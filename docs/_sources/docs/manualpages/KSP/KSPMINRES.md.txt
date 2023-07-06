@@ -1,0 +1,37 @@
+# KSPMINRES
+This code implements the MINRES (Minimum Residual) method. 
+
+
+## Notes
+The operator and the preconditioner must be symmetric and the preconditioner must be positive definite for this method.
+
+Supports only left preconditioning.
+
+
+## Reference
+
+- **** -*** Paige & Saunders, Solution of sparse indefinite systems of linear equations, SIAM J. Numer. Anal. 12, 1975.
+
+
+
+## Contributed by
+Robert Scheichl: maprs@maths.bath.ac.uk
+
+
+## See Also
+ [](chapter_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPCG`, `KSPCR`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/impls/minres/minres.c.html#KSPMINRES">src/ksp/ksp/impls/minres/minres.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/ksp/ksp/impls/minres/minres.c)
+
+
+[Index of all KSP routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

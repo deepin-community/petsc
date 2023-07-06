@@ -1,0 +1,38 @@
+# DMForestSetTopology
+Set the topology of a DMForest during the pre-setup phase.  The topology is a string (e.g. "cube", "shell") and can be interpreted by subtypes of DMFOREST) to construct the base DM of a forest during DMSetUp(). 
+## Synopsis
+```
+#include "petscdmforest.h" 
+#include "petscdm.h" 
+#include "petscdmlabel.h" 
+PetscErrorCode DMForestSetTopology(DM dm, DMForestTopology topology)
+```
+Logically collective on dm
+
+
+## Input parameters
+
+- ***dm -*** the forest
+- ***topology -*** the topology of the forest
+
+
+
+
+
+## See Also
+ `DMForestGetTopology()`, `DMForestSetBaseDM()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/forest/forest.c.html#DMForestSetTopology">src/dm/impls/forest/forest.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/forest/forest.c)
+
+
+[Index of all DMForest routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,45 @@
+# MatSeqAIJHIPSPARSEGetIJ
+returns the device row storage i and j indices for MATSEQAIJHIPSPARSE matrices. Not collective 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatSeqAIJHIPSPARSEGetIJ(Mat A, PetscBool compressed, const int **i, const int **j)
+```
+
+## Input Parameters
+
+- ***A -*** the matrix
+- ***compressed -*** PETSC_TRUE or PETSC_FALSE indicating the matrix data structure should be always returned in compressed form
+
+
+
+## Output Parameters
+
+- ***ia -*** the CSR row pointers
+- ***ja -*** the CSR column indices
+
+
+
+
+
+## Notes
+When compressed is true, the CSR structure does not contain empty rows
+
+
+## See Also
+ `MatSeqAIJHIPSPARSERestoreIJ()`, `MatSeqAIJHIPSPARSEGetArrayRead()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/aij/seq/seqhipsparse/aijhipsparse.hip.cpp#MatSeqAIJHIPSPARSEGetIJ">src/mat/impls/aij/seq/seqhipsparse/aijhipsparse.hip.cpp</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/aij/seq/seqhipsparse/aijhipsparse.hip.cpp)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

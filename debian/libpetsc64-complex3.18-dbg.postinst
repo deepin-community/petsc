@@ -1,0 +1,28 @@
+#!/bin/sh -e
+
+DEB_HOST_MULTIARCH=__DEB_HOST_MULTIARCH__
+
+PETSC_VERSION=__PETSC_VERSION__
+PETSC_ARCH=${DEB_HOST_MULTIARCH}
+PETSC_DEBUG_ARCH=${PETSC_ARCH}-complex-debug
+PETSC_VERSION_NUMBER=$( echo ${PETSC_VERSION} | sed "s/\.//g" )
+PETSC_SONAME_VERSION=__PETSC_SONAME_VERSION__
+PETSC64_NAME=petsc64-${PETSC_SONAME_VERSION}
+
+PETSC64_DIR_COMPLEX_DEBUG=/usr/lib/petscdir/${PETSC64_NAME}/${PETSC_DEBUG_ARCH}
+
+
+# Make alternatives links
+if [ "$1" = "configure" ]; then
+
+update-alternatives --install /usr/lib/petsc64 petsc64 ${PETSC64_DIR_COMPLEX_DEBUG} ${PETSC_VERSION_NUMBER}33 \
+  --slave /usr/lib/${DEB_HOST_MULTIARCH}/libpetsc64.so libpetsc64.so ${PETSC64_DIR_COMPLEX_DEBUG}/lib/libpetsc64_complex.so.${PETSC_VERSION} \
+  --slave /usr/include/petsc64 petsc64include ${PETSC64_DIR_COMPLEX_DEBUG}/include \
+  --slave /usr/lib/${DEB_HOST_MULTIARCH}/pkgconfig/PETSc64.pc PETSc64.pc ${PETSC64_DIR_COMPLEX_DEBUG}/lib/pkgconfig/PETSc.pc \
+  --slave /usr/lib/${DEB_HOST_MULTIARCH}/pkgconfig/petsc64.pc petsc64.pc ${PETSC64_DIR_COMPLEX_DEBUG}/lib/pkgconfig/petsc.pc \
+  --slave /usr/share/octave/site/m/petsc64 petsc64-octave ${PETSC64_DIR_COMPLEX_DEBUG}/share/petsc/matlab
+
+fi
+
+
+#DEBHELPER#

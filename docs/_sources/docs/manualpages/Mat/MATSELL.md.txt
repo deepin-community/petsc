@@ -1,0 +1,33 @@
+# MATSELL
+MATSELL = "sell" - A matrix type to be used for sparse matrices. This matrix type is identical to `MATSEQSELL` when constructed with a single process communicator,
+and `MATMPISELL` otherwise.  As a result, for single process communicators,
+`MatSeqSELLSetPreallocation()` is supported, and similarly `MatMPISELLSetPreallocation()` is supported
+for communicators controlling multiple processes.  It is recommended that you call both of
+the above preallocation routines for simplicity.
+
+
+## Options Database Keys
+
+- ***-mat_type sell -*** sets the matrix type to "sell" during a call to MatSetFromOptions()
+
+
+
+
+
+## See Also
+ `Mat`, `MATAIJ`, `MATBAIJ`, `MATSBAIJ`, `MatCreateSELL()`, `MatCreateSeqSELL()`, `MATSEQSELL`, `MATMPISELL`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/sell/mpi/mpisell.c.html#MATSELL">src/mat/impls/sell/mpi/mpisell.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/sell/mpi/mpisell.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

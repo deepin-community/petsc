@@ -1,0 +1,36 @@
+# PCSetApplicationContext
+Sets the optional user-defined context for the linear solver. 
+## Synopsis
+```
+#include "petscpc.h" 
+PetscErrorCode PCSetApplicationContext(PC pc, void *usrP)
+```
+Logically Collective
+
+
+## Input Parameters
+
+- ***pc -*** the PC context
+- ***usrP -*** optional user context
+
+
+
+
+
+## See Also
+ `PCGetApplicationContext()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/pc/interface/pcset.c.html#PCSetApplicationContext">src/ksp/pc/interface/pcset.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/ksp/pc/interface/pcset.c)
+
+
+[Index of all PC routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

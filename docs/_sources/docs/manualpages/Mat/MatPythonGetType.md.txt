@@ -1,0 +1,41 @@
+# MatPythonGetType
+Get the type of a `Mat` object implemented in Python. 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatPythonGetType(Mat mat, const char *pyname[])
+```
+Not collective
+
+
+## Input Parameter
+
+- ***mat -*** the matrix
+
+
+
+## Output Parameter
+
+- ***pyname -*** full dotted Python name [package].module[.{class|function}]
+
+
+
+
+
+## See Also
+ `Mat`, `MatType`, `MatCreate()`, `MatSetType()`, `MATPYTHON`, `PetscPythonInitialize()`, `MatPythonSetType()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/python/pythonmat.c.html#MatPythonGetType">src/mat/impls/python/pythonmat.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/python/pythonmat.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

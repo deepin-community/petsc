@@ -1,0 +1,78 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/dt/fe/interface/feceed.c">Actual source code: feceed.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:50+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../include/petsc/private/petscfeimpl.h.html">&lt;petsc/private/petscfeimpl.h&gt;</A>
+
+<a name="line3">  3: </a><font color="#A020F0">#ifdef PETSC_HAVE_LIBCEED</font>
+<a name="line4">  4: </a>#include <A href="../../../../../include/petscfeceed.h.html">&lt;petscfeceed.h&gt;</A>
+
+<a name="line6">  6: </a><font color="#B22222">/*@C</font>
+<a name="line7">  7: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/FE/PetscFESetCeed.html">PetscFESetCeed</a> - Set the `Ceed` object to a `<a href="../../../../../docs/manualpages/FE/PetscFE.html">PetscFE</a>`</font>
+
+<a name="line9">  9: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line11"> 11: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line12"> 12: </a><font color="#B22222">+ fe   - The `<a href="../../../../../docs/manualpages/FE/PetscFE.html">PetscFE</a>`</font>
+<a name="line13"> 13: </a><font color="#B22222">- ceed - The `Ceed` object</font>
+
+<a name="line15"> 15: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line17"> 17: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/FE/PetscFE.html">PetscFE</a>`, `<a href="../../../../../docs/manualpages/FE/PetscFEGetCeedBasis.html">PetscFEGetCeedBasis</a>()`, `<a href="../../../../../docs/manualpages/DM/DMGetCeed.html">DMGetCeed</a>()`</font>
+<a name="line18"> 18: </a><font color="#B22222">@*/</font>
+<a name="line19"> 19: </a><strong><font color="#4169E1"><a name="PetscFESetCeed"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/FE/PetscFESetCeed.html">PetscFESetCeed</a>(<a href="../../../../../docs/manualpages/FE/PetscFE.html">PetscFE</a> fe, Ceed ceed)</font></strong>
+<a name="line20"> 20: </a>{
+<a name="line22"> 22: </a>  <font color="#4169E1">if</font> (fe-&gt;ceed == ceed) <font color="#4169E1">return</font> 0;
+<a name="line23"> 23: </a>  CeedReferenceCopy(ceed, &amp;fe-&gt;ceed);
+<a name="line24"> 24: </a>  <font color="#4169E1">return</font> 0;
+<a name="line25"> 25: </a>}
+
+<a name="line27"> 27: </a><font color="#B22222">/*@C</font>
+<a name="line28"> 28: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/FE/PetscFEGetCeedBasis.html">PetscFEGetCeedBasis</a> - Get the `Ceed` object mirroring this `<a href="../../../../../docs/manualpages/FE/PetscFE.html">PetscFE</a>`</font>
+
+<a name="line30"> 30: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line32"> 32: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line33"> 33: </a><font color="#B22222">. fe - The `<a href="../../../../../docs/manualpages/FE/PetscFE.html">PetscFE</a>`</font>
+
+<a name="line35"> 35: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line36"> 36: </a><font color="#B22222">. basis - The `CeedBasis`</font>
+
+<a name="line38"> 38: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line40"> 40: </a><font color="#B22222">  Note:</font>
+<a name="line41"> 41: </a><font color="#B22222">  This is a borrowed reference, so it is not freed.</font>
+
+<a name="line43"> 43: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/FE/PetscFE.html">PetscFE</a>`, `<a href="../../../../../docs/manualpages/FE/PetscFESetCeed.html">PetscFESetCeed</a>()`, `<a href="../../../../../docs/manualpages/DM/DMGetCeed.html">DMGetCeed</a>()`</font>
+<a name="line44"> 44: </a><font color="#B22222">@*/</font>
+<a name="line45"> 45: </a><strong><font color="#4169E1"><a name="PetscFEGetCeedBasis"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/FE/PetscFEGetCeedBasis.html">PetscFEGetCeedBasis</a>(<a href="../../../../../docs/manualpages/FE/PetscFE.html">PetscFE</a> fe, CeedBasis *basis)</font></strong>
+<a name="line46"> 46: </a>{
+<a name="line47"> 47: </a>  <a href="../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a>      sp;
+<a name="line48"> 48: </a>  <a href="../../../../../docs/manualpages/DT/PetscQuadrature.html">PetscQuadrature</a> q;
+<a name="line49"> 49: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        dim, Nc, deg, ord;
+
+<a name="line53"> 53: </a>  <font color="#4169E1">if</font> (!fe-&gt;ceedBasis &amp;&amp; fe-&gt;ceed) {
+<a name="line54"> 54: </a>    <a href="../../../../../docs/manualpages/FE/PetscFEGetSpatialDimension.html">PetscFEGetSpatialDimension</a>(fe, &amp;dim);
+<a name="line55"> 55: </a>    <a href="../../../../../docs/manualpages/FE/PetscFEGetNumComponents.html">PetscFEGetNumComponents</a>(fe, &amp;Nc);
+<a name="line56"> 56: </a>    <a href="../../../../../docs/manualpages/FE/PetscFEGetBasisSpace.html">PetscFEGetBasisSpace</a>(fe, &amp;sp);
+<a name="line57"> 57: </a>    <a href="../../../../../docs/manualpages/SPACE/PetscSpaceGetDegree.html">PetscSpaceGetDegree</a>(sp, &amp;deg, NULL);
+<a name="line58"> 58: </a>    <a href="../../../../../docs/manualpages/FE/PetscFEGetQuadrature.html">PetscFEGetQuadrature</a>(fe, &amp;q);
+<a name="line59"> 59: </a>    <a href="../../../../../docs/manualpages/DT/PetscQuadratureGetOrder.html">PetscQuadratureGetOrder</a>(q, &amp;ord);
+<a name="line60"> 60: </a>    CeedBasisCreateTensorH1Lagrange(fe-&gt;ceed, dim, Nc, deg + 1, (ord + 1) / 2, CEED_GAUSS, &amp;fe-&gt;ceedBasis);
+<a name="line61"> 61: </a>  }
+<a name="line62"> 62: </a>  *basis = fe-&gt;ceedBasis;
+<a name="line63"> 63: </a>  <font color="#4169E1">return</font> 0;
+<a name="line64"> 64: </a>}
+
+<a name="line66"> 66: </a><font color="#A020F0">#endif</font>
+</pre>
+</body>
+
+</html>

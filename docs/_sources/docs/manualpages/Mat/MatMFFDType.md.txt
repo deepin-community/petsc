@@ -1,0 +1,29 @@
+# MatMFFDType
+algorithm used to compute the h used in computing matrix-vector products via differencing of the function 
+## Synopsis
+```
+typedef const char *MatMFFDType;
+#define MATMFFD_DS "ds"
+#define MATMFFD_WP "wp"
+
+```
+
+
+
+## See Also
+ `MatMFFDSetType()`, `MatMFFDRegister()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscmat.h.html#MatMFFDType">include/petscmat.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscmat.h)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

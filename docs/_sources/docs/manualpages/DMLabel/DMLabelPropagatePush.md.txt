@@ -1,0 +1,52 @@
+# DMLabelPropagatePush
+Tear down a cycle of label propagation 
+## Synopsis
+```
+#include "petscdmlabel.h"   
+#include "petscsection.h"   
+PetscErrorCode DMLabelPropagatePush(DMLabel label, PetscSF pointSF, PetscErrorCode (*markPoint)(DMLabel, PetscInt, PetscInt, void *), void *ctx)
+```
+Collective on sf
+
+
+## Input Parameters
+
+- ***label     -*** The DMLabel to propagate across processes
+- ***sf        -*** The SF describing parallel layout of the label points
+- ***markPoint -*** An optional callback that is called when a point is marked, or NULL
+- ***ctx       -*** An optional user context for the callback, or NULL
+
+
+
+## Calling sequence of markPoint
+```none
+markPoint(DMLabel label, PetscInt p, PetscInt val, void *ctx);
+```
+
+
+- ***label -*** The DMLabel
+- ***p     -*** The point being marked
+- ***val   -*** The label value for p
+- ***ctx   -*** An optional user context
+
+
+
+
+
+## See Also
+ `DMLabelPropagateBegin()`, `DMLabelPropagateEnd()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/label/dmlabel.c.html#DMLabelPropagatePush">src/dm/label/dmlabel.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/label/dmlabel.c)
+
+
+[Index of all DMLabel routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

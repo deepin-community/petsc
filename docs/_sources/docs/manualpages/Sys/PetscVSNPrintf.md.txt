@@ -1,0 +1,40 @@
+# PetscVSNPrintf
+The PETSc version of vsnprintf(). Converts a PETSc format string into a standard C format string and then puts all the function arguments into a string using the format statement. 
+## Synopsis
+```
+PetscErrorCode PetscVSNPrintf(char *str, size_t len, const char *format, size_t *fullLength, va_list Argp)
+```
+
+## Input Parameters
+
+- ***str -*** location to put result
+- ***len -*** the amount of space in str
++   format - the PETSc format string
+- ***fullLength -*** the amount of space in str actually used.
+
+
+
+## Developer Note
+this function may be called from an error handler, if an error occurs when it is called by the error handler than likely
+a recursion will occur and possible crash.
+
+
+
+
+## See Also
+ `PetscVSNPrintf()`, `PetscErrorPrintf()`, `PetscVPrintf()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/fileio/mprint.c.html#PetscVSNPrintf">src/sys/fileio/mprint.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/fileio/mprint.c)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

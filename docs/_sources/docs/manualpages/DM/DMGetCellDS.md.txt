@@ -1,0 +1,44 @@
+# DMGetCellDS
+Get the PetscDS defined on a given cell 
+## Synopsis
+```
+#include "petscdm.h"          
+#include "petscdmlabel.h"     
+#include "petscds.h"     
+PetscErrorCode DMGetCellDS(DM dm, PetscInt point, PetscDS *prob)
+```
+Not collective
+
+
+## Input Parameters
+
+- ***dm    -*** The DM
+- ***point -*** Cell for the DS
+
+
+
+## Output Parameter
+
+- ***prob -*** The PetscDS defined on the given cell
+
+
+
+
+
+## See Also
+ `DMGetDS()`, `DMSetRegionDS()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/interface/dm.c.html#DMGetCellDS">src/dm/interface/dm.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/interface/dm.c)
+
+
+[Index of all DM routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

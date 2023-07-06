@@ -1,0 +1,37 @@
+# MatProductType
+indicates what type of matrix product is requested 
+## Synopsis
+```
+typedef enum {
+  MATPRODUCT_UNSPECIFIED = 0,
+  MATPRODUCT_AB,
+  MATPRODUCT_AtB,
+  MATPRODUCT_ABt,
+  MATPRODUCT_PtAP,
+  MATPRODUCT_RARt,
+  MATPRODUCT_ABC
+} MatProductType;
+```
+
+
+
+## See Also
+ `MatProductSetType()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscmat.h.html#MatProductType">include/petscmat.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/pde_constrained/tutorials/parabolic.c.html">src/tao/pde_constrained/tutorials/parabolic.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscmat.h)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

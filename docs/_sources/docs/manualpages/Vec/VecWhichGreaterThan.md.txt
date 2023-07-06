@@ -1,0 +1,43 @@
+# VecWhichGreaterThan
+Creates an index set containing the indices where the vectors Vec1 > Vec2 
+## Synopsis
+```
+#include "petscvec.h"  
+PetscErrorCode VecWhichGreaterThan(Vec Vec1, Vec Vec2, IS *S)
+```
+Collective on S
+
+
+## Input Parameters
+
+- ***Vec1, Vec2 -*** the two vectors to compare
+
+
+
+## OutputParameter
+
+- ***S -*** The index set containing the indices i where vec1[i] > vec2[i]
+
+
+
+## Notes
+The two vectors must have the same parallel layout
+
+For complex numbers this only compares the real part
+
+
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/utils/projection.c.html#VecWhichGreaterThan">src/vec/vec/utils/projection.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/vec/utils/projection.c)
+
+
+[Index of all Vec routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

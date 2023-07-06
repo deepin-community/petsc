@@ -1,0 +1,43 @@
+# DMPlexMigrate
+Migrates internal DM data over the supplied star forest 
+## Synopsis
+```
+#include "petscdmplex.h"   
+#include "petscdmlabel.h"  
+PetscErrorCode DMPlexMigrate(DM dm, PetscSF sf, DM targetDM)
+```
+Collective on dm
+
+
+## Input Parameters
+
+- ***dm       -*** The source DMPlex object
+- ***sf       -*** The star forest communication context describing the migration pattern
+
+
+
+## Output Parameter
+
+- ***targetDM -*** The target DMPlex object
+
+
+
+
+
+## See Also
+ `DMPlexDistribute()`, `DMPlexDistributeOverlap()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/plexdistribute.c.html#DMPlexMigrate">src/dm/impls/plex/plexdistribute.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/plex/plexdistribute.c)
+
+
+[Index of all DMPlex routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

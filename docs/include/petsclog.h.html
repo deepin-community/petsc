@@ -1,0 +1,738 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/include/petsclog.h">Actual source code: petsclog.h</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:50:05+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">    Defines profile/logging in PETSc.</font>
+<a name="line3">  3: </a><font color="#B22222">*/</font>
+<a name="line4">  4: </a><font color="#A020F0">#ifndef PETSCLOG_H</font>
+<a name="line5">  5: </a><strong><font color="#228B22">#define PETSCLOG_H</font></strong>
+
+<a name="line7">  7: </a>#include <A href="petscsys.h.html">&lt;petscsys.h&gt;</A>
+<a name="line8">  8: </a>#include <A href="petsctime.h.html">&lt;petsctime.h&gt;</A>
+
+<a name="line10"> 10: </a><font color="#B22222">/* SUBMANSEC = Sys */</font>
+
+<a name="line12"> 12: </a><font color="#B22222">/* General logging of information; different from event logging */</font>
+<a name="line13"> 13: </a><strong><font color="#4169E1"><a name="PetscInfo_Private"></a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscInfo_Private(const char[], <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, const char[], ...)</font></strong> <a href="../docs/manualpages/Sys/PETSC_ATTRIBUTE_FORMAT.html">PETSC_ATTRIBUTE_FORMAT</a>(3, 4);
+<a name="line14"> 14: </a><font color="#A020F0">#if defined(PETSC_USE_INFO)</font>
+<a name="line15"> 15: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(A, ...) PetscInfo_Private(PETSC_FUNCTION_NAME, ((<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A), __VA_ARGS__)</font></strong>
+<a name="line16"> 16: </a><font color="#A020F0">#else</font>
+<a name="line17"> 17: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(A, ...) 0</font></strong>
+<a name="line18"> 18: </a><font color="#A020F0">#endif</font>
+
+<a name="line20"> 20: </a><strong><font color="#228B22">#define PetscInfo1(...) PETSC_DEPRECATED_MACRO(</font><font color="#666666">"GCC warning \"Use <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>() (since version 3.17)\""</font><font color="#228B22">) <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(__VA_ARGS__)</font></strong>
+<a name="line21"> 21: </a><strong><font color="#228B22">#define PetscInfo2(...) PETSC_DEPRECATED_MACRO(</font><font color="#666666">"GCC warning \"Use <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>() (since version 3.17)\""</font><font color="#228B22">) <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(__VA_ARGS__)</font></strong>
+<a name="line22"> 22: </a><strong><font color="#228B22">#define PetscInfo3(...) PETSC_DEPRECATED_MACRO(</font><font color="#666666">"GCC warning \"Use <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>() (since version 3.17)\""</font><font color="#228B22">) <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(__VA_ARGS__)</font></strong>
+<a name="line23"> 23: </a><strong><font color="#228B22">#define PetscInfo4(...) PETSC_DEPRECATED_MACRO(</font><font color="#666666">"GCC warning \"Use <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>() (since version 3.17)\""</font><font color="#228B22">) <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(__VA_ARGS__)</font></strong>
+<a name="line24"> 24: </a><strong><font color="#228B22">#define PetscInfo5(...) PETSC_DEPRECATED_MACRO(</font><font color="#666666">"GCC warning \"Use <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>() (since version 3.17)\""</font><font color="#228B22">) <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(__VA_ARGS__)</font></strong>
+<a name="line25"> 25: </a><strong><font color="#228B22">#define PetscInfo6(...) PETSC_DEPRECATED_MACRO(</font><font color="#666666">"GCC warning \"Use <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>() (since version 3.17)\""</font><font color="#228B22">) <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(__VA_ARGS__)</font></strong>
+<a name="line26"> 26: </a><strong><font color="#228B22">#define PetscInfo7(...) PETSC_DEPRECATED_MACRO(</font><font color="#666666">"GCC warning \"Use <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>() (since version 3.17)\""</font><font color="#228B22">) <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(__VA_ARGS__)</font></strong>
+<a name="line27"> 27: </a><strong><font color="#228B22">#define PetscInfo8(...) PETSC_DEPRECATED_MACRO(</font><font color="#666666">"GCC warning \"Use <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>() (since version 3.17)\""</font><font color="#228B22">) <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(__VA_ARGS__)</font></strong>
+<a name="line28"> 28: </a><strong><font color="#228B22">#define PetscInfo9(...) PETSC_DEPRECATED_MACRO(</font><font color="#666666">"GCC warning \"Use <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>() (since version 3.17)\""</font><font color="#228B22">) <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(__VA_ARGS__)</font></strong>
+
+<a name="line30"> 30: </a><font color="#B22222">/*E</font>
+<a name="line31"> 31: </a><font color="#B22222">  <a href="../docs/manualpages/Sys/PetscInfoCommFlag.html">PetscInfoCommFlag</a> - Describes the method by which to filter `<a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>()` by communicator size</font>
+
+<a name="line33"> 33: </a><font color="#B22222">  Used as an input for `<a href="../docs/manualpages/Profiling/PetscInfoSetFilterCommSelf.html">PetscInfoSetFilterCommSelf</a>()`</font>
+
+<a name="line35"> 35: </a><font color="#B22222">+ `<a href="../docs/manualpages/Sys/PetscInfoCommFlag.html">PETSC_INFO_COMM_ALL</a>` - Default uninitialized value. `<a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>()` will not filter based on</font>
+<a name="line36"> 36: </a><font color="#B22222">communicator size (i.e. will print for all communicators)</font>
+<a name="line37"> 37: </a><font color="#B22222">. `<a href="../docs/manualpages/Sys/PetscInfoCommFlag.html">PETSC_INFO_COMM_NO_SELF</a>` - `<a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>()` will NOT print for communicators with size = 1 (i.e. *_COMM_SELF)</font>
+<a name="line38"> 38: </a><font color="#B22222">- `<a href="../docs/manualpages/Sys/PetscInfoCommFlag.html">PETSC_INFO_COMM_ONLY_SELF</a>` - `<a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>()` will ONLY print for communicators with size = 1</font>
+
+<a name="line40"> 40: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line42"> 42: </a><font color="#B22222">.seealso: `<a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>()`, `<a href="../docs/manualpages/Profiling/PetscInfoSetFromOptions.html">PetscInfoSetFromOptions</a>()`, `<a href="../docs/manualpages/Profiling/PetscInfoSetFilterCommSelf.html">PetscInfoSetFilterCommSelf</a>()`</font>
+<a name="line43"> 43: </a><font color="#B22222">E*/</font>
+<a name="line44"> 44: </a><font color="#4169E1">typedef</font> <font color="#4169E1">enum</font> {
+<a name="line45"> 45: </a>  <a href="../docs/manualpages/Sys/PetscInfoCommFlag.html">PETSC_INFO_COMM_ALL</a>       = -1,
+<a name="line46"> 46: </a>  <a href="../docs/manualpages/Sys/PetscInfoCommFlag.html">PETSC_INFO_COMM_NO_SELF</a>   = 0,
+<a name="line47"> 47: </a>  <a href="../docs/manualpages/Sys/PetscInfoCommFlag.html">PETSC_INFO_COMM_ONLY_SELF</a> = 1
+<a name="line48"> 48: </a>} <a href="../docs/manualpages/Sys/PetscInfoCommFlag.html">PetscInfoCommFlag</a>;
+
+<a name="line50"> 50: </a>PETSC_EXTERN const char *const PetscInfoCommFlags[];
+<a name="line51"> 51: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>    <a href="../docs/manualpages/Profiling/PetscInfoDeactivateClass.html">PetscInfoDeactivateClass</a>(<a href="../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a>)</font></strong>;
+<a name="line52"> 52: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>    <a href="../docs/manualpages/Profiling/PetscInfoActivateClass.html">PetscInfoActivateClass</a>(<a href="../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a>)</font></strong>;
+<a name="line53"> 53: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>    <a href="../docs/manualpages/Profiling/PetscInfoEnabled.html">PetscInfoEnabled</a>(<a href="../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a>, <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *)</font></strong>;
+<a name="line54"> 54: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>    <a href="../docs/manualpages/Profiling/PetscInfoAllow.html">PetscInfoAllow</a>(<a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)</font></strong>;
+<a name="line55"> 55: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>    <a href="../docs/manualpages/Profiling/PetscInfoSetFile.html">PetscInfoSetFile</a>(const char[], const char[])</font></strong>;
+<a name="line56"> 56: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>    <a href="../docs/manualpages/Profiling/PetscInfoGetFile.html">PetscInfoGetFile</a>(char **, FILE **)</font></strong>;
+<a name="line57"> 57: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>    <a href="../docs/manualpages/Profiling/PetscInfoSetClasses.html">PetscInfoSetClasses</a>(<a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>, <a href="../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const char *const *)</font></strong>;
+<a name="line58"> 58: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>    <a href="../docs/manualpages/Profiling/PetscInfoGetClass.html">PetscInfoGetClass</a>(const char *, <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *)</font></strong>;
+<a name="line59"> 59: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>    <a href="../docs/manualpages/Profiling/PetscInfoGetInfo.html">PetscInfoGetInfo</a>(<a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *, <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *, <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *, <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *, <a href="../docs/manualpages/Sys/PetscInfoCommFlag.html">PetscInfoCommFlag</a> *)</font></strong>;
+<a name="line60"> 60: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>    <a href="../docs/manualpages/Profiling/PetscInfoProcessClass.html">PetscInfoProcessClass</a>(const char[], <a href="../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const <a href="../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a>[])</font></strong>;
+<a name="line61"> 61: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>    <a href="../docs/manualpages/Profiling/PetscInfoSetFilterCommSelf.html">PetscInfoSetFilterCommSelf</a>(<a href="../docs/manualpages/Sys/PetscInfoCommFlag.html">PetscInfoCommFlag</a>)</font></strong>;
+<a name="line62"> 62: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>    <a href="../docs/manualpages/Profiling/PetscInfoSetFromOptions.html">PetscInfoSetFromOptions</a>(PetscOptions)</font></strong>;
+<a name="line63"> 63: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>    <a href="../docs/manualpages/Profiling/PetscInfoDestroy.html">PetscInfoDestroy</a>(void)</font></strong>;
+<a name="line64"> 64: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>         PetscLogPrintInfo; <font color="#B22222">/* if true, indicates <a href="../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>() is turned on */</font>
+
+<a name="line66"> 66: </a><font color="#B22222">/*MC</font>
+<a name="line67"> 67: </a><font color="#B22222">    <a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> - id used to identify PETSc or user events which timed portions (blocks of executable)</font>
+<a name="line68"> 68: </a><font color="#B22222">     code.</font>
+
+<a name="line70"> 70: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line72"> 72: </a><font color="#B22222">.seealso: [](ch_profiling), `<a href="../docs/manualpages/Profiling/PetscLogEventRegister.html">PetscLogEventRegister</a>()`, `<a href="../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>()`, `<a href="../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>()`, `<a href="../docs/manualpages/Sys/PetscLogStage.html">PetscLogStage</a>`</font>
+<a name="line73"> 73: </a><font color="#B22222">M*/</font>
+<a name="line74"> 74: </a><font color="#4169E1">typedef int <a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>;</font>
+
+<a name="line76"> 76: </a><font color="#B22222">/*MC</font>
+<a name="line77"> 77: </a><font color="#B22222">    <a href="../docs/manualpages/Sys/PetscLogStage.html">PetscLogStage</a> - id used to identify user stages (phases, sections) of runs - for logging</font>
+
+<a name="line79"> 79: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line81"> 81: </a><font color="#B22222">.seealso: [](ch_profiling), `<a href="../docs/manualpages/Profiling/PetscLogStageRegister.html">PetscLogStageRegister</a>()`, `<a href="../docs/manualpages/Profiling/PetscLogStagePush.html">PetscLogStagePush</a>()`, `<a href="../docs/manualpages/Profiling/PetscLogStagePop.html">PetscLogStagePop</a>()`, `<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>`</font>
+<a name="line82"> 82: </a><font color="#B22222">M*/</font>
+<a name="line83"> 83: </a><font color="#4169E1">typedef int <a href="../docs/manualpages/Sys/PetscLogStage.html">PetscLogStage</a>;</font>
+
+<a name="line85"> 85: </a><strong><font color="#228B22">#define PETSC_EVENT 1311311</font></strong>
+<a name="line86"> 86: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> PETSC_LARGEST_EVENT;
+
+<a name="line88"> 88: </a><font color="#B22222">/* Global flop counter */</font>
+<a name="line89"> 89: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_TotalFlops;
+<a name="line90"> 90: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_tmp_flops;
+
+<a name="line92"> 92: </a><font color="#B22222">/* We must make the following structures available to access the event</font>
+<a name="line93"> 93: </a><font color="#B22222">     activation flags in the <a href="../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>/End() macros. These are not part of the PETSc public</font>
+<a name="line94"> 94: </a><font color="#B22222">     API and are not intended to be used by other parts of PETSc or by users.</font>
+
+<a name="line96"> 96: </a><font color="#B22222">     The code that manipulates these structures is in src/sys/logging/utils.</font>
+<a name="line97"> 97: </a><font color="#B22222">*/</font>
+<a name="line98"> 98: </a><font color="#4169E1">typedef struct _n_PetscIntStack *PetscIntStack;</font>
+
+<a name="line100">100: </a><font color="#B22222">/* -----------------------------------------------------------------------------------------------------*/</font>
+<a name="line101">101: </a><font color="#B22222">/*</font>
+<a name="line102">102: </a><font color="#B22222">    PetscClassRegInfo, PetscClassPerfInfo - Each class has two data structures associated with it. The first has</font>
+<a name="line103">103: </a><font color="#B22222">       static information about it, the second collects statistics on how many objects of the class are created,</font>
+<a name="line104">104: </a><font color="#B22222">       how much memory they use, etc.</font>
+
+<a name="line106">106: </a><font color="#B22222">    PetscClassRegLog, PetscClassPerfLog - arrays of the PetscClassRegInfo and PetscClassPerfInfo for all classes.</font>
+<a name="line107">107: </a><font color="#B22222">*/</font>
+<a name="line108">108: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line109">109: </a>  char        *name;    <font color="#B22222">/* The class name */</font>
+<a name="line110">110: </a>  <a href="../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a> classid; <font color="#B22222">/* The integer identifying this class */</font>
+<a name="line111">111: </a>} PetscClassRegInfo;
+
+<a name="line113">113: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line114">114: </a>  <a href="../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a>   id;           <font color="#B22222">/* The integer identifying this class */</font>
+<a name="line115">115: </a>  int            creations;    <font color="#B22222">/* The number of objects of this class created */</font>
+<a name="line116">116: </a>  int            destructions; <font color="#B22222">/* The number of objects of this class destroyed */</font>
+<a name="line117">117: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> mem;          <font color="#B22222">/* The total memory allocated by objects of this class; this is completely wrong and should possibly be removed */</font>
+<a name="line118">118: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> descMem;      <font color="#B22222">/* The total memory allocated by descendents of these objects; this is completely wrong and should possibly be removed */</font>
+<a name="line119">119: </a>} PetscClassPerfInfo;
+
+<a name="line121">121: </a><font color="#4169E1">typedef struct _n_PetscClassRegLog *PetscClassRegLog;</font>
+<a name="line122">122: </a><font color="#4169E1"><a name="_n_PetscClassRegLog"></a>struct _n_PetscClassRegLog </font>{
+<a name="line123">123: </a>  int                numClasses; <font color="#B22222">/* The number of classes registered */</font>
+<a name="line124">124: </a>  int                maxClasses; <font color="#B22222">/* The maximum number of classes */</font>
+<a name="line125">125: </a>  PetscClassRegInfo *classInfo;  <font color="#B22222">/* The structure for class information (classids are monotonicly increasing) */</font>
+<a name="line126">126: </a>};
+
+<a name="line128">128: </a><font color="#4169E1">typedef struct _n_PetscClassPerfLog *PetscClassPerfLog;</font>
+<a name="line129">129: </a><font color="#4169E1"><a name="_n_PetscClassPerfLog"></a>struct _n_PetscClassPerfLog </font>{
+<a name="line130">130: </a>  int                 numClasses; <font color="#B22222">/* The number of logging classes */</font>
+<a name="line131">131: </a>  int                 maxClasses; <font color="#B22222">/* The maximum number of classes */</font>
+<a name="line132">132: </a>  PetscClassPerfInfo *classInfo;  <font color="#B22222">/* The structure for class information (classids are monotonicly increasing) */</font>
+<a name="line133">133: </a>};
+<a name="line134">134: </a><font color="#B22222">/* -----------------------------------------------------------------------------------------------------*/</font>
+<a name="line135">135: </a><font color="#B22222">/*</font>
+<a name="line136">136: </a><font color="#B22222">    PetscEventRegInfo, PetscEventPerfInfo - Each event has two data structures associated with it. The first has</font>
+<a name="line137">137: </a><font color="#B22222">       static information about it, the second collects statistics on how many times the event is used, how</font>
+<a name="line138">138: </a><font color="#B22222">       much time it takes, etc.</font>
+
+<a name="line140">140: </a><font color="#B22222">    PetscEventRegLog, PetscEventPerfLog - an array of all PetscEventRegInfo and PetscEventPerfInfo for all events. There is one</font>
+<a name="line141">141: </a><font color="#B22222">      of these for each stage.</font>
+
+<a name="line143">143: </a><font color="#B22222">*/</font>
+<a name="line144">144: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line145">145: </a>  char        *name;       <font color="#B22222">/* The name of this event */</font>
+<a name="line146">146: </a>  <a href="../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a> classid;    <font color="#B22222">/* The class the event is associated with */</font>
+<a name="line147">147: </a>  <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>    collective; <font color="#B22222">/* Flag this event as collective */</font>
+<a name="line148">148: </a><font color="#A020F0">#if defined(PETSC_HAVE_MPE)</font>
+<a name="line149">149: </a>  int mpe_id_begin; <font color="#B22222">/* MPE IDs that define the event */</font>
+<a name="line150">150: </a>  int mpe_id_end;
+<a name="line151">151: </a><font color="#A020F0">#endif</font>
+<a name="line152">152: </a>} PetscEventRegInfo;
+
+<a name="line154">154: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line155">155: </a>  int            id;                      <font color="#B22222">/* The integer identifying this event */</font>
+<a name="line156">156: </a>  <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>      active;                  <font color="#B22222">/* The flag to activate logging */</font>
+<a name="line157">157: </a>  <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>      visible;                 <font color="#B22222">/* The flag to print info in summary */</font>
+<a name="line158">158: </a>  int            depth;                   <font color="#B22222">/* The nesting depth of the event call */</font>
+<a name="line159">159: </a>  int            count;                   <font color="#B22222">/* The number of times this event was executed */</font>
+<a name="line160">160: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> flops, flops2, flopsTmp; <font color="#B22222">/* The flops and flops^2 used in this event */</font>
+<a name="line161">161: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> time, time2, timeTmp;    <font color="#B22222">/* The time and time^2 taken for this event */</font>
+<a name="line162">162: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> syncTime;                <font color="#B22222">/* The synchronization barrier time */</font>
+<a name="line163">163: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> dof[8];                  <font color="#B22222">/* The number of degrees of freedom associated with this event */</font>
+<a name="line164">164: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> errors[8];               <font color="#B22222">/* The errors (user-defined) associated with this event */</font>
+<a name="line165">165: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> numMessages;             <font color="#B22222">/* The number of messages in this event */</font>
+<a name="line166">166: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> messageLength;           <font color="#B22222">/* The total message lengths in this event */</font>
+<a name="line167">167: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> numReductions;           <font color="#B22222">/* The number of reductions in this event */</font>
+<a name="line168">168: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> memIncrease;             <font color="#B22222">/* How much the resident memory has increased in this event */</font>
+<a name="line169">169: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> mallocIncrease;          <font color="#B22222">/* How much the maximum malloced space has increased in this event */</font>
+<a name="line170">170: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> mallocSpace;             <font color="#B22222">/* How much the space was malloced and kept during this event */</font>
+<a name="line171">171: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> mallocIncreaseEvent;     <font color="#B22222">/* Maximum of the high water mark with in event minus memory available at the end of the event */</font>
+<a name="line172">172: </a><font color="#A020F0">#if defined(PETSC_HAVE_DEVICE)</font>
+<a name="line173">173: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> CpuToGpuCount; <font color="#B22222">/* The total number of CPU to GPU copies */</font>
+<a name="line174">174: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> GpuToCpuCount; <font color="#B22222">/* The total number of GPU to CPU copies */</font>
+<a name="line175">175: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> CpuToGpuSize;  <font color="#B22222">/* The total size of CPU to GPU copies */</font>
+<a name="line176">176: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> GpuToCpuSize;  <font color="#B22222">/* The total size of GPU to CPU copies */</font>
+<a name="line177">177: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> GpuFlops;      <font color="#B22222">/* The flops done on a GPU in this event */</font>
+<a name="line178">178: </a>  <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> GpuTime;       <font color="#B22222">/* The time spent on a GPU in this event */</font>
+<a name="line179">179: </a><font color="#A020F0">#endif</font>
+<a name="line180">180: </a>} PetscEventPerfInfo;
+
+<a name="line182">182: </a><font color="#4169E1">typedef struct _n_PetscEventRegLog *PetscEventRegLog;</font>
+<a name="line183">183: </a><font color="#4169E1"><a name="_n_PetscEventRegLog"></a>struct _n_PetscEventRegLog </font>{
+<a name="line184">184: </a>  int                numEvents; <font color="#B22222">/* The number of registered events */</font>
+<a name="line185">185: </a>  int                maxEvents; <font color="#B22222">/* The maximum number of events */</font>
+<a name="line186">186: </a>  PetscEventRegInfo *eventInfo; <font color="#B22222">/* The registration information for each event */</font>
+<a name="line187">187: </a>};
+
+<a name="line189">189: </a><font color="#4169E1">typedef struct _n_PetscEventPerfLog *PetscEventPerfLog;</font>
+<a name="line190">190: </a><font color="#4169E1"><a name="_n_PetscEventPerfLog"></a>struct _n_PetscEventPerfLog </font>{
+<a name="line191">191: </a>  int                 numEvents; <font color="#B22222">/* The number of logging events */</font>
+<a name="line192">192: </a>  int                 maxEvents; <font color="#B22222">/* The maximum number of events */</font>
+<a name="line193">193: </a>  PetscEventPerfInfo *eventInfo; <font color="#B22222">/* The performance information for each event */</font>
+<a name="line194">194: </a>};
+<a name="line195">195: </a><font color="#B22222">/* ------------------------------------------------------------------------------------------------------------*/</font>
+<a name="line196">196: </a><font color="#B22222">/*</font>
+<a name="line197">197: </a><font color="#B22222">   PetscStageInfo - Contains all the information about a particular stage.</font>
+
+<a name="line199">199: </a><font color="#B22222">   PetscStageLog - An array of PetscStageInfo for each registered stage. There is a single one of these in the code.</font>
+<a name="line200">200: </a><font color="#B22222">*/</font>
+<a name="line201">201: </a><font color="#4169E1"><a name="_PetscStageInfo"></a>typedef struct _PetscStageInfo </font>{
+<a name="line202">202: </a>  char              *name;     <font color="#B22222">/* The stage name */</font>
+<a name="line203">203: </a>  <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>          used;     <font color="#B22222">/* The stage was pushed on this processor */</font>
+<a name="line204">204: </a>  PetscEventPerfInfo perfInfo; <font color="#B22222">/* The stage performance information */</font>
+<a name="line205">205: </a>  PetscEventPerfLog  eventLog; <font color="#B22222">/* The event information for this stage */</font>
+<a name="line206">206: </a>  PetscClassPerfLog  classLog; <font color="#B22222">/* The class information for this stage */</font>
+<a name="line207">207: </a>} PetscStageInfo;
+
+<a name="line209">209: </a><font color="#4169E1">typedef struct _n_PetscStageLog *PetscStageLog;</font>
+<a name="line210">210: </a><font color="#4169E1"><a name="_n_PetscStageLog"></a>struct _n_PetscStageLog </font>{
+<a name="line211">211: </a>  int              numStages; <font color="#B22222">/* The number of registered stages */</font>
+<a name="line212">212: </a>  int              maxStages; <font color="#B22222">/* The maximum number of stages */</font>
+<a name="line213">213: </a>  PetscIntStack    stack;     <font color="#B22222">/* The stack for active stages */</font>
+<a name="line214">214: </a>  int              curStage;  <font color="#B22222">/* The current stage (only used in macros so we don't call <a href="../docs/manualpages/Profiling/PetscIntStackTop.html">PetscIntStackTop</a>) */</font>
+<a name="line215">215: </a>  PetscStageInfo  *stageInfo; <font color="#B22222">/* The information for each stage */</font>
+<a name="line216">216: </a>  PetscEventRegLog eventLog;  <font color="#B22222">/* The registered events */</font>
+<a name="line217">217: </a>  PetscClassRegLog classLog;  <font color="#B22222">/* The registered classes */</font>
+<a name="line218">218: </a>};
+<a name="line219">219: </a><font color="#B22222">/* -----------------------------------------------------------------------------------------------------*/</font>
+
+<a name="line221">221: </a>PETSC_DEPRECATED_FUNCTION(<font color="#666666">"PetscLogObjectParent() is deprecated (since version 3.18)"</font>) static inline <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogObjectParent(<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a> o, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a> p)
+<a name="line222">222: </a>{
+<a name="line223">223: </a>  (void)o;
+<a name="line224">224: </a>  (void)p;
+<a name="line225">225: </a>  <font color="#4169E1">return</font> 0;
+<a name="line226">226: </a>}
+
+<a name="line228">228: </a>PETSC_DEPRECATED_FUNCTION(<font color="#666666">"PetscLogObjectMemory() is deprecated (since version 3.18)"</font>) static inline <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogObjectMemory(<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a> o, <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> m)
+<a name="line229">229: </a>{
+<a name="line230">230: </a>  (void)o;
+<a name="line231">231: </a>  (void)m;
+<a name="line232">232: </a>  <font color="#4169E1">return</font> 0;
+<a name="line233">233: </a>}
+
+<a name="line235">235: </a><font color="#A020F0">#if defined(PETSC_USE_LOG) </font><font color="#B22222">/* --- Logging is turned on --------------------------------*/</font><font color="#A020F0"></font>
+<a name="line236">236: </a>PETSC_EXTERN PetscStageLog  petsc_stageLog;
+<a name="line237">237: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogGetStageLog.html">PetscLogGetStageLog</a>(PetscStageLog *)</font></strong>;
+<a name="line238">238: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscStageLogGetCurrent.html">PetscStageLogGetCurrent</a>(PetscStageLog, int *)</font></strong>;
+<a name="line239">239: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscStageLogGetEventPerfLog.html">PetscStageLogGetEventPerfLog</a>(PetscStageLog, int, PetscEventPerfLog *)</font></strong>;
+
+<a name="line241">241: </a>  <font color="#B22222">/*</font>
+<a name="line242">242: </a><font color="#B22222">   Flop counting:  We count each arithmetic operation (e.g., addition, multiplication) separately.</font>
+
+<a name="line244">244: </a><font color="#B22222">   For the complex numbers version, note that</font>
+<a name="line245">245: </a><font color="#B22222">       1 complex addition = 2 flops</font>
+<a name="line246">246: </a><font color="#B22222">       1 complex multiplication = 6 flops,</font>
+<a name="line247">247: </a><font color="#B22222">   where we define 1 flop as that for a double precision scalar.  We roughly approximate</font>
+<a name="line248">248: </a><font color="#B22222">   flop counting for complex numbers by multiplying the total flops by 4; this corresponds</font>
+<a name="line249">249: </a><font color="#B22222">   to the assumption that we're counting mostly additions and multiplications -- and</font>
+<a name="line250">250: </a><font color="#B22222">   roughly the same number of each.  More accurate counting could be done by distinguishing</font>
+<a name="line251">251: </a><font color="#B22222">   among the various arithmetic operations.</font>
+<a name="line252">252: </a><font color="#B22222"> */</font>
+
+<a name="line254">254: </a><font color="#A020F0">  #if defined(PETSC_USE_COMPLEX)</font>
+<a name="line255">255: </a><strong><font color="#228B22">    #define PETSC_FLOPS_PER_OP 4.0</font></strong>
+<a name="line256">256: </a><font color="#A020F0">  #else</font>
+<a name="line257">257: </a><strong><font color="#228B22">    #define PETSC_FLOPS_PER_OP 1.0</font></strong>
+<a name="line258">258: </a><font color="#A020F0">  #endif</font>
+
+<a name="line260">260: </a><font color="#B22222">/*@C</font>
+<a name="line261">261: </a><font color="#B22222">       <a href="../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a> - Log how many flops are performed in a calculation</font>
+
+<a name="line263">263: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line264">264: </a><font color="#B22222">.   flops - the number of flops</font>
+
+<a name="line266">266: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line268">268: </a><font color="#B22222">   Note:</font>
+<a name="line269">269: </a><font color="#B22222">     To limit the chance of integer overflow when multiplying by a constant, represent the constant as a double,</font>
+<a name="line270">270: </a><font color="#B22222">     not an integer. Use `<a href="../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>`(4.0*n) not `<a href="../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>`(4*n)</font>
+
+<a name="line272">272: </a><font color="#B22222">.seealso: [](ch_profiling), `<a href="../docs/manualpages/Profiling/PetscLogView.html">PetscLogView</a>()`, `<a href="../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>()`</font>
+<a name="line273">273: </a><font color="#B22222">@*/</font>
+
+<a name="line275">275: </a><strong><font color="#4169E1"><a name="PetscLogFlops"></a>static inline <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>(<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> n)</font></strong>
+<a name="line276">276: </a>{
+<a name="line277">277: </a><font color="#A020F0">  #if defined(PETSC_USE_DEBUG)</font>
+<a name="line279">279: </a><font color="#A020F0">  #endif</font>
+<a name="line280">280: </a>  petsc_TotalFlops += PETSC_FLOPS_PER_OP * n;
+<a name="line281">281: </a>  <font color="#4169E1">return</font> 0;
+<a name="line282">282: </a>}
+
+<a name="line284">284: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscGetFlops.html">PetscGetFlops</a>(<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> *)</font></strong>;
+
+<a name="line286">286: </a><font color="#A020F0">  #if defined(PETSC_HAVE_MPE)</font>
+<a name="line287">287: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogMPEBegin.html">PetscLogMPEBegin</a>(void)</font></strong>;
+<a name="line288">288: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogMPEDump.html">PetscLogMPEDump</a>(const char[])</font></strong>;
+<a name="line289">289: </a><font color="#A020F0">  #endif</font>
+
+<a name="line291">291: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*PetscLogPLB)(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>, int, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)</font></strong>;
+<a name="line292">292: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*PetscLogPLE)(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>, int, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)</font></strong>;
+<a name="line293">293: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*PetscLogPHC)(<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)</font></strong>;
+<a name="line294">294: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*PetscLogPHD)(<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)</font></strong>;
+
+<a name="line296">296: </a><strong><font color="#228B22">  #define PetscLogObjectParents(p, n, d) PetscMacroReturnStandard(for (int _i = 0; _i &lt; (n); ++_i) PetscLogObjectParent((<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(p), (<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(d)[_i]);)</font></strong>
+<a name="line297">297: </a><strong><font color="#228B22">  #define PetscLogObjectCreate(h)        ((PetscLogPHC) ? (*PetscLogPHC)((<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(h)) : 0)</font></strong>
+<a name="line298">298: </a><strong><font color="#228B22">  #define PetscLogObjectDestroy(h)       ((PetscLogPHD) ? (*PetscLogPHD)((<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(h)) : 0)</font></strong>
+<a name="line299">299: </a><strong><font color="#4169E1"><a name="PetscLogObjectState"></a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogObjectState(<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, const char[], ...)</font></strong> <a href="../docs/manualpages/Sys/PETSC_ATTRIBUTE_FORMAT.html">PETSC_ATTRIBUTE_FORMAT</a>(2, 3);
+
+<a name="line301">301: </a><font color="#B22222">/* Initialization functions */</font>
+<a name="line302">302: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogDefaultBegin.html">PetscLogDefaultBegin</a>(void)</font></strong>;
+<a name="line303">303: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogAllBegin.html">PetscLogAllBegin</a>(void)</font></strong>;
+<a name="line304">304: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogNestedBegin.html">PetscLogNestedBegin</a>(void)</font></strong>;
+<a name="line305">305: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogTraceBegin.html">PetscLogTraceBegin</a>(FILE *)</font></strong>;
+<a name="line306">306: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogActions.html">PetscLogActions</a>(<a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)</font></strong>;
+<a name="line307">307: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogObjects.html">PetscLogObjects</a>(<a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)</font></strong>;
+<a name="line308">308: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogSetThreshold.html">PetscLogSetThreshold</a>(<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>, <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> *)</font></strong>;
+<a name="line309">309: </a><strong><font color="#4169E1"><a name="PetscLogSet"></a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogSet.html">PetscLogSet</a>(<a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*)(int, int, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>), <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*)(int, int, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)</font></strong>);
+
+<a name="line311">311: </a><font color="#B22222">/* Output functions */</font>
+<a name="line312">312: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogView.html">PetscLogView</a>(<a href="../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>)</font></strong>;
+<a name="line313">313: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogViewFromOptions.html">PetscLogViewFromOptions</a>(void)</font></strong>;
+<a name="line314">314: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogDump.html">PetscLogDump</a>(const char[])</font></strong>;
+
+<a name="line316">316: </a><font color="#B22222">/* Status checking functions */</font>
+<a name="line317">317: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogIsActive.html">PetscLogIsActive</a>(<a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *)</font></strong>;
+
+<a name="line319">319: </a><font color="#B22222">/* Stage functions */</font>
+<a name="line320">320: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogStageRegister.html">PetscLogStageRegister</a>(const char[], <a href="../docs/manualpages/Sys/PetscLogStage.html">PetscLogStage</a> *)</font></strong>;
+<a name="line321">321: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogStagePush.html">PetscLogStagePush</a>(<a href="../docs/manualpages/Sys/PetscLogStage.html">PetscLogStage</a>)</font></strong>;
+<a name="line322">322: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogStagePop.html">PetscLogStagePop</a>(void)</font></strong>;
+<a name="line323">323: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogStageSetActive.html">PetscLogStageSetActive</a>(<a href="../docs/manualpages/Sys/PetscLogStage.html">PetscLogStage</a>, <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)</font></strong>;
+<a name="line324">324: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogStageGetActive.html">PetscLogStageGetActive</a>(<a href="../docs/manualpages/Sys/PetscLogStage.html">PetscLogStage</a>, <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *)</font></strong>;
+<a name="line325">325: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogStageSetVisible.html">PetscLogStageSetVisible</a>(<a href="../docs/manualpages/Sys/PetscLogStage.html">PetscLogStage</a>, <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)</font></strong>;
+<a name="line326">326: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogStageGetVisible.html">PetscLogStageGetVisible</a>(<a href="../docs/manualpages/Sys/PetscLogStage.html">PetscLogStage</a>, <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *)</font></strong>;
+<a name="line327">327: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogStageGetId.html">PetscLogStageGetId</a>(const char[], <a href="../docs/manualpages/Sys/PetscLogStage.html">PetscLogStage</a> *)</font></strong>;
+
+<a name="line329">329: </a><font color="#B22222">/* Event functions */</font>
+<a name="line330">330: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventRegister.html">PetscLogEventRegister</a>(const char[], <a href="../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a>, <a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> *)</font></strong>;
+<a name="line331">331: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventSetCollective.html">PetscLogEventSetCollective</a>(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>, <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)</font></strong>;
+<a name="line332">332: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventIncludeClass.html">PetscLogEventIncludeClass</a>(<a href="../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a>)</font></strong>;
+<a name="line333">333: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventExcludeClass.html">PetscLogEventExcludeClass</a>(<a href="../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a>)</font></strong>;
+<a name="line334">334: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventActivate.html">PetscLogEventActivate</a>(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>)</font></strong>;
+<a name="line335">335: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventDeactivate.html">PetscLogEventDeactivate</a>(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>)</font></strong>;
+<a name="line336">336: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventDeactivatePush.html">PetscLogEventDeactivatePush</a>(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>)</font></strong>;
+<a name="line337">337: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventDeactivatePop.html">PetscLogEventDeactivatePop</a>(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>)</font></strong>;
+<a name="line338">338: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventSetActiveAll.html">PetscLogEventSetActiveAll</a>(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>, <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)</font></strong>;
+<a name="line339">339: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventActivateClass.html">PetscLogEventActivateClass</a>(<a href="../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a>)</font></strong>;
+<a name="line340">340: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventDeactivateClass.html">PetscLogEventDeactivateClass</a>(<a href="../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a>)</font></strong>;
+<a name="line341">341: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventGetId.html">PetscLogEventGetId</a>(const char[], <a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> *)</font></strong>;
+<a name="line342">342: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventGetPerfInfo.html">PetscLogEventGetPerfInfo</a>(int, <a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>, PetscEventPerfInfo *)</font></strong>;
+<a name="line343">343: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventSetDof.html">PetscLogEventSetDof</a>(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>, <a href="../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>)</font></strong>;
+<a name="line344">344: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogEventSetError.html">PetscLogEventSetError</a>(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>, <a href="../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>)</font></strong>;
+<a name="line345">345: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogPushCurrentEvent_Internal(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>)</font></strong>;
+<a name="line346">346: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogPopCurrentEvent_Internal(void)</font></strong>;
+
+<a name="line348">348: </a><font color="#B22222">/* Global counters */</font>
+<a name="line349">349: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_irecv_ct;
+<a name="line350">350: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_isend_ct;
+<a name="line351">351: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_recv_ct;
+<a name="line352">352: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_send_ct;
+<a name="line353">353: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_irecv_len;
+<a name="line354">354: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_isend_len;
+<a name="line355">355: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_recv_len;
+<a name="line356">356: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_send_len;
+<a name="line357">357: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_allreduce_ct;
+<a name="line358">358: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_gather_ct;
+<a name="line359">359: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_scatter_ct;
+<a name="line360">360: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_wait_ct;
+<a name="line361">361: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_wait_any_ct;
+<a name="line362">362: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_wait_all_ct;
+<a name="line363">363: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_sum_of_waits_ct;
+
+<a name="line365">365: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a> PetscLogMemory;
+
+<a name="line367">367: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>      PetscLogSyncOn; <font color="#B22222">/* true if logging synchronization is enabled */</font>
+<a name="line368">368: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogEventSynchronize(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>, <a href="../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>)</font></strong>;
+
+<a name="line370">370: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventSync.html">PetscLogEventSync</a>(e, comm) \</font></strong>
+<a name="line371">371: </a><strong><font color="#228B22">    (((PetscLogPLB &amp;&amp; petsc_stageLog-&gt;stageInfo[petsc_stageLog-&gt;curStage].perfInfo.active &amp;&amp; petsc_stageLog-&gt;stageInfo[petsc_stageLog-&gt;curStage].eventLog-&gt;eventInfo[e].active) ? PetscLogEventSynchronize((e), (comm)) : 0))</font></strong>
+
+<a name="line373">373: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(e, o1, o2, o3, o4) \</font></strong>
+<a name="line374">374: </a><strong><font color="#228B22">    ((PetscLogPLB &amp;&amp; petsc_stageLog-&gt;stageInfo[petsc_stageLog-&gt;curStage].perfInfo.active &amp;&amp; petsc_stageLog-&gt;stageInfo[petsc_stageLog-&gt;curStage].eventLog-&gt;eventInfo[e].active) ? (((*PetscLogPLB)((e), 0, (<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(o1), (<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(o2), (<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(o3), (<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(o4))) || PetscLogPushCurrentEvent_Internal(e)) : 0)</font></strong>
+
+<a name="line376">376: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(e, o1, o2, o3, o4) \</font></strong>
+<a name="line377">377: </a><strong><font color="#228B22">    ((PetscLogPLE &amp;&amp; petsc_stageLog-&gt;stageInfo[petsc_stageLog-&gt;curStage].perfInfo.active &amp;&amp; petsc_stageLog-&gt;stageInfo[petsc_stageLog-&gt;curStage].eventLog-&gt;eventInfo[e].active) ? (((*PetscLogPLE)((e), 0, (<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(o1), (<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(o2), (<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(o3), (<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(o4))) || PetscLogPopCurrentEvent_Internal()) : 0)</font></strong>
+
+<a name="line379">379: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogEventGetFlops(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>, <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> *)</font></strong>;
+<a name="line380">380: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogEventZeroFlops(<a href="../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>)</font></strong>;
+
+<a name="line382">382: </a>  <font color="#B22222">/*</font>
+<a name="line383">383: </a><font color="#B22222">     These are used internally in the PETSc routines to keep a count of MPI messages and</font>
+<a name="line384">384: </a><font color="#B22222">   their sizes.</font>
+
+<a name="line386">386: </a><font color="#B22222">     This does not work for MPI-Uni because our include/petsc/mpiuni/mpi.h file</font>
+<a name="line387">387: </a><font color="#B22222">   uses macros to defined the MPI operations.</font>
+
+<a name="line389">389: </a><font color="#B22222">     It does not work correctly from HP-UX because it processes the</font>
+<a name="line390">390: </a><font color="#B22222">   macros in a way that sometimes it double counts, hence</font>
+<a name="line391">391: </a><font color="#B22222">   PETSC_HAVE_BROKEN_RECURSIVE_MACRO</font>
+
+<a name="line393">393: </a><font color="#B22222">     It does not work with Windows because winmpich lacks <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_size.html#MPI_Type_size">MPI_Type_size</a>()</font>
+<a name="line394">394: </a><font color="#B22222">*/</font>
+<a name="line395">395: </a><font color="#A020F0">  #if !defined(MPIUNI_H) &amp;&amp; !defined(PETSC_HAVE_BROKEN_RECURSIVE_MACRO) &amp;&amp; !defined(PETSC_HAVE_MPI_MISSING_TYPESIZE)</font>
+<a name="line396">396: </a><font color="#B22222">/*</font>
+<a name="line397">397: </a><font color="#B22222">   Logging of MPI activities</font>
+<a name="line398">398: </a><font color="#B22222">*/</font>
+<a name="line399">399: </a><strong><font color="#4169E1"><a name="PetscMPITypeSize"></a>static inline <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscMPITypeSize(<a href="../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count, MPI_Datatype type, <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> *length)</font></strong>
+<a name="line400">400: </a>{
+<a name="line401">401: </a>  <a href="../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> typesize;
+
+<a name="line403">403: </a>  <font color="#4169E1">if</font> (type == MPI_DATATYPE_NULL) <font color="#4169E1">return</font> 0;
+<a name="line404">404: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_size.html#MPI_Type_size">MPI_Type_size</a>(type, &amp;typesize);
+<a name="line405">405: </a>  *length += (<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>)(count * typesize);
+<a name="line406">406: </a>  <font color="#4169E1">return</font> 0;
+<a name="line407">407: </a>}
+
+<a name="line409">409: </a><strong><font color="#4169E1"><a name="PetscMPITypeSizeComm"></a>static inline <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscMPITypeSizeComm(<a href="../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, const <a href="../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *counts, MPI_Datatype type, <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> *length)</font></strong>
+<a name="line410">410: </a>{
+<a name="line411">411: </a>  <a href="../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> typesize, size, p;
+
+<a name="line413">413: </a>  <font color="#4169E1">if</font> (type == MPI_DATATYPE_NULL) <font color="#4169E1">return</font> 0;
+<a name="line414">414: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line415">415: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_size.html#MPI_Type_size">MPI_Type_size</a>(type, &amp;typesize);
+<a name="line416">416: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; size; ++p) *length += (<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>)(counts[p] * typesize);
+<a name="line417">417: </a>  <font color="#4169E1">return</font> 0;
+<a name="line418">418: </a>}
+
+<a name="line420">420: </a><strong><font color="#4169E1"><a name="PetscMPITypeSizeCount"></a>static inline <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscMPITypeSizeCount(<a href="../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, const <a href="../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *counts, MPI_Datatype type, <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> *length)</font></strong>
+<a name="line421">421: </a>{
+<a name="line422">422: </a>  <a href="../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> typesize, p;
+
+<a name="line424">424: </a>  <font color="#4169E1">if</font> (type == MPI_DATATYPE_NULL) <font color="#4169E1">return</font> 0;
+<a name="line425">425: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_size.html#MPI_Type_size">MPI_Type_size</a>(type, &amp;typesize);
+<a name="line426">426: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; n; ++p) *length += (<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>)(counts[p] * typesize);
+<a name="line427">427: </a>  <font color="#4169E1">return</font> 0;
+<a name="line428">428: </a>}
+
+<a name="line430">430: </a><font color="#B22222">/*</font>
+<a name="line431">431: </a><font color="#B22222">    Returns 1 if the communicator is parallel else zero</font>
+<a name="line432">432: </a><font color="#B22222">*/</font>
+<a name="line433">433: </a><strong><font color="#4169E1"><a name="PetscMPIParallelComm"></a>static inline int PetscMPIParallelComm(<a href="../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm)</font></strong>
+<a name="line434">434: </a>{
+<a name="line435">435: </a>  <a href="../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size;
+<a name="line436">436: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line437">437: </a>  <font color="#4169E1">return</font> size &gt; 1;
+<a name="line438">438: </a>}
+
+<a name="line440">440: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(buf, count, datatype, source, tag, comm, request) ((petsc_irecv_ct++, 0) || PetscMPITypeSize((count), (datatype), &amp;(petsc_irecv_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>((buf), (count), (datatype), (source), (tag), (comm), (request)))</font></strong>
+
+<a name="line442">442: </a><strong><font color="#228B22">    #define MPI_Irecv_c(buf, count, datatype, source, tag, comm, request) ((petsc_irecv_ct++, 0) || PetscMPITypeSize((count), (datatype), &amp;(petsc_irecv_len)) || MPI_Irecv_c((buf), (count), (datatype), (source), (tag), (comm), (request)))</font></strong>
+
+<a name="line444">444: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(buf, count, datatype, dest, tag, comm, request) ((petsc_isend_ct++, 0) || PetscMPITypeSize((count), (datatype), &amp;(petsc_isend_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>((buf), (count), (datatype), (dest), (tag), (comm), (request)))</font></strong>
+
+<a name="line446">446: </a><strong><font color="#228B22">    #define MPI_Isend_c(buf, count, datatype, dest, tag, comm, request) ((petsc_isend_ct++, 0) || PetscMPITypeSize((count), (datatype), &amp;(petsc_isend_len)) || MPI_Isend_c((buf), (count), (datatype), (dest), (tag), (comm), (request)))</font></strong>
+
+<a name="line448">448: </a><strong><font color="#228B22">    #define MPI_Startall_irecv(count, datatype, number, requests) ((petsc_irecv_ct += (<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>)(number), 0) || PetscMPITypeSize((count), (datatype), &amp;(petsc_irecv_len)) || ((number) &amp;&amp; <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Startall.html#MPI_Startall">MPI_Startall</a>((number), (requests))))</font></strong>
+
+<a name="line450">450: </a><strong><font color="#228B22">    #define MPI_Startall_isend(count, datatype, number, requests) ((petsc_isend_ct += (<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>)(number), 0) || PetscMPITypeSize((count), (datatype), &amp;(petsc_isend_len)) || ((number) &amp;&amp; <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Startall.html#MPI_Startall">MPI_Startall</a>((number), (requests))))</font></strong>
+
+<a name="line452">452: </a><strong><font color="#228B22">    #define MPI_Start_isend(count, datatype, requests) ((petsc_isend_ct++, 0) || PetscMPITypeSize((count), (datatype), (&amp;petsc_isend_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Start.html#MPI_Start">MPI_Start</a>((requests)))</font></strong>
+
+<a name="line454">454: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(buf, count, datatype, source, tag, comm, status) ((petsc_recv_ct++, 0) || PetscMPITypeSize((count), (datatype), (&amp;petsc_recv_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>((buf), (count), (datatype), (source), (tag), (comm), (status)))</font></strong>
+
+<a name="line456">456: </a><strong><font color="#228B22">    #define MPI_Recv_c(buf, count, datatype, source, tag, comm, status) ((petsc_recv_ct++, 0) || PetscMPITypeSize((count), (datatype), (&amp;petsc_recv_len)) || MPI_Recv_c((buf), (count), (datatype), (source), (tag), (comm), (status)))</font></strong>
+
+<a name="line458">458: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(buf, count, datatype, dest, tag, comm) ((petsc_send_ct++, 0) || PetscMPITypeSize((count), (datatype), (&amp;petsc_send_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>((buf), (count), (datatype), (dest), (tag), (comm)))</font></strong>
+
+<a name="line460">460: </a><strong><font color="#228B22">    #define MPI_Send_c(buf, count, datatype, dest, tag, comm) ((petsc_send_ct++, 0) || PetscMPITypeSize((count), (datatype), (&amp;petsc_send_len)) || MPI_Send_c((buf), (count), (datatype), (dest), (tag), (comm)))</font></strong>
+
+<a name="line462">462: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Wait.html#MPI_Wait">MPI_Wait</a>(request, status) ((petsc_wait_ct++, petsc_sum_of_waits_ct++, 0) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Wait.html#MPI_Wait">MPI_Wait</a>((request), (status)))</font></strong>
+
+<a name="line464">464: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitany.html#MPI_Waitany">MPI_Waitany</a>(a, b, c, d) ((petsc_wait_any_ct++, petsc_sum_of_waits_ct++, 0) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitany.html#MPI_Waitany">MPI_Waitany</a>((a), (b), (c), (d)))</font></strong>
+
+<a name="line466">466: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(count, array_of_requests, array_of_statuses) ((petsc_wait_all_ct++, petsc_sum_of_waits_ct += (<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>)(count), 0) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>((count), (array_of_requests), (array_of_statuses)))</font></strong>
+
+<a name="line468">468: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a>(sendbuf, recvbuf, count, datatype, op, comm) (petsc_allreduce_ct += PetscMPIParallelComm((comm)), <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a>((sendbuf), (recvbuf), (count), (datatype), (op), (comm)))</font></strong>
+
+<a name="line470">470: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(buffer, count, datatype, root, comm) ((petsc_allreduce_ct += PetscMPIParallelComm((comm)), 0) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>((buffer), (count), (datatype), (root), (comm)))</font></strong>
+
+<a name="line472">472: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Reduce_scatter_block.html#MPI_Reduce_scatter_block">MPI_Reduce_scatter_block</a>(sendbuf, recvbuf, recvcount, datatype, op, comm) ((petsc_allreduce_ct += PetscMPIParallelComm((comm)), 0) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Reduce_scatter_block.html#MPI_Reduce_scatter_block">MPI_Reduce_scatter_block</a>((sendbuf), (recvbuf), (recvcount), (datatype), (op), (comm)))</font></strong>
+
+<a name="line474">474: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Alltoall.html#MPI_Alltoall">MPI_Alltoall</a>(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm) \</font></strong>
+<a name="line475">475: </a><strong><font color="#228B22">      ((petsc_allreduce_ct += PetscMPIParallelComm((comm)), 0) || PetscMPITypeSize((sendcount), (sendtype), (&amp;petsc_send_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Alltoall.html#MPI_Alltoall">MPI_Alltoall</a>((sendbuf), (sendcount), (sendtype), (recvbuf), (recvcount), (recvtype), (comm)))</font></strong>
+
+<a name="line477">477: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Alltoallv.html#MPI_Alltoallv">MPI_Alltoallv</a>(sendbuf, sendcnts, sdispls, sendtype, recvbuf, recvcnts, rdispls, recvtype, comm) \</font></strong>
+<a name="line478">478: </a><strong><font color="#228B22">      ((petsc_allreduce_ct += PetscMPIParallelComm((comm)), 0) || PetscMPITypeSizeComm((comm), (sendcnts), (sendtype), (&amp;petsc_send_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Alltoallv.html#MPI_Alltoallv">MPI_Alltoallv</a>((sendbuf), (sendcnts), (sdispls), (sendtype), (recvbuf), (recvcnts), (rdispls), (recvtype), (comm)))</font></strong>
+
+<a name="line480">480: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allgather.html#MPI_Allgather">MPI_Allgather</a>(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm) ((petsc_gather_ct += PetscMPIParallelComm((comm)), 0) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allgather.html#MPI_Allgather">MPI_Allgather</a>((sendbuf), (sendcount), (sendtype), (recvbuf), (recvcount), (recvtype), (comm)))</font></strong>
+
+<a name="line482">482: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allgatherv.html#MPI_Allgatherv">MPI_Allgatherv</a>(sendbuf, sendcount, sendtype, recvbuf, recvcount, displs, recvtype, comm) \</font></strong>
+<a name="line483">483: </a><strong><font color="#228B22">      ((petsc_gather_ct += PetscMPIParallelComm((comm)), 0) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allgatherv.html#MPI_Allgatherv">MPI_Allgatherv</a>((sendbuf), (sendcount), (sendtype), (recvbuf), (recvcount), (displs), (recvtype), (comm)))</font></strong>
+
+<a name="line485">485: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Gather.html#MPI_Gather">MPI_Gather</a>(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm) \</font></strong>
+<a name="line486">486: </a><strong><font color="#228B22">      ((petsc_gather_ct++, 0) || PetscMPITypeSize((sendcount), (sendtype), (&amp;petsc_send_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Gather.html#MPI_Gather">MPI_Gather</a>((sendbuf), (sendcount), (sendtype), (recvbuf), (recvcount), (recvtype), (root), (comm)))</font></strong>
+
+<a name="line488">488: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Gatherv.html#MPI_Gatherv">MPI_Gatherv</a>(sendbuf, sendcount, sendtype, recvbuf, recvcount, displs, recvtype, root, comm) \</font></strong>
+<a name="line489">489: </a><strong><font color="#228B22">      ((petsc_gather_ct++, 0) || PetscMPITypeSize((sendcount), (sendtype), (&amp;petsc_send_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Gatherv.html#MPI_Gatherv">MPI_Gatherv</a>((sendbuf), (sendcount), (sendtype), (recvbuf), (recvcount), (displs), (recvtype), (root), (comm)))</font></strong>
+
+<a name="line491">491: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatter.html#MPI_Scatter">MPI_Scatter</a>(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm) \</font></strong>
+<a name="line492">492: </a><strong><font color="#228B22">      ((petsc_scatter_ct++, 0) || PetscMPITypeSize((recvcount), (recvtype), (&amp;petsc_recv_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatter.html#MPI_Scatter">MPI_Scatter</a>((sendbuf), (sendcount), (sendtype), (recvbuf), (recvcount), (recvtype), (root), (comm)))</font></strong>
+
+<a name="line494">494: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatterv.html#MPI_Scatterv">MPI_Scatterv</a>(sendbuf, sendcount, displs, sendtype, recvbuf, recvcount, recvtype, root, comm) \</font></strong>
+<a name="line495">495: </a><strong><font color="#228B22">      ((petsc_scatter_ct++, 0) || PetscMPITypeSize((recvcount), (recvtype), (&amp;petsc_recv_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatterv.html#MPI_Scatterv">MPI_Scatterv</a>((sendbuf), (sendcount), (displs), (sendtype), (recvbuf), (recvcount), (recvtype), (root), (comm)))</font></strong>
+
+<a name="line497">497: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Ialltoall.html#MPI_Ialltoall">MPI_Ialltoall</a>(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, request) \</font></strong>
+<a name="line498">498: </a><strong><font color="#228B22">      ((petsc_allreduce_ct += PetscMPIParallelComm((comm)), 0) || PetscMPITypeSize((sendcount), (sendtype), (&amp;petsc_send_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Ialltoall.html#MPI_Ialltoall">MPI_Ialltoall</a>((sendbuf), (sendcount), (sendtype), (recvbuf), (recvcount), (recvtype), (comm), (request)))</font></strong>
+
+<a name="line500">500: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Ialltoallv.html#MPI_Ialltoallv">MPI_Ialltoallv</a>(sendbuf, sendcnts, sdispls, sendtype, recvbuf, recvcnts, rdispls, recvtype, comm, request) \</font></strong>
+<a name="line501">501: </a><strong><font color="#228B22">      ((petsc_allreduce_ct += PetscMPIParallelComm((comm)), 0) || PetscMPITypeSizeComm((comm), (sendcnts), (sendtype), (&amp;petsc_send_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Ialltoallv.html#MPI_Ialltoallv">MPI_Ialltoallv</a>((sendbuf), (sendcnts), (sdispls), (sendtype), (recvbuf), (recvcnts), (rdispls), (recvtype), (comm), (request)))</font></strong>
+
+<a name="line503">503: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Iallgather.html#MPI_Iallgather">MPI_Iallgather</a>(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, request) \</font></strong>
+<a name="line504">504: </a><strong><font color="#228B22">      ((petsc_gather_ct += PetscMPIParallelComm((comm)), 0) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Iallgather.html#MPI_Iallgather">MPI_Iallgather</a>((sendbuf), (sendcount), (sendtype), (recvbuf), (recvcount), (recvtype), (comm), (request)))</font></strong>
+
+<a name="line506">506: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Iallgatherv.html#MPI_Iallgatherv">MPI_Iallgatherv</a>(sendbuf, sendcount, sendtype, recvbuf, recvcount, displs, recvtype, comm, request) \</font></strong>
+<a name="line507">507: </a><strong><font color="#228B22">      ((petsc_gather_ct += PetscMPIParallelComm((comm)), 0) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Iallgatherv.html#MPI_Iallgatherv">MPI_Iallgatherv</a>((sendbuf), (sendcount), (sendtype), (recvbuf), (recvcount), (displs), (recvtype), (comm), (request)))</font></strong>
+
+<a name="line509">509: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Igather.html#MPI_Igather">MPI_Igather</a>(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, request) \</font></strong>
+<a name="line510">510: </a><strong><font color="#228B22">      ((petsc_gather_ct++, 0) || PetscMPITypeSize((sendcount), (sendtype), (&amp;petsc_send_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Igather.html#MPI_Igather">MPI_Igather</a>((sendbuf), (sendcount), (sendtype), (recvbuf), (recvcount), (recvtype), (root), (comm), (request)))</font></strong>
+
+<a name="line512">512: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Igatherv.html#MPI_Igatherv">MPI_Igatherv</a>(sendbuf, sendcount, sendtype, recvbuf, recvcount, displs, recvtype, root, comm, request) \</font></strong>
+<a name="line513">513: </a><strong><font color="#228B22">      ((petsc_gather_ct++, 0) || PetscMPITypeSize((sendcount), (sendtype), (&amp;petsc_send_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Igatherv.html#MPI_Igatherv">MPI_Igatherv</a>((sendbuf), (sendcount), (sendtype), (recvbuf), (recvcount), (displs), (recvtype), (root), (comm), (request)))</font></strong>
+
+<a name="line515">515: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Iscatter.html#MPI_Iscatter">MPI_Iscatter</a>(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, request) \</font></strong>
+<a name="line516">516: </a><strong><font color="#228B22">      ((petsc_scatter_ct++, 0) || PetscMPITypeSize((recvcount), (recvtype), (&amp;petsc_recv_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Iscatter.html#MPI_Iscatter">MPI_Iscatter</a>((sendbuf), (sendcount), (sendtype), (recvbuf), (recvcount), (recvtype), (root), (comm), (request)))</font></strong>
+
+<a name="line518">518: </a><strong><font color="#228B22">    #define <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Iscatterv.html#MPI_Iscatterv">MPI_Iscatterv</a>(sendbuf, sendcount, displs, sendtype, recvbuf, recvcount, recvtype, root, comm, request) \</font></strong>
+<a name="line519">519: </a><strong><font color="#228B22">      ((petsc_scatter_ct++, 0) || PetscMPITypeSize((recvcount), (recvtype), (&amp;petsc_recv_len)) || <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Iscatterv.html#MPI_Iscatterv">MPI_Iscatterv</a>((sendbuf), (sendcount), (displs), (sendtype), (recvbuf), (recvcount), (recvtype), (root), (comm), (request)))</font></strong>
+
+<a name="line521">521: </a><font color="#A020F0">  #else</font>
+
+<a name="line523">523: </a><strong><font color="#228B22">    #define MPI_Startall_irecv(count, datatype, number, requests) ((number) &amp;&amp; <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Startall.html#MPI_Startall">MPI_Startall</a>((number), (requests)))</font></strong>
+
+<a name="line525">525: </a><strong><font color="#228B22">    #define MPI_Startall_isend(count, datatype, number, requests) ((number) &amp;&amp; <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Startall.html#MPI_Startall">MPI_Startall</a>((number), (requests)))</font></strong>
+
+<a name="line527">527: </a><strong><font color="#228B22">    #define MPI_Start_isend(count, datatype, requests) (<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Start.html#MPI_Start">MPI_Start</a>((requests)))</font></strong>
+
+<a name="line529">529: </a><font color="#A020F0">  #endif </font><font color="#B22222">/* !MPIUNI_H &amp;&amp; ! PETSC_HAVE_BROKEN_RECURSIVE_MACRO */</font><font color="#A020F0"></font>
+
+<a name="line531">531: </a><font color="#A020F0">#else </font><font color="#B22222">/* ---Logging is turned off --------------------------------------------*/</font><font color="#A020F0"></font>
+
+<a name="line533">533: </a><strong><font color="#228B22">  #define PetscLogMemory <a href="../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a></font></strong>
+
+<a name="line535">535: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>(n) 0</font></strong>
+<a name="line536">536: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscGetFlops.html">PetscGetFlops</a>(a) (*(a) = 0.0, 0)</font></strong>
+
+<a name="line538">538: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogStageRegister.html">PetscLogStageRegister</a>(a, b)   0</font></strong>
+<a name="line539">539: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogStagePush.html">PetscLogStagePush</a>(a)          0</font></strong>
+<a name="line540">540: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogStagePop.html">PetscLogStagePop</a>()            0</font></strong>
+<a name="line541">541: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogStageSetActive.html">PetscLogStageSetActive</a>(a, b)  0</font></strong>
+<a name="line542">542: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogStageGetActive.html">PetscLogStageGetActive</a>(a, b)  0</font></strong>
+<a name="line543">543: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogStageGetVisible.html">PetscLogStageGetVisible</a>(a, b) 0</font></strong>
+<a name="line544">544: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogStageSetVisible.html">PetscLogStageSetVisible</a>(a, b) 0</font></strong>
+<a name="line545">545: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogStageGetId.html">PetscLogStageGetId</a>(a, b)      (*(b) = 0, 0)</font></strong>
+
+<a name="line547">547: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventRegister.html">PetscLogEventRegister</a>(a, b, c)    0</font></strong>
+<a name="line548">548: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventSetCollective.html">PetscLogEventSetCollective</a>(a, b)  0</font></strong>
+<a name="line549">549: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventIncludeClass.html">PetscLogEventIncludeClass</a>(a)      0</font></strong>
+<a name="line550">550: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventExcludeClass.html">PetscLogEventExcludeClass</a>(a)      0</font></strong>
+<a name="line551">551: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventActivate.html">PetscLogEventActivate</a>(a)          0</font></strong>
+<a name="line552">552: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventDeactivate.html">PetscLogEventDeactivate</a>(a)        0</font></strong>
+<a name="line553">553: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventDeactivatePush.html">PetscLogEventDeactivatePush</a>(a)    0</font></strong>
+<a name="line554">554: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventDeactivatePop.html">PetscLogEventDeactivatePop</a>(a)     0</font></strong>
+<a name="line555">555: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventActivateClass.html">PetscLogEventActivateClass</a>(a)     0</font></strong>
+<a name="line556">556: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventDeactivateClass.html">PetscLogEventDeactivateClass</a>(a)   0</font></strong>
+<a name="line557">557: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventSetActiveAll.html">PetscLogEventSetActiveAll</a>(a, b)   0</font></strong>
+<a name="line558">558: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventGetId.html">PetscLogEventGetId</a>(a, b)          (*(b) = 0, 0)</font></strong>
+<a name="line559">559: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventGetPerfInfo.html">PetscLogEventGetPerfInfo</a>(a, b, c) 0</font></strong>
+<a name="line560">560: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventSetDof.html">PetscLogEventSetDof</a>(a, b, c)      0</font></strong>
+<a name="line561">561: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventSetError.html">PetscLogEventSetError</a>(a, b, c)    0</font></strong>
+
+<a name="line563">563: </a><strong><font color="#228B22">  #define PetscLogPLB 0</font></strong>
+<a name="line564">564: </a><strong><font color="#228B22">  #define PetscLogPLE 0</font></strong>
+<a name="line565">565: </a><strong><font color="#228B22">  #define PetscLogPHC 0</font></strong>
+<a name="line566">566: </a><strong><font color="#228B22">  #define PetscLogPHD 0</font></strong>
+
+<a name="line568">568: </a><strong><font color="#228B22">  #define PetscLogObjectParents(p, n, c) 0</font></strong>
+<a name="line569">569: </a><strong><font color="#228B22">  #define PetscLogObjectCreate(h)        0</font></strong>
+<a name="line570">570: </a><strong><font color="#228B22">  #define PetscLogObjectDestroy(h)       0</font></strong>
+<a name="line571">571: </a><strong><font color="#4169E1"><a name="PetscLogObjectState"></a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogObjectState(<a href="../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, const char[], ...)</font></strong> <a href="../docs/manualpages/Sys/PETSC_ATTRIBUTE_FORMAT.html">PETSC_ATTRIBUTE_FORMAT</a>(2, 3);
+
+<a name="line573">573: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogDefaultBegin.html">PetscLogDefaultBegin</a>()     0</font></strong>
+<a name="line574">574: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogAllBegin.html">PetscLogAllBegin</a>()         0</font></strong>
+<a name="line575">575: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogNestedBegin.html">PetscLogNestedBegin</a>()      0</font></strong>
+<a name="line576">576: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogTraceBegin.html">PetscLogTraceBegin</a>(file)   0</font></strong>
+<a name="line577">577: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogActions.html">PetscLogActions</a>(a)         0</font></strong>
+<a name="line578">578: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogObjects.html">PetscLogObjects</a>(a)         0</font></strong>
+<a name="line579">579: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogSetThreshold.html">PetscLogSetThreshold</a>(a, b) 0</font></strong>
+<a name="line580">580: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogSet.html">PetscLogSet</a>(lb, le)        0</font></strong>
+<a name="line581">581: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogIsActive.html">PetscLogIsActive</a>(flag)     (*(flag) = <a href="../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, 0)</font></strong>
+
+<a name="line583">583: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogView.html">PetscLogView</a>(viewer)      0</font></strong>
+<a name="line584">584: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogViewFromOptions.html">PetscLogViewFromOptions</a>() 0</font></strong>
+<a name="line585">585: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogDump.html">PetscLogDump</a>(c)           0</font></strong>
+
+<a name="line587">587: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventSync.html">PetscLogEventSync</a>(e, comm)                            0</font></strong>
+<a name="line588">588: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(e, o1, o2, o3, o4)                 0</font></strong>
+<a name="line589">589: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(e, o1, o2, o3, o4)                   0</font></strong>
+
+<a name="line591">591: </a>  <font color="#B22222">/* If PETSC_USE_LOG is NOT defined, these still need to be! */</font>
+<a name="line592">592: </a><strong><font color="#228B22">  #define MPI_Startall_irecv(count, datatype, number, requests) ((number) &amp;&amp; <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Startall.html#MPI_Startall">MPI_Startall</a>(number, requests))</font></strong>
+<a name="line593">593: </a><strong><font color="#228B22">  #define MPI_Startall_isend(count, datatype, number, requests) ((number) &amp;&amp; <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Startall.html#MPI_Startall">MPI_Startall</a>(number, requests))</font></strong>
+<a name="line594">594: </a><strong><font color="#228B22">  #define MPI_Start_isend(count, datatype, requests)            <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Start.html#MPI_Start">MPI_Start</a>(requests)</font></strong>
+
+<a name="line596">596: </a><font color="#A020F0">#endif </font><font color="#B22222">/* PETSC_USE_LOG */</font><font color="#A020F0"></font>
+
+<a name="line598">598: </a><font color="#A020F0">#if defined(PETSC_USE_LOG) &amp;&amp; defined(PETSC_HAVE_DEVICE)</font>
+
+<a name="line600">600: </a><font color="#B22222">/* Global GPU counters */</font>
+<a name="line601">601: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_ctog_ct;
+<a name="line602">602: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_gtoc_ct;
+<a name="line603">603: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_ctog_sz;
+<a name="line604">604: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_gtoc_sz;
+<a name="line605">605: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_ctog_ct_scalar;
+<a name="line606">606: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_gtoc_ct_scalar;
+<a name="line607">607: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_ctog_sz_scalar;
+<a name="line608">608: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_gtoc_sz_scalar;
+<a name="line609">609: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_gflops;
+<a name="line610">610: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> petsc_gtime;
+
+<a name="line612">612: </a><strong><font color="#4169E1"><a name="PetscLogCpuToGpu"></a>static inline <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogCpuToGpu(<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> size)</font></strong>
+<a name="line613">613: </a>{
+<a name="line614">614: </a>  petsc_ctog_ct += 1;
+<a name="line615">615: </a>  petsc_ctog_sz += size;
+<a name="line616">616: </a>  <font color="#4169E1">return</font> 0;
+<a name="line617">617: </a>}
+
+<a name="line619">619: </a><strong><font color="#4169E1"><a name="PetscLogGpuToCpu"></a>static inline <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogGpuToCpu(<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> size)</font></strong>
+<a name="line620">620: </a>{
+<a name="line621">621: </a>  petsc_gtoc_ct += 1;
+<a name="line622">622: </a>  petsc_gtoc_sz += size;
+<a name="line623">623: </a>  <font color="#4169E1">return</font> 0;
+<a name="line624">624: </a>}
+
+<a name="line626">626: </a><strong><font color="#4169E1"><a name="PetscLogCpuToGpuScalar"></a>static inline <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogCpuToGpuScalar(<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> size)</font></strong>
+<a name="line627">627: </a>{
+<a name="line628">628: </a>  petsc_ctog_ct_scalar += 1;
+<a name="line629">629: </a>  petsc_ctog_sz_scalar += size;
+<a name="line630">630: </a>  <font color="#4169E1">return</font> 0;
+<a name="line631">631: </a>}
+
+<a name="line633">633: </a><strong><font color="#4169E1"><a name="PetscLogGpuToCpuScalar"></a>static inline <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogGpuToCpuScalar(<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> size)</font></strong>
+<a name="line634">634: </a>{
+<a name="line635">635: </a>  petsc_gtoc_ct_scalar += 1;
+<a name="line636">636: </a>  petsc_gtoc_sz_scalar += size;
+<a name="line637">637: </a>  <font color="#4169E1">return</font> 0;
+<a name="line638">638: </a>}
+
+<a name="line640">640: </a><font color="#B22222">/*@C</font>
+<a name="line641">641: </a><font color="#B22222">       <a href="../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a> - Log how many flops are performed in a calculation on the device</font>
+
+<a name="line643">643: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line644">644: </a><font color="#B22222">.   flops - the number of flops</font>
+
+<a name="line646">646: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line648">648: </a><font color="#B22222">   Notes:</font>
+<a name="line649">649: </a><font color="#B22222">     To limit the chance of integer overflow when multiplying by a constant, represent the constant as a double,</font>
+<a name="line650">650: </a><font color="#B22222">     not an integer. Use `<a href="../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>`(4.0*n) not `<a href="../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>`(4*n)</font>
+
+<a name="line652">652: </a><font color="#B22222">     The values are also added to the total flop count for the MPI rank that is set with `<a href="../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>()`; hence the number of flops</font>
+<a name="line653">653: </a><font color="#B22222">     just on the CPU would be the value from set from `<a href="../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>()` minus the value set from `<a href="../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>()`</font>
+
+<a name="line655">655: </a><font color="#B22222">.seealso: [](ch_profiling), `<a href="../docs/manualpages/Profiling/PetscLogView.html">PetscLogView</a>()`, `<a href="../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>()`, `<a href="../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>()`, `<a href="../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>()`</font>
+<a name="line656">656: </a><font color="#B22222">@*/</font>
+<a name="line657">657: </a><strong><font color="#4169E1"><a name="PetscLogGpuFlops"></a>static inline <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> n)</font></strong>
+<a name="line658">658: </a>{
+<a name="line660">660: </a>  petsc_TotalFlops += PETSC_FLOPS_PER_OP * n;
+<a name="line661">661: </a>  petsc_gflops += PETSC_FLOPS_PER_OP * n;
+<a name="line662">662: </a>  <font color="#4169E1">return</font> 0;
+<a name="line663">663: </a>}
+
+<a name="line665">665: </a><strong><font color="#4169E1"><a name="PetscLogGpuTimeAdd"></a>static inline <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogGpuTimeAdd(<a href="../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> t)</font></strong>
+<a name="line666">666: </a>{
+<a name="line667">667: </a>  petsc_gtime += t;
+<a name="line668">668: </a>  <font color="#4169E1">return</font> 0;
+<a name="line669">669: </a>}
+
+<a name="line671">671: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogGpuTime.html">PetscLogGpuTime</a>(void)</font></strong>;
+<a name="line672">672: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>(void)</font></strong>;
+<a name="line673">673: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>(void)</font></strong>;
+
+<a name="line675">675: </a><font color="#A020F0">#else</font>
+
+<a name="line677">677: </a><strong><font color="#228B22">  #define PetscLogCpuToGpu(a)       0</font></strong>
+<a name="line678">678: </a><strong><font color="#228B22">  #define PetscLogGpuToCpu(a)       0</font></strong>
+<a name="line679">679: </a><strong><font color="#228B22">  #define PetscLogCpuToGpuScalar(a) 0</font></strong>
+<a name="line680">680: </a><strong><font color="#228B22">  #define PetscLogGpuToCpuScalar(a) 0</font></strong>
+<a name="line681">681: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(a)       0</font></strong>
+<a name="line682">682: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogGpuTime.html">PetscLogGpuTime</a>()         0</font></strong>
+<a name="line683">683: </a><strong><font color="#228B22">  #define PetscLogGpuTimeAdd(a)     0</font></strong>
+<a name="line684">684: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>()    0</font></strong>
+<a name="line685">685: </a><strong><font color="#228B22">  #define <a href="../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>()      0</font></strong>
+
+<a name="line687">687: </a><font color="#A020F0">#endif </font><font color="#B22222">/* PETSC_USE_LOG &amp;&amp; PETSC_HAVE_DEVICE */</font><font color="#A020F0"></font>
+
+<a name="line689">689: </a><strong><font color="#228B22">#define <a href="../docs/manualpages/Profiling/PetscPreLoadBegin.html">PetscPreLoadBegin</a>(flag, name) \</font></strong>
+<a name="line690">690: </a><strong><font color="#228B22">  do { \</font></strong>
+<a name="line691">691: </a><strong><font color="#228B22">    <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     PetscPreLoading = flag; \</font></strong>
+<a name="line692">692: </a><strong><font color="#228B22">    int           PetscPreLoadMax, PetscPreLoadIt; \</font></strong>
+<a name="line693">693: </a><strong><font color="#228B22">    <a href="../docs/manualpages/Sys/PetscLogStage.html">PetscLogStage</a> _stageNum; \</font></strong>
+<a name="line694">694: </a><strong><font color="#228B22">    <a href="../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, </font><font color="#666666">"-preload"</font><font color="#228B22">, &amp;PetscPreLoading, NULL); \</font></strong>
+<a name="line695">695: </a><strong><font color="#228B22">    PetscPreLoadMax     = (int)(PetscPreLoading); \</font></strong>
+<a name="line696">696: </a><strong><font color="#228B22">    PetscPreLoadingUsed = PetscPreLoading ? <a href="../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : PetscPreLoadingUsed; \</font></strong>
+<a name="line697">697: </a><strong><font color="#228B22">    for (PetscPreLoadIt = 0; PetscPreLoadIt &lt;= PetscPreLoadMax; PetscPreLoadIt++) { \</font></strong>
+<a name="line698">698: </a><strong><font color="#228B22">      PetscPreLoadingOn = PetscPreLoading; \</font></strong>
+<a name="line699">699: </a><strong><font color="#228B22">      <a href="../docs/manualpages/Sys/PetscBarrier.html">PetscBarrier</a>(NULL); \</font></strong>
+<a name="line700">700: </a><strong><font color="#228B22">      if (PetscPreLoadIt &gt; 0) <a href="../docs/manualpages/Profiling/PetscLogStageGetId.html">PetscLogStageGetId</a>(name, &amp;_stageNum); \</font></strong>
+<a name="line701">701: </a><strong><font color="#228B22">      else <a href="../docs/manualpages/Profiling/PetscLogStageRegister.html">PetscLogStageRegister</a>(name, &amp;_stageNum); \</font></strong>
+<a name="line702">702: </a><strong><font color="#228B22">      <a href="../docs/manualpages/Profiling/PetscLogStageSetActive.html">PetscLogStageSetActive</a>(_stageNum, (<a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)(!PetscPreLoadMax || PetscPreLoadIt)); \</font></strong>
+<a name="line703">703: </a><strong><font color="#228B22">      <a href="../docs/manualpages/Profiling/PetscLogStagePush.html">PetscLogStagePush</a>(_stageNum);</font></strong>
+
+<a name="line705">705: </a><strong><font color="#228B22">#define <a href="../docs/manualpages/Profiling/PetscPreLoadEnd.html">PetscPreLoadEnd</a>() \</font></strong>
+<a name="line706">706: </a><strong><font color="#228B22">  <a href="../docs/manualpages/Profiling/PetscLogStagePop.html">PetscLogStagePop</a>(); \</font></strong>
+<a name="line707">707: </a><strong><font color="#228B22">  PetscPreLoading = <a href="../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>; \</font></strong>
+<a name="line708">708: </a><strong><font color="#228B22">  } \</font></strong>
+<a name="line709">709: </a><strong><font color="#228B22">  } \</font></strong>
+<a name="line710">710: </a><strong><font color="#228B22">  while (0)</font></strong>
+
+<a name="line712">712: </a><strong><font color="#228B22">#define <a href="../docs/manualpages/Profiling/PetscPreLoadStage.html">PetscPreLoadStage</a>(name) \</font></strong>
+<a name="line713">713: </a><strong><font color="#228B22">  do { \</font></strong>
+<a name="line714">714: </a><strong><font color="#228B22">    <a href="../docs/manualpages/Profiling/PetscLogStagePop.html">PetscLogStagePop</a>(); \</font></strong>
+<a name="line715">715: </a><strong><font color="#228B22">    if (PetscPreLoadIt &gt; 0) <a href="../docs/manualpages/Profiling/PetscLogStageGetId.html">PetscLogStageGetId</a>(name, &amp;_stageNum); \</font></strong>
+<a name="line716">716: </a><strong><font color="#228B22">    else <a href="../docs/manualpages/Profiling/PetscLogStageRegister.html">PetscLogStageRegister</a>(name, &amp;_stageNum); \</font></strong>
+<a name="line717">717: </a><strong><font color="#228B22">    <a href="../docs/manualpages/Profiling/PetscLogStageSetActive.html">PetscLogStageSetActive</a>(_stageNum, (<a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)(!PetscPreLoadMax || PetscPreLoadIt)); \</font></strong>
+<a name="line718">718: </a><strong><font color="#228B22">    <a href="../docs/manualpages/Profiling/PetscLogStagePush.html">PetscLogStagePush</a>(_stageNum); \</font></strong>
+<a name="line719">719: </a><strong><font color="#228B22">  } while (0)</font></strong>
+
+<a name="line721">721: </a><font color="#B22222">/* some vars for logging */</font>
+<a name="line722">722: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a> PetscPreLoadingUsed; <font color="#B22222">/* true if we are or have done preloading */</font>
+<a name="line723">723: </a>PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscBool.html">PetscBool</a> PetscPreLoadingOn;   <font color="#B22222">/* true if we are currently in a preloading calculation */</font>
+
+<a name="line725">725: </a><font color="#A020F0">#endif</font>
+</pre>
+</body>
+
+</html>

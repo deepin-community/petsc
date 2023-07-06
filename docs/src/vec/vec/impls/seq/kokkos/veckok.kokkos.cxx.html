@@ -1,0 +1,1320 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/vec/vec/impls/seq/kokkos/veckok.kokkos.cxx">Actual source code: veckok.kokkos.cxx</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:14+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">   Implements the sequential Kokkos vectors.</font>
+<a name="line3">  3: </a><font color="#B22222">*/</font>
+<a name="line4">  4: </a>#include <A href="../../../../../../include/petscvec_kokkos.hpp.html">&lt;petscvec_kokkos.hpp&gt;</A>
+
+<a name="line6">  6: </a>#include <A href="../../../../../../include/petsc/private/sfimpl.h.html">&lt;petsc/private/sfimpl.h&gt;</A>
+<a name="line7">  7: </a>#include <A href="../../../../../../include/petsc/private/petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
+<a name="line8">  8: </a>#include <A href="../../../../../../include/petscmath.h.html">&lt;petscmath.h&gt;</A>
+<a name="line9">  9: </a>#include <A href="../../../../../../include/petscviewer.h.html">&lt;petscviewer.h&gt;</A>
+<a name="line10"> 10: </a><font color="#A020F0">#include &lt;KokkosBlas.hpp&gt;</font>
+
+<a name="line12"> 12: </a>#include <A href="../../../../../../include/petscerror.h.html">&lt;petscerror.h&gt;</A>
+<a name="line13"> 13: </a>#include <A href="../../dvecimpl.h.html">&lt;../src/vec/vec/impls/dvecimpl.h&gt;</A>
+<a name="line14"> 14: </a>#include <A href="veckokkosimpl.hpp.html">&lt;../src/vec/vec/impls/seq/kokkos/veckokkosimpl.hpp&gt;</A>
+
+<a name="line16"> 16: </a>template &lt;class MemorySpace&gt;
+<a name="line17"> 17: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecGetKokkosView_Private(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, PetscScalarKokkosViewType&lt;MemorySpace&gt; *kv, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> overwrite)
+<a name="line18"> 18: </a>{
+<a name="line19"> 19: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(v-&gt;spptr);
+
+<a name="line21"> 21: </a>  VecErrorIfNotKokkos(v);
+<a name="line22"> 22: </a>  <font color="#4169E1">if</font> (!overwrite) veckok-&gt;v_dual.sync&lt;MemorySpace&gt;(); <font color="#B22222">/* If overwrite=true, no need to sync the space, since caller will overwrite the data */</font>
+<a name="line23"> 23: </a>  *kv = veckok-&gt;v_dual.view&lt;MemorySpace&gt;();
+<a name="line24"> 24: </a>  <font color="#4169E1">return</font> 0;
+<a name="line25"> 25: </a>}
+
+<a name="line27"> 27: </a>template &lt;class MemorySpace&gt;
+<a name="line28"> 28: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecRestoreKokkosView_Private(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, PetscScalarKokkosViewType&lt;MemorySpace&gt; *kv, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> overwrite)
+<a name="line29"> 29: </a>{
+<a name="line30"> 30: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(v-&gt;spptr);
+
+<a name="line32"> 32: </a>  VecErrorIfNotKokkos(v);
+<a name="line33"> 33: </a>  <font color="#4169E1">if</font> (overwrite) veckok-&gt;v_dual.clear_sync_state(); <font color="#B22222">/* If overwrite=true, clear the old sync state since user forced an overwrite */</font>
+<a name="line34"> 34: </a>  veckok-&gt;v_dual.modify&lt;MemorySpace&gt;();
+<a name="line35"> 35: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectStateIncrease.html">PetscObjectStateIncrease</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v);
+<a name="line36"> 36: </a>  <font color="#4169E1">return</font> 0;
+<a name="line37"> 37: </a>}
+
+<a name="line39"> 39: </a>template &lt;class MemorySpace&gt;
+<a name="line40"> 40: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, ConstPetscScalarKokkosViewType&lt;MemorySpace&gt; *kv)
+<a name="line41"> 41: </a>{
+<a name="line42"> 42: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(v-&gt;spptr);
+<a name="line43"> 43: </a>  VecErrorIfNotKokkos(v);
+<a name="line44"> 44: </a>  veckok-&gt;v_dual.sync&lt;MemorySpace&gt;(); <font color="#B22222">/* Sync the space for caller to read */</font>
+<a name="line45"> 45: </a>  *kv = veckok-&gt;v_dual.view&lt;MemorySpace&gt;();
+<a name="line46"> 46: </a>  <font color="#4169E1">return</font> 0;
+<a name="line47"> 47: </a>}
+
+<a name="line49"> 49: </a><font color="#B22222">/* Function template explicit instantiation */</font>
+<a name="line50"> 50: </a><strong><font color="#4169E1">template PETSC_VISIBILITY_PUBLIC <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, ConstPetscScalarKokkosView *)</font></strong>;
+<a name="line51"> 51: </a>template &lt;&gt;
+<a name="line52"> 52: </a><strong><font color="#4169E1"><a name="VecGetKokkosView"></a>PETSC_VISIBILITY_PUBLIC <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, PetscScalarKokkosView *kv)</font></strong>
+<a name="line53"> 53: </a>{
+<a name="line54"> 54: </a>  <font color="#4169E1">return</font> VecGetKokkosView_Private(v, kv, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line55"> 55: </a>}
+<a name="line56"> 56: </a>template &lt;&gt;
+<a name="line57"> 57: </a><strong><font color="#4169E1"><a name="VecRestoreKokkosView"></a>PETSC_VISIBILITY_PUBLIC <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, PetscScalarKokkosView *kv)</font></strong>
+<a name="line58"> 58: </a>{
+<a name="line59"> 59: </a>  <font color="#4169E1">return</font> VecRestoreKokkosView_Private(v, kv, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line60"> 60: </a>}
+<a name="line61"> 61: </a>template &lt;&gt;
+<a name="line62"> 62: </a><strong><font color="#4169E1"><a name="VecGetKokkosViewWrite"></a>PETSC_VISIBILITY_PUBLIC <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosViewWrite.html">VecGetKokkosViewWrite</a>(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, PetscScalarKokkosView *kv)</font></strong>
+<a name="line63"> 63: </a>{
+<a name="line64"> 64: </a>  <font color="#4169E1">return</font> VecGetKokkosView_Private(v, kv, <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+<a name="line65"> 65: </a>}
+<a name="line66"> 66: </a>template &lt;&gt;
+<a name="line67"> 67: </a><strong><font color="#4169E1"><a name="VecRestoreKokkosViewWrite"></a>PETSC_VISIBILITY_PUBLIC <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosViewWrite.html">VecRestoreKokkosViewWrite</a>(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, PetscScalarKokkosView *kv)</font></strong>
+<a name="line68"> 68: </a>{
+<a name="line69"> 69: </a>  <font color="#4169E1">return</font> VecRestoreKokkosView_Private(v, kv, <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+<a name="line70"> 70: </a>}
+
+<a name="line72"> 72: </a><font color="#A020F0">#if !defined(KOKKOS_ENABLE_DEFAULT_DEVICE_TYPE_HOST) </font><font color="#B22222">/* Get host views if the default memory space is not host space */</font><font color="#A020F0"></font>
+<a name="line73"> 73: </a><strong><font color="#4169E1">template PETSC_VISIBILITY_PUBLIC <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, ConstPetscScalarKokkosViewHost *)</font></strong>;
+<a name="line74"> 74: </a>template &lt;&gt;
+<a name="line75"> 75: </a><strong><font color="#4169E1"><a name="VecGetKokkosView"></a>PETSC_VISIBILITY_PUBLIC <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, PetscScalarKokkosViewHost *kv)</font></strong>
+<a name="line76"> 76: </a>{
+<a name="line77"> 77: </a>  <font color="#4169E1">return</font> VecGetKokkosView_Private(v, kv, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line78"> 78: </a>}
+<a name="line79"> 79: </a>template &lt;&gt;
+<a name="line80"> 80: </a><strong><font color="#4169E1"><a name="VecRestoreKokkosView"></a>PETSC_VISIBILITY_PUBLIC <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, PetscScalarKokkosViewHost *kv)</font></strong>
+<a name="line81"> 81: </a>{
+<a name="line82"> 82: </a>  <font color="#4169E1">return</font> VecRestoreKokkosView_Private(v, kv, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line83"> 83: </a>}
+<a name="line84"> 84: </a>template &lt;&gt;
+<a name="line85"> 85: </a><strong><font color="#4169E1"><a name="VecGetKokkosViewWrite"></a>PETSC_VISIBILITY_PUBLIC <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosViewWrite.html">VecGetKokkosViewWrite</a>(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, PetscScalarKokkosViewHost *kv)</font></strong>
+<a name="line86"> 86: </a>{
+<a name="line87"> 87: </a>  <font color="#4169E1">return</font> VecGetKokkosView_Private(v, kv, <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+<a name="line88"> 88: </a>}
+<a name="line89"> 89: </a>template &lt;&gt;
+<a name="line90"> 90: </a><strong><font color="#4169E1"><a name="VecRestoreKokkosViewWrite"></a>PETSC_VISIBILITY_PUBLIC <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosViewWrite.html">VecRestoreKokkosViewWrite</a>(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, PetscScalarKokkosViewHost *kv)</font></strong>
+<a name="line91"> 91: </a>{
+<a name="line92"> 92: </a>  <font color="#4169E1">return</font> VecRestoreKokkosView_Private(v, kv, <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+<a name="line93"> 93: </a>}
+<a name="line94"> 94: </a><font color="#A020F0">#endif</font>
+
+<a name="line96"> 96: </a><strong><font color="#4169E1"><a name="VecSetRandom_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecSetRandom_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Sys/PetscRandom.html">PetscRandom</a> r)</font></strong>
+<a name="line97"> 97: </a>{
+<a name="line98"> 98: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n = xin-&gt;map-&gt;n;
+<a name="line99"> 99: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   *xx;
+
+<a name="line101">101: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetArrayWrite.html">VecGetArrayWrite</a>(xin, &amp;xx); <font color="#B22222">/* TODO: generate randoms directly on device */</font>
+<a name="line102">102: </a>  <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i = 0; i &lt; n; i++) <a href="../../../../../../docs/manualpages/Sys/PetscRandomGetValue.html">PetscRandomGetValue</a>(r, &amp;xx[i]);
+<a name="line103">103: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreArrayWrite.html">VecRestoreArrayWrite</a>(xin, &amp;xx);
+<a name="line104">104: </a>  <font color="#4169E1">return</font> 0;
+<a name="line105">105: </a>}
+
+<a name="line107">107: </a><font color="#B22222">/* x = |x| */</font>
+<a name="line108">108: </a><strong><font color="#4169E1"><a name="VecAbs_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecAbs_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin)</font></strong>
+<a name="line109">109: </a>{
+<a name="line110">110: </a>  PetscScalarKokkosView xv;
+
+<a name="line112">112: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line113">113: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line114">114: </a><strong><font color="#FF0000">  KokkosBlas:</font></strong>:abs(xv, xv);
+<a name="line115">115: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line116">116: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line117">117: </a>  <font color="#4169E1">return</font> 0;
+<a name="line118">118: </a>}
+
+<a name="line120">120: </a><font color="#B22222">/* x = 1/x */</font>
+<a name="line121">121: </a><strong><font color="#4169E1"><a name="VecReciprocal_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecReciprocal_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin)</font></strong>
+<a name="line122">122: </a>{
+<a name="line123">123: </a>  PetscScalarKokkosView xv;
+
+<a name="line125">125: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line126">126: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line127">127: </a><strong><font color="#FF0000">  Kokkos:</font></strong>:parallel_for(
+<a name="line128">128: </a>    xv.extent(0), KOKKOS_LAMBDA(const int64_t i) {
+<a name="line129">129: </a>      <font color="#4169E1">if</font> (xv(i) != (<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)0.0) xv(i) = (<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)1.0 / xv(i);
+<a name="line130">130: </a>    });
+<a name="line131">131: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line132">132: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line133">133: </a>  <font color="#4169E1">return</font> 0;
+<a name="line134">134: </a>}
+
+<a name="line136">136: </a><strong><font color="#4169E1"><a name="VecMin_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecMin_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *p, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *val)</font></strong>
+<a name="line137">137: </a>{
+<a name="line138">138: </a>  <font color="#4169E1">typedef</font> Kokkos::MinLoc&lt;<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>&gt;::value_type MinLocValue_t;
+<a name="line139">139: </a>  ConstPetscScalarKokkosView                              xv;
+<a name="line140">140: </a>  MinLocValue_t                                           minloc;
+
+<a name="line142">142: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line143">143: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line144">144: </a><strong><font color="#FF0000">  Kokkos:</font></strong>:parallel_reduce(
+<a name="line145">145: </a>    <font color="#666666">"<a href="../../../../../../docs/manualpages/Vec/VecMin.html">VecMin</a>"</font>, xin-&gt;map-&gt;n,
+<a name="line146">146: </a>    KOKKOS_LAMBDA(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i, MinLocValue_t &amp; lminloc) {
+<a name="line147">147: </a>      <font color="#4169E1">if</font> (<a href="../../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(xv(i)) &lt; lminloc.val) {
+<a name="line148">148: </a>        lminloc.val = <a href="../../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(xv(i));
+<a name="line149">149: </a>        lminloc.loc = i;
+<a name="line150">150: </a>      }
+<a name="line151">151: </a>    },
+<a name="line152">152: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:MinLoc&lt;<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>&gt;(minloc)); <font color="#B22222">/* Kokkos will set minloc properly even if xin is zero-lengthed */</font>
+<a name="line153">153: </a>  <font color="#4169E1">if</font> (p) *p = minloc.loc;
+<a name="line154">154: </a>  *val = minloc.val;
+<a name="line155">155: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line156">156: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line157">157: </a>  <font color="#4169E1">return</font> 0;
+<a name="line158">158: </a>}
+
+<a name="line160">160: </a><strong><font color="#4169E1"><a name="VecMax_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecMax_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *p, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *val)</font></strong>
+<a name="line161">161: </a>{
+<a name="line162">162: </a>  <font color="#4169E1">typedef</font> Kokkos::MaxLoc&lt;<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>&gt;::value_type MaxLocValue_t;
+<a name="line163">163: </a>  ConstPetscScalarKokkosView                              xv;
+<a name="line164">164: </a>  MaxLocValue_t                                           maxloc;
+
+<a name="line166">166: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line167">167: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line168">168: </a><strong><font color="#FF0000">  Kokkos:</font></strong>:parallel_reduce(
+<a name="line169">169: </a>    <font color="#666666">"<a href="../../../../../../docs/manualpages/Vec/VecMax.html">VecMax</a>"</font>, xin-&gt;map-&gt;n,
+<a name="line170">170: </a>    KOKKOS_LAMBDA(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i, MaxLocValue_t &amp; lmaxloc) {
+<a name="line171">171: </a>      <font color="#4169E1">if</font> (<a href="../../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(xv(i)) &gt; lmaxloc.val) {
+<a name="line172">172: </a>        lmaxloc.val = <a href="../../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(xv(i));
+<a name="line173">173: </a>        lmaxloc.loc = i;
+<a name="line174">174: </a>      }
+<a name="line175">175: </a>    },
+<a name="line176">176: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:MaxLoc&lt;<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>&gt;(maxloc));
+<a name="line177">177: </a>  <font color="#4169E1">if</font> (p) *p = maxloc.loc;
+<a name="line178">178: </a>  *val = maxloc.val;
+<a name="line179">179: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line180">180: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line181">181: </a>  <font color="#4169E1">return</font> 0;
+<a name="line182">182: </a>}
+
+<a name="line184">184: </a><strong><font color="#4169E1"><a name="VecSum_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecSum_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *sum)</font></strong>
+<a name="line185">185: </a>{
+<a name="line186">186: </a>  ConstPetscScalarKokkosView xv;
+
+<a name="line188">188: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line189">189: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line190">190: </a>  *sum = KokkosBlas::sum(xv);
+<a name="line191">191: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line192">192: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line193">193: </a>  <font color="#4169E1">return</font> 0;
+<a name="line194">194: </a>}
+
+<a name="line196">196: </a><strong><font color="#4169E1"><a name="VecShift_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecShift_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> shift)</font></strong>
+<a name="line197">197: </a>{
+<a name="line198">198: </a>  PetscScalarKokkosView xv;
+
+<a name="line200">200: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line201">201: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line202">202: </a><strong><font color="#FF0000">  Kokkos:</font></strong>:parallel_for(
+<a name="line203">203: </a>    <font color="#666666">"<a href="../../../../../../docs/manualpages/Vec/VecShift.html">VecShift</a>"</font>, xin-&gt;map-&gt;n, KOKKOS_LAMBDA(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i) { xv(i) += shift; });
+<a name="line204">204: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line205">205: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line206">206: </a>  <font color="#4169E1">return</font> 0;
+<a name="line207">207: </a>}
+
+<a name="line209">209: </a><font color="#B22222">/* y = alpha x + y */</font>
+<a name="line210">210: </a><strong><font color="#4169E1"><a name="VecAXPY_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecAXPY_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> alpha, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin)</font></strong>
+<a name="line211">211: </a>{
+<a name="line212">212: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>                  xiskok, yiskok;
+<a name="line213">213: </a>  PetscScalarKokkosView      yv;
+<a name="line214">214: </a>  ConstPetscScalarKokkosView xv;
+
+<a name="line216">216: </a>  <font color="#4169E1">if</font> (alpha == (<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)0.0) <font color="#4169E1">return</font> 0;
+<a name="line217">217: </a>  <font color="#4169E1">if</font> (yin == xin) {
+<a name="line218">218: </a>    VecScale_SeqKokkos(yin, alpha + 1);
+<a name="line219">219: </a>    <font color="#4169E1">return</font> 0;
+<a name="line220">220: </a>  }
+<a name="line221">221: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompareAny.html">PetscObjectTypeCompareAny</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)xin, &amp;xiskok, <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a>, <a href="../../../../../../docs/manualpages/Vec/VECMPIKOKKOS.html">VECMPIKOKKOS</a>, <font color="#666666">""</font>);
+<a name="line222">222: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompareAny.html">PetscObjectTypeCompareAny</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)yin, &amp;yiskok, <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a>, <a href="../../../../../../docs/manualpages/Vec/VECMPIKOKKOS.html">VECMPIKOKKOS</a>, <font color="#666666">""</font>);
+<a name="line223">223: </a>  <font color="#4169E1">if</font> (xiskok &amp;&amp; yiskok) {
+<a name="line224">224: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line225">225: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line226">226: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(yin, &amp;yv);
+<a name="line227">227: </a><strong><font color="#FF0000">    KokkosBlas:</font></strong>:axpy(alpha, xv, yv);
+<a name="line228">228: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line229">229: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(yin, &amp;yv);
+<a name="line230">230: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line231">231: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(2.0 * yin-&gt;map-&gt;n);
+<a name="line232">232: </a>  } <font color="#4169E1">else</font> {
+<a name="line233">233: </a>    VecAXPY_Seq(yin, alpha, xin);
+<a name="line234">234: </a>  }
+<a name="line235">235: </a>  <font color="#4169E1">return</font> 0;
+<a name="line236">236: </a>}
+
+<a name="line238">238: </a><font color="#B22222">/* y = x + beta y */</font>
+<a name="line239">239: </a><strong><font color="#4169E1"><a name="VecAYPX_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecAYPX_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> beta, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin)</font></strong>
+<a name="line240">240: </a>{
+<a name="line241">241: </a>  <font color="#B22222">/* One needs to define KOKKOSBLAS_OPTIMIZATION_LEVEL_AXPBY &gt; 2 to have optimizations for cases alpha/beta = 0,+/-1 */</font>
+<a name="line242">242: </a>  VecAXPBY_SeqKokkos(yin, 1.0, beta, xin);
+<a name="line243">243: </a>  <font color="#4169E1">return</font> 0;
+<a name="line244">244: </a>}
+
+<a name="line246">246: </a><font color="#B22222">/* z = y^T x */</font>
+<a name="line247">247: </a><strong><font color="#4169E1"><a name="VecTDot_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecTDot_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *z)</font></strong>
+<a name="line248">248: </a>{
+<a name="line249">249: </a>  ConstPetscScalarKokkosView xv, yv;
+
+<a name="line251">251: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line252">252: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line253">253: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(yin, &amp;yv);
+<a name="line254">254: </a><strong><font color="#FF0000">  Kokkos:</font></strong>:parallel_reduce(
+<a name="line255">255: </a>    <font color="#666666">"<a href="../../../../../../docs/manualpages/Vec/VecTDot.html">VecTDot</a>"</font>, xin-&gt;map-&gt;n, KOKKOS_LAMBDA(int64_t i, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> &amp; update) { update += yv(i) * xv(i); }, *z); <font color="#B22222">/* Kokkos always overwrites z, so no need to init it */</font>
+<a name="line256">256: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(yin, &amp;yv);
+<a name="line257">257: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line258">258: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line259">259: </a>  <font color="#4169E1">if</font> (xin-&gt;map-&gt;n &gt; 0) <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(2.0 * xin-&gt;map-&gt;n);
+<a name="line260">260: </a>  <font color="#4169E1">return</font> 0;
+<a name="line261">261: </a>}
+
+<a name="line263">263: </a><font color="#4169E1"><a name="TransposeDotTag"></a>struct TransposeDotTag </font>{ };
+<a name="line264">264: </a><font color="#4169E1"><a name="ConjugateDotTag"></a>struct ConjugateDotTag </font>{ };
+
+<a name="line266">266: </a><font color="#4169E1"><a name="MDotFunctor"></a>struct MDotFunctor </font>{
+<a name="line267">267: </a>  <font color="#B22222">/* Note the C++ notation for an array typedef */</font>
+<a name="line268">268: </a>  <font color="#4169E1">typedef</font> <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>                           value_type[];
+<a name="line269">269: </a>  <font color="#4169E1">typedef</font> ConstPetscScalarKokkosView::size_type size_type;
+
+<a name="line271">271: </a>  <font color="#B22222">/* Tell Kokkos the result array's number of entries. This must be a public value in the functor */</font>
+<a name="line272">272: </a>  const size_type            value_count;
+<a name="line273">273: </a>  ConstPetscScalarKokkosView xv, yv[8];
+
+<a name="line275">275: </a>  MDotFunctor(ConstPetscScalarKokkosView &amp;xv, const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ny, <font color="#B22222">/* Number of valid entries in yv[8]. 1 &lt;= ny &lt;= 8 */</font>
+<a name="line276">276: </a>              ConstPetscScalarKokkosView &amp;yv0, ConstPetscScalarKokkosView &amp;yv1, ConstPetscScalarKokkosView &amp;yv2, ConstPetscScalarKokkosView &amp;yv3, ConstPetscScalarKokkosView &amp;yv4, ConstPetscScalarKokkosView &amp;yv5, ConstPetscScalarKokkosView &amp;yv6, ConstPetscScalarKokkosView &amp;yv7) :
+<a name="line277">277: </a>    value_count(ny), xv(xv)
+<a name="line278">278: </a>  {
+<a name="line279">279: </a>    yv[0] = yv0;
+<a name="line280">280: </a>    yv[1] = yv1;
+<a name="line281">281: </a>    yv[2] = yv2;
+<a name="line282">282: </a>    yv[3] = yv3;
+<a name="line283">283: </a>    yv[4] = yv4;
+<a name="line284">284: </a>    yv[5] = yv5;
+<a name="line285">285: </a>    yv[6] = yv6;
+<a name="line286">286: </a>    yv[7] = yv7;
+<a name="line287">287: </a>  }
+
+<a name="line289">289: </a>  KOKKOS_INLINE_FUNCTION void operator()(TransposeDotTag, const size_type i, value_type sum) const
+<a name="line290">290: </a>  {
+<a name="line291">291: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> xval = xv(i);
+<a name="line292">292: </a>    <font color="#4169E1">for</font> (size_type j = 0; j &lt; value_count; ++j) sum[j] += yv[j](i) * xval;
+<a name="line293">293: </a>  }
+
+<a name="line295">295: </a>  KOKKOS_INLINE_FUNCTION void operator()(ConjugateDotTag, const size_type i, value_type sum) const
+<a name="line296">296: </a>  {
+<a name="line297">297: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> xval = xv(i);
+<a name="line298">298: </a>    <font color="#4169E1">for</font> (size_type j = 0; j &lt; value_count; ++j) sum[j] += PetscConj(yv[j](i)) * xval;
+<a name="line299">299: </a>  }
+
+<a name="line301">301: </a>  // Per https://kokkos.github.io/kokkos-core-wiki/API/core/parallel-dispatch/parallel_reduce.html#requirements
+<a name="line302">302: </a>  // <font color="#666666">"when specifying a tag in the policy, the functor's potential init/join/final member functions must also be tagged"</font>
+<a name="line303">303: </a>  // So we have this kind of duplicated code.
+<a name="line304">304: </a>  KOKKOS_INLINE_FUNCTION void join(TransposeDotTag, value_type dst, const value_type src) const { join(dst, src); }
+<a name="line305">305: </a>  KOKKOS_INLINE_FUNCTION void join(ConjugateDotTag, value_type dst, const value_type src) const { join(dst, src); }
+
+<a name="line307">307: </a>  KOKKOS_INLINE_FUNCTION void init(TransposeDotTag, value_type sum) const { init(sum); }
+<a name="line308">308: </a>  KOKKOS_INLINE_FUNCTION void init(ConjugateDotTag, value_type sum) const { init(sum); }
+
+<a name="line310">310: </a>  KOKKOS_INLINE_FUNCTION void join(value_type dst, const value_type src) const
+<a name="line311">311: </a>  {
+<a name="line312">312: </a>    <font color="#4169E1">for</font> (size_type j = 0; j &lt; value_count; j++) dst[j] += src[j];
+<a name="line313">313: </a>  }
+
+<a name="line315">315: </a>  KOKKOS_INLINE_FUNCTION void init(value_type sum) const
+<a name="line316">316: </a>  {
+<a name="line317">317: </a>    <font color="#4169E1">for</font> (size_type j = 0; j &lt; value_count; j++) sum[j] = 0.0;
+<a name="line318">318: </a>  }
+<a name="line319">319: </a>};
+
+<a name="line321">321: </a>template &lt;class WorkTag&gt;
+<a name="line322">322: </a><strong><font color="#4169E1"><a name="VecMultiDot_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecMultiDot_Private(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nv, const <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin[], <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *z)</font></strong>
+<a name="line323">323: </a>{
+<a name="line324">324: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                   i, j, cur = 0, ngroup = nv / 8, rem = nv % 8, N = xin-&gt;map-&gt;n;
+<a name="line325">325: </a>  ConstPetscScalarKokkosView xv, yv[8];
+<a name="line326">326: </a>  PetscScalarKokkosViewHost  zv(z, nv);
+
+<a name="line328">328: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line329">329: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; ngroup; i++) { <font color="#B22222">/* 8 y's per group */</font>
+<a name="line330">330: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; 8; j++) <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(yin[cur + j], &amp;yv[j]);
+<a name="line331">331: </a>    MDotFunctor mdot(xv, 8, yv[0], yv[1], yv[2], yv[3], yv[4], yv[5], yv[6], yv[7]); <font color="#B22222">/* Hope Kokkos make it asynchronous */</font>
+<a name="line332">332: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_reduce(Kokkos::RangePolicy&lt;WorkTag&gt;(0, N), mdot, Kokkos::subview(zv, Kokkos::pair&lt;<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>&gt;(cur, cur + 8)));
+<a name="line333">333: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; 8; j++) <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(yin[cur + j], &amp;yv[j]);
+<a name="line334">334: </a>    cur += 8;
+<a name="line335">335: </a>  }
+
+<a name="line337">337: </a>  <font color="#4169E1">if</font> (rem) { <font color="#B22222">/* The remaining */</font>
+<a name="line338">338: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; rem; j++) <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(yin[cur + j], &amp;yv[j]);
+<a name="line339">339: </a>    MDotFunctor mdot(xv, rem, yv[0], yv[1], yv[2], yv[3], yv[4], yv[5], yv[6], yv[7]);
+<a name="line340">340: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_reduce(Kokkos::RangePolicy&lt;WorkTag&gt;(0, N), mdot, Kokkos::subview(zv, Kokkos::pair&lt;<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>&gt;(cur, cur + rem)));
+<a name="line341">341: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; rem; j++) <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(yin[cur + j], &amp;yv[j]);
+<a name="line342">342: </a>  }
+<a name="line343">343: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line344">344: </a><strong><font color="#FF0000">  Kokkos:</font></strong>:fence(); <font color="#B22222">/* If reduce is async, then we need this fence to make sure z is ready for use on host */</font>
+<a name="line345">345: </a>  <font color="#4169E1">return</font> 0;
+<a name="line346">346: </a>}
+
+<a name="line348">348: </a><font color="#B22222">/* z[i] = (x,y_i) = y_i^H x */</font>
+<a name="line349">349: </a><strong><font color="#4169E1"><a name="VecMDot_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecMDot_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nv, const <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin[], <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *z)</font></strong>
+<a name="line350">350: </a>{
+<a name="line351">351: </a>  VecMultiDot_Private&lt;ConjugateDotTag&gt;(xin, nv, yin, z);
+<a name="line352">352: </a>  <font color="#4169E1">return</font> 0;
+<a name="line353">353: </a>}
+
+<a name="line355">355: </a><font color="#B22222">/* z[i] = (x,y_i) = y_i^T x */</font>
+<a name="line356">356: </a><strong><font color="#4169E1"><a name="VecMTDot_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecMTDot_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nv, const <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin[], <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *z)</font></strong>
+<a name="line357">357: </a>{
+<a name="line358">358: </a>  VecMultiDot_Private&lt;TransposeDotTag&gt;(xin, nv, yin, z);
+<a name="line359">359: </a>  <font color="#4169E1">return</font> 0;
+<a name="line360">360: </a>}
+
+<a name="line362">362: </a><font color="#B22222">/* x[:] = alpha */</font>
+<a name="line363">363: </a><strong><font color="#4169E1"><a name="VecSet_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecSet_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> alpha)</font></strong>
+<a name="line364">364: </a>{
+<a name="line365">365: </a>  PetscScalarKokkosView xv;
+
+<a name="line367">367: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line368">368: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosViewWrite.html">VecGetKokkosViewWrite</a>(xin, &amp;xv);
+<a name="line369">369: </a><strong><font color="#FF0000">  KokkosBlas:</font></strong>:fill(xv, alpha);
+<a name="line370">370: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosViewWrite.html">VecRestoreKokkosViewWrite</a>(xin, &amp;xv);
+<a name="line371">371: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line372">372: </a>  <font color="#4169E1">return</font> 0;
+<a name="line373">373: </a>}
+
+<a name="line375">375: </a><font color="#B22222">/* x = alpha x */</font>
+<a name="line376">376: </a><strong><font color="#4169E1"><a name="VecScale_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecScale_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> alpha)</font></strong>
+<a name="line377">377: </a>{
+<a name="line378">378: </a>  PetscScalarKokkosView xv;
+
+<a name="line380">380: </a>  <font color="#4169E1">if</font> (alpha == (<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)0.0) {
+<a name="line381">381: </a>    VecSet_SeqKokkos(xin, alpha);
+<a name="line382">382: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (alpha != (<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)1.0) {
+<a name="line383">383: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line384">384: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line385">385: </a><strong><font color="#FF0000">    KokkosBlas:</font></strong>:scal(xv, alpha, xv);
+<a name="line386">386: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line387">387: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line388">388: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(xin-&gt;map-&gt;n);
+<a name="line389">389: </a>  }
+<a name="line390">390: </a>  <font color="#4169E1">return</font> 0;
+<a name="line391">391: </a>}
+
+<a name="line393">393: </a><font color="#B22222">/* z = y^H x */</font>
+<a name="line394">394: </a><strong><font color="#4169E1"><a name="VecDot_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecDot_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *z)</font></strong>
+<a name="line395">395: </a>{
+<a name="line396">396: </a>  ConstPetscScalarKokkosView xv, yv;
+
+<a name="line398">398: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line399">399: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line400">400: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(yin, &amp;yv);
+<a name="line401">401: </a>  *z = KokkosBlas::dot(yv, xv); <font color="#B22222">/* KokkosBlas::dot(a,b) takes conjugate of a */</font>
+<a name="line402">402: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line403">403: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(yin, &amp;yv);
+<a name="line404">404: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line405">405: </a>  <font color="#4169E1">if</font> (xin-&gt;map-&gt;n &gt; 0) <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(2.0 * xin-&gt;map-&gt;n - 1);
+<a name="line406">406: </a>  <font color="#4169E1">return</font> 0;
+<a name="line407">407: </a>}
+
+<a name="line409">409: </a><font color="#B22222">/* y = x, where x is <a href="../../../../../../docs/manualpages/Vec/VECKOKKOS.html">VECKOKKOS</a>, but y may be not */</font>
+<a name="line410">410: </a><strong><font color="#4169E1"><a name="VecCopy_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecCopy_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin)</font></strong>
+<a name="line411">411: </a>{
+<a name="line412">412: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line413">413: </a>  <font color="#4169E1">if</font> (xin != yin) {
+<a name="line414">414: </a>    Vec_Kokkos *xkok = static_cast&lt;Vec_Kokkos *&gt;(xin-&gt;spptr);
+<a name="line415">415: </a>    <font color="#4169E1">if</font> (yin-&gt;offloadmask == <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_KOKKOS</a>) {
+<a name="line416">416: </a>      <font color="#B22222">/* y is also a VecKokkos */</font>
+<a name="line417">417: </a>      Vec_Kokkos *ykok = static_cast&lt;Vec_Kokkos *&gt;(yin-&gt;spptr);
+<a name="line418">418: </a>      <font color="#B22222">/* Kokkos rule: if x's host has newer data, it will copy to y's host view; otherwise to y's device view</font>
+<a name="line419">419: </a><font color="#B22222">        In case x's host is newer, y's device is newer, it will error (though should not, I think). So we just</font>
+<a name="line420">420: </a><font color="#B22222">        clear y's sync state.</font>
+<a name="line421">421: </a><font color="#B22222">       */</font>
+<a name="line422">422: </a>      ykok-&gt;v_dual.clear_sync_state();
+<a name="line423">423: </a><strong><font color="#FF0000">      Kokkos:</font></strong>:deep_copy(ykok-&gt;v_dual, xkok-&gt;v_dual);
+<a name="line424">424: </a>    } <font color="#4169E1">else</font> {
+<a name="line425">425: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *yarray;
+<a name="line426">426: </a>      <a href="../../../../../../docs/manualpages/Vec/VecGetArrayWrite.html">VecGetArrayWrite</a>(yin, &amp;yarray);
+<a name="line427">427: </a>      PetscScalarKokkosViewHost yv(yarray, yin-&gt;map-&gt;n);
+<a name="line428">428: </a>      <font color="#4169E1">if</font> (xkok-&gt;v_dual.need_sync_host()) { <font color="#B22222">/* x's device has newer data */</font>
+<a name="line429">429: </a><strong><font color="#FF0000">        Kokkos:</font></strong>:deep_copy(yv, xkok-&gt;v_dual.view_device());
+<a name="line430">430: </a>      } <font color="#4169E1">else</font> {
+<a name="line431">431: </a><strong><font color="#FF0000">        Kokkos:</font></strong>:deep_copy(yv, xkok-&gt;v_dual.view_host());
+<a name="line432">432: </a>      }
+<a name="line433">433: </a>      <a href="../../../../../../docs/manualpages/Vec/VecRestoreArrayWrite.html">VecRestoreArrayWrite</a>(yin, &amp;yarray);
+<a name="line434">434: </a>    }
+<a name="line435">435: </a>  }
+<a name="line436">436: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line437">437: </a>  <font color="#4169E1">return</font> 0;
+<a name="line438">438: </a>}
+
+<a name="line440">440: </a><font color="#B22222">/* y[i] &lt;--&gt; x[i] */</font>
+<a name="line441">441: </a><strong><font color="#4169E1"><a name="VecSwap_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecSwap_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin)</font></strong>
+<a name="line442">442: </a>{
+<a name="line443">443: </a>  PetscScalarKokkosView xv, yv;
+
+<a name="line445">445: </a>  <font color="#4169E1">if</font> (xin != yin) {
+<a name="line446">446: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line447">447: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line448">448: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(yin, &amp;yv);
+<a name="line449">449: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(
+<a name="line450">450: </a>      xin-&gt;map-&gt;n, KOKKOS_LAMBDA(const int64_t i) {
+<a name="line451">451: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> tmp = xv(i);
+<a name="line452">452: </a>        xv(i)           = yv(i);
+<a name="line453">453: </a>        yv(i)           = tmp;
+<a name="line454">454: </a>      });
+<a name="line455">455: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line456">456: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(yin, &amp;yv);
+<a name="line457">457: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line458">458: </a>  }
+<a name="line459">459: </a>  <font color="#4169E1">return</font> 0;
+<a name="line460">460: </a>}
+
+<a name="line462">462: </a><font color="#B22222">/*  w = alpha x + y */</font>
+<a name="line463">463: </a><strong><font color="#4169E1"><a name="VecWAXPY_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecWAXPY_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> win, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> alpha, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin)</font></strong>
+<a name="line464">464: </a>{
+<a name="line465">465: </a>  ConstPetscScalarKokkosView xv, yv;
+<a name="line466">466: </a>  PetscScalarKokkosView      wv;
+
+<a name="line468">468: </a>  <font color="#4169E1">if</font> (alpha == (<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)0.0) {
+<a name="line469">469: </a>    VecCopy_SeqKokkos(yin, win);
+<a name="line470">470: </a>  } <font color="#4169E1">else</font> {
+<a name="line471">471: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line472">472: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosViewWrite.html">VecGetKokkosViewWrite</a>(win, &amp;wv);
+<a name="line473">473: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line474">474: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(yin, &amp;yv);
+<a name="line475">475: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(
+<a name="line476">476: </a>      win-&gt;map-&gt;n, KOKKOS_LAMBDA(const int64_t i) { wv(i) = alpha * xv(i) + yv(i); });
+<a name="line477">477: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line478">478: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(yin, &amp;yv);
+<a name="line479">479: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosViewWrite.html">VecRestoreKokkosViewWrite</a>(win, &amp;wv);
+<a name="line480">480: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line481">481: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(2 * win-&gt;map-&gt;n);
+<a name="line482">482: </a>  }
+<a name="line483">483: </a>  <font color="#4169E1">return</font> 0;
+<a name="line484">484: </a>}
+
+<a name="line486">486: </a><font color="#4169E1"><a name="MAXPYFunctor"></a>struct MAXPYFunctor </font>{
+<a name="line487">487: </a>  <font color="#4169E1">typedef</font> ConstPetscScalarKokkosView::size_type size_type;
+
+<a name="line489">489: </a>  PetscScalarKokkosView      yv;
+<a name="line490">490: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                   nx; <font color="#B22222">/* Significent entries in a[8] and xv[8] */</font>
+<a name="line491">491: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>                a[8];
+<a name="line492">492: </a>  ConstPetscScalarKokkosView xv[8];
+
+<a name="line494">494: </a>  MAXPYFunctor(PetscScalarKokkosView yv, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nx, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> a0, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> a1, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> a2, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> a3, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> a4, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> a5, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> a6, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> a7, ConstPetscScalarKokkosView xv0, ConstPetscScalarKokkosView xv1, ConstPetscScalarKokkosView xv2, ConstPetscScalarKokkosView xv3, ConstPetscScalarKokkosView xv4, ConstPetscScalarKokkosView xv5, ConstPetscScalarKokkosView xv6, ConstPetscScalarKokkosView xv7) :
+<a name="line495">495: </a>    yv(yv), nx(nx)
+<a name="line496">496: </a>  {
+<a name="line497">497: </a>    a[0]  = a0;
+<a name="line498">498: </a>    a[1]  = a1;
+<a name="line499">499: </a>    a[2]  = a2;
+<a name="line500">500: </a>    a[3]  = a3;
+<a name="line501">501: </a>    a[4]  = a4;
+<a name="line502">502: </a>    a[5]  = a5;
+<a name="line503">503: </a>    a[6]  = a6;
+<a name="line504">504: </a>    a[7]  = a7;
+<a name="line505">505: </a>    xv[0] = xv0;
+<a name="line506">506: </a>    xv[1] = xv1;
+<a name="line507">507: </a>    xv[2] = xv2;
+<a name="line508">508: </a>    xv[3] = xv3;
+<a name="line509">509: </a>    xv[4] = xv4;
+<a name="line510">510: </a>    xv[5] = xv5;
+<a name="line511">511: </a>    xv[6] = xv6;
+<a name="line512">512: </a>    xv[7] = xv7;
+<a name="line513">513: </a>  }
+
+<a name="line515">515: </a>  KOKKOS_INLINE_FUNCTION void operator()(const size_type i) const
+<a name="line516">516: </a>  {
+<a name="line517">517: </a>    <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> j = 0; j &lt; nx; ++j) yv(i) += a[j] * xv[j](i);
+<a name="line518">518: </a>  }
+<a name="line519">519: </a>};
+
+<a name="line521">521: </a><font color="#B22222">/*  y = y + sum alpha[i] x[i] */</font>
+<a name="line522">522: </a><strong><font color="#4169E1"><a name="VecMAXPY_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecMAXPY_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nv, const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *alpha, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *xin)</font></strong>
+<a name="line523">523: </a>{
+<a name="line524">524: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                   i, j, cur = 0, ngroup = nv / 8, rem = nv % 8;
+<a name="line525">525: </a>  PetscScalarKokkosView      yv;
+<a name="line526">526: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>                a[8];
+<a name="line527">527: </a>  ConstPetscScalarKokkosView xv[8];
+
+<a name="line529">529: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(yin, &amp;yv);
+<a name="line530">530: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; ngroup; i++) { <font color="#B22222">/* 8 x's per group */</font>
+<a name="line531">531: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; 8; j++) {    <font color="#B22222">/* Fill the parameters */</font>
+<a name="line532">532: </a>      a[j] = alpha[cur + j];
+<a name="line533">533: </a>      <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin[cur + j], &amp;xv[j]);
+<a name="line534">534: </a>    }
+<a name="line535">535: </a>    MAXPYFunctor maxpy(yv, 8, a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], xv[0], xv[1], xv[2], xv[3], xv[4], xv[5], xv[6], xv[7]);
+<a name="line536">536: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(yin-&gt;map-&gt;n, maxpy);
+<a name="line537">537: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; 8; j++) <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin[cur + j], &amp;xv[j]);
+<a name="line538">538: </a>    cur += 8;
+<a name="line539">539: </a>  }
+
+<a name="line541">541: </a>  <font color="#4169E1">if</font> (rem) { <font color="#B22222">/* The remaining */</font>
+<a name="line542">542: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; rem; j++) {
+<a name="line543">543: </a>      a[j] = alpha[cur + j];
+<a name="line544">544: </a>      <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin[cur + j], &amp;xv[j]);
+<a name="line545">545: </a>    }
+<a name="line546">546: </a>    MAXPYFunctor maxpy(yv, rem, a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7], xv[0], xv[1], xv[2], xv[3], xv[4], xv[5], xv[6], xv[7]);
+<a name="line547">547: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(yin-&gt;map-&gt;n, maxpy);
+<a name="line548">548: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; rem; j++) <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin[cur + j], &amp;xv[j]);
+<a name="line549">549: </a>  }
+<a name="line550">550: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(yin, &amp;yv);
+<a name="line551">551: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(nv * 2.0 * yin-&gt;map-&gt;n);
+<a name="line552">552: </a>  <font color="#4169E1">return</font> 0;
+<a name="line553">553: </a>}
+
+<a name="line555">555: </a><font color="#B22222">/* y = alpha x + beta y */</font>
+<a name="line556">556: </a><strong><font color="#4169E1"><a name="VecAXPBY_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecAXPBY_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> alpha, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> beta, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin)</font></strong>
+<a name="line557">557: </a>{
+<a name="line558">558: </a>  ConstPetscScalarKokkosView xv;
+<a name="line559">559: </a>  PetscScalarKokkosView      yv;
+<a name="line560">560: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>                  xiskok, yiskok;
+
+<a name="line562">562: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompareAny.html">PetscObjectTypeCompareAny</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)xin, &amp;xiskok, <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a>, <a href="../../../../../../docs/manualpages/Vec/VECMPIKOKKOS.html">VECMPIKOKKOS</a>, <font color="#666666">""</font>);
+<a name="line563">563: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompareAny.html">PetscObjectTypeCompareAny</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)yin, &amp;yiskok, <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a>, <a href="../../../../../../docs/manualpages/Vec/VECMPIKOKKOS.html">VECMPIKOKKOS</a>, <font color="#666666">""</font>);
+<a name="line564">564: </a>  <font color="#4169E1">if</font> (xiskok &amp;&amp; yiskok) {
+<a name="line565">565: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line566">566: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line567">567: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(yin, &amp;yv);
+<a name="line568">568: </a><strong><font color="#FF0000">    KokkosBlas:</font></strong>:axpby(alpha, xv, beta, yv);
+<a name="line569">569: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line570">570: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(yin, &amp;yv);
+<a name="line571">571: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line572">572: </a>    <font color="#4169E1">if</font> (alpha == (<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)0.0 || beta == (<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)0.0) {
+<a name="line573">573: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(xin-&gt;map-&gt;n);
+<a name="line574">574: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (beta == (<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)1.0 || alpha == (<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)1.0) {
+<a name="line575">575: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(2.0 * xin-&gt;map-&gt;n);
+<a name="line576">576: </a>    } <font color="#4169E1">else</font> {
+<a name="line577">577: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(3.0 * xin-&gt;map-&gt;n);
+<a name="line578">578: </a>    }
+<a name="line579">579: </a>  } <font color="#4169E1">else</font> {
+<a name="line580">580: </a>    VecAXPBY_Seq(yin, alpha, beta, xin);
+<a name="line581">581: </a>  }
+<a name="line582">582: </a>  <font color="#4169E1">return</font> 0;
+<a name="line583">583: </a>}
+
+<a name="line585">585: </a><font color="#B22222">/* z = alpha x + beta y + gamma z */</font>
+<a name="line586">586: </a><strong><font color="#4169E1"><a name="VecAXPBYPCZ_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecAXPBYPCZ_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> zin, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> alpha, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> beta, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> gamma, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin)</font></strong>
+<a name="line587">587: </a>{
+<a name="line588">588: </a>  ConstPetscScalarKokkosView xv, yv;
+<a name="line589">589: </a>  PetscScalarKokkosView      zv;
+
+<a name="line591">591: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line592">592: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(zin, &amp;zv);
+<a name="line593">593: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line594">594: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(yin, &amp;yv);
+<a name="line595">595: </a><strong><font color="#FF0000">  KokkosBlas:</font></strong>:update(alpha, xv, beta, yv, gamma, zv);
+<a name="line596">596: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line597">597: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(yin, &amp;yv);
+<a name="line598">598: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(zin, &amp;zv);
+<a name="line599">599: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line600">600: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(zin-&gt;map-&gt;n * 5);
+<a name="line601">601: </a>  <font color="#4169E1">return</font> 0;
+<a name="line602">602: </a>}
+
+<a name="line604">604: </a><font color="#B22222">/* w = x*y. Any subset of the x, y, and w may be the same vector.</font>
+
+<a name="line606">606: </a><font color="#B22222">  w is of type VecKokkos, but x, y may be not.</font>
+<a name="line607">607: </a><font color="#B22222">*/</font>
+<a name="line608">608: </a><strong><font color="#4169E1"><a name="VecPointwiseMult_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecPointwiseMult_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> win, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin)</font></strong>
+<a name="line609">609: </a>{
+<a name="line610">610: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n;
+
+<a name="line612">612: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line613">613: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(win, &amp;n);
+<a name="line614">614: </a>  <font color="#4169E1">if</font> (xin-&gt;offloadmask != <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_KOKKOS</a> || yin-&gt;offloadmask != <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_KOKKOS</a>) {
+<a name="line615">615: </a>    PetscScalarKokkosViewHost wv;
+<a name="line616">616: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>        *xp, *yp;
+<a name="line617">617: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(xin, &amp;xp);
+<a name="line618">618: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(yin, &amp;yp);
+<a name="line619">619: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosViewWrite.html">VecGetKokkosViewWrite</a>(win, &amp;wv);
+
+<a name="line621">621: </a>    ConstPetscScalarKokkosViewHost xv(xp, n), yv(yp, n);
+<a name="line622">622: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(
+<a name="line623">623: </a><strong><font color="#FF0000">      Kokkos:</font></strong>:RangePolicy&lt;Kokkos::DefaultHostExecutionSpace&gt;(0, n), KOKKOS_LAMBDA(const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i) { wv(i) = xv(i) * yv(i); });
+
+<a name="line625">625: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(xin, &amp;xp);
+<a name="line626">626: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(yin, &amp;yp);
+<a name="line627">627: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosViewWrite.html">VecRestoreKokkosViewWrite</a>(win, &amp;wv);
+<a name="line628">628: </a>  } <font color="#4169E1">else</font> {
+<a name="line629">629: </a>    ConstPetscScalarKokkosView xv, yv;
+<a name="line630">630: </a>    PetscScalarKokkosView      wv;
+
+<a name="line632">632: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosViewWrite.html">VecGetKokkosViewWrite</a>(win, &amp;wv);
+<a name="line633">633: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line634">634: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(yin, &amp;yv);
+<a name="line635">635: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(
+<a name="line636">636: </a>      n, KOKKOS_LAMBDA(const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i) { wv(i) = xv(i) * yv(i); });
+<a name="line637">637: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(yin, &amp;yv);
+<a name="line638">638: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line639">639: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosViewWrite.html">VecRestoreKokkosViewWrite</a>(win, &amp;wv);
+<a name="line640">640: </a>  }
+<a name="line641">641: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line642">642: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(n);
+<a name="line643">643: </a>  <font color="#4169E1">return</font> 0;
+<a name="line644">644: </a>}
+
+<a name="line646">646: </a><font color="#B22222">/* w = x/y */</font>
+<a name="line647">647: </a><strong><font color="#4169E1"><a name="VecPointwiseDivide_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecPointwiseDivide_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> win, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin)</font></strong>
+<a name="line648">648: </a>{
+<a name="line649">649: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n;
+
+<a name="line651">651: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line652">652: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(win, &amp;n);
+<a name="line653">653: </a>  <font color="#4169E1">if</font> (xin-&gt;offloadmask != <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_KOKKOS</a> || yin-&gt;offloadmask != <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_KOKKOS</a>) {
+<a name="line654">654: </a>    PetscScalarKokkosViewHost wv;
+<a name="line655">655: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>        *xp, *yp;
+<a name="line656">656: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(xin, &amp;xp);
+<a name="line657">657: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(yin, &amp;yp);
+<a name="line658">658: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosViewWrite.html">VecGetKokkosViewWrite</a>(win, &amp;wv);
+
+<a name="line660">660: </a>    ConstPetscScalarKokkosViewHost xv(xp, n), yv(yp, n);
+<a name="line661">661: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(
+<a name="line662">662: </a><strong><font color="#FF0000">      Kokkos:</font></strong>:RangePolicy&lt;Kokkos::DefaultHostExecutionSpace&gt;(0, n), KOKKOS_LAMBDA(const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i) {
+<a name="line663">663: </a>        <font color="#4169E1">if</font> (yv(i) != 0.0) wv(i) = xv(i) / yv(i);
+<a name="line664">664: </a>        <font color="#4169E1">else</font> wv(i) = 0.0;
+<a name="line665">665: </a>      });
+
+<a name="line667">667: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(xin, &amp;xp);
+<a name="line668">668: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(yin, &amp;yp);
+<a name="line669">669: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosViewWrite.html">VecRestoreKokkosViewWrite</a>(win, &amp;wv);
+<a name="line670">670: </a>  } <font color="#4169E1">else</font> {
+<a name="line671">671: </a>    ConstPetscScalarKokkosView xv, yv;
+<a name="line672">672: </a>    PetscScalarKokkosView      wv;
+
+<a name="line674">674: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosViewWrite.html">VecGetKokkosViewWrite</a>(win, &amp;wv);
+<a name="line675">675: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line676">676: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(yin, &amp;yv);
+<a name="line677">677: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(
+<a name="line678">678: </a>      n, KOKKOS_LAMBDA(const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i) {
+<a name="line679">679: </a>        <font color="#4169E1">if</font> (yv(i) != 0.0) wv(i) = xv(i) / yv(i);
+<a name="line680">680: </a>        <font color="#4169E1">else</font> wv(i) = 0.0;
+<a name="line681">681: </a>      });
+<a name="line682">682: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(yin, &amp;yv);
+<a name="line683">683: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line684">684: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosViewWrite.html">VecRestoreKokkosViewWrite</a>(win, &amp;wv);
+<a name="line685">685: </a>  }
+<a name="line686">686: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line687">687: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(win-&gt;map-&gt;n);
+<a name="line688">688: </a>  <font color="#4169E1">return</font> 0;
+<a name="line689">689: </a>}
+
+<a name="line691">691: </a><strong><font color="#4169E1"><a name="VecNorm_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecNorm_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Vec/NormType.html">NormType</a> type, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *z)</font></strong>
+<a name="line692">692: </a>{
+<a name="line693">693: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>             n = xin-&gt;map-&gt;n;
+<a name="line694">694: </a>  ConstPetscScalarKokkosView xv;
+
+<a name="line696">696: </a>  <font color="#4169E1">if</font> (type == <a href="../../../../../../docs/manualpages/Vec/NORM_1_AND_2.html">NORM_1_AND_2</a>) {
+<a name="line697">697: </a>    VecNorm_SeqKokkos(xin, <a href="../../../../../../docs/manualpages/Vec/NORM_1.html">NORM_1</a>, z);
+<a name="line698">698: </a>    VecNorm_SeqKokkos(xin, <a href="../../../../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, z + 1);
+<a name="line699">699: </a>  } <font color="#4169E1">else</font> {
+<a name="line700">700: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line701">701: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line702">702: </a>    <font color="#4169E1">if</font> (type == <a href="../../../../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a> || type == <a href="../../../../../../docs/manualpages/Vec/NORM_FROBENIUS.html">NORM_FROBENIUS</a>) {
+<a name="line703">703: </a>      *z = KokkosBlas::nrm2(xv);
+<a name="line704">704: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(<a href="../../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(2.0 * n - 1, 0.0));
+<a name="line705">705: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (type == <a href="../../../../../../docs/manualpages/Vec/NORM_1.html">NORM_1</a>) {
+<a name="line706">706: </a>      *z = KokkosBlas::nrm1(xv);
+<a name="line707">707: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(<a href="../../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(n - 1.0, 0.0));
+<a name="line708">708: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (type == <a href="../../../../../../docs/manualpages/Vec/NORM_INFINITY.html">NORM_INFINITY</a>) {
+<a name="line709">709: </a>      *z = KokkosBlas::nrminf(xv);
+<a name="line710">710: </a>    }
+<a name="line711">711: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line712">712: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line713">713: </a>  }
+<a name="line714">714: </a>  <font color="#4169E1">return</font> 0;
+<a name="line715">715: </a>}
+
+<a name="line717">717: </a><font color="#B22222">/* A functor for DotNorm2 so that we can compute dp and nm in one kernel */</font>
+<a name="line718">718: </a><font color="#4169E1"><a name="DotNorm2"></a>struct DotNorm2 </font>{
+<a name="line719">719: </a>  <font color="#4169E1">typedef</font> <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>                           value_type[];
+<a name="line720">720: </a>  <font color="#4169E1">typedef</font> ConstPetscScalarKokkosView::size_type size_type;
+
+<a name="line722">722: </a>  size_type                  value_count;
+<a name="line723">723: </a>  ConstPetscScalarKokkosView xv_, yv_; <font color="#B22222">/* first and second vectors in <a href="../../../../../../docs/manualpages/Vec/VecDotNorm2.html">VecDotNorm2</a>. The order matters. */</font>
+
+<a name="line725">725: </a>  DotNorm2(ConstPetscScalarKokkosView &amp;xv, ConstPetscScalarKokkosView &amp;yv) : value_count(2), xv_(xv), yv_(yv) { }
+
+<a name="line727">727: </a>  KOKKOS_INLINE_FUNCTION void operator()(const size_type i, value_type result) const
+<a name="line728">728: </a>  {
+<a name="line729">729: </a>    result[0] += PetscConj(yv_(i)) * xv_(i);
+<a name="line730">730: </a>    result[1] += PetscConj(yv_(i)) * yv_(i);
+<a name="line731">731: </a>  }
+
+<a name="line733">733: </a>  KOKKOS_INLINE_FUNCTION void join(value_type dst, const value_type src) const
+<a name="line734">734: </a>  {
+<a name="line735">735: </a>    dst[0] += src[0];
+<a name="line736">736: </a>    dst[1] += src[1];
+<a name="line737">737: </a>  }
+
+<a name="line739">739: </a>  KOKKOS_INLINE_FUNCTION void init(value_type result) const
+<a name="line740">740: </a>  {
+<a name="line741">741: </a>    result[0] = 0.0;
+<a name="line742">742: </a>    result[1] = 0.0;
+<a name="line743">743: </a>  }
+<a name="line744">744: </a>};
+
+<a name="line746">746: </a><font color="#B22222">/* dp = y^H x, nm = y^H y */</font>
+<a name="line747">747: </a><strong><font color="#4169E1"><a name="VecDotNorm2_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecDotNorm2_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yin, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *dp, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *nm)</font></strong>
+<a name="line748">748: </a>{
+<a name="line749">749: </a>  ConstPetscScalarKokkosView xv, yv;
+<a name="line750">750: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>                result[2];
+
+<a name="line752">752: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line753">753: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line754">754: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(yin, &amp;yv);
+<a name="line755">755: </a>  DotNorm2 dn(xv, yv);
+<a name="line756">756: </a><strong><font color="#FF0000">  Kokkos:</font></strong>:parallel_reduce(xin-&gt;map-&gt;n, dn, result);
+<a name="line757">757: </a>  *dp = result[0];
+<a name="line758">758: </a>  *nm = result[1];
+<a name="line759">759: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(yin, &amp;yv);
+<a name="line760">760: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line761">761: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line762">762: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(4.0 * xin-&gt;map-&gt;n);
+<a name="line763">763: </a>  <font color="#4169E1">return</font> 0;
+<a name="line764">764: </a>}
+
+<a name="line766">766: </a><strong><font color="#4169E1"><a name="VecConjugate_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecConjugate_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin)</font></strong>
+<a name="line767">767: </a>{
+<a name="line768">768: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line769">769: </a>  PetscScalarKokkosView xv;
+
+<a name="line771">771: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line772">772: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(xin, &amp;xv);
+<a name="line773">773: </a><strong><font color="#FF0000">  Kokkos:</font></strong>:parallel_for(
+<a name="line774">774: </a>    xin-&gt;map-&gt;n, KOKKOS_LAMBDA(int64_t i) { xv(i) = PetscConj(xv(i)); });
+<a name="line775">775: </a>  <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(xin, &amp;xv);
+<a name="line776">776: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line777">777: </a><font color="#A020F0">#else</font>
+<a name="line778">778: </a><font color="#A020F0">#endif</font>
+<a name="line779">779: </a>  <font color="#4169E1">return</font> 0;
+<a name="line780">780: </a>}
+
+<a name="line782">782: </a><font color="#B22222">/* Temporarily replace the array in vin with a[]. Return to the original array with a call to <a href="../../../../../../docs/manualpages/Vec/VecResetArray.html">VecResetArray</a>() */</font>
+<a name="line783">783: </a><strong><font color="#4169E1"><a name="VecPlaceArray_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecPlaceArray_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> vin, const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *a)</font></strong>
+<a name="line784">784: </a>{
+<a name="line785">785: </a>  Vec_Seq    *vecseq = (Vec_Seq *)vin-&gt;data;
+<a name="line786">786: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(vin-&gt;spptr);
+
+<a name="line788">788: </a>  VecPlaceArray_Seq(vin, a);
+<a name="line789">789: </a>  veckok-&gt;UpdateArray&lt;Kokkos::HostSpace&gt;(vecseq-&gt;array);
+<a name="line790">790: </a>  <font color="#4169E1">return</font> 0;
+<a name="line791">791: </a>}
+
+<a name="line793">793: </a><strong><font color="#4169E1"><a name="VecResetArray_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecResetArray_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> vin)</font></strong>
+<a name="line794">794: </a>{
+<a name="line795">795: </a>  Vec_Seq    *vecseq = (Vec_Seq *)vin-&gt;data;
+<a name="line796">796: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(vin-&gt;spptr);
+
+<a name="line798">798: </a>  veckok-&gt;v_dual.sync_host();        <font color="#B22222">/* User wants to unhook the provided host array. Sync it so that user can get the latest */</font>
+<a name="line799">799: </a>  VecResetArray_Seq(vin); <font color="#B22222">/* Swap back the old host array, assuming its has the latest value */</font>
+<a name="line800">800: </a>  veckok-&gt;UpdateArray&lt;Kokkos::HostSpace&gt;(vecseq-&gt;array);
+<a name="line801">801: </a>  <font color="#4169E1">return</font> 0;
+<a name="line802">802: </a>}
+
+<a name="line804">804: </a><font color="#B22222">/* Replace the array in vin with a[] that must be allocated by <a href="../../../../../../docs/manualpages/Sys/PetscMalloc.html">PetscMalloc</a>. a[] is owned by vin afterwards. */</font>
+<a name="line805">805: </a><strong><font color="#4169E1"><a name="VecReplaceArray_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecReplaceArray_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> vin, const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *a)</font></strong>
+<a name="line806">806: </a>{
+<a name="line807">807: </a>  Vec_Seq    *vecseq = (Vec_Seq *)vin-&gt;data;
+<a name="line808">808: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(vin-&gt;spptr);
+
+<a name="line810">810: </a>  <font color="#B22222">/* Make sure the users array has the latest values */</font>
+<a name="line811">811: </a>  <font color="#4169E1">if</font> (vecseq-&gt;array != vecseq-&gt;array_allocated) veckok-&gt;v_dual.sync_host();
+<a name="line812">812: </a>  VecReplaceArray_Seq(vin, a);
+<a name="line813">813: </a>  veckok-&gt;UpdateArray&lt;Kokkos::HostSpace&gt;(vecseq-&gt;array);
+<a name="line814">814: </a>  <font color="#4169E1">return</font> 0;
+<a name="line815">815: </a>}
+
+<a name="line817">817: </a><font color="#B22222">/* Maps the local portion of vector v into vector w */</font>
+<a name="line818">818: </a><strong><font color="#4169E1"><a name="VecGetLocalVector_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecGetLocalVector_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> w)</font></strong>
+<a name="line819">819: </a>{
+<a name="line820">820: </a>  Vec_Seq    *vecseq = static_cast&lt;Vec_Seq *&gt;(w-&gt;data);
+<a name="line821">821: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(w-&gt;spptr);
+
+<a name="line824">824: </a>  <font color="#B22222">/* Destroy w-&gt;data, w-&gt;spptr */</font>
+<a name="line825">825: </a>  <font color="#4169E1">if</font> (vecseq) {
+<a name="line826">826: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(vecseq-&gt;array_allocated);
+<a name="line827">827: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(w-&gt;data);
+<a name="line828">828: </a>  }
+<a name="line829">829: </a>  delete veckok;
+
+<a name="line831">831: </a>  <font color="#B22222">/* Replace with v's */</font>
+<a name="line832">832: </a>  w-&gt;data  = v-&gt;data;
+<a name="line833">833: </a>  w-&gt;spptr = v-&gt;spptr;
+<a name="line834">834: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectStateIncrease.html">PetscObjectStateIncrease</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)w);
+<a name="line835">835: </a>  <font color="#4169E1">return</font> 0;
+<a name="line836">836: </a>}
+
+<a name="line838">838: </a><strong><font color="#4169E1"><a name="VecRestoreLocalVector_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecRestoreLocalVector_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> w)</font></strong>
+<a name="line839">839: </a>{
+<a name="line841">841: </a>  v-&gt;data  = w-&gt;data;
+<a name="line842">842: </a>  v-&gt;spptr = w-&gt;spptr;
+<a name="line843">843: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectStateIncrease.html">PetscObjectStateIncrease</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v);
+<a name="line844">844: </a>  <font color="#B22222">/* TODO: need to think if setting w-&gt;data/spptr to NULL is safe */</font>
+<a name="line845">845: </a>  w-&gt;data  = NULL;
+<a name="line846">846: </a>  w-&gt;spptr = NULL;
+<a name="line847">847: </a>  <font color="#4169E1">return</font> 0;
+<a name="line848">848: </a>}
+
+<a name="line850">850: </a><strong><font color="#4169E1"><a name="VecGetArray_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecGetArray_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **a)</font></strong>
+<a name="line851">851: </a>{
+<a name="line852">852: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(v-&gt;spptr);
+
+<a name="line854">854: </a>  veckok-&gt;v_dual.sync_host();
+<a name="line855">855: </a>  *a = *((<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **)v-&gt;data);
+<a name="line856">856: </a>  <font color="#4169E1">return</font> 0;
+<a name="line857">857: </a>}
+
+<a name="line859">859: </a><strong><font color="#4169E1"><a name="VecRestoreArray_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecRestoreArray_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **a)</font></strong>
+<a name="line860">860: </a>{
+<a name="line861">861: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(v-&gt;spptr);
+
+<a name="line863">863: </a>  veckok-&gt;v_dual.modify_host();
+<a name="line864">864: </a>  <font color="#4169E1">return</font> 0;
+<a name="line865">865: </a>}
+
+<a name="line867">867: </a><font color="#B22222">/* Get array on host to overwrite, so no need to sync host. In <a href="../../../../../../docs/manualpages/Vec/VecRestoreArrayWrite.html">VecRestoreArrayWrite</a>() we will mark host is modified. */</font>
+<a name="line868">868: </a><strong><font color="#4169E1"><a name="VecGetArrayWrite_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecGetArrayWrite_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **a)</font></strong>
+<a name="line869">869: </a>{
+<a name="line870">870: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(v-&gt;spptr);
+
+<a name="line872">872: </a>  veckok-&gt;v_dual.clear_sync_state();
+<a name="line873">873: </a>  *a = veckok-&gt;v_dual.view_host().data();
+<a name="line874">874: </a>  <font color="#4169E1">return</font> 0;
+<a name="line875">875: </a>}
+
+<a name="line877">877: </a><strong><font color="#4169E1"><a name="VecGetArrayAndMemType_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecGetArrayAndMemType_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **a, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a> *mtype)</font></strong>
+<a name="line878">878: </a>{
+<a name="line879">879: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(v-&gt;spptr);
+
+<a name="line881">881: </a>  <font color="#4169E1">if</font> (std::is_same&lt;DefaultMemorySpace, Kokkos::HostSpace&gt;::value) {
+<a name="line882">882: </a>    *a = veckok-&gt;v_dual.view_host().data();
+<a name="line883">883: </a>    <font color="#4169E1">if</font> (mtype) *mtype = <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_HOST</a>;
+<a name="line884">884: </a>  } <font color="#4169E1">else</font> {
+<a name="line885">885: </a>    <font color="#B22222">/* When there is device, we always return up-to-date device data */</font>
+<a name="line886">886: </a>    veckok-&gt;v_dual.sync_device();
+<a name="line887">887: </a>    *a = veckok-&gt;v_dual.view_device().data();
+<a name="line888">888: </a>    <font color="#4169E1">if</font> (mtype) *mtype = PETSC_MEMTYPE_KOKKOS;
+<a name="line889">889: </a>  }
+<a name="line890">890: </a>  <font color="#4169E1">return</font> 0;
+<a name="line891">891: </a>}
+
+<a name="line893">893: </a><strong><font color="#4169E1"><a name="VecRestoreArrayAndMemType_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecRestoreArrayAndMemType_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **a)</font></strong>
+<a name="line894">894: </a>{
+<a name="line895">895: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(v-&gt;spptr);
+
+<a name="line897">897: </a>  <font color="#4169E1">if</font> (std::is_same&lt;DefaultMemorySpace, Kokkos::HostSpace&gt;::value) {
+<a name="line898">898: </a>    veckok-&gt;v_dual.modify_host();
+<a name="line899">899: </a>  } <font color="#4169E1">else</font> {
+<a name="line900">900: </a>    veckok-&gt;v_dual.modify_device();
+<a name="line901">901: </a>  }
+<a name="line902">902: </a>  <font color="#4169E1">return</font> 0;
+<a name="line903">903: </a>}
+
+<a name="line905">905: </a><strong><font color="#4169E1"><a name="VecGetArrayWriteAndMemType_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecGetArrayWriteAndMemType_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **a, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a> *mtype)</font></strong>
+<a name="line906">906: </a>{
+<a name="line907">907: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(v-&gt;spptr);
+
+<a name="line909">909: </a>  <font color="#4169E1">if</font> (std::is_same&lt;DefaultMemorySpace, Kokkos::HostSpace&gt;::value) {
+<a name="line910">910: </a>    *a = veckok-&gt;v_dual.view_host().data();
+<a name="line911">911: </a>    <font color="#4169E1">if</font> (mtype) *mtype = <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_HOST</a>;
+<a name="line912">912: </a>  } <font color="#4169E1">else</font> {
+<a name="line913">913: </a>    <font color="#B22222">/* When there is device, we always return device data (but no need to sync the device) */</font>
+<a name="line914">914: </a>    veckok-&gt;v_dual.clear_sync_state(); <font color="#B22222">/* So that in restore, we can safely modify_device() */</font>
+<a name="line915">915: </a>    *a = veckok-&gt;v_dual.view_device().data();
+<a name="line916">916: </a>    <font color="#4169E1">if</font> (mtype) *mtype = PETSC_MEMTYPE_KOKKOS;
+<a name="line917">917: </a>  }
+<a name="line918">918: </a>  <font color="#4169E1">return</font> 0;
+<a name="line919">919: </a>}
+
+<a name="line921">921: </a><font color="#B22222">/* Copy xin's sync state to y */</font>
+<a name="line922">922: </a><strong><font color="#4169E1"><a name="VecCopySyncState_Kokkos_Private"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecCopySyncState_Kokkos_Private(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xin, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yout)</font></strong>
+<a name="line923">923: </a>{
+<a name="line924">924: </a>  Vec_Kokkos *xkok = static_cast&lt;Vec_Kokkos *&gt;(xin-&gt;spptr);
+<a name="line925">925: </a>  Vec_Kokkos *ykok = static_cast&lt;Vec_Kokkos *&gt;(yout-&gt;spptr);
+
+<a name="line927">927: </a>  ykok-&gt;v_dual.clear_sync_state();
+<a name="line928">928: </a>  <font color="#4169E1">if</font> (xkok-&gt;v_dual.need_sync_host()) {
+<a name="line929">929: </a>    ykok-&gt;v_dual.modify_device();
+<a name="line930">930: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (xkok-&gt;v_dual.need_sync_device()) {
+<a name="line931">931: </a>    ykok-&gt;v_dual.modify_host();
+<a name="line932">932: </a>  }
+<a name="line933">933: </a>  <font color="#4169E1">return</font> 0;
+<a name="line934">934: </a>}
+
+<a name="line936">936: </a><font color="#B22222">/* Interal routine shared by VecGetSubVector_{SeqKokkos,MPIKokkos} */</font>
+<a name="line937">937: </a><strong><font color="#4169E1"><a name="VecGetSubVector_Kokkos_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecGetSubVector_Kokkos_Private(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> xIsMPI, <a href="../../../../../../docs/manualpages/IS/IS.html">IS</a> is, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *y)</font></strong>
+<a name="line938">938: </a>{
+<a name="line939">939: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> contig;
+<a name="line940">940: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  n, N, start, bs;
+<a name="line941">941: </a>  <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm;
+<a name="line942">942: </a>  <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>       z;
+
+<a name="line944">944: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)x, &amp;comm);
+<a name="line945">945: </a>  <a href="../../../../../../docs/manualpages/IS/ISGetLocalSize.html">ISGetLocalSize</a>(is, &amp;n);
+<a name="line946">946: </a>  <a href="../../../../../../docs/manualpages/IS/ISGetSize.html">ISGetSize</a>(is, &amp;N);
+<a name="line947">947: </a>  VecGetSubVectorContiguityAndBS_Private(x, is, &amp;contig, &amp;start, &amp;bs);
+
+<a name="line949">949: </a>  <font color="#4169E1">if</font> (contig) { <font color="#B22222">/* We can do a no-copy (in-place) implementation with y sharing x's arrays */</font>
+<a name="line950">950: </a>    Vec_Kokkos        *xkok    = static_cast&lt;Vec_Kokkos *&gt;(x-&gt;spptr);
+<a name="line951">951: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array_h = xkok-&gt;v_dual.view_host().data() + start;
+<a name="line952">952: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array_d = xkok-&gt;v_dual.view_device().data() + start;
+
+<a name="line954">954: </a>    <font color="#B22222">/* These calls assume the input arrays are synced */</font>
+<a name="line955">955: </a>    <font color="#4169E1">if</font> (xIsMPI) VecCreateMPIKokkosWithArrays_Private(comm, bs, n, N, array_h, array_d, &amp;z); <font color="#B22222">/* x could be MPI even when x's comm size = 1 */</font>
+<a name="line956">956: </a>    <font color="#4169E1">else</font> VecCreateSeqKokkosWithArrays_Private(comm, bs, n, array_h, array_d, &amp;z);
+
+<a name="line958">958: </a>    VecCopySyncState_Kokkos_Private(x, z); <font color="#B22222">/* Copy x's sync state to z */</font>
+
+<a name="line960">960: </a>    <font color="#B22222">/* This is relevant only in debug mode */</font>
+<a name="line961">961: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> state = 0;
+<a name="line962">962: </a>    <a href="../../../../../../docs/manualpages/Vec/VecLockGet.html">VecLockGet</a>(x, &amp;state);
+<a name="line963">963: </a>    <font color="#4169E1">if</font> (state) { <font color="#B22222">/* x is either in read or read/write mode, therefore z, overlapped with x, can only be in read mode */</font>
+<a name="line964">964: </a>      <a href="../../../../../../docs/manualpages/Vec/VecLockReadPush.html">VecLockReadPush</a>(z);
+<a name="line965">965: </a>    }
+
+<a name="line967">967: </a>    z-&gt;ops-&gt;placearray   = NULL; <font color="#B22222">/* z's arrays can't be replaced, because z does not own them */</font>
+<a name="line968">968: </a>    z-&gt;ops-&gt;replacearray = NULL;
+
+<a name="line970">970: </a>  } <font color="#4169E1">else</font> { <font color="#B22222">/* Have to create a <a href="../../../../../../docs/manualpages/PetscSF/VecScatter.html">VecScatter</a> and a stand-alone vector */</font>
+<a name="line971">971: </a>    VecGetSubVectorThroughVecScatter_Private(x, is, bs, &amp;z);
+<a name="line972">972: </a>  }
+<a name="line973">973: </a>  *y = z;
+<a name="line974">974: </a>  <font color="#4169E1">return</font> 0;
+<a name="line975">975: </a>}
+
+<a name="line977">977: </a><strong><font color="#4169E1"><a name="VecGetSubVector_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecGetSubVector_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../../../docs/manualpages/IS/IS.html">IS</a> is, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *y)</font></strong>
+<a name="line978">978: </a>{
+<a name="line979">979: </a>  VecGetSubVector_Kokkos_Private(x, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, is, y);
+<a name="line980">980: </a>  <font color="#4169E1">return</font> 0;
+<a name="line981">981: </a>}
+
+<a name="line983">983: </a><font color="#B22222">/* Restore subvector y to x */</font>
+<a name="line984">984: </a><strong><font color="#4169E1"><a name="VecRestoreSubVector_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecRestoreSubVector_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../../../docs/manualpages/IS/IS.html">IS</a> is, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *y)</font></strong>
+<a name="line985">985: </a>{
+<a name="line986">986: </a>  <a href="../../../../../../docs/manualpages/PetscSF/VecScatter.html">VecScatter</a>                    vscat;
+<a name="line987">987: </a>  PETSC_UNUSED <a href="../../../../../../docs/manualpages/Sys/PetscObjectState.html">PetscObjectState</a> dummystate = 0;
+<a name="line988">988: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>                     unchanged;
+
+<a name="line990">990: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposedDataGetInt.html">PetscObjectComposedDataGetInt</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)*y, VecGetSubVectorSavedStateId, dummystate, unchanged);
+<a name="line991">991: </a>  <font color="#4169E1">if</font> (unchanged) <font color="#4169E1">return</font> 0; <font color="#B22222">/* If y's state has not changed since <a href="../../../../../../docs/manualpages/Vec/VecGetSubVector.html">VecGetSubVector</a>(), we only need to destroy it */</font>
+
+<a name="line993">993: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)*y, <font color="#666666">"VecGetSubVector_Scatter"</font>, (<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;vscat);
+<a name="line994">994: </a>  <font color="#4169E1">if</font> (vscat) {
+<a name="line995">995: </a>    <a href="../../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(vscat, *y, x, <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);
+<a name="line996">996: </a>    <a href="../../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(vscat, *y, x, <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);
+<a name="line997">997: </a>  } <font color="#4169E1">else</font> { <font color="#B22222">/* y and x's (host and device) arrays overlap */</font>
+<a name="line998">998: </a>    Vec_Kokkos *xkok = static_cast&lt;Vec_Kokkos *&gt;(x-&gt;spptr);
+<a name="line999">999: </a>    Vec_Kokkos *ykok = static_cast&lt;Vec_Kokkos *&gt;((*y)-&gt;spptr);
+<a name="line1000">1000: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    state;
+
+<a name="line1002">1002: </a>    <a href="../../../../../../docs/manualpages/Vec/VecLockGet.html">VecLockGet</a>(x, &amp;state);
+
+<a name="line1005">1005: </a>    <font color="#B22222">/* The tricky part: one has to carefully sync the arrays */</font>
+<a name="line1006">1006: </a>    <font color="#4169E1">if</font> (xkok-&gt;v_dual.need_sync_device()) {      <font color="#B22222">/* x's host has newer data */</font>
+<a name="line1007">1007: </a>      ykok-&gt;v_dual.sync_host();                 <font color="#B22222">/* Move y's latest values to host (since y is just a subset of x) */</font>
+<a name="line1008">1008: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (xkok-&gt;v_dual.need_sync_host()) { <font color="#B22222">/* x's device has newer data */</font>
+<a name="line1009">1009: </a>      ykok-&gt;v_dual.sync_device();               <font color="#B22222">/* Move y's latest data to device */</font>
+<a name="line1010">1010: </a>    } <font color="#4169E1">else</font> {                                    <font color="#B22222">/* x's host and device data is already sync'ed; Copy y's sync state to x */</font>
+<a name="line1011">1011: </a>      VecCopySyncState_Kokkos_Private(*y, x);
+<a name="line1012">1012: </a>    }
+<a name="line1013">1013: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscObjectStateIncrease.html">PetscObjectStateIncrease</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)x); <font color="#B22222">/* Since x is updated */</font>
+<a name="line1014">1014: </a>  }
+<a name="line1015">1015: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1016">1016: </a>}
+
+<a name="line1018">1018: </a><strong><font color="#4169E1"><a name="VecSetPreallocationCOO_SeqKokkos"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecSetPreallocationCOO_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> ncoo, const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> coo_i[])</font></strong>
+<a name="line1019">1019: </a>{
+<a name="line1020">1020: </a>  Vec_Seq    *vecseq = static_cast&lt;Vec_Seq *&gt;(x-&gt;data);
+<a name="line1021">1021: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(x-&gt;spptr);
+<a name="line1022">1022: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    m;
+
+<a name="line1024">1024: </a>  VecSetPreallocationCOO_Seq(x, ncoo, coo_i);
+<a name="line1025">1025: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(x, &amp;m);
+<a name="line1026">1026: </a>  veckok-&gt;SetUpCOO(vecseq, m);
+<a name="line1027">1027: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1028">1028: </a>}
+
+<a name="line1030">1030: </a><strong><font color="#4169E1"><a name="VecSetValuesCOO_SeqKokkos"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecSetValuesCOO_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> v[], <a href="../../../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a> imode)</font></strong>
+<a name="line1031">1031: </a>{
+<a name="line1032">1032: </a>  Vec_Seq                    *vecseq = static_cast&lt;Vec_Seq *&gt;(x-&gt;data);
+<a name="line1033">1033: </a>  Vec_Kokkos                 *veckok = static_cast&lt;Vec_Kokkos *&gt;(x-&gt;spptr);
+<a name="line1034">1034: </a>  const PetscCountKokkosView &amp;jmap1  = veckok-&gt;jmap1_d;
+<a name="line1035">1035: </a>  const PetscCountKokkosView &amp;perm1  = veckok-&gt;perm1_d;
+<a name="line1036">1036: </a>  PetscScalarKokkosView       xv; <font color="#B22222">/* View for vector x */</font>
+<a name="line1037">1037: </a>  ConstPetscScalarKokkosView  vv; <font color="#B22222">/* View for array v[] */</font>
+<a name="line1038">1038: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                    m;
+<a name="line1039">1039: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a>                memtype;
+
+<a name="line1041">1041: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(x, &amp;m);
+<a name="line1042">1042: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscGetMemType.html">PetscGetMemType</a>(v, &amp;memtype);
+<a name="line1043">1043: </a>  <font color="#4169E1">if</font> (PetscMemTypeHost(memtype)) { <font color="#B22222">/* If user gave v[] in host, we might need to copy it to device if any */</font>
+<a name="line1044">1044: </a>    vv = Kokkos::create_mirror_view_and_copy(DefaultMemorySpace(), ConstPetscScalarKokkosViewHost(v, vecseq-&gt;coo_n));
+<a name="line1045">1045: </a>  } <font color="#4169E1">else</font> {
+<a name="line1046">1046: </a>    vv = ConstPetscScalarKokkosView(v, vecseq-&gt;coo_n); <font color="#B22222">/* Directly use v[]'s memory */</font>
+<a name="line1047">1047: </a>  }
+
+<a name="line1049">1049: </a>  <font color="#4169E1">if</font> (imode == <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>) <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosViewWrite.html">VecGetKokkosViewWrite</a>(x, &amp;xv); <font color="#B22222">/* write vector */</font>
+<a name="line1050">1050: </a>  <font color="#4169E1">else</font> <a href="../../../../../../docs/manualpages/Vec/VecGetKokkosView.html">VecGetKokkosView</a>(x, &amp;xv);                             <font color="#B22222">/* read &amp; write vector */</font>
+
+<a name="line1052">1052: </a><strong><font color="#FF0000">  Kokkos:</font></strong>:parallel_for(
+<a name="line1053">1053: </a>    m, KOKKOS_LAMBDA(const <a href="../../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> i) {
+<a name="line1054">1054: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> sum = 0.0;
+<a name="line1055">1055: </a>      <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> k = jmap1(i); k &lt; jmap1(i + 1); k++) sum += vv(perm1(k));
+<a name="line1056">1056: </a>      xv(i) = (imode == <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a> ? 0.0 : xv(i)) + sum;
+<a name="line1057">1057: </a>    });
+
+<a name="line1059">1059: </a>  <font color="#4169E1">if</font> (imode == <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>) <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosViewWrite.html">VecRestoreKokkosViewWrite</a>(x, &amp;xv);
+<a name="line1060">1060: </a>  <font color="#4169E1">else</font> <a href="../../../../../../docs/manualpages/Vec/VecRestoreKokkosView.html">VecRestoreKokkosView</a>(x, &amp;xv);
+<a name="line1061">1061: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1062">1062: </a>}
+
+<a name="line1064">1064: </a><strong><font color="#4169E1"><a name="VecSetOps_SeqKokkos"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecSetOps_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v)</font></strong>
+<a name="line1065">1065: </a>{
+<a name="line1066">1066: </a>  v-&gt;ops-&gt;abs             = VecAbs_SeqKokkos;
+<a name="line1067">1067: </a>  v-&gt;ops-&gt;reciprocal      = VecReciprocal_SeqKokkos;
+<a name="line1068">1068: </a>  v-&gt;ops-&gt;pointwisemult   = VecPointwiseMult_SeqKokkos;
+<a name="line1069">1069: </a>  v-&gt;ops-&gt;min             = VecMin_SeqKokkos;
+<a name="line1070">1070: </a>  v-&gt;ops-&gt;max             = VecMax_SeqKokkos;
+<a name="line1071">1071: </a>  v-&gt;ops-&gt;sum             = VecSum_SeqKokkos;
+<a name="line1072">1072: </a>  v-&gt;ops-&gt;shift           = VecShift_SeqKokkos;
+<a name="line1073">1073: </a>  v-&gt;ops-&gt;norm            = VecNorm_SeqKokkos;
+<a name="line1074">1074: </a>  v-&gt;ops-&gt;scale           = VecScale_SeqKokkos;
+<a name="line1075">1075: </a>  v-&gt;ops-&gt;copy            = VecCopy_SeqKokkos;
+<a name="line1076">1076: </a>  v-&gt;ops-&gt;set             = VecSet_SeqKokkos;
+<a name="line1077">1077: </a>  v-&gt;ops-&gt;swap            = VecSwap_SeqKokkos;
+<a name="line1078">1078: </a>  v-&gt;ops-&gt;axpy            = VecAXPY_SeqKokkos;
+<a name="line1079">1079: </a>  v-&gt;ops-&gt;axpby           = VecAXPBY_SeqKokkos;
+<a name="line1080">1080: </a>  v-&gt;ops-&gt;axpbypcz        = VecAXPBYPCZ_SeqKokkos;
+<a name="line1081">1081: </a>  v-&gt;ops-&gt;pointwisedivide = VecPointwiseDivide_SeqKokkos;
+<a name="line1082">1082: </a>  v-&gt;ops-&gt;setrandom       = VecSetRandom_SeqKokkos;
+
+<a name="line1084">1084: </a>  v-&gt;ops-&gt;dot   = VecDot_SeqKokkos;
+<a name="line1085">1085: </a>  v-&gt;ops-&gt;tdot  = VecTDot_SeqKokkos;
+<a name="line1086">1086: </a>  v-&gt;ops-&gt;mdot  = VecMDot_SeqKokkos;
+<a name="line1087">1087: </a>  v-&gt;ops-&gt;mtdot = VecMTDot_SeqKokkos;
+
+<a name="line1089">1089: </a>  v-&gt;ops-&gt;dot_local   = VecDot_SeqKokkos;
+<a name="line1090">1090: </a>  v-&gt;ops-&gt;tdot_local  = VecTDot_SeqKokkos;
+<a name="line1091">1091: </a>  v-&gt;ops-&gt;mdot_local  = VecMDot_SeqKokkos;
+<a name="line1092">1092: </a>  v-&gt;ops-&gt;mtdot_local = VecMTDot_SeqKokkos;
+
+<a name="line1094">1094: </a>  v-&gt;ops-&gt;norm_local             = VecNorm_SeqKokkos;
+<a name="line1095">1095: </a>  v-&gt;ops-&gt;maxpy                  = VecMAXPY_SeqKokkos;
+<a name="line1096">1096: </a>  v-&gt;ops-&gt;aypx                   = VecAYPX_SeqKokkos;
+<a name="line1097">1097: </a>  v-&gt;ops-&gt;waxpy                  = VecWAXPY_SeqKokkos;
+<a name="line1098">1098: </a>  v-&gt;ops-&gt;dotnorm2               = VecDotNorm2_SeqKokkos;
+<a name="line1099">1099: </a>  v-&gt;ops-&gt;placearray             = VecPlaceArray_SeqKokkos;
+<a name="line1100">1100: </a>  v-&gt;ops-&gt;replacearray           = VecReplaceArray_SeqKokkos;
+<a name="line1101">1101: </a>  v-&gt;ops-&gt;resetarray             = VecResetArray_SeqKokkos;
+<a name="line1102">1102: </a>  v-&gt;ops-&gt;destroy                = VecDestroy_SeqKokkos;
+<a name="line1103">1103: </a>  v-&gt;ops-&gt;duplicate              = VecDuplicate_SeqKokkos;
+<a name="line1104">1104: </a>  v-&gt;ops-&gt;conjugate              = VecConjugate_SeqKokkos;
+<a name="line1105">1105: </a>  v-&gt;ops-&gt;getlocalvector         = VecGetLocalVector_SeqKokkos;
+<a name="line1106">1106: </a>  v-&gt;ops-&gt;restorelocalvector     = VecRestoreLocalVector_SeqKokkos;
+<a name="line1107">1107: </a>  v-&gt;ops-&gt;getlocalvectorread     = VecGetLocalVector_SeqKokkos;
+<a name="line1108">1108: </a>  v-&gt;ops-&gt;restorelocalvectorread = VecRestoreLocalVector_SeqKokkos;
+<a name="line1109">1109: </a>  v-&gt;ops-&gt;getarraywrite          = VecGetArrayWrite_SeqKokkos;
+<a name="line1110">1110: </a>  v-&gt;ops-&gt;getarray               = VecGetArray_SeqKokkos;
+<a name="line1111">1111: </a>  v-&gt;ops-&gt;restorearray           = VecRestoreArray_SeqKokkos;
+
+<a name="line1113">1113: </a>  v-&gt;ops-&gt;getarrayandmemtype      = VecGetArrayAndMemType_SeqKokkos;
+<a name="line1114">1114: </a>  v-&gt;ops-&gt;restorearrayandmemtype  = VecRestoreArrayAndMemType_SeqKokkos;
+<a name="line1115">1115: </a>  v-&gt;ops-&gt;getarraywriteandmemtype = VecGetArrayWriteAndMemType_SeqKokkos;
+<a name="line1116">1116: </a>  v-&gt;ops-&gt;getsubvector            = VecGetSubVector_SeqKokkos;
+<a name="line1117">1117: </a>  v-&gt;ops-&gt;restoresubvector        = VecRestoreSubVector_SeqKokkos;
+
+<a name="line1119">1119: </a>  v-&gt;ops-&gt;setpreallocationcoo = VecSetPreallocationCOO_SeqKokkos;
+<a name="line1120">1120: </a>  v-&gt;ops-&gt;setvaluescoo        = VecSetValuesCOO_SeqKokkos;
+<a name="line1121">1121: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1122">1122: </a>}
+
+<a name="line1124">1124: </a><font color="#B22222">/*MC</font>
+<a name="line1125">1125: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a> - <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a> = "seqkokkos" - The basic sequential vector, modified to use Kokkos</font>
+
+<a name="line1127">1127: </a><font color="#B22222">   Options Database Keys:</font>
+<a name="line1128">1128: </a><font color="#B22222">. -vec_type seqkokkos - sets the vector type to <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a> during a call to <a href="../../../../../../docs/manualpages/Vec/VecSetFromOptions.html">VecSetFromOptions</a>()</font>
+
+<a name="line1130">1130: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line1132">1132: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecSetType.html">VecSetType</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecSetFromOptions.html">VecSetFromOptions</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecCreateMPIWithArray.html">VecCreateMPIWithArray</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VECMPI.html">VECMPI</a>`, `<a href="../../../../../../docs/manualpages/Vec/VecType.html">VecType</a>`, `<a href="../../../../../../docs/manualpages/Vec/VecCreateMPI.html">VecCreateMPI</a>()`</font>
+<a name="line1133">1133: </a><font color="#B22222">M*/</font>
+<a name="line1134">1134: </a><strong><font color="#4169E1"><a name="VecCreate_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecCreate_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v)</font></strong>
+<a name="line1135">1135: </a>{
+<a name="line1136">1136: </a>  Vec_Seq    *vecseq;
+<a name="line1137">1137: </a>  Vec_Kokkos *veckok;
+
+<a name="line1139">1139: </a>  PetscKokkosInitializeCheck();
+<a name="line1140">1140: </a>  <a href="../../../../../../docs/manualpages/IS/PetscLayoutSetUp.html">PetscLayoutSetUp</a>(v-&gt;map);
+<a name="line1141">1141: </a>  VecCreate_Seq(v); <font color="#B22222">/* Build a sequential vector, allocate array */</font>
+<a name="line1142">1142: </a>  PetscObjectChangeTypeName((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a>);
+<a name="line1143">1143: </a>  VecSetOps_SeqKokkos(v);
+
+<a name="line1146">1146: </a>  vecseq         = static_cast&lt;Vec_Seq *&gt;(v-&gt;data);
+<a name="line1147">1147: </a>  veckok         = new Vec_Kokkos(v-&gt;map-&gt;n, vecseq-&gt;array, NULL); <font color="#B22222">/* Let host claim it has the latest data (zero) */</font>
+<a name="line1148">1148: </a>  v-&gt;spptr       = static_cast&lt;void *&gt;(veckok);
+<a name="line1149">1149: </a>  v-&gt;offloadmask = <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_KOKKOS</a>;
+<a name="line1150">1150: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1151">1151: </a>}
+
+<a name="line1153">1153: </a><font color="#B22222">/*@C</font>
+<a name="line1154">1154: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Vec/VecCreateSeqKokkosWithArray.html">VecCreateSeqKokkosWithArray</a> - Creates a Kokkos sequential array-style vector,</font>
+<a name="line1155">1155: </a><font color="#B22222">   where the user provides the array space to store the vector values. The array</font>
+<a name="line1156">1156: </a><font color="#B22222">   provided must be a device array.</font>
+
+<a name="line1158">1158: </a><font color="#B22222">   Collective</font>
+
+<a name="line1160">1160: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line1161">1161: </a><font color="#B22222">+  comm - the communicator, should be <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a></font>
+<a name="line1162">1162: </a><font color="#B22222">.  bs - the block size</font>
+<a name="line1163">1163: </a><font color="#B22222">.  n - the vector length</font>
+<a name="line1164">1164: </a><font color="#B22222">-  array - device memory where the vector elements are to be stored.</font>
+
+<a name="line1166">1166: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line1167">1167: </a><font color="#B22222">.  v - the vector</font>
+
+<a name="line1169">1169: </a><font color="#B22222">   Notes:</font>
+<a name="line1170">1170: </a><font color="#B22222">   Use <a href="../../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>() or <a href="../../../../../../docs/manualpages/Vec/VecDuplicateVecs.html">VecDuplicateVecs</a>() to form additional vectors of the</font>
+<a name="line1171">1171: </a><font color="#B22222">   same type as an existing vector.</font>
+
+<a name="line1173">1173: </a><font color="#B22222">   PETSc does NOT free the array when the vector is destroyed via <a href="../../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>().</font>
+<a name="line1174">1174: </a><font color="#B22222">   The user should not free the array until the vector is destroyed.</font>
+
+<a name="line1176">1176: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line1178">1178: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Vec/VecCreateMPICUDAWithArray.html">VecCreateMPICUDAWithArray</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecDuplicateVecs.html">VecDuplicateVecs</a>()`,</font>
+<a name="line1179">1179: </a><font color="#B22222">          `<a href="../../../../../../docs/manualpages/Vec/VecCreateGhost.html">VecCreateGhost</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecCreateSeq.html">VecCreateSeq</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecCreateSeqWithArray.html">VecCreateSeqWithArray</a>()`,</font>
+<a name="line1180">1180: </a><font color="#B22222">          `<a href="../../../../../../docs/manualpages/Vec/VecCreateMPIWithArray.html">VecCreateMPIWithArray</a>()`</font>
+<a name="line1181">1181: </a><font color="#B22222">@*/</font>
+<a name="line1182">1182: </a><strong><font color="#4169E1"><a name="VecCreateSeqKokkosWithArray"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecCreateSeqKokkosWithArray.html">VecCreateSeqKokkosWithArray</a>(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> bs, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> darray[], <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *v)</font></strong>
+<a name="line1183">1183: </a>{
+<a name="line1184">1184: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>  size;
+<a name="line1185">1185: </a>  <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>          w;
+<a name="line1186">1186: </a>  Vec_Kokkos  *veckok = NULL;
+<a name="line1187">1187: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *harray;
+
+<a name="line1189">1189: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+
+<a name="line1192">1192: </a>  PetscKokkosInitializeCheck();
+<a name="line1193">1193: </a>  <a href="../../../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>(comm, &amp;w);
+<a name="line1194">1194: </a>  <a href="../../../../../../docs/manualpages/Vec/VecSetSizes.html">VecSetSizes</a>(w, n, n);
+<a name="line1195">1195: </a>  <a href="../../../../../../docs/manualpages/Vec/VecSetBlockSize.html">VecSetBlockSize</a>(w, bs);
+<a name="line1196">1196: </a>  <font color="#4169E1">if</font> (!darray) { <font color="#B22222">/* Allocate memory ourself if user provided NULL */</font>
+<a name="line1197">1197: </a>    <a href="../../../../../../docs/manualpages/Vec/VecSetType.html">VecSetType</a>(w, <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a>);
+<a name="line1198">1198: </a>  } <font color="#4169E1">else</font> {
+<a name="line1199">1199: </a>    <font color="#B22222">/* Build a <a href="../../../../../../docs/manualpages/Vec/VECSEQ.html">VECSEQ</a>, get its harray, and then build Vec_Kokkos along with darray */</font>
+<a name="line1200">1200: </a>    <font color="#4169E1">if</font> (std::is_same&lt;DefaultMemorySpace, Kokkos::HostSpace&gt;::value) {
+<a name="line1201">1201: </a>      harray = const_cast&lt;<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *&gt;(darray);
+<a name="line1202">1202: </a>      VecCreate_Seq_Private(w, harray); <font color="#B22222">/* Build a sequential vector with harray */</font>
+<a name="line1203">1203: </a>    } <font color="#4169E1">else</font> {
+<a name="line1204">1204: </a>      <a href="../../../../../../docs/manualpages/Vec/VecSetType.html">VecSetType</a>(w, <a href="../../../../../../docs/manualpages/Vec/VECSEQ.html">VECSEQ</a>);
+<a name="line1205">1205: </a>      harray = static_cast&lt;Vec_Seq *&gt;(w-&gt;data)-&gt;array;
+<a name="line1206">1206: </a>    }
+<a name="line1207">1207: </a>    PetscObjectChangeTypeName((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)w, <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a>); <font color="#B22222">/* Change it to Kokkos */</font>
+<a name="line1208">1208: </a>    VecSetOps_SeqKokkos(w);
+<a name="line1209">1209: </a>    veckok = new Vec_Kokkos(n, harray, const_cast&lt;<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *&gt;(darray));
+<a name="line1210">1210: </a>    veckok-&gt;v_dual.modify_device(); <font color="#B22222">/* Mark the device is modified */</font>
+<a name="line1211">1211: </a>    w-&gt;offloadmask = <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_KOKKOS</a>;
+<a name="line1212">1212: </a>    w-&gt;spptr       = static_cast&lt;void *&gt;(veckok);
+<a name="line1213">1213: </a>  }
+<a name="line1214">1214: </a>  *v = w;
+<a name="line1215">1215: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1216">1216: </a>}
+
+<a name="line1218">1218: </a><font color="#B22222">/*</font>
+<a name="line1219">1219: </a><font color="#B22222">   VecCreateSeqKokkosWithArrays_Private - Creates a Kokkos sequential array-style vector</font>
+<a name="line1220">1220: </a><font color="#B22222">   with user-provided arrays on host and device.</font>
+
+<a name="line1222">1222: </a><font color="#B22222">   Collective</font>
+
+<a name="line1224">1224: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line1225">1225: </a><font color="#B22222">+  comm - the communicator, should be <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a></font>
+<a name="line1226">1226: </a><font color="#B22222">.  bs - the block size</font>
+<a name="line1227">1227: </a><font color="#B22222">.  n - the vector length</font>
+<a name="line1228">1228: </a><font color="#B22222">.  harray - host memory where the vector elements are to be stored.</font>
+<a name="line1229">1229: </a><font color="#B22222">-  darray - device memory where the vector elements are to be stored.</font>
+
+<a name="line1231">1231: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line1232">1232: </a><font color="#B22222">.  v - the vector</font>
+
+<a name="line1234">1234: </a><font color="#B22222">   Notes:</font>
+<a name="line1235">1235: </a><font color="#B22222">   Unlike <a href="../../../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>{Seq,MPI}CUDAWithArrays(), this routine is private since we do not expect users to use it directly.</font>
+
+<a name="line1237">1237: </a><font color="#B22222">   If there is no device, then harray and darray must be the same.</font>
+<a name="line1238">1238: </a><font color="#B22222">   If n is not zero, then harray and darray must be allocated.</font>
+<a name="line1239">1239: </a><font color="#B22222">   After the call, the created vector is supposed to be in a synchronized state, i.e.,</font>
+<a name="line1240">1240: </a><font color="#B22222">   we suppose harray and darray have the same data.</font>
+
+<a name="line1242">1242: </a><font color="#B22222">   PETSc does NOT free the array when the vector is destroyed via <a href="../../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>().</font>
+<a name="line1243">1243: </a><font color="#B22222">   Caller should not free the array until the vector is destroyed.</font>
+<a name="line1244">1244: </a><font color="#B22222">*/</font>
+<a name="line1245">1245: </a><strong><font color="#4169E1"><a name="VecCreateSeqKokkosWithArrays_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecCreateSeqKokkosWithArrays_Private(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> bs, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> harray[], const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> darray[], <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *v)</font></strong>
+<a name="line1246">1246: </a>{
+<a name="line1247">1247: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size;
+<a name="line1248">1248: </a>  <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>         w;
+
+<a name="line1250">1250: </a>  PetscKokkosInitializeCheck();
+<a name="line1251">1251: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line1253">1253: </a>  <font color="#4169E1">if</font> (n) {
+<a name="line1256">1256: </a>  }
+
+<a name="line1259">1259: </a>  <a href="../../../../../../docs/manualpages/Vec/VecCreateSeqWithArray.html">VecCreateSeqWithArray</a>(comm, bs, n, harray, &amp;w);
+<a name="line1260">1260: </a>  PetscObjectChangeTypeName((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)w, <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a>); <font color="#B22222">/* Change it to Kokkos */</font>
+<a name="line1261">1261: </a>  VecSetOps_SeqKokkos(w);
+<a name="line1262">1262: </a>  w-&gt;spptr = new Vec_Kokkos(n, const_cast&lt;<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *&gt;(harray), const_cast&lt;<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *&gt;(darray));
+<a name="line1263">1263: </a>  w-&gt;offloadmask = <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_KOKKOS</a>;
+<a name="line1264">1264: </a>  *v             = w;
+<a name="line1265">1265: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1266">1266: </a>}
+
+<a name="line1268">1268: </a><font color="#B22222">/* TODO: ftn-auto generates veckok.kokkosf.c */</font>
+<a name="line1269">1269: </a><font color="#B22222">/*@C</font>
+<a name="line1270">1270: </a><font color="#B22222"> <a href="../../../../../../docs/manualpages/Vec/VecCreateSeqKokkos.html">VecCreateSeqKokkos</a> - Creates a standard, sequential array-style vector.</font>
+
+<a name="line1272">1272: </a><font color="#B22222"> Collective</font>
+
+<a name="line1274">1274: </a><font color="#B22222"> Input Parameter:</font>
+<a name="line1275">1275: </a><font color="#B22222"> +  comm - the communicator, should be <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a></font>
+<a name="line1276">1276: </a><font color="#B22222"> -  n - the vector length</font>
+
+<a name="line1278">1278: </a><font color="#B22222"> Output Parameter:</font>
+<a name="line1279">1279: </a><font color="#B22222"> .  v - the vector</font>
+
+<a name="line1281">1281: </a><font color="#B22222"> Notes:</font>
+<a name="line1282">1282: </a><font color="#B22222"> Use <a href="../../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>() or <a href="../../../../../../docs/manualpages/Vec/VecDuplicateVecs.html">VecDuplicateVecs</a>() to form additional vectors of the</font>
+<a name="line1283">1283: </a><font color="#B22222"> same type as an existing vector.</font>
+
+<a name="line1285">1285: </a><font color="#B22222"> Level: intermediate</font>
+
+<a name="line1287">1287: </a><font color="#B22222"> .seealso: `<a href="../../../../../../docs/manualpages/Vec/VecCreateMPI.html">VecCreateMPI</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecDuplicateVecs.html">VecDuplicateVecs</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecCreateGhost.html">VecCreateGhost</a>()`</font>
+<a name="line1288">1288: </a><font color="#B22222"> @*/</font>
+<a name="line1289">1289: </a><strong><font color="#4169E1"><a name="VecCreateSeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecCreateSeqKokkos.html">VecCreateSeqKokkos</a>(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *v)</font></strong>
+<a name="line1290">1290: </a>{
+<a name="line1291">1291: </a>  PetscKokkosInitializeCheck();
+<a name="line1292">1292: </a>  <a href="../../../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>(comm, v);
+<a name="line1293">1293: </a>  <a href="../../../../../../docs/manualpages/Vec/VecSetSizes.html">VecSetSizes</a>(*v, n, n);
+<a name="line1294">1294: </a>  <a href="../../../../../../docs/manualpages/Vec/VecSetType.html">VecSetType</a>(*v, <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a>); <font color="#B22222">/* Calls VecCreate_SeqKokkos */</font>
+<a name="line1295">1295: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1296">1296: </a>}
+
+<a name="line1298">1298: </a><font color="#B22222">/* Duplicate layout etc but not the values in the input vector */</font>
+<a name="line1299">1299: </a><strong><font color="#4169E1"><a name="VecDuplicate_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecDuplicate_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> win, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *v)</font></strong>
+<a name="line1300">1300: </a>{
+<a name="line1301">1301: </a>  VecDuplicate_Seq(win, v); <font color="#B22222">/* It also dups ops of win */</font>
+<a name="line1302">1302: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1303">1303: </a>}
+
+<a name="line1305">1305: </a><strong><font color="#4169E1"><a name="VecDestroy_SeqKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecDestroy_SeqKokkos(<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v)</font></strong>
+<a name="line1306">1306: </a>{
+<a name="line1307">1307: </a>  Vec_Kokkos *veckok = static_cast&lt;Vec_Kokkos *&gt;(v-&gt;spptr);
+<a name="line1308">1308: </a>  Vec_Seq    *vecseq = static_cast&lt;Vec_Seq *&gt;(v-&gt;data);
+
+<a name="line1310">1310: </a>  delete veckok;
+<a name="line1311">1311: </a>  v-&gt;spptr = NULL;
+<a name="line1312">1312: </a>  <font color="#4169E1">if</font> (vecseq) VecDestroy_Seq(v);
+<a name="line1313">1313: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1314">1314: </a>}
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,51 @@
+# MatCreateSubMatrixVirtual
+Creates a virtual matrix `MATSUBMATRIX` that acts as a submatrix 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatCreateSubMatrixVirtual(Mat A, IS isrow, IS iscol, Mat *newmat)
+```
+Collective
+
+
+## Input Parameters
+
+- ***A -*** matrix that we will extract a submatrix of
+- ***isrow -*** rows to be present in the submatrix
+- ***iscol -*** columns to be present in the submatrix
+
+
+
+## Output Parameters
+
+- ***newmat -*** new matrix
+
+
+
+
+
+## Note
+Most will use `MatCreateSubMatrix()` which provides a more efficient representation if it is available.
+
+
+## Developer Note
+The `MatType` is `MATSUBMATRIX` but the routines associated have `SubMatrixVirtual` in them, the `MatType` should likely be changed
+
+
+## See Also
+ `MATSUBMATRIX`, `MATLOCALREF`, `MatCreateLocalRef()`, `MatCreateSubMatrix()`, `MatSubMatrixVirtualUpdate()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/submat/submat.c.html#MatCreateSubMatrixVirtual">src/mat/impls/submat/submat.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/submat/submat.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,55 @@
+# PetscObjectSetName
+Sets a string name associated with a PETSc object. 
+## Synopsis
+```
+#include "petscsys.h"   
+PetscErrorCode PetscObjectSetName(PetscObject obj, const char name[])
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***obj -*** the Petsc variable
+Thus must be cast with a (`PetscObject`), for example,
+`PetscObjectSetName`((`PetscObject`)mat,name);
+- ***name -*** the name to give obj
+
+
+
+
+
+## Note
+If this routine is not called then the object may end up being name by `PetscObjectName()`.
+
+
+## See Also
+ `PetscObjectGetName()`, `PetscObjectName()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/objects/pname.c.html#PetscObjectSetName">src/sys/objects/pname.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/utils/tagger/tutorials/ex1.c.html">src/vec/vec/utils/tagger/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex10.c.html">src/vec/vec/tutorials/ex10.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex19.c.html">src/vec/vec/tutorials/ex19.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex3.c.html">src/vec/vec/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex31.c.html">src/vec/vec/tutorials/ex31.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex4f.F90.html">src/vec/vec/tutorials/ex4f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex4f90.F90.html">src/vec/vec/tutorials/ex4f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex10.c.html">src/mat/tutorials/ex10.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex3.c.html">src/mat/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/tutorials/ex10.c.html">src/dm/impls/plex/tutorials/ex10.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/tutorials/ex13.c.html">src/dm/impls/plex/tutorials/ex13.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/objects/pname.c)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

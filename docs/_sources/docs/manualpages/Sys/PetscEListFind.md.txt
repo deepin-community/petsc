@@ -1,0 +1,48 @@
+# PetscEListFind
+searches list of strings for given string, using case insensitive matching 
+## Synopsis
+```
+#include "petscsys.h"   
+PetscErrorCode PetscEListFind(PetscInt n, const char *const *list, const char *str, PetscInt *value, PetscBool *found)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***n -*** number of strings in
+- ***list -*** list of strings to search
+- ***str -*** string to look for, empty string "" accepts default (first entry in list)
+
+
+
+## Output Parameters
+
+- ***value -*** index of matching string (if found)
+- ***found -*** boolean indicating whether string was found (can be NULL)
+
+
+
+## Fortran Note
+Not for use in Fortran
+
+
+
+
+## See Also
+ `PetscEnumFind()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/utils/str.c.html#PetscEListFind">src/sys/utils/str.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/utils/str.c)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

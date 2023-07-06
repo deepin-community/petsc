@@ -1,0 +1,5 @@
+debian/docs/_static/auto-render.min.js
+debian/docs/_static/katex.min.js
+docs/_static/clipboard.min.js
+docs/_static/jquery.js
+docs/_static/underscore.js

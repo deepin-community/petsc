@@ -1,0 +1,29 @@
+# KSPCGType
+Determines what type of CG to use 
+## Synopsis
+```
+typedef enum {
+  KSP_CG_SYMMETRIC = 0,
+  KSP_CG_HERMITIAN = 1
+} KSPCGType;
+```
+
+
+
+## See Also
+ `KSPCGSetType()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscksp.h.html#KSPCGType">include/petscksp.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscksp.h)
+
+
+[Index of all KSP routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

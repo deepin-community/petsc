@@ -1,0 +1,159 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/objects/device/impls/cupm/cupmstream.hpp">Actual source code: cupmstream.hpp</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:58+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#ifndef PETSC_CUPMSTREAM_HPP</font>
+<a name="line2">  2: </a><strong><font color="#228B22">#define PETSC_CUPMSTREAM_HPP</font></strong>
+
+<a name="line4">  4: </a>#include <A href="../../../../../../include/petsc/private/cupminterface.hpp.html">&lt;petsc/private/cupminterface.hpp&gt;</A>
+
+<a name="line6">  6: </a><font color="#A020F0">#include </font><font color="#666666">"../segmentedmempool.hpp"</font><font color="#A020F0"></font>
+<a name="line7">  7: </a><font color="#A020F0">#include </font><font color="#666666">"cupmevent.hpp"</font><font color="#A020F0"></font>
+
+<a name="line9">  9: </a><font color="#A020F0">#if defined(__cplusplus)</font>
+<a name="line10"> 10: </a>namespace Petsc
+<a name="line11"> 11: </a>{
+
+<a name="line13"> 13: </a>namespace device
+<a name="line14"> 14: </a>{
+
+<a name="line16"> 16: </a>namespace cupm
+<a name="line17"> 17: </a>{
+
+<a name="line19"> 19: </a>// A bare wrapper around a cupmStream_t. The reason it exists is because we need to uniquely
+<a name="line20"> 20: </a>// identify separate cupm streams. This is so that the memory pool can accelerate allocation
+<a name="line21"> 21: </a>// calls as it can just pass back a pointer to memory that was used on the same
+<a name="line22"> 22: </a>// stream. Otherwise it must either serialize with another stream or allocate a new chunk.
+<a name="line23"> 23: </a>// Address of the objects does not suffice since cupmStreams are very likely internally reused.
+
+<a name="line25"> 25: </a>template &lt;DeviceType T&gt;
+<a name="line26"> 26: </a>class CUPMStream : public StreamBase&lt;CUPMStream&lt;T&gt;&gt;, impl::Interface&lt;T&gt; {
+<a name="line27"> 27: </a>  using crtp_base_type = StreamBase&lt;CUPMStream&lt;T&gt;&gt;;
+<a name="line28"> 28: </a>  friend crtp_base_type;
+
+<a name="line30"> 30: </a><strong><font color="#FF0000">public:</font></strong>
+<a name="line31"> 31: </a>  PETSC_CUPM_INHERIT_INTERFACE_TYPEDEFS_USING(interface_type, T);
+
+<a name="line33"> 33: </a>  using stream_type = cupmStream_t;
+<a name="line34"> 34: </a>  using id_type     = typename crtp_base_type::id_type;
+<a name="line35"> 35: </a>  using event_type  = CUPMEvent&lt;T&gt;;
+<a name="line36"> 36: </a>  using flag_type   = unsigned int;
+
+<a name="line38"> 38: </a>  CUPMStream() noexcept = <font color="#4169E1">default</font>;
+
+<a name="line40"> 40: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> destroy() noexcept;
+<a name="line41"> 41: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> create(flag_type) noexcept;
+<a name="line42"> 42: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> change_type(<a href="../../../../../../docs/manualpages/Sys/PetscStreamType.html">PetscStreamType</a>) noexcept;
+
+<a name="line44"> 44: </a><strong><font color="#FF0000">private:</font></strong>
+<a name="line45"> 45: </a>  stream_type stream_{};
+<a name="line46"> 46: </a>  id_type     id_ = new_id_();
+
+<a name="line48"> 48: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static id_type new_id_() noexcept;
+
+<a name="line50"> 50: </a>  // CRTP implementations
+<a name="line51"> 51: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> stream_type    get_stream_() const noexcept;
+<a name="line52"> 52: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> id_type        get_id_() const noexcept;
+<a name="line53"> 53: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> record_event_(event_type &amp;) const noexcept;
+<a name="line54"> 54: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> wait_for_(event_type &amp;) const noexcept;
+<a name="line55"> 55: </a>};
+
+<a name="line57"> 57: </a>template &lt;DeviceType T&gt;
+<a name="line58"> 58: </a>inline <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMStream&lt;T&gt;::destroy() noexcept
+<a name="line59"> 59: </a>{
+<a name="line60"> 60: </a>  <font color="#4169E1">if</font> (stream_) {
+<a name="line61"> 61: </a>    cupmStreamDestroy(stream_);
+<a name="line62"> 62: </a>    stream_ = cupmStream_t{};
+<a name="line63"> 63: </a>    id_     = 0;
+<a name="line64"> 64: </a>  }
+<a name="line65"> 65: </a>  <font color="#4169E1">return</font> 0;
+<a name="line66"> 66: </a>}
+
+<a name="line68"> 68: </a>template &lt;DeviceType T&gt;
+<a name="line69"> 69: </a>inline <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMStream&lt;T&gt;::create(flag_type flags) noexcept
+<a name="line70"> 70: </a>{
+<a name="line71"> 71: </a>  <font color="#4169E1">if</font> (stream_) {
+<a name="line72"> 72: </a>    <font color="#4169E1">if</font> (<a href="../../../../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG)) {
+<a name="line73"> 73: </a>      flag_type current_flags;
+
+<a name="line75"> 75: </a>      cupmStreamGetFlags(stream_, &amp;current_flags);
+<a name="line77"> 77: </a>    }
+<a name="line78"> 78: </a>    <font color="#4169E1">return</font> 0;
+<a name="line79"> 79: </a>  }
+<a name="line80"> 80: </a>  cupmStreamCreateWithFlags(&amp;stream_, flags);
+<a name="line81"> 81: </a>  id_ = new_id_();
+<a name="line82"> 82: </a>  <font color="#4169E1">return</font> 0;
+<a name="line83"> 83: </a>}
+
+<a name="line85"> 85: </a>template &lt;DeviceType T&gt;
+<a name="line86"> 86: </a>inline <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMStream&lt;T&gt;::change_type(<a href="../../../../../../docs/manualpages/Sys/PetscStreamType.html">PetscStreamType</a> newtype) noexcept
+<a name="line87"> 87: </a>{
+<a name="line88"> 88: </a>  <font color="#4169E1">if</font> (newtype == <a href="../../../../../../docs/manualpages/Sys/PetscStreamType.html">PETSC_STREAM_GLOBAL_BLOCKING</a>) {
+<a name="line89"> 89: </a>    destroy();
+<a name="line90"> 90: </a>  } <font color="#4169E1">else</font> {
+<a name="line91"> 91: </a>    const flag_type preferred = newtype == <a href="../../../../../../docs/manualpages/Sys/PetscStreamType.html">PETSC_STREAM_DEFAULT_BLOCKING</a> ? cupmStreamDefault : cupmStreamNonBlocking;
+
+<a name="line93"> 93: </a>    <font color="#4169E1">if</font> (stream_) {
+<a name="line94"> 94: </a>      flag_type flag;
+
+<a name="line96"> 96: </a>      cupmStreamGetFlags(stream_, &amp;flag);
+<a name="line97"> 97: </a>      <font color="#4169E1">if</font> ((flag != preferred) || (cupmStreamQuery(stream_) != cupmSuccess)) destroy();
+<a name="line98"> 98: </a>    }
+<a name="line99"> 99: </a>    create(preferred);
+<a name="line100">100: </a>  }
+<a name="line101">101: </a>  <font color="#4169E1">return</font> 0;
+<a name="line102">102: </a>}
+
+<a name="line104">104: </a>template &lt;DeviceType T&gt;
+<a name="line105">105: </a>inline typename CUPMStream&lt;T&gt;::id_type CUPMStream&lt;T&gt;::new_id_() noexcept
+<a name="line106">106: </a>{
+<a name="line107">107: </a>  static id_type id = 0;
+<a name="line108">108: </a>  <font color="#4169E1">return</font> id++;
+<a name="line109">109: </a>}
+
+<a name="line111">111: </a>// CRTP implementations
+<a name="line112">112: </a>template &lt;DeviceType T&gt;
+<a name="line113">113: </a>inline typename CUPMStream&lt;T&gt;::stream_type CUPMStream&lt;T&gt;::get_stream_() const noexcept
+<a name="line114">114: </a>{
+<a name="line115">115: </a>  <font color="#4169E1">return</font> stream_;
+<a name="line116">116: </a>}
+
+<a name="line118">118: </a>template &lt;DeviceType T&gt;
+<a name="line119">119: </a>inline typename CUPMStream&lt;T&gt;::id_type CUPMStream&lt;T&gt;::get_id_() const noexcept
+<a name="line120">120: </a>{
+<a name="line121">121: </a>  <font color="#4169E1">return</font> id_;
+<a name="line122">122: </a>}
+
+<a name="line124">124: </a>template &lt;DeviceType T&gt;
+<a name="line125">125: </a>inline <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMStream&lt;T&gt;::record_event_(event_type &amp;event) const noexcept
+<a name="line126">126: </a>{
+<a name="line127">127: </a>  event.record(stream_);
+<a name="line128">128: </a>  <font color="#4169E1">return</font> 0;
+<a name="line129">129: </a>}
+
+<a name="line131">131: </a>template &lt;DeviceType T&gt;
+<a name="line132">132: </a>inline <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMStream&lt;T&gt;::wait_for_(event_type &amp;event) const noexcept
+<a name="line133">133: </a>{
+<a name="line134">134: </a>  cupmStreamWaitEvent(stream_, event.get(), 0);
+<a name="line135">135: </a>  <font color="#4169E1">return</font> 0;
+<a name="line136">136: </a>}
+
+<a name="line138">138: </a>} // namespace cupm
+
+<a name="line140">140: </a>} // namespace device
+
+<a name="line142">142: </a>} // namespace Petsc
+<a name="line143">143: </a><font color="#A020F0">#endif // __cplusplus</font>
+
+<a name="line145">145: </a><font color="#A020F0">#endif // PETSC_CUPMSTREAM_HPP</font>
+</pre>
+</body>
+
+</html>

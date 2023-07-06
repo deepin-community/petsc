@@ -1,0 +1,5 @@
+#! /bin/sh
+echo usr/lib/${DEB_HOST_MULTIARCH}/libpetsc_complex.so.${PETSC_VERSION}  ${PETSC_COMPLEX_DIR_PREFIX}/lib/libpetsc_complex.so.${PETSC_VERSION}
+for common in include/petsc lib/petsc/bin share; do
+  echo usr/share/petsc/${PETSC_SONAME_VERSION}/${common} ${PETSC_COMPLEX_DIR_PREFIX}/${common}
+done

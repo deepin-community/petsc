@@ -1,0 +1,28 @@
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:49+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">-include ../../../../petscdir.mk
+
+LOCDIR          = src/ts/tutorials/multirate/
+MANSEC          = <a href="ROOT/docs/manualpages/TS/TS.html">TS</a>
+OBJECTS_FV      = finitevolume1d.o
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+
+<strong><font color="#FF0000">ex4:</font></strong> ex4.o $(OBJECTS_FV)
+<strong><font color="#FF0000">ex5:</font></strong> ex5.o $(OBJECTS_FV)
+<strong><font color="#FF0000">ex6:</font></strong> ex6.o $(OBJECTS_FV)
+<strong><font color="#FF0000">ex8:</font></strong> ex8.o $(OBJECTS_FV)
+
+include ${PETSC_DIR}/lib/petsc/conf/test
+</pre>
+</body>
+
+</html>

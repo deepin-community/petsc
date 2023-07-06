@@ -1,0 +1,40 @@
+# PetscDualSpaceTransformType
+The type of function transform 
+## Notes
+These transforms, and their inverses, are used to move functions and functionals between the reference element and real space.
+Suppose that we have a mapping $\phi$ which maps the reference cell to real space, and its Jacobian $J$. If we want to transform function $F$ on the reference element,
+so that it acts on real space, we use the pushforward transform $\sigma^*$. The pullback $\sigma_*$ is the inverse transform.
+
+```none
+Covariant Piola: $\sigma^*(F) = J^{-T} F \circ \phi^{-1)$
+```
+```none
+Contravariant Piola: $\sigma^*(F) = 1/|J| J F \circ \phi^{-1)$
+```
+
+
+## References
+
+- ***Rognes, Kirby, and Logg, Efficient Assembly of Hdiv and Hrot Conforming Finite Elements, SISC, 31(6), 4130-*** 4151, arXiv 1205.3085, 2010
+
+
+
+
+
+## See Also
+ `PetscDualSpaceGetDeRahm()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscfetypes.h.html#PetscDualSpaceTransformType">include/petscfetypes.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscfetypes.h)
+
+
+[Index of all FE routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

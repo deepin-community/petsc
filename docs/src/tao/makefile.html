@@ -1,0 +1,23 @@
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:52+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">-include ../../petscdir.mk
+
+SOURCEH  = ../../include/petsctao.h ../../include/petsctaolinesearch.h ../../include/petsc/private/taoimpl.h ../../include/petsc/private/taolinesearchimpl.h
+DIRS     = interface util unconstrained constrained bound quadratic complementarity linesearch matrix leastsquares pde_constrained shell python f90-mod tutorials
+MANSEC   = <a href="ROOT/docs/manualpages/Tao/Tao.html">Tao</a>
+LOCDIR   = src/tao/
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+include ${PETSC_DIR}/lib/petsc/conf/test
+</pre>
+</body>
+
+</html>

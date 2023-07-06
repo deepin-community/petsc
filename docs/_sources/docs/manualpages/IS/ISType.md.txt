@@ -1,0 +1,31 @@
+# ISType
+String with the name of a PETSc index set type 
+## Synopsis
+```
+#include "petscis.h" 
+typedef const char *ISType;
+#define ISGENERAL "general"
+#define ISSTRIDE  "stride"
+#define ISBLOCK   "block"
+
+```
+
+
+
+## See Also
+ `ISSetType()`, `IS`, `ISCreate()`, `ISRegister()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscis.h.html#ISType">include/petscis.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscis.h)
+
+
+[Index of all IS routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

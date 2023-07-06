@@ -1,0 +1,1077 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/coarsen/impls/hem/hem.c">Actual source code: hem.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:15+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../../../../include/petsc/private/matimpl.h.html">&lt;petsc/private/matimpl.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="../../../impls/aij/seq/aij.h.html">&lt;../src/mat/impls/aij/seq/aij.h&gt;</A>
+<a name="line4">  4: </a>#include <A href="../../../impls/aij/mpi/mpiaij.h.html">&lt;../src/mat/impls/aij/mpi/mpiaij.h&gt;</A>
+
+<a name="line6">  6: </a><font color="#B22222">/* linked list methods</font>
+<a name="line7">  7: </a><font color="#B22222"> *</font>
+<a name="line8">  8: </a><font color="#B22222"> *  PetscCDCreate</font>
+<a name="line9">  9: </a><font color="#B22222"> */</font>
+<a name="line10"> 10: </a><strong><font color="#4169E1"><a name="PetscCDCreate"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDCreate(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_size, PetscCoarsenData **a_out)</font></strong>
+<a name="line11"> 11: </a>{
+<a name="line12"> 12: </a>  PetscCoarsenData *ail;
+
+<a name="line14"> 14: </a>  <font color="#B22222">/* allocate pool, partially */</font>
+<a name="line15"> 15: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;ail);
+<a name="line16"> 16: </a>  *a_out               = ail;
+<a name="line17"> 17: </a>  ail-&gt;pool_list.next  = NULL;
+<a name="line18"> 18: </a>  ail-&gt;pool_list.array = NULL;
+<a name="line19"> 19: </a>  ail-&gt;chk_sz          = 0;
+<a name="line20"> 20: </a>  <font color="#B22222">/* allocate array */</font>
+<a name="line21"> 21: </a>  ail-&gt;size = a_size;
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(a_size, &amp;ail-&gt;array);
+<a name="line23"> 23: </a>  ail-&gt;extra_nodes = NULL;
+<a name="line24"> 24: </a>  ail-&gt;mat         = NULL;
+<a name="line25"> 25: </a>  <font color="#4169E1">return</font> 0;
+<a name="line26"> 26: </a>}
+
+<a name="line28"> 28: </a><font color="#B22222">/* NPDestroy</font>
+<a name="line29"> 29: </a><font color="#B22222"> */</font>
+<a name="line30"> 30: </a><strong><font color="#4169E1"><a name="PetscCDDestroy"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDDestroy(PetscCoarsenData *ail)</font></strong>
+<a name="line31"> 31: </a>{
+<a name="line32"> 32: </a>  PetscCDArrNd *n = &amp;ail-&gt;pool_list;
+
+<a name="line34"> 34: </a>  n = n-&gt;next;
+<a name="line35"> 35: </a>  <font color="#4169E1">while</font> (n) {
+<a name="line36"> 36: </a>    PetscCDArrNd *lstn = n;
+<a name="line37"> 37: </a>    n                  = n-&gt;next;
+<a name="line38"> 38: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(lstn);
+<a name="line39"> 39: </a>  }
+<a name="line40"> 40: </a>  <font color="#4169E1">if</font> (ail-&gt;pool_list.array) <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(ail-&gt;pool_list.array);
+<a name="line41"> 41: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(ail-&gt;array);
+<a name="line42"> 42: </a>  <font color="#4169E1">if</font> (ail-&gt;mat) <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;ail-&gt;mat);
+<a name="line43"> 43: </a>  <font color="#B22222">/* delete this (+agg+pool array) */</font>
+<a name="line44"> 44: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(ail);
+<a name="line45"> 45: </a>  <font color="#4169E1">return</font> 0;
+<a name="line46"> 46: </a>}
+
+<a name="line48"> 48: </a><font color="#B22222">/* PetscCDSetChuckSize</font>
+<a name="line49"> 49: </a><font color="#B22222"> */</font>
+<a name="line50"> 50: </a><strong><font color="#4169E1"><a name="PetscCDSetChuckSize"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDSetChuckSize(PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_sz)</font></strong>
+<a name="line51"> 51: </a>{
+<a name="line52"> 52: </a>  ail-&gt;chk_sz = a_sz;
+<a name="line53"> 53: </a>  <font color="#4169E1">return</font> 0;
+<a name="line54"> 54: </a>}
+
+<a name="line56"> 56: </a><font color="#B22222">/*  PetscCDGetNewNode</font>
+<a name="line57"> 57: </a><font color="#B22222"> */</font>
+<a name="line58"> 58: </a><strong><font color="#4169E1"><a name="PetscCDGetNewNode"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDGetNewNode(PetscCoarsenData *ail, PetscCDIntNd **a_out, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_id)</font></strong>
+<a name="line59"> 59: </a>{
+<a name="line60"> 60: </a>  *a_out = NULL; <font color="#B22222">/* squelch -Wmaybe-uninitialized */</font>
+<a name="line61"> 61: </a>  <font color="#4169E1">if</font> (ail-&gt;extra_nodes) {
+<a name="line62"> 62: </a>    PetscCDIntNd *node = ail-&gt;extra_nodes;
+<a name="line63"> 63: </a>    ail-&gt;extra_nodes   = node-&gt;next;
+<a name="line64"> 64: </a>    node-&gt;gid          = a_id;
+<a name="line65"> 65: </a>    node-&gt;next         = NULL;
+<a name="line66"> 66: </a>    *a_out             = node;
+<a name="line67"> 67: </a>  } <font color="#4169E1">else</font> {
+<a name="line68"> 68: </a>    <font color="#4169E1">if</font> (!ail-&gt;pool_list.array) {
+<a name="line69"> 69: </a>      <font color="#4169E1">if</font> (!ail-&gt;chk_sz) ail-&gt;chk_sz = 10; <font color="#B22222">/* use a chuck size of ail-&gt;size? */</font>
+<a name="line70"> 70: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(ail-&gt;chk_sz, &amp;ail-&gt;pool_list.array);
+<a name="line71"> 71: </a>      ail-&gt;new_node       = ail-&gt;pool_list.array;
+<a name="line72"> 72: </a>      ail-&gt;new_left       = ail-&gt;chk_sz;
+<a name="line73"> 73: </a>      ail-&gt;new_node-&gt;next = NULL;
+<a name="line74"> 74: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (!ail-&gt;new_left) {
+<a name="line75"> 75: </a>      PetscCDArrNd *node;
+<a name="line76"> 76: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMalloc.html">PetscMalloc</a>(ail-&gt;chk_sz * <font color="#4169E1">sizeof</font>(PetscCDIntNd) + <font color="#4169E1">sizeof</font>(PetscCDArrNd), &amp;node);
+<a name="line77"> 77: </a>      node-&gt;array         = (PetscCDIntNd *)(node + 1);
+<a name="line78"> 78: </a>      node-&gt;next          = ail-&gt;pool_list.next;
+<a name="line79"> 79: </a>      ail-&gt;pool_list.next = node;
+<a name="line80"> 80: </a>      ail-&gt;new_left       = ail-&gt;chk_sz;
+<a name="line81"> 81: </a>      ail-&gt;new_node       = node-&gt;array;
+<a name="line82"> 82: </a>    }
+<a name="line83"> 83: </a>    ail-&gt;new_node-&gt;gid  = a_id;
+<a name="line84"> 84: </a>    ail-&gt;new_node-&gt;next = NULL;
+<a name="line85"> 85: </a>    *a_out              = ail-&gt;new_node++;
+<a name="line86"> 86: </a>    ail-&gt;new_left--;
+<a name="line87"> 87: </a>  }
+<a name="line88"> 88: </a>  <font color="#4169E1">return</font> 0;
+<a name="line89"> 89: </a>}
+
+<a name="line91"> 91: </a><font color="#B22222">/* PetscCDIntNdSetID</font>
+<a name="line92"> 92: </a><font color="#B22222"> */</font>
+<a name="line93"> 93: </a><strong><font color="#4169E1"><a name="PetscCDIntNdSetID"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDIntNdSetID(PetscCDIntNd *a_this, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_id)</font></strong>
+<a name="line94"> 94: </a>{
+<a name="line95"> 95: </a>  a_this-&gt;gid = a_id;
+<a name="line96"> 96: </a>  <font color="#4169E1">return</font> 0;
+<a name="line97"> 97: </a>}
+
+<a name="line99"> 99: </a><font color="#B22222">/* PetscCDIntNdGetID</font>
+<a name="line100">100: </a><font color="#B22222"> */</font>
+<a name="line101">101: </a><strong><font color="#4169E1"><a name="PetscCDIntNdGetID"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDIntNdGetID(const PetscCDIntNd *a_this, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *a_gid)</font></strong>
+<a name="line102">102: </a>{
+<a name="line103">103: </a>  *a_gid = a_this-&gt;gid;
+<a name="line104">104: </a>  <font color="#4169E1">return</font> 0;
+<a name="line105">105: </a>}
+
+<a name="line107">107: </a><font color="#B22222">/* PetscCDGetHeadPos</font>
+<a name="line108">108: </a><font color="#B22222"> */</font>
+<a name="line109">109: </a><strong><font color="#4169E1"><a name="PetscCDGetHeadPos"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDGetHeadPos(const PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_idx, PetscCDIntNd **pos)</font></strong>
+<a name="line110">110: </a>{
+<a name="line112">112: </a>  *pos = ail-&gt;array[a_idx];
+<a name="line113">113: </a>  <font color="#4169E1">return</font> 0;
+<a name="line114">114: </a>}
+
+<a name="line116">116: </a><font color="#B22222">/* PetscCDGetNextPos</font>
+<a name="line117">117: </a><font color="#B22222"> */</font>
+<a name="line118">118: </a><strong><font color="#4169E1"><a name="PetscCDGetNextPos"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDGetNextPos(const PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> l_idx, PetscCDIntNd **pos)</font></strong>
+<a name="line119">119: </a>{
+<a name="line121">121: </a>  *pos = (*pos)-&gt;next;
+<a name="line122">122: </a>  <font color="#4169E1">return</font> 0;
+<a name="line123">123: </a>}
+
+<a name="line125">125: </a><font color="#B22222">/* PetscCDAppendID</font>
+<a name="line126">126: </a><font color="#B22222"> */</font>
+<a name="line127">127: </a><strong><font color="#4169E1"><a name="PetscCDAppendID"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDAppendID(PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_idx, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_id)</font></strong>
+<a name="line128">128: </a>{
+<a name="line129">129: </a>  PetscCDIntNd *n, *n2;
+
+<a name="line131">131: </a>  PetscCDGetNewNode(ail, &amp;n, a_id);
+<a name="line133">133: </a>  <font color="#4169E1">if</font> (!(n2 = ail-&gt;array[a_idx])) ail-&gt;array[a_idx] = n;
+<a name="line134">134: </a>  <font color="#4169E1">else</font> {
+<a name="line135">135: </a>    <font color="#4169E1">do</font> {
+<a name="line136">136: </a>      <font color="#4169E1">if</font> (!n2-&gt;next) {
+<a name="line137">137: </a>        n2-&gt;next = n;
+<a name="line139">139: </a>        <font color="#4169E1">break</font>;
+<a name="line140">140: </a>      }
+<a name="line141">141: </a>      n2 = n2-&gt;next;
+<a name="line142">142: </a>    } <font color="#4169E1">while</font> (n2);
+<a name="line144">144: </a>  }
+<a name="line145">145: </a>  <font color="#4169E1">return</font> 0;
+<a name="line146">146: </a>}
+
+<a name="line148">148: </a><font color="#B22222">/* PetscCDAppendNode</font>
+<a name="line149">149: </a><font color="#B22222"> */</font>
+<a name="line150">150: </a><strong><font color="#4169E1"><a name="PetscCDAppendNode"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDAppendNode(PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_idx, PetscCDIntNd *a_n)</font></strong>
+<a name="line151">151: </a>{
+<a name="line152">152: </a>  PetscCDIntNd *n2;
+
+<a name="line155">155: </a>  <font color="#4169E1">if</font> (!(n2 = ail-&gt;array[a_idx])) ail-&gt;array[a_idx] = a_n;
+<a name="line156">156: </a>  <font color="#4169E1">else</font> {
+<a name="line157">157: </a>    <font color="#4169E1">do</font> {
+<a name="line158">158: </a>      <font color="#4169E1">if</font> (!n2-&gt;next) {
+<a name="line159">159: </a>        n2-&gt;next  = a_n;
+<a name="line160">160: </a>        a_n-&gt;next = NULL;
+<a name="line161">161: </a>        <font color="#4169E1">break</font>;
+<a name="line162">162: </a>      }
+<a name="line163">163: </a>      n2 = n2-&gt;next;
+<a name="line164">164: </a>    } <font color="#4169E1">while</font> (n2);
+<a name="line166">166: </a>  }
+<a name="line167">167: </a>  <font color="#4169E1">return</font> 0;
+<a name="line168">168: </a>}
+
+<a name="line170">170: </a><font color="#B22222">/* PetscCDRemoveNextNode: a_last-&gt;next, this exposes single linked list structure to API</font>
+<a name="line171">171: </a><font color="#B22222"> */</font>
+<a name="line172">172: </a><strong><font color="#4169E1"><a name="PetscCDRemoveNextNode"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDRemoveNextNode(PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_idx, PetscCDIntNd *a_last)</font></strong>
+<a name="line173">173: </a>{
+<a name="line174">174: </a>  PetscCDIntNd *del;
+
+<a name="line178">178: </a>  del          = a_last-&gt;next;
+<a name="line179">179: </a>  a_last-&gt;next = del-&gt;next;
+<a name="line180">180: </a>  <font color="#B22222">/* del-&gt;next = NULL; -- this still used in a iterator so keep it intact -- need to fix this with a double linked list */</font>
+<a name="line181">181: </a>  <font color="#B22222">/* could reuse n2 but PetscCDAppendNode sometimes uses it */</font>
+<a name="line182">182: </a>  <font color="#4169E1">return</font> 0;
+<a name="line183">183: </a>}
+
+<a name="line185">185: </a><font color="#B22222">/* PetscCDPrint</font>
+<a name="line186">186: </a><font color="#B22222"> */</font>
+<a name="line187">187: </a><strong><font color="#4169E1"><a name="PetscCDPrint"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDPrint(const PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm)</font></strong>
+<a name="line188">188: </a>{
+<a name="line189">189: </a>  PetscCDIntNd *n;
+<a name="line190">190: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      ii, kk;
+<a name="line191">191: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>   rank;
+
+<a name="line193">193: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line194">194: </a>  <font color="#4169E1">for</font> (ii = 0; ii &lt; ail-&gt;size; ii++) {
+<a name="line195">195: </a>    kk = 0;
+<a name="line196">196: </a>    n  = ail-&gt;array[ii];
+<a name="line197">197: </a>    <font color="#4169E1">if</font> (n) <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"[%d]%s list %"</font> PetscInt_FMT <font color="#666666">":\n"</font>, rank, PETSC_FUNCTION_NAME, ii);
+<a name="line198">198: </a>    <font color="#4169E1">while</font> (n) {
+<a name="line199">199: </a>      <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"\t[%d] %"</font> PetscInt_FMT <font color="#666666">") id %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, rank, ++kk, n-&gt;gid);
+<a name="line200">200: </a>      n = n-&gt;next;
+<a name="line201">201: </a>    }
+<a name="line202">202: </a>  }
+<a name="line203">203: </a>  <font color="#4169E1">return</font> 0;
+<a name="line204">204: </a>}
+
+<a name="line206">206: </a><font color="#B22222">/* PetscCDAppendRemove</font>
+<a name="line207">207: </a><font color="#B22222"> */</font>
+<a name="line208">208: </a><strong><font color="#4169E1"><a name="PetscCDAppendRemove"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDAppendRemove(PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_destidx, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_srcidx)</font></strong>
+<a name="line209">209: </a>{
+<a name="line210">210: </a>  PetscCDIntNd *n;
+
+<a name="line215">215: </a>  n = ail-&gt;array[a_destidx];
+<a name="line216">216: </a>  <font color="#4169E1">if</font> (!n) ail-&gt;array[a_destidx] = ail-&gt;array[a_srcidx];
+<a name="line217">217: </a>  <font color="#4169E1">else</font> {
+<a name="line218">218: </a>    <font color="#4169E1">do</font> {
+<a name="line219">219: </a>      <font color="#4169E1">if</font> (!n-&gt;next) {
+<a name="line220">220: </a>        n-&gt;next = ail-&gt;array[a_srcidx];
+<a name="line221">221: </a>        <font color="#4169E1">break</font>;
+<a name="line222">222: </a>      }
+<a name="line223">223: </a>      n = n-&gt;next;
+<a name="line224">224: </a>    } <font color="#4169E1">while</font> (1);
+<a name="line225">225: </a>  }
+<a name="line226">226: </a>  ail-&gt;array[a_srcidx] = NULL;
+<a name="line227">227: </a>  <font color="#4169E1">return</font> 0;
+<a name="line228">228: </a>}
+
+<a name="line230">230: </a><font color="#B22222">/* PetscCDRemoveAll</font>
+<a name="line231">231: </a><font color="#B22222"> */</font>
+<a name="line232">232: </a><strong><font color="#4169E1"><a name="PetscCDRemoveAll"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDRemoveAll(PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_idx)</font></strong>
+<a name="line233">233: </a>{
+<a name="line234">234: </a>  PetscCDIntNd *rem, *n1;
+
+<a name="line237">237: </a>  rem               = ail-&gt;array[a_idx];
+<a name="line238">238: </a>  ail-&gt;array[a_idx] = NULL;
+<a name="line239">239: </a>  <font color="#4169E1">if</font> (!(n1 = ail-&gt;extra_nodes)) ail-&gt;extra_nodes = rem;
+<a name="line240">240: </a>  <font color="#4169E1">else</font> {
+<a name="line241">241: </a>    <font color="#4169E1">while</font> (n1-&gt;next) n1 = n1-&gt;next;
+<a name="line242">242: </a>    n1-&gt;next = rem;
+<a name="line243">243: </a>  }
+<a name="line244">244: </a>  <font color="#4169E1">return</font> 0;
+<a name="line245">245: </a>}
+
+<a name="line247">247: </a><font color="#B22222">/* PetscCDSizeAt</font>
+<a name="line248">248: </a><font color="#B22222"> */</font>
+<a name="line249">249: </a><strong><font color="#4169E1"><a name="PetscCDSizeAt"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDSizeAt(const PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_idx, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *a_sz)</font></strong>
+<a name="line250">250: </a>{
+<a name="line251">251: </a>  PetscCDIntNd *n1;
+<a name="line252">252: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      sz = 0;
+
+<a name="line255">255: </a>  n1 = ail-&gt;array[a_idx];
+<a name="line256">256: </a>  <font color="#4169E1">while</font> (n1) {
+<a name="line257">257: </a>    n1 = n1-&gt;next;
+<a name="line258">258: </a>    sz++;
+<a name="line259">259: </a>  }
+<a name="line260">260: </a>  *a_sz = sz;
+<a name="line261">261: </a>  <font color="#4169E1">return</font> 0;
+<a name="line262">262: </a>}
+
+<a name="line264">264: </a><font color="#B22222">/* PetscCDEmptyAt</font>
+<a name="line265">265: </a><font color="#B22222"> */</font>
+<a name="line266">266: </a><strong><font color="#4169E1"><a name="PetscCDEmptyAt"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDEmptyAt(const PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_idx, <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *a_e)</font></strong>
+<a name="line267">267: </a>{
+<a name="line269">269: </a>  *a_e = (<a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)(ail-&gt;array[a_idx] == NULL);
+<a name="line270">270: </a>  <font color="#4169E1">return</font> 0;
+<a name="line271">271: </a>}
+
+<a name="line273">273: </a><font color="#B22222">/* PetscCDGetMIS - used for C-F methods</font>
+<a name="line274">274: </a><font color="#B22222"> */</font>
+<a name="line275">275: </a><strong><font color="#4169E1"><a name="PetscCDGetMIS"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDGetMIS(PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/IS/IS.html">IS</a> *a_mis)</font></strong>
+<a name="line276">276: </a>{
+<a name="line277">277: </a>  PetscCDIntNd *n;
+<a name="line278">278: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      ii, kk;
+<a name="line279">279: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     *permute;
+
+<a name="line281">281: </a>  <font color="#4169E1">for</font> (ii = kk = 0; ii &lt; ail-&gt;size; ii++) {
+<a name="line282">282: </a>    n = ail-&gt;array[ii];
+<a name="line283">283: </a>    <font color="#4169E1">if</font> (n) kk++;
+<a name="line284">284: </a>  }
+<a name="line285">285: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(kk, &amp;permute);
+<a name="line286">286: </a>  <font color="#4169E1">for</font> (ii = kk = 0; ii &lt; ail-&gt;size; ii++) {
+<a name="line287">287: </a>    n = ail-&gt;array[ii];
+<a name="line288">288: </a>    <font color="#4169E1">if</font> (n) permute[kk++] = ii;
+<a name="line289">289: </a>  }
+<a name="line290">290: </a>  <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html">ISCreateGeneral</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, kk, permute, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, a_mis);
+<a name="line291">291: </a>  <font color="#4169E1">return</font> 0;
+<a name="line292">292: </a>}
+
+<a name="line294">294: </a><font color="#B22222">/* PetscCDGetMat</font>
+<a name="line295">295: </a><font color="#B22222"> */</font>
+<a name="line296">296: </a><strong><font color="#4169E1"><a name="PetscCDGetMat"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDGetMat(PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *a_mat)</font></strong>
+<a name="line297">297: </a>{
+<a name="line298">298: </a>  *a_mat   = ail-&gt;mat;
+<a name="line299">299: </a>  ail-&gt;mat = NULL; // give it up
+<a name="line300">300: </a>  <font color="#4169E1">return</font> 0;
+<a name="line301">301: </a>}
+
+<a name="line303">303: </a><font color="#B22222">/* PetscCDSetMat</font>
+<a name="line304">304: </a><font color="#B22222"> */</font>
+<a name="line305">305: </a><strong><font color="#4169E1"><a name="PetscCDSetMat"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDSetMat(PetscCoarsenData *ail, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> a_mat)</font></strong>
+<a name="line306">306: </a>{
+<a name="line307">307: </a>  <font color="#4169E1">if</font> (ail-&gt;mat) {
+<a name="line308">308: </a>    <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;ail-&gt;mat); //should not happen
+<a name="line309">309: </a>  }
+<a name="line310">310: </a>  ail-&gt;mat = a_mat;
+<a name="line311">311: </a>  <font color="#4169E1">return</font> 0;
+<a name="line312">312: </a>}
+
+<a name="line314">314: </a><font color="#B22222">/* PetscCDGetASMBlocks - get <a href="../../../../../docs/manualpages/IS/IS.html">IS</a> of aggregates for ASM smoothers</font>
+<a name="line315">315: </a><font color="#B22222"> */</font>
+<a name="line316">316: </a><strong><font color="#4169E1"><a name="PetscCDGetASMBlocks"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscCDGetASMBlocks(const PetscCoarsenData *ail, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a_bs, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> mat, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *a_sz, <a href="../../../../../docs/manualpages/IS/IS.html">IS</a> **a_local_is)</font></strong>
+<a name="line317">317: </a>{
+<a name="line318">318: </a>  PetscCDIntNd *n;
+<a name="line319">319: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      lsz, ii, kk, *idxs, jj, s, e, gid;
+<a name="line320">320: </a>  <a href="../../../../../docs/manualpages/IS/IS.html">IS</a>           *is_loc, is_bcs;
+
+<a name="line322">322: </a>  <font color="#4169E1">for</font> (ii = kk = 0; ii &lt; ail-&gt;size; ii++) {
+<a name="line323">323: </a>    <font color="#4169E1">if</font> (ail-&gt;array[ii]) kk++;
+<a name="line324">324: </a>  }
+<a name="line325">325: </a>  <font color="#B22222">/* count BCs */</font>
+<a name="line326">326: </a>  <a href="../../../../../docs/manualpages/Mat/MatGetOwnershipRange.html">MatGetOwnershipRange</a>(mat, &amp;s, &amp;e);
+<a name="line327">327: </a>  <font color="#4169E1">for</font> (gid = s, lsz = 0; gid &lt; e; gid++) {
+<a name="line328">328: </a>    <a href="../../../../../docs/manualpages/Mat/MatGetRow.html">MatGetRow</a>(mat, gid, &amp;jj, NULL, NULL);
+<a name="line329">329: </a>    <font color="#4169E1">if</font> (jj &lt; 2) lsz++;
+<a name="line330">330: </a>    <a href="../../../../../docs/manualpages/Mat/MatRestoreRow.html">MatRestoreRow</a>(mat, gid, &amp;jj, NULL, NULL);
+<a name="line331">331: </a>  }
+<a name="line332">332: </a>  <font color="#4169E1">if</font> (lsz) {
+<a name="line333">333: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(a_bs * lsz, &amp;idxs);
+<a name="line334">334: </a>    <font color="#4169E1">for</font> (gid = s, lsz = 0; gid &lt; e; gid++) {
+<a name="line335">335: </a>      <a href="../../../../../docs/manualpages/Mat/MatGetRow.html">MatGetRow</a>(mat, gid, &amp;jj, NULL, NULL);
+<a name="line336">336: </a>      <font color="#4169E1">if</font> (jj &lt; 2) {
+<a name="line337">337: </a>        <font color="#4169E1">for</font> (jj = 0; jj &lt; a_bs; lsz++, jj++) idxs[lsz] = a_bs * gid + jj;
+<a name="line338">338: </a>      }
+<a name="line339">339: </a>      <a href="../../../../../docs/manualpages/Mat/MatRestoreRow.html">MatRestoreRow</a>(mat, gid, &amp;jj, NULL, NULL);
+<a name="line340">340: </a>    }
+<a name="line341">341: </a>    <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html">ISCreateGeneral</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, lsz, idxs, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, &amp;is_bcs);
+<a name="line342">342: </a>    *a_sz = kk + 1; <font color="#B22222">/* out */</font>
+<a name="line343">343: </a>  } <font color="#4169E1">else</font> {
+<a name="line344">344: </a>    is_bcs = NULL;
+<a name="line345">345: </a>    *a_sz  = kk; <font color="#B22222">/* out */</font>
+<a name="line346">346: </a>  }
+<a name="line347">347: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(*a_sz, &amp;is_loc);
+
+<a name="line349">349: </a>  <font color="#4169E1">for</font> (ii = kk = 0; ii &lt; ail-&gt;size; ii++) {
+<a name="line350">350: </a>    <font color="#4169E1">for</font> (lsz = 0, n = ail-&gt;array[ii]; n; lsz++, n = n-&gt;next) <font color="#B22222">/* void */</font>
+<a name="line351">351: </a>      ;
+<a name="line352">352: </a>    <font color="#4169E1">if</font> (lsz) {
+<a name="line353">353: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(a_bs * lsz, &amp;idxs);
+<a name="line354">354: </a>      <font color="#4169E1">for</font> (lsz = 0, n = ail-&gt;array[ii]; n; n = n-&gt;next) {
+<a name="line355">355: </a>        PetscCDIntNdGetID(n, &amp;gid);
+<a name="line356">356: </a>        <font color="#4169E1">for</font> (jj = 0; jj &lt; a_bs; lsz++, jj++) idxs[lsz] = a_bs * gid + jj;
+<a name="line357">357: </a>      }
+<a name="line358">358: </a>      <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html">ISCreateGeneral</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, lsz, idxs, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, &amp;is_loc[kk++]);
+<a name="line359">359: </a>    }
+<a name="line360">360: </a>  }
+<a name="line361">361: </a>  <font color="#4169E1">if</font> (is_bcs) is_loc[kk++] = is_bcs;
+<a name="line363">363: </a>  *a_local_is = is_loc; <font color="#B22222">/* out */</font>
+
+<a name="line365">365: </a>  <font color="#4169E1">return</font> 0;
+<a name="line366">366: </a>}
+
+<a name="line368">368: </a><font color="#B22222">/* ********************************************************************** */</font>
+<a name="line369">369: </a><font color="#B22222">/* edge for priority queue */</font>
+<a name="line370">370: </a><font color="#4169E1"><a name="edge_tag"></a>typedef struct edge_tag </font>{
+<a name="line371">371: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> weight;
+<a name="line372">372: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  lid0, gid1, cpid1;
+<a name="line373">373: </a>} Edge;
+
+<a name="line375">375: </a><strong><font color="#4169E1"><a name="gamg_hem_compare"></a>static int gamg_hem_compare(const void *a, const void *b)</font></strong>
+<a name="line376">376: </a>{
+<a name="line377">377: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> va = ((Edge *)a)-&gt;weight, vb = ((Edge *)b)-&gt;weight;
+<a name="line378">378: </a>  <font color="#4169E1">return</font> (va &lt; vb) ? 1 : (va == vb) ? 0 : -1; <font color="#B22222">/* 0 for equal */</font>
+<a name="line379">379: </a>}
+
+<a name="line381">381: </a><font color="#B22222">/* -------------------------------------------------------------------------- */</font>
+<a name="line382">382: </a><font color="#B22222">/*</font>
+<a name="line383">383: </a><font color="#B22222">  MatCoarsenApply_HEM_private - parallel heavy edge matching</font>
+
+<a name="line385">385: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line386">386: </a><font color="#B22222">. perm - permutation</font>
+<a name="line387">387: </a><font color="#B22222">. a_Gmat - global matrix of the graph</font>
+
+<a name="line389">389: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line390">390: </a><font color="#B22222">   . a_locals_llist - array of list of local nodes rooted at local node</font>
+<a name="line391">391: </a><font color="#B22222">*/</font>
+<a name="line392">392: </a><strong><font color="#4169E1"><a name="MatCoarsenApply_HEM_private"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatCoarsenApply_HEM_private(<a href="../../../../../docs/manualpages/IS/IS.html">IS</a> perm, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> a_Gmat, PetscCoarsenData **a_locals_llist)</font></strong>
+<a name="line393">393: </a>{
+<a name="line394">394: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>         isMPI;
+<a name="line395">395: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>          comm;
+<a name="line396">396: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          sub_it, kk, n, ix, *idx, *ii, iter, Iend, my0;
+<a name="line397">397: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>       rank, size;
+<a name="line398">398: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    nloc = a_Gmat-&gt;rmap-&gt;n, n_iter = 4; <font color="#B22222">/* need to figure out how to stop this */</font>
+<a name="line399">399: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         *lid_cprowID, *lid_gid;
+<a name="line400">400: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>        *lid_matched;
+<a name="line401">401: </a>  Mat_SeqAIJ       *matA, *matB = NULL;
+<a name="line402">402: </a>  Mat_MPIAIJ       *mpimat     = NULL;
+<a name="line403">403: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       one        = 1.;
+<a name="line404">404: </a>  PetscCoarsenData *agg_llists = NULL, *deleted_list = NULL;
+<a name="line405">405: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>               cMat, tMat, P;
+<a name="line406">406: </a>  MatScalar        *ap;
+<a name="line407">407: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>       tag1, tag2;
+
+<a name="line409">409: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)a_Gmat, &amp;comm);
+<a name="line410">410: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line411">411: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line412">412: </a>  <a href="../../../../../docs/manualpages/Mat/MatGetOwnershipRange.html">MatGetOwnershipRange</a>(a_Gmat, &amp;my0, &amp;Iend);
+<a name="line413">413: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCommGetNewTag.html">PetscCommGetNewTag</a>(comm, &amp;tag1);
+<a name="line414">414: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCommGetNewTag.html">PetscCommGetNewTag</a>(comm, &amp;tag2);
+
+<a name="line416">416: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(nloc, &amp;lid_gid); <font color="#B22222">/* explicit array needed */</font>
+<a name="line417">417: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(nloc, &amp;lid_cprowID);
+<a name="line418">418: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(nloc, &amp;lid_matched);
+
+<a name="line420">420: </a>  PetscCDCreate(nloc, &amp;agg_llists);
+<a name="line421">421: </a>  <font color="#B22222">/* PetscCDSetChuckSize(agg_llists, nloc+1); */</font>
+<a name="line422">422: </a>  *a_locals_llist = agg_llists;
+<a name="line423">423: </a>  PetscCDCreate(size, &amp;deleted_list);
+<a name="line424">424: </a>  PetscCDSetChuckSize(deleted_list, 100);
+<a name="line425">425: </a>  <font color="#B22222">/* setup 'lid_gid' for scatters and add self to all lists */</font>
+<a name="line426">426: </a>  <font color="#4169E1">for</font> (kk = 0; kk &lt; nloc; kk++) {
+<a name="line427">427: </a>    lid_gid[kk] = kk + my0;
+<a name="line428">428: </a>    PetscCDAppendID(agg_llists, kk, my0 + kk);
+<a name="line429">429: </a>  }
+
+<a name="line431">431: </a>  <font color="#B22222">/* make a copy of the graph, this gets destroyed in iterates */</font>
+<a name="line432">432: </a>  <a href="../../../../../docs/manualpages/Mat/MatDuplicate.html">MatDuplicate</a>(a_Gmat, <a href="../../../../../docs/manualpages/Mat/MatDuplicateOption.html">MAT_COPY_VALUES</a>, &amp;cMat);
+<a name="line433">433: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)a_Gmat, <a href="../../../../../docs/manualpages/Mat/MATMPIAIJ.html">MATMPIAIJ</a>, &amp;isMPI);
+<a name="line434">434: </a>  iter = 0;
+<a name="line435">435: </a>  <font color="#4169E1">while</font> (iter++ &lt; n_iter) {
+<a name="line436">436: </a>    <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>    *cpcol_gid, *cpcol_max_ew, *cpcol_max_pe, *lid_max_ew;
+<a name="line437">437: </a>    <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>      *cpcol_matched;
+<a name="line438">438: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>    *cpcol_pe, proc;
+<a name="line439">439: </a>    <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>             locMaxEdge, locMaxPE, ghostMaxEdge, ghostMaxPE;
+<a name="line440">440: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        nEdges, n_nz_row, jj;
+<a name="line441">441: </a>    Edge           *Edges;
+<a name="line442">442: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        gid;
+<a name="line443">443: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *perm_ix, n_sub_its = 120;
+
+<a name="line445">445: </a>    <font color="#B22222">/* get submatrices of cMat */</font>
+<a name="line446">446: </a>    <font color="#4169E1">if</font> (isMPI) {
+<a name="line447">447: </a>      mpimat = (Mat_MPIAIJ *)cMat-&gt;data;
+<a name="line448">448: </a>      matA   = (Mat_SeqAIJ *)mpimat-&gt;A-&gt;data;
+<a name="line449">449: </a>      matB   = (Mat_SeqAIJ *)mpimat-&gt;B-&gt;data;
+<a name="line450">450: </a>      <font color="#4169E1">if</font> (!matB-&gt;compressedrow.use) {
+<a name="line451">451: </a>        <font color="#B22222">/* force construction of compressed row data structure since code below requires it */</font>
+<a name="line452">452: </a>        <a href="../../../../../docs/manualpages/Mat/MatCheckCompressedRow.html">MatCheckCompressedRow</a>(mpimat-&gt;B, matB-&gt;nonzerorowcnt, &amp;matB-&gt;compressedrow, matB-&gt;i, mpimat-&gt;B-&gt;rmap-&gt;n, -1.0);
+<a name="line453">453: </a>      }
+<a name="line454">454: </a>    } <font color="#4169E1">else</font> {
+<a name="line455">455: </a>      matA = (Mat_SeqAIJ *)cMat-&gt;data;
+<a name="line456">456: </a>    }
+
+<a name="line458">458: </a>    <font color="#B22222">/* set max edge on nodes */</font>
+<a name="line459">459: </a>    <a href="../../../../../docs/manualpages/Mat/MatCreateVecs.html">MatCreateVecs</a>(cMat, &amp;locMaxEdge, NULL);
+<a name="line460">460: </a>    <a href="../../../../../docs/manualpages/Mat/MatCreateVecs.html">MatCreateVecs</a>(cMat, &amp;locMaxPE, NULL);
+
+<a name="line462">462: </a>    <font color="#B22222">/* get 'cpcol_pe' &amp; 'cpcol_gid' &amp; init. 'cpcol_matched' using 'mpimat-&gt;lvec' */</font>
+<a name="line463">463: </a>    <font color="#4169E1">if</font> (mpimat) {
+<a name="line464">464: </a>      <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>         vec;
+<a name="line465">465: </a>      <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> vval;
+
+<a name="line467">467: </a>      <a href="../../../../../docs/manualpages/Mat/MatCreateVecs.html">MatCreateVecs</a>(cMat, &amp;vec, NULL);
+<a name="line468">468: </a>      <font color="#B22222">/* cpcol_pe */</font>
+<a name="line469">469: </a>      vval = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)(rank);
+<a name="line470">470: </a>      <font color="#4169E1">for</font> (kk = 0, gid = my0; kk &lt; nloc; kk++, gid++) { <a href="../../../../../docs/manualpages/Vec/VecSetValues.html">VecSetValues</a>(vec, 1, &amp;gid, &amp;vval, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>); <font color="#B22222">/* set with GID */</font> }
+<a name="line471">471: </a>      <a href="../../../../../docs/manualpages/Vec/VecAssemblyBegin.html">VecAssemblyBegin</a>(vec);
+<a name="line472">472: </a>      <a href="../../../../../docs/manualpages/Vec/VecAssemblyEnd.html">VecAssemblyEnd</a>(vec);
+<a name="line473">473: </a>      <a href="../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(mpimat-&gt;Mvctx, vec, mpimat-&gt;lvec, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line474">474: </a>      <a href="../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(mpimat-&gt;Mvctx, vec, mpimat-&gt;lvec, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line475">475: </a>      <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(mpimat-&gt;lvec, &amp;cpcol_gid); <font color="#B22222">/* get proc ID in 'cpcol_gid' */</font>
+<a name="line476">476: </a>      <a href="../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(mpimat-&gt;lvec, &amp;n);
+<a name="line477">477: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(n, &amp;cpcol_pe);
+<a name="line478">478: </a>      <font color="#4169E1">for</font> (kk = 0; kk &lt; n; kk++) cpcol_pe[kk] = (<a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>)<a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cpcol_gid[kk]);
+<a name="line479">479: </a>      <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(mpimat-&gt;lvec, &amp;cpcol_gid);
+
+<a name="line481">481: </a>      <font color="#B22222">/* cpcol_gid */</font>
+<a name="line482">482: </a>      <font color="#4169E1">for</font> (kk = 0, gid = my0; kk &lt; nloc; kk++, gid++) {
+<a name="line483">483: </a>        vval = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)(gid);
+<a name="line484">484: </a>        <a href="../../../../../docs/manualpages/Vec/VecSetValues.html">VecSetValues</a>(vec, 1, &amp;gid, &amp;vval, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>); <font color="#B22222">/* set with GID */</font>
+<a name="line485">485: </a>      }
+<a name="line486">486: </a>      <a href="../../../../../docs/manualpages/Vec/VecAssemblyBegin.html">VecAssemblyBegin</a>(vec);
+<a name="line487">487: </a>      <a href="../../../../../docs/manualpages/Vec/VecAssemblyEnd.html">VecAssemblyEnd</a>(vec);
+<a name="line488">488: </a>      <a href="../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(mpimat-&gt;Mvctx, vec, mpimat-&gt;lvec, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line489">489: </a>      <a href="../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(mpimat-&gt;Mvctx, vec, mpimat-&gt;lvec, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line490">490: </a>      <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;vec);
+<a name="line491">491: </a>      <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(mpimat-&gt;lvec, &amp;cpcol_gid); <font color="#B22222">/* get proc ID in 'cpcol_gid' */</font>
+
+<a name="line493">493: </a>      <font color="#B22222">/* cpcol_matched */</font>
+<a name="line494">494: </a>      <a href="../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(mpimat-&gt;lvec, &amp;n);
+<a name="line495">495: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(n, &amp;cpcol_matched);
+<a name="line496">496: </a>      <font color="#4169E1">for</font> (kk = 0; kk &lt; n; kk++) cpcol_matched[kk] = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line497">497: </a>    }
+
+<a name="line499">499: </a>    <font color="#B22222">/* need an inverse map - locals */</font>
+<a name="line500">500: </a>    <font color="#4169E1">for</font> (kk = 0; kk &lt; nloc; kk++) lid_cprowID[kk] = -1;
+<a name="line501">501: </a>    <font color="#B22222">/* set index into compressed row 'lid_cprowID' */</font>
+<a name="line502">502: </a>    <font color="#4169E1">if</font> (matB) {
+<a name="line503">503: </a>      <font color="#4169E1">for</font> (ix = 0; ix &lt; matB-&gt;compressedrow.nrows; ix++) lid_cprowID[matB-&gt;compressedrow.rindex[ix]] = ix;
+<a name="line504">504: </a>    }
+
+<a name="line506">506: </a>    <font color="#B22222">/* compute 'locMaxEdge' &amp; 'locMaxPE', and create list of edges, count edges' */</font>
+<a name="line507">507: </a>    <font color="#4169E1">for</font> (nEdges = 0, kk = 0, gid = my0; kk &lt; nloc; kk++, gid++) {
+<a name="line508">508: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>   max_e = 0., tt;
+<a name="line509">509: </a>      <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> vval;
+<a name="line510">510: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    lid    = kk;
+<a name="line511">511: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> max_pe = rank, pe;
+
+<a name="line513">513: </a>      ii  = matA-&gt;i;
+<a name="line514">514: </a>      n   = ii[lid + 1] - ii[lid];
+<a name="line515">515: </a>      idx = matA-&gt;j + ii[lid];
+<a name="line516">516: </a>      ap  = matA-&gt;a + ii[lid];
+<a name="line517">517: </a>      <font color="#4169E1">for</font> (jj = 0; jj &lt; n; jj++) {
+<a name="line518">518: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> lidj = idx[jj];
+<a name="line519">519: </a>        <font color="#4169E1">if</font> (lidj != lid &amp;&amp; <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(ap[jj]) &gt; max_e) max_e = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(ap[jj]);
+<a name="line520">520: </a>        <font color="#4169E1">if</font> (lidj &gt; lid) nEdges++;
+<a name="line521">521: </a>      }
+<a name="line522">522: </a>      <font color="#4169E1">if</font> ((ix = lid_cprowID[lid]) != -1) { <font color="#B22222">/* if I have any ghost neighbors */</font>
+<a name="line523">523: </a>        ii  = matB-&gt;compressedrow.i;
+<a name="line524">524: </a>        n   = ii[ix + 1] - ii[ix];
+<a name="line525">525: </a>        ap  = matB-&gt;a + ii[ix];
+<a name="line526">526: </a>        idx = matB-&gt;j + ii[ix];
+<a name="line527">527: </a>        <font color="#4169E1">for</font> (jj = 0; jj &lt; n; jj++) {
+<a name="line528">528: </a>          <font color="#4169E1">if</font> ((tt = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(ap[jj])) &gt; max_e) max_e = tt;
+<a name="line529">529: </a>          nEdges++;
+<a name="line530">530: </a>          <font color="#4169E1">if</font> ((pe = cpcol_pe[idx[jj]]) &gt; max_pe) max_pe = pe;
+<a name="line531">531: </a>        }
+<a name="line532">532: </a>      }
+<a name="line533">533: </a>      vval = max_e;
+<a name="line534">534: </a>      <a href="../../../../../docs/manualpages/Vec/VecSetValues.html">VecSetValues</a>(locMaxEdge, 1, &amp;gid, &amp;vval, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+
+<a name="line536">536: </a>      vval = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)max_pe;
+<a name="line537">537: </a>      <a href="../../../../../docs/manualpages/Vec/VecSetValues.html">VecSetValues</a>(locMaxPE, 1, &amp;gid, &amp;vval, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line538">538: </a>    }
+<a name="line539">539: </a>    <a href="../../../../../docs/manualpages/Vec/VecAssemblyBegin.html">VecAssemblyBegin</a>(locMaxEdge);
+<a name="line540">540: </a>    <a href="../../../../../docs/manualpages/Vec/VecAssemblyEnd.html">VecAssemblyEnd</a>(locMaxEdge);
+<a name="line541">541: </a>    <a href="../../../../../docs/manualpages/Vec/VecAssemblyBegin.html">VecAssemblyBegin</a>(locMaxPE);
+<a name="line542">542: </a>    <a href="../../../../../docs/manualpages/Vec/VecAssemblyEnd.html">VecAssemblyEnd</a>(locMaxPE);
+
+<a name="line544">544: </a>    <font color="#B22222">/* get 'cpcol_max_ew' &amp; 'cpcol_max_pe' */</font>
+<a name="line545">545: </a>    <font color="#4169E1">if</font> (mpimat) {
+<a name="line546">546: </a>      <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(mpimat-&gt;lvec, &amp;ghostMaxEdge);
+<a name="line547">547: </a>      <a href="../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(mpimat-&gt;Mvctx, locMaxEdge, ghostMaxEdge, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line548">548: </a>      <a href="../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(mpimat-&gt;Mvctx, locMaxEdge, ghostMaxEdge, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line549">549: </a>      <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(ghostMaxEdge, &amp;cpcol_max_ew);
+
+<a name="line551">551: </a>      <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(mpimat-&gt;lvec, &amp;ghostMaxPE);
+<a name="line552">552: </a>      <a href="../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(mpimat-&gt;Mvctx, locMaxPE, ghostMaxPE, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line553">553: </a>      <a href="../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(mpimat-&gt;Mvctx, locMaxPE, ghostMaxPE, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line554">554: </a>      <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(ghostMaxPE, &amp;cpcol_max_pe);
+<a name="line555">555: </a>    }
+
+<a name="line557">557: </a>    <font color="#B22222">/* setup sorted list of edges */</font>
+<a name="line558">558: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(nEdges, &amp;Edges);
+<a name="line559">559: </a>    <a href="../../../../../docs/manualpages/IS/ISGetIndices.html">ISGetIndices</a>(perm, &amp;perm_ix);
+<a name="line560">560: </a>    <font color="#4169E1">for</font> (nEdges = n_nz_row = kk = 0; kk &lt; nloc; kk++) {
+<a name="line561">561: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nn, lid = perm_ix[kk];
+<a name="line562">562: </a>      ii = matA-&gt;i;
+<a name="line563">563: </a>      nn = n = ii[lid + 1] - ii[lid];
+<a name="line564">564: </a>      idx    = matA-&gt;j + ii[lid];
+<a name="line565">565: </a>      ap     = matA-&gt;a + ii[lid];
+<a name="line566">566: </a>      <font color="#4169E1">for</font> (jj = 0; jj &lt; n; jj++) {
+<a name="line567">567: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> lidj = idx[jj];
+<a name="line568">568: </a>        <font color="#4169E1">if</font> (lidj &gt; lid) {
+<a name="line569">569: </a>          Edges[nEdges].lid0   = lid;
+<a name="line570">570: </a>          Edges[nEdges].gid1   = lidj + my0;
+<a name="line571">571: </a>          Edges[nEdges].cpid1  = -1;
+<a name="line572">572: </a>          Edges[nEdges].weight = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(ap[jj]);
+<a name="line573">573: </a>          nEdges++;
+<a name="line574">574: </a>        }
+<a name="line575">575: </a>      }
+<a name="line576">576: </a>      <font color="#4169E1">if</font> ((ix = lid_cprowID[lid]) != -1) { <font color="#B22222">/* if I have any ghost neighbors */</font>
+<a name="line577">577: </a>        ii  = matB-&gt;compressedrow.i;
+<a name="line578">578: </a>        n   = ii[ix + 1] - ii[ix];
+<a name="line579">579: </a>        ap  = matB-&gt;a + ii[ix];
+<a name="line580">580: </a>        idx = matB-&gt;j + ii[ix];
+<a name="line581">581: </a>        nn += n;
+<a name="line582">582: </a>        <font color="#4169E1">for</font> (jj = 0; jj &lt; n; jj++) {
+<a name="line583">583: </a>          Edges[nEdges].lid0   = lid;
+<a name="line584">584: </a>          Edges[nEdges].gid1   = (<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)<a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cpcol_gid[idx[jj]]);
+<a name="line585">585: </a>          Edges[nEdges].cpid1  = idx[jj];
+<a name="line586">586: </a>          Edges[nEdges].weight = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(ap[jj]);
+<a name="line587">587: </a>          nEdges++;
+<a name="line588">588: </a>        }
+<a name="line589">589: </a>      }
+<a name="line590">590: </a>      <font color="#4169E1">if</font> (nn &gt; 1) n_nz_row++;
+<a name="line591">591: </a>      <font color="#4169E1">else</font> <font color="#4169E1">if</font> (iter == 1) {
+<a name="line592">592: </a>        <font color="#B22222">/* should select this because it is technically in the MIS but lets not */</font>
+<a name="line593">593: </a>        PetscCDRemoveAll(agg_llists, lid);
+<a name="line594">594: </a>      }
+<a name="line595">595: </a>    }
+<a name="line596">596: </a>    <a href="../../../../../docs/manualpages/IS/ISRestoreIndices.html">ISRestoreIndices</a>(perm, &amp;perm_ix);
+
+<a name="line598">598: </a>    qsort(Edges, nEdges, <font color="#4169E1">sizeof</font>(Edge), gamg_hem_compare);
+
+<a name="line600">600: </a>    <font color="#B22222">/* projection matrix */</font>
+<a name="line601">601: </a>    <a href="../../../../../docs/manualpages/Mat/MatCreateAIJ.html">MatCreateAIJ</a>(comm, nloc, nloc, <a href="../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html">PETSC_DETERMINE</a>, <a href="../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html">PETSC_DETERMINE</a>, 1, NULL, 1, NULL, &amp;P);
+
+<a name="line603">603: </a>    <font color="#B22222">/* clear matched flags */</font>
+<a name="line604">604: </a>    <font color="#4169E1">for</font> (kk = 0; kk &lt; nloc; kk++) lid_matched[kk] = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line605">605: </a>    <font color="#B22222">/* process - communicate - process */</font>
+<a name="line606">606: </a>    <font color="#4169E1">for</font> (sub_it = 0; sub_it &lt; n_sub_its; sub_it++) {
+<a name="line607">607: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nactive_edges;
+
+<a name="line609">609: </a>      <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(locMaxEdge, &amp;lid_max_ew);
+<a name="line610">610: </a>      <font color="#4169E1">for</font> (kk = nactive_edges = 0; kk &lt; nEdges; kk++) {
+<a name="line611">611: </a>        <font color="#B22222">/* HEM */</font>
+<a name="line612">612: </a>        const Edge    *e    = &amp;Edges[kk];
+<a name="line613">613: </a>        const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> lid0 = e-&gt;lid0, gid1 = e-&gt;gid1, cpid1 = e-&gt;cpid1, gid0 = lid0 + my0, lid1 = gid1 - my0;
+<a name="line614">614: </a>        <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>      isOK = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+
+<a name="line616">616: </a>        <font color="#B22222">/* skip if either (local) vertex is done already */</font>
+<a name="line617">617: </a>        <font color="#4169E1">if</font> (lid_matched[lid0] || (gid1 &gt;= my0 &amp;&amp; gid1 &lt; Iend &amp;&amp; lid_matched[gid1 - my0])) <font color="#4169E1">continue</font>;
+
+<a name="line619">619: </a>        <font color="#B22222">/* skip if ghost vertex is done */</font>
+<a name="line620">620: </a>        <font color="#4169E1">if</font> (cpid1 != -1 &amp;&amp; cpcol_matched[cpid1]) <font color="#4169E1">continue</font>;
+
+<a name="line622">622: </a>        nactive_edges++;
+<a name="line623">623: </a>        <font color="#B22222">/* skip if I have a bigger edge someplace (lid_max_ew gets updated) */</font>
+<a name="line624">624: </a>        <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(lid_max_ew[lid0]) &gt; e-&gt;weight + PETSC_SMALL) <font color="#4169E1">continue</font>;
+
+<a name="line626">626: </a>        <font color="#4169E1">if</font> (cpid1 == -1) {
+<a name="line627">627: </a>          <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(lid_max_ew[lid1]) &gt; e-&gt;weight + PETSC_SMALL) <font color="#4169E1">continue</font>;
+<a name="line628">628: </a>        } <font color="#4169E1">else</font> {
+<a name="line629">629: </a>          <font color="#B22222">/* see if edge might get matched on other proc */</font>
+<a name="line630">630: </a>          <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> g_max_e = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cpcol_max_ew[cpid1]);
+<a name="line631">631: </a>          <font color="#4169E1">if</font> (g_max_e &gt; e-&gt;weight + PETSC_SMALL) <font color="#4169E1">continue</font>;
+<a name="line632">632: </a>          <font color="#4169E1">else</font> <font color="#4169E1">if</font> (e-&gt;weight &gt; g_max_e - PETSC_SMALL &amp;&amp; (<a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>)<a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cpcol_max_pe[cpid1]) &gt; rank) {
+<a name="line633">633: </a>            <font color="#B22222">/* check for max_e == to this edge and larger processor that will deal with this */</font>
+<a name="line634">634: </a>            <font color="#4169E1">continue</font>;
+<a name="line635">635: </a>          }
+<a name="line636">636: </a>        }
+
+<a name="line638">638: </a>        <font color="#B22222">/* check ghost for v0 */</font>
+<a name="line639">639: </a>        <font color="#4169E1">if</font> (isOK) {
+<a name="line640">640: </a>          <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> max_e, ew;
+<a name="line641">641: </a>          <font color="#4169E1">if</font> ((ix = lid_cprowID[lid0]) != -1) { <font color="#B22222">/* if I have any ghost neighbors */</font>
+<a name="line642">642: </a>            ii  = matB-&gt;compressedrow.i;
+<a name="line643">643: </a>            n   = ii[ix + 1] - ii[ix];
+<a name="line644">644: </a>            ap  = matB-&gt;a + ii[ix];
+<a name="line645">645: </a>            idx = matB-&gt;j + ii[ix];
+<a name="line646">646: </a>            <font color="#4169E1">for</font> (jj = 0; jj &lt; n &amp;&amp; isOK; jj++) {
+<a name="line647">647: </a>              <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> lidj = idx[jj];
+<a name="line648">648: </a>              <font color="#4169E1">if</font> (cpcol_matched[lidj]) <font color="#4169E1">continue</font>;
+<a name="line649">649: </a>              ew    = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(ap[jj]);
+<a name="line650">650: </a>              max_e = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cpcol_max_ew[lidj]);
+<a name="line651">651: </a>              <font color="#B22222">/* check for max_e == to this edge and larger processor that will deal with this */</font>
+<a name="line652">652: </a>              <font color="#4169E1">if</font> (ew &gt; max_e - PETSC_SMALL &amp;&amp; ew &gt; <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(lid_max_ew[lid0]) - PETSC_SMALL &amp;&amp; (<a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>)<a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cpcol_max_pe[lidj]) &gt; rank) isOK = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line653">653: </a>            }
+<a name="line654">654: </a>          }
+
+<a name="line656">656: </a>          <font color="#B22222">/* for v1 */</font>
+<a name="line657">657: </a>          <font color="#4169E1">if</font> (cpid1 == -1 &amp;&amp; isOK) {
+<a name="line658">658: </a>            <font color="#4169E1">if</font> ((ix = lid_cprowID[lid1]) != -1) { <font color="#B22222">/* if I have any ghost neighbors */</font>
+<a name="line659">659: </a>              ii  = matB-&gt;compressedrow.i;
+<a name="line660">660: </a>              n   = ii[ix + 1] - ii[ix];
+<a name="line661">661: </a>              ap  = matB-&gt;a + ii[ix];
+<a name="line662">662: </a>              idx = matB-&gt;j + ii[ix];
+<a name="line663">663: </a>              <font color="#4169E1">for</font> (jj = 0; jj &lt; n &amp;&amp; isOK; jj++) {
+<a name="line664">664: </a>                <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> lidj = idx[jj];
+<a name="line665">665: </a>                <font color="#4169E1">if</font> (cpcol_matched[lidj]) <font color="#4169E1">continue</font>;
+<a name="line666">666: </a>                ew    = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(ap[jj]);
+<a name="line667">667: </a>                max_e = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cpcol_max_ew[lidj]);
+<a name="line668">668: </a>                <font color="#B22222">/* check for max_e == to this edge and larger processor that will deal with this */</font>
+<a name="line669">669: </a>                <font color="#4169E1">if</font> (ew &gt; max_e - PETSC_SMALL &amp;&amp; ew &gt; <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(lid_max_ew[lid1]) - PETSC_SMALL &amp;&amp; (<a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>)<a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cpcol_max_pe[lidj]) &gt; rank) isOK = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line670">670: </a>              }
+<a name="line671">671: </a>            }
+<a name="line672">672: </a>          }
+<a name="line673">673: </a>        }
+
+<a name="line675">675: </a>        <font color="#B22222">/* do it */</font>
+<a name="line676">676: </a>        <font color="#4169E1">if</font> (isOK) {
+<a name="line677">677: </a>          <font color="#4169E1">if</font> (cpid1 == -1) {
+<a name="line678">678: </a>            lid_matched[lid1] = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>; <font color="#B22222">/* keep track of what we've done this round */</font>
+<a name="line679">679: </a>            PetscCDAppendRemove(agg_llists, lid0, lid1);
+<a name="line680">680: </a>          } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (sub_it != n_sub_its - 1) {
+<a name="line681">681: </a>            <font color="#B22222">/* add gid1 to list of ghost deleted by me -- I need their children */</font>
+<a name="line682">682: </a>            proc = cpcol_pe[cpid1];
+
+<a name="line684">684: </a>            cpcol_matched[cpid1] = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>; <font color="#B22222">/* messing with <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a> array -- needed??? */</font>
+
+<a name="line686">686: </a>            PetscCDAppendID(deleted_list, proc, cpid1); <font color="#B22222">/* cache to send messages */</font>
+<a name="line687">687: </a>            PetscCDAppendID(deleted_list, proc, lid0);
+<a name="line688">688: </a>          } <font color="#4169E1">else</font> <font color="#4169E1">continue</font>;
+
+<a name="line690">690: </a>          lid_matched[lid0] = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>; <font color="#B22222">/* keep track of what we've done this round */</font>
+<a name="line691">691: </a>          <font color="#B22222">/* set projection */</font>
+<a name="line692">692: </a>          <a href="../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(P, 1, &amp;gid0, 1, &amp;gid0, &amp;one, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line693">693: </a>          <a href="../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(P, 1, &amp;gid1, 1, &amp;gid0, &amp;one, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line694">694: </a>        } <font color="#B22222">/* matched */</font>
+<a name="line695">695: </a>      }   <font color="#B22222">/* edge loop */</font>
+
+<a name="line697">697: </a>      <font color="#B22222">/* deal with deleted ghost on first pass */</font>
+<a name="line698">698: </a>      <font color="#4169E1">if</font> (size &gt; 1 &amp;&amp; sub_it != n_sub_its - 1) {
+<a name="line699">699: </a><strong><font color="#228B22">#define REQ_BF_SIZE 100</font></strong>
+<a name="line700">700: </a>        PetscCDIntNd *pos;
+<a name="line701">701: </a>        <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     ise = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line702">702: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      nSend1, **sbuffs1, nSend2;
+<a name="line703">703: </a>        MPI_Request  *sreqs2[REQ_BF_SIZE], *rreqs2[REQ_BF_SIZE];
+<a name="line704">704: </a>        MPI_Status    status;
+
+<a name="line706">706: </a>        <font color="#B22222">/* send request */</font>
+<a name="line707">707: </a>        <font color="#4169E1">for</font> (proc = 0, nSend1 = 0; proc &lt; size; proc++) {
+<a name="line708">708: </a>          PetscCDEmptyAt(deleted_list, proc, &amp;ise);
+<a name="line709">709: </a>          <font color="#4169E1">if</font> (!ise) nSend1++;
+<a name="line710">710: </a>        }
+<a name="line711">711: </a>        <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(nSend1, &amp;sbuffs1);
+<a name="line712">712: </a>        <font color="#4169E1">for</font> (proc = 0, nSend1 = 0; proc &lt; size; proc++) {
+<a name="line713">713: </a>          <font color="#B22222">/* count ghosts */</font>
+<a name="line714">714: </a>          PetscCDSizeAt(deleted_list, proc, &amp;n);
+<a name="line715">715: </a>          <font color="#4169E1">if</font> (n &gt; 0) {
+<a name="line716">716: </a><strong><font color="#228B22">#define CHUNCK_SIZE 100</font></strong>
+<a name="line717">717: </a>            <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *sbuff, *pt;
+<a name="line718">718: </a>            MPI_Request *request;
+<a name="line719">719: </a>            n /= 2;
+<a name="line720">720: </a>            <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(2 + 2 * n + n * CHUNCK_SIZE + 2, &amp;sbuff);
+<a name="line721">721: </a>            <font color="#B22222">/* save requests */</font>
+<a name="line722">722: </a>            sbuffs1[nSend1] = sbuff;
+<a name="line723">723: </a>            request         = (MPI_Request *)sbuff;
+<a name="line724">724: </a>            sbuff = pt = (<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)(request + 1);
+<a name="line725">725: </a>            *pt++      = n;
+<a name="line726">726: </a>            *pt++      = rank;
+
+<a name="line728">728: </a>            PetscCDGetHeadPos(deleted_list, proc, &amp;pos);
+<a name="line729">729: </a>            <font color="#4169E1">while</font> (pos) {
+<a name="line730">730: </a>              <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> lid0, cpid, gid;
+<a name="line731">731: </a>              PetscCDIntNdGetID(pos, &amp;cpid);
+<a name="line732">732: </a>              gid = (<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)<a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cpcol_gid[cpid]);
+<a name="line733">733: </a>              PetscCDGetNextPos(deleted_list, proc, &amp;pos);
+<a name="line734">734: </a>              PetscCDIntNdGetID(pos, &amp;lid0);
+<a name="line735">735: </a>              PetscCDGetNextPos(deleted_list, proc, &amp;pos);
+<a name="line736">736: </a>              *pt++ = gid;
+<a name="line737">737: </a>              *pt++ = lid0;
+<a name="line738">738: </a>            }
+<a name="line739">739: </a>            <font color="#B22222">/* send request tag1 [n, proc, n*[gid1,lid0] ] */</font>
+<a name="line740">740: </a>            <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(sbuff, 2 * n + 2, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, proc, tag1, comm, request);
+<a name="line741">741: </a>            <font color="#B22222">/* post receive */</font>
+<a name="line742">742: </a>            request        = (MPI_Request *)pt;
+<a name="line743">743: </a>            rreqs2[nSend1] = request; <font color="#B22222">/* cache recv request */</font>
+<a name="line744">744: </a>            pt             = (<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)(request + 1);
+<a name="line745">745: </a>            <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(pt, n * CHUNCK_SIZE, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, proc, tag2, comm, request);
+<a name="line746">746: </a>            <font color="#B22222">/* clear list */</font>
+<a name="line747">747: </a>            PetscCDRemoveAll(deleted_list, proc);
+<a name="line748">748: </a>            nSend1++;
+<a name="line749">749: </a>          }
+<a name="line750">750: </a>        }
+<a name="line751">751: </a>        <font color="#B22222">/* receive requests, send response, clear lists */</font>
+<a name="line752">752: </a>        kk = nactive_edges;
+<a name="line753">753: </a>        <a href="../../../../../docs/manualpages/Sys/MPIU_Allreduce.html">MPIU_Allreduce</a>(&amp;kk, &amp;nactive_edges, 1, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_SUM, comm); <font color="#B22222">/* not correct synchronization and global */</font>
+<a name="line754">754: </a>        nSend2 = 0;
+<a name="line755">755: </a>        <font color="#4169E1">while</font> (1) {
+<a name="line756">756: </a><strong><font color="#228B22">#define BF_SZ 10000</font></strong>
+<a name="line757">757: </a>          <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>  flag, count;
+<a name="line758">758: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     rbuff[BF_SZ], *pt, *pt2, *pt3, count2, *sbuff, count3;
+<a name="line759">759: </a>          MPI_Request *request;
+
+<a name="line761">761: </a>          <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Iprobe.html#MPI_Iprobe">MPI_Iprobe</a>(MPI_ANY_SOURCE, tag1, comm, &amp;flag, &amp;status);
+<a name="line762">762: </a>          <font color="#4169E1">if</font> (!flag) <font color="#4169E1">break</font>;
+<a name="line763">763: </a>          <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Get_count.html#MPI_Get_count">MPI_Get_count</a>(&amp;status, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, &amp;count);
+<a name="line765">765: </a>          proc = status.MPI_SOURCE;
+<a name="line766">766: </a>          <font color="#B22222">/* receive request tag1 [n, proc, n*[gid1,lid0] ] */</font>
+<a name="line767">767: </a>          <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(rbuff, count, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, proc, tag1, comm, &amp;status);
+<a name="line768">768: </a>          <font color="#B22222">/* count sends */</font>
+<a name="line769">769: </a>          pt     = rbuff;
+<a name="line770">770: </a>          count3 = count2 = 0;
+<a name="line771">771: </a>          n               = *pt++;
+<a name="line772">772: </a>          kk              = *pt++;
+<a name="line773">773: </a>          <font color="#4169E1">while</font> (n--) {
+<a name="line774">774: </a>            <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> gid1 = *pt++, lid1 = gid1 - my0;
+<a name="line775">775: </a>            kk = *pt++;
+<a name="line777">777: </a>            lid_matched[lid1] = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>; <font color="#B22222">/* keep track of what we've done this round */</font>
+<a name="line778">778: </a>            PetscCDSizeAt(agg_llists, lid1, &amp;kk);
+<a name="line779">779: </a>            count2 += kk + 2;
+<a name="line780">780: </a>            count3++; <font color="#B22222">/* number of verts requested (n) */</font>
+<a name="line781">781: </a>          }
+<a name="line783">783: </a>          <font color="#B22222">/* send tag2 *[lid0, n, n*[gid] ] */</font>
+<a name="line784">784: </a>          <a href="../../../../../docs/manualpages/Sys/PetscMalloc.html">PetscMalloc</a>(count2 * <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>) + <font color="#4169E1">sizeof</font>(MPI_Request), &amp;sbuff);
+<a name="line785">785: </a>          request          = (MPI_Request *)sbuff;
+<a name="line786">786: </a>          sreqs2[nSend2++] = request; <font color="#B22222">/* cache request */</font>
+<a name="line788">788: </a>          pt2 = sbuff = (<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)(request + 1);
+<a name="line789">789: </a>          pt          = rbuff;
+<a name="line790">790: </a>          n           = *pt++;
+<a name="line791">791: </a>          kk          = *pt++;
+<a name="line792">792: </a>          <font color="#4169E1">while</font> (n--) {
+<a name="line793">793: </a>            <font color="#B22222">/* read [n, proc, n*[gid1,lid0] */</font>
+<a name="line794">794: </a>            <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> gid1 = *pt++, lid1 = gid1 - my0, lid0 = *pt++;
+<a name="line795">795: </a>            <font color="#B22222">/* write [lid0, n, n*[gid] ] */</font>
+<a name="line796">796: </a>            *pt2++ = lid0;
+<a name="line797">797: </a>            pt3    = pt2++; <font color="#B22222">/* save pointer for later */</font>
+<a name="line798">798: </a>            PetscCDGetHeadPos(agg_llists, lid1, &amp;pos);
+<a name="line799">799: </a>            <font color="#4169E1">while</font> (pos) {
+<a name="line800">800: </a>              <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> gid;
+<a name="line801">801: </a>              PetscCDIntNdGetID(pos, &amp;gid);
+<a name="line802">802: </a>              PetscCDGetNextPos(agg_llists, lid1, &amp;pos);
+<a name="line803">803: </a>              *pt2++ = gid;
+<a name="line804">804: </a>            }
+<a name="line805">805: </a>            *pt3 = (pt2 - pt3) - 1;
+<a name="line806">806: </a>            <font color="#B22222">/* clear list */</font>
+<a name="line807">807: </a>            PetscCDRemoveAll(agg_llists, lid1);
+<a name="line808">808: </a>          }
+<a name="line809">809: </a>          <font color="#B22222">/* send requested data tag2 *[lid0, n, n*[gid1] ] */</font>
+<a name="line810">810: </a>          <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(sbuff, count2, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, proc, tag2, comm, request);
+<a name="line811">811: </a>        }
+
+<a name="line813">813: </a>        <font color="#B22222">/* receive tag2 *[lid0, n, n*[gid] ] */</font>
+<a name="line814">814: </a>        <font color="#4169E1">for</font> (kk = 0; kk &lt; nSend1; kk++) {
+<a name="line815">815: </a>          <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>  count;
+<a name="line816">816: </a>          MPI_Request *request;
+<a name="line817">817: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *pt, *pt2;
+
+<a name="line819">819: </a>          request = rreqs2[kk]; <font color="#B22222">/* no need to free -- buffer is in 'sbuffs1' */</font>
+<a name="line820">820: </a>          <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Wait.html#MPI_Wait">MPI_Wait</a>(request, &amp;status);
+<a name="line821">821: </a>          <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Get_count.html#MPI_Get_count">MPI_Get_count</a>(&amp;status, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, &amp;count);
+<a name="line822">822: </a>          pt = pt2 = (<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)(request + 1);
+<a name="line823">823: </a>          <font color="#4169E1">while</font> (pt - pt2 &lt; count) {
+<a name="line824">824: </a>            <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> lid0 = *pt++, n = *pt++;
+<a name="line825">825: </a>            <font color="#4169E1">while</font> (n--) {
+<a name="line826">826: </a>              <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> gid1 = *pt++;
+<a name="line827">827: </a>              PetscCDAppendID(agg_llists, lid0, gid1);
+<a name="line828">828: </a>            }
+<a name="line829">829: </a>          }
+<a name="line830">830: </a>        }
+
+<a name="line832">832: </a>        <font color="#B22222">/* wait for tag1 isends */</font>
+<a name="line833">833: </a>        <font color="#4169E1">while</font> (nSend1--) {
+<a name="line834">834: </a>          MPI_Request *request;
+<a name="line835">835: </a>          request = (MPI_Request *)sbuffs1[nSend1];
+<a name="line836">836: </a>          <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Wait.html#MPI_Wait">MPI_Wait</a>(request, &amp;status);
+<a name="line837">837: </a>          <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(request);
+<a name="line838">838: </a>        }
+<a name="line839">839: </a>        <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(sbuffs1);
+
+<a name="line841">841: </a>        <font color="#B22222">/* wait for tag2 isends */</font>
+<a name="line842">842: </a>        <font color="#4169E1">while</font> (nSend2--) {
+<a name="line843">843: </a>          MPI_Request *request = sreqs2[nSend2];
+<a name="line844">844: </a>          <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Wait.html#MPI_Wait">MPI_Wait</a>(request, &amp;status);
+<a name="line845">845: </a>          <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(request);
+<a name="line846">846: </a>        }
+
+<a name="line848">848: </a>        <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(ghostMaxEdge, &amp;cpcol_max_ew);
+<a name="line849">849: </a>        <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(ghostMaxPE, &amp;cpcol_max_pe);
+
+<a name="line851">851: </a>        <font color="#B22222">/* get 'cpcol_matched' - use locMaxPE, ghostMaxEdge, cpcol_max_ew */</font>
+<a name="line852">852: </a>        <font color="#4169E1">for</font> (kk = 0, gid = my0; kk &lt; nloc; kk++, gid++) {
+<a name="line853">853: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> vval = lid_matched[kk] ? 1.0 : 0.0;
+<a name="line854">854: </a>          <a href="../../../../../docs/manualpages/Vec/VecSetValues.html">VecSetValues</a>(locMaxPE, 1, &amp;gid, &amp;vval, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>); <font color="#B22222">/* set with GID */</font>
+<a name="line855">855: </a>        }
+<a name="line856">856: </a>        <a href="../../../../../docs/manualpages/Vec/VecAssemblyBegin.html">VecAssemblyBegin</a>(locMaxPE);
+<a name="line857">857: </a>        <a href="../../../../../docs/manualpages/Vec/VecAssemblyEnd.html">VecAssemblyEnd</a>(locMaxPE);
+<a name="line858">858: </a>        <a href="../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(mpimat-&gt;Mvctx, locMaxPE, ghostMaxEdge, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line859">859: </a>        <a href="../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(mpimat-&gt;Mvctx, locMaxPE, ghostMaxEdge, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line860">860: </a>        <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(ghostMaxEdge, &amp;cpcol_max_ew);
+<a name="line861">861: </a>        <a href="../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(mpimat-&gt;lvec, &amp;n);
+<a name="line862">862: </a>        <font color="#4169E1">for</font> (kk = 0; kk &lt; n; kk++) cpcol_matched[kk] = (<a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)(<a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cpcol_max_ew[kk]) != 0.0);
+<a name="line863">863: </a>        <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(ghostMaxEdge, &amp;cpcol_max_ew);
+<a name="line864">864: </a>      } <font color="#B22222">/* size &gt; 1 */</font>
+
+<a name="line866">866: </a>      <font color="#B22222">/* compute 'locMaxEdge' */</font>
+<a name="line867">867: </a>      <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(locMaxEdge, &amp;lid_max_ew);
+<a name="line868">868: </a>      <font color="#4169E1">for</font> (kk = 0, gid = my0; kk &lt; nloc; kk++, gid++) {
+<a name="line869">869: </a>        <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>   max_e = 0., tt;
+<a name="line870">870: </a>        <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> vval;
+<a name="line871">871: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    lid = kk;
+
+<a name="line873">873: </a>        <font color="#4169E1">if</font> (lid_matched[lid]) vval = 0.;
+<a name="line874">874: </a>        <font color="#4169E1">else</font> {
+<a name="line875">875: </a>          ii  = matA-&gt;i;
+<a name="line876">876: </a>          n   = ii[lid + 1] - ii[lid];
+<a name="line877">877: </a>          idx = matA-&gt;j + ii[lid];
+<a name="line878">878: </a>          ap  = matA-&gt;a + ii[lid];
+<a name="line879">879: </a>          <font color="#4169E1">for</font> (jj = 0; jj &lt; n; jj++) {
+<a name="line880">880: </a>            <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> lidj = idx[jj];
+<a name="line881">881: </a>            <font color="#4169E1">if</font> (lid_matched[lidj]) <font color="#4169E1">continue</font>; <font color="#B22222">/* this is new - can change local max */</font>
+<a name="line882">882: </a>            <font color="#4169E1">if</font> (lidj != lid &amp;&amp; <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(ap[jj]) &gt; max_e) max_e = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(ap[jj]);
+<a name="line883">883: </a>          }
+<a name="line884">884: </a>          <font color="#4169E1">if</font> (lid_cprowID &amp;&amp; (ix = lid_cprowID[lid]) != -1) { <font color="#B22222">/* if I have any ghost neighbors */</font>
+<a name="line885">885: </a>            ii  = matB-&gt;compressedrow.i;
+<a name="line886">886: </a>            n   = ii[ix + 1] - ii[ix];
+<a name="line887">887: </a>            ap  = matB-&gt;a + ii[ix];
+<a name="line888">888: </a>            idx = matB-&gt;j + ii[ix];
+<a name="line889">889: </a>            <font color="#4169E1">for</font> (jj = 0; jj &lt; n; jj++) {
+<a name="line890">890: </a>              <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> lidj = idx[jj];
+<a name="line891">891: </a>              <font color="#4169E1">if</font> (cpcol_matched[lidj]) <font color="#4169E1">continue</font>;
+<a name="line892">892: </a>              <font color="#4169E1">if</font> ((tt = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(ap[jj])) &gt; max_e) max_e = tt;
+<a name="line893">893: </a>            }
+<a name="line894">894: </a>          }
+<a name="line895">895: </a>        }
+<a name="line896">896: </a>        vval = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)max_e;
+<a name="line897">897: </a>        <a href="../../../../../docs/manualpages/Vec/VecSetValues.html">VecSetValues</a>(locMaxEdge, 1, &amp;gid, &amp;vval, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>); <font color="#B22222">/* set with GID */</font>
+<a name="line898">898: </a>      }
+<a name="line899">899: </a>      <a href="../../../../../docs/manualpages/Vec/VecAssemblyBegin.html">VecAssemblyBegin</a>(locMaxEdge);
+<a name="line900">900: </a>      <a href="../../../../../docs/manualpages/Vec/VecAssemblyEnd.html">VecAssemblyEnd</a>(locMaxEdge);
+
+<a name="line902">902: </a>      <font color="#4169E1">if</font> (size &gt; 1 &amp;&amp; sub_it != n_sub_its - 1) {
+<a name="line903">903: </a>        <font color="#B22222">/* compute 'cpcol_max_ew' */</font>
+<a name="line904">904: </a>        <a href="../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(mpimat-&gt;Mvctx, locMaxEdge, ghostMaxEdge, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line905">905: </a>        <a href="../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(mpimat-&gt;Mvctx, locMaxEdge, ghostMaxEdge, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line906">906: </a>        <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(ghostMaxEdge, &amp;cpcol_max_ew);
+<a name="line907">907: </a>        <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(locMaxEdge, &amp;lid_max_ew);
+
+<a name="line909">909: </a>        <font color="#B22222">/* compute 'cpcol_max_pe' */</font>
+<a name="line910">910: </a>        <font color="#4169E1">for</font> (kk = 0, gid = my0; kk &lt; nloc; kk++, gid++) {
+<a name="line911">911: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    lid = kk;
+<a name="line912">912: </a>          <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>   ew, v1_max_e, v0_max_e = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(lid_max_ew[lid]);
+<a name="line913">913: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> vval;
+<a name="line914">914: </a>          <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> max_pe = rank, pe;
+
+<a name="line916">916: </a>          <font color="#4169E1">if</font> (lid_matched[lid]) vval = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)rank;
+<a name="line917">917: </a>          <font color="#4169E1">else</font> <font color="#4169E1">if</font> ((ix = lid_cprowID[lid]) != -1) { <font color="#B22222">/* if I have any ghost neighbors */</font> ii = matB-&gt;compressedrow.i;
+<a name="line918">918: </a>            n                                                                              = ii[ix + 1] - ii[ix];
+<a name="line919">919: </a>            ap                                                                             = matB-&gt;a + ii[ix];
+<a name="line920">920: </a>            idx                                                                            = matB-&gt;j + ii[ix];
+<a name="line921">921: </a>            <font color="#4169E1">for</font> (jj = 0; jj &lt; n; jj++) {
+<a name="line922">922: </a>              <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> lidj = idx[jj];
+<a name="line923">923: </a>              <font color="#4169E1">if</font> (cpcol_matched[lidj]) <font color="#4169E1">continue</font>;
+<a name="line924">924: </a>              ew       = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(ap[jj]);
+<a name="line925">925: </a>              v1_max_e = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cpcol_max_ew[lidj]);
+<a name="line926">926: </a>              <font color="#B22222">/* get max pe that has a max_e == to this edge w */</font>
+<a name="line927">927: </a>              <font color="#4169E1">if</font> ((pe = cpcol_pe[idx[jj]]) &gt; max_pe &amp;&amp; ew &gt; v1_max_e - PETSC_SMALL &amp;&amp; ew &gt; v0_max_e - PETSC_SMALL) max_pe = pe;
+<a name="line928">928: </a>            }
+<a name="line929">929: </a>            vval = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)max_pe;
+<a name="line930">930: </a>          }
+<a name="line931">931: </a>          <a href="../../../../../docs/manualpages/Vec/VecSetValues.html">VecSetValues</a>(locMaxPE, 1, &amp;gid, &amp;vval, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line932">932: </a>        }
+<a name="line933">933: </a>        <a href="../../../../../docs/manualpages/Vec/VecAssemblyBegin.html">VecAssemblyBegin</a>(locMaxPE);
+<a name="line934">934: </a>        <a href="../../../../../docs/manualpages/Vec/VecAssemblyEnd.html">VecAssemblyEnd</a>(locMaxPE);
+
+<a name="line936">936: </a>        <a href="../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(mpimat-&gt;Mvctx, locMaxPE, ghostMaxPE, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line937">937: </a>        <a href="../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(mpimat-&gt;Mvctx, locMaxPE, ghostMaxPE, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line938">938: </a>        <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(ghostMaxPE, &amp;cpcol_max_pe);
+<a name="line939">939: </a>        <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(locMaxEdge, &amp;lid_max_ew);
+<a name="line940">940: </a>      } <font color="#B22222">/* deal with deleted ghost */</font>
+<a name="line941">941: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(a_Gmat, <font color="#666666">"\t %"</font> PetscInt_FMT <font color="#666666">".%"</font> PetscInt_FMT <font color="#666666">": %"</font> PetscInt_FMT <font color="#666666">" active edges.\n"</font>, iter, sub_it, nactive_edges);
+<a name="line942">942: </a>      <font color="#4169E1">if</font> (!nactive_edges) <font color="#4169E1">break</font>;
+<a name="line943">943: </a>    } <font color="#B22222">/* sub_it loop */</font>
+
+<a name="line945">945: </a>    <font color="#B22222">/* clean up iteration */</font>
+<a name="line946">946: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(Edges);
+<a name="line947">947: </a>    <font color="#4169E1">if</font> (mpimat) {
+<a name="line948">948: </a>      <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(ghostMaxEdge, &amp;cpcol_max_ew);
+<a name="line949">949: </a>      <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;ghostMaxEdge);
+<a name="line950">950: </a>      <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(ghostMaxPE, &amp;cpcol_max_pe);
+<a name="line951">951: </a>      <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;ghostMaxPE);
+<a name="line952">952: </a>      <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(cpcol_pe);
+<a name="line953">953: </a>      <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(cpcol_matched);
+<a name="line954">954: </a>    }
+
+<a name="line956">956: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;locMaxEdge);
+<a name="line957">957: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;locMaxPE);
+
+<a name="line959">959: </a>    <font color="#4169E1">if</font> (mpimat) <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(mpimat-&gt;lvec, &amp;cpcol_gid);
+
+<a name="line961">961: </a>    <font color="#B22222">/* create next G if needed */</font>
+<a name="line962">962: </a>    <font color="#4169E1">if</font> (iter == n_iter) { <font color="#B22222">/* hard wired test - need to look at full surrounded nodes or something */</font>
+<a name="line963">963: </a>      <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;P);
+<a name="line964">964: </a>      <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;cMat);
+<a name="line965">965: </a>      <font color="#4169E1">break</font>;
+<a name="line966">966: </a>    } <font color="#4169E1">else</font> {
+<a name="line967">967: </a>      <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> diag;
+<a name="line968">968: </a>      <font color="#B22222">/* add identity for unmatched vertices so they stay alive */</font>
+<a name="line969">969: </a>      <font color="#4169E1">for</font> (kk = 0, gid = my0; kk &lt; nloc; kk++, gid++) {
+<a name="line970">970: </a>        <font color="#4169E1">if</font> (!lid_matched[kk]) {
+<a name="line971">971: </a>          gid = kk + my0;
+<a name="line972">972: </a>          <a href="../../../../../docs/manualpages/Mat/MatGetRow.html">MatGetRow</a>(cMat, gid, &amp;n, NULL, NULL);
+<a name="line973">973: </a>          <font color="#4169E1">if</font> (n &gt; 1) <a href="../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(P, 1, &amp;gid, 1, &amp;gid, &amp;one, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line974">974: </a>          <a href="../../../../../docs/manualpages/Mat/MatRestoreRow.html">MatRestoreRow</a>(cMat, gid, &amp;n, NULL, NULL);
+<a name="line975">975: </a>        }
+<a name="line976">976: </a>      }
+<a name="line977">977: </a>      <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(P, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line978">978: </a>      <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(P, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+
+<a name="line980">980: </a>      <font color="#B22222">/* project to make new graph with colapsed edges */</font>
+<a name="line981">981: </a>      <a href="../../../../../docs/manualpages/Mat/MatPtAP.html">MatPtAP</a>(cMat, P, <a href="../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>, 1.0, &amp;tMat);
+<a name="line982">982: </a>      <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;P);
+<a name="line983">983: </a>      <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;cMat);
+<a name="line984">984: </a>      cMat = tMat;
+<a name="line985">985: </a>      <a href="../../../../../docs/manualpages/Mat/MatCreateVecs.html">MatCreateVecs</a>(cMat, &amp;diag, NULL);
+<a name="line986">986: </a>      <a href="../../../../../docs/manualpages/Mat/MatGetDiagonal.html">MatGetDiagonal</a>(cMat, diag); <font color="#B22222">/* effectively <a href="../../../../../docs/manualpages/PC/PCJACOBI.html">PCJACOBI</a> */</font>
+<a name="line987">987: </a>      <a href="../../../../../docs/manualpages/Vec/VecReciprocal.html">VecReciprocal</a>(diag);
+<a name="line988">988: </a>      <a href="../../../../../docs/manualpages/Vec/VecSqrtAbs.html">VecSqrtAbs</a>(diag);
+<a name="line989">989: </a>      <a href="../../../../../docs/manualpages/Mat/MatDiagonalScale.html">MatDiagonalScale</a>(cMat, diag, diag);
+<a name="line990">990: </a>      <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;diag);
+<a name="line991">991: </a>    }
+<a name="line992">992: </a>  } <font color="#B22222">/* coarsen iterator */</font>
+
+<a name="line994">994: </a>  <font color="#B22222">/* make fake matrix */</font>
+<a name="line995">995: </a>  <font color="#4169E1">if</font> (size &gt; 1) {
+<a name="line996">996: </a>    <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>           mat;
+<a name="line997">997: </a>    PetscCDIntNd *pos;
+<a name="line998">998: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      gid, NN, MM, jj = 0, mxsz = 0;
+
+<a name="line1000">1000: </a>    <font color="#4169E1">for</font> (kk = 0; kk &lt; nloc; kk++) {
+<a name="line1001">1001: </a>      PetscCDSizeAt(agg_llists, kk, &amp;jj);
+<a name="line1002">1002: </a>      <font color="#4169E1">if</font> (jj &gt; mxsz) mxsz = jj;
+<a name="line1003">1003: </a>    }
+<a name="line1004">1004: </a>    <a href="../../../../../docs/manualpages/Mat/MatGetSize.html">MatGetSize</a>(a_Gmat, &amp;MM, &amp;NN);
+<a name="line1005">1005: </a>    <font color="#4169E1">if</font> (mxsz &gt; MM - nloc) mxsz = MM - nloc;
+
+<a name="line1007">1007: </a>    <a href="../../../../../docs/manualpages/Mat/MatCreateAIJ.html">MatCreateAIJ</a>(comm, nloc, nloc, <a href="../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html">PETSC_DETERMINE</a>, <a href="../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html">PETSC_DETERMINE</a>, 0, NULL, mxsz, NULL, &amp;mat);
+
+<a name="line1009">1009: </a>    <font color="#4169E1">for</font> (kk = 0, gid = my0; kk &lt; nloc; kk++, gid++) {
+<a name="line1010">1010: </a>      <font color="#B22222">/* for (pos=PetscCDGetHeadPos(agg_llists,kk) ; pos ; pos=PetscCDGetNextPos(agg_llists,kk,pos)) { */</font>
+<a name="line1011">1011: </a>      PetscCDGetHeadPos(agg_llists, kk, &amp;pos);
+<a name="line1012">1012: </a>      <font color="#4169E1">while</font> (pos) {
+<a name="line1013">1013: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> gid1;
+<a name="line1014">1014: </a>        PetscCDIntNdGetID(pos, &amp;gid1);
+<a name="line1015">1015: </a>        PetscCDGetNextPos(agg_llists, kk, &amp;pos);
+
+<a name="line1017">1017: </a>        <font color="#4169E1">if</font> (gid1 &lt; my0 || gid1 &gt;= my0 + nloc) <a href="../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(mat, 1, &amp;gid, 1, &amp;gid1, &amp;one, <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line1018">1018: </a>      }
+<a name="line1019">1019: </a>    }
+<a name="line1020">1020: </a>    <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(mat, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line1021">1021: </a>    <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(mat, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line1022">1022: </a>    PetscCDSetMat(agg_llists, mat);
+<a name="line1023">1023: </a>  }
+
+<a name="line1025">1025: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(lid_cprowID);
+<a name="line1026">1026: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(lid_gid);
+<a name="line1027">1027: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(lid_matched);
+<a name="line1028">1028: </a>  PetscCDDestroy(deleted_list);
+<a name="line1029">1029: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1030">1030: </a>}
+
+<a name="line1032">1032: </a><font color="#B22222">/*</font>
+<a name="line1033">1033: </a><font color="#B22222">   HEM coarsen, simple greedy.</font>
+<a name="line1034">1034: </a><font color="#B22222">*/</font>
+<a name="line1035">1035: </a><strong><font color="#4169E1"><a name="MatCoarsenApply_HEM"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatCoarsenApply_HEM(<a href="../../../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> coarse)</font></strong>
+<a name="line1036">1036: </a>{
+<a name="line1037">1037: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> mat = coarse-&gt;graph;
+
+<a name="line1039">1039: </a>  <font color="#4169E1">if</font> (!coarse-&gt;perm) {
+<a name="line1040">1040: </a>    <a href="../../../../../docs/manualpages/IS/IS.html">IS</a>       perm;
+<a name="line1041">1041: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, m;
+
+<a name="line1043">1043: </a>    <a href="../../../../../docs/manualpages/Mat/MatGetLocalSize.html">MatGetLocalSize</a>(mat, &amp;m, &amp;n);
+<a name="line1044">1044: </a>    <a href="../../../../../docs/manualpages/IS/ISCreateStride.html">ISCreateStride</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat), m, 0, 1, &amp;perm);
+<a name="line1045">1045: </a>    MatCoarsenApply_HEM_private(perm, mat, &amp;coarse-&gt;agg_lists);
+<a name="line1046">1046: </a>    <a href="../../../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;perm);
+<a name="line1047">1047: </a>  } <font color="#4169E1">else</font> {
+<a name="line1048">1048: </a>    MatCoarsenApply_HEM_private(coarse-&gt;perm, mat, &amp;coarse-&gt;agg_lists);
+<a name="line1049">1049: </a>  }
+<a name="line1050">1050: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1051">1051: </a>}
+
+<a name="line1053">1053: </a><strong><font color="#4169E1"><a name="MatCoarsenView_HEM"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatCoarsenView_HEM(<a href="../../../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> coarse, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line1054">1054: </a>{
+<a name="line1055">1055: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+<a name="line1056">1056: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   iascii;
+
+<a name="line1058">1058: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)coarse), &amp;rank);
+<a name="line1059">1059: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line1060">1060: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line1061">1061: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushSynchronized.html">PetscViewerASCIIPushSynchronized</a>(viewer);
+<a name="line1062">1062: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIISynchronizedPrintf.html">PetscViewerASCIISynchronizedPrintf</a>(viewer, <font color="#666666">"  [%d] HEM aggregator\n"</font>, rank);
+<a name="line1063">1063: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(viewer);
+<a name="line1064">1064: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopSynchronized.html">PetscViewerASCIIPopSynchronized</a>(viewer);
+<a name="line1065">1065: </a>  }
+<a name="line1066">1066: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1067">1067: </a>}
+
+<a name="line1069">1069: </a><font color="#B22222">/*MC</font>
+<a name="line1070">1070: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/MatOrderings/MATCOARSENHEM.html">MATCOARSENHEM</a> - A coarsener that uses HEM a simple greedy coarsener</font>
+
+<a name="line1072">1072: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line1074">1074: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `<a href="../../../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a>()`, `<a href="../../../../../docs/manualpages/MatOrderings/MatCoarsenGetData.html">MatCoarsenGetData</a>()`, `<a href="../../../../../docs/manualpages/Mat/MatCoarsenType.html">MatCoarsenType</a>`, `<a href="../../../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a>()`</font>
+<a name="line1075">1075: </a><font color="#B22222">M*/</font>
+
+<a name="line1077">1077: </a><strong><font color="#4169E1"><a name="MatCoarsenCreate_HEM"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatCoarsenCreate_HEM(<a href="../../../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> coarse)</font></strong>
+<a name="line1078">1078: </a>{
+<a name="line1079">1079: </a>  coarse-&gt;ops-&gt;apply = MatCoarsenApply_HEM;
+<a name="line1080">1080: </a>  coarse-&gt;ops-&gt;view  = MatCoarsenView_HEM;
+<a name="line1081">1081: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1082">1082: </a>}
+</pre>
+</body>
+
+</html>

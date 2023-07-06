@@ -1,0 +1,121 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/tests/ex47.c">Actual source code: ex47.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:07+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>static char help[] = <font color="#666666">"Example for <a href="../../../docs/manualpages/Sys/PetscOptionsInsertFileYAML.html">PetscOptionsInsertFileYAML</a>\n"</font>;
+
+<a name="line3">  3: </a>#include <A href="../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+<a name="line4">  4: </a>#include <A href="../../../include/petscviewer.h.html">&lt;petscviewer.h&gt;</A>
+
+<a name="line6">  6: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
+<a name="line7">  7: </a>{
+<a name="line8">  8: </a>  char      filename[PETSC_MAX_PATH_LEN];
+<a name="line9">  9: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg;
+
+<a name="line12"> 12: </a>  <a href="../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help);
+
+<a name="line14"> 14: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(NULL, NULL, <font color="#666666">"-f"</font>, filename, <font color="#4169E1">sizeof</font>(filename), &amp;flg);
+<a name="line15"> 15: </a>  <font color="#4169E1">if</font> (flg) <a href="../../../docs/manualpages/Sys/PetscOptionsInsertFileYAML.html">PetscOptionsInsertFileYAML</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, NULL, filename, <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+
+<a name="line17"> 17: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(NULL, NULL, <font color="#666666">"-yaml"</font>, filename, <font color="#4169E1">sizeof</font>(filename), &amp;flg);
+<a name="line18"> 18: </a>  <font color="#4169E1">if</font> (flg) {
+<a name="line19"> 19: </a>    <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> monitor = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line21"> 21: </a>    <a href="../../../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, <font color="#666666">"-monitor"</font>, &amp;monitor, NULL);
+<a name="line22"> 22: </a>    <font color="#4169E1">if</font> (monitor) <a href="../../../docs/manualpages/Sys/PetscOptionsMonitorSet.html">PetscOptionsMonitorSet</a>(<a href="../../../docs/manualpages/Sys/PetscOptionsMonitorDefault.html">PetscOptionsMonitorDefault</a>, NULL, NULL);
+<a name="line23"> 23: </a>    <a href="../../../docs/manualpages/Sys/PetscOptionsClear.html">PetscOptionsClear</a>(NULL);
+<a name="line24"> 24: </a>    <a href="../../../docs/manualpages/Sys/PetscOptionsInsertFileYAML.html">PetscOptionsInsertFileYAML</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, NULL, filename, <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+<a name="line25"> 25: </a>  }
+
+<a name="line27"> 27: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsView.html">PetscOptionsView</a>(NULL, <a href="../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line28"> 28: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsClear.html">PetscOptionsClear</a>(NULL);
+<a name="line29"> 29: </a>  <a href="../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line30"> 30: </a>  <font color="#4169E1">return</font> 0;
+<a name="line31"> 31: </a>}
+
+<a name="line33"> 33: </a><font color="#B22222">/*TEST</font>
+
+<a name="line35"> 35: </a><font color="#B22222">   testset:</font>
+<a name="line36"> 36: </a><font color="#B22222">     args: -options_left false</font>
+<a name="line37"> 37: </a><font color="#B22222">     filter:  grep -E -v "(options_left|options_monitor)"</font>
+<a name="line38"> 38: </a><font color="#B22222">     localrunfiles: petsc.yml</font>
+
+<a name="line40"> 40: </a><font color="#B22222">     test:</font>
+<a name="line41"> 41: </a><font color="#B22222">        suffix: 1</font>
+<a name="line42"> 42: </a><font color="#B22222">        args: -f petsc.yml</font>
+
+<a name="line44"> 44: </a><font color="#B22222">     test:</font>
+<a name="line45"> 45: </a><font color="#B22222">        suffix: 2_file</font>
+<a name="line46"> 46: </a><font color="#B22222">        output_file: output/ex47_2.out</font>
+<a name="line47"> 47: </a><font color="#B22222">        args: -options_file_yaml petsc.yml</font>
+
+<a name="line49"> 49: </a><font color="#B22222">     test:</font>
+<a name="line50"> 50: </a><font color="#B22222">        suffix: 2_string</font>
+<a name="line51"> 51: </a><font color="#B22222">        output_file: output/ex47_2.out</font>
+<a name="line52"> 52: </a><font color="#B22222">        args: -options_string_yaml "`cat petsc.yml`"</font>
+
+<a name="line54"> 54: </a><font color="#B22222">     test:</font>
+<a name="line55"> 55: </a><font color="#B22222">        suffix: 2_auto</font>
+<a name="line56"> 56: </a><font color="#B22222">        args: -options_monitor</font>
+<a name="line57"> 57: </a><font color="#B22222">        args: -options_file ex47-yaml_tag</font>
+<a name="line58"> 58: </a><font color="#B22222">        args: -options_file ex47-yaml_doc</font>
+<a name="line59"> 59: </a><font color="#B22222">        localrunfiles: ex47-yaml_tag ex47-yaml_doc</font>
+
+<a name="line61"> 61: </a><font color="#B22222">     test:</font>
+<a name="line62"> 62: </a><font color="#B22222">        suffix: 2_prefix</font>
+<a name="line63"> 63: </a><font color="#B22222">        args: -options_monitor</font>
+<a name="line64"> 64: </a><font color="#B22222">        args: -options_file ex47-opt.txt</font>
+<a name="line65"> 65: </a><font color="#B22222">        args: -prefix_push p5_ -options_file ex47-opt.yml -prefix_pop</font>
+<a name="line66"> 66: </a><font color="#B22222">        args: -prefix_push p5_ -options_file ex47-opt.yml:yaml -prefix_pop</font>
+<a name="line67"> 67: </a><font color="#B22222">        args: -prefix_push p6_ -options_file_yaml ex47-opt.yml -prefix_pop</font>
+<a name="line68"> 68: </a><font color="#B22222">        args: -prefix_push p7_ -options_string_yaml "`cat ex47-opt.yml`" -prefix_pop</font>
+<a name="line69"> 69: </a><font color="#B22222">        args: -prefix_push p7_ -options_string_yaml "`cat ex47-opt.yml`" -prefix_pop</font>
+<a name="line70"> 70: </a><font color="#B22222">        args: -prefix_push p8_ -options_string_yaml "`cat ex47-opt.yml`" -prefix_pop</font>
+<a name="line71"> 71: </a><font color="#B22222">        args: -prefix_push p9_ -options_file ex47-opt.json -prefix_pop</font>
+<a name="line72"> 72: </a><font color="#B22222">        localrunfiles: ex47-opt.txt ex47-opt.yml ex47-opt.json</font>
+
+<a name="line74"> 74: </a><font color="#B22222">   testset:</font>
+<a name="line75"> 75: </a><font color="#B22222">     nsize: {{1 2}}</font>
+
+<a name="line77"> 77: </a><font color="#B22222">     test:</font>
+<a name="line78"> 78: </a><font color="#B22222">        suffix: 3_empty</font>
+<a name="line79"> 79: </a><font color="#B22222">        args: -yaml ex47-empty.yaml</font>
+<a name="line80"> 80: </a><font color="#B22222">        localrunfiles: ex47-empty.yaml</font>
+
+<a name="line82"> 82: </a><font color="#B22222">     test:</font>
+<a name="line83"> 83: </a><font color="#B22222">        suffix: 3_merge</font>
+<a name="line84"> 84: </a><font color="#B22222">        args: -yaml ex47-merge.yaml -monitor</font>
+<a name="line85"> 85: </a><font color="#B22222">        localrunfiles: ex47-merge.yaml</font>
+
+<a name="line87"> 87: </a><font color="#B22222">     test:</font>
+<a name="line88"> 88: </a><font color="#B22222">        suffix: 3_options</font>
+<a name="line89"> 89: </a><font color="#B22222">        args: -yaml ex47-options.yaml</font>
+<a name="line90"> 90: </a><font color="#B22222">        localrunfiles: ex47-options.yaml</font>
+
+<a name="line92"> 92: </a><font color="#B22222">     test:</font>
+<a name="line93"> 93: </a><font color="#B22222">        suffix: 3_include</font>
+<a name="line94"> 94: </a><font color="#B22222">        args: -yaml ex47-include.yaml</font>
+<a name="line95"> 95: </a><font color="#B22222">        localrunfiles: ex47-include.yaml ex47-empty.yaml ex47-options.yaml</font>
+
+<a name="line97"> 97: </a><font color="#B22222">     test:</font>
+<a name="line98"> 98: </a><font color="#B22222">        suffix: 3_prefix</font>
+<a name="line99"> 99: </a><font color="#B22222">        args: -yaml ex47-prefix.yaml</font>
+<a name="line100">100: </a><font color="#B22222">        localrunfiles: ex47-prefix.yaml</font>
+
+<a name="line102">102: </a><font color="#B22222">     test:</font>
+<a name="line103">103: </a><font color="#B22222">        suffix: 3_multidoc</font>
+<a name="line104">104: </a><font color="#B22222">        args: -yaml ex47-multidoc.yaml</font>
+<a name="line105">105: </a><font color="#B22222">        localrunfiles: ex47-multidoc.yaml</font>
+
+<a name="line107">107: </a><font color="#B22222">TEST*/</font>
+</pre>
+</body>
+
+</html>

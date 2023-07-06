@@ -1,0 +1,51 @@
+# MatDenseCUDAGetArrayWrite
+Provides write access to the CUDA buffer inside a `MATDENSECUDA` matrix. 
+## Synopsis
+```
+#include "petscmat.h"  
+PetscErrorCode MatDenseCUDAGetArrayWrite(Mat A, PetscScalar **a)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***A -*** the matrix
+
+
+Output Parameters
+
+- ***array -*** the GPU array in column major order
+
+
+
+## Notes
+The data on the GPU may not be updated due to operations done on the CPU. If you need updated data, use `MatDenseCUDAGetArray()`.
+
+The array must be restored with `MatDenseCUDARestoreArrayWrite()` when no longer needed.
+
+
+
+
+## See Also
+ `MATDENSECUDA`, `MatDenseCUDAGetArray()`, `MatDenseCUDARestoreArray()`, `MatDenseCUDARestoreArrayWrite()`, `MatDenseCUDAGetArrayRead()`, `MatDenseCUDARestoreArrayRead()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/mpi/mpidense.c.html#MatDenseCUDAGetArrayWrite">src/mat/impls/dense/mpi/mpidense.c</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/mpi/mpidense.c.html#MatDenseCUDAGetArrayWrite_MPIDenseCUDA">MatDenseCUDAGetArrayWrite_MPIDenseCUDA in src/mat/impls/dense/mpi/mpidense.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/seq/cuda/densecuda.cu.html#MatDenseCUDAGetArrayWrite_SeqDenseCUDA">MatDenseCUDAGetArrayWrite_SeqDenseCUDA in src/mat/impls/dense/seq/cuda/densecuda.cu</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/dense/mpi/mpidense.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

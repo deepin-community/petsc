@@ -1,0 +1,96 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/tests/ex79f.F90">Actual source code: ex79f.F90</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:10+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>!
+<a name="line2">  2: </a>!   This program demonstrates use of <a href="../../../docs/manualpages/Mat/MatGetRowIJ.html">MatGetRowIJ</a>() from Fortran
+<a name="line3">  3: </a>!
+<a name="line4">  4: </a>      program main
+
+<a name="line6">  6: </a>#include <A href="../../../include/petsc/finclude/petscmat.h.html">&lt;petsc/finclude/petscmat.h&gt;</A>
+<a name="line7">  7: </a>      use petscmat
+<a name="line8">  8: </a>      implicit none
+
+<a name="line10"> 10: </a>      <a href="../../../docs/manualpages/Mat/Mat.html">Mat</a>         A,Ad,Ao
+<a name="line11"> 11: </a>      <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ierr
+<a name="line12"> 12: </a>      <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank
+<a name="line13"> 13: </a>      <a href="../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> v
+<a name="line14"> 14: </a>      <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i,j,ia(1),ja(1)
+<a name="line15"> 15: </a>      <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n,icol(1),rstart
+<a name="line16"> 16: </a>      <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> zero,one,rend
+<a name="line17"> 17: </a>      <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   done
+<a name="line18"> 18: </a>      <a href="../../../docs/manualpages/Sys/PetscOffset.html">PetscOffset</a> iia,jja,aaa,iicol
+<a name="line19"> 19: </a>      <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> aa(1)
+
+<a name="line21"> 21: </a>      PetscCallA(<a href="../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(ierr))
+<a name="line22"> 22: </a>      PetscCallMPIA(<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>,rank,ierr))
+
+<a name="line24"> 24: </a>      PetscCallA(<a href="../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html">PetscViewerBinaryOpen</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>,'${PETSC_DIR}/share/petsc/datafiles/matrices/' // 'ns-real-int32-float64',<a href="../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_READ</a>,v,ierr))
+<a name="line25"> 25: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>,A,ierr))
+<a name="line26"> 26: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(A, <a href="../../../docs/manualpages/Mat/MATMPIAIJ.html">MATMPIAIJ</a>,ierr))
+<a name="line27"> 27: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatLoad.html">MatLoad</a>(A,v,ierr))
+<a name="line28"> 28: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatView.html">MatView</a>(A,<a href="../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>,ierr))
+
+<a name="line30"> 30: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatMPIAIJGetSeqAIJ.html">MatMPIAIJGetSeqAIJ</a>(A,Ad,Ao,icol,iicol,ierr))
+<a name="line31"> 31: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatGetOwnershipRange.html">MatGetOwnershipRange</a>(A,rstart,rend,ierr))
+<a name="line32"> 32: </a>!
+<a name="line33"> 33: </a>!   Print diagonal portion of matrix
+<a name="line34"> 34: </a>!
+<a name="line35"> 35: </a>      PetscCallA(<a href="../../../docs/manualpages/Sys/PetscSequentialPhaseBegin.html">PetscSequentialPhaseBegin</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>,1,ierr))
+<a name="line36"> 36: </a>      zero = 0
+<a name="line37"> 37: </a>      one  = 1
+<a name="line38"> 38: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatGetRowIJ.html">MatGetRowIJ</a>(Ad,one,zero,zero,n,ia,iia,ja,jja,done,ierr))
+<a name="line39"> 39: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatSeqAIJGetArray.html">MatSeqAIJGetArray</a>(Ad,aa,aaa,ierr))
+<a name="line40"> 40: </a>      <font color="#4169E1">do</font> 10, i=1,n
+<a name="line41"> 41: </a>        write(7+rank,*) 'row ',i+rstart,' number nonzeros ',ia(iia+i+1)-ia(iia+i)
+<a name="line42"> 42: </a>        <font color="#4169E1">do</font> 20, j=ia(iia+i),ia(iia+i+1)-1
+<a name="line43"> 43: </a>          write(7+rank,*)'  ',j,ja(jja+j)+rstart,aa(aaa+j)
+<a name="line44"> 44: </a> 20     <font color="#4169E1">continue</font>
+<a name="line45"> 45: </a> 10   <font color="#4169E1">continue</font>
+<a name="line46"> 46: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatRestoreRowIJ.html">MatRestoreRowIJ</a>(Ad,one,zero,zero,n,ia,iia,ja,jja,done,ierr))
+<a name="line47"> 47: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatSeqAIJRestoreArray.html">MatSeqAIJRestoreArray</a>(Ad,aa,aaa,ierr))
+<a name="line48"> 48: </a>!
+<a name="line49"> 49: </a>!   Print off-diagonal portion of matrix
+<a name="line50"> 50: </a>!
+<a name="line51"> 51: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatGetRowIJ.html">MatGetRowIJ</a>(Ao,one,zero,zero,n,ia,iia,ja,jja,done,ierr))
+<a name="line52"> 52: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatSeqAIJGetArray.html">MatSeqAIJGetArray</a>(Ao,aa,aaa,ierr))
+<a name="line53"> 53: </a>      <font color="#4169E1">do</font> 30, i=1,n
+<a name="line54"> 54: </a>        write(7+rank,*) 'row ',i+rstart,' number nonzeros ',ia(iia+i+1)-ia(iia+i)
+<a name="line55"> 55: </a>        <font color="#4169E1">do</font> 40, j=ia(iia+i),ia(iia+i+1)-1
+<a name="line56"> 56: </a>          write(7+rank,*)'  ',j,icol(iicol+ja(jja+j))+1,aa(aaa+j)
+<a name="line57"> 57: </a> 40     <font color="#4169E1">continue</font>
+<a name="line58"> 58: </a> 30   <font color="#4169E1">continue</font>
+<a name="line59"> 59: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatRestoreRowIJ.html">MatRestoreRowIJ</a>(Ao,one,zero,zero,n,ia,iia,ja,jja,done,ierr))
+<a name="line60"> 60: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatSeqAIJRestoreArray.html">MatSeqAIJRestoreArray</a>(Ao,aa,aaa,ierr))
+
+<a name="line62"> 62: </a>      PetscCallA(<a href="../../../docs/manualpages/Sys/PetscSequentialPhaseEnd.html">PetscSequentialPhaseEnd</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>,1,ierr))
+
+<a name="line64"> 64: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatGetDiagonalBlock.html">MatGetDiagonalBlock</a>(A,Ad,ierr))
+<a name="line65"> 65: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatView.html">MatView</a>(Ad,<a href="../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>,ierr))
+
+<a name="line67"> 67: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatView.html">MatView</a>(A,<a href="../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>,ierr))
+<a name="line68"> 68: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(A,ierr))
+<a name="line69"> 69: </a>      PetscCallA(<a href="../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(v,ierr))
+<a name="line70"> 70: </a>      PetscCallA(<a href="../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>(ierr))
+<a name="line71"> 71: </a>      end
+
+<a name="line73"> 73: </a>!<font color="#B22222">/*TEST</font>
+<a name="line74"> 74: </a><font color="#B22222">!</font>
+<a name="line75"> 75: </a><font color="#B22222">!     build:</font>
+<a name="line76"> 76: </a><font color="#B22222">!       requires: double !complex !defined(PETSC_USE_64BIT_INDICES)</font>
+<a name="line77"> 77: </a><font color="#B22222">!</font>
+<a name="line78"> 78: </a><font color="#B22222">!     test:</font>
+<a name="line79"> 79: </a><font color="#B22222">!        args: -binary_read_double -options_left false</font>
+<a name="line80"> 80: </a><font color="#B22222">!</font>
+<a name="line81"> 81: </a><font color="#B22222">!TEST*/</font>
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,636 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/tao/interface/taosolver_fg.c">Actual source code: taosolver_fg.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:52+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../include/petsc/private/taoimpl.h.html">&lt;petsc/private/taoimpl.h&gt;</A>
+
+<a name="line3">  3: </a><font color="#B22222">/*@</font>
+<a name="line4">  4: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoSetSolution.html">TaoSetSolution</a> - Sets the vector holding the initial guess for the solve</font>
+
+<a name="line6">  6: </a><font color="#B22222">  Logically collective</font>
+
+<a name="line8">  8: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line9">  9: </a><font color="#B22222">+ tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+<a name="line10"> 10: </a><font color="#B22222">- x0  - the initial guess</font>
+
+<a name="line12"> 12: </a><font color="#B22222">  Level: beginner</font>
+<a name="line13"> 13: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>`, `<a href="../../../docs/manualpages/Tao/TaoCreate.html">TaoCreate</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSolve.html">TaoSolve</a>()`, `<a href="../../../docs/manualpages/Tao/TaoGetSolution.html">TaoGetSolution</a>()`</font>
+<a name="line14"> 14: </a><font color="#B22222">@*/</font>
+<a name="line15"> 15: </a><strong><font color="#4169E1"><a name="TaoSetSolution"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoSetSolution.html">TaoSetSolution</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> x0)</font></strong>
+<a name="line16"> 16: </a>{
+<a name="line19"> 19: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)x0);
+<a name="line20"> 20: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;tao-&gt;solution);
+<a name="line21"> 21: </a>  tao-&gt;solution = x0;
+<a name="line22"> 22: </a>  <font color="#4169E1">return</font> 0;
+<a name="line23"> 23: </a>}
+
+<a name="line25"> 25: </a><strong><font color="#4169E1"><a name="TaoTestGradient"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoTestGradient(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> g1)</font></strong>
+<a name="line26"> 26: </a>{
+<a name="line27"> 27: </a>  <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>               g2, g3;
+<a name="line28"> 28: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>         complete_print = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, test = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line29"> 29: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>         hcnorm, fdnorm, hcmax, fdmax, diffmax, diffnorm;
+<a name="line30"> 30: </a>  <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       dot;
+<a name="line31"> 31: </a>  <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>          comm;
+<a name="line32"> 32: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>       viewer, mviewer;
+<a name="line33"> 33: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PetscViewerFormat</a> format;
+<a name="line34"> 34: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          tabs;
+<a name="line35"> 35: </a>  static <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>  directionsprinted = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line37"> 37: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectOptionsBegin.html">PetscObjectOptionsBegin</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao);
+<a name="line38"> 38: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsName.html">PetscOptionsName</a>(<font color="#666666">"-tao_test_gradient"</font>, <font color="#666666">"Compare hand-coded and finite difference Gradients"</font>, <font color="#666666">"None"</font>, &amp;test);
+<a name="line39"> 39: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsViewer.html">PetscOptionsViewer</a>(<font color="#666666">"-tao_test_gradient_view"</font>, <font color="#666666">"View difference between hand-coded and finite difference Gradients element entries"</font>, <font color="#666666">"None"</font>, &amp;mviewer, &amp;format, &amp;complete_print);
+<a name="line40"> 40: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line41"> 41: </a>  <font color="#4169E1">if</font> (!test) {
+<a name="line42"> 42: </a>    <font color="#4169E1">if</font> (complete_print) <a href="../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;mviewer);
+<a name="line43"> 43: </a>    <font color="#4169E1">return</font> 0;
+<a name="line44"> 44: </a>  }
+
+<a name="line46"> 46: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao, &amp;comm);
+<a name="line47"> 47: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIGetStdout.html">PetscViewerASCIIGetStdout</a>(comm, &amp;viewer);
+<a name="line48"> 48: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIGetTab.html">PetscViewerASCIIGetTab</a>(viewer, &amp;tabs);
+<a name="line49"> 49: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerASCIISetTab.html">PetscViewerASCIISetTab</a>(viewer, ((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao)-&gt;tablevel);
+<a name="line50"> 50: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  ---------- Testing Gradient -------------\n"</font>);
+<a name="line51"> 51: </a>  <font color="#4169E1">if</font> (!complete_print &amp;&amp; !directionsprinted) {
+<a name="line52"> 52: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Run with -tao_test_gradient_view and optionally -tao_test_gradient &lt;threshold&gt; to show difference\n"</font>);
+<a name="line53"> 53: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"    of hand-coded and finite difference gradient entries greater than &lt;threshold&gt;.\n"</font>);
+<a name="line54"> 54: </a>  }
+<a name="line55"> 55: </a>  <font color="#4169E1">if</font> (!directionsprinted) {
+<a name="line56"> 56: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Testing hand-coded Gradient, if (for double precision runs) ||G - Gfd||/||G|| is\n"</font>);
+<a name="line57"> 57: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"    O(1.e-8), the hand-coded Gradient is probably correct.\n"</font>);
+<a name="line58"> 58: </a>    directionsprinted = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line59"> 59: </a>  }
+<a name="line60"> 60: </a>  <font color="#4169E1">if</font> (complete_print) <a href="../../../docs/manualpages/Viewer/PetscViewerPushFormat.html">PetscViewerPushFormat</a>(mviewer, format);
+
+<a name="line62"> 62: </a>  <a href="../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(x, &amp;g2);
+<a name="line63"> 63: </a>  <a href="../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(x, &amp;g3);
+
+<a name="line65"> 65: </a>  <font color="#B22222">/* Compute finite difference gradient, assume the gradient is already computed by <a href="../../../docs/manualpages/Tao/TaoComputeGradient.html">TaoComputeGradient</a>() and put into g1 */</font>
+<a name="line66"> 66: </a>  <a href="../../../docs/manualpages/Tao/TaoDefaultComputeGradient.html">TaoDefaultComputeGradient</a>(tao, x, g2, NULL);
+
+<a name="line68"> 68: </a>  <a href="../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(g2, <a href="../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;fdnorm);
+<a name="line69"> 69: </a>  <a href="../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(g1, <a href="../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;hcnorm);
+<a name="line70"> 70: </a>  <a href="../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(g2, <a href="../../../docs/manualpages/Vec/NORM_INFINITY.html">NORM_INFINITY</a>, &amp;fdmax);
+<a name="line71"> 71: </a>  <a href="../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(g1, <a href="../../../docs/manualpages/Vec/NORM_INFINITY.html">NORM_INFINITY</a>, &amp;hcmax);
+<a name="line72"> 72: </a>  <a href="../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(g1, g2, &amp;dot);
+<a name="line73"> 73: </a>  <a href="../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(g1, g3);
+<a name="line74"> 74: </a>  <a href="../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(g3, -1.0, g2);
+<a name="line75"> 75: </a>  <a href="../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(g3, <a href="../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;diffnorm);
+<a name="line76"> 76: </a>  <a href="../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(g3, <a href="../../../docs/manualpages/Vec/NORM_INFINITY.html">NORM_INFINITY</a>, &amp;diffmax);
+<a name="line77"> 77: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  ||Gfd|| %g, ||G|| = %g, angle cosine = (Gfd'G)/||Gfd||||G|| = %g\n"</font>, (double)fdnorm, (double)hcnorm, (double)(<a href="../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(dot) / (fdnorm * hcnorm)));
+<a name="line78"> 78: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  2-norm ||G - Gfd||/||G|| = %g, ||G - Gfd|| = %g\n"</font>, (double)(diffnorm / <a href="../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(hcnorm, fdnorm)), (double)diffnorm);
+<a name="line79"> 79: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  max-norm ||G - Gfd||/||G|| = %g, ||G - Gfd|| = %g\n"</font>, (double)(diffmax / <a href="../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(hcmax, fdmax)), (double)diffmax);
+
+<a name="line81"> 81: </a>  <font color="#4169E1">if</font> (complete_print) {
+<a name="line82"> 82: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Hand-coded gradient ----------\n"</font>);
+<a name="line83"> 83: </a>    <a href="../../../docs/manualpages/Vec/VecView.html">VecView</a>(g1, mviewer);
+<a name="line84"> 84: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Finite difference gradient ----------\n"</font>);
+<a name="line85"> 85: </a>    <a href="../../../docs/manualpages/Vec/VecView.html">VecView</a>(g2, mviewer);
+<a name="line86"> 86: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Hand-coded minus finite-difference gradient ----------\n"</font>);
+<a name="line87"> 87: </a>    <a href="../../../docs/manualpages/Vec/VecView.html">VecView</a>(g3, mviewer);
+<a name="line88"> 88: </a>  }
+<a name="line89"> 89: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;g2);
+<a name="line90"> 90: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;g3);
+
+<a name="line92"> 92: </a>  <font color="#4169E1">if</font> (complete_print) {
+<a name="line93"> 93: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerPopFormat.html">PetscViewerPopFormat</a>(mviewer);
+<a name="line94"> 94: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;mviewer);
+<a name="line95"> 95: </a>  }
+<a name="line96"> 96: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerASCIISetTab.html">PetscViewerASCIISetTab</a>(viewer, tabs);
+<a name="line97"> 97: </a>  <font color="#4169E1">return</font> 0;
+<a name="line98"> 98: </a>}
+
+<a name="line100">100: </a><font color="#B22222">/*@</font>
+<a name="line101">101: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoComputeGradient.html">TaoComputeGradient</a> - Computes the gradient of the objective function</font>
+
+<a name="line103">103: </a><font color="#B22222">  Collective</font>
+
+<a name="line105">105: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line106">106: </a><font color="#B22222">+ tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+<a name="line107">107: </a><font color="#B22222">- X - input vector</font>
+
+<a name="line109">109: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line110">110: </a><font color="#B22222">. G - gradient vector</font>
+
+<a name="line112">112: </a><font color="#B22222">  Options Database Keys:</font>
+<a name="line113">113: </a><font color="#B22222">+    -tao_test_gradient - compare the user provided gradient with one compute via finite differences to check for errors</font>
+<a name="line114">114: </a><font color="#B22222">-    -tao_test_gradient_view - display the user provided gradient, the finite difference gradient and the difference between them to help users detect the location of errors in the user provided gradient</font>
+
+<a name="line116">116: </a><font color="#B22222">  Note:</font>
+<a name="line117">117: </a><font color="#B22222">    `<a href="../../../docs/manualpages/Tao/TaoComputeGradient.html">TaoComputeGradient</a>()` is typically used within the implementation of the optimization method,</font>
+<a name="line118">118: </a><font color="#B22222">  so most users would not generally call this routine themselves.</font>
+
+<a name="line120">120: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line122">122: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/TaoComputeObjective.html">TaoComputeObjective</a>()`, `<a href="../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetGradient.html">TaoSetGradient</a>()`</font>
+<a name="line123">123: </a><font color="#B22222">@*/</font>
+<a name="line124">124: </a><strong><font color="#4169E1"><a name="TaoComputeGradient"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoComputeGradient.html">TaoComputeGradient</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> G)</font></strong>
+<a name="line125">125: </a>{
+<a name="line126">126: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> dummy;
+
+<a name="line133">133: </a>  <a href="../../../docs/manualpages/Vec/VecLockReadPush.html">VecLockReadPush</a>(X);
+<a name="line134">134: </a>  <font color="#4169E1">if</font> (tao-&gt;ops-&gt;computegradient) {
+<a name="line135">135: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(TAO_GradientEval, tao, X, G, NULL);
+<a name="line136">136: </a>    <a href="../../../docs/manualpages/Sys/PetscCallBack.html">PetscCallBack</a>(<font color="#666666">"<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> callback gradient"</font>, (*tao-&gt;ops-&gt;computegradient)(tao, X, G, tao-&gt;user_gradP));
+<a name="line137">137: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(TAO_GradientEval, tao, X, G, NULL);
+<a name="line138">138: </a>    tao-&gt;ngrads++;
+<a name="line139">139: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (tao-&gt;ops-&gt;computeobjectiveandgradient) {
+<a name="line140">140: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(TAO_ObjGradEval, tao, X, G, NULL);
+<a name="line141">141: </a>    <a href="../../../docs/manualpages/Sys/PetscCallBack.html">PetscCallBack</a>(<font color="#666666">"<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> callback objective/gradient"</font>, (*tao-&gt;ops-&gt;computeobjectiveandgradient)(tao, X, &amp;dummy, G, tao-&gt;user_objgradP));
+<a name="line142">142: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(TAO_ObjGradEval, tao, X, G, NULL);
+<a name="line143">143: </a>    tao-&gt;nfuncgrads++;
+<a name="line144">144: </a>  } <font color="#4169E1">else</font> <a href="../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao), PETSC_ERR_ARG_WRONGSTATE, <font color="#666666">"<a href="../../../docs/manualpages/Tao/TaoSetGradient.html">TaoSetGradient</a>() has not been called"</font>);
+<a name="line145">145: </a>  <a href="../../../docs/manualpages/Vec/VecLockReadPop.html">VecLockReadPop</a>(X);
+
+<a name="line147">147: </a>  TaoTestGradient(tao, X, G);
+<a name="line148">148: </a>  <font color="#4169E1">return</font> 0;
+<a name="line149">149: </a>}
+
+<a name="line151">151: </a><font color="#B22222">/*@</font>
+<a name="line152">152: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoComputeObjective.html">TaoComputeObjective</a> - Computes the objective function value at a given point</font>
+
+<a name="line154">154: </a><font color="#B22222">  Collective</font>
+
+<a name="line156">156: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line157">157: </a><font color="#B22222">+ tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+<a name="line158">158: </a><font color="#B22222">- X - input vector</font>
+
+<a name="line160">160: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line161">161: </a><font color="#B22222">. f - Objective value at X</font>
+
+<a name="line163">163: </a><font color="#B22222">  Note:</font>
+<a name="line164">164: </a><font color="#B22222">    `<a href="../../../docs/manualpages/Tao/TaoComputeObjective.html">TaoComputeObjective</a>()` is typically used within the implementation of the optimization algorithm</font>
+<a name="line165">165: </a><font color="#B22222">  so most users would not generally call this routine themselves.</font>
+
+<a name="line167">167: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line169">169: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>`, `<a href="../../../docs/manualpages/Tao/TaoComputeGradient.html">TaoComputeGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetObjective.html">TaoSetObjective</a>()`</font>
+<a name="line170">170: </a><font color="#B22222">@*/</font>
+<a name="line171">171: </a><strong><font color="#4169E1"><a name="TaoComputeObjective"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoComputeObjective.html">TaoComputeObjective</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *f)</font></strong>
+<a name="line172">172: </a>{
+<a name="line173">173: </a>  <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> temp;
+
+<a name="line178">178: </a>  <a href="../../../docs/manualpages/Vec/VecLockReadPush.html">VecLockReadPush</a>(X);
+<a name="line179">179: </a>  <font color="#4169E1">if</font> (tao-&gt;ops-&gt;computeobjective) {
+<a name="line180">180: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(TAO_ObjectiveEval, tao, X, NULL, NULL);
+<a name="line181">181: </a>    <a href="../../../docs/manualpages/Sys/PetscCallBack.html">PetscCallBack</a>(<font color="#666666">"<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> callback objective"</font>, (*tao-&gt;ops-&gt;computeobjective)(tao, X, f, tao-&gt;user_objP));
+<a name="line182">182: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(TAO_ObjectiveEval, tao, X, NULL, NULL);
+<a name="line183">183: </a>    tao-&gt;nfuncs++;
+<a name="line184">184: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (tao-&gt;ops-&gt;computeobjectiveandgradient) {
+<a name="line185">185: </a>    <a href="../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(tao, <font color="#666666">"Duplicating variable vector in order to call func/grad routine\n"</font>);
+<a name="line186">186: </a>    <a href="../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(X, &amp;temp);
+<a name="line187">187: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(TAO_ObjGradEval, tao, X, NULL, NULL);
+<a name="line188">188: </a>    <a href="../../../docs/manualpages/Sys/PetscCallBack.html">PetscCallBack</a>(<font color="#666666">"<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> callback objective/gradient"</font>, (*tao-&gt;ops-&gt;computeobjectiveandgradient)(tao, X, f, temp, tao-&gt;user_objgradP));
+<a name="line189">189: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(TAO_ObjGradEval, tao, X, NULL, NULL);
+<a name="line190">190: </a>    <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;temp);
+<a name="line191">191: </a>    tao-&gt;nfuncgrads++;
+<a name="line192">192: </a>  } <font color="#4169E1">else</font> <a href="../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao), PETSC_ERR_ARG_WRONGSTATE, <font color="#666666">"<a href="../../../docs/manualpages/Tao/TaoSetObjective.html">TaoSetObjective</a>() has not been called"</font>);
+<a name="line193">193: </a>  <a href="../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(tao, <font color="#666666">"TAO Function evaluation: %20.19e\n"</font>, (double)(*f));
+<a name="line194">194: </a>  <a href="../../../docs/manualpages/Vec/VecLockReadPop.html">VecLockReadPop</a>(X);
+<a name="line195">195: </a>  <font color="#4169E1">return</font> 0;
+<a name="line196">196: </a>}
+
+<a name="line198">198: </a><font color="#B22222">/*@</font>
+<a name="line199">199: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a> - Computes the objective function value at a given point</font>
+
+<a name="line201">201: </a><font color="#B22222">  Collective</font>
+
+<a name="line203">203: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line204">204: </a><font color="#B22222">+ tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+<a name="line205">205: </a><font color="#B22222">- X - input vector</font>
+
+<a name="line207">207: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line208">208: </a><font color="#B22222">+ f - Objective value at X</font>
+<a name="line209">209: </a><font color="#B22222">- g - Gradient vector at X</font>
+
+<a name="line211">211: </a><font color="#B22222">  Note:</font>
+<a name="line212">212: </a><font color="#B22222">    `<a href="../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a>()` is typically used within the implementation of the optimization algorithm,</font>
+<a name="line213">213: </a><font color="#B22222">  so most users would not generally call this routine themselves.</font>
+
+<a name="line215">215: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line217">217: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/TaoComputeGradient.html">TaoComputeGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetObjective.html">TaoSetObjective</a>()`</font>
+<a name="line218">218: </a><font color="#B22222">@*/</font>
+<a name="line219">219: </a><strong><font color="#4169E1"><a name="TaoComputeObjectiveAndGradient"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *f, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> G)</font></strong>
+<a name="line220">220: </a>{
+<a name="line226">226: </a>  <a href="../../../docs/manualpages/Vec/VecLockReadPush.html">VecLockReadPush</a>(X);
+<a name="line227">227: </a>  <font color="#4169E1">if</font> (tao-&gt;ops-&gt;computeobjectiveandgradient) {
+<a name="line228">228: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(TAO_ObjGradEval, tao, X, G, NULL);
+<a name="line229">229: </a>    <font color="#4169E1">if</font> (tao-&gt;ops-&gt;computegradient == <a href="../../../docs/manualpages/Tao/TaoDefaultComputeGradient.html">TaoDefaultComputeGradient</a>) {
+<a name="line230">230: </a>      <a href="../../../docs/manualpages/Tao/TaoComputeObjective.html">TaoComputeObjective</a>(tao, X, f);
+<a name="line231">231: </a>      <a href="../../../docs/manualpages/Tao/TaoDefaultComputeGradient.html">TaoDefaultComputeGradient</a>(tao, X, G, NULL);
+<a name="line232">232: </a>    } <font color="#4169E1">else</font> <a href="../../../docs/manualpages/Sys/PetscCallBack.html">PetscCallBack</a>(<font color="#666666">"<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> callback objective/gradient"</font>, (*tao-&gt;ops-&gt;computeobjectiveandgradient)(tao, X, f, G, tao-&gt;user_objgradP));
+<a name="line233">233: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(TAO_ObjGradEval, tao, X, G, NULL);
+<a name="line234">234: </a>    tao-&gt;nfuncgrads++;
+<a name="line235">235: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (tao-&gt;ops-&gt;computeobjective &amp;&amp; tao-&gt;ops-&gt;computegradient) {
+<a name="line236">236: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(TAO_ObjectiveEval, tao, X, NULL, NULL);
+<a name="line237">237: </a>    <a href="../../../docs/manualpages/Sys/PetscCallBack.html">PetscCallBack</a>(<font color="#666666">"<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> callback objective"</font>, (*tao-&gt;ops-&gt;computeobjective)(tao, X, f, tao-&gt;user_objP));
+<a name="line238">238: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(TAO_ObjectiveEval, tao, X, NULL, NULL);
+<a name="line239">239: </a>    tao-&gt;nfuncs++;
+<a name="line240">240: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(TAO_GradientEval, tao, X, G, NULL);
+<a name="line241">241: </a>    <a href="../../../docs/manualpages/Sys/PetscCallBack.html">PetscCallBack</a>(<font color="#666666">"<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> callback gradient"</font>, (*tao-&gt;ops-&gt;computegradient)(tao, X, G, tao-&gt;user_gradP));
+<a name="line242">242: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(TAO_GradientEval, tao, X, G, NULL);
+<a name="line243">243: </a>    tao-&gt;ngrads++;
+<a name="line244">244: </a>  } <font color="#4169E1">else</font> <a href="../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao), PETSC_ERR_ARG_WRONGSTATE, <font color="#666666">"<a href="../../../docs/manualpages/Tao/TaoSetObjective.html">TaoSetObjective</a>() or <a href="../../../docs/manualpages/Tao/TaoSetGradient.html">TaoSetGradient</a>() not set"</font>);
+<a name="line245">245: </a>  <a href="../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(tao, <font color="#666666">"TAO Function evaluation: %20.19e\n"</font>, (double)(*f));
+<a name="line246">246: </a>  <a href="../../../docs/manualpages/Vec/VecLockReadPop.html">VecLockReadPop</a>(X);
+
+<a name="line248">248: </a>  TaoTestGradient(tao, X, G);
+<a name="line249">249: </a>  <font color="#4169E1">return</font> 0;
+<a name="line250">250: </a>}
+
+<a name="line252">252: </a><font color="#B22222">/*@C</font>
+<a name="line253">253: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoSetObjective.html">TaoSetObjective</a> - Sets the function evaluation routine for minimization</font>
+
+<a name="line255">255: </a><font color="#B22222">  Logically collective</font>
+
+<a name="line257">257: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line258">258: </a><font color="#B22222">+ tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+<a name="line259">259: </a><font color="#B22222">. func - the objective function</font>
+<a name="line260">260: </a><font color="#B22222">- ctx - [optional] user-defined context for private data for the function evaluation</font>
+<a name="line261">261: </a><font color="#B22222">        routine (may be NULL)</font>
+
+<a name="line263">263: </a><font color="#B22222">  Calling sequence of func:</font>
+<a name="line264">264: </a><font color="#B22222">$      func (<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *f, void *ctx);</font>
+
+<a name="line266">266: </a><font color="#B22222">+ x - input vector</font>
+<a name="line267">267: </a><font color="#B22222">. f - function value</font>
+<a name="line268">268: </a><font color="#B22222">- ctx - [optional] user-defined function context</font>
+
+<a name="line270">270: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line272">272: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/TaoSetGradient.html">TaoSetGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetHessian.html">TaoSetHessian</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetObjectiveAndGradient.html">TaoSetObjectiveAndGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoGetObjective.html">TaoGetObjective</a>()`</font>
+<a name="line273">273: </a><font color="#B22222">@*/</font>
+<a name="line274">274: </a><strong><font color="#4169E1"><a name="TaoSetObjective"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoSetObjective.html">TaoSetObjective</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*func)(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *, void *), void *ctx)</font></strong>
+<a name="line275">275: </a>{
+<a name="line277">277: </a>  <font color="#4169E1">if</font> (ctx) tao-&gt;user_objP = ctx;
+<a name="line278">278: </a>  <font color="#4169E1">if</font> (func) tao-&gt;ops-&gt;computeobjective = func;
+<a name="line279">279: </a>  <font color="#4169E1">return</font> 0;
+<a name="line280">280: </a>}
+
+<a name="line282">282: </a><font color="#B22222">/*@C</font>
+<a name="line283">283: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoGetObjective.html">TaoGetObjective</a> - Gets the function evaluation routine for the function to be minimized</font>
+
+<a name="line285">285: </a><font color="#B22222">  Not collective</font>
+
+<a name="line287">287: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line288">288: </a><font color="#B22222">. tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+
+<a name="line290">290: </a><font color="#B22222">  Output Parameters</font>
+<a name="line291">291: </a><font color="#B22222">+ func - the objective function</font>
+<a name="line292">292: </a><font color="#B22222">- ctx - the user-defined context for private data for the function evaluation</font>
+
+<a name="line294">294: </a><font color="#B22222">  Calling sequence of func:</font>
+<a name="line295">295: </a><font color="#B22222">$      func (<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *f, void *ctx);</font>
+
+<a name="line297">297: </a><font color="#B22222">+ x - input vector</font>
+<a name="line298">298: </a><font color="#B22222">. f - function value</font>
+<a name="line299">299: </a><font color="#B22222">- ctx - [optional] user-defined function context</font>
+
+<a name="line301">301: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line303">303: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>`, `<a href="../../../docs/manualpages/Tao/TaoSetGradient.html">TaoSetGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetHessian.html">TaoSetHessian</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetObjective.html">TaoSetObjective</a>()`</font>
+<a name="line304">304: </a><font color="#B22222">@*/</font>
+<a name="line305">305: </a><strong><font color="#4169E1"><a name="TaoGetObjective"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoGetObjective.html">TaoGetObjective</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (**func)(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *, void *), void **ctx)</font></strong>
+<a name="line306">306: </a>{
+<a name="line308">308: </a>  <font color="#4169E1">if</font> (func) *func = tao-&gt;ops-&gt;computeobjective;
+<a name="line309">309: </a>  <font color="#4169E1">if</font> (ctx) *ctx = tao-&gt;user_objP;
+<a name="line310">310: </a>  <font color="#4169E1">return</font> 0;
+<a name="line311">311: </a>}
+
+<a name="line313">313: </a><font color="#B22222">/*@C</font>
+<a name="line314">314: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoSetResidualRoutine.html">TaoSetResidualRoutine</a> - Sets the residual evaluation routine for least-square applications</font>
+
+<a name="line316">316: </a><font color="#B22222">  Logically collective</font>
+
+<a name="line318">318: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line319">319: </a><font color="#B22222">+ tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+<a name="line320">320: </a><font color="#B22222">. func - the residual evaluation routine</font>
+<a name="line321">321: </a><font color="#B22222">- ctx - [optional] user-defined context for private data for the function evaluation</font>
+<a name="line322">322: </a><font color="#B22222">        routine (may be NULL)</font>
+
+<a name="line324">324: </a><font color="#B22222">  Calling sequence of func:</font>
+<a name="line325">325: </a><font color="#B22222">$      func (<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> f, void *ctx);</font>
+
+<a name="line327">327: </a><font color="#B22222">+ x - input vector</font>
+<a name="line328">328: </a><font color="#B22222">. f - function value vector</font>
+<a name="line329">329: </a><font color="#B22222">- ctx - [optional] user-defined function context</font>
+
+<a name="line331">331: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line333">333: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>`, `<a href="../../../docs/manualpages/Tao/TaoSetObjective.html">TaoSetObjective</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetJacobianRoutine.html">TaoSetJacobianRoutine</a>()`</font>
+<a name="line334">334: </a><font color="#B22222">@*/</font>
+<a name="line335">335: </a><strong><font color="#4169E1"><a name="TaoSetResidualRoutine"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoSetResidualRoutine.html">TaoSetResidualRoutine</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> res, <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*func)(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>, void *), void *ctx)</font></strong>
+<a name="line336">336: </a>{
+<a name="line339">339: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)res);
+<a name="line340">340: </a>  <font color="#4169E1">if</font> (tao-&gt;ls_res) <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;tao-&gt;ls_res);
+<a name="line341">341: </a>  tao-&gt;ls_res               = res;
+<a name="line342">342: </a>  tao-&gt;user_lsresP          = ctx;
+<a name="line343">343: </a>  tao-&gt;ops-&gt;computeresidual = func;
+
+<a name="line345">345: </a>  <font color="#4169E1">return</font> 0;
+<a name="line346">346: </a>}
+
+<a name="line348">348: </a><font color="#B22222">/*@</font>
+<a name="line349">349: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoSetResidualWeights.html">TaoSetResidualWeights</a> - Give weights for the residual values. A vector can be used if only diagonal terms are used, otherwise a matrix can be give.</font>
+<a name="line350">350: </a><font color="#B22222">   If this function is not provided, or if sigma_v and sigma_w are both NULL, then the identity matrix will be used for weights.</font>
+
+<a name="line352">352: </a><font color="#B22222">  Collective</font>
+
+<a name="line354">354: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line355">355: </a><font color="#B22222">+ tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+<a name="line356">356: </a><font color="#B22222">. sigma_v - vector of weights (diagonal terms only)</font>
+<a name="line357">357: </a><font color="#B22222">. n       - the number of weights (if using off-diagonal)</font>
+<a name="line358">358: </a><font color="#B22222">. rows    - index list of rows for sigma_w</font>
+<a name="line359">359: </a><font color="#B22222">. cols    - index list of columns for sigma_w</font>
+<a name="line360">360: </a><font color="#B22222">- vals - array of weights</font>
+
+<a name="line362">362: </a><font color="#B22222">  Note: Either sigma_v or sigma_w (or both) should be NULL</font>
+
+<a name="line364">364: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line366">366: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>`, `<a href="../../../docs/manualpages/Tao/TaoSetResidualRoutine.html">TaoSetResidualRoutine</a>()`</font>
+<a name="line367">367: </a><font color="#B22222">@*/</font>
+<a name="line368">368: </a><strong><font color="#4169E1"><a name="TaoSetResidualWeights"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoSetResidualWeights.html">TaoSetResidualWeights</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> sigma_v, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *rows, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *cols, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *vals)</font></strong>
+<a name="line369">369: </a>{
+<a name="line370">370: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i;
+
+<a name="line374">374: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)sigma_v);
+<a name="line375">375: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;tao-&gt;res_weights_v);
+<a name="line376">376: </a>  tao-&gt;res_weights_v = sigma_v;
+<a name="line377">377: </a>  <font color="#4169E1">if</font> (vals) {
+<a name="line378">378: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tao-&gt;res_weights_rows);
+<a name="line379">379: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tao-&gt;res_weights_cols);
+<a name="line380">380: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tao-&gt;res_weights_w);
+<a name="line381">381: </a>    <a href="../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(n, &amp;tao-&gt;res_weights_rows);
+<a name="line382">382: </a>    <a href="../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(n, &amp;tao-&gt;res_weights_cols);
+<a name="line383">383: </a>    <a href="../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(n, &amp;tao-&gt;res_weights_w);
+<a name="line384">384: </a>    tao-&gt;res_weights_n = n;
+<a name="line385">385: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; n; i++) {
+<a name="line386">386: </a>      tao-&gt;res_weights_rows[i] = rows[i];
+<a name="line387">387: </a>      tao-&gt;res_weights_cols[i] = cols[i];
+<a name="line388">388: </a>      tao-&gt;res_weights_w[i]    = vals[i];
+<a name="line389">389: </a>    }
+<a name="line390">390: </a>  } <font color="#4169E1">else</font> {
+<a name="line391">391: </a>    tao-&gt;res_weights_n    = 0;
+<a name="line392">392: </a>    tao-&gt;res_weights_rows = NULL;
+<a name="line393">393: </a>    tao-&gt;res_weights_cols = NULL;
+<a name="line394">394: </a>  }
+<a name="line395">395: </a>  <font color="#4169E1">return</font> 0;
+<a name="line396">396: </a>}
+
+<a name="line398">398: </a><font color="#B22222">/*@</font>
+<a name="line399">399: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoComputeResidual.html">TaoComputeResidual</a> - Computes a least-squares residual vector at a given point</font>
+
+<a name="line401">401: </a><font color="#B22222">  Collective</font>
+
+<a name="line403">403: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line404">404: </a><font color="#B22222">+ tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+<a name="line405">405: </a><font color="#B22222">- X - input vector</font>
+
+<a name="line407">407: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line408">408: </a><font color="#B22222">. f - Objective vector at X</font>
+
+<a name="line410">410: </a><font color="#B22222">  Notes:</font>
+<a name="line411">411: </a><font color="#B22222">    `<a href="../../../docs/manualpages/Tao/TaoComputeResidual.html">TaoComputeResidual</a>()` is typically used within the implementation of the optimization algorithm,</font>
+<a name="line412">412: </a><font color="#B22222">  so most users would not generally call this routine themselves.</font>
+
+<a name="line414">414: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line416">416: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>`, `<a href="../../../docs/manualpages/Tao/TaoSetResidualRoutine.html">TaoSetResidualRoutine</a>()`</font>
+<a name="line417">417: </a><font color="#B22222">@*/</font>
+<a name="line418">418: </a><strong><font color="#4169E1"><a name="TaoComputeResidual"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoComputeResidual.html">TaoComputeResidual</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> F)</font></strong>
+<a name="line419">419: </a>{
+<a name="line425">425: </a>  <font color="#4169E1">if</font> (tao-&gt;ops-&gt;computeresidual) {
+<a name="line426">426: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(TAO_ObjectiveEval, tao, X, NULL, NULL);
+<a name="line427">427: </a>    <a href="../../../docs/manualpages/Sys/PetscCallBack.html">PetscCallBack</a>(<font color="#666666">"<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> callback least-squares residual"</font>, (*tao-&gt;ops-&gt;computeresidual)(tao, X, F, tao-&gt;user_lsresP));
+<a name="line428">428: </a>    <a href="../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(TAO_ObjectiveEval, tao, X, NULL, NULL);
+<a name="line429">429: </a>    tao-&gt;nfuncs++;
+<a name="line430">430: </a>  } <font color="#4169E1">else</font> <a href="../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao), PETSC_ERR_ARG_WRONGSTATE, <font color="#666666">"<a href="../../../docs/manualpages/Tao/TaoSetResidualRoutine.html">TaoSetResidualRoutine</a>() has not been called"</font>);
+<a name="line431">431: </a>  <a href="../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(tao, <font color="#666666">"TAO least-squares residual evaluation.\n"</font>);
+<a name="line432">432: </a>  <font color="#4169E1">return</font> 0;
+<a name="line433">433: </a>}
+
+<a name="line435">435: </a><font color="#B22222">/*@C</font>
+<a name="line436">436: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoSetGradient.html">TaoSetGradient</a> - Sets the gradient evaluation routine for the function to be optimized</font>
+
+<a name="line438">438: </a><font color="#B22222">  Logically collective</font>
+
+<a name="line440">440: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line441">441: </a><font color="#B22222">+ tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+<a name="line442">442: </a><font color="#B22222">. g - [optional] the vector to internally hold the gradient computation</font>
+<a name="line443">443: </a><font color="#B22222">. func - the gradient function</font>
+<a name="line444">444: </a><font color="#B22222">- ctx - [optional] user-defined context for private data for the gradient evaluation</font>
+<a name="line445">445: </a><font color="#B22222">        routine (may be NULL)</font>
+
+<a name="line447">447: </a><font color="#B22222">  Calling sequence of func:</font>
+<a name="line448">448: </a><font color="#B22222">$      func (<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> g, void *ctx);</font>
+
+<a name="line450">450: </a><font color="#B22222">+ x - input vector</font>
+<a name="line451">451: </a><font color="#B22222">. g - gradient value (output)</font>
+<a name="line452">452: </a><font color="#B22222">- ctx - [optional] user-defined function context</font>
+
+<a name="line454">454: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line456">456: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>`, `<a href="../../../docs/manualpages/Tao/TaoSolve.html">TaoSolve</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetObjective.html">TaoSetObjective</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetHessian.html">TaoSetHessian</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetObjectiveAndGradient.html">TaoSetObjectiveAndGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoGetGradient.html">TaoGetGradient</a>()`</font>
+<a name="line457">457: </a><font color="#B22222">@*/</font>
+<a name="line458">458: </a><strong><font color="#4169E1"><a name="TaoSetGradient"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoSetGradient.html">TaoSetGradient</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> g, <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*func)(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>, void *), void *ctx)</font></strong>
+<a name="line459">459: </a>{
+<a name="line461">461: </a>  <font color="#4169E1">if</font> (g) {
+<a name="line464">464: </a>    <a href="../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)g);
+<a name="line465">465: </a>    <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;tao-&gt;gradient);
+<a name="line466">466: </a>    tao-&gt;gradient = g;
+<a name="line467">467: </a>  }
+<a name="line468">468: </a>  <font color="#4169E1">if</font> (func) tao-&gt;ops-&gt;computegradient = func;
+<a name="line469">469: </a>  <font color="#4169E1">if</font> (ctx) tao-&gt;user_gradP = ctx;
+<a name="line470">470: </a>  <font color="#4169E1">return</font> 0;
+<a name="line471">471: </a>}
+
+<a name="line473">473: </a><font color="#B22222">/*@C</font>
+<a name="line474">474: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoGetGradient.html">TaoGetGradient</a> - Gets the gradient evaluation routine for the function being optimized</font>
+
+<a name="line476">476: </a><font color="#B22222">  Not collective</font>
+
+<a name="line478">478: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line479">479: </a><font color="#B22222">. tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+
+<a name="line481">481: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line482">482: </a><font color="#B22222">+ g - the vector to internally hold the gradient computation</font>
+<a name="line483">483: </a><font color="#B22222">. func - the gradient function</font>
+<a name="line484">484: </a><font color="#B22222">- ctx - user-defined context for private data for the gradient evaluation routine</font>
+
+<a name="line486">486: </a><font color="#B22222">  Calling sequence of func:</font>
+<a name="line487">487: </a><font color="#B22222">$      func (<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> g, void *ctx);</font>
+
+<a name="line489">489: </a><font color="#B22222">+ x - input vector</font>
+<a name="line490">490: </a><font color="#B22222">. g - gradient value (output)</font>
+<a name="line491">491: </a><font color="#B22222">- ctx - [optional] user-defined function context</font>
+
+<a name="line493">493: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line495">495: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>`, `<a href="../../../docs/manualpages/Tao/TaoSetObjective.html">TaoSetObjective</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetHessian.html">TaoSetHessian</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetObjectiveAndGradient.html">TaoSetObjectiveAndGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetGradient.html">TaoSetGradient</a>()`</font>
+<a name="line496">496: </a><font color="#B22222">@*/</font>
+<a name="line497">497: </a><strong><font color="#4169E1"><a name="TaoGetGradient"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoGetGradient.html">TaoGetGradient</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> *g, <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (**func)(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>, void *), void **ctx)</font></strong>
+<a name="line498">498: </a>{
+<a name="line500">500: </a>  <font color="#4169E1">if</font> (g) *g = tao-&gt;gradient;
+<a name="line501">501: </a>  <font color="#4169E1">if</font> (func) *func = tao-&gt;ops-&gt;computegradient;
+<a name="line502">502: </a>  <font color="#4169E1">if</font> (ctx) *ctx = tao-&gt;user_gradP;
+<a name="line503">503: </a>  <font color="#4169E1">return</font> 0;
+<a name="line504">504: </a>}
+
+<a name="line506">506: </a><font color="#B22222">/*@C</font>
+<a name="line507">507: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoSetObjectiveAndGradient.html">TaoSetObjectiveAndGradient</a> - Sets a combined objective function and gradient evaluation routine for the function to be optimized</font>
+
+<a name="line509">509: </a><font color="#B22222">  Logically collective</font>
+
+<a name="line511">511: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line512">512: </a><font color="#B22222">+ tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+<a name="line513">513: </a><font color="#B22222">. g - [optional] the vector to internally hold the gradient computation</font>
+<a name="line514">514: </a><font color="#B22222">. func - the gradient function</font>
+<a name="line515">515: </a><font color="#B22222">- ctx - [optional] user-defined context for private data for the gradient evaluation</font>
+<a name="line516">516: </a><font color="#B22222">        routine (may be NULL)</font>
+
+<a name="line518">518: </a><font color="#B22222">  Calling sequence of func:</font>
+<a name="line519">519: </a><font color="#B22222">$      func (<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *f, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> g, void *ctx);</font>
+
+<a name="line521">521: </a><font color="#B22222">+ x - input vector</font>
+<a name="line522">522: </a><font color="#B22222">. f - objective value (output)</font>
+<a name="line523">523: </a><font color="#B22222">. g - gradient value (output)</font>
+<a name="line524">524: </a><font color="#B22222">- ctx - [optional] user-defined function context</font>
+
+<a name="line526">526: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line528">528: </a><font color="#B22222">  Note:</font>
+<a name="line529">529: </a><font color="#B22222">  For some optimization methods using a combined function can be more eifficient.</font>
+
+<a name="line531">531: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>`, `<a href="../../../docs/manualpages/Tao/TaoSolve.html">TaoSolve</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetObjective.html">TaoSetObjective</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetHessian.html">TaoSetHessian</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetGradient.html">TaoSetGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoGetObjectiveAndGradient.html">TaoGetObjectiveAndGradient</a>()`</font>
+<a name="line532">532: </a><font color="#B22222">@*/</font>
+<a name="line533">533: </a><strong><font color="#4169E1"><a name="TaoSetObjectiveAndGradient"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoSetObjectiveAndGradient.html">TaoSetObjectiveAndGradient</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> g, <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*func)(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>, void *), void *ctx)</font></strong>
+<a name="line534">534: </a>{
+<a name="line536">536: </a>  <font color="#4169E1">if</font> (g) {
+<a name="line539">539: </a>    <a href="../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)g);
+<a name="line540">540: </a>    <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;tao-&gt;gradient);
+<a name="line541">541: </a>    tao-&gt;gradient = g;
+<a name="line542">542: </a>  }
+<a name="line543">543: </a>  <font color="#4169E1">if</font> (ctx) tao-&gt;user_objgradP = ctx;
+<a name="line544">544: </a>  <font color="#4169E1">if</font> (func) tao-&gt;ops-&gt;computeobjectiveandgradient = func;
+<a name="line545">545: </a>  <font color="#4169E1">return</font> 0;
+<a name="line546">546: </a>}
+
+<a name="line548">548: </a><font color="#B22222">/*@C</font>
+<a name="line549">549: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoGetObjectiveAndGradient.html">TaoGetObjectiveAndGradient</a> - Gets the combined objective function and gradient evaluation routine for the function to be optimized</font>
+
+<a name="line551">551: </a><font color="#B22222">  Not collective</font>
+
+<a name="line553">553: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line554">554: </a><font color="#B22222">. tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+
+<a name="line556">556: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line557">557: </a><font color="#B22222">+ g - the vector to internally hold the gradient computation</font>
+<a name="line558">558: </a><font color="#B22222">. func - the gradient function</font>
+<a name="line559">559: </a><font color="#B22222">- ctx - user-defined context for private data for the gradient evaluation routine</font>
+
+<a name="line561">561: </a><font color="#B22222">  Calling sequence of func:</font>
+<a name="line562">562: </a><font color="#B22222">$      func (<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *f, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> g, void *ctx);</font>
+
+<a name="line564">564: </a><font color="#B22222">+ x - input vector</font>
+<a name="line565">565: </a><font color="#B22222">. f - objective value (output)</font>
+<a name="line566">566: </a><font color="#B22222">. g - gradient value (output)</font>
+<a name="line567">567: </a><font color="#B22222">- ctx - [optional] user-defined function context</font>
+
+<a name="line569">569: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line571">571: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>`, `<a href="../../../docs/manualpages/Tao/TaoSolve.html">TaoSolve</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetObjective.html">TaoSetObjective</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetGradient.html">TaoSetGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetHessian.html">TaoSetHessian</a>()`, `<a href="../../../docs/manualpages/Tao/TaoSetObjectiveAndGradient.html">TaoSetObjectiveAndGradient</a>()`</font>
+<a name="line572">572: </a><font color="#B22222">@*/</font>
+<a name="line573">573: </a><strong><font color="#4169E1"><a name="TaoGetObjectiveAndGradient"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoGetObjectiveAndGradient.html">TaoGetObjectiveAndGradient</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> *g, <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (**func)(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>, void *), void **ctx)</font></strong>
+<a name="line574">574: </a>{
+<a name="line576">576: </a>  <font color="#4169E1">if</font> (g) *g = tao-&gt;gradient;
+<a name="line577">577: </a>  <font color="#4169E1">if</font> (func) *func = tao-&gt;ops-&gt;computeobjectiveandgradient;
+<a name="line578">578: </a>  <font color="#4169E1">if</font> (ctx) *ctx = tao-&gt;user_objgradP;
+<a name="line579">579: </a>  <font color="#4169E1">return</font> 0;
+<a name="line580">580: </a>}
+
+<a name="line582">582: </a><font color="#B22222">/*@</font>
+<a name="line583">583: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoIsObjectiveDefined.html">TaoIsObjectiveDefined</a> - Checks to see if the user has</font>
+<a name="line584">584: </a><font color="#B22222">  declared an objective-only routine.  Useful for determining when</font>
+<a name="line585">585: </a><font color="#B22222">  it is appropriate to call `<a href="../../../docs/manualpages/Tao/TaoComputeObjective.html">TaoComputeObjective</a>()` or</font>
+<a name="line586">586: </a><font color="#B22222">  `<a href="../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a>()`</font>
+
+<a name="line588">588: </a><font color="#B22222">  Not collective</font>
+
+<a name="line590">590: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line591">591: </a><font color="#B22222">. tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+
+<a name="line593">593: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line594">594: </a><font color="#B22222">. flg - `<a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>` if function routine is set by user, `<a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>` otherwise</font>
+
+<a name="line596">596: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line598">598: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a>`, `<a href="../../../docs/manualpages/Tao/TaoSetObjective.html">TaoSetObjective</a>()`, `<a href="../../../docs/manualpages/Tao/TaoIsGradientDefined.html">TaoIsGradientDefined</a>()`, `<a href="../../../docs/manualpages/Tao/TaoIsObjectiveAndGradientDefined.html">TaoIsObjectiveAndGradientDefined</a>()`</font>
+<a name="line599">599: </a><font color="#B22222">@*/</font>
+<a name="line600">600: </a><strong><font color="#4169E1"><a name="TaoIsObjectiveDefined"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoIsObjectiveDefined.html">TaoIsObjectiveDefined</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *flg)</font></strong>
+<a name="line601">601: </a>{
+<a name="line603">603: </a>  <font color="#4169E1">if</font> (tao-&gt;ops-&gt;computeobjective == NULL) *flg = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line604">604: </a>  <font color="#4169E1">else</font> *flg = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line605">605: </a>  <font color="#4169E1">return</font> 0;
+<a name="line606">606: </a>}
+
+<a name="line608">608: </a><font color="#B22222">/*@</font>
+<a name="line609">609: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoIsGradientDefined.html">TaoIsGradientDefined</a> - Checks to see if the user has</font>
+<a name="line610">610: </a><font color="#B22222">  declared an objective-only routine.  Useful for determining when</font>
+<a name="line611">611: </a><font color="#B22222">  it is appropriate to call `<a href="../../../docs/manualpages/Tao/TaoComputeGradient.html">TaoComputeGradient</a>()` or</font>
+<a name="line612">612: </a><font color="#B22222">  `TaoComputeGradientAndGradient()`</font>
+
+<a name="line614">614: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line616">616: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line617">617: </a><font color="#B22222">. tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+
+<a name="line619">619: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line620">620: </a><font color="#B22222">. flg - `<a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>` if function routine is set by user, `<a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>` otherwise</font>
+
+<a name="line622">622: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line624">624: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/TaoSetGradient.html">TaoSetGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoIsObjectiveDefined.html">TaoIsObjectiveDefined</a>()`, `<a href="../../../docs/manualpages/Tao/TaoIsObjectiveAndGradientDefined.html">TaoIsObjectiveAndGradientDefined</a>()`</font>
+<a name="line625">625: </a><font color="#B22222">@*/</font>
+<a name="line626">626: </a><strong><font color="#4169E1"><a name="TaoIsGradientDefined"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoIsGradientDefined.html">TaoIsGradientDefined</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *flg)</font></strong>
+<a name="line627">627: </a>{
+<a name="line629">629: </a>  <font color="#4169E1">if</font> (tao-&gt;ops-&gt;computegradient == NULL) *flg = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line630">630: </a>  <font color="#4169E1">else</font> *flg = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line631">631: </a>  <font color="#4169E1">return</font> 0;
+<a name="line632">632: </a>}
+
+<a name="line634">634: </a><font color="#B22222">/*@</font>
+<a name="line635">635: </a><font color="#B22222">  <a href="../../../docs/manualpages/Tao/TaoIsObjectiveAndGradientDefined.html">TaoIsObjectiveAndGradientDefined</a> - Checks to see if the user has</font>
+<a name="line636">636: </a><font color="#B22222">  declared a joint objective/gradient routine.  Useful for determining when</font>
+<a name="line637">637: </a><font color="#B22222">  it is appropriate to call `<a href="../../../docs/manualpages/Tao/TaoComputeObjective.html">TaoComputeObjective</a>()` or</font>
+<a name="line638">638: </a><font color="#B22222">  `<a href="../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a>()`</font>
+
+<a name="line640">640: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line642">642: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line643">643: </a><font color="#B22222">. tao - the <a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> context</font>
+
+<a name="line645">645: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line646">646: </a><font color="#B22222">. flg - `<a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>` if function routine is set by user, `<a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>` otherwise</font>
+
+<a name="line648">648: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line650">650: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Tao/TaoSetObjectiveAndGradient.html">TaoSetObjectiveAndGradient</a>()`, `<a href="../../../docs/manualpages/Tao/TaoIsObjectiveDefined.html">TaoIsObjectiveDefined</a>()`, `<a href="../../../docs/manualpages/Tao/TaoIsGradientDefined.html">TaoIsGradientDefined</a>()`</font>
+<a name="line651">651: </a><font color="#B22222">@*/</font>
+<a name="line652">652: </a><strong><font color="#4169E1"><a name="TaoIsObjectiveAndGradientDefined"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoIsObjectiveAndGradientDefined.html">TaoIsObjectiveAndGradientDefined</a>(<a href="../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *flg)</font></strong>
+<a name="line653">653: </a>{
+<a name="line655">655: </a>  <font color="#4169E1">if</font> (tao-&gt;ops-&gt;computeobjectiveandgradient == NULL) *flg = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line656">656: </a>  <font color="#4169E1">else</font> *flg = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line657">657: </a>  <font color="#4169E1">return</font> 0;
+<a name="line658">658: </a>}
+</pre>
+</body>
+
+</html>

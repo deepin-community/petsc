@@ -1,0 +1,50 @@
+# PetscLogFlops
+Log how many flops are performed in a calculation 
+## Synopsis
+```
+static inline PetscErrorCode PetscLogFlops(PetscLogDouble n)
+```
+
+## Input Parameter
+
+- ***flops -*** the number of flops
+
+
+
+
+
+## Note
+To limit the chance of integer overflow when multiplying by a constant, represent the constant as a double,
+not an integer. Use `PetscLogFlops`(4.0*n) not `PetscLogFlops`(4*n)
+
+
+## See Also
+ [](ch_profiling), `PetscLogView()`, `PetscLogGpuFlops()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petsclog.h.html#PetscLogFlops">include/petsclog.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex3.c.html">src/sys/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex3f.F90.html">src/sys/tutorials/ex3f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex3f90.F90.html">src/sys/tutorials/ex3f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex9.c.html">src/ksp/ksp/tutorials/ex9.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex14.c.html">src/snes/tutorials/ex14.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex15.c.html">src/snes/tutorials/ex15.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex18.c.html">src/snes/tutorials/ex18.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex19.c.html">src/snes/tutorials/ex19.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex22.c.html">src/snes/tutorials/ex22.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex33.c.html">src/snes/tutorials/ex33.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex46.c.html">src/snes/tutorials/ex46.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petsclog.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,32 @@
+# Time-steppers for ODE and DAE - TS Manual Pages
+
+<A HREF="../../..-diffusion-reaction/../src/ts/tutorials/index.html">Examples</A><BR>
+
+The time-stepping (TS) component provides ODE and DAE integrators as well as
+pseudo-timestepping.  TS internally
+employs <A HREF="../../..-diffusion-reaction/../docs/manualpages/SNES/index.html">SNES</A> to solve the nonlinear
+problems at each time step (except for the Sundials functions, which
+use nonlinear solvers within Sundials).
+
+TS users can also set SNES options directly in application codes by first extracting the SNES context from the TS context via
+<A HREF="../../..-diffusion-reaction/../docs/manualpages/TS/TSGetSNES.html">TSGetSNES()</A>
+and then directly calling various SNES (and KSP and PC with further unwrapping) routines (e.g.,
+<A HREF="../../..-diffusion-reaction/../docs/manualpages/PC/PCSetType.html">PCSetType()</A>
+).
+
+<p>
+ 
+<a href="ex1.c.html">ex1.c</a><br>
+<a href="ex2.c.html">ex2.c</a><br>
+<a href="ex3.c.html">ex3.c</a><br>
+<a href="ex4.c.html">ex4.c</a><br>
+<a href="ex5.c.html">ex5.c</a><br>
+<a href="ex5adj.c.html">ex5adj.c</a><br>
+<a href="ex5adj_mf.c.html">ex5adj_mf.c</a><br>
+<a href="ex5opt_ic.c.html">ex5opt_ic.c</a><br>
+<a href="ex6.c.html">ex6.c</a><br>
+<a href="reaction_diffusion.c.html">reaction_diffusion.c</a><br>
+<a href="reaction_diffusion.h.html">reaction_diffusion.h</a><br>
+<a href="shashi.F90.html">shashi.F90</a><br>
+ 
+<a href="makefile.html">makefile</a><br>

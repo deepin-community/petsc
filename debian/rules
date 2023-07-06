@@ -1,4 +1,665 @@
 #!/usr/bin/make -f
+# See debhelper(7) (uncomment to enable)
+# output every command that modifies files on the build system.
+#export DH_VERBOSE = 1
 
+# see EXAMPLES in dpkg-buildflags(1) and read /usr/share/dpkg/*
+DPKG_EXPORT_BUILDFLAGS = 1
+include /usr/share/dpkg/default.mk
+
+DEB_SOURCE_PACKAGE := $(strip $(shell egrep '^Source: ' debian/control | cut -f 2 -d ':'))
+DEB_VERSION := $(shell dpkg-parsechangelog -S Version)
+DEB_NOEPOCH_VERSION := $(shell echo $(DEB_VERSION) | cut -d: -f2-)
+DEB_UPSTREAM_VERSION := $(shell echo $(DEB_NOEPOCH_VERSION) | sed 's/-[^-]*$$//')
+DEB_STRIPPED_UPSTREAM_VERSION = $(shell echo $(DEB_UPSTREAM_VERSION) | sed -e 's/[\.\+]dfsg.*$$//' )
+
+# see FEATURE AREAS in dpkg-buildflags(1)
+#export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+
+# see ENVIRONMENT in dpkg-buildflags(1)
+# package maintainers to append FLAGS
+export DEB_CFLAGS_MAINT_APPEND  = -fPIC
+export DEB_CXXFLAGS_MAINT_APPEND  = -fPIC
+export DEB_FFLAGS_MAINT_APPEND  = -fPIC -ffree-line-length-0
+export DEB_FCFLAGS_MAINT_APPEND  = $(DEB_FFLAGS_MAINT_APPEND)
+export DEB_LDFLAGS_MAINT_APPEND = -fPIC
+
+# keep the build dir (in the -fdebug-prefix-map flag) out of the installed config files,
+# by applying the flag only at build time not configure time
+export CFLAGS_NO_DEBUG_PREFIX_MAP := $(shell echo $(CFLAGS) | sed "s/ -fdebug-prefix-map=[^ ]* / /" )
+export CFLAGS_DEBUG_PREFIX_MAP := $(shell echo $(CFLAGS) | sed -n "s/^.*\(-fdebug-prefix-map=[^ ]*\) .*$$/\1/p" )
+export CXXFLAGS_NO_DEBUG_PREFIX_MAP := $(shell echo $(CXXFLAGS) | sed "s/ -fdebug-prefix-map=[^ ]* / /" )
+export CXXFLAGS_DEBUG_PREFIX_MAP := $(shell echo $(CXXFLAGS) | sed -n "s/^.*\(-fdebug-prefix-map=[^ ]*\) .*$$/\1/p" )
+export FCFLAGS_NO_DEBUG_PREFIX_MAP := $(shell echo $(FCFLAGS) | sed "s/ -fdebug-prefix-map=[^ ]* / /" )
+export FCFLAGS_DEBUG_PREFIX_MAP := $(shell echo $(FCFLAGS) | sed -n "s/^.*\(-fdebug-prefix-map=[^ ]*\) .*$$/\1/p" )
+export FFLAGS_NO_DEBUG_PREFIX_MAP := $(shell echo $(FFLAGS) | sed "s/ -fdebug-prefix-map=[^ ]* / /" )
+export FFLAGS_DEBUG_PREFIX_MAP := $(shell echo $(FFLAGS) | sed -n "s/^.*\(-fdebug-prefix-map=[^ ]*\) .*$$/\1/p" )
+
+# Overriding this with "contrib" attempts to link with parmetis (unimplemented).
+DEBIAN_DIST=main
+
+export DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
+
+# On Alpha, override this with debian/rules PETSC_ARCH=linux_alpha_dec binary
+# to build PETSc libs with the Compaq compilers, though that requires at least:
+# libots, cpml-ev(5|6), cxml-ev(5|6), cfal and ccc.
+# Note that only arch-dependent .debs are generated when you do this.
+PETSC_ARCH=$(DEB_HOST_MULTIARCH)
+
+CPU_COUNT := $(shell /usr/bin/nproc )
+export DEB_BUILD_OPTIONS ?= parallel=$(CPU_COUNT)
+
+# This defines the MPI implementation to use.  The easiest way to override this
+# default is to specify while building, e.g. debian/rules PETSC_MPI=lam binary.
+# Again, only arch-dependent .debs are generated when you do this.
+# Note that as of PETSc 2.3.0 this only specifies the name of the PETSc
+# packages, the implementation is chosen by BuildSystem according to what's
+# available at build time.
+include /usr/share/mpi-default-dev/debian_defaults
+PETSC_MPI=$(ARCH_DEFAULT_MPI_IMPL)
+
+# PETSc has a tight dependency on the MPI minor version:
+# the Major.Minor version of the current MPI must match the one that
+# PETSc was built against, see /usr/lib/petscdir/*/x86_64-linux-gnu-real/include/petscsys.h
+# Define the required version here:
+MPI_DEPENDS=$(shell debian/extract_MPI_dependency)
+
+
+# facilitate build-time testing (invoking OpenMPI) when building in a chroot (pbuilder or sbuild)
+export OMPI_MCA_plm_rsh_agent=/bin/false
+export OMPI_MCA_btl_base_warn_component_unused=0
+
+HDF5_INCLUDE_DIR=$(shell for i in `pkg-config hdf5-mpi --cflags-only-I`; do echo $$i | grep "include/hdf5"; done | sed "s/-I//")
+HDF5_LIBS=$(shell pkg-config hdf5-mpi --libs)
+PETSC_HDF5_FLAGS=--with-hdf5-include=$(HDF5_INCLUDE_DIR) --with-hdf5-lib="$(HDF5_LIBS)"
+
+VALGRIND_ARCH_LIST := amd64 arm64 armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64
+ifeq (,$(findstring $(space)$(DEB_HOST_ARCH)$(space), $(space)$(VALGRIND_ARCH_LIST)$(space)))
+  VALGRIND_CONFIG=--with-valgrind=1
+else
+  VALGRIND_CONFIG=
+endif
+
+PETSC_REAL_BUILD_DIR=$(PETSC_ARCH)-real
+PETSC_REAL_DEBUG_BUILD_DIR=$(PETSC_ARCH)-real-debug
+PETSC_COMPLEX_BUILD_DIR=$(PETSC_ARCH)-complex
+PETSC_COMPLEX_DEBUG_BUILD_DIR=$(PETSC_ARCH)-complex-debug
+
+PETSC64_REAL_BUILD_DIR=$(PETSC_ARCH)-real-64
+PETSC64_REAL_DEBUG_BUILD_DIR=$(PETSC_ARCH)-real-debug-64
+PETSC64_COMPLEX_BUILD_DIR=$(PETSC_ARCH)-complex-64
+PETSC64_COMPLEX_DEBUG_BUILD_DIR=$(PETSC_ARCH)-complex-debug-64
+
+# PETSC_VERSION is used for the package names, library sonames, and
+# /usr/lib/petscdir subdirectory names.
+export PETSC_VERSION=$(DEB_STRIPPED_UPSTREAM_VERSION)$(PETSC_EXT)
+# use only major.minor as general soname (rather than major.minor.patch.build)
+export PETSC_SONAME_VERSION=$(shell echo $(PETSC_VERSION) | awk 'BEGIN { FS="."}; {print $$1"."$$2 }')
+
+# PETSC_NAME is the install dir under /usr/lib and the base for package names
+PETSC_NAME=petsc$(PETSC_SONAME_VERSION)
+PETSC_REAL_SONAME=petsc-real$(PETSC_SONAME_VERSION)
+PETSC_COMPLEX_SONAME=petsc-complex$(PETSC_SONAME_VERSION)
+
+PETSC64_NAME=petsc64-$(PETSC_SONAME_VERSION)
+PETSC64_REAL_SONAME=petsc64-real$(PETSC_SONAME_VERSION)
+PETSC64_COMPLEX_SONAME=petsc64-complex$(PETSC_SONAME_VERSION)
+
+# debian binary package names
+PETSC_REAL_DEV_PACKAGE=lib$(PETSC_REAL_SONAME)-dev
+PETSC_REAL_PACKAGE=lib$(PETSC_REAL_SONAME)
+PETSC_REAL_DEBUG_PACKAGE=lib$(PETSC_REAL_SONAME)-dbg
+PETSC_COMPLEX_DEV_PACKAGE=lib$(PETSC_COMPLEX_SONAME)-dev
+PETSC_COMPLEX_PACKAGE=lib$(PETSC_COMPLEX_SONAME)
+PETSC_COMPLEX_DEBUG_PACKAGE=lib$(PETSC_COMPLEX_SONAME)-dbg
+
+PETSC64_REAL_DEV_PACKAGE=lib$(PETSC64_REAL_SONAME)-dev
+PETSC64_REAL_PACKAGE=lib$(PETSC64_REAL_SONAME)
+PETSC64_REAL_DEBUG_PACKAGE=lib$(PETSC64_REAL_SONAME)-dbg
+PETSC64_COMPLEX_DEV_PACKAGE=lib$(PETSC64_COMPLEX_SONAME)-dev
+PETSC64_COMPLEX_PACKAGE=lib$(PETSC64_COMPLEX_SONAME)
+PETSC64_COMPLEX_DEBUG_PACKAGE=lib$(PETSC64_COMPLEX_SONAME)-dbg
+
+PETSC_DEV_COMMON_PACKAGE=lib$(PETSC_NAME)-dev-common
+export PETSC_DOC_PACKAGE=petsc$(PETSC_SONAME_VERSION)-doc
+export PETSC_DEV_EXAMPLE_PACKAGE=lib$(PETSC_NAME)-dev-examples
+
+# install into /usr/lib/petscdir rather than /usr/lib/petsc
+# to allow /usr/lib/petsc to be configured by alternatives
+export PETSC_REAL_DIR_PREFIX=/usr/lib/petscdir/$(PETSC_NAME)/$(PETSC_ARCH)-real
+export PETSC_REAL_DEBUG_DIR_PREFIX=/usr/lib/petscdir/$(PETSC_NAME)/$(PETSC_ARCH)-real-debug
+export PETSC_COMPLEX_DIR_PREFIX=/usr/lib/petscdir/$(PETSC_NAME)/$(PETSC_ARCH)-complex
+export PETSC_COMPLEX_DEBUG_DIR_PREFIX=/usr/lib/petscdir/$(PETSC_NAME)/$(PETSC_ARCH)-complex-debug
+
+export PETSC64_REAL_DIR_PREFIX=/usr/lib/petscdir/$(PETSC64_NAME)/$(PETSC_ARCH)-real
+export PETSC64_REAL_DEBUG_DIR_PREFIX=/usr/lib/petscdir/$(PETSC64_NAME)/$(PETSC_ARCH)-real-debug
+export PETSC64_COMPLEX_DIR_PREFIX=/usr/lib/petscdir/$(PETSC64_NAME)/$(PETSC_ARCH)-complex
+export PETSC64_COMPLEX_DEBUG_DIR_PREFIX=/usr/lib/petscdir/$(PETSC64_NAME)/$(PETSC_ARCH)-complex-debug
+
+PACKAGE_REAL_INSTALL_DIR=debian/tmp/$(PETSC_NAME)-real
+export PACKAGE_REAL_DEBUG_INSTALL_DIR=debian/tmp/$(PETSC_NAME)-real-debug
+PACKAGE_COMPLEX_INSTALL_DIR=debian/tmp/$(PETSC_NAME)-complex
+PACKAGE_COMPLEX_DEBUG_INSTALL_DIR=debian/tmp/$(PETSC_NAME)-complex-debug
+
+PACKAGE_64_REAL_INSTALL_DIR=debian/tmp/$(PETSC64_NAME)-real
+export PACKAGE_64_REAL_DEBUG_INSTALL_DIR=debian/tmp/$(PETSC64_NAME)-real-debug
+PACKAGE_64_COMPLEX_INSTALL_DIR=debian/tmp/$(PETSC64_NAME)-complex
+PACKAGE_64_COMPLEX_DEBUG_INSTALL_DIR=debian/tmp/$(PETSC64_NAME)-complex-debug
+
+PETSC64_CONFIG=--with-64-bit-indices
+
+CONFIGURATION_OPTIONS=--with-shared-libraries --with-pic=1 \
+	  --with-cc=mpicc --with-cxx=mpicxx --with-fc=mpif90 \
+	  --with-cxx-dialect=C++11 \
+	  --with-opencl=1 \
+	  --with-blas-lib=-lblas --with-lapack-lib=-llapack \
+	  --with-scalapack=1 --with-scalapack-lib=-lscalapack-$(PETSC_MPI) \
+	  --with-ptscotch=1 --with-ptscotch-include=/usr/include/scotch --with-ptscotch-lib="-lptesmumps -lptscotch -lptscotcherr" \
+	  --with-fftw=1 --with-fftw-include=[] --with-fftw-lib="-lfftw3 -lfftw3_mpi" \
+	  --with-yaml=1 \
+	  $(VALGRIND_CONFIG) \
+	  $(PETSC_HDF5_FLAGS) --CXX_LINKER_FLAGS="-Wl,--no-as-needed"
+
+
+# hypre is only supported with real numbers, not complex
+HYPRE_VERSION=$(shell dpkg -s libhypre-dev | grep Version | awk '{print $$2}')
+HYPRE_LIB=$(shell if dpkg --compare-versions $(HYPRE_VERSION) lt 2.20.0-1exp3~ ; then echo HYPRE_core; else echo HYPRE; fi)
+HYPRE_CONFIG=--with-hypre=1 --with-hypre-include=/usr/include/hypre \
+	  --with-hypre-lib="-l$(HYPRE_LIB)"
+
+
+# 64-bit Hypre is only available on 64-bit architectures
+HYPRE64_SUFFIX=64m
+HYPRE64_VERSION := $(shell dpkg -s libhypre$(HYPRE64_SUFFIX)-dev | grep Version | awk '{print $2}')
+ifndef HYPRE64_VERSION
+  HYPRE64_CONFIG=
+else
+  # --with-64-bit-indices option requires Hypre built with --enable-bigint or --enable-mixedint
+  # set HYPRE64_SUFFIX=64 for bigint (libhypre64), or HYPRE64_SUFFIX=64m for mixedint (libhypre64m)
+  HYPRE64_LIB=HYPRE$(HYPRE64_SUFFIX)
+  HYPRE64_CONFIG=--with-hypre=1 --with-hypre-include=/usr/include/hypre$(HYPRE64_SUFFIX) \
+         --with-hypre-lib="-l$(HYPRE64_LIB)"
+endif
+
+# standard MUMPS (32 bit)
+MUMPS_CONFIG=--with-mumps=1 --with-mumps-include=[] --with-mumps-lib="-ldmumps -lzmumps -lsmumps -lcmumps -lmumps_common -lpord"
+
+# 64-bit MUMPS
+MUMPS64_CONFIG=--with-mumps=1 --with-mumps-include=[] --with-mumps-lib="-ldmumps_64 -lzmumps_64 -lsmumps_64 -lcmumps_64 -lmumps_common_64 -lpord_64"
+
+# Cannot use SuperLU with 64 bit integers, it is not coded for this capability
+SUPERLU_CONFIG=--with-superlu=1 --with-superlu-include=/usr/include/superlu --with-superlu-lib=-lsuperlu
+
+# Cannot use SuperLU_dist with 64 bit integers, see https://gitlab.com/petsc/petsc/-/issues/935
+SUPERLU_DIST_CONFIG=--with-superlu_dist=1 --with-superlu_dist-include=/usr/include/superlu-dist --with-superlu_dist-lib=-lsuperlu_dist \
+
+SUITESPARSE_CONFIG=--with-suitesparse=1 --with-suitesparse-include=/usr/include/suitesparse --with-suitesparse-lib="-lspqr -lumfpack -lamd -lcholmod -lklu"
+
+# SuiteSparse does not support 64-bit indices on 32-bit architectures, so drop it in that case.
+32BIT_ARCH_LIST := armel armhf i386 mipsel hppa hurd-i386 m68k powerpc sh4 x32
+ifneq (,$(findstring $(space)$(DEB_HOST_ARCH)$(space), $(space)$(32BIT_ARCH_LIST)$(space)))
+  SUITESPARSE64_CONFIG=
+else
+  SUITESPARSE64_CONFIG=$(SUITESPARSE_CONFIG)
+endif
+
+ML_VERSION := $(shell dpkg -s libtrilinos-ml-dev 2>/dev/null | grep Version | awk '{print $2}')
+ifndef ML_VERSION
+  ML_CONFIG=
+else
+  ML_CONFIG=--with-ml=1 --with-ml-include=/usr/include/trilinos --with-ml-lib=-ltrilinos_ml
+endif
+
+ZOLTAN_VERSION := $(shell dpkg -s libtrilinos-zoltan-dev 2>/dev/null | grep Version | awk '{print $2}')
+ifndef ZOLTAN_VERSION
+  ZOLTAN_CONFIG=
+else
+  ZOLTAN_CONFIG=--with-zoltan=1 --with-zoltan-include=/usr/include/trilinos --with-zoltan-lib=-ltrilinos_zoltan
+endif
+
+
+# main packaging script based on dh7 syntax
 %:
-	dh $@
+	dh $@ --with python3,fortran_mod
+
+override_dh_auto_clean:
+	if [ -d $(PETSC_REAL_DEBUG_BUILD_DIR) -a -f $(PETSC_REAL_DEBUG_BUILD_DIR)/lib/petsc/conf/petscrules ]; then \
+	  dh_auto_clean -p$(PETSC_REAL_DEBUG_PACKAGE) -p$(PETSC_DOC_PACKAGE) -- \
+	    PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_REAL_DEBUG_BUILD_DIR); \
+	fi
+	if [ -d $(PETSC_REAL_BUILD_DIR) -a -f $(PETSC_REAL_BUILD_DIR)/lib/petsc/conf/petscrules ]; then \
+	dh_auto_clean -p$(PETSC_REAL_DEV_PACKAGE) -- \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_REAL_BUILD_DIR); \
+	fi
+	if [ -d $(PETSC_COMPLEX_BUILD_DIR) -a -f $(PETSC_COMPLEX_BUILD_DIR)/lib/petsc/conf/petscrules ]; then \
+	dh_auto_clean -p$(PETSC_COMPLEX_DEV_PACKAGE) -- \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_COMPLEX_BUILD_DIR); \
+	fi
+	if [ -d $(PETSC_COMPLEX_DEBUG_BUILD_DIR) -a -f $(PETSC_COMPLEX_DEBUG_BUILD_DIR)/lib/petsc/conf/petscrules ]; then \
+	dh_auto_clean -p$(PETSC_COMPLEX_DEBUG_PACKAGE) -- \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_COMPLEX_DEBUG_BUILD_DIR); \
+	fi
+	if [ -d $(PETSC_REAL_DEBUG_BUILD_DIR) -a -f $(PETSC_REAL_DEBUG_BUILD_DIR)/lib/petsc/conf/petscrules ]; then \
+	  dh_auto_clean -p$(PETSC_REAL_DEBUG_PACKAGE) -p$(PETSC_DOC_PACKAGE) -- \
+	    PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_REAL_DEBUG_BUILD_DIR); \
+	fi
+	if [ -d $(PETSC64_REAL_BUILD_DIR) -a -f $(PETSC64_REAL_BUILD_DIR)/lib/petsc/conf/petscrules ]; then \
+	dh_auto_clean -p$(PETSC64_REAL_DEV_PACKAGE) -- \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_REAL_BUILD_DIR); \
+	fi
+	if [ -d $(PETSC64_COMPLEX_BUILD_DIR) -a -f $(PETSC64_COMPLEX_BUILD_DIR)/lib/petsc/conf/petscrules ]; then \
+	dh_auto_clean -p$(PETSC64_COMPLEX_DEV_PACKAGE) -- \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_COMPLEX_BUILD_DIR); \
+	fi
+	if [ -d $(PETSC64_COMPLEX_DEBUG_BUILD_DIR) -a -f $(PETSC64_COMPLEX_DEBUG_BUILD_DIR)/lib/petsc/conf/petscrules ]; then \
+	dh_auto_clean -p$(PETSC64_COMPLEX_DEBUG_PACKAGE) -- \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_COMPLEX_DEBUG_BUILD_DIR); \
+	fi
+
+override_dh_clean: override_dh_auto_clean
+	dh_clean
+	rm -f *.log *.log.bkp configtest.mod
+	rm -f src/vec/vec/tests/x.h5
+	rm -f lib/petsc/conf/petscvariables
+	rm -f reconfigure-*.py
+	find config -name *.pyc | xargs rm -f
+	rm -f CMakeLists.txt simplemake
+	rm -rf $(PETSC_REAL_BUILD_DIR) $(PETSC_REAL_DEBUG_BUILD_DIR) $(PETSC_COMPLEX_BUILD_DIR) $(PETSC_COMPLEX_DEBUG_BUILD_DIR) \
+          $(PETSC64_REAL_BUILD_DIR) $(PETSC64_REAL_DEBUG_BUILD_DIR) $(PETSC64_COMPLEX_BUILD_DIR) $(PETSC64_COMPLEX_DEBUG_BUILD_DIR)
+
+override_dh_auto_configure:
+	@echo ===================== $(PETSC_REAL_DEBUG_PACKAGE) =====================
+	set -e; \
+	if dh_auto_configure -p$(PETSC_REAL_DEBUG_PACKAGE) -p$(PETSC_DOC_PACKAGE) --  \
+          --with-debugging=1  \
+          --shared-library-extension=_real \
+          $(CONFIGURATION_OPTIONS)  \
+          $(HYPRE_CONFIG)  \
+          $(MUMPS_CONFIG)  \
+          $(SUITESPARSE_CONFIG) \
+          $(SUPERLU_CONFIG)  \
+          $(SUPERLU_DIST_CONFIG)  \
+          $(ML_CONFIG)  \
+          $(ZOLTAN_CONFIG)  \
+          --prefix=$(PETSC_REAL_DEBUG_DIR_PREFIX)  \
+          --PETSC_ARCH=$(PETSC_REAL_DEBUG_BUILD_DIR) \
+            CFLAGS="$(CFLAGS_NO_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_NO_DEBUG_PREFIX_MAP)" \
+            FCFLAGS="$(FCFLAGS_NO_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_NO_DEBUG_PREFIX_MAP)"  \
+            CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" MAKEFLAGS="$(MAKEFLAGS)"; then \
+	  : ; \
+	else \
+	  cat configure.log; \
+	  false; \
+	fi
+	@echo ===================== $(PETSC_REAL_DEV_PACKAGE) =====================
+	set -e; \
+	if dh_auto_configure -p$(PETSC_REAL_DEV_PACKAGE) --  \
+          --with-debugging=0  \
+          --shared-library-extension=_real \
+          $(CONFIGURATION_OPTIONS)  \
+          $(HYPRE_CONFIG)  \
+          $(MUMPS_CONFIG)  \
+          $(SUITESPARSE_CONFIG) \
+          $(SUPERLU_CONFIG)  \
+          $(SUPERLU_DIST_CONFIG)  \
+          $(ML_CONFIG)  \
+          $(ZOLTAN_CONFIG)  \
+          --prefix=$(PETSC_REAL_DIR_PREFIX)  \
+          --PETSC_ARCH=$(PETSC_REAL_BUILD_DIR) \
+            CFLAGS="$(CFLAGS_NO_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_NO_DEBUG_PREFIX_MAP)" \
+            FCFLAGS="$(FCFLAGS_NO_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_NO_DEBUG_PREFIX_MAP)"  \
+            CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" MAKEFLAGS="$(MAKEFLAGS)"; then \
+	  : ; \
+	else \
+	  cat configure.log; \
+	  false; \
+	fi
+	@echo ===================== $(PETSC_COMPLEX_DEV_PACKAGE) =====================
+	set -e; \
+	if dh_auto_configure -p$(PETSC_COMPLEX_DEV_PACKAGE) --  \
+          --with-debugging=0  \
+          --with-scalar-type=complex --shared-library-extension=_complex \
+          $(CONFIGURATION_OPTIONS)  \
+          $(MUMPS_CONFIG)  \
+          $(SUITESPARSE_CONFIG) \
+          $(SUPERLU_CONFIG)  \
+          $(SUPERLU_DIST_CONFIG)  \
+          $(ZOLTAN_CONFIG)  \
+          --prefix=$(PETSC_COMPLEX_DIR_PREFIX)  \
+          --PETSC_ARCH=$(PETSC_COMPLEX_BUILD_DIR) \
+            CFLAGS="$(CFLAGS_NO_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_NO_DEBUG_PREFIX_MAP)" \
+            FCFLAGS="$(FCFLAGS_NO_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_NO_DEBUG_PREFIX_MAP)"  \
+            CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" MAKEFLAGS="$(MAKEFLAGS)"; then \
+	  : ; \
+	else \
+	  cat configure.log; \
+	  false; \
+	fi
+	@echo ===================== $(PETSC_COMPLEX_DEBUG_PACKAGE) =====================
+	set -e; \
+	if dh_auto_configure -p$(PETSC_COMPLEX_DEBUG_PACKAGE) --  \
+          --with-debugging=1  \
+          --with-scalar-type=complex --shared-library-extension=_complex \
+          $(CONFIGURATION_OPTIONS)  \
+          $(MUMPS_CONFIG)  \
+          $(SUITESPARSE_CONFIG) \
+          $(SUPERLU_CONFIG)  \
+          $(SUPERLU_DIST_CONFIG)  \
+          $(ZOLTAN_CONFIG)  \
+          --prefix=$(PETSC_COMPLEX_DEBUG_DIR_PREFIX)  \
+          --PETSC_ARCH=$(PETSC_COMPLEX_DEBUG_BUILD_DIR) \
+            CFLAGS="$(CFLAGS_NO_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_NO_DEBUG_PREFIX_MAP)" \
+            FCFLAGS="$(FCFLAGS_NO_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_NO_DEBUG_PREFIX_MAP)"  \
+            CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" MAKEFLAGS="$(MAKEFLAGS)"; then \
+	  : ; \
+	else \
+	  cat configure.log; \
+	  false; \
+	fi
+	@echo ===================== $(PETSC64_REAL_DEBUG_PACKAGE) =====================
+	set -e; \
+	if dh_auto_configure -p$(PETSC64_REAL_DEBUG_PACKAGE) --  \
+          $(PETSC64_CONFIG)  \
+          --with-debugging=1  \
+          --shared-library-extension=64_real \
+          $(CONFIGURATION_OPTIONS)  \
+          $(HYPRE64_CONFIG)  \
+          $(MUMPS64_CONFIG)  \
+          $(SUITESPARSE64_CONFIG) \
+          $(ZOLTAN_CONFIG)  \
+          --prefix=$(PETSC64_REAL_DEBUG_DIR_PREFIX)  \
+          --PETSC_ARCH=$(PETSC64_REAL_DEBUG_BUILD_DIR) \
+            CFLAGS="$(CFLAGS_NO_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_NO_DEBUG_PREFIX_MAP)" \
+            FCFLAGS="$(FCFLAGS_NO_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_NO_DEBUG_PREFIX_MAP)"  \
+            CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" MAKEFLAGS="$(MAKEFLAGS)"; then \
+	  : ; \
+	else \
+	  cat configure.log; \
+	  false; \
+	fi
+	@echo ===================== $(PETSC64_REAL_DEV_PACKAGE) =====================
+	set -e; \
+	if dh_auto_configure -p$(PETSC64_REAL_DEV_PACKAGE) --  \
+          $(PETSC64_CONFIG)  \
+          --with-debugging=0  \
+          --shared-library-extension=64_real \
+          $(CONFIGURATION_OPTIONS)  \
+          $(HYPRE64_CONFIG)  \
+          $(MUMPS64_CONFIG)  \
+          $(SUITESPARSE64_CONFIG) \
+          $(ZOLTAN_CONFIG)  \
+          --prefix=$(PETSC64_REAL_DIR_PREFIX)  \
+          --PETSC_ARCH=$(PETSC64_REAL_BUILD_DIR) \
+            CFLAGS="$(CFLAGS_NO_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_NO_DEBUG_PREFIX_MAP)" \
+            FCFLAGS="$(FCFLAGS_NO_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_NO_DEBUG_PREFIX_MAP)"  \
+            CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" MAKEFLAGS="$(MAKEFLAGS)"; then \
+	  : ; \
+	else \
+	  cat configure.log; \
+	  false; \
+	fi
+	@echo ===================== $(PETSC64_COMPLEX_DEV_PACKAGE) =====================
+	set -e; \
+	if dh_auto_configure -p$(PETSC64_COMPLEX_DEV_PACKAGE) --  \
+          $(PETSC64_CONFIG)  \
+          --with-debugging=0  \
+          --with-scalar-type=complex --shared-library-extension=64_complex \
+          $(CONFIGURATION_OPTIONS)  \
+          $(MUMPS64_CONFIG)  \
+          $(SUITESPARSE64_CONFIG) \
+          $(ZOLTAN_CONFIG)  \
+          --prefix=$(PETSC64_COMPLEX_DIR_PREFIX)  \
+          --PETSC_ARCH=$(PETSC64_COMPLEX_BUILD_DIR) \
+            CFLAGS="$(CFLAGS_NO_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_NO_DEBUG_PREFIX_MAP)" \
+            FCFLAGS="$(FCFLAGS_NO_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_NO_DEBUG_PREFIX_MAP)"  \
+            CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" MAKEFLAGS="$(MAKEFLAGS)"; then \
+	  : ; \
+	else \
+	  cat configure.log; \
+	  false; \
+	fi
+	@echo ===================== $(PETSC64_COMPLEX_DEBUG_PACKAGE) =====================
+	set -e; \
+	if dh_auto_configure -p$(PETSC64_COMPLEX_DEBUG_PACKAGE) --  \
+          $(PETSC64_CONFIG)  \
+          --with-debugging=1  \
+          --with-scalar-type=complex --shared-library-extension=64_complex \
+          $(CONFIGURATION_OPTIONS)  \
+          $(MUMPS64_CONFIG)  \
+          $(SUITESPARSE64_CONFIG) \
+          $(ZOLTAN_CONFIG)  \
+          --prefix=$(PETSC64_COMPLEX_DEBUG_DIR_PREFIX)  \
+          --PETSC_ARCH=$(PETSC64_COMPLEX_DEBUG_BUILD_DIR) \
+            CFLAGS="$(CFLAGS_NO_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_NO_DEBUG_PREFIX_MAP)" \
+            FCFLAGS="$(FCFLAGS_NO_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_NO_DEBUG_PREFIX_MAP)"  \
+            CPPFLAGS="$(CPPFLAGS)" LDFLAGS="$(LDFLAGS)" MAKEFLAGS="$(MAKEFLAGS)"; then \
+	  : ; \
+	else \
+	  cat configure.log; \
+	  false; \
+	fi
+
+
+override_dh_auto_build:
+	dh_auto_build -p$(PETSC_REAL_DEBUG_PACKAGE) -p$(PETSC_DOC_PACKAGE) -p$(PETSC_DEV_EXAMPLE_PACKAGE) -- V=1 \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_REAL_DEBUG_BUILD_DIR) \
+	  CFLAGS="$(CFLAGS_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_DEBUG_PREFIX_MAP)" \
+	  FCFLAGS="$(FCFLAGS_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_DEBUG_PREFIX_MAP)"
+	dh_auto_build -p$(PETSC_REAL_DEV_PACKAGE)  -- V=1 \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_REAL_BUILD_DIR) \
+	  CFLAGS="$(CFLAGS_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_DEBUG_PREFIX_MAP)" \
+	  FCFLAGS="$(FCFLAGS_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_DEBUG_PREFIX_MAP)"
+	dh_auto_build -p$(PETSC_COMPLEX_DEV_PACKAGE)  -- V=1 \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_COMPLEX_BUILD_DIR) \
+	  CFLAGS="$(CFLAGS_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_DEBUG_PREFIX_MAP)" \
+	  FCFLAGS="$(FCFLAGS_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_DEBUG_PREFIX_MAP)"
+	dh_auto_build -p$(PETSC_COMPLEX_DEBUG_PACKAGE)  -- V=1 \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_COMPLEX_DEBUG_BUILD_DIR) \
+	  CFLAGS="$(CFLAGS_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_DEBUG_PREFIX_MAP)" \
+	  FCFLAGS="$(FCFLAGS_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_DEBUG_PREFIX_MAP)"
+	dh_auto_build -p$(PETSC64_REAL_DEBUG_PACKAGE) -- V=1 \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_REAL_DEBUG_BUILD_DIR) \
+	  CFLAGS="$(CFLAGS_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_DEBUG_PREFIX_MAP)" \
+	  FCFLAGS="$(FCFLAGS_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_DEBUG_PREFIX_MAP)"
+	dh_auto_build -p$(PETSC64_REAL_DEV_PACKAGE)  -- V=1 \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_REAL_BUILD_DIR) \
+	  CFLAGS="$(CFLAGS_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_DEBUG_PREFIX_MAP)" \
+	  FCFLAGS="$(FCFLAGS_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_DEBUG_PREFIX_MAP)"
+	dh_auto_build -p$(PETSC64_COMPLEX_DEV_PACKAGE)  -- V=1 \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_COMPLEX_BUILD_DIR) \
+	  CFLAGS="$(CFLAGS_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_DEBUG_PREFIX_MAP)" \
+	  FCFLAGS="$(FCFLAGS_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_DEBUG_PREFIX_MAP)"
+	dh_auto_build -p$(PETSC64_COMPLEX_DEBUG_PACKAGE)  -- V=1 \
+	  PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_COMPLEX_DEBUG_BUILD_DIR) \
+	  CFLAGS="$(CFLAGS_DEBUG_PREFIX_MAP)" CXXFLAGS="$(CXXFLAGS_DEBUG_PREFIX_MAP)" \
+	  FCFLAGS="$(FCFLAGS_DEBUG_PREFIX_MAP)"  FFLAGS="$(FFLAGS_DEBUG_PREFIX_MAP)"
+
+
+# these arches started failing to complete tests in PETSc 3.9
+# so skip their tests until a workaround or fix is known
+ARCH_NO_TEST_LIST = armel armhf i386 mips64el hppa ia64 powerpc x32
+
+empty :=
+space := $(empty)$(empty)
+
+# run tests, or not
+RUNTEST=yes
+ifneq (,$(findstring $(space)$(DEB_HOST_ARCH)$(space), $(space)$(ARCH_NO_TEST_LIST)$(space)))
+  RUNTEST=no
+endif
+ifeq (nocheck,$(findstring nocheck,$(DEB_BUILD_OPTIONS)))
+  RUNTEST=no
+endif
+
+override_dh_auto_test-indep:
+	echo "Tests are run with arch-any builds".
+
+override_dh_auto_test-arch:
+	set -e; \
+	if [ "$(RUNTEST)" = "no" ]; then \
+	   echo Tests have been disabled on $(DEB_HOST_ARCH); \
+	else make -j$(CPU_COUNT) check_build VERBOSE=1 V=1 \
+	    PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_REAL_DEBUG_BUILD_DIR) \
+	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CURDIR)/$(PETSC_REAL_DEBUG_BUILD_DIR)/lib; \
+	  make -j$(CPU_COUNT) check_build VERBOSE=1 V=1 \
+	    PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_REAL_BUILD_DIR) \
+	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CURDIR)/$(PETSC_REAL_BUILD_DIR)/lib; \
+	  make -j$(CPU_COUNT) check_build VERBOSE=1 V=1 \
+	    PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_COMPLEX_BUILD_DIR) \
+	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CURDIR)/$(PETSC_COMPLEX_BUILD_DIR)/lib; \
+	  make -j$(CPU_COUNT) check_build VERBOSE=1 V=1 \
+	    PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_COMPLEX_DEBUG_BUILD_DIR) \
+	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CURDIR)/$(PETSC_COMPLEX_DEBUG_BUILD_DIR)/lib; \
+	  make -j$(CPU_COUNT) check_build VERBOSE=1 V=1 \
+	    PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_REAL_DEBUG_BUILD_DIR) \
+	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CURDIR)/$(PETSC64_REAL_DEBUG_BUILD_DIR)/lib; \
+	  make -j$(CPU_COUNT) check_build VERBOSE=1 V=1 \
+	    PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_REAL_BUILD_DIR) \
+	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CURDIR)/$(PETSC64_REAL_BUILD_DIR)/lib; \
+	  make -j$(CPU_COUNT) check_build VERBOSE=1 V=1 \
+	    PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_COMPLEX_BUILD_DIR) \
+	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CURDIR)/$(PETSC64_COMPLEX_BUILD_DIR)/lib; \
+	  make -j$(CPU_COUNT) check_build VERBOSE=1 V=1 \
+	    PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_COMPLEX_DEBUG_BUILD_DIR) \
+	    LD_LIBRARY_PATH=$(LD_LIBRARY_PATH):$(CURDIR)/$(PETSC64_COMPLEX_DEBUG_BUILD_DIR)/lib; \
+	fi
+
+override_dh_auto_install:
+	dh_auto_install -p$(PETSC_REAL_DEBUG_PACKAGE) -p$(PETSC_DOC_PACKAGE) -p$(PETSC_DEV_EXAMPLE_PACKAGE) --destdir=$(PACKAGE_REAL_DEBUG_INSTALL_DIR) --  \
+          PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_REAL_DEBUG_BUILD_DIR)
+	dh_auto_install -p$(PETSC_REAL_DEV_PACKAGE) --destdir=$(PACKAGE_REAL_INSTALL_DIR) --  \
+          PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_REAL_BUILD_DIR)
+	dh_auto_install -p$(PETSC_COMPLEX_DEV_PACKAGE) --destdir=$(PACKAGE_COMPLEX_INSTALL_DIR) --  \
+          PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_COMPLEX_BUILD_DIR)
+	dh_auto_install -p$(PETSC_COMPLEX_DEBUG_PACKAGE) --destdir=$(PACKAGE_COMPLEX_DEBUG_INSTALL_DIR) --  \
+          PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC_COMPLEX_DEBUG_BUILD_DIR)
+	dh_auto_install -p$(PETSC64_REAL_DEBUG_PACKAGE) --destdir=$(PACKAGE_64_REAL_DEBUG_INSTALL_DIR) --  \
+          PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_REAL_DEBUG_BUILD_DIR)
+	dh_auto_install -p$(PETSC64_REAL_DEV_PACKAGE) --destdir=$(PACKAGE_64_REAL_INSTALL_DIR) --  \
+          PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_REAL_BUILD_DIR)
+	dh_auto_install -p$(PETSC64_COMPLEX_DEV_PACKAGE) --destdir=$(PACKAGE_64_COMPLEX_INSTALL_DIR) --  \
+          PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_COMPLEX_BUILD_DIR)
+	dh_auto_install -p$(PETSC64_COMPLEX_DEBUG_PACKAGE) --destdir=$(PACKAGE_64_COMPLEX_DEBUG_INSTALL_DIR) --  \
+          PETSC_DIR=$(CURDIR) PETSC_ARCH=$(PETSC64_COMPLEX_DEBUG_BUILD_DIR)
+
+override_dh_install:
+	dh_install -p$(PETSC_REAL_PACKAGE) --sourcedir $(PACKAGE_REAL_INSTALL_DIR)  $(PETSC_REAL_DIR_PREFIX)/lib/libpetsc_real.so.$(PETSC_VERSION)  usr/lib/$(DEB_HOST_MULTIARCH)
+	dh_install -p$(PETSC_REAL_DEV_PACKAGE) --sourcedir $(PACKAGE_REAL_INSTALL_DIR) --autodest --exclude='include/*.mod' --exclude=*html --exclude=conf/uninstall.py --exclude=libpetsc_real.so.$(PETSC_VERSION) --exclude=share/ --exclude=include/petsc/ --exclude=lib/petsc/bin/  usr
+	
+	dh_install -p$(PETSC_REAL_DEBUG_PACKAGE) --sourcedir $(PACKAGE_REAL_DEBUG_INSTALL_DIR) --autodest --exclude='include/*.mod' --exclude=*html --exclude=conf/uninstall.py --exclude=share/ --exclude=include/petsc/ --exclude=lib/petsc/bin/  usr
+	
+	dh_install -p$(PETSC_COMPLEX_PACKAGE) --sourcedir $(PACKAGE_COMPLEX_INSTALL_DIR)  $(PETSC_COMPLEX_DIR_PREFIX)/lib/libpetsc_complex.so.$(PETSC_VERSION)  usr/lib/$(DEB_HOST_MULTIARCH)
+	dh_install -p$(PETSC_COMPLEX_DEV_PACKAGE) --sourcedir $(PACKAGE_COMPLEX_INSTALL_DIR) --autodest --exclude='include/*.mod' --exclude=*html --exclude=conf/uninstall.py --exclude=libpetsc_complex.so.$(PETSC_VERSION) --exclude=share/ --exclude=include/petsc/ --exclude=lib/petsc/bin/  usr
+	
+	dh_install -p$(PETSC_COMPLEX_DEBUG_PACKAGE) --sourcedir $(PACKAGE_COMPLEX_DEBUG_INSTALL_DIR) --autodest --exclude='include/*.mod' --exclude=*html --exclude=conf/uninstall.py --exclude=share/ --exclude=include/petsc/ --exclude=lib/petsc/bin/  usr
+	
+	dh_install -p$(PETSC64_REAL_PACKAGE) --sourcedir $(PACKAGE_64_REAL_INSTALL_DIR)  $(PETSC64_REAL_DIR_PREFIX)/lib/libpetsc64_real.so.$(PETSC_VERSION)  usr/lib/$(DEB_HOST_MULTIARCH)
+	dh_install -p$(PETSC64_REAL_DEV_PACKAGE) --sourcedir $(PACKAGE_64_REAL_INSTALL_DIR) --autodest --exclude='include/*.mod' --exclude=*html --exclude=conf/uninstall.py --exclude=libpetsc64_real.so.$(PETSC_VERSION) --exclude=share/ --exclude=include/petsc/ --exclude=lib/petsc/bin/  usr
+	
+	dh_install -p$(PETSC64_REAL_DEBUG_PACKAGE) --sourcedir $(PACKAGE_64_REAL_DEBUG_INSTALL_DIR) --autodest --exclude='include/*.mod' --exclude=*html --exclude=conf/uninstall.py --exclude=share/ --exclude=include/petsc/ --exclude=lib/petsc/bin/  usr
+	
+	dh_install -p$(PETSC64_COMPLEX_PACKAGE) --sourcedir $(PACKAGE_64_COMPLEX_INSTALL_DIR)  $(PETSC64_COMPLEX_DIR_PREFIX)/lib/libpetsc64_complex.so.$(PETSC_VERSION)  usr/lib/$(DEB_HOST_MULTIARCH)
+	dh_install -p$(PETSC64_COMPLEX_DEV_PACKAGE) --sourcedir $(PACKAGE_64_COMPLEX_INSTALL_DIR) --autodest --exclude='include/*.mod' --exclude=*html --exclude=conf/uninstall.py --exclude=libpetsc64_complex.so.$(PETSC_VERSION) --exclude=share/ --exclude=include/petsc/ --exclude=lib/petsc/bin/  usr
+	
+	dh_install -p$(PETSC64_COMPLEX_DEBUG_PACKAGE) --sourcedir $(PACKAGE_64_COMPLEX_DEBUG_INSTALL_DIR) --autodest --exclude='include/*.mod' --exclude=*html --exclude=conf/uninstall.py --exclude=share/ --exclude=include/petsc/ --exclude=lib/petsc/bin/  usr
+	
+	dh_install -p$(PETSC_DEV_COMMON_PACKAGE) --sourcedir $(PACKAGE_REAL_DEBUG_INSTALL_DIR)/$(PETSC_REAL_DEBUG_DIR_PREFIX) --exclude=share/petsc/examples/ --exclude=share/petsc/datafiles/  share  usr/share/petsc/$(PETSC_SONAME_VERSION)
+	dh_install -p$(PETSC_DEV_COMMON_PACKAGE) --sourcedir $(PACKAGE_REAL_DEBUG_INSTALL_DIR)/$(PETSC_REAL_DEBUG_DIR_PREFIX) --exclude=*html  include/petsc  usr/share/petsc/$(PETSC_SONAME_VERSION)/include
+	dh_install -p$(PETSC_DEV_COMMON_PACKAGE) --sourcedir $(PACKAGE_REAL_DEBUG_INSTALL_DIR)/$(PETSC_REAL_DEBUG_DIR_PREFIX)  lib/petsc/bin  usr/share/petsc/$(PETSC_SONAME_VERSION)/lib/petsc
+	
+	dh_install -p$(PETSC_DEV_EXAMPLE_PACKAGE)
+
+override_dh_installdocs-indep:
+	dh_installdocs -i
+	# dh_install can't install .html while preserving directory structure
+	# so first install all include files to docs...
+	dh_install -p$(PETSC_DOC_PACKAGE) --sourcedir $(PACKAGE_REAL_DEBUG_INSTALL_DIR)  $(PETSC_REAL_DEBUG_DIR_PREFIX)/include usr/share/doc/$(PETSC_DOC_PACKAGE)
+	# test if header docs were installed (in a binary-only build they won't be)
+	if [ -d ./debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/include ]; then  \
+	# then remove non-html files  \
+	  find ./debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/include/ -type f -not -name "*.html" -delete ;  \
+	# make header docs "generic" (pointing to headers in preferred alternative /usr/include/petsc)  \
+	  for hdoc in `find ./debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/include/ -name "*.html"`; do  \
+	    h=`echo $${hdoc} | xargs basename | sed "s/.html//"`; \
+	    hdir=`echo $${hdoc} | xargs dirname | sed "s|^.*/include||"`; \
+	    sed "s|href=\"$${h}\"|href=\"/usr/include/petsc$${hdir}/$${h}\"|" -i $${hdoc};  \
+	  done  \
+	fi
+	for j in jquery searchtools underscore doctools; do \
+	    rm -rf debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/docs/_static/$${j}.js ; \
+	    ln -s /usr/share/sphinx/themes/basic/static/$${j}.js debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/docs/_static/$${j}.js ; \
+	done
+	rm -rf debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/docs/_static/jquery-?.?.?.js
+	rm -rf debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/docs/_static/underscore-?.?.?.js
+	# change external references to local js scripts (avoid privacy breaches)
+	for j in contrib/auto-render.min.js katex.min.js katex.min.css; do \
+	    grep -ls "https://cdn.jsdelivr.net/npm/.*/dist/$$j" debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/* -R \
+	      | xargs sed -i "s|https://cdn.jsdelivr.net/npm/.*/dist/$$j|/usr/share/doc/$(PETSC_DOC_PACKAGE)/docs/_static/`basename $$j`|g";  \
+	done
+	# use local MathJax.js
+	if [ -d debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/docs ]; then \
+	  find debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/docs -name "*.html" | \
+	     xargs -r sed -i "s|https://cdn.mathjax.org/mathjax/latest/MathJax.js|file:///usr/share/javascript/mathjax/MathJax.js|" ; \
+	fi
+	if [ -d debian/$(PETSC_DEV_COMMON_PACKAGE)/usr/share/petsc/$(PETSC_SONAME_VERSION)/share/petsc/saws ]; then \
+	  find debian/$(PETSC_DEV_COMMON_PACKAGE)/usr/share/petsc/$(PETSC_SONAME_VERSION)/share/petsc/saws -name "*html" | \
+	     xargs sed -i "s|https://www.mcs.anl.gov/research/projects/saws/js/jquery-.*[^custom].js|file:///usr/share/sphinx/themes/basic/static/jquery.js|; \
+	        s|https://www.mcs.anl.gov/research/projects/saws/js/jquery-ui.*.js|file:///usr/share/javascript/jquery-ui/jquery-ui.js|; \
+		s|http://cdn.mathjax.org/mathjax/latest/MathJax.js|file:///usr/share/javascript/mathjax/MathJax.js|" ; \
+	fi
+
+# dh_installchangelogs can't handle a directory of changelog files, so skip them here
+override_dh_installchangelogs:
+	dh_installchangelogs --exclude=docs/docs/changes
+
+override_dh_fixperms-indep:
+	dh_fixperms
+	chmod a-x debian/$(PETSC_DEV_EXAMPLE_PACKAGE)/usr/share/petsc/$(PETSC_SONAME_VERSION)/share/petsc/datafiles/matrices/*
+	chmod a-x debian/$(PETSC_DEV_EXAMPLE_PACKAGE)/usr/share/petsc/$(PETSC_SONAME_VERSION)/share/petsc/datafiles/meshes/*
+	chmod a-x debian/$(PETSC_DEV_EXAMPLE_PACKAGE)/usr/share/petsc/$(PETSC_SONAME_VERSION)/share/petsc/examples/config/example_template.py
+	chmod a+x debian/$(PETSC_DEV_EXAMPLE_PACKAGE)/usr/share/petsc/$(PETSC_SONAME_VERSION)/share/petsc/examples/src/ts/tutorials/hybrid/run.sh
+	# python auxiliary modules and support files need not be executable
+	# let PetscBinaryIO_tests.py remain executable, but add hashbang
+	chmod a-x debian/$(PETSC_DEV_COMMON_PACKAGE)/usr/share/petsc/$(PETSC_SONAME_VERSION)/lib/petsc/bin/petsc_conf.py
+	chmod a-x debian/$(PETSC_DEV_COMMON_PACKAGE)/usr/share/petsc/$(PETSC_SONAME_VERSION)/lib/petsc/bin/PetscBinaryIO.py
+	sed '1 s|^|#!/usr/bin/python3\n|' -i debian/$(PETSC_DEV_COMMON_PACKAGE)/usr/share/petsc/$(PETSC_SONAME_VERSION)/lib/petsc/bin/PetscBinaryIO_tests.py
+	# matlab scripts should not be executable
+	for matlabdir in `find debian/*/usr -name matlab | grep "petsc/matlab" `; do \
+	  find $$matlabdir -name *.m | xargs chmod a-x; \
+	  chmod a-x $$matlabdir/laplacianlicense.txt; \
+	done
+
+override_dh_python3-indep:
+	for p in configureTAS.py extract.py; do chmod a+x debian/$(PETSC_DEV_COMMON_PACKAGE)/usr/share/petsc/$(PETSC_SONAME_VERSION)/lib/petsc/bin/$$p; done
+	dh_python3 -i --shebang=/usr/bin/python3
+	dh_python3 --shebang=/usr/bin/python3 -p$(PETSC_DEV_COMMON_PACKAGE) /usr/share/petsc/$(PETSC_SONAME_VERSION)/lib/petsc/bin
+	dh_python3 --shebang=/usr/bin/python3 -p$(PETSC_DEV_EXAMPLE_PACKAGE) /usr/share/petsc/$(PETSC_SONAME_VERSION)/share/petsc/examples
+	dh_python3 --shebang=/usr/bin/python3 -p$(PETSC_DEV_EXAMPLE_PACKAGE) /usr/share/petsc/$(PETSC_SONAME_VERSION)/share/petsc/datafiles
+
+override_dh_python3-arch:
+	dh_python3 -a --shebang=/usr/bin/python3
+
+override_dh_installdeb:
+	dh_installdeb
+	for pkg in $$(dh_listpackages -a); do \
+	  sed -i -e 's/__PETSC_SONAME_VERSION__/$(PETSC_SONAME_VERSION)/; s/__PETSC_VERSION__/$(PETSC_VERSION)/; s/__DEB_HOST_MULTIARCH__/$(DEB_HOST_MULTIARCH)/' debian/$$pkg/DEBIAN/*; \
+	done
+
+override_dh_gencontrol:
+	dh_gencontrol -- -VMPI:Depends="$(MPI_DEPENDS)"
+
+override_dh_strip:
+	dh_strip --dbg-package=$(PETSC_REAL_DEBUG_PACKAGE)
+	dh_strip --dbg-package=$(PETSC_COMPLEX_DEBUG_PACKAGE)
+	dh_strip --dbg-package=$(PETSC64_REAL_DEBUG_PACKAGE)
+	dh_strip --dbg-package=$(PETSC64_COMPLEX_DEBUG_PACKAGE)
+
+# a sample binary build is made to build docs, but those binaries are not installed in an arch-indep build
+override_dh_missing-indep:
+	dh_missing --list-missing
+
+USCAN_DESTDIR := $(CURDIR)
+
+get-orig-source:
+	uscan --no-conf --download-current-version --repack --compression xz
+

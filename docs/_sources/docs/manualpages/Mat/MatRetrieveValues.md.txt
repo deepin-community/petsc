@@ -1,0 +1,46 @@
+# MatRetrieveValues
+Retrieves the copy of the matrix values; this allows, for example, reuse of the linear part of a Jacobian, while recomputing the nonlinear portion. 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatRetrieveValues(Mat mat)
+```
+Logically Collect
+
+
+## Input Parameters
+
+- ***mat -*** the matrix (currently only `MATAIJ` matrices support this option)
+
+
+
+
+
+## See Also
+ `MatStoreValues()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/aij/seq/aij.c.html#MatRetrieveValues">src/mat/impls/aij/seq/aij.c</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/aij/mpi/mpiaij.c.html#MatRetrieveValues_MPIAIJ">MatRetrieveValues_MPIAIJ in src/mat/impls/aij/mpi/mpiaij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/aij/seq/aij.c.html#MatRetrieveValues_SeqAIJ">MatRetrieveValues_SeqAIJ in src/mat/impls/aij/seq/aij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/baij/mpi/mpibaij.c.html#MatRetrieveValues_MPIBAIJ">MatRetrieveValues_MPIBAIJ in src/mat/impls/baij/mpi/mpibaij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/baij/seq/baij.c.html#MatRetrieveValues_SeqBAIJ">MatRetrieveValues_SeqBAIJ in src/mat/impls/baij/seq/baij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/sbaij/mpi/mpisbaij.c.html#MatRetrieveValues_MPISBAIJ">MatRetrieveValues_MPISBAIJ in src/mat/impls/sbaij/mpi/mpisbaij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/sbaij/seq/sbaij.c.html#MatRetrieveValues_SeqSBAIJ">MatRetrieveValues_SeqSBAIJ in src/mat/impls/sbaij/seq/sbaij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/sell/mpi/mpisell.c.html#MatRetrieveValues_MPISELL">MatRetrieveValues_MPISELL in src/mat/impls/sell/mpi/mpisell.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/sell/seq/sell.c.html#MatRetrieveValues_SeqSELL">MatRetrieveValues_SeqSELL in src/mat/impls/sell/seq/sell.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/aij/seq/aij.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

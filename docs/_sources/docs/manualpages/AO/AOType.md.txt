@@ -1,0 +1,31 @@
+# AOType
+String with the name of a PETSc application ordering or the creation function with an optional dynamic library name. 
+## Synopsis
+```
+typedef const char *AOType;
+#define AOBASIC          "basic"
+#define AOADVANCED       "advanced"
+#define AOMAPPING        "mapping"
+#define AOMEMORYSCALABLE "memoryscalable"
+
+```
+
+
+
+## See Also
+ `AOSetType()`, `AO`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscao.h.html#AOType">include/petscao.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscao.h)
+
+
+[Index of all AO routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

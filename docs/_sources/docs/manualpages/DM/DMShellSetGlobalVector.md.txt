@@ -1,0 +1,39 @@
+# DMShellSetGlobalVector
+sets a template global vector associated with the DMShell 
+## Synopsis
+```
+#include "petscdmshell.h"  
+PetscErrorCode DMShellSetGlobalVector(DM dm, Vec X)
+```
+Logically Collective on dm
+
+
+## Input Parameters
+
+- ***dm -*** shell DM
+- ***X -*** template vector
+
+
+
+
+
+## See Also
+ `DMCreateGlobalVector()`, `DMShellSetMatrix()`, `DMShellSetCreateGlobalVector()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/shell/dmshell.c.html#DMShellSetGlobalVector">src/dm/impls/shell/dmshell.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex73f90t.F90.html">src/snes/tutorials/ex73f90t.F90.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/shell/dmshell.c)
+
+
+[Index of all DM routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

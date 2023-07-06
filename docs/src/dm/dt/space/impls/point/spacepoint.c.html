@@ -1,0 +1,177 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/dt/space/impls/point/spacepoint.c">Actual source code: spacepoint.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:49+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../../include/petsc/private/petscfeimpl.h.html">&lt;petsc/private/petscfeimpl.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../../../include/petsc/private/dtimpl.h.html">&lt;petsc/private/dtimpl.h&gt;</A>
+
+<a name="line4">  4: </a><strong><font color="#4169E1"><a name="PetscSpacePointView_Ascii"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpacePointView_Ascii(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line5">  5: </a>{
+<a name="line6">  6: </a>  PetscSpace_Point *pt = (PetscSpace_Point *)sp-&gt;data;
+<a name="line7">  7: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PetscViewerFormat</a> format;
+
+<a name="line9">  9: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGetFormat.html">PetscViewerGetFormat</a>(viewer, &amp;format);
+<a name="line10"> 10: </a>  <font color="#4169E1">if</font> (format == <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_INFO_DETAIL</a>) {
+<a name="line11"> 11: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Point space in dimension %"</font> PetscInt_FMT <font color="#666666">":\n"</font>, sp-&gt;Nv);
+<a name="line12"> 12: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(viewer);
+<a name="line13"> 13: </a>    <a href="../../../../../../docs/manualpages/DT/PetscQuadratureView.html">PetscQuadratureView</a>(pt-&gt;quad, viewer);
+<a name="line14"> 14: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(viewer);
+<a name="line15"> 15: </a>  } <font color="#4169E1">else</font> <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Point space in dimension %"</font> PetscInt_FMT <font color="#666666">" on %"</font> PetscInt_FMT <font color="#666666">" points\n"</font>, sp-&gt;Nv, pt-&gt;quad-&gt;numPoints);
+<a name="line16"> 16: </a>  <font color="#4169E1">return</font> 0;
+<a name="line17"> 17: </a>}
+
+<a name="line19"> 19: </a><strong><font color="#4169E1"><a name="PetscSpaceView_Point"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceView_Point(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line20"> 20: </a>{
+<a name="line21"> 21: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> iascii;
+
+<a name="line25"> 25: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line26"> 26: </a>  <font color="#4169E1">if</font> (iascii) PetscSpacePointView_Ascii(sp, viewer);
+<a name="line27"> 27: </a>  <font color="#4169E1">return</font> 0;
+<a name="line28"> 28: </a>}
+
+<a name="line30"> 30: </a><strong><font color="#4169E1"><a name="PetscSpaceSetUp_Point"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceSetUp_Point(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp)</font></strong>
+<a name="line31"> 31: </a>{
+<a name="line32"> 32: </a>  PetscSpace_Point *pt = (PetscSpace_Point *)sp-&gt;data;
+
+<a name="line34"> 34: </a>  <font color="#4169E1">if</font> (!pt-&gt;quad-&gt;points &amp;&amp; sp-&gt;degree &gt;= 0) {
+<a name="line35"> 35: </a>    <a href="../../../../../../docs/manualpages/DT/PetscQuadratureDestroy.html">PetscQuadratureDestroy</a>(&amp;pt-&gt;quad);
+<a name="line36"> 36: </a>    <a href="../../../../../../docs/manualpages/DT/PetscDTStroudConicalQuadrature.html">PetscDTStroudConicalQuadrature</a>(sp-&gt;Nv, sp-&gt;Nc, <a href="../../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(sp-&gt;degree + 1, 1), -1.0, 1.0, &amp;pt-&gt;quad);
+<a name="line37"> 37: </a>  }
+<a name="line38"> 38: </a>  <font color="#4169E1">return</font> 0;
+<a name="line39"> 39: </a>}
+
+<a name="line41"> 41: </a><strong><font color="#4169E1"><a name="PetscSpaceDestroy_Point"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceDestroy_Point(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp)</font></strong>
+<a name="line42"> 42: </a>{
+<a name="line43"> 43: </a>  PetscSpace_Point *pt = (PetscSpace_Point *)sp-&gt;data;
+
+<a name="line45"> 45: </a>  <a href="../../../../../../docs/manualpages/DT/PetscQuadratureDestroy.html">PetscQuadratureDestroy</a>(&amp;pt-&gt;quad);
+<a name="line46"> 46: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(pt);
+<a name="line47"> 47: </a>  <font color="#4169E1">return</font> 0;
+<a name="line48"> 48: </a>}
+
+<a name="line50"> 50: </a><strong><font color="#4169E1"><a name="PetscSpaceGetDimension_Point"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceGetDimension_Point(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *dim)</font></strong>
+<a name="line51"> 51: </a>{
+<a name="line52"> 52: </a>  PetscSpace_Point *pt = (PetscSpace_Point *)sp-&gt;data;
+
+<a name="line54"> 54: </a>  *dim = pt-&gt;quad-&gt;numPoints;
+<a name="line55"> 55: </a>  <font color="#4169E1">return</font> 0;
+<a name="line56"> 56: </a>}
+
+<a name="line58"> 58: </a><strong><font color="#4169E1"><a name="PetscSpaceEvaluate_Point"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceEvaluate_Point(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> npoints, const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> points[], <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> B[], <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> D[], <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> H[])</font></strong>
+<a name="line59"> 59: </a>{
+<a name="line60"> 60: </a>  PetscSpace_Point *pt  = (PetscSpace_Point *)sp-&gt;data;
+<a name="line61"> 61: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          dim = sp-&gt;Nv, pdim = pt-&gt;quad-&gt;numPoints, d, p, i, c;
+
+<a name="line64"> 64: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscArrayzero.html">PetscArrayzero</a>(B, npoints * pdim);
+<a name="line65"> 65: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; npoints; ++p) {
+<a name="line66"> 66: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; pdim; ++i) {
+<a name="line67"> 67: </a>      <font color="#4169E1">for</font> (d = 0; d &lt; dim; ++d) {
+<a name="line68"> 68: </a>        <font color="#4169E1">if</font> (<a href="../../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(points[p * dim + d] - pt-&gt;quad-&gt;points[p * dim + d]) &gt; 1.0e-10) <font color="#4169E1">break</font>;
+<a name="line69"> 69: </a>      }
+<a name="line70"> 70: </a>      <font color="#4169E1">if</font> (d &gt;= dim) {
+<a name="line71"> 71: </a>        B[p * pdim + i] = 1.0;
+<a name="line72"> 72: </a>        <font color="#4169E1">break</font>;
+<a name="line73"> 73: </a>      }
+<a name="line74"> 74: </a>    }
+<a name="line75"> 75: </a>  }
+<a name="line76"> 76: </a>  <font color="#B22222">/* Replicate for other components */</font>
+<a name="line77"> 77: </a>  <font color="#4169E1">for</font> (c = 1; c &lt; sp-&gt;Nc; ++c) {
+<a name="line78"> 78: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; npoints; ++p) {
+<a name="line79"> 79: </a>      <font color="#4169E1">for</font> (i = 0; i &lt; pdim; ++i) B[(c * npoints + p) * pdim + i] = B[p * pdim + i];
+<a name="line80"> 80: </a>    }
+<a name="line81"> 81: </a>  }
+<a name="line82"> 82: </a>  <font color="#4169E1">if</font> (D) <a href="../../../../../../docs/manualpages/Sys/PetscArrayzero.html">PetscArrayzero</a>(D, npoints * pdim * dim);
+<a name="line83"> 83: </a>  <font color="#4169E1">if</font> (H) <a href="../../../../../../docs/manualpages/Sys/PetscArrayzero.html">PetscArrayzero</a>(H, npoints * pdim * dim * dim);
+<a name="line84"> 84: </a>  <font color="#4169E1">return</font> 0;
+<a name="line85"> 85: </a>}
+
+<a name="line87"> 87: </a><strong><font color="#4169E1"><a name="PetscSpaceInitialize_Point"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceInitialize_Point(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp)</font></strong>
+<a name="line88"> 88: </a>{
+<a name="line89"> 89: </a>  sp-&gt;ops-&gt;setfromoptions = NULL;
+<a name="line90"> 90: </a>  sp-&gt;ops-&gt;setup          = PetscSpaceSetUp_Point;
+<a name="line91"> 91: </a>  sp-&gt;ops-&gt;view           = PetscSpaceView_Point;
+<a name="line92"> 92: </a>  sp-&gt;ops-&gt;destroy        = PetscSpaceDestroy_Point;
+<a name="line93"> 93: </a>  sp-&gt;ops-&gt;getdimension   = PetscSpaceGetDimension_Point;
+<a name="line94"> 94: </a>  sp-&gt;ops-&gt;evaluate       = PetscSpaceEvaluate_Point;
+<a name="line95"> 95: </a>  <font color="#4169E1">return</font> 0;
+<a name="line96"> 96: </a>}
+
+<a name="line98"> 98: </a><font color="#B22222">/*MC</font>
+<a name="line99"> 99: </a><font color="#B22222">  <a href="../../../../../../docs/manualpages/SPACE/PETSCSPACEPOINT.html">PETSCSPACEPOINT</a> = "point" - A `<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a>` object that encapsulates functions defined on a set of quadrature points.</font>
+
+<a name="line101">101: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line103">103: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a>`, `<a href="../../../../../../docs/manualpages/FE/PetscSpaceType.html">PetscSpaceType</a>`, `<a href="../../../../../../docs/manualpages/SPACE/PetscSpaceCreate.html">PetscSpaceCreate</a>()`, `<a href="../../../../../../docs/manualpages/SPACE/PetscSpaceSetType.html">PetscSpaceSetType</a>()`</font>
+<a name="line104">104: </a><font color="#B22222">M*/</font>
+
+<a name="line106">106: </a><strong><font color="#4169E1"><a name="PetscSpaceCreate_Point"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceCreate_Point(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp)</font></strong>
+<a name="line107">107: </a>{
+<a name="line108">108: </a>  PetscSpace_Point *pt;
+
+<a name="line111">111: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;pt);
+<a name="line112">112: </a>  sp-&gt;data = pt;
+
+<a name="line114">114: </a>  sp-&gt;Nv        = 0;
+<a name="line115">115: </a>  sp-&gt;maxDegree = PETSC_MAX_INT;
+<a name="line116">116: </a>  <a href="../../../../../../docs/manualpages/DT/PetscQuadratureCreate.html">PetscQuadratureCreate</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;pt-&gt;quad);
+<a name="line117">117: </a>  <a href="../../../../../../docs/manualpages/DT/PetscQuadratureSetData.html">PetscQuadratureSetData</a>(pt-&gt;quad, 0, 1, 0, NULL, NULL);
+
+<a name="line119">119: </a>  PetscSpaceInitialize_Point(sp);
+<a name="line120">120: </a>  <font color="#4169E1">return</font> 0;
+<a name="line121">121: </a>}
+
+<a name="line123">123: </a><font color="#B22222">/*@</font>
+<a name="line124">124: </a><font color="#B22222">  <a href="../../../../../../docs/manualpages/SPACE/PetscSpacePointSetPoints.html">PetscSpacePointSetPoints</a> - Sets the evaluation points for the space to coincide with the points of a quadrature rule</font>
+
+<a name="line126">126: </a><font color="#B22222">  Logically collective</font>
+
+<a name="line128">128: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line129">129: </a><font color="#B22222">+ sp - The `<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a>`</font>
+<a name="line130">130: </a><font color="#B22222">- q  - The `<a href="../../../../../../docs/manualpages/DT/PetscQuadrature.html">PetscQuadrature</a>` defining the points</font>
+
+<a name="line132">132: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line134">134: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a>`, `<a href="../../../../../../docs/manualpages/DT/PetscQuadrature.html">PetscQuadrature</a>`, `<a href="../../../../../../docs/manualpages/SPACE/PetscSpaceCreate.html">PetscSpaceCreate</a>()`, `<a href="../../../../../../docs/manualpages/SPACE/PetscSpaceSetType.html">PetscSpaceSetType</a>()`</font>
+<a name="line135">135: </a><font color="#B22222">@*/</font>
+<a name="line136">136: </a><strong><font color="#4169E1"><a name="PetscSpacePointSetPoints"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/SPACE/PetscSpacePointSetPoints.html">PetscSpacePointSetPoints</a>(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp, <a href="../../../../../../docs/manualpages/DT/PetscQuadrature.html">PetscQuadrature</a> q)</font></strong>
+<a name="line137">137: </a>{
+<a name="line138">138: </a>  PetscSpace_Point *pt = (PetscSpace_Point *)sp-&gt;data;
+
+<a name="line142">142: </a>  <a href="../../../../../../docs/manualpages/DT/PetscQuadratureDestroy.html">PetscQuadratureDestroy</a>(&amp;pt-&gt;quad);
+<a name="line143">143: </a>  <a href="../../../../../../docs/manualpages/DT/PetscQuadratureDuplicate.html">PetscQuadratureDuplicate</a>(q, &amp;pt-&gt;quad);
+<a name="line144">144: </a>  <font color="#4169E1">return</font> 0;
+<a name="line145">145: </a>}
+
+<a name="line147">147: </a><font color="#B22222">/*@</font>
+<a name="line148">148: </a><font color="#B22222">  <a href="../../../../../../docs/manualpages/SPACE/PetscSpacePointGetPoints.html">PetscSpacePointGetPoints</a> - Gets the evaluation points for the space as the points of a quadrature rule</font>
+
+<a name="line150">150: </a><font color="#B22222">  Logically collective</font>
+
+<a name="line152">152: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line153">153: </a><font color="#B22222">. sp - The `<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a>`</font>
+
+<a name="line155">155: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line156">156: </a><font color="#B22222">. q  - The `<a href="../../../../../../docs/manualpages/DT/PetscQuadrature.html">PetscQuadrature</a>` defining the points</font>
+
+<a name="line158">158: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line160">160: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a>`, `<a href="../../../../../../docs/manualpages/DT/PetscQuadrature.html">PetscQuadrature</a>`, `<a href="../../../../../../docs/manualpages/SPACE/PetscSpaceCreate.html">PetscSpaceCreate</a>()`, `<a href="../../../../../../docs/manualpages/SPACE/PetscSpaceSetType.html">PetscSpaceSetType</a>()`</font>
+<a name="line161">161: </a><font color="#B22222">@*/</font>
+<a name="line162">162: </a><strong><font color="#4169E1"><a name="PetscSpacePointGetPoints"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/SPACE/PetscSpacePointGetPoints.html">PetscSpacePointGetPoints</a>(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp, <a href="../../../../../../docs/manualpages/DT/PetscQuadrature.html">PetscQuadrature</a> *q)</font></strong>
+<a name="line163">163: </a>{
+<a name="line164">164: </a>  PetscSpace_Point *pt = (PetscSpace_Point *)sp-&gt;data;
+
+<a name="line168">168: </a>  *q = pt-&gt;quad;
+<a name="line169">169: </a>  <font color="#4169E1">return</font> 0;
+<a name="line170">170: </a>}
+</pre>
+</body>
+
+</html>

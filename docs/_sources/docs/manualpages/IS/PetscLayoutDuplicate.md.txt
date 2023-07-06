@@ -1,0 +1,45 @@
+# PetscLayoutDuplicate
+creates a new `PetscLayout` with the same information as a given one. If the `PetscLayout` already exists it is destroyed first. 
+## Synopsis
+```
+#include "petscis.h" 
+PetscErrorCode PetscLayoutDuplicate(PetscLayout in, PetscLayout *out)
+```
+Collective
+
+
+## Input Parameter
+
+- ***in -*** input `PetscLayout` to be duplicated
+
+
+
+## Output Parameter
+
+- ***out -*** the copy
+
+
+
+
+
+## Note
+`PetscLayoutSetUp()` does not need to be called on the resulting `PetscLayout`
+
+
+## See Also
+ [PetscLayout](sec_matlayout), `PetscLayoutCreate()`, `PetscLayoutDestroy()`, `PetscLayoutSetUp()`, `PetscLayoutReference()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/utils/pmap.c.html#PetscLayoutDuplicate">src/vec/is/utils/pmap.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/is/utils/pmap.c)
+
+
+[Index of all IS routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

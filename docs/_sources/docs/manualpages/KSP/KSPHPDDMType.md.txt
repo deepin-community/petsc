@@ -1,0 +1,66 @@
+# KSPHPDDMType
+Type of Krylov method used by `KSPHPDDM` 
+## Synopsis
+```
+typedef enum {
+  KSP_HPDDM_TYPE_GMRES   = 0,
+  KSP_HPDDM_TYPE_BGMRES  = 1,
+  KSP_HPDDM_TYPE_CG      = 2,
+  KSP_HPDDM_TYPE_BCG     = 3,
+  KSP_HPDDM_TYPE_GCRODR  = 4,
+  KSP_HPDDM_TYPE_BGCRODR = 5,
+  KSP_HPDDM_TYPE_BFBCG   = 6,
+  KSP_HPDDM_TYPE_PREONLY = 7
+} KSPHPDDMType;
+```
+
+
+
+## Values
+```none
+`KSP_HPDDM_TYPE_GMRES` (default)
+```
+```none
+`KSP_HPDDM_TYPE_BGMRES`
+```
+```none
+`KSP_HPDDM_TYPE_CG`
+```
+```none
+`KSP_HPDDM_TYPE_BCG`
+```
+```none
+`KSP_HPDDM_TYPE_GCRODR`
+```
+```none
+`KSP_HPDDM_TYPE_BGCRODR`
+```
+```none
+`KSP_HPDDM_TYPE_BFBCG`
+```
+```none
+`KSP_HPDDM_TYPE_PREONLY`
+```
+
+
+## See Also
+ `KSPHPDDM`, `KSPHPDDMSetType()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscksp.h.html#KSPHPDDMType">include/petscksp.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex76.c.html">src/ksp/ksp/tutorials/ex76.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex78.c.html">src/ksp/ksp/tutorials/ex78.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscksp.h)
+
+
+[Index of all KSP routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,38 @@
+# PetscInt
+PETSc type that represents an integer, used primarily to represent size of arrays and indexing into arrays. Its size can be configured with the option --with-64-bit-indices to be either 32-bit (default) or 64-bit. 
+## Notes
+For MPI calls that require datatypes, use `MPIU_INT` as the datatype for `PetscInt`. It will automatically work correctly regardless of the size of PetscInt.
+
+
+
+
+## See Also
+ `PetscBLASInt`, `PetscMPIInt`, `PetscReal`, `PetscScalar`, `PetscComplex`, `PetscInt`, `MPIU_REAL`, `MPIU_SCALAR`, `MPIU_COMPLEX`, `MPIU_INT`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscsystypes.h.html#PetscInt">include/petscsystypes.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/classes/random/tutorials/ex1.c.html">src/sys/classes/random/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/classes/random/tutorials/ex2.c.html">src/sys/classes/random/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex5f90.F90.html">src/sys/tutorials/ex5f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex11f90.F90.html">src/vec/vec/tutorials/ex11f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex12f.F90.html">src/vec/vec/tutorials/ex12f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex16f.F90.html">src/vec/vec/tutorials/ex16f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex18f.F90.html">src/vec/vec/tutorials/ex18f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex1f.F90.html">src/vec/vec/tutorials/ex1f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex3f.F90.html">src/vec/vec/tutorials/ex3f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex4f90.F90.html">src/vec/vec/tutorials/ex4f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex5f.F90.html">src/vec/vec/tutorials/ex5f.F90.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscsystypes.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

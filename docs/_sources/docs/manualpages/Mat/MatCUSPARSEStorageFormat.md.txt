@@ -1,0 +1,42 @@
+# MatCUSPARSEStorageFormat
+indicates the storage format for CUSPARSE (GPU) matrices. 
+## Synopsis
+```
+typedef enum {
+  MAT_CUSPARSE_CSR,
+  MAT_CUSPARSE_ELL,
+  MAT_CUSPARSE_HYB
+} MatCUSPARSEStorageFormat;
+```
+Not Collective
+
+
+- ***`MAT_CUSPARSE_CSR` -*** Compressed Sparse Row
+- ***`MAT_CUSPARSE_ELL` -*** Ellpack (requires CUDA 4.2 or later).
+- ***`MAT_CUSPARSE_HYB` -*** Hybrid, a combination of Ellpack and Coordinate format (requires CUDA 4.2 or later).
+
+
+
+
+
+## Developer Note
+Any additions/changes here MUST also be made in include/petsc/finclude/petscmat.h
+
+
+## See Also
+ `MatCUSPARSESetFormat()`, `MatCUSPARSEFormatOperation`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscmat.h.html#MatCUSPARSEStorageFormat">include/petscmat.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscmat.h)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

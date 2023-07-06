@@ -1,0 +1,67 @@
+# VecPointwiseMult
+Computes the component-wise multiplication `w[i] = x[i] * y[i]`. 
+## Synopsis
+```
+#include "petscvec.h"   
+PetscErrorCode VecPointwiseMult(Vec w, Vec x, Vec y)
+```
+Logically Collective
+
+
+## Input Parameters
+
+- ***x, y  -*** the vectors
+
+
+
+## Output Parameter
+
+- ***w -*** the result
+
+
+
+
+
+## Note
+Any subset of the `x`, `y`, and `w` may be the same vector.
+
+
+## See Also
+ [](chapter_vectors), `Vec`, `VecPointwiseDivide()`, `VecPointwiseMax()`, `VecPointwiseMin()`, `VecPointwiseMaxAbs()`, `VecMaxPointwiseDivide()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/interface/vector.c.html#VecPointwiseMult">src/vec/vec/interface/vector.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex1.c.html">src/vec/vec/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex1f.F90.html">src/vec/vec/tutorials/ex1f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex1f90.F90.html">src/vec/vec/tutorials/ex1f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex20f90.F90.html">src/vec/vec/tutorials/ex20f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex15.c.html">src/ksp/ksp/tutorials/ex15.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex15f.F90.html">src/ksp/ksp/tutorials/ex15f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex36.c.html">src/snes/tutorials/ex36.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex29.c.html">src/ts/tutorials/ex29.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex50.c.html">src/ts/tutorials/ex50.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/unconstrained/tutorials/burgers_spectral.c.html">src/tao/unconstrained/tutorials/burgers_spectral.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/unconstrained/tutorials/spectraladjointassimilation.c.html">src/tao/unconstrained/tutorials/spectraladjointassimilation.c.html</A><BR>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/nest/vecnest.c.html#VecPointwiseMult_Nest">VecPointwiseMult_Nest in src/vec/vec/impls/nest/vecnest.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/bvec2.c.html#VecPointwiseMult_Seq">VecPointwiseMult_Seq in src/vec/vec/impls/seq/bvec2.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/kokkos/veckok.kokkos.cxx.html#VecPointwiseMult_SeqKokkos">VecPointwiseMult_SeqKokkos in src/vec/vec/impls/seq/kokkos/veckok.kokkos.cxx</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/seqcuda/veccuda2.cu.html#VecPointwiseMult_SeqCUDA">VecPointwiseMult_SeqCUDA in src/vec/vec/impls/seq/seqcuda/veccuda2.cu</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/seqhip/vechip2.hip.c.html#VecPointwiseMult_SeqHIP">VecPointwiseMult_SeqHIP in src/vec/vec/impls/seq/seqhip/vechip2.hip.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/seqviennacl/vecviennacl.cxx.html#VecPointwiseMult_SeqViennaCL">VecPointwiseMult_SeqViennaCL in src/vec/vec/impls/seq/seqviennacl/vecviennacl.cxx</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/vec/interface/vector.c)
+
+
+[Index of all Vec routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

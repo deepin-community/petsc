@@ -1,0 +1,54 @@
+# DMPlexComputeCellGeometryAffineFEM
+Assuming an affine map, compute the Jacobian, inverse Jacobian, and Jacobian determinant for a given cell 
+## Synopsis
+```
+#include "petscdmplex.h"   
+#include "petscfe.h"       
+PetscErrorCode DMPlexComputeCellGeometryAffineFEM(DM dm, PetscInt cell, PetscReal *v0, PetscReal *J, PetscReal *invJ, PetscReal *detJ)
+```
+Collective on dm
+
+
+## Input Parameters
+
+- ***dm   -*** the DM
+- ***cell -*** the cell
+
+
+
+## Output Parameters
+
+- ***v0   -*** the translation part of this affine transform, meaning the translation to the origin (not the first vertex of the reference cell)
+- ***J    -*** the Jacobian of the transform from the reference element
+- ***invJ -*** the inverse of the Jacobian
+- ***detJ -*** the Jacobian determinant
+
+
+
+
+
+## Fortran Notes
+Since it returns arrays, this routine is only available in Fortran 90, and you must
+include petsc.h90 in your code.
+
+
+## See Also
+ `DMPlexComputeCellGeometryFEM()`, `DMGetCoordinateSection()`, `DMGetCoordinates()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/plexgeometry.c.html#DMPlexComputeCellGeometryAffineFEM">src/dm/impls/plex/plexgeometry.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/tutorials/ex3f90.F90.html">src/dm/impls/plex/tutorials/ex3f90.F90.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/plex/plexgeometry.c)
+
+
+[Index of all DMPlex routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

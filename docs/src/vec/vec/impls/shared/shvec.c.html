@@ -1,0 +1,197 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/vec/vec/impls/shared/shvec.c">Actual source code: shvec.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:15+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/*</font>
+<a name="line3">  3: </a><font color="#B22222">   This file contains routines for Parallel vector operations that use shared memory</font>
+<a name="line4">  4: </a><font color="#B22222"> */</font>
+<a name="line5">  5: </a>#include <A href="../mpi/pvecimpl.h.html">&lt;../src/vec/vec/impls/mpi/pvecimpl.h&gt;</A>
+
+<a name="line7">  7: </a><font color="#A020F0">#if defined(PETSC_USE_SHARED_MEMORY)</font>
+
+<a name="line9">  9: </a><strong><font color="#4169E1">extern <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSharedMalloc(<a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, void **)</font></strong>;
+
+<a name="line11"> 11: </a><strong><font color="#4169E1"><a name="VecDuplicate_Shared"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecDuplicate_Shared(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> win, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *v)</font></strong>
+<a name="line12"> 12: </a>{
+<a name="line13"> 13: </a>  Vec_MPI     *w = (Vec_MPI *)win-&gt;data;
+<a name="line14"> 14: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array;
+
+<a name="line16"> 16: </a>  <font color="#B22222">/* first processor allocates entire array and sends it's address to the others */</font>
+<a name="line17"> 17: </a>  PetscSharedMalloc(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)win), win-&gt;map-&gt;n * <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>), win-&gt;map-&gt;N * <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>), (void **)&amp;array);
+
+<a name="line19"> 19: </a>  <a href="../../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)win), v);
+<a name="line20"> 20: </a>  <a href="../../../../../docs/manualpages/Vec/VecSetSizes.html">VecSetSizes</a>(*v, win-&gt;map-&gt;n, win-&gt;map-&gt;N);
+<a name="line21"> 21: </a>  VecCreate_MPI_Private(*v, <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, w-&gt;nghost, array);
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutReference.html">PetscLayoutReference</a>(win-&gt;map, &amp;(*v)-&gt;map);
+
+<a name="line24"> 24: </a>  <font color="#B22222">/* New vector should inherit stashing property of parent */</font>
+<a name="line25"> 25: </a>  (*v)-&gt;stash.donotstash   = win-&gt;stash.donotstash;
+<a name="line26"> 26: </a>  (*v)-&gt;stash.ignorenegidx = win-&gt;stash.ignorenegidx;
+
+<a name="line28"> 28: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectListDuplicate.html">PetscObjectListDuplicate</a>(((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)win)-&gt;olist, &amp;((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)*v)-&gt;olist);
+<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFunctionListDuplicate.html">PetscFunctionListDuplicate</a>(((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)win)-&gt;qlist, &amp;((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)*v)-&gt;qlist);
+
+<a name="line31"> 31: </a>  (*v)-&gt;ops-&gt;duplicate = VecDuplicate_Shared;
+<a name="line32"> 32: </a>  (*v)-&gt;bstash.bs      = win-&gt;bstash.bs;
+<a name="line33"> 33: </a>  <font color="#4169E1">return</font> 0;
+<a name="line34"> 34: </a>}
+
+<a name="line36"> 36: </a><strong><font color="#4169E1"><a name="VecCreate_Shared"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecCreate_Shared(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> vv)</font></strong>
+<a name="line37"> 37: </a>{
+<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array;
+
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSplitOwnership.html">PetscSplitOwnership</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vv), &amp;vv-&gt;map-&gt;n, &amp;vv-&gt;map-&gt;N);
+<a name="line41"> 41: </a>  PetscSharedMalloc(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vv), vv-&gt;map-&gt;n * <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>), vv-&gt;map-&gt;N * <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>), (void **)&amp;array);
+
+<a name="line43"> 43: </a>  VecCreate_MPI_Private(vv, <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, 0, array);
+<a name="line44"> 44: </a>  vv-&gt;ops-&gt;duplicate = VecDuplicate_Shared;
+<a name="line45"> 45: </a>  <font color="#4169E1">return</font> 0;
+<a name="line46"> 46: </a>}
+
+<a name="line48"> 48: </a>  <font color="#B22222">/* ----------------------------------------------------------------------------------------</font>
+<a name="line49"> 49: </a><font color="#B22222">     Code to manage shared memory allocation using standard Unix shared memory</font>
+<a name="line50"> 50: </a><font color="#B22222">*/</font>
+<a name="line51"> 51: </a>#include <A href="../../../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+<a name="line52"> 52: </a><font color="#A020F0">  #if defined(PETSC_HAVE_PWD_H)</font>
+<a name="line53"> 53: </a><font color="#A020F0">    #include &lt;pwd.h&gt;</font>
+<a name="line54"> 54: </a><font color="#A020F0">  #endif</font>
+<a name="line55"> 55: </a><font color="#A020F0">  #include &lt;ctype.h&gt;</font>
+<a name="line56"> 56: </a><font color="#A020F0">  #include &lt;sys/stat.h&gt;</font>
+<a name="line57"> 57: </a><font color="#A020F0">  #if defined(PETSC_HAVE_UNISTD_H)</font>
+<a name="line58"> 58: </a><font color="#A020F0">    #include &lt;unistd.h&gt;</font>
+<a name="line59"> 59: </a><font color="#A020F0">  #endif</font>
+<a name="line60"> 60: </a><font color="#A020F0">  #if defined(PETSC_HAVE_SYS_UTSNAME_H)</font>
+<a name="line61"> 61: </a><font color="#A020F0">    #include &lt;sys/utsname.h&gt;</font>
+<a name="line62"> 62: </a><font color="#A020F0">  #endif</font>
+<a name="line63"> 63: </a><font color="#A020F0">  #include &lt;fcntl.h&gt;</font>
+<a name="line64"> 64: </a><font color="#A020F0">  #include &lt;time.h&gt;</font>
+<a name="line65"> 65: </a><font color="#A020F0">  #if defined(PETSC_HAVE_SYS_SYSTEMINFO_H)</font>
+<a name="line66"> 66: </a><font color="#A020F0">    #include &lt;sys/systeminfo.h&gt;</font>
+<a name="line67"> 67: </a><font color="#A020F0">  #endif</font>
+<a name="line68"> 68: </a><font color="#A020F0">  #include &lt;sys/shm.h&gt;</font>
+<a name="line69"> 69: </a><font color="#A020F0">  #include &lt;sys/mman.h&gt;</font>
+
+<a name="line71"> 71: </a>static <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> Petsc_ShmComm_keyval = MPI_KEYVAL_INVALID;
+
+<a name="line73"> 73: </a><font color="#B22222">/*</font>
+<a name="line74"> 74: </a><font color="#B22222">   Private routine to delete internal storage when a communicator is freed.</font>
+<a name="line75"> 75: </a><font color="#B22222">  This is called by MPI, not by users.</font>
+
+<a name="line77"> 77: </a><font color="#B22222">  The binding for the first argument changed from MPI 1.0 to 1.1; in 1.0</font>
+<a name="line78"> 78: </a><font color="#B22222">  it was <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> *comm.</font>
+<a name="line79"> 79: </a><font color="#B22222">*/</font>
+<a name="line80"> 80: </a><strong><font color="#4169E1"><a name="Petsc_DeleteShared"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Petsc_DeleteShared(<a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> keyval, void *attr_val, void *extra_state)</font></strong>
+<a name="line81"> 81: </a>{
+<a name="line82"> 82: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(attr_val);
+<a name="line83"> 83: </a>  <font color="#4169E1">return</font> MPI_SUCCESS;
+<a name="line84"> 84: </a>}
+
+<a name="line86"> 86: </a><font color="#B22222">/*</font>
+
+<a name="line88"> 88: </a><font color="#B22222">    This routine is still incomplete and needs work.</font>
+
+<a name="line90"> 90: </a><font color="#B22222">    For this to work on the Apple Mac OS X you will likely need to add something line the following to the file /etc/sysctl.conf</font>
+<a name="line91"> 91: </a><font color="#B22222">cat /etc/sysctl.conf</font>
+<a name="line92"> 92: </a><font color="#B22222">kern.sysv.shmmax=67108864</font>
+<a name="line93"> 93: </a><font color="#B22222">kern.sysv.shmmin=1</font>
+<a name="line94"> 94: </a><font color="#B22222">kern.sysv.shmmni=32</font>
+<a name="line95"> 95: </a><font color="#B22222">kern.sysv.shmseg=512</font>
+<a name="line96"> 96: </a><font color="#B22222">kern.sysv.shmall=1024</font>
+
+<a name="line98"> 98: </a><font color="#B22222">  This does not currently free the shared memory after the program runs. Use the Unix command ipcs to see the shared memory in use and</font>
+<a name="line99"> 99: </a><font color="#B22222">ipcrm to remove the shared memory in use.</font>
+
+<a name="line101">101: </a><font color="#B22222">*/</font>
+<a name="line102">102: </a><strong><font color="#4169E1"><a name="PetscSharedMalloc"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSharedMalloc(<a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> llen, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> len, void **result)</font></strong>
+<a name="line103">103: </a>{
+<a name="line104">104: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    shift;
+<a name="line105">105: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank, flag;
+<a name="line106">106: </a>  int        *arena, id, key = 0;
+<a name="line107">107: </a>  char       *value;
+
+<a name="line109">109: </a>  *result = 0;
+
+<a name="line111">111: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scan.html#MPI_Scan">MPI_Scan</a>(&amp;llen, &amp;shift, 1, MPI_INT, MPI_SUM, comm);
+<a name="line112">112: </a>  shift -= llen;
+
+<a name="line114">114: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line115">115: </a>  <font color="#4169E1">if</font> (rank == 0) {
+<a name="line116">116: </a>    id = shmget(key, len, 0666 | IPC_CREAT);
+<a name="line117">117: </a>    <font color="#4169E1">if</font> (id == -1) {
+<a name="line118">118: </a>      perror(<font color="#666666">"Unable to malloc shared memory"</font>);
+<a name="line119">119: </a>      <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_LIB, <font color="#666666">"Unable to malloc shared memory"</font>);
+<a name="line120">120: </a>    }
+<a name="line121">121: </a>  } <font color="#4169E1">else</font> {
+<a name="line122">122: </a>    id = shmget(key, len, 0666);
+<a name="line123">123: </a>    <font color="#4169E1">if</font> (id == -1) {
+<a name="line124">124: </a>      perror(<font color="#666666">"Unable to malloc shared memory"</font>);
+<a name="line125">125: </a>      <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_LIB, <font color="#666666">"Unable to malloc shared memory"</font>);
+<a name="line126">126: </a>    }
+<a name="line127">127: </a>  }
+<a name="line128">128: </a>  value = shmat(id, (void *)0, 0);
+<a name="line129">129: </a>  <font color="#4169E1">if</font> (value == (char *)-1) {
+<a name="line130">130: </a>    perror(<font color="#666666">"Unable to access shared memory allocated"</font>);
+<a name="line131">131: </a>    <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_LIB, <font color="#666666">"Unable to access shared memory allocated"</font>);
+<a name="line132">132: </a>  }
+<a name="line133">133: </a>  *result = (void *)(value + shift);
+<a name="line134">134: </a>  <font color="#4169E1">return</font> 0;
+<a name="line135">135: </a>}
+
+<a name="line137">137: </a><font color="#A020F0">#else</font>
+
+<a name="line139">139: </a><strong><font color="#4169E1"><a name="VecCreate_Shared"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecCreate_Shared(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> vv)</font></strong>
+<a name="line140">140: </a>{
+<a name="line141">141: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size;
+
+<a name="line143">143: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vv), &amp;size);
+<a name="line145">145: </a>  VecCreate_Seq(vv);
+<a name="line146">146: </a>  <font color="#4169E1">return</font> 0;
+<a name="line147">147: </a>}
+
+<a name="line149">149: </a><font color="#A020F0">#endif</font>
+
+<a name="line151">151: </a><font color="#B22222">/*@</font>
+<a name="line152">152: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Vec/VecCreateShared.html">VecCreateShared</a> - Creates a parallel vector that uses shared memory.</font>
+
+<a name="line154">154: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line155">155: </a><font color="#B22222">+  comm - the MPI communicator to use</font>
+<a name="line156">156: </a><font color="#B22222">.  n - local vector length (or <a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a> to have calculated if N is given)</font>
+<a name="line157">157: </a><font color="#B22222">-  N - global vector length (or <a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a> to have calculated if n is given)</font>
+
+<a name="line159">159: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line160">160: </a><font color="#B22222">.  vv - the vector</font>
+
+<a name="line162">162: </a><font color="#B22222">   Collective</font>
+
+<a name="line164">164: </a><font color="#B22222">   Notes:</font>
+<a name="line165">165: </a><font color="#B22222">   Currently <a href="../../../../../docs/manualpages/Vec/VecCreateShared.html">VecCreateShared</a>() is available only on the SGI; otherwise,</font>
+<a name="line166">166: </a><font color="#B22222">   this routine is the same as <a href="../../../../../docs/manualpages/Vec/VecCreateMPI.html">VecCreateMPI</a>().</font>
+
+<a name="line168">168: </a><font color="#B22222">   Use <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>() or <a href="../../../../../docs/manualpages/Vec/VecDuplicateVecs.html">VecDuplicateVecs</a>() to form additional vectors of the</font>
+<a name="line169">169: </a><font color="#B22222">   same type as an existing vector.</font>
+
+<a name="line171">171: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line173">173: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Vec/VecCreateSeq.html">VecCreateSeq</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecCreateMPI.html">VecCreateMPI</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecDuplicateVecs.html">VecDuplicateVecs</a>()`,</font>
+<a name="line174">174: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/Vec/VecCreateGhost.html">VecCreateGhost</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecCreateMPIWithArray.html">VecCreateMPIWithArray</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecCreateGhostWithArray.html">VecCreateGhostWithArray</a>()`</font>
+
+<a name="line176">176: </a><font color="#B22222">@*/</font>
+<a name="line177">177: </a><strong><font color="#4169E1"><a name="VecCreateShared"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Vec/VecCreateShared.html">VecCreateShared</a>(<a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> N, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *v)</font></strong>
+<a name="line178">178: </a>{
+<a name="line179">179: </a>  <a href="../../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>(comm, v);
+<a name="line180">180: </a>  <a href="../../../../../docs/manualpages/Vec/VecSetSizes.html">VecSetSizes</a>(*v, n, N);
+<a name="line181">181: </a>  <a href="../../../../../docs/manualpages/Vec/VecSetType.html">VecSetType</a>(*v, VECSHARED);
+<a name="line182">182: </a>  <font color="#4169E1">return</font> 0;
+<a name="line183">183: </a>}
+</pre>
+</body>
+
+</html>

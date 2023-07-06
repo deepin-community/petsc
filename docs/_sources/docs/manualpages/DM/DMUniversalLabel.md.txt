@@ -1,0 +1,22 @@
+# DMUniversalLabel
+A label that encodes a set of `DMLabel`s, bijectively 
+## Synopsis
+```
+typedef struct _p_UniversalLabel *DMUniversalLabel;
+```
+
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscdmtypes.h.html#DMUniversalLabel">include/petscdmtypes.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscdmtypes.h)
+
+
+[Index of all DM routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

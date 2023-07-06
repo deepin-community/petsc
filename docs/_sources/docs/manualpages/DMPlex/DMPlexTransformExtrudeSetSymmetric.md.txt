@@ -1,0 +1,36 @@
+# DMPlexTransformExtrudeSetSymmetric
+Set the flag to extrude symmetrically from the initial surface 
+## Synopsis
+```
+#include "petscdmplextransform.h" 
+PetscErrorCode DMPlexTransformExtrudeSetSymmetric(DMPlexTransform tr, PetscBool symmetric)
+```
+Not collective
+
+
+## Input Parameters
+
+- ***tr  -*** The DMPlexTransform
+- ***symmetric -*** The flag to extrude symmetrically
+
+
+
+
+
+## See Also
+ `DMPlexTransformExtrudeGetSymmetric()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/transform/impls/extrudeplextrextrude.c.html#DMPlexTransformExtrudeSetSymmetric">src/dm/impls/plex/transform/impls/extrudeplextrextrude.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/plex/transform/impls/extrudeplextrextrude.c)
+
+
+[Index of all DMPlex routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

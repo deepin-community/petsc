@@ -1,0 +1,4 @@
+#! /bin/sh
+for common in include/petsc lib/petsc/bin share; do
+  echo usr/share/petsc/${PETSC_SONAME_VERSION}/${common} ${PETSC_REAL_DEBUG_DIR_PREFIX}/${common}
+done

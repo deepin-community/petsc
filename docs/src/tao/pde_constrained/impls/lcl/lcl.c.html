@@ -1,0 +1,722 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/tao/pde_constrained/impls/lcl/lcl.c">Actual source code: lcl.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:50:01+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="lcl.h.html">&lt;../src/tao/pde_constrained/impls/lcl/lcl.h&gt;</A>
+<a name="line2">  2: </a><strong><font color="#4169E1">static <a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> LCLComputeLagrangianAndGradient(TaoLineSearch, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../.._constrained/../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a>, void *)</font></strong>;
+<a name="line3">  3: </a><strong><font color="#4169E1">static <a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> LCLComputeAugmentedLagrangianAndGradient(TaoLineSearch, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../.._constrained/../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a>, void *)</font></strong>;
+<a name="line4">  4: </a><strong><font color="#4169E1">static <a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> LCLScatter(TAO_LCL *, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a>)</font></strong>;
+<a name="line5">  5: </a><strong><font color="#4169E1">static <a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> LCLGather(TAO_LCL *, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a>)</font></strong>;
+
+<a name="line7">  7: </a><strong><font color="#4169E1"><a name="TaoDestroy_LCL"></a>static <a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoDestroy_LCL(<a href="../.._constrained/../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line8">  8: </a>{
+<a name="line9">  9: </a>  TAO_LCL *lclP = (TAO_LCL *)tao-&gt;data;
+
+<a name="line11"> 11: </a>  <font color="#4169E1">if</font> (tao-&gt;setupcalled) {
+<a name="line12"> 12: </a>    <a href="../.._constrained/../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;lclP-&gt;R);
+<a name="line13"> 13: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;lambda);
+<a name="line14"> 14: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;lambda0);
+<a name="line15"> 15: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;WL);
+<a name="line16"> 16: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;W);
+<a name="line17"> 17: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;X0);
+<a name="line18"> 18: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;G0);
+<a name="line19"> 19: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GL);
+<a name="line20"> 20: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GAugL);
+<a name="line21"> 21: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;dbar);
+<a name="line22"> 22: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;U);
+<a name="line23"> 23: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;U0);
+<a name="line24"> 24: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;V);
+<a name="line25"> 25: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;V0);
+<a name="line26"> 26: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;V1);
+<a name="line27"> 27: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GU);
+<a name="line28"> 28: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GV);
+<a name="line29"> 29: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GU0);
+<a name="line30"> 30: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GV0);
+<a name="line31"> 31: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GL_U);
+<a name="line32"> 32: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GL_V);
+<a name="line33"> 33: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GAugL_U);
+<a name="line34"> 34: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GAugL_V);
+<a name="line35"> 35: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GL_U0);
+<a name="line36"> 36: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GL_V0);
+<a name="line37"> 37: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GAugL_U0);
+<a name="line38"> 38: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;GAugL_V0);
+<a name="line39"> 39: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;DU);
+<a name="line40"> 40: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;DV);
+<a name="line41"> 41: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;WU);
+<a name="line42"> 42: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;WV);
+<a name="line43"> 43: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;g1);
+<a name="line44"> 44: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;g2);
+<a name="line45"> 45: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;con1);
+
+<a name="line47"> 47: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;r);
+<a name="line48"> 48: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lclP-&gt;s);
+
+<a name="line50"> 50: </a>    <a href="../.._constrained/../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;tao-&gt;state_is);
+<a name="line51"> 51: </a>    <a href="../.._constrained/../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;tao-&gt;design_is);
+
+<a name="line53"> 53: </a>    <a href="../.._constrained/../../../docs/manualpages/PetscSF/VecScatterDestroy.html">VecScatterDestroy</a>(&amp;lclP-&gt;state_scatter);
+<a name="line54"> 54: </a>    <a href="../.._constrained/../../../docs/manualpages/PetscSF/VecScatterDestroy.html">VecScatterDestroy</a>(&amp;lclP-&gt;design_scatter);
+<a name="line55"> 55: </a>  }
+<a name="line56"> 56: </a>  <a href="../.._constrained/../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;lclP-&gt;R);
+<a name="line57"> 57: </a>  <a href="../.._constrained/../../../docs/manualpages/KSP/KSPDestroy.html">KSPDestroy</a>(&amp;tao-&gt;ksp);
+<a name="line58"> 58: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tao-&gt;data);
+<a name="line59"> 59: </a>  <font color="#4169E1">return</font> 0;
+<a name="line60"> 60: </a>}
+
+<a name="line62"> 62: </a><strong><font color="#4169E1"><a name="TaoSetFromOptions_LCL"></a>static <a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoSetFromOptions_LCL(<a href="../.._constrained/../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line63"> 63: </a>{
+<a name="line64"> 64: </a>  TAO_LCL *lclP = (TAO_LCL *)tao-&gt;data;
+
+<a name="line66"> 66: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"Linearly-Constrained Augmented Lagrangian Method for PDE-constrained optimization"</font>);
+<a name="line67"> 67: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscOptionsReal.html">PetscOptionsReal</a>(<font color="#666666">"-tao_lcl_eps1"</font>, <font color="#666666">"epsilon 1 tolerance"</font>, <font color="#666666">""</font>, lclP-&gt;eps1, &amp;lclP-&gt;eps1, NULL);
+<a name="line68"> 68: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscOptionsReal.html">PetscOptionsReal</a>(<font color="#666666">"-tao_lcl_eps2"</font>, <font color="#666666">"epsilon 2 tolerance"</font>, <font color="#666666">""</font>, lclP-&gt;eps2, &amp;lclP-&gt;eps2, NULL);
+<a name="line69"> 69: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscOptionsReal.html">PetscOptionsReal</a>(<font color="#666666">"-tao_lcl_rho0"</font>, <font color="#666666">"init value for rho"</font>, <font color="#666666">""</font>, lclP-&gt;rho0, &amp;lclP-&gt;rho0, NULL);
+<a name="line70"> 70: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscOptionsReal.html">PetscOptionsReal</a>(<font color="#666666">"-tao_lcl_rhomax"</font>, <font color="#666666">"max value for rho"</font>, <font color="#666666">""</font>, lclP-&gt;rhomax, &amp;lclP-&gt;rhomax, NULL);
+<a name="line71"> 71: </a>  lclP-&gt;phase2_niter = 1;
+<a name="line72"> 72: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscOptionsInt.html">PetscOptionsInt</a>(<font color="#666666">"-tao_lcl_phase2_niter"</font>, <font color="#666666">"Number of phase 2 iterations in LCL algorithm"</font>, <font color="#666666">""</font>, lclP-&gt;phase2_niter, &amp;lclP-&gt;phase2_niter, NULL);
+<a name="line73"> 73: </a>  lclP-&gt;verbose = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line74"> 74: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-tao_lcl_verbose"</font>, <font color="#666666">"Print verbose output"</font>, <font color="#666666">""</font>, lclP-&gt;verbose, &amp;lclP-&gt;verbose, NULL);
+<a name="line75"> 75: </a>  lclP-&gt;tau[0] = lclP-&gt;tau[1] = lclP-&gt;tau[2] = lclP-&gt;tau[3] = 1.0e-4;
+<a name="line76"> 76: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscOptionsReal.html">PetscOptionsReal</a>(<font color="#666666">"-tao_lcl_tola"</font>, <font color="#666666">"Tolerance for first forward solve"</font>, <font color="#666666">""</font>, lclP-&gt;tau[0], &amp;lclP-&gt;tau[0], NULL);
+<a name="line77"> 77: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscOptionsReal.html">PetscOptionsReal</a>(<font color="#666666">"-tao_lcl_tolb"</font>, <font color="#666666">"Tolerance for first adjoint solve"</font>, <font color="#666666">""</font>, lclP-&gt;tau[1], &amp;lclP-&gt;tau[1], NULL);
+<a name="line78"> 78: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscOptionsReal.html">PetscOptionsReal</a>(<font color="#666666">"-tao_lcl_tolc"</font>, <font color="#666666">"Tolerance for second forward solve"</font>, <font color="#666666">""</font>, lclP-&gt;tau[2], &amp;lclP-&gt;tau[2], NULL);
+<a name="line79"> 79: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscOptionsReal.html">PetscOptionsReal</a>(<font color="#666666">"-tao_lcl_told"</font>, <font color="#666666">"Tolerance for second adjoint solve"</font>, <font color="#666666">""</font>, lclP-&gt;tau[3], &amp;lclP-&gt;tau[3], NULL);
+<a name="line80"> 80: </a>  PetscOptionsHeadEnd();
+<a name="line81"> 81: </a>  <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetFromOptions.html">TaoLineSearchSetFromOptions</a>(tao-&gt;linesearch);
+<a name="line82"> 82: </a>  <a href="../.._constrained/../../../docs/manualpages/Mat/MatSetFromOptions.html">MatSetFromOptions</a>(lclP-&gt;R);
+<a name="line83"> 83: </a>  <font color="#4169E1">return</font> 0;
+<a name="line84"> 84: </a>}
+
+<a name="line86"> 86: </a><strong><font color="#4169E1"><a name="TaoView_LCL"></a>static <a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoView_LCL(<a href="../.._constrained/../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../.._constrained/../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line87"> 87: </a>{
+<a name="line88"> 88: </a>  <font color="#4169E1">return</font> 0;
+<a name="line89"> 89: </a>}
+
+<a name="line91"> 91: </a><strong><font color="#4169E1"><a name="TaoSetup_LCL"></a>static <a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoSetup_LCL(<a href="../.._constrained/../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line92"> 92: </a>{
+<a name="line93"> 93: </a>  TAO_LCL *lclP = (TAO_LCL *)tao-&gt;data;
+<a name="line94"> 94: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> lo, hi, nlocalstate, nlocaldesign;
+<a name="line95"> 95: </a>  <a href="../.._constrained/../../../docs/manualpages/IS/IS.html">IS</a>       is_state, is_design;
+
+<a name="line98"> 98: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;tao-&gt;gradient);
+<a name="line99"> 99: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;tao-&gt;stepdirection);
+<a name="line100">100: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;lclP-&gt;W);
+<a name="line101">101: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;lclP-&gt;X0);
+<a name="line102">102: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;lclP-&gt;G0);
+<a name="line103">103: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;lclP-&gt;GL);
+<a name="line104">104: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;lclP-&gt;GAugL);
+
+<a name="line106">106: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;constraints, &amp;lclP-&gt;lambda);
+<a name="line107">107: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;constraints, &amp;lclP-&gt;WL);
+<a name="line108">108: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;constraints, &amp;lclP-&gt;lambda0);
+<a name="line109">109: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;constraints, &amp;lclP-&gt;con1);
+
+<a name="line111">111: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(lclP-&gt;lambda, 0.0);
+
+<a name="line113">113: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecGetSize.html">VecGetSize</a>(tao-&gt;solution, &amp;lclP-&gt;n);
+<a name="line114">114: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecGetSize.html">VecGetSize</a>(tao-&gt;constraints, &amp;lclP-&gt;m);
+
+<a name="line116">116: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>(((<a href="../.._constrained/../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao)-&gt;comm, &amp;lclP-&gt;U);
+<a name="line117">117: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>(((<a href="../.._constrained/../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao)-&gt;comm, &amp;lclP-&gt;V);
+<a name="line118">118: </a>  <a href="../.._constrained/../../../docs/manualpages/IS/ISGetLocalSize.html">ISGetLocalSize</a>(tao-&gt;state_is, &amp;nlocalstate);
+<a name="line119">119: </a>  <a href="../.._constrained/../../../docs/manualpages/IS/ISGetLocalSize.html">ISGetLocalSize</a>(tao-&gt;design_is, &amp;nlocaldesign);
+<a name="line120">120: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecSetSizes.html">VecSetSizes</a>(lclP-&gt;U, nlocalstate, lclP-&gt;m);
+<a name="line121">121: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecSetSizes.html">VecSetSizes</a>(lclP-&gt;V, nlocaldesign, lclP-&gt;n - lclP-&gt;m);
+<a name="line122">122: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecSetType.html">VecSetType</a>(lclP-&gt;U, ((<a href="../.._constrained/../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(tao-&gt;solution))-&gt;type_name);
+<a name="line123">123: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecSetType.html">VecSetType</a>(lclP-&gt;V, ((<a href="../.._constrained/../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(tao-&gt;solution))-&gt;type_name);
+<a name="line124">124: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecSetFromOptions.html">VecSetFromOptions</a>(lclP-&gt;U);
+<a name="line125">125: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecSetFromOptions.html">VecSetFromOptions</a>(lclP-&gt;V);
+<a name="line126">126: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;U, &amp;lclP-&gt;DU);
+<a name="line127">127: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;U, &amp;lclP-&gt;U0);
+<a name="line128">128: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;U, &amp;lclP-&gt;GU);
+<a name="line129">129: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;U, &amp;lclP-&gt;GU0);
+<a name="line130">130: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;U, &amp;lclP-&gt;GAugL_U);
+<a name="line131">131: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;U, &amp;lclP-&gt;GL_U);
+<a name="line132">132: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;U, &amp;lclP-&gt;GAugL_U0);
+<a name="line133">133: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;U, &amp;lclP-&gt;GL_U0);
+<a name="line134">134: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;U, &amp;lclP-&gt;WU);
+<a name="line135">135: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;U, &amp;lclP-&gt;r);
+<a name="line136">136: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;V0);
+<a name="line137">137: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;V1);
+<a name="line138">138: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;DV);
+<a name="line139">139: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;s);
+<a name="line140">140: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;GV);
+<a name="line141">141: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;GV0);
+<a name="line142">142: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;dbar);
+<a name="line143">143: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;GAugL_V);
+<a name="line144">144: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;GL_V);
+<a name="line145">145: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;GAugL_V0);
+<a name="line146">146: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;GL_V0);
+<a name="line147">147: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;WV);
+<a name="line148">148: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;g1);
+<a name="line149">149: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lclP-&gt;V, &amp;lclP-&gt;g2);
+
+<a name="line151">151: </a>  <font color="#B22222">/* create scatters for state, design subvecs */</font>
+<a name="line152">152: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecGetOwnershipRange.html">VecGetOwnershipRange</a>(lclP-&gt;U, &amp;lo, &amp;hi);
+<a name="line153">153: </a>  <a href="../.._constrained/../../../docs/manualpages/IS/ISCreateStride.html">ISCreateStride</a>(((<a href="../.._constrained/../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)lclP-&gt;U)-&gt;comm, hi - lo, lo, 1, &amp;is_state);
+<a name="line154">154: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecGetOwnershipRange.html">VecGetOwnershipRange</a>(lclP-&gt;V, &amp;lo, &amp;hi);
+<a name="line155">155: </a>  <font color="#4169E1">if</font> (0) {
+<a name="line156">156: </a>    <a href="../.._constrained/../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> sizeU, sizeV;
+<a name="line157">157: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecGetSize.html">VecGetSize</a>(lclP-&gt;U, &amp;sizeU);
+<a name="line158">158: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecGetSize.html">VecGetSize</a>(lclP-&gt;V, &amp;sizeV);
+<a name="line159">159: </a>    <a href="../.._constrained/../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"size(U)=%"</font> PetscInt_FMT <font color="#666666">", size(V)=%"</font> PetscInt_FMT <font color="#666666">"\n"</font>, sizeU, sizeV);
+<a name="line160">160: </a>  }
+<a name="line161">161: </a>  <a href="../.._constrained/../../../docs/manualpages/IS/ISCreateStride.html">ISCreateStride</a>(((<a href="../.._constrained/../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)lclP-&gt;V)-&gt;comm, hi - lo, lo, 1, &amp;is_design);
+<a name="line162">162: </a>  <a href="../.._constrained/../../../docs/manualpages/PetscSF/VecScatterCreate.html">VecScatterCreate</a>(tao-&gt;solution, tao-&gt;state_is, lclP-&gt;U, is_state, &amp;lclP-&gt;state_scatter);
+<a name="line163">163: </a>  <a href="../.._constrained/../../../docs/manualpages/PetscSF/VecScatterCreate.html">VecScatterCreate</a>(tao-&gt;solution, tao-&gt;design_is, lclP-&gt;V, is_design, &amp;lclP-&gt;design_scatter);
+<a name="line164">164: </a>  <a href="../.._constrained/../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;is_state);
+<a name="line165">165: </a>  <a href="../.._constrained/../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;is_design);
+<a name="line166">166: </a>  <font color="#4169E1">return</font> 0;
+<a name="line167">167: </a>}
+
+<a name="line169">169: </a><strong><font color="#4169E1"><a name="TaoSolve_LCL"></a>static <a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoSolve_LCL(<a href="../.._constrained/../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line170">170: </a>{
+<a name="line171">171: </a>  TAO_LCL                     *lclP = (TAO_LCL *)tao-&gt;data;
+<a name="line172">172: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                     phase2_iter, nlocal, its;
+<a name="line173">173: </a>  TaoLineSearchConvergedReason ls_reason = TAOLINESEARCH_CONTINUE_ITERATING;
+<a name="line174">174: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>                    step      = 1.0, f, descent, aldescent;
+<a name="line175">175: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>                    cnorm, mnorm;
+<a name="line176">176: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>                    adec, r2, rGL_U, rWU;
+<a name="line177">177: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>                    set, pset, flag, pflag, symmetric;
+
+<a name="line179">179: </a>  lclP-&gt;rho = lclP-&gt;rho0;
+<a name="line180">180: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(lclP-&gt;U, &amp;nlocal);
+<a name="line181">181: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(lclP-&gt;V, &amp;nlocal);
+<a name="line182">182: </a>  <a href="../.._constrained/../../../docs/manualpages/Mat/MatSetSizes.html">MatSetSizes</a>(lclP-&gt;R, nlocal, nlocal, lclP-&gt;n - lclP-&gt;m, lclP-&gt;n - lclP-&gt;m);
+<a name="line183">183: </a>  <a href="../.._constrained/../../../docs/manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>(lclP-&gt;R, lclP-&gt;V, lclP-&gt;V);
+<a name="line184">184: </a>  lclP-&gt;recompute_jacobian_flag = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+
+<a name="line186">186: </a>  <font color="#B22222">/* Scatter to U,V */</font>
+<a name="line187">187: </a>  LCLScatter(lclP, tao-&gt;solution, lclP-&gt;U, lclP-&gt;V);
+
+<a name="line189">189: </a>  <font color="#B22222">/* Evaluate Function, Gradient, Constraints, and Jacobian */</font>
+<a name="line190">190: </a>  <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a>(tao, tao-&gt;solution, &amp;f, tao-&gt;gradient);
+<a name="line191">191: </a>  <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeJacobianState.html">TaoComputeJacobianState</a>(tao, tao-&gt;solution, tao-&gt;jacobian_state, tao-&gt;jacobian_state_pre, tao-&gt;jacobian_state_inv);
+<a name="line192">192: </a>  <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeJacobianDesign.html">TaoComputeJacobianDesign</a>(tao, tao-&gt;solution, tao-&gt;jacobian_design);
+<a name="line193">193: </a>  <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeConstraints.html">TaoComputeConstraints</a>(tao, tao-&gt;solution, tao-&gt;constraints);
+
+<a name="line195">195: </a>  <font color="#B22222">/* Scatter gradient to GU,GV */</font>
+<a name="line196">196: </a>  LCLScatter(lclP, tao-&gt;gradient, lclP-&gt;GU, lclP-&gt;GV);
+
+<a name="line198">198: </a>  <font color="#B22222">/* Evaluate Lagrangian function and gradient */</font>
+<a name="line199">199: </a>  <font color="#B22222">/* p0 */</font>
+<a name="line200">200: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(lclP-&gt;lambda, 0.0); <font color="#B22222">/*  Initial guess in CG */</font>
+<a name="line201">201: </a>  <a href="../.._constrained/../../../docs/manualpages/Mat/MatIsSymmetricKnown.html">MatIsSymmetricKnown</a>(tao-&gt;jacobian_state, &amp;set, &amp;flag);
+<a name="line202">202: </a>  <font color="#4169E1">if</font> (tao-&gt;jacobian_state_pre) {
+<a name="line203">203: </a>    <a href="../.._constrained/../../../docs/manualpages/Mat/MatIsSymmetricKnown.html">MatIsSymmetricKnown</a>(tao-&gt;jacobian_state_pre, &amp;pset, &amp;pflag);
+<a name="line204">204: </a>  } <font color="#4169E1">else</font> {
+<a name="line205">205: </a>    pset = pflag = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line206">206: </a>  }
+<a name="line207">207: </a>  <font color="#4169E1">if</font> (set &amp;&amp; pset &amp;&amp; flag &amp;&amp; pflag) symmetric = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line208">208: </a>  <font color="#4169E1">else</font> symmetric = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line210">210: </a>  lclP-&gt;solve_type = LCL_ADJOINT2;
+<a name="line211">211: </a>  <font color="#4169E1">if</font> (tao-&gt;jacobian_state_inv) {
+<a name="line212">212: </a>    <font color="#4169E1">if</font> (symmetric) {
+<a name="line213">213: </a>      <a href="../.._constrained/../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;jacobian_state_inv, lclP-&gt;GU, lclP-&gt;lambda);
+<a name="line214">214: </a>    } <font color="#4169E1">else</font> {
+<a name="line215">215: </a>      <a href="../.._constrained/../../../docs/manualpages/Mat/MatMultTranspose.html">MatMultTranspose</a>(tao-&gt;jacobian_state_inv, lclP-&gt;GU, lclP-&gt;lambda);
+<a name="line216">216: </a>    }
+<a name="line217">217: </a>  } <font color="#4169E1">else</font> {
+<a name="line218">218: </a>    <a href="../.._constrained/../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>(tao-&gt;ksp, tao-&gt;jacobian_state, tao-&gt;jacobian_state_pre);
+<a name="line219">219: </a>    <font color="#4169E1">if</font> (symmetric) {
+<a name="line220">220: </a>      <a href="../.._constrained/../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>(tao-&gt;ksp, lclP-&gt;GU, lclP-&gt;lambda);
+<a name="line221">221: </a>    } <font color="#4169E1">else</font> {
+<a name="line222">222: </a>      <a href="../.._constrained/../../../docs/manualpages/KSP/KSPSolveTranspose.html">KSPSolveTranspose</a>(tao-&gt;ksp, lclP-&gt;GU, lclP-&gt;lambda);
+<a name="line223">223: </a>    }
+<a name="line224">224: </a>    <a href="../.._constrained/../../../docs/manualpages/KSP/KSPGetIterationNumber.html">KSPGetIterationNumber</a>(tao-&gt;ksp, &amp;its);
+<a name="line225">225: </a>    tao-&gt;ksp_its += its;
+<a name="line226">226: </a>    tao-&gt;ksp_tot_its += its;
+<a name="line227">227: </a>  }
+<a name="line228">228: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;lambda, lclP-&gt;lambda0);
+<a name="line229">229: </a>  LCLComputeAugmentedLagrangianAndGradient(tao-&gt;linesearch, tao-&gt;solution, &amp;lclP-&gt;aug, lclP-&gt;GAugL, tao);
+
+<a name="line231">231: </a>  LCLScatter(lclP, lclP-&gt;GL, lclP-&gt;GL_U, lclP-&gt;GL_V);
+<a name="line232">232: </a>  LCLScatter(lclP, lclP-&gt;GAugL, lclP-&gt;GAugL_U, lclP-&gt;GAugL_V);
+
+<a name="line234">234: </a>  <font color="#B22222">/* Evaluate constraint norm */</font>
+<a name="line235">235: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(tao-&gt;constraints, <a href="../.._constrained/../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;cnorm);
+<a name="line236">236: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(lclP-&gt;GAugL, <a href="../.._constrained/../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;mnorm);
+
+<a name="line238">238: </a>  <font color="#B22222">/* Monitor convergence */</font>
+<a name="line239">239: </a>  tao-&gt;reason = <a href="../.._constrained/../../../docs/manualpages/Tao/TaoConvergedReason.html">TAO_CONTINUE_ITERATING</a>;
+<a name="line240">240: </a>  TaoLogConvergenceHistory(tao, f, mnorm, cnorm, tao-&gt;ksp_its);
+<a name="line241">241: </a>  <a href="../.._constrained/../../../docs/manualpages/Tao/TaoMonitor.html">TaoMonitor</a>(tao, tao-&gt;niter, f, mnorm, cnorm, step);
+<a name="line242">242: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(tao, convergencetest, tao-&gt;cnvP);
+
+<a name="line244">244: </a>  <font color="#4169E1">while</font> (tao-&gt;reason == <a href="../.._constrained/../../../docs/manualpages/Tao/TaoConvergedReason.html">TAO_CONTINUE_ITERATING</a>) {
+<a name="line245">245: </a>    <font color="#B22222">/* Call general purpose update function */</font>
+<a name="line246">246: </a>    <a href="../.._constrained/../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(tao, update, tao-&gt;niter, tao-&gt;user_update);
+<a name="line247">247: </a>    tao-&gt;ksp_its = 0;
+<a name="line248">248: </a>    <font color="#B22222">/* Compute a descent direction for the linearly constrained subproblem</font>
+<a name="line249">249: </a><font color="#B22222">       minimize f(u+du, v+dv)</font>
+<a name="line250">250: </a><font color="#B22222">       s.t. A(u0,v0)du + B(u0,v0)dv = -g(u0,v0) */</font>
+
+<a name="line252">252: </a>    <font color="#B22222">/* Store the points around the linearization */</font>
+<a name="line253">253: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;U, lclP-&gt;U0);
+<a name="line254">254: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;V, lclP-&gt;V0);
+<a name="line255">255: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;GU, lclP-&gt;GU0);
+<a name="line256">256: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;GV, lclP-&gt;GV0);
+<a name="line257">257: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;GAugL_U, lclP-&gt;GAugL_U0);
+<a name="line258">258: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;GAugL_V, lclP-&gt;GAugL_V0);
+<a name="line259">259: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;GL_U, lclP-&gt;GL_U0);
+<a name="line260">260: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;GL_V, lclP-&gt;GL_V0);
+
+<a name="line262">262: </a>    lclP-&gt;aug0 = lclP-&gt;aug;
+<a name="line263">263: </a>    lclP-&gt;lgn0 = lclP-&gt;lgn;
+
+<a name="line265">265: </a>    <font color="#B22222">/* Given the design variables, we need to project the current iterate</font>
+<a name="line266">266: </a><font color="#B22222">       onto the linearized constraint.  We choose to fix the design variables</font>
+<a name="line267">267: </a><font color="#B22222">       and solve the linear system for the state variables.  The resulting</font>
+<a name="line268">268: </a><font color="#B22222">       point is the Newton direction */</font>
+
+<a name="line270">270: </a>    <font color="#B22222">/* Solve r = A\con */</font>
+<a name="line271">271: </a>    lclP-&gt;solve_type = LCL_FORWARD1;
+<a name="line272">272: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(lclP-&gt;r, 0.0); <font color="#B22222">/*  Initial guess in CG */</font>
+
+<a name="line274">274: </a>    <font color="#4169E1">if</font> (tao-&gt;jacobian_state_inv) {
+<a name="line275">275: </a>      <a href="../.._constrained/../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;jacobian_state_inv, tao-&gt;constraints, lclP-&gt;r);
+<a name="line276">276: </a>    } <font color="#4169E1">else</font> {
+<a name="line277">277: </a>      <a href="../.._constrained/../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>(tao-&gt;ksp, tao-&gt;jacobian_state, tao-&gt;jacobian_state_pre);
+<a name="line278">278: </a>      <a href="../.._constrained/../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>(tao-&gt;ksp, tao-&gt;constraints, lclP-&gt;r);
+<a name="line279">279: </a>      <a href="../.._constrained/../../../docs/manualpages/KSP/KSPGetIterationNumber.html">KSPGetIterationNumber</a>(tao-&gt;ksp, &amp;its);
+<a name="line280">280: </a>      tao-&gt;ksp_its += its;
+<a name="line281">281: </a>      tao-&gt;ksp_tot_its += tao-&gt;ksp_its;
+<a name="line282">282: </a>    }
+
+<a name="line284">284: </a>    <font color="#B22222">/* Set design step direction dv to zero */</font>
+<a name="line285">285: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(lclP-&gt;s, 0.0);
+
+<a name="line287">287: </a>    <font color="#B22222">/*</font>
+<a name="line288">288: </a><font color="#B22222">       Check sufficient descent for constraint merit function .5*||con||^2</font>
+<a name="line289">289: </a><font color="#B22222">       con' Ak r &gt;= eps1 ||r||^(2+eps2)</font>
+<a name="line290">290: </a><font color="#B22222">    */</font>
+
+<a name="line292">292: </a>    <font color="#B22222">/* Compute WU= Ak' * con */</font>
+<a name="line293">293: </a>    <font color="#4169E1">if</font> (symmetric) {
+<a name="line294">294: </a>      <a href="../.._constrained/../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;jacobian_state, tao-&gt;constraints, lclP-&gt;WU);
+<a name="line295">295: </a>    } <font color="#4169E1">else</font> {
+<a name="line296">296: </a>      <a href="../.._constrained/../../../docs/manualpages/Mat/MatMultTranspose.html">MatMultTranspose</a>(tao-&gt;jacobian_state, tao-&gt;constraints, lclP-&gt;WU);
+<a name="line297">297: </a>    }
+<a name="line298">298: </a>    <font color="#B22222">/* Compute r * Ak' * con */</font>
+<a name="line299">299: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(lclP-&gt;r, lclP-&gt;WU, &amp;rWU);
+
+<a name="line301">301: </a>    <font color="#B22222">/* compute ||r||^(2+eps2) */</font>
+<a name="line302">302: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(lclP-&gt;r, <a href="../.._constrained/../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;r2);
+<a name="line303">303: </a>    r2   = PetscPowScalar(r2, 2.0 + lclP-&gt;eps2);
+<a name="line304">304: </a>    adec = lclP-&gt;eps1 * r2;
+
+<a name="line306">306: </a>    <font color="#4169E1">if</font> (rWU &lt; adec) {
+<a name="line307">307: </a>      <a href="../.._constrained/../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(tao, <font color="#666666">"Newton direction not descent for constraint, feasibility phase required\n"</font>);
+<a name="line308">308: </a>      <font color="#4169E1">if</font> (lclP-&gt;verbose) <a href="../.._constrained/../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"Newton direction not descent for constraint: %g -- using steepest descent\n"</font>, (double)descent);
+
+<a name="line310">310: </a>      <a href="../.._constrained/../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(tao, <font color="#666666">"Using steepest descent direction instead.\n"</font>);
+<a name="line311">311: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(lclP-&gt;r, 0.0);
+<a name="line312">312: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(lclP-&gt;r, -1.0, lclP-&gt;WU);
+<a name="line313">313: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(lclP-&gt;r, lclP-&gt;r, &amp;rWU);
+<a name="line314">314: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(lclP-&gt;r, <a href="../.._constrained/../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;r2);
+<a name="line315">315: </a>      r2 = PetscPowScalar(r2, 2.0 + lclP-&gt;eps2);
+<a name="line316">316: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(lclP-&gt;r, lclP-&gt;GAugL_U, &amp;descent);
+<a name="line317">317: </a>      adec = lclP-&gt;eps1 * r2;
+<a name="line318">318: </a>    }
+
+<a name="line320">320: </a>    <font color="#B22222">/*</font>
+<a name="line321">321: </a><font color="#B22222">       Check descent for aug. lagrangian</font>
+<a name="line322">322: </a><font color="#B22222">       r' (GUk - Ak'*yk - rho*Ak'*con) &lt;= -eps1 ||r||^(2+eps2)</font>
+<a name="line323">323: </a><font color="#B22222">          GL_U = GUk - Ak'*yk</font>
+<a name="line324">324: </a><font color="#B22222">          WU   = Ak'*con</font>
+<a name="line325">325: </a><font color="#B22222">                                         adec=eps1||r||^(2+eps2)</font>
+
+<a name="line327">327: </a><font color="#B22222">       ==&gt;</font>
+<a name="line328">328: </a><font color="#B22222">       Check r'GL_U - rho*r'WU &lt;= adec</font>
+<a name="line329">329: </a><font color="#B22222">    */</font>
+
+<a name="line331">331: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(lclP-&gt;r, lclP-&gt;GL_U, &amp;rGL_U);
+<a name="line332">332: </a>    aldescent = rGL_U - lclP-&gt;rho * rWU;
+<a name="line333">333: </a>    <font color="#4169E1">if</font> (aldescent &gt; -adec) {
+<a name="line334">334: </a>      <font color="#4169E1">if</font> (lclP-&gt;verbose) <a href="../.._constrained/../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">" Newton direction not descent for augmented Lagrangian: %g"</font>, (double)aldescent);
+<a name="line335">335: </a>      <a href="../.._constrained/../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(tao, <font color="#666666">"Newton direction not descent for augmented Lagrangian: %g\n"</font>, (double)aldescent);
+<a name="line336">336: </a>      lclP-&gt;rho = (rGL_U - adec) / rWU;
+<a name="line337">337: </a>      <font color="#4169E1">if</font> (lclP-&gt;rho &gt; lclP-&gt;rhomax) {
+<a name="line338">338: </a>        lclP-&gt;rho = lclP-&gt;rhomax;
+<a name="line339">339: </a>        <a href="../.._constrained/../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, PETSC_ERR_SUP, <font color="#666666">"rho=%g &gt; rhomax, case not implemented.  Increase rhomax (-tao_lcl_rhomax)"</font>, (double)lclP-&gt;rho);
+<a name="line340">340: </a>      }
+<a name="line341">341: </a>      <font color="#4169E1">if</font> (lclP-&gt;verbose) <a href="../.._constrained/../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"  Increasing penalty parameter to %g\n"</font>, (double)lclP-&gt;rho);
+<a name="line342">342: </a>      <a href="../.._constrained/../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(tao, <font color="#666666">"  Increasing penalty parameter to %g\n"</font>, (double)lclP-&gt;rho);
+<a name="line343">343: </a>    }
+
+<a name="line345">345: </a>    LCLComputeAugmentedLagrangianAndGradient(tao-&gt;linesearch, tao-&gt;solution, &amp;lclP-&gt;aug, lclP-&gt;GAugL, tao);
+<a name="line346">346: </a>    LCLScatter(lclP, lclP-&gt;GL, lclP-&gt;GL_U, lclP-&gt;GL_V);
+<a name="line347">347: </a>    LCLScatter(lclP, lclP-&gt;GAugL, lclP-&gt;GAugL_U, lclP-&gt;GAugL_V);
+
+<a name="line349">349: </a>    <font color="#B22222">/* We now minimize the augmented Lagrangian along the Newton direction */</font>
+<a name="line350">350: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(lclP-&gt;r, -1.0);
+<a name="line351">351: </a>    LCLGather(lclP, lclP-&gt;r, lclP-&gt;s, tao-&gt;stepdirection);
+<a name="line352">352: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(lclP-&gt;r, -1.0);
+<a name="line353">353: </a>    LCLGather(lclP, lclP-&gt;GAugL_U0, lclP-&gt;GAugL_V0, lclP-&gt;GAugL);
+<a name="line354">354: </a>    LCLGather(lclP, lclP-&gt;U0, lclP-&gt;V0, lclP-&gt;X0);
+
+<a name="line356">356: </a>    lclP-&gt;recompute_jacobian_flag = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+
+<a name="line358">358: </a>    <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetInitialStepLength.html">TaoLineSearchSetInitialStepLength</a>(tao-&gt;linesearch, 1.0);
+<a name="line359">359: </a>    <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetType.html">TaoLineSearchSetType</a>(tao-&gt;linesearch, <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TAOLINESEARCHMT.html">TAOLINESEARCHMT</a>);
+<a name="line360">360: </a>    <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetFromOptions.html">TaoLineSearchSetFromOptions</a>(tao-&gt;linesearch);
+<a name="line361">361: </a>    <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TaoLineSearchApply.html">TaoLineSearchApply</a>(tao-&gt;linesearch, tao-&gt;solution, &amp;lclP-&gt;aug, lclP-&gt;GAugL, tao-&gt;stepdirection, &amp;step, &amp;ls_reason);
+<a name="line362">362: </a>    <font color="#4169E1">if</font> (lclP-&gt;verbose) <a href="../.._constrained/../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"Steplength = %g\n"</font>, (double)step);
+
+<a name="line364">364: </a>    LCLScatter(lclP, tao-&gt;solution, lclP-&gt;U, lclP-&gt;V);
+<a name="line365">365: </a>    <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a>(tao, tao-&gt;solution, &amp;f, tao-&gt;gradient);
+<a name="line366">366: </a>    LCLScatter(lclP, tao-&gt;gradient, lclP-&gt;GU, lclP-&gt;GV);
+
+<a name="line368">368: </a>    LCLScatter(lclP, lclP-&gt;GAugL, lclP-&gt;GAugL_U, lclP-&gt;GAugL_V);
+
+<a name="line370">370: </a>    <font color="#B22222">/* Check convergence */</font>
+<a name="line371">371: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(lclP-&gt;GAugL, <a href="../.._constrained/../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;mnorm);
+<a name="line372">372: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(tao-&gt;constraints, <a href="../.._constrained/../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;cnorm);
+<a name="line373">373: </a>    TaoLogConvergenceHistory(tao, f, mnorm, cnorm, tao-&gt;ksp_its);
+<a name="line374">374: </a>    <a href="../.._constrained/../../../docs/manualpages/Tao/TaoMonitor.html">TaoMonitor</a>(tao, tao-&gt;niter, f, mnorm, cnorm, step);
+<a name="line375">375: </a>    <a href="../.._constrained/../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(tao, convergencetest, tao-&gt;cnvP);
+<a name="line376">376: </a>    <font color="#4169E1">if</font> (tao-&gt;reason != <a href="../.._constrained/../../../docs/manualpages/Tao/TaoConvergedReason.html">TAO_CONTINUE_ITERATING</a>) <font color="#4169E1">break</font>;
+
+<a name="line378">378: </a>    <font color="#B22222">/* TODO: use a heuristic to choose how many iterations should be performed within phase 2 */</font>
+<a name="line379">379: </a>    <font color="#4169E1">for</font> (phase2_iter = 0; phase2_iter &lt; lclP-&gt;phase2_niter; phase2_iter++) {
+<a name="line380">380: </a>      <font color="#B22222">/* We now minimize the objective function starting from the fraction of</font>
+<a name="line381">381: </a><font color="#B22222">         the Newton point accepted by applying one step of a reduced-space</font>
+<a name="line382">382: </a><font color="#B22222">         method.  The optimization problem is:</font>
+
+<a name="line384">384: </a><font color="#B22222">         minimize f(u+du, v+dv)</font>
+<a name="line385">385: </a><font color="#B22222">         s. t.    A(u0,v0)du + B(u0,v0)du = -alpha g(u0,v0)</font>
+
+<a name="line387">387: </a><font color="#B22222">         In particular, we have that</font>
+<a name="line388">388: </a><font color="#B22222">         du = -inv(A)*(Bdv + alpha g) */</font>
+
+<a name="line390">390: </a>      <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeJacobianState.html">TaoComputeJacobianState</a>(tao, lclP-&gt;X0, tao-&gt;jacobian_state, tao-&gt;jacobian_state_pre, tao-&gt;jacobian_state_inv);
+<a name="line391">391: </a>      <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeJacobianDesign.html">TaoComputeJacobianDesign</a>(tao, lclP-&gt;X0, tao-&gt;jacobian_design);
+
+<a name="line393">393: </a>      <font color="#B22222">/* Store V and constraints */</font>
+<a name="line394">394: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;V, lclP-&gt;V1);
+<a name="line395">395: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(tao-&gt;constraints, lclP-&gt;con1);
+
+<a name="line397">397: </a>      <font color="#B22222">/* Compute multipliers */</font>
+<a name="line398">398: </a>      <font color="#B22222">/* p1 */</font>
+<a name="line399">399: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(lclP-&gt;lambda, 0.0); <font color="#B22222">/*  Initial guess in CG */</font>
+<a name="line400">400: </a>      lclP-&gt;solve_type = LCL_ADJOINT1;
+<a name="line401">401: </a>      <a href="../.._constrained/../../../docs/manualpages/Mat/MatIsSymmetricKnown.html">MatIsSymmetricKnown</a>(tao-&gt;jacobian_state, &amp;set, &amp;flag);
+<a name="line402">402: </a>      <font color="#4169E1">if</font> (tao-&gt;jacobian_state_pre) {
+<a name="line403">403: </a>        <a href="../.._constrained/../../../docs/manualpages/Mat/MatIsSymmetricKnown.html">MatIsSymmetricKnown</a>(tao-&gt;jacobian_state_pre, &amp;pset, &amp;pflag);
+<a name="line404">404: </a>      } <font color="#4169E1">else</font> {
+<a name="line405">405: </a>        pset = pflag = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line406">406: </a>      }
+<a name="line407">407: </a>      <font color="#4169E1">if</font> (set &amp;&amp; pset &amp;&amp; flag &amp;&amp; pflag) symmetric = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line408">408: </a>      <font color="#4169E1">else</font> symmetric = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line410">410: </a>      <font color="#4169E1">if</font> (tao-&gt;jacobian_state_inv) {
+<a name="line411">411: </a>        <font color="#4169E1">if</font> (symmetric) {
+<a name="line412">412: </a>          <a href="../.._constrained/../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;jacobian_state_inv, lclP-&gt;GAugL_U, lclP-&gt;lambda);
+<a name="line413">413: </a>        } <font color="#4169E1">else</font> {
+<a name="line414">414: </a>          <a href="../.._constrained/../../../docs/manualpages/Mat/MatMultTranspose.html">MatMultTranspose</a>(tao-&gt;jacobian_state_inv, lclP-&gt;GAugL_U, lclP-&gt;lambda);
+<a name="line415">415: </a>        }
+<a name="line416">416: </a>      } <font color="#4169E1">else</font> {
+<a name="line417">417: </a>        <font color="#4169E1">if</font> (symmetric) {
+<a name="line418">418: </a>          <a href="../.._constrained/../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>(tao-&gt;ksp, lclP-&gt;GAugL_U, lclP-&gt;lambda);
+<a name="line419">419: </a>        } <font color="#4169E1">else</font> {
+<a name="line420">420: </a>          <a href="../.._constrained/../../../docs/manualpages/KSP/KSPSolveTranspose.html">KSPSolveTranspose</a>(tao-&gt;ksp, lclP-&gt;GAugL_U, lclP-&gt;lambda);
+<a name="line421">421: </a>        }
+<a name="line422">422: </a>        <a href="../.._constrained/../../../docs/manualpages/KSP/KSPGetIterationNumber.html">KSPGetIterationNumber</a>(tao-&gt;ksp, &amp;its);
+<a name="line423">423: </a>        tao-&gt;ksp_its += its;
+<a name="line424">424: </a>        tao-&gt;ksp_tot_its += its;
+<a name="line425">425: </a>      }
+<a name="line426">426: </a>      <a href="../.._constrained/../../../docs/manualpages/Mat/MatMultTranspose.html">MatMultTranspose</a>(tao-&gt;jacobian_design, lclP-&gt;lambda, lclP-&gt;g1);
+<a name="line427">427: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(lclP-&gt;g1, -1.0, lclP-&gt;GAugL_V);
+
+<a name="line429">429: </a>      <font color="#B22222">/* Compute the limited-memory quasi-newton direction */</font>
+<a name="line430">430: </a>      <font color="#4169E1">if</font> (tao-&gt;niter &gt; 0) {
+<a name="line431">431: </a>        <a href="../.._constrained/../../../docs/manualpages/Mat/MatSolve.html">MatSolve</a>(lclP-&gt;R, lclP-&gt;g1, lclP-&gt;s);
+<a name="line432">432: </a>        <a href="../.._constrained/../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(lclP-&gt;s, lclP-&gt;g1, &amp;descent);
+<a name="line433">433: </a>        <font color="#4169E1">if</font> (descent &lt;= 0) {
+<a name="line434">434: </a>          <font color="#4169E1">if</font> (lclP-&gt;verbose) <a href="../.._constrained/../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"Reduced-space direction not descent: %g\n"</font>, (double)descent);
+<a name="line435">435: </a>          <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;g1, lclP-&gt;s);
+<a name="line436">436: </a>        }
+<a name="line437">437: </a>      } <font color="#4169E1">else</font> {
+<a name="line438">438: </a>        <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;g1, lclP-&gt;s);
+<a name="line439">439: </a>      }
+<a name="line440">440: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(lclP-&gt;g1, -1.0);
+
+<a name="line442">442: </a>      <font color="#B22222">/* Recover the full space direction */</font>
+<a name="line443">443: </a>      <a href="../.._constrained/../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;jacobian_design, lclP-&gt;s, lclP-&gt;WU);
+<a name="line444">444: </a>      <font color="#B22222">/* <a href="../.._constrained/../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(lclP-&gt;r,0.0); */</font> <font color="#B22222">/*  Initial guess in CG */</font>
+<a name="line445">445: </a>      lclP-&gt;solve_type = LCL_FORWARD2;
+<a name="line446">446: </a>      <font color="#4169E1">if</font> (tao-&gt;jacobian_state_inv) {
+<a name="line447">447: </a>        <a href="../.._constrained/../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;jacobian_state_inv, lclP-&gt;WU, lclP-&gt;r);
+<a name="line448">448: </a>      } <font color="#4169E1">else</font> {
+<a name="line449">449: </a>        <a href="../.._constrained/../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>(tao-&gt;ksp, lclP-&gt;WU, lclP-&gt;r);
+<a name="line450">450: </a>        <a href="../.._constrained/../../../docs/manualpages/KSP/KSPGetIterationNumber.html">KSPGetIterationNumber</a>(tao-&gt;ksp, &amp;its);
+<a name="line451">451: </a>        tao-&gt;ksp_its += its;
+<a name="line452">452: </a>        tao-&gt;ksp_tot_its += its;
+<a name="line453">453: </a>      }
+
+<a name="line455">455: </a>      <font color="#B22222">/* We now minimize the augmented Lagrangian along the direction -r,s */</font>
+<a name="line456">456: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(lclP-&gt;r, -1.0);
+<a name="line457">457: </a>      LCLGather(lclP, lclP-&gt;r, lclP-&gt;s, tao-&gt;stepdirection);
+<a name="line458">458: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(lclP-&gt;r, -1.0);
+<a name="line459">459: </a>      lclP-&gt;recompute_jacobian_flag = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+
+<a name="line461">461: </a>      <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetInitialStepLength.html">TaoLineSearchSetInitialStepLength</a>(tao-&gt;linesearch, 1.0);
+<a name="line462">462: </a>      <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetType.html">TaoLineSearchSetType</a>(tao-&gt;linesearch, <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TAOLINESEARCHMT.html">TAOLINESEARCHMT</a>);
+<a name="line463">463: </a>      <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetFromOptions.html">TaoLineSearchSetFromOptions</a>(tao-&gt;linesearch);
+<a name="line464">464: </a>      <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TaoLineSearchApply.html">TaoLineSearchApply</a>(tao-&gt;linesearch, tao-&gt;solution, &amp;lclP-&gt;aug, lclP-&gt;GAugL, tao-&gt;stepdirection, &amp;step, &amp;ls_reason);
+<a name="line465">465: </a>      <font color="#4169E1">if</font> (lclP-&gt;verbose) <a href="../.._constrained/../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"Reduced-space steplength =  %g\n"</font>, (double)step);
+
+<a name="line467">467: </a>      LCLScatter(lclP, tao-&gt;solution, lclP-&gt;U, lclP-&gt;V);
+<a name="line468">468: </a>      LCLScatter(lclP, lclP-&gt;GL, lclP-&gt;GL_U, lclP-&gt;GL_V);
+<a name="line469">469: </a>      LCLScatter(lclP, lclP-&gt;GAugL, lclP-&gt;GAugL_U, lclP-&gt;GAugL_V);
+<a name="line470">470: </a>      <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a>(tao, tao-&gt;solution, &amp;f, tao-&gt;gradient);
+<a name="line471">471: </a>      LCLScatter(lclP, tao-&gt;gradient, lclP-&gt;GU, lclP-&gt;GV);
+
+<a name="line473">473: </a>      <font color="#B22222">/* Compute the reduced gradient at the new point */</font>
+
+<a name="line475">475: </a>      <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeJacobianState.html">TaoComputeJacobianState</a>(tao, lclP-&gt;X0, tao-&gt;jacobian_state, tao-&gt;jacobian_state_pre, tao-&gt;jacobian_state_inv);
+<a name="line476">476: </a>      <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeJacobianDesign.html">TaoComputeJacobianDesign</a>(tao, lclP-&gt;X0, tao-&gt;jacobian_design);
+
+<a name="line478">478: </a>      <font color="#B22222">/* p2 */</font>
+<a name="line479">479: </a>      <font color="#B22222">/* Compute multipliers, using lambda-rho*con as an initial guess in PCG */</font>
+<a name="line480">480: </a>      <font color="#4169E1">if</font> (phase2_iter == 0) {
+<a name="line481">481: </a>        <a href="../.._constrained/../../../docs/manualpages/Vec/VecWAXPY.html">VecWAXPY</a>(lclP-&gt;lambda, -lclP-&gt;rho, lclP-&gt;con1, lclP-&gt;lambda0);
+<a name="line482">482: </a>      } <font color="#4169E1">else</font> {
+<a name="line483">483: </a>        <a href="../.._constrained/../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(lclP-&gt;lambda, -lclP-&gt;rho, tao-&gt;constraints);
+<a name="line484">484: </a>      }
+
+<a name="line486">486: </a>      <a href="../.._constrained/../../../docs/manualpages/Mat/MatIsSymmetricKnown.html">MatIsSymmetricKnown</a>(tao-&gt;jacobian_state, &amp;set, &amp;flag);
+<a name="line487">487: </a>      <font color="#4169E1">if</font> (tao-&gt;jacobian_state_pre) {
+<a name="line488">488: </a>        <a href="../.._constrained/../../../docs/manualpages/Mat/MatIsSymmetricKnown.html">MatIsSymmetricKnown</a>(tao-&gt;jacobian_state_pre, &amp;pset, &amp;pflag);
+<a name="line489">489: </a>      } <font color="#4169E1">else</font> {
+<a name="line490">490: </a>        pset = pflag = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line491">491: </a>      }
+<a name="line492">492: </a>      <font color="#4169E1">if</font> (set &amp;&amp; pset &amp;&amp; flag &amp;&amp; pflag) symmetric = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line493">493: </a>      <font color="#4169E1">else</font> symmetric = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line495">495: </a>      lclP-&gt;solve_type = LCL_ADJOINT2;
+<a name="line496">496: </a>      <font color="#4169E1">if</font> (tao-&gt;jacobian_state_inv) {
+<a name="line497">497: </a>        <font color="#4169E1">if</font> (symmetric) {
+<a name="line498">498: </a>          <a href="../.._constrained/../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;jacobian_state_inv, lclP-&gt;GU, lclP-&gt;lambda);
+<a name="line499">499: </a>        } <font color="#4169E1">else</font> {
+<a name="line500">500: </a>          <a href="../.._constrained/../../../docs/manualpages/Mat/MatMultTranspose.html">MatMultTranspose</a>(tao-&gt;jacobian_state_inv, lclP-&gt;GU, lclP-&gt;lambda);
+<a name="line501">501: </a>        }
+<a name="line502">502: </a>      } <font color="#4169E1">else</font> {
+<a name="line503">503: </a>        <font color="#4169E1">if</font> (symmetric) {
+<a name="line504">504: </a>          <a href="../.._constrained/../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>(tao-&gt;ksp, lclP-&gt;GU, lclP-&gt;lambda);
+<a name="line505">505: </a>        } <font color="#4169E1">else</font> {
+<a name="line506">506: </a>          <a href="../.._constrained/../../../docs/manualpages/KSP/KSPSolveTranspose.html">KSPSolveTranspose</a>(tao-&gt;ksp, lclP-&gt;GU, lclP-&gt;lambda);
+<a name="line507">507: </a>        }
+<a name="line508">508: </a>        <a href="../.._constrained/../../../docs/manualpages/KSP/KSPGetIterationNumber.html">KSPGetIterationNumber</a>(tao-&gt;ksp, &amp;its);
+<a name="line509">509: </a>        tao-&gt;ksp_its += its;
+<a name="line510">510: </a>        tao-&gt;ksp_tot_its += its;
+<a name="line511">511: </a>      }
+
+<a name="line513">513: </a>      <a href="../.._constrained/../../../docs/manualpages/Mat/MatMultTranspose.html">MatMultTranspose</a>(tao-&gt;jacobian_design, lclP-&gt;lambda, lclP-&gt;g2);
+<a name="line514">514: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(lclP-&gt;g2, -1.0, lclP-&gt;GV);
+
+<a name="line516">516: </a>      <a href="../.._constrained/../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(lclP-&gt;g2, -1.0);
+
+<a name="line518">518: </a>      <font color="#B22222">/* Update the quasi-newton approximation */</font>
+<a name="line519">519: </a>      <a href="../.._constrained/../../../docs/manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a>(lclP-&gt;R, lclP-&gt;V, lclP-&gt;g2);
+<a name="line520">520: </a>      <font color="#B22222">/* Use "-tao_ls_type gpcg -tao_ls_ftol 0 -tao_lmm_broyden_phi 0.0 -tao_lmm_scale_type scalar" to obtain agreement with MATLAB code */</font>
+<a name="line521">521: </a>    }
+
+<a name="line523">523: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;lambda, lclP-&gt;lambda0);
+
+<a name="line525">525: </a>    <font color="#B22222">/* Evaluate Function, Gradient, Constraints, and Jacobian */</font>
+<a name="line526">526: </a>    <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a>(tao, tao-&gt;solution, &amp;f, tao-&gt;gradient);
+<a name="line527">527: </a>    LCLScatter(lclP, tao-&gt;solution, lclP-&gt;U, lclP-&gt;V);
+<a name="line528">528: </a>    LCLScatter(lclP, tao-&gt;gradient, lclP-&gt;GU, lclP-&gt;GV);
+
+<a name="line530">530: </a>    <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeJacobianState.html">TaoComputeJacobianState</a>(tao, tao-&gt;solution, tao-&gt;jacobian_state, tao-&gt;jacobian_state_pre, tao-&gt;jacobian_state_inv);
+<a name="line531">531: </a>    <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeJacobianDesign.html">TaoComputeJacobianDesign</a>(tao, tao-&gt;solution, tao-&gt;jacobian_design);
+<a name="line532">532: </a>    <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeConstraints.html">TaoComputeConstraints</a>(tao, tao-&gt;solution, tao-&gt;constraints);
+
+<a name="line534">534: </a>    LCLComputeAugmentedLagrangianAndGradient(tao-&gt;linesearch, tao-&gt;solution, &amp;lclP-&gt;aug, lclP-&gt;GAugL, tao);
+
+<a name="line536">536: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(lclP-&gt;GAugL, <a href="../.._constrained/../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;mnorm);
+
+<a name="line538">538: </a>    <font color="#B22222">/* Evaluate constraint norm */</font>
+<a name="line539">539: </a>    <a href="../.._constrained/../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(tao-&gt;constraints, <a href="../.._constrained/../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;cnorm);
+
+<a name="line541">541: </a>    <font color="#B22222">/* Monitor convergence */</font>
+<a name="line542">542: </a>    tao-&gt;niter++;
+<a name="line543">543: </a>    TaoLogConvergenceHistory(tao, f, mnorm, cnorm, tao-&gt;ksp_its);
+<a name="line544">544: </a>    <a href="../.._constrained/../../../docs/manualpages/Tao/TaoMonitor.html">TaoMonitor</a>(tao, tao-&gt;niter, f, mnorm, cnorm, step);
+<a name="line545">545: </a>    <a href="../.._constrained/../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(tao, convergencetest, tao-&gt;cnvP);
+<a name="line546">546: </a>  }
+<a name="line547">547: </a>  <font color="#4169E1">return</font> 0;
+<a name="line548">548: </a>}
+
+<a name="line550">550: </a><font color="#B22222">/*MC</font>
+<a name="line551">551: </a><font color="#B22222"> <a href="../.._constrained/../../../docs/manualpages/Tao/TAOLCL.html">TAOLCL</a> - linearly constrained lagrangian method for pde-constrained optimization</font>
+
+<a name="line553">553: </a><font color="#B22222">+ -tao_lcl_eps1 - epsilon 1 tolerance</font>
+<a name="line554">554: </a><font color="#B22222">. -tao_lcl_eps2","epsilon 2 tolerance","",lclP-&gt;eps2,&amp;lclP-&gt;eps2,NULL);</font>
+<a name="line555">555: </a><font color="#B22222">. -tao_lcl_rho0","init value for rho","",lclP-&gt;rho0,&amp;lclP-&gt;rho0,NULL);</font>
+<a name="line556">556: </a><font color="#B22222">. -tao_lcl_rhomax","max value for rho","",lclP-&gt;rhomax,&amp;lclP-&gt;rhomax,NULL);</font>
+<a name="line557">557: </a><font color="#B22222">. -tao_lcl_phase2_niter - Number of phase 2 iterations in LCL algorithm</font>
+<a name="line558">558: </a><font color="#B22222">. -tao_lcl_verbose - Print verbose output if True</font>
+<a name="line559">559: </a><font color="#B22222">. -tao_lcl_tola - Tolerance for first forward solve</font>
+<a name="line560">560: </a><font color="#B22222">. -tao_lcl_tolb - Tolerance for first adjoint solve</font>
+<a name="line561">561: </a><font color="#B22222">. -tao_lcl_tolc - Tolerance for second forward solve</font>
+<a name="line562">562: </a><font color="#B22222">- -tao_lcl_told - Tolerance for second adjoint solve</font>
+
+<a name="line564">564: </a><font color="#B22222">  Level: beginner</font>
+<a name="line565">565: </a><font color="#B22222">M*/</font>
+<a name="line566">566: </a><strong><font color="#4169E1"><a name="TaoCreate_LCL"></a>PETSC_EXTERN <a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoCreate_LCL(<a href="../.._constrained/../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line567">567: </a>{
+<a name="line568">568: </a>  TAO_LCL    *lclP;
+<a name="line569">569: </a>  const char *morethuente_type = <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TAOLINESEARCHMT.html">TAOLINESEARCHMT</a>;
+
+<a name="line571">571: </a>  tao-&gt;ops-&gt;setup          = TaoSetup_LCL;
+<a name="line572">572: </a>  tao-&gt;ops-&gt;solve          = TaoSolve_LCL;
+<a name="line573">573: </a>  tao-&gt;ops-&gt;view           = TaoView_LCL;
+<a name="line574">574: </a>  tao-&gt;ops-&gt;setfromoptions = TaoSetFromOptions_LCL;
+<a name="line575">575: </a>  tao-&gt;ops-&gt;destroy        = TaoDestroy_LCL;
+<a name="line576">576: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;lclP);
+<a name="line577">577: </a>  tao-&gt;data = (void *)lclP;
+
+<a name="line579">579: </a>  <font color="#B22222">/* Override default settings (unless already changed) */</font>
+<a name="line580">580: </a>  <font color="#4169E1">if</font> (!tao-&gt;max_it_changed) tao-&gt;max_it = 200;
+<a name="line581">581: </a>  <font color="#4169E1">if</font> (!tao-&gt;catol_changed) tao-&gt;catol = 1.0e-4;
+<a name="line582">582: </a>  <font color="#4169E1">if</font> (!tao-&gt;gatol_changed) tao-&gt;gttol = 1.0e-4;
+<a name="line583">583: </a>  <font color="#4169E1">if</font> (!tao-&gt;grtol_changed) tao-&gt;gttol = 1.0e-4;
+<a name="line584">584: </a>  <font color="#4169E1">if</font> (!tao-&gt;gttol_changed) tao-&gt;gttol = 1.0e-4;
+<a name="line585">585: </a>  lclP-&gt;rho0       = 1.0e-4;
+<a name="line586">586: </a>  lclP-&gt;rhomax     = 1e5;
+<a name="line587">587: </a>  lclP-&gt;eps1       = 1.0e-8;
+<a name="line588">588: </a>  lclP-&gt;eps2       = 0.0;
+<a name="line589">589: </a>  lclP-&gt;solve_type = 2;
+<a name="line590">590: </a>  lclP-&gt;tau[0] = lclP-&gt;tau[1] = lclP-&gt;tau[2] = lclP-&gt;tau[3] = 1.0e-4;
+<a name="line591">591: </a>  <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TaoLineSearchCreate.html">TaoLineSearchCreate</a>(((<a href="../.._constrained/../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao)-&gt;comm, &amp;tao-&gt;linesearch);
+<a name="line592">592: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscObjectIncrementTabLevel.html">PetscObjectIncrementTabLevel</a>((<a href="../.._constrained/../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao-&gt;linesearch, (<a href="../.._constrained/../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao, 1);
+<a name="line593">593: </a>  <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetType.html">TaoLineSearchSetType</a>(tao-&gt;linesearch, morethuente_type);
+<a name="line594">594: </a>  <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetOptionsPrefix.html">TaoLineSearchSetOptionsPrefix</a>(tao-&gt;linesearch, tao-&gt;hdr.prefix);
+
+<a name="line596">596: </a>  <a href="../.._constrained/../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetObjectiveAndGradientRoutine.html">TaoLineSearchSetObjectiveAndGradientRoutine</a>(tao-&gt;linesearch, LCLComputeAugmentedLagrangianAndGradient, tao);
+<a name="line597">597: </a>  <a href="../.._constrained/../../../docs/manualpages/KSP/KSPCreate.html">KSPCreate</a>(((<a href="../.._constrained/../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao)-&gt;comm, &amp;tao-&gt;ksp);
+<a name="line598">598: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscObjectIncrementTabLevel.html">PetscObjectIncrementTabLevel</a>((<a href="../.._constrained/../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao-&gt;ksp, (<a href="../.._constrained/../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao, 1);
+<a name="line599">599: </a>  <a href="../.._constrained/../../../docs/manualpages/KSP/KSPSetOptionsPrefix.html">KSPSetOptionsPrefix</a>(tao-&gt;ksp, tao-&gt;hdr.prefix);
+<a name="line600">600: </a>  <a href="../.._constrained/../../../docs/manualpages/KSP/KSPSetFromOptions.html">KSPSetFromOptions</a>(tao-&gt;ksp);
+
+<a name="line602">602: </a>  <a href="../.._constrained/../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>(((<a href="../.._constrained/../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao)-&gt;comm, &amp;lclP-&gt;R);
+<a name="line603">603: </a>  <a href="../.._constrained/../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(lclP-&gt;R, MATLMVMBFGS);
+<a name="line604">604: </a>  <font color="#4169E1">return</font> 0;
+<a name="line605">605: </a>}
+
+<a name="line607">607: </a><strong><font color="#4169E1"><a name="LCLComputeLagrangianAndGradient"></a>static <a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> LCLComputeLagrangianAndGradient(TaoLineSearch ls, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../.._constrained/../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *f, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a> G, void *ptr)</font></strong>
+<a name="line608">608: </a>{
+<a name="line609">609: </a>  <a href="../.._constrained/../../../docs/manualpages/Tao/Tao.html">Tao</a>       tao  = (<a href="../.._constrained/../../../docs/manualpages/Tao/Tao.html">Tao</a>)ptr;
+<a name="line610">610: </a>  TAO_LCL  *lclP = (TAO_LCL *)tao-&gt;data;
+<a name="line611">611: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> set, pset, flag, pflag, symmetric;
+<a name="line612">612: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> cdotl;
+
+<a name="line614">614: </a>  <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a>(tao, X, f, G);
+<a name="line615">615: </a>  LCLScatter(lclP, G, lclP-&gt;GU, lclP-&gt;GV);
+<a name="line616">616: </a>  <font color="#4169E1">if</font> (lclP-&gt;recompute_jacobian_flag) {
+<a name="line617">617: </a>    <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeJacobianState.html">TaoComputeJacobianState</a>(tao, X, tao-&gt;jacobian_state, tao-&gt;jacobian_state_pre, tao-&gt;jacobian_state_inv);
+<a name="line618">618: </a>    <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeJacobianDesign.html">TaoComputeJacobianDesign</a>(tao, X, tao-&gt;jacobian_design);
+<a name="line619">619: </a>  }
+<a name="line620">620: </a>  <a href="../.._constrained/../../../docs/manualpages/Tao/TaoComputeConstraints.html">TaoComputeConstraints</a>(tao, X, tao-&gt;constraints);
+<a name="line621">621: </a>  <a href="../.._constrained/../../../docs/manualpages/Mat/MatIsSymmetricKnown.html">MatIsSymmetricKnown</a>(tao-&gt;jacobian_state, &amp;set, &amp;flag);
+<a name="line622">622: </a>  <font color="#4169E1">if</font> (tao-&gt;jacobian_state_pre) {
+<a name="line623">623: </a>    <a href="../.._constrained/../../../docs/manualpages/Mat/MatIsSymmetricKnown.html">MatIsSymmetricKnown</a>(tao-&gt;jacobian_state_pre, &amp;pset, &amp;pflag);
+<a name="line624">624: </a>  } <font color="#4169E1">else</font> {
+<a name="line625">625: </a>    pset = pflag = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line626">626: </a>  }
+<a name="line627">627: </a>  <font color="#4169E1">if</font> (set &amp;&amp; pset &amp;&amp; flag &amp;&amp; pflag) symmetric = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line628">628: </a>  <font color="#4169E1">else</font> symmetric = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line630">630: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(lclP-&gt;lambda0, tao-&gt;constraints, &amp;cdotl);
+<a name="line631">631: </a>  lclP-&gt;lgn = *f - cdotl;
+
+<a name="line633">633: </a>  <font color="#B22222">/* Gradient of Lagrangian GL = G - J' * lambda */</font>
+<a name="line634">634: </a>  <font color="#B22222">/*      WU = A' * WL</font>
+<a name="line635">635: </a><font color="#B22222">          WV = B' * WL */</font>
+<a name="line636">636: </a>  <font color="#4169E1">if</font> (symmetric) {
+<a name="line637">637: </a>    <a href="../.._constrained/../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;jacobian_state, lclP-&gt;lambda0, lclP-&gt;GL_U);
+<a name="line638">638: </a>  } <font color="#4169E1">else</font> {
+<a name="line639">639: </a>    <a href="../.._constrained/../../../docs/manualpages/Mat/MatMultTranspose.html">MatMultTranspose</a>(tao-&gt;jacobian_state, lclP-&gt;lambda0, lclP-&gt;GL_U);
+<a name="line640">640: </a>  }
+<a name="line641">641: </a>  <a href="../.._constrained/../../../docs/manualpages/Mat/MatMultTranspose.html">MatMultTranspose</a>(tao-&gt;jacobian_design, lclP-&gt;lambda0, lclP-&gt;GL_V);
+<a name="line642">642: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(lclP-&gt;GL_U, -1.0);
+<a name="line643">643: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(lclP-&gt;GL_V, -1.0);
+<a name="line644">644: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(lclP-&gt;GL_U, 1.0, lclP-&gt;GU);
+<a name="line645">645: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(lclP-&gt;GL_V, 1.0, lclP-&gt;GV);
+<a name="line646">646: </a>  LCLGather(lclP, lclP-&gt;GL_U, lclP-&gt;GL_V, lclP-&gt;GL);
+
+<a name="line648">648: </a>  f[0] = lclP-&gt;lgn;
+<a name="line649">649: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;GL, G);
+<a name="line650">650: </a>  <font color="#4169E1">return</font> 0;
+<a name="line651">651: </a>}
+
+<a name="line653">653: </a><strong><font color="#4169E1"><a name="LCLComputeAugmentedLagrangianAndGradient"></a>static <a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> LCLComputeAugmentedLagrangianAndGradient(TaoLineSearch ls, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../.._constrained/../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *f, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a> G, void *ptr)</font></strong>
+<a name="line654">654: </a>{
+<a name="line655">655: </a>  <a href="../.._constrained/../../../docs/manualpages/Tao/Tao.html">Tao</a>       tao  = (<a href="../.._constrained/../../../docs/manualpages/Tao/Tao.html">Tao</a>)ptr;
+<a name="line656">656: </a>  TAO_LCL  *lclP = (TAO_LCL *)tao-&gt;data;
+<a name="line657">657: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> con2;
+<a name="line658">658: </a>  <a href="../.._constrained/../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flag, pflag, set, pset, symmetric;
+
+<a name="line660">660: </a>  LCLComputeLagrangianAndGradient(tao-&gt;linesearch, X, f, G, tao);
+<a name="line661">661: </a>  LCLScatter(lclP, G, lclP-&gt;GL_U, lclP-&gt;GL_V);
+<a name="line662">662: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(tao-&gt;constraints, tao-&gt;constraints, &amp;con2);
+<a name="line663">663: </a>  lclP-&gt;aug = lclP-&gt;lgn + 0.5 * lclP-&gt;rho * con2;
+
+<a name="line665">665: </a>  <font color="#B22222">/* Gradient of Aug. Lagrangian GAugL = GL + rho * J' c */</font>
+<a name="line666">666: </a>  <font color="#B22222">/*      WU = A' * c</font>
+<a name="line667">667: </a><font color="#B22222">          WV = B' * c */</font>
+<a name="line668">668: </a>  <a href="../.._constrained/../../../docs/manualpages/Mat/MatIsSymmetricKnown.html">MatIsSymmetricKnown</a>(tao-&gt;jacobian_state, &amp;set, &amp;flag);
+<a name="line669">669: </a>  <font color="#4169E1">if</font> (tao-&gt;jacobian_state_pre) {
+<a name="line670">670: </a>    <a href="../.._constrained/../../../docs/manualpages/Mat/MatIsSymmetricKnown.html">MatIsSymmetricKnown</a>(tao-&gt;jacobian_state_pre, &amp;pset, &amp;pflag);
+<a name="line671">671: </a>  } <font color="#4169E1">else</font> {
+<a name="line672">672: </a>    pset = pflag = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line673">673: </a>  }
+<a name="line674">674: </a>  <font color="#4169E1">if</font> (set &amp;&amp; pset &amp;&amp; flag &amp;&amp; pflag) symmetric = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line675">675: </a>  <font color="#4169E1">else</font> symmetric = <a href="../.._constrained/../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line677">677: </a>  <font color="#4169E1">if</font> (symmetric) {
+<a name="line678">678: </a>    <a href="../.._constrained/../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;jacobian_state, tao-&gt;constraints, lclP-&gt;GAugL_U);
+<a name="line679">679: </a>  } <font color="#4169E1">else</font> {
+<a name="line680">680: </a>    <a href="../.._constrained/../../../docs/manualpages/Mat/MatMultTranspose.html">MatMultTranspose</a>(tao-&gt;jacobian_state, tao-&gt;constraints, lclP-&gt;GAugL_U);
+<a name="line681">681: </a>  }
+
+<a name="line683">683: </a>  <a href="../.._constrained/../../../docs/manualpages/Mat/MatMultTranspose.html">MatMultTranspose</a>(tao-&gt;jacobian_design, tao-&gt;constraints, lclP-&gt;GAugL_V);
+<a name="line684">684: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecAYPX.html">VecAYPX</a>(lclP-&gt;GAugL_U, lclP-&gt;rho, lclP-&gt;GL_U);
+<a name="line685">685: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecAYPX.html">VecAYPX</a>(lclP-&gt;GAugL_V, lclP-&gt;rho, lclP-&gt;GL_V);
+<a name="line686">686: </a>  LCLGather(lclP, lclP-&gt;GAugL_U, lclP-&gt;GAugL_V, lclP-&gt;GAugL);
+
+<a name="line688">688: </a>  f[0] = lclP-&gt;aug;
+<a name="line689">689: </a>  <a href="../.._constrained/../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(lclP-&gt;GAugL, G);
+<a name="line690">690: </a>  <font color="#4169E1">return</font> 0;
+<a name="line691">691: </a>}
+
+<a name="line693">693: </a><strong><font color="#4169E1"><a name="LCLGather"></a><a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> LCLGather(TAO_LCL *lclP, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a> u, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a> v, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a> x)</font></strong>
+<a name="line694">694: </a>{
+<a name="line695">695: </a>  <a href="../.._constrained/../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(lclP-&gt;state_scatter, u, x, <a href="../.._constrained/../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../.._constrained/../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);
+<a name="line696">696: </a>  <a href="../.._constrained/../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(lclP-&gt;state_scatter, u, x, <a href="../.._constrained/../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../.._constrained/../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);
+<a name="line697">697: </a>  <a href="../.._constrained/../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(lclP-&gt;design_scatter, v, x, <a href="../.._constrained/../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../.._constrained/../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);
+<a name="line698">698: </a>  <a href="../.._constrained/../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(lclP-&gt;design_scatter, v, x, <a href="../.._constrained/../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../.._constrained/../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);
+<a name="line699">699: </a>  <font color="#4169E1">return</font> 0;
+<a name="line700">700: </a>}
+<a name="line701">701: </a><strong><font color="#4169E1"><a name="LCLScatter"></a><a href="../.._constrained/../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> LCLScatter(TAO_LCL *lclP, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a> u, <a href="../.._constrained/../../../docs/manualpages/Vec/Vec.html">Vec</a> v)</font></strong>
+<a name="line702">702: </a>{
+<a name="line703">703: </a>  <a href="../.._constrained/../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(lclP-&gt;state_scatter, x, u, <a href="../.._constrained/../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../.._constrained/../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line704">704: </a>  <a href="../.._constrained/../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(lclP-&gt;state_scatter, x, u, <a href="../.._constrained/../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../.._constrained/../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line705">705: </a>  <a href="../.._constrained/../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(lclP-&gt;design_scatter, x, v, <a href="../.._constrained/../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../.._constrained/../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line706">706: </a>  <a href="../.._constrained/../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(lclP-&gt;design_scatter, x, v, <a href="../.._constrained/../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../.._constrained/../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line707">707: </a>  <font color="#4169E1">return</font> 0;
+<a name="line708">708: </a>}
+</pre>
+</body>
+
+</html>

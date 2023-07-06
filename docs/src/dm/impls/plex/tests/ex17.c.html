@@ -1,0 +1,131 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/plex/tests/ex17.c">Actual source code: ex17.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:29+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>static char help[] = <font color="#666666">"Tests for point location\n\n"</font>;
+
+<a name="line3">  3: </a>#include <A href="../../../../../include/petscsf.h.html">&lt;petscsf.h&gt;</A>
+<a name="line4">  4: </a>#include <A href="../../../../../include/petscdmplex.h.html">&lt;petscdmplex.h&gt;</A>
+
+<a name="line6">  6: </a><strong><font color="#4169E1"><a name="CreateMesh"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CreateMesh(<a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../docs/manualpages/DM/DM.html">DM</a> *dm)</font></strong>
+<a name="line7">  7: </a>{
+<a name="line9">  9: </a>  <a href="../../../../../docs/manualpages/DM/DMCreate.html">DMCreate</a>(comm, dm);
+<a name="line10"> 10: </a>  <a href="../../../../../docs/manualpages/DM/DMSetType.html">DMSetType</a>(*dm, <a href="../../../../../docs/manualpages/DMPlex/DMPLEX.html">DMPLEX</a>);
+<a name="line11"> 11: </a>  <a href="../../../../../docs/manualpages/DM/DMSetFromOptions.html">DMSetFromOptions</a>(*dm);
+<a name="line12"> 12: </a>  <a href="../../../../../docs/manualpages/DM/DMViewFromOptions.html">DMViewFromOptions</a>(*dm, NULL, <font color="#666666">"-dm_view"</font>);
+<a name="line13"> 13: </a>  <font color="#4169E1">return</font> 0;
+<a name="line14"> 14: </a>}
+
+<a name="line16"> 16: </a><strong><font color="#4169E1"><a name="TestLocation"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TestLocation(<a href="../../../../../docs/manualpages/DM/DM.html">DM</a> dm)</font></strong>
+<a name="line17"> 17: </a>{
+<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>                points;
+<a name="line19"> 19: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a>            cellSF = NULL;
+<a name="line20"> 20: </a>  const <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html">PetscSFNode</a> *cells;
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *a;
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           cdim, n;
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           cStart, cEnd, c;
+
+<a name="line26"> 26: </a>  <a href="../../../../../docs/manualpages/DM/DMGetCoordinateDim.html">DMGetCoordinateDim</a>(dm, &amp;cdim);
+<a name="line27"> 27: </a>  <a href="../../../../../docs/manualpages/DM/DMGetCoordinatesLocalSetUp.html">DMGetCoordinatesLocalSetUp</a>(dm);
+<a name="line28"> 28: </a>  <a href="../../../../../docs/manualpages/DMPlex/DMPlexGetHeightStratum.html">DMPlexGetHeightStratum</a>(dm, 0, &amp;cStart, &amp;cEnd);
+<a name="line29"> 29: </a>  <font color="#B22222">/* Locate all centroids */</font>
+<a name="line30"> 30: </a>  <a href="../../../../../docs/manualpages/Vec/VecCreateSeq.html">VecCreateSeq</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, (cEnd - cStart) * cdim, &amp;points);
+<a name="line31"> 31: </a>  <a href="../../../../../docs/manualpages/Vec/VecSetBlockSize.html">VecSetBlockSize</a>(points, cdim);
+<a name="line32"> 32: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(points, &amp;a);
+<a name="line33"> 33: </a>  <font color="#4169E1">for</font> (c = cStart; c &lt; cEnd; ++c) {
+<a name="line34"> 34: </a>    <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> centroid[3];
+<a name="line35"> 35: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  off = (c - cStart) * cdim, d;
+
+<a name="line37"> 37: </a>    <a href="../../../../../docs/manualpages/DMPlex/DMPlexComputeCellGeometryFVM.html">DMPlexComputeCellGeometryFVM</a>(dm, c, NULL, centroid, NULL);
+<a name="line38"> 38: </a>    <font color="#4169E1">for</font> (d = 0; d &lt; cdim; ++d) a[off + d] = centroid[d];
+<a name="line39"> 39: </a>  }
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(points, &amp;a);
+<a name="line41"> 41: </a>  <a href="../../../../../docs/manualpages/DM/DMLocatePoints.html">DMLocatePoints</a>(dm, points, <a href="../../../../../docs/manualpages/DM/DMPointLocationType.html">DM_POINTLOCATION_NONE</a>, &amp;cellSF);
+<a name="line42"> 42: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;points);
+<a name="line43"> 43: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html">PetscSFGetGraph</a>(cellSF, NULL, &amp;n, NULL, &amp;cells);
+<a name="line44"> 44: </a>  <font color="#4169E1">if</font> (n != (cEnd - cStart)) {
+<a name="line45"> 45: </a>    <font color="#4169E1">for</font> (c = 0; c &lt; n; ++c) {
+<a name="line46"> 46: </a>      <font color="#4169E1">if</font> (cells[c].index != c + cStart) <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"Could not locate centroid of cell %"</font> PetscInt_FMT <font color="#666666">", error %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, c + cStart, cells[c].index);
+<a name="line47"> 47: </a>    }
+<a name="line48"> 48: </a>    <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_PLIB, <font color="#666666">"Located %"</font> PetscInt_FMT <font color="#666666">" points instead of %"</font> PetscInt_FMT, n, cEnd - cStart);
+<a name="line49"> 49: </a>  }
+<a name="line51"> 51: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFDestroy.html">PetscSFDestroy</a>(&amp;cellSF);
+<a name="line52"> 52: </a>  <font color="#4169E1">return</font> 0;
+<a name="line53"> 53: </a>}
+
+<a name="line55"> 55: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
+<a name="line56"> 56: </a>{
+<a name="line57"> 57: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a> dm;
+
+<a name="line60"> 60: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help);
+<a name="line61"> 61: </a>  CreateMesh(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;dm);
+<a name="line62"> 62: </a>  TestLocation(dm);
+<a name="line63"> 63: </a>  <a href="../../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dm);
+<a name="line64"> 64: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line65"> 65: </a>  <font color="#4169E1">return</font> 0;
+<a name="line66"> 66: </a>}
+
+<a name="line68"> 68: </a><font color="#B22222">/*TEST</font>
+
+<a name="line70"> 70: </a><font color="#B22222">  testset:</font>
+<a name="line71"> 71: </a><font color="#B22222">    args: -dm_plex_dim 1 -dm_plex_box_faces 10</font>
+
+<a name="line73"> 73: </a><font color="#B22222">    test:</font>
+<a name="line74"> 74: </a><font color="#B22222">      suffix: seg</font>
+
+<a name="line76"> 76: </a><font color="#B22222">    test:</font>
+<a name="line77"> 77: </a><font color="#B22222">      suffix: seg_hash</font>
+<a name="line78"> 78: </a><font color="#B22222">      args: -dm_refine 2 -dm_plex_hash_location</font>
+
+<a name="line80"> 80: </a><font color="#B22222">  testset:</font>
+<a name="line81"> 81: </a><font color="#B22222">    args: -dm_plex_box_faces 5,5</font>
+
+<a name="line83"> 83: </a><font color="#B22222">    test:</font>
+<a name="line84"> 84: </a><font color="#B22222">      suffix: tri</font>
+<a name="line85"> 85: </a><font color="#B22222">      requires: triangle</font>
+
+<a name="line87"> 87: </a><font color="#B22222">    test:</font>
+<a name="line88"> 88: </a><font color="#B22222">      suffix: tri_hash</font>
+<a name="line89"> 89: </a><font color="#B22222">      requires: triangle</font>
+<a name="line90"> 90: </a><font color="#B22222">      args: -dm_refine 2 -dm_plex_hash_location</font>
+
+<a name="line92"> 92: </a><font color="#B22222">    test:</font>
+<a name="line93"> 93: </a><font color="#B22222">      suffix: quad</font>
+<a name="line94"> 94: </a><font color="#B22222">      args: -dm_plex_simplex 0</font>
+
+<a name="line96"> 96: </a><font color="#B22222">    test:</font>
+<a name="line97"> 97: </a><font color="#B22222">      suffix: quad_hash</font>
+<a name="line98"> 98: </a><font color="#B22222">      args: -dm_plex_simplex 0 -dm_refine 2 -dm_plex_hash_location</font>
+
+<a name="line100">100: </a><font color="#B22222">  testset:</font>
+<a name="line101">101: </a><font color="#B22222">    args: -dm_plex_dim 3 -dm_plex_box_faces 3,3,3</font>
+
+<a name="line103">103: </a><font color="#B22222">    test:</font>
+<a name="line104">104: </a><font color="#B22222">      suffix: tet</font>
+<a name="line105">105: </a><font color="#B22222">      requires: ctetgen</font>
+
+<a name="line107">107: </a><font color="#B22222">    test:</font>
+<a name="line108">108: </a><font color="#B22222">      suffix: tet_hash</font>
+<a name="line109">109: </a><font color="#B22222">      requires: ctetgen</font>
+<a name="line110">110: </a><font color="#B22222">      args: -dm_refine 1 -dm_plex_hash_location</font>
+
+<a name="line112">112: </a><font color="#B22222">    test:</font>
+<a name="line113">113: </a><font color="#B22222">      suffix: hex</font>
+<a name="line114">114: </a><font color="#B22222">      args: -dm_plex_simplex 0</font>
+
+<a name="line116">116: </a><font color="#B22222">    test:</font>
+<a name="line117">117: </a><font color="#B22222">      suffix: hex_hash</font>
+<a name="line118">118: </a><font color="#B22222">      args: -dm_plex_simplex 0 -dm_refine 1 -dm_plex_hash_location</font>
+
+<a name="line120">120: </a><font color="#B22222">TEST*/</font>
+</pre>
+</body>
+
+</html>

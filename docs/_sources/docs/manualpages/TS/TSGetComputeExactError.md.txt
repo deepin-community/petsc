@@ -1,0 +1,52 @@
+# TSGetComputeExactError
+Get the function used to automatically compute the exact error for the timestepping. 
+## Synopsis
+```
+#include "petscts.h"  
+PetscErrorCode TSGetComputeExactError(TS ts, PetscErrorCode (**exactError)(TS, Vec, Vec))
+```
+Not collective
+
+
+## Input Parameter
+
+- ***ts -*** time stepping context
+
+
+
+## Output Parameter
+
+- ***exactError -*** The function which computes the solution error
+
+
+
+## Calling sequence for exactError
+```none
+PetscErrorCode exactError(TS ts, Vec u)
+```
+
+- ***ts -*** The timestepping context
+- ***u  -*** The approximate solution vector
+- ***e  -*** The input vector in which the error is stored
+
+
+
+
+
+## See Also
+ [](chapter_ts), `TS`, `TSGetComputeExactError()`, `TSComputeExactError()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/interface/ts.c.html#TSGetComputeExactError">src/ts/interface/ts.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/ts/interface/ts.c)
+
+
+[Index of all TS routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

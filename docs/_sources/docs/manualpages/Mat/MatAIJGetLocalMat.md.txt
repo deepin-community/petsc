@@ -1,0 +1,48 @@
+# MatAIJGetLocalMat
+Creates a `MATSEQAIJ` from a `MATAIJ` matrix by taking all its local rows and putting them into a sequential matrix with mlocal rows and n columns. Where mlocal is the row count obtained with `MatGetLocalSize()` and n is the global column count obtained with `MatGetSize()` 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatAIJGetLocalMat(Mat A, Mat *A_loc)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***A -*** the matrix
+- ***scall -*** either `MAT_INITIAL_MATRIX` or `MAT_REUSE_MATRIX`
+
+
+
+## Output Parameter
+
+- ***A_loc -*** the local sequential matrix generated
+
+
+
+
+
+## Notes
+In other words combines the two parts of a parallel `MATMPIAIJ` matrix on each process to a single matrix.
+
+Destroy the matrix with `MatDestroy()`
+
+
+## See Also
+ `MatMPIAIJGetLocalMat()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/aij/mpi/mpiaij.c.html#MatAIJGetLocalMat">src/mat/impls/aij/mpi/mpiaij.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/aij/mpi/mpiaij.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

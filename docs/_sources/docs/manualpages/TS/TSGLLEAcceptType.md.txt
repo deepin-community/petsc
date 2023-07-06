@@ -1,0 +1,28 @@
+# TSGLLEAcceptType
+String with the name of `TSGLLEAccept` scheme 
+## Synopsis
+```
+typedef const char *TSGLLEAcceptType;
+#define TSGLLEACCEPT_ALWAYS "always"
+
+```
+
+
+
+## See Also
+ `TSGLLESetAcceptType()`, `TS`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscts.h.html#TSGLLEAcceptType">include/petscts.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscts.h)
+
+
+[Index of all TS routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

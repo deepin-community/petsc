@@ -1,0 +1,490 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/partition/impls/scotch/scotch.c">Actual source code: scotch.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:14+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../../impls/adj/mpi/mpiadj.h.html">&lt;../src/mat/impls/adj/mpi/mpiadj.h&gt;</A>
+
+<a name="line4">  4: </a>EXTERN_C_BEGIN
+<a name="line5">  5: </a><font color="#A020F0">#include &lt;ptscotch.h&gt;</font>
+<a name="line6">  6: </a><font color="#A020F0">#if defined(PETSC_HAVE_SCOTCH_PARMETIS_V3_NODEND)</font>
+<a name="line7">  7: </a><font color="#B22222">/* we define the prototype instead of include SCOTCH's parmetis.h */</font>
+<a name="line8">  8: </a><strong><font color="#4169E1">void SCOTCH_ParMETIS_V3_NodeND(const SCOTCH_Num *const, SCOTCH_Num *const, SCOTCH_Num *const, const SCOTCH_Num *const, const SCOTCH_Num *const, SCOTCH_Num *const, SCOTCH_Num *const, <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> *)</font></strong>;
+<a name="line9">  9: </a><font color="#A020F0">#endif</font>
+<a name="line10"> 10: </a>EXTERN_C_END
+
+<a name="line12"> 12: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line13"> 13: </a>  double     imbalance;
+<a name="line14"> 14: </a>  SCOTCH_Num strategy;
+<a name="line15"> 15: </a>} MatPartitioning_PTScotch;
+
+<a name="line17"> 17: </a><font color="#B22222">/*@</font>
+<a name="line18"> 18: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetImbalance.html">MatPartitioningPTScotchSetImbalance</a> - Sets the value of the load imbalance</font>
+<a name="line19"> 19: </a><font color="#B22222">   ratio to be used during strategy selection.</font>
+
+<a name="line21"> 21: </a><font color="#B22222">   Collective</font>
+
+<a name="line23"> 23: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line24"> 24: </a><font color="#B22222">+  part - the partitioning context</font>
+<a name="line25"> 25: </a><font color="#B22222">-  imb  - the load imbalance ratio</font>
+
+<a name="line27"> 27: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line28"> 28: </a><font color="#B22222">.  -mat_partitioning_ptscotch_imbalance &lt;imb&gt; - set load imbalance ratio</font>
+
+<a name="line30"> 30: </a><font color="#B22222">   Note:</font>
+<a name="line31"> 31: </a><font color="#B22222">   Must be in the range [0,1]. The default value is 0.01.</font>
+
+<a name="line33"> 33: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line35"> 35: </a><font color="#B22222">.seealso: `MATPARTITIONINGSCOTCH`, `<a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetStrategy.html">MatPartitioningPTScotchSetStrategy</a>()`, `<a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchGetImbalance.html">MatPartitioningPTScotchGetImbalance</a>()`</font>
+<a name="line36"> 36: </a><font color="#B22222">@*/</font>
+<a name="line37"> 37: </a><strong><font color="#4169E1"><a name="MatPartitioningPTScotchSetImbalance"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetImbalance.html">MatPartitioningPTScotchSetImbalance</a>(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> imb)</font></strong>
+<a name="line38"> 38: </a>{
+<a name="line41"> 41: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryMethod.html">PetscTryMethod</a>(part, <font color="#666666">"MatPartitioningPTScotchSetImbalance_C"</font>, (<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a>, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>), (part, imb));
+<a name="line42"> 42: </a>  <font color="#4169E1">return</font> 0;
+<a name="line43"> 43: </a>}
+
+<a name="line45"> 45: </a><strong><font color="#4169E1"><a name="MatPartitioningPTScotchSetImbalance_PTScotch"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatPartitioningPTScotchSetImbalance_PTScotch(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> imb)</font></strong>
+<a name="line46"> 46: </a>{
+<a name="line47"> 47: </a>  MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part-&gt;data;
+
+<a name="line49"> 49: </a>  <font color="#4169E1">if</font> (imb == <a href="../../../../../docs/manualpages/Sys/PETSC_DEFAULT.html">PETSC_DEFAULT</a>) scotch-&gt;imbalance = 0.01;
+<a name="line50"> 50: </a>  <font color="#4169E1">else</font> {
+<a name="line52"> 52: </a>    scotch-&gt;imbalance = (double)imb;
+<a name="line53"> 53: </a>  }
+<a name="line54"> 54: </a>  <font color="#4169E1">return</font> 0;
+<a name="line55"> 55: </a>}
+
+<a name="line57"> 57: </a><font color="#B22222">/*@</font>
+<a name="line58"> 58: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchGetImbalance.html">MatPartitioningPTScotchGetImbalance</a> - Gets the value of the load imbalance</font>
+<a name="line59"> 59: </a><font color="#B22222">   ratio used during strategy selection.</font>
+
+<a name="line61"> 61: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line63"> 63: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line64"> 64: </a><font color="#B22222">.  part - the partitioning context</font>
+
+<a name="line66"> 66: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line67"> 67: </a><font color="#B22222">.  imb  - the load imbalance ratio</font>
+
+<a name="line69"> 69: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line71"> 71: </a><font color="#B22222">.seealso: `MATPARTITIONINGSCOTCH`, `<a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetImbalance.html">MatPartitioningPTScotchSetImbalance</a>()`</font>
+<a name="line72"> 72: </a><font color="#B22222">@*/</font>
+<a name="line73"> 73: </a><strong><font color="#4169E1"><a name="MatPartitioningPTScotchGetImbalance"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchGetImbalance.html">MatPartitioningPTScotchGetImbalance</a>(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *imb)</font></strong>
+<a name="line74"> 74: </a>{
+<a name="line77"> 77: </a>  <a href="../../../../../docs/manualpages/Sys/PetscUseMethod.html">PetscUseMethod</a>(part, <font color="#666666">"MatPartitioningPTScotchGetImbalance_C"</font>, (<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a>, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *), (part, imb));
+<a name="line78"> 78: </a>  <font color="#4169E1">return</font> 0;
+<a name="line79"> 79: </a>}
+
+<a name="line81"> 81: </a><strong><font color="#4169E1"><a name="MatPartitioningPTScotchGetImbalance_PTScotch"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatPartitioningPTScotchGetImbalance_PTScotch(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *imb)</font></strong>
+<a name="line82"> 82: </a>{
+<a name="line83"> 83: </a>  MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part-&gt;data;
+
+<a name="line85"> 85: </a>  *imb = scotch-&gt;imbalance;
+<a name="line86"> 86: </a>  <font color="#4169E1">return</font> 0;
+<a name="line87"> 87: </a>}
+
+<a name="line89"> 89: </a><font color="#B22222">/*@</font>
+<a name="line90"> 90: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetStrategy.html">MatPartitioningPTScotchSetStrategy</a> - Sets the strategy to be used in PTScotch.</font>
+
+<a name="line92"> 92: </a><font color="#B22222">   Collective</font>
+
+<a name="line94"> 94: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line95"> 95: </a><font color="#B22222">+  part - the partitioning context</font>
+<a name="line96"> 96: </a><font color="#B22222">-  strategy - the strategy, one of</font>
+<a name="line97"> 97: </a><font color="#B22222">.vb</font>
+<a name="line98"> 98: </a><font color="#B22222">     MP_PTSCOTCH_DEFAULT     - Default behavior</font>
+<a name="line99"> 99: </a><font color="#B22222">     MP_PTSCOTCH_QUALITY     - Prioritize quality over speed</font>
+<a name="line100">100: </a><font color="#B22222">     MP_PTSCOTCH_SPEED       - Prioritize speed over quality</font>
+<a name="line101">101: </a><font color="#B22222">     MP_PTSCOTCH_BALANCE     - Enforce load balance</font>
+<a name="line102">102: </a><font color="#B22222">     MP_PTSCOTCH_SAFETY      - Avoid methods that may fail</font>
+<a name="line103">103: </a><font color="#B22222">     MP_PTSCOTCH_SCALABILITY - Favor scalability as much as possible</font>
+<a name="line104">104: </a><font color="#B22222">.ve</font>
+
+<a name="line106">106: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line107">107: </a><font color="#B22222">.  -mat_partitioning_ptscotch_strategy [quality,speed,balance,safety,scalability] - strategy</font>
+
+<a name="line109">109: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line111">111: </a><font color="#B22222">   Note:</font>
+<a name="line112">112: </a><font color="#B22222">   The default is `MP_SCOTCH_QUALITY`. See the PTScotch documentation for more information.</font>
+
+<a name="line114">114: </a><font color="#B22222">.seealso: `MATPARTITIONINGSCOTCH`, `<a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetImbalance.html">MatPartitioningPTScotchSetImbalance</a>()`, `<a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchGetStrategy.html">MatPartitioningPTScotchGetStrategy</a>()`</font>
+<a name="line115">115: </a><font color="#B22222">@*/</font>
+<a name="line116">116: </a><strong><font color="#4169E1"><a name="MatPartitioningPTScotchSetStrategy"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetStrategy.html">MatPartitioningPTScotchSetStrategy</a>(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part, MPPTScotchStrategyType strategy)</font></strong>
+<a name="line117">117: </a>{
+<a name="line120">120: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryMethod.html">PetscTryMethod</a>(part, <font color="#666666">"MatPartitioningPTScotchSetStrategy_C"</font>, (<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a>, MPPTScotchStrategyType), (part, strategy));
+<a name="line121">121: </a>  <font color="#4169E1">return</font> 0;
+<a name="line122">122: </a>}
+
+<a name="line124">124: </a><strong><font color="#4169E1"><a name="MatPartitioningPTScotchSetStrategy_PTScotch"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatPartitioningPTScotchSetStrategy_PTScotch(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part, MPPTScotchStrategyType strategy)</font></strong>
+<a name="line125">125: </a>{
+<a name="line126">126: </a>  MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part-&gt;data;
+
+<a name="line128">128: </a>  <font color="#4169E1">switch</font> (strategy) {
+<a name="line129">129: </a>  <font color="#4169E1">case</font> MP_PTSCOTCH_QUALITY:
+<a name="line130">130: </a>    scotch-&gt;strategy = SCOTCH_STRATQUALITY;
+<a name="line131">131: </a>    <font color="#4169E1">break</font>;
+<a name="line132">132: </a>  <font color="#4169E1">case</font> MP_PTSCOTCH_SPEED:
+<a name="line133">133: </a>    scotch-&gt;strategy = SCOTCH_STRATSPEED;
+<a name="line134">134: </a>    <font color="#4169E1">break</font>;
+<a name="line135">135: </a>  <font color="#4169E1">case</font> MP_PTSCOTCH_BALANCE:
+<a name="line136">136: </a>    scotch-&gt;strategy = SCOTCH_STRATBALANCE;
+<a name="line137">137: </a>    <font color="#4169E1">break</font>;
+<a name="line138">138: </a>  <font color="#4169E1">case</font> MP_PTSCOTCH_SAFETY:
+<a name="line139">139: </a>    scotch-&gt;strategy = SCOTCH_STRATSAFETY;
+<a name="line140">140: </a>    <font color="#4169E1">break</font>;
+<a name="line141">141: </a>  <font color="#4169E1">case</font> MP_PTSCOTCH_SCALABILITY:
+<a name="line142">142: </a>    scotch-&gt;strategy = SCOTCH_STRATSCALABILITY;
+<a name="line143">143: </a>    <font color="#4169E1">break</font>;
+<a name="line144">144: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line145">145: </a>    scotch-&gt;strategy = SCOTCH_STRATDEFAULT;
+<a name="line146">146: </a>    <font color="#4169E1">break</font>;
+<a name="line147">147: </a>  }
+<a name="line148">148: </a>  <font color="#4169E1">return</font> 0;
+<a name="line149">149: </a>}
+
+<a name="line151">151: </a><font color="#B22222">/*@</font>
+<a name="line152">152: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchGetStrategy.html">MatPartitioningPTScotchGetStrategy</a> - Gets the strategy used in PTScotch.</font>
+
+<a name="line154">154: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line156">156: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line157">157: </a><font color="#B22222">.  part - the partitioning context</font>
+
+<a name="line159">159: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line160">160: </a><font color="#B22222">.  strategy - the strategy</font>
+
+<a name="line162">162: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line164">164: </a><font color="#B22222">.seealso: `MATPARTITIONINGSCOTCH`, `<a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetStrategy.html">MatPartitioningPTScotchSetStrategy</a>()`</font>
+<a name="line165">165: </a><font color="#B22222">@*/</font>
+<a name="line166">166: </a><strong><font color="#4169E1"><a name="MatPartitioningPTScotchGetStrategy"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchGetStrategy.html">MatPartitioningPTScotchGetStrategy</a>(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part, MPPTScotchStrategyType *strategy)</font></strong>
+<a name="line167">167: </a>{
+<a name="line170">170: </a>  <a href="../../../../../docs/manualpages/Sys/PetscUseMethod.html">PetscUseMethod</a>(part, <font color="#666666">"MatPartitioningPTScotchGetStrategy_C"</font>, (<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a>, MPPTScotchStrategyType *), (part, strategy));
+<a name="line171">171: </a>  <font color="#4169E1">return</font> 0;
+<a name="line172">172: </a>}
+
+<a name="line174">174: </a><strong><font color="#4169E1"><a name="MatPartitioningPTScotchGetStrategy_PTScotch"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatPartitioningPTScotchGetStrategy_PTScotch(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part, MPPTScotchStrategyType *strategy)</font></strong>
+<a name="line175">175: </a>{
+<a name="line176">176: </a>  MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part-&gt;data;
+
+<a name="line178">178: </a>  <font color="#4169E1">switch</font> (scotch-&gt;strategy) {
+<a name="line179">179: </a>  <font color="#4169E1">case</font> SCOTCH_STRATQUALITY:
+<a name="line180">180: </a>    *strategy = MP_PTSCOTCH_QUALITY;
+<a name="line181">181: </a>    <font color="#4169E1">break</font>;
+<a name="line182">182: </a>  <font color="#4169E1">case</font> SCOTCH_STRATSPEED:
+<a name="line183">183: </a>    *strategy = MP_PTSCOTCH_SPEED;
+<a name="line184">184: </a>    <font color="#4169E1">break</font>;
+<a name="line185">185: </a>  <font color="#4169E1">case</font> SCOTCH_STRATBALANCE:
+<a name="line186">186: </a>    *strategy = MP_PTSCOTCH_BALANCE;
+<a name="line187">187: </a>    <font color="#4169E1">break</font>;
+<a name="line188">188: </a>  <font color="#4169E1">case</font> SCOTCH_STRATSAFETY:
+<a name="line189">189: </a>    *strategy = MP_PTSCOTCH_SAFETY;
+<a name="line190">190: </a>    <font color="#4169E1">break</font>;
+<a name="line191">191: </a>  <font color="#4169E1">case</font> SCOTCH_STRATSCALABILITY:
+<a name="line192">192: </a>    *strategy = MP_PTSCOTCH_SCALABILITY;
+<a name="line193">193: </a>    <font color="#4169E1">break</font>;
+<a name="line194">194: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line195">195: </a>    *strategy = MP_PTSCOTCH_DEFAULT;
+<a name="line196">196: </a>    <font color="#4169E1">break</font>;
+<a name="line197">197: </a>  }
+<a name="line198">198: </a>  <font color="#4169E1">return</font> 0;
+<a name="line199">199: </a>}
+
+<a name="line201">201: </a><strong><font color="#4169E1"><a name="MatPartitioningView_PTScotch"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatPartitioningView_PTScotch(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line202">202: </a>{
+<a name="line203">203: </a>  MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part-&gt;data;
+<a name="line204">204: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>                 isascii;
+<a name="line205">205: </a>  const char               *str = NULL;
+
+<a name="line207">207: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;isascii);
+<a name="line208">208: </a>  <font color="#4169E1">if</font> (isascii) {
+<a name="line209">209: </a>    <font color="#4169E1">switch</font> (scotch-&gt;strategy) {
+<a name="line210">210: </a>    <font color="#4169E1">case</font> SCOTCH_STRATQUALITY:
+<a name="line211">211: </a>      str = <font color="#666666">"Prioritize quality over speed"</font>;
+<a name="line212">212: </a>      <font color="#4169E1">break</font>;
+<a name="line213">213: </a>    <font color="#4169E1">case</font> SCOTCH_STRATSPEED:
+<a name="line214">214: </a>      str = <font color="#666666">"Prioritize speed over quality"</font>;
+<a name="line215">215: </a>      <font color="#4169E1">break</font>;
+<a name="line216">216: </a>    <font color="#4169E1">case</font> SCOTCH_STRATBALANCE:
+<a name="line217">217: </a>      str = <font color="#666666">"Enforce load balance"</font>;
+<a name="line218">218: </a>      <font color="#4169E1">break</font>;
+<a name="line219">219: </a>    <font color="#4169E1">case</font> SCOTCH_STRATSAFETY:
+<a name="line220">220: </a>      str = <font color="#666666">"Avoid methods that may fail"</font>;
+<a name="line221">221: </a>      <font color="#4169E1">break</font>;
+<a name="line222">222: </a>    <font color="#4169E1">case</font> SCOTCH_STRATSCALABILITY:
+<a name="line223">223: </a>      str = <font color="#666666">"Favor scalability as much as possible"</font>;
+<a name="line224">224: </a>      <font color="#4169E1">break</font>;
+<a name="line225">225: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line226">226: </a>      str = <font color="#666666">"Default behavior"</font>;
+<a name="line227">227: </a>      <font color="#4169E1">break</font>;
+<a name="line228">228: </a>    }
+<a name="line229">229: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Strategy=%s\n"</font>, str);
+<a name="line230">230: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Load imbalance ratio=%g\n"</font>, scotch-&gt;imbalance);
+<a name="line231">231: </a>  }
+<a name="line232">232: </a>  <font color="#4169E1">return</font> 0;
+<a name="line233">233: </a>}
+
+<a name="line235">235: </a><strong><font color="#4169E1"><a name="MatPartitioningSetFromOptions_PTScotch"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatPartitioningSetFromOptions_PTScotch(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line236">236: </a>{
+<a name="line237">237: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>                 flag;
+<a name="line238">238: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>                 r;
+<a name="line239">239: </a>  MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part-&gt;data;
+<a name="line240">240: </a>  MPPTScotchStrategyType    strat;
+
+<a name="line242">242: </a>  <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchGetStrategy.html">MatPartitioningPTScotchGetStrategy</a>(part, &amp;strat);
+<a name="line243">243: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"PTScotch partitioning options"</font>);
+<a name="line244">244: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsEnum.html">PetscOptionsEnum</a>(<font color="#666666">"-mat_partitioning_ptscotch_strategy"</font>, <font color="#666666">"Strategy"</font>, <font color="#666666">"<a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetStrategy.html">MatPartitioningPTScotchSetStrategy</a>"</font>, MPPTScotchStrategyTypes, (<a href="../../../../../docs/manualpages/Sys/PetscEnum.html">PetscEnum</a>)strat, (<a href="../../../../../docs/manualpages/Sys/PetscEnum.html">PetscEnum</a> *)&amp;strat, &amp;flag);
+<a name="line245">245: </a>  <font color="#4169E1">if</font> (flag) <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetStrategy.html">MatPartitioningPTScotchSetStrategy</a>(part, strat);
+<a name="line246">246: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsReal.html">PetscOptionsReal</a>(<font color="#666666">"-mat_partitioning_ptscotch_imbalance"</font>, <font color="#666666">"Load imbalance ratio"</font>, <font color="#666666">"<a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetImbalance.html">MatPartitioningPTScotchSetImbalance</a>"</font>, scotch-&gt;imbalance, &amp;r, &amp;flag);
+<a name="line247">247: </a>  <font color="#4169E1">if</font> (flag) <a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetImbalance.html">MatPartitioningPTScotchSetImbalance</a>(part, r);
+<a name="line248">248: </a>  PetscOptionsHeadEnd();
+<a name="line249">249: </a>  <font color="#4169E1">return</font> 0;
+<a name="line250">250: </a>}
+
+<a name="line252">252: </a><strong><font color="#4169E1"><a name="MatPartitioningApply_PTScotch_Private"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatPartitioningApply_PTScotch_Private(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part, <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> useND, <a href="../../../../../docs/manualpages/IS/IS.html">IS</a> *partitioning)</font></strong>
+<a name="line253">253: </a>{
+<a name="line254">254: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>                  pcomm, comm;
+<a name="line255">255: </a>  MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part-&gt;data;
+<a name="line256">256: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>               rank;
+<a name="line257">257: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>                       mat = part-&gt;adj;
+<a name="line258">258: </a>  Mat_MPIAdj               *adj = (Mat_MPIAdj *)mat-&gt;data;
+<a name="line259">259: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>                 flg, distributed;
+<a name="line260">260: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>                 proc_weight_flg;
+<a name="line261">261: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                  i, j, p, bs = 1, nold;
+<a name="line262">262: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                 *NDorder = NULL;
+<a name="line263">263: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>                *vwgttab, deltval;
+<a name="line264">264: </a>  SCOTCH_Num               *locals, *velotab, *veloloctab, *edloloctab, vertlocnbr, edgelocnbr, nparts = part-&gt;n;
+
+<a name="line266">266: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)part, &amp;pcomm);
+<a name="line267">267: </a>  <font color="#B22222">/* Duplicate the communicator to be sure that PTSCOTCH attribute caching does not interfere with PETSc. */</font>
+<a name="line268">268: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_dup.html#MPI_Comm_dup">MPI_Comm_dup</a>(pcomm, &amp;comm);
+<a name="line269">269: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line270">270: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat, <a href="../../../../../docs/manualpages/Mat/MATMPIADJ.html">MATMPIADJ</a>, &amp;flg);
+<a name="line271">271: </a>  <font color="#4169E1">if</font> (!flg) {
+<a name="line272">272: </a>    <font color="#B22222">/* bs indicates if the converted matrix is "reduced" from the original and hence the</font>
+<a name="line273">273: </a><font color="#B22222">       resulting partition results need to be stretched to match the original matrix */</font>
+<a name="line274">274: </a>    nold = mat-&gt;rmap-&gt;n;
+<a name="line275">275: </a>    <a href="../../../../../docs/manualpages/Mat/MatConvert.html">MatConvert</a>(mat, <a href="../../../../../docs/manualpages/Mat/MATMPIADJ.html">MATMPIADJ</a>, <a href="../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>, &amp;mat);
+<a name="line276">276: </a>    <font color="#4169E1">if</font> (mat-&gt;rmap-&gt;n &gt; 0) bs = nold / mat-&gt;rmap-&gt;n;
+<a name="line277">277: </a>    adj = (Mat_MPIAdj *)mat-&gt;data;
+<a name="line278">278: </a>  }
+
+<a name="line280">280: </a>  proc_weight_flg = part-&gt;part_weights ? <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line281">281: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, <font color="#666666">"-mat_partitioning_ptscotch_proc_weight"</font>, &amp;proc_weight_flg, NULL);
+
+<a name="line283">283: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(mat-&gt;rmap-&gt;n + 1, &amp;locals);
+
+<a name="line285">285: </a>  <font color="#4169E1">if</font> (useND) {
+<a name="line286">286: </a><font color="#A020F0">#if defined(PETSC_HAVE_SCOTCH_PARMETIS_V3_NODEND)</font>
+<a name="line287">287: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   *sizes, *seps, log2size, subd, *level, base = 0;
+<a name="line288">288: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size;
+
+<a name="line290">290: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line291">291: </a>    log2size = PetscLog2Real(size);
+<a name="line292">292: </a>    subd     = PetscPowInt(2, log2size);
+<a name="line294">294: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(mat-&gt;rmap-&gt;n, &amp;NDorder);
+<a name="line295">295: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc3.html">PetscMalloc3</a>(2 * size, &amp;sizes, 4 * size, &amp;seps, size, &amp;level);
+<a name="line296">296: </a>    SCOTCH_ParMETIS_V3_NodeND(mat-&gt;rmap-&gt;range, adj-&gt;i, adj-&gt;j, &amp;base, NULL, NDorder, sizes, &amp;comm);
+<a name="line297">297: </a>    MatPartitioningSizesToSep_Private(subd, sizes, seps, level);
+<a name="line298">298: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; mat-&gt;rmap-&gt;n; i++) {
+<a name="line299">299: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> loc;
+
+<a name="line301">301: </a>      <a href="../../../../../docs/manualpages/Sys/PetscFindInt.html">PetscFindInt</a>(NDorder[i], 2 * subd, seps, &amp;loc);
+<a name="line302">302: </a>      <font color="#4169E1">if</font> (loc &lt; 0) {
+<a name="line303">303: </a>        loc = -(loc + 1);
+<a name="line304">304: </a>        <font color="#4169E1">if</font> (loc % 2) { <font color="#B22222">/* part of subdomain */</font>
+<a name="line305">305: </a>          locals[i] = loc / 2;
+<a name="line306">306: </a>        } <font color="#4169E1">else</font> {
+<a name="line307">307: </a>          <a href="../../../../../docs/manualpages/Sys/PetscFindInt.html">PetscFindInt</a>(NDorder[i], 2 * (subd - 1), seps + 2 * subd, &amp;loc);
+<a name="line308">308: </a>          loc       = loc &lt; 0 ? -(loc + 1) / 2 : loc / 2;
+<a name="line309">309: </a>          locals[i] = level[loc];
+<a name="line310">310: </a>        }
+<a name="line311">311: </a>      } <font color="#4169E1">else</font> locals[i] = loc / 2;
+<a name="line312">312: </a>    }
+<a name="line313">313: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree3.html">PetscFree3</a>(sizes, seps, level);
+<a name="line314">314: </a><font color="#A020F0">#else</font>
+<a name="line315">315: </a>    <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(pcomm, PETSC_ERR_SUP, <font color="#666666">"Need libptscotchparmetis.a compiled with -DSCOTCH_METIS_PREFIX"</font>);
+<a name="line316">316: </a><font color="#A020F0">#endif</font>
+<a name="line317">317: </a>  } <font color="#4169E1">else</font> {
+<a name="line318">318: </a>    velotab = NULL;
+<a name="line319">319: </a>    <font color="#4169E1">if</font> (proc_weight_flg) {
+<a name="line320">320: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(nparts, &amp;vwgttab);
+<a name="line321">321: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(nparts, &amp;velotab);
+<a name="line322">322: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; nparts; j++) {
+<a name="line323">323: </a>        <font color="#4169E1">if</font> (part-&gt;part_weights) vwgttab[j] = part-&gt;part_weights[j] * nparts;
+<a name="line324">324: </a>        <font color="#4169E1">else</font> vwgttab[j] = 1.0;
+<a name="line325">325: </a>      }
+<a name="line326">326: </a>      <font color="#4169E1">for</font> (i = 0; i &lt; nparts; i++) {
+<a name="line327">327: </a>        deltval = <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(vwgttab[i] - PetscFloorReal(vwgttab[i] + 0.5));
+<a name="line328">328: </a>        <font color="#4169E1">if</font> (deltval &gt; 0.01) {
+<a name="line329">329: </a>          <font color="#4169E1">for</font> (j = 0; j &lt; nparts; j++) vwgttab[j] /= deltval;
+<a name="line330">330: </a>        }
+<a name="line331">331: </a>      }
+<a name="line332">332: </a>      <font color="#4169E1">for</font> (i = 0; i &lt; nparts; i++) velotab[i] = (SCOTCH_Num)(vwgttab[i] + 0.5);
+<a name="line333">333: </a>      <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(vwgttab);
+<a name="line334">334: </a>    }
+
+<a name="line336">336: </a>    vertlocnbr = mat-&gt;rmap-&gt;range[rank + 1] - mat-&gt;rmap-&gt;range[rank];
+<a name="line337">337: </a>    edgelocnbr = adj-&gt;i[vertlocnbr];
+<a name="line338">338: </a>    veloloctab = part-&gt;vertex_weights;
+<a name="line339">339: </a>    edloloctab = part-&gt;use_edge_weights ? adj-&gt;values : NULL;
+
+<a name="line341">341: </a>    <font color="#B22222">/* detect whether all vertices are located at the same process in original graph */</font>
+<a name="line342">342: </a>    <font color="#4169E1">for</font> (p = 0; !mat-&gt;rmap-&gt;range[p + 1] &amp;&amp; p &lt; nparts; ++p)
+<a name="line343">343: </a>      ;
+<a name="line344">344: </a>    distributed = (mat-&gt;rmap-&gt;range[p + 1] == mat-&gt;rmap-&gt;N) ? <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a> : <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line345">345: </a>    <font color="#4169E1">if</font> (distributed) {
+<a name="line346">346: </a>      SCOTCH_Arch     archdat;
+<a name="line347">347: </a>      SCOTCH_Dgraph   grafdat;
+<a name="line348">348: </a>      SCOTCH_Dmapping mappdat;
+<a name="line349">349: </a>      SCOTCH_Strat    stradat;
+
+<a name="line351">351: </a>      SCOTCH_dgraphInit(&amp;grafdat, comm);
+<a name="line352">352: </a>      SCOTCH_dgraphBuild(&amp;grafdat, 0, vertlocnbr, vertlocnbr, adj-&gt;i, adj-&gt;i + 1, veloloctab, NULL, edgelocnbr, edgelocnbr, adj-&gt;j, NULL, edloloctab);
+
+<a name="line354">354: </a>      <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG)) SCOTCH_dgraphCheck(&amp;grafdat);
+
+<a name="line356">356: </a>      SCOTCH_archInit(&amp;archdat);
+<a name="line357">357: </a>      SCOTCH_stratInit(&amp;stradat);
+<a name="line358">358: </a>      SCOTCH_stratDgraphMapBuild(&amp;stradat, scotch-&gt;strategy, nparts, nparts, scotch-&gt;imbalance);
+
+<a name="line360">360: </a>      <font color="#4169E1">if</font> (velotab) {
+<a name="line361">361: </a>        SCOTCH_archCmpltw(&amp;archdat, nparts, velotab);
+<a name="line362">362: </a>      } <font color="#4169E1">else</font> {
+<a name="line363">363: </a>        SCOTCH_archCmplt(&amp;archdat, nparts);
+<a name="line364">364: </a>      }
+<a name="line365">365: </a>      SCOTCH_dgraphMapInit(&amp;grafdat, &amp;mappdat, &amp;archdat, locals);
+<a name="line366">366: </a>      SCOTCH_dgraphMapCompute(&amp;grafdat, &amp;mappdat, &amp;stradat);
+
+<a name="line368">368: </a>      SCOTCH_dgraphMapExit(&amp;grafdat, &amp;mappdat);
+<a name="line369">369: </a>      SCOTCH_archExit(&amp;archdat);
+<a name="line370">370: </a>      SCOTCH_stratExit(&amp;stradat);
+<a name="line371">371: </a>      SCOTCH_dgraphExit(&amp;grafdat);
+
+<a name="line373">373: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (rank == p) {
+<a name="line374">374: </a>      SCOTCH_Graph grafdat;
+<a name="line375">375: </a>      SCOTCH_Strat stradat;
+
+<a name="line377">377: </a>      SCOTCH_graphInit(&amp;grafdat);
+<a name="line378">378: </a>      SCOTCH_graphBuild(&amp;grafdat, 0, vertlocnbr, adj-&gt;i, adj-&gt;i + 1, veloloctab, NULL, edgelocnbr, adj-&gt;j, edloloctab);
+<a name="line379">379: </a>      <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG)) SCOTCH_graphCheck(&amp;grafdat);
+<a name="line380">380: </a>      SCOTCH_stratInit(&amp;stradat);
+<a name="line381">381: </a>      SCOTCH_stratGraphMapBuild(&amp;stradat, scotch-&gt;strategy, nparts, scotch-&gt;imbalance);
+<a name="line382">382: </a>      <font color="#4169E1">if</font> (velotab) {
+<a name="line383">383: </a>        SCOTCH_Arch archdat;
+<a name="line384">384: </a>        SCOTCH_archInit(&amp;archdat);
+<a name="line385">385: </a>        SCOTCH_archCmpltw(&amp;archdat, nparts, velotab);
+<a name="line386">386: </a>        SCOTCH_graphMap(&amp;grafdat, &amp;archdat, &amp;stradat, locals);
+<a name="line387">387: </a>        SCOTCH_archExit(&amp;archdat);
+<a name="line388">388: </a>      } <font color="#4169E1">else</font> {
+<a name="line389">389: </a>        SCOTCH_graphPart(&amp;grafdat, nparts, &amp;stradat, locals);
+<a name="line390">390: </a>      }
+<a name="line391">391: </a>      SCOTCH_stratExit(&amp;stradat);
+<a name="line392">392: </a>      SCOTCH_graphExit(&amp;grafdat);
+<a name="line393">393: </a>    }
+
+<a name="line395">395: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(velotab);
+<a name="line396">396: </a>  }
+<a name="line397">397: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_free.html#MPI_Comm_free">MPI_Comm_free</a>(&amp;comm);
+
+<a name="line399">399: </a>  <font color="#4169E1">if</font> (bs &gt; 1) {
+<a name="line400">400: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *newlocals;
+<a name="line401">401: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(bs * mat-&gt;rmap-&gt;n, &amp;newlocals);
+<a name="line402">402: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; mat-&gt;rmap-&gt;n; i++) {
+<a name="line403">403: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; bs; j++) newlocals[bs * i + j] = locals[i];
+<a name="line404">404: </a>    }
+<a name="line405">405: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(locals);
+<a name="line406">406: </a>    <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html">ISCreateGeneral</a>(pcomm, bs * mat-&gt;rmap-&gt;n, newlocals, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, partitioning);
+<a name="line407">407: </a>  } <font color="#4169E1">else</font> {
+<a name="line408">408: </a>    <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html">ISCreateGeneral</a>(pcomm, mat-&gt;rmap-&gt;n, locals, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, partitioning);
+<a name="line409">409: </a>  }
+<a name="line410">410: </a>  <font color="#4169E1">if</font> (useND) {
+<a name="line411">411: </a>    <a href="../../../../../docs/manualpages/IS/IS.html">IS</a> ndis;
+
+<a name="line413">413: </a>    <font color="#4169E1">if</font> (bs &gt; 1) {
+<a name="line414">414: </a>      <a href="../../../../../docs/manualpages/IS/ISCreateBlock.html">ISCreateBlock</a>(pcomm, bs, mat-&gt;rmap-&gt;n, NDorder, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, &amp;ndis);
+<a name="line415">415: </a>    } <font color="#4169E1">else</font> {
+<a name="line416">416: </a>      <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html">ISCreateGeneral</a>(pcomm, mat-&gt;rmap-&gt;n, NDorder, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, &amp;ndis);
+<a name="line417">417: </a>    }
+<a name="line418">418: </a>    <a href="../../../../../docs/manualpages/IS/ISSetPermutation.html">ISSetPermutation</a>(ndis);
+<a name="line419">419: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectCompose.html">PetscObjectCompose</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(*partitioning), <font color="#666666">"_petsc_matpartitioning_ndorder"</font>, (<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ndis);
+<a name="line420">420: </a>    <a href="../../../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;ndis);
+<a name="line421">421: </a>  }
+
+<a name="line423">423: </a>  <font color="#4169E1">if</font> (!flg) <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;mat);
+<a name="line424">424: </a>  <font color="#4169E1">return</font> 0;
+<a name="line425">425: </a>}
+
+<a name="line427">427: </a><strong><font color="#4169E1"><a name="MatPartitioningApply_PTScotch"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatPartitioningApply_PTScotch(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part, <a href="../../../../../docs/manualpages/IS/IS.html">IS</a> *partitioning)</font></strong>
+<a name="line428">428: </a>{
+<a name="line429">429: </a>  MatPartitioningApply_PTScotch_Private(part, <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, partitioning);
+<a name="line430">430: </a>  <font color="#4169E1">return</font> 0;
+<a name="line431">431: </a>}
+
+<a name="line433">433: </a><strong><font color="#4169E1"><a name="MatPartitioningApplyND_PTScotch"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatPartitioningApplyND_PTScotch(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part, <a href="../../../../../docs/manualpages/IS/IS.html">IS</a> *partitioning)</font></strong>
+<a name="line434">434: </a>{
+<a name="line435">435: </a>  MatPartitioningApply_PTScotch_Private(part, <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, partitioning);
+<a name="line436">436: </a>  <font color="#4169E1">return</font> 0;
+<a name="line437">437: </a>}
+
+<a name="line439">439: </a><strong><font color="#4169E1"><a name="MatPartitioningDestroy_PTScotch"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatPartitioningDestroy_PTScotch(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part)</font></strong>
+<a name="line440">440: </a>{
+<a name="line441">441: </a>  MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part-&gt;data;
+
+<a name="line443">443: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(scotch);
+<a name="line444">444: </a>  <font color="#B22222">/* clear composed functions */</font>
+<a name="line445">445: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)part, <font color="#666666">"MatPartitioningPTScotchSetImbalance_C"</font>, NULL);
+<a name="line446">446: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)part, <font color="#666666">"MatPartitioningPTScotchGetImbalance_C"</font>, NULL);
+<a name="line447">447: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)part, <font color="#666666">"MatPartitioningPTScotchSetStrategy_C"</font>, NULL);
+<a name="line448">448: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)part, <font color="#666666">"MatPartitioningPTScotchGetStrategy_C"</font>, NULL);
+<a name="line449">449: </a>  <font color="#4169E1">return</font> 0;
+<a name="line450">450: </a>}
+
+<a name="line452">452: </a><font color="#B22222">/*MC</font>
+<a name="line453">453: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/MatOrderings/MATPARTITIONINGPTSCOTCH.html">MATPARTITIONINGPTSCOTCH</a> - Creates a partitioning context that uses the external package SCOTCH.</font>
+
+<a name="line455">455: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line457">457: </a><font color="#B22222">   Note:</font>
+<a name="line458">458: </a><font color="#B22222">    See http://www.labri.fr/perso/pelegrin/scotch/</font>
+
+<a name="line460">460: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningSetType.html">MatPartitioningSetType</a>()`, `<a href="../../../../../docs/manualpages/Mat/MatPartitioningType.html">MatPartitioningType</a>`, `<a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetImbalance.html">MatPartitioningPTScotchSetImbalance</a>()`, `<a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchGetImbalance.html">MatPartitioningPTScotchGetImbalance</a>()`,</font>
+<a name="line461">461: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchSetStrategy.html">MatPartitioningPTScotchSetStrategy</a>()`, `<a href="../../../../../docs/manualpages/MatOrderings/MatPartitioningPTScotchGetStrategy.html">MatPartitioningPTScotchGetStrategy</a>()`</font>
+<a name="line462">462: </a><font color="#B22222">M*/</font>
+
+<a name="line464">464: </a><strong><font color="#4169E1"><a name="MatPartitioningCreate_PTScotch"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatPartitioningCreate_PTScotch(<a href="../../../../../docs/manualpages/Mat/MatPartitioning.html">MatPartitioning</a> part)</font></strong>
+<a name="line465">465: </a>{
+<a name="line466">466: </a>  MatPartitioning_PTScotch *scotch;
+
+<a name="line468">468: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;scotch);
+<a name="line469">469: </a>  part-&gt;data = (void *)scotch;
+
+<a name="line471">471: </a>  scotch-&gt;imbalance = 0.01;
+<a name="line472">472: </a>  scotch-&gt;strategy  = SCOTCH_STRATDEFAULT;
+
+<a name="line474">474: </a>  part-&gt;ops-&gt;apply          = MatPartitioningApply_PTScotch;
+<a name="line475">475: </a>  part-&gt;ops-&gt;applynd        = MatPartitioningApplyND_PTScotch;
+<a name="line476">476: </a>  part-&gt;ops-&gt;view           = MatPartitioningView_PTScotch;
+<a name="line477">477: </a>  part-&gt;ops-&gt;setfromoptions = MatPartitioningSetFromOptions_PTScotch;
+<a name="line478">478: </a>  part-&gt;ops-&gt;destroy        = MatPartitioningDestroy_PTScotch;
+
+<a name="line480">480: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)part, <font color="#666666">"MatPartitioningPTScotchSetImbalance_C"</font>, MatPartitioningPTScotchSetImbalance_PTScotch);
+<a name="line481">481: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)part, <font color="#666666">"MatPartitioningPTScotchGetImbalance_C"</font>, MatPartitioningPTScotchGetImbalance_PTScotch);
+<a name="line482">482: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)part, <font color="#666666">"MatPartitioningPTScotchSetStrategy_C"</font>, MatPartitioningPTScotchSetStrategy_PTScotch);
+<a name="line483">483: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)part, <font color="#666666">"MatPartitioningPTScotchGetStrategy_C"</font>, MatPartitioningPTScotchGetStrategy_PTScotch);
+<a name="line484">484: </a>  <font color="#4169E1">return</font> 0;
+<a name="line485">485: </a>}
+</pre>
+</body>
+
+</html>

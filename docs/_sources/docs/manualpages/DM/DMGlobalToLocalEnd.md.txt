@@ -1,0 +1,67 @@
+# DMGlobalToLocalEnd
+Ends updating local vectors from global vector 
+## Synopsis
+```
+#include "petscdm.h"          
+#include "petscdmlabel.h"     
+#include "petscds.h"     
+PetscErrorCode DMGlobalToLocalEnd(DM dm, Vec g, InsertMode mode, Vec l)
+```
+Neighbor-wise Collective on dm
+
+
+## Input Parameters
+
+- ***dm -*** the `DM` object
+- ***g -*** the global vector
+- ***mode -*** `INSERT_VALUES` or `ADD_VALUES`
+- ***l -*** the local vector
+
+
+
+
+
+## Note
+See `DMGlobalToLocalBegin()` for details.
+
+
+## See Also
+ `DMCoarsen()`, `DMDestroy()`, `DMView()`, `DMCreateGlobalVector()`, `DMCreateInterpolation()`, `DMGlobalToLocal()`, `DMLocalToGlobalBegin()`, `DMLocalToGlobal()`, `DMLocalToGlobalBegin()`, `DMLocalToGlobalEnd()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/interface/dm.c.html#DMGlobalToLocalEnd">src/dm/interface/dm.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex1.c.html">src/dm/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex3.c.html">src/dm/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex5.c.html">src/dm/tutorials/ex5.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex6.c.html">src/dm/tutorials/ex6.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex7.c.html">src/dm/tutorials/ex7.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex9.c.html">src/dm/tutorials/ex9.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex14f.F90.html">src/ksp/ksp/tutorials/ex14f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex42.c.html">src/ksp/ksp/tutorials/ex42.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex43.c.html">src/ksp/ksp/tutorials/ex43.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex49.c.html">src/ksp/ksp/tutorials/ex49.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex70.c.html">src/ksp/ksp/tutorials/ex70.c.html</A><BR>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/composite/pack.c.html#DMGlobalToLocalEnd_Composite">DMGlobalToLocalEnd_Composite in src/dm/impls/composite/pack.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/da/dagtol.c.html#DMGlobalToLocalEnd_DA">DMGlobalToLocalEnd_DA in src/dm/impls/da/dagtol.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/moab/dmmbvec.cxx.html#DMGlobalToLocalEnd_Moab">DMGlobalToLocalEnd_Moab in src/dm/impls/moab/dmmbvec.cxx</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/network/network.c.html#DMGlobalToLocalEnd_Network">DMGlobalToLocalEnd_Network in src/dm/impls/network/network.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/redundant/dmredundant.c.html#DMGlobalToLocalEnd_Redundant">DMGlobalToLocalEnd_Redundant in src/dm/impls/redundant/dmredundant.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/sliced/sliced.c.html#DMGlobalToLocalEnd_Sliced">DMGlobalToLocalEnd_Sliced in src/dm/impls/sliced/sliced.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/stag/stag.c.html#DMGlobalToLocalEnd_Stag">DMGlobalToLocalEnd_Stag in src/dm/impls/stag/stag.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/interface/dm.c)
+
+
+[Index of all DM routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

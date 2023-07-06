@@ -1,0 +1,48 @@
+# MatPreallocateSymmetricSetLocalBlock
+Indicates the locations (rows and columns) in the matrix where nonzeros will be inserted using a local number of the rows and columns 
+## Synopsis
+```
+#include <petscmat.h>
+PetscErrorCode MatPreallocateSymmetricSetLocalBlock(ISLocalToGlobalMappping map,PetscInt nrows, PetscInt *rows,PetscInt ncols, PetscInt *cols,PetscInt *dnz, PetscInt *onz)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***map -*** the mapping between local numbering and global numbering
+- ***nrows -*** the number of rows indicated
+- ***rows -*** the indices of the rows
+- ***ncols -*** the number of columns in the matrix
+- ***cols -*** the columns indicated
+- ***dnz -*** the array that will be passed to the matrix preallocation routines
+- ***onz -*** the other array passed to the matrix preallocation routines
+
+
+
+
+
+## Notes
+See Users-Manual: ch_performance for more details.
+
+Do not malloc or free dnz and onz that is handled internally by these routines
+
+
+## See Also
+ `MatPreallocateEnd()`, `MatPreallocateSet()`
+`MatPreallocateBegin()`, `MatPreallocateSetLocal()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscmat.h.html#MatPreallocateSymmetricSetLocalBlock">include/petscmat.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscmat.h)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

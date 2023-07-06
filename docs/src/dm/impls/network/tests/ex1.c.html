@@ -1,0 +1,181 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/network/tests/ex1.c">Actual source code: ex1.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:33+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>static char help[] = <font color="#666666">"Check if <a href="../../../../docs/manualpages/DM/DMClone.html">DMClone</a> for DMNetwork Correctly Shallow Clones Topology Only \n\n"</font>;
+
+<a name="line3">  3: </a>#include <A href="../../../../../include/petscdmnetwork.h.html">&lt;petscdmnetwork.h&gt;</A>
+
+<a name="line5">  5: </a><font color="#B22222">/*</font>
+<a name="line6">  6: </a><font color="#B22222">CreateStarGraphEdgeList - Create a k-Star Graph Edgelist on current processor</font>
+<a name="line7">  7: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line9">  9: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line10"> 10: </a><font color="#B22222">. k    - order of the star graph (number of edges)</font>
+<a name="line11"> 11: </a><font color="#B22222">. directin - if true direction of edges is towards the center vertex, otherwise they are directed out of the center vertex.</font>
+
+<a name="line13"> 13: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line14"> 14: </a><font color="#B22222">.  ne - number of edges of this star graph</font>
+<a name="line15"> 15: </a><font color="#B22222">.  edgelist - list of edges for this star graph, this is a one dimensional array with pairs of entries being the two vertices (in global numbering of the vertices) of each edge,</font>
+<a name="line16"> 16: </a><font color="#B22222">              [first vertex of first edge, second vertex of first edge, first vertex of second edge, second vertex of second edge, etc].</font>
+
+<a name="line18"> 18: </a><font color="#B22222">              User is responsible for deallocating this memory.</font>
+<a name="line19"> 19: </a><font color="#B22222">*/</font>
+<a name="line20"> 20: </a><strong><font color="#4169E1"><a name="CreateStarGraphEdgeList"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CreateStarGraphEdgeList(<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> k, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> directin, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *ne, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *edgelist[])</font></strong>
+<a name="line21"> 21: </a>{
+<a name="line22"> 22: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i;
+
+<a name="line24"> 24: </a>  *ne = k;
+<a name="line25"> 25: </a>  <a href="../../../../docs/manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(2 * k, edgelist);
+
+<a name="line27"> 27: </a>  <font color="#4169E1">if</font> (directin) {
+<a name="line28"> 28: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; k; i++) {
+<a name="line29"> 29: </a>      (*edgelist)[2 * i]     = i + 1;
+<a name="line30"> 30: </a>      (*edgelist)[2 * i + 1] = 0;
+<a name="line31"> 31: </a>    }
+<a name="line32"> 32: </a>  } <font color="#4169E1">else</font> {
+<a name="line33"> 33: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; k; i++) {
+<a name="line34"> 34: </a>      (*edgelist)[2 * i]     = 0;
+<a name="line35"> 35: </a>      (*edgelist)[2 * i + 1] = i + 1;
+<a name="line36"> 36: </a>    }
+<a name="line37"> 37: </a>  }
+<a name="line38"> 38: </a>  <font color="#4169E1">return</font> 0;
+<a name="line39"> 39: </a>}
+
+<a name="line41"> 41: </a><font color="#B22222">/*</font>
+<a name="line42"> 42: </a><font color="#B22222">CreateSimpleStarGraph - Create a Distributed k-Star Graph DMNetwork with a single <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> component on</font>
+<a name="line43"> 43: </a><font color="#B22222">all edges and vertices, aselectable number of dofs on vertices and edges. Intended mostly to be used for testing purposes.</font>
+
+<a name="line45"> 45: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line46"> 46: </a><font color="#B22222">. comm       - the communicator of the dm</font>
+<a name="line47"> 47: </a><font color="#B22222">. numdofvert - number of degrees of freedom (dofs) on vertices</font>
+<a name="line48"> 48: </a><font color="#B22222">. numdofedge - number of degrees of freedom (dofs) on edges</font>
+<a name="line49"> 49: </a><font color="#B22222">. k          - order of the star graph (number of edges)</font>
+<a name="line50"> 50: </a><font color="#B22222">. directin   - if true direction of edges is towards the center vertex, otherwise they are directed out of the center vertex</font>
+
+<a name="line52"> 52: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line53"> 53: </a><font color="#B22222">. newdm       - The created and distributed simple Star Graph</font>
+<a name="line54"> 54: </a><font color="#B22222">*/</font>
+<a name="line55"> 55: </a><strong><font color="#4169E1"><a name="CreateSimpleStarGraph"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CreateSimpleStarGraph(<a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> numdofvert, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> numdofedge, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> k, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> directin, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *newdm)</font></strong>
+<a name="line56"> 56: </a>{
+<a name="line57"> 57: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>          dm;
+<a name="line58"> 58: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+<a name="line59"> 59: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    ne       = 0, compkey, eStart, eEnd, vStart, vEnd, e, v;
+<a name="line60"> 60: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   *edgelist = NULL, *compedge, *compvert;
+
+<a name="line62"> 62: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkCreate.html">DMNetworkCreate</a>(comm, &amp;dm);
+<a name="line63"> 63: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkSetNumSubNetworks.html">DMNetworkSetNumSubNetworks</a>(dm, <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, 1);
+<a name="line64"> 64: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line65"> 65: </a>  <font color="#4169E1">if</font> (rank == 0) CreateStarGraphEdgeList(k, directin, &amp;ne, &amp;edgelist);
+<a name="line66"> 66: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkAddSubnetwork.html">DMNetworkAddSubnetwork</a>(dm, <font color="#666666">"Main"</font>, ne, edgelist, NULL);
+<a name="line67"> 67: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkRegisterComponent.html">DMNetworkRegisterComponent</a>(dm, <font color="#666666">"dummy"</font>, <font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>), &amp;compkey);
+<a name="line68"> 68: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkLayoutSetUp.html">DMNetworkLayoutSetUp</a>(dm);
+<a name="line69"> 69: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(edgelist);
+<a name="line70"> 70: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetEdgeRange.html">DMNetworkGetEdgeRange</a>(dm, &amp;eStart, &amp;eEnd);
+<a name="line71"> 71: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetVertexRange.html">DMNetworkGetVertexRange</a>(dm, &amp;vStart, &amp;vEnd);
+<a name="line72"> 72: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc2.html">PetscMalloc2</a>(eEnd - eStart, &amp;compedge, vEnd - vStart, &amp;compvert);
+<a name="line73"> 73: </a>  <font color="#4169E1">for</font> (e = eStart; e &lt; eEnd; e++) {
+<a name="line74"> 74: </a>    compedge[e - eStart] = e;
+<a name="line75"> 75: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkAddComponent.html">DMNetworkAddComponent</a>(dm, e, compkey, &amp;compedge[e - eStart], numdofedge);
+<a name="line76"> 76: </a>  }
+<a name="line77"> 77: </a>  <font color="#4169E1">for</font> (v = vStart; v &lt; vEnd; v++) {
+<a name="line78"> 78: </a>    compvert[v - vStart] = v;
+<a name="line79"> 79: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkAddComponent.html">DMNetworkAddComponent</a>(dm, v, compkey, &amp;compvert[v - vStart], numdofvert);
+<a name="line80"> 80: </a>  }
+<a name="line81"> 81: </a>  <a href="../../../../docs/manualpages/DM/DMSetFromOptions.html">DMSetFromOptions</a>(dm);
+<a name="line82"> 82: </a>  <a href="../../../../docs/manualpages/DM/DMViewFromOptions.html">DMViewFromOptions</a>(dm, NULL, <font color="#666666">"-dm_view"</font>);
+<a name="line83"> 83: </a>  <a href="../../../../docs/manualpages/DM/DMSetUp.html">DMSetUp</a>(dm);
+<a name="line84"> 84: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree2.html">PetscFree2</a>(compedge, compvert);
+<a name="line85"> 85: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkDistribute.html">DMNetworkDistribute</a>(&amp;dm, 0);
+<a name="line86"> 86: </a>  *newdm = dm;
+<a name="line87"> 87: </a>  <font color="#4169E1">return</font> 0;
+<a name="line88"> 88: </a>}
+
+<a name="line90"> 90: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
+<a name="line91"> 91: </a>{
+<a name="line92"> 92: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>           dm, dmclone, plex;
+<a name="line93"> 93: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     e, eStart, eEnd, ndofs, ndofsprev;
+<a name="line94"> 94: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *compprev, *comp, compkey;
+<a name="line95"> 95: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     dofv = 1, dofe = 1, ne = 1;
+<a name="line96"> 96: </a>  <a href="../../../../docs/manualpages/PetscSection/PetscSection.html">PetscSection</a> sec;
+<a name="line97"> 97: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>          vec;
+
+<a name="line100">100: </a>  <a href="../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help);
+<a name="line101">101: </a>  <font color="#B22222">/* create a distributed k-Star graph DMNetwork */</font>
+<a name="line102">102: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(NULL, NULL, <font color="#666666">"-dofv"</font>, &amp;dofv, NULL);
+<a name="line103">103: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(NULL, NULL, <font color="#666666">"-dofe"</font>, &amp;dofe, NULL);
+<a name="line104">104: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(NULL, NULL, <font color="#666666">"-ne"</font>, &amp;ne, NULL);
+<a name="line105">105: </a>  CreateSimpleStarGraph(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, dofv, dofe, ne, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, &amp;dm);
+<a name="line106">106: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetEdgeRange.html">DMNetworkGetEdgeRange</a>(dm, &amp;eStart, &amp;eEnd);
+
+<a name="line108">108: </a>  <font color="#B22222">/* check if cloning changed any component */</font>
+<a name="line109">109: </a>  <font color="#4169E1">if</font> (eStart &lt; eEnd) <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetComponent.html">DMNetworkGetComponent</a>(dm, eStart, 0, NULL, (void **)&amp;compprev, &amp;ndofsprev);
+<a name="line110">110: </a>  <a href="../../../../docs/manualpages/DM/DMClone.html">DMClone</a>(dm, &amp;dmclone);
+<a name="line111">111: </a>  <font color="#4169E1">if</font> (eStart &lt; eEnd) {
+<a name="line112">112: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetComponent.html">DMNetworkGetComponent</a>(dm, eStart, 0, NULL, (void **)&amp;comp, &amp;ndofs);
+<a name="line115">115: </a>  }
+
+<a name="line117">117: </a>  <font color="#B22222">/* register new components to the clone and add a dummy component to every point */</font>
+<a name="line118">118: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkRegisterComponent.html">DMNetworkRegisterComponent</a>(dmclone, <font color="#666666">"dummyclone"</font>, <font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>), &amp;compkey);
+<a name="line119">119: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetEdgeRange.html">DMNetworkGetEdgeRange</a>(dmclone, &amp;eStart, &amp;eEnd);
+<a name="line120">120: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(eEnd - eStart, &amp;comp);
+<a name="line121">121: </a>  <font color="#4169E1">for</font> (e = eStart; e &lt; eEnd; e++) {
+<a name="line122">122: </a>    comp[e - eStart] = e;
+<a name="line123">123: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkAddComponent.html">DMNetworkAddComponent</a>(dmclone, e, compkey, &amp;comp[e - eStart], 2);
+<a name="line124">124: </a>  }
+<a name="line125">125: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkFinalizeComponents.html">DMNetworkFinalizeComponents</a>(dmclone);
+<a name="line126">126: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(comp);
+
+<a name="line128">128: </a>  <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">" dm: \n"</font>);
+<a name="line129">129: </a>  <a href="../../../../docs/manualpages/DM/DMView.html">DMView</a>(dm, <a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line130">130: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetPlex.html">DMNetworkGetPlex</a>(dm, &amp;plex);
+<a name="line131">131: </a>  <a href="../../../../docs/manualpages/DM/DMGetLocalSection.html">DMGetLocalSection</a>(plex, &amp;sec);
+<a name="line132">132: </a>  <a href="../../../../docs/manualpages/PetscSection/PetscSectionView.html">PetscSectionView</a>(sec, <a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>);
+
+<a name="line134">134: </a>  <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"\n dmclone: \n"</font>);
+<a name="line135">135: </a>  <a href="../../../../docs/manualpages/DM/DMView.html">DMView</a>(dmclone, <a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line136">136: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetPlex.html">DMNetworkGetPlex</a>(dmclone, &amp;plex);
+<a name="line137">137: </a>  <a href="../../../../docs/manualpages/DM/DMGetLocalSection.html">DMGetLocalSection</a>(plex, &amp;sec);
+<a name="line138">138: </a>  <a href="../../../../docs/manualpages/PetscSection/PetscSectionView.html">PetscSectionView</a>(sec, <a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>);
+
+<a name="line140">140: </a>  <font color="#B22222">/* create Vectors */</font>
+<a name="line141">141: </a>  <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html">DMCreateGlobalVector</a>(dm, &amp;vec);
+<a name="line142">142: </a>  <a href="../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(vec, 1.0);
+<a name="line143">143: </a>  <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"\n dm vec:\n"</font>);
+<a name="line144">144: </a>  <a href="../../../../docs/manualpages/Vec/VecView.html">VecView</a>(vec, <a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line145">145: </a>  <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;vec);
+
+<a name="line147">147: </a>  <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html">DMCreateGlobalVector</a>(dmclone, &amp;vec);
+<a name="line148">148: </a>  <a href="../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(vec, 2.0);
+<a name="line149">149: </a>  <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"\n dmclone vec:\n"</font>);
+<a name="line150">150: </a>  <a href="../../../../docs/manualpages/Vec/VecView.html">VecView</a>(vec, <a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>);
+<a name="line151">151: </a>  <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;vec);
+
+<a name="line153">153: </a>  <a href="../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dm);
+<a name="line154">154: </a>  <a href="../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dmclone);
+<a name="line155">155: </a>  <a href="../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line156">156: </a>}
+
+<a name="line158">158: </a><font color="#B22222">/*TEST</font>
+
+<a name="line160">160: </a><font color="#B22222">  test:</font>
+<a name="line161">161: </a><font color="#B22222">    suffix: 0</font>
+<a name="line162">162: </a><font color="#B22222">    args:</font>
+
+<a name="line164">164: </a><font color="#B22222">  test:</font>
+<a name="line165">165: </a><font color="#B22222">    suffix: 1</font>
+<a name="line166">166: </a><font color="#B22222">    nsize: 2</font>
+<a name="line167">167: </a><font color="#B22222">    args: -dofv 2 -dofe 2 -ne 2</font>
+
+<a name="line169">169: </a><font color="#B22222"> TEST*/</font>
+</pre>
+</body>
+
+</html>

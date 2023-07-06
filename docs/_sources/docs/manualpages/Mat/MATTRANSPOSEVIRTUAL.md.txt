@@ -1,0 +1,21 @@
+# MATTRANSPOSEVIRTUAL
+"transpose" - A matrix type that represents a virtual transpose of a matrix 
+
+
+## See Also
+ `MATHERMITIANTRANSPOSEVIRTUAL`, `Mat`, `MatCreateHermitianTranspose()`, `MatCreateTranspose()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/transpose/transm.c.html#MATTRANSPOSEVIRTUAL">src/mat/impls/transpose/transm.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/transpose/transm.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

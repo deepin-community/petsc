@@ -1,0 +1,35 @@
+# PETSC_DECIDE
+standard way of passing in integer or floating point parameter where you wish PETSc to use the default. 
+
+
+## See Also
+ `PETSC_DEFAULT`, `PETSC_IGNORE`, `PETSC_DETERMINE`
+
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscsys.h.html#PETSC_DECIDE">include/petscsys.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/utils/tagger/tutorials/ex1.c.html">src/vec/vec/utils/tagger/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex1.c.html">src/vec/vec/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex10.c.html">src/vec/vec/tutorials/ex10.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex11.c.html">src/vec/vec/tutorials/ex11.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex11f.F90.html">src/vec/vec/tutorials/ex11f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex11f90.F90.html">src/vec/vec/tutorials/ex11f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex12.c.html">src/vec/vec/tutorials/ex12.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex12f.F90.html">src/vec/vec/tutorials/ex12f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex13.c.html">src/vec/vec/tutorials/ex13.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex14f.F90.html">src/vec/vec/tutorials/ex14f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex15.c.html">src/vec/vec/tutorials/ex15.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscsys.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

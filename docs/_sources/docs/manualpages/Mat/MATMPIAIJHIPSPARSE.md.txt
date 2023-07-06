@@ -1,0 +1,19 @@
+# MATMPIAIJHIPSPARSE
+A matrix type to be used for sparse matrices; it is as same as MATAIJHIPSPARSE. 
+
+.seealso: `MATAIJHIPSPARSE`, `MATSEQAIJHIPSPARSE`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/aij/mpi/mpihipsparse/mpiaijhipsparse.hip.cpp#MATMPIAIJHIPSPARSE">src/mat/impls/aij/mpi/mpihipsparse/mpiaijhipsparse.hip.cpp</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/aij/mpi/mpihipsparse/mpiaijhipsparse.hip.cpp)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

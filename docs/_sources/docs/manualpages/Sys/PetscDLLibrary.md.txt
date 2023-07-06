@@ -1,0 +1,26 @@
+# PetscDLLibrary
+Linked list of dynamics libraries to search for functions 
+## Synopsis
+```
+typedef struct _n_PetscDLLibrary *PetscDLLibrary;
+```
+
+
+
+## See Also
+ `PetscDLLibraryOpen()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscsystypes.h.html#PetscDLLibrary">include/petscsystypes.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscsystypes.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

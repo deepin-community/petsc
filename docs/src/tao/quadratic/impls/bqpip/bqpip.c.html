@@ -1,0 +1,563 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/tao/quadratic/impls/bqpip/bqpip.c">Actual source code: bqpip.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:58+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">    This file implements a Mehrotra predictor-corrector method for</font>
+<a name="line3">  3: </a><font color="#B22222">    bound-constrained quadratic programs.</font>
+
+<a name="line5">  5: </a><font color="#B22222"> */</font>
+
+<a name="line7">  7: </a>#include <A href="bqpipimpl.h.html">&lt;../src/tao/quadratic/impls/bqpip/bqpipimpl.h&gt;</A>
+<a name="line8">  8: </a>#include <A href="../../../../../include/petscksp.h.html">&lt;petscksp.h&gt;</A>
+
+<a name="line10"> 10: </a><strong><font color="#4169E1"><a name="QPIPComputeResidual"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> QPIPComputeResidual(TAO_BQPIP *qp, <a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line11"> 11: </a>{
+<a name="line12"> 12: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> dtmp = 1.0 - qp-&gt;psteplength;
+
+<a name="line14"> 14: </a>  <font color="#B22222">/* Compute R3 and R5 */</font>
+
+<a name="line16"> 16: </a>  <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;R3, dtmp);
+<a name="line17"> 17: </a>  <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;R5, dtmp);
+<a name="line18"> 18: </a>  qp-&gt;pinfeas = dtmp * qp-&gt;pinfeas;
+
+<a name="line20"> 20: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(qp-&gt;S, tao-&gt;gradient);
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(tao-&gt;gradient, -1.0, qp-&gt;Z);
+
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;hessian, tao-&gt;solution, qp-&gt;RHS);
+<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;RHS, -1.0);
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;RHS, -1.0, qp-&gt;C);
+<a name="line26"> 26: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(tao-&gt;gradient, -1.0, qp-&gt;RHS);
+
+<a name="line28"> 28: </a>  <a href="../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(tao-&gt;gradient, <a href="../../../../../docs/manualpages/Vec/NORM_1.html">NORM_1</a>, &amp;qp-&gt;dinfeas);
+<a name="line29"> 29: </a>  qp-&gt;rnorm = (qp-&gt;dinfeas + qp-&gt;pinfeas) / (qp-&gt;m + qp-&gt;n);
+<a name="line30"> 30: </a>  <font color="#4169E1">return</font> 0;
+<a name="line31"> 31: </a>}
+
+<a name="line33"> 33: </a><strong><font color="#4169E1"><a name="QPIPSetInitialPoint"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> QPIPSetInitialPoint(TAO_BQPIP *qp, <a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line34"> 34: </a>{
+<a name="line35"> 35: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> two = 2.0, p01 = 1;
+<a name="line36"> 36: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> gap1, gap2, fff, mu;
+
+<a name="line38"> 38: </a>  <font color="#B22222">/* Compute function, Gradient R=Hx+b, and Hessian */</font>
+<a name="line39"> 39: </a>  <a href="../../../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;hessian, tao-&gt;solution, tao-&gt;gradient);
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(qp-&gt;C, qp-&gt;Work);
+<a name="line41"> 41: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;Work, 0.5, tao-&gt;gradient);
+<a name="line42"> 42: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(tao-&gt;gradient, 1.0, qp-&gt;C);
+<a name="line43"> 43: </a>  <a href="../../../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(tao-&gt;solution, qp-&gt;Work, &amp;fff);
+<a name="line44"> 44: </a>  qp-&gt;pobj = fff + qp-&gt;d;
+
+
+<a name="line48"> 48: </a>  <font color="#B22222">/* Initialize slack vectors */</font>
+<a name="line49"> 49: </a>  <font color="#B22222">/* T = XU - X; G = X - XL */</font>
+<a name="line50"> 50: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(qp-&gt;XU, qp-&gt;T);
+<a name="line51"> 51: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;T, -1.0, tao-&gt;solution);
+<a name="line52"> 52: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(tao-&gt;solution, qp-&gt;G);
+<a name="line53"> 53: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;G, -1.0, qp-&gt;XL);
+
+<a name="line55"> 55: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(qp-&gt;GZwork, p01);
+<a name="line56"> 56: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(qp-&gt;TSwork, p01);
+
+<a name="line58"> 58: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseMax.html">VecPointwiseMax</a>(qp-&gt;G, qp-&gt;G, qp-&gt;GZwork);
+<a name="line59"> 59: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseMax.html">VecPointwiseMax</a>(qp-&gt;T, qp-&gt;T, qp-&gt;TSwork);
+
+<a name="line61"> 61: </a>  <font color="#B22222">/* Initialize Dual Variable Vectors */</font>
+<a name="line62"> 62: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(qp-&gt;G, qp-&gt;Z);
+<a name="line63"> 63: </a>  <a href="../../../../../docs/manualpages/Vec/VecReciprocal.html">VecReciprocal</a>(qp-&gt;Z);
+
+<a name="line65"> 65: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(qp-&gt;T, qp-&gt;S);
+<a name="line66"> 66: </a>  <a href="../../../../../docs/manualpages/Vec/VecReciprocal.html">VecReciprocal</a>(qp-&gt;S);
+
+<a name="line68"> 68: </a>  <a href="../../../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;hessian, qp-&gt;Work, qp-&gt;RHS);
+<a name="line69"> 69: </a>  <a href="../../../../../docs/manualpages/Vec/VecAbs.html">VecAbs</a>(qp-&gt;RHS);
+<a name="line70"> 70: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(qp-&gt;Work, p01);
+<a name="line71"> 71: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseMax.html">VecPointwiseMax</a>(qp-&gt;RHS, qp-&gt;RHS, qp-&gt;Work);
+
+<a name="line73"> 73: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseDivide.html">VecPointwiseDivide</a>(qp-&gt;RHS, tao-&gt;gradient, qp-&gt;RHS);
+<a name="line74"> 74: </a>  <a href="../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(qp-&gt;RHS, <a href="../../../../../docs/manualpages/Vec/NORM_1.html">NORM_1</a>, &amp;gap1);
+<a name="line75"> 75: </a>  mu = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(10.0, (gap1 + 10.0) / qp-&gt;m);
+
+<a name="line77"> 77: </a>  <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;S, mu);
+<a name="line78"> 78: </a>  <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;Z, mu);
+
+<a name="line80"> 80: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(qp-&gt;TSwork, p01);
+<a name="line81"> 81: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(qp-&gt;GZwork, p01);
+<a name="line82"> 82: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseMax.html">VecPointwiseMax</a>(qp-&gt;S, qp-&gt;S, qp-&gt;TSwork);
+<a name="line83"> 83: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseMax.html">VecPointwiseMax</a>(qp-&gt;Z, qp-&gt;Z, qp-&gt;GZwork);
+
+<a name="line85"> 85: </a>  qp-&gt;mu      = 0;
+<a name="line86"> 86: </a>  qp-&gt;dinfeas = 1.0;
+<a name="line87"> 87: </a>  qp-&gt;pinfeas = 1.0;
+<a name="line88"> 88: </a>  <font color="#4169E1">while</font> ((qp-&gt;dinfeas + qp-&gt;pinfeas) / (qp-&gt;m + qp-&gt;n) &gt;= qp-&gt;mu) {
+<a name="line89"> 89: </a>    <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;G, two);
+<a name="line90"> 90: </a>    <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;Z, two);
+<a name="line91"> 91: </a>    <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;S, two);
+<a name="line92"> 92: </a>    <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;T, two);
+
+<a name="line94"> 94: </a>    QPIPComputeResidual(qp, tao);
+
+<a name="line96"> 96: </a>    <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(tao-&gt;solution, qp-&gt;R3);
+<a name="line97"> 97: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;R3, -1.0, qp-&gt;G);
+<a name="line98"> 98: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;R3, -1.0, qp-&gt;XL);
+
+<a name="line100">100: </a>    <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(tao-&gt;solution, qp-&gt;R5);
+<a name="line101">101: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;R5, 1.0, qp-&gt;T);
+<a name="line102">102: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;R5, -1.0, qp-&gt;XU);
+
+<a name="line104">104: </a>    <a href="../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(qp-&gt;R3, <a href="../../../../../docs/manualpages/Vec/NORM_INFINITY.html">NORM_INFINITY</a>, &amp;gap1);
+<a name="line105">105: </a>    <a href="../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(qp-&gt;R5, <a href="../../../../../docs/manualpages/Vec/NORM_INFINITY.html">NORM_INFINITY</a>, &amp;gap2);
+<a name="line106">106: </a>    qp-&gt;pinfeas = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(gap1, gap2);
+
+<a name="line108">108: </a>    <font color="#B22222">/* Compute the duality gap */</font>
+<a name="line109">109: </a>    <a href="../../../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(qp-&gt;G, qp-&gt;Z, &amp;gap1);
+<a name="line110">110: </a>    <a href="../../../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(qp-&gt;T, qp-&gt;S, &amp;gap2);
+
+<a name="line112">112: </a>    qp-&gt;gap  = gap1 + gap2;
+<a name="line113">113: </a>    qp-&gt;dobj = qp-&gt;pobj - qp-&gt;gap;
+<a name="line114">114: </a>    <font color="#4169E1">if</font> (qp-&gt;m &gt; 0) {
+<a name="line115">115: </a>      qp-&gt;mu = qp-&gt;gap / (qp-&gt;m);
+<a name="line116">116: </a>    } <font color="#4169E1">else</font> {
+<a name="line117">117: </a>      qp-&gt;mu = 0.0;
+<a name="line118">118: </a>    }
+<a name="line119">119: </a>    qp-&gt;rgap = qp-&gt;gap / (<a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(qp-&gt;dobj) + <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(qp-&gt;pobj) + 1.0);
+<a name="line120">120: </a>  }
+<a name="line121">121: </a>  <font color="#4169E1">return</font> 0;
+<a name="line122">122: </a>}
+
+<a name="line124">124: </a><strong><font color="#4169E1"><a name="QPIPStepLength"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> QPIPStepLength(TAO_BQPIP *qp)</font></strong>
+<a name="line125">125: </a>{
+<a name="line126">126: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> tstep1, tstep2, tstep3, tstep4, tstep;
+
+<a name="line128">128: </a>  <font color="#B22222">/* Compute stepsize to the boundary */</font>
+<a name="line129">129: </a>  <a href="../../../../../docs/manualpages/Vec/VecStepMax.html">VecStepMax</a>(qp-&gt;G, qp-&gt;DG, &amp;tstep1);
+<a name="line130">130: </a>  <a href="../../../../../docs/manualpages/Vec/VecStepMax.html">VecStepMax</a>(qp-&gt;T, qp-&gt;DT, &amp;tstep2);
+<a name="line131">131: </a>  <a href="../../../../../docs/manualpages/Vec/VecStepMax.html">VecStepMax</a>(qp-&gt;S, qp-&gt;DS, &amp;tstep3);
+<a name="line132">132: </a>  <a href="../../../../../docs/manualpages/Vec/VecStepMax.html">VecStepMax</a>(qp-&gt;Z, qp-&gt;DZ, &amp;tstep4);
+
+<a name="line134">134: </a>  tstep           = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(tstep1, tstep2);
+<a name="line135">135: </a>  qp-&gt;psteplength = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(0.95 * tstep, 1.0);
+
+<a name="line137">137: </a>  tstep           = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(tstep3, tstep4);
+<a name="line138">138: </a>  qp-&gt;dsteplength = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(0.95 * tstep, 1.0);
+
+<a name="line140">140: </a>  qp-&gt;psteplength = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(qp-&gt;psteplength, qp-&gt;dsteplength);
+<a name="line141">141: </a>  qp-&gt;dsteplength = qp-&gt;psteplength;
+<a name="line142">142: </a>  <font color="#4169E1">return</font> 0;
+<a name="line143">143: </a>}
+
+<a name="line145">145: </a><strong><font color="#4169E1"><a name="QPIPComputeNormFromCentralPath"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> QPIPComputeNormFromCentralPath(TAO_BQPIP *qp, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *norm)</font></strong>
+<a name="line146">146: </a>{
+<a name="line147">147: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> gap[2], mu[2], nmu;
+
+<a name="line149">149: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(qp-&gt;GZwork, qp-&gt;G, qp-&gt;Z);
+<a name="line150">150: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(qp-&gt;TSwork, qp-&gt;T, qp-&gt;S);
+<a name="line151">151: </a>  <a href="../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(qp-&gt;TSwork, <a href="../../../../../docs/manualpages/Vec/NORM_1.html">NORM_1</a>, &amp;mu[0]);
+<a name="line152">152: </a>  <a href="../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(qp-&gt;GZwork, <a href="../../../../../docs/manualpages/Vec/NORM_1.html">NORM_1</a>, &amp;mu[1]);
+
+<a name="line154">154: </a>  nmu = -(mu[0] + mu[1]) / qp-&gt;m;
+
+<a name="line156">156: </a>  <a href="../../../../../docs/manualpages/Vec/VecShift.html">VecShift</a>(qp-&gt;GZwork, nmu);
+<a name="line157">157: </a>  <a href="../../../../../docs/manualpages/Vec/VecShift.html">VecShift</a>(qp-&gt;TSwork, nmu);
+
+<a name="line159">159: </a>  <a href="../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(qp-&gt;GZwork, <a href="../../../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;gap[0]);
+<a name="line160">160: </a>  <a href="../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(qp-&gt;TSwork, <a href="../../../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;gap[1]);
+<a name="line161">161: </a>  gap[0] *= gap[0];
+<a name="line162">162: </a>  gap[1] *= gap[1];
+
+<a name="line164">164: </a>  qp-&gt;pathnorm = PetscSqrtScalar(gap[0] + gap[1]);
+<a name="line165">165: </a>  *norm        = qp-&gt;pathnorm;
+<a name="line166">166: </a>  <font color="#4169E1">return</font> 0;
+<a name="line167">167: </a>}
+
+<a name="line169">169: </a><strong><font color="#4169E1"><a name="QPIPComputeStepDirection"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> QPIPComputeStepDirection(TAO_BQPIP *qp, <a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line170">170: </a>{
+<a name="line171">171: </a>  <font color="#B22222">/* Calculate DG */</font>
+<a name="line172">172: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(tao-&gt;stepdirection, qp-&gt;DG);
+<a name="line173">173: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;DG, 1.0, qp-&gt;R3);
+
+<a name="line175">175: </a>  <font color="#B22222">/* Calculate DT */</font>
+<a name="line176">176: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(tao-&gt;stepdirection, qp-&gt;DT);
+<a name="line177">177: </a>  <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;DT, -1.0);
+<a name="line178">178: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;DT, -1.0, qp-&gt;R5);
+
+<a name="line180">180: </a>  <font color="#B22222">/* Calculate DZ */</font>
+<a name="line181">181: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;DZ, -1.0, qp-&gt;Z);
+<a name="line182">182: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseDivide.html">VecPointwiseDivide</a>(qp-&gt;GZwork, qp-&gt;DG, qp-&gt;G);
+<a name="line183">183: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(qp-&gt;GZwork, qp-&gt;GZwork, qp-&gt;Z);
+<a name="line184">184: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;DZ, -1.0, qp-&gt;GZwork);
+
+<a name="line186">186: </a>  <font color="#B22222">/* Calculate DS */</font>
+<a name="line187">187: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;DS, -1.0, qp-&gt;S);
+<a name="line188">188: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseDivide.html">VecPointwiseDivide</a>(qp-&gt;TSwork, qp-&gt;DT, qp-&gt;T);
+<a name="line189">189: </a>  <a href="../../../../../docs/manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(qp-&gt;TSwork, qp-&gt;TSwork, qp-&gt;S);
+<a name="line190">190: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;DS, -1.0, qp-&gt;TSwork);
+<a name="line191">191: </a>  <font color="#4169E1">return</font> 0;
+<a name="line192">192: </a>}
+
+<a name="line194">194: </a><strong><font color="#4169E1"><a name="TaoSetup_BQPIP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoSetup_BQPIP(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line195">195: </a>{
+<a name="line196">196: </a>  TAO_BQPIP *qp = (TAO_BQPIP *)tao-&gt;data;
+
+<a name="line198">198: </a>  <font color="#B22222">/* Set pointers to Data */</font>
+<a name="line199">199: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetSize.html">VecGetSize</a>(tao-&gt;solution, &amp;qp-&gt;n);
+
+<a name="line201">201: </a>  <font color="#B22222">/* Allocate some arrays */</font>
+<a name="line202">202: </a>  <font color="#4169E1">if</font> (!tao-&gt;gradient) <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;tao-&gt;gradient);
+<a name="line203">203: </a>  <font color="#4169E1">if</font> (!tao-&gt;stepdirection) <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;tao-&gt;stepdirection);
+
+<a name="line205">205: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;Work);
+<a name="line206">206: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;XU);
+<a name="line207">207: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;XL);
+<a name="line208">208: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;HDiag);
+<a name="line209">209: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;DiagAxpy);
+<a name="line210">210: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;RHS);
+<a name="line211">211: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;RHS2);
+<a name="line212">212: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;C);
+
+<a name="line214">214: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;G);
+<a name="line215">215: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;DG);
+<a name="line216">216: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;S);
+<a name="line217">217: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;Z);
+<a name="line218">218: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;DZ);
+<a name="line219">219: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;GZwork);
+<a name="line220">220: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;R3);
+
+<a name="line222">222: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;T);
+<a name="line223">223: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;DT);
+<a name="line224">224: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;DS);
+<a name="line225">225: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;TSwork);
+<a name="line226">226: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(tao-&gt;solution, &amp;qp-&gt;R5);
+<a name="line227">227: </a>  qp-&gt;m = 2 * qp-&gt;n;
+<a name="line228">228: </a>  <font color="#4169E1">return</font> 0;
+<a name="line229">229: </a>}
+
+<a name="line231">231: </a><strong><font color="#4169E1"><a name="TaoSolve_BQPIP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoSolve_BQPIP(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line232">232: </a>{
+<a name="line233">233: </a>  TAO_BQPIP *qp = (TAO_BQPIP *)tao-&gt;data;
+<a name="line234">234: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   its;
+<a name="line235">235: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>  d1, d2, ksptol, sigmamu;
+<a name="line236">236: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>  gnorm, dstep, pstep, step = 0;
+<a name="line237">237: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>  gap[4];
+<a name="line238">238: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>  getdiagop;
+
+<a name="line240">240: </a>  qp-&gt;dobj        = 0.0;
+<a name="line241">241: </a>  qp-&gt;pobj        = 1.0;
+<a name="line242">242: </a>  qp-&gt;gap         = 10.0;
+<a name="line243">243: </a>  qp-&gt;rgap        = 1.0;
+<a name="line244">244: </a>  qp-&gt;mu          = 1.0;
+<a name="line245">245: </a>  qp-&gt;dinfeas     = 1.0;
+<a name="line246">246: </a>  qp-&gt;psteplength = 0.0;
+<a name="line247">247: </a>  qp-&gt;dsteplength = 0.0;
+
+<a name="line249">249: </a>  <font color="#B22222">/* TODO</font>
+<a name="line250">250: </a><font color="#B22222">     - Remove fixed variables and treat them correctly</font>
+<a name="line251">251: </a><font color="#B22222">     - Use index sets for the infinite versus finite bounds</font>
+<a name="line252">252: </a><font color="#B22222">     - Update remaining code for fixed and free variables</font>
+<a name="line253">253: </a><font color="#B22222">     - Fix inexact solves for predictor and corrector</font>
+<a name="line254">254: </a><font color="#B22222">  */</font>
+
+<a name="line256">256: </a>  <font color="#B22222">/* Tighten infinite bounds, things break when we don't do this</font>
+<a name="line257">257: </a><font color="#B22222">    -- see test_bqpip.c</font>
+<a name="line258">258: </a><font color="#B22222">  */</font>
+<a name="line259">259: </a>  <a href="../../../../../docs/manualpages/Tao/TaoComputeVariableBounds.html">TaoComputeVariableBounds</a>(tao);
+<a name="line260">260: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(qp-&gt;XU, 1.0e20);
+<a name="line261">261: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(qp-&gt;XL, -1.0e20);
+<a name="line262">262: </a>  <font color="#4169E1">if</font> (tao-&gt;XL) <a href="../../../../../docs/manualpages/Vec/VecPointwiseMax.html">VecPointwiseMax</a>(qp-&gt;XL, qp-&gt;XL, tao-&gt;XL);
+<a name="line263">263: </a>  <font color="#4169E1">if</font> (tao-&gt;XU) <a href="../../../../../docs/manualpages/Vec/VecPointwiseMin.html">VecPointwiseMin</a>(qp-&gt;XU, qp-&gt;XU, tao-&gt;XU);
+<a name="line264">264: </a>  <a href="../../../../../docs/manualpages/Vec/VecMedian.html">VecMedian</a>(qp-&gt;XL, tao-&gt;solution, qp-&gt;XU, tao-&gt;solution);
+
+<a name="line266">266: </a>  <font color="#B22222">/* Evaluate gradient and Hessian at zero to get the correct values</font>
+<a name="line267">267: </a><font color="#B22222">     without contaminating them with numerical artifacts.</font>
+<a name="line268">268: </a><font color="#B22222">  */</font>
+<a name="line269">269: </a>  <a href="../../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(qp-&gt;Work, 0);
+<a name="line270">270: </a>  <a href="../../../../../docs/manualpages/Tao/TaoComputeObjectiveAndGradient.html">TaoComputeObjectiveAndGradient</a>(tao, qp-&gt;Work, &amp;qp-&gt;d, qp-&gt;C);
+<a name="line271">271: </a>  <a href="../../../../../docs/manualpages/Tao/TaoComputeHessian.html">TaoComputeHessian</a>(tao, qp-&gt;Work, tao-&gt;hessian, tao-&gt;hessian_pre);
+<a name="line272">272: </a>  <a href="../../../../../docs/manualpages/Mat/MatHasOperation.html">MatHasOperation</a>(tao-&gt;hessian, MATOP_GET_DIAGONAL, &amp;getdiagop);
+<a name="line273">273: </a>  <font color="#4169E1">if</font> (getdiagop) <a href="../../../../../docs/manualpages/Mat/MatGetDiagonal.html">MatGetDiagonal</a>(tao-&gt;hessian, qp-&gt;HDiag);
+
+<a name="line275">275: </a>  <font color="#B22222">/* Initialize starting point and residuals */</font>
+<a name="line276">276: </a>  QPIPSetInitialPoint(qp, tao);
+<a name="line277">277: </a>  QPIPComputeResidual(qp, tao);
+
+<a name="line279">279: </a>  <font color="#B22222">/* Enter main loop */</font>
+<a name="line280">280: </a>  tao-&gt;reason = <a href="../../../../../docs/manualpages/Tao/TaoConvergedReason.html">TAO_CONTINUE_ITERATING</a>;
+<a name="line281">281: </a>  <font color="#4169E1">while</font> (1) {
+<a name="line282">282: </a>    <font color="#B22222">/* Check Stopping Condition      */</font>
+<a name="line283">283: </a>    gnorm = PetscSqrtScalar(qp-&gt;gap + qp-&gt;dinfeas);
+<a name="line284">284: </a>    TaoLogConvergenceHistory(tao, qp-&gt;pobj, gnorm, qp-&gt;pinfeas, tao-&gt;ksp_its);
+<a name="line285">285: </a>    <a href="../../../../../docs/manualpages/Tao/TaoMonitor.html">TaoMonitor</a>(tao, tao-&gt;niter, qp-&gt;pobj, gnorm, qp-&gt;pinfeas, step);
+<a name="line286">286: </a>    <a href="../../../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(tao, convergencetest, tao-&gt;cnvP);
+<a name="line287">287: </a>    <font color="#4169E1">if</font> (tao-&gt;reason != <a href="../../../../../docs/manualpages/Tao/TaoConvergedReason.html">TAO_CONTINUE_ITERATING</a>) <font color="#4169E1">break</font>;
+<a name="line288">288: </a>    <font color="#B22222">/* Call general purpose update function */</font>
+<a name="line289">289: </a>    <a href="../../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(tao, update, tao-&gt;niter, tao-&gt;user_update);
+<a name="line290">290: </a>    tao-&gt;niter++;
+<a name="line291">291: </a>    tao-&gt;ksp_its = 0;
+
+<a name="line293">293: </a>    <font color="#B22222">/*</font>
+<a name="line294">294: </a><font color="#B22222">       Dual Infeasibility Direction should already be in the right</font>
+<a name="line295">295: </a><font color="#B22222">       hand side from computing the residuals</font>
+<a name="line296">296: </a><font color="#B22222">    */</font>
+
+<a name="line298">298: </a>    QPIPComputeNormFromCentralPath(qp, &amp;d1);
+
+<a name="line300">300: </a>    <a href="../../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(qp-&gt;DZ, 0.0);
+<a name="line301">301: </a>    <a href="../../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(qp-&gt;DS, 0.0);
+
+<a name="line303">303: </a>    <font color="#B22222">/*</font>
+<a name="line304">304: </a><font color="#B22222">       Compute the Primal Infeasiblitiy RHS and the</font>
+<a name="line305">305: </a><font color="#B22222">       Diagonal Matrix to be added to H and store in Work</font>
+<a name="line306">306: </a><font color="#B22222">    */</font>
+<a name="line307">307: </a>    <a href="../../../../../docs/manualpages/Vec/VecPointwiseDivide.html">VecPointwiseDivide</a>(qp-&gt;DiagAxpy, qp-&gt;Z, qp-&gt;G);
+<a name="line308">308: </a>    <a href="../../../../../docs/manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(qp-&gt;GZwork, qp-&gt;DiagAxpy, qp-&gt;R3);
+<a name="line309">309: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;RHS, -1.0, qp-&gt;GZwork);
+
+<a name="line311">311: </a>    <a href="../../../../../docs/manualpages/Vec/VecPointwiseDivide.html">VecPointwiseDivide</a>(qp-&gt;TSwork, qp-&gt;S, qp-&gt;T);
+<a name="line312">312: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;DiagAxpy, 1.0, qp-&gt;TSwork);
+<a name="line313">313: </a>    <a href="../../../../../docs/manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(qp-&gt;TSwork, qp-&gt;TSwork, qp-&gt;R5);
+<a name="line314">314: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;RHS, -1.0, qp-&gt;TSwork);
+
+<a name="line316">316: </a>    <font color="#B22222">/*  Determine the solving tolerance */</font>
+<a name="line317">317: </a>    ksptol = qp-&gt;mu / 10.0;
+<a name="line318">318: </a>    ksptol = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(ksptol, 0.001);
+<a name="line319">319: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSetTolerances.html">KSPSetTolerances</a>(tao-&gt;ksp, ksptol, 1e-30, 1e30, <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(10, qp-&gt;n));
+
+<a name="line321">321: </a>    <font color="#B22222">/* Shift the diagonals of the Hessian matrix */</font>
+<a name="line322">322: </a>    <a href="../../../../../docs/manualpages/Mat/MatDiagonalSet.html">MatDiagonalSet</a>(tao-&gt;hessian, qp-&gt;DiagAxpy, <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line323">323: </a>    <font color="#4169E1">if</font> (!getdiagop) {
+<a name="line324">324: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(qp-&gt;DiagAxpy, qp-&gt;HDiag);
+<a name="line325">325: </a>      <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;HDiag, -1.0);
+<a name="line326">326: </a>    }
+<a name="line327">327: </a>    <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(tao-&gt;hessian, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line328">328: </a>    <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(tao-&gt;hessian, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+
+<a name="line330">330: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>(tao-&gt;ksp, tao-&gt;hessian, tao-&gt;hessian_pre);
+<a name="line331">331: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>(tao-&gt;ksp, qp-&gt;RHS, tao-&gt;stepdirection);
+<a name="line332">332: </a>    <a href="../../../../../docs/manualpages/KSP/KSPGetIterationNumber.html">KSPGetIterationNumber</a>(tao-&gt;ksp, &amp;its);
+<a name="line333">333: </a>    tao-&gt;ksp_its += its;
+<a name="line334">334: </a>    tao-&gt;ksp_tot_its += its;
+
+<a name="line336">336: </a>    <font color="#B22222">/* Restore the true diagonal of the Hessian matrix */</font>
+<a name="line337">337: </a>    <font color="#4169E1">if</font> (getdiagop) {
+<a name="line338">338: </a>      <a href="../../../../../docs/manualpages/Mat/MatDiagonalSet.html">MatDiagonalSet</a>(tao-&gt;hessian, qp-&gt;HDiag, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line339">339: </a>    } <font color="#4169E1">else</font> {
+<a name="line340">340: </a>      <a href="../../../../../docs/manualpages/Mat/MatDiagonalSet.html">MatDiagonalSet</a>(tao-&gt;hessian, qp-&gt;HDiag, <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line341">341: </a>    }
+<a name="line342">342: </a>    <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(tao-&gt;hessian, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line343">343: </a>    <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(tao-&gt;hessian, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line344">344: </a>    QPIPComputeStepDirection(qp, tao);
+<a name="line345">345: </a>    QPIPStepLength(qp);
+
+<a name="line347">347: </a>    <font color="#B22222">/* Calculate New Residual R1 in Work vector */</font>
+<a name="line348">348: </a>    <a href="../../../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;hessian, tao-&gt;stepdirection, qp-&gt;RHS2);
+<a name="line349">349: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;RHS2, 1.0, qp-&gt;DS);
+<a name="line350">350: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;RHS2, -1.0, qp-&gt;DZ);
+<a name="line351">351: </a>    <a href="../../../../../docs/manualpages/Vec/VecAYPX.html">VecAYPX</a>(qp-&gt;RHS2, qp-&gt;dsteplength, tao-&gt;gradient);
+
+<a name="line353">353: </a>    <a href="../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(qp-&gt;RHS2, <a href="../../../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;qp-&gt;dinfeas);
+<a name="line354">354: </a>    <a href="../../../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(qp-&gt;DZ, qp-&gt;DG, gap);
+<a name="line355">355: </a>    <a href="../../../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(qp-&gt;DS, qp-&gt;DT, gap + 1);
+
+<a name="line357">357: </a>    qp-&gt;rnorm = (qp-&gt;dinfeas + qp-&gt;psteplength * qp-&gt;pinfeas) / (qp-&gt;m + qp-&gt;n);
+<a name="line358">358: </a>    pstep     = qp-&gt;psteplength;
+<a name="line359">359: </a>    step      = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(qp-&gt;psteplength, qp-&gt;dsteplength);
+<a name="line360">360: </a>    sigmamu   = (pstep * pstep * (gap[0] + gap[1]) + (1 - pstep) * qp-&gt;gap) / qp-&gt;m;
+
+<a name="line362">362: </a>    <font color="#4169E1">if</font> (qp-&gt;predcorr &amp;&amp; step &lt; 0.9) {
+<a name="line363">363: </a>      <font color="#4169E1">if</font> (sigmamu &lt; qp-&gt;mu) {
+<a name="line364">364: </a>        sigmamu = sigmamu / qp-&gt;mu;
+<a name="line365">365: </a>        sigmamu = sigmamu * sigmamu * sigmamu;
+<a name="line366">366: </a>      } <font color="#4169E1">else</font> {
+<a name="line367">367: </a>        sigmamu = 1.0;
+<a name="line368">368: </a>      }
+<a name="line369">369: </a>      sigmamu = sigmamu * qp-&gt;mu;
+
+<a name="line371">371: </a>      <font color="#B22222">/* Compute Corrector Step */</font>
+<a name="line372">372: </a>      <a href="../../../../../docs/manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(qp-&gt;DZ, qp-&gt;DG, qp-&gt;DZ);
+<a name="line373">373: </a>      <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;DZ, -1.0);
+<a name="line374">374: </a>      <a href="../../../../../docs/manualpages/Vec/VecShift.html">VecShift</a>(qp-&gt;DZ, sigmamu);
+<a name="line375">375: </a>      <a href="../../../../../docs/manualpages/Vec/VecPointwiseDivide.html">VecPointwiseDivide</a>(qp-&gt;DZ, qp-&gt;DZ, qp-&gt;G);
+
+<a name="line377">377: </a>      <a href="../../../../../docs/manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(qp-&gt;DS, qp-&gt;DS, qp-&gt;DT);
+<a name="line378">378: </a>      <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;DS, -1.0);
+<a name="line379">379: </a>      <a href="../../../../../docs/manualpages/Vec/VecShift.html">VecShift</a>(qp-&gt;DS, sigmamu);
+<a name="line380">380: </a>      <a href="../../../../../docs/manualpages/Vec/VecPointwiseDivide.html">VecPointwiseDivide</a>(qp-&gt;DS, qp-&gt;DS, qp-&gt;T);
+
+<a name="line382">382: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(qp-&gt;DZ, qp-&gt;RHS2);
+<a name="line383">383: </a>      <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;RHS2, -1.0, qp-&gt;DS);
+<a name="line384">384: </a>      <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;RHS2, 1.0, qp-&gt;RHS);
+
+<a name="line386">386: </a>      <font color="#B22222">/* Approximately solve the linear system */</font>
+<a name="line387">387: </a>      <a href="../../../../../docs/manualpages/Mat/MatDiagonalSet.html">MatDiagonalSet</a>(tao-&gt;hessian, qp-&gt;DiagAxpy, <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line388">388: </a>      <font color="#4169E1">if</font> (!getdiagop) {
+<a name="line389">389: </a>        <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(qp-&gt;DiagAxpy, qp-&gt;HDiag);
+<a name="line390">390: </a>        <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(qp-&gt;HDiag, -1.0);
+<a name="line391">391: </a>      }
+<a name="line392">392: </a>      <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(tao-&gt;hessian, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line393">393: </a>      <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(tao-&gt;hessian, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+
+<a name="line395">395: </a>      <font color="#B22222">/* Solve using the previous tolerances that were set */</font>
+<a name="line396">396: </a>      <a href="../../../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>(tao-&gt;ksp, qp-&gt;RHS2, tao-&gt;stepdirection);
+<a name="line397">397: </a>      <a href="../../../../../docs/manualpages/KSP/KSPGetIterationNumber.html">KSPGetIterationNumber</a>(tao-&gt;ksp, &amp;its);
+<a name="line398">398: </a>      tao-&gt;ksp_its += its;
+<a name="line399">399: </a>      tao-&gt;ksp_tot_its += its;
+
+<a name="line401">401: </a>      <font color="#4169E1">if</font> (getdiagop) {
+<a name="line402">402: </a>        <a href="../../../../../docs/manualpages/Mat/MatDiagonalSet.html">MatDiagonalSet</a>(tao-&gt;hessian, qp-&gt;HDiag, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line403">403: </a>      } <font color="#4169E1">else</font> {
+<a name="line404">404: </a>        <a href="../../../../../docs/manualpages/Mat/MatDiagonalSet.html">MatDiagonalSet</a>(tao-&gt;hessian, qp-&gt;HDiag, <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line405">405: </a>      }
+<a name="line406">406: </a>      <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(tao-&gt;hessian, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line407">407: </a>      <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(tao-&gt;hessian, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line408">408: </a>      QPIPComputeStepDirection(qp, tao);
+<a name="line409">409: </a>      QPIPStepLength(qp);
+<a name="line410">410: </a>    } <font color="#B22222">/* End Corrector step */</font>
+
+<a name="line412">412: </a>    <font color="#B22222">/* Take the step */</font>
+<a name="line413">413: </a>    dstep = qp-&gt;dsteplength;
+
+<a name="line415">415: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;Z, dstep, qp-&gt;DZ);
+<a name="line416">416: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;S, dstep, qp-&gt;DS);
+<a name="line417">417: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(tao-&gt;solution, dstep, tao-&gt;stepdirection);
+<a name="line418">418: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;G, dstep, qp-&gt;DG);
+<a name="line419">419: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(qp-&gt;T, dstep, qp-&gt;DT);
+
+<a name="line421">421: </a>    <font color="#B22222">/* Compute Residuals */</font>
+<a name="line422">422: </a>    QPIPComputeResidual(qp, tao);
+
+<a name="line424">424: </a>    <font color="#B22222">/* Evaluate quadratic function */</font>
+<a name="line425">425: </a>    <a href="../../../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(tao-&gt;hessian, tao-&gt;solution, qp-&gt;Work);
+
+<a name="line427">427: </a>    <a href="../../../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(tao-&gt;solution, qp-&gt;Work, &amp;d1);
+<a name="line428">428: </a>    <a href="../../../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(tao-&gt;solution, qp-&gt;C, &amp;d2);
+<a name="line429">429: </a>    <a href="../../../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(qp-&gt;G, qp-&gt;Z, gap);
+<a name="line430">430: </a>    <a href="../../../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(qp-&gt;T, qp-&gt;S, gap + 1);
+
+<a name="line432">432: </a>    <font color="#B22222">/* Compute the duality gap */</font>
+<a name="line433">433: </a>    qp-&gt;pobj = d1 / 2.0 + d2 + qp-&gt;d;
+<a name="line434">434: </a>    qp-&gt;gap  = gap[0] + gap[1];
+<a name="line435">435: </a>    qp-&gt;dobj = qp-&gt;pobj - qp-&gt;gap;
+<a name="line436">436: </a>    <font color="#4169E1">if</font> (qp-&gt;m &gt; 0) qp-&gt;mu = qp-&gt;gap / (qp-&gt;m);
+<a name="line437">437: </a>    qp-&gt;rgap = qp-&gt;gap / (<a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(qp-&gt;dobj) + <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(qp-&gt;pobj) + 1.0);
+<a name="line438">438: </a>  } <font color="#B22222">/* END MAIN LOOP  */</font>
+<a name="line439">439: </a>  <font color="#4169E1">return</font> 0;
+<a name="line440">440: </a>}
+
+<a name="line442">442: </a><strong><font color="#4169E1"><a name="TaoView_BQPIP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoView_BQPIP(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line443">443: </a>{
+<a name="line444">444: </a>  <font color="#4169E1">return</font> 0;
+<a name="line445">445: </a>}
+
+<a name="line447">447: </a><strong><font color="#4169E1"><a name="TaoSetFromOptions_BQPIP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoSetFromOptions_BQPIP(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line448">448: </a>{
+<a name="line449">449: </a>  TAO_BQPIP *qp = (TAO_BQPIP *)tao-&gt;data;
+
+<a name="line451">451: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"Interior point method for bound constrained quadratic optimization"</font>);
+<a name="line452">452: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsInt.html">PetscOptionsInt</a>(<font color="#666666">"-tao_bqpip_predcorr"</font>, <font color="#666666">"Use a predictor-corrector method"</font>, <font color="#666666">""</font>, qp-&gt;predcorr, &amp;qp-&gt;predcorr, NULL);
+<a name="line453">453: </a>  PetscOptionsHeadEnd();
+<a name="line454">454: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html">KSPSetFromOptions</a>(tao-&gt;ksp);
+<a name="line455">455: </a>  <font color="#4169E1">return</font> 0;
+<a name="line456">456: </a>}
+
+<a name="line458">458: </a><strong><font color="#4169E1"><a name="TaoDestroy_BQPIP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoDestroy_BQPIP(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line459">459: </a>{
+<a name="line460">460: </a>  TAO_BQPIP *qp = (TAO_BQPIP *)tao-&gt;data;
+
+<a name="line462">462: </a>  <font color="#4169E1">if</font> (tao-&gt;setupcalled) {
+<a name="line463">463: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;G);
+<a name="line464">464: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;DG);
+<a name="line465">465: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;Z);
+<a name="line466">466: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;DZ);
+<a name="line467">467: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;GZwork);
+<a name="line468">468: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;R3);
+<a name="line469">469: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;S);
+<a name="line470">470: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;DS);
+<a name="line471">471: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;T);
+
+<a name="line473">473: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;DT);
+<a name="line474">474: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;TSwork);
+<a name="line475">475: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;R5);
+<a name="line476">476: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;HDiag);
+<a name="line477">477: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;Work);
+<a name="line478">478: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;XL);
+<a name="line479">479: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;XU);
+<a name="line480">480: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;DiagAxpy);
+<a name="line481">481: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;RHS);
+<a name="line482">482: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;RHS2);
+<a name="line483">483: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;qp-&gt;C);
+<a name="line484">484: </a>  }
+<a name="line485">485: </a>  <a href="../../../../../docs/manualpages/KSP/KSPDestroy.html">KSPDestroy</a>(&amp;tao-&gt;ksp);
+<a name="line486">486: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tao-&gt;data);
+<a name="line487">487: </a>  <font color="#4169E1">return</font> 0;
+<a name="line488">488: </a>}
+
+<a name="line490">490: </a><strong><font color="#4169E1"><a name="TaoComputeDual_BQPIP"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoComputeDual_BQPIP(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> DXL, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> DXU)</font></strong>
+<a name="line491">491: </a>{
+<a name="line492">492: </a>  TAO_BQPIP *qp = (TAO_BQPIP *)tao-&gt;data;
+
+<a name="line494">494: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(qp-&gt;Z, DXL);
+<a name="line495">495: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(qp-&gt;S, DXU);
+<a name="line496">496: </a>  <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(DXU, -1.0);
+<a name="line497">497: </a>  <font color="#4169E1">return</font> 0;
+<a name="line498">498: </a>}
+
+<a name="line500">500: </a><font color="#B22222">/*MC</font>
+<a name="line501">501: </a><font color="#B22222"> <a href="../../../../../docs/manualpages/Tao/TAOBQPIP.html">TAOBQPIP</a> - interior-point method for quadratic programs with</font>
+<a name="line502">502: </a><font color="#B22222">    box constraints.</font>
+
+<a name="line504">504: </a><font color="#B22222"> Notes:</font>
+<a name="line505">505: </a><font color="#B22222">    This algorithms solves quadratic problems only, the Hessian will</font>
+<a name="line506">506: </a><font color="#B22222">        only be computed once.</font>
+
+<a name="line508">508: </a><font color="#B22222"> Options Database Keys:</font>
+<a name="line509">509: </a><font color="#B22222">. -tao_bqpip_predcorr - use a predictor/corrector method</font>
+
+<a name="line511">511: </a><font color="#B22222">  Level: beginner</font>
+<a name="line512">512: </a><font color="#B22222">M*/</font>
+
+<a name="line514">514: </a><strong><font color="#4169E1"><a name="TaoCreate_BQPIP"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoCreate_BQPIP(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line515">515: </a>{
+<a name="line516">516: </a>  TAO_BQPIP *qp;
+
+<a name="line518">518: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;qp);
+
+<a name="line520">520: </a>  tao-&gt;ops-&gt;setup          = TaoSetup_BQPIP;
+<a name="line521">521: </a>  tao-&gt;ops-&gt;solve          = TaoSolve_BQPIP;
+<a name="line522">522: </a>  tao-&gt;ops-&gt;view           = TaoView_BQPIP;
+<a name="line523">523: </a>  tao-&gt;ops-&gt;setfromoptions = TaoSetFromOptions_BQPIP;
+<a name="line524">524: </a>  tao-&gt;ops-&gt;destroy        = TaoDestroy_BQPIP;
+<a name="line525">525: </a>  tao-&gt;ops-&gt;computedual    = TaoComputeDual_BQPIP;
+
+<a name="line527">527: </a>  <font color="#B22222">/* Override default settings (unless already changed) */</font>
+<a name="line528">528: </a>  <font color="#4169E1">if</font> (!tao-&gt;max_it_changed) tao-&gt;max_it = 100;
+<a name="line529">529: </a>  <font color="#4169E1">if</font> (!tao-&gt;max_funcs_changed) tao-&gt;max_funcs = 500;
+<a name="line530">530: </a><font color="#A020F0">#if defined(PETSC_USE_REAL_SINGLE)</font>
+<a name="line531">531: </a>  <font color="#4169E1">if</font> (!tao-&gt;catol_changed) tao-&gt;catol = 1e-6;
+<a name="line532">532: </a><font color="#A020F0">#else</font>
+<a name="line533">533: </a>  <font color="#4169E1">if</font> (!tao-&gt;catol_changed) tao-&gt;catol = 1e-12;
+<a name="line534">534: </a><font color="#A020F0">#endif</font>
+
+<a name="line536">536: </a>  <font color="#B22222">/* Initialize pointers and variables */</font>
+<a name="line537">537: </a>  qp-&gt;n = 0;
+<a name="line538">538: </a>  qp-&gt;m = 0;
+
+<a name="line540">540: </a>  qp-&gt;predcorr = 1;
+<a name="line541">541: </a>  tao-&gt;data    = (void *)qp;
+
+<a name="line543">543: </a>  <a href="../../../../../docs/manualpages/KSP/KSPCreate.html">KSPCreate</a>(((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao)-&gt;comm, &amp;tao-&gt;ksp);
+<a name="line544">544: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectIncrementTabLevel.html">PetscObjectIncrementTabLevel</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao-&gt;ksp, (<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao, 1);
+<a name="line545">545: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetOptionsPrefix.html">KSPSetOptionsPrefix</a>(tao-&gt;ksp, tao-&gt;hdr.prefix);
+<a name="line546">546: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetType.html">KSPSetType</a>(tao-&gt;ksp, <a href="../../../../../docs/manualpages/KSP/KSPCG.html">KSPCG</a>);
+<a name="line547">547: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetTolerances.html">KSPSetTolerances</a>(tao-&gt;ksp, 1e-14, 1e-30, 1e30, <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(10, qp-&gt;n));
+<a name="line548">548: </a>  <font color="#4169E1">return</font> 0;
+<a name="line549">549: </a>}
+</pre>
+</body>
+
+</html>

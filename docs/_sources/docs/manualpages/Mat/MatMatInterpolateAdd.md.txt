@@ -1,0 +1,48 @@
+# MatMatInterpolateAdd
+Y = W + A*X or W + A'*X 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatMatInterpolateAdd(Mat A, Mat x, Mat w, Mat *y)
+```
+Neighbor-wise Collective on Mat
+
+
+## Input Parameters
+
+- ***mat   -*** the matrix
+- ***w, x -*** the input dense matrices
+
+
+
+## Output Parameters
+
+- ***y -*** the output dense matrix
+
+
+
+
+
+## Note
+This allows one to use either the restriction or interpolation (its transpose)
+matrix to do the interpolation. y matrix can be reused if already created with the proper sizes,
+otherwise it will be recreated. y must be initialized to `NULL` if not supplied.
+
+
+## See Also
+ `Mat`, `MatInterpolateAdd()`, `MatMatInterpolate()`, `MatMatRestrict()`, `PCMG`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/interface/matrix.c.html#MatMatInterpolateAdd">src/mat/interface/matrix.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/interface/matrix.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

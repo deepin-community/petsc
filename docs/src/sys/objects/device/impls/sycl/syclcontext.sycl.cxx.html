@@ -1,0 +1,104 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/objects/device/impls/sycl/syclcontext.sycl.cxx">Actual source code: syclcontext.sycl.cxx</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:59+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#include </font><font color="#666666">"sycldevice.hpp"</font><font color="#A020F0"></font>
+<a name="line2">  2: </a><font color="#A020F0">#include &lt;CL/sycl.hpp&gt;</font>
+
+<a name="line4">  4: </a>namespace Petsc
+<a name="line5">  5: </a>{
+
+<a name="line7">  7: </a>namespace device
+<a name="line8">  8: </a>{
+
+<a name="line10"> 10: </a>namespace sycl
+<a name="line11"> 11: </a>{
+
+<a name="line13"> 13: </a>namespace impl
+<a name="line14"> 14: </a>{
+
+<a name="line16"> 16: </a>class DeviceContext {
+<a name="line17"> 17: </a><strong><font color="#FF0000">public:</font></strong>
+<a name="line18"> 18: </a>  <font color="#4169E1">struct PetscDeviceContext_IMPLS</font> {
+<a name="line19"> 19: </a>    ::sycl::event event;
+<a name="line20"> 20: </a>    ::sycl::event begin; // timer-only
+<a name="line21"> 21: </a>    ::sycl::event end;   // timer-only
+<a name="line22"> 22: </a><font color="#A020F0">#if <a href="../../../../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG)</font>
+<a name="line23"> 23: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> timerInUse;
+<a name="line24"> 24: </a><font color="#A020F0">#endif</font>
+<a name="line25"> 25: </a>  };
+
+<a name="line27"> 27: </a><strong><font color="#FF0000">private:</font></strong>
+<a name="line28"> 28: </a>  static bool initialized_;
+
+<a name="line30"> 30: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> finalize_() noexcept
+<a name="line31"> 31: </a>  {
+<a name="line32"> 32: </a>    initialized_ = false;
+<a name="line33"> 33: </a>    <font color="#4169E1">return</font> 0;
+<a name="line34"> 34: </a>  }
+
+<a name="line36"> 36: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> initialize_(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> id, DeviceContext *dci) noexcept
+<a name="line37"> 37: </a>  {
+<a name="line38"> 38: </a>    PetscDeviceCheckDeviceCount_Internal(id);
+<a name="line39"> 39: </a>    <font color="#4169E1">if</font> (!initialized_) {
+<a name="line40"> 40: </a>      initialized_ = true;
+<a name="line41"> 41: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscRegisterFinalize.html">PetscRegisterFinalize</a>(finalize_);
+<a name="line42"> 42: </a>    }
+<a name="line43"> 43: </a>    <font color="#4169E1">return</font> 0;
+<a name="line44"> 44: </a>  }
+
+<a name="line46"> 46: </a><strong><font color="#FF0000">public:</font></strong>
+<a name="line47"> 47: </a>  const <font color="#4169E1">struct _DeviceContextOps</font> ops = {destroy, changeStreamType, setUp, query, waitForContext, synchronize, getBlasHandle, getSolverHandle, getStreamHandle, beginTimer, endTimer, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
+
+<a name="line49"> 49: </a>  // <font color="#4169E1">default</font> constructor
+<a name="line50"> 50: </a>  DeviceContext() noexcept = <font color="#4169E1">default</font>;
+
+<a name="line52"> 52: </a>  // All of these functions MUST be static in order to be callable from C, otherwise they
+<a name="line53"> 53: </a>  // get the implicit 'this' pointer tacked on
+<a name="line54"> 54: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> destroy(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx) noexcept
+<a name="line55"> 55: </a>  {
+<a name="line56"> 56: </a>    delete static_cast&lt;PetscDeviceContext_IMPLS *&gt;(dctx-&gt;data);
+<a name="line57"> 57: </a>    dctx-&gt;data = nullptr;
+<a name="line58"> 58: </a>    <font color="#4169E1">return</font> 0;
+<a name="line59"> 59: </a>  };
+<a name="line60"> 60: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> changeStreamType(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, <a href="../../../../../../docs/manualpages/Sys/PetscStreamType.html">PetscStreamType</a>) noexcept { <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>); };
+<a name="line61"> 61: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> setUp(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>) noexcept { <font color="#4169E1">return</font> 0; }; // Nothing to setup
+<a name="line62"> 62: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> query(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *) noexcept { <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>); };
+<a name="line63"> 63: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> waitForContext(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, <a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>) noexcept { <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>); };
+<a name="line64"> 64: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> synchronize(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>) noexcept { <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>); };
+<a name="line65"> 65: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> getBlasHandle(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, void *) noexcept { <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>); };
+<a name="line66"> 66: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> getSolverHandle(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, void *) noexcept { <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>); };
+<a name="line67"> 67: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> getStreamHandle(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, void *) noexcept { <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>); };
+<a name="line68"> 68: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> beginTimer(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>) noexcept { <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>); };
+<a name="line69"> 69: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> endTimer(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, <a href="../../../../../../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> *) noexcept { <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Not implemented"</font>); };
+<a name="line70"> 70: </a>};
+
+<a name="line72"> 72: </a>} // namespace impl
+
+<a name="line74"> 74: </a>} // namespace sycl
+
+<a name="line76"> 76: </a>} // namespace device
+
+<a name="line78"> 78: </a>} // namespace Petsc
+
+<a name="line80"> 80: </a><strong><font color="#4169E1"><a name="PetscDeviceContextCreate_SYCL"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextCreate_SYCL(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx)</font></strong>
+<a name="line81"> 81: </a>{
+<a name="line82"> 82: </a>  using namespace Petsc::device::sycl::impl;
+
+<a name="line84"> 84: </a>  static const DeviceContext syclctx;
+
+<a name="line86"> 86: </a>  dctx-&gt;data = new DeviceContext::PetscDeviceContext_IMPLS();
+<a name="line87"> 87: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMemcpy.html">PetscMemcpy</a>(dctx-&gt;ops, &amp;syclctx.ops, <font color="#4169E1">sizeof</font>(syclctx.ops));
+<a name="line88"> 88: </a>  <font color="#4169E1">return</font> 0;
+<a name="line89"> 89: </a>}
+</pre>
+</body>
+
+</html>

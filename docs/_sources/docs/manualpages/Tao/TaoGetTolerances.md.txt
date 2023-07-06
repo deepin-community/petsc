@@ -1,0 +1,47 @@
+# TaoGetTolerances
+gets the current values of tolerances 
+## Synopsis
+```
+#include "petsctao.h" 
+PetscErrorCode TaoGetTolerances(Tao tao, PetscReal *gatol, PetscReal *grtol, PetscReal *gttol)
+```
+Not Collective
+
+
+## Input Parameter
+
+- ***tao -*** the Tao context
+
+
+
+## Output Parameters
+
+- ***gatol -*** stop if norm of gradient is less than this
+- ***grtol -*** stop if relative norm of gradient is less than this
+- ***gttol -*** stop if norm of gradient is reduced by a this factor
+
+
+
+
+
+## Note
+NULL can be used as an argument if not all tolerances values are needed
+
+
+## See Also
+ `Tao`, `TaoSetTolerances()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/interface/taosolver.c.html#TaoGetTolerances">src/tao/interface/taosolver.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/tao/interface/taosolver.c)
+
+
+[Index of all Tao routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,1 @@
+PETSC_DIR=/usr/lib/petscdir/petsc-complex ./debian/tests/test-petsc-common

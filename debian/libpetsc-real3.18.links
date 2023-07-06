@@ -1,0 +1,2 @@
+#! /bin/sh
+echo usr/lib/${DEB_HOST_MULTIARCH}/libpetsc_real.so.${PETSC_VERSION} usr/lib/${DEB_HOST_MULTIARCH}/libpetsc_real.so.${PETSC_SONAME_VERSION}

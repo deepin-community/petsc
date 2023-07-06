@@ -1,0 +1,92 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/classes/viewer/impls/ams/amsopen.c">Actual source code: amsopen.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:45+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../../../../../include/petsc/private/viewerimpl.h.html">&lt;petsc/private/viewerimpl.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="../../../../../../include/petscviewersaws.h.html">&lt;petscviewersaws.h&gt;</A>
+
+<a name="line5">  5: </a><font color="#B22222">/*@C</font>
+<a name="line6">  6: </a><font color="#B22222">    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSAWsOpen.html">PetscViewerSAWsOpen</a> - Opens an SAWs `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`.</font>
+
+<a name="line8">  8: </a><font color="#B22222">    Collective; No Fortran Support</font>
+
+<a name="line10"> 10: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line11"> 11: </a><font color="#B22222">.   comm - the MPI communicator</font>
+
+<a name="line13"> 13: </a><font color="#B22222">    Output Parameter:</font>
+<a name="line14"> 14: </a><font color="#B22222">.   lab - the `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`</font>
+
+<a name="line16"> 16: </a><font color="#B22222">    Options Database Keys:</font>
+<a name="line17"> 17: </a><font color="#B22222">+   -saws_port &lt;port number&gt; - port number where you are running SAWs client</font>
+<a name="line18"> 18: </a><font color="#B22222">.   -xxx_view saws - publish the object xxx</font>
+<a name="line19"> 19: </a><font color="#B22222">-   -xxx_saws_block - blocks the program at the end of a critical point (for <a href="../../../../../../docs/manualpages/KSP/KSP.html">KSP</a> and <a href="../../../../../../docs/manualpages/SNES/SNES.html">SNES</a> it is the end of a solve) until</font>
+<a name="line20"> 20: </a><font color="#B22222">                    the user unblocks the problem with an external tool that access the object with SAWS</font>
+
+<a name="line22"> 22: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line24"> 24: </a><font color="#B22222">    Note:</font>
+<a name="line25"> 25: </a><font color="#B22222">    Unlike other viewers that only access the object being viewed on the call to XXXView(object,viewer) the SAWs viewer allows</font>
+<a name="line26"> 26: </a><font color="#B22222">    one to view the object asynchronously as the program continues to run. One can remove SAWs access to the object with a call to</font>
+<a name="line27"> 27: </a><font color="#B22222">    `PetscObjectSAWsViewOff()`.</font>
+
+<a name="line29"> 29: </a><font color="#B22222">    Information about the SAWs is available via https://bitbucket.org/saws/saws</font>
+
+<a name="line31"> 31: </a><font color="#B22222">.seealso: [](sec_viewers), `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerStringSPrintf.html">PetscViewerStringSPrintf</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_SAWS_.html">PETSC_VIEWER_SAWS_</a>()`, `<a href="../../../../../../docs/manualpages/Sys/PetscObjectSAWsBlock.html">PetscObjectSAWsBlock</a>()`,</font>
+<a name="line32"> 32: </a><font color="#B22222">          `PetscObjectSAWsViewOff()`, `<a href="../../../../../../docs/manualpages/Sys/PetscObjectSAWsTakeAccess.html">PetscObjectSAWsTakeAccess</a>()`, `<a href="../../../../../../docs/manualpages/Sys/PetscObjectSAWsGrantAccess.html">PetscObjectSAWsGrantAccess</a>()`</font>
+<a name="line33"> 33: </a><font color="#B22222">@*/</font>
+<a name="line34"> 34: </a><strong><font color="#4169E1"><a name="PetscViewerSAWsOpen"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSAWsOpen.html">PetscViewerSAWsOpen</a>(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *lab)</font></strong>
+<a name="line35"> 35: </a>{
+<a name="line36"> 36: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>(comm, lab);
+<a name="line37"> 37: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html">PetscViewerSetType</a>(*lab, PETSCVIEWERSAWS);
+<a name="line38"> 38: </a>  <font color="#4169E1">return</font> 0;
+<a name="line39"> 39: </a>}
+
+<a name="line41"> 41: </a><font color="#B22222">/*@C</font>
+<a name="line42"> 42: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Viewer/PetscObjectViewSAWs.html">PetscObjectViewSAWs</a> - View the base portion of any object with an SAWs viewer</font>
+
+<a name="line44"> 44: </a><font color="#B22222">   Collective</font>
+
+<a name="line46"> 46: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line47"> 47: </a><font color="#B22222">+  obj - the `<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>` variable. Thus must be cast with a (`<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>`), for example, `<a href="../../../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>`((`<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>`)mat,name);</font>
+<a name="line48"> 48: </a><font color="#B22222">-  viewer - the SAWs viewer</font>
+
+<a name="line50"> 50: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line52"> 52: </a><font color="#B22222">   Note:</font>
+<a name="line53"> 53: </a><font color="#B22222">   The object must have already been named before calling this routine since naming an</font>
+<a name="line54"> 54: </a><font color="#B22222">   object can be collective.</font>
+
+<a name="line56"> 56: </a><font color="#B22222">   Developer Note:</font>
+<a name="line57"> 57: </a><font color="#B22222">   Currently this is called only on rank zero of `<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>`</font>
+
+<a name="line59"> 59: </a><font color="#B22222">.seealso: [](sec_viewers), `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`, `<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>`, `<a href="../../../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>()`, `PetscObjectSAWsViewOff()`</font>
+<a name="line60"> 60: </a><font color="#B22222">@*/</font>
+<a name="line61"> 61: </a><strong><font color="#4169E1"><a name="PetscObjectViewSAWs"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Viewer/PetscObjectViewSAWs.html">PetscObjectViewSAWs</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> obj, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line62"> 62: </a>{
+<a name="line63"> 63: </a>  char        dir[1024];
+<a name="line64"> 64: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+
+<a name="line67"> 67: </a>  <font color="#4169E1">if</font> (obj-&gt;amsmem) <font color="#4169E1">return</font> 0;
+<a name="line68"> 68: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;rank);
+
+<a name="line72"> 72: </a>  obj-&gt;amsmem = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line73"> 73: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(dir, 1024, <font color="#666666">"/PETSc/Objects/%s/Class"</font>, obj-&gt;name);
+<a name="line74"> 74: </a>  SAWs_Register, (dir, &amp;obj-&gt;class_name, 1, SAWs_READ, SAWs_STRING);
+<a name="line75"> 75: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(dir, 1024, <font color="#666666">"/PETSc/Objects/%s/Type"</font>, obj-&gt;name);
+<a name="line76"> 76: </a>  SAWs_Register, (dir, &amp;obj-&gt;type_name, 1, SAWs_READ, SAWs_STRING);
+<a name="line77"> 77: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(dir, 1024, <font color="#666666">"/PETSc/Objects/%s/__Id"</font>, obj-&gt;name);
+<a name="line78"> 78: </a>  SAWs_Register, (dir, &amp;obj-&gt;id, 1, SAWs_READ, SAWs_INT);
+<a name="line79"> 79: </a>  <font color="#4169E1">return</font> 0;
+<a name="line80"> 80: </a>}
+</pre>
+</body>
+
+</html>

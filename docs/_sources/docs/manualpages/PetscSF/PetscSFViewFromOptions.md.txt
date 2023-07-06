@@ -1,0 +1,37 @@
+# PetscSFViewFromOptions
+View a `PetscSF` based on arguments in the options database 
+## Synopsis
+```
+#include "petscsf.h" 
+PetscErrorCode PetscSFViewFromOptions(PetscSF A, PetscObject obj, const char name[])
+```
+Collective on A
+
+
+## Input Parameters
+
+- ***A -*** the star forest
+- ***obj -*** Optional object that provides the prefix for the option names
+- ***name -*** command line option
+
+
+
+
+
+## See Also
+ `PetscSF`, `PetscSFView`, `PetscObjectViewFromOptions()`, `PetscSFCreate()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/sf/interface/sf.c.html#PetscSFViewFromOptions">src/vec/is/sf/interface/sf.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/is/sf/interface/sf.c)
+
+
+[Index of all PetscSF routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,505 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/field/impls/da/dmfieldda.c">Actual source code: dmfieldda.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:52+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../include/petsc/private/dmfieldimpl.h.html">&lt;petsc/private/dmfieldimpl.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../../include/petsc/private/dmimpl.h.html">&lt;petsc/private/dmimpl.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="../../../../../include/petscdmda.h.html">&lt;petscdmda.h&gt;</A>
+
+<a name="line5">  5: </a><font color="#4169E1"><a name="_n_DMField_DA"></a>typedef struct _n_DMField_DA </font>{
+<a name="line6">  6: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *cornerVals;
+<a name="line7">  7: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *cornerCoeffs;
+<a name="line8">  8: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *work;
+<a name="line9">  9: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>    coordRange[3][2];
+<a name="line10"> 10: </a>} DMField_DA;
+
+<a name="line12"> 12: </a><strong><font color="#4169E1"><a name="DMFieldDestroy_DA"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMFieldDestroy_DA(<a href="../../../../../docs/manualpages/DM/DMField.html">DMField</a> field)</font></strong>
+<a name="line13"> 13: </a>{
+<a name="line14"> 14: </a>  DMField_DA *dafield;
+
+<a name="line16"> 16: </a>  dafield = (DMField_DA *)field-&gt;data;
+<a name="line17"> 17: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree3.html">PetscFree3</a>(dafield-&gt;cornerVals, dafield-&gt;cornerCoeffs, dafield-&gt;work);
+<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(dafield);
+<a name="line19"> 19: </a>  <font color="#4169E1">return</font> 0;
+<a name="line20"> 20: </a>}
+
+<a name="line22"> 22: </a><strong><font color="#4169E1"><a name="DMFieldView_DA"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMFieldView_DA(<a href="../../../../../docs/manualpages/DM/DMField.html">DMField</a> field, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line23"> 23: </a>{
+<a name="line24"> 24: </a>  DMField_DA *dafield = (DMField_DA *)field-&gt;data;
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   iascii;
+
+<a name="line27"> 27: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line28"> 28: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line29"> 29: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i, c, dim;
+<a name="line30"> 30: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nc;
+<a name="line31"> 31: </a>    <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>       dm = field-&gt;dm;
+
+<a name="line33"> 33: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Field corner values:\n"</font>);
+<a name="line34"> 34: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(viewer);
+<a name="line35"> 35: </a>    <a href="../../../../../docs/manualpages/DM/DMGetDimension.html">DMGetDimension</a>(dm, &amp;dim);
+<a name="line36"> 36: </a>    nc = field-&gt;numComponents;
+<a name="line37"> 37: </a>    <font color="#4169E1">for</font> (i = 0, c = 0; i &lt; (1 &lt;&lt; dim); i++) {
+<a name="line38"> 38: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> j;
+
+<a name="line40"> 40: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; nc; j++, c++) {
+<a name="line41"> 41: </a>        <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> val = dafield-&gt;cornerVals[nc * i + j];
+
+<a name="line43"> 43: </a><font color="#A020F0">#if !defined(PETSC_USE_COMPLEX)</font>
+<a name="line44"> 44: </a>        <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"%g "</font>, (double)val);
+<a name="line45"> 45: </a><font color="#A020F0">#else</font>
+<a name="line46"> 46: </a>        <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"%g+i%g "</font>, (double)<a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(val), (double)<a href="../../../../../docs/manualpages/Sys/PetscImaginaryPart.html">PetscImaginaryPart</a>(val));
+<a name="line47"> 47: </a><font color="#A020F0">#endif</font>
+<a name="line48"> 48: </a>      }
+<a name="line49"> 49: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"\n"</font>);
+<a name="line50"> 50: </a>    }
+<a name="line51"> 51: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(viewer);
+<a name="line52"> 52: </a>  }
+<a name="line53"> 53: </a>  <font color="#4169E1">return</font> 0;
+<a name="line54"> 54: </a>}
+
+<a name="line56"> 56: </a><strong><font color="#228B22">#define MEdot(y, A, x, m, c, cast) \</font></strong>
+<a name="line57"> 57: </a><strong><font color="#228B22">  do { \</font></strong>
+<a name="line58"> 58: </a><strong><font color="#228B22">    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> _k, _l; \</font></strong>
+<a name="line59"> 59: </a><strong><font color="#228B22">    for (_k = 0; _k &lt; (c); _k++) (y)[_k] = 0.; \</font></strong>
+<a name="line60"> 60: </a><strong><font color="#228B22">    for (_l = 0; _l &lt; (m); _l++) { \</font></strong>
+<a name="line61"> 61: </a><strong><font color="#228B22">      for (_k = 0; _k &lt; (c); _k++) (y)[_k] += cast((A)[(c)*_l + _k]) * (x)[_l]; \</font></strong>
+<a name="line62"> 62: </a><strong><font color="#228B22">    } \</font></strong>
+<a name="line63"> 63: </a><strong><font color="#228B22">  } while (0)</font></strong>
+
+<a name="line65"> 65: </a><strong><font color="#228B22">#define MEHess(out, cf, etaB, etaD, dim, nc, cast) \</font></strong>
+<a name="line66"> 66: </a><strong><font color="#228B22">  do { \</font></strong>
+<a name="line67"> 67: </a><strong><font color="#228B22">    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> _m, _j, _k; \</font></strong>
+<a name="line68"> 68: </a><strong><font color="#228B22">    for (_m = 0; _m &lt; (nc) * (dim) * (dim); _m++) (out)[_m] = 0.; \</font></strong>
+<a name="line69"> 69: </a><strong><font color="#228B22">    for (_j = 0; _j &lt; (dim); _j++) { \</font></strong>
+<a name="line70"> 70: </a><strong><font color="#228B22">      for (_k = _j + 1; _k &lt; (dim); _k++) { \</font></strong>
+<a name="line71"> 71: </a><strong><font color="#228B22">        <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> _ind = (1 &lt;&lt; _j) + (1 &lt;&lt; _k); \</font></strong>
+<a name="line72"> 72: </a><strong><font color="#228B22">        for (_m = 0; _m &lt; (nc); _m++) { \</font></strong>
+<a name="line73"> 73: </a><strong><font color="#228B22">          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> c = (cf)[_m] * (etaB)[_ind] * (etaD)[_ind]; \</font></strong>
+<a name="line74"> 74: </a><strong><font color="#228B22">          (out)[(_m * (dim) + _k) * (dim) + _j] += cast(c); \</font></strong>
+<a name="line75"> 75: </a><strong><font color="#228B22">          (out)[(_m * (dim) + _j) * (dim) + _k] += cast(c); \</font></strong>
+<a name="line76"> 76: </a><strong><font color="#228B22">        } \</font></strong>
+<a name="line77"> 77: </a><strong><font color="#228B22">      } \</font></strong>
+<a name="line78"> 78: </a><strong><font color="#228B22">    } \</font></strong>
+<a name="line79"> 79: </a><strong><font color="#228B22">  } while (0)</font></strong>
+
+<a name="line81"> 81: </a><strong><font color="#4169E1"><a name="MultilinearEvaluate"></a>static void MultilinearEvaluate(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dim, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> (*coordRange)</font></strong>[2], <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nc, <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *cf, <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *cfWork, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nPoints, const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *points, <a href="../../../../../docs/manualpages/Sys/PetscDataType.html">PetscDataType</a> datatype, void *B, void *D, void *H)
+<a name="line82"> 82: </a>{
+<a name="line83"> 83: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i, j, k, l, m;
+<a name="line84"> 84: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> whol = 1 &lt;&lt; dim;
+<a name="line85"> 85: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> half = whol &gt;&gt; 1;
+
+<a name="line88"> 88: </a>  <font color="#4169E1">if</font> (!B &amp;&amp; !D &amp;&amp; !H) <font color="#4169E1">return</font>;
+<a name="line89"> 89: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nPoints; i++) {
+<a name="line90"> 90: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *point   = &amp;points[dim * i];
+<a name="line91"> 91: </a>    <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>          deta[3] = {0.};
+<a name="line92"> 92: </a>    <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>          etaB[8] = {1., 1., 1., 1., 1., 1., 1., 1.};
+<a name="line93"> 93: </a>    <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>          etaD[8] = {1., 1., 1., 1., 1., 1., 1., 1.};
+<a name="line94"> 94: </a>    <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>          work[8];
+
+<a name="line96"> 96: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; dim; j++) {
+<a name="line97"> 97: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> e, d;
+
+<a name="line99"> 99: </a>      e       = (<a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(point[j]) - coordRange[j][0]) / coordRange[j][1];
+<a name="line100">100: </a>      deta[j] = d = 1. / coordRange[j][1];
+<a name="line101">101: </a>      <font color="#4169E1">for</font> (k = 0; k &lt; whol; k++) work[k] = etaB[k];
+<a name="line102">102: </a>      <font color="#4169E1">for</font> (k = 0; k &lt; half; k++) {
+<a name="line103">103: </a>        etaB[k]        = work[2 * k] * e;
+<a name="line104">104: </a>        etaB[k + half] = work[2 * k + 1];
+<a name="line105">105: </a>      }
+<a name="line106">106: </a>      <font color="#4169E1">if</font> (H) {
+<a name="line107">107: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; whol; k++) work[k] = etaD[k];
+<a name="line108">108: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; half; k++) {
+<a name="line109">109: </a>          etaD[k + half] = work[2 * k];
+<a name="line110">110: </a>          etaD[k]        = work[2 * k + 1] * d;
+<a name="line111">111: </a>        }
+<a name="line112">112: </a>      }
+<a name="line113">113: </a>    }
+<a name="line114">114: </a>    <font color="#4169E1">if</font> (B) {
+<a name="line115">115: </a>      <font color="#4169E1">if</font> (datatype == PETSC_SCALAR) {
+<a name="line116">116: </a>        <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *out = &amp;((<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)B)[nc * i];
+
+<a name="line118">118: </a>        MEdot(out, cf, etaB, (1 &lt;&lt; dim), nc, (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>));
+<a name="line119">119: </a>      } <font color="#4169E1">else</font> {
+<a name="line120">120: </a>        <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *out = &amp;((<a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)B)[nc * i];
+
+<a name="line122">122: </a>        MEdot(out, cf, etaB, (1 &lt;&lt; dim), nc, <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>);
+<a name="line123">123: </a>      }
+<a name="line124">124: </a>    }
+<a name="line125">125: </a>    <font color="#4169E1">if</font> (D) {
+<a name="line126">126: </a>      <font color="#4169E1">if</font> (datatype == PETSC_SCALAR) {
+<a name="line127">127: </a>        <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *out = &amp;((<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)D)[nc * dim * i];
+
+<a name="line129">129: </a>        <font color="#4169E1">for</font> (m = 0; m &lt; nc * dim; m++) out[m] = 0.;
+<a name="line130">130: </a>      } <font color="#4169E1">else</font> {
+<a name="line131">131: </a>        <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *out = &amp;((<a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)D)[nc * dim * i];
+
+<a name="line133">133: </a>        <font color="#4169E1">for</font> (m = 0; m &lt; nc * dim; m++) out[m] = 0.;
+<a name="line134">134: </a>      }
+<a name="line135">135: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; dim; j++) {
+<a name="line136">136: </a>        <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> d = deta[j];
+
+<a name="line138">138: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; whol * nc; k++) cfWork[k] = cf[k];
+<a name="line139">139: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; whol; k++) work[k] = etaB[k];
+<a name="line140">140: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; half; k++) {
+<a name="line141">141: </a>          <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> e;
+
+<a name="line143">143: </a>          etaB[k]        = work[2 * k];
+<a name="line144">144: </a>          etaB[k + half] = e = work[2 * k + 1];
+
+<a name="line146">146: </a>          <font color="#4169E1">for</font> (l = 0; l &lt; nc; l++) {
+<a name="line147">147: </a>            cf[k * nc + l]          = cfWork[2 * k * nc + l];
+<a name="line148">148: </a>            cf[(k + half) * nc + l] = cfWork[(2 * k + 1) * nc + l];
+<a name="line149">149: </a>          }
+<a name="line150">150: </a>          <font color="#4169E1">if</font> (datatype == PETSC_SCALAR) {
+<a name="line151">151: </a>            <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *out = &amp;((<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)D)[nc * dim * i];
+
+<a name="line153">153: </a>            <font color="#4169E1">for</font> (l = 0; l &lt; nc; l++) out[l * dim + j] += d * e * cf[k * nc + l];
+<a name="line154">154: </a>          } <font color="#4169E1">else</font> {
+<a name="line155">155: </a>            <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *out = &amp;((<a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)D)[nc * dim * i];
+
+<a name="line157">157: </a>            <font color="#4169E1">for</font> (l = 0; l &lt; nc; l++) out[l * dim + j] += d * e * <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cf[k * nc + l]);
+<a name="line158">158: </a>          }
+<a name="line159">159: </a>        }
+<a name="line160">160: </a>      }
+<a name="line161">161: </a>    }
+<a name="line162">162: </a>    <font color="#4169E1">if</font> (H) {
+<a name="line163">163: </a>      <font color="#4169E1">if</font> (datatype == PETSC_SCALAR) {
+<a name="line164">164: </a>        <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *out = &amp;((<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)H)[nc * dim * dim * i];
+
+<a name="line166">166: </a>        MEHess(out, cf, etaB, etaD, dim, nc, (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>));
+<a name="line167">167: </a>      } <font color="#4169E1">else</font> {
+<a name="line168">168: </a>        <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *out = &amp;((<a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)H)[nc * dim * dim * i];
+
+<a name="line170">170: </a>        MEHess(out, cf, etaB, etaD, dim, nc, <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>);
+<a name="line171">171: </a>      }
+<a name="line172">172: </a>    }
+<a name="line173">173: </a>  }
+<a name="line174">174: </a>  <font color="#4169E1">return</font>;
+<a name="line175">175: </a>}
+
+<a name="line177">177: </a><strong><font color="#4169E1"><a name="DMFieldEvaluate_DA"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMFieldEvaluate_DA(<a href="../../../../../docs/manualpages/DM/DMField.html">DMField</a> field, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> points, <a href="../../../../../docs/manualpages/Sys/PetscDataType.html">PetscDataType</a> datatype, void *B, void *D, void *H)</font></strong>
+<a name="line178">178: </a>{
+<a name="line179">179: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>                 dm;
+<a name="line180">180: </a>  DMField_DA        *dafield;
+<a name="line181">181: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           dim;
+<a name="line182">182: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           N, n, nc;
+<a name="line183">183: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array;
+<a name="line184">184: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>(*coordRange)[2];
+
+<a name="line186">186: </a>  dm      = field-&gt;dm;
+<a name="line187">187: </a>  nc      = field-&gt;numComponents;
+<a name="line188">188: </a>  dafield = (DMField_DA *)field-&gt;data;
+<a name="line189">189: </a>  <a href="../../../../../docs/manualpages/DM/DMGetDimension.html">DMGetDimension</a>(dm, &amp;dim);
+<a name="line190">190: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(points, &amp;N);
+<a name="line192">192: </a>  n          = N / dim;
+<a name="line193">193: </a>  coordRange = &amp;(dafield-&gt;coordRange[0]);
+<a name="line194">194: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(points, &amp;array);
+<a name="line195">195: </a>  MultilinearEvaluate(dim, coordRange, nc, dafield-&gt;cornerCoeffs, dafield-&gt;work, n, array, datatype, B, D, H);
+<a name="line196">196: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(points, &amp;array);
+<a name="line197">197: </a>  <font color="#4169E1">return</font> 0;
+<a name="line198">198: </a>}
+
+<a name="line200">200: </a><strong><font color="#4169E1"><a name="DMFieldEvaluateFE_DA"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMFieldEvaluateFE_DA(<a href="../../../../../docs/manualpages/DM/DMField.html">DMField</a> field, <a href="../../../../../docs/manualpages/IS/IS.html">IS</a> cellIS, <a href="../../../../../docs/manualpages/DT/PetscQuadrature.html">PetscQuadrature</a> points, <a href="../../../../../docs/manualpages/Sys/PetscDataType.html">PetscDataType</a> datatype, void *B, void *D, void *H)</font></strong>
+<a name="line201">201: </a>{
+<a name="line202">202: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  c, i, j, k, dim, cellsPer[3] = {0}, first[3] = {0}, whol, half;
+<a name="line203">203: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> stepPer[3]           = {0.};
+<a name="line204">204: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> cellCoordRange[3][2] = {
+<a name="line205">205: </a>    {0., 1.},
+<a name="line206">206: </a>    {0., 1.},
+<a name="line207">207: </a>    {0., 1.}
+<a name="line208">208: </a>  };
+<a name="line209">209: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>     *cellCoeffs, *work;
+<a name="line210">210: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>               dm;
+<a name="line211">211: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDALocalInfo.html">DMDALocalInfo</a>    info;
+<a name="line212">212: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         cStart, cEnd;
+<a name="line213">213: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         nq, nc;
+<a name="line214">214: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *q;
+<a name="line215">215: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line216">216: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *qs;
+<a name="line217">217: </a><font color="#A020F0">#else</font>
+<a name="line218">218: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *qs;
+<a name="line219">219: </a><font color="#A020F0">#endif</font>
+<a name="line220">220: </a>  DMField_DA     *dafield;
+<a name="line221">221: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>       isStride;
+<a name="line222">222: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *cells  = NULL;
+<a name="line223">223: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        sfirst = -1, stride = -1, nCells;
+
+<a name="line225">225: </a>  dafield = (DMField_DA *)field-&gt;data;
+<a name="line226">226: </a>  dm      = field-&gt;dm;
+<a name="line227">227: </a>  nc      = field-&gt;numComponents;
+<a name="line228">228: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetLocalInfo.html">DMDAGetLocalInfo</a>(dm, &amp;info);
+<a name="line229">229: </a>  dim         = info.dim;
+<a name="line230">230: </a>  work        = dafield-&gt;work;
+<a name="line231">231: </a>  stepPer[0]  = 1. / info.mx;
+<a name="line232">232: </a>  stepPer[1]  = 1. / info.my;
+<a name="line233">233: </a>  stepPer[2]  = 1. / info.mz;
+<a name="line234">234: </a>  first[0]    = info.gxs;
+<a name="line235">235: </a>  first[1]    = info.gys;
+<a name="line236">236: </a>  first[2]    = info.gzs;
+<a name="line237">237: </a>  cellsPer[0] = info.gxm;
+<a name="line238">238: </a>  cellsPer[1] = info.gym;
+<a name="line239">239: </a>  cellsPer[2] = info.gzm;
+<a name="line240">240: </a>  <font color="#B22222">/* TODO: probably take components into account */</font>
+<a name="line241">241: </a>  <a href="../../../../../docs/manualpages/DT/PetscQuadratureGetData.html">PetscQuadratureGetData</a>(points, NULL, NULL, &amp;nq, &amp;q, NULL);
+<a name="line242">242: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line243">243: </a>  <a href="../../../../../docs/manualpages/DM/DMGetWorkArray.html">DMGetWorkArray</a>(dm, nq * dim, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, &amp;qs);
+<a name="line244">244: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nq * dim; i++) qs[i] = q[i];
+<a name="line245">245: </a><font color="#A020F0">#else</font>
+<a name="line246">246: </a>  qs = q;
+<a name="line247">247: </a><font color="#A020F0">#endif</font>
+<a name="line248">248: </a>  DMDAGetHeightStratum(dm, 0, &amp;cStart, &amp;cEnd);
+<a name="line249">249: </a>  <a href="../../../../../docs/manualpages/DM/DMGetWorkArray.html">DMGetWorkArray</a>(dm, (1 &lt;&lt; dim) * nc, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, &amp;cellCoeffs);
+<a name="line250">250: </a>  whol = (1 &lt;&lt; dim);
+<a name="line251">251: </a>  half = whol &gt;&gt; 1;
+<a name="line252">252: </a>  <a href="../../../../../docs/manualpages/IS/ISGetLocalSize.html">ISGetLocalSize</a>(cellIS, &amp;nCells);
+<a name="line253">253: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)cellIS, ISSTRIDE, &amp;isStride);
+<a name="line254">254: </a>  <font color="#4169E1">if</font> (isStride) {
+<a name="line255">255: </a>    <a href="../../../../../docs/manualpages/IS/ISStrideGetInfo.html">ISStrideGetInfo</a>(cellIS, &amp;sfirst, &amp;stride);
+<a name="line256">256: </a>  } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/IS/ISGetIndices.html">ISGetIndices</a>(cellIS, &amp;cells);
+<a name="line257">257: </a>  <font color="#4169E1">for</font> (c = 0; c &lt; nCells; c++) {
+<a name="line258">258: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cell   = isStride ? (sfirst + c * stride) : cells[c];
+<a name="line259">259: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> rem    = cell;
+<a name="line260">260: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ijk[3] = {0};
+<a name="line261">261: </a>    void    *cB, *cD, *cH;
+
+<a name="line263">263: </a>    <font color="#4169E1">if</font> (datatype == PETSC_SCALAR) {
+<a name="line264">264: </a>      cB = B ? &amp;((<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)B)[nc * nq * c] : NULL;
+<a name="line265">265: </a>      cD = D ? &amp;((<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)D)[nc * nq * dim * c] : NULL;
+<a name="line266">266: </a>      cH = H ? &amp;((<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)H)[nc * nq * dim * dim * c] : NULL;
+<a name="line267">267: </a>    } <font color="#4169E1">else</font> {
+<a name="line268">268: </a>      cB = B ? &amp;((<a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)B)[nc * nq * c] : NULL;
+<a name="line269">269: </a>      cD = D ? &amp;((<a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)D)[nc * nq * dim * c] : NULL;
+<a name="line270">270: </a>      cH = H ? &amp;((<a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)H)[nc * nq * dim * dim * c] : NULL;
+<a name="line271">271: </a>    }
+<a name="line273">273: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nc * whol; i++) work[i] = dafield-&gt;cornerCoeffs[i];
+<a name="line274">274: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; dim; j++) {
+<a name="line275">275: </a>      <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> e, d;
+<a name="line276">276: </a>      ijk[j] = (rem % cellsPer[j]);
+<a name="line277">277: </a>      rem /= cellsPer[j];
+
+<a name="line279">279: </a>      e = 2. * (ijk[j] + first[j] + 0.5) * stepPer[j] - 1.;
+<a name="line280">280: </a>      d = stepPer[j];
+<a name="line281">281: </a>      <font color="#4169E1">for</font> (i = 0; i &lt; half; i++) {
+<a name="line282">282: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; nc; k++) {
+<a name="line283">283: </a>          cellCoeffs[i * nc + k]          = work[2 * i * nc + k] * d;
+<a name="line284">284: </a>          cellCoeffs[(i + half) * nc + k] = work[2 * i * nc + k] * e + work[(2 * i + 1) * nc + k];
+<a name="line285">285: </a>        }
+<a name="line286">286: </a>      }
+<a name="line287">287: </a>      <font color="#4169E1">for</font> (i = 0; i &lt; whol * nc; i++) work[i] = cellCoeffs[i];
+<a name="line288">288: </a>    }
+<a name="line289">289: </a>    MultilinearEvaluate(dim, cellCoordRange, nc, cellCoeffs, dafield-&gt;work, nq, qs, datatype, cB, cD, cH);
+<a name="line290">290: </a>  }
+<a name="line291">291: </a>  <font color="#4169E1">if</font> (!isStride) <a href="../../../../../docs/manualpages/IS/ISRestoreIndices.html">ISRestoreIndices</a>(cellIS, &amp;cells);
+<a name="line292">292: </a>  <a href="../../../../../docs/manualpages/DM/DMRestoreWorkArray.html">DMRestoreWorkArray</a>(dm, (1 &lt;&lt; dim) * nc, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, &amp;cellCoeffs);
+<a name="line293">293: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line294">294: </a>  <a href="../../../../../docs/manualpages/DM/DMRestoreWorkArray.html">DMRestoreWorkArray</a>(dm, nq * dim, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, &amp;qs);
+<a name="line295">295: </a><font color="#A020F0">#endif</font>
+<a name="line296">296: </a>  <font color="#4169E1">return</font> 0;
+<a name="line297">297: </a>}
+
+<a name="line299">299: </a><strong><font color="#4169E1"><a name="DMFieldEvaluateFV_DA"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMFieldEvaluateFV_DA(<a href="../../../../../docs/manualpages/DM/DMField.html">DMField</a> field, <a href="../../../../../docs/manualpages/IS/IS.html">IS</a> cellIS, <a href="../../../../../docs/manualpages/Sys/PetscDataType.html">PetscDataType</a> datatype, void *B, void *D, void *H)</font></strong>
+<a name="line300">300: </a>{
+<a name="line301">301: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        c, i, dim, cellsPer[3] = {0}, first[3] = {0};
+<a name="line302">302: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>       stepPer[3] = {0.};
+<a name="line303">303: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>              dm;
+<a name="line304">304: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDALocalInfo.html">DMDALocalInfo</a>   info;
+<a name="line305">305: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        cStart, cEnd, numCells;
+<a name="line306">306: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        nc;
+<a name="line307">307: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>    *points;
+<a name="line308">308: </a>  DMField_DA     *dafield;
+<a name="line309">309: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>       isStride;
+<a name="line310">310: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *cells  = NULL;
+<a name="line311">311: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        sfirst = -1, stride = -1;
+
+<a name="line313">313: </a>  dafield = (DMField_DA *)field-&gt;data;
+<a name="line314">314: </a>  dm      = field-&gt;dm;
+<a name="line315">315: </a>  nc      = field-&gt;numComponents;
+<a name="line316">316: </a>  <a href="../../../../../docs/manualpages/DMDA/DMDAGetLocalInfo.html">DMDAGetLocalInfo</a>(dm, &amp;info);
+<a name="line317">317: </a>  dim         = info.dim;
+<a name="line318">318: </a>  stepPer[0]  = 1. / info.mx;
+<a name="line319">319: </a>  stepPer[1]  = 1. / info.my;
+<a name="line320">320: </a>  stepPer[2]  = 1. / info.mz;
+<a name="line321">321: </a>  first[0]    = info.gxs;
+<a name="line322">322: </a>  first[1]    = info.gys;
+<a name="line323">323: </a>  first[2]    = info.gzs;
+<a name="line324">324: </a>  cellsPer[0] = info.gxm;
+<a name="line325">325: </a>  cellsPer[1] = info.gym;
+<a name="line326">326: </a>  cellsPer[2] = info.gzm;
+<a name="line327">327: </a>  DMDAGetHeightStratum(dm, 0, &amp;cStart, &amp;cEnd);
+<a name="line328">328: </a>  <a href="../../../../../docs/manualpages/IS/ISGetLocalSize.html">ISGetLocalSize</a>(cellIS, &amp;numCells);
+<a name="line329">329: </a>  <a href="../../../../../docs/manualpages/DM/DMGetWorkArray.html">DMGetWorkArray</a>(dm, dim * numCells, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, &amp;points);
+<a name="line330">330: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)cellIS, ISSTRIDE, &amp;isStride);
+<a name="line331">331: </a>  <font color="#4169E1">if</font> (isStride) {
+<a name="line332">332: </a>    <a href="../../../../../docs/manualpages/IS/ISStrideGetInfo.html">ISStrideGetInfo</a>(cellIS, &amp;sfirst, &amp;stride);
+<a name="line333">333: </a>  } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/IS/ISGetIndices.html">ISGetIndices</a>(cellIS, &amp;cells);
+<a name="line334">334: </a>  <font color="#4169E1">for</font> (c = 0; c &lt; numCells; c++) {
+<a name="line335">335: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cell   = isStride ? (sfirst + c * stride) : cells[c];
+<a name="line336">336: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> rem    = cell;
+<a name="line337">337: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ijk[3] = {0};
+
+<a name="line340">340: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; dim; i++) {
+<a name="line341">341: </a>      ijk[i] = (rem % cellsPer[i]);
+<a name="line342">342: </a>      rem /= cellsPer[i];
+<a name="line343">343: </a>      points[dim * c + i] = (ijk[i] + first[i] + 0.5) * stepPer[i];
+<a name="line344">344: </a>    }
+<a name="line345">345: </a>  }
+<a name="line346">346: </a>  <font color="#4169E1">if</font> (!isStride) <a href="../../../../../docs/manualpages/IS/ISRestoreIndices.html">ISRestoreIndices</a>(cellIS, &amp;cells);
+<a name="line347">347: </a>  MultilinearEvaluate(dim, dafield-&gt;coordRange, nc, dafield-&gt;cornerCoeffs, dafield-&gt;work, numCells, points, datatype, B, D, H);
+<a name="line348">348: </a>  <a href="../../../../../docs/manualpages/DM/DMRestoreWorkArray.html">DMRestoreWorkArray</a>(dm, dim * numCells, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, &amp;points);
+<a name="line349">349: </a>  <font color="#4169E1">return</font> 0;
+<a name="line350">350: </a>}
+
+<a name="line352">352: </a><strong><font color="#4169E1"><a name="DMFieldGetDegree_DA"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMFieldGetDegree_DA(<a href="../../../../../docs/manualpages/DM/DMField.html">DMField</a> field, <a href="../../../../../docs/manualpages/IS/IS.html">IS</a> pointIS, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *minDegree, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *maxDegree)</font></strong>
+<a name="line353">353: </a>{
+<a name="line354">354: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>       dm;
+<a name="line355">355: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dim, h, imin;
+
+<a name="line357">357: </a>  dm = field-&gt;dm;
+<a name="line358">358: </a>  <a href="../../../../../docs/manualpages/IS/ISGetMinMax.html">ISGetMinMax</a>(pointIS, &amp;imin, NULL);
+<a name="line359">359: </a>  <a href="../../../../../docs/manualpages/DM/DMGetDimension.html">DMGetDimension</a>(dm, &amp;dim);
+<a name="line360">360: </a>  <font color="#4169E1">for</font> (h = 0; h &lt;= dim; h++) {
+<a name="line361">361: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> hEnd;
+
+<a name="line363">363: </a>    DMDAGetHeightStratum(dm, h, NULL, &amp;hEnd);
+<a name="line364">364: </a>    <font color="#4169E1">if</font> (imin &lt; hEnd) <font color="#4169E1">break</font>;
+<a name="line365">365: </a>  }
+<a name="line366">366: </a>  dim -= h;
+<a name="line367">367: </a>  <font color="#4169E1">if</font> (minDegree) *minDegree = 1;
+<a name="line368">368: </a>  <font color="#4169E1">if</font> (maxDegree) *maxDegree = dim;
+<a name="line369">369: </a>  <font color="#4169E1">return</font> 0;
+<a name="line370">370: </a>}
+
+<a name="line372">372: </a><strong><font color="#4169E1"><a name="DMFieldCreateDefaultQuadrature_DA"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMFieldCreateDefaultQuadrature_DA(<a href="../../../../../docs/manualpages/DM/DMField.html">DMField</a> field, <a href="../../../../../docs/manualpages/IS/IS.html">IS</a> cellIS, <a href="../../../../../docs/manualpages/DT/PetscQuadrature.html">PetscQuadrature</a> *quad)</font></strong>
+<a name="line373">373: </a>{
+<a name="line374">374: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> h, dim, imax, imin;
+<a name="line375">375: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>       dm;
+
+<a name="line377">377: </a>  dm = field-&gt;dm;
+<a name="line378">378: </a>  <a href="../../../../../docs/manualpages/IS/ISGetMinMax.html">ISGetMinMax</a>(cellIS, &amp;imin, &amp;imax);
+<a name="line379">379: </a>  <a href="../../../../../docs/manualpages/DM/DMGetDimension.html">DMGetDimension</a>(dm, &amp;dim);
+<a name="line380">380: </a>  *quad = NULL;
+<a name="line381">381: </a>  <font color="#4169E1">for</font> (h = 0; h &lt;= dim; h++) {
+<a name="line382">382: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> hStart, hEnd;
+
+<a name="line384">384: </a>    DMDAGetHeightStratum(dm, h, &amp;hStart, &amp;hEnd);
+<a name="line385">385: </a>    <font color="#4169E1">if</font> (imin &gt;= hStart &amp;&amp; imax &lt; hEnd) <font color="#4169E1">break</font>;
+<a name="line386">386: </a>  }
+<a name="line387">387: </a>  dim -= h;
+<a name="line388">388: </a>  <font color="#4169E1">if</font> (dim &gt; 0) <a href="../../../../../docs/manualpages/DT/PetscDTGaussTensorQuadrature.html">PetscDTGaussTensorQuadrature</a>(dim, 1, 1, -1.0, 1.0, quad);
+
+<a name="line390">390: </a>  <font color="#4169E1">return</font> 0;
+<a name="line391">391: </a>}
+
+<a name="line393">393: </a><strong><font color="#4169E1"><a name="DMFieldInitialize_DA"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMFieldInitialize_DA(<a href="../../../../../docs/manualpages/DM/DMField.html">DMField</a> field)</font></strong>
+<a name="line394">394: </a>{
+<a name="line395">395: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>          dm;
+<a name="line396">396: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>         coords = NULL;
+<a name="line397">397: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    dim, i, j, k;
+<a name="line398">398: </a>  DMField_DA *dafield = (DMField_DA *)field-&gt;data;
+
+<a name="line400">400: </a>  field-&gt;ops-&gt;destroy                 = DMFieldDestroy_DA;
+<a name="line401">401: </a>  field-&gt;ops-&gt;evaluate                = DMFieldEvaluate_DA;
+<a name="line402">402: </a>  field-&gt;ops-&gt;evaluateFE              = DMFieldEvaluateFE_DA;
+<a name="line403">403: </a>  field-&gt;ops-&gt;evaluateFV              = DMFieldEvaluateFV_DA;
+<a name="line404">404: </a>  field-&gt;ops-&gt;getDegree               = DMFieldGetDegree_DA;
+<a name="line405">405: </a>  field-&gt;ops-&gt;createDefaultQuadrature = DMFieldCreateDefaultQuadrature_DA;
+<a name="line406">406: </a>  field-&gt;ops-&gt;view                    = DMFieldView_DA;
+<a name="line407">407: </a>  dm                                  = field-&gt;dm;
+<a name="line408">408: </a>  <a href="../../../../../docs/manualpages/DM/DMGetDimension.html">DMGetDimension</a>(dm, &amp;dim);
+<a name="line409">409: </a>  <a href="../../../../../docs/manualpages/DM/DMGetCoordinates.html">DMGetCoordinates</a>(dm, &amp;coords);
+<a name="line410">410: </a>  <font color="#4169E1">if</font> (coords) {
+<a name="line411">411: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           n;
+<a name="line412">412: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array;
+<a name="line413">413: </a>    <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>          mins[3][2] = {
+<a name="line414">414: </a>      {PETSC_MAX_REAL, PETSC_MAX_REAL},
+<a name="line415">415: </a>      {PETSC_MAX_REAL, PETSC_MAX_REAL},
+<a name="line416">416: </a>      {PETSC_MAX_REAL, PETSC_MAX_REAL}
+<a name="line417">417: </a>    };
+
+<a name="line419">419: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(coords, &amp;n);
+<a name="line420">420: </a>    n /= dim;
+<a name="line421">421: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(coords, &amp;array);
+<a name="line422">422: </a>    <font color="#4169E1">for</font> (i = 0, k = 0; i &lt; n; i++) {
+<a name="line423">423: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; dim; j++, k++) {
+<a name="line424">424: </a>        <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> val = <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(array[k]);
+
+<a name="line426">426: </a>        mins[j][0] = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(mins[j][0], val);
+<a name="line427">427: </a>        mins[j][1] = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(mins[j][1], -val);
+<a name="line428">428: </a>      }
+<a name="line429">429: </a>    }
+<a name="line430">430: </a>    <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(coords, &amp;array);
+<a name="line431">431: </a>    <a href="../../../../../docs/manualpages/Sys/MPIU_Allreduce.html">MPIU_Allreduce</a>((<a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)mins, &amp;(dafield-&gt;coordRange[0][0]), 2 * dim, <a href="../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, MPI_MIN, <a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm));
+<a name="line432">432: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; dim; j++) dafield-&gt;coordRange[j][1] = -dafield-&gt;coordRange[j][1];
+<a name="line433">433: </a>  } <font color="#4169E1">else</font> {
+<a name="line434">434: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; dim; j++) {
+<a name="line435">435: </a>      dafield-&gt;coordRange[j][0] = 0.;
+<a name="line436">436: </a>      dafield-&gt;coordRange[j][1] = 1.;
+<a name="line437">437: </a>    }
+<a name="line438">438: </a>  }
+<a name="line439">439: </a>  <font color="#4169E1">for</font> (j = 0; j &lt; dim; j++) {
+<a name="line440">440: </a>    <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> avg = 0.5 * (dafield-&gt;coordRange[j][1] + dafield-&gt;coordRange[j][0]);
+<a name="line441">441: </a>    <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> dif = 0.5 * (dafield-&gt;coordRange[j][1] - dafield-&gt;coordRange[j][0]);
+
+<a name="line443">443: </a>    dafield-&gt;coordRange[j][0] = avg;
+<a name="line444">444: </a>    dafield-&gt;coordRange[j][1] = dif;
+<a name="line445">445: </a>  }
+<a name="line446">446: </a>  <font color="#4169E1">return</font> 0;
+<a name="line447">447: </a>}
+
+<a name="line449">449: </a><strong><font color="#4169E1"><a name="DMFieldCreate_DA"></a>PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMFieldCreate_DA(<a href="../../../../../docs/manualpages/DM/DMField.html">DMField</a> field)</font></strong>
+<a name="line450">450: </a>{
+<a name="line451">451: </a>  DMField_DA *dafield;
+
+<a name="line453">453: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;dafield);
+<a name="line454">454: </a>  field-&gt;data = dafield;
+<a name="line455">455: </a>  DMFieldInitialize_DA(field);
+<a name="line456">456: </a>  <font color="#4169E1">return</font> 0;
+<a name="line457">457: </a>}
+
+<a name="line459">459: </a><strong><font color="#4169E1"><a name="DMFieldCreateDA"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMFieldCreateDA(<a href="../../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nc, const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *cornerValues, <a href="../../../../../docs/manualpages/DM/DMField.html">DMField</a> *field)</font></strong>
+<a name="line460">460: </a>{
+<a name="line461">461: </a>  <a href="../../../../../docs/manualpages/DM/DMField.html">DMField</a>      b;
+<a name="line462">462: </a>  DMField_DA  *dafield;
+<a name="line463">463: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     dim, nv, i, j, k;
+<a name="line464">464: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     half;
+<a name="line465">465: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *cv, *cf, *work;
+
+<a name="line467">467: </a>  DMFieldCreate(dm, nc, DMFIELD_VERTEX, &amp;b);
+<a name="line468">468: </a>  <a href="../../../../../docs/manualpages/DM/DMFieldSetType.html">DMFieldSetType</a>(b, DMFIELDDA);
+<a name="line469">469: </a>  dafield = (DMField_DA *)b-&gt;data;
+<a name="line470">470: </a>  <a href="../../../../../docs/manualpages/DM/DMGetDimension.html">DMGetDimension</a>(dm, &amp;dim);
+<a name="line471">471: </a>  nv = (1 &lt;&lt; dim) * nc;
+<a name="line472">472: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc3.html">PetscMalloc3</a>(nv, &amp;cv, nv, &amp;cf, nv, &amp;work);
+<a name="line473">473: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nv; i++) cv[i] = cornerValues[i];
+<a name="line474">474: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nv; i++) cf[i] = cv[i];
+<a name="line475">475: </a>  dafield-&gt;cornerVals   = cv;
+<a name="line476">476: </a>  dafield-&gt;cornerCoeffs = cf;
+<a name="line477">477: </a>  dafield-&gt;work         = work;
+<a name="line478">478: </a>  half                  = (1 &lt;&lt; (dim - 1));
+<a name="line479">479: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; dim; i++) {
+<a name="line480">480: </a>    <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *w;
+
+<a name="line482">482: </a>    w = work;
+<a name="line483">483: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; half; j++) {
+<a name="line484">484: </a>      <font color="#4169E1">for</font> (k = 0; k &lt; nc; k++) w[j * nc + k] = 0.5 * (cf[(2 * j + 1) * nc + k] - cf[(2 * j) * nc + k]);
+<a name="line485">485: </a>    }
+<a name="line486">486: </a>    w = &amp;work[j * nc];
+<a name="line487">487: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; half; j++) {
+<a name="line488">488: </a>      <font color="#4169E1">for</font> (k = 0; k &lt; nc; k++) w[j * nc + k] = 0.5 * (cf[(2 * j) * nc + k] + cf[(2 * j + 1) * nc + k]);
+<a name="line489">489: </a>    }
+<a name="line490">490: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; nv; j++) cf[j] = work[j];
+<a name="line491">491: </a>  }
+<a name="line492">492: </a>  *field = b;
+<a name="line493">493: </a>  <font color="#4169E1">return</font> 0;
+<a name="line494">494: </a>}
+</pre>
+</body>
+
+</html>

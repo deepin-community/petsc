@@ -1,5 +1,2390 @@
-template-repository (1.0-1) unstable; urgency=medium
+petsc (3.18.6+dfsg1-1) unstable; urgency=medium
 
-  * Initial release
+  * New upstream release.
 
- -- Tsic404 <liuheng@deepin.org>  Sat, 28 Jan 2023 13:46:49 +0800
+ -- Drew Parsons <dparsons@debian.org>  Sun, 11 Jun 2023 21:55:10 +0200
+
+petsc (3.18.5+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 05 Mar 2023 15:16:00 +0100
+
+petsc (3.18.4+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 05 Feb 2023 10:46:17 +0100
+
+petsc (3.18.3+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Standards-Version: 4.6.2
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 06 Jan 2023 23:52:57 +0100
+
+petsc (3.18.2+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * debian/tests: test if SuiteSparse or Trilinos ML was used before
+    running the respective runtime tests.
+    On some 32-bit systems like armhf, armel, i386, SuiteSparse is
+    not used with the 64-bit PETSc build and ML is not available.
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 07 Dec 2022 19:49:56 +0100
+
+petsc (3.18.1+dfsg1-2) unstable; urgency=medium
+
+  * drop use of dh_sphinxdoc (dh --with sphinxdoc).
+    PETSc docs are not compatible with sphinx 5. Closes: #1013398.
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 05 Dec 2022 22:47:04 +0100
+
+petsc (3.18.1+dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream release
+    - ABI update to 3.18
+  * debian patch ptscotch_without_bison_MR5787.diff applies upstream
+    MR5787 to enable configuration without bison (with ptscotch).
+    See https://gitlab.com/petsc/petsc/-/issues/1276
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 30 Oct 2022 19:55:35 +0100
+
+petsc (3.17.5+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release
+  * update lintian overrides
+    (unversioned shared library links are handled via alternatives)
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 19 Oct 2022 00:06:44 +1100
+
+petsc (3.17.4+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+    - applies debian patch clean_tests.patch
+  * Standards-Version: 4.6.1
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 02 Sep 2022 17:19:32 +0200
+
+petsc (3.17.0+dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream release
+    - ABI upgrade to 3.17
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 02 Apr 2022 01:09:22 +0200
+
+petsc (3.16.6+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 08 Apr 2022 23:01:01 +0200
+
+petsc (3.16.5+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 12 Mar 2022 10:02:50 +0100
+
+petsc (3.16.1+dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream release
+    - ABI upgrade to 3.16
+    - applies debian patches
+      petscmpiexec_posix_sh.patch, hypre_owner_PR4237.patch
+    - SuiteSparse support now uses libspqr.so
+  * pdf manual no longer provided, only html
+  * docs reorganized under docs subdir not html
+  * debian/rules: at dh_fixperms make example meshes non-executable
+  * debian/copyright: update khash.h location
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 11 Nov 2021 01:41:33 +0100
+
+petsc (3.15.5+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+    - provides manual.pdf
+    - html docs moved to html subdir
+  * debian/tests check HYPRE is supported before running HYPRE tests
+    (identified by HYPRE_LIB in lib/petsc/conf/petscvariables)
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 22 Oct 2021 01:26:55 +0200
+
+petsc (3.15.4+dfsg1-2) unstable; urgency=medium
+
+  * Build-Depends: libx11-dev, to match the libpetsc3.15-dev-common
+    Depends.
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 17 Oct 2021 12:56:09 +0200
+
+petsc (3.15.4+dfsg1-1exp7) experimental; urgency=medium
+
+  * more supported package -dev dependencies
+    - libpetsc3.15-dev-common Depends: libx11-dev (X_LIB),
+      libblas-dev, liblapack-dev (BLASLAPACK_LIB)
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 27 Sep 2021 20:56:45 +0200
+
+petsc (3.15.4+dfsg1-1exp6) experimental; urgency=medium
+
+  * update supported package -dev dependencies
+    Needed by clients such as slepc which use ML_LIB, ZOLTAN_LIB,
+    HYPRE_LIB from lib/petsc/conf/petscvariables
+    - libpetsc-real3.15-{dev,dbg} Depends libtrilinos-ml-dev,
+      [amd64 arm64 ppc64el s390x ppc64]
+    - libpetsc-*3.15-{dev,dbg} Depends: libtrilinos-zoltan-dev
+      [amd64 arm64 ppc64el s390x ppc64]
+    - libpetsc64-real3.15-{dev,dbg} Depends: libhypre64m-dev (>= 2.21.0)
+      [amd64 arm64 mips64el ppc64el s390x alpha ia64 ppc64 riscv64 sparc64]
+  * drop libpetsc3.15-dev-common Depends: bash.
+    The problem with bash in slepc builds was due to the location of
+    bash, not the availability of bash. It was an artifact of usrmerge
+    (https://wiki.debian.org/UsrMerge) combined with the binary upload
+    of petsc made to test superlu-dist 7 in experimental.
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 26 Sep 2021 19:20:26 +0200
+
+petsc (3.15.4+dfsg1-1exp5) experimental; urgency=medium
+
+  * libpetsc3.15-dev-common Depends: bash.
+    SHELL is configured to bash in */lib/petsc/conf/petscvariables.
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 24 Sep 2021 18:56:53 +0200
+
+petsc (3.15.4+dfsg1-1exp4) experimental; urgency=medium
+
+  * fix test for availability of 64-bit Hypre
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 18 Sep 2021 15:53:07 +0200
+
+petsc (3.15.4+dfsg1-1exp3) experimental; urgency=medium
+
+  * 64-bit Hypre is only available on 64-bit architectures
+    [amd64 arm64 mips64el ppc64el s390x
+    alpha ia64 ppc64 riscv64 sparc64]
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 18 Sep 2021 14:20:50 +0200
+
+petsc (3.15.4+dfsg1-1exp2) experimental; urgency=medium
+
+  * Build-Depends: libhypre64m-dev to use 64-bit HYPRE (mixed-int)
+    with versioned Build-Depends: libhypre-dev (>= 2.21.0) to ensure
+    libhypre version matches libhypre64m
+  * use `set -e` with dh_auto_configure to catch configuration-time
+    errors.
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 17 Sep 2021 23:35:00 +0200
+
+petsc (3.15.4+dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream release.
+    - update Files-Excluded in debian/copyright: docs no longer
+      provided in pdf format in source tarball.
+  * use 64-bit HYPRE with the 64-bit (real-number) build
+    - building against HYPRE mixedint (libhypre64m).
+      This is experimental, might be changed to bigint in the future.
+  * don't configure 64-bit builds with SuperLU-Dist support.
+    It's not compatible, see upstream Issue #935.
+    - drop debian patch superlu-dist-no_test.patch (superlu-dist
+      now works fine with support correctly configured)
+  * fix configuration tests for libtrilinos-ml-dev and
+    libtrilinos-zoltan-dev
+  * drop Build-Depends: libtrilinos-aztecoo-dev
+    (libtrilinos-ml-dev is now fixed to Depend on it)
+  * debian patch hypre_owner_PR4237.patch applies upstream PR#4237 to
+    handle changes in hypre API from hypre 2.22.
+  * debian patch clean_tests.patch ensures tests are cleaned before
+    and after use.
+  * use triple slash in file privacy replacements in docs
+  * Standards-Version: 4.6.0
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 17 Sep 2021 15:46:03 +0200
+
+petsc (3.15.0+dfsg1-1exp5) experimental; urgency=medium
+
+  * build HYPRE support against libHYPRE.so not libHYPRE_core.so
+    for hypre versions 2.20.0-1exp3~ and above
+  * build support for Trilinos components, ML and ZOLTAN
+    (available on amd64 arm64 ppc64el s390x ppc64 only).
+    ML is supported in standard (32-bit) real-number builds only.
+    Kokkos support requires Kokkos 3.4, not yet available in Debian.
+    Closes: #847045, #989323.
+    - Build-Depends: libtrilinos-ml-dev, libtrilinos-zoltan-dev
+    - Also Build-Depends: libtrilinos-aztecoo-dev (see Bug#989488)
+  * remove simplemake in dh_clean override
+  * update debian/tests (autopkgtest)
+    - test ML (from Trilinos), SuperLU-Dist, SuiteSparse
+    - test complex-number builds
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 05 Jun 2021 06:31:55 +0200
+
+petsc (3.15.0+dfsg1-1exp4) experimental; urgency=medium
+
+  * move common dev library dependencies into libpetsc3.15-dev-common
+    - add libpetsc3.15-dev-common Depends: libyaml-dev
+  * Build against valgrind where available.
+    - Build-Depends: valgrind-mpi [amd64 arm64 armhf i386
+        mips64el mipsel ppc64el s390x powerpc ppc64]
+    - libpetsc[64]-{real,complex}3.15-dev Depends: valgrind-mpi
+        [on supported arches]
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 04 May 2021 23:02:48 +0200
+
+petsc (3.15.0+dfsg1-1exp3) experimental; urgency=medium
+
+  * update debian patch configure_python3.patch to use python3 in
+    ts/tutorials/extchem.py
+  * build against system libyaml
+    Build-Depends: libyaml-dev
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 01 May 2021 21:07:05 +0200
+
+petsc (3.15.0+dfsg1-1exp2) experimental; urgency=medium
+
+  * rebuild against libraries in unstable
+    (to help debug build problems with SLEPc 3.15)
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 23 Apr 2021 13:12:18 +0200
+
+petsc (3.15.0+dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream release (new ABI 3.15).
+    - applies debian patches,
+      PR3681_scalapack_block_size.diff
+      PR3686_DMPlex_missing_PetscSFSetUp.diff
+      PR3722_umfpack_ordering.diff
+      PR3728_DM_anchor_initialize.diff
+  * From PETSc 3.15, upstream now provides tarballs petsc-with-docs
+    or without docs. Update debian/watch to select petsc-with-docs
+    (we want to keep providing the petsc*-doc package).
+  * Build-Depends: libmumps-dev (>= 5.2.1~)
+  * update debian patch configure_python3.patch to use python3 in
+    tasClasses.py and test ex55.py
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 19 Apr 2021 10:37:25 +0200
+
+petsc (3.14.5+dfsg1-4) unstable; urgency=medium
+
+  [ Andreas Beckmann ]
+  * libpetsc-real3.14/libpetsc-complex3.14: Add Breaks against
+    lib{petsc,slepc}-{real,complex}3.10 and libpetsc3.10-dev-{common,examples}
+    for smoother upgrades from buster. The libraries are not co-installable
+    due to the libhdf5-103 -> libhdf5-103-1 and other package renames, the
+    -dev-* packages are affected by the removal of unversioned python.
+    Closes: #987618.
+
+  [ Drew Parsons ]
+  * add lintian overrides to ignore breaks-without-version warning in
+    libpetsc-real3.14 and libpetsc-complex3.14 from Breaks: libpetsc*3.10*
+    and Breaks libslepc*3.10*. The version is embedded in the package
+    names.
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 01 May 2021 14:26:37 +0200
+
+petsc (3.14.5+dfsg1-3) unstable; urgency=medium
+
+  * petsc3.14-doc Depends: sphinx-common.
+    Required since upstream tarball provides pregenerated docs, so
+    dh_sphinxdoc does not automatically add sphinx-common.
+    Closes: #985659.
+  * cherry-pick specific bug fixes from PETSc 3.14.6
+    - PR3681_scalapack_block_size.diff, sets block size of transposed
+      ScalAPACK matrices
+    - PR3686_DMPlex_missing_PetscSFSetUp.diff, adds PetscSFSetUp()
+      to DM plexcreate.c
+    - PR3722_umfpack_ordering.diff, use default umfpack ordering
+      since much faster than PETSc ordering
+    - PR3728_DM_anchor_initialize.diff, initialize variable in DM
+      anchor calculation
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 09 Apr 2021 13:28:02 +0200
+
+petsc (3.14.5+dfsg1-2) unstable; urgency=medium
+
+  * upload new bugfix release to unstable
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 10 Mar 2021 12:21:59 +0100
+
+petsc (3.14.5+dfsg1-1) experimental; urgency=medium
+
+  * New upstream release (bugfixes)
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 08 Mar 2021 18:37:39 +0100
+
+petsc (3.14.4+dfsg1-2) unstable; urgency=medium
+
+  * fix PETSC64_NAME in libpetsc64-complex3.14-dev.prerm to enable a
+    clean uninstall of libpetsc64-complex3.14-dev. Closes: #983892.
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 08 Mar 2021 18:27:40 +0100
+
+petsc (3.14.4+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 11 Feb 2021 16:51:02 +0100
+
+petsc (3.14.3+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 17 Jan 2021 12:47:42 +1100
+
+petsc (3.14.2+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 25 Dec 2020 00:39:54 +1100
+
+petsc (3.14.1+dfsg1-2) unstable; urgency=medium
+
+  * provide alternatives links for lowercase petsc.pc pkgconfig files
+  * add doctools to the list of js scripts provided in docs which are
+    not recognized by dh_sphinxdoc (built by different version of
+    sphinx). Closes: #975203.
+  * Standards-Version: 4.5.1
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 22 Nov 2020 01:29:32 +0800
+
+petsc (3.14.1+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * mark petsc-dev, petsc64-dev as Multi-Arch: foreign
+  * link PETSc64.pc to PETSc.pc (and petsc64.pc to petsc.pc) in
+    pkgconfig dirs for 64-bit PETSC_DIRs.
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 07 Nov 2020 02:33:30 +0800
+
+petsc (3.14.0+dfsg1-5) unstable; urgency=medium
+
+  * fix includes and dummy modules in debian patch
+    petscmatmod_split.patch (follow pattern in KSP split)
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 01 Nov 2020 12:27:02 +0800
+
+petsc (3.14.0+dfsg1-4) unstable; urgency=medium
+
+  * debian patch petscmatmod_split.patch splits petscmatmod to enable
+    build on mipsel.
+  * mark libpetsc-real-dev, libpetsc-complex-dev, libpetsc64-real-dev
+    and libpetsc64-complex-dev as Multi-Arch: foreign
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 31 Oct 2020 21:45:15 +0800
+
+petsc (3.14.0+dfsg1-3) unstable; urgency=medium
+
+  * manipulate configureTAS.py, extract.py only on arch-indep builds
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 30 Oct 2020 18:25:11 +0800
+
+petsc (3.14.0+dfsg1-2) unstable; urgency=medium
+
+  * remove src/vec/vec/tests/x.h5 when cleaning
+  * debian/copyright: exclude src/binding/petsc4py from upstream tarball
+    (petsc4py source is handled separately via the pypi source tarball)
+  * ensure configureTAS.py, extract.py scripts are handled by
+    dh_python3 (replacing shebang) by making them executable
+  * move external js files to [debian/] html/js
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 30 Oct 2020 11:19:01 +0800
+
+petsc (3.14.0+dfsg1-1) experimental; urgency=medium
+
+  * New upstream release.
+    - ABI bump to 3.14
+    - docs currently split between old format in docs subdir
+      and new sphinx-generated docs in html subdir.
+      Use html/index.html as root index.
+  * Use dh_sphinxdoc to manage standard .js scripts.
+    Manually download auto-render.min.js, katex.min.css and
+    katex.min.js from https://cdn.jsdelivr.net/npm/ to avoid privacy
+    breaches when reading docs.
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 11 Oct 2020 18:21:36 +0800
+
+petsc (3.13.6+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 10 Oct 2020 11:21:59 +0800
+
+petsc (3.13.5+dfsg1-2) unstable; urgency=medium
+
+  * add hurd-i386, m68k and sh4 to the list of 32-bit arches
+    (which do not support 64-bit SuiteSparse)
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 10 Oct 2020 07:57:38 +0800
+
+petsc (3.13.5+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * remove deprecated tags in source lintian overrides
+  * handle fortran-mod-version using dh_fortran_mod
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 16 Sep 2020 02:39:43 +0800
+
+petsc (3.13.4+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * fix path for PETSC64_DIR_REAL in libpetsc64-real3.13-dev.prerm
+  * remove errant lintian overrides
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 09 Aug 2020 13:24:43 +0800
+
+petsc (3.13.3+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 08 Jul 2020 01:11:00 +0800
+
+petsc (3.13.2+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Retrospectively place Adam C. Powell, IV in quotes in old
+    changelog entries.
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 30 Jun 2020 03:31:40 +0800
+
+petsc (3.13.1+dfsg1-4) unstable; urgency=medium
+
+  * add mipsel, hppa to the 32-bit arch list dropping SuiteSparse-64.
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 22 Jun 2020 11:17:09 +0800
+
+petsc (3.13.1+dfsg1-3exp2) experimental; urgency=medium
+
+  * drop SuiteSparse support for 64-bit builds on 32-bit platforms
+    (armel armhf i386 powerpc x32).  Suitesparse does not support
+    64-bit indexing on these architectures.
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 20 Jun 2020 10:15:40 +0800
+
+petsc (3.13.1+dfsg1-3exp1) experimental; urgency=medium
+
+  * Provide petsc64 packages with 64-bit builds (64 bit indexing).
+    Closes: #953116.
+    - cannot use SuperLU with 64 bit integers
+    - 64-bit PETSc needs Hypre with --enable-bigint (or
+      --enable-mixedint) which is not yet available.
+    - Build-Depends: libmumps64-dev
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 01 Jun 2020 19:54:28 +0800
+
+petsc (3.13.1+dfsg1-3) unstable; urgency=medium
+
+  * ignore uninstalled binary files in arch-indep builds
+    (used to build docs). Closes: #961879.
+  * fix dh overrides for build dir cleaning
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 31 May 2020 14:16:08 +0800
+
+petsc (3.13.1+dfsg1-2) unstable; urgency=medium
+
+  * update versioned build-dependencies:
+    libsuitesparse-dev (>= 1:5.6.0),
+    libsuperlu-dev (>= 5.2.1), libsuperlu-dist-dev (>= 6.1.1)
+  * debhelper compatibility level 13
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 31 May 2020 00:21:24 +0800
+
+petsc (3.13.1+dfsg1-1) experimental; urgency=medium
+
+  * New upstream release.
+  * only run tests for arch-any builds. Closes: #960151.
+  * apply lintian overrides to let matlab scripts remain executable,
+    and test scripts remain not executable.
+  * set ts/tutorials/hybrid/run.sh executable in examples package.
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 15 May 2020 18:54:18 +0800
+
+petsc (3.13.0+dfsg2-1) experimental; urgency=medium
+
+  * New upstream release.
+  * update power_grid path in Files-Excluded from debian/copyight
+  * build tests (dh_auto_test) run 'make check_build' not 'make test'
+  * use pkg-config hdf5-mpi to get configuration for HDF5
+    Needs versioned Build-Depends: libhdf5-mpi-dev (>= 1.10.6+repack-1)
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 11 Apr 2020 21:11:23 +0800
+
+petsc (3.12.4+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Standards-Version: 4.5.0
+  * Build-Depends: gdb
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 08 Feb 2020 11:28:40 +0800
+
+petsc (3.12.3+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 16 Jan 2020 13:12:24 +0800
+
+petsc (3.12.2+dfsg1-2) unstable; urgency=medium
+
+  * install examples in share/petsc subdir (maintain petsc
+    installation tree structure)
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 18 Dec 2019 09:34:48 +1100
+
+petsc (3.12.2+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * libpetsc3.12-dev-examples: place examples and datafiles in
+    /usr/share/petsc. Don't place them in the -dev-common package.
+    Closes: #945338.
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 17 Dec 2019 14:57:47 +1100
+
+petsc (3.12.0+dfsg1-2) experimental; urgency=medium
+
+  * apply Depends: ocl-icd-opencl-dev | opencl-dev from 3.11.4+dfsg1-2
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 13 Oct 2019 20:31:04 +0800
+
+petsc (3.12.0+dfsg1-1) experimental; urgency=medium
+
+  * New upstream release (new ABI).
+    - applies patches package_version-b7c30771e93.diff
+      and support_HYPRE_2.16.0-PR1696.patch
+  * drop debian patch hypre.patch (deprecated)
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 02 Oct 2019 02:38:24 +0800
+
+petsc (3.11.4+dfsg1-4) unstable; urgency=medium
+
+  [ Christophe Trophime ]
+  * Team upload.
+  * Do not use /usr/share/doc content in postinst
+    Closes: #945338
+
+ -- Andreas Tille <tille@debian.org>  Thu, 12 Dec 2019 13:33:56 +0100
+
+petsc (3.11.4+dfsg1-3) unstable; urgency=medium
+
+  * set MCA btl_base_warn_component_unused to 0 in tests to
+    ignore complaints about missing OpenFabrics transports
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 12 Nov 2019 02:52:48 +0900
+
+petsc (3.11.4+dfsg1-2) unstable; urgency=medium
+
+  * add Depends: ocl-icd-opencl-dev | opencl-dev to
+    versioned libpetsc*-dev packages, to satisfy -lOpenCL when
+    building against PETSc.
+  * drop --useThreads=0 configuration option. It is for internal use
+    only (mpiexec timeout), see upstream issue #394. It had been added
+    in 2.3.2-3 to help hppa builds, but never fixed builds anyway.
+    Thanks Martin Diehl for drawing attention to it in Bug#927927.
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 04 Oct 2019 12:31:42 +0800
+
+petsc (3.11.4+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+    - applies debian patch HDF5_refactor_6a0bd752.diff
+      (upstream commit 51e210a targeted at PETSc 3.11, see PR#1943)
+  * build with OpenCL GPU support
+    Build-Depends: ocl-icd-opencl-dev | opencl-dev
+  * skip build-time tests if nocheck is set in DEB_BUILD_OPTIONS
+  * remove deprecated configure option --with-fortran-interfaces
+    (was removed in PETSc 3.8). Closes: #927927.
+  * Standards-Version: 4.4.1
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 01 Oct 2019 18:22:51 +0800
+
+petsc (3.11.3+dfsg1-2) unstable; urgency=medium
+
+  * debian patch HDF5_refactor_6a0bd752.diff applies upstream patch
+    6a0bd752 to keep HDF5 support from interfering with PETSc clients
+    that do not use HDF5. Closes: #933845.
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 04 Aug 2019 19:56:06 +0800
+
+petsc (3.11.3+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * apply upstream patches:
+    - package_version-b7c30771e93.diff introduces package versioning
+    - support_HYPRE_2.16.0-PR1696.patch applies PR1696 to support
+      HYPRE 2.16.0
+  * Standards-Version: 4.4.0
+  * debian/tests: check that hypre and mumps tests "run successfully"
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 03 Aug 2019 11:17:00 +0800
+
+petsc (3.11.0+dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream release.
+    - now supports python3 in configure script
+  * use petsc with python3:
+    - Build-Depends: python3
+    - debian patch configure_python3.patch configures with python3
+    - invoke dh_python3 with --shebang=/usr/bin/python3
+  * remove debian/compat, Build-Depends: debhelper-compat (= 12)
+  * remove Build-Depends: quilt. quilt is now a standard build package.
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 02 Apr 2019 10:56:41 +0800
+
+petsc (3.10.5+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+    - applies patches:
+      - petscdmmod_split_da.patch
+      - petsckspmod_split.patch
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 01 Apr 2019 22:17:08 +0800
+
+petsc (3.10.3+dfsg1-5) unstable; urgency=medium
+
+  * provide alternatives links to /usr/lib/petscdir/petsc-real and
+    /usr/lib/petscdir/petsc-complex (points petsc-real and
+    petsc-complex to the latest or preferred version).
+    This provides the preferred path if you need a version-free link
+    to the latest petsc-complex, e.g. configure your client package
+    with PETSC_DIR=/usr/lib/petscdir/petsc-complex
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 10 Jan 2019 16:33:39 +0100
+
+petsc (3.10.3+dfsg1-4) unstable; urgency=medium
+
+  * create new dummy packages libpetsc-real-dev and
+    libpetsc-complex-dev, which depend on the latest dev packages.
+    petsc-dev now Depends: libpetsc-real-dev.
+  * debhelper compatibility level 12
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 10 Jan 2019 00:05:03 +0100
+
+petsc (3.10.3+dfsg1-3) unstable; urgency=medium
+
+  * update petsckspmod_split.patch to define but not use the new dummy
+    module that includes header files, otherwise ksp definitions are
+    ambiguous (breaking SLEPc builds)
+  * Standards-Version: 4.3.0
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 24 Dec 2018 17:44:22 +0100
+
+petsc (3.10.3+dfsg1-2) unstable; urgency=medium
+
+  * add x32 to the no-test list (build tests time out)
+  * create patch petsckspmod_split.patch to split petscksp.mod, which
+    hits out of memory with 3.10.3 on mips and mipsel.
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 23 Dec 2018 10:51:16 +0100
+
+petsc (3.10.3+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * configure --with-cxx-dialect=C++11 to support current SuperLU-Dist
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 22 Dec 2018 13:11:22 +0100
+
+petsc (3.10.2+dfsg1-2) unstable; urgency=medium
+
+  * drop dependency on libspooles-dev. Support for spooles was removed
+    in PETSc 3.4.
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 20 Dec 2018 00:32:57 +0100
+
+petsc (3.10.2+dfsg1-1exp4) experimental; urgency=medium
+
+  * Builds of petscdm.mod again break on mips/mipsel (out of memory).
+    Create debian patch petscdmmod_split_da.patch to reduce module
+    size by splitting out petscdmdamod.F, as done previously for
+    petscdmplexmod.F
+  * mark libpetsc3.10-dev-common as Multi-Arch: foreign
+    (not coinstallable, can satisfy dependencies)
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 03 Dec 2018 14:25:38 +0800
+
+petsc (3.10.2+dfsg1-1exp3) experimental; urgency=medium
+
+  * -dev/-dbg Depends: libpetsc3.10-dev-common
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 04 Nov 2018 00:44:25 +0800
+
+petsc (3.10.2+dfsg1-1exp2) experimental; urgency=medium
+
+  * README.source: document possible sed/sh error during build tests
+    due to '+' in build path when building with pdebuild (pbuilder).
+  * -dev/-dbg Depends: ${fortran-mod-version}
+    (gfortran-mod-15, constructed from mod version in petsc.mod)
+  * remove --with-clanguage=C++ build flag (not recommended by upstream)
+    It had been added to support older versions of hypre (hypre now
+    supports C99 complex since 2.10)
+  * debian/rules override_dh_fixperms: fix permissions of python
+    support files in dev-common package as arch-indep override
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 03 Nov 2018 01:37:42 +0800
+
+petsc (3.10.2+dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream release.
+    - drop build-debug-nowarn.patch (--with-errorchecking option is
+      removed)
+    - versioned Build-Depends libsuperlu-dist-dev (>= 5.4.0)
+      (references LargeDiag_MC64)
+      Drop debian patch superlu_dist_540_0425e358a93.patch
+  * Create libpetsc3.10-dev-common to hold header and support files
+    common to both real and complex dev packages, including python support
+    scripts. Closes: #802303.
+  * New Debian patches:
+    - downloaded_SAWs.js.patch applies a predownloaded
+      version of SAWs.js, so documentation needs no internet connection
+    - superlu-dist-no_test.patch disables test with SuperLU-Dist.
+      SuperLU-Dist does not play well with others. Needs ParMETIS
+      (Scotch-parmetis does not set perm_c) else segfaults on Destroy_LU
+      Use SuperLU-Dist from PETSc at your own risk (try MUMPS instead).
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 21 Oct 2018 10:12:20 +0800
+
+petsc (3.9.4+dfsg1-3) unstable; urgency=medium
+
+  * Build-Depends: libhypre-dev (>= 2.15.1)
+    - link against -lHYPRE_core
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 30 Nov 2018 15:21:19 +0800
+
+petsc (3.9.4+dfsg1-2) unstable; urgency=medium
+
+  * Debian patch superlu_dist_540_0425e358a93.patch applies upstream
+    commit 0425e35 to build against SuperLU-Dist 5.4.0 or later.
+    Closes: #911615.
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 23 Oct 2018 16:24:12 +0800
+
+petsc (3.9.4+dfsg1-1) unstable; urgency=medium
+
+  * New upstream version.
+  * Standards-Version: 4.2.1
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 18 Sep 2018 18:11:56 +0800
+
+petsc (3.9.3+dfsg1-4) unstable; urgency=medium
+
+  * add ia64 to the no-test list
+  * add debian/tests (autopkgtest)
+  * Standards-Version: 4.2.0
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 15 Aug 2018 20:48:15 +0800
+
+petsc (3.9.3+dfsg1-3) unstable; urgency=medium
+
+  * Include the whole upstream mpi version in MPI dependency, including
+    the subminor (release) version. PETSc is forward compatible with
+    the same MPI minor version, but must not go backwards in the
+    subminor. Closes: #904020.
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 19 Jul 2018 11:02:44 +0800
+
+petsc (3.9.3+dfsg1-2) unstable; urgency=medium
+
+  * distinguish between arch and arch-indep in override_dh_fixperms
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 15 Jul 2018 13:13:42 +0800
+
+petsc (3.9.3+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release
+  * Reorganise directory structure of libpetsc3.9-dev-examples
+  * add mips64el to no-test list. Times out on runex19_fieldsplit_mumps
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 15 Jul 2018 10:20:07 +0800
+
+petsc (3.9.2+dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream release
+    - reinstates deprecated API (marked as DEPRECATED)
+      e.g. use MatSolverType instead of MatSolverPackage
+    - applies split_petscdmmod_23928a8.patch
+  * Add hppa to no-test list. Tests pass intermittently but unreliably.
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 24 May 2018 01:04:46 +0800
+
+petsc (3.9.1+dfsg1-1exp3) experimental; urgency=medium
+
+  * add -ffree-line-length-0 to FCFLAGS to compile SNES test ex5f
+  * Place no-ex19 arches on to the no-test list. If they fail one test,
+    they'll fail others. Drop patch test_mpi_conditional_bug816101.
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 09 May 2018 21:07:03 +0800
+
+petsc (3.9.1+dfsg1-1exp2) experimental; urgency=medium
+
+  * fix spaces in build-time arch tests
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 06 May 2018 03:13:51 +0800
+
+petsc (3.9.1+dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream release.
+  * Place arches on the no-ex19-test list: armel armhf i386 powerpc
+    (thanks Christophe Trophime for use of makefile conditionals)
+  * Apply upstream patch split_petscdmmod_23928a8.patch to split
+    petscdmmod.F to enable build on constrained 32bit systems
+    (mips,mipsel). Closes: #897006.
+  * get verbose build logs with make V=1
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 05 May 2018 16:26:36 +0800
+
+petsc (3.9.0+dfsg1-1exp4) experimental; urgency=medium
+
+  * update patch test_mpi_conditional_bug816101 to skip ex19 if
+    RUN_SNES_EX19_2MPI_TEST=no
+  * run all tests with patch label_tests.patch to diagnose more
+    clearly which tests exactly are failing to return
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 27 Apr 2018 01:13:58 +0800
+
+petsc (3.9.0+dfsg1-1exp3) experimental; urgency=medium
+
+  * run tests according to DEB_HOST_ARCH not DEB_HOST_MULTIARCH
+  * extract examples from real-debug build
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 25 Apr 2018 11:00:18 +0800
+
+petsc (3.9.0+dfsg1-1exp2) experimental; urgency=medium
+
+  * Only process MathJax.js in docs when examples package is built
+    (i.e. arch-all binary independent build)
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 25 Apr 2018 00:41:55 +0800
+
+petsc (3.9.0+dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream release.
+    - refresh debian/patches
+    - remove patches (applied upstream):
+        - hypre-2.14.0_e6de09342.patch
+        - install_fixDir_petscconf.h_b1eb7ee26db_deb554b.patch
+        - make_parallel_f88a919.patch
+    - remove superlu-dist_no-parmetis.patch, now redundant (parmetis
+      handling is now more robust)
+    - tutorials no longer installed. Instead see
+      http://www.mcs.anl.gov/petsc/documentation/tutorials/index.html
+  * update debian/copyright: excluded (DFSG) dir bin/win32fe has been
+    moved to lib/petsc/ 
+  * d/rules override_dh_clean: remove build files
+  * libpetsc*dev packages Suggests: python3 | python, since python
+    support scripts are provided in $PETSC_DIR/lib/petsc/bin
+  * Example and tutorial scripts are now installed in
+    /usr/share/petsc/examples by package libpetsc3.9-dev-examples
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 17 Apr 2018 12:59:59 +0800
+
+petsc (3.8.4+dfsg1-3) UNRELEASED; urgency=medium
+
+  * Fix build tests (cherry-pick commit 52672c1f from experimental).
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 24 Apr 2018 12:19:04 +0800
+
+petsc (3.8.4+dfsg1-2) unstable; urgency=medium
+
+  * Build-Depends: libhypre-dev (>= 2.14.0)
+    - apply upstream patch hypre-2.14.0_e6de09342.patch
+      to enable build against hypre 2.14. Closes: #894559.
+    - remove libpetsc-complex3.8-dev Depends: libhypre-dev
+      (complex PETSc does not support hypre)
+  * Standards-Version: 4.1.4
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 11 Apr 2018 09:47:34 +0800
+
+petsc (3.8.4+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * debian/control: change Vcs-Git to https so general users can clone.
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 01 Apr 2018 17:59:27 +0800
+
+petsc (3.8.3+dfsg1-7) unstable; urgency=medium
+
+  * debian patch make_parallel_f88a919.patch, adapted from upstream
+    merge f88a919 to facilitate parallel builds. Closes: #893509.
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 21 Mar 2018 00:59:49 +0800
+
+petsc (3.8.3+dfsg1-6) unstable; urgency=medium
+
+  * use upstream patches b1eb7ee26db and deb554b to fix PETSC_DIR in
+    petscconf.h.
+  * update VCS tags to salsa.debian.org
+  * debian/rules: define DEB_STRIPPED_UPSTREAM_VERSION as upstream
+    version (regardless of whether we applied dfsg or not)
+  * don't write the build dir (-fdebug-prefix-map) into the installed
+    configuration files
+  * don't install conf/uninstall.py
+  * d/rules: use DEB_BUILD_OPTIONS to set the number of cpus (nproc)
+    available for a parallel build (parallel=`nproc`)
+  * debhelper compatibility level 11
+  * Standards-Version: 4.1.3
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 19 Mar 2018 14:27:45 +0800
+
+petsc (3.8.3+dfsg1-5) unstable; urgency=medium
+
+  * debian/extract_MPI_dependency: handle alpha/beta markers in minor
+    version. e.g. take mpich 3.3~a2 as >= 3.3~a2, << 3.4.
+  * debian/rules: create a blacklist for arches known to fail tests on
+    the build daemons. Build them without running tests.
+    Currently ARCH_NO_TEST_LIST=powerpc x32
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 05 Mar 2018 02:53:44 +0800
+
+petsc (3.8.3+dfsg1-4) unstable; urgency=medium
+
+  * debian/rules: separate -arch and -indep rules for
+    override_dh_auto_install. Fixing petscconf.h applies to -arch only.
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 03 Mar 2018 16:37:58 +0800
+
+petsc (3.8.3+dfsg1-3) unstable; urgency=medium
+
+  * set PETSC_DIR in petscconf.h to install dir not build dir.
+    Closes: #891952.
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 03 Mar 2018 11:59:03 +0800
+
+petsc (3.8.3+dfsg1-2) unstable; urgency=medium
+
+  * drop Recommends: csh (petscmpiexec now converted to posix)
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 27 Feb 2018 08:30:06 +0800
+
+petsc (3.8.3+dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream version.
+  * List optimised OpenBLAS and ATLAS as Build-Dep alternatives for
+    BLAS and LAPACK.
+  * Activate support for SuperLU-Dist.
+    - patch superlu-dist_no-parmetis.patch disconnects SuperLU-Dist
+      from parmetis (which is not available, non-free)
+  * Update debian/copyright
+    - use https format url
+    - matlab/laplacian* is BSD-2-clause, but acknowledge authors
+      Bryan C. Smith and Andrew V. Knyazev
+    - add include/petsc/private/hash.h, MIT licence from attractor
+    - add src/ksp/ksp/examples/tutorials/ex63.cxx*
+      (BSD-3-clause from Sandia Corporation, along with tests/ex46.cxx*)
+  * matlab scripts and sample matrix files are set non-executable
+  * remove debian patch scotch-shlib.patch
+    (ptscotch specified during configuration)
+  * debian patch petscmpiexec_posix_sh.patch converts petscmpiexec to
+    posix sh (csh scripts are considered harmful, see Debian Policy 10.4)
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 27 Feb 2018 02:26:41 +0800
+
+petsc (3.8.0+dfsg1-1exp1) experimental; urgency=medium
+
+  * Team upload.
+  * New upstream version.
+    - updated API, fortran interfaces are simplified.
+  * Remove deprecated debian patches:
+    - applied upstream:
+        build-ssl1.1.patch
+        mpi-version-test.patch
+        g++-4.8.patch
+    - redundant:
+        example-src-dir.patch
+        install-dir.patch
+        configure-kfreebsd8.patch
+  * New package structure: drop patch-specific versions and alternatives
+    i.e. drop 3.8.0 specific packages, any 3.8.Z will satisfy petsc3.8
+  * configuration updates:
+    - configure option --with-mpi-dir not required
+      (specify MPI compilers mpicc,mpicxx,mpif90 explicitly)
+    - use pkg-config to set hdf5 include and libs
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 03 Nov 2017 09:36:28 +0800
+
+petsc (3.7.7+dfsg1-2) unstable; urgency=medium
+
+  * Team upload.
+  * Standards-Version: 4.1.1
+  * debian/control Priority: optional (Priority: extra is deprecated)
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 19 Oct 2017 01:47:19 +0800
+
+petsc (3.7.7+dfsg1-1) experimental; urgency=medium
+
+  * Team upload.
+  * New upstream version. Last release before PETSc 3.8.
+  * Standards-Version: 4.1.0
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 29 Sep 2017 00:46:18 +0800
+
+petsc (3.7.6+dfsg1-3) unstable; urgency=medium
+
+  * create mpi-version-test.patch to relax MPI version test to match
+    minor, not patch (release) version in include/petscsys.h. Should
+    simplify future openmpi upgrades, see debian/extract_MPI_dependency.
+    Taken from upstream git (commits ca70f86, 41f4af4). Closes: #865526.
+  * remove dependencies on libblacs-mpi-dev (explicit blacs support
+    has not been a PETSc configuration option since 3.4)
+  * drop Build-Depends: autotools-dev (autoreconf is now automatic in
+    debhelper compat 10)
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 27 Jul 2017 17:22:07 +0800
+
+petsc (3.7.6+dfsg1-2) unstable; urgency=medium
+
+  * Team upload.
+  * Standards-Version: 4.0.0
+  * debhelper compatibility level 10
+  * debian/rules: build using make -j 1 
+    (petsc uses MAKE_NP to handle parallel builds, 
+    see lib/petsc/conf/rules)
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 15 Jul 2017 06:52:29 +0800
+
+petsc (3.7.6+dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream version.
+  * libpetsc-3.7.6-dev, libpetsc-complex-3.7.6-dev Suggests: 
+    relax to unversioned dependency on petsc-dev, petsc3.7.6-doc
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 30 May 2017 14:07:47 +0800
+
+petsc (3.7.5+dfsg1-4) unstable; urgency=medium
+
+  * Don't duplicate -dev dependencies. -lhdf5 and -lsuperlu are
+    invoked in PETSc.pc, so we Depend on their dev packages, we don't
+    simply Recommend them.
+  * Move petsc3.7 and petsc3.7-real alternatives handling from
+    libpetsc3.7-dev to libpetsc3.7.5-dev. Similarly petsc3.7-complex. 
+    Otherwise alternatives for older patch versions are left unowned. 
+    Closes: #852514.
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 06 Feb 2017 05:03:51 +0800
+
+petsc (3.7.5+dfsg1-3) unstable; urgency=medium
+
+  * Update libgfortran-5-dev dependency to gfortran to ensure 
+    the default gfortran (currently 6) is linked to libpetsc*3.7.5-dev.
+    Closes: #852011.
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 22 Jan 2017 12:13:55 +0800
+
+petsc (3.7.5+dfsg1-2) unstable; urgency=medium
+
+  * upload PETSc 3.7.5 to unstable.
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 16 Jan 2017 21:24:40 +0800
+
+petsc (3.7.5+dfsg1-1) experimental; urgency=medium
+
+  * New upstream version (patch release).
+    - MPI checks during testing now fail in amd64 chroots so
+      refresh debian/patches/test_mpi_conditional_bug816101
+      to always disable the 2-processor test of ex19.
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 11 Jan 2017 00:33:58 +0800
+
+petsc (3.7.4+dfsg1-9) unstable; urgency=medium
+
+  * Binary -dev packages Depends: libhdf5-mpi-dev. 
+    Needed since -lhdf5 is now added to PETSc pkgconfig flags. 
+    Closes: #802706.
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 06 Jan 2017 13:10:01 +0800
+
+petsc (3.7.4+dfsg1-8) unstable; urgency=medium
+
+  * update for multiarch MPI. Closes: #848784.
+  * update build-time test for multiarch HDF5
+    - test for both mpi and serial versions of HDF5, with preference
+      for mpi. 
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 21 Dec 2016 21:54:51 +0800
+
+petsc (3.7.4+dfsg1-7) unstable; urgency=medium
+
+  * link include/petsc/finclude docs to headers
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 29 Nov 2016 22:28:10 +0800
+
+petsc (3.7.4+dfsg1-6) unstable; urgency=medium
+
+  * debian/rules: only manipulate header docs when the doc package is
+    being built.
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 28 Nov 2016 21:05:58 +0800
+
+petsc (3.7.4+dfsg1-5) unstable; urgency=medium
+
+  * Update build-ssl1.1.patch to upstream patch ecd1d7b.
+  * doc package is Multi-Arch: foreign
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 28 Nov 2016 18:46:28 +0800
+
+petsc (3.7.4+dfsg1-4) unstable; urgency=medium
+
+  * Version Build-Depends: libhypre-dev (>= 2.11.1-3).
+    Earlier hypre versions contained internal superlu header files,
+    which confuses petsc when trying to use libsuperlu-dev.
+  * build-ssl1.1.patch enables build with SSL 1.1.
+    (SSLv23_method was redefined to TLS_method in SSL 1.1)
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 05 Nov 2016 20:21:40 +0800
+
+petsc (3.7.4+dfsg1-3) unstable; urgency=medium
+
+  * Update configuration for HYPRE 2.11.1
+    (headers now in /usr/include/hypre)
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 03 Nov 2016 22:55:55 +0800
+
+petsc (3.7.4+dfsg1-2) unstable; urgency=medium
+
+  * Handle shlibs dependencies via virtual libpetsc3.7 and
+    libpetsc-complex-3.7 packages. The .Z in 3.7.Z is not used in
+    sonames, but we need .Z in binary packages because of the upstream
+    directory structure.
+    When different libpetsc3.7.Z are installed, the preferred version
+    is controlled by alternatives for libpetsc3.7 (likewise for
+    libpetsc_complex.so.3.7).
+  * Multiarch: place PETSc.pc alternative in /usr/lib/<arch>/pkgconfig
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 14 Oct 2016 22:28:54 +0800
+
+petsc (3.7.4+dfsg1-1) unstable; urgency=medium
+
+  * New upstream version.
+  * Mark the Debian DFSG version with '+dfsg' rather than '.dfsg' to 
+    make the distinction with the raw upstream version more clear.
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 12 Oct 2016 16:06:53 +0800
+
+petsc (3.7.3.dfsg1-3) unstable; urgency=medium
+
+  * Reinstate build on kfreebsd (it now passes build-time tests).
+  * Reinstate support for superlu (>=5.2).
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 09 Sep 2016 21:50:40 +0800
+
+petsc (3.7.3.dfsg1-2) unstable; urgency=medium
+
+  * Release PETSc 3.7 to unstable.
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 17 Aug 2016 16:47:22 +0800
+
+petsc (3.7.3.dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream version.
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 30 Jul 2016 10:56:06 +0800
+
+petsc (3.7.2.dfsg1-1exp3) experimental; urgency=medium
+
+  * Build with -fPIC explicitly forced into build flags.
+    To facilitate build on ppc64el, arm64, armhf.
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 29 Jul 2016 21:19:44 +0800
+
+petsc (3.7.2.dfsg1-1exp2) experimental; urgency=medium
+
+  * Configure --with-pic=1 to ensure -fPIC flags are used for building
+    with shared libraries.
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 16 Jul 2016 20:33:12 +0800
+
+petsc (3.7.2.dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream version.
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 01 Jul 2016 21:45:23 +0800
+
+petsc (3.7.1.dfsg1-1) experimental; urgency=medium
+
+  * New upstream version. New ABI 3.7
+  * Temporarily disable SuperLU support: 
+      PETSc 3.7 requires SuperLU 5.2.
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 20 May 2016 01:18:11 +0800
+
+petsc (3.6.4.dfsg1-3) unstable; urgency=high
+
+  * Set tight PETSc dev package dependency on MPI version. Closes: #828987.
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 01 Jul 2016 15:59:30 +0800
+
+petsc (3.6.4.dfsg1-2) unstable; urgency=medium
+
+  * Use alternatives to set default versions for soname (3.6) in
+    /usr/lib/petscdir/, including real and complex versions.
+  * PETSc 3.6 requires a SuperLU version less than 5.2.
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 05 Jun 2016 22:37:20 +0800
+
+petsc (3.6.4.dfsg1-1) unstable; urgency=low
+
+  * New upstream version.
+    - drop patch install_python_RDict_upstream_5a4fee... 
+      (already applied in 3.6.4)
+  * Standards-Version: 3.9.8
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 11 May 2016 10:19:20 +0800
+
+petsc (3.6.3.dfsg2-6) unstable; urgency=medium
+
+  * don't build explicit soname links to libraries, they are handled
+    by alternatives 
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 03 May 2016 22:20:08 +0800
+
+petsc (3.6.3.dfsg2-5) unstable; urgency=medium
+
+  * New patch test_mpi_conditional_bug816101 disables test of ex19 on
+    2 MPI processes on mipsel and powerpc, working around intermittent
+    timeouts. Closes: #816101.
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 25 Apr 2016 13:09:18 +0800
+
+petsc (3.6.3.dfsg2-4.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Fix FTBS on hurd by conditionally include mach/std_types.h (Closes: #822214)
+
+ -- Tobias Frost <tobi@debian.org>  Fri, 22 Apr 2016 07:18:20 +0200
+
+petsc (3.6.3.dfsg2-4) unstable; urgency=medium
+
+  * Update debug alternatives at configure stage.
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 10 Apr 2016 13:07:03 +0800
+
+petsc (3.6.3.dfsg2-3) unstable; urgency=medium
+
+  * Drop old /usr/lib/libpetsc.so alternatives in debug packages.
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 09 Apr 2016 20:35:37 +0800
+
+petsc (3.6.3.dfsg2-2) unstable; urgency=medium
+
+  * complex dev package should Suggest: complex (not real) debug package
+  * Drop legacy alternative link to /usr/lib/libpetsc.so. It just
+    makes trouble with ldconfig.
+  * Remove alternatives when dev packages are removed. Closes: #820080.
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 04 Apr 2016 21:55:25 +0800
+
+petsc (3.6.3.dfsg2-1) unstable; urgency=medium
+
+  * Add sundry copyright notices to debian/copyright.
+  * DFSG2: Barry Smith reserves all copyright to the Apple
+    examples, implying redistribution is not permitted. These files
+    are therefore excluded from the Debian source package (blacklisted
+    in debian/copyright).
+  * libpetsc3.6-dev is a dummy package depending on the latest patch
+    version (libpetsc3.6.3-dev).  Different patch versions may be
+    installed in parallel (e.g. 3.6.2 and 3.6.3), but they share the
+    same soname (3.6). The preferred version for libpetsc.so.3.6 is
+    controlled (by the specific patch version) using alternatives. 
+    Client packages should normally depend on libpetsc3.6-dev (or
+    petsc-dev) instead of libpetsc3.6.3-dev.
+    Likewise for libpetsc-complex-3.6-dev.
+
+ -- Drew Parsons <dparsons@debian.org>  Fri, 01 Apr 2016 01:20:15 +0800
+
+petsc (3.6.3.dfsg1-1) unstable; urgency=medium
+
+  * New upstream version.
+  * debian/rules: only print the configure log of failed builds.
+    Closes: #811257. 
+  * Build doc package from files installed for the debug package.
+    Closes: #817165.
+  * Patch install_python_RDict_upstream_5a4fee... fixes installation
+    during package build (patch from upstream git commit 5a4feee).
+  * libpetsc-real.so and libpetsc-complex.so (dev packages) handled by
+    alternatives. 
+  * Standards-Version: 3.9.7
+
+ -- Drew Parsons <dparsons@debian.org>  Sat, 12 Mar 2016 22:57:27 +0800
+
+petsc (3.6.2.dfsg1-3) unstable; urgency=medium
+
+  * Add Depends: libssl-dev, libgfortran-5-dev to petsc dev packages.
+    Needed since petsc invokes external libraries -lssl -lcrypto -gfortran 
+    in <petsc>/lib/pkgconfig/PETSc.pc and <petsc>/lib/petsc/conf/petscvariables
+    cf. bug #802706
+
+ -- Drew Parsons <dparsons@debian.org>  Sun, 25 Oct 2015 01:06:09 +0800
+
+petsc (3.6.2.dfsg1-2) unstable; urgency=medium
+
+  * Ensure octave directory exists for linking to PETSc matlab scripts.
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 19 Oct 2015 14:13:20 +0800
+
+petsc (3.6.2.dfsg1-1) unstable; urgency=medium
+
+  * New upstream version.
+  * Apply Files-Excluded to debian/copyright to exclude DSFG files from
+    upstream source tarball:
+     - PDF documentation (source documentation is not available)
+        - docs/
+        - src/ts/examples/tutorials/power_grid/PDF_eqs_power_grid.pdf
+     - win32 executables in bin/win32fe (source code is available
+       separately at https://bitbucket.org/petsc/win32fe but we don't
+       need it and therefore don't include it)
+  * Standards version 3.9.6.
+  * PETSc matlab scripts are linked to /usr/share/octave/site/m/petsc.
+    Closes: #736662.
+  * Add superlu support.  Closes: #671062.
+  * Provide new packages libpetsc-complex-3.6.2-dev, libpetsc-complex-3.6
+    and libpetsc-complex-3.6.2-dbg with support for complex numbers. 
+    Closes: #730317.
+  * The library and soname are modified for complex support,
+    libpetsc_complex.so.  The standard build with real numbers has a
+    modified soname to match, libpetc_real.so.  The preference for
+    libpetsc.so is controlled by alternatives (petsc and libpetsc.so.3.6).
+
+ -- Drew Parsons <dparsons@debian.org>  Mon, 12 Oct 2015 23:07:20 +0800
+
+petsc (3.4.2.dfsg1-8) unstable; urgency=medium
+
+  * Team upload.
+  * Remove mpich workaround for scalapack. (Closes: #740765)
+
+ -- Sébastien Villemot <sebastien@debian.org>  Thu, 24 Apr 2014 19:28:14 +0200
+
+petsc (3.4.2.dfsg1-7) unstable; urgency=medium
+
+  * Team upload.
+  * Depend on libsuperlu-dev (instead of libsuperlu3-dev).
+  * Use canonical URLs in Vcs-* fields.
+  * Remove mpich workaround for blacs-mpi, since the latter has been fixed.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Sat, 01 Mar 2014 13:38:39 +0100
+
+petsc (3.4.2.dfsg1-6) unstable; urgency=medium
+
+  * Team upload.
+  * Fix mangling of dfsg suffix in debian/watch (Closes: #730151)
+  * Transition to suitesparse 4.2.1 (Closes: #708398)
+    + umfpack.patch: remove patch, no longer needed
+    + bump build-dependency version
+  * Bump Standards-Version to 3.9.5, no changes needed.
+
+ -- Sébastien Villemot <sebastien@debian.org>  Wed, 11 Dec 2013 10:30:05 +0100
+
+petsc (3.4.2.dfsg1-5) unstable; urgency=low
+
+  * Team upload.
+  * Adapt the package for the MPICH transition. (Closes: #728074)
+    - Tighten B-D on mpi-default-dev to be >= 1.0.2.
+      That version is required to handle correctly the mpich2->mpich renaming.
+    - debian/rules: adapt for the mpich2->mpich renaming
+      (and remove lam support).
+    - debian/rules: add a workaround for blacs-mpi and scalapack.
+      Their shared libraries still have the mpich2 suffix
+  * Update Build-Conflicts to libatlas3-base (instead of libatlas3gf-base)
+
+ -- Sébastien Villemot <sebastien@debian.org>  Sat, 02 Nov 2013 22:10:37 +0100
+
+petsc (3.4.2.dfsg1-4) unstable; urgency=low
+
+  * Team upload (git is out-of-date)
+  * Change architectures to "hurd-any linux-any" as these architectures do
+    work with this package, in good faith. Net-change is addition of
+    armel, which is known to work in Ubuntu, and future proof adding of
+    upcoming ports which are also known to work - arm64/powerpc.
+
+ -- Dmitrijs Ledkovs <xnox@ubuntu.com>  Fri, 25 Oct 2013 01:30:25 +0100
+
+petsc (3.4.2.dfsg1-3) unstable; urgency=low
+
+  [ Christophe Trophime ]
+  * Team upload.
+  * [bbd895b] Fix missing declaration (found when compiling gmsh with g++-4.8)
+
+ -- Anton Gladky <gladk@debian.org>  Sat, 28 Sep 2013 09:49:56 +0200
+
+petsc (3.4.2.dfsg1-2) unstable; urgency=low
+
+  * [35ff06e] Add copyright-info of some files. (Closes: #722979)
+  * [0002c26] Remove libpastix-dev and change libsuperlu4-dev on 
+              libsuperlu3-dev.
+
+ -- Anton Gladky <gladk@debian.org>  Tue, 17 Sep 2013 07:52:56 +0200
+
+petsc (3.4.2.dfsg-1) unstable; urgency=low
+
+  * Team upload.
+  [ Christophe Trophime ]
+  * Non-maintainer upload.
+  * New upstream release
+  * debian/control
+    - remove obsolete DM-Upload-Allowed
+    - remove libblas-3gf.so from Build-Depends
+    - remove liblapack-3gf.so from Build-Depends
+    - add libpastix-dev to Depends for libpetsc3.2-dev
+    - add libfftw3-dev to  Depends for libpetsc3.2-dev
+    - add libfftw3-mpi-dev to  Depends for libpetsc3.2-dev
+  * debian/rules
+    - add support for fftw
+    - add shared libraries for PETSC_ARCH-c-debug
+    - remove liblapack-3gf.so and libblas-3gf.so
+  * update postinst script
+    - change the version from 3100 to 3420
+    
+  [ Thomas Weber ]
+  * Make copying config.guess and config.sub independent of
+    automake version. (Closes: #713208)
+
+ -- Anton Gladky <gladk@debian.org>  Wed, 11 Sep 2013 19:19:33 +0200
+
+petsc (3.2.dfsg-6) unstable; urgency=low
+
+  * Team upload.
+  * Fix PETSC_CHECKS m4 macro so that it also detects static petsc library
+    - petsc.m4: add -lhdf5 and -lstdc++ to PETSC_EXTERNAL_LIBS
+    - d/rules: add g++ to petsc-compilers
+    Thanks to Anton Gladky for a first version of the patch. (Closes: #691307)
+
+ -- Sébastien Villemot <sebastien@debian.org>  Sun, 11 Nov 2012 16:26:06 +0100
+
+petsc (3.2.dfsg-5) unstable; urgency=low
+
+  * Rebuild with newest version of HDF5, and force >= 1.8.8.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 26 Jan 2012 15:02:15 -0500
+
+petsc (3.2.dfsg-4) unstable; urgency=low
+
+  * Added lam4-dev to Build-Conflicts (closes: #656189).
+  * Added alpha and lpia to architecture list (closes: #655940).
+  * Added CHOLMOD support (closes: #642439).
+  * Test building with HDF5 on all arches.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 26 Jan 2012 14:10:51 -0500
+
+petsc (3.2.dfsg-3) unstable; urgency=low
+
+  * Reinstated s390x arch since an external error prevents it from building (no
+    s390x support in PVM -> no ScaLAPACK).
+  * Changed libscotch-dev to libptscotch-dev in libpetsc3.2-dev Build-Depends.
+  * Added cmake to Build-Conflicts because it causes setting of
+    PETSC_BUILD_USING_CMAKE and breaks SLEPc build.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Mon, 16 Jan 2012 11:13:41 -0500
+
+petsc (3.2.dfsg-2) unstable; urgency=low
+
+  * Fixed MUMPS support to work with PTScotch (thanks: Satish Balay).
+  * Removed doc link to non-free PDF file.
+  * Added mpich2 case to debian/rules (closes: #652307).
+  * Restrict architectures to exclude armel because of an unknown python bug
+    (closes: #651453), kfreebsd-* because of a FORTRAN test problem, and s390x
+    because of dependency issues (missing architecture in PVM).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Wed, 11 Jan 2012 18:49:43 -0500
+
+petsc (3.2.dfsg-1) unstable; urgency=low
+
+  * New upstream (closes: #652101).
+  * Removed bin/win32fe/win32fe.exe and win32feutils.dll, docs/developers.pdf,
+    docs/manual.pdf, src/tops/twopager.pdf and the share and xcode directories
+    from upstream due to lack of source.
+  * Forward-ported patches, splitting ld.patch into hypre.patch and
+    nocleanup.patch.
+  * Changed arch-dependent packages to "any" -- let's test all arches.
+  * Reinstated patch/unpatch in build-arch, build-indep and clean targets.
+  * Re-added quilt to Build-Depends, lintian complains otherwise.
+  * PETSc dropped support for Scotch, need to disable MUMPS as well for now
+    (but keeping both in dependencies).
+  * Requires newer SuiteSparse than version 3.4.0 in Debian, kludged it to
+    compile properly but runtime behavior is unpredictable at best.
+  * Lintian overrides for false positives on copyright and petsc-dev.
+  * Using MPI selection from mpi-default-dev.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri, 30 Dec 2011 13:27:43 -0500
+
+petsc (3.1.dfsg-11.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * Don't mix source format 3.0 (quilt) and manual usage of quilt:
+    - Drop manual quilt calls from debian/rules;
+    - Drop superfluous quilt Build-Depends.
+    Closes: #643488
+
+ -- Didier Raboud <odyx@debian.org>  Tue, 15 Nov 2011 17:20:34 +0100
+
+petsc (3.1.dfsg-11) unstable; urgency=low
+
+  [ Adam C. Powell, IV ]
+  * Use HDF5 only on openmpi architectures (closes: #602660, #605294).
+  * Bump Standards-Version, no changes needed.
+  * Update to upstream patch level 8 (closes: #621609).
+  * Clean target update.
+  * Fix stamps to prevent double-building.
+
+  [ Matthias Klose ]
+  * Patch PETSc build system to link properly to hypre libs, and change BLACS
+    lib order in rules, to make binutils-gold work (closes: #608902).
+  * Explicitly set PETSC_BUILD_GNU_SYSTEM in rules.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 07 Apr 2011 21:20:50 -0400
+
+petsc (3.1.dfsg-10) unstable; urgency=low
+
+  * Fixed mpi-default-dev implementation selection (closes: #604549).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 23 Nov 2010 15:08:38 -0500
+
+petsc (3.1.dfsg-9) unstable; urgency=low
+
+  * Choose MPI implementation based on mpi-default-dev (closes: #604549).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Mon, 22 Nov 2010 20:53:41 -0500
+
+petsc (3.1.dfsg-8) unstable; urgency=low
+
+  [ Adam C. Powell, IV ]
+  * Build with HDF5 regardless of MPI implementation.
+  * Symlinked $(PETSC_ARCH)-cxx-[opt|debug] to -c-[opt|debug] to indicate C++
+    support (closes: #594046).
+
+  [ Christophe Trophime ]
+  * Upstream patch level 5.
+  * Added (non-Scotch) MUMPS support (closes: #600265).
+  * Bumped Standards-Version.
+  * Silenced several clean commands.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 04 Nov 2010 10:10:34 -0400
+
+petsc (3.1.dfsg-7) unstable; urgency=low
+
+  * Added shared_freebsd8 target to conf/rules (closes: #591262).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Wed, 04 Aug 2010 14:35:10 -0400
+
+petsc (3.1.dfsg-6) unstable; urgency=low
+
+  * Fixed clean target so it doesn't remove TAGS files from the .pc directory,
+    causing quilt to forget to revert it (closes: #589063, #589064).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 15 Jul 2010 14:46:58 -0400
+
+petsc (3.1.dfsg-5) unstable; urgency=low
+
+  * Added patch target so dpkg-buildpackage -B actually runs the build-arch
+    target with patches applied (closes: #584551, #586220, #588334).
+  * Added a couple more file removals to debian/rules clean target.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Wed, 14 Jul 2010 10:24:21 -0400
+
+petsc (3.1.dfsg-4) unstable; urgency=low
+
+  * Upstream patch level 3.
+  * Fix to clean target.
+  * libpetsc3.1-dev depends on libhdf5-mpi-dev.
+  * Build-conflict with atlas libs since they mess up other packages' builds.
+  * Change target architectures eliminating hppa (closes: #529485).
+  * Reinstated mpirun_lam script since LAM arches will need it.
+  * Point all obsolete libraries' alternative symlinks at petsc library.
+  * Added source lintian overrides about Adam Powell's name.
+  * Bumped Standards-Version.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 06 Jul 2010 23:00:50 -0400
+
+petsc (3.1.dfsg-3) unstable; urgency=low
+
+  * Symlink $PETSC_DIR/conf/base -> variables for 3.0.x compatibility.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 27 May 2010 08:45:04 -0400
+
+petsc (3.1.dfsg-2) unstable; urgency=low
+
+  * Upstream patch level 2.
+  * Patched to have the effect of regenerating config.[guess|sub] so clean is
+    cleaner.
+  * Added a few more files to the debian/rules clean target.
+  * Added -c-opt to petscvariables directory in examples tarball.
+  * Added --with-c-support to configure options (closes: #580546).
+  * Changed control file to conform to Debian Science Policy Manual.
+  * Added diagnostic to indicate MPI implementation and directory.
+  * Disabled HDF5 support with LAM because libhdf5-lam-dev is missing at least
+    one needed library libhdf5_fortran.so (closes: #582290).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Wed, 19 May 2010 19:14:34 -0400
+
+petsc (3.1.dfsg-1) unstable; urgency=low
+
+  * New upstream release, patch level 1 (closes: #576023).
+  * Removed bin/win32fe/win32fe.exe and win32feutils.dll, docs/manual.pdf and
+    src/tops/twopager.pdf from upstream due to lack of source.
+  * Changed BLAS and LAPACK links to -lblas and -llapack (closes: #577875).
+  * PETSc brings this into -dev package config files (closes: #579578).
+  * Added --with-clanguage=C++ to configure commands (closes: #576799).
+  * Added HDF5 support (closes: #566920).
+  * Changed to source format 3.0 (quilt).
+  * Bumped Standards-Version.
+  * Added ${misc:Depends} to all package Depends fields.
+  * Disabled SuperLU because this PETSc version doesn't seem compatible.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri, 30 Apr 2010 19:08:52 -0400
+
+petsc (3.0.0.dfsg-6) unstable; urgency=low
+
+  * Updated to patch level 10.
+  * Added ftn-auto and ftn-custom finclude subdirectories (closes: #534211).
+  * Added --with-fortran-interfaces=1 to configure calls (closes: #529970).
+  * Removed Fortran libs from BLASLAPACK_LIBS in the case of Debian's special
+    blas/lapack libraries in math-blaslapack.m4 (closes: #559119).
+  * Changed BLAS/LAPACK links to Debian's special 3gf libs.
+  * Added Build-Depends on automake, and copy its config.guess and config.sub
+    to replace PETSc's versions of those.
+  * Versioned dependency on debhelper.
+  * Bumped Standards-Version.
+  * Added README.source.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri, 11 Dec 2009 19:35:42 -0500
+
+petsc (3.0.0.dfsg-5.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * fix Build-Depends for new dpkg-dev (closes: #535276) 
+
+ -- Rene Engelhard <rene@debian.org>  Fri, 03 Jul 2009 10:31:34 +0200
+
+petsc (3.0.0.dfsg-5) unstable; urgency=medium
+
+  * Removed babel-1.2.0 and libsidl-dev from Build-Depends (closes: #529485).
+  * Patched conf/rules to remove double-colon clean target (closes: #533342).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 16 Jun 2009 14:49:31 -0400
+
+petsc (3.0.0.dfsg-4) unstable; urgency=low
+
+  * Removed --prefix=/usr because it interfered with building shared libs
+    (closes: #529303).
+  * Fixed buggy petsc.m4 (closes: #528788).
+  * Disabled sprng linkage because the functions PETSc needs aren't in the
+    Debian sprng package, pending closure of bug 529295.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Mon, 18 May 2009 15:15:30 -0400
+
+petsc (3.0.0.dfsg-3) unstable; urgency=low
+
+  [Christophe Prud'homme]
+  * debian/rules: use --prefix=/usr in configure
+
+  [Adam C. Powell, IV]
+  * Removed superfluous scotch shlib patch (closes: #528556).
+  * Added fftw and sprng linkages (closes: #515165), but actually doing fftw
+    will require it to use MPI (bug 528680).
+  * Changed PETSC_ARCH to DEB_BUILD_GNU_SYSTEM, and included it in configure
+    command (closes: #528619).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 14 May 2009 13:54:25 -0400
+
+petsc (3.0.0.dfsg-2) unstable; urgency=low
+
+  * Removed different package name by MPI implementation (closes: #522764).
+  * Upstream patch level 5.
+  * Updated petsc.m4 to 3.0.0 conventions (closes: #528408).
+  * Updated math-blaslapack.m4 adding gf to library names.
+  * Added Scotch linkage.
+  * Stopped trying to build "dynamic" libraries (closes: #522287).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Wed, 13 May 2009 09:32:01 -0400
+
+petsc (3.0.0.dfsg-1) unstable; urgency=low
+
+  * New tarball without non-free bin/win32fe.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri, 27 Mar 2009 16:15:33 -0400
+
+petsc (3.0.0-1) unstable; urgency=low
+
+  * New upstream release (closes: #509692).
+  * Build-depends on mpi-default-dev and mpi-default-bin, though still uses
+    PETSC_MPI to allow users to build with non-default MPI implementations
+    (closes: #509785).
+  * Removed debian/control.in from source package (closes: #496946).
+  * Managing patches using quilt.
+  * Building against hypre 2.4.0 (closes: #511117, #512723).
+  * Temporarily desabled broken babel interface.
+  * Made pkg-scicomp-devel maintainer and self first/only uploader.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Mon, 23 Mar 2009 15:07:04 -0400
+
+petsc (2.3.3-15) unstable; urgency=low
+
+  * Fixed bashism in debian/petsc-ext (closes: #488714).
+  * Added src/mat/impls/aij/mpi/mpiaij.h to include directory in
+    libpetsc2.3.3-dev (closes: #496679).
+  * Moved debian/petsc2.3.2-doc* files to correct version (closes: #496680).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 28 Aug 2008 12:49:26 -0400
+
+petsc (2.3.3-14) unstable; urgency=low
+
+  * Change to babel dependency generation and substvars.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Mon, 30 Jun 2008 10:26:50 -0400
+
+petsc (2.3.3-13) unstable; urgency=low
+
+  * Only use babel support where available (closes: #486825).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 19 Jun 2008 11:37:00 -0400
+
+petsc (2.3.3-12) unstable; urgency=low
+
+  * Added hypre preconditioner library support (closes: #451737).
+  * Added babel support (closes: #476423).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Wed, 21 May 2008 14:41:37 -0400
+
+petsc (2.3.3-11) unstable; urgency=low
+
+  * Removed control file overwrite which caused control-files mismatches.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Sun, 06 Apr 2008 09:22:28 -0400
+
+petsc (2.3.3-10) unstable; urgency=low
+
+  * Removed -Wno-long-double from compiler options (closes: #474461).
+  * Changed from "ls -l | sed" to "readlink | sed" MPI test based on work
+    by Domenico Andreoli (closes: #474249).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Sat, 05 Apr 2008 22:48:44 -0400
+
+petsc (2.3.3-9) unstable; urgency=low
+
+  * Changed lam4-runtime to lam-runtime in Build-Depends (D'oh!).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Mon, 24 Mar 2008 08:35:20 -0400
+
+petsc (2.3.3-8) unstable; urgency=low
+
+  * Explicitly declare arches for openmpi vs. lam building.
+  * Added libspooles-dev to libpetsc2.3.3-dev dependencies.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 20 Mar 2008 09:15:37 -0400
+
+petsc (2.3.3-7) unstable; urgency=low
+
+  * Added lam4-dev as a build option (closes: #469664), with auto-detection
+    at build time of which MPI variant is installed.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Wed, 19 Mar 2008 13:05:32 -0400
+
+petsc (2.3.3-6) unstable; urgency=low
+
+  * Rebuild for unstable.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri, 22 Feb 2008 09:27:30 -0500
+
+petsc (2.3.3-5) experimental; urgency=low
+
+  * Rebuild against, and depend on, new suitesparse with proper shared
+    library versioning.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Mon, 11 Feb 2008 18:38:25 -0500
+
+petsc (2.3.3-4) experimental; urgency=low
+
+  * Build-depends on gfortran-transitioned BLAS, LAPACK and suitesparse
+    (closes: #463825).
+  * Adds spooles support (closes: #464723).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Sun, 10 Feb 2008 03:21:25 -0500
+
+petsc (2.3.3-3) unstable; urgency=low
+
+  * New watch file from Daniel Leidert (closes: #440933).
+  * Specifies only gfortran in build-deps and petsc-compilers substvar in
+    debian/rules (closes: #448158).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 08 Nov 2007 09:46:39 -0500
+
+petsc (2.3.3-2) unstable; urgency=low
+
+  * Changed build-dep from g77 to gfortran (closes: #434666).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri, 24 Aug 2007 18:12:50 -0400
+
+petsc (2.3.3-1) unstable; urgency=low
+
+  * New upstream release, .orig is patch level 3 (closes: #425998).
+  * New shared library soname and -dev package name for long double
+    (closes: #430292).
+  * Changed default MPI to openmpi.
+  * Fixed mpich and lam MPI build options (closes: #432898).
+  * Old math-blaslapack.m4 macro seems to work with ATLAS libs
+    (closes: #429502).
+  * Separated math-blaslapack.m4 alternatives symlink from other petsc links so
+    other packages can provide it.
+  * Added links to umfpack (libsuitesparse-dev) and superlu (libsuperlu3-dev)
+    (closes: #428007).
+  * Added mpirun_lam based on old upstream mpirun.lam which was removed.
+  * Added removal of .pyc files to rules clean target (closes: #424343).
+  * Package changes: moved compat into file, changed source version substvar.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 17 Jul 2007 18:12:50 -0400
+
+petsc (2.3.2-3) unstable; urgency=low
+
+  * Configuring with --useThreads=0 to try to work around bug 345139 on HPPA --
+    and ARM.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 18 Jan 2007 10:05:17 -0500
+
+petsc (2.3.2-2) unstable; urgency=low
+
+  * Upgrade to upstream patch level 8 to try to fix HPPA build by working
+    around bug 354139.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Wed, 17 Jan 2007 14:50:59 -0500
+
+petsc (2.3.2-1) unstable; urgency=low
+
+  * New upstream release, .orig is patch level 6.
+  * Removed overlap between the -dev and -dbg packages (closes: #363122).
+  * Changed == in rules tests to = (closes: #379540).
+  * Removed postscript files from doc-base list (closes #367312).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Mon, 20 Nov 2006 04:13:08 -0500
+
+petsc (2.3.1-1) unstable; urgency=low
+
+  * New upstream release, .orig is patch level 11 (closes: #351576).
+  * Upstream changes should support GNU/kFreeBSD (closes: #340710).
+  * Upstream also fixed troubleshooting.html error (closes: #350157).
+  * Change to rules in 2.3.0-3 should fix stranded dirs (closes: #350752).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu,  6 Apr 2006 19:57:52 -0400
+
+petsc (2.3.0-3) unstable; urgency=low
+
+  * mipsel arch is now linux-gnu as it should be (closes: #160253).
+  * This is PETSC 2.3 (closes: #316159).
+  * Changed 2.2 to 2.3 in petsc2.3.0-doc.doc-base (closes: #345166).
+  * Removed top_builddir and $HOME refs from bmake dir (closes: #349756).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Wed, 25 Jan 2006 14:39:51 -0500
+
+petsc (2.3.0-2) unstable; urgency=low
+
+  * Removed petsc-dbg package as it's not very helpful and almost never used.
+  * Retained versioned -dev packages and petsc-dev per thread at
+    http://lists.debian.org/debian-release/2005/11/msg00107.html continued at
+    http://lists.debian.org/debian-devel/2005/11/msg00986.html
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri, 16 Dec 2005 16:27:35 -0500
+
+petsc (2.3.0-1) unstable; urgency=low
+
+  * New upstream release (closes: #316159).
+  * New configure debian/rules target using python-based BuildSystem.
+  * New configure process should address endianness separate from instruction
+    set (closes: #160253).
+  * Modifications to BuildSystem: disabled rpath, disabled no debug warning.
+  * Abandoning separate static libs build without -fPIC as it would require too
+    much work to modify BuildSystem to do this.
+  * No python bindings for now.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue,  1 Nov 2005 19:35:35 -0500
+
+petsc (2.2.0-5) unstable; urgency=low
+
+  * Rebuild of unofficial sarge backport testbed for unstable with mpich 1.2.7.
+  * More documentation in petsc.m4 (closes: #315472).
+  * Thanks to new lintian, noticed and re-added trailer to 2.1.3-3 entry.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 16 Aug 2005 21:46:59 -0400
+
+petsc (2.2.0-4sarge1) unstable; urgency=low
+
+  * Rebuilt to link with libmpich1.0-noslog, and removed -lslog from
+    patch-bmake-packages and petsc.m4.
+  * Added versioned dependencies on mpich (>> 1.2.7).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri, 12 Aug 2005 18:24:23 -0400
+
+petsc (2.2.0-4) unstable; urgency=low
+
+  * Update for new mpich >> 1.2.5.3-2.
+  * Fixed src/inline/axpy.h for complex and UNROLL (closes: #284023, #293011).
+  * Added -fno-strict-aliasing to compile flags (closes: #274009).
+  * Switched SLES stuff to KSP in petsc.m4 (closes: 267796).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 24 Mar 2005 09:46:23 +0900
+
+petsc (2.2.0-3) unstable; urgency=low
+
+  * Changed libpetscsles alternative symlinks to libpetscksp, and removed
+    alternatives symlinks to libpetsccontrib (closes: #255076).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Wed, 11 Aug 2004 19:50:12 -0400
+
+petsc (2.2.0-2) unstable; urgency=low
+
+  * Upstream patch level 2.
+  * New PETSC_BOPT_EXTRA option for different BOPT and lib names, with _c++
+    symlinks only for plain and single (closes: #249617).
+  * New DEBIAN_DIST=contrib option to link with hypre, parmetis (closes:
+    #249619).
+  * Combined petsc-c and petsc-fortran substvars into petsc-compilers.
+  * Extra quote in -dev prerm eliminates "too many arguments" problem.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Mon,  7 Jun 2004 13:41:43 -0400
+
+petsc (2.2.0-1) unstable; urgency=low
+
+  * New upstream.
+  * Changed X devel dependency from xlibs-dev to libx11-dev since that should
+    be the only one needed.
+  * Changed blas/lapack devel dependencies to libblas-3.so/liblapack-3.so, and
+    math-blaslapack.m4 accordingly.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 15 Apr 2004 21:36:58 -0400
+
+petsc (2.1.6-2) unstable; urgency=low
+
+  * Fixed bug in bmake/linux*/variables removing erroneous "-lfrtbegin".
+  * Added new LG-SP draw mechanism (see patch-draw-lgsp).
+  * Fixed rules so clean does unpatch if necessary.
+  * Upstream patch level 10.
+  * Updated the Standards-Version.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri, 17 Oct 2003 16:02:48 -0400
+
+petsc (2.1.6-1) unstable; urgency=low
+
+  * New upstream (closes: #204392).
+  * Upstream patch level 4.
+  * Name changes: shlib is now libpetsc2.1.6, -dev and -dbg add those suffixes.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu,  4 Sep 2003 11:45:12 -0400
+
+petsc (2.1.5-4) unstable; urgency=low
+
+  * Upstream patch level 8.
+  * Removed rpath from bmake/*/packages (patch) and petsc.m4, since that's been
+    removed from mpich (as of 1.2.5-4, hence the versioned dep in control and
+    rules).
+  * Changed petscconf.h to PETSC_USE_BLAS_KERNELS instead of FORTRAN.
+  * Fixed src/inline/axpy.h to work with PETSC_USE_BLAS_KERNELS.
+  * Moved -dev packages to section libdevel.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 20 May 2003 18:11:42 -0400
+
+petsc (2.1.5-3) unstable; urgency=low
+
+  * Added bmake/*/rules files with libf: target for linux_ppc and hurd
+    (closes: 187669).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue,  8 Apr 2003 19:23:35 -0400
+
+petsc (2.1.5-2) unstable; urgency=low
+
+  * Added -Wl,-rpath -Wl,/usr/lib/mpich/lib/shared/ to MPE_LIB in
+    bmake/*/packages and PETSC_MPI_LIBS in petsc.m4 (closes: #170573).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 18 Mar 2003 10:36:43 -0500
+
+petsc (2.1.5-1) unstable; urgency=low
+
+  * New upstream, patch level 4.
+  * Moved shlib building stuff from bmake/$(PETSC_ARCH)/rules to
+    bmake/common/rules to simplify patch-bmake-rules, put "touch" into
+    debian/rules to make sure ppc and hurd get those files.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 18 Feb 2003 20:21:52 -0500
+
+petsc (2.1.3-8) unstable; urgency=low
+
+  * Upstream patch level 9.
+  * Removed . from end of descriptions (Lintian warning).
+  * Switched from gcc-3.2 and friends to gcc, since it's now gcc-3.2; this will
+    make building dependencies like illuminator easier (closes: #176237).
+  * The -dev package now suggests illuminator-dev (as it should have long since
+    done...).
+  * Updated the Standards-Version.
+  * Changed manpages' sections from 1L to 1 (oops!).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Wed,  8 Jan 2003 21:25:00 -0500
+
+petsc (2.1.3-7) unstable; urgency=low
+
+  * Updated patch-bmake-packages and petsc.m4 to include -lslog with -lmpe for
+    compatibility with new mpich 1.2.4-10 package.
+  * Put mpich version in Build-Depends and rules' mpi substvar setting.
+  * Made shlibs explicitly indicate this version or newer.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri, 20 Dec 2002 13:09:16 -0500
+
+petsc (2.1.3-6) unstable; urgency=low
+
+  * New petsc.m4 with libraries, broken for lam though (see PETSC_MPI_LIBS).
+  * The new petsc.m4 depends on math-blaslapack.m4, which is also included.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Mon, 21 Oct 2002 21:53:39 -0400
+
+petsc (2.1.3-5) unstable; urgency=low
+
+  * Commented "make clean" in clean: rule (closes: #160240).
+  * Removed lapack99-dev from build-depends since it doesn't exist on ARM;
+    maybe this will actually work with gcc-3.0-built lapack on alpha?
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 10 Sep 2002 00:06:01 +0000
+
+petsc (2.1.3-4) unstable; urgency=low
+
+  * Added directory handling for /usr/share/aclocal in case that dir isn't
+    provided by any other package.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Sun, 08 Sep 2002 08:12:01 +0000
+
+petsc (2.1.3-3) unstable; urgency=low
+
+  * Upstream patch level 6.
+  * Uses gcc-3.2 and g77-3.2 for shared libg2c.
+  * Okay, in this one the shared mpich libs should actually work (except
+    libmpe, which breaks IA-64 and HPPA when I add $(PETSC_EXTERNAL_LIB) to the
+    shlib linking command in bmake/rules).
+  * Removed ${linear-algebra} and xlibs from petsc2.1.3 deps because they
+    should be auto-detected by dh_shlibdeps (as should libg2c0).
+  * New patch system should simplify future upgrades.
+  * Put lapack99-dev as preferred lapack-dev in -dev package's dependencies.
+  * Added petsc.m4 to -dev package (closes: #160042).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Sun, 08 Sep 2002 07:16:28 +0000
+
+petsc (2.1.3-2) unstable; urgency=low
+
+  * New version built against shared mpich in unstable, no other changes yet.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Thu, 20 Jun 2002 21:45:14 +0000
+
+petsc (2.1.3-1.woody.1) testing; urgency=low
+
+  * Special release for Woody, built against its libs, etc.
+  * Several significant updates vs. 2.1.1.30-1, previous woody version, as
+    mentioned below.
+  * Put lapack99-dev as preferred lapack-dev in Build-Depends because it
+    actually works on Alpha, unlike all other lapack2-dev Providers -- see bug
+    149834.
+  * Commented shlib building in linux_alpha_dec subarch because I still can't
+    make it work, one other small fix to that arch's petscconf.h.  (Note: this
+    does not affect any uploaded Debian binary packages, just the option to
+    build source with PETSC_ARCH=linux_alpha_dec which uses the non-free HPaq
+    compilers for Alpha.)
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 18 Jun 2002 19:09:33 -0400
+
+petsc (2.1.3-1) unstable; urgency=low
+
+  * New upstream major release.
+  * Moved to Priority: extra because dependency mpich is there.
+  * In includes, using EXTERN_C_BEGIN and _END from petsc.h instead of the
+    whole #ifdef business; I think this will work better and be easier to port
+    forward.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue,  4 Jun 2002 13:29:40 -0400
+
+petsc (2.1.2-2) unstable; urgency=low
+
+  * Upstream patch level 8.
+  * Removed ${PETSC_EXTERNAL_LIB_BASIC} from shlib linking, to get rid of
+    non-PIC stuff in shlibs (closes: #142647).  This cuts the size of the shlib
+    package in half, and some individual libs by a factor of ten!
+  * Reinstated MPE on alpha and IA-64 since this wasn't the cause of the
+    problem.
+  * Because first thing broke auto linear-algebra shlib deps, put them in rules
+    by hand.  (Incidentally, fixes a lintian problem with lapack deps...)
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Sun, 12 May 2002 12:23:00 -0400
+
+petsc (2.1.2-1) unstable; urgency=low
+
+  * New upstream major release.  Package name no longer includes patch level,
+    to avoid repeated upload of 99.99% identical .orig.tar.gz.
+  * Upstream patch level 6.
+  * Removed MPE support for linux_alpha and derivatives to fix IA-64
+    PIC/non-PIC mix in shlibs (workaround for #142647).
+  * Added #ifdef __cplusplus extern "C" { } etc. to headers so C++ building
+    works, removed note from README.Debian. (closes: #137978)
+  * Other minor updates to README.Debian.
+  * Changed library linking to -lblas2 -llapack2 to support /etc/alternatives
+    symlinks in packages providing blas2-dev.
+  * Removed -assume no2underscores from linux_alpha_dec/variables so fortran
+    might *really* work on this subarch this time (though not shlibs)...
+  * Removed empty file deleter for examples src.tar.gz.
+  * Added package homepage link to readme.html
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Mon,  6 May 2002 21:32:41 -0400
+
+petsc (2.1.1.30-1) unstable; urgency=low
+
+  * New upstream patch release(s).
+  * Changed xlib6g-dev to xlibs-dev in -dev Depends (overlooked last time).
+  * Changed atlas2-base-dev | blas-dev and atlas2-base-dev | lapack-dev (in
+    rules) to blas2-dev and lapack2-dev in -dev Depends, and also Build-Depends
+    now that they exist.
+  * In bmake/linux_alpha_dec/variables, added SYMLINK, changed cc to ccc,
+    disabled shared libs because they don't work), removed fortran junk from
+    C_SYS_LIB, removed rpath, added PETSC_HAVE_FORTRAN_UNDERSCORE_UNDERSCORE to
+    bmake/linux_alpha_dec/petscconf.h, so that "subarch" works again.
+  * Added debian/packagename directory removal to clean target for -dec and
+    -lam alternative support.
+  * Removed potato mpich dir names from bmake/*/packages.
+  * Added a note on C++ "libraries" to README.Debian.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri, 15 Mar 2002 00:04:49 -0500
+
+petsc (2.1.1.21-1) unstable; urgency=low
+
+  * New upstream patch release(s).
+  * Changed xlib6g-dev to xlibs-dev in Build-Depends (breaking build on potato,
+    though that hasn't worked for some time) (closes: #130521).
+  * Removed atlas so it might get into testing
+  * Added symlinks in -doc package so .h.html links work (closes: #130522).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Sat,  9 Feb 2002 19:34:55 -0500
+
+petsc (2.1.1.16-1) unstable; urgency=low
+
+  * New upstream patch release(s!) (closes: #130407).
+  * Fixed double semicolon in line 67 of src/sys/src/viewer/impls/draw/drawv.c.
+  * Switched atlas2-base-dev and blas-dev, lapack-dev dependency order for
+    ${linear-algebra-dev} where set in rules line 267 (closes: #129427).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 22 Jan 2002 18:44:27 -0500
+
+petsc (2.1.1.8-1) unstable; urgency=low
+
+  * New upstream 2.1.1 package (closes: #126092)
+  * Build-Depends on "atlas2-base-dev | blas-dev, atlas2-base-dev lapack-dev"
+    instead of atlas2-base-dev so it will build on all architectures.
+  * Changed default linear-algebra-dev substvar to "atlas2-base-dev | blas-dev,
+    atlas2-base-dev | lapack-dev" so -dev will install on all arches.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri, 11 Jan 2002 13:10:26 -0500
+
+petsc (2.1.0-4) unstable; urgency=low
+
+  * Build-depends on atlas2-base-dev since that works for PPC now.
+  * Also added "gcc |", "g77 |" and "| lam3-dev" to Build-Depends.
+  * Added petsc-c and petsc-fortran substvars so petsc2.1.0-dev depends on the
+    appropriate compilers (closes: #111446).
+  * Changed DH_COMPAT to 3 and removed petsc2.1.0.postinst.in since that
+    postinst is auto-generated now.
+  * Fixed bmake/linux_alpha_dec files so that "platform" works!
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 13 Nov 2001 20:55:35 -0500
+
+petsc (2.1.0-3) unstable; urgency=low
+
+  * Removed unneeded stuff from Build-Depends.
+  * Corrected bmake/*/base.site BLASLAPACK_LIB (closes: #105873).
+  * Added man pages for petscarch and mpirun.lam (closes: #86677).
+  * Removed "linear-algebra" substvar since the proper shlib dep should be
+    dragged in by the using package (but left mpi because mpich and lam-runtime
+    are not dragged in).
+  * Removed -dev's c-shell dependency since petscarch is a dummy sh script.
+  * Because lam changed mpirun_lam to mpirun.lam, I changed mpirun.lam to
+    mpirun_lam.
+  * Harmonized descriptions of petsc-dev and petsc-dbg (closes: #109572).
+  * Removed references to the obsolete -examples package from docs/faq.html.
+  * Updated standards version.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Wed, 29 Aug 2001 20:08:57 -0400
+
+petsc (2.1.0-2) unstable; urgency=low
+
+  * Removed obsolete "Local Variables:" from the bottom of this file.
+  * Changed #define to typedef for Scalar in petscmath.h (closes: #97633).
+  * Changed pdf link to pdf.gz because the pdf is compressed, and moved
+    /usr/include/petsc/(*/)*.h.html from -dev to -doc (closes: #98729).
+  * Changed -examples' Depends: -dev to Recommends:.
+  * Put all examples minus their documentation into a src.tar.gz file,
+    shrinking petsc2.1.0-examples' installed-size from 7835K to 455K!  Updated
+    README.Debian accordingly.
+  * At that size, there's really no longer a reason for separate
+    petsc2.1.0-examples, so I'm merging it into -doc.
+  * Changed atlas2-dev dependencies to atlas-dev, removed lapack from deps
+    (except on PPC).
+  * Removed libc6-dev from Build-Depends.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 10 Jul 2001 14:37:58 -0400
+
+petsc (2.1.0-1) unstable; urgency=low
+
+  * New upstream release!
+  * No more C++ ifdefs in headers (lots of work, will replace them with better
+    C++ headers in the future).
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Sun, 15 Apr 2001 22:12:36 -0400
+
+petsc (2.0.29-6) unstable; urgency=low
+
+  * Versioned depends for petsc-dev and petsc-dbg.
+  * Got rid of Replaces and Conflicts since they were only in unstable.
+  * Made alternative petsc2.0.29-dbg packages provide petsc2.0.29-dbg.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri, 23 Mar 2001 00:13:46 -0500
+
+petsc (2.0.29-5) unstable; urgency=low
+
+  * D'oh!  The control file had "Adam Powell" vs. "Adam C. Powell, IV".  So the
+    last upload was marked as NMU, though all previous upload had this problem.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 20 Mar 2001 08:31:14 -0500
+
+petsc (2.0.29-4) unstable; urgency=low
+
+  * Added a fake manpage symlink for mpirun.lam.
+  * Changed the double-colon clean target in bmake/common to
+    single-colon. (Closes: #85770)
+  * Removed PPC-only status of lapack-dev build-dep. (Closes: #85771)
+  * Made PLogFlops macro in include/petsclog.h always give zero. (Closes:
+    #85821)
+  * Made timestepping work matrix-free in src/ts/impls/implicit/beuler/beuler.c
+    and cn/cn.c. (Closes: #86073)
+  * Added mvs to debian/rules clean target to preserve src/fortran/custom/TAGS.
+  * Added link from readme.html to README.Debian.
+  * Corrected MPE_LIB typo in bmake/*/base.site.
+  * Made petsc2.0.29-dbg suggest petsc-dbg.
+  * Hundreds of new documentation corrections, particularly in
+    docs/manual/manual.html, also bmake/base_variables.defs.
+  * Updated variable names at the bottom of this changelog for new dpkg-dev-el.
+  * Updated -dev Depends adding "csh |" to c-shell.
+  * Removed those diffs in examples makefiles which involve comparisons with
+    empty files (empty files are removed because of policy), replaced with
+    "if [ -s ...]",
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 13 Mar 2001 00:25:10 -0500
+
+petsc (2.0.29-3) unstable; urgency=low
+
+  * Removed hyphen from package names between petsc and version.
+  * Made these hyphen-less packages replace and conflict with old packages
+    (for the benefit of testing/unstable users, will remove before release).
+  * Added petsc-dev and petsc-dbg virtual packages which depend on the latest
+    version of devel and debug packages.
+  * Changed /usr/lib subdirectory names from e.g. petsc-2.0.29 to
+    petscdir/2.0.29 so all installed versions are within a single dir.
+    (Closes: #81096)
+  * Added m68k, mips, hppa and sparc "support" by making petscarch return
+    linux_ppc for those arches; also ia64 returns linux_alpha, and arm and
+    mipsel should work with the linux default.  Problem: ATLAS BLAS support is
+    not used for any 32-bit BE arch, since it is not currently available on PPC
+    (gcc bug, -funroll-all-loops is broken).
+  * Using PETSC_ARCH=linux_alpha_dec adds -dec to package names, subdir names,
+    alternatives symlinks, and shared library sonames; and modifies substvars
+    for linear algebra dependencies.
+  * Added lam MPI alternative using PETSC_MPI buildtime variable, which (if
+    used) adds -lam to the same things as -dec is added to above; and modifies
+    substvars for mpi and mpi-dev dependencies. (Closes: #82040)
+  * Added alternatives symlink to mpirun.lam scripts to pull in the right
+    options. (Closes: #82041)
+  * Revised README.Debian for new package names, new lam build alternatives,
+    and a note on /etc/alternatives symlinks.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Fri,  2 Feb 2001 16:18:09 -0500
+
+petsc (2.0.29-2) unstable; urgency=low
+
+  * Made Depends: arch-specific since PPC depends on lapack(-dev), others on
+    atlas(-dev).
+  * Made all internal dependencies require the same source version.
+  * Added another lib path to MPI_LIBS in bmake/*/base.site so it builds on
+    mpich 1.2.0 as well as 1.1.2 (i.e. woody as well as potato).
+  * It should now successfully build with PETSC_ARCH=linux_alpha_dec.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Tue, 28 Nov 2000 22:10:01 -0500
+
+petsc (2.0.29-1) unstable; urgency=low
+
+  * New upstream release.
+  * Added material to README.Debian.
+  * Removed lapack and lapack-dev dependencies since they are part of the atlas
+    packages.
+  * Made petscarch manpage symlink via /etc/alternatives.
+  * Changed `pwd` to $(CURDIR) in rules.
+  * Eliminated empty files in -examples package.
+  * New maintainer email address.
+
+ -- "Adam C. Powell, IV" <hazelsct@debian.org>  Mon,  6 Nov 2000 21:01:56 -0500
+
+petsc (2.0.28.2-7) unstable; urgency=low
+
+  * Fixed MPI_INCLUDES in bmake/*/base.site so petsc works with lam2-dev
+    installed.
+  * Added MPE support, since we're depending on mpich.
+  * Fixed a bug which eliminated the petscarch manpage, now it's there again.
+  * Greatly simplified .files for -examples and -dbg.
+
+ -- "Adam C. Powell, IV (24)" <hazelsct@mit.edu>  Wed, 27 Sep 2000 22:58:10 -0400
+
+petsc (2.0.28.2-6) unstable; urgency=low
+
+  * First upload (Closes: #72073)
+  * Changed description in control file so first line fits in one line.
+  * Added language to README.Debian to make it clearer people should file bug
+    reports which I'll forward upstream.
+  * Added debhelper to Build-Depends.
+  * Changed /usr/share/doc/petsc-2.0.28-examples/src to examples with a symlink
+    from src to get rid of lintian errors.
+
+ -- "Adam C. Powell, IV (24)" <hazelsct@mit.edu>  Thu, 21 Sep 2000 16:21:25 -0400
+
+petsc (2.0.28.2-5) unstable; urgency=low
+
+  * Added a hyphen to the binary package names for consistency with e.g. the
+    /usr/lib/petsc alternatives symlink.
+  * Symlinked bmake/$(PETSC_ARCH)/*.h to include/ so one can use
+    #include <petsc/petscdefs.h> or <petsc/petscfix.h>
+  * Removed extraneous directories from debian/tmp so they don't show up in the
+    -dev package.
+
+ -- "Adam C. Powell, IV (24)" <hazelsct@mit.edu>  Sun, 17 Sep 2000 23:50:40 -0400
+
+petsc (2.0.28.2-4) unstable; urgency=low
+
+  * Added linux_ppc to petscarch script and bmake directory.
+  * Symlinked libO_c++ to libO and libg_c++ to libg so C++ should work.
+  * Added -m parameter to dh_makeshlibs so it gets the library version right.
+  * Removed bmake/$(PETSC_ARCH)/buildtest for good!
+  * Added README.Debian file for the -dev package.
+  * Added undocumented.7.gz symlink for petscarch fake manpage.
+
+ -- "Adam C. Powell, IV (24)" <hazelsct@mit.edu>  Wed,  6 Sep 2000 17:05:48 -0400
+
+petsc (2.0.28.2-3) unstable; urgency=low
+
+  * Made three files in debian/ auto-generate because they're architecture-
+    dependent.
+
+ -- "Adam C. Powell, IV (24)" <hazelsct@mit.edu>  Wed, 30 Aug 2000 07:07:37 -0400
+
+petsc (2.0.28.2-2) unstable; urgency=low
+
+  * Incorporated new linux_alpha and linux_alpha_dec bmake subdirs from
+    upstream (not yet public).
+  * Renamed binary packages to include version number.
+  * Changed main petsc directory to /usr/lib/petsc-2.0.28.
+  * Moved most files (includes, non-shared libs, petscarch) into that
+    directory, with the exception of -doc and -examples files in /usr/share.
+  * /etc/alternatives master link created to link /usr/lib/petsc to
+    petsc-2.0.28, and lots of slaves for /usr/include/petsc and
+    /usr/lib/libpetscX.so and same .a's.
+  * Changed library version numbers from 1 to 2.0.28.
+  * Explicitly depends on mpich now (not mpi) because I can't get lam to work.
+
+ -- "Adam C. Powell, IV (24)" <hazelsct@mit.edu>  Tue, 29 Aug 2000 18:18:20 -0400
+
+petsc (2.0.28.2-1) unstable; urgency=low
+
+  * Initial Release.
+  * Currently depends on mpi, but I don't know whether lam will work, or
+    whether it depends on which mpi petsc is built with.
+  * Currently depends on atlas, will change to blas/lapack if anyone complains.
+  * Assumes little endian for now (after all, everyone knows Linux is just
+    for Intel :-), I'll have to fix that.
+
+ -- "Adam C. Powell, IV (24)" <hazelsct@mit.edu>  Sun,  6 Aug 2000 01:25:48 -0600

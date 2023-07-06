@@ -1,0 +1,211 @@
+# PetscFE Manual Pages
+
+There are many <A HREF="../../../src/snes/tutorials/index.html">SNES Examples</A> using PetscFE, such ex12, ex17, and ex62.
+
+The PetscFE class encapsulates a finite element discretization. Each PetscFE object contains a PetscSpace, PetscDualSpace, and DMPlex in the classic Ciarlet triple representation.
+
+<ul>
+  <li><a href="http://arxiv.org/abs/1309.1204">Achieving High Performance with Unified Residual Evaluation</a>, Matthew G. Knepley, Jed Brown, Karl Rupp, Barry F. Smith, 2013.</li>
+  <li><a href="http://arxiv.org/abs/1607.04245">Finite Element Integration with Quadrature on the GPU</a>, Matthew G. Knepley, Karl Rupp, Andy R. Terrel, 2016.</li>
+</ul>
+
+[Manual Pages Table of Contents](/docs/manualpages/index.md)
+
+## Manual Pages by Level
+
+### Beginner - Basic usage
+```{hlist}
+---
+columns: 3
+---
+- [](PetscDualSpace.md)
+- [](PetscDualSpaceReferenceCell.md)
+- [](PetscDualSpaceTransformType.md)
+- [](PetscDualSpaceType.md)
+- [](PetscFE.md)
+- [](PetscFECreate.md)
+- [](PetscFECreateByCell.md)
+- [](PetscFECreateDefault.md)
+- [](PetscFECreateFromSpaces.md)
+- [](PetscFECreateLagrange.md)
+- [](PetscFECreateLagrangeByCell.md)
+- [](PetscFEDestroy.md)
+- [](PetscFEGeomCreate.md)
+- [](PetscFEGeomDestroy.md)
+- [](PetscFEJacobianType.md)
+- [](PetscFEType.md)
+- [](PetscFEView.md)
+- [](PetscSpace.md)
+- [](PetscSpaceType.md)
+```
+
+
+
+### Intermediate - Setting options for algorithms and data structures
+```{hlist}
+---
+columns: 3
+---
+- [](PETSCDUALSPACEBDM.md)
+- [](PETSCFEBASIC.md)
+- [](PETSCFECOMPOSITE.md)
+- [](PETSCFEOPENCL.md)
+- [](PetscFECompositeGetMapping.md)
+- [](PetscFECopyQuadrature.md)
+- [](PetscFECreateTabulation.md)
+- [](PetscFEGeom.md)
+- [](PetscFEGeomComplete.md)
+- [](PetscFEGeomGetCellPoint.md)
+- [](PetscFEGeomGetChunk.md)
+- [](PetscFEGeomGetPoint.md)
+- [](PetscFEGeomRestoreChunk.md)
+- [](PetscFEGetBasisSpace.md)
+- [](PetscFEGetCeedBasis.md)
+- [](PetscFEGetCellTabulation.md)
+- [](PetscFEGetDimension.md)
+- [](PetscFEGetDualSpace.md)
+- [](PetscFEGetFaceCentroidTabulation.md)
+- [](PetscFEGetFaceQuadrature.md)
+- [](PetscFEGetFaceTabulation.md)
+- [](PetscFEGetNumComponents.md)
+- [](PetscFEGetNumDof.md)
+- [](PetscFEGetQuadrature.md)
+- [](PetscFEGetSpatialDimension.md)
+- [](PetscFEGetTileSizes.md)
+- [](PetscFEGetType.md)
+- [](PetscFEIntegrate.md)
+- [](PetscFEIntegrateBd.md)
+- [](PetscFEIntegrateBdJacobian.md)
+- [](PetscFEIntegrateBdResidual.md)
+- [](PetscFEIntegrateJacobian.md)
+- [](PetscFEIntegrateResidual.md)
+- [](PetscFESetBasisSpace.md)
+- [](PetscFESetCeed.md)
+- [](PetscFESetDualSpace.md)
+- [](PetscFESetFaceQuadrature.md)
+- [](PetscFESetFromOptions.md)
+- [](PetscFESetName.md)
+- [](PetscFESetNumComponents.md)
+- [](PetscFESetQuadrature.md)
+- [](PetscFESetTileSizes.md)
+- [](PetscFESetType.md)
+- [](PetscFESetUp.md)
+- [](PetscFEViewFromOptions.md)
+- [](PetscTabulationDestroy.md)
+```
+
+
+
+### Advanced - Setting more advanced options and customization
+```{hlist}
+---
+columns: 3
+---
+- [](PetscFEGetHeightSubspace.md)
+- [](PetscFEPushforward.md)
+- [](PetscFEPushforwardGradient.md)
+- [](PetscFEPushforwardHessian.md)
+- [](PetscFERefine.md)
+- [](PetscFERegister.md)
+```
+
+
+
+### Developer - Interfaces intended primarily for library developers, not for typical applications programmers
+```{hlist}
+---
+columns: 3
+---
+- [](PetscFEIntegrateHybridJacobian.md)
+- [](PetscFEIntegrateHybridResidual.md)
+- [](PetscFEOpenCLGetRealType.md)
+- [](PetscFEOpenCLSetRealType.md)
+```
+
+
+
+### No deprecated routines
+
+## Single list of manual pages
+```{toctree}
+---
+maxdepth: 1
+---
+PETSCDUALSPACEBDM.md
+PETSCFEBASIC.md
+PETSCFECOMPOSITE.md
+PETSCFEOPENCL.md
+PetscDualSpace.md
+PetscDualSpaceReferenceCell.md
+PetscDualSpaceTransformType.md
+PetscDualSpaceType.md
+PetscFE.md
+PetscFECompositeGetMapping.md
+PetscFECopyQuadrature.md
+PetscFECreate.md
+PetscFECreateByCell.md
+PetscFECreateDefault.md
+PetscFECreateFromSpaces.md
+PetscFECreateLagrange.md
+PetscFECreateLagrangeByCell.md
+PetscFECreateTabulation.md
+PetscFEDestroy.md
+PetscFEGeom.md
+PetscFEGeomComplete.md
+PetscFEGeomCreate.md
+PetscFEGeomDestroy.md
+PetscFEGeomGetCellPoint.md
+PetscFEGeomGetChunk.md
+PetscFEGeomGetPoint.md
+PetscFEGeomRestoreChunk.md
+PetscFEGetBasisSpace.md
+PetscFEGetCeedBasis.md
+PetscFEGetCellTabulation.md
+PetscFEGetDimension.md
+PetscFEGetDualSpace.md
+PetscFEGetFaceCentroidTabulation.md
+PetscFEGetFaceQuadrature.md
+PetscFEGetFaceTabulation.md
+PetscFEGetHeightSubspace.md
+PetscFEGetNumComponents.md
+PetscFEGetNumDof.md
+PetscFEGetQuadrature.md
+PetscFEGetSpatialDimension.md
+PetscFEGetTileSizes.md
+PetscFEGetType.md
+PetscFEIntegrate.md
+PetscFEIntegrateBd.md
+PetscFEIntegrateBdJacobian.md
+PetscFEIntegrateBdResidual.md
+PetscFEIntegrateHybridJacobian.md
+PetscFEIntegrateHybridResidual.md
+PetscFEIntegrateJacobian.md
+PetscFEIntegrateResidual.md
+PetscFEJacobianType.md
+PetscFEOpenCLGetRealType.md
+PetscFEOpenCLSetRealType.md
+PetscFEPushforward.md
+PetscFEPushforwardGradient.md
+PetscFEPushforwardHessian.md
+PetscFERefine.md
+PetscFERegister.md
+PetscFESetBasisSpace.md
+PetscFESetCeed.md
+PetscFESetDualSpace.md
+PetscFESetFaceQuadrature.md
+PetscFESetFromOptions.md
+PetscFESetName.md
+PetscFESetNumComponents.md
+PetscFESetQuadrature.md
+PetscFESetTileSizes.md
+PetscFESetType.md
+PetscFESetUp.md
+PetscFEType.md
+PetscFEView.md
+PetscFEViewFromOptions.md
+PetscSpace.md
+PetscSpaceType.md
+PetscTabulationDestroy.md
+```
+
+

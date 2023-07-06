@@ -1,0 +1,163 @@
+Index: petsc/config/PETSc/options/sharedLibraries.py
+===================================================================
+--- petsc.orig/config/PETSc/options/sharedLibraries.py	2023-06-11 21:50:21.512296246 +0200
++++ petsc/config/PETSc/options/sharedLibraries.py	2023-06-11 21:50:21.500296131 +0200
+@@ -7,16 +7,20 @@
+     self.headerPrefix = ''
+     self.substPrefix  = ''
+     self.useShared    = 0
++    self.petsclibExt  = ''
+     return
+ 
+   def __str1__(self):
+     txt =  '  Single library: %s\n' % ('yes' if self.framework.argDB['with-single-library'] else 'no')
+     txt += '  Shared libraries: %s\n' % ('yes' if self.useShared else 'no')
++    if self.petsclibExt:
++      txt += '  shared library extension: ' + self.petsclibExt + '\n'
+     return txt
+ 
+   def setupHelp(self, help):
+     import nargs
+     help.addArgument('PETSc', '-with-shared-libraries=<bool>', nargs.ArgBool(None, 1, 'Make PETSc libraries shared -- libpetsc.so (Unix/Linux) or libpetsc.dylib (Mac)'))
++    help.addArgument('PETSc', '-shared-library-extension=<string>', nargs.Arg(None, None, 'Extension to name of shared library'))
+     help.addArgument('PETSc', '-with-serialize-functions=<bool>', nargs.ArgBool(None, 0, 'Allows function pointers to be serialized to binary files with string representations'))
+     return
+ 
+@@ -62,6 +66,12 @@
+       #else:
+       #  self.addMakeRule('shared_arch','shared_'+self.arch.hostOsBase)
+ 
++      # define library extension at configure time with --shared-library-extension=<ext>
++      # This is added the shared library name and soname to allow for installation multiple configurations
++      # e.g. --shared-library-extension=Complex generates libpetscComplex.so instead of libpetsc.so
++      if 'shared-library-extension' in self.framework.argDB:
++        self.petsclibExt=self.framework.argDB['shared-library-extension']
++
+       # Linux is the default
+       if self.setCompilers.isDarwin(self.log):
+         self.addMakeRule('shared_arch','shared_darwin')
+Index: petsc/lib/petsc/conf/variables
+===================================================================
+--- petsc.orig/lib/petsc/conf/variables	2023-06-11 21:50:21.512296246 +0200
++++ petsc/lib/petsc/conf/variables	2023-06-11 21:50:21.500296131 +0200
+@@ -50,7 +50,7 @@
+ #
+ # Note that EXAMPLESALL is only used in the tutorial directories and SOURCED only in the non-tutorials and tests directories
+ #
+-LIBNAME     = ${INSTALL_LIB_DIR}/${LIBBASE}.${AR_LIB_SUFFIX}
++LIBNAME     = ${INSTALL_LIB_DIR}/${LIBBASE}${PETSC_LIB_EXT}.${AR_LIB_SUFFIX}
+ SOURCE      = `ls *.c *.cxx *.F *.F90 *.cu *.cpp           2> /dev/null`
+ SOURCEALL   = `ls *.c *.cxx *.F *.F90 *.cu *.cpp *.h *.hpp 2> /dev/null`
+ SOURCED     = `ls *.c *.cxx           *.cu *.cpp *.h *.hpp 2> /dev/null`
+Index: petsc/gmakefile
+===================================================================
+--- petsc.orig/gmakefile	2023-06-11 21:50:21.512296246 +0200
++++ petsc/gmakefile	2023-06-11 21:50:21.504296170 +0200
+@@ -27,14 +27,14 @@
+ absbasename_all = $(basename $(basename $(basename $(basename $(abspath $(1))))))# arch/lib/libpetsc.so.3.8.0 -> /path/to/arch/lib/libpetsc
+ sl_linker_args = $(call SL_LINKER_FUNCTION,$(call absbasename_all,$@),$(libpetsc_abi_version),$(libpetsc_lib_version))
+ 
+-libpetsc_shared  := $(LIBDIR)/libpetsc.$(SL_LINKER_SUFFIX)
+-libpetsc_soname  := $(call soname_function,$(LIBDIR)/libpetsc)
+-libpetsc_libname := $(call libname_function,$(LIBDIR)/libpetsc)
+-libpetsc_static  := $(LIBDIR)/libpetsc.$(AR_LIB_SUFFIX)
+-libpetscpkgs_shared  := $(foreach pkg, $(pkgs), $(LIBDIR)/libpetsc$(pkg).$(SL_LINKER_SUFFIX))
+-libpetscpkgs_soname  := $(foreach pkg, $(pkgs), $(call soname_function,$(LIBDIR)/libpetsc$(pkg)))
+-libpetscpkgs_libname := $(foreach pkg, $(pkgs), $(call libname_function,$(LIBDIR)/libpetsc$(pkg)))
+-libpetscpkgs_static  := $(foreach pkg, $(pkgs), $(LIBDIR)/libpetsc$(pkg).$(AR_LIB_SUFFIX))
++libpetsc_shared  := $(LIBDIR)/libpetsc$(PETSC_LIB_EXT).$(SL_LINKER_SUFFIX)
++libpetsc_soname  := $(call soname_function,$(LIBDIR)/libpetsc$(PETSC_LIB_EXT))
++libpetsc_libname := $(call libname_function,$(LIBDIR)/libpetsc$(PETSC_LIB_EXT))
++libpetsc_static  := $(LIBDIR)/libpetsc$(PETSC_LIB_EXT).$(AR_LIB_SUFFIX)
++libpetscpkgs_shared  := $(foreach pkg, $(pkgs), $(LIBDIR)/libpetsc$(pkg)$(PETSC_LIB_EXT).$(SL_LINKER_SUFFIX))
++libpetscpkgs_soname  := $(foreach pkg, $(pkgs), $(call soname_function,$(LIBDIR)/libpetsc$(pkg)$(PETSC_LIB_EXT)))
++libpetscpkgs_libname := $(foreach pkg, $(pkgs), $(call libname_function,$(LIBDIR)/libpetsc$(pkg)$(PETSC_LIB_EXT)))
++libpetscpkgs_static  := $(foreach pkg, $(pkgs), $(LIBDIR)/libpetsc$(pkg)$(PETSC_LIB_EXT).$(AR_LIB_SUFFIX))
+ 
+ ifeq ($(PETSC_WITH_EXTERNAL_LIB),)
+   libpetscall_shared  := $(libpetscpkgs_shared)
+@@ -149,7 +149,7 @@
+ 	$(if $(findstring win32fe lib,$(AR)),$(ARCHIVE_RECIPE_WIN32FE_LIB),$(if $(findstring yes,$(AR_ARGFILE)),$(if $(GMAKE4),$(ARCHIVE_RECIPE_ARGFILE),$(ARCHIVE_RECIPE_DEFAULT)),$(ARCHIVE_RECIPE_DEFAULT)))
+ 
+ # with-single-library=0
+-libpkg = $(foreach pkg, $1, $(LIBDIR)/libpetsc$(pkg).$(SL_LINKER_SUFFIX))
++libpkg = $(foreach pkg, $1, $(LIBDIR)/libpetsc$(pkg)$(PETSC_LIB_EXT).$(SL_LINKER_SUFFIX))
+ define pkg_template
+   $(LIBDIR)/libpetsc$(1).$(AR_LIB_SUFFIX)  : $(call concatlang,$(1))
+   $(call libname_function,$(LIBDIR)/libpetsc$(1)) : $(call concatlang,$(1))
+Index: petsc/config/PETSc/Configure.py
+===================================================================
+--- petsc.orig/config/PETSc/Configure.py	2023-06-11 21:50:21.512296246 +0200
++++ petsc/config/PETSc/Configure.py	2023-06-11 21:50:21.504296170 +0200
+@@ -69,6 +69,7 @@
+     self.dataFilesPath = framework.require('PETSc.options.dataFilesPath',self)
+     self.scalartypes   = framework.require('PETSc.options.scalarTypes', self)
+     self.indexTypes    = framework.require('PETSc.options.indexTypes',  self)
++    self.sharedLibraries = framework.require('PETSc.options.sharedLibraries',  self)
+     self.languages     = framework.require('PETSc.options.languages',   self.setCompilers)
+     self.indexTypes    = framework.require('PETSc.options.indexTypes',  self.compilers)
+     self.types         = framework.require('config.types',              self)
+@@ -82,6 +83,10 @@
+     self.fortran       = framework.require('config.compilersFortran',   self)
+     self.externalpackagesdir = framework.require('PETSc.options.externalpackagesdir',self)
+ 
++    self.petsclibExt=''
++    if self.sharedLibraries.petsclibExt:
++      self.petsclibExt=self.sharedLibraries.petsclibExt
++
+     for utility in sorted(os.listdir(os.path.join('config','PETSc','options'))):
+       self.registerPythonFile(utility,'PETSc.options')
+ 
+@@ -147,6 +152,10 @@
+ 
+   def DumpPkgconfig(self, petsc_pc):
+     ''' Create a pkg-config file '''
++
++    if self.sharedLibraries.petsclibExt:
++      self.petsclibExt=self.sharedLibraries.petsclibExt
++
+     if not os.path.exists(os.path.join(self.petscdir.dir,self.arch.arch,'lib','pkgconfig')):
+       os.makedirs(os.path.join(self.petscdir.dir,self.arch.arch,'lib','pkgconfig'))
+     with open(os.path.join(self.petscdir.dir,self.arch.arch,'lib','pkgconfig',petsc_pc),'w') as fd:
+@@ -413,10 +422,17 @@
+           i.include = [i.include]
+         includes.extend(i.include)
+         self.addMakeMacro(i.PACKAGE.replace('-','_')+'_INCLUDE',self.headers.toStringNoDupes(i.include))
++    if self.sharedLibraries.petsclibExt:
++      self.petsclibExt=self.sharedLibraries.petsclibExt
+     if self.framework.argDB['with-single-library']:
+       self.petsclib = '-lpetsc'
+     else:
+       self.petsclib = '-lpetscts -lpetscsnes -lpetscksp -lpetscdm -lpetscmat -lpetscvec -lpetscsys'
++    if self.petsclibExt:
++      petsclibs = ''
++      for mylib in self.petsclib.split():
++        petsclibs += mylib+self.petsclibExt+' '
++      self.petsclib = petsclibs.strip()
+     self.complibs = self.compilers.flibs+self.compilers.cxxlibs+self.compilers.LIBS.split()
+     self.PETSC_WITH_EXTERNAL_LIB = self.libraries.toStringNoDupes(['-L${PETSC_DIR}/${PETSC_ARCH}/lib', self.petsclib]+self.packagelibs+self.complibs)
+     self.PETSC_EXTERNAL_LIB_BASIC = self.libraries.toStringNoDupes(self.packagelibs+self.complibs)
+@@ -435,15 +451,17 @@
+       self.addMakeMacro('PETSC_FC_INCLUDES_INSTALL',self.headers.toStringNoDupes(allincludes_install,modinc(allincludes_install)))
+ 
+     self.addDefine('LIB_DIR','"'+os.path.join(self.installdir.dir,'lib')+'"')
++    if self.petsclibExt:
++      self.addMakeMacro('PETSC_LIB_EXT',self.petsclibExt)
+ 
+     if self.framework.argDB['with-single-library']:
+       # overrides the values set in conf/variables
+-      self.addMakeMacro('LIBNAME','${INSTALL_LIB_DIR}/libpetsc.${AR_LIB_SUFFIX}')
+-      self.addMakeMacro('SHLIBS','libpetsc')
+-      self.addMakeMacro('PETSC_LIB_BASIC','-lpetsc')
+-      self.addMakeMacro('PETSC_KSP_LIB_BASIC','-lpetsc')
+-      self.addMakeMacro('PETSC_TS_LIB_BASIC','-lpetsc')
+-      self.addMakeMacro('PETSC_TAO_LIB_BASIC','-lpetsc')
++      self.addMakeMacro('LIBNAME','${INSTALL_LIB_DIR}/libpetsc'+self.petsclibExt+'.${AR_LIB_SUFFIX}')
++      self.addMakeMacro('SHLIBS','libpetsc'+self.petsclibExt)
++      self.addMakeMacro('PETSC_LIB_BASIC','-lpetsc'+self.petsclibExt)
++      self.addMakeMacro('PETSC_KSP_LIB_BASIC','-lpetsc'+self.petsclibExt)
++      self.addMakeMacro('PETSC_TS_LIB_BASIC','-lpetsc'+self.petsclibExt)
++      self.addMakeMacro('PETSC_TAO_LIB_BASIC','-lpetsc'+self.petsclibExt)
+       self.addMakeMacro('PETSC_WITH_EXTERNAL_LIB',self.PETSC_WITH_EXTERNAL_LIB)
+       self.addDefine('USE_SINGLE_LIBRARY', '1')
+       if self.sharedlibraries.useShared:

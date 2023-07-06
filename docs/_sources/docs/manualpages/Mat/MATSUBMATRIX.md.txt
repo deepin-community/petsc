@@ -1,0 +1,25 @@
+# MATSUBMATRIX
+"submatrix" - A matrix type that represents a virtual submatrix of a matrix 
+
+
+## Developer Note
+This should be named `MATSUBMATRIXVIRTUAL`
+
+
+## See Also
+ `Mat`, `MatCreateSubMatrixVirtual()`, `MatCreateSubMatrixVirtual()`, `MatCreateSubMatrix()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/submat/submat.c.html#MATSUBMATRIX">src/mat/impls/submat/submat.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/submat/submat.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,60 @@
+# VecGetLocalVector
+Maps the local portion of a vector into a vector. 
+## Synopsis
+```
+#include "petscvec.h"   
+PetscErrorCode VecGetLocalVector(Vec v, Vec w)
+```
+Collective on v, not collective on w.
+
+
+## Input parameter
+
+- ***v -*** The vector for which the local vector is desired.
+
+
+
+## Output parameter
+
+- ***w -*** Upon exit this contains the local vector.
+
+
+
+
+
+## Notes
+This function is similar to `VecGetArray()` which maps the local
+portion into a raw pointer.  `VecGetLocalVector()` is usually about as
+efficient as `VecGetArray()` but in certain circumstances
+`VecGetLocalVector()` can be much more efficient than `VecGetArray()`.
+This is because the construction of a contiguous array representing
+the vector data required by `VecGetArray()` can be an expensive
+operation for certain vector types.  For example, for GPU vectors
+`VecGetArray()` requires that the data between device and host is
+synchronized.
+
+
+## See Also
+ [](chapter_vectors), `Vec`, `VecCreateLocalVector()`, `VecRestoreLocalVector()`, `VecGetLocalVectorRead()`, `VecGetArrayRead()`, `VecGetArray()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/interface/rvector.c.html#VecGetLocalVector">src/vec/vec/interface/rvector.c</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/nest/vecnest.c.html#VecGetLocalVector_Nest">VecGetLocalVector_Nest in src/vec/vec/impls/nest/vecnest.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/kokkos/veckok.kokkos.cxx.html#VecGetLocalVector_SeqKokkos">VecGetLocalVector_SeqKokkos in src/vec/vec/impls/seq/kokkos/veckok.kokkos.cxx</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/seqcuda/veccuda2.cu.html#VecGetLocalVector_SeqCUDA">VecGetLocalVector_SeqCUDA in src/vec/vec/impls/seq/seqcuda/veccuda2.cu</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/seqhip/vechip2.hip.c.html#VecGetLocalVector_SeqHIP">VecGetLocalVector_SeqHIP in src/vec/vec/impls/seq/seqhip/vechip2.hip.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/vec/interface/rvector.c)
+
+
+[Index of all Vec routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

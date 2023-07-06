@@ -1,0 +1,86 @@
+# PetscCallMPI
+Checks error code returned from MPI calls, if non-zero it calls the error handler and then returns 
+## Synopsis
+```
+#include <petscerror.h>
+void PetscCallMPI(MPI_Function(args))
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***MPI_Function -*** an MPI function that returns an MPI error code
+
+
+
+## Notes
+Always returns the error code `PETSC_ERR_MPI`; the MPI error code and string are embedded in
+the string error message. Do not use this to call any other routines (for example PETSc
+routines), it should only be used for direct MPI calls. Due to limitations of the
+preprocessor this can unfortunately not easily be enforced, so the user should take care to
+check this themselves.
+
+
+## Example Usage
+```none
+  PetscCallMPI(MPI_Comm_size(...)); // OK, calling MPI function
+
+  PetscCallMPI(PetscFunction(...)); // ERROR, use PetscCall() instead!
+```
+
+
+
+## Fortran Notes
+The Fortran function from which this is used must declare a variable `PetscErrorCode` ierr and ierr must be
+the final argument to the MPI function being called.
+
+In the main program and in Fortran subroutines that do not have ierr as the final return parameter one
+should use `PetscCallMPIA()`
+
+
+## Fortran Usage
+```none
+  PetscErrorCode ierr or integer ierr
+  ...
+  PetscCallMPI(MPI_Comm_size(...,ierr))
+  PetscCallMPIA(MPI_Comm_size(...,ierr)) ! Will abort after calling error handler
+
+  PetscCallMPI(MPI_Comm_size(...,eflag)) ! ERROR, final argument must be ierr
+```
+
+
+
+
+
+## See Also
+ `SETERRMPI()`, `PetscCall()`, `SETERRQ()`, `SETERRABORT()`, `PetscCallAbort()`,
+`PetscTraceBackErrorHandler()`, `PetscPushErrorHandler()`, `PetscError()`, `CHKMEMQ`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscerror.h.html#PetscCallMPI">include/petscerror.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/classes/random/tutorials/ex1.c.html">src/sys/classes/random/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/classes/random/tutorials/ex2.c.html">src/sys/classes/random/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex1.c.html">src/sys/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex16.c.html">src/sys/tutorials/ex16.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex2.c.html">src/sys/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex3.c.html">src/sys/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex4.c.html">src/sys/tutorials/ex4.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex10.c.html">src/vec/vec/tutorials/ex10.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex15.c.html">src/vec/vec/tutorials/ex15.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex18.c.html">src/vec/vec/tutorials/ex18.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex19.c.html">src/vec/vec/tutorials/ex19.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscerror.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

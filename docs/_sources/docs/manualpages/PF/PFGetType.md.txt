@@ -1,0 +1,42 @@
+# PFGetType
+Gets the PF method type and name (as a string) from the PF context. 
+## Synopsis
+```
+#include "petscpf.h" 
+PetscErrorCode PFGetType(PF pf, PFType *type)
+```
+Not Collective
+
+
+## Input Parameter
+
+- ***pf -*** the function context
+
+
+
+## Output Parameter
+
+- ***type -*** name of function
+
+
+
+
+
+## See Also
+ `PFSetType()`
+
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/pf/interface/pf.c.html#PFGetType">src/vec/pf/interface/pf.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/pf/interface/pf.c)
+
+
+[Index of all PF routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

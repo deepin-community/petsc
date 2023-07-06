@@ -1,0 +1,138 @@
+# SNESFAS Manual Pages
+
+<A HREF="../../../src/snes/tutorials/index.html">Examples</A><BR>
+
+The `SNESFAS` object is a nonlinear multigrid solver which uses the Full Approximation Storage scheme.
+
+[Manual Pages Table of Contents](/docs/manualpages/index.md)
+
+## Manual Pages by Level
+
+### Beginner - Basic usage
+```{hlist}
+---
+columns: 3
+---
+- [](SNESFAS.md)
+```
+
+
+
+### Intermediate - Setting options for algorithms and data structures
+```{hlist}
+---
+columns: 3
+---
+- [](SNESFASGetType.md)
+- [](SNESFASSetLevels.md)
+- [](SNESFASSetType.md)
+```
+
+
+
+### Advanced - Setting more advanced options and customization
+```{hlist}
+---
+columns: 3
+---
+- [](SNESFASCycleGetCorrection.md)
+- [](SNESFASCycleGetInjection.md)
+- [](SNESFASCycleGetInterpolation.md)
+- [](SNESFASCycleGetRScale.md)
+- [](SNESFASCycleGetRestriction.md)
+- [](SNESFASCycleGetSmoother.md)
+- [](SNESFASCycleGetSmootherDown.md)
+- [](SNESFASCycleGetSmootherUp.md)
+- [](SNESFASCycleIsFine.md)
+- [](SNESFASCycleSetCycles.md)
+- [](SNESFASFullGetTotal.md)
+- [](SNESFASFullSetDownSweep.md)
+- [](SNESFASFullSetTotal.md)
+- [](SNESFASGetCoarseSolve.md)
+- [](SNESFASGetCycleSNES.md)
+- [](SNESFASGetGalerkin.md)
+- [](SNESFASGetInjection.md)
+- [](SNESFASGetInterpolation.md)
+- [](SNESFASGetLevels.md)
+- [](SNESFASGetRestriction.md)
+- [](SNESFASGetSmoother.md)
+- [](SNESFASGetSmootherDown.md)
+- [](SNESFASGetSmootherUp.md)
+- [](SNESFASSetContinuation.md)
+- [](SNESFASSetCycles.md)
+- [](SNESFASSetGalerkin.md)
+- [](SNESFASSetInjection.md)
+- [](SNESFASSetInterpolation.md)
+- [](SNESFASSetLog.md)
+- [](SNESFASSetMonitor.md)
+- [](SNESFASSetNumberSmoothDown.md)
+- [](SNESFASSetNumberSmoothUp.md)
+- [](SNESFASSetRScale.md)
+- [](SNESFASSetRestriction.md)
+```
+
+
+
+### Developer - Interfaces intended primarily for library developers, not for typical applications programmers
+```{hlist}
+---
+columns: 3
+---
+- [](SNESFASCreateCoarseVec.md)
+- [](SNESFASGalerkinFunctionDefault.md)
+- [](SNESFASRestrict.md)
+```
+
+
+
+### No deprecated routines
+
+## Single list of manual pages
+```{toctree}
+---
+maxdepth: 1
+---
+SNESFAS.md
+SNESFASCreateCoarseVec.md
+SNESFASCycleGetCorrection.md
+SNESFASCycleGetInjection.md
+SNESFASCycleGetInterpolation.md
+SNESFASCycleGetRScale.md
+SNESFASCycleGetRestriction.md
+SNESFASCycleGetSmoother.md
+SNESFASCycleGetSmootherDown.md
+SNESFASCycleGetSmootherUp.md
+SNESFASCycleIsFine.md
+SNESFASCycleSetCycles.md
+SNESFASFullGetTotal.md
+SNESFASFullSetDownSweep.md
+SNESFASFullSetTotal.md
+SNESFASGalerkinFunctionDefault.md
+SNESFASGetCoarseSolve.md
+SNESFASGetCycleSNES.md
+SNESFASGetGalerkin.md
+SNESFASGetInjection.md
+SNESFASGetInterpolation.md
+SNESFASGetLevels.md
+SNESFASGetRestriction.md
+SNESFASGetSmoother.md
+SNESFASGetSmootherDown.md
+SNESFASGetSmootherUp.md
+SNESFASGetType.md
+SNESFASRestrict.md
+SNESFASSetContinuation.md
+SNESFASSetCycles.md
+SNESFASSetGalerkin.md
+SNESFASSetInjection.md
+SNESFASSetInterpolation.md
+SNESFASSetLevels.md
+SNESFASSetLog.md
+SNESFASSetMonitor.md
+SNESFASSetNumberSmoothDown.md
+SNESFASSetNumberSmoothUp.md
+SNESFASSetRScale.md
+SNESFASSetRestriction.md
+SNESFASSetType.md
+```
+
+

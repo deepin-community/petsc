@@ -1,0 +1,130 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/vec/pf/impls/string/cstring.c">Actual source code: cstring.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:32+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../pfimpl.h.html">&lt;../src/vec/pf/pfimpl.h&gt;</A>
+
+<a name="line4">  4: </a><font color="#B22222">/*</font>
+<a name="line5">  5: </a><font color="#B22222">        This <a href="../../../../../docs/manualpages/PF/PF.html">PF</a> generates a function on the fly and loads it into the running</font>
+<a name="line6">  6: </a><font color="#B22222">   program.</font>
+<a name="line7">  7: </a><font color="#B22222">*/</font>
+
+<a name="line9">  9: </a><strong><font color="#4169E1"><a name="PFView_String"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PFView_String(void *value, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line10"> 10: </a>{
+<a name="line11"> 11: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> iascii;
+
+<a name="line13"> 13: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line14"> 14: </a>  <font color="#4169E1">if</font> (iascii) <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"String = %s\n"</font>, (char *)value);
+<a name="line15"> 15: </a>  <font color="#4169E1">return</font> 0;
+<a name="line16"> 16: </a>}
+
+<a name="line18"> 18: </a><strong><font color="#4169E1"><a name="PFDestroy_String"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PFDestroy_String(void *value)</font></strong>
+<a name="line19"> 19: </a>{
+<a name="line20"> 20: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(value);
+<a name="line21"> 21: </a>  <font color="#4169E1">return</font> 0;
+<a name="line22"> 22: </a>}
+
+<a name="line24"> 24: </a><font color="#B22222">/*</font>
+<a name="line25"> 25: </a><font color="#B22222">    PFStringCreateFunction - Creates a function from a string</font>
+
+<a name="line27"> 27: </a><font color="#B22222">   Collective over <a href="../../../../../docs/manualpages/PF/PF.html">PF</a></font>
+
+<a name="line29"> 29: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line30"> 30: </a><font color="#B22222">+    pf - the function object</font>
+<a name="line31"> 31: </a><font color="#B22222">-    string - the string that defines the function</font>
+
+<a name="line33"> 33: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line34"> 34: </a><font color="#B22222">.    f - the function pointer.</font>
+
+<a name="line36"> 36: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/PF/PFSetFromOptions.html">PFSetFromOptions</a>()`</font>
+
+<a name="line38"> 38: </a><font color="#B22222">*/</font>
+<a name="line39"> 39: </a><strong><font color="#4169E1"><a name="PFStringCreateFunction"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PFStringCreateFunction(<a href="../../../../../docs/manualpages/PF/PF.html">PF</a> pf, char *string, void **f)</font></strong>
+<a name="line40"> 40: </a>{
+<a name="line41"> 41: </a><font color="#A020F0">#if defined(PETSC_HAVE_DYNAMIC_LIBRARIES)</font>
+<a name="line42"> 42: </a>  char      task[1024], tmp[256], lib[PETSC_MAX_PATH_LEN], username[64];
+<a name="line43"> 43: </a>  FILE     *fd;
+<a name="line44"> 44: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> tmpshared, wdshared, keeptmpfiles = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line45"> 45: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm;
+<a name="line46"> 46: </a><font color="#A020F0">#endif</font>
+
+<a name="line48"> 48: </a><font color="#A020F0">#if defined(PETSC_HAVE_DYNAMIC_LIBRARIES)</font>
+<a name="line49"> 49: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(pf-&gt;data);
+<a name="line50"> 50: </a>  <a href="../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(string, (char **)&amp;pf-&gt;data);
+
+<a name="line52"> 52: </a>  <font color="#B22222">/* create the new C function and compile it */</font>
+<a name="line53"> 53: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSharedTmp.html">PetscSharedTmp</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pf), &amp;tmpshared);
+<a name="line54"> 54: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSharedWorkingDirectory.html">PetscSharedWorkingDirectory</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pf), &amp;wdshared);
+<a name="line55"> 55: </a>  <font color="#4169E1">if</font> (tmpshared) { <font color="#B22222">/* do it in /tmp since everyone has one */</font>
+<a name="line56"> 56: </a>    <a href="../../../../../docs/manualpages/Sys/PetscGetTmp.html">PetscGetTmp</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pf), tmp, PETSC_MAX_PATH_LEN);
+<a name="line57"> 57: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pf, &amp;comm);
+<a name="line58"> 58: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (!wdshared) { <font color="#B22222">/* each one does in private /tmp */</font>
+<a name="line59"> 59: </a>    <a href="../../../../../docs/manualpages/Sys/PetscGetTmp.html">PetscGetTmp</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pf), tmp, PETSC_MAX_PATH_LEN);
+<a name="line60"> 60: </a>    comm = <a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>;
+<a name="line61"> 61: </a>  } <font color="#4169E1">else</font> { <font color="#B22222">/* do it in current directory */</font>
+<a name="line62"> 62: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrcpy.html">PetscStrcpy</a>(tmp, <font color="#666666">"."</font>);
+<a name="line63"> 63: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pf, &amp;comm);
+<a name="line64"> 64: </a>  }
+<a name="line65"> 65: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pf)-&gt;options, ((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pf)-&gt;prefix, <font color="#666666">"-pf_string_keep_files"</font>, &amp;keeptmpfiles, NULL);
+<a name="line66"> 66: </a>  <font color="#4169E1">if</font> (keeptmpfiles)
+<a name="line67"> 67: </a>    sprintf(task, <font color="#666666">"cd %s ; mkdir ${USERNAME} ; cd ${USERNAME} ; \\cp -f ${PETSC_DIR}/src/pf/impls/string/makefile ./makefile ; ke  MIN=%d NOUT=%d petscdlib STRINGFUNCTION=\"%s\" ; sync\n"</font>, tmp, (int)pf-&gt;dimin, (int)pf-&gt;dimout, string);
+<a name="line68"> 68: </a>  <font color="#4169E1">else</font>
+<a name="line69"> 69: </a>    sprintf(task, <font color="#666666">"cd %s ; mkdir ${USERNAME} ; cd ${USERNAME} ; \\cp -f ${PETSC_DIR}/src/pf/impls/string/makefile ./makefile ; make  MIN=%d NOUT=%d -f makefile petscdlib STRINGFUNCTION=\"%s\" ; \\rm -f makefile petscdlib.c libpetscdlib.a ;  sync\n"</font>, tmp,
+<a name="line70"> 70: </a>            (int)pf-&gt;dimin, (int)pf-&gt;dimout, string);
+
+<a name="line72"> 72: </a><font color="#A020F0">  #if defined(PETSC_HAVE_POPEN)</font>
+<a name="line73"> 73: </a>  <a href="../../../../../docs/manualpages/Sys/PetscPOpen.html">PetscPOpen</a>(comm, NULL, task, <font color="#666666">"r"</font>, &amp;fd);
+<a name="line74"> 74: </a>  <a href="../../../../../docs/manualpages/Sys/PetscPClose.html">PetscPClose</a>(comm, fd);
+<a name="line75"> 75: </a><font color="#A020F0">  #else</font>
+<a name="line76"> 76: </a>  <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP_SYS, <font color="#666666">"Cannot run external programs on this machine"</font>);
+<a name="line77"> 77: </a><font color="#A020F0">  #endif</font>
+
+<a name="line79"> 79: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Barrier.html#MPI_Barrier">MPI_Barrier</a>(comm);
+
+<a name="line81"> 81: </a>  <font color="#B22222">/* load the apply function from the dynamic library */</font>
+<a name="line82"> 82: </a>  <a href="../../../../../docs/manualpages/Sys/PetscGetUserName.html">PetscGetUserName</a>(username, 64);
+<a name="line83"> 83: </a>  sprintf(lib, <font color="#666666">"%s/%s/libpetscdlib"</font>, tmp, username);
+<a name="line84"> 84: </a>  <a href="../../../../../docs/manualpages/Sys/PetscDLLibrarySym.html">PetscDLLibrarySym</a>(comm, NULL, lib, <font color="#666666">"PFApply_String"</font>, f);
+<a name="line86"> 86: </a><font color="#A020F0">#endif</font>
+<a name="line87"> 87: </a>  <font color="#4169E1">return</font> 0;
+<a name="line88"> 88: </a>}
+
+<a name="line90"> 90: </a><strong><font color="#4169E1"><a name="PFSetFromOptions_String"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PFSetFromOptions_String(<a href="../../../../../docs/manualpages/PF/PF.html">PF</a> pf, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line91"> 91: </a>{
+<a name="line92"> 92: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+<a name="line93"> 93: </a>  char      value[PETSC_MAX_PATH_LEN];
+<a name="line94"> 94: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*f)(void *, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *, <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *) = NULL;
+
+<a name="line96"> 96: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"String function options"</font>);
+<a name="line97"> 97: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsString.html">PetscOptionsString</a>(<font color="#666666">"-pf_string"</font>, <font color="#666666">"Enter the function"</font>, <font color="#666666">"PFStringCreateFunction"</font>, <font color="#666666">""</font>, value, <font color="#4169E1">sizeof</font>(value), &amp;flag);
+<a name="line98"> 98: </a>  <font color="#4169E1">if</font> (flag) {
+<a name="line99"> 99: </a>    PFStringCreateFunction(pf, value, (void **)&amp;f);
+<a name="line100">100: </a>    pf-&gt;ops-&gt;apply = f;
+<a name="line101">101: </a>  }
+<a name="line102">102: </a>  PetscOptionsHeadEnd();
+<a name="line103">103: </a>  <font color="#4169E1">return</font> 0;
+<a name="line104">104: </a>}
+
+<a name="line106">106: </a><strong><font color="#4169E1">typedef <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*FCN)(void *, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *, <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)</font></strong>; <font color="#B22222">/* force argument to next function to not be extern C*/</font>
+
+<a name="line108">108: </a><strong><font color="#4169E1"><a name="PFCreate_String"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PFCreate_String(<a href="../../../../../docs/manualpages/PF/PF.html">PF</a> pf, void *value)</font></strong>
+<a name="line109">109: </a>{
+<a name="line110">110: </a>  FCN f = NULL;
+
+<a name="line112">112: </a>  <font color="#4169E1">if</font> (value) PFStringCreateFunction(pf, (char *)value, (void **)&amp;f);
+<a name="line113">113: </a>  <a href="../../../../../docs/manualpages/PF/PFSet.html">PFSet</a>(pf, f, NULL, PFView_String, PFDestroy_String, NULL);
+<a name="line114">114: </a>  pf-&gt;ops-&gt;setfromoptions = PFSetFromOptions_String;
+<a name="line115">115: </a>  <font color="#4169E1">return</font> 0;
+<a name="line116">116: </a>}
+</pre>
+</body>
+
+</html>

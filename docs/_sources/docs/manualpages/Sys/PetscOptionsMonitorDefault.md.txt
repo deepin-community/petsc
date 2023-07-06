@@ -1,0 +1,45 @@
+# PetscOptionsMonitorDefault
+Print all options set value events using the supplied `PetscViewer`. 
+## Synopsis
+```
+#include "petscsys.h"   
+PetscErrorCode PetscOptionsMonitorDefault(const char name[], const char value[], void *ctx)
+```
+Logically Collective
+
+
+## Input Parameters
+
+- ***name  -*** option name string
+- ***value -*** option value string
+- ***ctx -*** an ASCII viewer or NULL
+
+
+
+
+
+## Notes
+If ctx is NULL, `PetscPrintf()` is used.
+The first MPI rank in the `PetscViewer` viewer actually prints the values, other
+processes may have different values set
+
+If `PetscCIEnabled` then do not print the test harness options
+
+
+## See Also
+ `PetscOptionsMonitorSet()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/objects/options.c.html#PetscOptionsMonitorDefault">src/sys/objects/options.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/objects/options.c)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

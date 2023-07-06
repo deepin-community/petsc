@@ -1,0 +1,22 @@
+#!/bin/sh -e
+
+DEB_HOST_MULTIARCH=__DEB_HOST_MULTIARCH__
+
+SONAME=__PETSC_SONAME_VERSION__
+
+PETSC_VERSION=__PETSC_VERSION__
+PETSC_ARCH=${DEB_HOST_MULTIARCH}
+PETSC_COMPLEX_ARCH=${PETSC_ARCH}-complex
+PETSC_SONAME_VERSION=__PETSC_SONAME_VERSION__
+PETSC64_NAME=petsc64-${PETSC_SONAME_VERSION}
+
+PETSC64_DIR_COMPLEX=/usr/lib/petscdir/${PETSC64_NAME}/${PETSC_COMPLEX_ARCH}
+
+# Remove alternatives links
+if [ "$1" = "remove" ]; then
+  update-alternatives --remove petsc64 ${PETSC64_DIR_COMPLEX}
+  update-alternatives --remove libpetsc64_complex.so /usr/lib/${DEB_HOST_MULTIARCH}/libpetsc64_complex.so.${PETSC_VERSION}
+  update-alternatives --remove petsc64-${SONAME} ${PETSC64_DIR_COMPLEX}
+fi
+
+#DEBHELPER#

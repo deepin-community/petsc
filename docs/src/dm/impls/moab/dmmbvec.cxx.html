@@ -1,0 +1,651 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/moab/dmmbvec.cxx">Actual source code: dmmbvec.cxx</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:33+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petsc/private/dmmbimpl.h.html">&lt;petsc/private/dmmbimpl.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../include/petsc/private/vecimpl.h.html">&lt;petsc/private/vecimpl.h&gt;</A>
+
+<a name="line4">  4: </a>#include <A href="../../../../include/petscdmmoab.h.html">&lt;petscdmmoab.h&gt;</A>
+<a name="line5">  5: </a><font color="#A020F0">#include &lt;MBTagConventions.hpp&gt;</font>
+
+<a name="line7">  7: </a><strong><font color="#228B22">#define USE_NATIVE_PETSCVEC</font></strong>
+
+<a name="line9">  9: </a><font color="#B22222">/* declare some private DMMoab specific overrides */</font>
+<a name="line10"> 10: </a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCreateVector_Moab_Private(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, moab::Tag tag, const moab::Range *userrange, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> is_global_vec, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> destroy_tag, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *vec);
+<a name="line11"> 11: </a><strong><font color="#4169E1">static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMVecUserDestroy_Moab(void *user)</font></strong>;
+<a name="line12"> 12: </a><strong><font color="#4169E1">static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMVecDuplicate_Moab(<a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *y)</font></strong>;
+<a name="line13"> 13: </a><font color="#A020F0">#ifdef MOAB_HAVE_MPI</font>
+<a name="line14"> 14: </a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMVecCreateTagName_Moab_Private(moab::Interface *mbiface, moab::ParallelComm *pcomm, char **tag_name);
+<a name="line15"> 15: </a><font color="#A020F0">#else</font>
+<a name="line16"> 16: </a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMVecCreateTagName_Moab_Private(moab::Interface *mbiface, char **tag_name);
+<a name="line17"> 17: </a><font color="#A020F0">#endif</font>
+
+<a name="line19"> 19: </a><font color="#B22222">/*@C</font>
+<a name="line20"> 20: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMMOAB/DMMoabCreateVector.html">DMMoabCreateVector</a> - Create a <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> from either an existing tag, or a specified tag size, and a range of entities</font>
+
+<a name="line22"> 22: </a><font color="#B22222">  Collective</font>
+
+<a name="line24"> 24: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line25"> 25: </a><font color="#B22222">+ dm              - The DMMoab object being set</font>
+<a name="line26"> 26: </a><font color="#B22222">. tag             - If non-zero, block size will be taken from the tag size</font>
+<a name="line27"> 27: </a><font color="#B22222">. range           - If non-empty, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> corresponds to these entities, otherwise to the entities set on the DMMoab</font>
+<a name="line28"> 28: </a><font color="#B22222">. is_global_vec   - If true, this is a local representation of the <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> (including ghosts in parallel), otherwise a truly parallel one</font>
+<a name="line29"> 29: </a><font color="#B22222">- destroy_tag     - If true, MOAB tag is destroyed with <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>, otherwise it is left on MOAB</font>
+
+<a name="line31"> 31: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line32"> 32: </a><font color="#B22222">. vec             - The created vector</font>
+
+<a name="line34"> 34: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line36"> 36: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>()`</font>
+<a name="line37"> 37: </a><font color="#B22222">@*/</font>
+<a name="line38"> 38: </a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMMOAB/DMMoabCreateVector.html">DMMoabCreateVector</a>(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, moab::Tag tag, const moab::Range *range, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> is_global_vec, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> destroy_tag, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *vec)
+<a name="line39"> 39: </a>{
+
+<a name="line42"> 42: </a>  DMCreateVector_Moab_Private(dm, tag, range, is_global_vec, destroy_tag, vec);
+<a name="line43"> 43: </a>  <font color="#4169E1">return</font> 0;
+<a name="line44"> 44: </a>}
+
+<a name="line46"> 46: </a><font color="#B22222">/*@C</font>
+<a name="line47"> 47: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMMOAB/DMMoabGetVecTag.html">DMMoabGetVecTag</a> - Get the MOAB tag associated with this <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a></font>
+
+<a name="line49"> 49: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line50"> 50: </a><font color="#B22222">. vec - <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> being queried</font>
+
+<a name="line52"> 52: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line53"> 53: </a><font color="#B22222">. tag - Tag associated with this <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>. NULL if vec is a native PETSc <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>.</font>
+
+<a name="line55"> 55: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line57"> 57: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/DMMOAB/DMMoabCreateVector.html">DMMoabCreateVector</a>()`, `<a href="../../../../docs/manualpages/DMMOAB/DMMoabGetVecRange.html">DMMoabGetVecRange</a>()`</font>
+<a name="line58"> 58: </a><font color="#B22222">@*/</font>
+<a name="line59"> 59: </a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMMOAB/DMMoabGetVecTag.html">DMMoabGetVecTag</a>(<a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> vec, moab::Tag *tag)
+<a name="line60"> 60: </a>{
+<a name="line61"> 61: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a> moabdata;
+<a name="line62"> 62: </a>  Vec_MOAB      *vmoab;
+
+
+<a name="line66"> 66: </a>  <font color="#B22222">/* Get the MOAB private data */</font>
+<a name="line67"> 67: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vec, <font color="#666666">"MOABData"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;moabdata);
+<a name="line68"> 68: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(moabdata, (void **)&amp;vmoab);
+
+<a name="line70"> 70: </a>  *tag = vmoab-&gt;tag;
+<a name="line71"> 71: </a>  <font color="#4169E1">return</font> 0;
+<a name="line72"> 72: </a>}
+
+<a name="line74"> 74: </a><font color="#B22222">/*@C</font>
+<a name="line75"> 75: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMMOAB/DMMoabGetVecRange.html">DMMoabGetVecRange</a> - Get the MOAB entities associated with this <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a></font>
+
+<a name="line77"> 77: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line78"> 78: </a><font color="#B22222">. vec   - <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> being queried</font>
+
+<a name="line80"> 80: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line81"> 81: </a><font color="#B22222">. range - Entities associated with this <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>. NULL if vec is a native PETSc <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>.</font>
+
+<a name="line83"> 83: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line85"> 85: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/DMMOAB/DMMoabCreateVector.html">DMMoabCreateVector</a>()`, `<a href="../../../../docs/manualpages/DMMOAB/DMMoabGetVecTag.html">DMMoabGetVecTag</a>()`</font>
+<a name="line86"> 86: </a><font color="#B22222">@*/</font>
+<a name="line87"> 87: </a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMMOAB/DMMoabGetVecRange.html">DMMoabGetVecRange</a>(<a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> vec, moab::Range *range)
+<a name="line88"> 88: </a>{
+<a name="line89"> 89: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a> moabdata;
+<a name="line90"> 90: </a>  Vec_MOAB      *vmoab;
+
+
+<a name="line94"> 94: </a>  <font color="#B22222">/* Get the MOAB private data handle */</font>
+<a name="line95"> 95: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vec, <font color="#666666">"MOABData"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;moabdata);
+<a name="line96"> 96: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(moabdata, (void **)&amp;vmoab);
+
+<a name="line98"> 98: </a>  *range = *vmoab-&gt;tag_range;
+<a name="line99"> 99: </a>  <font color="#4169E1">return</font> 0;
+<a name="line100">100: </a>}
+
+<a name="line102">102: </a><font color="#B22222">/*@C</font>
+<a name="line103">103: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMMOAB/DMMoabVecGetArray.html">DMMoabVecGetArray</a> - Returns the writable direct access array to the local representation of MOAB tag data for the underlying vector using locally owned+ghosted range of entities</font>
+
+<a name="line105">105: </a><font color="#B22222">  Collective</font>
+
+<a name="line107">107: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line108">108: </a><font color="#B22222">+ dm              - The DMMoab object being set</font>
+<a name="line109">109: </a><font color="#B22222">- vec             - The Vector whose underlying data is requested</font>
+
+<a name="line111">111: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line112">112: </a><font color="#B22222">. array           - The local data array</font>
+
+<a name="line114">114: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line116">116: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/DMMOAB/DMMoabVecRestoreArray.html">DMMoabVecRestoreArray</a>()`, `<a href="../../../../docs/manualpages/DMMOAB/DMMoabVecGetArrayRead.html">DMMoabVecGetArrayRead</a>()`, `<a href="../../../../docs/manualpages/DMMOAB/DMMoabVecRestoreArrayRead.html">DMMoabVecRestoreArrayRead</a>()`</font>
+<a name="line117">117: </a><font color="#B22222">@*/</font>
+<a name="line118">118: </a><strong><font color="#4169E1"><a name="DMMoabVecGetArray"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMMOAB/DMMoabVecGetArray.html">DMMoabVecGetArray</a>(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> vec, void *array)</font></strong>
+<a name="line119">119: </a>{
+<a name="line120">120: </a>  DM_Moab        *dmmoab;
+<a name="line121">121: </a><strong><font color="#FF0000">  moab:</font></strong>:ErrorCode merr;
+<a name="line122">122: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        count, i, f;
+<a name="line123">123: </a><strong><font color="#FF0000">  moab:</font></strong>:Tag       vtag;
+<a name="line124">124: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   **varray;
+<a name="line125">125: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>    *marray;
+<a name="line126">126: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a>  moabdata;
+<a name="line127">127: </a>  Vec_MOAB       *vmoab, *xmoab;
+
+<a name="line132">132: </a>  dmmoab = (DM_Moab *)dm-&gt;data;
+
+<a name="line134">134: </a>  <font color="#B22222">/* Get the Vec_MOAB struct for the original vector */</font>
+<a name="line135">135: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vec, <font color="#666666">"MOABData"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;moabdata);
+<a name="line136">136: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(moabdata, (void **)&amp;vmoab);
+
+<a name="line138">138: </a>  <font color="#B22222">/* Get the real scalar array handle */</font>
+<a name="line139">139: </a>  varray = reinterpret_cast&lt;<a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **&gt;(array);
+
+<a name="line141">141: </a>  <font color="#4169E1">if</font> (vmoab-&gt;is_native_vec) {
+<a name="line142">142: </a>    <font color="#B22222">/* get the local representation of the arrays from Vectors */</font>
+<a name="line143">143: </a>    <a href="../../../../docs/manualpages/DM/DMGetLocalVector.html">DMGetLocalVector</a>(dm, &amp;vmoab-&gt;local);
+<a name="line144">144: </a>    <a href="../../../../docs/manualpages/DM/DMGlobalToLocalBegin.html">DMGlobalToLocalBegin</a>(dm, vec, <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, vmoab-&gt;local);
+<a name="line145">145: </a>    <a href="../../../../docs/manualpages/DM/DMGlobalToLocalEnd.html">DMGlobalToLocalEnd</a>(dm, vec, <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, vmoab-&gt;local);
+
+<a name="line147">147: </a>    <font color="#B22222">/* Get the Vec_MOAB struct for the original vector */</font>
+<a name="line148">148: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vmoab-&gt;local, <font color="#666666">"MOABData"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;moabdata);
+<a name="line149">149: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(moabdata, (void **)&amp;xmoab);
+
+<a name="line151">151: </a>    <font color="#B22222">/* get the local representation of the arrays from Vectors */</font>
+<a name="line152">152: </a>    <a href="../../../../docs/manualpages/Vec/VecGhostGetLocalForm.html">VecGhostGetLocalForm</a>(vmoab-&gt;local, &amp;xmoab-&gt;local);
+<a name="line153">153: </a>    <a href="../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>(vmoab-&gt;local, <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line154">154: </a>    <a href="../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>(vmoab-&gt;local, <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+
+<a name="line156">156: </a>    <a href="../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(xmoab-&gt;local, varray);
+<a name="line157">157: </a>  } <font color="#4169E1">else</font> {
+<a name="line158">158: </a>    <font color="#B22222">/* Get the MOAB private data */</font>
+<a name="line159">159: </a>    <a href="../../../../docs/manualpages/DMMOAB/DMMoabGetVecTag.html">DMMoabGetVecTag</a>(vec, &amp;vtag);
+
+<a name="line161">161: </a><font color="#A020F0">#ifdef MOAB_HAVE_MPI</font>
+<a name="line162">162: </a>    <font color="#B22222">/* exchange the data into ghost cells first */</font>
+<a name="line163">163: </a>    merr = dmmoab-&gt;pcomm-&gt;exchange_tags(vtag, *dmmoab-&gt;vlocal);
+<a name="line164">164: </a>    MBERRNM(merr);
+<a name="line165">165: </a><font color="#A020F0">#endif</font>
+
+<a name="line167">167: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>((dmmoab-&gt;nloc + dmmoab-&gt;nghost) * dmmoab-&gt;numFields, varray);
+
+<a name="line169">169: </a>    <font color="#B22222">/* Get the array data for local entities */</font>
+<a name="line170">170: </a>    merr = dmmoab-&gt;mbiface-&gt;tag_iterate(vtag, dmmoab-&gt;vlocal-&gt;begin(), dmmoab-&gt;vlocal-&gt;end(), count, reinterpret_cast&lt;void *&amp;&gt;(marray), false);
+<a name="line171">171: </a>    MBERRNM(merr);
+
+<a name="line174">174: </a>    i = 0;
+<a name="line175">175: </a>    <font color="#4169E1">for</font> (moab::Range::iterator iter = dmmoab-&gt;vlocal-&gt;begin(); iter != dmmoab-&gt;vlocal-&gt;end(); iter++) {
+<a name="line176">176: </a>      <font color="#4169E1">for</font> (f = 0; f &lt; dmmoab-&gt;numFields; f++, i++) (*varray)[dmmoab-&gt;lidmap[(<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)*iter - dmmoab-&gt;seqstart] * dmmoab-&gt;numFields + f] = marray[i];
+<a name="line177">177: </a>      //(*varray)[dmmoab-&gt;llmap[dmmoab-&gt;lidmap[((<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)*iter-dmmoab-&gt;seqstart)]*dmmoab-&gt;numFields+f]]=marray[i];
+<a name="line178">178: </a>    }
+<a name="line179">179: </a>  }
+<a name="line180">180: </a>  <font color="#4169E1">return</font> 0;
+<a name="line181">181: </a>}
+
+<a name="line183">183: </a><font color="#B22222">/*@C</font>
+<a name="line184">184: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMMOAB/DMMoabVecRestoreArray.html">DMMoabVecRestoreArray</a> - Restores the writable direct access array obtained via <a href="../../../../docs/manualpages/DMMOAB/DMMoabVecGetArray.html">DMMoabVecGetArray</a></font>
+
+<a name="line186">186: </a><font color="#B22222">  Collective</font>
+
+<a name="line188">188: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line189">189: </a><font color="#B22222">+ dm              - The DMMoab object being set</font>
+<a name="line190">190: </a><font color="#B22222">. vec             - The Vector whose underlying data is requested</font>
+<a name="line191">191: </a><font color="#B22222">- array           - The local data array</font>
+
+<a name="line193">193: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line195">195: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/DMMOAB/DMMoabVecGetArray.html">DMMoabVecGetArray</a>()`, `<a href="../../../../docs/manualpages/DMMOAB/DMMoabVecGetArrayRead.html">DMMoabVecGetArrayRead</a>()`, `<a href="../../../../docs/manualpages/DMMOAB/DMMoabVecRestoreArrayRead.html">DMMoabVecRestoreArrayRead</a>()`</font>
+<a name="line196">196: </a><font color="#B22222">@*/</font>
+<a name="line197">197: </a><strong><font color="#4169E1"><a name="DMMoabVecRestoreArray"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMMOAB/DMMoabVecRestoreArray.html">DMMoabVecRestoreArray</a>(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> vec, void *array)</font></strong>
+<a name="line198">198: </a>{
+<a name="line199">199: </a>  DM_Moab        *dmmoab;
+<a name="line200">200: </a><strong><font color="#FF0000">  moab:</font></strong>:ErrorCode merr;
+<a name="line201">201: </a><strong><font color="#FF0000">  moab:</font></strong>:Tag       vtag;
+<a name="line202">202: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        count, i, f;
+<a name="line203">203: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   **varray;
+<a name="line204">204: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>    *marray;
+<a name="line205">205: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a>  moabdata;
+<a name="line206">206: </a>  Vec_MOAB       *vmoab, *xmoab;
+
+<a name="line211">211: </a>  dmmoab = (DM_Moab *)dm-&gt;data;
+
+<a name="line213">213: </a>  <font color="#B22222">/* Get the Vec_MOAB struct for the original vector */</font>
+<a name="line214">214: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vec, <font color="#666666">"MOABData"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;moabdata);
+<a name="line215">215: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(moabdata, (void **)&amp;vmoab);
+
+<a name="line217">217: </a>  <font color="#B22222">/* Get the real scalar array handle */</font>
+<a name="line218">218: </a>  varray = reinterpret_cast&lt;<a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **&gt;(array);
+
+<a name="line220">220: </a>  <font color="#4169E1">if</font> (vmoab-&gt;is_native_vec) {
+<a name="line221">221: </a>    <font color="#B22222">/* Get the Vec_MOAB struct for the original vector */</font>
+<a name="line222">222: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vmoab-&gt;local, <font color="#666666">"MOABData"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;moabdata);
+<a name="line223">223: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(moabdata, (void **)&amp;xmoab);
+
+<a name="line225">225: </a>    <font color="#B22222">/* get the local representation of the arrays from Vectors */</font>
+<a name="line226">226: </a>    <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xmoab-&gt;local, varray);
+<a name="line227">227: </a>    <a href="../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>(vmoab-&gt;local, <a href="../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>, <a href="../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);
+<a name="line228">228: </a>    <a href="../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>(vmoab-&gt;local, <a href="../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>, <a href="../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);
+<a name="line229">229: </a>    <a href="../../../../docs/manualpages/Vec/VecGhostRestoreLocalForm.html">VecGhostRestoreLocalForm</a>(vmoab-&gt;local, &amp;xmoab-&gt;local);
+
+<a name="line231">231: </a>    <font color="#B22222">/* restore local pieces */</font>
+<a name="line232">232: </a>    <a href="../../../../docs/manualpages/DM/DMLocalToGlobalBegin.html">DMLocalToGlobalBegin</a>(dm, vmoab-&gt;local, <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, vec);
+<a name="line233">233: </a>    <a href="../../../../docs/manualpages/DM/DMLocalToGlobalEnd.html">DMLocalToGlobalEnd</a>(dm, vmoab-&gt;local, <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, vec);
+<a name="line234">234: </a>    <a href="../../../../docs/manualpages/DM/DMRestoreLocalVector.html">DMRestoreLocalVector</a>(dm, &amp;vmoab-&gt;local);
+<a name="line235">235: </a>  } <font color="#4169E1">else</font> {
+<a name="line236">236: </a>    <font color="#B22222">/* Get the MOAB private data */</font>
+<a name="line237">237: </a>    <a href="../../../../docs/manualpages/DMMOAB/DMMoabGetVecTag.html">DMMoabGetVecTag</a>(vec, &amp;vtag);
+
+<a name="line239">239: </a>    <font color="#B22222">/* Get the array data for local entities */</font>
+<a name="line240">240: </a>    merr = dmmoab-&gt;mbiface-&gt;tag_iterate(vtag, dmmoab-&gt;vlocal-&gt;begin(), dmmoab-&gt;vlocal-&gt;end(), count, reinterpret_cast&lt;void *&amp;&gt;(marray), false);
+<a name="line241">241: </a>    MBERRNM(merr);
+
+<a name="line244">244: </a>    i = 0;
+<a name="line245">245: </a>    <font color="#4169E1">for</font> (moab::Range::iterator iter = dmmoab-&gt;vlocal-&gt;begin(); iter != dmmoab-&gt;vlocal-&gt;end(); iter++) {
+<a name="line246">246: </a>      <font color="#4169E1">for</font> (f = 0; f &lt; dmmoab-&gt;numFields; f++, i++) marray[i] = (*varray)[dmmoab-&gt;lidmap[(<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)*iter - dmmoab-&gt;seqstart] * dmmoab-&gt;numFields + f];
+<a name="line247">247: </a>      //marray[i] = (*varray)[dmmoab-&gt;llmap[dmmoab-&gt;lidmap[((<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)*iter-dmmoab-&gt;seqstart)]*dmmoab-&gt;numFields+f]];
+<a name="line248">248: </a>    }
+
+<a name="line250">250: </a><font color="#A020F0">#ifdef MOAB_HAVE_MPI</font>
+<a name="line251">251: </a>    <font color="#B22222">/* reduce the tags correctly -&gt; should probably let the user choose how to reduce in the future</font>
+<a name="line252">252: </a><font color="#B22222">      For all FEM residual based assembly calculations, MPI_SUM should serve well */</font>
+<a name="line253">253: </a>    merr = dmmoab-&gt;pcomm-&gt;reduce_tags(vtag, MPI_SUM, *dmmoab-&gt;vlocal);
+<a name="line254">254: </a>    MBERRV(dmmoab-&gt;mbiface, merr);
+<a name="line255">255: </a><font color="#A020F0">#endif</font>
+<a name="line256">256: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(*varray);
+<a name="line257">257: </a>  }
+<a name="line258">258: </a>  <font color="#4169E1">return</font> 0;
+<a name="line259">259: </a>}
+
+<a name="line261">261: </a><font color="#B22222">/*@C</font>
+<a name="line262">262: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMMOAB/DMMoabVecGetArrayRead.html">DMMoabVecGetArrayRead</a> - Returns the read-only direct access array to the local representation of MOAB tag data for the underlying vector using locally owned+ghosted range of entities</font>
+
+<a name="line264">264: </a><font color="#B22222">  Collective</font>
+
+<a name="line266">266: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line267">267: </a><font color="#B22222">+ dm              - The DMMoab object being set</font>
+<a name="line268">268: </a><font color="#B22222">- vec             - The Vector whose underlying data is requested</font>
+
+<a name="line270">270: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line271">271: </a><font color="#B22222">. array           - The local data array</font>
+
+<a name="line273">273: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line275">275: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/DMMOAB/DMMoabVecRestoreArrayRead.html">DMMoabVecRestoreArrayRead</a>()`, `<a href="../../../../docs/manualpages/DMMOAB/DMMoabVecGetArray.html">DMMoabVecGetArray</a>()`, `<a href="../../../../docs/manualpages/DMMOAB/DMMoabVecRestoreArray.html">DMMoabVecRestoreArray</a>()`</font>
+<a name="line276">276: </a><font color="#B22222">@*/</font>
+<a name="line277">277: </a><strong><font color="#4169E1"><a name="DMMoabVecGetArrayRead"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMMOAB/DMMoabVecGetArrayRead.html">DMMoabVecGetArrayRead</a>(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> vec, void *array)</font></strong>
+<a name="line278">278: </a>{
+<a name="line279">279: </a>  DM_Moab        *dmmoab;
+<a name="line280">280: </a><strong><font color="#FF0000">  moab:</font></strong>:ErrorCode merr;
+<a name="line281">281: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        count, i, f;
+<a name="line282">282: </a><strong><font color="#FF0000">  moab:</font></strong>:Tag       vtag;
+<a name="line283">283: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   **varray;
+<a name="line284">284: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>    *marray;
+<a name="line285">285: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a>  moabdata;
+<a name="line286">286: </a>  Vec_MOAB       *vmoab, *xmoab;
+
+<a name="line291">291: </a>  dmmoab = (DM_Moab *)dm-&gt;data;
+
+<a name="line293">293: </a>  <font color="#B22222">/* Get the Vec_MOAB struct for the original vector */</font>
+<a name="line294">294: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vec, <font color="#666666">"MOABData"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;moabdata);
+<a name="line295">295: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(moabdata, (void **)&amp;vmoab);
+
+<a name="line297">297: </a>  <font color="#B22222">/* Get the real scalar array handle */</font>
+<a name="line298">298: </a>  varray = reinterpret_cast&lt;<a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **&gt;(array);
+
+<a name="line300">300: </a>  <font color="#4169E1">if</font> (vmoab-&gt;is_native_vec) {
+<a name="line301">301: </a>    <font color="#B22222">/* get the local representation of the arrays from Vectors */</font>
+<a name="line302">302: </a>    <a href="../../../../docs/manualpages/DM/DMGetLocalVector.html">DMGetLocalVector</a>(dm, &amp;vmoab-&gt;local);
+<a name="line303">303: </a>    <a href="../../../../docs/manualpages/DM/DMGlobalToLocalBegin.html">DMGlobalToLocalBegin</a>(dm, vec, <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, vmoab-&gt;local);
+<a name="line304">304: </a>    <a href="../../../../docs/manualpages/DM/DMGlobalToLocalEnd.html">DMGlobalToLocalEnd</a>(dm, vec, <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, vmoab-&gt;local);
+
+<a name="line306">306: </a>    <font color="#B22222">/* Get the Vec_MOAB struct for the original vector */</font>
+<a name="line307">307: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vmoab-&gt;local, <font color="#666666">"MOABData"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;moabdata);
+<a name="line308">308: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(moabdata, (void **)&amp;xmoab);
+
+<a name="line310">310: </a>    <font color="#B22222">/* get the local representation of the arrays from Vectors */</font>
+<a name="line311">311: </a>    <a href="../../../../docs/manualpages/Vec/VecGhostGetLocalForm.html">VecGhostGetLocalForm</a>(vmoab-&gt;local, &amp;xmoab-&gt;local);
+<a name="line312">312: </a>    <a href="../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>(vmoab-&gt;local, <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line313">313: </a>    <a href="../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>(vmoab-&gt;local, <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line314">314: </a>    <a href="../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(xmoab-&gt;local, varray);
+<a name="line315">315: </a>  } <font color="#4169E1">else</font> {
+<a name="line316">316: </a>    <font color="#B22222">/* Get the MOAB private data */</font>
+<a name="line317">317: </a>    <a href="../../../../docs/manualpages/DMMOAB/DMMoabGetVecTag.html">DMMoabGetVecTag</a>(vec, &amp;vtag);
+
+<a name="line319">319: </a><font color="#A020F0">#ifdef MOAB_HAVE_MPI</font>
+<a name="line320">320: </a>    <font color="#B22222">/* exchange the data into ghost cells first */</font>
+<a name="line321">321: </a>    merr = dmmoab-&gt;pcomm-&gt;exchange_tags(vtag, *dmmoab-&gt;vlocal);
+<a name="line322">322: </a>    MBERRNM(merr);
+<a name="line323">323: </a><font color="#A020F0">#endif</font>
+<a name="line324">324: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>((dmmoab-&gt;nloc + dmmoab-&gt;nghost) * dmmoab-&gt;numFields, varray);
+
+<a name="line326">326: </a>    <font color="#B22222">/* Get the array data for local entities */</font>
+<a name="line327">327: </a>    merr = dmmoab-&gt;mbiface-&gt;tag_iterate(vtag, dmmoab-&gt;vlocal-&gt;begin(), dmmoab-&gt;vlocal-&gt;end(), count, reinterpret_cast&lt;void *&amp;&gt;(marray), false);
+<a name="line328">328: </a>    MBERRNM(merr);
+
+<a name="line331">331: </a>    i = 0;
+<a name="line332">332: </a>    <font color="#4169E1">for</font> (moab::Range::iterator iter = dmmoab-&gt;vlocal-&gt;begin(); iter != dmmoab-&gt;vlocal-&gt;end(); iter++) {
+<a name="line333">333: </a>      <font color="#4169E1">for</font> (f = 0; f &lt; dmmoab-&gt;numFields; f++, i++) (*varray)[dmmoab-&gt;lidmap[(<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)*iter - dmmoab-&gt;seqstart] * dmmoab-&gt;numFields + f] = marray[i];
+<a name="line334">334: </a>      //(*varray)[dmmoab-&gt;llmap[dmmoab-&gt;lidmap[((<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)*iter-dmmoab-&gt;seqstart)]*dmmoab-&gt;numFields+f]]=marray[i];
+<a name="line335">335: </a>    }
+<a name="line336">336: </a>  }
+<a name="line337">337: </a>  <font color="#4169E1">return</font> 0;
+<a name="line338">338: </a>}
+
+<a name="line340">340: </a><font color="#B22222">/*@C</font>
+<a name="line341">341: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMMOAB/DMMoabVecRestoreArrayRead.html">DMMoabVecRestoreArrayRead</a> - Restores the read-only direct access array obtained via <a href="../../../../docs/manualpages/DMMOAB/DMMoabVecGetArray.html">DMMoabVecGetArray</a></font>
+
+<a name="line343">343: </a><font color="#B22222">  Collective</font>
+
+<a name="line345">345: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line346">346: </a><font color="#B22222">+ dm              - The DMMoab object being set</font>
+<a name="line347">347: </a><font color="#B22222">. vec             - The Vector whose underlying data is requested</font>
+<a name="line348">348: </a><font color="#B22222">- array           - The local data array</font>
+
+<a name="line350">350: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line352">352: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/DMMOAB/DMMoabVecGetArrayRead.html">DMMoabVecGetArrayRead</a>()`, `<a href="../../../../docs/manualpages/DMMOAB/DMMoabVecGetArray.html">DMMoabVecGetArray</a>()`, `<a href="../../../../docs/manualpages/DMMOAB/DMMoabVecRestoreArray.html">DMMoabVecRestoreArray</a>()`</font>
+<a name="line353">353: </a><font color="#B22222">@*/</font>
+<a name="line354">354: </a><strong><font color="#4169E1"><a name="DMMoabVecRestoreArrayRead"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMMOAB/DMMoabVecRestoreArrayRead.html">DMMoabVecRestoreArrayRead</a>(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> vec, void *array)</font></strong>
+<a name="line355">355: </a>{
+<a name="line356">356: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>  **varray;
+<a name="line357">357: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a> moabdata;
+<a name="line358">358: </a>  Vec_MOAB      *vmoab, *xmoab;
+
+
+<a name="line364">364: </a>  <font color="#B22222">/* Get the Vec_MOAB struct for the original vector */</font>
+<a name="line365">365: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vec, <font color="#666666">"MOABData"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;moabdata);
+<a name="line366">366: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(moabdata, (void **)&amp;vmoab);
+
+<a name="line368">368: </a>  <font color="#B22222">/* Get the real scalar array handle */</font>
+<a name="line369">369: </a>  varray = reinterpret_cast&lt;<a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **&gt;(array);
+
+<a name="line371">371: </a>  <font color="#4169E1">if</font> (vmoab-&gt;is_native_vec) {
+<a name="line372">372: </a>    <font color="#B22222">/* Get the Vec_MOAB struct for the original vector */</font>
+<a name="line373">373: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vmoab-&gt;local, <font color="#666666">"MOABData"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;moabdata);
+<a name="line374">374: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(moabdata, (void **)&amp;xmoab);
+
+<a name="line376">376: </a>    <font color="#B22222">/* restore the local representation of the arrays from Vectors */</font>
+<a name="line377">377: </a>    <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xmoab-&gt;local, varray);
+<a name="line378">378: </a>    <a href="../../../../docs/manualpages/Vec/VecGhostRestoreLocalForm.html">VecGhostRestoreLocalForm</a>(vmoab-&gt;local, &amp;xmoab-&gt;local);
+
+<a name="line380">380: </a>    <font color="#B22222">/* restore local pieces */</font>
+<a name="line381">381: </a>    <a href="../../../../docs/manualpages/DM/DMRestoreLocalVector.html">DMRestoreLocalVector</a>(dm, &amp;vmoab-&gt;local);
+<a name="line382">382: </a>  } <font color="#4169E1">else</font> {
+<a name="line383">383: </a>    <font color="#B22222">/* Nothing to do but just free the memory allocated before */</font>
+<a name="line384">384: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(*varray);
+<a name="line385">385: </a>  }
+<a name="line386">386: </a>  <font color="#4169E1">return</font> 0;
+<a name="line387">387: </a>}
+
+<a name="line389">389: </a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCreateVector_Moab_Private(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, moab::Tag tag, const moab::Range *userrange, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> is_global_vec, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> destroy_tag, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *vec)
+<a name="line390">390: </a>{
+<a name="line391">391: </a><strong><font color="#FF0000">  moab:</font></strong>:ErrorCode    merr;
+<a name="line392">392: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>          is_newtag;
+<a name="line393">393: </a>  const moab::Range *range;
+<a name="line394">394: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           count, lnative_vec, gnative_vec;
+<a name="line395">395: </a><strong><font color="#FF0000">  std:</font></strong>:string        ttname;
+<a name="line396">396: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *data_ptr, *defaultvals;
+
+<a name="line398">398: </a>  Vec_MOAB *vmoab;
+<a name="line399">399: </a>  DM_Moab  *dmmoab = (DM_Moab *)dm-&gt;data;
+<a name="line400">400: </a><font color="#A020F0">#ifdef MOAB_HAVE_MPI</font>
+<a name="line401">401: </a><strong><font color="#FF0000">  moab:</font></strong>:ParallelComm *pcomm = dmmoab-&gt;pcomm;
+<a name="line402">402: </a><font color="#A020F0">#endif</font>
+<a name="line403">403: </a><strong><font color="#FF0000">  moab:</font></strong>:Interface *mbiface = dmmoab-&gt;mbiface;
+
+<a name="line406">406: </a>  <font color="#4169E1">if</font> (!userrange) range = dmmoab-&gt;vowned;
+<a name="line407">407: </a>  <font color="#4169E1">else</font> range = userrange;
+
+<a name="line410">410: </a><font color="#A020F0">#ifndef USE_NATIVE_PETSCVEC</font>
+<a name="line411">411: </a>  <font color="#B22222">/* If the tag data is in a single sequence, use PETSc native vector since tag_iterate isn't useful anymore */</font>
+<a name="line412">412: </a>  lnative_vec = (range-&gt;psize() - 1);
+<a name="line413">413: </a><font color="#A020F0">#else</font>
+<a name="line414">414: </a>  lnative_vec = 1; <font color="#B22222">/* NOTE: Testing PETSc vector: will force to create native vector all the time */</font>
+<a name="line415">415: </a>                   //  lnative_vec=0; <font color="#B22222">/* NOTE: Testing MOAB vector: will force to create MOAB tag_iterate based vector all the time */</font>
+<a name="line416">416: </a><font color="#A020F0">#endif</font>
+
+<a name="line418">418: </a><font color="#A020F0">#ifdef MOAB_HAVE_MPI</font>
+<a name="line419">419: </a>  <a href="../../../../docs/manualpages/Sys/MPIU_Allreduce.html">MPIU_Allreduce</a>(&amp;lnative_vec, &amp;gnative_vec, 1, MPI_INT, MPI_MAX, (((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm)-&gt;comm));
+<a name="line420">420: </a><font color="#A020F0">#else</font>
+<a name="line421">421: </a>  gnative_vec = lnative_vec;
+<a name="line422">422: </a><font color="#A020F0">#endif</font>
+
+<a name="line424">424: </a>  <font color="#B22222">/* Create the MOAB internal data object */</font>
+<a name="line425">425: </a>  <a href="../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;vmoab);
+<a name="line426">426: </a>  vmoab-&gt;is_native_vec = (gnative_vec &gt; 0 ? <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+
+<a name="line428">428: </a>  <font color="#4169E1">if</font> (!vmoab-&gt;is_native_vec) {
+<a name="line429">429: </a>    merr = moab::MB_SUCCESS;
+<a name="line430">430: </a>    <font color="#4169E1">if</font> (tag != 0) merr = mbiface-&gt;tag_get_name(tag, ttname);
+<a name="line431">431: </a>    <font color="#4169E1">if</font> (!ttname.length() || merr != moab::MB_SUCCESS) {
+<a name="line432">432: </a>      <font color="#B22222">/* get the new name for the anonymous MOABVec -&gt; the tag_name will be destroyed along with Tag */</font>
+<a name="line433">433: </a>      char *tag_name = NULL;
+<a name="line434">434: </a><font color="#A020F0">#ifdef MOAB_HAVE_MPI</font>
+<a name="line435">435: </a>      DMVecCreateTagName_Moab_Private(mbiface, pcomm, &amp;tag_name);
+<a name="line436">436: </a><font color="#A020F0">#else</font>
+<a name="line437">437: </a>      DMVecCreateTagName_Moab_Private(mbiface, &amp;tag_name);
+<a name="line438">438: </a><font color="#A020F0">#endif</font>
+<a name="line439">439: </a>      is_newtag = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+
+<a name="line441">441: </a>      <font color="#B22222">/* Create the default value for the tag (all zeros) */</font>
+<a name="line442">442: </a>      <a href="../../../../docs/manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(dmmoab-&gt;numFields, &amp;defaultvals);
+
+<a name="line444">444: </a>      <font color="#B22222">/* Create the tag */</font>
+<a name="line445">445: </a>      merr = mbiface-&gt;tag_get_handle(tag_name, dmmoab-&gt;numFields, moab::MB_TYPE_DOUBLE, tag, moab::MB_TAG_DENSE | moab::MB_TAG_CREAT, defaultvals);
+<a name="line446">446: </a>      MBERRNM(merr);
+<a name="line447">447: </a>      <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tag_name);
+<a name="line448">448: </a>      <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(defaultvals);
+<a name="line449">449: </a>    } <font color="#4169E1">else</font> {
+<a name="line450">450: </a>      <font color="#B22222">/* Make sure the tag data is of type "double" */</font>
+<a name="line451">451: </a><strong><font color="#FF0000">      moab:</font></strong>:DataType tag_type;
+<a name="line452">452: </a>      merr = mbiface-&gt;tag_get_data_type(tag, tag_type);
+<a name="line453">453: </a>      MBERRNM(merr);
+<a name="line455">455: </a>      is_newtag = destroy_tag;
+<a name="line456">456: </a>    }
+
+<a name="line458">458: </a>    vmoab-&gt;tag     = tag;
+<a name="line459">459: </a>    vmoab-&gt;new_tag = is_newtag;
+<a name="line460">460: </a>  }
+<a name="line461">461: </a>  vmoab-&gt;mbiface = mbiface;
+<a name="line462">462: </a><font color="#A020F0">#ifdef MOAB_HAVE_MPI</font>
+<a name="line463">463: </a>  vmoab-&gt;pcomm = pcomm;
+<a name="line464">464: </a><font color="#A020F0">#endif</font>
+<a name="line465">465: </a>  vmoab-&gt;is_global_vec = is_global_vec;
+<a name="line466">466: </a>  vmoab-&gt;tag_size      = dmmoab-&gt;bs;
+
+<a name="line468">468: </a>  <font color="#4169E1">if</font> (vmoab-&gt;is_native_vec) {
+<a name="line469">469: </a>    <font color="#B22222">/* Create the PETSc Vector directly and attach our functions accordingly */</font>
+<a name="line470">470: </a>    <font color="#4169E1">if</font> (!is_global_vec) {
+<a name="line471">471: </a>      <font color="#B22222">/* This is an MPI Vector with ghosted padding */</font>
+<a name="line472">472: </a>      <a href="../../../../docs/manualpages/Vec/VecCreateGhostBlock.html">VecCreateGhostBlock</a>((((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm)-&gt;comm), dmmoab-&gt;bs, dmmoab-&gt;numFields * dmmoab-&gt;nloc, dmmoab-&gt;numFields * dmmoab-&gt;n, dmmoab-&gt;nghost, &amp;dmmoab-&gt;gsindices[dmmoab-&gt;nloc], vec);
+<a name="line473">473: </a>    } <font color="#4169E1">else</font> {
+<a name="line474">474: </a>      <font color="#B22222">/* This is an MPI/SEQ Vector */</font>
+<a name="line475">475: </a>      <a href="../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>((((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm)-&gt;comm), vec);
+<a name="line476">476: </a>      <a href="../../../../docs/manualpages/Vec/VecSetSizes.html">VecSetSizes</a>(*vec, dmmoab-&gt;numFields * dmmoab-&gt;nloc, <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>);
+<a name="line477">477: </a>      <a href="../../../../docs/manualpages/Vec/VecSetBlockSize.html">VecSetBlockSize</a>(*vec, dmmoab-&gt;bs);
+<a name="line478">478: </a>      <a href="../../../../docs/manualpages/Vec/VecSetType.html">VecSetType</a>(*vec, <a href="../../../../docs/manualpages/Vec/VECMPI.html">VECMPI</a>);
+<a name="line479">479: </a>    }
+<a name="line480">480: </a>  } <font color="#4169E1">else</font> {
+<a name="line481">481: </a>    <font color="#B22222">/* Call tag_iterate. This will cause MOAB to allocate memory for the</font>
+<a name="line482">482: </a><font color="#B22222">       tag data if it hasn't already happened */</font>
+<a name="line483">483: </a>    merr = mbiface-&gt;tag_iterate(tag, range-&gt;begin(), range-&gt;end(), count, (void *&amp;)data_ptr);
+<a name="line484">484: </a>    MBERRNM(merr);
+
+<a name="line486">486: </a>    <font color="#B22222">/* set the reference for vector range */</font>
+<a name="line487">487: </a>    vmoab-&gt;tag_range = new moab::Range(*range);
+<a name="line488">488: </a>    merr             = mbiface-&gt;tag_get_length(tag, dmmoab-&gt;numFields);
+<a name="line489">489: </a>    MBERRNM(merr);
+
+<a name="line491">491: </a>    <font color="#B22222">/* Create the PETSc Vector</font>
+<a name="line492">492: </a><font color="#B22222">      Query MOAB mesh to check if there are any ghosted entities</font>
+<a name="line493">493: </a><font color="#B22222">        -&gt; if we do, create a ghosted vector to map correctly to the same layout</font>
+<a name="line494">494: </a><font color="#B22222">        -&gt; else, create a non-ghosted parallel vector */</font>
+<a name="line495">495: </a>    <font color="#4169E1">if</font> (!is_global_vec) {
+<a name="line496">496: </a>      <font color="#B22222">/* This is an MPI Vector with ghosted padding */</font>
+<a name="line497">497: </a>      <a href="../../../../docs/manualpages/Vec/VecCreateGhostBlockWithArray.html">VecCreateGhostBlockWithArray</a>((((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm)-&gt;comm), dmmoab-&gt;bs, dmmoab-&gt;numFields * dmmoab-&gt;nloc, dmmoab-&gt;numFields * dmmoab-&gt;n, dmmoab-&gt;nghost, &amp;dmmoab-&gt;gsindices[dmmoab-&gt;nloc], data_ptr, vec);
+<a name="line498">498: </a>    } <font color="#4169E1">else</font> {
+<a name="line499">499: </a>      <font color="#B22222">/* This is an MPI Vector without ghosted padding */</font>
+<a name="line500">500: </a>      <a href="../../../../docs/manualpages/Vec/VecCreateMPIWithArray.html">VecCreateMPIWithArray</a>((((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm)-&gt;comm), dmmoab-&gt;bs, dmmoab-&gt;numFields * range-&gt;size(), <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, data_ptr, vec);
+<a name="line501">501: </a>    }
+<a name="line502">502: </a>  }
+<a name="line503">503: </a>  <a href="../../../../docs/manualpages/Vec/VecSetFromOptions.html">VecSetFromOptions</a>(*vec);
+
+<a name="line505">505: </a>  <font color="#B22222">/* create a container and store the internal MOAB data for faster access based on Entities etc */</font>
+<a name="line506">506: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a> moabdata;
+<a name="line507">507: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainerCreate.html">PetscContainerCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;moabdata);
+<a name="line508">508: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainerSetPointer.html">PetscContainerSetPointer</a>(moabdata, vmoab);
+<a name="line509">509: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainerSetUserDestroy.html">PetscContainerSetUserDestroy</a>(moabdata, DMVecUserDestroy_Moab);
+<a name="line510">510: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectCompose.html">PetscObjectCompose</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)*vec, <font color="#666666">"MOABData"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)moabdata);
+<a name="line511">511: </a>  (*vec)-&gt;ops-&gt;duplicate = DMVecDuplicate_Moab;
+<a name="line512">512: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainerDestroy.html">PetscContainerDestroy</a>(&amp;moabdata);
+
+<a name="line514">514: </a>  <font color="#B22222">/* Vector created, manually set local to global mapping */</font>
+<a name="line515">515: </a>  <font color="#4169E1">if</font> (dmmoab-&gt;ltog_map) <a href="../../../../docs/manualpages/Vec/VecSetLocalToGlobalMapping.html">VecSetLocalToGlobalMapping</a>(*vec, dmmoab-&gt;ltog_map);
+
+<a name="line517">517: </a>  <font color="#B22222">/* set the <a href="../../../../docs/manualpages/DM/DM.html">DM</a> reference to the vector */</font>
+<a name="line518">518: </a>  <a href="../../../../docs/manualpages/DM/VecSetDM.html">VecSetDM</a>(*vec, dm);
+<a name="line519">519: </a>  <font color="#4169E1">return</font> 0;
+<a name="line520">520: </a>}
+
+<a name="line522">522: </a><font color="#B22222">/*  DMVecCreateTagName_Moab_Private</font>
+<a name="line523">523: </a><font color="#B22222"> *</font>
+<a name="line524">524: </a><font color="#B22222"> *  Creates a unique tag name that will be shared across processes. If</font>
+<a name="line525">525: </a><font color="#B22222"> *  pcomm is NULL, then this is a serial vector. A unique tag name</font>
+<a name="line526">526: </a><font color="#B22222"> *  will be returned in tag_name in either case.</font>
+<a name="line527">527: </a><font color="#B22222"> *</font>
+<a name="line528">528: </a><font color="#B22222"> *  The tag names have the format _PETSC_VEC_N where N is some integer.</font>
+<a name="line529">529: </a><font color="#B22222"> *</font>
+<a name="line530">530: </a><font color="#B22222"> *  NOTE: The tag_name is allocated in this routine; The user needs to free</font>
+<a name="line531">531: </a><font color="#B22222"> *        the character array.</font>
+<a name="line532">532: </a><font color="#B22222"> */</font>
+<a name="line533">533: </a><font color="#A020F0">#ifdef MOAB_HAVE_MPI</font>
+<a name="line534">534: </a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMVecCreateTagName_Moab_Private(moab::Interface *mbiface, moab::ParallelComm *pcomm, char **tag_name)
+<a name="line535">535: </a><font color="#A020F0">#else</font>
+<a name="line536">536: </a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMVecCreateTagName_Moab_Private(moab::Interface *mbiface, char **tag_name)
+<a name="line537">537: </a><font color="#A020F0">#endif</font>
+<a name="line538">538: </a>{
+<a name="line539">539: </a><strong><font color="#FF0000">  moab:</font></strong>:ErrorCode mberr;
+<a name="line540">540: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        n, global_n;
+<a name="line541">541: </a><strong><font color="#FF0000">  moab:</font></strong>:Tag       indexTag;
+
+<a name="line543">543: </a>  const char *PVEC_PREFIX = <font color="#666666">"__PETSC_VEC_"</font>;
+<a name="line544">544: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(PETSC_MAX_PATH_LEN, tag_name);
+
+<a name="line546">546: </a><strong><font color="#FF0000">  moab:</font></strong>:EntityHandle rootset = mbiface-&gt;get_root_set();
+
+<a name="line548">548: </a>  <font color="#B22222">/* Check to see if there are any PETSc vectors defined */</font>
+<a name="line549">549: </a>  <font color="#B22222">/* Create a tag in MOAB mesh to index and keep track of number of Petsc vec tags */</font>
+<a name="line550">550: </a>  mberr = mbiface-&gt;tag_get_handle(<font color="#666666">"__PETSC_VECS__"</font>, 1, moab::MB_TYPE_INTEGER, indexTag, moab::MB_TAG_SPARSE | moab::MB_TAG_CREAT, 0);
+<a name="line551">551: </a>  MBERRNM(mberr);
+<a name="line552">552: </a>  mberr = mbiface-&gt;tag_get_data(indexTag, &amp;rootset, 1, &amp;n);
+<a name="line553">553: </a>  <font color="#4169E1">if</font> (mberr == moab::MB_TAG_NOT_FOUND) n = 0; <font color="#B22222">/* this is the first temporary vector */</font>
+<a name="line554">554: </a>  <font color="#4169E1">else</font> MBERRNM(mberr);
+
+<a name="line556">556: </a>  <font color="#B22222">/* increment the new value of n */</font>
+<a name="line557">557: </a>  ++n;
+
+<a name="line559">559: </a><font color="#A020F0">#ifdef MOAB_HAVE_MPI</font>
+<a name="line560">560: </a>  <font color="#B22222">/* Make sure that n is consistent across all processes */</font>
+<a name="line561">561: </a>  <a href="../../../../docs/manualpages/Sys/MPIU_Allreduce.html">MPIU_Allreduce</a>(&amp;n, &amp;global_n, 1, MPI_INT, MPI_MAX, pcomm-&gt;comm());
+<a name="line562">562: </a><font color="#A020F0">#else</font>
+<a name="line563">563: </a>  global_n = n;
+<a name="line564">564: </a><font color="#A020F0">#endif</font>
+
+<a name="line566">566: </a>  <font color="#B22222">/* Set the new name accordingly and return */</font>
+<a name="line567">567: </a>  <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(*tag_name, PETSC_MAX_PATH_LEN - 1, <font color="#666666">"%s_%"</font> PetscInt_FMT, PVEC_PREFIX, global_n);
+<a name="line568">568: </a>  mberr = mbiface-&gt;tag_set_data(indexTag, &amp;rootset, 1, (const void *)&amp;global_n);
+<a name="line569">569: </a>  MBERRNM(mberr);
+<a name="line570">570: </a>  <font color="#4169E1">return</font> 0;
+<a name="line571">571: </a>}
+
+<a name="line573">573: </a><strong><font color="#4169E1"><a name="DMCreateGlobalVector_Moab"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCreateGlobalVector_Moab(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *gvec)</font></strong>
+<a name="line574">574: </a>{
+<a name="line575">575: </a>  DM_Moab *dmmoab = (DM_Moab *)dm-&gt;data;
+
+<a name="line579">579: </a>  DMCreateVector_Moab_Private(dm, NULL, dmmoab-&gt;vowned, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, gvec);
+<a name="line580">580: </a>  <font color="#4169E1">return</font> 0;
+<a name="line581">581: </a>}
+
+<a name="line583">583: </a><strong><font color="#4169E1"><a name="DMCreateLocalVector_Moab"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCreateLocalVector_Moab(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *lvec)</font></strong>
+<a name="line584">584: </a>{
+<a name="line585">585: </a>  DM_Moab *dmmoab = (DM_Moab *)dm-&gt;data;
+
+<a name="line589">589: </a>  DMCreateVector_Moab_Private(dm, NULL, dmmoab-&gt;vlocal, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, lvec);
+<a name="line590">590: </a>  <font color="#4169E1">return</font> 0;
+<a name="line591">591: </a>}
+
+<a name="line593">593: </a><strong><font color="#4169E1"><a name="DMVecDuplicate_Moab"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMVecDuplicate_Moab(<a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *y)</font></strong>
+<a name="line594">594: </a>{
+<a name="line595">595: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>             dm;
+<a name="line596">596: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a> moabdata;
+<a name="line597">597: </a>  Vec_MOAB      *vmoab;
+
+
+<a name="line602">602: </a>  <font color="#B22222">/* Get the Vec_MOAB struct for the original vector */</font>
+<a name="line603">603: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)x, <font color="#666666">"MOABData"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;moabdata);
+<a name="line604">604: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(moabdata, (void **)&amp;vmoab);
+
+<a name="line606">606: </a>  <a href="../../../../docs/manualpages/DM/VecGetDM.html">VecGetDM</a>(x, &amp;dm);
+
+<a name="line609">609: </a>  DMCreateVector_Moab_Private(dm, NULL, vmoab-&gt;tag_range, vmoab-&gt;is_global_vec, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, y);
+<a name="line610">610: </a>  <a href="../../../../docs/manualpages/DM/VecSetDM.html">VecSetDM</a>(*y, dm);
+<a name="line611">611: </a>  <font color="#4169E1">return</font> 0;
+<a name="line612">612: </a>}
+
+<a name="line614">614: </a><strong><font color="#4169E1"><a name="DMVecUserDestroy_Moab"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMVecUserDestroy_Moab(void *user)</font></strong>
+<a name="line615">615: </a>{
+<a name="line616">616: </a>  Vec_MOAB       *vmoab = (Vec_MOAB *)user;
+<a name="line617">617: </a><strong><font color="#FF0000">  moab:</font></strong>:ErrorCode merr;
+
+<a name="line619">619: </a>  <font color="#4169E1">if</font> (vmoab-&gt;new_tag &amp;&amp; vmoab-&gt;tag) {
+<a name="line620">620: </a>    <font color="#B22222">/* Tag was created via a call to <a href="../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>, delete the underlying tag in MOAB */</font>
+<a name="line621">621: </a>    merr = vmoab-&gt;mbiface-&gt;tag_delete(vmoab-&gt;tag);
+<a name="line622">622: </a>    MBERRNM(merr);
+<a name="line623">623: </a>  }
+<a name="line624">624: </a>  delete vmoab-&gt;tag_range;
+<a name="line625">625: </a>  vmoab-&gt;tag     = NULL;
+<a name="line626">626: </a>  vmoab-&gt;mbiface = NULL;
+<a name="line627">627: </a><font color="#A020F0">#ifdef MOAB_HAVE_MPI</font>
+<a name="line628">628: </a>  vmoab-&gt;pcomm = NULL;
+<a name="line629">629: </a><font color="#A020F0">#endif</font>
+<a name="line630">630: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(vmoab);
+<a name="line631">631: </a>  <font color="#4169E1">return</font> 0;
+<a name="line632">632: </a>}
+
+<a name="line634">634: </a><strong><font color="#4169E1"><a name="DMGlobalToLocalBegin_Moab"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMGlobalToLocalBegin_Moab(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> g, <a href="../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a> mode, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> l)</font></strong>
+<a name="line635">635: </a>{
+<a name="line636">636: </a>  DM_Moab *dmmoab = (DM_Moab *)dm-&gt;data;
+
+<a name="line638">638: </a>  <a href="../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(dmmoab-&gt;ltog_sendrecv, g, l, mode, <a href="../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);
+<a name="line639">639: </a>  <font color="#4169E1">return</font> 0;
+<a name="line640">640: </a>}
+
+<a name="line642">642: </a><strong><font color="#4169E1"><a name="DMGlobalToLocalEnd_Moab"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMGlobalToLocalEnd_Moab(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> g, <a href="../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a> mode, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> l)</font></strong>
+<a name="line643">643: </a>{
+<a name="line644">644: </a>  DM_Moab *dmmoab = (DM_Moab *)dm-&gt;data;
+
+<a name="line646">646: </a>  <a href="../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(dmmoab-&gt;ltog_sendrecv, g, l, mode, <a href="../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);
+<a name="line647">647: </a>  <font color="#4169E1">return</font> 0;
+<a name="line648">648: </a>}
+
+<a name="line650">650: </a><strong><font color="#4169E1"><a name="DMLocalToGlobalBegin_Moab"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMLocalToGlobalBegin_Moab(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> l, <a href="../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a> mode, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> g)</font></strong>
+<a name="line651">651: </a>{
+<a name="line652">652: </a>  DM_Moab *dmmoab = (DM_Moab *)dm-&gt;data;
+
+<a name="line654">654: </a>  <a href="../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(dmmoab-&gt;ltog_sendrecv, l, g, mode, <a href="../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line655">655: </a>  <font color="#4169E1">return</font> 0;
+<a name="line656">656: </a>}
+
+<a name="line658">658: </a><strong><font color="#4169E1"><a name="DMLocalToGlobalEnd_Moab"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMLocalToGlobalEnd_Moab(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> l, <a href="../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a> mode, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> g)</font></strong>
+<a name="line659">659: </a>{
+<a name="line660">660: </a>  DM_Moab *dmmoab = (DM_Moab *)dm-&gt;data;
+
+<a name="line662">662: </a>  <a href="../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(dmmoab-&gt;ltog_sendrecv, l, g, mode, <a href="../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line663">663: </a>  <font color="#4169E1">return</font> 0;
+<a name="line664">664: </a>}
+</pre>
+</body>
+
+</html>

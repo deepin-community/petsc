@@ -1,0 +1,5 @@
+# zero byte output are provided in upstream tarball as examples
+zero-byte-file-in-doc-directory usr/share/doc/libpetsc*-dev-examples/src/*
+
+# test scripts don't need to be executable
+script-not-executable [usr/share/petsc/*/share/petsc/examples/src/*/tests/scripts/*]

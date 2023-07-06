@@ -1,0 +1,83 @@
+# PetscViewerFormat
+Way a viewer presents the object 
+## Synopsis
+```
+typedef enum {
+  PETSC_VIEWER_DEFAULT,
+  PETSC_VIEWER_ASCII_MATLAB,
+  PETSC_VIEWER_ASCII_MATHEMATICA,
+  PETSC_VIEWER_ASCII_IMPL,
+  PETSC_VIEWER_ASCII_INFO,
+  PETSC_VIEWER_ASCII_INFO_DETAIL,
+  PETSC_VIEWER_ASCII_COMMON,
+  PETSC_VIEWER_ASCII_SYMMODU,
+  PETSC_VIEWER_ASCII_INDEX,
+  PETSC_VIEWER_ASCII_DENSE,
+  PETSC_VIEWER_ASCII_MATRIXMARKET,
+  PETSC_VIEWER_ASCII_VTK_DEPRECATED,
+  PETSC_VIEWER_ASCII_VTK_ATTR = PETSC_VIEWER_ASCII_VTK_DEPRECATED,
+  PETSC_VIEWER_ASCII_VTK_CELL_DEPRECATED,
+  PETSC_VIEWER_ASCII_VTK_CELL_ATTR = PETSC_VIEWER_ASCII_VTK_CELL_DEPRECATED,
+  PETSC_VIEWER_ASCII_VTK_COORDS_DEPRECATED,
+  PETSC_VIEWER_ASCII_VTK_COORDS_ATTR = PETSC_VIEWER_ASCII_VTK_COORDS_DEPRECATED,
+  PETSC_VIEWER_ASCII_PCICE,
+  PETSC_VIEWER_ASCII_PYTHON,
+  PETSC_VIEWER_ASCII_FACTOR_INFO,
+  PETSC_VIEWER_ASCII_LATEX,
+  PETSC_VIEWER_ASCII_XML,
+  PETSC_VIEWER_ASCII_FLAMEGRAPH,
+  PETSC_VIEWER_ASCII_GLVIS,
+  PETSC_VIEWER_ASCII_CSV,
+  PETSC_VIEWER_DRAW_BASIC,
+  PETSC_VIEWER_DRAW_LG,
+  PETSC_VIEWER_DRAW_LG_XRANGE,
+  PETSC_VIEWER_DRAW_CONTOUR,
+  PETSC_VIEWER_DRAW_PORTS,
+  PETSC_VIEWER_VTK_VTS,
+  PETSC_VIEWER_VTK_VTR,
+  PETSC_VIEWER_VTK_VTU,
+  PETSC_VIEWER_BINARY_MATLAB,
+  PETSC_VIEWER_NATIVE,
+  PETSC_VIEWER_HDF5_PETSC,
+  PETSC_VIEWER_HDF5_VIZ,
+  PETSC_VIEWER_HDF5_XDMF,
+  PETSC_VIEWER_HDF5_MAT,
+  PETSC_VIEWER_NOFORMAT,
+  PETSC_VIEWER_LOAD_BALANCE,
+  PETSC_VIEWER_FAILED,
+  PETSC_VIEWER_ALL
+} PetscViewerFormat;
+```
+
+
+
+## See Also
+ [](sec_viewers), `PetscViewer`, `PetscViewerType`, `PetscViewerPushFormat()`, `PetscViewerPopFormat()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscviewer.h.html#PetscViewerFormat">include/petscviewer.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex3.c.html">src/vec/vec/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/sf/tutorials/ex1.c.html">src/vec/is/sf/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/sf/tutorials/ex1f.F90.html">src/vec/is/sf/tutorials/ex1f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/tutorials/ex5.c.html">src/dm/impls/plex/tutorials/ex5.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex22.c.html">src/dm/tutorials/ex22.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex7.c.html">src/dm/tutorials/ex7.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex27.c.html">src/ksp/ksp/tutorials/ex27.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex2f.F90.html">src/ksp/ksp/tutorials/ex2f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex34.c.html">src/ksp/ksp/tutorials/ex34.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex54.c.html">src/ksp/ksp/tutorials/ex54.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex55.c.html">src/ksp/ksp/tutorials/ex55.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscviewer.h)
+
+
+[Index of all Viewer routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

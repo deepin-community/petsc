@@ -1,0 +1,53 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/product/product.c">Actual source code: product.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:36+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petsc/private/dmproductimpl.h.html">&lt;petsc/private/dmproductimpl.h&gt;</A>
+
+<a name="line3">  3: </a><strong><font color="#4169E1"><a name="DMDestroy_Product"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMDestroy_Product(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm)</font></strong>
+<a name="line4">  4: </a>{
+<a name="line5">  5: </a>  DM_Product *product = (DM_Product *)dm-&gt;data;
+<a name="line6">  6: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    d;
+
+<a name="line9">  9: </a>  <font color="#4169E1">for</font> (d = 0; d &lt; DMPRODUCT_MAX_DIM; ++d) <a href="../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;product-&gt;dm[d]);
+<a name="line10"> 10: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(product);
+<a name="line11"> 11: </a>  <font color="#4169E1">return</font> 0;
+<a name="line12"> 12: </a>}
+
+<a name="line14"> 14: </a><font color="#B22222">/*MC</font>
+<a name="line15"> 15: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMPRODUCT/DMPRODUCT.html">DMPRODUCT</a> = "product" - a <a href="../../../../docs/manualpages/DM/DM.html">DM</a> representing a local Cartesian product of other DMs</font>
+
+<a name="line17"> 17: </a><font color="#B22222">  For each of dim dimensions, stores a sub-<a href="../../../../docs/manualpages/DM/DM.html">DM</a> (need not be unique) and a dimension index. This specifies</font>
+<a name="line18"> 18: </a><font color="#B22222">  which dimension of the sub-<a href="../../../../docs/manualpages/DM/DM.html">DM</a> corresponds to each dimension of the DMProduct.</font>
+
+<a name="line20"> 20: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line22"> 22: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/DM/DM.html">DM</a>`, `<a href="../../../../docs/manualpages/DMStag/DMSTAG.html">DMSTAG</a>`, `<a href="../../../../docs/manualpages/DMPRODUCT/DMProductGetDM.html">DMProductGetDM</a>()`, `<a href="../../../../docs/manualpages/DMPRODUCT/DMProductSetDimensionIndex.html">DMProductSetDimensionIndex</a>()`, `<a href="../../../../docs/manualpages/DMPRODUCT/DMProductSetDM.html">DMProductSetDM</a>()`, `<a href="../../../../docs/manualpages/DMStag/DMStagSetUniformCoordinatesProduct.html">DMStagSetUniformCoordinatesProduct</a>()`,</font>
+<a name="line23"> 23: </a><font color="#B22222">          `<a href="../../../../docs/manualpages/DMStag/DMStagGetProductCoordinateArrays.html">DMStagGetProductCoordinateArrays</a>()`, `<a href="../../../../docs/manualpages/DMStag/DMStagGetProductCoordinateArraysRead.html">DMStagGetProductCoordinateArraysRead</a>()`</font>
+<a name="line24"> 24: </a><font color="#B22222">M*/</font>
+
+<a name="line26"> 26: </a><strong><font color="#4169E1"><a name="DMCreate_Product"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCreate_Product(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm)</font></strong>
+<a name="line27"> 27: </a>{
+<a name="line28"> 28: </a>  DM_Product *product;
+<a name="line29"> 29: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    d;
+
+<a name="line32"> 32: </a>  <a href="../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;product);
+<a name="line33"> 33: </a>  dm-&gt;data = product;
+
+<a name="line35"> 35: </a>  <font color="#4169E1">for</font> (d = 0; d &lt; DMPRODUCT_MAX_DIM; ++d) product-&gt;dm[d] = NULL;
+<a name="line36"> 36: </a>  <font color="#4169E1">for</font> (d = 0; d &lt; DMPRODUCT_MAX_DIM; ++d) product-&gt;dim[d] = -1;
+
+<a name="line38"> 38: </a>  dm-&gt;ops-&gt;destroy = DMDestroy_Product;
+<a name="line39"> 39: </a>  <font color="#4169E1">return</font> 0;
+<a name="line40"> 40: </a>}
+</pre>
+</body>
+
+</html>

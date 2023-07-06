@@ -1,0 +1,400 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/objects/tagm.c">Actual source code: tagm.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:57+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../include/petsc/private/petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../include/petsc/private/hashmapobj.h.html">&lt;petsc/private/hashmapobj.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="../../../include/petsc/private/garbagecollector.h.html">&lt;petsc/private/garbagecollector.h&gt;</A>
+<a name="line4">  4: </a><font color="#B22222">/* ---------------------------------------------------------------- */</font>
+<a name="line5">  5: </a><font color="#B22222">/*</font>
+<a name="line6">  6: </a><font color="#B22222">   A simple way to manage tags inside a communicator.</font>
+
+<a name="line8">  8: </a><font color="#B22222">   It uses the attributes to determine if a new communicator</font>
+<a name="line9">  9: </a><font color="#B22222">      is needed and to store the available tags.</font>
+
+<a name="line11"> 11: </a><font color="#B22222">*/</font>
+
+<a name="line13"> 13: </a><font color="#B22222">/*@C</font>
+<a name="line14"> 14: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscObjectGetNewTag.html">PetscObjectGetNewTag</a> - Gets a unique new tag from a PETSc object. All</font>
+<a name="line15"> 15: </a><font color="#B22222">    processors that share the object MUST call this routine EXACTLY the same</font>
+<a name="line16"> 16: </a><font color="#B22222">    number of times.  This tag should only be used with the current objects</font>
+<a name="line17"> 17: </a><font color="#B22222">    communicator; do NOT use it with any other MPI communicator.</font>
+
+<a name="line19"> 19: </a><font color="#B22222">    Collective</font>
+
+<a name="line21"> 21: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line22"> 22: </a><font color="#B22222">.   obj - the PETSc object; this must be cast with a (`<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>`), for example,</font>
+<a name="line23"> 23: </a><font color="#B22222">         `<a href="../../../docs/manualpages/Sys/PetscObjectGetNewTag.html">PetscObjectGetNewTag</a>`((`<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>`)mat,&amp;tag);</font>
+
+<a name="line25"> 25: </a><font color="#B22222">    Output Parameter:</font>
+<a name="line26"> 26: </a><font color="#B22222">.   tag - the new tag</font>
+
+<a name="line28"> 28: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line30"> 30: </a><font color="#B22222">    Note:</font>
+<a name="line31"> 31: </a><font color="#B22222">    This tag is needed if one is writing MPI communication code involving message passing and needs unique MPI tags to ensure the messages are connected to this specific</font>
+<a name="line32"> 32: </a><font color="#B22222">    object.</font>
+
+<a name="line34"> 34: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscCommGetNewTag.html">PetscCommGetNewTag</a>()`</font>
+<a name="line35"> 35: </a><font color="#B22222">@*/</font>
+<a name="line36"> 36: </a><strong><font color="#4169E1"><a name="PetscObjectGetNewTag"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscObjectGetNewTag.html">PetscObjectGetNewTag</a>(<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> obj, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *tag)</font></strong>
+<a name="line37"> 37: </a>{
+<a name="line38"> 38: </a>  <a href="../../../docs/manualpages/Sys/PetscCommGetNewTag.html">PetscCommGetNewTag</a>(obj-&gt;comm, tag);
+<a name="line39"> 39: </a>  <font color="#4169E1">return</font> 0;
+<a name="line40"> 40: </a>}
+
+<a name="line42"> 42: </a><font color="#B22222">/*@</font>
+<a name="line43"> 43: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscCommGetNewTag.html">PetscCommGetNewTag</a> - Gets a unique new tag from a PETSc communicator. All</font>
+<a name="line44"> 44: </a><font color="#B22222">    processors that share the communicator MUST call this routine EXACTLY the same</font>
+<a name="line45"> 45: </a><font color="#B22222">    number of times.  This tag should only be used with the current objects</font>
+<a name="line46"> 46: </a><font color="#B22222">    communicator; do NOT use it with any other MPI communicator.</font>
+
+<a name="line48"> 48: </a><font color="#B22222">    Collective</font>
+
+<a name="line50"> 50: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line51"> 51: </a><font color="#B22222">.   comm - the MPI communicator</font>
+
+<a name="line53"> 53: </a><font color="#B22222">    Output Parameter:</font>
+<a name="line54"> 54: </a><font color="#B22222">.   tag - the new tag</font>
+
+<a name="line56"> 56: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line58"> 58: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscObjectGetNewTag.html">PetscObjectGetNewTag</a>()`, `<a href="../../../docs/manualpages/Sys/PetscCommDuplicate.html">PetscCommDuplicate</a>()`</font>
+<a name="line59"> 59: </a><font color="#B22222">@*/</font>
+<a name="line60"> 60: </a><strong><font color="#4169E1"><a name="PetscCommGetNewTag"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscCommGetNewTag.html">PetscCommGetNewTag</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *tag)</font></strong>
+<a name="line61"> 61: </a>{
+<a name="line62"> 62: </a>  PetscCommCounter *counter;
+<a name="line63"> 63: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>      *maxval, flg;
+
+
+<a name="line67"> 67: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(comm, Petsc_Counter_keyval, &amp;counter, &amp;flg);
+
+<a name="line70"> 70: </a>  <font color="#4169E1">if</font> (counter-&gt;tag &lt; 1) {
+<a name="line71"> 71: </a>    <a href="../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(NULL, <font color="#666666">"Out of tags for object, starting to recycle. Comm reference count %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, counter-&gt;refcount);
+<a name="line72"> 72: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(MPI_COMM_WORLD, MPI_TAG_UB, &amp;maxval, &amp;flg);
+<a name="line74"> 74: </a>    counter-&gt;tag = *maxval - 128; <font color="#B22222">/* hope that any still active tags were issued right at the beginning of the run */</font>
+<a name="line75"> 75: </a>  }
+
+<a name="line77"> 77: </a>  *tag = counter-&gt;tag--;
+<a name="line78"> 78: </a>  <font color="#4169E1">if</font> (<a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG)) {
+<a name="line79"> 79: </a>    <font color="#B22222">/*</font>
+<a name="line80"> 80: </a><font color="#B22222">     Hanging here means that some processes have called <a href="../../../docs/manualpages/Sys/PetscCommGetNewTag.html">PetscCommGetNewTag</a>() and others have not.</font>
+<a name="line81"> 81: </a><font color="#B22222">     */</font>
+<a name="line82"> 82: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Barrier.html#MPI_Barrier">MPI_Barrier</a>(comm);
+<a name="line83"> 83: </a>  }
+<a name="line84"> 84: </a>  <font color="#4169E1">return</font> 0;
+<a name="line85"> 85: </a>}
+
+<a name="line87"> 87: </a><font color="#B22222">/*@C</font>
+<a name="line88"> 88: </a><font color="#B22222">  <a href="../../../docs/manualpages/Sys/PetscCommGetComm.html">PetscCommGetComm</a> - get a new MPI communicator from a PETSc communicator that can be passed off to another package</font>
+
+<a name="line90"> 90: </a><font color="#B22222">  Collective</font>
+
+<a name="line92"> 92: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line93"> 93: </a><font color="#B22222">. comm_in - Input communicator</font>
+
+<a name="line95"> 95: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line96"> 96: </a><font color="#B22222">. comm_out - Output communicator</font>
+
+<a name="line98"> 98: </a><font color="#B22222">  Notes:</font>
+<a name="line99"> 99: </a><font color="#B22222">    Use `<a href="../../../docs/manualpages/Sys/PetscCommRestoreComm.html">PetscCommRestoreComm</a>()` to return the communicator when the external package no longer needs it</font>
+
+<a name="line101">101: </a><font color="#B22222">    Certain MPI implementations have `<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_free.html#MPI_Comm_free">MPI_Comm_free</a>()` that do not work, thus one can run out of available MPI communicators causing</font>
+<a name="line102">102: </a><font color="#B22222">    mysterious crashes in the code after running a long time. This routine allows reusing previously obtained MPI communicators that</font>
+<a name="line103">103: </a><font color="#B22222">    are no longer needed.</font>
+
+<a name="line105">105: </a><font color="#B22222">Level: developer</font>
+
+<a name="line107">107: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscObjectGetNewTag.html">PetscObjectGetNewTag</a>()`, `<a href="../../../docs/manualpages/Sys/PetscCommGetNewTag.html">PetscCommGetNewTag</a>()`, `<a href="../../../docs/manualpages/Sys/PetscCommDestroy.html">PetscCommDestroy</a>()`, `<a href="../../../docs/manualpages/Sys/PetscCommRestoreComm.html">PetscCommRestoreComm</a>()`</font>
+<a name="line108">108: </a><font color="#B22222">@*/</font>
+<a name="line109">109: </a><strong><font color="#4169E1"><a name="PetscCommGetComm"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscCommGetComm.html">PetscCommGetComm</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm_in, <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> *comm_out)</font></strong>
+<a name="line110">110: </a>{
+<a name="line111">111: </a>  PetscCommCounter *counter;
+<a name="line112">112: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>       flg;
+
+<a name="line114">114: </a>  PetscSpinlockLock(&amp;PetscCommSpinLock);
+<a name="line115">115: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(comm_in, Petsc_Counter_keyval, &amp;counter, &amp;flg);
+
+<a name="line118">118: </a>  <font color="#4169E1">if</font> (counter-&gt;comms) {
+<a name="line119">119: </a>    <font color="#4169E1">struct PetscCommStash</font> *pcomms = counter-&gt;comms;
+
+<a name="line121">121: </a>    *comm_out      = pcomms-&gt;comm;
+<a name="line122">122: </a>    counter-&gt;comms = pcomms-&gt;next;
+<a name="line123">123: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(pcomms);
+<a name="line124">124: </a>    <a href="../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(NULL, <font color="#666666">"Reusing a communicator %ld %ld\n"</font>, (long)comm_in, (long)*comm_out);
+<a name="line125">125: </a>  } <font color="#4169E1">else</font> {
+<a name="line126">126: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_dup.html#MPI_Comm_dup">MPI_Comm_dup</a>(comm_in, comm_out);
+<a name="line127">127: </a>  }
+<a name="line128">128: </a>  PetscSpinlockUnlock(&amp;PetscCommSpinLock);
+<a name="line129">129: </a>  <font color="#4169E1">return</font> 0;
+<a name="line130">130: </a>}
+
+<a name="line132">132: </a><font color="#B22222">/*@C</font>
+<a name="line133">133: </a><font color="#B22222">  <a href="../../../docs/manualpages/Sys/PetscCommRestoreComm.html">PetscCommRestoreComm</a> - restores an MPI communicator that was obtained with `<a href="../../../docs/manualpages/Sys/PetscCommGetComm.html">PetscCommGetComm</a>()`</font>
+
+<a name="line135">135: </a><font color="#B22222">  Collective</font>
+
+<a name="line137">137: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line138">138: </a><font color="#B22222">+  comm_in - Input communicator</font>
+<a name="line139">139: </a><font color="#B22222">-  comm_out - returned communicator</font>
+
+<a name="line141">141: </a><font color="#B22222">Level: developer</font>
+
+<a name="line143">143: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscObjectGetNewTag.html">PetscObjectGetNewTag</a>()`, `<a href="../../../docs/manualpages/Sys/PetscCommGetNewTag.html">PetscCommGetNewTag</a>()`, `<a href="../../../docs/manualpages/Sys/PetscCommDestroy.html">PetscCommDestroy</a>()`, `<a href="../../../docs/manualpages/Sys/PetscCommRestoreComm.html">PetscCommRestoreComm</a>()`</font>
+<a name="line144">144: </a><font color="#B22222">@*/</font>
+<a name="line145">145: </a><strong><font color="#4169E1"><a name="PetscCommRestoreComm"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscCommRestoreComm.html">PetscCommRestoreComm</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm_in, <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> *comm_out)</font></strong>
+<a name="line146">146: </a>{
+<a name="line147">147: </a>  PetscCommCounter      *counter;
+<a name="line148">148: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>            flg;
+<a name="line149">149: </a>  <font color="#4169E1">struct PetscCommStash</font> *pcomms, *ncomm;
+
+<a name="line151">151: </a>  PetscSpinlockLock(&amp;PetscCommSpinLock);
+<a name="line152">152: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(comm_in, Petsc_Counter_keyval, &amp;counter, &amp;flg);
+
+<a name="line155">155: </a>  <a href="../../../docs/manualpages/Sys/PetscMalloc.html">PetscMalloc</a>(<font color="#4169E1">sizeof</font>(<font color="#4169E1">struct PetscCommStash</font>), &amp;ncomm);
+<a name="line156">156: </a>  ncomm-&gt;comm = *comm_out;
+<a name="line157">157: </a>  ncomm-&gt;next = NULL;
+<a name="line158">158: </a>  pcomms      = counter-&gt;comms;
+<a name="line159">159: </a>  <font color="#4169E1">while</font> (pcomms &amp;&amp; pcomms-&gt;next) pcomms = pcomms-&gt;next;
+<a name="line160">160: </a>  <font color="#4169E1">if</font> (pcomms) {
+<a name="line161">161: </a>    pcomms-&gt;next = ncomm;
+<a name="line162">162: </a>  } <font color="#4169E1">else</font> {
+<a name="line163">163: </a>    counter-&gt;comms = ncomm;
+<a name="line164">164: </a>  }
+<a name="line165">165: </a>  *comm_out = 0;
+<a name="line166">166: </a>  PetscSpinlockUnlock(&amp;PetscCommSpinLock);
+<a name="line167">167: </a>  <font color="#4169E1">return</font> 0;
+<a name="line168">168: </a>}
+
+<a name="line170">170: </a><font color="#B22222">/*@C</font>
+<a name="line171">171: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscCommDuplicate.html">PetscCommDuplicate</a> - Duplicates the communicator only if it is not already a PETSc communicator.</font>
+
+<a name="line173">173: </a><font color="#B22222">   Collective</font>
+
+<a name="line175">175: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line176">176: </a><font color="#B22222">.  comm_in - Input communicator</font>
+
+<a name="line178">178: </a><font color="#B22222">   Output Parameters:</font>
+<a name="line179">179: </a><font color="#B22222">+  comm_out - Output communicator.  May be comm_in.</font>
+<a name="line180">180: </a><font color="#B22222">-  first_tag - Tag available that has not already been used with this communicator (you may pass in NULL if you do not need a tag)</font>
+
+<a name="line182">182: </a><font color="#B22222">   Note:</font>
+<a name="line183">183: </a><font color="#B22222">   PETSc communicators are just regular MPI communicators that keep track of which</font>
+<a name="line184">184: </a><font color="#B22222">   tags have been used to prevent tag conflict. If you pass a non-PETSc communicator into</font>
+<a name="line185">185: </a><font color="#B22222">   a PETSc creation routine it will attach a private communicator for use in the objects communications.</font>
+<a name="line186">186: </a><font color="#B22222">   The internal `<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>` is used to perform all the MPI calls for PETSc, the outer `<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>` is a user</font>
+<a name="line187">187: </a><font color="#B22222">   level `<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>` that may be performing communication for the user or other library and so <a href="../../../docs/manualpages/IS/IS.html">IS</a> NOT used by PETSc.</font>
+
+<a name="line189">189: </a><font color="#B22222">Level: developer</font>
+
+<a name="line191">191: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscObjectGetNewTag.html">PetscObjectGetNewTag</a>()`, `<a href="../../../docs/manualpages/Sys/PetscCommGetNewTag.html">PetscCommGetNewTag</a>()`, `<a href="../../../docs/manualpages/Sys/PetscCommDestroy.html">PetscCommDestroy</a>()`</font>
+<a name="line192">192: </a><font color="#B22222">@*/</font>
+<a name="line193">193: </a><strong><font color="#4169E1"><a name="PetscCommDuplicate"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscCommDuplicate.html">PetscCommDuplicate</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm_in, <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> *comm_out, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *first_tag)</font></strong>
+<a name="line194">194: </a>{
+<a name="line195">195: </a>  PetscInt64       *cidx;
+<a name="line196">196: </a>  PetscCommCounter *counter;
+<a name="line197">197: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>      *maxval, flg;
+
+<a name="line199">199: </a>  PetscSpinlockLock(&amp;PetscCommSpinLock);
+<a name="line200">200: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(comm_in, Petsc_Counter_keyval, &amp;counter, &amp;flg);
+
+<a name="line202">202: </a>  <font color="#4169E1">if</font> (!flg) { <font color="#B22222">/* this is NOT a PETSc comm */</font>
+<a name="line203">203: </a>    <font color="#4169E1">union</font>
+<a name="line204">204: </a>    {
+<a name="line205">205: </a>      <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm;
+<a name="line206">206: </a>      void    *ptr;
+<a name="line207">207: </a>    } ucomm;
+<a name="line208">208: </a>    <font color="#B22222">/* check if this communicator has a PETSc communicator embedded in it */</font>
+<a name="line209">209: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(comm_in, Petsc_InnerComm_keyval, &amp;ucomm, &amp;flg);
+<a name="line210">210: </a>    <font color="#4169E1">if</font> (!flg) {
+<a name="line211">211: </a>      <font color="#B22222">/* This communicator is not yet known to this system, so we duplicate it and make an internal communicator */</font>
+<a name="line212">212: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_dup.html#MPI_Comm_dup">MPI_Comm_dup</a>(comm_in, comm_out);
+<a name="line213">213: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(MPI_COMM_WORLD, MPI_TAG_UB, &amp;maxval, &amp;flg);
+<a name="line215">215: </a>      <a href="../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;counter); <font color="#B22222">/* all fields of counter are zero'ed */</font>
+<a name="line216">216: </a>      counter-&gt;tag = *maxval;
+<a name="line217">217: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_set_attr.html#MPI_Comm_set_attr">MPI_Comm_set_attr</a>(*comm_out, Petsc_Counter_keyval, counter);
+<a name="line218">218: </a>      <font color="#B22222">/* Add an object creation index to the communicator */</font>
+<a name="line219">219: </a>      <a href="../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;cidx);
+<a name="line220">220: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_set_attr.html#MPI_Comm_set_attr">MPI_Comm_set_attr</a>(*comm_out, Petsc_CreationIdx_keyval, cidx);
+<a name="line221">221: </a>      <a href="../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(NULL, <font color="#666666">"Duplicating a communicator %ld %ld max tags = %d\n"</font>, (long)comm_in, (long)*comm_out, *maxval);
+
+<a name="line223">223: </a>      <font color="#B22222">/* save PETSc communicator inside user communicator, so we can get it next time */</font>
+<a name="line224">224: </a>      ucomm.comm = *comm_out; <font color="#B22222">/* ONLY the comm part of the union is significant. */</font>
+<a name="line225">225: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_set_attr.html#MPI_Comm_set_attr">MPI_Comm_set_attr</a>(comm_in, Petsc_InnerComm_keyval, ucomm.ptr);
+<a name="line226">226: </a>      ucomm.comm = comm_in;
+<a name="line227">227: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_set_attr.html#MPI_Comm_set_attr">MPI_Comm_set_attr</a>(*comm_out, Petsc_OuterComm_keyval, ucomm.ptr);
+<a name="line228">228: </a>    } <font color="#4169E1">else</font> {
+<a name="line229">229: </a>      *comm_out = ucomm.comm;
+<a name="line230">230: </a>      <font color="#B22222">/* pull out the inner <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> and hand it back to the caller */</font>
+<a name="line231">231: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(*comm_out, Petsc_Counter_keyval, &amp;counter, &amp;flg);
+<a name="line233">233: </a>      <a href="../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(NULL, <font color="#666666">"Using internal PETSc communicator %ld %ld\n"</font>, (long)comm_in, (long)*comm_out);
+<a name="line234">234: </a>    }
+<a name="line235">235: </a>  } <font color="#4169E1">else</font> *comm_out = comm_in;
+
+<a name="line237">237: </a>  <font color="#4169E1">if</font> (<a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG)) {
+<a name="line238">238: </a>    <font color="#B22222">/*</font>
+<a name="line239">239: </a><font color="#B22222">     Hanging here means that some processes have called <a href="../../../docs/manualpages/Sys/PetscCommDuplicate.html">PetscCommDuplicate</a>() and others have not.</font>
+<a name="line240">240: </a><font color="#B22222">     This likely means that a subset of processes in a <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> have attempted to create a <a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>!</font>
+<a name="line241">241: </a><font color="#B22222">     ALL processes that share a communicator MUST shared objects created from that communicator.</font>
+<a name="line242">242: </a><font color="#B22222">     */</font>
+<a name="line243">243: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Barrier.html#MPI_Barrier">MPI_Barrier</a>(comm_in);
+<a name="line244">244: </a>  }
+
+<a name="line246">246: </a>  <font color="#4169E1">if</font> (counter-&gt;tag &lt; 1) {
+<a name="line247">247: </a>    <a href="../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(NULL, <font color="#666666">"Out of tags for object, starting to recycle. Comm reference count %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, counter-&gt;refcount);
+<a name="line248">248: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(MPI_COMM_WORLD, MPI_TAG_UB, &amp;maxval, &amp;flg);
+<a name="line250">250: </a>    counter-&gt;tag = *maxval - 128; <font color="#B22222">/* hope that any still active tags were issued right at the beginning of the run */</font>
+<a name="line251">251: </a>  }
+
+<a name="line253">253: </a>  <font color="#4169E1">if</font> (first_tag) *first_tag = counter-&gt;tag--;
+
+<a name="line255">255: </a>  counter-&gt;refcount++; <font color="#B22222">/* number of references to this comm */</font>
+<a name="line256">256: </a>  PetscSpinlockUnlock(&amp;PetscCommSpinLock);
+<a name="line257">257: </a>  <font color="#4169E1">return</font> 0;
+<a name="line258">258: </a>}
+
+<a name="line260">260: </a><font color="#B22222">/*@C</font>
+<a name="line261">261: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscCommDestroy.html">PetscCommDestroy</a> - Frees communicator obtained with `<a href="../../../docs/manualpages/Sys/PetscCommDuplicate.html">PetscCommDuplicate</a>()`.</font>
+
+<a name="line263">263: </a><font color="#B22222">   Collective</font>
+
+<a name="line265">265: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line266">266: </a><font color="#B22222">.  comm - the communicator to free</font>
+
+<a name="line268">268: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line270">270: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscCommDuplicate.html">PetscCommDuplicate</a>()`</font>
+<a name="line271">271: </a><font color="#B22222">@*/</font>
+<a name="line272">272: </a><strong><font color="#4169E1"><a name="PetscCommDestroy"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscCommDestroy.html">PetscCommDestroy</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> *comm)</font></strong>
+<a name="line273">273: </a>{
+<a name="line274">274: </a>  PetscInt64       *cidx;
+<a name="line275">275: </a>  PetscCommCounter *counter;
+<a name="line276">276: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>       flg;
+<a name="line277">277: </a>  PetscGarbage      garbage;
+<a name="line278">278: </a>  <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>          icomm = *comm, ocomm;
+<a name="line279">279: </a>  <font color="#4169E1">union</font>
+<a name="line280">280: </a>  {
+<a name="line281">281: </a>    <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm;
+<a name="line282">282: </a>    void    *ptr;
+<a name="line283">283: </a>  } ucomm;
+
+<a name="line285">285: </a>  <font color="#4169E1">if</font> (*comm == MPI_COMM_NULL) <font color="#4169E1">return</font> 0;
+<a name="line286">286: </a>  PetscSpinlockLock(&amp;PetscCommSpinLock);
+<a name="line287">287: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(icomm, Petsc_Counter_keyval, &amp;counter, &amp;flg);
+<a name="line288">288: </a>  <font color="#4169E1">if</font> (!flg) { <font color="#B22222">/* not a PETSc comm, check if it has an inner comm */</font>
+<a name="line289">289: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(icomm, Petsc_InnerComm_keyval, &amp;ucomm, &amp;flg);
+<a name="line291">291: </a>    icomm = ucomm.comm;
+<a name="line292">292: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(icomm, Petsc_Counter_keyval, &amp;counter, &amp;flg);
+<a name="line294">294: </a>  }
+<a name="line295">295: </a>  counter-&gt;refcount--;
+<a name="line296">296: </a>  <font color="#4169E1">if</font> (!counter-&gt;refcount) {
+<a name="line297">297: </a>    <font color="#B22222">/* if <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> has outer comm then remove reference to inner <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> from outer <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> */</font>
+<a name="line298">298: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(icomm, Petsc_OuterComm_keyval, &amp;ucomm, &amp;flg);
+<a name="line299">299: </a>    <font color="#4169E1">if</font> (flg) {
+<a name="line300">300: </a>      ocomm = ucomm.comm;
+<a name="line301">301: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(ocomm, Petsc_InnerComm_keyval, &amp;ucomm, &amp;flg);
+<a name="line303">303: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_delete_attr.html#MPI_Comm_delete_attr">MPI_Comm_delete_attr</a>(ocomm, Petsc_InnerComm_keyval);
+<a name="line304">304: </a>    }
+
+<a name="line306">306: </a>    <font color="#B22222">/* Remove the object creation index on the communicator */</font>
+<a name="line307">307: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(icomm, Petsc_CreationIdx_keyval, &amp;cidx, &amp;flg);
+<a name="line308">308: </a>    <font color="#4169E1">if</font> (flg) {
+<a name="line309">309: </a>      <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(cidx);
+<a name="line310">310: </a>    } <font color="#4169E1">else</font> <a href="../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_CORRUPT, <font color="#666666">"<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> does not have object creation index"</font>);
+
+<a name="line312">312: </a>    <font color="#B22222">/* Remove garbage hashmap set up by garbage collection */</font>
+<a name="line313">313: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(icomm, Petsc_Garbage_HMap_keyval, &amp;garbage, &amp;flg);
+<a name="line314">314: </a>    <font color="#4169E1">if</font> (flg) {
+<a name="line315">315: </a>      <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> entries = 0;
+<a name="line316">316: </a>      <a href="../../../docs/manualpages/PetscH/PetscHMapObjGetSize.html">PetscHMapObjGetSize</a>(garbage.map, &amp;entries);
+<a name="line317">317: </a>      <font color="#4169E1">if</font> (entries &gt; 0) <a href="../../../docs/manualpages/Sys/PetscGarbageCleanup.html">PetscGarbageCleanup</a>(icomm);
+<a name="line318">318: </a>      <a href="../../../docs/manualpages/PetscH/PetscHMapObjDestroy.html">PetscHMapObjDestroy</a>(&amp;(garbage.map));
+<a name="line319">319: </a>    }
+
+<a name="line321">321: </a>    <a href="../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(NULL, <font color="#666666">"Deleting PETSc <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> %ld\n"</font>, (long)icomm);
+<a name="line322">322: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_free.html#MPI_Comm_free">MPI_Comm_free</a>(&amp;icomm);
+<a name="line323">323: </a>  }
+<a name="line324">324: </a>  *comm = MPI_COMM_NULL;
+<a name="line325">325: </a>  PetscSpinlockUnlock(&amp;PetscCommSpinLock);
+<a name="line326">326: </a>  <font color="#4169E1">return</font> 0;
+<a name="line327">327: </a>}
+
+<a name="line329">329: </a><font color="#B22222">/*@C</font>
+<a name="line330">330: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscObjectsListGetGlobalNumbering.html">PetscObjectsListGetGlobalNumbering</a> - computes a global numbering</font>
+<a name="line331">331: </a><font color="#B22222">    of `<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>`s living on subcommunicators of a given communicator.</font>
+
+<a name="line333">333: </a><font color="#B22222">    Collective.</font>
+
+<a name="line335">335: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line336">336: </a><font color="#B22222">+   comm    - the `<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>`</font>
+<a name="line337">337: </a><font color="#B22222">.   len     - local length of objlist</font>
+<a name="line338">338: </a><font color="#B22222">-   objlist - a list of PETSc objects living on subcomms of comm and containing this comm rank</font>
+<a name="line339">339: </a><font color="#B22222">              (subcomm ordering is assumed to be deadlock-free)</font>
+
+<a name="line341">341: </a><font color="#B22222">    Output Parameters:</font>
+<a name="line342">342: </a><font color="#B22222">+   count      - global number of distinct subcommunicators on objlist (may be &gt; len)</font>
+<a name="line343">343: </a><font color="#B22222">-   numbering  - global numbers of objlist entries (allocated by user)</font>
+
+<a name="line345">345: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line347">347: </a><font color="#B22222">    Note:</font>
+<a name="line348">348: </a><font color="#B22222">    This is needed when PETSc is used with certain languages that do garbage collection to manage object life cycles.</font>
+
+<a name="line350">350: </a><font color="#B22222">@*/</font>
+<a name="line351">351: </a><strong><font color="#4169E1"><a name="PetscObjectsListGetGlobalNumbering"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscObjectsListGetGlobalNumbering.html">PetscObjectsListGetGlobalNumbering</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> len, <a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *objlist, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *count, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *numbering)</font></strong>
+<a name="line352">352: </a>{
+<a name="line353">353: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    i, roots, offset;
+<a name="line354">354: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size, rank;
+
+<a name="line357">357: </a>  <font color="#4169E1">if</font> (!count &amp;&amp; !numbering) <font color="#4169E1">return</font> 0;
+
+<a name="line359">359: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line360">360: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line361">361: </a>  roots = 0;
+<a name="line362">362: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; len; ++i) {
+<a name="line363">363: </a>    <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> srank;
+<a name="line364">364: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(objlist[i]-&gt;comm, &amp;srank);
+<a name="line365">365: </a>    <font color="#B22222">/* Am I the root of the i-th subcomm? */</font>
+<a name="line366">366: </a>    <font color="#4169E1">if</font> (!srank) ++roots;
+<a name="line367">367: </a>  }
+<a name="line368">368: </a>  <font color="#4169E1">if</font> (count) {
+<a name="line369">369: </a>    <font color="#B22222">/* Obtain the sum of all roots -- the global number of distinct subcomms. */</font>
+<a name="line370">370: </a>    <a href="../../../docs/manualpages/Sys/MPIU_Allreduce.html">MPIU_Allreduce</a>(&amp;roots, count, 1, <a href="../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_SUM, comm);
+<a name="line371">371: </a>  }
+<a name="line372">372: </a>  <font color="#4169E1">if</font> (numbering) {
+<a name="line373">373: </a>    <font color="#B22222">/* Introduce a global numbering for subcomms, initially known only by subcomm roots. */</font>
+<a name="line374">374: </a>    <font color="#B22222">/*</font>
+<a name="line375">375: </a><font color="#B22222">      At each subcomm root number all of the subcomms it owns locally</font>
+<a name="line376">376: </a><font color="#B22222">      and make it global by calculating the shift among all of the roots.</font>
+<a name="line377">377: </a><font color="#B22222">      The roots are ordered using the comm ordering.</font>
+<a name="line378">378: </a><font color="#B22222">    */</font>
+<a name="line379">379: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scan.html#MPI_Scan">MPI_Scan</a>(&amp;roots, &amp;offset, 1, <a href="../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_SUM, comm);
+<a name="line380">380: </a>    offset -= roots;
+<a name="line381">381: </a>    <font color="#B22222">/* Now we are ready to broadcast global subcomm numbers within each subcomm.*/</font>
+<a name="line382">382: </a>    <font color="#B22222">/*</font>
+<a name="line383">383: </a><font color="#B22222">      This is where the assumption of a deadlock-free ordering of the subcomms is assumed:</font>
+<a name="line384">384: </a><font color="#B22222">      broadcast is collective on the subcomm.</font>
+<a name="line385">385: </a><font color="#B22222">    */</font>
+<a name="line386">386: </a>    roots = 0;
+<a name="line387">387: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; len; ++i) {
+<a name="line388">388: </a>      <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> srank;
+<a name="line389">389: </a>      numbering[i] = offset + roots; <font color="#B22222">/* only meaningful if !srank. */</font>
+
+<a name="line391">391: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(objlist[i]-&gt;comm, &amp;srank);
+<a name="line392">392: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(numbering + i, 1, <a href="../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, 0, objlist[i]-&gt;comm);
+<a name="line393">393: </a>      <font color="#4169E1">if</font> (!srank) ++roots;
+<a name="line394">394: </a>    }
+<a name="line395">395: </a>  }
+<a name="line396">396: </a>  <font color="#4169E1">return</font> 0;
+<a name="line397">397: </a>}
+</pre>
+</body>
+
+</html>

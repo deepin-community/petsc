@@ -1,0 +1,71 @@
+# PetscCopyMode
+Determines how an array or `PetscObject` passed to certain functions is copied or retained by the aggregate `PetscObject` 
+## Synopsis
+```
+typedef enum {
+  PETSC_COPY_VALUES,
+  PETSC_OWN_POINTER,
+  PETSC_USE_POINTER
+} PetscCopyMode;
+```
+
+
+
+## For the array input
+```none
+`PETSC_COPY_VALUES` - the array values are copied into new space, the user is free to reuse or delete the passed in array
+```
+```none
+`PETSC_OWN_POINTER` - the array values are NOT copied, the object takes ownership of the array and will free it later, the user cannot change or
+```
+```none
+delete the array. The array MUST have been obtained with PetscMalloc(). Hence this mode cannot be used in Fortran.
+```
+```none
+`PETSC_USE_POINTER` - the array values are NOT copied, the object uses the array but does NOT take ownership of the array. The user cannot use
+```
+```none
+the array but the user must delete the array after the object is destroyed.
+```
+
+
+## For the PetscObject input
+```none
+`PETSC_COPY_VALUES` - the input `PetscObject` is cloned into the aggregate `PetscObject`; the user is free to reuse/modify the input `PetscObject` without side effects.
+```
+```none
+`PETSC_OWN_POINTER` - the input `PetscObject` is referenced by pointer (with reference count), thus should not be modified by the user. (Modification may cause errors or unintended side-effects in this or a future version of PETSc.)
+```
+For either case above, the input `PetscObject` should be destroyed by the user when no longer needed (the aggregate object increases its reference count).
+```none
+`PETSC_USE_POINTER` - invalid for `PetscObject` inputs.
+```
+
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscsystypes.h.html#PetscCopyMode">include/petscsystypes.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/utils/tagger/tutorials/ex1.c.html">src/vec/vec/utils/tagger/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex8.c.html">src/vec/vec/tutorials/ex8.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex8f.F90.html">src/vec/vec/tutorials/ex8f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex1.c.html">src/vec/is/is/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex1f.F90.html">src/vec/is/is/tutorials/ex1f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex1f90.F90.html">src/vec/is/is/tutorials/ex1f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex3.c.html">src/vec/is/is/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex3f90.F90.html">src/vec/is/is/tutorials/ex3f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex4.c.html">src/vec/is/is/tutorials/ex4.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex5.c.html">src/vec/is/is/tutorials/ex5.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/sf/tutorials/ex1.c.html">src/vec/is/sf/tutorials/ex1.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscsystypes.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

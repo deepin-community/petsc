@@ -1,0 +1,52 @@
+# ISGetBlockSize
+Returns the number of elements in a block. 
+## Synopsis
+```
+#include "petscis.h" 
+PetscErrorCode ISGetBlockSize(IS is, PetscInt *size)
+```
+Not Collective
+
+
+## Input Parameter
+
+- ***is -*** the index set
+
+
+
+## Output Parameter
+
+- ***size -*** the number of elements in a block
+
+
+
+
+
+## Notes
+This is much like the block size for Vecs. It indicates that one can think of the indices as
+being in a collection of equal size blocks. For ISBlock() these collections of blocks are all contiquous
+within a block but this is not the case for other IS.
+ISBlockGetIndices() only works for ISBlock IS, not others.
+
+
+## See Also
+ `ISBlockGetSize()`, `ISGetSize()`, `ISCreateBlock()`, `ISSetBlockSize()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/interface/index.c.html#ISGetBlockSize">src/vec/is/is/interface/index.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex3.c.html">src/vec/is/is/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex3f90.F90.html">src/vec/is/is/tutorials/ex3f90.F90.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/is/is/interface/index.c)
+
+
+[Index of all IS routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

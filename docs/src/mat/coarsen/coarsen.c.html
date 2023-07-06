@@ -1,0 +1,397 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/coarsen/coarsen.c">Actual source code: coarsen.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:14+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../../include/petsc/private/matimpl.h.html">&lt;petsc/private/matimpl.h&gt;</A>
+
+<a name="line4">  4: </a><font color="#B22222">/* Logging support */</font>
+<a name="line5">  5: </a><a href="../../../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a> MAT_COARSEN_CLASSID;
+
+<a name="line7">  7: </a><a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> MatCoarsenList              = NULL;
+<a name="line8">  8: </a><a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>         MatCoarsenRegisterAllCalled = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line10"> 10: </a><font color="#B22222">/*@C</font>
+<a name="line11"> 11: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenRegister.html">MatCoarsenRegister</a> - Adds a new sparse matrix coarsening algorithm to the matrix package.</font>
+
+<a name="line13"> 13: </a><font color="#B22222">   Logically Collective</font>
+
+<a name="line15"> 15: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line16"> 16: </a><font color="#B22222">+  sname - name of coarsen (for example `<a href="../../../docs/manualpages/MatOrderings/MATCOARSENMIS.html">MATCOARSENMIS</a>`)</font>
+<a name="line17"> 17: </a><font color="#B22222">-  function - function pointer that creates the coarsen type</font>
+
+<a name="line19"> 19: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line21"> 21: </a><font color="#B22222">   Sample usage:</font>
+<a name="line22"> 22: </a><font color="#B22222">.vb</font>
+<a name="line23"> 23: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenRegister.html">MatCoarsenRegister</a>("my_agg",MyAggCreate);</font>
+<a name="line24"> 24: </a><font color="#B22222">.ve</font>
+
+<a name="line26"> 26: </a><font color="#B22222">   Then, your aggregator can be chosen with the procedural interface via</font>
+<a name="line27"> 27: </a><font color="#B22222">$     <a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a>(agg,"my_agg")</font>
+<a name="line28"> 28: </a><font color="#B22222">   or at runtime via the option</font>
+<a name="line29"> 29: </a><font color="#B22222">$     -mat_coarsen_type my_agg</font>
+
+<a name="line31"> 31: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `<a href="../../../docs/manualpages/Mat/MatCoarsenType.html">MatCoarsenType</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a>()`, `MatCoarsenRegisterDestroy()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenRegisterAll.html">MatCoarsenRegisterAll</a>()`</font>
+<a name="line32"> 32: </a><font color="#B22222">@*/</font>
+<a name="line33"> 33: </a><strong><font color="#4169E1"><a name="MatCoarsenRegister"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/MatOrderings/MatCoarsenRegister.html">MatCoarsenRegister</a>(const char sname[], <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*function)(<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>))</font></strong>
+<a name="line34"> 34: </a>{
+<a name="line35"> 35: </a>  <a href="../../../docs/manualpages/Mat/MatInitializePackage.html">MatInitializePackage</a>();
+<a name="line36"> 36: </a>  <a href="../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>(&amp;MatCoarsenList, sname, function);
+<a name="line37"> 37: </a>  <font color="#4169E1">return</font> 0;
+<a name="line38"> 38: </a>}
+
+<a name="line40"> 40: </a><font color="#B22222">/*@C</font>
+<a name="line41"> 41: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenGetType.html">MatCoarsenGetType</a> - Gets the Coarsen method type and name (as a string)</font>
+<a name="line42"> 42: </a><font color="#B22222">        from the coarsen context.</font>
+
+<a name="line44"> 44: </a><font color="#B22222">   Not collective</font>
+
+<a name="line46"> 46: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line47"> 47: </a><font color="#B22222">.  coarsen - the coarsen context</font>
+
+<a name="line49"> 49: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line50"> 50: </a><font color="#B22222">.  type - coarsener type</font>
+
+<a name="line52"> 52: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line54"> 54: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line56"> 56: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a>()`, `<a href="../../../docs/manualpages/Mat/MatCoarsenType.html">MatCoarsenType</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenRegister.html">MatCoarsenRegister</a>()`</font>
+<a name="line57"> 57: </a><font color="#B22222">@*/</font>
+<a name="line58"> 58: </a><strong><font color="#4169E1"><a name="MatCoarsenGetType"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/MatOrderings/MatCoarsenGetType.html">MatCoarsenGetType</a>(<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> coarsen, <a href="../../../docs/manualpages/Mat/MatCoarsenType.html">MatCoarsenType</a> *type)</font></strong>
+<a name="line59"> 59: </a>{
+<a name="line62"> 62: </a>  *type = ((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)coarsen)-&gt;type_name;
+<a name="line63"> 63: </a>  <font color="#4169E1">return</font> 0;
+<a name="line64"> 64: </a>}
+
+<a name="line66"> 66: </a><font color="#B22222">/*@</font>
+<a name="line67"> 67: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenApply.html">MatCoarsenApply</a> - Gets a coarsen for a matrix.</font>
+
+<a name="line69"> 69: </a><font color="#B22222">   Collective</font>
+
+<a name="line71"> 71: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line72"> 72: </a><font color="#B22222">.   coarsen - the coarsen</font>
+
+<a name="line74"> 74: </a><font color="#B22222">   Options Database Keys:</font>
+<a name="line75"> 75: </a><font color="#B22222">   To specify the coarsen through the options database, use one of</font>
+<a name="line76"> 76: </a><font color="#B22222">   the following</font>
+<a name="line77"> 77: </a><font color="#B22222">$    -mat_coarsen_type mis|hem|misk</font>
+<a name="line78"> 78: </a><font color="#B22222">   To see the coarsen result</font>
+<a name="line79"> 79: </a><font color="#B22222">$    -mat_coarsen_view</font>
+
+<a name="line81"> 81: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line83"> 83: </a><font color="#B22222">   Notes:</font>
+<a name="line84"> 84: </a><font color="#B22222">    Use `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenGetData.html">MatCoarsenGetData</a>()` to access the results of the coarsening</font>
+
+<a name="line86"> 86: </a><font color="#B22222">   The user can define additional coarsens; see `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenRegister.html">MatCoarsenRegister</a>()`.</font>
+
+<a name="line88"> 88: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `MatCoarseSetFromOptions()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenRegister.html">MatCoarsenRegister</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a>()`,</font>
+<a name="line89"> 89: </a><font color="#B22222">          `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenDestroy.html">MatCoarsenDestroy</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetAdjacency.html">MatCoarsenSetAdjacency</a>()`</font>
+<a name="line90"> 90: </a><font color="#B22222">          `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenGetData.html">MatCoarsenGetData</a>()`</font>
+<a name="line91"> 91: </a><font color="#B22222">@*/</font>
+<a name="line92"> 92: </a><strong><font color="#4169E1"><a name="MatCoarsenApply"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/MatOrderings/MatCoarsenApply.html">MatCoarsenApply</a>(<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> coarser)</font></strong>
+<a name="line93"> 93: </a>{
+<a name="line98"> 98: </a>  <a href="../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(MAT_Coarsen, coarser, 0, 0, 0);
+<a name="line99"> 99: </a>  <a href="../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(coarser, apply);
+<a name="line100">100: </a>  <a href="../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(MAT_Coarsen, coarser, 0, 0, 0);
+<a name="line101">101: </a>  <font color="#4169E1">return</font> 0;
+<a name="line102">102: </a>}
+
+<a name="line104">104: </a><font color="#B22222">/*@</font>
+<a name="line105">105: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetAdjacency.html">MatCoarsenSetAdjacency</a> - Sets the adjacency graph (matrix) of the thing to be coarsened.</font>
+
+<a name="line107">107: </a><font color="#B22222">   Collective</font>
+
+<a name="line109">109: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line110">110: </a><font color="#B22222">+  agg - the coarsen context</font>
+<a name="line111">111: </a><font color="#B22222">-  adj - the adjacency matrix</font>
+
+<a name="line113">113: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line115">115: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetFromOptions.html">MatCoarsenSetFromOptions</a>()`, `<a href="../../../docs/manualpages/Mat/Mat.html">Mat</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenApply.html">MatCoarsenApply</a>()`</font>
+<a name="line116">116: </a><font color="#B22222">@*/</font>
+<a name="line117">117: </a><strong><font color="#4169E1"><a name="MatCoarsenSetAdjacency"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetAdjacency.html">MatCoarsenSetAdjacency</a>(<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> agg, <a href="../../../docs/manualpages/Mat/Mat.html">Mat</a> adj)</font></strong>
+<a name="line118">118: </a>{
+<a name="line121">121: </a>  agg-&gt;graph = adj;
+<a name="line122">122: </a>  <font color="#4169E1">return</font> 0;
+<a name="line123">123: </a>}
+
+<a name="line125">125: </a><font color="#B22222">/*@</font>
+<a name="line126">126: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetStrictAggs.html">MatCoarsenSetStrictAggs</a> - Set whether to keep strict (non overlapping) aggregates in the linked list of aggregates for a coarsen context</font>
+
+<a name="line128">128: </a><font color="#B22222">   Logically Collective</font>
+
+<a name="line130">130: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line131">131: </a><font color="#B22222">+  agg - the coarsen context</font>
+<a name="line132">132: </a><font color="#B22222">-  str - `<a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>` keep strict aggregates, `<a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>` allow overlap</font>
+<a name="line133">133: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line135">135: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetFromOptions.html">MatCoarsenSetFromOptions</a>()`</font>
+<a name="line136">136: </a><font color="#B22222">@*/</font>
+<a name="line137">137: </a><strong><font color="#4169E1"><a name="MatCoarsenSetStrictAggs"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetStrictAggs.html">MatCoarsenSetStrictAggs</a>(<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> agg, <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> str)</font></strong>
+<a name="line138">138: </a>{
+<a name="line140">140: </a>  agg-&gt;strict_aggs = str;
+<a name="line141">141: </a>  <font color="#4169E1">return</font> 0;
+<a name="line142">142: </a>}
+
+<a name="line144">144: </a><font color="#B22222">/*@</font>
+<a name="line145">145: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenDestroy.html">MatCoarsenDestroy</a> - Destroys the coarsen context.</font>
+
+<a name="line147">147: </a><font color="#B22222">   Collective</font>
+
+<a name="line149">149: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line150">150: </a><font color="#B22222">.  agg - the coarsen context</font>
+
+<a name="line152">152: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line154">154: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a>()`</font>
+<a name="line155">155: </a><font color="#B22222">@*/</font>
+<a name="line156">156: </a><strong><font color="#4169E1"><a name="MatCoarsenDestroy"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/MatOrderings/MatCoarsenDestroy.html">MatCoarsenDestroy</a>(<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> *agg)</font></strong>
+<a name="line157">157: </a>{
+<a name="line158">158: </a>  <font color="#4169E1">if</font> (!*agg) <font color="#4169E1">return</font> 0;
+<a name="line160">160: </a>  <font color="#4169E1">if</font> (--((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(*agg))-&gt;refct &gt; 0) {
+<a name="line161">161: </a>    *agg = NULL;
+<a name="line162">162: </a>    <font color="#4169E1">return</font> 0;
+<a name="line163">163: </a>  }
+
+<a name="line165">165: </a>  <font color="#4169E1">if</font> ((*agg)-&gt;ops-&gt;destroy) (*(*agg)-&gt;ops-&gt;destroy)((*agg));
+
+<a name="line167">167: </a>  <font color="#4169E1">if</font> ((*agg)-&gt;agg_lists) PetscCDDestroy((*agg)-&gt;agg_lists);
+
+<a name="line169">169: </a>  <a href="../../../docs/manualpages/Sys/PetscHeaderDestroy.html">PetscHeaderDestroy</a>(agg);
+<a name="line170">170: </a>  <font color="#4169E1">return</font> 0;
+<a name="line171">171: </a>}
+
+<a name="line173">173: </a><font color="#B22222">/*@</font>
+<a name="line174">174: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a> - Creates a coarsen context.</font>
+
+<a name="line176">176: </a><font color="#B22222">   Collective</font>
+
+<a name="line178">178: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line179">179: </a><font color="#B22222">.   comm - MPI communicator</font>
+
+<a name="line181">181: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line182">182: </a><font color="#B22222">.  newcrs - location to put the context</font>
+
+<a name="line184">184: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line186">186: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenApply.html">MatCoarsenApply</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenDestroy.html">MatCoarsenDestroy</a>()`,</font>
+<a name="line187">187: </a><font color="#B22222">          `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetAdjacency.html">MatCoarsenSetAdjacency</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenGetData.html">MatCoarsenGetData</a>()`</font>
+
+<a name="line189">189: </a><font color="#B22222">@*/</font>
+<a name="line190">190: </a><strong><font color="#4169E1"><a name="MatCoarsenCreate"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> *newcrs)</font></strong>
+<a name="line191">191: </a>{
+<a name="line192">192: </a>  <a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> agg;
+
+<a name="line194">194: </a>  *newcrs = NULL;
+
+<a name="line196">196: </a>  <a href="../../../docs/manualpages/Mat/MatInitializePackage.html">MatInitializePackage</a>();
+<a name="line197">197: </a>  <a href="../../../docs/manualpages/Sys/PetscHeaderCreate.html">PetscHeaderCreate</a>(agg, MAT_COARSEN_CLASSID, <font color="#666666">"<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>"</font>, <font color="#666666">"Matrix/graph coarsen"</font>, <font color="#666666">"<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>"</font>, comm, <a href="../../../docs/manualpages/MatOrderings/MatCoarsenDestroy.html">MatCoarsenDestroy</a>, <a href="../../../docs/manualpages/MatOrderings/MatCoarsenView.html">MatCoarsenView</a>);
+
+<a name="line199">199: </a>  *newcrs = agg;
+<a name="line200">200: </a>  <font color="#4169E1">return</font> 0;
+<a name="line201">201: </a>}
+
+<a name="line203">203: </a><font color="#B22222">/*@C</font>
+<a name="line204">204: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenViewFromOptions.html">MatCoarsenViewFromOptions</a> - View the coarsener from the options database</font>
+
+<a name="line206">206: </a><font color="#B22222">   Collective</font>
+
+<a name="line208">208: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line209">209: </a><font color="#B22222">+  A - the coarsen context</font>
+<a name="line210">210: </a><font color="#B22222">.  obj - Optional object that provides the prefix for the option name</font>
+<a name="line211">211: </a><font color="#B22222">-  name - command line option (usually `-mat_coarsen_view`)</font>
+
+<a name="line213">213: </a><font color="#B22222">  Options Database:</font>
+<a name="line214">214: </a><font color="#B22222">.  -mat_coarsen_view [viewertype]:... - the viewer and its options</font>
+
+<a name="line216">216: </a><font color="#B22222">  Note:</font>
+<a name="line217">217: </a><font color="#B22222">.vb</font>
+<a name="line218">218: </a><font color="#B22222">    If no value is provided ascii:stdout is used</font>
+<a name="line219">219: </a><font color="#B22222">       ascii[:[filename][:[format][:append]]]    defaults to stdout - format can be one of ascii_info, ascii_info_detail, or ascii_matlab,</font>
+<a name="line220">220: </a><font color="#B22222">                                                  for example ascii::ascii_info prints just the information about the object not all details</font>
+<a name="line221">221: </a><font color="#B22222">                                                  unless :append is given filename opens in write mode, overwriting what was already there</font>
+<a name="line222">222: </a><font color="#B22222">       binary[:[filename][:[format][:append]]]   defaults to the file binaryoutput</font>
+<a name="line223">223: </a><font color="#B22222">       draw[:drawtype[:filename]]                for example, draw:tikz, draw:tikz:figure.tex  or draw:x</font>
+<a name="line224">224: </a><font color="#B22222">       socket[:port]                             defaults to the standard output port</font>
+<a name="line225">225: </a><font color="#B22222">       saws[:communicatorname]                    publishes object to the Scientific Application Webserver (SAWs)</font>
+<a name="line226">226: </a><font color="#B22222">.ve</font>
+
+<a name="line228">228: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line230">230: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenView.html">MatCoarsenView</a>`, `<a href="../../../docs/manualpages/Sys/PetscObjectViewFromOptions.html">PetscObjectViewFromOptions</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a>()`</font>
+<a name="line231">231: </a><font color="#B22222">@*/</font>
+<a name="line232">232: </a><strong><font color="#4169E1"><a name="MatCoarsenViewFromOptions"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/MatOrderings/MatCoarsenViewFromOptions.html">MatCoarsenViewFromOptions</a>(<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> A, <a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> obj, const char name[])</font></strong>
+<a name="line233">233: </a>{
+<a name="line235">235: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectViewFromOptions.html">PetscObjectViewFromOptions</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, obj, name);
+<a name="line236">236: </a>  <font color="#4169E1">return</font> 0;
+<a name="line237">237: </a>}
+
+<a name="line239">239: </a><font color="#B22222">/*@C</font>
+<a name="line240">240: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenView.html">MatCoarsenView</a> - Prints the coarsen data structure.</font>
+
+<a name="line242">242: </a><font color="#B22222">   Collective</font>
+
+<a name="line244">244: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line245">245: </a><font color="#B22222">+  agg - the coarsen context</font>
+<a name="line246">246: </a><font color="#B22222">-  viewer - optional visualization context</font>
+
+<a name="line248">248: </a><font color="#B22222">   For viewing the options database see `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenViewFromOptions.html">MatCoarsenViewFromOptions</a>()`</font>
+
+<a name="line250">250: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line252">252: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `<a href="../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`, `<a href="../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html">PetscViewerASCIIOpen</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenViewFromOptions.html">MatCoarsenViewFromOptions</a>`</font>
+<a name="line253">253: </a><font color="#B22222">@*/</font>
+<a name="line254">254: </a><strong><font color="#4169E1"><a name="MatCoarsenView"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/MatOrderings/MatCoarsenView.html">MatCoarsenView</a>(<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> agg, <a href="../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line255">255: </a>{
+<a name="line256">256: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> iascii;
+
+<a name="line259">259: </a>  <font color="#4169E1">if</font> (!viewer) <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIGetStdout.html">PetscViewerASCIIGetStdout</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)agg), &amp;viewer);
+
+<a name="line263">263: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line264">264: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectPrintClassNamePrefixType.html">PetscObjectPrintClassNamePrefixType</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)agg, viewer);
+<a name="line265">265: </a>  <font color="#4169E1">if</font> (agg-&gt;ops-&gt;view) {
+<a name="line266">266: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(viewer);
+<a name="line267">267: </a>    <a href="../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(agg, view, viewer);
+<a name="line268">268: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(viewer);
+<a name="line269">269: </a>  }
+<a name="line270">270: </a>  <font color="#4169E1">return</font> 0;
+<a name="line271">271: </a>}
+
+<a name="line273">273: </a><font color="#B22222">/*@C</font>
+<a name="line274">274: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a> - Sets the type of aggregator to use</font>
+
+<a name="line276">276: </a><font color="#B22222">   Collective</font>
+
+<a name="line278">278: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line279">279: </a><font color="#B22222">+  coarser - the coarsen context.</font>
+<a name="line280">280: </a><font color="#B22222">-  type - a known coarsening method</font>
+
+<a name="line282">282: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line283">283: </a><font color="#B22222">.  -mat_coarsen_type  &lt;type&gt; - (for instance, misk), use -help for a list of available methods</font>
+
+<a name="line285">285: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line287">287: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenApply.html">MatCoarsenApply</a>()`, `<a href="../../../docs/manualpages/Mat/MatCoarsenType.html">MatCoarsenType</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenGetType.html">MatCoarsenGetType</a>()`</font>
+<a name="line288">288: </a><font color="#B22222">@*/</font>
+<a name="line289">289: </a><strong><font color="#4169E1"><a name="MatCoarsenSetType"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a>(<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> coarser, <a href="../../../docs/manualpages/Mat/MatCoarsenType.html">MatCoarsenType</a> type)</font></strong>
+<a name="line290">290: </a>{
+<a name="line291">291: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> match;
+<a name="line292">292: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*r)(<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>);
+
+
+<a name="line297">297: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)coarser, type, &amp;match);
+<a name="line298">298: </a>  <font color="#4169E1">if</font> (match) <font color="#4169E1">return</font> 0;
+
+<a name="line300">300: </a>  <a href="../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(coarser, destroy);
+<a name="line301">301: </a>  coarser-&gt;ops-&gt;destroy = NULL;
+<a name="line302">302: </a>  <a href="../../../docs/manualpages/Sys/PetscMemzero.html">PetscMemzero</a>(coarser-&gt;ops, <font color="#4169E1">sizeof</font>(<font color="#4169E1">struct _MatCoarsenOps</font>));
+
+<a name="line304">304: </a>  <a href="../../../docs/manualpages/Sys/PetscFunctionListFind.html">PetscFunctionListFind</a>(MatCoarsenList, type, &amp;r);
+<a name="line306">306: </a>  (*r)(coarser);
+
+<a name="line308">308: </a>  <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)coarser)-&gt;type_name);
+<a name="line309">309: </a>  <a href="../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(type, &amp;((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)coarser)-&gt;type_name);
+<a name="line310">310: </a>  <font color="#4169E1">return</font> 0;
+<a name="line311">311: </a>}
+
+<a name="line313">313: </a><font color="#B22222">/*@C</font>
+<a name="line314">314: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetGreedyOrdering.html">MatCoarsenSetGreedyOrdering</a> - Sets the ordering of the vertices to use with a greedy coarsening method</font>
+
+<a name="line316">316: </a><font color="#B22222">   Logically Collective</font>
+
+<a name="line318">318: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line319">319: </a><font color="#B22222">+  coarser - the coarsen context</font>
+<a name="line320">320: </a><font color="#B22222">-  perm - vertex ordering of (greedy) algorithm</font>
+
+<a name="line322">322: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line324">324: </a><font color="#B22222">   Note:</font>
+<a name="line325">325: </a><font color="#B22222">   The `<a href="../../../docs/manualpages/IS/IS.html">IS</a>` weights is freed by PETSc, the user should not destroy it or change it after this call</font>
+
+<a name="line327">327: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `<a href="../../../docs/manualpages/Mat/MatCoarsenType.html">MatCoarsenType</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a>()`</font>
+<a name="line328">328: </a><font color="#B22222">@*/</font>
+<a name="line329">329: </a><strong><font color="#4169E1"><a name="MatCoarsenSetGreedyOrdering"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetGreedyOrdering.html">MatCoarsenSetGreedyOrdering</a>(<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> coarser, const <a href="../../../docs/manualpages/IS/IS.html">IS</a> perm)</font></strong>
+<a name="line330">330: </a>{
+<a name="line332">332: </a>  coarser-&gt;perm = perm;
+<a name="line333">333: </a>  <font color="#4169E1">return</font> 0;
+<a name="line334">334: </a>}
+
+<a name="line336">336: </a><font color="#B22222">/*@C</font>
+<a name="line337">337: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenGetData.html">MatCoarsenGetData</a> - Gets the weights for vertices for a coarsener.</font>
+
+<a name="line339">339: </a><font color="#B22222">   Logically Collective</font>
+
+<a name="line341">341: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line342">342: </a><font color="#B22222">.  coarser - the coarsen context</font>
+
+<a name="line344">344: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line345">345: </a><font color="#B22222">.  llist - linked list of aggregates</font>
+
+<a name="line347">347: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line349">349: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenApply.html">MatCoarsenApply</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a>()`</font>
+<a name="line350">350: </a><font color="#B22222">@*/</font>
+<a name="line351">351: </a><strong><font color="#4169E1"><a name="MatCoarsenGetData"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/MatOrderings/MatCoarsenGetData.html">MatCoarsenGetData</a>(<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> coarser, PetscCoarsenData **llist)</font></strong>
+<a name="line352">352: </a>{
+<a name="line355">355: </a>  *llist             = coarser-&gt;agg_lists;
+<a name="line356">356: </a>  coarser-&gt;agg_lists = NULL; <font color="#B22222">/* giving up ownership */</font>
+<a name="line357">357: </a>  <font color="#4169E1">return</font> 0;
+<a name="line358">358: </a>}
+
+<a name="line360">360: </a><font color="#B22222">/*@</font>
+<a name="line361">361: </a><font color="#B22222">   <a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetFromOptions.html">MatCoarsenSetFromOptions</a> - Sets various coarsen options from the options database.</font>
+
+<a name="line363">363: </a><font color="#B22222">   Collective</font>
+
+<a name="line365">365: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line366">366: </a><font color="#B22222">.  coarser - the coarsen context.</font>
+
+<a name="line368">368: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line369">369: </a><font color="#B22222">.  -mat_coarsen_type  &lt;type&gt; - (for instance, mis), use -help for a list of available methods</font>
+
+<a name="line371">371: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line373">373: </a><font color="#B22222">   Note:</font>
+<a name="line374">374: </a><font color="#B22222">   Sets the `<a href="../../../docs/manualpages/Mat/MatCoarsenType.html">MatCoarsenType</a>` to `<a href="../../../docs/manualpages/MatOrderings/MATCOARSENMISK.html">MATCOARSENMISK</a>` if has not been set previously</font>
+
+<a name="line376">376: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a>`, `<a href="../../../docs/manualpages/Mat/MatCoarsenType.html">MatCoarsenType</a>`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenApply.html">MatCoarsenApply</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenCreate.html">MatCoarsenCreate</a>()`, `<a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a>()`</font>
+<a name="line377">377: </a><font color="#B22222">@*/</font>
+<a name="line378">378: </a><strong><font color="#4169E1"><a name="MatCoarsenSetFromOptions"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetFromOptions.html">MatCoarsenSetFromOptions</a>(<a href="../../../docs/manualpages/Mat/MatCoarsen.html">MatCoarsen</a> coarser)</font></strong>
+<a name="line379">379: </a>{
+<a name="line380">380: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   flag;
+<a name="line381">381: </a>  char        type[256];
+<a name="line382">382: </a>  const char *def;
+
+<a name="line384">384: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectOptionsBegin.html">PetscObjectOptionsBegin</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)coarser);
+<a name="line385">385: </a>  <font color="#4169E1">if</font> (!((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)coarser)-&gt;type_name) {
+<a name="line386">386: </a>    def = <a href="../../../docs/manualpages/MatOrderings/MATCOARSENMISK.html">MATCOARSENMISK</a>;
+<a name="line387">387: </a>  } <font color="#4169E1">else</font> {
+<a name="line388">388: </a>    def = ((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)coarser)-&gt;type_name;
+<a name="line389">389: </a>  }
+
+<a name="line391">391: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsFList.html">PetscOptionsFList</a>(<font color="#666666">"-mat_coarsen_type"</font>, <font color="#666666">"Type of aggregator"</font>, <font color="#666666">"<a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a>"</font>, MatCoarsenList, def, type, 256, &amp;flag);
+<a name="line392">392: </a>  <font color="#4169E1">if</font> (flag) <a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a>(coarser, type);
+<a name="line393">393: </a>  <font color="#B22222">/*</font>
+<a name="line394">394: </a><font color="#B22222">   Set the type if it was never set.</font>
+<a name="line395">395: </a><font color="#B22222">   */</font>
+<a name="line396">396: </a>  <font color="#4169E1">if</font> (!((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)coarser)-&gt;type_name) <a href="../../../docs/manualpages/MatOrderings/MatCoarsenSetType.html">MatCoarsenSetType</a>(coarser, def);
+
+<a name="line398">398: </a>  <a href="../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(coarser, setfromoptions, PetscOptionsObject);
+<a name="line399">399: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+
+<a name="line401">401: </a>  <font color="#4169E1">return</font> 0;
+<a name="line402">402: </a>}
+</pre>
+</body>
+
+</html>

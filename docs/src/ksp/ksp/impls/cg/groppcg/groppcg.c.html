@@ -1,0 +1,196 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ksp/ksp/impls/cg/groppcg/groppcg.c">Actual source code: groppcg.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:07+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../../include/petsc/private/kspimpl.h.html">&lt;petsc/private/kspimpl.h&gt;</A>
+
+<a name="line3">  3: </a><font color="#B22222">/*</font>
+<a name="line4">  4: </a><font color="#B22222"> KSPSetUp_GROPPCG - Sets up the workspace needed by the GROPPCG method.</font>
+
+<a name="line6">  6: </a><font color="#B22222"> This is called once, usually automatically by <a href="../../../../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>() or <a href="../../../../../../docs/manualpages/KSP/KSPSetUp.html">KSPSetUp</a>()</font>
+<a name="line7">  7: </a><font color="#B22222"> but can be called directly by <a href="../../../../../../docs/manualpages/KSP/KSPSetUp.html">KSPSetUp</a>()</font>
+<a name="line8">  8: </a><font color="#B22222">*/</font>
+<a name="line9">  9: </a><strong><font color="#4169E1"><a name="KSPSetUp_GROPPCG"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPSetUp_GROPPCG(<a href="../../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp)</font></strong>
+<a name="line10"> 10: </a>{
+<a name="line11"> 11: </a>  <a href="../../../../../../docs/manualpages/KSP/KSPSetWorkVecs.html">KSPSetWorkVecs</a>(ksp, 6);
+<a name="line12"> 12: </a>  <font color="#4169E1">return</font> 0;
+<a name="line13"> 13: </a>}
+
+<a name="line15"> 15: </a><font color="#B22222">/*</font>
+<a name="line16"> 16: </a><font color="#B22222"> KSPSolve_GROPPCG</font>
+
+<a name="line18"> 18: </a><font color="#B22222"> Input Parameter:</font>
+<a name="line19"> 19: </a><font color="#B22222"> .     ksp - the Krylov space object that was set to use conjugate gradient, by, for</font>
+<a name="line20"> 20: </a><font color="#B22222">             example, <a href="../../../../../../docs/manualpages/KSP/KSPCreate.html">KSPCreate</a>(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>,<a href="../../../../../../docs/manualpages/KSP/KSP.html">KSP</a> *ksp); <a href="../../../../../../docs/manualpages/KSP/KSPSetType.html">KSPSetType</a>(ksp,<a href="../../../../../../docs/manualpages/KSP/KSPCG.html">KSPCG</a>);</font>
+<a name="line21"> 21: </a><font color="#B22222">*/</font>
+<a name="line22"> 22: </a><strong><font color="#4169E1"><a name="KSPSolve_GROPPCG"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPSolve_GROPPCG(<a href="../../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp)</font></strong>
+<a name="line23"> 23: </a>{
+<a name="line24"> 24: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    i;
+<a name="line25"> 25: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> alpha, beta = 0.0, gamma, gammaNew, t;
+<a name="line26"> 26: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>   dp = 0.0;
+<a name="line27"> 27: </a>  <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>         x, b, r, p, s, S, z, Z;
+<a name="line28"> 28: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>         Amat, Pmat;
+<a name="line29"> 29: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   diagonalscale;
+
+<a name="line31"> 31: </a>  <a href="../../../../../../docs/manualpages/PC/PCGetDiagonalScale.html">PCGetDiagonalScale</a>(ksp-&gt;pc, &amp;diagonalscale);
+
+<a name="line34"> 34: </a>  x = ksp-&gt;vec_sol;
+<a name="line35"> 35: </a>  b = ksp-&gt;vec_rhs;
+<a name="line36"> 36: </a>  r = ksp-&gt;work[0];
+<a name="line37"> 37: </a>  p = ksp-&gt;work[1];
+<a name="line38"> 38: </a>  s = ksp-&gt;work[2];
+<a name="line39"> 39: </a>  S = ksp-&gt;work[3];
+<a name="line40"> 40: </a>  z = ksp-&gt;work[4];
+<a name="line41"> 41: </a>  Z = ksp-&gt;work[5];
+
+<a name="line43"> 43: </a>  <a href="../../../../../../docs/manualpages/PC/PCGetOperators.html">PCGetOperators</a>(ksp-&gt;pc, &amp;Amat, &amp;Pmat);
+
+<a name="line45"> 45: </a>  ksp-&gt;its = 0;
+<a name="line46"> 46: </a>  <font color="#4169E1">if</font> (!ksp-&gt;guess_zero) {
+<a name="line47"> 47: </a>    KSP_MatMult(ksp, Amat, x, r); <font color="#B22222">/*     r &lt;- b - Ax     */</font>
+<a name="line48"> 48: </a>    <a href="../../../../../../docs/manualpages/Vec/VecAYPX.html">VecAYPX</a>(r, -1.0, b);
+<a name="line49"> 49: </a>  } <font color="#4169E1">else</font> {
+<a name="line50"> 50: </a>    <a href="../../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(b, r); <font color="#B22222">/*     r &lt;- b (x is 0) */</font>
+<a name="line51"> 51: </a>  }
+
+<a name="line53"> 53: </a>  KSP_PCApply(ksp, r, z);    <font color="#B22222">/*     z &lt;- Br   */</font>
+<a name="line54"> 54: </a>  <a href="../../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(z, p);             <font color="#B22222">/*     p &lt;- z    */</font>
+<a name="line55"> 55: </a>  <a href="../../../../../../docs/manualpages/Vec/VecDotBegin.html">VecDotBegin</a>(r, z, &amp;gamma); <font color="#B22222">/*     gamma &lt;- z'*r       */</font>
+<a name="line56"> 56: </a>  <a href="../../../../../../docs/manualpages/Vec/PetscCommSplitReductionBegin.html">PetscCommSplitReductionBegin</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)r));
+<a name="line57"> 57: </a>  KSP_MatMult(ksp, Amat, p, s); <font color="#B22222">/*     s &lt;- Ap   */</font>
+<a name="line58"> 58: </a>  <a href="../../../../../../docs/manualpages/Vec/VecDotEnd.html">VecDotEnd</a>(r, z, &amp;gamma);      <font color="#B22222">/*     gamma &lt;- z'*r       */</font>
+
+<a name="line60"> 60: </a>  <font color="#4169E1">switch</font> (ksp-&gt;normtype) {
+<a name="line61"> 61: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_PRECONDITIONED.html">KSP_NORM_PRECONDITIONED</a>:
+<a name="line62"> 62: </a>    <font color="#B22222">/* This could be merged with the computation of gamma above */</font>
+<a name="line63"> 63: </a>    <a href="../../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(z, <a href="../../../../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;dp); <font color="#B22222">/*     dp &lt;- z'*z = e'*A'*B'*B*A'*e'     */</font>
+<a name="line64"> 64: </a>    <font color="#4169E1">break</font>;
+<a name="line65"> 65: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_UNPRECONDITIONED.html">KSP_NORM_UNPRECONDITIONED</a>:
+<a name="line66"> 66: </a>    <font color="#B22222">/* This could be merged with the computation of gamma above */</font>
+<a name="line67"> 67: </a>    <a href="../../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(r, <a href="../../../../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;dp); <font color="#B22222">/*     dp &lt;- r'*r = e'*A'*A*e            */</font>
+<a name="line68"> 68: </a>    <font color="#4169E1">break</font>;
+<a name="line69"> 69: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_NATURAL.html">KSP_NORM_NATURAL</a>:
+<a name="line70"> 70: </a>    <a href="../../../../../../docs/manualpages/KSP/KSPCheckDot.html">KSPCheckDot</a>(ksp, gamma);
+<a name="line71"> 71: </a>    dp = PetscSqrtReal(PetscAbsScalar(gamma)); <font color="#B22222">/*     dp &lt;- r'*z = r'*B*r = e'*A'*B*A*e */</font>
+<a name="line72"> 72: </a>    <font color="#4169E1">break</font>;
+<a name="line73"> 73: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_NONE.html">KSP_NORM_NONE</a>:
+<a name="line74"> 74: </a>    dp = 0.0;
+<a name="line75"> 75: </a>    <font color="#4169E1">break</font>;
+<a name="line76"> 76: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line77"> 77: </a>    <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ksp), PETSC_ERR_SUP, <font color="#666666">"%s"</font>, KSPNormTypes[ksp-&gt;normtype]);
+<a name="line78"> 78: </a>  }
+<a name="line79"> 79: </a>  KSPLogResidualHistory(ksp, dp);
+<a name="line80"> 80: </a>  <a href="../../../../../../docs/manualpages/KSP/KSPMonitor.html">KSPMonitor</a>(ksp, 0, dp);
+<a name="line81"> 81: </a>  ksp-&gt;rnorm = dp;
+<a name="line82"> 82: </a>  (*ksp-&gt;converged)(ksp, 0, dp, &amp;ksp-&gt;reason, ksp-&gt;cnvP); <font color="#B22222">/* test for convergence */</font>
+<a name="line83"> 83: </a>  <font color="#4169E1">if</font> (ksp-&gt;reason) <font color="#4169E1">return</font> 0;
+
+<a name="line85"> 85: </a>  i = 0;
+<a name="line86"> 86: </a>  <font color="#4169E1">do</font> {
+<a name="line87"> 87: </a>    ksp-&gt;its = i + 1;
+<a name="line88"> 88: </a>    i++;
+
+<a name="line90"> 90: </a>    <a href="../../../../../../docs/manualpages/Vec/VecDotBegin.html">VecDotBegin</a>(p, s, &amp;t);
+<a name="line91"> 91: </a>    <a href="../../../../../../docs/manualpages/Vec/PetscCommSplitReductionBegin.html">PetscCommSplitReductionBegin</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)p));
+
+<a name="line93"> 93: </a>    KSP_PCApply(ksp, s, S); <font color="#B22222">/*   S &lt;- Bs       */</font>
+
+<a name="line95"> 95: </a>    <a href="../../../../../../docs/manualpages/Vec/VecDotEnd.html">VecDotEnd</a>(p, s, &amp;t);
+
+<a name="line97"> 97: </a>    alpha = gamma / t;
+<a name="line98"> 98: </a>    <a href="../../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(x, alpha, p);  <font color="#B22222">/*     x &lt;- x + alpha * p   */</font>
+<a name="line99"> 99: </a>    <a href="../../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(r, -alpha, s); <font color="#B22222">/*     r &lt;- r - alpha * s   */</font>
+<a name="line100">100: </a>    <a href="../../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(z, -alpha, S); <font color="#B22222">/*     z &lt;- z - alpha * S   */</font>
+
+<a name="line102">102: </a>    <font color="#4169E1">if</font> (ksp-&gt;normtype == <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_UNPRECONDITIONED.html">KSP_NORM_UNPRECONDITIONED</a>) {
+<a name="line103">103: </a>      <a href="../../../../../../docs/manualpages/Vec/VecNormBegin.html">VecNormBegin</a>(r, <a href="../../../../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;dp);
+<a name="line104">104: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ksp-&gt;normtype == <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_PRECONDITIONED.html">KSP_NORM_PRECONDITIONED</a>) {
+<a name="line105">105: </a>      <a href="../../../../../../docs/manualpages/Vec/VecNormBegin.html">VecNormBegin</a>(z, <a href="../../../../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;dp);
+<a name="line106">106: </a>    }
+<a name="line107">107: </a>    <a href="../../../../../../docs/manualpages/Vec/VecDotBegin.html">VecDotBegin</a>(r, z, &amp;gammaNew);
+<a name="line108">108: </a>    <a href="../../../../../../docs/manualpages/Vec/PetscCommSplitReductionBegin.html">PetscCommSplitReductionBegin</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)r));
+
+<a name="line110">110: </a>    KSP_MatMult(ksp, Amat, z, Z); <font color="#B22222">/*   Z &lt;- Az       */</font>
+
+<a name="line112">112: </a>    <font color="#4169E1">if</font> (ksp-&gt;normtype == <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_UNPRECONDITIONED.html">KSP_NORM_UNPRECONDITIONED</a>) {
+<a name="line113">113: </a>      <a href="../../../../../../docs/manualpages/Vec/VecNormEnd.html">VecNormEnd</a>(r, <a href="../../../../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;dp);
+<a name="line114">114: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ksp-&gt;normtype == <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_PRECONDITIONED.html">KSP_NORM_PRECONDITIONED</a>) {
+<a name="line115">115: </a>      <a href="../../../../../../docs/manualpages/Vec/VecNormEnd.html">VecNormEnd</a>(z, <a href="../../../../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;dp);
+<a name="line116">116: </a>    }
+<a name="line117">117: </a>    <a href="../../../../../../docs/manualpages/Vec/VecDotEnd.html">VecDotEnd</a>(r, z, &amp;gammaNew);
+
+<a name="line119">119: </a>    <font color="#4169E1">if</font> (ksp-&gt;normtype == <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_NATURAL.html">KSP_NORM_NATURAL</a>) {
+<a name="line120">120: </a>      <a href="../../../../../../docs/manualpages/KSP/KSPCheckDot.html">KSPCheckDot</a>(ksp, gammaNew);
+<a name="line121">121: </a>      dp = PetscSqrtReal(PetscAbsScalar(gammaNew)); <font color="#B22222">/*     dp &lt;- r'*z = r'*B*r = e'*A'*B*A*e */</font>
+<a name="line122">122: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ksp-&gt;normtype == <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_NONE.html">KSP_NORM_NONE</a>) {
+<a name="line123">123: </a>      dp = 0.0;
+<a name="line124">124: </a>    }
+<a name="line125">125: </a>    ksp-&gt;rnorm = dp;
+<a name="line126">126: </a>    KSPLogResidualHistory(ksp, dp);
+<a name="line127">127: </a>    <a href="../../../../../../docs/manualpages/KSP/KSPMonitor.html">KSPMonitor</a>(ksp, i, dp);
+<a name="line128">128: </a>    (*ksp-&gt;converged)(ksp, i, dp, &amp;ksp-&gt;reason, ksp-&gt;cnvP);
+<a name="line129">129: </a>    <font color="#4169E1">if</font> (ksp-&gt;reason) <font color="#4169E1">return</font> 0;
+
+<a name="line131">131: </a>    beta  = gammaNew / gamma;
+<a name="line132">132: </a>    gamma = gammaNew;
+<a name="line133">133: </a>    <a href="../../../../../../docs/manualpages/Vec/VecAYPX.html">VecAYPX</a>(p, beta, z); <font color="#B22222">/*     p &lt;- z + beta * p   */</font>
+<a name="line134">134: </a>    <a href="../../../../../../docs/manualpages/Vec/VecAYPX.html">VecAYPX</a>(s, beta, Z); <font color="#B22222">/*     s &lt;- Z + beta * s   */</font>
+
+<a name="line136">136: </a>  } <font color="#4169E1">while</font> (i &lt; ksp-&gt;max_it);
+
+<a name="line138">138: </a>  <font color="#4169E1">if</font> (i &gt;= ksp-&gt;max_it) ksp-&gt;reason = <a href="../../../../../../docs/manualpages/KSP/KSP_DIVERGED_ITS.html">KSP_DIVERGED_ITS</a>;
+<a name="line139">139: </a>  <font color="#4169E1">return</font> 0;
+<a name="line140">140: </a>}
+
+<a name="line142">142: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPBuildResidual_CG(<a href="../../../../../../docs/manualpages/KSP/KSP.html">KSP</a>, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *)</font></strong>;
+
+<a name="line144">144: </a><font color="#B22222">/*MC</font>
+<a name="line145">145: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/KSP/KSPGROPPCG.html">KSPGROPPCG</a> - A pipelined conjugate gradient method developed by Bill Gropp. [](sec_pipelineksp)</font>
+
+<a name="line147">147: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line149">149: </a><font color="#B22222">   Notes:</font>
+<a name="line150">150: </a><font color="#B22222">   This method has two reductions, one of which is overlapped with the matrix-vector product and one of which is</font>
+<a name="line151">151: </a><font color="#B22222">   overlapped with the preconditioner.</font>
+
+<a name="line153">153: </a><font color="#B22222">   See also `<a href="../../../../../../docs/manualpages/KSP/KSPPIPECG.html">KSPPIPECG</a>`, which has only a single reduction that overlaps both the matrix-vector product and the preconditioner.</font>
+
+<a name="line155">155: </a><font color="#B22222">   MPI configuration may be necessary for reductions to make asynchronous progress, which is important for performance of pipelined methods.</font>
+<a name="line156">156: </a><font color="#B22222">   See [](doc_faq_pipelined)</font>
+
+<a name="line158">158: </a><font color="#B22222">   Contributed by:</font>
+<a name="line159">159: </a><font color="#B22222">   Pieter Ghysels, Universiteit Antwerpen, Intel Exascience lab Flanders</font>
+
+<a name="line161">161: </a><font color="#B22222">   Reference:</font>
+<a name="line162">162: </a><font color="#B22222">   http://www.cs.uiuc.edu/~wgropp/bib/talks/tdata/2012/icerm.pdf</font>
+
+<a name="line164">164: </a><font color="#B22222">.seealso: [](chapter_ksp), [](sec_pipelineksp), [](doc_faq_pipelined), `<a href="../../../../../../docs/manualpages/KSP/KSPCreate.html">KSPCreate</a>()`, `<a href="../../../../../../docs/manualpages/KSP/KSPPIPECG2.html">KSPPIPECG2</a>()`, `<a href="../../../../../../docs/manualpages/KSP/KSPSetType.html">KSPSetType</a>()`, `<a href="../../../../../../docs/manualpages/KSP/KSPPIPECG.html">KSPPIPECG</a>`, `<a href="../../../../../../docs/manualpages/KSP/KSPPIPECR.html">KSPPIPECR</a>`, `<a href="../../../../../../docs/manualpages/KSP/KSPPGMRES.html">KSPPGMRES</a>`, `<a href="../../../../../../docs/manualpages/KSP/KSPCG.html">KSPCG</a>`, `<a href="../../../../../../docs/manualpages/KSP/KSPCGUseSingleReduction.html">KSPCGUseSingleReduction</a>()`</font>
+<a name="line165">165: </a><font color="#B22222">M*/</font>
+
+<a name="line167">167: </a><strong><font color="#4169E1"><a name="KSPCreate_GROPPCG"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPCreate_GROPPCG(<a href="../../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp)</font></strong>
+<a name="line168">168: </a>{
+<a name="line169">169: </a>  <a href="../../../../../../docs/manualpages/KSP/KSPSetSupportedNorm.html">KSPSetSupportedNorm</a>(ksp, <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_UNPRECONDITIONED.html">KSP_NORM_UNPRECONDITIONED</a>, <a href="../../../../../../docs/manualpages/PC/PCSide.html">PC_LEFT</a>, 2);
+<a name="line170">170: </a>  <a href="../../../../../../docs/manualpages/KSP/KSPSetSupportedNorm.html">KSPSetSupportedNorm</a>(ksp, <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_PRECONDITIONED.html">KSP_NORM_PRECONDITIONED</a>, <a href="../../../../../../docs/manualpages/PC/PCSide.html">PC_LEFT</a>, 2);
+<a name="line171">171: </a>  <a href="../../../../../../docs/manualpages/KSP/KSPSetSupportedNorm.html">KSPSetSupportedNorm</a>(ksp, <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_NATURAL.html">KSP_NORM_NATURAL</a>, <a href="../../../../../../docs/manualpages/PC/PCSide.html">PC_LEFT</a>, 2);
+<a name="line172">172: </a>  <a href="../../../../../../docs/manualpages/KSP/KSPSetSupportedNorm.html">KSPSetSupportedNorm</a>(ksp, <a href="../../../../../../docs/manualpages/KSP/KSP_NORM_NONE.html">KSP_NORM_NONE</a>, <a href="../../../../../../docs/manualpages/PC/PCSide.html">PC_LEFT</a>, 1);
+
+<a name="line174">174: </a>  ksp-&gt;ops-&gt;setup          = KSPSetUp_GROPPCG;
+<a name="line175">175: </a>  ksp-&gt;ops-&gt;solve          = KSPSolve_GROPPCG;
+<a name="line176">176: </a>  ksp-&gt;ops-&gt;destroy        = KSPDestroyDefault;
+<a name="line177">177: </a>  ksp-&gt;ops-&gt;view           = NULL;
+<a name="line178">178: </a>  ksp-&gt;ops-&gt;setfromoptions = NULL;
+<a name="line179">179: </a>  ksp-&gt;ops-&gt;buildsolution  = KSPBuildSolutionDefault;
+<a name="line180">180: </a>  ksp-&gt;ops-&gt;buildresidual  = KSPBuildResidual_CG;
+<a name="line181">181: </a>  <font color="#4169E1">return</font> 0;
+<a name="line182">182: </a>}
+</pre>
+</body>
+
+</html>

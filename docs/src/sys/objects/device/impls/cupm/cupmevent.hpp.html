@@ -1,0 +1,164 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/objects/device/impls/cupm/cupmevent.hpp">Actual source code: cupmevent.hpp</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:58+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#ifndef PETSC_CUPMEVENT_HPP</font>
+<a name="line2">  2: </a><strong><font color="#228B22">#define PETSC_CUPMEVENT_HPP</font></strong>
+
+<a name="line4">  4: </a>#include <A href="../../../../../../include/petsc/private/cupminterface.hpp.html">&lt;petsc/private/cupminterface.hpp&gt;</A>
+<a name="line5">  5: </a>#include <A href="../../../../../../include/petsc/private/cpp/memory.hpp.html">&lt;petsc/private/cpp/memory.hpp&gt;</A>
+<a name="line6">  6: </a>#include <A href="../../../../../../include/petsc/private/cpp/object_pool.hpp.html">&lt;petsc/private/cpp/object_pool.hpp&gt;</A>
+
+<a name="line8">  8: </a><font color="#A020F0">#if defined(__cplusplus)</font>
+<a name="line9">  9: </a>namespace Petsc
+<a name="line10"> 10: </a>{
+
+<a name="line12"> 12: </a>namespace device
+<a name="line13"> 13: </a>{
+
+<a name="line15"> 15: </a>namespace cupm
+<a name="line16"> 16: </a>{
+
+<a name="line18"> 18: </a>namespace
+<a name="line19"> 19: </a>{
+
+<a name="line21"> 21: </a>// A pool <font color="#4169E1">for</font> allocating cupmEvent_t's. While events are generally very cheap to create and
+<a name="line22"> 22: </a>// destroy, they are not free. Using the pool vs on-demand creation and destruction yields a ~20%
+<a name="line23"> 23: </a>// speedup.
+<a name="line24"> 24: </a>template &lt;DeviceType T, unsigned long flags&gt;
+<a name="line25"> 25: </a><font color="#4169E1"><a name="CUPMEventPoolAllocator"></a>struct CUPMEventPoolAllocator </font>: impl::Interface&lt;T&gt;, AllocatorBase&lt;typename impl::Interface&lt;T&gt;::cupmEvent_t&gt; {
+<a name="line26"> 26: </a>  PETSC_CUPM_INHERIT_INTERFACE_TYPEDEFS_USING(interface_type, T);
+
+<a name="line28"> 28: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> create(cupmEvent_t *) noexcept;
+<a name="line29"> 29: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> destroy(cupmEvent_t) noexcept;
+<a name="line30"> 30: </a>};
+
+<a name="line32"> 32: </a>template &lt;DeviceType T, unsigned long flags&gt;
+<a name="line33"> 33: </a>inline <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMEventPoolAllocator&lt;T, flags&gt;::create(cupmEvent_t *event) noexcept
+<a name="line34"> 34: </a>{
+<a name="line35"> 35: </a>  cupmEventCreateWithFlags(event, flags);
+<a name="line36"> 36: </a>  <font color="#4169E1">return</font> 0;
+<a name="line37"> 37: </a>}
+
+<a name="line39"> 39: </a>template &lt;DeviceType T, unsigned long flags&gt;
+<a name="line40"> 40: </a>inline <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMEventPoolAllocator&lt;T, flags&gt;::destroy(cupmEvent_t event) noexcept
+<a name="line41"> 41: </a>{
+<a name="line42"> 42: </a>  cupmEventDestroy(event);
+<a name="line43"> 43: </a>  <font color="#4169E1">return</font> 0;
+<a name="line44"> 44: </a>}
+
+<a name="line46"> 46: </a>} // anonymous namespace
+
+<a name="line48"> 48: </a>template &lt;DeviceType T, unsigned long flags, typename allocator_type = CUPMEventPoolAllocator&lt;T, flags&gt;, typename pool_type = ObjectPool&lt;typename allocator_type::value_type, allocator_type&gt;&gt;
+<a name="line49"> 49: </a>pool_type &amp;cupm_event_pool() noexcept
+<a name="line50"> 50: </a>{
+<a name="line51"> 51: </a>  static pool_type pool;
+<a name="line52"> 52: </a>  <font color="#4169E1">return</font> pool;
+<a name="line53"> 53: </a>}
+
+<a name="line55"> 55: </a>// pool of events with timing disabled
+<a name="line56"> 56: </a>template &lt;DeviceType T&gt;
+<a name="line57"> 57: </a><strong><font color="#4169E1"><a name="cupm_fast_event_pool"></a>inline auto cupm_fast_event_pool()</font></strong> noexcept -&gt; decltype(cupm_event_pool&lt;T, impl::Interface&lt;T&gt;::cupmEventDisableTiming&gt;()) &amp;
+<a name="line58"> 58: </a>{
+<a name="line59"> 59: </a>  <font color="#4169E1">return</font> cupm_event_pool&lt;T, impl::Interface&lt;T&gt;::cupmEventDisableTiming&gt;();
+<a name="line60"> 60: </a>}
+
+<a name="line62"> 62: </a>// pool of events with timing enabled
+<a name="line63"> 63: </a>template &lt;DeviceType T&gt;
+<a name="line64"> 64: </a><strong><font color="#4169E1"><a name="cupm_timer_event_pool"></a>inline auto cupm_timer_event_pool()</font></strong> noexcept -&gt; decltype(cupm_event_pool&lt;T, impl::Interface&lt;T&gt;::cupmEventDefault&gt;()) &amp;
+<a name="line65"> 65: </a>{
+<a name="line66"> 66: </a>  <font color="#4169E1">return</font> cupm_event_pool&lt;T, impl::Interface&lt;T&gt;::cupmEventDefault&gt;();
+<a name="line67"> 67: </a>}
+
+<a name="line69"> 69: </a>// A simple wrapper of cupmEvent_t. This is used in conjunction with CUPMStream to build the
+<a name="line70"> 70: </a>// event-stream pairing <font color="#4169E1">for</font> the async allocator. It is also used as the data member of
+<a name="line71"> 71: </a>// PetscEvent.
+<a name="line72"> 72: </a>template &lt;DeviceType T&gt;
+<a name="line73"> 73: </a>class CUPMEvent : impl::Interface&lt;T&gt;, public memory::PoolAllocated&lt;CUPMEvent&lt;T&gt;&gt; {
+<a name="line74"> 74: </a>  using pool_type = memory::PoolAllocated&lt;CUPMEvent&lt;T&gt;&gt;;
+
+<a name="line76"> 76: </a><strong><font color="#FF0000">public:</font></strong>
+<a name="line77"> 77: </a>  PETSC_CUPM_INHERIT_INTERFACE_TYPEDEFS_USING(interface_type, T);
+
+<a name="line79"> 79: </a>  constexpr CUPMEvent() noexcept = <font color="#4169E1">default</font>;
+<a name="line80"> 80: </a>  ~CUPMEvent() noexcept;
+
+<a name="line82"> 82: </a>  CUPMEvent(CUPMEvent &amp;&amp;) noexcept;
+<a name="line83"> 83: </a>  CUPMEvent &amp;operator=(CUPMEvent &amp;&amp;) noexcept;
+
+<a name="line85"> 85: </a>  // event is not copyable
+<a name="line86"> 86: </a>  CUPMEvent(const CUPMEvent &amp;)            = delete;
+<a name="line87"> 87: </a>  CUPMEvent &amp;operator=(const CUPMEvent &amp;) = delete;
+
+<a name="line89"> 89: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> cupmEvent_t    get() noexcept;
+<a name="line90"> 90: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> record(cupmStream_t) noexcept;
+
+<a name="line92"> 92: </a>  explicit operator bool() const noexcept;
+
+<a name="line94"> 94: </a><strong><font color="#FF0000">private:</font></strong>
+<a name="line95"> 95: </a>  cupmEvent_t event_{};
+<a name="line96"> 96: </a>};
+
+<a name="line98"> 98: </a>template &lt;DeviceType T&gt;
+<a name="line99"> 99: </a>inline CUPMEvent&lt;T&gt;::~CUPMEvent() noexcept
+<a name="line100">100: </a>{
+<a name="line101">101: </a>  <font color="#4169E1">if</font> (event_) <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, cupm_fast_event_pool&lt;T&gt;().deallocate(std::move(event_));
+<a name="line102">102: </a>  <font color="#4169E1">return</font>;
+<a name="line103">103: </a>}
+
+<a name="line105">105: </a>template &lt;DeviceType T&gt;
+<a name="line106">106: </a>inline CUPMEvent&lt;T&gt;::CUPMEvent(CUPMEvent &amp;&amp;other) noexcept : interface_type(std::move(other)), pool_type(std::move(other)), event_(util::exchange(other.event_, cupmEvent_t{}))
+<a name="line107">107: </a>{
+<a name="line108">108: </a>}
+
+<a name="line110">110: </a>template &lt;DeviceType T&gt;
+<a name="line111">111: </a>inline CUPMEvent&lt;T&gt; &amp;CUPMEvent&lt;T&gt;::operator=(CUPMEvent &amp;&amp;other) noexcept
+<a name="line112">112: </a>{
+<a name="line113">113: </a>  <font color="#4169E1">if</font> (this != &amp;other) {
+<a name="line114">114: </a><strong><font color="#FF0000">    interface_type:</font></strong>:operator=(std::move(other));
+<a name="line115">115: </a><strong><font color="#FF0000">    pool_type:</font></strong>:     operator=(std::move(other));
+<a name="line116">116: </a>    <font color="#4169E1">if</font> (event_) <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, cupm_fast_event_pool&lt;T&gt;().deallocate(std::move(event_));
+<a name="line117">117: </a>    event_ = util::exchange(other.event_, cupmEvent_t{});
+<a name="line118">118: </a>  }
+<a name="line119">119: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(*this);
+<a name="line120">120: </a>}
+
+<a name="line122">122: </a>template &lt;DeviceType T&gt;
+<a name="line123">123: </a>inline typename CUPMEvent&lt;T&gt;::cupmEvent_t CUPMEvent&lt;T&gt;::get() noexcept
+<a name="line124">124: </a>{
+<a name="line125">125: </a>  <font color="#4169E1">if</font> (<a href="../../../../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(!event_)) <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, cupm_fast_event_pool&lt;T&gt;().allocate(&amp;event_);
+<a name="line126">126: </a>  <font color="#4169E1">return</font> event_;
+<a name="line127">127: </a>}
+
+<a name="line129">129: </a>template &lt;DeviceType T&gt;
+<a name="line130">130: </a>inline <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMEvent&lt;T&gt;::record(cupmStream_t stream) noexcept
+<a name="line131">131: </a>{
+<a name="line132">132: </a>  cupmEventRecord(get(), stream);
+<a name="line133">133: </a>  <font color="#4169E1">return</font> 0;
+<a name="line134">134: </a>}
+
+<a name="line136">136: </a>template &lt;DeviceType T&gt;
+<a name="line137">137: </a>inline CUPMEvent&lt;T&gt;::operator bool() const noexcept
+<a name="line138">138: </a>{
+<a name="line139">139: </a>  <font color="#4169E1">return</font> event_ != cupmEvent_t{};
+<a name="line140">140: </a>}
+
+<a name="line142">142: </a>} // namespace cupm
+
+<a name="line144">144: </a>} // namespace device
+
+<a name="line146">146: </a>} // namespace Petsc
+<a name="line147">147: </a><font color="#A020F0">#endif // __cplusplus</font>
+
+<a name="line149">149: </a><font color="#A020F0">#endif // PETSC_CUPMEVENT_HPP</font>
+</pre>
+</body>
+
+</html>

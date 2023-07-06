@@ -1,0 +1,7 @@
+#! /bin/sh
+echo usr/lib/${DEB_HOST_MULTIARCH}/libpetsc64_real.so.${PETSC_VERSION}  ${PETSC64_REAL_DIR_PREFIX}/lib/libpetsc64_real.so.${PETSC_VERSION}
+for common in include/petsc lib/petsc/bin share; do
+  echo usr/share/petsc/${PETSC_SONAME_VERSION}/${common} ${PETSC64_REAL_DIR_PREFIX}/${common}
+done
+echo ${PETSC64_REAL_DIR_PREFIX}/lib/pkgconfig/petsc.pc ${PETSC64_REAL_DIR_PREFIX}/lib/pkgconfig/petsc64.pc
+echo ${PETSC64_REAL_DIR_PREFIX}/lib/pkgconfig/PETSc.pc ${PETSC64_REAL_DIR_PREFIX}/lib/pkgconfig/PETSc64.pc

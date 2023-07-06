@@ -1,0 +1,2 @@
+# common arch-indep files are installed in usr/share/petsc
+breakout-link usr/lib/petscdir/petsc* -> usr/share/petsc/*

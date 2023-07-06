@@ -1,0 +1,3 @@
+# let matlab scripts remain executable
+executable-not-elf-or-script usr/share/petsc/*/share/petsc/matlab/*.m
+executable-not-elf-or-script usr/share/petsc/*/share/petsc/matlab/*/*.m

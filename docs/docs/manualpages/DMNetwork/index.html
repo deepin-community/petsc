@@ -1,0 +1,726 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>DMNetwork Manual Pages &#8212; PETSc 3.18.6 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../../_static/styles/bootstrap.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/katex-math.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script src="../../../_static/katex.min.js"></script>
+    <script src="../../../_static/auto-render.min.js"></script>
+    <script src="../../../_static/katex_autorenderer.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/manualpages/DMNetwork/index';</script>
+    <link rel="shortcut icon" href="../../../_static/petsc_favicon.png"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="DMNETWORK" href="DMNETWORK.html" />
+    <link rel="prev" title="DMRefine_Moab" href="../DMMOAB/DMRefine_Moab.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../../../index.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../../../_static/PETSc-TAO_RGB.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../../../_static/PETSc-TAO_RGB_white.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        API-Docs
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+    </ul>
+</nav>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+        <div class="navbar-end-item navbar-persistent--container">
+          
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+        </div>
+      
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+
+
+  
+  
+    <div class="navbar-persistent--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+    </div>
+  
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+  </label>
+  
+
+</div>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        API-Docs
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+  <div class="sidebar-start-items sidebar-primary__section">
+    <div class="sidebar-start-items__item"><nav class="bd-links" id="bd-docs-nav" aria-label="Section navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">
+    Section Navigation
+  </p>
+  <div class="bd-toc-item navbar-nav">
+    <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../changes/index.html">Changes for each release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+</ul>
+
+  </div>
+</nav>
+    </div>
+  </div>
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+  
+  <div id="rtd-footer-container"></div>
+
+      </div>
+      <main id="main-content" class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+            </div>
+            
+            
+            <article class="bd-article" role="main">
+              
+  <section class="tex2jax_ignore mathjax_ignore" id="dmnetwork-manual-pages">
+<h1>DMNetwork Manual Pages<a class="headerlink" href="#dmnetwork-manual-pages" title="Permalink to this heading">#</a></h1>
+<p>The DMNetwork class encapsulates a graph topology, and is based on DMPLEX. It is designed to handle very large scale graphs, such as those that arise in power system or wireless communication modeling.</p>
+<p><a class="reference internal" href="../index.html"><span class="doc std std-doc">Manual Pages Table of Contents</span></a></p>
+<section id="manual-pages-by-level">
+<h2>Manual Pages by Level<a class="headerlink" href="#manual-pages-by-level" title="Permalink to this heading">#</a></h2>
+<section id="beginner-basic-usage">
+<h3>Beginner - Basic usage<a class="headerlink" href="#beginner-basic-usage" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="DMNetworkAddComponent.html"><span class="doc std std-doc">DMNetworkAddComponent</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkAddSharedVertices.html"><span class="doc std std-doc">DMNetworkAddSharedVertices</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkAddSubnetwork.html"><span class="doc std std-doc">DMNetworkAddSubnetwork</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkCreate.html"><span class="doc std std-doc">DMNetworkCreate</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkFinalizeComponents.html"><span class="doc std std-doc">DMNetworkFinalizeComponents</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetComponent.html"><span class="doc std std-doc">DMNetworkGetComponent</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="DMNetworkGetConnectedVertices.html"><span class="doc std std-doc">DMNetworkGetConnectedVertices</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetEdgeRange.html"><span class="doc std std-doc">DMNetworkGetEdgeRange</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetNumComponents.html"><span class="doc std std-doc">DMNetworkGetNumComponents</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetNumSubNetworks.html"><span class="doc std std-doc">DMNetworkGetNumSubNetworks</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetSupportingEdges.html"><span class="doc std std-doc">DMNetworkGetSupportingEdges</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetVertexRange.html"><span class="doc std std-doc">DMNetworkGetVertexRange</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="DMNetworkIsGhostVertex.html"><span class="doc std std-doc">DMNetworkIsGhostVertex</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkIsSharedVertex.html"><span class="doc std std-doc">DMNetworkIsSharedVertex</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkLayoutSetUp.html"><span class="doc std std-doc">DMNetworkLayoutSetUp</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkRegisterComponent.html"><span class="doc std std-doc">DMNetworkRegisterComponent</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkSetNumSubNetworks.html"><span class="doc std std-doc">DMNetworkSetNumSubNetworks</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="intermediate-setting-options-for-algorithms-and-data-structures">
+<h3>Intermediate - Setting options for algorithms and data structures<a class="headerlink" href="#intermediate-setting-options-for-algorithms-and-data-structures" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="DMNETWORK.html"><span class="doc std std-doc">DMNETWORK</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkAssembleGraphStructures.html"><span class="doc std std-doc">DMNetworkAssembleGraphStructures</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkDistribute.html"><span class="doc std std-doc">DMNetworkDistribute</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetEdgeOffset.html"><span class="doc std std-doc">DMNetworkGetEdgeOffset</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetGlobalEdgeIndex.html"><span class="doc std std-doc">DMNetworkGetGlobalEdgeIndex</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetGlobalVecOffset.html"><span class="doc std std-doc">DMNetworkGetGlobalVecOffset</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetGlobalVertexIndex.html"><span class="doc std std-doc">DMNetworkGetGlobalVertexIndex</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="DMNetworkGetLocalVecOffset.html"><span class="doc std std-doc">DMNetworkGetLocalVecOffset</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetSharedVertices.html"><span class="doc std std-doc">DMNetworkGetSharedVertices</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetSubnetwork.html"><span class="doc std std-doc">DMNetworkGetSubnetwork</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetVertexOffset.html"><span class="doc std std-doc">DMNetworkGetVertexOffset</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkHasJacobian.html"><span class="doc std std-doc">DMNetworkHasJacobian</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkMonitorAdd.html"><span class="doc std std-doc">DMNetworkMonitorAdd</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="DMNetworkMonitorCreate.html"><span class="doc std std-doc">DMNetworkMonitorCreate</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkMonitorDestroy.html"><span class="doc std std-doc">DMNetworkMonitorDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkMonitorPop.html"><span class="doc std std-doc">DMNetworkMonitorPop</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkMonitorView.html"><span class="doc std std-doc">DMNetworkMonitorView</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkSharedVertexGetInfo.html"><span class="doc std std-doc">DMNetworkSharedVertexGetInfo</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFGetSubSF.html"><span class="doc std std-doc">PetscSFGetSubSF</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="advanced-setting-more-advanced-options-and-customization">
+<h3>Advanced - Setting more advanced options and customization<a class="headerlink" href="#advanced-setting-more-advanced-options-and-customization" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="DMNetworkCreateIS.html"><span class="doc std std-doc">DMNetworkCreateIS</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkCreateLocalIS.html"><span class="doc std std-doc">DMNetworkCreateLocalIS</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkEdgeSetMatrix.html"><span class="doc std std-doc">DMNetworkEdgeSetMatrix</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="DMNetworkGetPlex.html"><span class="doc std std-doc">DMNetworkGetPlex</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkGetVertexLocalToGlobalOrdering.html"><span class="doc std std-doc">DMNetworkGetVertexLocalToGlobalOrdering</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="DMNetworkSetVertexLocalToGlobalOrdering.html"><span class="doc std std-doc">DMNetworkSetVertexLocalToGlobalOrdering</span></a></p></li>
+<li><p><a class="reference internal" href="DMNetworkVertexSetMatrix.html"><span class="doc std std-doc">DMNetworkVertexSetMatrix</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="no-developer-routines">
+<h3>No developer routines<a class="headerlink" href="#no-developer-routines" title="Permalink to this heading">#</a></h3>
+</section>
+<section id="no-deprecated-routines">
+<h3>No deprecated routines<a class="headerlink" href="#no-deprecated-routines" title="Permalink to this heading">#</a></h3>
+</section>
+</section>
+<section id="single-list-of-manual-pages">
+<h2>Single list of manual pages<a class="headerlink" href="#single-list-of-manual-pages" title="Permalink to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="DMNETWORK.html">DMNETWORK</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkAddComponent.html">DMNetworkAddComponent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkAddSharedVertices.html">DMNetworkAddSharedVertices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkAddSubnetwork.html">DMNetworkAddSubnetwork</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkAssembleGraphStructures.html">DMNetworkAssembleGraphStructures</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkCreate.html">DMNetworkCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkCreateIS.html">DMNetworkCreateIS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkCreateLocalIS.html">DMNetworkCreateLocalIS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkDistribute.html">DMNetworkDistribute</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkEdgeSetMatrix.html">DMNetworkEdgeSetMatrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkFinalizeComponents.html">DMNetworkFinalizeComponents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetComponent.html">DMNetworkGetComponent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetConnectedVertices.html">DMNetworkGetConnectedVertices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetEdgeOffset.html">DMNetworkGetEdgeOffset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetEdgeRange.html">DMNetworkGetEdgeRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetGlobalEdgeIndex.html">DMNetworkGetGlobalEdgeIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetGlobalVecOffset.html">DMNetworkGetGlobalVecOffset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetGlobalVertexIndex.html">DMNetworkGetGlobalVertexIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetLocalVecOffset.html">DMNetworkGetLocalVecOffset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetNumComponents.html">DMNetworkGetNumComponents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetNumSubNetworks.html">DMNetworkGetNumSubNetworks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetPlex.html">DMNetworkGetPlex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetSharedVertices.html">DMNetworkGetSharedVertices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetSubnetwork.html">DMNetworkGetSubnetwork</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetSupportingEdges.html">DMNetworkGetSupportingEdges</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetVertexLocalToGlobalOrdering.html">DMNetworkGetVertexLocalToGlobalOrdering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetVertexOffset.html">DMNetworkGetVertexOffset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkGetVertexRange.html">DMNetworkGetVertexRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkHasJacobian.html">DMNetworkHasJacobian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkIsGhostVertex.html">DMNetworkIsGhostVertex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkIsSharedVertex.html">DMNetworkIsSharedVertex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkLayoutSetUp.html">DMNetworkLayoutSetUp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkMonitorAdd.html">DMNetworkMonitorAdd</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkMonitorCreate.html">DMNetworkMonitorCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkMonitorDestroy.html">DMNetworkMonitorDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkMonitorPop.html">DMNetworkMonitorPop</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkMonitorView.html">DMNetworkMonitorView</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkRegisterComponent.html">DMNetworkRegisterComponent</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkSetNumSubNetworks.html">DMNetworkSetNumSubNetworks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkSetVertexLocalToGlobalOrdering.html">DMNetworkSetVertexLocalToGlobalOrdering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkSharedVertexGetInfo.html">DMNetworkSharedVertexGetInfo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMNetworkVertexSetMatrix.html">DMNetworkVertexSetMatrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFGetSubSF.html">PetscSFGetSubSF</a></li>
+</ul>
+</div>
+</section>
+</section>
+
+
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+  <a class='left-prev' id="prev-link" href="../DMMOAB/DMRefine_Moab.html" title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">DMRefine_Moab</p>
+      </div>
+  </a>
+  <a class='right-next' id="next-link" href="DMNETWORK.html" title="next page">
+  <div class="prev-next-info">
+      <p class="prev-next-subtitle">next</p>
+      <p class="prev-next-title">DMNETWORK</p>
+  </div>
+  <i class="fa-solid fa-angle-right"></i>
+  </a>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div class="tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+</div>
+<nav id="bd-toc-nav" class="page-toc">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#manual-pages-by-level">
+   Manual Pages by Level
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#beginner-basic-usage">
+     Beginner - Basic usage
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#intermediate-setting-options-for-algorithms-and-data-structures">
+     Intermediate - Setting options for algorithms and data structures
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#advanced-setting-more-advanced-options-and-customization">
+     Advanced - Setting more advanced options and customization
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#no-developer-routines">
+     No developer routines
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#no-deprecated-routines">
+     No deprecated routines
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#single-list-of-manual-pages">
+   Single list of manual pages
+  </a>
+  <ul class="simple nav section-nav flex-column">
+  </ul>
+ </li>
+</ul>
+
+</nav>
+</div>
+
+<div class="toc-item">
+  
+<div id="searchbox"></div>
+</div>
+
+<div class="toc-item">
+  
+
+<div class="tocsection editthispage">
+    <a href="https://gitlab.com/petsc/petsc/edit/release/doc/docs/manualpages/DMNetwork/index.md">
+        <i class="fa-solid fa-pencil"></i> Edit this page
+    </a>
+</div>
+
+</div>
+
+<div class="toc-item">
+  
+<div class="tocsection sourcelink">
+    <a href="../../../_sources/docs/manualpages/DMNetwork/index.md.txt">
+        <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+</div>
+
+</div>
+
+            </div>
+          
+          
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+</p>
+  </div>
+  
+</div>
+  </footer>
+  </body>
+</html>

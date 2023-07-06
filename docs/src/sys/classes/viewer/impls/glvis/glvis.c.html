@@ -1,0 +1,832 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/classes/viewer/impls/glvis/glvis.c">Actual source code: glvis.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:45+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><strong><font color="#228B22">#define PETSC_DESIRE_FEATURE_TEST_MACROS </font><font color="#B22222">/* for fdopen() */</font><font color="#228B22"></font></strong>
+
+<a name="line3">  3: </a>#include <A href="../../../../../../include/petsc/private/viewerimpl.h.html">&lt;petsc/private/viewerimpl.h&gt;</A>
+<a name="line4">  4: </a>#include <A href="../../../../../../include/petsc/private/petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
+<a name="line5">  5: </a>#include <A href="../../../../../../include/petsc/private/glvisviewerimpl.h.html">&lt;petsc/private/glvisviewerimpl.h&gt;</A>
+
+<a name="line7">  7: </a><font color="#B22222">/* we may eventually make this function public */</font>
+<a name="line8">  8: </a><strong><font color="#4169E1">static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerASCIISocketOpen(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>, const char *, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *)</font></strong>;
+
+<a name="line10"> 10: </a><font color="#4169E1"><a name="_n_PetscViewerGLVis"></a>struct _n_PetscViewerGLVis </font>{
+<a name="line11"> 11: </a>  PetscViewerGLVisStatus status;
+<a name="line12"> 12: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PetscViewerGLVisType</a>   type;       <font color="#B22222">/* either <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_DUMP</a> or <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_SOCKET</a> */</font>
+<a name="line13"> 13: </a>  char                  *name;       <font color="#B22222">/* prefix for filename, or hostname, depending on the type */</font>
+<a name="line14"> 14: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>               port;       <font color="#B22222">/* used just for the socket case */</font>
+<a name="line15"> 15: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>              pause;      <font color="#B22222">/* if positive, calls <a href="../../../../../../docs/manualpages/Sys/PetscSleep.html">PetscSleep</a>(pause) after each VecView_GLVis call */</font>
+<a name="line16"> 16: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>            meshwindow; <font color="#B22222">/* used just by the ASCII dumping */</font>
+<a name="line17"> 17: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>            dm;         <font color="#B22222">/* <a href="../../../../../../docs/manualpages/DM/DM.html">DM</a> as passed by PetscViewerGLVisSetDM_Private(): should contain discretization info */</font>
+<a name="line18"> 18: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>               nwindow;    <font color="#B22222">/* number of windows/fields to be visualized */</font>
+<a name="line19"> 19: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>           *window;
+<a name="line20"> 20: </a>  char                 **windowtitle;
+<a name="line21"> 21: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>               windowsizes[2];
+<a name="line22"> 22: </a>  char                 **fec_type;                                          <font color="#B22222">/* type of elements to be used for visualization, see FiniteElementCollection::Name() */</font>
+<a name="line23"> 23: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*g2lfield)(<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>[], void *); <font color="#B22222">/* global to local operation for generating dofs to be visualized */</font>
+<a name="line24"> 24: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *spacedim;                                                    <font color="#B22222">/* geometrical space dimension (just used to initialize the scene) */</font>
+<a name="line25"> 25: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *Ufield;                                                      <font color="#B22222">/* work vectors for visualization */</font>
+<a name="line26"> 26: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     snapid;                                                      <font color="#B22222">/* snapshot id, use <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisSetSnapId.html">PetscViewerGLVisSetSnapId</a> to change this value*/</font>
+<a name="line27"> 27: </a>  void        *userctx;                                                     <font color="#B22222">/* User context, used by g2lfield */</font>
+<a name="line28"> 28: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*destroyctx)(void *);                                     <font color="#B22222">/* destroy routine for userctx */</font>
+<a name="line29"> 29: </a>  char *fmt;                                                                <font color="#B22222">/* format string for FP values */</font>
+<a name="line30"> 30: </a>};
+<a name="line31"> 31: </a><font color="#4169E1">typedef struct _n_PetscViewerGLVis *PetscViewerGLVis;</font>
+
+<a name="line33"> 33: </a><font color="#B22222">/*@</font>
+<a name="line34"> 34: </a><font color="#B22222">     <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisSetPrecision.html">PetscViewerGLVisSetPrecision</a> - Set the number of digits for floating point values to be displayed</font>
+
+<a name="line36"> 36: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line38"> 38: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line39"> 39: </a><font color="#B22222">+  viewer - the `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>` of type `PETSCVIEWERGLVIS`</font>
+<a name="line40"> 40: </a><font color="#B22222">-  prec   - the number of digits required</font>
+
+<a name="line42"> 42: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line44"> 44: </a><font color="#B22222">.seealso: [](sec_viewers), `PETSCVIEWERGLVIS`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisOpen.html">PetscViewerGLVisOpen</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisSetFields.html">PetscViewerGLVisSetFields</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html">PetscViewerSetType</a>()`</font>
+<a name="line45"> 45: </a><font color="#B22222">@*/</font>
+<a name="line46"> 46: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisSetPrecision"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisSetPrecision.html">PetscViewerGLVisSetPrecision</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> prec)</font></strong>
+<a name="line47"> 47: </a>{
+<a name="line49"> 49: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscTryMethod.html">PetscTryMethod</a>(viewer, <font color="#666666">"PetscViewerGLVisSetPrecision_C"</font>, (<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>), (viewer, prec));
+<a name="line50"> 50: </a>  <font color="#4169E1">return</font> 0;
+<a name="line51"> 51: </a>}
+
+<a name="line53"> 53: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisSetPrecision_GLVis"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisSetPrecision_GLVis(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> prec)</font></strong>
+<a name="line54"> 54: </a>{
+<a name="line55"> 55: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+
+<a name="line57"> 57: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(socket-&gt;fmt);
+<a name="line58"> 58: </a>  <font color="#4169E1">if</font> (prec &gt; 0) {
+<a name="line59"> 59: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(16, &amp;socket-&gt;fmt);
+<a name="line60"> 60: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(socket-&gt;fmt, 16, <font color="#666666">" %%.%"</font> PetscInt_FMT <font color="#666666">"e"</font>, prec);
+<a name="line61"> 61: </a>  } <font color="#4169E1">else</font> {
+<a name="line62"> 62: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(<font color="#666666">" %g"</font>, &amp;socket-&gt;fmt);
+<a name="line63"> 63: </a>  }
+<a name="line64"> 64: </a>  <font color="#4169E1">return</font> 0;
+<a name="line65"> 65: </a>}
+
+<a name="line67"> 67: </a><font color="#B22222">/*@</font>
+<a name="line68"> 68: </a><font color="#B22222">     <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisSetSnapId.html">PetscViewerGLVisSetSnapId</a> - Set the snapshot id. Only relevant when the `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PetscViewerGLVisType</a>` is `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_DUMP</a>`</font>
+
+<a name="line70"> 70: </a><font color="#B22222">  Logically Collective</font>
+
+<a name="line72"> 72: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line73"> 73: </a><font color="#B22222">+  viewer - the `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>` of type `PETSCVIEWERGLVIS`</font>
+<a name="line74"> 74: </a><font color="#B22222">-  id     - the current snapshot id in a time-dependent simulation</font>
+
+<a name="line76"> 76: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line78"> 78: </a><font color="#B22222">.seealso: [](sec_viewers), `PETSCVIEWERGLVIS`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisOpen.html">PetscViewerGLVisOpen</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisSetFields.html">PetscViewerGLVisSetFields</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html">PetscViewerSetType</a>()`</font>
+<a name="line79"> 79: </a><font color="#B22222">@*/</font>
+<a name="line80"> 80: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisSetSnapId"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisSetSnapId.html">PetscViewerGLVisSetSnapId</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> id)</font></strong>
+<a name="line81"> 81: </a>{
+<a name="line84"> 84: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscTryMethod.html">PetscTryMethod</a>(viewer, <font color="#666666">"PetscViewerGLVisSetSnapId_C"</font>, (<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>), (viewer, id));
+<a name="line85"> 85: </a>  <font color="#4169E1">return</font> 0;
+<a name="line86"> 86: </a>}
+
+<a name="line88"> 88: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisSetSnapId_GLVis"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisSetSnapId_GLVis(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> id)</font></strong>
+<a name="line89"> 89: </a>{
+<a name="line90"> 90: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+
+<a name="line92"> 92: </a>  socket-&gt;snapid = id;
+<a name="line93"> 93: </a>  <font color="#4169E1">return</font> 0;
+<a name="line94"> 94: </a>}
+
+<a name="line96"> 96: </a><font color="#B22222">/*@C</font>
+<a name="line97"> 97: </a><font color="#B22222">     <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisSetFields.html">PetscViewerGLVisSetFields</a> - Sets the required information to visualize different fields from a vector.</font>
+
+<a name="line99"> 99: </a><font color="#B22222">  Logically Collective</font>
+
+<a name="line101">101: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line102">102: </a><font color="#B22222">+  viewer     - the `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>` of type `PETSCVIEWERGLVIS`</font>
+<a name="line103">103: </a><font color="#B22222">.  nf         - number of fields to be visualized</font>
+<a name="line104">104: </a><font color="#B22222">.  fec_type   - the type of finite element to be used to visualize the data (see FiniteElementCollection::Name() in MFEM)</font>
+<a name="line105">105: </a><font color="#B22222">.  dim        - array of space dimension for field vectors (used to initialize the scene)</font>
+<a name="line106">106: </a><font color="#B22222">.  g2lfields  - User routine to compute the local field vectors to be visualized; <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> is used in place of <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> on the prototype</font>
+<a name="line107">107: </a><font color="#B22222">.  Vfield     - array of work vectors, one for each field</font>
+<a name="line108">108: </a><font color="#B22222">.  ctx        - User context to store the relevant data to apply g2lfields</font>
+<a name="line109">109: </a><font color="#B22222">-  destroyctx - Destroy function for userctx</font>
+
+<a name="line111">111: </a><font color="#B22222">  Notes:</font>
+<a name="line112">112: </a><font color="#B22222">    g2lfields is called on the vector V to be visualized in order to extract the relevant dofs to be put in Vfield[], as</font>
+<a name="line113">113: </a><font color="#B22222">.vb</font>
+<a name="line114">114: </a><font color="#B22222">  g2lfields((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)V,nfields,(<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>*)Vfield[],ctx).</font>
+<a name="line115">115: </a><font color="#B22222">.ve</font>
+
+<a name="line117">117: </a><font color="#B22222">  For vector spaces, the block size of Vfield[i] represents the vector dimension.</font>
+<a name="line118">118: </a><font color="#B22222">  The names of the Vfield vectors will be displayed in the window title.</font>
+
+<a name="line120">120: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line122">122: </a><font color="#B22222">.seealso: [](sec_viewers), `PETSCVIEWERGLVIS`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisOpen.html">PetscViewerGLVisOpen</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html">PetscViewerSetType</a>()`, `<a href="../../../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>()`</font>
+<a name="line123">123: </a><font color="#B22222">@*/</font>
+<a name="line124">124: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisSetFields"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisSetFields.html">PetscViewerGLVisSetFields</a>(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nf, const char *fec_type[], <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dim[], <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*g2l)(<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>[], void *), <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> Vfield[], void *ctx, <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*destroyctx)(void *))</font></strong>
+<a name="line125">125: </a>{
+<a name="line132">132: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscTryMethod.html">PetscTryMethod</a>(viewer, <font color="#666666">"PetscViewerGLVisSetFields_C"</font>, (<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const char *[], <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>[], <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*)(<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>[], void *), <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>[], void *, <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*)(void *)), (viewer, nf, fec_type, dim, g2l, Vfield, ctx, destroyctx));
+<a name="line133">133: </a>  <font color="#4169E1">return</font> 0;
+<a name="line134">134: </a>}
+
+<a name="line136">136: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisSetFields_GLVis"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisSetFields_GLVis(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nfields, const char *fec_type[], <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dim[], <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*g2l)(<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>[], void *), <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> Vfield[], void *ctx, <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*destroyctx)(void *))</font></strong>
+<a name="line137">137: </a>{
+<a name="line138">138: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+<a name="line139">139: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         i;
+
+<a name="line142">142: </a>  <font color="#4169E1">if</font> (!socket-&gt;nwindow) {
+<a name="line143">143: </a>    socket-&gt;nwindow = nfields;
+
+<a name="line145">145: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscCalloc5.html">PetscCalloc5</a>(nfields, &amp;socket-&gt;window, nfields, &amp;socket-&gt;windowtitle, nfields, &amp;socket-&gt;fec_type, nfields, &amp;socket-&gt;spacedim, nfields, &amp;socket-&gt;Ufield);
+<a name="line146">146: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nfields; i++) {
+<a name="line147">147: </a>      const char *name;
+
+<a name="line149">149: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>(Vfield[i], &amp;name);
+<a name="line150">150: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(name, &amp;socket-&gt;windowtitle[i]);
+<a name="line151">151: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(fec_type[i], &amp;socket-&gt;fec_type[i]);
+<a name="line152">152: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>(Vfield[i]);
+<a name="line153">153: </a>      socket-&gt;Ufield[i]   = Vfield[i];
+<a name="line154">154: </a>      socket-&gt;spacedim[i] = dim[i];
+<a name="line155">155: </a>    }
+<a name="line156">156: </a>  }
+<a name="line157">157: </a>  <font color="#B22222">/* number of fields are not allowed to vary */</font>
+<a name="line159">159: </a>  socket-&gt;g2lfield = g2l;
+<a name="line160">160: </a>  <font color="#4169E1">if</font> (socket-&gt;destroyctx &amp;&amp; socket-&gt;userctx) (*socket-&gt;destroyctx)(socket-&gt;userctx);
+<a name="line161">161: </a>  socket-&gt;userctx    = ctx;
+<a name="line162">162: </a>  socket-&gt;destroyctx = destroyctx;
+<a name="line163">163: </a>  <font color="#4169E1">return</font> 0;
+<a name="line164">164: </a>}
+
+<a name="line166">166: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisInfoDestroy_Private"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisInfoDestroy_Private(void *ptr)</font></strong>
+<a name="line167">167: </a>{
+<a name="line168">168: </a>  PetscViewerGLVisInfo info = (PetscViewerGLVisInfo)ptr;
+
+<a name="line170">170: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(info-&gt;fmt);
+<a name="line171">171: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(info);
+<a name="line172">172: </a>  <font color="#4169E1">return</font> 0;
+<a name="line173">173: </a>}
+
+<a name="line175">175: </a><font color="#B22222">/* we can decide to prevent specific processes from using the viewer */</font>
+<a name="line176">176: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisAttachInfo_Private"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisAttachInfo_Private(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> window)</font></strong>
+<a name="line177">177: </a>{
+<a name="line178">178: </a>  PetscViewerGLVis     socket = (PetscViewerGLVis)viewer-&gt;data;
+<a name="line179">179: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a>       container;
+<a name="line180">180: </a>  PetscViewerGLVisInfo info;
+
+<a name="line182">182: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)window, <font color="#666666">"_glvis_info_container"</font>, (<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;container);
+<a name="line183">183: </a>  <font color="#4169E1">if</font> (!container) {
+<a name="line184">184: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;info);
+<a name="line185">185: </a>    info-&gt;enabled = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line186">186: </a>    info-&gt;init    = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line187">187: </a>    info-&gt;size[0] = socket-&gt;windowsizes[0];
+<a name="line188">188: </a>    info-&gt;size[1] = socket-&gt;windowsizes[1];
+<a name="line189">189: </a>    info-&gt;pause   = socket-&gt;pause;
+<a name="line190">190: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscContainerCreate.html">PetscContainerCreate</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)window), &amp;container);
+<a name="line191">191: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscContainerSetPointer.html">PetscContainerSetPointer</a>(container, (void *)info);
+<a name="line192">192: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscContainerSetUserDestroy.html">PetscContainerSetUserDestroy</a>(container, PetscViewerGLVisInfoDestroy_Private);
+<a name="line193">193: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscObjectCompose.html">PetscObjectCompose</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)window, <font color="#666666">"_glvis_info_container"</font>, (<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)container);
+<a name="line194">194: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscContainerDestroy.html">PetscContainerDestroy</a>(&amp;container);
+<a name="line195">195: </a>  } <font color="#4169E1">else</font> {
+<a name="line196">196: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(container, (void **)&amp;info);
+<a name="line197">197: </a>  }
+<a name="line198">198: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(info-&gt;fmt);
+<a name="line199">199: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(socket-&gt;fmt, &amp;info-&gt;fmt);
+<a name="line200">200: </a>  <font color="#4169E1">return</font> 0;
+<a name="line201">201: </a>}
+
+<a name="line203">203: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisGetNewWindow_Private"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisGetNewWindow_Private(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *view)</font></strong>
+<a name="line204">204: </a>{
+<a name="line205">205: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+<a name="line206">206: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>      window = NULL;
+<a name="line207">207: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>        ldis, dis;
+
+<a name="line209">209: </a>  PetscViewerASCIISocketOpen(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, socket-&gt;name, socket-&gt;port, &amp;window);
+<a name="line210">210: </a>  <font color="#B22222">/* if we could not establish a connection, we disable the socket viewer on all MPI ranks */</font>
+<a name="line211">211: </a>  ldis = !viewer ? <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line212">212: </a>  <a href="../../../../../../docs/manualpages/Sys/MPIU_Allreduce.html">MPIU_Allreduce</a>(&amp;ldis, &amp;dis, 1, MPIU_BOOL, MPI_LOR, <a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer));
+<a name="line213">213: </a>  <font color="#4169E1">if</font> (dis) {
+<a name="line214">214: </a>    socket-&gt;status = PETSCVIEWERGLVIS_DISABLED;
+<a name="line215">215: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;window);
+<a name="line216">216: </a>  }
+<a name="line217">217: </a>  *view = window;
+<a name="line218">218: </a>  <font color="#4169E1">return</font> 0;
+<a name="line219">219: </a>}
+
+<a name="line221">221: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisPause_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisPause_Private(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line222">222: </a>{
+<a name="line223">223: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+
+<a name="line225">225: </a>  <font color="#4169E1">if</font> (socket-&gt;type == <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_SOCKET</a> &amp;&amp; socket-&gt;pause &gt; 0) <a href="../../../../../../docs/manualpages/Sys/PetscSleep.html">PetscSleep</a>(socket-&gt;pause);
+<a name="line226">226: </a>  <font color="#4169E1">return</font> 0;
+<a name="line227">227: </a>}
+
+<a name="line229">229: </a><font color="#B22222">/* <a href="../../../../../../docs/manualpages/DM/DM.html">DM</a> specific support */</font>
+<a name="line230">230: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisSetDM_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisSetDM_Private(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> dm)</font></strong>
+<a name="line231">231: </a>{
+<a name="line232">232: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+
+<a name="line235">235: </a>  <font color="#4169E1">if</font> (!socket-&gt;dm) {
+<a name="line236">236: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*setupwithdm)(<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>) = NULL;
+
+<a name="line238">238: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscObjectQueryFunction.html">PetscObjectQueryFunction</a>(dm, <font color="#666666">"DMSetUpGLVisViewer_C"</font>, &amp;setupwithdm);
+<a name="line239">239: </a>    <font color="#4169E1">if</font> (setupwithdm) {
+<a name="line240">240: </a>      (*setupwithdm)(dm, viewer);
+<a name="line241">241: </a>    } <font color="#4169E1">else</font> <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>(dm), PETSC_ERR_SUP, <font color="#666666">"No support for <a href="../../../../../../docs/manualpages/DM/DM.html">DM</a> type %s"</font>, dm-&gt;type_name);
+<a name="line242">242: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>(dm);
+<a name="line243">243: </a>    socket-&gt;dm = dm;
+<a name="line244">244: </a>  }
+<a name="line245">245: </a>  <font color="#4169E1">return</font> 0;
+<a name="line246">246: </a>}
+
+<a name="line248">248: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisGetDMWindow_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisGetDMWindow_Private(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *view)</font></strong>
+<a name="line249">249: </a>{
+<a name="line250">250: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+
+<a name="line253">253: </a>  <font color="#4169E1">if</font> (!socket-&gt;meshwindow) {
+<a name="line254">254: </a>    <font color="#4169E1">if</font> (socket-&gt;type == <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_SOCKET</a>) {
+<a name="line255">255: </a>      PetscViewerGLVisGetNewWindow_Private(viewer, &amp;socket-&gt;meshwindow);
+<a name="line256">256: </a>    } <font color="#4169E1">else</font> {
+<a name="line257">257: </a>      size_t    len;
+<a name="line258">258: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> isstdout;
+
+<a name="line260">260: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscStrlen.html">PetscStrlen</a>(socket-&gt;name, &amp;len);
+<a name="line261">261: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(socket-&gt;name, <font color="#666666">"stdout"</font>, &amp;isstdout);
+<a name="line262">262: </a>      <font color="#4169E1">if</font> (!socket-&gt;name || !len || isstdout) {
+<a name="line263">263: </a>        <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html">PetscViewerASCIIOpen</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"stdout"</font>, &amp;socket-&gt;meshwindow);
+<a name="line264">264: </a>      } <font color="#4169E1">else</font> {
+<a name="line265">265: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+<a name="line266">266: </a>        char        filename[PETSC_MAX_PATH_LEN];
+<a name="line267">267: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer), &amp;rank);
+<a name="line268">268: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(filename, PETSC_MAX_PATH_LEN, <font color="#666666">"%s-mesh.%06d"</font>, socket-&gt;name, rank);
+<a name="line269">269: </a>        <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html">PetscViewerASCIIOpen</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, filename, &amp;socket-&gt;meshwindow);
+<a name="line270">270: </a>      }
+<a name="line271">271: </a>    }
+<a name="line272">272: </a>    <font color="#4169E1">if</font> (socket-&gt;meshwindow) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerPushFormat.html">PetscViewerPushFormat</a>(socket-&gt;meshwindow, <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_GLVIS</a>);
+<a name="line273">273: </a>  }
+<a name="line274">274: </a>  <font color="#4169E1">if</font> (socket-&gt;meshwindow) PetscViewerGLVisAttachInfo_Private(viewer, socket-&gt;meshwindow);
+<a name="line275">275: </a>  *view = socket-&gt;meshwindow;
+<a name="line276">276: </a>  <font color="#4169E1">return</font> 0;
+<a name="line277">277: </a>}
+
+<a name="line279">279: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisRestoreDMWindow_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisRestoreDMWindow_Private(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *view)</font></strong>
+<a name="line280">280: </a>{
+<a name="line281">281: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+
+<a name="line285">285: </a>  <font color="#4169E1">if</font> (*view) {
+<a name="line286">286: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(*view);
+<a name="line287">287: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscBarrier.html">PetscBarrier</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer);
+<a name="line288">288: </a>  }
+<a name="line289">289: </a>  <font color="#4169E1">if</font> (socket-&gt;type == <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_DUMP</a>) { <font color="#B22222">/* destroy the viewer, as it is associated with a single time step */</font>
+<a name="line290">290: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;socket-&gt;meshwindow);
+<a name="line291">291: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (!*view) { <font color="#B22222">/* something went wrong (SIGPIPE) so we just zero the private pointer */</font>
+<a name="line292">292: </a>    socket-&gt;meshwindow = NULL;
+<a name="line293">293: </a>  }
+<a name="line294">294: </a>  *view = NULL;
+<a name="line295">295: </a>  <font color="#4169E1">return</font> 0;
+<a name="line296">296: </a>}
+
+<a name="line298">298: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisGetType_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisGetType_Private(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PetscViewerGLVisType</a> *type)</font></strong>
+<a name="line299">299: </a>{
+<a name="line300">300: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+
+<a name="line303">303: </a>  *type = socket-&gt;type;
+<a name="line304">304: </a>  <font color="#4169E1">return</font> 0;
+<a name="line305">305: </a>}
+
+<a name="line307">307: </a><font color="#B22222">/* This function is only relevant in the SOCKET_GLIVS case. The status is computed the first time it is requested, as GLVis currently has issues when connecting the first time through the socket */</font>
+<a name="line308">308: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisGetStatus_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisGetStatus_Private(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, PetscViewerGLVisStatus *sockstatus)</font></strong>
+<a name="line309">309: </a>{
+<a name="line310">310: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+
+<a name="line313">313: </a>  <font color="#4169E1">if</font> (socket-&gt;type == <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_DUMP</a>) {
+<a name="line314">314: </a>    socket-&gt;status = PETSCVIEWERGLVIS_DISCONNECTED;
+<a name="line315">315: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (socket-&gt;status == PETSCVIEWERGLVIS_DISCONNECTED &amp;&amp; socket-&gt;nwindow) {
+<a name="line316">316: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  i;
+<a name="line317">317: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> lconn, conn;
+
+<a name="line319">319: </a>    <font color="#4169E1">for</font> (i = 0, lconn = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>; i &lt; socket-&gt;nwindow; i++)
+<a name="line320">320: </a>      <font color="#4169E1">if</font> (!socket-&gt;window[i]) lconn = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line322">322: </a>    <a href="../../../../../../docs/manualpages/Sys/MPIU_Allreduce.html">MPIU_Allreduce</a>(&amp;lconn, &amp;conn, 1, MPIU_BOOL, MPI_LAND, <a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer));
+<a name="line323">323: </a>    <font color="#4169E1">if</font> (conn) socket-&gt;status = PETSCVIEWERGLVIS_CONNECTED;
+<a name="line324">324: </a>  }
+<a name="line325">325: </a>  *sockstatus = socket-&gt;status;
+<a name="line326">326: </a>  <font color="#4169E1">return</font> 0;
+<a name="line327">327: </a>}
+
+<a name="line329">329: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisGetDM_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisGetDM_Private(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *dm)</font></strong>
+<a name="line330">330: </a>{
+<a name="line331">331: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+
+<a name="line333">333: </a>  *dm = socket-&gt;dm;
+<a name="line334">334: </a>  <font color="#4169E1">return</font> 0;
+<a name="line335">335: </a>}
+
+<a name="line337">337: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisGetFields_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisGetFields_Private(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *nfield, const char **fec[], <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *spacedim[], <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (**g2lfield)(<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>[], void *), <a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *Ufield[], void **userctx)</font></strong>
+<a name="line338">338: </a>{
+<a name="line339">339: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+
+<a name="line341">341: </a>  <font color="#4169E1">if</font> (nfield) *nfield = socket-&gt;nwindow;
+<a name="line342">342: </a>  <font color="#4169E1">if</font> (fec) *fec = (const char **)socket-&gt;fec_type;
+<a name="line343">343: </a>  <font color="#4169E1">if</font> (spacedim) *spacedim = socket-&gt;spacedim;
+<a name="line344">344: </a>  <font color="#4169E1">if</font> (g2lfield) *g2lfield = socket-&gt;g2lfield;
+<a name="line345">345: </a>  <font color="#4169E1">if</font> (Ufield) *Ufield = socket-&gt;Ufield;
+<a name="line346">346: </a>  <font color="#4169E1">if</font> (userctx) *userctx = socket-&gt;userctx;
+<a name="line347">347: </a>  <font color="#4169E1">return</font> 0;
+<a name="line348">348: </a>}
+
+<a name="line350">350: </a><font color="#B22222">/* accessor routines for the viewer windows:</font>
+<a name="line351">351: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_DUMP</a>   : it returns a new viewer every time</font>
+<a name="line352">352: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_SOCKET</a> : it returns the socket, and creates it if not yet done.</font>
+<a name="line353">353: </a><font color="#B22222">*/</font>
+<a name="line354">354: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisGetWindow_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisGetWindow_Private(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> wid, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *view)</font></strong>
+<a name="line355">355: </a>{
+<a name="line356">356: </a>  PetscViewerGLVis       socket = (PetscViewerGLVis)viewer-&gt;data;
+<a name="line357">357: </a>  PetscViewerGLVisStatus status;
+
+<a name="line362">362: </a>  status = socket-&gt;status;
+<a name="line364">364: </a>  <font color="#4169E1">switch</font> (status) {
+<a name="line365">365: </a>  <font color="#4169E1">case</font> PETSCVIEWERGLVIS_DISCONNECTED:
+<a name="line367">367: </a>    <font color="#4169E1">if</font> (socket-&gt;type == <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_DUMP</a>) {
+<a name="line368">368: </a>      size_t    len;
+<a name="line369">369: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> isstdout;
+
+<a name="line371">371: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscStrlen.html">PetscStrlen</a>(socket-&gt;name, &amp;len);
+<a name="line372">372: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(socket-&gt;name, <font color="#666666">"stdout"</font>, &amp;isstdout);
+<a name="line373">373: </a>      <font color="#4169E1">if</font> (!socket-&gt;name || !len || isstdout) {
+<a name="line374">374: </a>        <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html">PetscViewerASCIIOpen</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"stdout"</font>, &amp;socket-&gt;window[wid]);
+<a name="line375">375: </a>      } <font color="#4169E1">else</font> {
+<a name="line376">376: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+<a name="line377">377: </a>        char        filename[PETSC_MAX_PATH_LEN];
+
+<a name="line379">379: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer), &amp;rank);
+<a name="line380">380: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(filename, PETSC_MAX_PATH_LEN, <font color="#666666">"%s-%s-%"</font> PetscInt_FMT <font color="#666666">".%06d"</font>, socket-&gt;name, socket-&gt;windowtitle[wid], socket-&gt;snapid, rank);
+<a name="line381">381: </a>        <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html">PetscViewerASCIIOpen</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, filename, &amp;socket-&gt;window[wid]);
+<a name="line382">382: </a>      }
+<a name="line383">383: </a>    } <font color="#4169E1">else</font> {
+<a name="line384">384: </a>      PetscViewerGLVisGetNewWindow_Private(viewer, &amp;socket-&gt;window[wid]);
+<a name="line385">385: </a>    }
+<a name="line386">386: </a>    <font color="#4169E1">if</font> (socket-&gt;window[wid]) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerPushFormat.html">PetscViewerPushFormat</a>(socket-&gt;window[wid], <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_GLVIS</a>);
+<a name="line387">387: </a>    *view = socket-&gt;window[wid];
+<a name="line388">388: </a>    <font color="#4169E1">break</font>;
+<a name="line389">389: </a>  <font color="#4169E1">case</font> PETSCVIEWERGLVIS_CONNECTED:
+<a name="line390">390: </a>    *view = socket-&gt;window[wid];
+<a name="line391">391: </a>    <font color="#4169E1">break</font>;
+<a name="line392">392: </a>  <font color="#4169E1">case</font> PETSCVIEWERGLVIS_DISABLED:
+<a name="line393">393: </a>    *view = NULL;
+<a name="line394">394: </a>    <font color="#4169E1">break</font>;
+<a name="line395">395: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line396">396: </a>    <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer), PETSC_ERR_SUP, <font color="#666666">"Unhandled socket status %d"</font>, (int)status);
+<a name="line397">397: </a>  }
+<a name="line398">398: </a>  <font color="#4169E1">if</font> (*view) PetscViewerGLVisAttachInfo_Private(viewer, *view);
+<a name="line399">399: </a>  <font color="#4169E1">return</font> 0;
+<a name="line400">400: </a>}
+
+<a name="line402">402: </a><font color="#B22222">/* Restore the window viewer</font>
+<a name="line403">403: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_DUMP</a>  : destroys the temporary created ASCII viewer used for dumping</font>
+<a name="line404">404: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_SOCKET</a>: - if the returned window viewer is not NULL, just zeros the pointer.</font>
+<a name="line405">405: </a><font color="#B22222">                 - it the returned window viewer is NULL, assumes something went wrong</font>
+<a name="line406">406: </a><font color="#B22222">                   with the socket (i.e. SIGPIPE when a user closes the popup window)</font>
+<a name="line407">407: </a><font color="#B22222">                   and that the caller already handled it (see VecView_GLVis).</font>
+<a name="line408">408: </a><font color="#B22222">*/</font>
+<a name="line409">409: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisRestoreWindow_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisRestoreWindow_Private(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> wid, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *view)</font></strong>
+<a name="line410">410: </a>{
+<a name="line411">411: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+
+<a name="line418">418: </a>  <font color="#4169E1">if</font> (*view) {
+<a name="line419">419: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(*view);
+<a name="line420">420: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscBarrier.html">PetscBarrier</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer);
+<a name="line421">421: </a>  }
+<a name="line422">422: </a>  <font color="#4169E1">if</font> (socket-&gt;type == <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_DUMP</a>) { <font color="#B22222">/* destroy the viewer, as it is associated with a single time step */</font>
+<a name="line423">423: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;socket-&gt;window[wid]);
+<a name="line424">424: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (!*view) { <font color="#B22222">/* something went wrong (SIGPIPE) so we just zero the private pointer */</font>
+<a name="line425">425: </a>    socket-&gt;window[wid] = NULL;
+<a name="line426">426: </a>  }
+<a name="line427">427: </a>  *view = NULL;
+<a name="line428">428: </a>  <font color="#4169E1">return</font> 0;
+<a name="line429">429: </a>}
+
+<a name="line431">431: </a><font color="#B22222">/* default window appearance in the <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_SOCKET</a> case */</font>
+<a name="line432">432: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisInitWindow_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisInitWindow_Private(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> mesh, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dim, const char *name)</font></strong>
+<a name="line433">433: </a>{
+<a name="line434">434: </a>  PetscViewerGLVisInfo info;
+<a name="line435">435: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a>       container;
+
+<a name="line437">437: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"_glvis_info_container"</font>, (<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;container);
+<a name="line439">439: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(container, (void **)&amp;info);
+<a name="line440">440: </a>  <font color="#4169E1">if</font> (info-&gt;init) <font color="#4169E1">return</font> 0;
+
+<a name="line442">442: </a>  <font color="#B22222">/* Configure window */</font>
+<a name="line443">443: </a>  <font color="#4169E1">if</font> (info-&gt;size[0] &gt; 0) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"window_size %"</font> PetscInt_FMT <font color="#666666">" %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, info-&gt;size[0], info-&gt;size[1]);
+<a name="line444">444: </a>  <font color="#4169E1">if</font> (name) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"window_title '%s'\n"</font>, name);
+
+<a name="line446">446: </a>  <font color="#B22222">/* Configure default view */</font>
+<a name="line447">447: </a>  <font color="#4169E1">if</font> (mesh) {
+<a name="line448">448: </a>    <font color="#4169E1">switch</font> (dim) {
+<a name="line449">449: </a>    <font color="#4169E1">case</font> 1:
+<a name="line450">450: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"keys m\n"</font>); <font color="#B22222">/* show mesh */</font>
+<a name="line451">451: </a>      <font color="#4169E1">break</font>;
+<a name="line452">452: </a>    <font color="#4169E1">case</font> 2:
+<a name="line453">453: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"keys m\n"</font>); <font color="#B22222">/* show mesh */</font>
+<a name="line454">454: </a>      <font color="#4169E1">break</font>;
+<a name="line455">455: </a>    <font color="#4169E1">case</font> 3: <font color="#B22222">/* TODO: decide default view in 3D */</font>
+<a name="line456">456: </a>      <font color="#4169E1">break</font>;
+<a name="line457">457: </a>    }
+<a name="line458">458: </a>  } <font color="#4169E1">else</font> {
+<a name="line459">459: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"keys cm\n"</font>); <font color="#B22222">/* show colorbar and mesh */</font>
+<a name="line460">460: </a>    <font color="#4169E1">switch</font> (dim) {
+<a name="line461">461: </a>    <font color="#4169E1">case</font> 1:
+<a name="line462">462: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"keys RRjl\n"</font>); <font color="#B22222">/* set to 1D (side view), turn off perspective and light */</font>
+<a name="line463">463: </a>      <font color="#4169E1">break</font>;
+<a name="line464">464: </a>    <font color="#4169E1">case</font> 2:
+<a name="line465">465: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"keys Rjl\n"</font>); <font color="#B22222">/* set to 2D (top view), turn off perspective and light */</font>
+<a name="line466">466: </a>      <font color="#4169E1">break</font>;
+<a name="line467">467: </a>    <font color="#4169E1">case</font> 3:
+<a name="line468">468: </a>      <font color="#4169E1">break</font>;
+<a name="line469">469: </a>    }
+<a name="line470">470: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"autoscale value\n"</font>); <font color="#B22222">/* update value-range; keep mesh-extents fixed */</font>
+<a name="line471">471: </a>  }
+
+<a name="line473">473: </a>  { <font color="#B22222">/* Additional keys and commands */</font>
+<a name="line474">474: </a>    char         keys[256] = <font color="#666666">""</font>, cmds[2 * PETSC_MAX_PATH_LEN] = <font color="#666666">""</font>;
+<a name="line475">475: </a>    PetscOptions opt = ((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer)-&gt;options;
+<a name="line476">476: </a>    const char  *pre = ((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer)-&gt;prefix;
+
+<a name="line478">478: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(opt, pre, <font color="#666666">"-glvis_keys"</font>, keys, <font color="#4169E1">sizeof</font>(keys), NULL);
+<a name="line479">479: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(opt, pre, <font color="#666666">"-glvis_exec"</font>, cmds, <font color="#4169E1">sizeof</font>(cmds), NULL);
+<a name="line480">480: </a>    <font color="#4169E1">if</font> (keys[0]) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"keys %s\n"</font>, keys);
+<a name="line481">481: </a>    <font color="#4169E1">if</font> (cmds[0]) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"%s\n"</font>, cmds);
+<a name="line482">482: </a>  }
+
+<a name="line484">484: </a>  <font color="#B22222">/* Pause visualization */</font>
+<a name="line485">485: </a>  <font color="#4169E1">if</font> (!mesh &amp;&amp; info-&gt;pause == -1) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"autopause 1\n"</font>);
+<a name="line486">486: </a>  <font color="#4169E1">if</font> (!mesh &amp;&amp; info-&gt;pause == 0) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"pause\n"</font>);
+
+<a name="line488">488: </a>  info-&gt;init = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line489">489: </a>  <font color="#4169E1">return</font> 0;
+<a name="line490">490: </a>}
+
+<a name="line492">492: </a><strong><font color="#4169E1"><a name="PetscViewerDestroy_GLVis"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerDestroy_GLVis(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line493">493: </a>{
+<a name="line494">494: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+<a name="line495">495: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         i;
+
+<a name="line497">497: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; socket-&gt;nwindow; i++) {
+<a name="line498">498: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;socket-&gt;window[i]);
+<a name="line499">499: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(socket-&gt;windowtitle[i]);
+<a name="line500">500: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(socket-&gt;fec_type[i]);
+<a name="line501">501: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscObjectDestroy.html">PetscObjectDestroy</a>(&amp;socket-&gt;Ufield[i]);
+<a name="line502">502: </a>  }
+<a name="line503">503: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(socket-&gt;name);
+<a name="line504">504: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree5.html">PetscFree5</a>(socket-&gt;window, socket-&gt;windowtitle, socket-&gt;fec_type, socket-&gt;spacedim, socket-&gt;Ufield);
+<a name="line505">505: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(socket-&gt;fmt);
+<a name="line506">506: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;socket-&gt;meshwindow);
+<a name="line507">507: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectDestroy.html">PetscObjectDestroy</a>(&amp;socket-&gt;dm);
+<a name="line508">508: </a>  <font color="#4169E1">if</font> (socket-&gt;destroyctx &amp;&amp; socket-&gt;userctx) (*socket-&gt;destroyctx)(socket-&gt;userctx);
+
+<a name="line510">510: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerGLVisSetPrecision_C"</font>, NULL);
+<a name="line511">511: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerGLVisSetSnapId_C"</font>, NULL);
+<a name="line512">512: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerGLVisSetFields_C"</font>, NULL);
+<a name="line513">513: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerFileSetName_C"</font>, NULL);
+<a name="line514">514: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(socket);
+<a name="line515">515: </a>  viewer-&gt;data = NULL;
+<a name="line516">516: </a>  <font color="#4169E1">return</font> 0;
+<a name="line517">517: </a>}
+
+<a name="line519">519: </a><strong><font color="#4169E1"><a name="PetscViewerSetFromOptions_GLVis"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerSetFromOptions_GLVis(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> v, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line520">520: </a>{
+<a name="line521">521: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)v-&gt;data;
+<a name="line522">522: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         nsizes = 2, prec = <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>;
+<a name="line523">523: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>        set;
+
+<a name="line525">525: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"GLVis <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> Options"</font>);
+<a name="line526">526: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsInt.html">PetscOptionsInt</a>(<font color="#666666">"-glvis_precision"</font>, <font color="#666666">"Number of digits for floating point values"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisSetPrecision.html">PetscViewerGLVisSetPrecision</a>"</font>, prec, &amp;prec, &amp;set);
+<a name="line527">527: </a>  <font color="#4169E1">if</font> (set) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisSetPrecision.html">PetscViewerGLVisSetPrecision</a>(v, prec);
+<a name="line528">528: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsIntArray.html">PetscOptionsIntArray</a>(<font color="#666666">"-glvis_size"</font>, <font color="#666666">"Window sizes"</font>, NULL, socket-&gt;windowsizes, &amp;nsizes, &amp;set);
+<a name="line529">529: </a>  <font color="#4169E1">if</font> (set &amp;&amp; (nsizes == 1 || socket-&gt;windowsizes[1] &lt; 0)) socket-&gt;windowsizes[1] = socket-&gt;windowsizes[0];
+<a name="line530">530: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsReal.html">PetscOptionsReal</a>(<font color="#666666">"-glvis_pause"</font>, <font color="#666666">"-1 to pause after each visualization, otherwise sleeps for given seconds"</font>, NULL, socket-&gt;pause, &amp;socket-&gt;pause, NULL);
+<a name="line531">531: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsName.html">PetscOptionsName</a>(<font color="#666666">"-glvis_keys"</font>, <font color="#666666">"Additional keys to configure visualization"</font>, NULL, NULL);
+<a name="line532">532: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsName.html">PetscOptionsName</a>(<font color="#666666">"-glvis_exec"</font>, <font color="#666666">"Additional commands to configure visualization"</font>, NULL, NULL);
+<a name="line533">533: </a>  PetscOptionsHeadEnd();
+<a name="line534">534: </a>  <font color="#4169E1">return</font> 0;
+<a name="line535">535: </a>}
+
+<a name="line537">537: </a><strong><font color="#4169E1"><a name="PetscViewerFileSetName_GLVis"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerFileSetName_GLVis(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, const char name[])</font></strong>
+<a name="line538">538: </a>{
+<a name="line539">539: </a>  char            *sport;
+<a name="line540">540: </a>  PetscViewerGLVis socket = (PetscViewerGLVis)viewer-&gt;data;
+
+<a name="line542">542: </a>  socket-&gt;type = <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_DUMP</a>;
+<a name="line543">543: </a>  <font color="#B22222">/* we accept localhost^port */</font>
+<a name="line544">544: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(socket-&gt;name);
+<a name="line545">545: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(name, &amp;socket-&gt;name);
+<a name="line546">546: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrchr.html">PetscStrchr</a>(socket-&gt;name, '^', &amp;sport);
+<a name="line547">547: </a>  <font color="#4169E1">if</font> (sport) {
+<a name="line548">548: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       port = 19916;
+<a name="line549">549: </a>    size_t         len;
+
+<a name="line552">552: </a>    *sport++ = 0;
+<a name="line553">553: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscStrlen.html">PetscStrlen</a>(sport, &amp;len);
+<a name="line554">554: </a>    PetscOptionsStringToInt(sport, &amp;port);
+<a name="line555">555: </a>    <font color="#4169E1">if</font> (<a href="../../../../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(ierr)) {
+<a name="line556">556: </a>      socket-&gt;port = 19916;
+<a name="line557">557: </a>    } <font color="#4169E1">else</font> {
+<a name="line558">558: </a>      socket-&gt;port = (port != <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a> &amp;&amp; port != <a href="../../../../../../docs/manualpages/Sys/PETSC_DEFAULT.html">PETSC_DEFAULT</a>) ? port : 19916;
+<a name="line559">559: </a>    }
+<a name="line560">560: </a>    socket-&gt;type = <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_SOCKET</a>;
+<a name="line561">561: </a>  }
+<a name="line562">562: </a>  <font color="#4169E1">return</font> 0;
+<a name="line563">563: </a>}
+
+<a name="line565">565: </a><font color="#B22222">/*@C</font>
+<a name="line566">566: </a><font color="#B22222">  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisOpen.html">PetscViewerGLVisOpen</a> - Opens a `PETSCVIEWERGLVIS` `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`</font>
+
+<a name="line568">568: </a><font color="#B22222">  Collective; No Fortran Support</font>
+
+<a name="line570">570: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line571">571: </a><font color="#B22222">+  comm      - the MPI communicator</font>
+<a name="line572">572: </a><font color="#B22222">.  type      - the viewer type: `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_SOCKET</a>` for real-time visualization or `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_DUMP</a>` for dumping to a file</font>
+<a name="line573">573: </a><font color="#B22222">.  name      - either the hostname where the GLVis server is running or the base filename for dumping the data for subsequent visualizations</font>
+<a name="line574">574: </a><font color="#B22222">-  port      - socket port where the GLVis server is listening. Not referenced when type is `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_DUMP</a>`</font>
+
+<a name="line576">576: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line577">577: </a><font color="#B22222">-  viewer    - the `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>` object</font>
+
+<a name="line579">579: </a><font color="#B22222">  Options Database Keys:</font>
+<a name="line580">580: </a><font color="#B22222">+  -glvis_precision &lt;precision&gt; - Sets number of digits for floating point values</font>
+<a name="line581">581: </a><font color="#B22222">.  -glvis_size &lt;width,height&gt; - Sets the window size (in pixels)</font>
+<a name="line582">582: </a><font color="#B22222">.  -glvis_pause &lt;pause&gt; - Sets time (in seconds) that the program pauses after each visualization</font>
+<a name="line583">583: </a><font color="#B22222">       (0 is default, -1 implies every visualization)</font>
+<a name="line584">584: </a><font color="#B22222">.  -glvis_keys - Additional keys to configure visualization</font>
+<a name="line585">585: </a><font color="#B22222">-  -glvis_exec - Additional commands to configure visualization</font>
+
+<a name="line587">587: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line589">589: </a><font color="#B22222">.seealso: [](sec_viewers), `PETSCVIEWERGLVIS`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html">PetscViewerSetType</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PetscViewerGLVisType</a>`</font>
+<a name="line590">590: </a><font color="#B22222">@*/</font>
+<a name="line591">591: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisOpen"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisOpen.html">PetscViewerGLVisOpen</a>(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PetscViewerGLVisType</a> type, const char name[], <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> port, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *viewer)</font></strong>
+<a name="line592">592: </a>{
+<a name="line593">593: </a>  PetscViewerGLVis socket;
+
+<a name="line595">595: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>(comm, viewer);
+<a name="line596">596: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html">PetscViewerSetType</a>(*viewer, PETSCVIEWERGLVIS);
+
+<a name="line598">598: </a>  socket       = (PetscViewerGLVis)((*viewer)-&gt;data);
+<a name="line599">599: </a>  socket-&gt;type = type;
+<a name="line600">600: </a>  <font color="#4169E1">if</font> (type == <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_DUMP</a> || name) {
+<a name="line601">601: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(socket-&gt;name);
+<a name="line602">602: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(name, &amp;socket-&gt;name);
+<a name="line603">603: </a>  }
+<a name="line604">604: </a>  socket-&gt;port = (!port || port == <a href="../../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html">PETSC_DETERMINE</a> || port == <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>) ? 19916 : port;
+
+<a name="line606">606: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetFromOptions.html">PetscViewerSetFromOptions</a>(*viewer);
+<a name="line607">607: </a>  <font color="#4169E1">return</font> 0;
+<a name="line608">608: </a>}
+
+<a name="line610">610: </a><font color="#B22222">/*@C</font>
+<a name="line611">611: </a><font color="#B22222">  <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_GLVIS_.html">PETSC_VIEWER_GLVIS_</a> - Creates a `PETSCVIEWERGLVIS` `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>` shared by all processors in a communicator.</font>
+
+<a name="line613">613: </a><font color="#B22222">  Collective; No Fortran Support</font>
+
+<a name="line615">615: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line616">616: </a><font color="#B22222">. comm - the MPI communicator to share the `PETSCVIEWERGLVIS` `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`</font>
+
+<a name="line618">618: </a><font color="#B22222">  Environmental variables:</font>
+<a name="line619">619: </a><font color="#B22222">+ `PETSC_VIEWER_GLVIS_FILENAME` - output filename (if specified dump to disk, and takes precedence on `PETSC_VIEWER_GLVIS_HOSTNAME`)</font>
+<a name="line620">620: </a><font color="#B22222">. `PETSC_VIEWER_GLVIS_HOSTNAME` - machine where the GLVis server is listening (defaults to localhost)</font>
+<a name="line621">621: </a><font color="#B22222">- `PETSC_VIEWER_GLVIS_PORT`     - port opened by the GLVis server (defaults to 19916)</font>
+
+<a name="line623">623: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line625">625: </a><font color="#B22222">  Note:</font>
+<a name="line626">626: </a><font color="#B22222">  Unlike almost all other PETSc routines, `<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_GLVIS_.html">PETSC_VIEWER_GLVIS_</a>()` does not return</font>
+<a name="line627">627: </a><font color="#B22222">  an error code.  It is usually used in the form</font>
+<a name="line628">628: </a><font color="#B22222">$       XXXView(XXX object, <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_GLVIS_.html">PETSC_VIEWER_GLVIS_</a>(comm));</font>
+
+<a name="line630">630: </a><font color="#B22222">.seealso: [](sec_viewers), `PETSCVIEWERGLVIS`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`, `PetscViewerGLVISOpen()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PetscViewerGLVisType</a>`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>()`</font>
+<a name="line631">631: </a><font color="#B22222">@*/</font>
+<a name="line632">632: </a><strong><font color="#4169E1"><a name="PETSC_VIEWER_GLVIS_"></a><a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> <a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_GLVIS_.html">PETSC_VIEWER_GLVIS_</a>(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm)</font></strong>
+<a name="line633">633: </a>{
+<a name="line634">634: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>       ierr;
+<a name="line635">635: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>            flg;
+<a name="line636">636: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>          viewer;
+<a name="line637">637: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PetscViewerGLVisType</a> type;
+<a name="line638">638: </a>  char                 fname[PETSC_MAX_PATH_LEN], sport[16];
+<a name="line639">639: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>             port = 19916; <font color="#B22222">/* default for GLVis */</font>
+
+<a name="line641">641: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsGetenv.html">PetscOptionsGetenv</a>(comm, <font color="#666666">"PETSC_VIEWER_GLVIS_FILENAME"</font>, fname, PETSC_MAX_PATH_LEN, &amp;flg);
+<a name="line642">642: </a>  <font color="#4169E1">if</font> (ierr) {
+<a name="line643">643: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscError.html">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, __LINE__, <font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_GLVIS_.html">PETSC_VIEWER_GLVIS_</a>"</font>, __FILE__, PETSC_ERR_PLIB, <a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html">PETSC_ERROR_INITIAL</a>, <font color="#666666">" "</font>);
+<a name="line644">644: </a>    <font color="#4169E1">return</font> NULL;
+<a name="line645">645: </a>  }
+<a name="line646">646: </a>  <font color="#4169E1">if</font> (!flg) {
+<a name="line647">647: </a>    type = <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_SOCKET</a>;
+<a name="line648">648: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscOptionsGetenv.html">PetscOptionsGetenv</a>(comm, <font color="#666666">"PETSC_VIEWER_GLVIS_HOSTNAME"</font>, fname, PETSC_MAX_PATH_LEN, &amp;flg);
+<a name="line649">649: </a>    <font color="#4169E1">if</font> (ierr) {
+<a name="line650">650: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscError.html">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, __LINE__, <font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_GLVIS_.html">PETSC_VIEWER_GLVIS_</a>"</font>, __FILE__, PETSC_ERR_PLIB, <a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html">PETSC_ERROR_INITIAL</a>, <font color="#666666">" "</font>);
+<a name="line651">651: </a>      <font color="#4169E1">return</font> NULL;
+<a name="line652">652: </a>    }
+<a name="line653">653: </a>    <font color="#4169E1">if</font> (!flg) {
+<a name="line654">654: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscStrcpy.html">PetscStrcpy</a>(fname, <font color="#666666">"localhost"</font>);
+<a name="line655">655: </a>      <font color="#4169E1">if</font> (ierr) {
+<a name="line656">656: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscError.html">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, __LINE__, <font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_GLVIS_.html">PETSC_VIEWER_GLVIS_</a>"</font>, __FILE__, PETSC_ERR_PLIB, <a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html">PETSC_ERROR_INITIAL</a>, <font color="#666666">" "</font>);
+<a name="line657">657: </a>        <font color="#4169E1">return</font> NULL;
+<a name="line658">658: </a>      }
+<a name="line659">659: </a>    }
+<a name="line660">660: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscOptionsGetenv.html">PetscOptionsGetenv</a>(comm, <font color="#666666">"PETSC_VIEWER_GLVIS_PORT"</font>, sport, 16, &amp;flg);
+<a name="line661">661: </a>    <font color="#4169E1">if</font> (ierr) {
+<a name="line662">662: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscError.html">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, __LINE__, <font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_GLVIS_.html">PETSC_VIEWER_GLVIS_</a>"</font>, __FILE__, PETSC_ERR_PLIB, <a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html">PETSC_ERROR_INITIAL</a>, <font color="#666666">" "</font>);
+<a name="line663">663: </a>      <font color="#4169E1">return</font> NULL;
+<a name="line664">664: </a>    }
+<a name="line665">665: </a>    <font color="#4169E1">if</font> (flg) {
+<a name="line666">666: </a>      PetscOptionsStringToInt(sport, &amp;port);
+<a name="line667">667: </a>      <font color="#4169E1">if</font> (ierr) {
+<a name="line668">668: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscError.html">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, __LINE__, <font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_GLVIS_.html">PETSC_VIEWER_GLVIS_</a>"</font>, __FILE__, PETSC_ERR_PLIB, <a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html">PETSC_ERROR_INITIAL</a>, <font color="#666666">" "</font>);
+<a name="line669">669: </a>        <font color="#4169E1">return</font> NULL;
+<a name="line670">670: </a>      }
+<a name="line671">671: </a>    }
+<a name="line672">672: </a>  } <font color="#4169E1">else</font> {
+<a name="line673">673: </a>    type = <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_DUMP</a>;
+<a name="line674">674: </a>  }
+<a name="line675">675: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisOpen.html">PetscViewerGLVisOpen</a>(comm, type, fname, port, &amp;viewer);
+<a name="line676">676: </a>  <font color="#4169E1">if</font> (ierr) {
+<a name="line677">677: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscError.html">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, __LINE__, <font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_GLVIS_.html">PETSC_VIEWER_GLVIS_</a>"</font>, __FILE__, PETSC_ERR_PLIB, <a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html">PETSC_ERROR_INITIAL</a>, <font color="#666666">" "</font>);
+<a name="line678">678: </a>    <font color="#4169E1">return</font> NULL;
+<a name="line679">679: </a>  }
+<a name="line680">680: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectRegisterDestroy.html">PetscObjectRegisterDestroy</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer);
+<a name="line681">681: </a>  <font color="#4169E1">if</font> (ierr) {
+<a name="line682">682: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscError.html">PetscError</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, __LINE__, <font color="#666666">"<a href="../../../../../../docs/manualpages/Viewer/PETSC_VIEWER_GLVIS_.html">PETSC_VIEWER_GLVIS_</a>"</font>, __FILE__, PETSC_ERR_PLIB, <a href="../../../../../../docs/manualpages/Sys/PetscErrorType.html">PETSC_ERROR_INITIAL</a>, <font color="#666666">" "</font>);
+<a name="line683">683: </a>    <font color="#4169E1">return</font> NULL;
+<a name="line684">684: </a>  }
+<a name="line685">685: </a>  <font color="#4169E1">return</font> viewer;
+<a name="line686">686: </a>}
+
+<a name="line688">688: </a><strong><font color="#4169E1"><a name="PetscViewerCreate_GLVis"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerCreate_GLVis(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line689">689: </a>{
+<a name="line690">690: </a>  PetscViewerGLVis socket;
+
+<a name="line692">692: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;socket);
+
+<a name="line694">694: </a>  <font color="#B22222">/* defaults to socket viewer */</font>
+<a name="line695">695: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(<font color="#666666">"localhost"</font>, &amp;socket-&gt;name);
+<a name="line696">696: </a>  socket-&gt;port  = 19916; <font color="#B22222">/* GLVis default listening port */</font>
+<a name="line697">697: </a>  socket-&gt;type  = <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_SOCKET</a>;
+<a name="line698">698: </a>  socket-&gt;pause = 0; <font color="#B22222">/* just pause the first time */</font>
+
+<a name="line700">700: </a>  socket-&gt;windowsizes[0] = 600;
+<a name="line701">701: </a>  socket-&gt;windowsizes[1] = 600;
+
+<a name="line703">703: </a>  <font color="#B22222">/* defaults to full precision */</font>
+<a name="line704">704: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(<font color="#666666">" %g"</font>, &amp;socket-&gt;fmt);
+
+<a name="line706">706: </a>  viewer-&gt;data                = (void *)socket;
+<a name="line707">707: </a>  viewer-&gt;ops-&gt;destroy        = PetscViewerDestroy_GLVis;
+<a name="line708">708: </a>  viewer-&gt;ops-&gt;setfromoptions = PetscViewerSetFromOptions_GLVis;
+
+<a name="line710">710: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerGLVisSetPrecision_C"</font>, PetscViewerGLVisSetPrecision_GLVis);
+<a name="line711">711: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerGLVisSetSnapId_C"</font>, PetscViewerGLVisSetSnapId_GLVis);
+<a name="line712">712: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerGLVisSetFields_C"</font>, PetscViewerGLVisSetFields_GLVis);
+<a name="line713">713: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerFileSetName_C"</font>, PetscViewerFileSetName_GLVis);
+<a name="line714">714: </a>  <font color="#4169E1">return</font> 0;
+<a name="line715">715: </a>}
+
+<a name="line717">717: </a><font color="#B22222">/* this is a private implementation of a SOCKET with ASCII data format</font>
+<a name="line718">718: </a><font color="#B22222">   GLVis does not currently handle binary socket streams */</font>
+<a name="line719">719: </a><font color="#A020F0">#if defined(PETSC_HAVE_UNISTD_H)</font>
+<a name="line720">720: </a><font color="#A020F0">  #include &lt;unistd.h&gt;</font>
+<a name="line721">721: </a><font color="#A020F0">#endif</font>
+
+<a name="line723">723: </a><font color="#A020F0">#ifndef PETSC_HAVE_WINDOWS_H</font>
+<a name="line724">724: </a><strong><font color="#4169E1">static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*PetscViewerDestroy_ASCII)(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>)</font></strong>;
+
+<a name="line726">726: </a><strong><font color="#4169E1"><a name="PetscViewerDestroy_ASCII_Socket"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerDestroy_ASCII_Socket(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line727">727: </a>{
+<a name="line728">728: </a>  FILE *stream;
+
+<a name="line730">730: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html">PetscViewerASCIIGetPointer</a>(viewer, &amp;stream);
+<a name="line731">731: </a>  <font color="#4169E1">if</font> (stream) {
+<a name="line732">732: </a>    int retv = fclose(stream);
+<a name="line734">734: </a>  }
+<a name="line735">735: </a>  PetscViewerDestroy_ASCII(viewer);
+<a name="line736">736: </a>  <font color="#4169E1">return</font> 0;
+<a name="line737">737: </a>}
+<a name="line738">738: </a><font color="#A020F0">#endif</font>
+
+<a name="line740">740: </a><font color="#B22222">/*</font>
+<a name="line741">741: </a><font color="#B22222">    This attempts to return a NULL viewer if it is unable to open a socket connection.</font>
+
+<a name="line743">743: </a><font color="#B22222">     The code below involving <a href="../../../../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(ierr) is illegal in PETSc, one can NEVER attempt to recover once an error is initiated in PETSc.</font>
+
+<a name="line745">745: </a><font color="#B22222">     The correct approach is to refactor PetscOpenSocket() to not initiate an error under certain failure conditions but instead either return a special value</font>
+<a name="line746">746: </a><font color="#B22222">     of fd to indicate it was impossible to open the socket, or add another return argument to it indicating the socket was not opened.</font>
+<a name="line747">747: </a><font color="#B22222">*/</font>
+<a name="line748">748: </a><strong><font color="#4169E1"><a name="PetscViewerASCIISocketOpen"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerASCIISocketOpen(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, const char *hostname, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> port, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *viewer)</font></strong>
+<a name="line749">749: </a>{
+<a name="line750">750: </a><font color="#A020F0">#if defined(PETSC_HAVE_WINDOWS_H)</font>
+<a name="line751">751: </a>  <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(comm, PETSC_ERR_SUP, <font color="#666666">"Not implemented for Windows"</font>);
+<a name="line752">752: </a><font color="#A020F0">#else</font>
+<a name="line753">753: </a>  FILE          *stream = NULL;
+<a name="line754">754: </a>  int            fd     = 0;
+
+<a name="line759">759: </a><font color="#A020F0">  #if defined(PETSC_USE_SOCKET_VIEWER)</font>
+<a name="line760">760: </a>  PetscOpenSocket(hostname, port, &amp;fd);
+<a name="line761">761: </a><font color="#A020F0">  #else</font>
+<a name="line762">762: </a>  <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(comm, PETSC_ERR_SUP, <font color="#666666">"Missing Socket viewer"</font>);
+<a name="line763">763: </a><font color="#A020F0">  #endif</font>
+<a name="line764">764: </a>  <font color="#B22222">/*</font>
+<a name="line765">765: </a><font color="#B22222">     The following code is illegal in PETSc, one can NEVER attempt to recover once an error is initiated in PETSc.</font>
+<a name="line766">766: </a><font color="#B22222">        The correct approach is to refactor PetscOpenSocket() to not initiate an error under certain conditions but instead either return a special value</font>
+<a name="line767">767: </a><font color="#B22222">     of fd to indicate it was impossible to open the socket, or add another return argument to it indicating the socket was not opened.</font>
+<a name="line768">768: </a><font color="#B22222">   */</font>
+<a name="line769">769: </a>  <font color="#4169E1">if</font> (<a href="../../../../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(ierr)) {
+<a name="line770">770: </a>    char err[1024];
+
+<a name="line772">772: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(err, 1024, <font color="#666666">"Cannot connect to socket on %s:%"</font> PetscInt_FMT <font color="#666666">". Socket visualization is disabled\n"</font>, hostname, port);
+<a name="line773">773: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(NULL, <font color="#666666">"%s"</font>, err);
+<a name="line774">774: </a>    *viewer = NULL;
+<a name="line775">775: </a>    <font color="#4169E1">return</font> 0;
+<a name="line776">776: </a>  } <font color="#4169E1">else</font> {
+<a name="line777">777: </a>    char msg[1024];
+
+<a name="line779">779: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(msg, 1024, <font color="#666666">"Successfully connect to socket on %s:%"</font> PetscInt_FMT <font color="#666666">". Socket visualization is enabled\n"</font>, hostname, port);
+<a name="line780">780: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(NULL, <font color="#666666">"%s"</font>, msg);
+<a name="line781">781: </a>  }
+<a name="line782">782: </a>  stream = fdopen(fd, <font color="#666666">"w"</font>); <font color="#B22222">/* Not possible on Windows */</font>
+<a name="line784">784: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpenWithFILE.html">PetscViewerASCIIOpenWithFILE</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, stream, viewer);
+<a name="line785">785: </a>  PetscViewerDestroy_ASCII = (*viewer)-&gt;ops-&gt;destroy;
+<a name="line786">786: </a>  (*viewer)-&gt;ops-&gt;destroy  = PetscViewerDestroy_ASCII_Socket;
+<a name="line787">787: </a><font color="#A020F0">#endif</font>
+<a name="line788">788: </a>  <font color="#4169E1">return</font> 0;
+<a name="line789">789: </a>}
+
+<a name="line791">791: </a><font color="#A020F0">#if !defined(PETSC_MISSING_SIGPIPE)</font>
+
+<a name="line793">793: </a><font color="#A020F0">  #include &lt;signal.h&gt;</font>
+
+<a name="line795">795: </a><font color="#A020F0">  #if defined(PETSC_HAVE_WINDOWS_H)</font>
+<a name="line796">796: </a><strong><font color="#228B22">    #define PETSC_DEVNULL </font><font color="#666666">"NUL"</font><font color="#228B22"></font></strong>
+<a name="line797">797: </a><font color="#A020F0">  #else</font>
+<a name="line798">798: </a><strong><font color="#228B22">    #define PETSC_DEVNULL </font><font color="#666666">"/dev/null"</font><font color="#228B22"></font></strong>
+<a name="line799">799: </a><font color="#A020F0">  #endif</font>
+
+<a name="line801">801: </a>static volatile <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> PetscGLVisBrokenPipe = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line803">803: </a><strong><font color="#4169E1"><a name="void"></a>static void (*PetscGLVisSigHandler_save)(int)</font></strong> = NULL;
+
+<a name="line805">805: </a><strong><font color="#4169E1"><a name="PetscGLVisSigHandler_SIGPIPE"></a>static void PetscGLVisSigHandler_SIGPIPE(PETSC_UNUSED int sig)</font></strong>
+<a name="line806">806: </a>{
+<a name="line807">807: </a>  PetscGLVisBrokenPipe = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line808">808: </a><font color="#A020F0">  #if !defined(PETSC_MISSING_SIG_IGN)</font>
+<a name="line809">809: </a>  signal(SIGPIPE, SIG_IGN);
+<a name="line810">810: </a><font color="#A020F0">  #endif</font>
+<a name="line811">811: </a>}
+
+<a name="line813">813: </a><strong><font color="#4169E1"><a name="PetscGLVisCollectiveBegin"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscGLVisCollectiveBegin(PETSC_UNUSED <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, PETSC_UNUSED <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *win)</font></strong>
+<a name="line814">814: </a>{
+<a name="line816">816: </a>  PetscGLVisBrokenPipe      = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line817">817: </a>  PetscGLVisSigHandler_save = signal(SIGPIPE, PetscGLVisSigHandler_SIGPIPE);
+<a name="line818">818: </a>  <font color="#4169E1">return</font> 0;
+<a name="line819">819: </a>}
+
+<a name="line821">821: </a><strong><font color="#4169E1"><a name="PetscGLVisCollectiveEnd"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscGLVisCollectiveEnd(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *win)</font></strong>
+<a name="line822">822: </a>{
+<a name="line823">823: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flag, brokenpipe;
+
+<a name="line825">825: </a>  flag = PetscGLVisBrokenPipe;
+<a name="line826">826: </a>  <a href="../../../../../../docs/manualpages/Sys/MPIU_Allreduce.html">MPIU_Allreduce</a>(&amp;flag, &amp;brokenpipe, 1, MPIU_BOOL, MPI_LOR, comm);
+<a name="line827">827: </a>  <font color="#4169E1">if</font> (brokenpipe) {
+<a name="line828">828: </a>    FILE *sock, *null = fopen(PETSC_DEVNULL, <font color="#666666">"w"</font>);
+<a name="line829">829: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIGetPointer.html">PetscViewerASCIIGetPointer</a>(*win, &amp;sock);
+<a name="line830">830: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIISetFILE.html">PetscViewerASCIISetFILE</a>(*win, null);
+<a name="line831">831: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(win);
+<a name="line832">832: </a>    <font color="#4169E1">if</font> (sock) (void)fclose(sock);
+<a name="line833">833: </a>  }
+<a name="line834">834: </a>  (void)signal(SIGPIPE, PetscGLVisSigHandler_save);
+<a name="line835">835: </a>  PetscGLVisSigHandler_save = NULL;
+<a name="line836">836: </a>  PetscGLVisBrokenPipe      = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line837">837: </a>  <font color="#4169E1">return</font> 0;
+<a name="line838">838: </a>}
+
+<a name="line840">840: </a><font color="#A020F0">#else</font>
+
+<a name="line842">842: </a><strong><font color="#4169E1"><a name="PetscGLVisCollectiveBegin"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscGLVisCollectiveBegin(PETSC_UNUSED <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, PETSC_UNUSED <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *win)</font></strong>
+<a name="line843">843: </a>{
+<a name="line844">844: </a>  <font color="#4169E1">return</font> 0;
+<a name="line845">845: </a>}
+
+<a name="line847">847: </a><strong><font color="#4169E1"><a name="PetscGLVisCollectiveEnd"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscGLVisCollectiveEnd(PETSC_UNUSED <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, PETSC_UNUSED <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *win)</font></strong>
+<a name="line848">848: </a>{
+<a name="line849">849: </a>  <font color="#4169E1">return</font> 0;
+<a name="line850">850: </a>}
+
+<a name="line852">852: </a><font color="#A020F0">#endif</font>
+</pre>
+</body>
+
+</html>

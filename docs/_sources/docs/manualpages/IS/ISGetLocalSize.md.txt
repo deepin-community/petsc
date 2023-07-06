@@ -1,0 +1,51 @@
+# ISGetLocalSize
+Returns the local (processor) length of an index set. 
+## Synopsis
+```
+#include "petscis.h" 
+PetscErrorCode ISGetLocalSize(IS is, PetscInt *size)
+```
+Not Collective
+
+
+## Input Parameter
+
+- ***is -*** the index set
+
+
+
+## Output Parameter
+
+- ***size -*** the local size
+
+
+
+
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/interface/index.c.html#ISGetLocalSize">src/vec/is/is/interface/index.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/utils/tagger/tutorials/ex1.c.html">src/vec/vec/utils/tagger/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex1.c.html">src/vec/is/is/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex1f.F90.html">src/vec/is/is/tutorials/ex1f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex1f90.F90.html">src/vec/is/is/tutorials/ex1f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex3.c.html">src/vec/is/is/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex3f90.F90.html">src/vec/is/is/tutorials/ex3f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/tutorials/ex10.c.html">src/dm/impls/plex/tutorials/ex10.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex22.c.html">src/dm/tutorials/ex22.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex59.c.html">src/ksp/ksp/tutorials/ex59.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex71.c.html">src/ksp/ksp/tutorials/ex71.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex76.c.html">src/ksp/ksp/tutorials/ex76.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/is/is/interface/index.c)
+
+
+[Index of all IS routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

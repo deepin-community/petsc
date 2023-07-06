@@ -1,0 +1,30 @@
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:34+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">-include ../../../../../petscdir.mk
+<font color="#A020F0">#requirespackage  'PETSC_HAVE_P4EST'</font>
+
+CFLAGS   = ${P4EST_INCLUDE}
+SOURCEC  = dmp4est.c dmp8est.c petsc_p4est_package.c
+SOURCEF  =
+SOURCEH  =
+DIRS     = tests
+LIBBASE  = libpetscdm
+MANSEC   = <a href="ROOT/docs/manualpages/DM/DM.html">DM</a>
+SUBMANSEC= DMForest
+LOCDIR   = src/dm/impls/forest/p4est/
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+include ${PETSC_DIR}/lib/petsc/conf/test
+
+</pre>
+</body>
+
+</html>

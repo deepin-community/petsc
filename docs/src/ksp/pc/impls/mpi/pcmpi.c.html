@@ -1,0 +1,710 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ksp/pc/impls/mpi/pcmpi.c">Actual source code: pcmpi.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:03+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">    This file creates an MPI parallel <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> from a sequential <a href="../../../../../docs/manualpages/PC/PC.html">PC</a> that lives on MPI rank 0.</font>
+<a name="line3">  3: </a><font color="#B22222">    It is intended to allow using PETSc MPI parallel linear solvers from non-MPI codes.</font>
+
+<a name="line5">  5: </a><font color="#B22222">    That program may use OpenMP to compute the right hand side and matrix for the linear system</font>
+
+<a name="line7">  7: </a><font color="#B22222">    The code uses MPI_COMM_WORLD below but maybe it should be <a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a></font>
+
+<a name="line9">  9: </a><font color="#B22222">    The resulting <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> and <a href="../../../../../docs/manualpages/PC/PC.html">PC</a> can only be controlled via the options database, though some common commands</font>
+<a name="line10"> 10: </a><font color="#B22222">    could be passed through the server.</font>
+
+<a name="line12"> 12: </a><font color="#B22222">*/</font>
+<a name="line13"> 13: </a>#include <A href="../../../../../include/petsc/private/pcimpl.h.html">&lt;petsc/private/pcimpl.h&gt;</A>
+<a name="line14"> 14: </a>#include <A href="../../../../../include/petsc/private/kspimpl.h.html">&lt;petsc/private/kspimpl.h&gt;</A>
+<a name="line15"> 15: </a>#include <A href="../../../../../include/petsc.h.html">&lt;petsc.h&gt;</A>
+
+<a name="line17"> 17: </a><strong><font color="#228B22">#define PC_MPI_MAX_RANKS  256</font></strong>
+<a name="line18"> 18: </a><strong><font color="#228B22">#define PC_MPI_COMM_WORLD MPI_COMM_WORLD</font></strong>
+
+<a name="line20"> 20: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>         ksps[PC_MPI_MAX_RANKS];                               <font color="#B22222">/* The addresses of the MPI parallel <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> on each rank, NULL when not on a rank. */</font>
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> sendcount[PC_MPI_MAX_RANKS], displ[PC_MPI_MAX_RANKS]; <font color="#B22222">/* For scatter/gather of rhs/solution */</font>
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> NZ[PC_MPI_MAX_RANKS], NZdispl[PC_MPI_MAX_RANKS];      <font color="#B22222">/* For scatter of nonzero values in matrix (and nonzero column indices initially */</font>
+<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    mincntperrank;                                        <font color="#B22222">/* minimum number of desired nonzeros per active rank in MPI parallel <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> solve */</font>
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   alwaysuseserver;                                      <font color="#B22222">/* for debugging use the server infrastructure even if only one MPI rank is used for the solve */</font>
+<a name="line26"> 26: </a>} PC_MPI;
+
+<a name="line28"> 28: </a><font color="#4169E1">typedef</font> <font color="#4169E1">enum</font> {
+<a name="line29"> 29: </a>  PCMPI_EXIT, <font color="#B22222">/* exit the <a href="../../../../../docs/manualpages/PC/PC.html">PC</a> server loop, means the controlling sequential program is done */</font>
+<a name="line30"> 30: </a>  PCMPI_CREATE,
+<a name="line31"> 31: </a>  PCMPI_SET_MAT,           <font color="#B22222">/* set original matrix (or one with different nonzero pattern) */</font>
+<a name="line32"> 32: </a>  PCMPI_UPDATE_MAT_VALUES, <font color="#B22222">/* update current matrix with new nonzero values */</font>
+<a name="line33"> 33: </a>  PCMPI_SOLVE,
+<a name="line34"> 34: </a>  PCMPI_VIEW,
+<a name="line35"> 35: </a>  PCMPI_DESTROY <font color="#B22222">/* destroy a <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> that is no longer needed */</font>
+<a name="line36"> 36: </a>} PCMPICommand;
+
+<a name="line38"> 38: </a>static <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  PCMPIComms[PC_MPI_MAX_RANKS];
+<a name="line39"> 39: </a>static <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> PCMPICommSet = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line40"> 40: </a>static <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  PCMPISolveCounts[PC_MPI_MAX_RANKS], PCMPIKSPCounts[PC_MPI_MAX_RANKS], PCMPIMatCounts[PC_MPI_MAX_RANKS], PCMPISolveCountsSeq = 0, PCMPIKSPCountsSeq = 0;
+<a name="line41"> 41: </a>static <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  PCMPIIterations[PC_MPI_MAX_RANKS], PCMPISizes[PC_MPI_MAX_RANKS], PCMPIIterationsSeq = 0, PCMPISizesSeq = 0;
+
+<a name="line43"> 43: </a><strong><font color="#4169E1"><a name="PCMPICommsCreate"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCMPICommsCreate(void)</font></strong>
+<a name="line44"> 44: </a>{
+<a name="line45"> 45: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>    comm = PC_MPI_COMM_WORLD;
+<a name="line46"> 46: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size, rank, i;
+
+<a name="line48"> 48: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line50"> 50: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line51"> 51: </a>  <font color="#B22222">/* comm for size 1 is useful only for debugging */</font>
+<a name="line52"> 52: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; size; i++) {
+<a name="line53"> 53: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> color = rank &lt; i + 1 ? 0 : MPI_UNDEFINED;
+<a name="line54"> 54: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_split.html#MPI_Comm_split">MPI_Comm_split</a>(comm, color, 0, &amp;PCMPIComms[i]);
+<a name="line55"> 55: </a>    PCMPISolveCounts[i] = 0;
+<a name="line56"> 56: </a>    PCMPIKSPCounts[i]   = 0;
+<a name="line57"> 57: </a>    PCMPIIterations[i]  = 0;
+<a name="line58"> 58: </a>    PCMPISizes[i]       = 0;
+<a name="line59"> 59: </a>  }
+<a name="line60"> 60: </a>  PCMPICommSet = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line61"> 61: </a>  <font color="#4169E1">return</font> 0;
+<a name="line62"> 62: </a>}
+
+<a name="line64"> 64: </a><strong><font color="#4169E1"><a name="PCMPICommsDestroy"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCMPICommsDestroy(void)</font></strong>
+<a name="line65"> 65: </a>{
+<a name="line66"> 66: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>    comm = PC_MPI_COMM_WORLD;
+<a name="line67"> 67: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size, rank, i;
+
+<a name="line69"> 69: </a>  <font color="#4169E1">if</font> (!PCMPICommSet) <font color="#4169E1">return</font> 0;
+<a name="line70"> 70: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line71"> 71: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line72"> 72: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; size; i++) {
+<a name="line73"> 73: </a>    <font color="#4169E1">if</font> (PCMPIComms[i] != MPI_COMM_NULL) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_free.html#MPI_Comm_free">MPI_Comm_free</a>(&amp;PCMPIComms[i]);
+<a name="line74"> 74: </a>  }
+<a name="line75"> 75: </a>  PCMPICommSet = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line76"> 76: </a>  <font color="#4169E1">return</font> 0;
+<a name="line77"> 77: </a>}
+
+<a name="line79"> 79: </a><strong><font color="#4169E1"><a name="PCMPICreate"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCMPICreate(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line80"> 80: </a>{
+<a name="line81"> 81: </a>  PC_MPI     *km   = pc ? (PC_MPI *)pc-&gt;data : NULL;
+<a name="line82"> 82: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>    comm = PC_MPI_COMM_WORLD;
+<a name="line83"> 83: </a>  <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>         ksp;
+<a name="line84"> 84: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    N[2], mincntperrank = 0;
+<a name="line85"> 85: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size;
+<a name="line86"> 86: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>         sA;
+<a name="line87"> 87: </a>  char       *prefix;
+<a name="line88"> 88: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> len = 0;
+
+<a name="line90"> 90: </a>  <font color="#4169E1">if</font> (!PCMPICommSet) PCMPICommsCreate();
+<a name="line91"> 91: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line92"> 92: </a>  <font color="#4169E1">if</font> (pc) {
+<a name="line93"> 93: </a>    <font color="#4169E1">if</font> (size == 1) <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"Warning: Running <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> type of MPI on a one rank MPI run, this will be less efficient then not using this type\n"</font>);
+<a name="line94"> 94: </a>    <a href="../../../../../docs/manualpages/PC/PCGetOperators.html">PCGetOperators</a>(pc, &amp;sA, &amp;sA);
+<a name="line95"> 95: </a>    <a href="../../../../../docs/manualpages/Mat/MatGetSize.html">MatGetSize</a>(sA, &amp;N[0], &amp;N[1]);
+<a name="line96"> 96: </a>  }
+<a name="line97"> 97: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(N, 2, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, 0, comm);
+
+<a name="line99"> 99: </a>  <font color="#B22222">/* choose a suitable sized <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> for the problem to be solved on */</font>
+<a name="line100">100: </a>  <font color="#4169E1">if</font> (km) mincntperrank = km-&gt;mincntperrank;
+<a name="line101">101: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(&amp;mincntperrank, 1, MPI_INT, 0, comm);
+<a name="line102">102: </a>  comm = PCMPIComms[<a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(size, <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(1, N[0] / mincntperrank)) - 1];
+<a name="line103">103: </a>  <font color="#4169E1">if</font> (comm == MPI_COMM_NULL) {
+<a name="line104">104: </a>    ksp = NULL;
+<a name="line105">105: </a>    <font color="#4169E1">return</font> 0;
+<a name="line106">106: </a>  }
+<a name="line107">107: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogStagePush.html">PetscLogStagePush</a>(PCMPIStage);
+<a name="line108">108: </a>  <a href="../../../../../docs/manualpages/KSP/KSPCreate.html">KSPCreate</a>(comm, &amp;ksp);
+<a name="line109">109: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogStagePop.html">PetscLogStagePop</a>();
+<a name="line110">110: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Gather.html#MPI_Gather">MPI_Gather</a>(&amp;ksp, 1, MPI_AINT, pc ? km-&gt;ksps : NULL, 1, MPI_AINT, 0, comm);
+<a name="line111">111: </a>  <font color="#4169E1">if</font> (pc) {
+<a name="line112">112: </a>    size_t slen;
+
+<a name="line114">114: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line115">115: </a>    PCMPIKSPCounts[size - 1]++;
+<a name="line116">116: </a>    <a href="../../../../../docs/manualpages/PC/PCGetOptionsPrefix.html">PCGetOptionsPrefix</a>(pc, (const char **)&amp;prefix);
+<a name="line117">117: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrlen.html">PetscStrlen</a>(prefix, &amp;slen);
+<a name="line118">118: </a>    len = (<a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>)slen;
+<a name="line119">119: </a>  }
+<a name="line120">120: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(&amp;len, 1, MPI_INT, 0, comm);
+<a name="line121">121: </a>  <font color="#4169E1">if</font> (len) {
+<a name="line122">122: </a>    <font color="#4169E1">if</font> (!pc) <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(len + 1, &amp;prefix);
+<a name="line123">123: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(prefix, len + 1, MPI_CHAR, 0, comm);
+<a name="line124">124: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSetOptionsPrefix.html">KSPSetOptionsPrefix</a>(ksp, prefix);
+<a name="line125">125: </a>  }
+<a name="line126">126: </a>  <a href="../../../../../docs/manualpages/KSP/KSPAppendOptionsPrefix.html">KSPAppendOptionsPrefix</a>(ksp, <font color="#666666">"mpi_"</font>);
+<a name="line127">127: </a>  <font color="#4169E1">return</font> 0;
+<a name="line128">128: </a>}
+
+<a name="line130">130: </a><strong><font color="#4169E1"><a name="PCMPISetMat"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCMPISetMat(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line131">131: </a>{
+<a name="line132">132: </a>  PC_MPI            *km = pc ? (PC_MPI *)pc-&gt;data : NULL;
+<a name="line133">133: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>                A;
+<a name="line134">134: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           m, n, *ia, *ja, j, bs;
+<a name="line135">135: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>                sA;
+<a name="line136">136: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>           comm = PC_MPI_COMM_WORLD;
+<a name="line137">137: </a>  <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>                ksp;
+<a name="line138">138: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayout.html">PetscLayout</a>        layout;
+<a name="line139">139: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *IA = NULL, *JA = NULL;
+<a name="line140">140: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *range;
+<a name="line141">141: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>       *NZ = NULL, sendcounti[PC_MPI_MAX_RANKS], displi[PC_MPI_MAX_RANKS], *NZdispl = NULL, nz, size, i;
+<a name="line142">142: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *a;
+<a name="line143">143: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *sa               = NULL;
+<a name="line144">144: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           matproperties[7] = {0, 0, 0, 0, 0, 0, 0};
+
+<a name="line146">146: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatter.html#MPI_Scatter">MPI_Scatter</a>(pc ? km-&gt;ksps : NULL, 1, MPI_AINT, &amp;ksp, 1, MPI_AINT, 0, comm);
+<a name="line147">147: </a>  <font color="#4169E1">if</font> (!ksp) <font color="#4169E1">return</font> 0;
+<a name="line148">148: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ksp, &amp;comm);
+<a name="line149">149: </a>  <font color="#4169E1">if</font> (pc) {
+<a name="line150">150: </a>    <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> isset, issymmetric, ishermitian, isspd, isstructurallysymmetric;
+
+<a name="line152">152: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line153">153: </a>    PCMPIMatCounts[size - 1]++;
+<a name="line154">154: </a>    <a href="../../../../../docs/manualpages/PC/PCGetOperators.html">PCGetOperators</a>(pc, &amp;sA, &amp;sA);
+<a name="line155">155: </a>    <a href="../../../../../docs/manualpages/Mat/MatGetSize.html">MatGetSize</a>(sA, &amp;matproperties[0], &amp;matproperties[1]);
+<a name="line156">156: </a>    <a href="../../../../../docs/manualpages/Mat/MatGetBlockSize.html">MatGetBlockSize</a>(sA, &amp;bs);
+<a name="line157">157: </a>    matproperties[2] = bs;
+<a name="line158">158: </a>    <a href="../../../../../docs/manualpages/Mat/MatIsSymmetricKnown.html">MatIsSymmetricKnown</a>(sA, &amp;isset, &amp;issymmetric);
+<a name="line159">159: </a>    matproperties[3] = !isset ? 0 : (issymmetric ? 1 : 2);
+<a name="line160">160: </a>    <a href="../../../../../docs/manualpages/Mat/MatIsHermitianKnown.html">MatIsHermitianKnown</a>(sA, &amp;isset, &amp;ishermitian);
+<a name="line161">161: </a>    matproperties[4] = !isset ? 0 : (ishermitian ? 1 : 2);
+<a name="line162">162: </a>    <a href="../../../../../docs/manualpages/Mat/MatIsSPDKnown.html">MatIsSPDKnown</a>(sA, &amp;isset, &amp;isspd);
+<a name="line163">163: </a>    matproperties[5] = !isset ? 0 : (isspd ? 1 : 2);
+<a name="line164">164: </a>    <a href="../../../../../docs/manualpages/Mat/MatIsStructurallySymmetricKnown.html">MatIsStructurallySymmetricKnown</a>(sA, &amp;isset, &amp;isstructurallysymmetric);
+<a name="line165">165: </a>    matproperties[6] = !isset ? 0 : (isstructurallysymmetric ? 1 : 2);
+<a name="line166">166: </a>  }
+<a name="line167">167: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(matproperties, 7, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, 0, comm);
+
+<a name="line169">169: </a>  <font color="#B22222">/* determine ownership ranges of matrix columns */</font>
+<a name="line170">170: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutCreate.html">PetscLayoutCreate</a>(comm, &amp;layout);
+<a name="line171">171: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetBlockSize.html">PetscLayoutSetBlockSize</a>(layout, matproperties[2]);
+<a name="line172">172: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetSize.html">PetscLayoutSetSize</a>(layout, matproperties[1]);
+<a name="line173">173: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetUp.html">PetscLayoutSetUp</a>(layout);
+<a name="line174">174: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutGetLocalSize.html">PetscLayoutGetLocalSize</a>(layout, &amp;n);
+<a name="line175">175: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutDestroy.html">PetscLayoutDestroy</a>(&amp;layout);
+
+<a name="line177">177: </a>  <font color="#B22222">/* determine ownership ranges of matrix rows */</font>
+<a name="line178">178: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutCreate.html">PetscLayoutCreate</a>(comm, &amp;layout);
+<a name="line179">179: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetBlockSize.html">PetscLayoutSetBlockSize</a>(layout, matproperties[2]);
+<a name="line180">180: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetSize.html">PetscLayoutSetSize</a>(layout, matproperties[0]);
+<a name="line181">181: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetUp.html">PetscLayoutSetUp</a>(layout);
+<a name="line182">182: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutGetLocalSize.html">PetscLayoutGetLocalSize</a>(layout, &amp;m);
+
+<a name="line184">184: </a>  <font color="#B22222">/* copy over the matrix nonzero structure and values */</font>
+<a name="line185">185: </a>  <font color="#4169E1">if</font> (pc) {
+<a name="line186">186: </a>    NZ      = km-&gt;NZ;
+<a name="line187">187: </a>    NZdispl = km-&gt;NZdispl;
+<a name="line188">188: </a>    <a href="../../../../../docs/manualpages/IS/PetscLayoutGetRanges.html">PetscLayoutGetRanges</a>(layout, &amp;range);
+<a name="line189">189: </a>    <a href="../../../../../docs/manualpages/Mat/MatGetRowIJ.html">MatGetRowIJ</a>(sA, 0, <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, NULL, &amp;IA, &amp;JA, NULL);
+<a name="line190">190: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; size; i++) {
+<a name="line191">191: </a>      sendcounti[i] = (<a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>)(1 + range[i + 1] - range[i]);
+<a name="line192">192: </a>      NZ[i]         = (<a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>)(IA[range[i + 1]] - IA[range[i]]);
+<a name="line193">193: </a>    }
+<a name="line194">194: </a>    displi[0]  = 0;
+<a name="line195">195: </a>    NZdispl[0] = 0;
+<a name="line196">196: </a>    <font color="#4169E1">for</font> (j = 1; j &lt; size; j++) {
+<a name="line197">197: </a>      displi[j]  = displi[j - 1] + sendcounti[j - 1] - 1;
+<a name="line198">198: </a>      NZdispl[j] = NZdispl[j - 1] + NZ[j - 1];
+<a name="line199">199: </a>    }
+<a name="line200">200: </a>    <a href="../../../../../docs/manualpages/Mat/MatSeqAIJGetArrayRead.html">MatSeqAIJGetArrayRead</a>(sA, &amp;sa);
+<a name="line201">201: </a>  }
+<a name="line202">202: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutDestroy.html">PetscLayoutDestroy</a>(&amp;layout);
+<a name="line203">203: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatter.html#MPI_Scatter">MPI_Scatter</a>(NZ, 1, MPI_INT, &amp;nz, 1, MPI_INT, 0, comm);
+
+<a name="line205">205: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc3.html">PetscMalloc3</a>(n + 1, &amp;ia, nz, &amp;ja, nz, &amp;a);
+<a name="line206">206: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatterv.html#MPI_Scatterv">MPI_Scatterv</a>(IA, sendcounti, displi, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, ia, n + 1, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, 0, comm);
+<a name="line207">207: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatterv.html#MPI_Scatterv">MPI_Scatterv</a>(JA, NZ, NZdispl, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, ja, nz, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, 0, comm);
+<a name="line208">208: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatterv.html#MPI_Scatterv">MPI_Scatterv</a>(sa, NZ, NZdispl, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, a, nz, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, 0, comm);
+
+<a name="line210">210: </a>  <font color="#4169E1">if</font> (pc) {
+<a name="line211">211: </a>    <a href="../../../../../docs/manualpages/Mat/MatSeqAIJRestoreArrayRead.html">MatSeqAIJRestoreArrayRead</a>(sA, &amp;sa);
+<a name="line212">212: </a>    <a href="../../../../../docs/manualpages/Mat/MatRestoreRowIJ.html">MatRestoreRowIJ</a>(sA, 0, <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, NULL, &amp;IA, &amp;JA, NULL);
+<a name="line213">213: </a>  }
+
+<a name="line215">215: </a>  <font color="#4169E1">for</font> (j = 1; j &lt; n + 1; j++) ia[j] -= ia[0];
+<a name="line216">216: </a>  ia[0] = 0;
+<a name="line217">217: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogStagePush.html">PetscLogStagePush</a>(PCMPIStage);
+<a name="line218">218: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreateMPIAIJWithArrays.html">MatCreateMPIAIJWithArrays</a>(comm, m, n, matproperties[0], matproperties[1], ia, ja, a, &amp;A);
+<a name="line219">219: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetBlockSize.html">MatSetBlockSize</a>(A, matproperties[2]);
+<a name="line220">220: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetOptionsPrefix.html">MatSetOptionsPrefix</a>(A, <font color="#666666">"mpi_"</font>);
+<a name="line221">221: </a>  <font color="#4169E1">if</font> (matproperties[3]) <a href="../../../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(A, <a href="../../../../../docs/manualpages/Mat/MatOption.html">MAT_SYMMETRIC</a>, matproperties[3] == 1 ? <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line222">222: </a>  <font color="#4169E1">if</font> (matproperties[4]) <a href="../../../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(A, <a href="../../../../../docs/manualpages/Mat/MatOption.html">MAT_HERMITIAN</a>, matproperties[4] == 1 ? <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line223">223: </a>  <font color="#4169E1">if</font> (matproperties[5]) <a href="../../../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(A, <a href="../../../../../docs/manualpages/Mat/MatOption.html">MAT_SPD</a>, matproperties[5] == 1 ? <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line224">224: </a>  <font color="#4169E1">if</font> (matproperties[6]) <a href="../../../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(A, <a href="../../../../../docs/manualpages/Mat/MatOption.html">MAT_STRUCTURALLY_SYMMETRIC</a>, matproperties[6] == 1 ? <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+
+<a name="line226">226: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree3.html">PetscFree3</a>(ia, ja, a);
+<a name="line227">227: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>(ksp, A, A);
+<a name="line228">228: </a>  <font color="#4169E1">if</font> (!ksp-&gt;vec_sol) <a href="../../../../../docs/manualpages/Mat/MatCreateVecs.html">MatCreateVecs</a>(A, &amp;ksp-&gt;vec_sol, &amp;ksp-&gt;vec_rhs);
+<a name="line229">229: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogStagePop.html">PetscLogStagePop</a>();
+<a name="line230">230: </a>  <font color="#4169E1">if</font> (pc) { <font color="#B22222">/* needed for scatterv/gatherv of rhs and solution */</font>
+<a name="line231">231: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *range;
+
+<a name="line233">233: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetOwnershipRanges.html">VecGetOwnershipRanges</a>(ksp-&gt;vec_sol, &amp;range);
+<a name="line234">234: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; size; i++) {
+<a name="line235">235: </a>      km-&gt;sendcount[i] = (<a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>)(range[i + 1] - range[i]);
+<a name="line236">236: </a>      km-&gt;displ[i]     = (<a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>)range[i];
+<a name="line237">237: </a>    }
+<a name="line238">238: </a>  }
+<a name="line239">239: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;A);
+<a name="line240">240: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html">KSPSetFromOptions</a>(ksp);
+<a name="line241">241: </a>  <font color="#4169E1">return</font> 0;
+<a name="line242">242: </a>}
+
+<a name="line244">244: </a><strong><font color="#4169E1"><a name="PCMPIUpdateMatValues"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCMPIUpdateMatValues(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line245">245: </a>{
+<a name="line246">246: </a>  PC_MPI            *km = pc ? (PC_MPI *)pc-&gt;data : NULL;
+<a name="line247">247: </a>  <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>                ksp;
+<a name="line248">248: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>                sA, A;
+<a name="line249">249: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>           comm = PC_MPI_COMM_WORLD;
+<a name="line250">250: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *a;
+<a name="line251">251: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a>         nz;
+<a name="line252">252: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *sa = NULL;
+<a name="line253">253: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>        size;
+<a name="line254">254: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           matproperties[4] = {0, 0, 0, 0};
+
+<a name="line256">256: </a>  <font color="#4169E1">if</font> (pc) {
+<a name="line257">257: </a>    <a href="../../../../../docs/manualpages/PC/PCGetOperators.html">PCGetOperators</a>(pc, &amp;sA, &amp;sA);
+<a name="line258">258: </a>    <a href="../../../../../docs/manualpages/Mat/MatSeqAIJGetArrayRead.html">MatSeqAIJGetArrayRead</a>(sA, &amp;sa);
+<a name="line259">259: </a>  }
+<a name="line260">260: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatter.html#MPI_Scatter">MPI_Scatter</a>(pc ? km-&gt;ksps : NULL, 1, MPI_AINT, &amp;ksp, 1, MPI_AINT, 0, comm);
+<a name="line261">261: </a>  <font color="#4169E1">if</font> (!ksp) <font color="#4169E1">return</font> 0;
+<a name="line262">262: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ksp, &amp;comm);
+<a name="line263">263: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line264">264: </a>  PCMPIMatCounts[size - 1]++;
+<a name="line265">265: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetOperators.html">KSPGetOperators</a>(ksp, NULL, &amp;A);
+<a name="line266">266: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJGetNumberNonzeros.html">MatMPIAIJGetNumberNonzeros</a>(A, &amp;nz);
+<a name="line267">267: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(nz, &amp;a);
+<a name="line268">268: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatterv.html#MPI_Scatterv">MPI_Scatterv</a>(sa, pc ? km-&gt;NZ : NULL, pc ? km-&gt;NZdispl : NULL, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, a, nz, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, 0, comm);
+<a name="line269">269: </a>  <font color="#4169E1">if</font> (pc) {
+<a name="line270">270: </a>    <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> isset, issymmetric, ishermitian, isspd, isstructurallysymmetric;
+
+<a name="line272">272: </a>    <a href="../../../../../docs/manualpages/Mat/MatSeqAIJRestoreArrayRead.html">MatSeqAIJRestoreArrayRead</a>(sA, &amp;sa);
+
+<a name="line274">274: </a>    <a href="../../../../../docs/manualpages/Mat/MatIsSymmetricKnown.html">MatIsSymmetricKnown</a>(sA, &amp;isset, &amp;issymmetric);
+<a name="line275">275: </a>    matproperties[0] = !isset ? 0 : (issymmetric ? 1 : 2);
+<a name="line276">276: </a>    <a href="../../../../../docs/manualpages/Mat/MatIsHermitianKnown.html">MatIsHermitianKnown</a>(sA, &amp;isset, &amp;ishermitian);
+<a name="line277">277: </a>    matproperties[1] = !isset ? 0 : (ishermitian ? 1 : 2);
+<a name="line278">278: </a>    <a href="../../../../../docs/manualpages/Mat/MatIsSPDKnown.html">MatIsSPDKnown</a>(sA, &amp;isset, &amp;isspd);
+<a name="line279">279: </a>    matproperties[2] = !isset ? 0 : (isspd ? 1 : 2);
+<a name="line280">280: </a>    <a href="../../../../../docs/manualpages/Mat/MatIsStructurallySymmetricKnown.html">MatIsStructurallySymmetricKnown</a>(sA, &amp;isset, &amp;isstructurallysymmetric);
+<a name="line281">281: </a>    matproperties[3] = !isset ? 0 : (isstructurallysymmetric ? 1 : 2);
+<a name="line282">282: </a>  }
+<a name="line283">283: </a>  <a href="../../../../../docs/manualpages/Mat/MatUpdateMPIAIJWithArray.html">MatUpdateMPIAIJWithArray</a>(A, a);
+<a name="line284">284: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(a);
+<a name="line285">285: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(matproperties, 4, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, 0, comm);
+<a name="line286">286: </a>  <font color="#B22222">/* if any of these properties was previously set and is now not set this will result in incorrect properties in A since there is no way to unset a property */</font>
+<a name="line287">287: </a>  <font color="#4169E1">if</font> (matproperties[0]) <a href="../../../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(A, <a href="../../../../../docs/manualpages/Mat/MatOption.html">MAT_SYMMETRIC</a>, matproperties[0] == 1 ? <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line288">288: </a>  <font color="#4169E1">if</font> (matproperties[1]) <a href="../../../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(A, <a href="../../../../../docs/manualpages/Mat/MatOption.html">MAT_HERMITIAN</a>, matproperties[1] == 1 ? <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line289">289: </a>  <font color="#4169E1">if</font> (matproperties[2]) <a href="../../../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(A, <a href="../../../../../docs/manualpages/Mat/MatOption.html">MAT_SPD</a>, matproperties[2] == 1 ? <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line290">290: </a>  <font color="#4169E1">if</font> (matproperties[3]) <a href="../../../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(A, <a href="../../../../../docs/manualpages/Mat/MatOption.html">MAT_STRUCTURALLY_SYMMETRIC</a>, matproperties[3] == 1 ? <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line291">291: </a>  <font color="#4169E1">return</font> 0;
+<a name="line292">292: </a>}
+
+<a name="line294">294: </a><strong><font color="#4169E1"><a name="PCMPISolve"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCMPISolve(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> B, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> X)</font></strong>
+<a name="line295">295: </a>{
+<a name="line296">296: </a>  PC_MPI            *km = pc ? (PC_MPI *)pc-&gt;data : NULL;
+<a name="line297">297: </a>  <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>                ksp;
+<a name="line298">298: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>           comm = PC_MPI_COMM_WORLD;
+<a name="line299">299: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *sb   = NULL, *x;
+<a name="line300">300: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *b, *sx = NULL;
+<a name="line301">301: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           its, n;
+<a name="line302">302: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>        size;
+
+<a name="line304">304: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatter.html#MPI_Scatter">MPI_Scatter</a>(pc ? km-&gt;ksps : &amp;ksp, 1, MPI_AINT, &amp;ksp, 1, MPI_AINT, 0, comm);
+<a name="line305">305: </a>  <font color="#4169E1">if</font> (!ksp) <font color="#4169E1">return</font> 0;
+<a name="line306">306: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ksp, &amp;comm);
+
+<a name="line308">308: </a>  <font color="#B22222">/* TODO: optimize code to not require building counts/displ every time */</font>
+
+<a name="line310">310: </a>  <font color="#B22222">/* scatterv rhs */</font>
+<a name="line311">311: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line312">312: </a>  <font color="#4169E1">if</font> (pc) {
+<a name="line313">313: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> N;
+
+<a name="line315">315: </a>    PCMPISolveCounts[size - 1]++;
+<a name="line316">316: </a>    <a href="../../../../../docs/manualpages/Mat/MatGetSize.html">MatGetSize</a>(pc-&gt;pmat, &amp;N, NULL);
+<a name="line317">317: </a>    ;
+<a name="line318">318: </a>    PCMPISizes[size - 1] += N;
+<a name="line319">319: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(B, &amp;sb);
+<a name="line320">320: </a>  }
+<a name="line321">321: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(ksp-&gt;vec_rhs, &amp;n);
+<a name="line322">322: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(ksp-&gt;vec_rhs, &amp;b);
+<a name="line323">323: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatterv.html#MPI_Scatterv">MPI_Scatterv</a>(sb, pc ? km-&gt;sendcount : NULL, pc ? km-&gt;displ : NULL, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, b, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, 0, comm);
+<a name="line324">324: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(ksp-&gt;vec_rhs, &amp;b);
+<a name="line325">325: </a>  <font color="#4169E1">if</font> (pc) <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(B, &amp;sb);
+
+<a name="line327">327: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogStagePush.html">PetscLogStagePush</a>(PCMPIStage);
+<a name="line328">328: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>(ksp, NULL, NULL);
+<a name="line329">329: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogStagePop.html">PetscLogStagePop</a>();
+<a name="line330">330: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetIterationNumber.html">KSPGetIterationNumber</a>(ksp, &amp;its);
+<a name="line331">331: </a>  PCMPIIterations[size - 1] += its;
+
+<a name="line333">333: </a>  <font color="#B22222">/* gather solution */</font>
+<a name="line334">334: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(ksp-&gt;vec_sol, &amp;x);
+<a name="line335">335: </a>  <font color="#4169E1">if</font> (pc) <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(X, &amp;sx);
+<a name="line336">336: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Gatherv.html#MPI_Gatherv">MPI_Gatherv</a>(x, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, sx, pc ? km-&gt;sendcount : NULL, pc ? km-&gt;displ : NULL, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, 0, comm);
+<a name="line337">337: </a>  <font color="#4169E1">if</font> (pc) <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(X, &amp;sx);
+<a name="line338">338: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(ksp-&gt;vec_sol, &amp;x);
+<a name="line339">339: </a>  <font color="#4169E1">return</font> 0;
+<a name="line340">340: </a>}
+
+<a name="line342">342: </a><strong><font color="#4169E1"><a name="PCMPIDestroy"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCMPIDestroy(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line343">343: </a>{
+<a name="line344">344: </a>  PC_MPI  *km = pc ? (PC_MPI *)pc-&gt;data : NULL;
+<a name="line345">345: </a>  <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>      ksp;
+<a name="line346">346: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm = PC_MPI_COMM_WORLD;
+
+<a name="line348">348: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Scatter.html#MPI_Scatter">MPI_Scatter</a>(pc ? km-&gt;ksps : NULL, 1, MPI_AINT, &amp;ksp, 1, MPI_AINT, 0, comm);
+<a name="line349">349: </a>  <font color="#4169E1">if</font> (!ksp) <font color="#4169E1">return</font> 0;
+<a name="line350">350: </a>  <a href="../../../../../docs/manualpages/KSP/KSPDestroy.html">KSPDestroy</a>(&amp;ksp);
+<a name="line351">351: </a>  <font color="#4169E1">return</font> 0;
+<a name="line352">352: </a>}
+
+<a name="line354">354: </a><font color="#B22222">/*@C</font>
+<a name="line355">355: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/PC/PCMPIServerBegin.html">PCMPIServerBegin</a> - starts a server that runs on the rank != 0 MPI processes waiting to process requests for</font>
+<a name="line356">356: </a><font color="#B22222">     parallel `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` solves and management of parallel `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` objects.</font>
+
+<a name="line358">358: </a><font color="#B22222">     Logically collective on all MPI ranks except 0</font>
+
+<a name="line360">360: </a><font color="#B22222">   Options Database Keys:</font>
+<a name="line361">361: </a><font color="#B22222">+   -mpi_linear_solver_server - causes the PETSc program to start in MPI linear solver server mode where only the first MPI rank runs user code</font>
+<a name="line362">362: </a><font color="#B22222">-   -mpi_linear_solver_server_view - displays information about the linear systems solved by the MPI linear solver server</font>
+
+<a name="line364">364: </a><font color="#B22222">     Note:</font>
+<a name="line365">365: </a><font color="#B22222">      This is normally started automatically in `<a href="../../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>()` when the option is provided</font>
+
+<a name="line367">367: </a><font color="#B22222">     Developer Notes:</font>
+<a name="line368">368: </a><font color="#B22222">       When called on rank zero this sets `<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>` to `<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>` to allow a main program</font>
+<a name="line369">369: </a><font color="#B22222">       written with `<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>` to run correctly on the single rank while all the ranks</font>
+<a name="line370">370: </a><font color="#B22222">       (that would normally be sharing `<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>`) to run the solver server.</font>
+
+<a name="line372">372: </a><font color="#B22222">       Can this be integrated into the `<a href="../../../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a>` abstraction that is currently being developed?</font>
+
+<a name="line374">374: </a><font color="#B22222">     Level: developer</font>
+
+<a name="line376">376: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/PC/PCMPIServerEnd.html">PCMPIServerEnd</a>()`, `<a href="../../../../../docs/manualpages/PC/PCMPI.html">PCMPI</a>`</font>
+<a name="line377">377: </a><font color="#B22222">@*/</font>
+<a name="line378">378: </a><strong><font color="#4169E1"><a name="PCMPIServerBegin"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PC/PCMPIServerBegin.html">PCMPIServerBegin</a>(void)</font></strong>
+<a name="line379">379: </a>{
+<a name="line380">380: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+
+<a name="line382">382: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(NULL, <font color="#666666">"Starting MPI Linear Solver Server"</font>);
+<a name="line383">383: </a>  <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_SINGLE_LIBRARY)) {
+<a name="line384">384: </a>    <a href="../../../../../docs/manualpages/Vec/VecInitializePackage.html">VecInitializePackage</a>();
+<a name="line385">385: </a>    <a href="../../../../../docs/manualpages/Mat/MatInitializePackage.html">MatInitializePackage</a>();
+<a name="line386">386: </a>    <a href="../../../../../docs/manualpages/DM/DMInitializePackage.html">DMInitializePackage</a>();
+<a name="line387">387: </a>    <a href="../../../../../docs/manualpages/KSP/PCInitializePackage.html">PCInitializePackage</a>();
+<a name="line388">388: </a>    <a href="../../../../../docs/manualpages/KSP/KSPInitializePackage.html">KSPInitializePackage</a>();
+<a name="line389">389: </a>    <a href="../../../../../docs/manualpages/SNES/SNESInitializePackage.html">SNESInitializePackage</a>();
+<a name="line390">390: </a>    <a href="../../../../../docs/manualpages/TS/TSInitializePackage.html">TSInitializePackage</a>();
+<a name="line391">391: </a>    <a href="../../../../../docs/manualpages/Tao/TaoInitializePackage.html">TaoInitializePackage</a>();
+<a name="line392">392: </a>  }
+
+<a name="line394">394: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(PC_MPI_COMM_WORLD, &amp;rank);
+<a name="line395">395: </a>  <font color="#4169E1">if</font> (rank == 0) {
+<a name="line396">396: </a>    <a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a> = <a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>;
+<a name="line397">397: </a>    <font color="#4169E1">return</font> 0;
+<a name="line398">398: </a>  }
+
+<a name="line400">400: </a>  <font color="#4169E1">while</font> (<a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>) {
+<a name="line401">401: </a>    PCMPICommand request = PCMPI_CREATE;
+<a name="line402">402: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(&amp;request, 1, MPIU_ENUM, 0, PC_MPI_COMM_WORLD);
+<a name="line403">403: </a>    <font color="#4169E1">switch</font> (request) {
+<a name="line404">404: </a>    <font color="#4169E1">case</font> PCMPI_CREATE:
+<a name="line405">405: </a>      PCMPICreate(NULL);
+<a name="line406">406: </a>      <font color="#4169E1">break</font>;
+<a name="line407">407: </a>    <font color="#4169E1">case</font> PCMPI_SET_MAT:
+<a name="line408">408: </a>      PCMPISetMat(NULL);
+<a name="line409">409: </a>      <font color="#4169E1">break</font>;
+<a name="line410">410: </a>    <font color="#4169E1">case</font> PCMPI_UPDATE_MAT_VALUES:
+<a name="line411">411: </a>      PCMPIUpdateMatValues(NULL);
+<a name="line412">412: </a>      <font color="#4169E1">break</font>;
+<a name="line413">413: </a>    <font color="#4169E1">case</font> PCMPI_VIEW:
+<a name="line414">414: </a>      // PCMPIView(NULL);
+<a name="line415">415: </a>      <font color="#4169E1">break</font>;
+<a name="line416">416: </a>    <font color="#4169E1">case</font> PCMPI_SOLVE:
+<a name="line417">417: </a>      PCMPISolve(NULL, NULL, NULL);
+<a name="line418">418: </a>      <font color="#4169E1">break</font>;
+<a name="line419">419: </a>    <font color="#4169E1">case</font> PCMPI_DESTROY:
+<a name="line420">420: </a>      PCMPIDestroy(NULL);
+<a name="line421">421: </a>      <font color="#4169E1">break</font>;
+<a name="line422">422: </a>    <font color="#4169E1">case</font> PCMPI_EXIT:
+<a name="line423">423: </a>      <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line424">424: </a>      exit(0); <font color="#B22222">/* not sure if this is a good idea, but cannot return because it will run users main program */</font>
+<a name="line425">425: </a>      <font color="#4169E1">break</font>;
+<a name="line426">426: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line427">427: </a>      <font color="#4169E1">break</font>;
+<a name="line428">428: </a>    }
+<a name="line429">429: </a>  }
+<a name="line430">430: </a>  <font color="#4169E1">return</font> 0;
+<a name="line431">431: </a>}
+
+<a name="line433">433: </a><font color="#B22222">/*@C</font>
+<a name="line434">434: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/PC/PCMPIServerEnd.html">PCMPIServerEnd</a> - ends a server that runs on the rank != 0 MPI processes waiting to process requests for</font>
+<a name="line435">435: </a><font color="#B22222">     parallel <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> solves and management of parallel `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` objects.</font>
+
+<a name="line437">437: </a><font color="#B22222">     Logically collective on all MPI ranks except 0</font>
+
+<a name="line439">439: </a><font color="#B22222">     Note:</font>
+<a name="line440">440: </a><font color="#B22222">      This is normally ended automatically in `<a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>()` when the option is provided</font>
+
+<a name="line442">442: </a><font color="#B22222">     Level: developer</font>
+
+<a name="line444">444: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/PC/PCMPIServerBegin.html">PCMPIServerBegin</a>()`, `<a href="../../../../../docs/manualpages/PC/PCMPI.html">PCMPI</a>`</font>
+<a name="line445">445: </a><font color="#B22222">@*/</font>
+<a name="line446">446: </a><strong><font color="#4169E1"><a name="PCMPIServerEnd"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PC/PCMPIServerEnd.html">PCMPIServerEnd</a>(void)</font></strong>
+<a name="line447">447: </a>{
+<a name="line448">448: </a>  PCMPICommand request = PCMPI_EXIT;
+
+<a name="line450">450: </a>  <font color="#4169E1">if</font> (PetscGlobalRank == 0) {
+<a name="line451">451: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>       viewer = NULL;
+<a name="line452">452: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PetscViewerFormat</a> format;
+
+<a name="line454">454: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(&amp;request, 1, MPIU_ENUM, 0, PC_MPI_COMM_WORLD);
+<a name="line455">455: </a>    <a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a> = MPI_COMM_WORLD; <font color="#B22222">/* could use PC_MPI_COMM_WORLD */</font>
+<a name="line456">456: </a>    <a href="../../../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, NULL, <font color="#666666">"MPI linear solver server options"</font>, NULL);
+<a name="line457">457: </a>    <a href="../../../../../docs/manualpages/Sys/PetscOptionsViewer.html">PetscOptionsViewer</a>(<font color="#666666">"-mpi_linear_solver_server_view"</font>, <font color="#666666">"View information about system solved with the server"</font>, <font color="#666666">"<a href="../../../../../docs/manualpages/PC/PCMPI.html">PCMPI</a>"</font>, &amp;viewer, &amp;format, NULL);
+<a name="line458">458: </a>    <a href="../../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line459">459: </a>    <font color="#4169E1">if</font> (viewer) {
+<a name="line460">460: </a>      <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> isascii;
+
+<a name="line462">462: </a>      <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;isascii);
+<a name="line463">463: </a>      <font color="#4169E1">if</font> (isascii) {
+<a name="line464">464: </a>        <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size;
+<a name="line465">465: </a>        <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> i;
+
+<a name="line467">467: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;size);
+<a name="line468">468: </a>        <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"MPI linear solver server statistics:\n"</font>);
+<a name="line469">469: </a>        <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"    Ranks        <a href="../../../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>()s     Mats        KSPs       Avg. Size      Avg. Its\n"</font>);
+<a name="line470">470: </a>        <font color="#4169E1">if</font> (PCMPIKSPCountsSeq) {
+<a name="line471">471: </a>          <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Sequential         %"</font> PetscInt_FMT <font color="#666666">"                         %"</font> PetscInt_FMT <font color="#666666">"            %"</font> PetscInt_FMT <font color="#666666">"           %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, PCMPISolveCountsSeq, PCMPIKSPCountsSeq, PCMPISizesSeq / PCMPISolveCountsSeq, PCMPIIterationsSeq / PCMPISolveCountsSeq);
+<a name="line472">472: </a>        }
+<a name="line473">473: </a>        <font color="#4169E1">for</font> (i = 0; i &lt; size; i++) {
+<a name="line474">474: </a>          <font color="#4169E1">if</font> (PCMPIKSPCounts[i]) {
+<a name="line475">475: </a>            <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"     %d               %"</font> PetscInt_FMT <font color="#666666">"            %"</font> PetscInt_FMT <font color="#666666">"           %"</font> PetscInt_FMT <font color="#666666">"            %"</font> PetscInt_FMT <font color="#666666">"            %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, i + 1, PCMPISolveCounts[i], PCMPIMatCounts[i], PCMPIKSPCounts[i], PCMPISizes[i] / PCMPISolveCounts[i], PCMPIIterations[i] / PCMPISolveCounts[i]);
+<a name="line476">476: </a>          }
+<a name="line477">477: </a>        }
+<a name="line478">478: </a>      }
+<a name="line479">479: </a>      <a href="../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;viewer);
+<a name="line480">480: </a>    }
+<a name="line481">481: </a>  }
+<a name="line482">482: </a>  PCMPICommsDestroy();
+<a name="line483">483: </a>  <font color="#4169E1">return</font> 0;
+<a name="line484">484: </a>}
+
+<a name="line486">486: </a><font color="#B22222">/*</font>
+<a name="line487">487: </a><font color="#B22222">    This version is used in the trivial case when the MPI parallel solver server is running on just the original MPI rank 0</font>
+<a name="line488">488: </a><font color="#B22222">    because, for example, the problem is small. This version is more efficient because it does not require copying any data</font>
+<a name="line489">489: </a><font color="#B22222">*/</font>
+<a name="line490">490: </a><strong><font color="#4169E1"><a name="PCSetUp_Seq"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCSetUp_Seq(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line491">491: </a>{
+<a name="line492">492: </a>  PC_MPI     *km = (PC_MPI *)pc-&gt;data;
+<a name="line493">493: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>         sA;
+<a name="line494">494: </a>  const char *prefix;
+
+<a name="line496">496: </a>  <a href="../../../../../docs/manualpages/PC/PCGetOperators.html">PCGetOperators</a>(pc, NULL, &amp;sA);
+<a name="line497">497: </a>  <a href="../../../../../docs/manualpages/PC/PCGetOptionsPrefix.html">PCGetOptionsPrefix</a>(pc, &amp;prefix);
+<a name="line498">498: </a>  <a href="../../../../../docs/manualpages/KSP/KSPCreate.html">KSPCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;km-&gt;ksps[0]);
+<a name="line499">499: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetOptionsPrefix.html">KSPSetOptionsPrefix</a>(km-&gt;ksps[0], prefix);
+<a name="line500">500: </a>  <a href="../../../../../docs/manualpages/KSP/KSPAppendOptionsPrefix.html">KSPAppendOptionsPrefix</a>(km-&gt;ksps[0], <font color="#666666">"mpi_"</font>);
+<a name="line501">501: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>(km-&gt;ksps[0], sA, sA);
+<a name="line502">502: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html">KSPSetFromOptions</a>(km-&gt;ksps[0]);
+<a name="line503">503: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetUp.html">KSPSetUp</a>(km-&gt;ksps[0]);
+<a name="line504">504: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pc, <font color="#666666">"MPI parallel linear solver system is being solved directly on rank 0 due to its small size\n"</font>);
+<a name="line505">505: </a>  PCMPIKSPCountsSeq++;
+<a name="line506">506: </a>  <font color="#4169E1">return</font> 0;
+<a name="line507">507: </a>}
+
+<a name="line509">509: </a><strong><font color="#4169E1"><a name="PCApply_Seq"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCApply_Seq(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> b, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x)</font></strong>
+<a name="line510">510: </a>{
+<a name="line511">511: </a>  PC_MPI  *km = (PC_MPI *)pc-&gt;data;
+<a name="line512">512: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> its, n;
+<a name="line513">513: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>      A;
+
+<a name="line515">515: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>(km-&gt;ksps[0], b, x);
+<a name="line516">516: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetIterationNumber.html">KSPGetIterationNumber</a>(km-&gt;ksps[0], &amp;its);
+<a name="line517">517: </a>  PCMPISolveCountsSeq++;
+<a name="line518">518: </a>  PCMPIIterationsSeq += its;
+<a name="line519">519: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetOperators.html">KSPGetOperators</a>(km-&gt;ksps[0], NULL, &amp;A);
+<a name="line520">520: </a>  <a href="../../../../../docs/manualpages/Mat/MatGetSize.html">MatGetSize</a>(A, &amp;n, NULL);
+<a name="line521">521: </a>  PCMPISizesSeq += n;
+<a name="line522">522: </a>  <font color="#4169E1">return</font> 0;
+<a name="line523">523: </a>}
+
+<a name="line525">525: </a><strong><font color="#4169E1"><a name="PCView_Seq"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCView_Seq(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line526">526: </a>{
+<a name="line527">527: </a>  PC_MPI     *km = (PC_MPI *)pc-&gt;data;
+<a name="line528">528: </a>  const char *prefix;
+
+<a name="line530">530: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Running MPI linear solver server directly on rank 0 due to its small size\n"</font>);
+<a name="line531">531: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Desired minimum number of nonzeros per rank for MPI parallel solve %d\n"</font>, (int)km-&gt;mincntperrank);
+<a name="line532">532: </a>  <a href="../../../../../docs/manualpages/PC/PCGetOptionsPrefix.html">PCGetOptionsPrefix</a>(pc, &amp;prefix);
+<a name="line533">533: </a>  <font color="#4169E1">if</font> (prefix) <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"*** Use -%smpi_ksp_view to see the MPI <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> parameters ***\n"</font>, prefix);
+<a name="line534">534: </a>  <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"*** Use -mpi_ksp_view to see the MPI <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> parameters ***\n"</font>);
+<a name="line535">535: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"*** Use -mpi_linear_solver_server_view to statistics on all the solves ***\n"</font>);
+<a name="line536">536: </a>  <font color="#4169E1">return</font> 0;
+<a name="line537">537: </a>}
+
+<a name="line539">539: </a><strong><font color="#4169E1"><a name="PCDestroy_Seq"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCDestroy_Seq(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line540">540: </a>{
+<a name="line541">541: </a>  PC_MPI *km = (PC_MPI *)pc-&gt;data;
+
+<a name="line543">543: </a>  <a href="../../../../../docs/manualpages/KSP/KSPDestroy.html">KSPDestroy</a>(&amp;km-&gt;ksps[0]);
+<a name="line544">544: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(pc-&gt;data);
+<a name="line545">545: </a>  <font color="#4169E1">return</font> 0;
+<a name="line546">546: </a>}
+
+<a name="line548">548: </a><font color="#B22222">/*</font>
+<a name="line549">549: </a><font color="#B22222">     PCSetUp_MPI - Trigger the creation of the MPI parallel <a href="../../../../../docs/manualpages/PC/PC.html">PC</a> and copy parts of the matrix and</font>
+<a name="line550">550: </a><font color="#B22222">     right hand side to the parallel <a href="../../../../../docs/manualpages/PC/PC.html">PC</a></font>
+<a name="line551">551: </a><font color="#B22222">*/</font>
+<a name="line552">552: </a><strong><font color="#4169E1"><a name="PCSetUp_MPI"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCSetUp_MPI(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line553">553: </a>{
+<a name="line554">554: </a>  PC_MPI      *km = (PC_MPI *)pc-&gt;data;
+<a name="line555">555: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>  rank, size;
+<a name="line556">556: </a>  PCMPICommand request;
+<a name="line557">557: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>    newmatrix = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line559">559: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(MPI_COMM_WORLD, &amp;rank);
+<a name="line561">561: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(MPI_COMM_WORLD, &amp;size);
+
+<a name="line563">563: </a>  <font color="#4169E1">if</font> (!pc-&gt;setupcalled) {
+<a name="line564">564: </a>    <font color="#4169E1">if</font> (!km-&gt;alwaysuseserver) {
+<a name="line565">565: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n;
+<a name="line566">566: </a>      <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>      sA;
+<a name="line567">567: </a>      <font color="#B22222">/* short circuit for small systems */</font>
+<a name="line568">568: </a>      <a href="../../../../../docs/manualpages/PC/PCGetOperators.html">PCGetOperators</a>(pc, &amp;sA, &amp;sA);
+<a name="line569">569: </a>      <a href="../../../../../docs/manualpages/Mat/MatGetSize.html">MatGetSize</a>(sA, &amp;n, NULL);
+<a name="line570">570: </a>      <font color="#4169E1">if</font> (n &lt; 2 * km-&gt;mincntperrank - 1 || size == 1) {
+<a name="line571">571: </a>        pc-&gt;ops-&gt;setup   = NULL;
+<a name="line572">572: </a>        pc-&gt;ops-&gt;apply   = PCApply_Seq;
+<a name="line573">573: </a>        pc-&gt;ops-&gt;destroy = PCDestroy_Seq;
+<a name="line574">574: </a>        pc-&gt;ops-&gt;view    = PCView_Seq;
+<a name="line575">575: </a>        PCSetUp_Seq(pc);
+<a name="line576">576: </a>        <font color="#4169E1">return</font> 0;
+<a name="line577">577: </a>      }
+<a name="line578">578: </a>    }
+
+<a name="line580">580: </a>    request = PCMPI_CREATE;
+<a name="line581">581: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(&amp;request, 1, MPIU_ENUM, 0, MPI_COMM_WORLD);
+<a name="line582">582: </a>    PCMPICreate(pc);
+<a name="line583">583: </a>    newmatrix = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line584">584: </a>  }
+<a name="line585">585: </a>  <font color="#4169E1">if</font> (pc-&gt;flag == <a href="../../../../../docs/manualpages/Mat/MatStructure.html">DIFFERENT_NONZERO_PATTERN</a>) newmatrix = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+
+<a name="line587">587: </a>  <font color="#4169E1">if</font> (newmatrix) {
+<a name="line588">588: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pc, <font color="#666666">"New matrix or matrix has changed nonzero structure\n"</font>);
+<a name="line589">589: </a>    request = PCMPI_SET_MAT;
+<a name="line590">590: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(&amp;request, 1, MPIU_ENUM, 0, MPI_COMM_WORLD);
+<a name="line591">591: </a>    PCMPISetMat(pc);
+<a name="line592">592: </a>  } <font color="#4169E1">else</font> {
+<a name="line593">593: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pc, <font color="#666666">"Matrix has only changed nozero values\n"</font>);
+<a name="line594">594: </a>    request = PCMPI_UPDATE_MAT_VALUES;
+<a name="line595">595: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(&amp;request, 1, MPIU_ENUM, 0, MPI_COMM_WORLD);
+<a name="line596">596: </a>    PCMPIUpdateMatValues(pc);
+<a name="line597">597: </a>  }
+<a name="line598">598: </a>  <font color="#4169E1">return</font> 0;
+<a name="line599">599: </a>}
+
+<a name="line601">601: </a><strong><font color="#4169E1"><a name="PCApply_MPI"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCApply_MPI(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> b, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x)</font></strong>
+<a name="line602">602: </a>{
+<a name="line603">603: </a>  PCMPICommand request = PCMPI_SOLVE;
+
+<a name="line605">605: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(&amp;request, 1, MPIU_ENUM, 0, MPI_COMM_WORLD);
+<a name="line606">606: </a>  PCMPISolve(pc, b, x);
+<a name="line607">607: </a>  <font color="#4169E1">return</font> 0;
+<a name="line608">608: </a>}
+
+<a name="line610">610: </a><strong><font color="#4169E1"><a name="PCDestroy_MPI"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCDestroy_MPI(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line611">611: </a>{
+<a name="line612">612: </a>  PCMPICommand request = PCMPI_DESTROY;
+
+<a name="line614">614: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(&amp;request, 1, MPIU_ENUM, 0, MPI_COMM_WORLD);
+<a name="line615">615: </a>  PCMPIDestroy(pc);
+<a name="line616">616: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(pc-&gt;data);
+<a name="line617">617: </a>  <font color="#4169E1">return</font> 0;
+<a name="line618">618: </a>}
+
+<a name="line620">620: </a><font color="#B22222">/*</font>
+<a name="line621">621: </a><font color="#B22222">     PCView_MPI - Cannot call view on the MPI parallel <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> because other ranks do not have access to the viewer</font>
+<a name="line622">622: </a><font color="#B22222">*/</font>
+<a name="line623">623: </a><strong><font color="#4169E1"><a name="PCView_MPI"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCView_MPI(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line624">624: </a>{
+<a name="line625">625: </a>  PC_MPI     *km = (PC_MPI *)pc-&gt;data;
+<a name="line626">626: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>    comm;
+<a name="line627">627: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size;
+<a name="line628">628: </a>  const char *prefix;
+
+<a name="line630">630: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)km-&gt;ksps[0], &amp;comm);
+<a name="line631">631: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line632">632: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Size of MPI communicator used for MPI parallel <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> solve %d\n"</font>, size);
+<a name="line633">633: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Desired minimum number of nonzeros per rank for MPI parallel solve %d\n"</font>, (int)km-&gt;mincntperrank);
+<a name="line634">634: </a>  <a href="../../../../../docs/manualpages/PC/PCGetOptionsPrefix.html">PCGetOptionsPrefix</a>(pc, &amp;prefix);
+<a name="line635">635: </a>  <font color="#4169E1">if</font> (prefix) <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"*** Use -%smpi_ksp_view to see the MPI <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> parameters ***\n"</font>, prefix);
+<a name="line636">636: </a>  <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"*** Use -mpi_ksp_view to see the MPI <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> parameters ***\n"</font>);
+<a name="line637">637: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"*** Use -mpi_linear_solver_server_view to statistics on all the solves ***\n"</font>);
+<a name="line638">638: </a>  <font color="#4169E1">return</font> 0;
+<a name="line639">639: </a>}
+
+<a name="line641">641: </a><strong><font color="#4169E1"><a name="PCSetFromOptions_MPI"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCSetFromOptions_MPI(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line642">642: </a>{
+<a name="line643">643: </a>  PC_MPI *km = (PC_MPI *)pc-&gt;data;
+
+<a name="line645">645: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"MPI linear solver server options"</font>);
+<a name="line646">646: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsInt.html">PetscOptionsInt</a>(<font color="#666666">"-pc_mpi_minimum_count_per_rank"</font>, <font color="#666666">"Desired minimum number of nonzeros per rank"</font>, <font color="#666666">"None"</font>, km-&gt;mincntperrank, &amp;km-&gt;mincntperrank, NULL);
+<a name="line647">647: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-pc_mpi_always_use_server"</font>, <font color="#666666">"Use the server even if only one rank is used for the solve (for debugging)"</font>, <font color="#666666">"None"</font>, km-&gt;alwaysuseserver, &amp;km-&gt;alwaysuseserver, NULL);
+<a name="line648">648: </a>  PetscOptionsHeadEnd();
+<a name="line649">649: </a>  <font color="#4169E1">return</font> 0;
+<a name="line650">650: </a>}
+
+<a name="line652">652: </a><font color="#B22222">/*MC</font>
+<a name="line653">653: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/PC/PCMPI.html">PCMPI</a> - Calls an MPI parallel `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` to solve a linear system from user code running on one process</font>
+
+<a name="line655">655: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line657">657: </a><font color="#B22222">   Options Database Keys:</font>
+<a name="line658">658: </a><font color="#B22222">+  -mpi_linear_solver_server - causes the PETSc program to start in MPI linear solver server mode where only the first MPI rank runs user code</font>
+<a name="line659">659: </a><font color="#B22222">.  -mpi_linear_solver_server_view - displays information about the linear systems solved by the MPI linear solver server</font>
+<a name="line660">660: </a><font color="#B22222">.  -pc_mpi_minimum_count_per_rank - sets the minimum size of the linear system per MPI rank that the solver will strive for</font>
+<a name="line661">661: </a><font color="#B22222">-  -pc_mpi_always_use_server - use the server solver code even if the particular system is only solved on the process, this option is only for debugging and testing purposes</font>
+
+<a name="line663">663: </a><font color="#B22222">   Notes:</font>
+<a name="line664">664: </a><font color="#B22222">   The options database prefix for the MPI parallel `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` and `<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>` is -mpi_</font>
+
+<a name="line666">666: </a><font color="#B22222">   The MPI linear solver server will not support scaling user code to utilize extremely large numbers of MPI ranks but should give reasonable speedup for</font>
+<a name="line667">667: </a><font color="#B22222">   potentially 4 to 8 MPI ranks depending on the linear system being solved, solver algorithm, and the hardware.</font>
+
+<a name="line669">669: </a><font color="#B22222">   It can be particularly useful for user OpenMP code or potentially user GPU code.</font>
+
+<a name="line671">671: </a><font color="#B22222">   When the program is running with a single MPI rank then this directly uses the provided matrix and right hand side (still in a `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` with the options prefix of -mpi)</font>
+<a name="line672">672: </a><font color="#B22222">   and does not need to distribute the matrix and vector to the various MPI ranks; thus it incurs no extra overhead over just using the `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` directly.</font>
+
+<a name="line674">674: </a><font color="#B22222">   The solver options for `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` and `<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>` must be controlled via the options database, calls to set options directly on the user level `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` and `<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>` have no effect</font>
+<a name="line675">675: </a><font color="#B22222">   because they are not the actual solver objects.</font>
+
+<a name="line677">677: </a><font color="#B22222">   When `-log_view` is used with this solver the events within the parallel solve are logging in their own stage. Some of the logging in the other</font>
+<a name="line678">678: </a><font color="#B22222">   stages will be confusing since the event times are only recorded on the 0th MPI rank, thus the percent of time in the events will be misleading.</font>
+
+<a name="line680">680: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/KSP/KSPCreate.html">KSPCreate</a>()`, `<a href="../../../../../docs/manualpages/KSP/KSPSetType.html">KSPSetType</a>()`, `<a href="../../../../../docs/manualpages/KSP/KSPType.html">KSPType</a>`, `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>`, `<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>`, `<a href="../../../../../docs/manualpages/PC/PCMPIServerBegin.html">PCMPIServerBegin</a>()`, `<a href="../../../../../docs/manualpages/PC/PCMPIServerEnd.html">PCMPIServerEnd</a>()`</font>
+<a name="line681">681: </a><font color="#B22222">M*/</font>
+<a name="line682">682: </a><strong><font color="#4169E1"><a name="PCCreate_MPI"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCCreate_MPI(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line683">683: </a>{
+<a name="line684">684: </a>  PC_MPI *km;
+
+<a name="line686">686: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;km);
+<a name="line687">687: </a>  pc-&gt;data = (void *)km;
+
+<a name="line689">689: </a>  km-&gt;mincntperrank = 10000;
+
+<a name="line691">691: </a>  pc-&gt;ops-&gt;setup          = PCSetUp_MPI;
+<a name="line692">692: </a>  pc-&gt;ops-&gt;apply          = PCApply_MPI;
+<a name="line693">693: </a>  pc-&gt;ops-&gt;destroy        = PCDestroy_MPI;
+<a name="line694">694: </a>  pc-&gt;ops-&gt;view           = PCView_MPI;
+<a name="line695">695: </a>  pc-&gt;ops-&gt;setfromoptions = PCSetFromOptions_MPI;
+<a name="line696">696: </a>  <font color="#4169E1">return</font> 0;
+<a name="line697">697: </a>}
+</pre>
+</body>
+
+</html>

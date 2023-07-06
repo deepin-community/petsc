@@ -1,0 +1,202 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/plex/plexfvm.c">Actual source code: plexfvm.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:24+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petsc/private/dmpleximpl.h.html">&lt;petsc/private/dmpleximpl.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../include/petscsf.h.html">&lt;petscsf.h&gt;</A>
+
+<a name="line4">  4: </a>#include <A href="../../../../include/petsc/private/petscfeimpl.h.html">&lt;petsc/private/petscfeimpl.h&gt;</A>
+<a name="line5">  5: </a>#include <A href="../../../../include/petsc/private/petscfvimpl.h.html">&lt;petsc/private/petscfvimpl.h&gt;</A>
+
+<a name="line7">  7: </a><strong><font color="#4169E1"><a name="DMPlexApplyLimiter_Internal"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexApplyLimiter_Internal(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> dmCell, <a href="../../../../docs/manualpages/FV/PetscLimiter.html">PetscLimiter</a> lim, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dim, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dof, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cell, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> field, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> face, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> fStart, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> fEnd, <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *cellPhi, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *x, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *cellgeom, const <a href="../../../../docs/manualpages/FV/PetscFVCellGeom.html">PetscFVCellGeom</a> *cg, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *cx, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *cgrad)</font></strong>
+<a name="line8">  8: </a>{
+<a name="line9">  9: </a>  const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *children;
+<a name="line10"> 10: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        numChildren;
+
+<a name="line12"> 12: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetTreeChildren.html">DMPlexGetTreeChildren</a>(dm, face, &amp;numChildren, &amp;children);
+<a name="line13"> 13: </a>  <font color="#4169E1">if</font> (numChildren) {
+<a name="line14"> 14: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> c;
+
+<a name="line16"> 16: </a>    <font color="#4169E1">for</font> (c = 0; c &lt; numChildren; c++) {
+<a name="line17"> 17: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> childFace = children[c];
+
+<a name="line19"> 19: </a>      <font color="#4169E1">if</font> (childFace &gt;= fStart &amp;&amp; childFace &lt; fEnd) DMPlexApplyLimiter_Internal(dm, dmCell, lim, dim, dof, cell, field, childFace, fStart, fEnd, cellPhi, x, cellgeom, cg, cx, cgrad);
+<a name="line20"> 20: </a>    }
+<a name="line21"> 21: </a>  } <font color="#4169E1">else</font> {
+<a name="line22"> 22: </a>    <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>     *ncx;
+<a name="line23"> 23: </a>    <a href="../../../../docs/manualpages/FV/PetscFVCellGeom.html">PetscFVCellGeom</a> *ncg;
+<a name="line24"> 24: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  *fcells;
+<a name="line25"> 25: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         ncell, d;
+<a name="line26"> 26: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>        v[3];
+
+<a name="line28"> 28: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetSupport.html">DMPlexGetSupport</a>(dm, face, &amp;fcells);
+<a name="line29"> 29: </a>    ncell = cell == fcells[0] ? fcells[1] : fcells[0];
+<a name="line30"> 30: </a>    <font color="#4169E1">if</font> (field &gt;= 0) {
+<a name="line31"> 31: </a>      <a href="../../../../docs/manualpages/DMPlex/DMPlexPointLocalFieldRead.html">DMPlexPointLocalFieldRead</a>(dm, ncell, field, x, &amp;ncx);
+<a name="line32"> 32: </a>    } <font color="#4169E1">else</font> {
+<a name="line33"> 33: </a>      <a href="../../../../docs/manualpages/DMPlex/DMPlexPointLocalRead.html">DMPlexPointLocalRead</a>(dm, ncell, x, &amp;ncx);
+<a name="line34"> 34: </a>    }
+<a name="line35"> 35: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexPointLocalRead.html">DMPlexPointLocalRead</a>(dmCell, ncell, cellgeom, &amp;ncg);
+<a name="line36"> 36: </a>    DMPlex_WaxpyD_Internal(dim, -1, cg-&gt;centroid, ncg-&gt;centroid, v);
+<a name="line37"> 37: </a>    <font color="#4169E1">for</font> (d = 0; d &lt; dof; ++d) {
+<a name="line38"> 38: </a>      <font color="#B22222">/* We use the symmetric slope limited form of Berger, Aftosmis, and Murman 2005 */</font>
+<a name="line39"> 39: </a>      <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> denom = DMPlex_DotD_Internal(dim, &amp;cgrad[d * dim], v);
+<a name="line40"> 40: </a>      <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> phi, flim = 0.5 * <a href="../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(ncx[d] - cx[d]) / denom;
+
+<a name="line42"> 42: </a>      <a href="../../../../docs/manualpages/FV/PetscLimiterLimit.html">PetscLimiterLimit</a>(lim, flim, &amp;phi);
+<a name="line43"> 43: </a>      cellPhi[d] = <a href="../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(cellPhi[d], phi);
+<a name="line44"> 44: </a>    }
+<a name="line45"> 45: </a>  }
+<a name="line46"> 46: </a>  <font color="#4169E1">return</font> 0;
+<a name="line47"> 47: </a>}
+
+<a name="line49"> 49: </a><strong><font color="#4169E1"><a name="DMPlexReconstructGradients_Internal"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexReconstructGradients_Internal(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/FV/PetscFV.html">PetscFV</a> fvm, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> fStart, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> fEnd, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> faceGeometry, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> cellGeometry, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> locX, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> grad)</font></strong>
+<a name="line50"> 50: </a>{
+<a name="line51"> 51: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>                 dmFace, dmCell, dmGrad;
+<a name="line52"> 52: </a>  <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>            ghostLabel;
+<a name="line53"> 53: </a>  <a href="../../../../docs/manualpages/DT/PetscDS.html">PetscDS</a>            prob;
+<a name="line54"> 54: </a>  <a href="../../../../docs/manualpages/FV/PetscLimiter.html">PetscLimiter</a>       lim;
+<a name="line55"> 55: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *facegeom, *cellgeom, *x;
+<a name="line56"> 56: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *gr;
+<a name="line57"> 57: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>         *cellPhi;
+<a name="line58"> 58: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           dim, face, cell, field, dof, cStart, cEnd, nFields;
+
+<a name="line60"> 60: </a>  <a href="../../../../docs/manualpages/DM/DMGetDimension.html">DMGetDimension</a>(dm, &amp;dim);
+<a name="line61"> 61: </a>  <a href="../../../../docs/manualpages/DM/DMGetDS.html">DMGetDS</a>(dm, &amp;prob);
+<a name="line62"> 62: </a>  <a href="../../../../docs/manualpages/DT/PetscDSGetNumFields.html">PetscDSGetNumFields</a>(prob, &amp;nFields);
+<a name="line63"> 63: </a>  <a href="../../../../docs/manualpages/DT/PetscDSGetFieldIndex.html">PetscDSGetFieldIndex</a>(prob, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)fvm, &amp;field);
+<a name="line64"> 64: </a>  <a href="../../../../docs/manualpages/DT/PetscDSGetFieldSize.html">PetscDSGetFieldSize</a>(prob, field, &amp;dof);
+<a name="line65"> 65: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"ghost"</font>, &amp;ghostLabel);
+<a name="line66"> 66: </a>  <a href="../../../../docs/manualpages/FV/PetscFVGetLimiter.html">PetscFVGetLimiter</a>(fvm, &amp;lim);
+<a name="line67"> 67: </a>  <a href="../../../../docs/manualpages/DM/VecGetDM.html">VecGetDM</a>(faceGeometry, &amp;dmFace);
+<a name="line68"> 68: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(faceGeometry, &amp;facegeom);
+<a name="line69"> 69: </a>  <a href="../../../../docs/manualpages/DM/VecGetDM.html">VecGetDM</a>(cellGeometry, &amp;dmCell);
+<a name="line70"> 70: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(cellGeometry, &amp;cellgeom);
+<a name="line71"> 71: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(locX, &amp;x);
+<a name="line72"> 72: </a>  <a href="../../../../docs/manualpages/DM/VecGetDM.html">VecGetDM</a>(grad, &amp;dmGrad);
+<a name="line73"> 73: </a>  <a href="../../../../docs/manualpages/Vec/VecZeroEntries.html">VecZeroEntries</a>(grad);
+<a name="line74"> 74: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(grad, &amp;gr);
+<a name="line75"> 75: </a>  <font color="#B22222">/* Reconstruct gradients */</font>
+<a name="line76"> 76: </a>  <font color="#4169E1">for</font> (face = fStart; face &lt; fEnd; ++face) {
+<a name="line77"> 77: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  *cells;
+<a name="line78"> 78: </a>    <a href="../../../../docs/manualpages/FV/PetscFVFaceGeom.html">PetscFVFaceGeom</a> *fg;
+<a name="line79"> 79: </a>    <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>     *cx[2];
+<a name="line80"> 80: </a>    <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>     *cgrad[2];
+<a name="line81"> 81: </a>    <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>        boundary;
+<a name="line82"> 82: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         ghost, c, pd, d, numChildren, numCells;
+
+<a name="line84"> 84: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(ghostLabel, face, &amp;ghost);
+<a name="line85"> 85: </a>    DMIsBoundaryPoint(dm, face, &amp;boundary);
+<a name="line86"> 86: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetTreeChildren.html">DMPlexGetTreeChildren</a>(dm, face, &amp;numChildren, NULL);
+<a name="line87"> 87: </a>    <font color="#4169E1">if</font> (ghost &gt;= 0 || boundary || numChildren) <font color="#4169E1">continue</font>;
+<a name="line88"> 88: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetSupportSize.html">DMPlexGetSupportSize</a>(dm, face, &amp;numCells);
+<a name="line90"> 90: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetSupport.html">DMPlexGetSupport</a>(dm, face, &amp;cells);
+<a name="line91"> 91: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexPointLocalRead.html">DMPlexPointLocalRead</a>(dmFace, face, facegeom, &amp;fg);
+<a name="line92"> 92: </a>    <font color="#4169E1">for</font> (c = 0; c &lt; 2; ++c) {
+<a name="line93"> 93: </a>      <font color="#4169E1">if</font> (nFields &gt; 1) {
+<a name="line94"> 94: </a>        <a href="../../../../docs/manualpages/DMPlex/DMPlexPointLocalFieldRead.html">DMPlexPointLocalFieldRead</a>(dm, cells[c], field, x, &amp;cx[c]);
+<a name="line95"> 95: </a>      } <font color="#4169E1">else</font> {
+<a name="line96"> 96: </a>        <a href="../../../../docs/manualpages/DMPlex/DMPlexPointLocalRead.html">DMPlexPointLocalRead</a>(dm, cells[c], x, &amp;cx[c]);
+<a name="line97"> 97: </a>      }
+<a name="line98"> 98: </a>      <a href="../../../../docs/manualpages/DMPlex/DMPlexPointGlobalRef.html">DMPlexPointGlobalRef</a>(dmGrad, cells[c], gr, &amp;cgrad[c]);
+<a name="line99"> 99: </a>    }
+<a name="line100">100: </a>    <font color="#4169E1">for</font> (pd = 0; pd &lt; dof; ++pd) {
+<a name="line101">101: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> delta = cx[1][pd] - cx[0][pd];
+
+<a name="line103">103: </a>      <font color="#4169E1">for</font> (d = 0; d &lt; dim; ++d) {
+<a name="line104">104: </a>        <font color="#4169E1">if</font> (cgrad[0]) cgrad[0][pd * dim + d] += fg-&gt;grad[0][d] * delta;
+<a name="line105">105: </a>        <font color="#4169E1">if</font> (cgrad[1]) cgrad[1][pd * dim + d] -= fg-&gt;grad[1][d] * delta;
+<a name="line106">106: </a>      }
+<a name="line107">107: </a>    }
+<a name="line108">108: </a>  }
+<a name="line109">109: </a>  <font color="#B22222">/* Limit interior gradients (using cell-based loop because it generalizes better to vector limiters) */</font>
+<a name="line110">110: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetSimplexOrBoxCells.html">DMPlexGetSimplexOrBoxCells</a>(dm, 0, &amp;cStart, &amp;cEnd);
+<a name="line111">111: </a>  <a href="../../../../docs/manualpages/DM/DMGetWorkArray.html">DMGetWorkArray</a>(dm, dof, <a href="../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;cellPhi);
+<a name="line112">112: </a>  <font color="#4169E1">for</font> (cell = (dmGrad &amp;&amp; lim) ? cStart : cEnd; cell &lt; cEnd; ++cell) {
+<a name="line113">113: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  *faces;
+<a name="line114">114: </a>    <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>     *cx;
+<a name="line115">115: </a>    <a href="../../../../docs/manualpages/FV/PetscFVCellGeom.html">PetscFVCellGeom</a> *cg;
+<a name="line116">116: </a>    <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>     *cgrad;
+<a name="line117">117: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         coneSize, f, pd, d;
+
+<a name="line119">119: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetConeSize.html">DMPlexGetConeSize</a>(dm, cell, &amp;coneSize);
+<a name="line120">120: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetCone.html">DMPlexGetCone</a>(dm, cell, &amp;faces);
+<a name="line121">121: </a>    <font color="#4169E1">if</font> (nFields &gt; 1) {
+<a name="line122">122: </a>      <a href="../../../../docs/manualpages/DMPlex/DMPlexPointLocalFieldRead.html">DMPlexPointLocalFieldRead</a>(dm, cell, field, x, &amp;cx);
+<a name="line123">123: </a>    } <font color="#4169E1">else</font> {
+<a name="line124">124: </a>      <a href="../../../../docs/manualpages/DMPlex/DMPlexPointLocalRead.html">DMPlexPointLocalRead</a>(dm, cell, x, &amp;cx);
+<a name="line125">125: </a>    }
+<a name="line126">126: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexPointLocalRead.html">DMPlexPointLocalRead</a>(dmCell, cell, cellgeom, &amp;cg);
+<a name="line127">127: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexPointGlobalRef.html">DMPlexPointGlobalRef</a>(dmGrad, cell, gr, &amp;cgrad);
+<a name="line128">128: </a>    <font color="#4169E1">if</font> (!cgrad) <font color="#4169E1">continue</font>; <font color="#B22222">/* Unowned overlap cell, we do not compute */</font>
+<a name="line129">129: </a>    <font color="#B22222">/* Limiter will be minimum value over all neighbors */</font>
+<a name="line130">130: </a>    <font color="#4169E1">for</font> (d = 0; d &lt; dof; ++d) cellPhi[d] = PETSC_MAX_REAL;
+<a name="line131">131: </a>    <font color="#4169E1">for</font> (f = 0; f &lt; coneSize; ++f) DMPlexApplyLimiter_Internal(dm, dmCell, lim, dim, dof, cell, nFields &gt; 1 ? field : -1, faces[f], fStart, fEnd, cellPhi, x, cellgeom, cg, cx, cgrad);
+<a name="line132">132: </a>    <font color="#B22222">/* Apply limiter to gradient */</font>
+<a name="line133">133: </a>    <font color="#4169E1">for</font> (pd = 0; pd &lt; dof; ++pd) <font color="#B22222">/* Scalar limiter applied to each component separately */</font>
+<a name="line134">134: </a>      <font color="#4169E1">for</font> (d = 0; d &lt; dim; ++d) cgrad[pd * dim + d] *= cellPhi[pd];
+<a name="line135">135: </a>  }
+<a name="line136">136: </a>  <a href="../../../../docs/manualpages/DM/DMRestoreWorkArray.html">DMRestoreWorkArray</a>(dm, dof, <a href="../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;cellPhi);
+<a name="line137">137: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(faceGeometry, &amp;facegeom);
+<a name="line138">138: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(cellGeometry, &amp;cellgeom);
+<a name="line139">139: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(locX, &amp;x);
+<a name="line140">140: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(grad, &amp;gr);
+<a name="line141">141: </a>  <font color="#4169E1">return</font> 0;
+<a name="line142">142: </a>}
+
+<a name="line144">144: </a><font color="#B22222">/*@</font>
+<a name="line145">145: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMPlex/DMPlexReconstructGradientsFVM.html">DMPlexReconstructGradientsFVM</a> - reconstruct the gradient of a vector using a finite volume method.</font>
+
+<a name="line147">147: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line148">148: </a><font color="#B22222">+ dm - the mesh</font>
+<a name="line149">149: </a><font color="#B22222">- locX - the local representation of the vector</font>
+
+<a name="line151">151: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line152">152: </a><font color="#B22222">. grad - the global representation of the gradient</font>
+
+<a name="line154">154: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line156">156: </a><font color="#B22222">.seealso: [](chapter_unstructured), `<a href="../../../../docs/manualpages/DM/DM.html">DM</a>`, `<a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>`, `<a href="../../../../docs/manualpages/DMPlex/DMPlexGetGradientDM.html">DMPlexGetGradientDM</a>()`</font>
+<a name="line157">157: </a><font color="#B22222">@*/</font>
+<a name="line158">158: </a><strong><font color="#4169E1"><a name="DMPlexReconstructGradientsFVM"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMPlex/DMPlexReconstructGradientsFVM.html">DMPlexReconstructGradientsFVM</a>(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> locX, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> grad)</font></strong>
+<a name="line159">159: </a>{
+<a name="line160">160: </a>  <a href="../../../../docs/manualpages/DT/PetscDS.html">PetscDS</a>          prob;
+<a name="line161">161: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         Nf, f, fStart, fEnd;
+<a name="line162">162: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>        useFVM = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line163">163: </a>  <a href="../../../../docs/manualpages/FV/PetscFV.html">PetscFV</a>          fvm    = NULL;
+<a name="line164">164: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>              faceGeometryFVM, cellGeometryFVM;
+<a name="line165">165: </a>  <a href="../../../../docs/manualpages/FV/PetscFVCellGeom.html">PetscFVCellGeom</a> *cgeomFVM = NULL;
+<a name="line166">166: </a>  <a href="../../../../docs/manualpages/FV/PetscFVFaceGeom.html">PetscFVFaceGeom</a> *fgeomFVM = NULL;
+<a name="line167">167: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>               dmGrad   = NULL;
+
+<a name="line169">169: </a>  <a href="../../../../docs/manualpages/DM/DMGetDS.html">DMGetDS</a>(dm, &amp;prob);
+<a name="line170">170: </a>  <a href="../../../../docs/manualpages/DT/PetscDSGetNumFields.html">PetscDSGetNumFields</a>(prob, &amp;Nf);
+<a name="line171">171: </a>  <font color="#4169E1">for</font> (f = 0; f &lt; Nf; ++f) {
+<a name="line172">172: </a>    <a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>  obj;
+<a name="line173">173: </a>    <a href="../../../../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a> id;
+
+<a name="line175">175: </a>    <a href="../../../../docs/manualpages/DT/PetscDSGetDiscretization.html">PetscDSGetDiscretization</a>(prob, f, &amp;obj);
+<a name="line176">176: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectGetClassId.html">PetscObjectGetClassId</a>(obj, &amp;id);
+<a name="line177">177: </a>    <font color="#4169E1">if</font> (id == PETSCFV_CLASSID) {
+<a name="line178">178: </a>      useFVM = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line179">179: </a>      fvm    = (<a href="../../../../docs/manualpages/FV/PetscFV.html">PetscFV</a>)obj;
+<a name="line180">180: </a>    }
+<a name="line181">181: </a>  }
+<a name="line183">183: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetDataFVM.html">DMPlexGetDataFVM</a>(dm, fvm, &amp;cellGeometryFVM, &amp;faceGeometryFVM, &amp;dmGrad);
+<a name="line185">185: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(faceGeometryFVM, (const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **)&amp;fgeomFVM);
+<a name="line186">186: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(cellGeometryFVM, (const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **)&amp;cgeomFVM);
+<a name="line187">187: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetHeightStratum.html">DMPlexGetHeightStratum</a>(dm, 1, &amp;fStart, &amp;fEnd);
+<a name="line188">188: </a>  DMPlexReconstructGradients_Internal(dm, fvm, fStart, fEnd, faceGeometryFVM, cellGeometryFVM, locX, grad);
+<a name="line189">189: </a>  <font color="#4169E1">return</font> 0;
+<a name="line190">190: </a>}
+</pre>
+</body>
+
+</html>

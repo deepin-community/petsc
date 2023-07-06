@@ -1,0 +1,156 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/plex/transform/impls/refine/1d/plexref1d.c">Actual source code: plexref1d.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:27+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../../../../include/petsc/private/dmplextransformimpl.h.html">&lt;petsc/private/dmplextransformimpl.h&gt;</A>
+
+<a name="line3">  3: </a><strong><font color="#4169E1"><a name="DMPlexTransformSetUp_1D"></a>static <a href="../../../../../../..1d/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformSetUp_1D(<a href="../../../../../../..1d/docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> tr)</font></strong>
+<a name="line4">  4: </a>{
+<a name="line5">  5: </a>  <a href="../../../../../../..1d/docs/manualpages/DM/DM.html">DM</a>       dm;
+<a name="line6">  6: </a>  <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>  active;
+<a name="line7">  7: </a>  <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> pStart, pEnd, p;
+
+<a name="line9">  9: </a>  DMPlexTransformGetDM(tr, &amp;dm);
+<a name="line10"> 10: </a>  DMPlexTransformGetActive(tr, &amp;active);
+<a name="line12"> 12: </a>  <font color="#B22222">/* Calculate refineType for each cell */</font>
+<a name="line13"> 13: </a>  <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabelCreate.html">DMLabelCreate</a>(<a href="../../../../../../..1d/docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"Refine Type"</font>, &amp;tr-&gt;trType);
+<a name="line14"> 14: </a>  <a href="../../../../../../..1d/docs/manualpages/DMPlex/DMPlexGetChart.html">DMPlexGetChart</a>(dm, &amp;pStart, &amp;pEnd);
+<a name="line15"> 15: </a>  <font color="#4169E1">for</font> (p = pStart; p &lt; pEnd; ++p) {
+<a name="line16"> 16: </a>    <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>        trType = tr-&gt;trType;
+<a name="line17"> 17: </a>    <a href="../../../../../../..1d/docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a> ct;
+<a name="line18"> 18: </a>    <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a>       val;
+
+<a name="line20"> 20: </a>    <a href="../../../../../../..1d/docs/manualpages/DMPlex/DMPlexGetCellType.html">DMPlexGetCellType</a>(dm, p, &amp;ct);
+<a name="line21"> 21: </a>    <font color="#4169E1">switch</font> (ct) {
+<a name="line22"> 22: </a>    <font color="#4169E1">case</font> <a href="../../../../../../..1d/docs/manualpages/DM/DMPolytopeType.html">DM_POLYTOPE_POINT</a>:
+<a name="line23"> 23: </a>      <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(trType, p, 0);
+<a name="line24"> 24: </a>      <font color="#4169E1">break</font>;
+<a name="line25"> 25: </a>    <font color="#4169E1">case</font> <a href="../../../../../../..1d/docs/manualpages/DM/DMPolytopeType.html">DM_POLYTOPE_SEGMENT</a>:
+<a name="line26"> 26: </a>    <font color="#4169E1">case</font> <a href="../../../../../../..1d/docs/manualpages/DM/DMPolytopeType.html">DM_POLYTOPE_POINT_PRISM_TENSOR</a>:
+<a name="line27"> 27: </a>      <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(active, p, &amp;val);
+<a name="line28"> 28: </a>      <font color="#4169E1">if</font> (val == 1) <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(trType, p, val);
+<a name="line29"> 29: </a>      <font color="#4169E1">else</font> <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(trType, p, 2);
+<a name="line30"> 30: </a>      <font color="#4169E1">break</font>;
+<a name="line31"> 31: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line32"> 32: </a>      <a href="../../../../../../..1d/docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../..1d/docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Cannot handle points of type %s"</font>, DMPolytopeTypes[ct]);
+<a name="line33"> 33: </a>    }
+<a name="line34"> 34: </a>  }
+<a name="line35"> 35: </a>  <font color="#4169E1">return</font> 0;
+<a name="line36"> 36: </a>}
+
+<a name="line38"> 38: </a><strong><font color="#4169E1"><a name="DMPlexTransformGetSubcellOrientation_1D"></a>static <a href="../../../../../../..1d/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformGetSubcellOrientation_1D(<a href="../../../../../../..1d/docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> tr, <a href="../../../../../../..1d/docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a> sct, <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> sp, <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> so, <a href="../../../../../../..1d/docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a> tct, <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> r, <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> o, <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> *rnew, <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> *onew)</font></strong>
+<a name="line39"> 39: </a>{
+<a name="line40"> 40: </a>  <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> rt;
+
+<a name="line43"> 43: </a>  <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(tr-&gt;trType, sp, &amp;rt);
+<a name="line44"> 44: </a>  *rnew = r;
+<a name="line45"> 45: </a>  *onew = o;
+<a name="line46"> 46: </a>  <font color="#4169E1">switch</font> (rt) {
+<a name="line47"> 47: </a>  <font color="#4169E1">case</font> 1:
+<a name="line48"> 48: </a>    DMPlexTransformGetSubcellOrientation_Regular(tr, sct, sp, so, tct, r, o, rnew, onew);
+<a name="line49"> 49: </a>    <font color="#4169E1">break</font>;
+<a name="line50"> 50: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line51"> 51: </a>    DMPlexTransformGetSubcellOrientationIdentity(tr, sct, sp, so, tct, r, o, rnew, onew);
+<a name="line52"> 52: </a>  }
+<a name="line53"> 53: </a>  <font color="#4169E1">return</font> 0;
+<a name="line54"> 54: </a>}
+
+<a name="line56"> 56: </a><strong><font color="#4169E1"><a name="DMPlexTransformCellTransform_1D"></a>static <a href="../../../../../../..1d/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformCellTransform_1D(<a href="../../../../../../..1d/docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> tr, <a href="../../../../../../..1d/docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a> source, <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> p, <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> *rt, <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> *Nt, <a href="../../../../../../..1d/docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a> *target[], <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> *size[], <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> *cone[], <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> *ornt[])</font></strong>
+<a name="line57"> 57: </a>{
+<a name="line58"> 58: </a>  <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>  trType = tr-&gt;trType;
+<a name="line59"> 59: </a>  <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a> val;
+
+<a name="line63"> 63: </a>  <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(trType, p, &amp;val);
+<a name="line64"> 64: </a>  <font color="#4169E1">if</font> (rt) *rt = val;
+<a name="line65"> 65: </a>  <font color="#4169E1">switch</font> (source) {
+<a name="line66"> 66: </a>  <font color="#4169E1">case</font> <a href="../../../../../../..1d/docs/manualpages/DM/DMPolytopeType.html">DM_POLYTOPE_POINT</a>:
+<a name="line67"> 67: </a>    DMPlexTransformCellRefine_Regular(tr, source, p, NULL, Nt, target, size, cone, ornt);
+<a name="line68"> 68: </a>    <font color="#4169E1">break</font>;
+<a name="line69"> 69: </a>  <font color="#4169E1">case</font> <a href="../../../../../../..1d/docs/manualpages/DM/DMPolytopeType.html">DM_POLYTOPE_POINT_PRISM_TENSOR</a>:
+<a name="line70"> 70: </a>  <font color="#4169E1">case</font> <a href="../../../../../../..1d/docs/manualpages/DM/DMPolytopeType.html">DM_POLYTOPE_SEGMENT</a>:
+<a name="line71"> 71: </a>    <font color="#4169E1">if</font> (val == 1) DMPlexTransformCellRefine_Regular(tr, source, p, NULL, Nt, target, size, cone, ornt);
+<a name="line72"> 72: </a>    <font color="#4169E1">else</font> DMPlexTransformCellTransformIdentity(tr, source, p, NULL, Nt, target, size, cone, ornt);
+<a name="line73"> 73: </a>    <font color="#4169E1">break</font>;
+<a name="line74"> 74: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line75"> 75: </a>    <a href="../../../../../../..1d/docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../..1d/docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"No refinement strategy for %s"</font>, DMPolytopeTypes[source]);
+<a name="line76"> 76: </a>  }
+<a name="line77"> 77: </a>  <font color="#4169E1">return</font> 0;
+<a name="line78"> 78: </a>}
+
+<a name="line80"> 80: </a><strong><font color="#4169E1"><a name="DMPlexTransformSetFromOptions_1D"></a>static <a href="../../../../../../..1d/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformSetFromOptions_1D(<a href="../../../../../../..1d/docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> tr, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line81"> 81: </a>{
+<a name="line82"> 82: </a>  <a href="../../../../../../..1d/docs/manualpages/Sys/PetscInt.html">PetscInt</a>  cells[256], n = 256, i;
+<a name="line83"> 83: </a>  <a href="../../../../../../..1d/docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg;
+
+<a name="line85"> 85: </a>  <a href="../../../../../../..1d/docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"DMPlex Options"</font>);
+<a name="line86"> 86: </a>  <a href="../../../../../../..1d/docs/manualpages/Sys/PetscOptionsIntArray.html">PetscOptionsIntArray</a>(<font color="#666666">"-dm_plex_transform_1d_ref_cell"</font>, <font color="#666666">"Mark cells for refinement"</font>, <font color="#666666">""</font>, cells, &amp;n, &amp;flg);
+<a name="line87"> 87: </a>  <font color="#4169E1">if</font> (flg) {
+<a name="line88"> 88: </a>    <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> active;
+
+<a name="line90"> 90: </a>    <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabelCreate.html">DMLabelCreate</a>(<a href="../../../../../../..1d/docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"Adaptation Label"</font>, &amp;active);
+<a name="line91"> 91: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; n; ++i) <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(active, cells[i], <a href="../../../../../../..1d/docs/manualpages/DM/DMAdaptFlag.html">DM_ADAPT_REFINE</a>);
+<a name="line92"> 92: </a>    DMPlexTransformSetActive(tr, active);
+<a name="line93"> 93: </a>    <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabelDestroy.html">DMLabelDestroy</a>(&amp;active);
+<a name="line94"> 94: </a>  }
+<a name="line95"> 95: </a>  PetscOptionsHeadEnd();
+<a name="line96"> 96: </a>  <font color="#4169E1">return</font> 0;
+<a name="line97"> 97: </a>}
+
+<a name="line99"> 99: </a><strong><font color="#4169E1"><a name="DMPlexTransformView_1D"></a>static <a href="../../../../../../..1d/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformView_1D(<a href="../../../../../../..1d/docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> tr, <a href="../../../../../../..1d/docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line100">100: </a>{
+<a name="line101">101: </a>  <a href="../../../../../../..1d/docs/manualpages/Sys/PetscBool.html">PetscBool</a> isascii;
+
+<a name="line105">105: </a>  <a href="../../../../../../..1d/docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../../..1d/docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../../..1d/docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;isascii);
+<a name="line106">106: </a>  <font color="#4169E1">if</font> (isascii) {
+<a name="line107">107: </a>    <a href="../../../../../../..1d/docs/manualpages/Viewer/PetscViewerFormat.html">PetscViewerFormat</a> format;
+<a name="line108">108: </a>    const char       *name;
+
+<a name="line110">110: </a>    <a href="../../../../../../..1d/docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>((<a href="../../../../../../..1d/docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tr, &amp;name);
+<a name="line111">111: </a>    <a href="../../../../../../..1d/docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"1D refinement %s\n"</font>, name ? name : <font color="#666666">""</font>);
+<a name="line112">112: </a>    <a href="../../../../../../..1d/docs/manualpages/Viewer/PetscViewerGetFormat.html">PetscViewerGetFormat</a>(viewer, &amp;format);
+<a name="line113">113: </a>    <font color="#4169E1">if</font> (format == <a href="../../../../../../..1d/docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_INFO_DETAIL</a>) <a href="../../../../../../..1d/docs/manualpages/DMLabel/DMLabelView.html">DMLabelView</a>(tr-&gt;trType, viewer);
+<a name="line114">114: </a>  } <font color="#4169E1">else</font> {
+<a name="line115">115: </a>    <a href="../../../../../../..1d/docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../..1d/docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../..1d/docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tr), PETSC_ERR_SUP, <font color="#666666">"Viewer type %s not yet supported for <a href="../../../../../../..1d/docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> writing"</font>, ((<a href="../../../../../../..1d/docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer)-&gt;type_name);
+<a name="line116">116: </a>  }
+<a name="line117">117: </a>  <font color="#4169E1">return</font> 0;
+<a name="line118">118: </a>}
+
+<a name="line120">120: </a><strong><font color="#4169E1"><a name="DMPlexTransformDestroy_1D"></a>static <a href="../../../../../../..1d/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformDestroy_1D(<a href="../../../../../../..1d/docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> tr)</font></strong>
+<a name="line121">121: </a>{
+<a name="line122">122: </a>  <a href="../../../../../../..1d/docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tr-&gt;data);
+<a name="line123">123: </a>  <font color="#4169E1">return</font> 0;
+<a name="line124">124: </a>}
+
+<a name="line126">126: </a><strong><font color="#4169E1"><a name="DMPlexTransformInitialize_1D"></a>static <a href="../../../../../../..1d/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformInitialize_1D(<a href="../../../../../../..1d/docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> tr)</font></strong>
+<a name="line127">127: </a>{
+<a name="line128">128: </a>  tr-&gt;ops-&gt;view                  = DMPlexTransformView_1D;
+<a name="line129">129: </a>  tr-&gt;ops-&gt;setfromoptions        = DMPlexTransformSetFromOptions_1D;
+<a name="line130">130: </a>  tr-&gt;ops-&gt;setup                 = DMPlexTransformSetUp_1D;
+<a name="line131">131: </a>  tr-&gt;ops-&gt;destroy               = DMPlexTransformDestroy_1D;
+<a name="line132">132: </a>  tr-&gt;ops-&gt;celltransform         = DMPlexTransformCellTransform_1D;
+<a name="line133">133: </a>  tr-&gt;ops-&gt;getsubcellorientation = DMPlexTransformGetSubcellOrientation_1D;
+<a name="line134">134: </a>  tr-&gt;ops-&gt;mapcoordinates        = DMPlexTransformMapCoordinatesBarycenter_Internal;
+<a name="line135">135: </a>  <font color="#4169E1">return</font> 0;
+<a name="line136">136: </a>}
+
+<a name="line138">138: </a><strong><font color="#4169E1"><a name="DMPlexTransformCreate_1D"></a>PETSC_EXTERN <a href="../../../../../../..1d/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformCreate_1D(<a href="../../../../../../..1d/docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> tr)</font></strong>
+<a name="line139">139: </a>{
+<a name="line140">140: </a>  DMPlexRefine_1D *f;
+
+<a name="line143">143: </a>  <a href="../../../../../../..1d/docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;f);
+<a name="line144">144: </a>  tr-&gt;data = f;
+
+<a name="line146">146: </a>  DMPlexTransformInitialize_1D(tr);
+<a name="line147">147: </a>  <font color="#4169E1">return</font> 0;
+<a name="line148">148: </a>}
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,36 @@
+# MatScatterSetVecScatter
+sets the scatter that the matrix is to apply as its linear operator in a `MATSCATTER` 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatScatterSetVecScatter(Mat mat, VecScatter scatter)
+```
+Collective
+
+
+## Input Parameters
+
+- ***mat -*** the `MATSCATTER` matrix
+- ***scatter -*** the scatter context create with `VecScatterCreate()`
+
+
+
+
+
+## See Also
+ `MATSCATTER`, `MatCreateScatter()`, `MATSCATTER`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/scatter/mscatter.c.html#MatScatterSetVecScatter">src/mat/impls/scatter/mscatter.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/scatter/mscatter.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

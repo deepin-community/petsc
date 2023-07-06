@@ -1,0 +1,22 @@
+# MATMPIAIJCUSPARSE
+A matrix type to be used for sparse matrices; it is as same as `MATAIJCUSPARSE`. 
+
+.seealso: `MATAIJCUSPARSE`, `MATSEQAIJCUSPARSE`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/aij/mpi/mpicusparse/mpiaijcusparse.cu.html#MATMPIAIJCUSPARSE">src/mat/impls/aij/mpi/mpicusparse/mpiaijcusparse.cu</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex5cu.cu.html">src/mat/tutorials/ex5cu.cu.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/aij/mpi/mpicusparse/mpiaijcusparse.cu)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

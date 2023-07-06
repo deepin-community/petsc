@@ -1,0 +1,54 @@
+# DMSetBasicAdjacency
+Set the flags for determining variable influence, using either the default or field 0 if it is defined 
+## Synopsis
+```
+#include "petscdm.h"          
+#include "petscdmlabel.h"     
+#include "petscds.h"     
+PetscErrorCode DMSetBasicAdjacency(DM dm, PetscBool useCone, PetscBool useClosure)
+```
+Not collective
+
+
+## Input Parameters
+
+- ***dm         -*** The DM object
+- ***useCone    -*** Flag for variable influence starting with the cone operation
+- ***useClosure -*** Flag for variable influence using transitive closure
+
+
+
+## Notes
+```none
+FEM:   Two points p and q are adjacent if q \in closure(star(p)),   useCone = PETSC_FALSE, useClosure = PETSC_TRUE
+```
+```none
+FVM:   Two points p and q are adjacent if q \in support(p+cone(p)), useCone = PETSC_TRUE,  useClosure = PETSC_FALSE
+```
+```none
+FVM++: Two points p and q are adjacent if q \in star(closure(p)),   useCone = PETSC_TRUE,  useClosure = PETSC_TRUE
+```
+
+
+
+
+## See Also
+ `DMGetBasicAdjacency()`, `DMGetField()`, `DMSetField()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/interface/dm.c.html#DMSetBasicAdjacency">src/dm/interface/dm.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex11_sa.c.html">src/ts/tutorials/ex11_sa.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/interface/dm.c)
+
+
+[Index of all DM routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

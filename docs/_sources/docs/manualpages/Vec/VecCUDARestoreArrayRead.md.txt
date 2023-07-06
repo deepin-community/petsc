@@ -1,0 +1,46 @@
+# VecCUDARestoreArrayRead
+Restore a CUDA device pointer previously acquired with `VecCUDAGetArrayRead()`. 
+## Synopsis
+```
+#include "petscvec.h"   
+PETSC_EXTERN PetscErrorCode VecCUDARestoreArrayRead(Vec v, const PetscScalar **a)
+```
+Not Collective; No Fortran Support
+
+
+## Input Parameters
+
+- ***v -*** the vector
+- ***a -*** the CUDA device pointer.  This pointer is invalid after `VecCUDARestoreArrayRead()` returns.
+
+
+
+
+
+## Note
+If the data on the host side was previously up to date it will remain
+so, i.e. data on both the device and the host is up to date.
+Accessing data on the host side e.g. with `VecGetArray()` does not
+incur a device to host data transfer.
+
+
+## See Also
+ [](chapter_vectors), `Vec`, `VecCUDAGetArrayRead()`, `VecCUDAGetArrayWrite()`, `VecCUDAGetArray()`, `VecGetArray()`, `VecRestoreArray()`, `VecGetArrayRead()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/interface/rvector.c.html#VecCUDARestoreArrayRead">src/vec/vec/interface/rvector.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex47cu.cu.html">src/snes/tutorials/ex47cu.cu.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/vec/interface/rvector.c)
+
+
+[Index of all Vec routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

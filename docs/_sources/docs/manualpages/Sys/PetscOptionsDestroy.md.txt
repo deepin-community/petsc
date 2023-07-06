@@ -1,0 +1,39 @@
+# PetscOptionsDestroy
+Destroys an option database. 
+## Synopsis
+```
+#include "petscsys.h"   
+PetscErrorCode PetscOptionsDestroy(PetscOptions *options)
+```
+Logically collective on whatever communicator was associated with the call to `PetscOptionsCreate()`
+
+
+## Input Parameter
+
+- ***options -*** the `PetscOptions` object
+
+
+
+
+
+## See Also
+ `PetscOptionsInsert()`, `PetscOptionsPush()`, `PetscOptionsPop()`, `PetscOptionsInsert()`, `PetscOptionsSetValue()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/objects/options.c.html#PetscOptionsDestroy">src/sys/objects/options.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex19.c.html">src/sys/tutorials/ex19.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex20.c.html">src/sys/tutorials/ex20.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/objects/options.c)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

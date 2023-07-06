@@ -1,0 +1,50 @@
+# DMSwarmCreateMassMatrixSquare
+Creates the block-diagonal of the square, M^T_p M_p, of the particle mass matrix M_p 
+## Synopsis
+```
+#include "petscdmswarm.h"   
+PetscErrorCode DMSwarmCreateMassMatrixSquare(DM dmCoarse, DM dmFine, Mat *mass)
+```
+Collective on dmCoarse
+
+
+## Input parameters
+
+- ***dmCoarse -*** a DMSwarm
+- ***dmFine   -*** a DMPlex
+
+
+
+## Output parameter
+
+- ***mass     -*** the square of the particle mass matrix
+
+
+
+
+
+## Notes
+We only compute the block diagonal since this provides a good preconditioner and is completely local. It would be possible in the
+future to compute the full normal equations.
+
+
+## See Also
+ `DMCreateMassMatrix()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/swarm/swarm.c.html#DMSwarmCreateMassMatrixSquare">src/dm/impls/swarm/swarm.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/swarm/tutorials/ex1.c.html">src/dm/impls/swarm/tutorials/ex1.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/swarm/swarm.c)
+
+
+[Index of all DMSwarm routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

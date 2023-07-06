@@ -1,0 +1,170 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/classes/viewer/impls/cgns/cgnsv.c">Actual source code: cgnsv.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:45+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../../include/petsc/private/viewercgnsimpl.h.html">&lt;petsc/private/viewercgnsimpl.h&gt;</A>
+<a name="line2">  2: </a><font color="#A020F0">#if defined(PETSC_HDF5_HAVE_PARALLEL)</font>
+<a name="line3">  3: </a><font color="#A020F0">  #include &lt;pcgnslib.h&gt;</font>
+<a name="line4">  4: </a><font color="#A020F0">#else</font>
+<a name="line5">  5: </a><font color="#A020F0">  #include &lt;cgnslib.h&gt;</font>
+<a name="line6">  6: </a><font color="#A020F0">#endif</font>
+
+<a name="line8">  8: </a><strong><font color="#4169E1"><a name="PetscViewerSetFromOptions_CGNS"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerSetFromOptions_CGNS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> v, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line9">  9: </a>{
+<a name="line10"> 10: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"CGNS Viewer Options"</font>);
+<a name="line11"> 11: </a>  PetscOptionsHeadEnd();
+<a name="line12"> 12: </a>  <font color="#4169E1">return</font> 0;
+<a name="line13"> 13: </a>}
+
+<a name="line15"> 15: </a><strong><font color="#4169E1"><a name="PetscViewerView_CGNS"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerView_CGNS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> v, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line16"> 16: </a>{
+<a name="line17"> 17: </a>  PetscViewer_CGNS *cgv = (PetscViewer_CGNS *)v-&gt;data;
+
+<a name="line19"> 19: </a>  <font color="#4169E1">if</font> (cgv-&gt;filename) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Filename: %s\n"</font>, cgv-&gt;filename);
+<a name="line20"> 20: </a>  <font color="#4169E1">return</font> 0;
+<a name="line21"> 21: </a>}
+
+<a name="line23"> 23: </a><strong><font color="#4169E1"><a name="PetscViewerFileClose_CGNS"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerFileClose_CGNS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line24"> 24: </a>{
+<a name="line25"> 25: </a>  PetscViewer_CGNS *cgv = (PetscViewer_CGNS *)viewer-&gt;data;
+
+<a name="line27"> 27: </a>  <font color="#4169E1">if</font> (cgv-&gt;output_times) {
+<a name="line28"> 28: </a>    size_t     size, width = 32;
+<a name="line29"> 29: </a>    char      *solnames;
+<a name="line30"> 30: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *times;
+<a name="line31"> 31: </a>    cgsize_t   num_times;
+<a name="line32"> 32: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscSegBufferGetSize.html">PetscSegBufferGetSize</a>(cgv-&gt;output_times, &amp;size);
+<a name="line33"> 33: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscSegBufferExtractInPlace.html">PetscSegBufferExtractInPlace</a>(cgv-&gt;output_times, &amp;times);
+<a name="line34"> 34: </a>    num_times = size;
+<a name="line35"> 35: </a>    cg_biter_write(cgv-&gt;file_num, cgv-&gt;base, <font color="#666666">"TimeIterValues"</font>, num_times);
+<a name="line36"> 36: </a>    cg_goto(cgv-&gt;file_num, cgv-&gt;base, <font color="#666666">"BaseIterativeData_t"</font>, 1, NULL);
+<a name="line37"> 37: </a>    cg_array_write(<font color="#666666">"TimeValues"</font>, CGNS_ENUMV(RealDouble), 1, &amp;num_times, times);
+<a name="line38"> 38: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscSegBufferDestroy.html">PetscSegBufferDestroy</a>(&amp;cgv-&gt;output_times);
+<a name="line39"> 39: </a>    cg_ziter_write(cgv-&gt;file_num, cgv-&gt;base, cgv-&gt;zone, <font color="#666666">"ZoneIterativeData"</font>);
+<a name="line40"> 40: </a>    cg_goto(cgv-&gt;file_num, cgv-&gt;base, <font color="#666666">"Zone_t"</font>, cgv-&gt;zone, <font color="#666666">"ZoneIterativeData_t"</font>, 1, NULL);
+<a name="line41"> 41: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMalloc.html">PetscMalloc</a>(size * width + 1, &amp;solnames);
+<a name="line42"> 42: </a>    <font color="#4169E1">for</font> (size_t i = 0; i &lt; size; i++) <a href="../../../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(&amp;solnames[i * width], width + 1, <font color="#666666">"FlowSolution%-20zu"</font>, i);
+<a name="line43"> 43: </a>    cgsize_t shape[2] = {(cgsize_t)width, (cgsize_t)size};
+<a name="line44"> 44: </a>    cg_array_write(<font color="#666666">"FlowSolutionPointers"</font>, CGNS_ENUMV(Character), 2, shape, solnames);
+<a name="line45"> 45: </a>    // The VTK reader looks <font color="#4169E1">for</font> names like FlowSolution*Pointers.
+<a name="line46"> 46: </a>    <font color="#4169E1">for</font> (size_t i = 0; i &lt; size; i++) <a href="../../../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(&amp;solnames[i * width], width + 1, <font color="#666666">"%-32s"</font>, <font color="#666666">"CellInfo"</font>);
+<a name="line47"> 47: </a>    cg_array_write(<font color="#666666">"FlowSolutionCellInfoPointers"</font>, CGNS_ENUMV(Character), 2, shape, solnames);
+<a name="line48"> 48: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(solnames);
+
+<a name="line50"> 50: </a>    cg_simulation_type_write(cgv-&gt;file_num, cgv-&gt;base, CGNS_ENUMV(TimeAccurate));
+<a name="line51"> 51: </a>  }
+<a name="line52"> 52: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(cgv-&gt;filename);
+<a name="line53"> 53: </a><font color="#A020F0">#if defined(PETSC_HDF5_HAVE_PARALLEL)</font>
+<a name="line54"> 54: </a>  cgp_close(cgv-&gt;file_num);
+<a name="line55"> 55: </a><font color="#A020F0">#else</font>
+<a name="line56"> 56: </a>  <font color="#4169E1">if</font> (cgv-&gt;file_num) cg_close(cgv-&gt;file_num);
+<a name="line57"> 57: </a><font color="#A020F0">#endif</font>
+<a name="line58"> 58: </a>  cgv-&gt;file_num = 0;
+<a name="line59"> 59: </a>  <font color="#4169E1">return</font> 0;
+<a name="line60"> 60: </a>}
+
+<a name="line62"> 62: </a><strong><font color="#4169E1"><a name="PetscViewerDestroy_CGNS"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerDestroy_CGNS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line63"> 63: </a>{
+<a name="line64"> 64: </a>  PetscViewer_CGNS *cgv = (PetscViewer_CGNS *)viewer-&gt;data;
+
+<a name="line66"> 66: </a>  PetscViewerFileClose_CGNS(viewer);
+<a name="line67"> 67: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(cgv-&gt;node_l2g);
+<a name="line68"> 68: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(cgv-&gt;nodal_field);
+<a name="line69"> 69: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(cgv);
+<a name="line70"> 70: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerFileSetName_C"</font>, NULL);
+<a name="line71"> 71: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerFileGetName_C"</font>, NULL);
+<a name="line72"> 72: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerFileSetMode_C"</font>, NULL);
+<a name="line73"> 73: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerFileGetMode_C"</font>, NULL);
+<a name="line74"> 74: </a>  <font color="#4169E1">return</font> 0;
+<a name="line75"> 75: </a>}
+
+<a name="line77"> 77: </a><strong><font color="#4169E1"><a name="PetscViewerFileSetMode_CGNS"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerFileSetMode_CGNS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">PetscFileMode</a> type)</font></strong>
+<a name="line78"> 78: </a>{
+<a name="line79"> 79: </a>  PetscViewer_CGNS *cgv = (PetscViewer_CGNS *)viewer-&gt;data;
+
+<a name="line81"> 81: </a>  cgv-&gt;btype = type;
+<a name="line82"> 82: </a>  <font color="#4169E1">return</font> 0;
+<a name="line83"> 83: </a>}
+
+<a name="line85"> 85: </a><strong><font color="#4169E1"><a name="PetscViewerFileGetMode_CGNS"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerFileGetMode_CGNS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">PetscFileMode</a> *type)</font></strong>
+<a name="line86"> 86: </a>{
+<a name="line87"> 87: </a>  PetscViewer_CGNS *cgv = (PetscViewer_CGNS *)viewer-&gt;data;
+
+<a name="line89"> 89: </a>  *type = cgv-&gt;btype;
+<a name="line90"> 90: </a>  <font color="#4169E1">return</font> 0;
+<a name="line91"> 91: </a>}
+
+<a name="line93"> 93: </a><strong><font color="#4169E1"><a name="PetscViewerFileSetName_CGNS"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerFileSetName_CGNS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, const char *filename)</font></strong>
+<a name="line94"> 94: </a>{
+<a name="line95"> 95: </a>  PetscViewer_CGNS *cgv = (PetscViewer_CGNS *)viewer-&gt;data;
+
+<a name="line97"> 97: </a>  <font color="#4169E1">if</font> (cgv-&gt;file_num) cg_close(cgv-&gt;file_num);
+<a name="line98"> 98: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(cgv-&gt;filename);
+<a name="line99"> 99: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(filename, &amp;cgv-&gt;filename);
+
+<a name="line101">101: </a>  <font color="#4169E1">switch</font> (cgv-&gt;btype) {
+<a name="line102">102: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_READ</a>:
+<a name="line103">103: </a>    <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer), PETSC_ERR_SUP, <font color="#666666">"<a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_READ</a> not yet implemented"</font>);
+<a name="line104">104: </a>    <font color="#4169E1">break</font>;
+<a name="line105">105: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_WRITE</a>:
+<a name="line106">106: </a><font color="#A020F0">#if defined(PETSC_HDF5_HAVE_PARALLEL)</font>
+<a name="line107">107: </a>    cgp_mpi_comm(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer));
+<a name="line108">108: </a>    cgp_open(filename, CG_MODE_WRITE, &amp;cgv-&gt;file_num);
+<a name="line109">109: </a><font color="#A020F0">#else</font>
+<a name="line110">110: </a>    cg_open(filename, CG_MODE_WRITE, &amp;cgv-&gt;file_num);
+<a name="line111">111: </a><font color="#A020F0">#endif</font>
+<a name="line112">112: </a>    <font color="#4169E1">break</font>;
+<a name="line113">113: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_UNDEFINED</a>:
+<a name="line114">114: </a>    <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer), PETSC_ERR_ORDER, <font color="#666666">"Must call <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetMode.html">PetscViewerFileSetMode</a>() before <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetName.html">PetscViewerFileSetName</a>()"</font>);
+<a name="line115">115: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line116">116: </a>    <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer), PETSC_ERR_SUP, <font color="#666666">"Unsupported file mode %s"</font>, PetscFileModes[cgv-&gt;btype]);
+<a name="line117">117: </a>  }
+<a name="line118">118: </a>  <font color="#4169E1">return</font> 0;
+<a name="line119">119: </a>}
+
+<a name="line121">121: </a><strong><font color="#4169E1"><a name="PetscViewerFileGetName_CGNS"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerFileGetName_CGNS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, const char **filename)</font></strong>
+<a name="line122">122: </a>{
+<a name="line123">123: </a>  PetscViewer_CGNS *cgv = (PetscViewer_CGNS *)viewer-&gt;data;
+
+<a name="line125">125: </a>  *filename = cgv-&gt;filename;
+<a name="line126">126: </a>  <font color="#4169E1">return</font> 0;
+<a name="line127">127: </a>}
+
+<a name="line129">129: </a><font color="#B22222">/*MC</font>
+<a name="line130">130: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERCGNS.html">PETSCVIEWERCGNS</a> - A viewer for CGNS files</font>
+
+<a name="line132">132: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line134">134: </a><font color="#B22222">.seealso: [](sec_viewers), `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecView.html">VecView</a>()`, `<a href="../../../../../../docs/manualpages/DM/DMView.html">DMView</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetName.html">PetscViewerFileSetName</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetMode.html">PetscViewerFileSetMode</a>()`</font>
+<a name="line135">135: </a><font color="#B22222">M*/</font>
+
+<a name="line137">137: </a><strong><font color="#4169E1"><a name="PetscViewerCreate_CGNS"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerCreate_CGNS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> v)</font></strong>
+<a name="line138">138: </a>{
+<a name="line139">139: </a>  PetscViewer_CGNS *cgv;
+
+<a name="line141">141: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;cgv);
+
+<a name="line143">143: </a>  v-&gt;data                = cgv;
+<a name="line144">144: </a>  v-&gt;ops-&gt;destroy        = PetscViewerDestroy_CGNS;
+<a name="line145">145: </a>  v-&gt;ops-&gt;setfromoptions = PetscViewerSetFromOptions_CGNS;
+<a name="line146">146: </a>  v-&gt;ops-&gt;view           = PetscViewerView_CGNS;
+<a name="line147">147: </a>  cgv-&gt;btype             = <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_UNDEFINED</a>;
+<a name="line148">148: </a>  cgv-&gt;filename          = NULL;
+
+<a name="line150">150: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, <font color="#666666">"PetscViewerFileSetName_C"</font>, PetscViewerFileSetName_CGNS);
+<a name="line151">151: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, <font color="#666666">"PetscViewerFileGetName_C"</font>, PetscViewerFileGetName_CGNS);
+<a name="line152">152: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, <font color="#666666">"PetscViewerFileSetMode_C"</font>, PetscViewerFileSetMode_CGNS);
+<a name="line153">153: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, <font color="#666666">"PetscViewerFileGetMode_C"</font>, PetscViewerFileGetMode_CGNS);
+<a name="line154">154: </a>  <font color="#4169E1">return</font> 0;
+<a name="line155">155: </a>}
+</pre>
+</body>
+
+</html>

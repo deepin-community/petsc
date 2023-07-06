@@ -1,0 +1,32 @@
+# PetscDTBinomialInt
+Compute the binomial coefficient "n choose k" 
+## Input Parameters
+
+- ***n -*** a non-negative integer
+- ***k -*** an integer between 0 and n, inclusive
+
+
+
+## Output Parameter
+
+- ***binomial -*** the binomial coefficient n choose k
+
+
+Note: this is limited by integers that can be represented by `PetscInt`
+
+
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscdt.h.html#PetscDTBinomialInt">include/petscdt.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscdt.h)
+
+
+[Index of all DT routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

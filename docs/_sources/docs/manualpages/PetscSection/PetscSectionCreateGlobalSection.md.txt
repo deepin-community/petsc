@@ -1,0 +1,48 @@
+# PetscSectionCreateGlobalSection
+Create a section describing the global field layout using the local section and a `PetscSF` describing the section point overlap. 
+## Synopsis
+```
+#include "petscsection.h"   
+PetscErrorCode PetscSectionCreateGlobalSection(PetscSection s, PetscSF sf, PetscBool includeConstraints, PetscBool localOffsets, PetscSection *gsection)
+```
+
+## Input Parameters
+
+- ***s -*** The `PetscSection` for the local field layout
+- ***sf -*** The `PetscSF` describing parallel layout of the section points (leaves are unowned local points)
+- ***includeConstraints -*** By default this is `PETSC_FALSE`, meaning that the global field vector will not possess constrained dofs
+- ***localOffsets -*** If `PETSC_TRUE`, use local rather than global offsets for the points
+
+
+
+## Output Parameter
+
+- ***gsection -*** The `PetscSection` for the global field layout
+
+
+
+
+
+## Notes
+If we have a set of local sections defining the layout of a set of local vectors, and also a `PetscSF` to determine which section points are shared and the ownership, we can calculate a global section defining the parallel data layout, and the associated global vector.
+
+This gives negative sizes and offsets to points not owned by this process
+
+
+## See Also
+ [PetscSection](sec_petscsection), `PetscSection`, `PetscSectionCreate()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/section/interface/section.c.html#PetscSectionCreateGlobalSection">src/vec/is/section/interface/section.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/is/section/interface/section.c)
+
+
+[Index of all PetscSection routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,60 @@
+# PetscStrToArray
+Separates a string by a character (for example ' ' or '\n') and creates an array of strings 
+## Synopsis
+```
+#include "petscsys.h"   
+PetscErrorCode PetscStrToArray(const char s[], char sp, int *argc, char ***args)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***s -*** pointer to string
+- ***sp -*** separator character
+
+
+
+## Output Parameters
+
+- ***argc -*** the number of entries in the array
+- ***args -*** an array of the entries with a null at the end
+
+
+
+
+
+## Note
+this may be called before PetscInitialize() or after PetscFinalize()
+
+
+## Fortran Note
+Not for use in Fortran
+
+
+## Developer Notes
+Uses raw `malloc()` and does not call error handlers since this may be used before PETSc is initialized.
+
+Used to generate argc, args arguments passed to `MPI_Init()`
+
+
+## See Also
+ `PetscStrToArrayDestroy()`, `PetscToken`, `PetscTokenCreate()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/utils/str.c.html#PetscStrToArray">src/sys/utils/str.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex7.c.html">src/mat/tutorials/ex7.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/utils/str.c)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,102 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/vec/is/ao/interface/aoreg.c">Actual source code: aoreg.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:30+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../aoimpl.h.html">&lt;../src/vec/is/ao/aoimpl.h&gt;</A>
+
+<a name="line4">  4: </a><a href="../../../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> AOList              = NULL;
+<a name="line5">  5: </a><a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>         AORegisterAllCalled = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line7">  7: </a><font color="#B22222">/*@C</font>
+<a name="line8">  8: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/AO/AOSetType.html">AOSetType</a> - Builds an application ordering for a particular `<a href="../../../../../docs/manualpages/AO/AOType.html">AOType</a>`</font>
+
+<a name="line10"> 10: </a><font color="#B22222">  Collective</font>
+
+<a name="line12"> 12: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line13"> 13: </a><font color="#B22222">+ ao    - The `<a href="../../../../../docs/manualpages/AO/AO.html">AO</a>` object</font>
+<a name="line14"> 14: </a><font color="#B22222">- method - The name of the <a href="../../../../../docs/manualpages/AO/AO.html">AO</a> type</font>
+
+<a name="line16"> 16: </a><font color="#B22222">  Options Database Key:</font>
+<a name="line17"> 17: </a><font color="#B22222">. -ao_type &lt;type&gt; - Sets the `<a href="../../../../../docs/manualpages/AO/AO.html">AO</a>` type; use -help for a list of available types</font>
+
+<a name="line19"> 19: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line21"> 21: </a><font color="#B22222">  Notes:</font>
+<a name="line22"> 22: </a><font color="#B22222">  See "petsc/include/petscao.h" for available <a href="../../../../../docs/manualpages/AO/AO.html">AO</a> types (for instance, `AOBASIC` and `AOMEMORYSCALABLE`).</font>
+
+<a name="line24"> 24: </a><font color="#B22222">  `<a href="../../../../../docs/manualpages/AO/AO.html">AO</a>` are usually created via the convenience routines such as `<a href="../../../../../docs/manualpages/AO/AOCreateBasic.html">AOCreateBasic</a>()` or `<a href="../../../../../docs/manualpages/AO/AOCreateMemoryScalable.html">AOCreateMemoryScalable</a>()`</font>
+
+<a name="line26"> 26: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/AO/AO.html">AO</a>`, `<a href="../../../../../docs/manualpages/AO/AOType.html">AOType</a>`, `<a href="../../../../../docs/manualpages/AO/AOCreateBasic.html">AOCreateBasic</a>()`, `<a href="../../../../../docs/manualpages/AO/AOCreateMemoryScalable.html">AOCreateMemoryScalable</a>()`, `<a href="../../../../../docs/manualpages/AO/AOGetType.html">AOGetType</a>()`, `<a href="../../../../../docs/manualpages/AO/AOCreate.html">AOCreate</a>()`</font>
+<a name="line27"> 27: </a><font color="#B22222">@*/</font>
+<a name="line28"> 28: </a><strong><font color="#4169E1"><a name="AOSetType"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/AO/AOSetType.html">AOSetType</a>(<a href="../../../../../docs/manualpages/AO/AO.html">AO</a> ao, <a href="../../../../../docs/manualpages/AO/AOType.html">AOType</a> method)</font></strong>
+<a name="line29"> 29: </a>{
+<a name="line30"> 30: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*r)(<a href="../../../../../docs/manualpages/AO/AO.html">AO</a>);
+<a name="line31"> 31: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> match;
+
+<a name="line34"> 34: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ao, method, &amp;match);
+<a name="line35"> 35: </a>  <font color="#4169E1">if</font> (match) <font color="#4169E1">return</font> 0;
+
+<a name="line37"> 37: </a>  <a href="../../../../../docs/manualpages/AO/AORegisterAll.html">AORegisterAll</a>();
+<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFunctionListFind.html">PetscFunctionListFind</a>(AOList, method, &amp;r);
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(ao, destroy);
+<a name="line41"> 41: </a>  ao-&gt;ops-&gt;destroy = NULL;
+
+<a name="line43"> 43: </a>  (*r)(ao);
+<a name="line44"> 44: </a>  <font color="#4169E1">return</font> 0;
+<a name="line45"> 45: </a>}
+
+<a name="line47"> 47: </a><font color="#B22222">/*@C</font>
+<a name="line48"> 48: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/AO/AOGetType.html">AOGetType</a> - Gets the `<a href="../../../../../docs/manualpages/AO/AO.html">AO</a>` type name (as a string) from the <a href="../../../../../docs/manualpages/AO/AO.html">AO</a>.</font>
+
+<a name="line50"> 50: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line52"> 52: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line53"> 53: </a><font color="#B22222">. ao  - The vector</font>
+
+<a name="line55"> 55: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line56"> 56: </a><font color="#B22222">. type - The `<a href="../../../../../docs/manualpages/AO/AO.html">AO</a>` type name</font>
+
+<a name="line58"> 58: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line60"> 60: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/AO/AO.html">AO</a>`, `<a href="../../../../../docs/manualpages/AO/AOType.html">AOType</a>`, `<a href="../../../../../docs/manualpages/AO/AOSetType.html">AOSetType</a>()`, `<a href="../../../../../docs/manualpages/AO/AOCreate.html">AOCreate</a>()`</font>
+<a name="line61"> 61: </a><font color="#B22222">@*/</font>
+<a name="line62"> 62: </a><strong><font color="#4169E1"><a name="AOGetType"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/AO/AOGetType.html">AOGetType</a>(<a href="../../../../../docs/manualpages/AO/AO.html">AO</a> ao, <a href="../../../../../docs/manualpages/AO/AOType.html">AOType</a> *type)</font></strong>
+<a name="line63"> 63: </a>{
+<a name="line66"> 66: </a>  <a href="../../../../../docs/manualpages/AO/AORegisterAll.html">AORegisterAll</a>();
+<a name="line67"> 67: </a>  *type = ((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ao)-&gt;type_name;
+<a name="line68"> 68: </a>  <font color="#4169E1">return</font> 0;
+<a name="line69"> 69: </a>}
+
+<a name="line71"> 71: </a><font color="#B22222">/*--------------------------------------------------------------------------------------------------------------------*/</font>
+
+<a name="line73"> 73: </a><font color="#B22222">/*@C</font>
+<a name="line74"> 74: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/AO/AORegister.html">AORegister</a> - Register  an application ordering method</font>
+
+<a name="line76"> 76: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line78"> 78: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line79"> 79: </a><font color="#B22222">+   sname - the name (`<a href="../../../../../docs/manualpages/AO/AOType.html">AOType</a>`) of the `<a href="../../../../../docs/manualpages/AO/AO.html">AO</a>` scheme</font>
+<a name="line80"> 80: </a><font color="#B22222">-   function - the create routine for the application ordering method</font>
+
+<a name="line82"> 82: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line84"> 84: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/AO/AO.html">AO</a>`, `<a href="../../../../../docs/manualpages/AO/AOType.html">AOType</a>`, `<a href="../../../../../docs/manualpages/AO/AOCreate.html">AOCreate</a>()`, `<a href="../../../../../docs/manualpages/AO/AORegisterAll.html">AORegisterAll</a>()`, `AOBASIC`, `AOADVANCED`, `AOMAPPING`, `AOMEMORYSCALABLE`</font>
+<a name="line85"> 85: </a><font color="#B22222">@*/</font>
+<a name="line86"> 86: </a><strong><font color="#4169E1"><a name="AORegister"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/AO/AORegister.html">AORegister</a>(const char sname[], <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*function)(<a href="../../../../../docs/manualpages/AO/AO.html">AO</a>))</font></strong>
+<a name="line87"> 87: </a>{
+<a name="line88"> 88: </a>  <a href="../../../../../docs/manualpages/AO/AOInitializePackage.html">AOInitializePackage</a>();
+<a name="line89"> 89: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>(&amp;AOList, sname, function);
+<a name="line90"> 90: </a>  <font color="#4169E1">return</font> 0;
+<a name="line91"> 91: </a>}
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,50 @@
+# MatInodeGetInodeSizes
+Returns the inode information of a matrix with inodes 
+## Synopsis
+```
+PetscErrorCode MatInodeGetInodeSizes(Mat A, PetscInt *node_count, PetscInt *sizes[], PetscInt *limit)
+```
+Not Collective
+
+
+## Input Parameter
+
+- ***A -*** the Inode matrix or matrix derived from the Inode class -- e.g., `MATSEQAIJ`
+
+
+
+## Output Parameters
+
+- ***node_count -*** no of inodes present in the matrix.
+- ***sizes      -*** an array of size node_count,with sizes of each inode.
+- ***limit      -*** the max size used to generate the inodes.
+
+
+
+
+
+## Note
+This routine returns some internal storage information
+of the matrix, it is intended to be used by advanced users.
+It should be called after the matrix is assembled.
+The contents of the sizes[] array should not be changed.
+NULL may be passed for information not requested.
+
+
+## See Also
+ `MatGetInfo()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/aij/seq/inode.c.html#MatInodeGetInodeSizes">src/mat/impls/aij/seq/inode.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/aij/seq/inode.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

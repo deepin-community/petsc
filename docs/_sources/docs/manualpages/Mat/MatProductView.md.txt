@@ -1,0 +1,36 @@
+# MatProductView
+View the private `Mat_Product` algorithm object within a matrix 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatProductView(Mat mat, PetscViewer viewer)
+```
+Logically Collective
+
+
+## Input Parameters
+
+- ***mat -*** the matrix obtained with `MatProductCreate()` or `MatProductCreateWithMat()`
+- ***viewer -*** where `mat` should be reviewed
+
+
+
+
+
+## See Also
+ `Mat`, `MatProductSetFromOptions()`, `MatView()`, `MatProductCreate()`, `MatProductCreateWithMat()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/interface/matproduct.c.html#MatProductView">src/mat/interface/matproduct.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/interface/matproduct.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,37 @@
+#!/bin/sh -e
+
+DEB_HOST_MULTIARCH=__DEB_HOST_MULTIARCH__
+
+SONAME=__PETSC_SONAME_VERSION__
+
+PETSC_VERSION=__PETSC_VERSION__
+PETSC_ARCH=${DEB_HOST_MULTIARCH}
+PETSC_REAL_ARCH=${PETSC_ARCH}-real
+PETSC_VERSION_NUMBER=$( echo ${PETSC_VERSION} | sed "s/\.//g" )
+PETSC_SONAME_VERSION=__PETSC_SONAME_VERSION__
+PETSC64_NAME=petsc64-${PETSC_SONAME_VERSION}
+
+PETSC64_DIR_REAL=/usr/lib/petscdir/${PETSC64_NAME}/${PETSC_REAL_ARCH}
+
+# Make alternatives links
+if [ "$1" = "configure" ]; then
+
+# alternative default petsc (e.g. real or complex)
+update-alternatives --install /usr/lib/petsc64 petsc64 ${PETSC64_DIR_REAL} ${PETSC_VERSION_NUMBER}75 \
+  --slave /usr/lib/${DEB_HOST_MULTIARCH}/libpetsc64.so libpetsc64.so /usr/lib/${DEB_HOST_MULTIARCH}/libpetsc64_real.so.${PETSC_VERSION} \
+  --slave /usr/include/petsc64 petsc64include ${PETSC64_DIR_REAL}/include \
+  --slave /usr/lib/${DEB_HOST_MULTIARCH}/pkgconfig/PETSc64.pc PETSc64.pc ${PETSC64_DIR_REAL}/lib/pkgconfig/PETSc.pc \
+  --slave /usr/lib/${DEB_HOST_MULTIARCH}/pkgconfig/petsc64.pc petsc64.pc ${PETSC64_DIR_REAL}/lib/pkgconfig/petsc.pc \
+  --slave /usr/share/octave/site/m/petsc64 petsc64-octave ${PETSC64_DIR_REAL}/share/petsc/matlab
+
+# alternative base version of petsc real
+update-alternatives --install /usr/lib/${DEB_HOST_MULTIARCH}/libpetsc64_real.so libpetsc64_real.so /usr/lib/${DEB_HOST_MULTIARCH}/libpetsc64_real.so.${PETSC_VERSION} ${PETSC_VERSION_NUMBER}77 \
+  --slave /usr/lib/petscdir/petsc64-real petsc64-real ${PETSC64_DIR_REAL}
+
+# alternative petsc for this X.Y soname (e.g. real or complex)
+update-alternatives --install /usr/lib/petscdir/64-${SONAME} petsc64-${SONAME} ${PETSC64_DIR_REAL} ${PETSC_VERSION_NUMBER}77
+
+fi
+
+
+#DEBHELPER#

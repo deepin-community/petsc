@@ -1,0 +1,21 @@
+# MATSOLVERKOKKOS
+"Kokkos" - A matrix solver type providing triangular solvers for sequential matrices on a single GPU of type, `MATSEQAIJKOKKOS`, `MATAIJKOKKOS`. 
+
+
+## See Also
+ `PCFactorSetMatSolverType()`, `MatSolverType`, `MatCreateSeqAIJKokkos()`, `MATAIJKOKKOS`, `MatKokkosSetFormat()`, `MatKokkosStorageFormat`, `MatKokkosFormatOperation`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/aij/seq/kokkos/aijkok.kokkos.cxx.html#MATSOLVERKOKKOS">src/mat/impls/aij/seq/kokkos/aijkok.kokkos.cxx</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/aij/seq/kokkos/aijkok.kokkos.cxx)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

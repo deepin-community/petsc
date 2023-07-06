@@ -1,0 +1,28 @@
+Small adaptations to use Debian sprng.
+
+Index: petsc/src/sys/classes/random/impls/sprng/sprng.c
+===================================================================
+--- petsc.orig/src/sys/classes/random/impls/sprng/sprng.c	2022-10-30 13:45:47.450258357 +0100
++++ petsc/src/sys/classes/random/impls/sprng/sprng.c	2022-10-30 13:46:09.434426782 +0100
+@@ -10,7 +10,7 @@
+ PetscErrorCode PetscRandomSeed_Sprng(PetscRandom r)
+ {
+   PetscFunctionBegin;
+-  init_sprng(r->seed, SPRNG_DEFAULT);
++  init_sprng(SPRNG_CMRG,r->seed, SPRNG_DEFAULT);
+   PetscFunctionReturn(0);
+ }
+ 
+Index: petsc/config/BuildSystem/config/packages/sprng.py
+===================================================================
+--- petsc.orig/config/BuildSystem/config/packages/sprng.py	2022-10-30 13:45:47.450258357 +0100
++++ petsc/config/BuildSystem/config/packages/sprng.py	2022-10-30 13:45:47.442258296 +0100
+@@ -6,7 +6,7 @@
+     self.download  = ['http://ftp.mcs.anl.gov/pub/petsc/externalpackages/sprng-1.0.tar.gz']
+     self.functions = ['make_new_seed_mpi']
+     self.includes  = ['sprng.h']
+-    self.liblist   = [['liblcg.a']]
++    self.liblist   = [['libsprng.a']]
+     return
+ 
+   def setupDependencies(self, framework):

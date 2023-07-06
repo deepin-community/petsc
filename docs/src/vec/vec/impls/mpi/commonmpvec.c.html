@@ -1,0 +1,282 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/vec/vec/impls/mpi/commonmpvec.c">Actual source code: commonmpvec.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:15+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="pvecimpl.h.html">&lt;../src/vec/vec/impls/mpi/pvecimpl.h&gt;</A>
+
+<a name="line4">  4: </a><font color="#B22222">/*</font>
+<a name="line5">  5: </a><font color="#B22222">  This is used in <a href="../../../../../docs/manualpages/Vec/VecGhostGetLocalForm.html">VecGhostGetLocalForm</a> and <a href="../../../../../docs/manualpages/Vec/VecGhostRestoreLocalForm.html">VecGhostRestoreLocalForm</a> to ensure</font>
+<a name="line6">  6: </a><font color="#B22222">  that the state is updated if either vector has changed since the last time</font>
+<a name="line7">  7: </a><font color="#B22222">  one of these functions was called.  It could apply to any <a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, but</font>
+<a name="line8">  8: </a><font color="#B22222">  VecGhost is quite different from other objects in that two separate vectors</font>
+<a name="line9">  9: </a><font color="#B22222">  look at the same memory.</font>
+
+<a name="line11"> 11: </a><font color="#B22222">  In principle, we could only propagate state to the local vector on</font>
+<a name="line12"> 12: </a><font color="#B22222">  GetLocalForm and to the global vector on RestoreLocalForm, but this version is</font>
+<a name="line13"> 13: </a><font color="#B22222">  more conservative (i.e. robust against misuse) and simpler.</font>
+
+<a name="line15"> 15: </a><font color="#B22222">  Note that this function is correct and changes nothing if both arguments are the</font>
+<a name="line16"> 16: </a><font color="#B22222">  same, which is the case in serial.</font>
+<a name="line17"> 17: </a><font color="#B22222">*/</font>
+<a name="line18"> 18: </a><strong><font color="#4169E1"><a name="VecGhostStateSync_Private"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecGhostStateSync_Private(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> g, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> l)</font></strong>
+<a name="line19"> 19: </a>{
+<a name="line20"> 20: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectState.html">PetscObjectState</a> gstate, lstate;
+
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectStateGet.html">PetscObjectStateGet</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)g, &amp;gstate);
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectStateGet.html">PetscObjectStateGet</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)l, &amp;lstate);
+<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectStateSet.html">PetscObjectStateSet</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)g, <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(gstate, lstate));
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectStateSet.html">PetscObjectStateSet</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)l, <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(gstate, lstate));
+<a name="line26"> 26: </a>  <font color="#4169E1">return</font> 0;
+<a name="line27"> 27: </a>}
+
+<a name="line29"> 29: </a><font color="#B22222">/*@</font>
+<a name="line30"> 30: </a><font color="#B22222">    <a href="../../../../../docs/manualpages/Vec/VecGhostGetLocalForm.html">VecGhostGetLocalForm</a> - Obtains the local ghosted representation of</font>
+<a name="line31"> 31: </a><font color="#B22222">    a parallel vector (obtained with <a href="../../../../../docs/manualpages/Vec/VecCreateGhost.html">VecCreateGhost</a>(), <a href="../../../../../docs/manualpages/Vec/VecCreateGhostWithArray.html">VecCreateGhostWithArray</a>()</font>
+<a name="line32"> 32: </a><font color="#B22222">    or <a href="../../../../../docs/manualpages/Vec/VecCreateSeq.html">VecCreateSeq</a>()). Returns NULL if the <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> is not ghosted.</font>
+
+<a name="line34"> 34: </a><font color="#B22222">    Logically Collective</font>
+
+<a name="line36"> 36: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line37"> 37: </a><font color="#B22222">.   g - the global vector</font>
+
+<a name="line39"> 39: </a><font color="#B22222">    Output Parameter:</font>
+<a name="line40"> 40: </a><font color="#B22222">.   l - the local (ghosted) representation, NULL if g is not ghosted</font>
+
+<a name="line42"> 42: </a><font color="#B22222">    Notes:</font>
+<a name="line43"> 43: </a><font color="#B22222">    This routine does not actually update the ghost values, but rather it</font>
+<a name="line44"> 44: </a><font color="#B22222">    returns a sequential vector that includes the locations for the ghost</font>
+<a name="line45"> 45: </a><font color="#B22222">    values and their current values. The returned vector and the original</font>
+<a name="line46"> 46: </a><font color="#B22222">    vector passed in share the same array that contains the actual vector data.</font>
+
+<a name="line48"> 48: </a><font color="#B22222">    To update the ghost values from the locations on the other processes one must call</font>
+<a name="line49"> 49: </a><font color="#B22222">    <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>() and <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>() before accessing the ghost values. Thus normal</font>
+<a name="line50"> 50: </a><font color="#B22222">    usage is</font>
+<a name="line51"> 51: </a><font color="#B22222">$     <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>(x,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);</font>
+<a name="line52"> 52: </a><font color="#B22222">$     <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>(x,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);</font>
+<a name="line53"> 53: </a><font color="#B22222">$     <a href="../../../../../docs/manualpages/Vec/VecGhostGetLocalForm.html">VecGhostGetLocalForm</a>(x,&amp;xlocal);</font>
+<a name="line54"> 54: </a><font color="#B22222">$     <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(xlocal,&amp;xvalues);</font>
+<a name="line55"> 55: </a><font color="#B22222">$        // access the non-ghost values in locations xvalues[0:n-1] and ghost values in locations xvalues[n:n+nghost];</font>
+<a name="line56"> 56: </a><font color="#B22222">$     <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xlocal,&amp;xvalues);</font>
+<a name="line57"> 57: </a><font color="#B22222">$     <a href="../../../../../docs/manualpages/Vec/VecGhostRestoreLocalForm.html">VecGhostRestoreLocalForm</a>(x,&amp;xlocal);</font>
+
+<a name="line59"> 59: </a><font color="#B22222">    One should call <a href="../../../../../docs/manualpages/Vec/VecGhostRestoreLocalForm.html">VecGhostRestoreLocalForm</a>() or <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>() once one is</font>
+<a name="line60"> 60: </a><font color="#B22222">    finished using the object.</font>
+
+<a name="line62"> 62: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line64"> 64: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Vec/VecCreateGhost.html">VecCreateGhost</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecGhostRestoreLocalForm.html">VecGhostRestoreLocalForm</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecCreateGhostWithArray.html">VecCreateGhostWithArray</a>()`</font>
+
+<a name="line66"> 66: </a><font color="#B22222">@*/</font>
+<a name="line67"> 67: </a><strong><font color="#4169E1"><a name="VecGhostGetLocalForm"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Vec/VecGhostGetLocalForm.html">VecGhostGetLocalForm</a>(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> g, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *l)</font></strong>
+<a name="line68"> 68: </a>{
+<a name="line69"> 69: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> isseq, ismpi;
+
+
+<a name="line74"> 74: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)g, <a href="../../../../../docs/manualpages/Vec/VECSEQ.html">VECSEQ</a>, &amp;isseq);
+<a name="line75"> 75: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)g, <a href="../../../../../docs/manualpages/Vec/VECMPI.html">VECMPI</a>, &amp;ismpi);
+<a name="line76"> 76: </a>  <font color="#4169E1">if</font> (ismpi) {
+<a name="line77"> 77: </a>    Vec_MPI *v = (Vec_MPI *)g-&gt;data;
+<a name="line78"> 78: </a>    *l         = v-&gt;localrep;
+<a name="line79"> 79: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isseq) {
+<a name="line80"> 80: </a>    *l = g;
+<a name="line81"> 81: </a>  } <font color="#4169E1">else</font> {
+<a name="line82"> 82: </a>    *l = NULL;
+<a name="line83"> 83: </a>  }
+<a name="line84"> 84: </a>  <font color="#4169E1">if</font> (*l) {
+<a name="line85"> 85: </a>    VecGhostStateSync_Private(g, *l);
+<a name="line86"> 86: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)*l);
+<a name="line87"> 87: </a>  }
+<a name="line88"> 88: </a>  <font color="#4169E1">return</font> 0;
+<a name="line89"> 89: </a>}
+
+<a name="line91"> 91: </a><font color="#B22222">/*@</font>
+<a name="line92"> 92: </a><font color="#B22222">    <a href="../../../../../docs/manualpages/Vec/VecGhostIsLocalForm.html">VecGhostIsLocalForm</a> - Checks if a given vector is the local form of a global vector</font>
+
+<a name="line94"> 94: </a><font color="#B22222">    Not Collective</font>
+
+<a name="line96"> 96: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line97"> 97: </a><font color="#B22222">+   g - the global vector</font>
+<a name="line98"> 98: </a><font color="#B22222">-   l - the local vector</font>
+
+<a name="line100">100: </a><font color="#B22222">    Output Parameter:</font>
+<a name="line101">101: </a><font color="#B22222">.   flg - <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> if local vector is local form</font>
+
+<a name="line103">103: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line105">105: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Vec/VecCreateGhost.html">VecCreateGhost</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecGhostRestoreLocalForm.html">VecGhostRestoreLocalForm</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecCreateGhostWithArray.html">VecCreateGhostWithArray</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecGhostGetLocalForm.html">VecGhostGetLocalForm</a>()`</font>
+
+<a name="line107">107: </a><font color="#B22222">@*/</font>
+<a name="line108">108: </a><strong><font color="#4169E1"><a name="VecGhostIsLocalForm"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Vec/VecGhostIsLocalForm.html">VecGhostIsLocalForm</a>(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> g, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> l, <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *flg)</font></strong>
+<a name="line109">109: </a>{
+<a name="line110">110: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> isseq, ismpi;
+
+
+<a name="line115">115: </a>  *flg = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line116">116: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)g, <a href="../../../../../docs/manualpages/Vec/VECSEQ.html">VECSEQ</a>, &amp;isseq);
+<a name="line117">117: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)g, <a href="../../../../../docs/manualpages/Vec/VECMPI.html">VECMPI</a>, &amp;ismpi);
+<a name="line118">118: </a>  <font color="#4169E1">if</font> (ismpi) {
+<a name="line119">119: </a>    Vec_MPI *v = (Vec_MPI *)g-&gt;data;
+<a name="line120">120: </a>    <font color="#4169E1">if</font> (l == v-&gt;localrep) *flg = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line121">121: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isseq) {
+<a name="line122">122: </a>    <font color="#4169E1">if</font> (l == g) *flg = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line123">123: </a>  } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)g), PETSC_ERR_ARG_WRONG, <font color="#666666">"Global vector is not ghosted"</font>);
+<a name="line124">124: </a>  <font color="#4169E1">return</font> 0;
+<a name="line125">125: </a>}
+
+<a name="line127">127: </a><font color="#B22222">/*@</font>
+<a name="line128">128: </a><font color="#B22222">    <a href="../../../../../docs/manualpages/Vec/VecGhostRestoreLocalForm.html">VecGhostRestoreLocalForm</a> - Restores the local ghosted representation of</font>
+<a name="line129">129: </a><font color="#B22222">    a parallel vector obtained with <a href="../../../../../docs/manualpages/Vec/VecGhostGetLocalForm.html">VecGhostGetLocalForm</a>().</font>
+
+<a name="line131">131: </a><font color="#B22222">    Logically Collective</font>
+
+<a name="line133">133: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line134">134: </a><font color="#B22222">+   g - the global vector</font>
+<a name="line135">135: </a><font color="#B22222">-   l - the local (ghosted) representation</font>
+
+<a name="line137">137: </a><font color="#B22222">    Notes:</font>
+<a name="line138">138: </a><font color="#B22222">    This routine does not actually update the ghost values, but rather it</font>
+<a name="line139">139: </a><font color="#B22222">    returns a sequential vector that includes the locations for the ghost values</font>
+<a name="line140">140: </a><font color="#B22222">    and their current values.</font>
+
+<a name="line142">142: </a><font color="#B22222">    Level: advanced</font>
+
+<a name="line144">144: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Vec/VecCreateGhost.html">VecCreateGhost</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecGhostGetLocalForm.html">VecGhostGetLocalForm</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecCreateGhostWithArray.html">VecCreateGhostWithArray</a>()`</font>
+<a name="line145">145: </a><font color="#B22222">@*/</font>
+<a name="line146">146: </a><strong><font color="#4169E1"><a name="VecGhostRestoreLocalForm"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Vec/VecGhostRestoreLocalForm.html">VecGhostRestoreLocalForm</a>(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> g, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *l)</font></strong>
+<a name="line147">147: </a>{
+<a name="line148">148: </a>  <font color="#4169E1">if</font> (*l) {
+<a name="line149">149: </a>    VecGhostStateSync_Private(g, *l);
+<a name="line150">150: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectDereference.html">PetscObjectDereference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)*l);
+<a name="line151">151: </a>  }
+<a name="line152">152: </a>  <font color="#4169E1">return</font> 0;
+<a name="line153">153: </a>}
+
+<a name="line155">155: </a><font color="#B22222">/*@</font>
+<a name="line156">156: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a> - Begins the vector scatter to update the vector from</font>
+<a name="line157">157: </a><font color="#B22222">   local representation to global or global representation to local.</font>
+
+<a name="line159">159: </a><font color="#B22222">   Neighbor-wise Collective</font>
+
+<a name="line161">161: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line162">162: </a><font color="#B22222">+  g - the vector (obtained with `<a href="../../../../../docs/manualpages/Vec/VecCreateGhost.html">VecCreateGhost</a>()` or `<a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>()`)</font>
+<a name="line163">163: </a><font color="#B22222">.  insertmode - one of <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>, <a href="../../../../../docs/manualpages/Sys/MAX_VALUES.html">MAX_VALUES</a>, <a href="../../../../../docs/manualpages/Sys/MIN_VALUES.html">MIN_VALUES</a> or <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a></font>
+<a name="line164">164: </a><font color="#B22222">-  scattermode - one of <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a> or <a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a></font>
+
+<a name="line166">166: </a><font color="#B22222">   Notes:</font>
+<a name="line167">167: </a><font color="#B22222">   Use the following to update the ghost regions with correct values from the owning process</font>
+<a name="line168">168: </a><font color="#B22222">.vb</font>
+<a name="line169">169: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>(v,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);</font>
+<a name="line170">170: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>(v,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);</font>
+<a name="line171">171: </a><font color="#B22222">.ve</font>
+
+<a name="line173">173: </a><font color="#B22222">   Use the following to accumulate the ghost region values onto the owning processors</font>
+<a name="line174">174: </a><font color="#B22222">.vb</font>
+<a name="line175">175: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>(v,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);</font>
+<a name="line176">176: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>(v,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);</font>
+<a name="line177">177: </a><font color="#B22222">.ve</font>
+
+<a name="line179">179: </a><font color="#B22222">   To accumulate the ghost region values onto the owning processors and then update</font>
+<a name="line180">180: </a><font color="#B22222">   the ghost regions correctly, call the latter followed by the former, i.e.,</font>
+<a name="line181">181: </a><font color="#B22222">.vb</font>
+<a name="line182">182: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>(v,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);</font>
+<a name="line183">183: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>(v,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);</font>
+<a name="line184">184: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>(v,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);</font>
+<a name="line185">185: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>(v,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);</font>
+<a name="line186">186: </a><font color="#B22222">.ve</font>
+
+<a name="line188">188: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line190">190: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Vec/VecCreateGhost.html">VecCreateGhost</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecGhostGetLocalForm.html">VecGhostGetLocalForm</a>()`,</font>
+<a name="line191">191: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/Vec/VecGhostRestoreLocalForm.html">VecGhostRestoreLocalForm</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecCreateGhostWithArray.html">VecCreateGhostWithArray</a>()`</font>
+
+<a name="line193">193: </a><font color="#B22222">@*/</font>
+<a name="line194">194: </a><strong><font color="#4169E1"><a name="VecGhostUpdateBegin"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> g, <a href="../../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a> insertmode, <a href="../../../../../docs/manualpages/Vec/ScatterMode.html">ScatterMode</a> scattermode)</font></strong>
+<a name="line195">195: </a>{
+<a name="line196">196: </a>  Vec_MPI  *v;
+<a name="line197">197: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> ismpi, isseq;
+
+<a name="line200">200: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)g, <a href="../../../../../docs/manualpages/Vec/VECMPI.html">VECMPI</a>, &amp;ismpi);
+<a name="line201">201: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)g, <a href="../../../../../docs/manualpages/Vec/VECSEQ.html">VECSEQ</a>, &amp;isseq);
+<a name="line202">202: </a>  <font color="#4169E1">if</font> (ismpi) {
+<a name="line203">203: </a>    v = (Vec_MPI *)g-&gt;data;
+<a name="line205">205: </a>    <font color="#4169E1">if</font> (!v-&gt;localupdate) <font color="#4169E1">return</font> 0;
+<a name="line206">206: </a>    <font color="#4169E1">if</font> (scattermode == <a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>) {
+<a name="line207">207: </a>      <a href="../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(v-&gt;localupdate, v-&gt;localrep, g, insertmode, scattermode);
+<a name="line208">208: </a>    } <font color="#4169E1">else</font> {
+<a name="line209">209: </a>      <a href="../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(v-&gt;localupdate, g, v-&gt;localrep, insertmode, scattermode);
+<a name="line210">210: </a>    }
+<a name="line211">211: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isseq) {
+<a name="line212">212: </a>    <font color="#B22222">/* Do nothing */</font>
+<a name="line213">213: </a>  } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)g), PETSC_ERR_ARG_WRONG, <font color="#666666">"Vector is not ghosted"</font>);
+<a name="line214">214: </a>  <font color="#4169E1">return</font> 0;
+<a name="line215">215: </a>}
+
+<a name="line217">217: </a><font color="#B22222">/*@</font>
+<a name="line218">218: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a> - End the vector scatter to update the vector from</font>
+<a name="line219">219: </a><font color="#B22222">   local representation to global or global representation to local.</font>
+
+<a name="line221">221: </a><font color="#B22222">   Neighbor-wise Collective</font>
+
+<a name="line223">223: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line224">224: </a><font color="#B22222">+  g - the vector (obtained with `<a href="../../../../../docs/manualpages/Vec/VecCreateGhost.html">VecCreateGhost</a>()` or `<a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>()`)</font>
+<a name="line225">225: </a><font color="#B22222">.  insertmode - one of <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>, <a href="../../../../../docs/manualpages/Sys/MAX_VALUES.html">MAX_VALUES</a>, <a href="../../../../../docs/manualpages/Sys/MIN_VALUES.html">MIN_VALUES</a> or <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a></font>
+<a name="line226">226: </a><font color="#B22222">-  scattermode - one of <a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a> or <a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a></font>
+
+<a name="line228">228: </a><font color="#B22222">   Notes:</font>
+
+<a name="line230">230: </a><font color="#B22222">   Use the following to update the ghost regions with correct values from the owning process</font>
+<a name="line231">231: </a><font color="#B22222">.vb</font>
+<a name="line232">232: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>(v,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);</font>
+<a name="line233">233: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>(v,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);</font>
+<a name="line234">234: </a><font color="#B22222">.ve</font>
+
+<a name="line236">236: </a><font color="#B22222">   Use the following to accumulate the ghost region values onto the owning processors</font>
+<a name="line237">237: </a><font color="#B22222">.vb</font>
+<a name="line238">238: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>(v,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);</font>
+<a name="line239">239: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>(v,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);</font>
+<a name="line240">240: </a><font color="#B22222">.ve</font>
+
+<a name="line242">242: </a><font color="#B22222">   To accumulate the ghost region values onto the owning processors and then update</font>
+<a name="line243">243: </a><font color="#B22222">   the ghost regions correctly, call the later followed by the former, i.e.,</font>
+<a name="line244">244: </a><font color="#B22222">.vb</font>
+<a name="line245">245: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>(v,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);</font>
+<a name="line246">246: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>(v,<a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);</font>
+<a name="line247">247: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>(v,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);</font>
+<a name="line248">248: </a><font color="#B22222">       <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>(v,<a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>,<a href="../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);</font>
+<a name="line249">249: </a><font color="#B22222">.ve</font>
+
+<a name="line251">251: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line253">253: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Vec/VecCreateGhost.html">VecCreateGhost</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecGhostUpdateBegin.html">VecGhostUpdateBegin</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecGhostGetLocalForm.html">VecGhostGetLocalForm</a>()`,</font>
+<a name="line254">254: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/Vec/VecGhostRestoreLocalForm.html">VecGhostRestoreLocalForm</a>()`, `<a href="../../../../../docs/manualpages/Vec/VecCreateGhostWithArray.html">VecCreateGhostWithArray</a>()`</font>
+
+<a name="line256">256: </a><font color="#B22222">@*/</font>
+<a name="line257">257: </a><strong><font color="#4169E1"><a name="VecGhostUpdateEnd"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Vec/VecGhostUpdateEnd.html">VecGhostUpdateEnd</a>(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> g, <a href="../../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a> insertmode, <a href="../../../../../docs/manualpages/Vec/ScatterMode.html">ScatterMode</a> scattermode)</font></strong>
+<a name="line258">258: </a>{
+<a name="line259">259: </a>  Vec_MPI  *v;
+<a name="line260">260: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> ismpi;
+
+<a name="line263">263: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)g, <a href="../../../../../docs/manualpages/Vec/VECMPI.html">VECMPI</a>, &amp;ismpi);
+<a name="line264">264: </a>  <font color="#4169E1">if</font> (ismpi) {
+<a name="line265">265: </a>    v = (Vec_MPI *)g-&gt;data;
+<a name="line267">267: </a>    <font color="#4169E1">if</font> (!v-&gt;localupdate) <font color="#4169E1">return</font> 0;
+<a name="line268">268: </a>    <font color="#4169E1">if</font> (scattermode == <a href="../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>) {
+<a name="line269">269: </a>      <a href="../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(v-&gt;localupdate, v-&gt;localrep, g, insertmode, scattermode);
+<a name="line270">270: </a>    } <font color="#4169E1">else</font> {
+<a name="line271">271: </a>      <a href="../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(v-&gt;localupdate, g, v-&gt;localrep, insertmode, scattermode);
+<a name="line272">272: </a>    }
+<a name="line273">273: </a>  }
+<a name="line274">274: </a>  <font color="#4169E1">return</font> 0;
+<a name="line275">275: </a>}
+</pre>
+</body>
+
+</html>

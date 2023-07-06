@@ -1,0 +1,9 @@
+# libpetsc.so.X.Y soname links are managed by alternatives (libpetc.so.X.Y)
+ldconfig-symlink-missing-for-shlib usr/lib/*/libpetsc.so.* usr/lib/*/libpetsc-complex.so.* libpetsc.so.*
+
+# libpetsc_complex.so is handled by alternatives in libpetsc-complexX.Y-dev
+lacks-unversioned-link-to-shared-library example: usr/lib/*/libpetsc_complex.so [usr/lib/*/libpetsc_complex.so.*]
+
+# the version of the broken packages is embedded in the package names
+breaks-without-version libpetsc*3.10*
+breaks-without-version libslepc*3.10*

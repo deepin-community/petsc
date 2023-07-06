@@ -1,0 +1,39 @@
+# TaoSubsetType
+Type representing the way Tao handles active sets 
+## Synopsis
+```
+typedef enum {
+  TAO_SUBSET_SUBVEC,
+  TAO_SUBSET_MASK,
+  TAO_SUBSET_MATRIXFREE
+} TaoSubsetType;
+```
+
+- ***`TAO_SUBSET_SUBVEC` -*** Tao uses `MatCreateSubMatrix()` and `VecGetSubVector()`
+- ***`TAO_SUBSET_MASK` -*** Matrices are zeroed out corresponding to active set entries
+- ***`TAO_SUBSET_MATRIXFREE` -*** Same as `TAO_SUBSET_MASK` but it can be applied to matrix-free operators
+
+
+
+## Options database keys
+
+- ***-different_hessian -*** Tao will use a copy of the hessian operator for masking.  By default
+Tao will directly alter the hessian operator.
+
+
+
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petsctao.h.html#TaoSubsetType">include/petsctao.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petsctao.h)
+
+
+[Index of all Tao routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

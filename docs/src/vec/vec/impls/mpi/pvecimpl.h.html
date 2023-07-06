@@ -1,0 +1,103 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/vec/vec/impls/mpi/pvecimpl.h">Actual source code: pvecimpl.h</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:15+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#ifndef PETSC_PVECIMPL_H</font>
+<a name="line2">  2: </a><strong><font color="#228B22">#define PETSC_PVECIMPL_H</font></strong>
+
+<a name="line4">  4: </a>#include <A href="../dvecimpl.h.html">&lt;../src/vec/vec/impls/dvecimpl.h&gt;</A>
+
+<a name="line6">  6: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line7">  7: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> insertmode;
+<a name="line8">  8: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count;
+<a name="line9">  9: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> bcount;
+<a name="line10"> 10: </a>} VecAssemblyHeader;
+
+<a name="line12"> 12: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line13"> 13: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *ints;
+<a name="line14"> 14: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *intb;
+<a name="line15"> 15: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *scalars;
+<a name="line16"> 16: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *scalarb;
+<a name="line17"> 17: </a>  char         pendings;
+<a name="line18"> 18: </a>  char         pendingb;
+<a name="line19"> 19: </a>} VecAssemblyFrame;
+
+<a name="line21"> 21: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line22"> 22: </a>  VECHEADER
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   nghost;      <font color="#B22222">/* number of ghost points on this process */</font>
+<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>        localrep;    <font color="#B22222">/* local representation of vector */</font>
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/PetscSF/VecScatter.html">VecScatter</a> localupdate; <font color="#B22222">/* scatter to update ghost values */</font>
+
+<a name="line27"> 27: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>          assembly_subset;     <font color="#B22222">/* Subsequent assemblies will set a subset (perhaps equal) of off-process entries set on first assembly */</font>
+<a name="line28"> 28: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>          first_assembly_done; <font color="#B22222">/* Is the first time assembly done? */</font>
+<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>          use_status;          <font color="#B22222">/* Use MPI_Status to determine number of items in each message */</font>
+<a name="line30"> 30: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>        nsendranks;
+<a name="line31"> 31: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>        nrecvranks;
+<a name="line32"> 32: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>       *sendranks;
+<a name="line33"> 33: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>       *recvranks;
+<a name="line34"> 34: </a>  VecAssemblyHeader *sendhdr, *recvhdr;
+<a name="line35"> 35: </a>  VecAssemblyFrame  *sendptrs; <font color="#B22222">/* pointers to the main messages */</font>
+<a name="line36"> 36: </a>  MPI_Request       *sendreqs;
+<a name="line37"> 37: </a>  MPI_Request       *recvreqs;
+<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSegBuffer.html">PetscSegBuffer</a>     segrecvint;
+<a name="line39"> 39: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSegBuffer.html">PetscSegBuffer</a>     segrecvscalar;
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/Sys/PetscSegBuffer.html">PetscSegBuffer</a>     segrecvframe;
+<a name="line41"> 41: </a><font color="#A020F0">#if defined(PETSC_HAVE_NVSHMEM)</font>
+<a name="line42"> 42: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> use_nvshmem; <font color="#B22222">/* Try to use NVSHMEM in communication of, for example, <a href="../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a> */</font>
+<a name="line43"> 43: </a><font color="#A020F0">#endif</font>
+
+<a name="line45"> 45: </a>  <font color="#B22222">/* COO fields, assuming m is the vector's local size */</font>
+<a name="line46"> 46: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a>  coo_n;
+<a name="line47"> 47: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a>  tot1;  <font color="#B22222">/* Total local entries in COO arrays */</font>
+<a name="line48"> 48: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> *jmap1; <font color="#B22222">/* [m+1]: i-th entry of the vector has jmap1[i+1]-jmap1[i] repeats in COO arrays */</font>
+<a name="line49"> 49: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> *perm1; <font color="#B22222">/* [tot1]: permutation array for local entries */</font>
+
+<a name="line51"> 51: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a>  nnz2;  <font color="#B22222">/* Unique entries in recvbuf */</font>
+<a name="line52"> 52: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> *imap2; <font color="#B22222">/* [nnz2]: i-th unique entry in recvbuf is imap2[i]-th entry in the vector */</font>
+<a name="line53"> 53: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> *jmap2; <font color="#B22222">/* [nnz2+1] */</font>
+<a name="line54"> 54: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> *perm2; <font color="#B22222">/* [recvlen] */</font>
+
+<a name="line56"> 56: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a>      coo_sf;
+<a name="line57"> 57: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a>   sendlen, recvlen;  <font color="#B22222">/* Lengths (in unit of <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>) of send/recvbuf */</font>
+<a name="line58"> 58: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a>  *Cperm;             <font color="#B22222">/* [sendlen]: permutation array to fill sendbuf[]. 'C' for communication */</font>
+<a name="line59"> 59: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *sendbuf, *recvbuf; <font color="#B22222">/* Buffers for remote values in <a href="../../../../../docs/manualpages/Vec/VecSetValuesCOO.html">VecSetValuesCOO</a>() */</font>
+<a name="line60"> 60: </a>} Vec_MPI;
+
+<a name="line62"> 62: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecDot_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)</font></strong>;
+<a name="line63"> 63: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecMDot_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>[], <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)</font></strong>;
+<a name="line64"> 64: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecTDot_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)</font></strong>;
+<a name="line65"> 65: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecMTDot_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>[], <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)</font></strong>;
+<a name="line66"> 66: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecNorm_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Vec/NormType.html">NormType</a>, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)</font></strong>;
+<a name="line67"> 67: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecMax_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)</font></strong>;
+<a name="line68"> 68: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecMin_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)</font></strong>;
+<a name="line69"> 69: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecDestroy_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>)</font></strong>;
+<a name="line70"> 70: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecView_MPI_Binary(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>)</font></strong>;
+<a name="line71"> 71: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecView_MPI_Draw_LG(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>)</font></strong>;
+<a name="line72"> 72: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecView_MPI_Socket(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>)</font></strong>;
+<a name="line73"> 73: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecView_MPI_HDF5(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>)</font></strong>;
+<a name="line74"> 74: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecView_MPI_ADIOS(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>)</font></strong>;
+<a name="line75"> 75: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecView_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>)</font></strong>;
+<a name="line76"> 76: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecGetSize_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)</font></strong>;
+<a name="line77"> 77: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecGetValues_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>[], <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>[])</font></strong>;
+<a name="line78"> 78: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecSetValues_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>[], const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>[], <a href="../../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a>)</font></strong>;
+<a name="line79"> 79: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecSetValuesBlocked_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>[], const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>[], <a href="../../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a>)</font></strong>;
+<a name="line80"> 80: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecAssemblyBegin_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>)</font></strong>;
+<a name="line81"> 81: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecAssemblyEnd_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>)</font></strong>;
+<a name="line82"> 82: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecAssemblyReset_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>)</font></strong>;
+<a name="line83"> 83: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecCreate_MPI_Private(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>[])</font></strong>;
+<a name="line84"> 84: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecCreate_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>)</font></strong>;
+<a name="line85"> 85: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecDuplicate_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *)</font></strong>;
+<a name="line86"> 86: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecSetPreallocationCOO_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a>, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>[])</font></strong>;
+<a name="line87"> 87: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecSetValuesCOO_MPI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>[], <a href="../../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a>)</font></strong>;
+<a name="line88"> 88: </a><font color="#A020F0">#endif // PETSC_PVECIMPL_H</font>
+</pre>
+</body>
+
+</html>

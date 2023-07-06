@@ -1,0 +1,45 @@
+# PETSC_COMM_WORLD
+the equivalent of the `MPI_COMM_WORLD` communicator which represents all the processes that PETSc knows about. 
+
+
+## Notes
+By default `PETSC_COMM_WORLD` and `MPI_COMM_WORLD` are identical unless you wish to
+run PETSc on ONLY a subset of `MPI_COMM_WORLD`. In that case create your new (smaller)
+communicator, call it, say comm, and set `PETSC_COMM_WORLD` = comm BEFORE calling
+PetscInitialize(), but after `MPI_Init()` has been called.
+
+The value of `PETSC_COMM_WORLD` should never be USED/accessed before `PetscInitialize()`
+is called because it may not have a valid value yet.
+
+
+## See Also
+ `PETSC_COMM_SELF`
+
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscsys.h.html#PETSC_COMM_WORLD">include/petscsys.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/classes/viewer/tutorials/ex1.c.html">src/sys/classes/viewer/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/classes/viewer/tutorials/ex1f90.F90.html">src/sys/classes/viewer/tutorials/ex1f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/classes/viewer/tutorials/ex2.c.html">src/sys/classes/viewer/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/classes/random/tutorials/ex1.c.html">src/sys/classes/random/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/classes/random/tutorials/ex2.c.html">src/sys/classes/random/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex1.c.html">src/sys/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex16.c.html">src/sys/tutorials/ex16.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex16f.F90.html">src/sys/tutorials/ex16f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex1f.F90.html">src/sys/tutorials/ex1f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex2.c.html">src/sys/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex20.c.html">src/sys/tutorials/ex20.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscsys.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

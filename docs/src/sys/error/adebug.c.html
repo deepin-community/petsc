@@ -1,0 +1,604 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/error/adebug.c">Actual source code: adebug.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:53+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">      Code to handle PETSc starting up in debuggers,etc.</font>
+<a name="line3">  3: </a><font color="#B22222">*/</font>
+
+<a name="line5">  5: </a>#include <A href="../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+<a name="line6">  6: </a><font color="#A020F0">#include &lt;signal.h&gt;</font>
+<a name="line7">  7: </a><font color="#A020F0">#if defined(PETSC_HAVE_UNISTD_H)</font>
+<a name="line8">  8: </a><font color="#A020F0">  #include &lt;unistd.h&gt;</font>
+<a name="line9">  9: </a><font color="#A020F0">#endif</font>
+
+<a name="line11"> 11: </a><font color="#B22222">/*</font>
+<a name="line12"> 12: </a><font color="#B22222">      These are the debugger and display used if the debugger is started up</font>
+<a name="line13"> 13: </a><font color="#B22222">*/</font>
+<a name="line14"> 14: </a>static char      PetscDebugger[PETSC_MAX_PATH_LEN];
+<a name="line15"> 15: </a>static char      DebugTerminal[PETSC_MAX_PATH_LEN];
+<a name="line16"> 16: </a>static <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> UseDebugTerminal    = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line17"> 17: </a><a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>        petscwaitonerrorflg = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line18"> 18: </a><a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>        petscindebugger     = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line20"> 20: </a><font color="#B22222">/*@C</font>
+<a name="line21"> 21: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscSetDebugTerminal.html">PetscSetDebugTerminal</a> - Sets the terminal to use for debugging.</font>
+
+<a name="line23"> 23: </a><font color="#B22222">   Not Collective; No Fortran Support</font>
+
+<a name="line25"> 25: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line26"> 26: </a><font color="#B22222">.  terminal - name of terminal and any flags required to execute a program.</font>
+<a name="line27"> 27: </a><font color="#B22222">              For example xterm, "urxvt -e", "gnome-terminal -x".</font>
+<a name="line28"> 28: </a><font color="#B22222">              On Apple MacOS you can use Terminal (note the capital T)</font>
+
+<a name="line30"> 30: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line31"> 31: </a><font color="#B22222">   -debug_terminal terminal - use this terminal instead of the default</font>
+
+<a name="line33"> 33: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line35"> 35: </a><font color="#B22222">   Notes:</font>
+<a name="line36"> 36: </a><font color="#B22222">   You can start the debugger for all processes in the same GNU screen session.</font>
+
+<a name="line38"> 38: </a><font color="#B22222">     mpiexec -n 4 ./myapp -start_in_debugger -debug_terminal "screen -X -S debug screen"</font>
+
+<a name="line40"> 40: </a><font color="#B22222">   will open 4 windows in the session named "debug".</font>
+
+<a name="line42"> 42: </a><font color="#B22222">   The default on Apple is Terminal, on other systems the default is xterm</font>
+
+<a name="line44"> 44: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscSetDebugger.html">PetscSetDebugger</a>()`</font>
+<a name="line45"> 45: </a><font color="#B22222">@*/</font>
+<a name="line46"> 46: </a><strong><font color="#4169E1"><a name="PetscSetDebugTerminal"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscSetDebugTerminal.html">PetscSetDebugTerminal</a>(const char terminal[])</font></strong>
+<a name="line47"> 47: </a>{
+<a name="line48"> 48: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> xterm;
+
+<a name="line50"> 50: </a>  <a href="../../../docs/manualpages/Sys/PetscStrncpy.html">PetscStrncpy</a>(DebugTerminal, terminal, <font color="#4169E1">sizeof</font>(DebugTerminal));
+<a name="line51"> 51: </a>  <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(terminal, <font color="#666666">"xterm"</font>, &amp;xterm);
+<a name="line52"> 52: </a>  <font color="#4169E1">if</font> (xterm) <a href="../../../docs/manualpages/Sys/PetscStrlcat.html">PetscStrlcat</a>(DebugTerminal, <font color="#666666">" -e"</font>, <font color="#4169E1">sizeof</font>(DebugTerminal));
+<a name="line53"> 53: </a>  <font color="#4169E1">return</font> 0;
+<a name="line54"> 54: </a>}
+
+<a name="line56"> 56: </a><font color="#B22222">/*@C</font>
+<a name="line57"> 57: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscSetDebugger.html">PetscSetDebugger</a> - Sets options associated with the debugger.</font>
+
+<a name="line59"> 59: </a><font color="#B22222">   Not Collective; No Fortran Support</font>
+
+<a name="line61"> 61: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line62"> 62: </a><font color="#B22222">+  debugger - name of debugger, which should be in your path,</font>
+<a name="line63"> 63: </a><font color="#B22222">              usually "lldb", "dbx", "gdb", "cuda-gdb", "idb", "xxgdb", "kdgb" or "ddd". Also, HP-UX</font>
+<a name="line64"> 64: </a><font color="#B22222">              supports "xdb", and IBM rs6000 supports "xldb".</font>
+
+<a name="line66"> 66: </a><font color="#B22222">-  usedebugterminal - flag to indicate debugger window, set to either <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> (to indicate</font>
+<a name="line67"> 67: </a><font color="#B22222">            debugger should be started in a new terminal window) or <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a> (to start debugger</font>
+<a name="line68"> 68: </a><font color="#B22222">            in initial window (the option <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a> makes no sense when using more</font>
+<a name="line69"> 69: </a><font color="#B22222">            than one MPI process.)</font>
+
+<a name="line71"> 71: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line73"> 73: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscAttachDebugger.html">PetscAttachDebugger</a>()`, `<a href="../../../docs/manualpages/Sys/PetscAttachDebuggerErrorHandler.html">PetscAttachDebuggerErrorHandler</a>()`, `<a href="../../../docs/manualpages/Sys/PetscSetDebugTerminal.html">PetscSetDebugTerminal</a>()`</font>
+<a name="line74"> 74: </a><font color="#B22222">@*/</font>
+<a name="line75"> 75: </a><strong><font color="#4169E1"><a name="PetscSetDebugger"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscSetDebugger.html">PetscSetDebugger</a>(const char debugger[], <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> usedebugterminal)</font></strong>
+<a name="line76"> 76: </a>{
+<a name="line77"> 77: </a>  <font color="#4169E1">if</font> (debugger) <a href="../../../docs/manualpages/Sys/PetscStrncpy.html">PetscStrncpy</a>(PetscDebugger, debugger, <font color="#4169E1">sizeof</font>(PetscDebugger));
+<a name="line78"> 78: </a>  <font color="#4169E1">if</font> (UseDebugTerminal) UseDebugTerminal = usedebugterminal;
+<a name="line79"> 79: </a>  <font color="#4169E1">return</font> 0;
+<a name="line80"> 80: </a>}
+
+<a name="line82"> 82: </a><font color="#B22222">/*@C</font>
+<a name="line83"> 83: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscSetDefaultDebugger.html">PetscSetDefaultDebugger</a> - Causes PETSc to use its default debugger and output terminal</font>
+
+<a name="line85"> 85: </a><font color="#B22222">   Not collective</font>
+
+<a name="line87"> 87: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line89"> 89: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscSetDebugger.html">PetscSetDebugger</a>()`, `<a href="../../../docs/manualpages/Sys/PetscSetDebuggerFromString.html">PetscSetDebuggerFromString</a>()`</font>
+<a name="line90"> 90: </a><font color="#B22222">@*/</font>
+<a name="line91"> 91: </a><strong><font color="#4169E1"><a name="PetscSetDefaultDebugger"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscSetDefaultDebugger.html">PetscSetDefaultDebugger</a>(void)</font></strong>
+<a name="line92"> 92: </a>{
+<a name="line93"> 93: </a><font color="#A020F0">#if defined(PETSC_USE_DEBUGGER)</font>
+<a name="line94"> 94: </a>  <a href="../../../docs/manualpages/Sys/PetscSetDebugger.html">PetscSetDebugger</a>(PETSC_USE_DEBUGGER, <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+<a name="line95"> 95: </a><font color="#A020F0">#endif</font>
+<a name="line96"> 96: </a><font color="#A020F0">#if defined(__APPLE__)</font>
+<a name="line97"> 97: </a>  <a href="../../../docs/manualpages/Sys/PetscSetDebugTerminal.html">PetscSetDebugTerminal</a>(<font color="#666666">"Terminal"</font>);
+<a name="line98"> 98: </a><font color="#A020F0">#else</font>
+<a name="line99"> 99: </a>  <a href="../../../docs/manualpages/Sys/PetscSetDebugTerminal.html">PetscSetDebugTerminal</a>(<font color="#666666">"xterm"</font>);
+<a name="line100">100: </a><font color="#A020F0">#endif</font>
+<a name="line101">101: </a>  <font color="#4169E1">return</font> 0;
+<a name="line102">102: </a>}
+
+<a name="line105">105: </a>{
+<a name="line106">106: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> exists;
+<a name="line107">107: </a>  char     *f;
+
+<a name="line109">109: </a>  <a href="../../../docs/manualpages/Sys/PetscStrstr.html">PetscStrstr</a>(string, defaultDbg, &amp;f);
+<a name="line110">110: </a>  <font color="#4169E1">if</font> (f) {
+<a name="line111">111: </a>    <a href="../../../docs/manualpages/Sys/PetscTestFile.html">PetscTestFile</a>(string, 'x', &amp;exists);
+<a name="line112">112: </a>    <font color="#4169E1">if</font> (exists) *debugger = string;
+<a name="line113">113: </a>    <font color="#4169E1">else</font> *debugger = defaultDbg;
+<a name="line114">114: </a>  }
+<a name="line115">115: </a>  <font color="#4169E1">return</font> 0;
+<a name="line116">116: </a>}
+
+<a name="line118">118: </a><font color="#B22222">/*@C</font>
+<a name="line119">119: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscSetDebuggerFromString.html">PetscSetDebuggerFromString</a> - Set the complete path for the</font>
+<a name="line120">120: </a><font color="#B22222">       debugger for PETSc to use.</font>
+
+<a name="line122">122: </a><font color="#B22222">   Not collective</font>
+
+<a name="line124">124: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line126">126: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscSetDebugger.html">PetscSetDebugger</a>()`, `<a href="../../../docs/manualpages/Sys/PetscSetDefaultDebugger.html">PetscSetDefaultDebugger</a>()`</font>
+<a name="line127">127: </a><font color="#B22222">@*/</font>
+<a name="line128">128: </a><strong><font color="#4169E1"><a name="PetscSetDebuggerFromString"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscSetDebuggerFromString.html">PetscSetDebuggerFromString</a>(const char *string)</font></strong>
+<a name="line129">129: </a>{
+<a name="line130">130: </a>  const char *debugger    = NULL;
+<a name="line131">131: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   useterminal = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line132">132: </a>  char       *f;
+
+<a name="line134">134: </a>  <a href="../../../docs/manualpages/Sys/PetscStrstr.html">PetscStrstr</a>(string, <font color="#666666">"noxterm"</font>, &amp;f);
+<a name="line135">135: </a>  <font color="#4169E1">if</font> (f) useterminal = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line136">136: </a>  <a href="../../../docs/manualpages/Sys/PetscStrstr.html">PetscStrstr</a>(string, <font color="#666666">"ddd"</font>, &amp;f);
+<a name="line137">137: </a>  <font color="#4169E1">if</font> (f) useterminal = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line138">138: </a>  <a href="../../../docs/manualpages/Sys/PetscStrstr.html">PetscStrstr</a>(string, <font color="#666666">"noterminal"</font>, &amp;f);
+<a name="line139">139: </a>  <font color="#4169E1">if</font> (f) useterminal = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line154">154: </a>  <a href="../../../docs/manualpages/Sys/PetscSetDebugger.html">PetscSetDebugger</a>(debugger, useterminal);
+<a name="line155">155: </a>  <font color="#4169E1">return</font> 0;
+<a name="line156">156: </a>}
+
+<a name="line158">158: </a><font color="#B22222">/*@</font>
+<a name="line159">159: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscWaitOnError.html">PetscWaitOnError</a> - If an error is detected and the process would normally exit the main program with `<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Abort.html#MPI_Abort">MPI_Abort</a>()` sleep instead</font>
+<a name="line160">160: </a><font color="#B22222">                      of exiting.</font>
+
+<a name="line162">162: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line164">164: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line166">166: </a><font color="#B22222">   Note:</font>
+<a name="line167">167: </a><font color="#B22222">      When -start_in_debugger -debugger_ranks x,y,z is used this prevents the processes NOT listed in x,y,z from calling <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Abort.html#MPI_Abort">MPI_Abort</a> and</font>
+<a name="line168">168: </a><font color="#B22222">      killing the user's debugging sessions.</font>
+
+<a name="line170">170: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscSetDebugger.html">PetscSetDebugger</a>()`, `<a href="../../../docs/manualpages/Sys/PetscAttachDebugger.html">PetscAttachDebugger</a>()`</font>
+<a name="line171">171: </a><font color="#B22222">@*/</font>
+<a name="line172">172: </a><strong><font color="#4169E1"><a name="PetscWaitOnError"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscWaitOnError.html">PetscWaitOnError</a>(void)</font></strong>
+<a name="line173">173: </a>{
+<a name="line174">174: </a>  petscwaitonerrorflg = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line175">175: </a>  <font color="#4169E1">return</font> 0;
+<a name="line176">176: </a>}
+
+<a name="line178">178: </a><font color="#B22222">/*@</font>
+<a name="line179">179: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscAttachDebugger.html">PetscAttachDebugger</a> - Attaches the debugger to the running process.</font>
+
+<a name="line181">181: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line183">183: </a><font color="#B22222">   Options Database Keys:</font>
+<a name="line184">184: </a><font color="#B22222">-  -start_in_debugger [noxterm,dbx,xxgdb,xdb,xldb,gdb] [-display name] [-debugger_ranks m,n] -debug_terminal xterm or Terminal (for Apple)</font>
+<a name="line185">185: </a><font color="#B22222">.  -on_error_attach_debugger [noxterm,dbx,xxgdb,xdb,xldb,gdb] [-display name] - Activates debugger attachment</font>
+
+<a name="line187">187: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line189">189: </a><font color="#B22222">   Developer Note:</font>
+<a name="line190">190: </a><font color="#B22222">    Since this can be called by the error handler should it be calling `<a href="../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>()` and `<a href="../../../docs/manualpages/Sys/PetscCall.html">PetscCall</a>()`?</font>
+
+<a name="line192">192: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscSetDebugger.html">PetscSetDebugger</a>()`, `<a href="../../../docs/manualpages/Sys/PetscSetDefaultDebugger.html">PetscSetDefaultDebugger</a>()`, `<a href="../../../docs/manualpages/Sys/PetscSetDebugTerminal.html">PetscSetDebugTerminal</a>()`, `<a href="../../../docs/manualpages/Sys/PetscAttachDebuggerErrorHandler.html">PetscAttachDebuggerErrorHandler</a>()`, `<a href="../../../docs/manualpages/Sys/PetscStopForDebugger.html">PetscStopForDebugger</a>()`</font>
+<a name="line193">193: </a><font color="#B22222">@*/</font>
+<a name="line194">194: </a><strong><font color="#4169E1"><a name="PetscAttachDebugger"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscAttachDebugger.html">PetscAttachDebugger</a>(void)</font></strong>
+<a name="line195">195: </a>{
+<a name="line196">196: </a><font color="#A020F0">#if !defined(PETSC_CANNOT_START_DEBUGGER) &amp;&amp; defined(PETSC_HAVE_FORK)</font>
+<a name="line197">197: </a>  int       child     = 0;
+<a name="line198">198: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> sleeptime = 0;
+<a name="line199">199: </a>  char      program[PETSC_MAX_PATH_LEN], display[256], hostname[64];
+<a name="line200">200: </a><font color="#A020F0">#endif</font>
+
+<a name="line202">202: </a><font color="#A020F0">#if defined(PETSC_CANNOT_START_DEBUGGER) || !defined(PETSC_HAVE_FORK)</font>
+<a name="line203">203: </a>  (*<a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"System cannot start debugger\n"</font>);
+<a name="line204">204: </a>  (*<a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"On Cray run program in Totalview debugger\n"</font>);
+<a name="line205">205: </a>  (*<a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"On Windows use Developer Studio(MSDEV)\n"</font>);
+<a name="line206">206: </a>  <a href="../../../docs/manualpages/Sys/PETSCABORT.html">PETSCABORT</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, PETSC_ERR_SUP_SYS);
+<a name="line207">207: </a><font color="#A020F0">#else</font>
+<a name="line208">208: </a>  <font color="#4169E1">if</font> (<a href="../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(<a href="../../../docs/manualpages/Sys/PetscGetDisplay.html">PetscGetDisplay</a>(display, <font color="#4169E1">sizeof</font>(display)))) {
+<a name="line209">209: </a>    (*<a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"Cannot determine display\n"</font>);
+<a name="line210">210: </a>    <font color="#4169E1">return</font> PETSC_ERR_SYS;
+<a name="line211">211: </a>  }
+<a name="line212">212: </a>  <font color="#4169E1">if</font> (<a href="../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(<a href="../../../docs/manualpages/Sys/PetscGetProgramName.html">PetscGetProgramName</a>(program, <font color="#4169E1">sizeof</font>(program)))) {
+<a name="line213">213: </a>    (*<a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"Cannot determine program name needed to attach debugger\n"</font>);
+<a name="line214">214: </a>    <font color="#4169E1">return</font> PETSC_ERR_SYS;
+<a name="line215">215: </a>  }
+<a name="line216">216: </a>  <font color="#4169E1">if</font> (<a href="../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(!program[0])) {
+<a name="line217">217: </a>    (*<a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"Cannot determine program name needed to attach debugger\n"</font>);
+<a name="line218">218: </a>    <font color="#4169E1">return</font> PETSC_ERR_SYS;
+<a name="line219">219: </a>  }
+<a name="line220">220: </a>  child = (int)fork();
+<a name="line221">221: </a>  <font color="#4169E1">if</font> (<a href="../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(child &lt; 0)) {
+<a name="line222">222: </a>    (*<a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"Error in fork() prior to attaching debugger\n"</font>);
+<a name="line223">223: </a>    <font color="#4169E1">return</font> PETSC_ERR_SYS;
+<a name="line224">224: </a>  }
+<a name="line225">225: </a>  petscindebugger = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+
+<a name="line227">227: </a>  <font color="#B22222">/*</font>
+<a name="line228">228: </a><font color="#B22222">      Swap role the parent and child. This is (I think) so that control c typed</font>
+<a name="line229">229: </a><font color="#B22222">    in the debugger goes to the correct process.</font>
+<a name="line230">230: </a><font color="#B22222">  */</font>
+<a name="line231">231: </a><font color="#A020F0">  #if !defined(PETSC_DO_NOT_SWAP_CHILD_FOR_DEBUGGER)</font>
+<a name="line232">232: </a>  child = child ? 0 : (int)getppid();
+<a name="line233">233: </a><font color="#A020F0">  #endif</font>
+
+<a name="line235">235: </a>  <font color="#4169E1">if</font> (child) { <font color="#B22222">/* I am the parent, will run the debugger */</font>
+<a name="line236">236: </a>    const char *args[10];
+<a name="line237">237: </a>    char        pid[10];
+<a name="line238">238: </a>    <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    j, jj;
+<a name="line239">239: </a>    <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   isdbx, isidb, isxldb, isxxgdb, isups, isxdb, isworkshop, isddd, iskdbg, islldb;
+
+<a name="line241">241: </a>    <a href="../../../docs/manualpages/Sys/PetscGetHostName.html">PetscGetHostName</a>(hostname, <font color="#4169E1">sizeof</font>(hostname));
+<a name="line242">242: </a>    <font color="#B22222">/*</font>
+<a name="line243">243: </a><font color="#B22222">         We need to send a continue signal to the "child" process on the</font>
+<a name="line244">244: </a><font color="#B22222">       alpha, otherwise it just stays off forever</font>
+<a name="line245">245: </a><font color="#B22222">    */</font>
+<a name="line246">246: </a><font color="#A020F0">  #if defined(PETSC_NEED_KILL_FOR_DEBUGGER)</font>
+<a name="line247">247: </a>    kill(child, SIGCONT);
+<a name="line248">248: </a><font color="#A020F0">  #endif</font>
+<a name="line249">249: </a>    sprintf(pid, <font color="#666666">"%d"</font>, child);
+
+<a name="line251">251: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"xxgdb"</font>, &amp;isxxgdb);
+<a name="line252">252: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"ddd"</font>, &amp;isddd);
+<a name="line253">253: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"kdbg"</font>, &amp;iskdbg);
+<a name="line254">254: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"ups"</font>, &amp;isups);
+<a name="line255">255: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"xldb"</font>, &amp;isxldb);
+<a name="line256">256: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"xdb"</font>, &amp;isxdb);
+<a name="line257">257: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"dbx"</font>, &amp;isdbx);
+<a name="line258">258: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"idb"</font>, &amp;isidb);
+<a name="line259">259: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"workshop"</font>, &amp;isworkshop);
+<a name="line260">260: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"lldb"</font>, &amp;islldb);
+
+<a name="line262">262: </a>    <font color="#4169E1">if</font> (isxxgdb || isups || isddd) {
+<a name="line263">263: </a>      args[1] = program;
+<a name="line264">264: </a>      args[2] = pid;
+<a name="line265">265: </a>      args[3] = <font color="#666666">"-display"</font>;
+<a name="line266">266: </a>      args[0] = PetscDebugger;
+<a name="line267">267: </a>      args[4] = display;
+<a name="line268">268: </a>      args[5] = NULL;
+<a name="line269">269: </a>      printf(<font color="#666666">"PETSC: Attaching %s to %s %s on %s\n"</font>, args[0], args[1], pid, hostname);
+<a name="line270">270: </a>      <font color="#4169E1">if</font> (execvp(args[0], (char **)args) &lt; 0) {
+<a name="line271">271: </a>        perror(<font color="#666666">"Unable to start debugger"</font>);
+<a name="line272">272: </a>        exit(0);
+<a name="line273">273: </a>      }
+<a name="line274">274: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (iskdbg) {
+<a name="line275">275: </a>      args[1] = <font color="#666666">"-p"</font>;
+<a name="line276">276: </a>      args[2] = pid;
+<a name="line277">277: </a>      args[3] = program;
+<a name="line278">278: </a>      args[4] = <font color="#666666">"-display"</font>;
+<a name="line279">279: </a>      args[0] = PetscDebugger;
+<a name="line280">280: </a>      args[5] = display;
+<a name="line281">281: </a>      args[6] = NULL;
+<a name="line282">282: </a>      printf(<font color="#666666">"PETSC: Attaching %s to %s %s on %s\n"</font>, args[0], args[3], pid, hostname);
+<a name="line283">283: </a>      <font color="#4169E1">if</font> (execvp(args[0], (char **)args) &lt; 0) {
+<a name="line284">284: </a>        perror(<font color="#666666">"Unable to start debugger"</font>);
+<a name="line285">285: </a>        exit(0);
+<a name="line286">286: </a>      }
+<a name="line287">287: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isxldb) {
+<a name="line288">288: </a>      args[1] = <font color="#666666">"-a"</font>;
+<a name="line289">289: </a>      args[2] = pid;
+<a name="line290">290: </a>      args[3] = program;
+<a name="line291">291: </a>      args[4] = <font color="#666666">"-display"</font>;
+<a name="line292">292: </a>      args[0] = PetscDebugger;
+<a name="line293">293: </a>      args[5] = display;
+<a name="line294">294: </a>      args[6] = NULL;
+<a name="line295">295: </a>      printf(<font color="#666666">"PETSC: Attaching %s to %s %s on %s\n"</font>, args[0], args[1], pid, hostname);
+<a name="line296">296: </a>      <font color="#4169E1">if</font> (execvp(args[0], (char **)args) &lt; 0) {
+<a name="line297">297: </a>        perror(<font color="#666666">"Unable to start debugger"</font>);
+<a name="line298">298: </a>        exit(0);
+<a name="line299">299: </a>      }
+<a name="line300">300: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isworkshop) {
+<a name="line301">301: </a>      args[1] = <font color="#666666">"-s"</font>;
+<a name="line302">302: </a>      args[2] = pid;
+<a name="line303">303: </a>      args[3] = <font color="#666666">"-D"</font>;
+<a name="line304">304: </a>      args[4] = <font color="#666666">"-"</font>;
+<a name="line305">305: </a>      args[0] = PetscDebugger;
+<a name="line306">306: </a>      args[5] = pid;
+<a name="line307">307: </a>      args[6] = <font color="#666666">"-display"</font>;
+<a name="line308">308: </a>      args[7] = display;
+<a name="line309">309: </a>      args[8] = NULL;
+<a name="line310">310: </a>      printf(<font color="#666666">"PETSC: Attaching %s to %s on %s\n"</font>, args[0], pid, hostname);
+<a name="line311">311: </a>      <font color="#4169E1">if</font> (execvp(args[0], (char **)args) &lt; 0) {
+<a name="line312">312: </a>        perror(<font color="#666666">"Unable to start debugger"</font>);
+<a name="line313">313: </a>        exit(0);
+<a name="line314">314: </a>      }
+<a name="line315">315: </a>    } <font color="#4169E1">else</font> {
+<a name="line316">316: </a>      j = 0;
+<a name="line317">317: </a>      <font color="#4169E1">if</font> (UseDebugTerminal) {
+<a name="line318">318: </a>        <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> cmp;
+<a name="line319">319: </a>        char     *tmp, *tmp1;
+<a name="line320">320: </a>        <a href="../../../docs/manualpages/Sys/PetscStrncmp.html">PetscStrncmp</a>(DebugTerminal, <font color="#666666">"Terminal"</font>, 8, &amp;cmp);
+<a name="line321">321: </a>        <font color="#4169E1">if</font> (cmp) {
+<a name="line322">322: </a>          char command[1024];
+<a name="line323">323: </a>          <font color="#4169E1">if</font> (islldb) <a href="../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(command, <font color="#4169E1">sizeof</font>(command), <font color="#666666">"osascript -e 'tell app \"Terminal\" to do script \"lldb  -p %s \"'\n"</font>, pid);
+<a name="line324">324: </a>          <font color="#4169E1">else</font> {
+<a name="line325">325: </a>            char fullprogram[PETSC_MAX_PATH_LEN];
+<a name="line326">326: </a>            <a href="../../../docs/manualpages/Sys/PetscGetFullPath.html">PetscGetFullPath</a>(program, fullprogram, <font color="#4169E1">sizeof</font>(fullprogram));
+<a name="line327">327: </a>            <a href="../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(command, <font color="#4169E1">sizeof</font>(command), <font color="#666666">"osascript -e 'tell app \"Terminal\" to do script \"%s  %s %s \"'\n"</font>, PetscDebugger, fullprogram, pid);
+<a name="line328">328: </a>          }
+<a name="line329">329: </a>          <a href="../../../docs/manualpages/Sys/PetscPOpen.html">PetscPOpen</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, NULL, command, <font color="#666666">"r"</font>, NULL);
+<a name="line330">330: </a>          exit(0);
+<a name="line331">331: </a>        }
+
+<a name="line333">333: </a>        <a href="../../../docs/manualpages/Sys/PetscStrncmp.html">PetscStrncmp</a>(DebugTerminal, <font color="#666666">"screen"</font>, 6, &amp;cmp);
+<a name="line334">334: </a>        <font color="#4169E1">if</font> (!cmp) <a href="../../../docs/manualpages/Sys/PetscStrncmp.html">PetscStrncmp</a>(DebugTerminal, <font color="#666666">"gnome-terminal"</font>, 6, &amp;cmp);
+<a name="line335">335: </a>        <font color="#4169E1">if</font> (cmp) display[0] = 0; <font color="#B22222">/* when using screen, we never pass -display */</font>
+<a name="line336">336: </a>        args[j++] = tmp = DebugTerminal;
+<a name="line337">337: </a>        <font color="#4169E1">if</font> (display[0]) {
+<a name="line338">338: </a>          args[j++] = <font color="#666666">"-display"</font>;
+<a name="line339">339: </a>          args[j++] = display;
+<a name="line340">340: </a>        }
+<a name="line341">341: </a>        <font color="#4169E1">while</font> (*tmp) {
+<a name="line342">342: </a>          <a href="../../../docs/manualpages/Sys/PetscStrchr.html">PetscStrchr</a>(tmp, ' ', &amp;tmp1);
+<a name="line343">343: </a>          <font color="#4169E1">if</font> (!tmp1) <font color="#4169E1">break</font>;
+<a name="line344">344: </a>          *tmp1     = 0;
+<a name="line345">345: </a>          tmp       = tmp1 + 1;
+<a name="line346">346: </a>          args[j++] = tmp;
+<a name="line347">347: </a>        }
+<a name="line348">348: </a>      }
+<a name="line349">349: </a>      args[j++] = PetscDebugger;
+<a name="line350">350: </a>      jj        = j;
+<a name="line351">351: </a>      <font color="#B22222">/* this is for default gdb */</font>
+<a name="line352">352: </a>      args[j++] = program;
+<a name="line353">353: </a>      args[j++] = pid;
+<a name="line354">354: </a>      args[j++] = NULL;
+
+<a name="line356">356: </a>      <font color="#4169E1">if</font> (isidb) {
+<a name="line357">357: </a>        j         = jj;
+<a name="line358">358: </a>        args[j++] = <font color="#666666">"-pid"</font>;
+<a name="line359">359: </a>        args[j++] = pid;
+<a name="line360">360: </a>        args[j++] = <font color="#666666">"-gdb"</font>;
+<a name="line361">361: </a>        args[j++] = program;
+<a name="line362">362: </a>        args[j++] = NULL;
+<a name="line363">363: </a>      }
+<a name="line364">364: </a>      <font color="#4169E1">if</font> (islldb) {
+<a name="line365">365: </a>        j         = jj;
+<a name="line366">366: </a>        args[j++] = <font color="#666666">"-p"</font>;
+<a name="line367">367: </a>        args[j++] = pid;
+<a name="line368">368: </a>        args[j++] = NULL;
+<a name="line369">369: </a>      }
+<a name="line370">370: </a>      <font color="#4169E1">if</font> (isdbx) {
+<a name="line371">371: </a>        j         = jj;
+<a name="line372">372: </a><font color="#A020F0">  #if defined(PETSC_USE_P_FOR_DEBUGGER)</font>
+<a name="line373">373: </a>        args[j++] = <font color="#666666">"-p"</font>;
+<a name="line374">374: </a>        args[j++] = pid;
+<a name="line375">375: </a>        args[j++] = program;
+<a name="line376">376: </a><font color="#A020F0">  #elif defined(PETSC_USE_LARGEP_FOR_DEBUGGER)</font>
+<a name="line377">377: </a>        args[j++] = <font color="#666666">"-l"</font>;
+<a name="line378">378: </a>        args[j++] = <font color="#666666">"ALL"</font>;
+<a name="line379">379: </a>        args[j++] = <font color="#666666">"-P"</font>;
+<a name="line380">380: </a>        args[j++] = pid;
+<a name="line381">381: </a>        args[j++] = program;
+<a name="line382">382: </a><font color="#A020F0">  #elif defined(PETSC_USE_A_FOR_DEBUGGER)</font>
+<a name="line383">383: </a>        args[j++] = <font color="#666666">"-a"</font>;
+<a name="line384">384: </a>        args[j++] = pid;
+<a name="line385">385: </a><font color="#A020F0">  #elif defined(PETSC_USE_PID_FOR_DEBUGGER)</font>
+<a name="line386">386: </a>        args[j++] = <font color="#666666">"-pid"</font>;
+<a name="line387">387: </a>        args[j++] = pid;
+<a name="line388">388: </a>        args[j++] = program;
+<a name="line389">389: </a><font color="#A020F0">  #else</font>
+<a name="line390">390: </a>        args[j++] = program;
+<a name="line391">391: </a>        args[j++] = pid;
+<a name="line392">392: </a><font color="#A020F0">  #endif</font>
+<a name="line393">393: </a>        args[j++] = NULL;
+<a name="line394">394: </a>      }
+<a name="line395">395: </a>      <font color="#4169E1">if</font> (UseDebugTerminal) {
+<a name="line396">396: </a>        <font color="#4169E1">if</font> (display[0]) printf(<font color="#666666">"PETSC: Attaching %s to %s of pid %s on display %s on machine %s\n"</font>, PetscDebugger, program, pid, display, hostname);
+<a name="line397">397: </a>        <font color="#4169E1">else</font> printf(<font color="#666666">"PETSC: Attaching %s to %s on pid %s on %s\n"</font>, PetscDebugger, program, pid, hostname);
+
+<a name="line399">399: </a>        <font color="#4169E1">if</font> (execvp(args[0], (char **)args) &lt; 0) {
+<a name="line400">400: </a>          perror(<font color="#666666">"Unable to start debugger in xterm"</font>);
+<a name="line401">401: </a>          exit(0);
+<a name="line402">402: </a>        }
+<a name="line403">403: </a>      } <font color="#4169E1">else</font> {
+<a name="line404">404: </a>        printf(<font color="#666666">"PETSC: Attaching %s to %s of pid %s on %s\n"</font>, PetscDebugger, program, pid, hostname);
+<a name="line405">405: </a>        <font color="#4169E1">if</font> (execvp(args[0], (char **)args) &lt; 0) {
+<a name="line406">406: </a>          perror(<font color="#666666">"Unable to start debugger"</font>);
+<a name="line407">407: </a>          exit(0);
+<a name="line408">408: </a>        }
+<a name="line409">409: </a>      }
+<a name="line410">410: </a>    }
+<a name="line411">411: </a>  } <font color="#4169E1">else</font> {          <font color="#B22222">/* I am the child, continue with user code */</font>
+<a name="line412">412: </a>    sleeptime = 10; <font color="#B22222">/* default to sleep waiting for debugger */</font>
+<a name="line413">413: </a>    <a href="../../../docs/manualpages/Sys/PetscOptionsGetReal.html">PetscOptionsGetReal</a>(NULL, NULL, <font color="#666666">"-debugger_pause"</font>, &amp;sleeptime, NULL);
+<a name="line414">414: </a>    <font color="#4169E1">if</font> (sleeptime &lt; 0) sleeptime = -sleeptime;
+<a name="line415">415: </a><font color="#A020F0">  #if defined(PETSC_NEED_DEBUGGER_NO_SLEEP)</font>
+<a name="line416">416: </a>    <font color="#B22222">/*</font>
+<a name="line417">417: </a><font color="#B22222">        HP cannot attach process to sleeping debugger, hence count instead</font>
+<a name="line418">418: </a><font color="#B22222">    */</font>
+<a name="line419">419: </a>    {
+<a name="line420">420: </a>      <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> x = 1.0;
+<a name="line421">421: </a>      int       i = 10000000;
+<a name="line422">422: </a>      <font color="#4169E1">while</font> (i--) x++; <font color="#B22222">/* cannot attach to sleeper */</font>
+<a name="line423">423: </a>    }
+<a name="line424">424: </a><font color="#A020F0">  #elif defined(PETSC_HAVE_SLEEP_RETURNS_EARLY)</font>
+<a name="line425">425: </a>    <font color="#B22222">/*</font>
+<a name="line426">426: </a><font color="#B22222">        IBM sleep may return at anytime, hence must see if there is more time to sleep</font>
+<a name="line427">427: </a><font color="#B22222">    */</font>
+<a name="line428">428: </a>    {
+<a name="line429">429: </a>      int left = sleeptime;
+<a name="line430">430: </a>      <font color="#4169E1">while</font> (left &gt; 0) left = <a href="../../../docs/manualpages/Sys/PetscSleep.html">PetscSleep</a>(left) - 1;
+<a name="line431">431: </a>    }
+<a name="line432">432: </a><font color="#A020F0">  #else</font>
+<a name="line433">433: </a>    <a href="../../../docs/manualpages/Sys/PetscSleep.html">PetscSleep</a>(sleeptime);
+<a name="line434">434: </a><font color="#A020F0">  #endif</font>
+<a name="line435">435: </a>  }
+<a name="line436">436: </a><font color="#A020F0">#endif</font>
+<a name="line437">437: </a>  <font color="#4169E1">return</font> 0;
+<a name="line438">438: </a>}
+
+<a name="line440">440: </a><font color="#B22222">/*@C</font>
+<a name="line441">441: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscAttachDebuggerErrorHandler.html">PetscAttachDebuggerErrorHandler</a> - Error handler that attaches</font>
+<a name="line442">442: </a><font color="#B22222">   a debugger to a running process when an error is detected.</font>
+<a name="line443">443: </a><font color="#B22222">   This routine is useful for examining variables, etc.</font>
+
+<a name="line445">445: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line447">447: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line448">448: </a><font color="#B22222">+  comm - communicator over which error occurred</font>
+<a name="line449">449: </a><font color="#B22222">.  line - the line number of the error (indicated by __LINE__)</font>
+<a name="line450">450: </a><font color="#B22222">.  file - the file in which the error was detected (indicated by __FILE__)</font>
+<a name="line451">451: </a><font color="#B22222">.  message - an error text string, usually just printed to the screen</font>
+<a name="line452">452: </a><font color="#B22222">.  number - the generic error number</font>
+<a name="line453">453: </a><font color="#B22222">.  p - `<a href="../../../docs/manualpages/Sys/PetscErrorType.html">PETSC_ERROR_INITIAL</a>` if error just detected, otherwise `<a href="../../../docs/manualpages/Sys/PetscErrorType.html">PETSC_ERROR_REPEAT</a>`</font>
+<a name="line454">454: </a><font color="#B22222">-  ctx - error handler context</font>
+
+<a name="line456">456: </a><font color="#B22222">   Options Database Keys:</font>
+<a name="line457">457: </a><font color="#B22222">+  -on_error_attach_debugger [noxterm,dbx,xxgdb,xdb,xldb,gdb] [-display name] - Activates debugger attachment</font>
+<a name="line458">458: </a><font color="#B22222">-  -start_in_debugger [noxterm,dbx,xxgdb,xdb,xldb,gdb] [-display name] [-debugger_ranks m,n]</font>
+
+<a name="line460">460: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line462">462: </a><font color="#B22222">   Notes:</font>
+<a name="line463">463: </a><font color="#B22222">   By default the GNU debugger, gdb, is used.  Alternatives are cuda-gdb, lldb, dbx and</font>
+<a name="line464">464: </a><font color="#B22222">   xxgdb,xldb (on IBM rs6000), xdb (on HP-UX).</font>
+
+<a name="line466">466: </a><font color="#B22222">   Most users need not directly employ this routine and the other error</font>
+<a name="line467">467: </a><font color="#B22222">   handlers, but can instead use the simplified interface SETERR, which has</font>
+<a name="line468">468: </a><font color="#B22222">   the calling sequence</font>
+<a name="line469">469: </a><font color="#B22222">$     <a href="../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>,number,p,message)</font>
+
+<a name="line471">471: </a><font color="#B22222">   Notes for experienced users:</font>
+<a name="line472">472: </a><font color="#B22222">   Use `<a href="../../../docs/manualpages/Sys/PetscPushErrorHandler.html">PetscPushErrorHandler</a>()` to set the desired error handler.  The</font>
+<a name="line473">473: </a><font color="#B22222">   currently available PETSc error handlers are</font>
+<a name="line474">474: </a><font color="#B22222">$    <a href="../../../docs/manualpages/Sys/PetscTraceBackErrorHandler.html">PetscTraceBackErrorHandler</a>()</font>
+<a name="line475">475: </a><font color="#B22222">$    <a href="../../../docs/manualpages/Sys/PetscAttachDebuggerErrorHandler.html">PetscAttachDebuggerErrorHandler</a>()</font>
+<a name="line476">476: </a><font color="#B22222">$    <a href="../../../docs/manualpages/Sys/PetscAbortErrorHandler.html">PetscAbortErrorHandler</a>()</font>
+<a name="line477">477: </a><font color="#B22222">   or you may write your own.</font>
+
+<a name="line479">479: </a><font color="#B22222">   Developer Note:</font>
+<a name="line480">480: </a><font color="#B22222">     This routine calls abort instead of returning because if it returned then `<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Abort.html#MPI_Abort">MPI_Abort</a>()` would get called which can generate an exception</font>
+<a name="line481">481: </a><font color="#B22222">     causing the debugger to be attached again in a cycle.</font>
+
+<a name="line483">483: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscSetDebuggerFromString.html">PetscSetDebuggerFromString</a>()`, `<a href="../../../docs/manualpages/Sys/PetscSetDebugger.html">PetscSetDebugger</a>()`, `<a href="../../../docs/manualpages/Sys/PetscSetDefaultDebugger.html">PetscSetDefaultDebugger</a>()`, `<a href="../../../docs/manualpages/Sys/PetscError.html">PetscError</a>()`, `<a href="../../../docs/manualpages/Sys/PetscPushErrorHandler.html">PetscPushErrorHandler</a>()`, `<a href="../../../docs/manualpages/Sys/PetscPopErrorHandler.html">PetscPopErrorHandler</a>()`, `<a href="../../../docs/manualpages/Sys/PetscTraceBackErrorHandler.html">PetscTraceBackErrorHandler</a>()`,</font>
+<a name="line484">484: </a><font color="#B22222">          `<a href="../../../docs/manualpages/Sys/PetscAbortErrorHandler.html">PetscAbortErrorHandler</a>()`, `<a href="../../../docs/manualpages/Sys/PetscMPIAbortErrorHandler.html">PetscMPIAbortErrorHandler</a>()`, `<a href="../../../docs/manualpages/Sys/PetscEmacsClientErrorHandler.html">PetscEmacsClientErrorHandler</a>()`, `<a href="../../../docs/manualpages/Sys/PetscReturnErrorHandler.html">PetscReturnErrorHandler</a>()`, `PetscSetDebugTermainal()`</font>
+<a name="line485">485: </a><font color="#B22222">@*/</font>
+<a name="line486">486: </a><strong><font color="#4169E1"><a name="PetscAttachDebuggerErrorHandler"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscAttachDebuggerErrorHandler.html">PetscAttachDebuggerErrorHandler</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, int line, const char *fun, const char *file, <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> num, <a href="../../../docs/manualpages/Sys/PetscErrorType.html">PetscErrorType</a> p, const char *mess, void *ctx)</font></strong>
+<a name="line487">487: </a>{
+<a name="line488">488: </a>  <font color="#4169E1">if</font> (!mess) mess = <font color="#666666">" "</font>;
+
+<a name="line490">490: </a>  <font color="#4169E1">if</font> (fun) (*<a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"%s() at %s:%d %s\n"</font>, fun, file, line, mess);
+<a name="line491">491: </a>  <font color="#4169E1">else</font> (*<a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"%s:%d %s\n"</font>, file, line, mess);
+
+<a name="line493">493: </a>  <a href="../../../docs/manualpages/Sys/PetscAttachDebugger.html">PetscAttachDebugger</a>();
+<a name="line494">494: </a>  abort(); <font color="#B22222">/* call abort because don't want to kill other MPI ranks that may successfully attach to debugger */</font>
+<a name="line495">495: </a>  <font color="#4169E1">return</font> 0;
+<a name="line496">496: </a>}
+
+<a name="line498">498: </a><font color="#B22222">/*@C</font>
+<a name="line499">499: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscStopForDebugger.html">PetscStopForDebugger</a> - Prints a message to the screen indicating how to</font>
+<a name="line500">500: </a><font color="#B22222">         attach to the process with the debugger and then waits for the</font>
+<a name="line501">501: </a><font color="#B22222">         debugger to attach.</font>
+
+<a name="line503">503: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line505">505: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line506">506: </a><font color="#B22222">.   -stop_for_debugger - will stop for you to attach the debugger when <a href="../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>() is called</font>
+
+<a name="line508">508: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line510">510: </a><font color="#B22222">   Note:</font>
+<a name="line511">511: </a><font color="#B22222">    This is likely never needed since `<a href="../../../docs/manualpages/Sys/PetscAttachDebugger.html">PetscAttachDebugger</a>()` is easier to use and seems to always work.</font>
+
+<a name="line513">513: </a><font color="#B22222">   Developer Note:</font>
+<a name="line514">514: </a><font color="#B22222">    Since this can be called by the error handler, should it be calling `<a href="../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>()` and `<a href="../../../docs/manualpages/Sys/PetscCall.html">PetscCall</a>()`?</font>
+
+<a name="line516">516: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscSetDebugger.html">PetscSetDebugger</a>()`, `<a href="../../../docs/manualpages/Sys/PetscAttachDebugger.html">PetscAttachDebugger</a>()`</font>
+<a name="line517">517: </a><font color="#B22222">@*/</font>
+<a name="line518">518: </a><strong><font color="#4169E1"><a name="PetscStopForDebugger"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscStopForDebugger.html">PetscStopForDebugger</a>(void)</font></strong>
+<a name="line519">519: </a>{
+<a name="line521">521: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       sleeptime = 0;
+<a name="line522">522: </a><font color="#A020F0">#if !defined(PETSC_CANNOT_START_DEBUGGER)</font>
+<a name="line523">523: </a>  int         ppid;
+<a name="line524">524: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+<a name="line525">525: </a>  char        program[PETSC_MAX_PATH_LEN], hostname[256];
+<a name="line526">526: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   isdbx, isxldb, isxxgdb, isddd, iskdbg, isups, isxdb, islldb;
+<a name="line527">527: </a><font color="#A020F0">#endif</font>
+
+<a name="line529">529: </a><font color="#A020F0">#if defined(PETSC_CANNOT_START_DEBUGGER)</font>
+<a name="line530">530: </a>  (*<a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"System cannot start debugger; just continuing program\n"</font>);
+<a name="line531">531: </a><font color="#A020F0">#else</font>
+<a name="line532">532: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;rank);
+<a name="line533">533: </a>  <font color="#4169E1">if</font> (ierr) rank = 0; <font color="#B22222">/* ignore error since this may be already in error handler */</font>
+<a name="line534">534: </a>  <a href="../../../docs/manualpages/Sys/PetscGetHostName.html">PetscGetHostName</a>(hostname, <font color="#4169E1">sizeof</font>(hostname));
+<a name="line535">535: </a>  <font color="#4169E1">if</font> (ierr) {
+<a name="line536">536: </a>    (*<a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"Cannot determine hostname; just continuing program\n"</font>);
+<a name="line537">537: </a>    <font color="#4169E1">return</font> 0;
+<a name="line538">538: </a>  }
+
+<a name="line540">540: </a>  <a href="../../../docs/manualpages/Sys/PetscGetProgramName.html">PetscGetProgramName</a>(program, <font color="#4169E1">sizeof</font>(program));
+<a name="line541">541: </a>  <font color="#4169E1">if</font> (ierr) {
+<a name="line542">542: </a>    (*<a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"Cannot determine program name; just continuing program\n"</font>);
+<a name="line543">543: </a>    <font color="#4169E1">return</font> 0;
+<a name="line544">544: </a>  }
+<a name="line545">545: </a>  <font color="#4169E1">if</font> (!program[0]) {
+<a name="line546">546: </a>    (*<a href="../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"Cannot determine program name; just continuing program\n"</font>);
+<a name="line547">547: </a>    <font color="#4169E1">return</font> 0;
+<a name="line548">548: </a>  }
+
+<a name="line550">550: </a>  ppid = getpid();
+
+<a name="line552">552: </a>  <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"xxgdb"</font>, &amp;isxxgdb);
+<a name="line553">553: </a>  <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"ddd"</font>, &amp;isddd);
+<a name="line554">554: </a>  <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"kdbg"</font>, &amp;iskdbg);
+<a name="line555">555: </a>  <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"ups"</font>, &amp;isups);
+<a name="line556">556: </a>  <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"xldb"</font>, &amp;isxldb);
+<a name="line557">557: </a>  <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"xdb"</font>, &amp;isxdb);
+<a name="line558">558: </a>  <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"dbx"</font>, &amp;isdbx);
+<a name="line559">559: </a>  <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(PetscDebugger, <font color="#666666">"lldb"</font>, &amp;islldb);
+
+<a name="line561">561: </a>  <font color="#4169E1">if</font> (isxxgdb || isups || isddd || iskdbg) printf(<font color="#666666">"[%d]%s&gt;&gt;%s %s %d\n"</font>, rank, hostname, PetscDebugger, program, ppid);
+<a name="line562">562: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isxldb) printf(<font color="#666666">"[%d]%s&gt;&gt;%s -a %d %s\n"</font>, rank, hostname, PetscDebugger, ppid, program);
+<a name="line563">563: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (islldb) printf(<font color="#666666">"[%d]%s&gt;&gt;%s -p %d\n"</font>, rank, hostname, PetscDebugger, ppid);
+<a name="line564">564: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isdbx) {
+<a name="line565">565: </a><font color="#A020F0">  #if defined(PETSC_USE_P_FOR_DEBUGGER)</font>
+<a name="line566">566: </a>    printf(<font color="#666666">"[%d]%s&gt;&gt;%s -p %d %s\n"</font>, rank, hostname, PetscDebugger, ppid, program);
+<a name="line567">567: </a><font color="#A020F0">  #elif defined(PETSC_USE_LARGEP_FOR_DEBUGGER)</font>
+<a name="line568">568: </a>    printf(<font color="#666666">"[%d]%s&gt;&gt;%s -l ALL -P %d %s\n"</font>, rank, hostname, PetscDebugger, ppid, program);
+<a name="line569">569: </a><font color="#A020F0">  #elif defined(PETSC_USE_A_FOR_DEBUGGER)</font>
+<a name="line570">570: </a>    printf(<font color="#666666">"[%d]%s&gt;&gt;%s -a %d\n"</font>, rank, hostname, PetscDebugger, ppid);
+<a name="line571">571: </a><font color="#A020F0">  #elif defined(PETSC_USE_PID_FOR_DEBUGGER)</font>
+<a name="line572">572: </a>    printf(<font color="#666666">"[%d]%s&gt;&gt;%s -pid %d %s\n"</font>, rank, hostname, PetscDebugger, ppid, program);
+<a name="line573">573: </a><font color="#A020F0">  #else</font>
+<a name="line574">574: </a>    printf(<font color="#666666">"[%d]%s&gt;&gt;%s %s %d\n"</font>, rank, hostname, PetscDebugger, program, ppid);
+<a name="line575">575: </a><font color="#A020F0">  #endif</font>
+<a name="line576">576: </a>  }
+<a name="line577">577: </a><font color="#A020F0">#endif </font><font color="#B22222">/* PETSC_CANNOT_START_DEBUGGER */</font><font color="#A020F0"></font>
+
+<a name="line579">579: </a>  fflush(stdout); <font color="#B22222">/* ignore error because may already be in error handler */</font>
+
+<a name="line581">581: </a>  sleeptime = 25;                                                      <font color="#B22222">/* default to sleep waiting for debugger */</font>
+<a name="line582">582: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(NULL, NULL, <font color="#666666">"-debugger_pause"</font>, &amp;sleeptime, NULL); <font color="#B22222">/* ignore error because may already be in error handler */</font>
+<a name="line583">583: </a>  <font color="#4169E1">if</font> (sleeptime &lt; 0) sleeptime = -sleeptime;
+<a name="line584">584: </a><font color="#A020F0">#if defined(PETSC_NEED_DEBUGGER_NO_SLEEP)</font>
+<a name="line585">585: </a>  <font color="#B22222">/*</font>
+<a name="line586">586: </a><font color="#B22222">      HP cannot attach process to sleeping debugger, hence count instead</font>
+<a name="line587">587: </a><font color="#B22222">  */</font>
+<a name="line588">588: </a>  {
+<a name="line589">589: </a>    <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> x = 1.0;
+<a name="line590">590: </a>    int       i = 10000000;
+<a name="line591">591: </a>    <font color="#4169E1">while</font> (i--) x++; <font color="#B22222">/* cannot attach to sleeper */</font>
+<a name="line592">592: </a>  }
+<a name="line593">593: </a><font color="#A020F0">#elif defined(PETSC_HAVE_SLEEP_RETURNS_EARLY)</font>
+<a name="line594">594: </a>  <font color="#B22222">/*</font>
+<a name="line595">595: </a><font color="#B22222">      IBM sleep may return at anytime, hence must see if there is more time to sleep</font>
+<a name="line596">596: </a><font color="#B22222">  */</font>
+<a name="line597">597: </a>  {
+<a name="line598">598: </a>    int left = sleeptime;
+<a name="line599">599: </a>    <font color="#4169E1">while</font> (left &gt; 0) left = sleep(left) - 1;
+<a name="line600">600: </a>  }
+<a name="line601">601: </a><font color="#A020F0">#else</font>
+<a name="line602">602: </a>  <a href="../../../docs/manualpages/Sys/PetscSleep.html">PetscSleep</a>(sleeptime);
+<a name="line603">603: </a><font color="#A020F0">#endif</font>
+<a name="line604">604: </a>  <font color="#4169E1">return</font> 0;
+<a name="line605">605: </a>}
+</pre>
+</body>
+
+</html>

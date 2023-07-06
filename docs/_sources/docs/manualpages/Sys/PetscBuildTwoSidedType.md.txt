@@ -1,0 +1,54 @@
+# PetscBuildTwoSidedType
+algorithm for setting up two-sided communication 
+## Synopsis
+```
+typedef enum {
+  PETSC_BUILDTWOSIDED_NOTSET     = -1,
+  PETSC_BUILDTWOSIDED_ALLREDUCE  = 0,
+  PETSC_BUILDTWOSIDED_IBARRIER   = 1,
+  PETSC_BUILDTWOSIDED_REDSCATTER = 2
+  /* Updates here must be accompanied by updates in finclude/petscsys.h and the string array in mpits.c */
+} PetscBuildTwoSidedType;
+```
+```none
+`PETSC_BUILDTWOSIDED_ALLREDUCE` - classical algorithm using an MPI_Allreduce with
+```
+```none
+a buffer of length equal to the communicator size. Not memory-scalable due to
+```
+```none
+the large reduction size. Requires only MPI-1.
+```
+```none
+`PETSC_BUILDTWOSIDED_IBARRIER` - nonblocking algorithm based on MPI_Issend and MPI_Ibarrier.
+```
+```none
+Proved communication-optimal in Hoefler, Siebert, and Lumsdaine (2010). Requires MPI-3.
+```
+```none
+`PETSC_BUILDTWOSIDED_REDSCATTER` - similar to above, but use more optimized function
+```
+```none
+that only communicates the part of the reduction that is necessary.  Requires MPI-2.
+```
+
+
+
+
+## See Also
+ `PetscCommBuildTwoSided()`, `PetscCommBuildTwoSidedSetType()`, `PetscCommBuildTwoSidedGetType()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscsystypes.h.html#PetscBuildTwoSidedType">include/petscsystypes.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscsystypes.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

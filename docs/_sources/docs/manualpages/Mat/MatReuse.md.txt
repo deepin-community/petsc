@@ -1,0 +1,59 @@
+# MatReuse
+Indicates if matrices obtained from a previous call to MatCreateSubMatrices(), MatCreateSubMatrix(), MatConvert() or several other functions are to be reused to store the new matrix values. 
+## Synopsis
+```
+typedef enum {
+  MAT_INITIAL_MATRIX,
+  MAT_REUSE_MATRIX,
+  MAT_IGNORE_MATRIX,
+  MAT_INPLACE_MATRIX
+} MatReuse;
+```
+```none
+MAT_INITIAL_MATRIX - create a new matrix
+```
+```none
+MAT_REUSE_MATRIX - reuse the matrix created with a previous call that used MAT_INITIAL_MATRIX
+```
+```none
+MAT_INPLACE_MATRIX - replace the first input matrix with the new matrix (not applicable to all functions)
+```
+```none
+MAT_IGNORE_MATRIX - do not create a new matrix or reuse a give matrix, just ignore that matrix argument (not applicable to all functions)
+```
+
+
+
+Any additions/changes here MUST also be made in include/petsc/finclude/petscmat.h
+
+
+## See Also
+ `MatCreateSubMatrices()`, `MatCreateSubMatrix()`, `MatDestroyMatrices()`, `MatConvert()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscmat.h.html#MatReuse">include/petscmat.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex5cu.cu.html">src/mat/tutorials/ex5cu.cu.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex27.c.html">src/ksp/ksp/tutorials/ex27.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex29.c.html">src/ksp/ksp/tutorials/ex29.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex34.c.html">src/ksp/ksp/tutorials/ex34.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex43.c.html">src/ksp/ksp/tutorials/ex43.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex49.c.html">src/ksp/ksp/tutorials/ex49.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex59.c.html">src/ksp/ksp/tutorials/ex59.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex64.c.html">src/ksp/ksp/tutorials/ex64.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex65.c.html">src/ksp/ksp/tutorials/ex65.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex6f.F90.html">src/ksp/ksp/tutorials/ex6f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex71.c.html">src/ksp/ksp/tutorials/ex71.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscmat.h)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

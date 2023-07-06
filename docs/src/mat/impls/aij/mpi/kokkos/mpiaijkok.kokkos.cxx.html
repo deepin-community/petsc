@@ -1,0 +1,1576 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/impls/aij/mpi/kokkos/mpiaijkok.kokkos.cxx">Actual source code: mpiaijkok.kokkos.cxx</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:42+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../../include/petscvec_kokkos.hpp.html">&lt;petscvec_kokkos.hpp&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../../../include/petscsf.h.html">&lt;petscsf.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="../../../../../../include/petsc/private/sfimpl.h.html">&lt;petsc/private/sfimpl.h&gt;</A>
+<a name="line4">  4: </a>#include <A href="../mpiaij.h.html">&lt;../src/mat/impls/aij/mpi/mpiaij.h&gt;</A>
+<a name="line5">  5: </a>#include <A href="mpiaijkok.hpp.html">&lt;../src/mat/impls/aij/mpi/kokkos/mpiaijkok.hpp&gt;</A>
+<a name="line6">  6: </a><font color="#A020F0">#include &lt;KokkosSparse_spadd.hpp&gt;</font>
+
+<a name="line8">  8: </a><strong><font color="#4169E1"><a name="MatAssemblyEnd_MPIAIJKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatAssemblyEnd_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Mat/MatAssemblyType.html">MatAssemblyType</a> mode)</font></strong>
+<a name="line9">  9: </a>{
+<a name="line10"> 10: </a>  Mat_SeqAIJKokkos *aijkok;
+<a name="line11"> 11: </a>  Mat_MPIAIJ       *mpiaij = (Mat_MPIAIJ *)A-&gt;data;
+
+<a name="line13"> 13: </a>  MatAssemblyEnd_MPIAIJ(A, mode);
+<a name="line14"> 14: </a>  <font color="#B22222">/* E.g., <a href="../../../../../../docs/manualpages/Mat/MatCreateSubMatrix.html">MatCreateSubMatrix</a>() calls <a href="../../../../../../docs/manualpages/Mat/MatCreateMPIAIJWithSeqAIJ.html">MatCreateMPIAIJWithSeqAIJ</a>(comm,A,B,..), which creates Bnew of SEQAIJ and destroys B of SEQAIJKOKKOS.</font>
+<a name="line15"> 15: </a><font color="#B22222">     Thus we finalize A/B/lvec's type in <a href="../../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>() to handle various cases.</font>
+<a name="line16"> 16: </a><font color="#B22222">   */</font>
+<a name="line17"> 17: </a>  <font color="#4169E1">if</font> (mode == <a href="../../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>) {
+<a name="line18"> 18: </a>    <a href="../../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(mpiaij-&gt;A, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJKOKKOS.html">MATSEQAIJKOKKOS</a>);
+<a name="line19"> 19: </a>    <a href="../../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(mpiaij-&gt;B, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJKOKKOS.html">MATSEQAIJKOKKOS</a>);
+<a name="line20"> 20: </a>    <a href="../../../../../../docs/manualpages/Vec/VecSetType.html">VecSetType</a>(mpiaij-&gt;lvec, <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a>);
+<a name="line21"> 21: </a>  }
+<a name="line22"> 22: </a>  aijkok = static_cast&lt;Mat_SeqAIJKokkos *&gt;(((Mat_MPIAIJ *)A-&gt;data)-&gt;A-&gt;spptr); <font color="#B22222">/* Access spptr after MatAssemblyEnd_MPIAIJ(), which might have deleted old spptr */</font>
+<a name="line23"> 23: </a>  <font color="#4169E1">if</font> (aijkok &amp;&amp; aijkok-&gt;device_mat_d.data()) {
+<a name="line24"> 24: </a>    A-&gt;offloadmask = <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_GPU</a>; // in GPU mode, no going back. <a href="../../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a> checks this
+<a name="line25"> 25: </a>  }
+
+<a name="line27"> 27: </a>  <font color="#4169E1">return</font> 0;
+<a name="line28"> 28: </a>}
+
+<a name="line30"> 30: </a><strong><font color="#4169E1"><a name="MatMPIAIJSetPreallocation_MPIAIJKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatMPIAIJSetPreallocation_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> mat, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> d_nz, const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> d_nnz[], <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> o_nz, const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> o_nnz[])</font></strong>
+<a name="line31"> 31: </a>{
+<a name="line32"> 32: </a>  Mat_MPIAIJ *mpiaij = (Mat_MPIAIJ *)mat-&gt;data;
+
+<a name="line34"> 34: </a>  <a href="../../../../../../docs/manualpages/IS/PetscLayoutSetUp.html">PetscLayoutSetUp</a>(mat-&gt;rmap);
+<a name="line35"> 35: </a>  <a href="../../../../../../docs/manualpages/IS/PetscLayoutSetUp.html">PetscLayoutSetUp</a>(mat-&gt;cmap);
+<a name="line36"> 36: </a><font color="#A020F0">#if defined(PETSC_USE_DEBUG)</font>
+<a name="line37"> 37: </a>  <font color="#4169E1">if</font> (d_nnz) {
+<a name="line38"> 38: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i;
+<a name="line40"> 40: </a>  }
+<a name="line41"> 41: </a>  <font color="#4169E1">if</font> (o_nnz) {
+<a name="line42"> 42: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i;
+<a name="line44"> 44: </a>  }
+<a name="line45"> 45: </a><font color="#A020F0">#endif</font>
+<a name="line46"> 46: </a><font color="#A020F0">#if defined(PETSC_USE_CTABLE)</font>
+<a name="line47"> 47: </a>  PetscTableDestroy(&amp;mpiaij-&gt;colmap);
+<a name="line48"> 48: </a><font color="#A020F0">#else</font>
+<a name="line49"> 49: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(mpiaij-&gt;colmap);
+<a name="line50"> 50: </a><font color="#A020F0">#endif</font>
+<a name="line51"> 51: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(mpiaij-&gt;garray);
+<a name="line52"> 52: </a>  <a href="../../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;mpiaij-&gt;lvec);
+<a name="line53"> 53: </a>  <a href="../../../../../../docs/manualpages/PetscSF/VecScatterDestroy.html">VecScatterDestroy</a>(&amp;mpiaij-&gt;Mvctx);
+<a name="line54"> 54: </a>  <font color="#B22222">/* Because the B will have been resized we simply destroy it and create a new one each time */</font>
+<a name="line55"> 55: </a>  <a href="../../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;mpiaij-&gt;B);
+
+<a name="line57"> 57: </a>  <font color="#4169E1">if</font> (!mpiaij-&gt;A) {
+<a name="line58"> 58: </a>    <a href="../../../../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;mpiaij-&gt;A);
+<a name="line59"> 59: </a>    <a href="../../../../../../docs/manualpages/Mat/MatSetSizes.html">MatSetSizes</a>(mpiaij-&gt;A, mat-&gt;rmap-&gt;n, mat-&gt;cmap-&gt;n, mat-&gt;rmap-&gt;n, mat-&gt;cmap-&gt;n);
+<a name="line60"> 60: </a>  }
+<a name="line61"> 61: </a>  <font color="#4169E1">if</font> (!mpiaij-&gt;B) {
+<a name="line62"> 62: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size;
+<a name="line63"> 63: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat), &amp;size);
+<a name="line64"> 64: </a>    <a href="../../../../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;mpiaij-&gt;B);
+<a name="line65"> 65: </a>    <a href="../../../../../../docs/manualpages/Mat/MatSetSizes.html">MatSetSizes</a>(mpiaij-&gt;B, mat-&gt;rmap-&gt;n, size &gt; 1 ? mat-&gt;cmap-&gt;N : 0, mat-&gt;rmap-&gt;n, size &gt; 1 ? mat-&gt;cmap-&gt;N : 0);
+<a name="line66"> 66: </a>  }
+<a name="line67"> 67: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(mpiaij-&gt;A, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJKOKKOS.html">MATSEQAIJKOKKOS</a>);
+<a name="line68"> 68: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(mpiaij-&gt;B, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJKOKKOS.html">MATSEQAIJKOKKOS</a>);
+<a name="line69"> 69: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSeqAIJSetPreallocation.html">MatSeqAIJSetPreallocation</a>(mpiaij-&gt;A, d_nz, d_nnz);
+<a name="line70"> 70: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSeqAIJSetPreallocation.html">MatSeqAIJSetPreallocation</a>(mpiaij-&gt;B, o_nz, o_nnz);
+<a name="line71"> 71: </a>  mat-&gt;preallocated = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line72"> 72: </a>  <font color="#4169E1">return</font> 0;
+<a name="line73"> 73: </a>}
+
+<a name="line75"> 75: </a><strong><font color="#4169E1"><a name="MatMult_MPIAIJKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatMult_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> mat, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xx, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yy)</font></strong>
+<a name="line76"> 76: </a>{
+<a name="line77"> 77: </a>  Mat_MPIAIJ *mpiaij = (Mat_MPIAIJ *)mat-&gt;data;
+<a name="line78"> 78: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    nt;
+
+<a name="line80"> 80: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(xx, &amp;nt);
+<a name="line82"> 82: </a>  <a href="../../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(mpiaij-&gt;Mvctx, xx, mpiaij-&gt;lvec, <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line83"> 83: </a>  (*mpiaij-&gt;A-&gt;ops-&gt;mult)(mpiaij-&gt;A, xx, yy);
+<a name="line84"> 84: </a>  <a href="../../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(mpiaij-&gt;Mvctx, xx, mpiaij-&gt;lvec, <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line85"> 85: </a>  (*mpiaij-&gt;B-&gt;ops-&gt;multadd)(mpiaij-&gt;B, mpiaij-&gt;lvec, yy, yy);
+<a name="line86"> 86: </a>  <font color="#4169E1">return</font> 0;
+<a name="line87"> 87: </a>}
+
+<a name="line89"> 89: </a><strong><font color="#4169E1"><a name="MatMultAdd_MPIAIJKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatMultAdd_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> mat, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xx, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yy, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> zz)</font></strong>
+<a name="line90"> 90: </a>{
+<a name="line91"> 91: </a>  Mat_MPIAIJ *mpiaij = (Mat_MPIAIJ *)mat-&gt;data;
+<a name="line92"> 92: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    nt;
+
+<a name="line94"> 94: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(xx, &amp;nt);
+<a name="line96"> 96: </a>  <a href="../../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(mpiaij-&gt;Mvctx, xx, mpiaij-&gt;lvec, <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line97"> 97: </a>  (*mpiaij-&gt;A-&gt;ops-&gt;multadd)(mpiaij-&gt;A, xx, yy, zz);
+<a name="line98"> 98: </a>  <a href="../../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(mpiaij-&gt;Mvctx, xx, mpiaij-&gt;lvec, <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line99"> 99: </a>  (*mpiaij-&gt;B-&gt;ops-&gt;multadd)(mpiaij-&gt;B, mpiaij-&gt;lvec, zz, zz);
+<a name="line100">100: </a>  <font color="#4169E1">return</font> 0;
+<a name="line101">101: </a>}
+
+<a name="line103">103: </a><strong><font color="#4169E1"><a name="MatMultTranspose_MPIAIJKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatMultTranspose_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> mat, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xx, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yy)</font></strong>
+<a name="line104">104: </a>{
+<a name="line105">105: </a>  Mat_MPIAIJ *mpiaij = (Mat_MPIAIJ *)mat-&gt;data;
+<a name="line106">106: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    nt;
+
+<a name="line108">108: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(xx, &amp;nt);
+<a name="line110">110: </a>  (*mpiaij-&gt;B-&gt;ops-&gt;multtranspose)(mpiaij-&gt;B, xx, mpiaij-&gt;lvec);
+<a name="line111">111: </a>  (*mpiaij-&gt;A-&gt;ops-&gt;multtranspose)(mpiaij-&gt;A, xx, yy);
+<a name="line112">112: </a>  <a href="../../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(mpiaij-&gt;Mvctx, mpiaij-&gt;lvec, yy, <a href="../../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);
+<a name="line113">113: </a>  <a href="../../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(mpiaij-&gt;Mvctx, mpiaij-&gt;lvec, yy, <a href="../../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_REVERSE.html">SCATTER_REVERSE</a>);
+<a name="line114">114: </a>  <font color="#4169E1">return</font> 0;
+<a name="line115">115: </a>}
+
+<a name="line117">117: </a><font color="#B22222">/* Merge the "A, B" matrices of mat into a matrix C.  mat's type is MPIAIJKOKKOS. C's type is <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJKOKKOS.html">MATSEQAIJKOKKOS</a>.</font>
+<a name="line118">118: </a><font color="#B22222">   A is put before B. C's size would be A-&gt;rmap-&gt;n by (A-&gt;cmap-&gt;n + B-&gt;cmap-&gt;n).</font>
+<a name="line119">119: </a><font color="#B22222">   C still uses local column ids. Their corresponding global column ids are returned in glob.</font>
+<a name="line120">120: </a><font color="#B22222">*/</font>
+<a name="line121">121: </a><strong><font color="#4169E1"><a name="MatMPIAIJGetLocalMatMerge_MPIAIJKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatMPIAIJGetLocalMatMerge_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> mat, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MatReuse</a> reuse, <a href="../../../../../../docs/manualpages/IS/IS.html">IS</a> *glob, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *C)</font></strong>
+<a name="line122">122: </a>{
+<a name="line123">123: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>             Ad, Ao;
+<a name="line124">124: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *cmap;
+
+<a name="line126">126: </a>  <a href="../../../../../../docs/manualpages/Mat/MatMPIAIJGetSeqAIJ.html">MatMPIAIJGetSeqAIJ</a>(mat, &amp;Ad, &amp;Ao, &amp;cmap);
+<a name="line127">127: </a>  MatSeqAIJKokkosMergeMats(Ad, Ao, reuse, C);
+<a name="line128">128: </a>  <font color="#4169E1">if</font> (glob) {
+<a name="line129">129: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cst, i, dn, on, *gidx;
+<a name="line130">130: </a>    <a href="../../../../../../docs/manualpages/Mat/MatGetLocalSize.html">MatGetLocalSize</a>(Ad, NULL, &amp;dn);
+<a name="line131">131: </a>    <a href="../../../../../../docs/manualpages/Mat/MatGetLocalSize.html">MatGetLocalSize</a>(Ao, NULL, &amp;on);
+<a name="line132">132: </a>    <a href="../../../../../../docs/manualpages/Mat/MatGetOwnershipRangeColumn.html">MatGetOwnershipRangeColumn</a>(mat, &amp;cst, NULL);
+<a name="line133">133: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(dn + on, &amp;gidx);
+<a name="line134">134: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; dn; i++) gidx[i] = cst + i;
+<a name="line135">135: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; on; i++) gidx[i + dn] = cmap[i];
+<a name="line136">136: </a>    <a href="../../../../../../docs/manualpages/IS/ISCreateGeneral.html">ISCreateGeneral</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)Ad), dn + on, gidx, <a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, glob);
+<a name="line137">137: </a>  }
+<a name="line138">138: </a>  <font color="#4169E1">return</font> 0;
+<a name="line139">139: </a>}
+
+<a name="line141">141: </a><font color="#B22222">/* Structs used in matrix product C=AB, C=A^tB and C=B^tAB */</font>
+<a name="line142">142: </a><font color="#4169E1"><a name="MatMatStruct"></a>struct MatMatStruct </font>{
+<a name="line143">143: </a>  MatRowMapKokkosView Cdstart; <font color="#B22222">/* Used to split sequential matrix into petsc's A, B format */</font>
+<a name="line144">144: </a>  <a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a>             sf;      <font color="#B22222">/* SF to send/recv matrix entries */</font>
+<a name="line145">145: </a>  MatScalarKokkosView abuf;    <font color="#B22222">/* buf of mat values in send/recv */</font>
+<a name="line146">146: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>                 C1, C2, B_local;
+<a name="line147">147: </a>  KokkosCsrMatrix     C1_global, C2_global, C_global;
+<a name="line148">148: </a>  KernelHandle        kh;
+<a name="line149">149: </a>  MatMatStruct()
+<a name="line150">150: </a>  {
+<a name="line151">151: </a>    C1 = C2 = B_local = NULL;
+<a name="line152">152: </a>    sf                = NULL;
+<a name="line153">153: </a>  }
+
+<a name="line155">155: </a>  ~MatMatStruct()
+<a name="line156">156: </a>  {
+<a name="line157">157: </a>    <a href="../../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;C1);
+<a name="line158">158: </a>    <a href="../../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;C2);
+<a name="line159">159: </a>    <a href="../../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;B_local);
+<a name="line160">160: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFDestroy.html">PetscSFDestroy</a>(&amp;sf);
+<a name="line161">161: </a>    kh.destroy_spadd_handle();
+<a name="line162">162: </a>  }
+<a name="line163">163: </a>};
+
+<a name="line165">165: </a><font color="#4169E1"><a name="MatMatStruct_AB"></a>struct MatMatStruct_AB </font>: public MatMatStruct {
+<a name="line166">166: </a>  MatColIdxKokkosView rows;
+<a name="line167">167: </a>  MatRowMapKokkosView rowoffset;
+<a name="line168">168: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>                 B_other, C_petsc; <font color="#B22222">/* SEQAIJKOKKOS matrices. TODO: have a better var name than C_petsc */</font>
+
+<a name="line170">170: </a>  MatMatStruct_AB() : B_other(NULL), C_petsc(NULL) { }
+<a name="line171">171: </a>  ~MatMatStruct_AB()
+<a name="line172">172: </a>  {
+<a name="line173">173: </a>    <a href="../../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;B_other);
+<a name="line174">174: </a>    <a href="../../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;C_petsc);
+<a name="line175">175: </a>  }
+<a name="line176">176: </a>};
+
+<a name="line178">178: </a><font color="#4169E1"><a name="MatMatStruct_AtB"></a>struct MatMatStruct_AtB </font>: public MatMatStruct {
+<a name="line179">179: </a>  MatRowMapKokkosView srcrowoffset, dstrowoffset;
+<a name="line180">180: </a>};
+
+<a name="line182">182: </a><font color="#4169E1"><a name="MatProductData_MPIAIJKokkos"></a>struct MatProductData_MPIAIJKokkos </font>{
+<a name="line183">183: </a>  MatMatStruct_AB  *mmAB;
+<a name="line184">184: </a>  MatMatStruct_AtB *mmAtB;
+<a name="line185">185: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>         reusesym;
+
+<a name="line187">187: </a>  MatProductData_MPIAIJKokkos() : mmAB(NULL), mmAtB(NULL), reusesym(<a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>) { }
+<a name="line188">188: </a>  ~MatProductData_MPIAIJKokkos()
+<a name="line189">189: </a>  {
+<a name="line190">190: </a>    delete mmAB;
+<a name="line191">191: </a>    delete mmAtB;
+<a name="line192">192: </a>  }
+<a name="line193">193: </a>};
+
+<a name="line195">195: </a><strong><font color="#4169E1"><a name="MatProductDataDestroy_MPIAIJKokkos"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatProductDataDestroy_MPIAIJKokkos(void *data)</font></strong>
+<a name="line196">196: </a>{
+<a name="line197">197: </a>  delete static_cast&lt;MatProductData_MPIAIJKokkos *&gt;(data);
+<a name="line198">198: </a>  <font color="#4169E1">return</font> 0;
+<a name="line199">199: </a>}
+
+<a name="line201">201: </a><font color="#B22222">/* MatSeqAIJKokkosGetCSRMatrixWithGlobalColumnIds - Get a KokkosCsrMatrix from a <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJKOKKOS.html">MATSEQAIJKOKKOS</a> matrix</font>
+
+<a name="line203">203: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line204">204: </a><font color="#B22222">+  A       - the <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJKOKKOS.html">MATSEQAIJKOKKOS</a> matrix</font>
+<a name="line205">205: </a><font color="#B22222">.  N       - new column size for the returned Kokkos matrix</font>
+<a name="line206">206: </a><font color="#B22222">-  l2g     - a map that maps old col ids to new col ids</font>
+
+<a name="line208">208: </a><font color="#B22222">   Output Parameters:</font>
+<a name="line209">209: </a><font color="#B22222">.  csrmat  - the Kokkos matrix, which has the same row size as A, shares a, i but not j with A.</font>
+<a name="line210">210: </a><font color="#B22222"> */</font>
+<a name="line211">211: </a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSeqAIJKokkosGetCSRMatrixWithGlobalColumnIds(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> N, const ConstMatColIdxKokkosView &amp;l2g, KokkosCsrMatrix &amp;csrmat)
+<a name="line212">212: </a>{
+<a name="line213">213: </a>  KokkosCsrMatrix    &amp;orig = static_cast&lt;Mat_SeqAIJKokkos *&gt;(A-&gt;spptr)-&gt;csrmat;
+<a name="line214">214: </a>  MatColIdxKokkosView jg(<font color="#666666">"jg"</font>, orig.nnz()); <font color="#B22222">/* New j array for csrmat */</font>
+
+<a name="line216">216: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscCallCXX.html">PetscCallCXX</a>(Kokkos::parallel_for(
+<a name="line217">217: </a>    orig.nnz(), KOKKOS_LAMBDA(const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i) { jg(i) = l2g(orig.graph.entries(i)); }));
+<a name="line218">218: </a>  csrmat = KokkosCsrMatrix(<font color="#666666">"csrmat"</font>, orig.numRows(), N, orig.nnz(), orig.values, orig.graph.row_map, jg);
+<a name="line219">219: </a>  <font color="#4169E1">return</font> 0;
+<a name="line220">220: </a>}
+
+<a name="line222">222: </a><font color="#B22222">/* MatSetMPIAIJKokkosWithSplitSeqAIJKokkosMatrices - Set the diag and offdiag matrices of a MATMPIAIJKOKKOS matrix.</font>
+<a name="line223">223: </a><font color="#B22222">   It is similar to <a href="../../../../../../docs/manualpages/Mat/MatCreateMPIAIJWithSplitArrays.html">MatCreateMPIAIJWithSplitArrays</a>.</font>
+
+<a name="line225">225: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line226">226: </a><font color="#B22222">+  mat   - the MATMPIAIJKOKKOS matrix, which should have its type and layout set, but should not have its diag, offdiag matrices set</font>
+<a name="line227">227: </a><font color="#B22222">.  A     - the diag matrix using local col ids</font>
+<a name="line228">228: </a><font color="#B22222">-  B     - the offdiag matrix using global col ids</font>
+
+<a name="line230">230: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line231">231: </a><font color="#B22222">.  mat   - the updated MATMPIAIJKOKKOS matrix</font>
+<a name="line232">232: </a><font color="#B22222">*/</font>
+<a name="line233">233: </a><strong><font color="#4169E1"><a name="MatSetMPIAIJKokkosWithSplitSeqAIJKokkosMatrices"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSetMPIAIJKokkosWithSplitSeqAIJKokkosMatrices(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> mat, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B)</font></strong>
+<a name="line234">234: </a>{
+<a name="line235">235: </a>  Mat_MPIAIJ       *mpiaij = static_cast&lt;Mat_MPIAIJ *&gt;(mat-&gt;data);
+<a name="line236">236: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          m, n, M, N, Am, An, Bm, Bn;
+<a name="line237">237: </a>  Mat_SeqAIJKokkos *bkok = static_cast&lt;Mat_SeqAIJKokkos *&gt;(B-&gt;spptr);
+
+<a name="line239">239: </a>  <a href="../../../../../../docs/manualpages/Mat/MatGetSize.html">MatGetSize</a>(mat, &amp;M, &amp;N);
+<a name="line240">240: </a>  <a href="../../../../../../docs/manualpages/Mat/MatGetLocalSize.html">MatGetLocalSize</a>(mat, &amp;m, &amp;n);
+<a name="line241">241: </a>  <a href="../../../../../../docs/manualpages/Mat/MatGetLocalSize.html">MatGetLocalSize</a>(A, &amp;Am, &amp;An);
+<a name="line242">242: </a>  <a href="../../../../../../docs/manualpages/Mat/MatGetLocalSize.html">MatGetLocalSize</a>(B, &amp;Bm, &amp;Bn);
+
+<a name="line248">248: </a>  mpiaij-&gt;A = A;
+<a name="line249">249: </a>  mpiaij-&gt;B = B;
+
+<a name="line251">251: </a>  mat-&gt;preallocated     = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line252">252: </a>  mat-&gt;nooffprocentries = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>; <font color="#B22222">/* See MatAssemblyBegin_MPIAIJ. In effect, making <a href="../../../../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a> a nop */</font>
+
+<a name="line254">254: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(mat, <a href="../../../../../../docs/manualpages/Mat/MatOption.html">MAT_NO_OFF_PROC_ENTRIES</a>, <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+<a name="line255">255: </a>  <a href="../../../../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(mat, <a href="../../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line256">256: </a>  <font color="#B22222">/* <a href="../../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a> is critical here. It sets mat-&gt;offloadmask according to A and B's, and</font>
+<a name="line257">257: </a><font color="#B22222">    also gets mpiaij-&gt;B compacted, with its col ids and size reduced</font>
+<a name="line258">258: </a><font color="#B22222">  */</font>
+<a name="line259">259: </a>  <a href="../../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(mat, <a href="../../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line260">260: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(mat, <a href="../../../../../../docs/manualpages/Mat/MatOption.html">MAT_NO_OFF_PROC_ENTRIES</a>, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line261">261: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(mat, <a href="../../../../../../docs/manualpages/Mat/MatOption.html">MAT_NEW_NONZERO_LOCATION_ERR</a>, <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+
+<a name="line263">263: </a>  <font color="#B22222">/* Update bkok with new local col ids (stored on host) and size */</font>
+<a name="line264">264: </a>  bkok-&gt;j_dual.modify_host();
+<a name="line265">265: </a>  bkok-&gt;j_dual.sync_device();
+<a name="line266">266: </a>  bkok-&gt;SetColSize(mpiaij-&gt;B-&gt;cmap-&gt;n);
+<a name="line267">267: </a>  <font color="#4169E1">return</font> 0;
+<a name="line268">268: </a>}
+
+<a name="line270">270: </a><font color="#B22222">/* MatSeqAIJKokkosBcast - Bcast rows of a SEQAIJKOKKOS matrice (B) to form a SEQAIJKOKKOS matrix (C).</font>
+
+<a name="line272">272: </a><font color="#B22222">   It is essentially the MPIAIJKOKKOS counterpart of MatGetBrowsOfAoCols_MPIAIJ, but supports device and uses <a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a>.</font>
+<a name="line273">273: </a><font color="#B22222">   In the given ownerSF, leaves correspond to rows in C, and roots correspond to rows in B. Roots may connect to multiple leaves.</font>
+<a name="line274">274: </a><font color="#B22222">   Suppose C's j-th row is connected to a root identified by <a href="../../../../../../docs/manualpages/PetscSF/PetscSFNode.html">PetscSFNode</a> (k,i), it means we will bcast the i-th row of B on rank k</font>
+<a name="line275">275: </a><font color="#B22222">   to j-th row of C. ownerSF's leaves must be contiguous (in other words, as if ilocal=NULL was used to set its graph).</font>
+
+<a name="line277">277: </a><font color="#B22222">   Collective on comm of ownerSF</font>
+
+<a name="line279">279: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line280">280: </a><font color="#B22222">+   B       - the SEQAIJKOKKOS matrix, using local col ids</font>
+<a name="line281">281: </a><font color="#B22222">.   reuse   - either <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a> or <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a></font>
+<a name="line282">282: </a><font color="#B22222">.   N       - global col ids are in range of [0,N). N Must be the same across ranks (nonsignificant in <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>)</font>
+<a name="line283">283: </a><font color="#B22222">.   l2g     - a map mapping B's local col ids to global ones (nonsignificant in <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>)</font>
+<a name="line284">284: </a><font color="#B22222">.   ownerSF - the ownership SF (nonsignificant in <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>)</font>
+
+<a name="line286">286: </a><font color="#B22222">   Input/Output Parameters (out when resue = <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>, inout when reuse = <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>)</font>
+<a name="line287">287: </a><font color="#B22222">+   bcastSF   - the SF used to bcast rows of B. This plain SF does buffer (abuf) to buffer (Ca) send/recv. In this SF, vertices are nonzeros.</font>
+<a name="line288">288: </a><font color="#B22222">.   abuf      - buffer for sending matrix values</font>
+<a name="line289">289: </a><font color="#B22222">.   rows      - array containing indices of (local) rows that this rank needs to bcast to others. Each receiver rank has a chunk in rows[].</font>
+<a name="line290">290: </a><font color="#B22222">                Values in rows[] might have repeats, which simply indicates a row will be bcast'ed to multiple neighbors.</font>
+<a name="line291">291: </a><font color="#B22222">.   rowoffset - For each row in rows[], it will be copied to rowoffset[] at abuf[]</font>
+<a name="line292">292: </a><font color="#B22222">-   C         -  the SEQAIJKOKKOS matrix made of the bcast'ed rows, using local col ids.</font>
+<a name="line293">293: </a><font color="#B22222">*/</font>
+<a name="line294">294: </a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSeqAIJKokkosBcast(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MatReuse</a> reuse, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> N, const ConstMatColIdxKokkosView &amp;l2g, <a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> ownerSF, <a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> &amp;bcastSF, MatScalarKokkosView &amp;abuf, MatColIdxKokkosView &amp;rows, MatRowMapKokkosView &amp;rowoffset, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> &amp;C)
+<a name="line295">295: </a>{
+<a name="line296">296: </a>  Mat_SeqAIJKokkos *bkok, *ckok;
+
+<a name="line298">298: </a>  MatSeqAIJKokkosSyncDevice(B); <font color="#B22222">/* Make sure B-&gt;spptr is accessible */</font>
+<a name="line299">299: </a>  bkok = static_cast&lt;Mat_SeqAIJKokkos *&gt;(B-&gt;spptr);
+
+<a name="line301">301: </a>  <font color="#4169E1">if</font> (reuse == <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>) {
+<a name="line302">302: </a>    ckok = static_cast&lt;Mat_SeqAIJKokkos *&gt;(C-&gt;spptr);
+
+<a name="line304">304: </a>    const auto &amp;Ba = bkok-&gt;a_dual.view_device();
+<a name="line305">305: </a>    const auto &amp;Bi = bkok-&gt;i_dual.view_device();
+<a name="line306">306: </a>    const auto &amp;Ca = ckok-&gt;a_dual.view_device();
+
+<a name="line308">308: </a>    <font color="#B22222">/* Copy Ba to abuf */</font>
+<a name="line309">309: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(
+<a name="line310">310: </a><strong><font color="#FF0000">      Kokkos:</font></strong>:TeamPolicy&lt;&gt;(rows.extent(0), Kokkos::AUTO()), KOKKOS_LAMBDA(const KokkosTeamMemberType &amp;t) {
+<a name="line311">311: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i    = t.league_rank(); <font color="#B22222">/* rows[i] is r-th row of B */</font>
+<a name="line312">312: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> r    = rows(i);
+<a name="line313">313: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> base = rowoffset(i); <font color="#B22222">/* Copy r-th row of B to this offset in abuf[] */</font>
+<a name="line314">314: </a><strong><font color="#FF0000">        Kokkos:</font></strong>:parallel_for(Kokkos::TeamThreadRange(t, Bi(r + 1) - Bi(r)), [&amp;](<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> k) { abuf(base + k) = Ba(Bi(r) + k); });
+<a name="line315">315: </a>      });
+
+<a name="line317">317: </a>    <font color="#B22222">/* Send abuf to Ca through bcastSF and then mark C is updated on device */</font>
+<a name="line318">318: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFBcastBegin.html">PetscSFBcastBegin</a>(bcastSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, abuf.data(), Ca.data(), MPI_REPLACE); <font color="#B22222">/* TODO: get memtype for abuf */</font>
+<a name="line319">319: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html">PetscSFBcastEnd</a>(bcastSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, abuf.data(), Ca.data(), MPI_REPLACE);
+<a name="line320">320: </a>    ckok-&gt;a_dual.modify_device();
+<a name="line321">321: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (reuse == <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>) {
+<a name="line322">322: </a>    <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>    comm;
+<a name="line323">323: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> tag;
+<a name="line324">324: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    k, Cm, Cn, Cnnz, *Ci_h, nroots, nleaves;
+
+<a name="line326">326: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ownerSF, &amp;comm);
+<a name="line327">327: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html">PetscSFGetGraph</a>(ownerSF, &amp;nroots, &amp;nleaves, NULL, NULL);
+<a name="line328">328: </a>    Cm = nleaves; <font color="#B22222">/* row size of C */</font>
+<a name="line329">329: </a>    Cn = N;       <font color="#B22222">/* col size of C, which initially uses global ids, so we can safely set its col size as N */</font>
+
+<a name="line331">331: </a>    <font color="#B22222">/* Get row lens (nz) of B's rows for later fast query */</font>
+<a name="line332">332: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       *Browlens;
+<a name="line333">333: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *tmp = bkok-&gt;i_host_data();
+<a name="line334">334: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(nroots, &amp;Browlens);
+<a name="line335">335: </a>    <font color="#4169E1">for</font> (k = 0; k &lt; nroots; k++) Browlens[k] = tmp[k + 1] - tmp[k];
+
+<a name="line337">337: </a>    <font color="#B22222">/* By ownerSF, each proc gets lens of rows of C */</font>
+<a name="line338">338: </a>    MatRowMapKokkosDualView Ci(<font color="#666666">"i"</font>, Cm + 1); <font color="#B22222">/* C's rowmap */</font>
+<a name="line339">339: </a>    Ci_h    = Ci.view_host().data();
+<a name="line340">340: </a>    Ci_h[0] = 0;
+<a name="line341">341: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFBcastWithMemTypeBegin.html">PetscSFBcastWithMemTypeBegin</a>(ownerSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_HOST</a>, Browlens, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_HOST</a>, &amp;Ci_h[1], MPI_REPLACE);
+<a name="line342">342: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html">PetscSFBcastEnd</a>(ownerSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, Browlens, &amp;Ci_h[1], MPI_REPLACE);
+<a name="line343">343: </a>    <font color="#4169E1">for</font> (k = 1; k &lt; Cm + 1; k++) Ci_h[k] += Ci_h[k - 1]; <font color="#B22222">/* Convert lens to CSR */</font>
+<a name="line344">344: </a>    Cnnz = Ci_h[Cm];
+<a name="line345">345: </a>    Ci.modify_host();
+<a name="line346">346: </a>    Ci.sync_device();
+
+<a name="line348">348: </a>    <font color="#B22222">/* With the newly known Cnnz, we are able to allocate (j, a) for C on host &amp; device */</font>
+<a name="line349">349: </a>    MatColIdxKokkosDualView Cj(<font color="#666666">"j"</font>, Cnnz);
+<a name="line350">350: </a>    MatScalarKokkosDualView Ca(<font color="#666666">"a"</font>, Cnnz);
+
+<a name="line352">352: </a>    <font color="#B22222">/* Now build the bcastSF to fill Ca, Cj. This plain SF only does (contiguous) buffer to buffer send/recv */</font>
+<a name="line353">353: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *iranks, *ranks;
+<a name="line354">354: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *ioffset, *irootloc, *roffset;
+<a name="line355">355: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           i, j, niranks, nranks, *sdisp, *rdisp, *rowptr;
+<a name="line356">356: </a>    MPI_Request       *reqs;
+
+<a name="line358">358: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFGetLeafRanks.html">PetscSFGetLeafRanks</a>(ownerSF, &amp;niranks, &amp;iranks, &amp;ioffset, &amp;irootloc);                      <font color="#B22222">/* irootloc[] contains indices of rows I need to send to each receiver */</font>
+<a name="line359">359: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFGetRootRanks.html">PetscSFGetRootRanks</a>(ownerSF, &amp;nranks, &amp;ranks, &amp;roffset, NULL <font color="#B22222">/*rmine*/</font>, NULL <font color="#B22222">/*rremote*/</font>); <font color="#B22222">/* recv info */</font>
+
+<a name="line361">361: </a>    <font color="#B22222">/* figure out offsets at the send buffer, to build the SF</font>
+<a name="line362">362: </a><font color="#B22222">      sdisp[]  - stores offsets of nonzeros (in abuf or jbuf, see later) I need to send, per receiver.</font>
+<a name="line363">363: </a><font color="#B22222">      rowptr[] - stores offsets for data of each row in abuf</font>
+
+<a name="line365">365: </a><font color="#B22222">      rdisp[]  - to receive sdisp[]</font>
+<a name="line366">366: </a><font color="#B22222">    */</font>
+<a name="line367">367: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMalloc3.html">PetscMalloc3</a>(niranks + 1, &amp;sdisp, nranks, &amp;rdisp, niranks + nranks, &amp;reqs);
+<a name="line368">368: </a>    MatRowMapKokkosViewHost rowptr_h(<font color="#666666">"rowptr_h"</font>, ioffset[niranks] + 1); <font color="#B22222">/* Let Kokkos do the allocation, so that we can do an easy mirror later */</font>
+<a name="line369">369: </a>    rowptr = rowptr_h.data();
+
+<a name="line371">371: </a>    sdisp[0]  = 0;
+<a name="line372">372: </a>    rowptr[0] = 0;
+<a name="line373">373: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; niranks; i++) { <font color="#B22222">/* for each receiver */</font>
+<a name="line374">374: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> len, nz = 0;
+<a name="line375">375: </a>      <font color="#4169E1">for</font> (j = ioffset[i]; j &lt; ioffset[i + 1]; j++) { <font color="#B22222">/* for each row to this receiver */</font>
+<a name="line376">376: </a>        len           = Browlens[irootloc[j]];
+<a name="line377">377: </a>        rowptr[j + 1] = rowptr[j] + len;
+<a name="line378">378: </a>        nz += len;
+<a name="line379">379: </a>      }
+<a name="line380">380: </a>      sdisp[i + 1] = sdisp[i] + nz;
+<a name="line381">381: </a>    }
+<a name="line382">382: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscCommGetNewTag.html">PetscCommGetNewTag</a>(comm, &amp;tag);
+<a name="line383">383: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nranks; i++) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(&amp;rdisp[i], 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, ranks[i], tag, comm, &amp;reqs[i]);
+<a name="line384">384: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; niranks; i++) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(&amp;sdisp[i], 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, iranks[i], tag, comm, &amp;reqs[nranks + i]);
+<a name="line385">385: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(niranks + nranks, reqs, MPI_STATUSES_IGNORE);
+
+<a name="line387">387: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     nleaves2 = Cnnz;           <font color="#B22222">/* leaves are the nonzeros I will receive */</font>
+<a name="line388">388: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     nroots2  = sdisp[niranks]; <font color="#B22222">/* roots are the nonzeros (in abuf) I will send */</font>
+<a name="line389">389: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFNode.html">PetscSFNode</a> *iremote;
+<a name="line390">390: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(nleaves2, &amp;iremote);
+<a name="line391">391: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nranks; i++) { <font color="#B22222">/* for each sender */</font>
+<a name="line392">392: </a>      k = 0;
+<a name="line393">393: </a>      <font color="#4169E1">for</font> (j = Ci_h[roffset[i]]; j &lt; Ci_h[roffset[i + 1]]; j++) {
+<a name="line394">394: </a>        iremote[j].rank  = ranks[i];
+<a name="line395">395: </a>        iremote[j].index = rdisp[i] + k;
+<a name="line396">396: </a>        k++;
+<a name="line397">397: </a>      }
+<a name="line398">398: </a>    }
+<a name="line399">399: </a>    <font color="#B22222">/* TODO: we should extend <a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> APIs for this buffer-to-buffer send/recv */</font>
+<a name="line400">400: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFCreate.html">PetscSFCreate</a>(comm, &amp;bcastSF);
+<a name="line401">401: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html">PetscSFSetGraph</a>(bcastSF, nroots2, nleaves2, NULL <font color="#B22222">/*ilocal*/</font>, <a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, iremote, <a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>);
+
+<a name="line403">403: </a>    <font color="#B22222">/* Extract selected rows of B, and copy their (a, j) into abuf[] and jbuf[], with j converted</font>
+<a name="line404">404: </a><font color="#B22222">      from local to global. Then use bcastSF to fill Ca, Cj.</font>
+<a name="line405">405: </a><font color="#B22222">    */</font>
+<a name="line406">406: </a>    ConstMatColIdxKokkosViewHost rows_h(irootloc, ioffset[niranks]); <font color="#B22222">/* irootloc[] stores indices of rows I need to send */</font>
+<a name="line407">407: </a>    MatColIdxKokkosView          rows(<font color="#666666">"rows"</font>, ioffset[niranks]);
+<a name="line408">408: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:deep_copy(rows, rows_h); <font color="#B22222">/* Use deep copy since irootoc is managed by <a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> and we want 'rows' to be standalone */</font>
+
+<a name="line410">410: </a>    rowoffset = Kokkos::create_mirror_view_and_copy(DefaultMemorySpace(), rowptr_h); <font color="#B22222">/* If no device, rowoffset will be an alias to rowptr_h */</font>
+
+<a name="line412">412: </a>    MatColIdxKokkosView jbuf(<font color="#666666">"jbuf"</font>, sdisp[niranks]);   <font color="#B22222">/* send buf for (global) col ids */</font>
+<a name="line413">413: </a>    abuf = MatScalarKokkosView(<font color="#666666">"abuf"</font>, sdisp[niranks]); <font color="#B22222">/* send buf for mat values */</font>
+
+<a name="line415">415: </a>    const auto &amp;Ba = bkok-&gt;a_dual.view_device();
+<a name="line416">416: </a>    const auto &amp;Bi = bkok-&gt;i_dual.view_device();
+<a name="line417">417: </a>    const auto &amp;Bj = bkok-&gt;j_dual.view_device();
+
+<a name="line419">419: </a>    <font color="#B22222">/* Copy Ba, Bj to abuf, jbuf with change col ids from local to global */</font>
+<a name="line420">420: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(
+<a name="line421">421: </a><strong><font color="#FF0000">      Kokkos:</font></strong>:TeamPolicy&lt;&gt;(rows.extent(0), Kokkos::AUTO()), KOKKOS_LAMBDA(const KokkosTeamMemberType &amp;t) {
+<a name="line422">422: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i    = t.league_rank(); <font color="#B22222">/* rows[i] is r-th row of B */</font>
+<a name="line423">423: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> r    = rows(i);
+<a name="line424">424: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> base = rowoffset(i); <font color="#B22222">/* Copy r-th row of B to this offset in abuf[] */</font>
+<a name="line425">425: </a><strong><font color="#FF0000">        Kokkos:</font></strong>:parallel_for(Kokkos::TeamThreadRange(t, Bi(r + 1) - Bi(r)), [&amp;](<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> k) {
+<a name="line426">426: </a>          abuf(base + k) = Ba(Bi(r) + k);
+<a name="line427">427: </a>          jbuf(base + k) = l2g(Bj(Bi(r) + k));
+<a name="line428">428: </a>        });
+<a name="line429">429: </a>      });
+
+<a name="line431">431: </a>    <font color="#B22222">/* Send abuf &amp; jbuf to fill Ca, Cj */</font>
+<a name="line432">432: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFBcastBegin.html">PetscSFBcastBegin</a>(bcastSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, jbuf.data(), Cj.view_device().data(), MPI_REPLACE);
+<a name="line433">433: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFBcastBegin.html">PetscSFBcastBegin</a>(bcastSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, abuf.data(), Ca.view_device().data(), MPI_REPLACE);
+<a name="line434">434: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html">PetscSFBcastEnd</a>(bcastSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, jbuf.data(), Cj.view_device().data(), MPI_REPLACE);
+<a name="line435">435: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html">PetscSFBcastEnd</a>(bcastSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, abuf.data(), Ca.view_device().data(), MPI_REPLACE);
+<a name="line436">436: </a>    Cj.modify_device(); <font color="#B22222">/* Mark Cj, Ca modified on device, but only sync Cj since we might not need Ca on host at all */</font>
+<a name="line437">437: </a>    Cj.sync_host();
+<a name="line438">438: </a>    Ca.modify_device();
+
+<a name="line440">440: </a>    <font color="#B22222">/* Construct C with Ca, Ci, Cj */</font>
+<a name="line441">441: </a>    auto ckok = new Mat_SeqAIJKokkos(Cm, Cn, Cnnz, Ci, Cj, Ca);
+<a name="line442">442: </a>    MatCreateSeqAIJKokkosWithCSRMatrix(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, ckok, &amp;C);
+<a name="line443">443: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree3.html">PetscFree3</a>(sdisp, rdisp, reqs);
+<a name="line444">444: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(Browlens);
+<a name="line445">445: </a>  } <font color="#4169E1">else</font> <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_PLIB, <font color="#666666">"Unsupported <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MatReuse</a> enum %d"</font>, reuse);
+<a name="line446">446: </a>  <font color="#4169E1">return</font> 0;
+<a name="line447">447: </a>}
+
+<a name="line449">449: </a><font color="#B22222">/* MatSeqAIJKokkosReduce - Reduce rows of a SEQAIJKOKKOS matrix (A) to form a Kokkos Csr matrix (C)</font>
+
+<a name="line451">451: </a><font color="#B22222">  It is the reverse of MatSeqAIJKokkosBcast in some sense.</font>
+
+<a name="line453">453: </a><font color="#B22222">  Think each row of A as a leaf, then the given ownerSF specifies roots of the leaves. Roots may connect to multiple leaves.</font>
+<a name="line454">454: </a><font color="#B22222">  In this routine, we reduce (i.e., concatenate) leaves (rows) at their roots to form potentially longer rows in C. Such rows might</font>
+<a name="line455">455: </a><font color="#B22222">  contain repeats, which does not matter since they will be summed up by other routines. C's row size will be nroots of ownerSF.</font>
+
+<a name="line457">457: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line458">458: </a><font color="#B22222">+  A        - the SEQAIJKOKKOS matrix to be reduced</font>
+<a name="line459">459: </a><font color="#B22222">.  reuse    - either <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a> or <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a></font>
+<a name="line460">460: </a><font color="#B22222">.  local    - true if A uses local col ids; false if A is already in global col ids.</font>
+<a name="line461">461: </a><font color="#B22222">.  N        - if local, N is A's global col size</font>
+<a name="line462">462: </a><font color="#B22222">.  l2g      - if local, a map mapping A's local col ids to global ones, which are in range of [0,N).</font>
+<a name="line463">463: </a><font color="#B22222">-  ownerSF  - the SF specifies ownership (root) of rows in A</font>
+
+<a name="line465">465: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line466">466: </a><font color="#B22222">+  reduceSF    - the SF to reduce A's rows to contiguous buffers at the receiver side</font>
+<a name="line467">467: </a><font color="#B22222">.  abuf         - a contiguous buffer to receive A's rows sent to this proc. Suppose there are 'nrows' such rows.</font>
+<a name="line468">468: </a><font color="#B22222">.  srcrowoffset - offset array of size nrows+1. Each entry is the corresponding row's offset in abuf[]. srcrowoffset[i+1]-srcrowoffset[i] is row i's len.</font>
+<a name="line469">469: </a><font color="#B22222">.  dstrowoffset - offset array of size nrows. Each entry is the corresponding row's offset in Ca[], i.e., C's 'a' array. Row i, i+1 in abuf[] may go to</font>
+<a name="line470">470: </a><font color="#B22222">                  unrelated places in Ca, so dstrowoffset is not in CSR-like format as srcrowoffset.</font>
+<a name="line471">471: </a><font color="#B22222">-  C            - the matrix made up by rows sent to me from other ranks, using global col ids</font>
+
+<a name="line473">473: </a><font color="#B22222">   TODO: we can even have MatSeqAIJKokkosReduceBegin/End to provide opportunity for callers to overlap comp./comm. when reuse = <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>.</font>
+<a name="line474">474: </a><font color="#B22222"> */</font>
+<a name="line475">475: </a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSeqAIJKokkosReduce(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MatReuse</a> reuse, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> local, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> N, const ConstMatColIdxKokkosView &amp;l2g, <a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> ownerSF, <a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> &amp;reduceSF, MatScalarKokkosView &amp;abuf, MatRowMapKokkosView &amp;srcrowoffset, MatRowMapKokkosView &amp;dstrowoffset, KokkosCsrMatrix &amp;C)
+<a name="line476">476: </a>{
+<a name="line477">477: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          i, r, Am, An, Annz, Cnnz, nrows;
+<a name="line478">478: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   *Ai;
+<a name="line479">479: </a>  Mat_SeqAIJKokkos *akok;
+
+<a name="line481">481: </a>  MatSeqAIJKokkosSyncDevice(A); <font color="#B22222">/* So that A's latest data is on device */</font>
+<a name="line482">482: </a>  <a href="../../../../../../docs/manualpages/Mat/MatGetSize.html">MatGetSize</a>(A, &amp;Am, &amp;An);
+<a name="line483">483: </a>  Ai   = static_cast&lt;Mat_SeqAIJ *&gt;(A-&gt;data)-&gt;i;
+<a name="line484">484: </a>  akok = static_cast&lt;Mat_SeqAIJKokkos *&gt;(A-&gt;spptr);
+<a name="line485">485: </a>  Annz = Ai[Am];
+
+<a name="line487">487: </a>  <font color="#4169E1">if</font> (reuse == <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>) {
+<a name="line488">488: </a>    <font color="#B22222">/* Send Aa to abuf */</font>
+<a name="line489">489: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFReduceBegin.html">PetscSFReduceBegin</a>(reduceSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, akok-&gt;a_device_data(), abuf.data(), MPI_REPLACE);
+<a name="line490">490: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html">PetscSFReduceEnd</a>(reduceSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, akok-&gt;a_device_data(), abuf.data(), MPI_REPLACE);
+
+<a name="line492">492: </a>    <font color="#B22222">/* Copy abuf to Ca */</font>
+<a name="line493">493: </a>    const MatScalarKokkosView &amp;Ca = C.values;
+<a name="line494">494: </a>    nrows                         = dstrowoffset.extent(0); <font color="#B22222">/* Not srcrowoffset[] since it has an extra entry for CSR */</font>
+<a name="line495">495: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(
+<a name="line496">496: </a><strong><font color="#FF0000">      Kokkos:</font></strong>:TeamPolicy&lt;&gt;(nrows, Kokkos::AUTO()), KOKKOS_LAMBDA(const KokkosTeamMemberType &amp;t) {
+<a name="line497">497: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i   = t.league_rank();
+<a name="line498">498: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> src = srcrowoffset(i), dst = dstrowoffset(i);
+<a name="line499">499: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> len = srcrowoffset(i + 1) - srcrowoffset(i);
+<a name="line500">500: </a><strong><font color="#FF0000">        Kokkos:</font></strong>:parallel_for(Kokkos::TeamThreadRange(t, len), [&amp;](<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> k) { Ca(dst + k) = abuf(src + k); });
+<a name="line501">501: </a>      });
+<a name="line502">502: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (reuse == <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>) {
+<a name="line503">503: </a>    <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>     comm;
+<a name="line504">504: </a>    MPI_Request *reqs;
+<a name="line505">505: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>  tag;
+<a name="line506">506: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     Cm;
+
+<a name="line508">508: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ownerSF, &amp;comm);
+<a name="line509">509: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscCommGetNewTag.html">PetscCommGetNewTag</a>(comm, &amp;tag);
+
+<a name="line511">511: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           niranks, nranks, nroots, nleaves;
+<a name="line512">512: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *iranks, *ranks;
+<a name="line513">513: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *ioffset, *rows, *roffset; <font color="#B22222">/* rows[] contains local indices of rows scattered to me from others. ioffset[] is a CSR on rows[] */</font>
+<a name="line514">514: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html">PetscSFSetUp</a>(ownerSF);
+<a name="line515">515: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFGetLeafRanks.html">PetscSFGetLeafRanks</a>(ownerSF, &amp;niranks, &amp;iranks, &amp;ioffset, &amp;rows);                          <font color="#B22222">/* recv info: iranks[] will send rows to me */</font>
+<a name="line516">516: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFGetRootRanks.html">PetscSFGetRootRanks</a>(ownerSF, &amp;nranks, &amp;ranks, &amp;roffset, NULL <font color="#B22222">/*rmine*/</font>, NULL <font color="#B22222">/*rremote*/</font>); <font color="#B22222">/* send info */</font>
+<a name="line517">517: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html">PetscSFGetGraph</a>(ownerSF, &amp;nroots, &amp;nleaves, NULL, NULL);
+<a name="line519">519: </a>    Cm    = nroots;
+<a name="line520">520: </a>    nrows = ioffset[niranks]; <font color="#B22222">/* # of rows to be received. Might receive same row (each is partial) from different senders */</font>
+
+<a name="line522">522: </a>    <font color="#B22222">/* Tell owners how long each row I will send */</font>
+<a name="line523">523: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>               *srowlens;                              <font color="#B22222">/* send buf of row lens */</font>
+<a name="line524">524: </a>    MatRowMapKokkosViewHost rrowlens_h(<font color="#666666">"rrowoffset_h"</font>, nrows + 1); <font color="#B22222">/* recv buf of row lens. +1 to make CSR later. Memory might be passed to other views */</font>
+<a name="line525">525: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>               *rrowlens = rrowlens_h.data();
+
+<a name="line527">527: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMalloc2.html">PetscMalloc2</a>(Am, &amp;srowlens, niranks + nranks, &amp;reqs);
+<a name="line528">528: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; Am; i++) srowlens[i] = Ai[i + 1] - Ai[i];
+<a name="line529">529: </a>    rrowlens[0] = 0;
+<a name="line530">530: </a>    rrowlens++; <font color="#B22222">/* shift the pointer to make the following expression more readable */</font>
+<a name="line531">531: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; niranks; i++) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(&amp;rrowlens[ioffset[i]], ioffset[i + 1] - ioffset[i], <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, iranks[i], tag, comm, &amp;reqs[i]);
+<a name="line532">532: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nranks; i++) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(&amp;srowlens[roffset[i]], roffset[i + 1] - roffset[i], <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, ranks[i], tag, comm, &amp;reqs[niranks + i]);
+<a name="line533">533: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(niranks + nranks, reqs, MPI_STATUSES_IGNORE);
+
+<a name="line535">535: </a>    <font color="#B22222">/* Owner builds Ci on host by histogramming rrowlens[] */</font>
+<a name="line536">536: </a>    MatRowMapKokkosViewHost Ci_h(<font color="#666666">"i"</font>, Cm + 1);
+<a name="line537">537: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:deep_copy(Ci_h, 0); <font color="#B22222">/* Zero Ci */</font>
+<a name="line538">538: </a>    MatRowMapType *Ci_ptr = Ci_h.data();
+
+<a name="line540">540: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nrows; i++) {
+<a name="line541">541: </a>      r = rows[i]; <font color="#B22222">/* local row id of i-th received row */</font>
+<a name="line542">542: </a><font color="#A020F0">#if defined(PETSC_USE_DEBUG)</font>
+<a name="line544">544: </a><font color="#A020F0">#endif</font>
+<a name="line545">545: </a>      Ci_ptr[r + 1] += rrowlens[i]; <font color="#B22222">/* add to length of row r in C */</font>
+<a name="line546">546: </a>    }
+<a name="line547">547: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; Cm; i++) Ci_ptr[i + 1] += Ci_ptr[i]; <font color="#B22222">/* to CSR format */</font>
+<a name="line548">548: </a>    Cnnz = Ci_ptr[Cm];
+
+<a name="line550">550: </a>    <font color="#B22222">/* For each received row, compute src &amp; dst offsets in memory copying (from recv bufs abuf, jbuf to Ca, Cj) */</font>
+<a name="line551">551: </a>    MatRowMapKokkosViewHost dstrowoffset_h(<font color="#666666">"dstrowoffset_h"</font>, nrows);
+<a name="line552">552: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>               *dstrowoffset_hptr = dstrowoffset_h.data();
+<a name="line553">553: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>               *currowlens; <font color="#B22222">/* Current row lens. They are temp accumulators for row lens in C, to help build dstrowoffset */</font>
+
+<a name="line555">555: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(Cm, &amp;currowlens);           <font color="#B22222">/* Init with zero, to be added to */</font>
+<a name="line556">556: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nrows; i++) {                       <font color="#B22222">/* for each row I receive */</font>
+<a name="line557">557: </a>      r                    = rows[i];                   <font color="#B22222">/* row id in C */</font>
+<a name="line558">558: </a>      dstrowoffset_hptr[i] = Ci_ptr[r] + currowlens[r]; <font color="#B22222">/* dst offset of the new place for each recv'ed row in Ca/Cj */</font>
+<a name="line559">559: </a>      currowlens[r] += rrowlens[i];                     <font color="#B22222">/* accumulate to length of row r in C */</font>
+<a name="line560">560: </a>    }
+<a name="line561">561: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(currowlens);
+
+<a name="line563">563: </a>    rrowlens--;
+<a name="line564">564: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nrows; i++) rrowlens[i + 1] += rrowlens[i]; <font color="#B22222">/* Change rrowlens[] to CSR format */</font>
+<a name="line565">565: </a>    dstrowoffset = Kokkos::create_mirror_view_and_copy(DefaultMemorySpace(), dstrowoffset_h);
+<a name="line566">566: </a>    srcrowoffset = Kokkos::create_mirror_view_and_copy(DefaultMemorySpace(), rrowlens_h); <font color="#B22222">/* src offset of each recv'ed row in abuf/jbuf */</font>
+
+<a name="line568">568: </a>    <font color="#B22222">/* Build the reduceSF, which performs buffer to buffer send/recv */</font>
+<a name="line569">569: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *sdisp, *rdisp; <font color="#B22222">/* buffer to send offsets of roots, and buffer to recv them */</font>
+<a name="line570">570: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMalloc2.html">PetscMalloc2</a>(niranks, &amp;sdisp, nranks, &amp;rdisp);
+<a name="line571">571: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; niranks; i++) sdisp[i] = rrowlens[ioffset[i]];
+<a name="line572">572: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nranks; i++) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(&amp;rdisp[i], 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, ranks[i], tag, comm, &amp;reqs[i]);
+<a name="line573">573: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; niranks; i++) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(&amp;sdisp[i], 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, iranks[i], tag, comm, &amp;reqs[nranks + i]);
+<a name="line574">574: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(niranks + nranks, reqs, MPI_STATUSES_IGNORE);
+
+<a name="line576">576: </a>    <font color="#B22222">/* Nonzeros in abuf/jbuf are roots and those in A are leaves */</font>
+<a name="line577">577: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     nroots2 = Cnnz, nleaves2 = Annz;
+<a name="line578">578: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFNode.html">PetscSFNode</a> *iremote;
+<a name="line579">579: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(nleaves2, &amp;iremote); <font color="#B22222">/* no free, since memory will be given to reduceSF */</font>
+<a name="line580">580: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nranks; i++) {
+<a name="line581">581: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> rootbase = rdisp[i];                      <font color="#B22222">/* root offset at this root rank */</font>
+<a name="line582">582: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> leafbase = Ai[roffset[i]];                <font color="#B22222">/* leaf base */</font>
+<a name="line583">583: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nz       = Ai[roffset[i + 1]] - leafbase; <font color="#B22222">/* I will send nz nonzeros to this root rank */</font>
+<a name="line584">584: </a>      <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> k = 0; k &lt; nz; k++) {
+<a name="line585">585: </a>        iremote[leafbase + k].rank  = ranks[i];
+<a name="line586">586: </a>        iremote[leafbase + k].index = rootbase + k;
+<a name="line587">587: </a>      }
+<a name="line588">588: </a>    }
+<a name="line589">589: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFCreate.html">PetscSFCreate</a>(comm, &amp;reduceSF);
+<a name="line590">590: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html">PetscSFSetGraph</a>(reduceSF, nroots2, nleaves2, NULL, <a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, iremote, <a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>);
+<a name="line591">591: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree2.html">PetscFree2</a>(sdisp, rdisp);
+
+<a name="line593">593: </a>    <font color="#B22222">/* Reduce Aa, Ajg to abuf and jbuf */</font>
+
+<a name="line595">595: </a>    <font color="#B22222">/* If A uses local col ids, convert them to global ones before sending */</font>
+<a name="line596">596: </a>    MatColIdxKokkosView Ajg;
+<a name="line597">597: </a>    <font color="#4169E1">if</font> (local) {
+<a name="line598">598: </a>      Ajg                           = MatColIdxKokkosView(<font color="#666666">"j"</font>, Annz);
+<a name="line599">599: </a>      const MatColIdxKokkosView &amp;Aj = akok-&gt;j_dual.view_device();
+<a name="line600">600: </a><strong><font color="#FF0000">      Kokkos:</font></strong>:parallel_for(
+<a name="line601">601: </a>        Annz, KOKKOS_LAMBDA(const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i) { Ajg(i) = l2g(Aj(i)); });
+<a name="line602">602: </a>    } <font color="#4169E1">else</font> {
+<a name="line603">603: </a>      Ajg = akok-&gt;j_dual.view_device(); <font color="#B22222">/* no data copy, just take a reference */</font>
+<a name="line604">604: </a>    }
+
+<a name="line606">606: </a>    MatColIdxKokkosView jbuf(<font color="#666666">"jbuf"</font>, Cnnz);
+<a name="line607">607: </a>    abuf = MatScalarKokkosView(<font color="#666666">"abuf"</font>, Cnnz);
+<a name="line608">608: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFReduceBegin.html">PetscSFReduceBegin</a>(reduceSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, Ajg.data(), jbuf.data(), MPI_REPLACE);
+<a name="line609">609: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html">PetscSFReduceEnd</a>(reduceSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, Ajg.data(), jbuf.data(), MPI_REPLACE);
+<a name="line610">610: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFReduceBegin.html">PetscSFReduceBegin</a>(reduceSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, akok-&gt;a_device_data(), abuf.data(), MPI_REPLACE);
+<a name="line611">611: </a>    <a href="../../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html">PetscSFReduceEnd</a>(reduceSF, <a href="../../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, akok-&gt;a_device_data(), abuf.data(), MPI_REPLACE);
+
+<a name="line613">613: </a>    <font color="#B22222">/* Copy data from abuf, jbuf to Ca, Cj */</font>
+<a name="line614">614: </a>    MatRowMapKokkosView Ci = Kokkos::create_mirror_view_and_copy(DefaultMemorySpace(), Ci_h); <font color="#B22222">/* Ci is an alias of Ci_h if no device */</font>
+<a name="line615">615: </a>    MatColIdxKokkosView Cj(<font color="#666666">"j"</font>, Cnnz);
+<a name="line616">616: </a>    MatScalarKokkosView Ca(<font color="#666666">"a"</font>, Cnnz);
+
+<a name="line618">618: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(
+<a name="line619">619: </a><strong><font color="#FF0000">      Kokkos:</font></strong>:TeamPolicy&lt;&gt;(nrows, Kokkos::AUTO()), KOKKOS_LAMBDA(const KokkosTeamMemberType &amp;t) {
+<a name="line620">620: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i   = t.league_rank();
+<a name="line621">621: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> src = srcrowoffset(i), dst = dstrowoffset(i);
+<a name="line622">622: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> len = srcrowoffset(i + 1) - srcrowoffset(i);
+<a name="line623">623: </a><strong><font color="#FF0000">        Kokkos:</font></strong>:parallel_for(Kokkos::TeamThreadRange(t, len), [&amp;](<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> k) {
+<a name="line624">624: </a>          Ca(dst + k) = abuf(src + k);
+<a name="line625">625: </a>          Cj(dst + k) = jbuf(src + k);
+<a name="line626">626: </a>        });
+<a name="line627">627: </a>      });
+
+<a name="line629">629: </a>    <font color="#B22222">/* Build C with Ca, Ci, Cj */</font>
+<a name="line630">630: </a>    C = KokkosCsrMatrix(<font color="#666666">"csrmat"</font>, Cm, N, Cnnz, Ca, Ci, Cj);
+<a name="line631">631: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscFree2.html">PetscFree2</a>(srowlens, reqs);
+<a name="line632">632: </a>  } <font color="#4169E1">else</font> <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_PLIB, <font color="#666666">"Unsupported <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MatReuse</a> enum %d"</font>, reuse);
+<a name="line633">633: </a>  <font color="#4169E1">return</font> 0;
+<a name="line634">634: </a>}
+
+<a name="line636">636: </a><font color="#B22222">/* MatSetMPIAIJKokkosWithGlobalCSRMatrix - Set the diag and offdiag parts of a `MATMPIAIJKOKKOS` matrix by splitting a KokkosCsrMatrix</font>
+
+<a name="line638">638: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line639">639: </a><font color="#B22222">+  C        - the `MATMPIAIJKOKKOS` matrix, of size m,n,M,N</font>
+<a name="line640">640: </a><font color="#B22222">.  reuse    - indicate whether the matrix has called this function before</font>
+<a name="line641">641: </a><font color="#B22222">.  csrmat   - the KokkosCsrMatrix, of size m,N</font>
+<a name="line642">642: </a><font color="#B22222">-  Cdstart  - when reuse == `<a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>`, it is an input parameter. For each row in csrmat, it stores the start of the first</font>
+<a name="line643">643: </a><font color="#B22222">              entry of the diag block of C in csrmat's j array. E.g, if row i has col ids = {0, 3, 4, 5, 7, 9} and the first diag</font>
+<a name="line644">644: </a><font color="#B22222">              entry is 5, then Cdstart[i] = 3.</font>
+
+<a name="line646">646: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line647">647: </a><font color="#B22222">+  C        - the updated `MATMPIAIJKOKKOS` matrix</font>
+<a name="line648">648: </a><font color="#B22222">-  Cdstart - when reuse == `<a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>`, it is an output parameter</font>
+
+<a name="line650">650: </a><font color="#B22222">  Note:</font>
+<a name="line651">651: </a><font color="#B22222">   Between calls with `<a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>` or `<a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>`, csrmat must have the same nonzero pattern</font>
+
+<a name="line653">653: </a><font color="#B22222">.seealso: `MATMPIAIJKOKKOS`</font>
+<a name="line654">654: </a><font color="#B22222"> */</font>
+<a name="line655">655: </a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSetMPIAIJKokkosWithGlobalCSRMatrix(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> C, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MatReuse</a> reuse, const KokkosCsrMatrix &amp;csrmat, MatRowMapKokkosView &amp;Cdstart)
+<a name="line656">656: </a>{
+<a name="line657">657: </a>  const MatScalarKokkosView      &amp;Ca = csrmat.values;
+<a name="line658">658: </a>  const ConstMatRowMapKokkosView &amp;Ci = csrmat.graph.row_map;
+<a name="line659">659: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                        m, n, N;
+
+<a name="line661">661: </a>  <a href="../../../../../../docs/manualpages/Mat/MatGetLocalSize.html">MatGetLocalSize</a>(C, &amp;m, &amp;n);
+<a name="line662">662: </a>  <a href="../../../../../../docs/manualpages/Mat/MatGetSize.html">MatGetSize</a>(C, NULL, &amp;N);
+
+<a name="line664">664: </a>  <font color="#4169E1">if</font> (reuse == <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>) {
+<a name="line665">665: </a>    Mat_MPIAIJ                *mpiaij = static_cast&lt;Mat_MPIAIJ *&gt;(C-&gt;data);
+<a name="line666">666: </a>    Mat_SeqAIJKokkos          *akok   = static_cast&lt;Mat_SeqAIJKokkos *&gt;(mpiaij-&gt;A-&gt;spptr);
+<a name="line667">667: </a>    Mat_SeqAIJKokkos          *bkok   = static_cast&lt;Mat_SeqAIJKokkos *&gt;(mpiaij-&gt;B-&gt;spptr);
+<a name="line668">668: </a>    const MatScalarKokkosView &amp;Cda = akok-&gt;a_dual.view_device(), Coa = bkok-&gt;a_dual.view_device();
+<a name="line669">669: </a>    const MatRowMapKokkosView &amp;Cdi = akok-&gt;i_dual.view_device(), Coi = bkok-&gt;i_dual.view_device();
+
+<a name="line671">671: </a>    <font color="#B22222">/* Fill 'a' of Cd and Co on device */</font>
+<a name="line672">672: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(
+<a name="line673">673: </a><strong><font color="#FF0000">      Kokkos:</font></strong>:TeamPolicy&lt;&gt;(m, Kokkos::AUTO()), KOKKOS_LAMBDA(const KokkosTeamMemberType &amp;t) {
+<a name="line674">674: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i       = t.league_rank();     <font color="#B22222">/* row i */</font>
+<a name="line675">675: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> clen    = Ci(i + 1) - Ci(i);   <font color="#B22222">/* len of row i of C */</font>
+<a name="line676">676: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cdlen   = Cdi(i + 1) - Cdi(i); <font color="#B22222">/* len of row i of Cd */</font>
+<a name="line677">677: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cdstart = Cdstart(i);          <font color="#B22222">/* [start, end) of row i of Cd in C */</font>
+<a name="line678">678: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cdend   = cdstart + cdlen;
+<a name="line679">679: </a>        <font color="#B22222">/* [0, clen) is cut into three blocks: [0, cdstart), [cdstart, cdend), [cdend, clen) */</font>
+<a name="line680">680: </a><strong><font color="#FF0000">        Kokkos:</font></strong>:parallel_for(Kokkos::TeamThreadRange(t, clen), [&amp;](<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> k) {
+<a name="line681">681: </a>          <font color="#4169E1">if</font> (k &lt; cdstart) { <font color="#B22222">/* k in [0, cdstart) */</font>
+<a name="line682">682: </a>            Coa(Coi(i) + k) = Ca(Ci(i) + k);
+<a name="line683">683: </a>          } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (k &lt; cdend) { <font color="#B22222">/* k in [cdstart, cdend) */</font>
+<a name="line684">684: </a>            Cda(Cdi(i) + (k - cdstart)) = Ca(Ci(i) + k);
+<a name="line685">685: </a>          } <font color="#4169E1">else</font> { <font color="#B22222">/* k in [cdend, clen) */</font>
+<a name="line686">686: </a>            Coa(Coi(i) + k - cdlen) = Ca(Ci(i) + k);
+<a name="line687">687: </a>          }
+<a name="line688">688: </a>        });
+<a name="line689">689: </a>      });
+
+<a name="line691">691: </a>    akok-&gt;a_dual.modify_device();
+<a name="line692">692: </a>    bkok-&gt;a_dual.modify_device();
+<a name="line693">693: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (reuse == <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>) {
+<a name="line694">694: </a>    <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>                        Cd, Co;
+<a name="line695">695: </a>    const MatColIdxKokkosView &amp;Cj = csrmat.graph.entries;
+<a name="line696">696: </a>    MatRowMapKokkosDualView    Cdi_dual(<font color="#666666">"i"</font>, m + 1), Coi_dual(<font color="#666666">"i"</font>, m + 1);
+<a name="line697">697: </a>    MatRowMapKokkosView        Cdi = Cdi_dual.view_device(), Coi = Coi_dual.view_device();
+<a name="line698">698: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                   cstart, cend;
+
+<a name="line700">700: </a>    <font color="#B22222">/* Note that each row of C is sorted by col ids. We want to find out how to cut each row into three blocks:</font>
+<a name="line701">701: </a><font color="#B22222">       left to the diag block, diag block, right to the diag block. The diag block have col ids in [cstart,cend).</font>
+<a name="line702">702: </a><font color="#B22222">       Suppose a row of C has len nonzeros, indexed by [0, len). We want to know two indices: cdstart and cdend,</font>
+<a name="line703">703: </a><font color="#B22222">       such that the three blocks are [0,cdstart), [cdstart,cdend), [cdend,len). The following code equivalentaly</font>
+<a name="line704">704: </a><font color="#B22222">       stores values of cdstart and cdend-cstart (aka Cdi[]) instead.</font>
+<a name="line705">705: </a><font color="#B22222">     */</font>
+<a name="line706">706: </a>    Cdstart = MatRowMapKokkosView(<font color="#666666">"Cdstart"</font>, m);
+<a name="line707">707: </a>    <a href="../../../../../../docs/manualpages/IS/PetscLayoutGetRange.html">PetscLayoutGetRange</a>(C-&gt;cmap, &amp;cstart, &amp;cend); <font color="#B22222">/* Not <a href="../../../../../../docs/manualpages/Mat/MatGetOwnershipRangeColumn.html">MatGetOwnershipRangeColumn</a>() since C has not been preallocated yet */</font>
+
+<a name="line709">709: </a>    <font color="#B22222">/* I could use RangePolicy and one thread per row. But since each thread essentially does binary search, threads in a</font>
+<a name="line710">710: </a><font color="#B22222">      CUDA warp would completely diverge. So I use TeamPolicy with a team size 1.</font>
+<a name="line711">711: </a><font color="#B22222">     */</font>
+<a name="line712">712: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(
+<a name="line713">713: </a><strong><font color="#FF0000">      Kokkos:</font></strong>:TeamPolicy&lt;&gt;(m, 1), KOKKOS_LAMBDA(const KokkosTeamMemberType &amp;t) {
+<a name="line714">714: </a><strong><font color="#FF0000">        Kokkos:</font></strong>:single(Kokkos::PerTeam(t), [=]() {                               <font color="#B22222">/* Only one thread works in a team */</font>
+<a name="line715">715: </a>                                                   <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i = t.league_rank(); <font color="#B22222">/* row i */</font>
+<a name="line716">716: </a>                                                   <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> j, first, count, step;
+
+<a name="line718">718: </a>                                                   <font color="#4169E1">if</font> (i == 0) { <font color="#B22222">/* Set the first entry of the i arrays to zero on device, to be used in CSR */</font>
+<a name="line719">719: </a>                                                     Cdi(0) = 0;
+<a name="line720">720: </a>                                                     Coi(0) = 0;
+<a name="line721">721: </a>                                                   }
+
+<a name="line723">723: </a>                                                   <font color="#B22222">/* Do std::lower_bound(Ci(i),Ci(i+1),cstart) on Cj[]. We use j as the iterator. lower_bound() returns</font>
+<a name="line724">724: </a><font color="#B22222">          in 'first' the first iterator with a value &gt;= cstart, or last iterator if no such element is found.</font>
+<a name="line725">725: </a><font color="#B22222">        */</font>
+<a name="line726">726: </a>                                                   count = Ci(i + 1) - Ci(i);
+<a name="line727">727: </a>                                                   first = Ci(i);
+<a name="line728">728: </a>                                                   <font color="#4169E1">while</font> (count &gt; 0) {
+<a name="line729">729: </a>                                                     j    = first;
+<a name="line730">730: </a>                                                     step = count / 2;
+<a name="line731">731: </a>                                                     j += step;
+<a name="line732">732: </a>                                                     <font color="#4169E1">if</font> (Cj(j) &lt; cstart) {
+<a name="line733">733: </a>                                                       first = ++j;
+<a name="line734">734: </a>                                                       count -= step + 1;
+<a name="line735">735: </a>                                                     } <font color="#4169E1">else</font> count = step;
+<a name="line736">736: </a>                                                   }
+<a name="line737">737: </a>                                                   Cdstart(i) = first - Ci(i); <font color="#B22222">/* 'first' is the while-loop's output */</font>
+
+<a name="line739">739: </a>                                                   <font color="#B22222">/* Do std::lower_bound(first,Ci(i+1),cend) on Cj[] */</font>
+<a name="line740">740: </a>                                                   count = Ci(i + 1) - first;
+<a name="line741">741: </a>                                                   <font color="#4169E1">while</font> (count &gt; 0) {
+<a name="line742">742: </a>                                                     j    = first;
+<a name="line743">743: </a>                                                     step = count / 2;
+<a name="line744">744: </a>                                                     j += step;
+<a name="line745">745: </a>                                                     <font color="#4169E1">if</font> (Cj(j) &lt; cend) {
+<a name="line746">746: </a>                                                       first = ++j;
+<a name="line747">747: </a>                                                       count -= step + 1;
+<a name="line748">748: </a>                                                     } <font color="#4169E1">else</font> count = step;
+<a name="line749">749: </a>                                                   }
+<a name="line750">750: </a>                                                   Cdi(i + 1) = first - (Ci(i) + Cdstart(i));     <font color="#B22222">/* 'first' is the while-loop's output */</font>
+<a name="line751">751: </a>                                                   Coi(i + 1) = (Ci(i + 1) - Ci(i)) - Cdi(i + 1); <font color="#B22222">/* Co's row len = C's row len - Cd's row len */</font>
+<a name="line752">752: </a>        });
+<a name="line753">753: </a>      });
+
+<a name="line755">755: </a>    <font color="#B22222">/* Convert row lens in Cdi[], Coi[] to CSR format using inclusive scan, e.g., changing [0,1,2,3] into [0,1,3,6] */</font>
+<a name="line756">756: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_scan(
+<a name="line757">757: </a>      m + 1, KOKKOS_LAMBDA(const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> &amp;update, const bool final) {
+<a name="line758">758: </a>        update += Cdi(i);
+<a name="line759">759: </a>        <font color="#4169E1">if</font> (final) Cdi(i) = update;
+<a name="line760">760: </a>      });
+<a name="line761">761: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_scan(
+<a name="line762">762: </a>      m + 1, KOKKOS_LAMBDA(const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> &amp;update, const bool final) {
+<a name="line763">763: </a>        update += Coi(i);
+<a name="line764">764: </a>        <font color="#4169E1">if</font> (final) Coi(i) = update;
+<a name="line765">765: </a>      });
+
+<a name="line767">767: </a>    <font color="#B22222">/* Get Cdi, Coi on host (it is not a waste, since we do need them on host in</font>
+<a name="line768">768: </a><font color="#B22222">       MatCreateSeqAIJKokkosWithCSRMatrix() below), then get nnz of Cd and Co.</font>
+<a name="line769">769: </a><font color="#B22222">    */</font>
+<a name="line770">770: </a>    Cdi_dual.modify_device();
+<a name="line771">771: </a>    Coi_dual.modify_device();
+<a name="line772">772: </a>    Cdi_dual.sync_host();
+<a name="line773">773: </a>    Coi_dual.sync_host();
+<a name="line774">774: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> Cd_nnz = Cdi_dual.view_host().data()[m];
+<a name="line775">775: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> Co_nnz = Coi_dual.view_host().data()[m];
+
+<a name="line777">777: </a>    <font color="#B22222">/* With nnz, allocate a, j for Cd and Co */</font>
+<a name="line778">778: </a>    MatColIdxKokkosDualView Cdj_dual(<font color="#666666">"j"</font>, Cd_nnz), Coj_dual(<font color="#666666">"j"</font>, Co_nnz);
+<a name="line779">779: </a>    MatScalarKokkosDualView Cda_dual(<font color="#666666">"a"</font>, Cd_nnz), Coa_dual(<font color="#666666">"a"</font>, Co_nnz);
+
+<a name="line781">781: </a>    <font color="#B22222">/* Fill a, j of Cd and Co on device */</font>
+<a name="line782">782: </a>    MatColIdxKokkosView Cdj = Cdj_dual.view_device(), Coj = Coj_dual.view_device();
+<a name="line783">783: </a>    MatScalarKokkosView Cda = Cda_dual.view_device(), Coa = Coa_dual.view_device();
+
+<a name="line785">785: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:parallel_for(
+<a name="line786">786: </a><strong><font color="#FF0000">      Kokkos:</font></strong>:TeamPolicy&lt;&gt;(m, Kokkos::AUTO()), KOKKOS_LAMBDA(const KokkosTeamMemberType &amp;t) {
+<a name="line787">787: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i       = t.league_rank();     <font color="#B22222">/* row i */</font>
+<a name="line788">788: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> clen    = Ci(i + 1) - Ci(i);   <font color="#B22222">/* len of row i of C */</font>
+<a name="line789">789: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cdlen   = Cdi(i + 1) - Cdi(i); <font color="#B22222">/* len of row i of Cd */</font>
+<a name="line790">790: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cdstart = Cdstart(i);          <font color="#B22222">/* [start, end) of row i of Cd in C */</font>
+<a name="line791">791: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cdend   = cdstart + cdlen;
+<a name="line792">792: </a>        <font color="#B22222">/* [0, clen) is cut into three blocks: [0, cdstart), [cdstart, cdend), [cdend, clen) */</font>
+<a name="line793">793: </a><strong><font color="#FF0000">        Kokkos:</font></strong>:parallel_for(Kokkos::TeamThreadRange(t, clen), [&amp;](<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> k) {
+<a name="line794">794: </a>          <font color="#4169E1">if</font> (k &lt; cdstart) { <font color="#B22222">/* k in [0, cdstart) */</font>
+<a name="line795">795: </a>            Coa(Coi(i) + k) = Ca(Ci(i) + k);
+<a name="line796">796: </a>            Coj(Coi(i) + k) = Cj(Ci(i) + k);
+<a name="line797">797: </a>          } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (k &lt; cdend) { <font color="#B22222">/* k in [cdstart, cdend) */</font>
+<a name="line798">798: </a>            Cda(Cdi(i) + (k - cdstart)) = Ca(Ci(i) + k);
+<a name="line799">799: </a>            Cdj(Cdi(i) + (k - cdstart)) = Cj(Ci(i) + k) - cstart; <font color="#B22222">/* Use local col ids in Cdj */</font>
+<a name="line800">800: </a>          } <font color="#4169E1">else</font> {                                                <font color="#B22222">/* k in [cdend, clen) */</font>
+<a name="line801">801: </a>            Coa(Coi(i) + k - cdlen) = Ca(Ci(i) + k);
+<a name="line802">802: </a>            Coj(Coi(i) + k - cdlen) = Cj(Ci(i) + k);
+<a name="line803">803: </a>          }
+<a name="line804">804: </a>        });
+<a name="line805">805: </a>      });
+
+<a name="line807">807: </a>    Cdj_dual.modify_device();
+<a name="line808">808: </a>    Cda_dual.modify_device();
+<a name="line809">809: </a>    Coj_dual.modify_device();
+<a name="line810">810: </a>    Coa_dual.modify_device();
+<a name="line811">811: </a>    <font color="#B22222">/* With a, i, j for Cd and Co, finally build Cd, Co and then C. Their offloadmask will be set in each's <a href="../../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a> */</font>
+<a name="line812">812: </a>    auto cdkok = new Mat_SeqAIJKokkos(m, n, Cd_nnz, Cdi_dual, Cdj_dual, Cda_dual);
+<a name="line813">813: </a>    auto cokok = new Mat_SeqAIJKokkos(m, N, Co_nnz, Coi_dual, Coj_dual, Coa_dual);
+<a name="line814">814: </a>    MatCreateSeqAIJKokkosWithCSRMatrix(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, cdkok, &amp;Cd);
+<a name="line815">815: </a>    MatCreateSeqAIJKokkosWithCSRMatrix(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, cokok, &amp;Co);
+<a name="line816">816: </a>    MatSetMPIAIJKokkosWithSplitSeqAIJKokkosMatrices(C, Cd, Co); <font color="#B22222">/* Coj will be converted to local ids within */</font>
+<a name="line817">817: </a>  }
+<a name="line818">818: </a>  <font color="#4169E1">return</font> 0;
+<a name="line819">819: </a>}
+
+<a name="line821">821: </a><font color="#B22222">/* MatSeqAIJCompactOutExtraColumns_SeqAIJKokkos - Compact a SEQAIJKOKKS matrix's global col ids.</font>
+
+<a name="line823">823: </a><font color="#B22222">  It is similar to MatSeqAIJCompactOutExtraColumns_SeqAIJ, but it applies to SEQAIJKOKKOS and returns the l2g map in Kokkos view.</font>
+
+<a name="line825">825: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line826">826: </a><font color="#B22222">+  C        - the MATMPIAIJKOKKOS matrix, of size m,n,M,N</font>
+<a name="line827">827: </a><font color="#B22222">.  reuse    - indicate whether the matrix has called this function before</font>
+<a name="line828">828: </a><font color="#B22222">.  csrmat   - the KokkosCsrMatrix, of size m,N</font>
+<a name="line829">829: </a><font color="#B22222">-  Cdoffset - when reuse == <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>, it is an input parameter. For each row in csrmat, it stores the offset of the first</font>
+<a name="line830">830: </a><font color="#B22222">              entry of the diag block of C in csrmat's j array.</font>
+
+<a name="line832">832: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line833">833: </a><font color="#B22222">+  C        - the updated MATMPIAIJKOKKOS matrix</font>
+<a name="line834">834: </a><font color="#B22222">-  Cdoffset - when reuse == <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>, it is an output parameter</font>
+
+<a name="line836">836: </a><font color="#B22222">  Note:</font>
+<a name="line837">837: </a><font color="#B22222">  the input matrix's col ids and col size will be changed.</font>
+<a name="line838">838: </a><font color="#B22222">*/</font>
+<a name="line839">839: </a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSeqAIJCompactOutExtraColumns_SeqAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> C, MatColIdxKokkosView &amp;l2g)
+<a name="line840">840: </a>{
+<a name="line841">841: </a>  Mat_SeqAIJKokkos      *ckok;
+<a name="line842">842: </a>  <a href="../../../../../../docs/manualpages/IS/ISLocalToGlobalMapping.html">ISLocalToGlobalMapping</a> l2gmap;
+<a name="line843">843: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        *garray;
+<a name="line844">844: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>               sz;
+
+<a name="line846">846: </a>  <font color="#B22222">/* Compact P_other's global col ids and col size. We do it since we guess with local ids KK might be more memory scalable */</font>
+<a name="line847">847: </a>  MatSeqAIJCompactOutExtraColumns_SeqAIJ(C, &amp;l2gmap);
+<a name="line848">848: </a>  ckok = static_cast&lt;Mat_SeqAIJKokkos *&gt;(C-&gt;spptr);
+<a name="line849">849: </a>  ckok-&gt;j_dual.modify_host(); <font color="#B22222">/* P_other's j is modified on host; we need to sync it on device */</font>
+<a name="line850">850: </a>  ckok-&gt;j_dual.sync_device();
+<a name="line851">851: </a>  ckok-&gt;SetColSize(C-&gt;cmap-&gt;n); <font color="#B22222">/* Update col size of the csrmat in spptr */</font>
+
+<a name="line853">853: </a>  <font color="#B22222">/* Build l2g -- the local to global mapping of C's cols */</font>
+<a name="line854">854: </a>  <a href="../../../../../../docs/manualpages/IS/ISLocalToGlobalMappingGetIndices.html">ISLocalToGlobalMappingGetIndices</a>(l2gmap, &amp;garray);
+<a name="line855">855: </a>  <a href="../../../../../../docs/manualpages/IS/ISLocalToGlobalMappingGetSize.html">ISLocalToGlobalMappingGetSize</a>(l2gmap, &amp;sz);
+
+<a name="line858">858: </a>  ConstMatColIdxKokkosViewHost tmp(garray, sz);
+<a name="line859">859: </a>  l2g = MatColIdxKokkosView(<font color="#666666">"l2g"</font>, sz);
+<a name="line860">860: </a><strong><font color="#FF0000">  Kokkos:</font></strong>:deep_copy(l2g, tmp);
+
+<a name="line862">862: </a>  <a href="../../../../../../docs/manualpages/IS/ISLocalToGlobalMappingRestoreIndices.html">ISLocalToGlobalMappingRestoreIndices</a>(l2gmap, &amp;garray);
+<a name="line863">863: </a>  <a href="../../../../../../docs/manualpages/IS/ISLocalToGlobalMappingDestroy.html">ISLocalToGlobalMappingDestroy</a>(&amp;l2gmap);
+<a name="line864">864: </a>  <font color="#4169E1">return</font> 0;
+<a name="line865">865: </a>}
+
+<a name="line867">867: </a><font color="#B22222">/* MatProductSymbolic_MPIAIJKokkos_AB - AB flavor of MatProductSymbolic_MPIAIJKokkos</font>
+
+<a name="line869">869: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line870">870: </a><font color="#B22222">+  product  - Mat_Product which carried out the computation. Passed in to access info about this mat product.</font>
+<a name="line871">871: </a><font color="#B22222">.  A        - an MPIAIJKOKKOS matrix</font>
+<a name="line872">872: </a><font color="#B22222">.  B        - an MPIAIJKOKKOS matrix</font>
+<a name="line873">873: </a><font color="#B22222">-  mm       - a struct used to stash intermediate data when computing AB. Persist from symbolic to numeric operations.</font>
+
+<a name="line875">875: </a><font color="#B22222">  Note: The local part of the result C is stored as mm-&gt;C_global, which is of type KokkosCsrMatrix and uses global col ids.</font>
+<a name="line876">876: </a><font color="#B22222">*/</font>
+<a name="line877">877: </a><strong><font color="#4169E1"><a name="MatProductSymbolic_MPIAIJKokkos_AB"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatProductSymbolic_MPIAIJKokkos_AB(Mat_Product *product, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, MatMatStruct_AB *mm)</font></strong>
+<a name="line878">878: </a>{
+<a name="line879">879: </a>  Mat_MPIAIJ              *a  = static_cast&lt;Mat_MPIAIJ *&gt;(A-&gt;data);
+<a name="line880">880: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>                      Ad = a-&gt;A, Ao = a-&gt;B; <font color="#B22222">/* diag and offdiag of A */</font>
+<a name="line881">881: </a>  <a href="../../../../../../docs/manualpages/IS/IS.html">IS</a>                       glob = NULL;
+<a name="line882">882: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          *garray;
+<a name="line883">883: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                 N = B-&gt;cmap-&gt;N, sz;
+<a name="line884">884: </a>  ConstMatColIdxKokkosView l2g1; <font color="#B22222">/* two temp maps mapping local col ids to global ones */</font>
+<a name="line885">885: </a>  MatColIdxKokkosView      l2g2;
+<a name="line886">886: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>                      C1, C2; <font color="#B22222">/* intermediate matrices */</font>
+
+<a name="line888">888: </a>  <font color="#B22222">/* C1 = Ad * B_local. B_local is a matrix got by merging Bd and Bo, and uses local col ids */</font>
+<a name="line889">889: </a>  <a href="../../../../../../docs/manualpages/Mat/MatMPIAIJGetLocalMatMerge.html">MatMPIAIJGetLocalMatMerge</a>(B, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>, &amp;glob, &amp;mm-&gt;B_local);
+<a name="line890">890: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductCreate.html">MatProductCreate</a>(Ad, mm-&gt;B_local, NULL, &amp;C1);
+<a name="line891">891: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductSetType.html">MatProductSetType</a>(C1, <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AB</a>);
+<a name="line892">892: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductSetFill.html">MatProductSetFill</a>(C1, product-&gt;fill);
+<a name="line893">893: </a>  C1-&gt;product-&gt;api_user = product-&gt;api_user;
+<a name="line894">894: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductSetFromOptions.html">MatProductSetFromOptions</a>(C1);
+<a name="line895">895: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(C1, productsymbolic);
+
+<a name="line897">897: </a>  <a href="../../../../../../docs/manualpages/IS/ISGetIndices.html">ISGetIndices</a>(glob, &amp;garray);
+<a name="line898">898: </a>  <a href="../../../../../../docs/manualpages/IS/ISGetSize.html">ISGetSize</a>(glob, &amp;sz);
+<a name="line899">899: </a>  const auto &amp;tmp = ConstMatColIdxKokkosViewHost(garray, sz);                       <font color="#B22222">/* wrap garray as a view */</font>
+<a name="line900">900: </a>  l2g1            = Kokkos::create_mirror_view_and_copy(DefaultMemorySpace(), tmp); <font color="#B22222">/* maybe just an alias to tmp, so we restore garray at the very end */</font>
+<a name="line901">901: </a>  MatSeqAIJKokkosGetCSRMatrixWithGlobalColumnIds(C1, N, l2g1, mm-&gt;C1_global);
+
+<a name="line903">903: </a>  <font color="#B22222">/* C2 = Ao * B_other. B_other is a matrix consisting of needed rows of B gathered from other procs */</font>
+<a name="line904">904: </a>  MatSeqAIJKokkosBcast(mm-&gt;B_local, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>, N, l2g1, a-&gt;Mvctx, mm-&gt;sf, mm-&gt;abuf, mm-&gt;rows, mm-&gt;rowoffset, mm-&gt;B_other);
+
+<a name="line906">906: </a>  <font color="#B22222">/* Compact B_other to use local ids as we guess KK spgemm is more memory scalable with that; We could skip the compaction to simplify code */</font>
+<a name="line907">907: </a>  MatSeqAIJCompactOutExtraColumns_SeqAIJKokkos(mm-&gt;B_other, l2g2);
+<a name="line908">908: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductCreate.html">MatProductCreate</a>(Ao, mm-&gt;B_other, NULL, &amp;C2);
+<a name="line909">909: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductSetType.html">MatProductSetType</a>(C2, <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AB</a>);
+<a name="line910">910: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductSetFill.html">MatProductSetFill</a>(C2, product-&gt;fill);
+<a name="line911">911: </a>  C2-&gt;product-&gt;api_user = product-&gt;api_user;
+<a name="line912">912: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductSetFromOptions.html">MatProductSetFromOptions</a>(C2);
+<a name="line913">913: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(C2, productsymbolic);
+<a name="line914">914: </a>  MatSeqAIJKokkosGetCSRMatrixWithGlobalColumnIds(C2, N, l2g2, mm-&gt;C2_global);
+
+<a name="line916">916: </a>  <font color="#B22222">/* C = C1 + C2.  We actually use their global col ids versions in adding */</font>
+<a name="line917">917: </a>  mm-&gt;kh.create_spadd_handle(false); <font color="#B22222">/* Input C1, C2 are NOT sorted, since B_local, B_other are not */</font>
+<a name="line918">918: </a><strong><font color="#FF0000">  KokkosSparse:</font></strong>:spadd_symbolic(&amp;mm-&gt;kh, mm-&gt;C1_global, mm-&gt;C2_global, mm-&gt;C_global);
+<a name="line919">919: </a>  <font color="#B22222">/* Have to do numeric since spadd_symbolic does not really populate column indices of the result matrix */</font>
+<a name="line920">920: </a><strong><font color="#FF0000">  KokkosSparse:</font></strong>:spadd_numeric(&amp;mm-&gt;kh, (MatScalarType)1.0, mm-&gt;C1_global, (MatScalarType)1.0, mm-&gt;C2_global, mm-&gt;C_global);
+
+<a name="line922">922: </a>  mm-&gt;C1 = C1;
+<a name="line923">923: </a>  mm-&gt;C2 = C2;
+<a name="line924">924: </a>  <a href="../../../../../../docs/manualpages/IS/ISRestoreIndices.html">ISRestoreIndices</a>(glob, &amp;garray);
+<a name="line925">925: </a>  <a href="../../../../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;glob);
+<a name="line926">926: </a>  <font color="#4169E1">return</font> 0;
+<a name="line927">927: </a>}
+
+<a name="line929">929: </a><font color="#B22222">/* MatProductSymbolic_MPIAIJKokkos_AtB - A^tB flavor of MatProductSymbolic_MPIAIJKokkos</font>
+
+<a name="line931">931: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line932">932: </a><font color="#B22222">+  product  - Mat_Product which carried out the computation. Passed in to access info about this mat product.</font>
+<a name="line933">933: </a><font color="#B22222">.  A        - an MPIAIJKOKKOS matrix</font>
+<a name="line934">934: </a><font color="#B22222">.  B        - a SEQAIJKOKKOS matrix. It works as if A^t is multiplied by a parallel matrix made up of Bs on each rank.</font>
+<a name="line935">935: </a><font color="#B22222">.  localB   - Does B use local col ids? If false, then B is already in global col ids.</font>
+<a name="line936">936: </a><font color="#B22222">.  N        - col size of the "parallel B matrix". It implies B's global col ids are in range of [0,N) and N is the same across the communicator.</font>
+<a name="line937">937: </a><font color="#B22222">.  l2g      - If localB, then l2g maps B's local col ids to global ones.</font>
+<a name="line938">938: </a><font color="#B22222">-  mm       - a struct used to stash intermediate data in AtB</font>
+
+<a name="line940">940: </a><font color="#B22222">  Note: The local part of the result C is stored as mm-&gt;C_global, which is of type KokkosCsrMatrix and uses global col ids.</font>
+<a name="line941">941: </a><font color="#B22222">*/</font>
+<a name="line942">942: </a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatProductSymbolic_MPIAIJKokkos_AtB(Mat_Product *product, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> localB, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> N, const ConstMatColIdxKokkosView &amp;l2g, MatMatStruct_AtB *mm)
+<a name="line943">943: </a>{
+<a name="line944">944: </a>  Mat_MPIAIJ *a  = static_cast&lt;Mat_MPIAIJ *&gt;(A-&gt;data);
+<a name="line945">945: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>         Ad = a-&gt;A, Ao = a-&gt;B; <font color="#B22222">/* diag and offdiag of A */</font>
+<a name="line946">946: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>         C1, C2;               <font color="#B22222">/* intermediate matrices */</font>
+
+<a name="line948">948: </a>  <font color="#B22222">/* C1 = Ad^t * B */</font>
+<a name="line949">949: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductCreate.html">MatProductCreate</a>(Ad, B, NULL, &amp;C1);
+<a name="line950">950: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductSetType.html">MatProductSetType</a>(C1, <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AtB</a>);
+<a name="line951">951: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductSetFill.html">MatProductSetFill</a>(C1, product-&gt;fill);
+<a name="line952">952: </a>  C1-&gt;product-&gt;api_user = product-&gt;api_user;
+<a name="line953">953: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductSetFromOptions.html">MatProductSetFromOptions</a>(C1);
+<a name="line954">954: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(C1, productsymbolic);
+
+<a name="line956">956: </a>  <font color="#4169E1">if</font> (localB) MatSeqAIJKokkosGetCSRMatrixWithGlobalColumnIds(C1, N, l2g, mm-&gt;C1_global);
+<a name="line957">957: </a>  <font color="#4169E1">else</font> mm-&gt;C1_global = static_cast&lt;Mat_SeqAIJKokkos *&gt;(C1-&gt;spptr)-&gt;csrmat; <font color="#B22222">/* the csrmat already uses global col ids */</font>
+
+<a name="line959">959: </a>  <font color="#B22222">/* C2 = Ao^t * B */</font>
+<a name="line960">960: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductCreate.html">MatProductCreate</a>(Ao, B, NULL, &amp;C2);
+<a name="line961">961: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductSetType.html">MatProductSetType</a>(C2, <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AtB</a>);
+<a name="line962">962: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductSetFill.html">MatProductSetFill</a>(C2, product-&gt;fill);
+<a name="line963">963: </a>  C2-&gt;product-&gt;api_user = product-&gt;api_user;
+<a name="line964">964: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductSetFromOptions.html">MatProductSetFromOptions</a>(C2);
+<a name="line965">965: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(C2, productsymbolic);
+
+<a name="line967">967: </a>  MatSeqAIJKokkosReduce(C2, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>, localB, N, l2g, a-&gt;Mvctx, mm-&gt;sf, mm-&gt;abuf, mm-&gt;srcrowoffset, mm-&gt;dstrowoffset, mm-&gt;C2_global);
+
+<a name="line969">969: </a>  mm-&gt;kh.create_spadd_handle(false); <font color="#B22222">/* Input C1, C2 are NOT sorted, since B may be not */</font>
+<a name="line970">970: </a><strong><font color="#FF0000">  KokkosSparse:</font></strong>:spadd_symbolic(&amp;mm-&gt;kh, mm-&gt;C1_global, mm-&gt;C2_global, mm-&gt;C_global);
+<a name="line971">971: </a>  <font color="#B22222">/* Have to do numeric since spadd_symbolic does not really populate column indices of the result matrix */</font>
+<a name="line972">972: </a><strong><font color="#FF0000">  KokkosSparse:</font></strong>:spadd_numeric(&amp;mm-&gt;kh, (MatScalarType)1.0, mm-&gt;C1_global, (MatScalarType)1.0, mm-&gt;C2_global, mm-&gt;C_global);
+<a name="line973">973: </a>  mm-&gt;C1 = C1;
+<a name="line974">974: </a>  mm-&gt;C2 = C2;
+<a name="line975">975: </a>  <font color="#4169E1">return</font> 0;
+<a name="line976">976: </a>}
+
+<a name="line978">978: </a><strong><font color="#4169E1"><a name="MatProductNumeric_MPIAIJKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatProductNumeric_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> C)</font></strong>
+<a name="line979">979: </a>{
+<a name="line980">980: </a>  Mat_Product                 *product = C-&gt;product;
+<a name="line981">981: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MatProductType</a>               ptype;
+<a name="line982">982: </a>  MatProductData_MPIAIJKokkos *mmdata;
+<a name="line983">983: </a>  MatMatStruct                *mm = NULL;
+<a name="line984">984: </a>  MatMatStruct_AB             *ab;
+<a name="line985">985: </a>  MatMatStruct_AtB            *atb;
+<a name="line986">986: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>                          A, B, Ad, Ao, Bd, Bo;
+<a name="line987">987: </a>  const MatScalarType          one = 1.0; <font color="#B22222">/* Not use literal 1.0 directly, to avoid wrong template instantiation in KokkosSparse::spadd_numeric */</font>
+
+<a name="line989">989: </a>  MatCheckProduct(C, 1);
+<a name="line990">990: </a>  mmdata = static_cast&lt;MatProductData_MPIAIJKokkos *&gt;(product-&gt;data);
+<a name="line991">991: </a>  ptype  = product-&gt;type;
+<a name="line992">992: </a>  A      = product-&gt;A;
+<a name="line993">993: </a>  B      = product-&gt;B;
+<a name="line994">994: </a>  Ad     = static_cast&lt;Mat_MPIAIJ *&gt;(A-&gt;data)-&gt;A;
+<a name="line995">995: </a>  Ao     = static_cast&lt;Mat_MPIAIJ *&gt;(A-&gt;data)-&gt;B;
+<a name="line996">996: </a>  Bd     = static_cast&lt;Mat_MPIAIJ *&gt;(B-&gt;data)-&gt;A;
+<a name="line997">997: </a>  Bo     = static_cast&lt;Mat_MPIAIJ *&gt;(B-&gt;data)-&gt;B;
+
+<a name="line999">999: </a>  <font color="#4169E1">if</font> (mmdata-&gt;reusesym) {           <font color="#B22222">/* We reached here through e.g., <a href="../../../../../../docs/manualpages/Mat/MatMatMult.html">MatMatMult</a>(A,B,<a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>,..,C), where symbolic/numeric are combined */</font>
+<a name="line1000">1000: </a>    mmdata-&gt;reusesym = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>; <font color="#B22222">/* So that next time when user calls <a href="../../../../../../docs/manualpages/Mat/MatMatMult.html">MatMatMult</a>(E,F,<a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>,..,C), we still do numeric  */</font>
+<a name="line1001">1001: </a>    ab               = mmdata-&gt;mmAB;
+<a name="line1002">1002: </a>    atb              = mmdata-&gt;mmAtB;
+<a name="line1003">1003: </a>    <font color="#4169E1">if</font> (ab) {
+<a name="line1004">1004: </a>      static_cast&lt;MatProductData_SeqAIJKokkos *&gt;(ab-&gt;C1-&gt;product-&gt;data)-&gt;reusesym = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line1005">1005: </a>      static_cast&lt;MatProductData_SeqAIJKokkos *&gt;(ab-&gt;C2-&gt;product-&gt;data)-&gt;reusesym = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line1006">1006: </a>    }
+<a name="line1007">1007: </a>    <font color="#4169E1">if</font> (atb) {
+<a name="line1008">1008: </a>      static_cast&lt;MatProductData_SeqAIJKokkos *&gt;(atb-&gt;C1-&gt;product-&gt;data)-&gt;reusesym = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line1009">1009: </a>      static_cast&lt;MatProductData_SeqAIJKokkos *&gt;(atb-&gt;C2-&gt;product-&gt;data)-&gt;reusesym = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line1010">1010: </a>    }
+<a name="line1011">1011: </a>    <font color="#4169E1">return</font> 0;
+<a name="line1012">1012: </a>  }
+
+<a name="line1014">1014: </a>  <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AB</a>) {
+<a name="line1015">1015: </a>    ab = mmdata-&gt;mmAB;
+<a name="line1016">1016: </a>    <font color="#B22222">/* C1 = Ad * B_local */</font>
+<a name="line1018">1018: </a>    <a href="../../../../../../docs/manualpages/Mat/MatMPIAIJGetLocalMatMerge.html">MatMPIAIJGetLocalMatMerge</a>(B, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>, NULL <font color="#B22222">/* glob */</font>, &amp;ab-&gt;B_local);
+<a name="line1020">1020: </a>    <font color="#4169E1">if</font> (ab-&gt;C1-&gt;product-&gt;A != Ad) <a href="../../../../../../docs/manualpages/Mat/MatProductReplaceMats.html">MatProductReplaceMats</a>(Ad, NULL, NULL, ab-&gt;C1);
+<a name="line1021">1021: </a>    (*ab-&gt;C1-&gt;ops-&gt;productnumeric)(ab-&gt;C1);
+<a name="line1022">1022: </a>    MatSeqAIJKokkosBcast(ab-&gt;B_local, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>, 0 <font color="#B22222">/* N */</font>, MatColIdxKokkosView() <font color="#B22222">/*l2g*/</font>, NULL <font color="#B22222">/*ownerSF*/</font>, ab-&gt;sf, ab-&gt;abuf, ab-&gt;rows, ab-&gt;rowoffset, ab-&gt;B_other);
+<a name="line1023">1023: </a>    <font color="#B22222">/* C2 = Ao * B_other */</font>
+<a name="line1025">1025: </a>    <font color="#4169E1">if</font> (ab-&gt;C1-&gt;product-&gt;A != Ao) <a href="../../../../../../docs/manualpages/Mat/MatProductReplaceMats.html">MatProductReplaceMats</a>(Ao, NULL, NULL, ab-&gt;C2);
+<a name="line1026">1026: </a>    (*ab-&gt;C2-&gt;ops-&gt;productnumeric)(ab-&gt;C2);
+<a name="line1027">1027: </a>    <font color="#B22222">/* C = C1_global + C2_global */</font>
+<a name="line1028">1028: </a><strong><font color="#FF0000">    KokkosSparse:</font></strong>:spadd_numeric(&amp;ab-&gt;kh, one, ab-&gt;C1_global, one, ab-&gt;C2_global, ab-&gt;C_global);
+<a name="line1029">1029: </a>    mm = static_cast&lt;MatMatStruct *&gt;(ab);
+<a name="line1030">1030: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AtB</a>) {
+<a name="line1031">1031: </a>    atb = mmdata-&gt;mmAtB;
+<a name="line1033">1033: </a>    <font color="#B22222">/* C1 = Ad^t * B_local */</font>
+<a name="line1034">1034: </a>    <a href="../../../../../../docs/manualpages/Mat/MatMPIAIJGetLocalMatMerge.html">MatMPIAIJGetLocalMatMerge</a>(B, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>, NULL <font color="#B22222">/* glob */</font>, &amp;atb-&gt;B_local);
+<a name="line1036">1036: </a>    <font color="#4169E1">if</font> (atb-&gt;C1-&gt;product-&gt;A != Ad) <a href="../../../../../../docs/manualpages/Mat/MatProductReplaceMats.html">MatProductReplaceMats</a>(Ad, NULL, NULL, atb-&gt;C1);
+<a name="line1037">1037: </a>    (*atb-&gt;C1-&gt;ops-&gt;productnumeric)(atb-&gt;C1);
+
+<a name="line1039">1039: </a>    <font color="#B22222">/* C2 = Ao^t * B_local */</font>
+<a name="line1041">1041: </a>    <font color="#4169E1">if</font> (atb-&gt;C2-&gt;product-&gt;A != Ao) <a href="../../../../../../docs/manualpages/Mat/MatProductReplaceMats.html">MatProductReplaceMats</a>(Ao, NULL, NULL, atb-&gt;C2);
+<a name="line1042">1042: </a>    (*atb-&gt;C2-&gt;ops-&gt;productnumeric)(atb-&gt;C2);
+<a name="line1043">1043: </a>    <font color="#B22222">/* Form C2_global */</font>
+<a name="line1044">1044: </a>    MatSeqAIJKokkosReduce(atb-&gt;C2, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>, <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, 0 <font color="#B22222">/* N */</font>, MatColIdxKokkosView() <font color="#B22222">/*l2g*/</font>, NULL <font color="#B22222">/*ownerSF*/</font>, atb-&gt;sf, atb-&gt;abuf, atb-&gt;srcrowoffset, atb-&gt;dstrowoffset, atb-&gt;C2_global);
+<a name="line1045">1045: </a>    <font color="#B22222">/* C = C1_global + C2_global */</font>
+<a name="line1046">1046: </a><strong><font color="#FF0000">    KokkosSparse:</font></strong>:spadd_numeric(&amp;atb-&gt;kh, one, atb-&gt;C1_global, one, atb-&gt;C2_global, atb-&gt;C_global);
+<a name="line1047">1047: </a>    mm = static_cast&lt;MatMatStruct *&gt;(atb);
+<a name="line1048">1048: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_PtAP</a>) { <font color="#B22222">/* BtAB */</font>
+<a name="line1049">1049: </a>    ab = mmdata-&gt;mmAB;
+<a name="line1050">1050: </a>    <a href="../../../../../../docs/manualpages/Mat/MatMPIAIJGetLocalMatMerge.html">MatMPIAIJGetLocalMatMerge</a>(B, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>, NULL <font color="#B22222">/* glob */</font>, &amp;ab-&gt;B_local);
+
+<a name="line1052">1052: </a>    <font color="#B22222">/* ab-&gt;C1 = Ad * B_local */</font>
+<a name="line1054">1054: </a>    <font color="#4169E1">if</font> (ab-&gt;C1-&gt;product-&gt;A != Ad) <a href="../../../../../../docs/manualpages/Mat/MatProductReplaceMats.html">MatProductReplaceMats</a>(Ad, NULL, NULL, ab-&gt;C1);
+<a name="line1055">1055: </a>    (*ab-&gt;C1-&gt;ops-&gt;productnumeric)(ab-&gt;C1);
+<a name="line1056">1056: </a>    MatSeqAIJKokkosBcast(ab-&gt;B_local, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>, 0 <font color="#B22222">/* N */</font>, MatColIdxKokkosView() <font color="#B22222">/*l2g*/</font>, NULL <font color="#B22222">/*ownerSF*/</font>, ab-&gt;sf, ab-&gt;abuf, ab-&gt;rows, ab-&gt;rowoffset, ab-&gt;B_other);
+<a name="line1057">1057: </a>    <font color="#B22222">/* ab-&gt;C2 = Ao * B_other */</font>
+<a name="line1058">1058: </a>    <font color="#4169E1">if</font> (ab-&gt;C2-&gt;product-&gt;A != Ao) <a href="../../../../../../docs/manualpages/Mat/MatProductReplaceMats.html">MatProductReplaceMats</a>(Ao, NULL, NULL, ab-&gt;C2);
+<a name="line1059">1059: </a>    (*ab-&gt;C2-&gt;ops-&gt;productnumeric)(ab-&gt;C2); <font color="#B22222">/* C2 = Ao * B_other */</font>
+<a name="line1060">1060: </a><strong><font color="#FF0000">    KokkosSparse:</font></strong>:spadd_numeric(&amp;ab-&gt;kh, one, ab-&gt;C1_global, one, ab-&gt;C2_global, ab-&gt;C_global);
+
+<a name="line1062">1062: </a>    <font color="#B22222">/* atb-&gt;C1 = Bd^t * ab-&gt;C_petsc */</font>
+<a name="line1063">1063: </a>    atb = mmdata-&gt;mmAtB;
+<a name="line1065">1065: </a>    <font color="#4169E1">if</font> (atb-&gt;C1-&gt;product-&gt;A != Bd) <a href="../../../../../../docs/manualpages/Mat/MatProductReplaceMats.html">MatProductReplaceMats</a>(Bd, NULL, NULL, atb-&gt;C1);
+<a name="line1066">1066: </a>    (*atb-&gt;C1-&gt;ops-&gt;productnumeric)(atb-&gt;C1);
+<a name="line1067">1067: </a>    <font color="#B22222">/* atb-&gt;C2 = Bo^t * ab-&gt;C_petsc */</font>
+<a name="line1068">1068: </a>    <font color="#4169E1">if</font> (atb-&gt;C2-&gt;product-&gt;A != Bo) <a href="../../../../../../docs/manualpages/Mat/MatProductReplaceMats.html">MatProductReplaceMats</a>(Bo, NULL, NULL, atb-&gt;C2);
+<a name="line1069">1069: </a>    (*atb-&gt;C2-&gt;ops-&gt;productnumeric)(atb-&gt;C2);
+<a name="line1070">1070: </a>    MatSeqAIJKokkosReduce(atb-&gt;C2, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, 0 <font color="#B22222">/* N */</font>, MatColIdxKokkosView() <font color="#B22222">/*l2g*/</font>, NULL <font color="#B22222">/* ownerSF */</font>, atb-&gt;sf, atb-&gt;abuf, atb-&gt;srcrowoffset, atb-&gt;dstrowoffset, atb-&gt;C2_global);
+<a name="line1071">1071: </a><strong><font color="#FF0000">    KokkosSparse:</font></strong>:spadd_numeric(&amp;atb-&gt;kh, one, atb-&gt;C1_global, one, atb-&gt;C2_global, atb-&gt;C_global);
+<a name="line1072">1072: </a>    mm = static_cast&lt;MatMatStruct *&gt;(atb);
+<a name="line1073">1073: </a>  }
+<a name="line1074">1074: </a>  <font color="#B22222">/* Split C_global to form C */</font>
+<a name="line1075">1075: </a>  MatSetMPIAIJKokkosWithGlobalCSRMatrix(C, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>, mm-&gt;C_global, mm-&gt;Cdstart);
+<a name="line1076">1076: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1077">1077: </a>}
+
+<a name="line1079">1079: </a><strong><font color="#4169E1"><a name="MatProductSymbolic_MPIAIJKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatProductSymbolic_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> C)</font></strong>
+<a name="line1080">1080: </a>{
+<a name="line1081">1081: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>                          A, B;
+<a name="line1082">1082: </a>  Mat_Product                 *product = C-&gt;product;
+<a name="line1083">1083: </a>  <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MatProductType</a>               ptype;
+<a name="line1084">1084: </a>  MatProductData_MPIAIJKokkos *mmdata;
+<a name="line1085">1085: </a>  MatMatStruct                *mm   = NULL;
+<a name="line1086">1086: </a>  <a href="../../../../../../docs/manualpages/IS/IS.html">IS</a>                           glob = NULL;
+<a name="line1087">1087: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>              *garray;
+<a name="line1088">1088: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                     m, n, M, N, sz;
+<a name="line1089">1089: </a>  ConstMatColIdxKokkosView     l2g; <font color="#B22222">/* map local col ids to global ones */</font>
+
+<a name="line1091">1091: </a>  MatCheckProduct(C, 1);
+<a name="line1093">1093: </a>  ptype = product-&gt;type;
+<a name="line1094">1094: </a>  A     = product-&gt;A;
+<a name="line1095">1095: </a>  B     = product-&gt;B;
+
+<a name="line1097">1097: </a>  <font color="#4169E1">switch</font> (ptype) {
+<a name="line1098">1098: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AB</a>:
+<a name="line1099">1099: </a>    m = A-&gt;rmap-&gt;n;
+<a name="line1100">1100: </a>    n = B-&gt;cmap-&gt;n;
+<a name="line1101">1101: </a>    M = A-&gt;rmap-&gt;N;
+<a name="line1102">1102: </a>    N = B-&gt;cmap-&gt;N;
+<a name="line1103">1103: </a>    <font color="#4169E1">break</font>;
+<a name="line1104">1104: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AtB</a>:
+<a name="line1105">1105: </a>    m = A-&gt;cmap-&gt;n;
+<a name="line1106">1106: </a>    n = B-&gt;cmap-&gt;n;
+<a name="line1107">1107: </a>    M = A-&gt;cmap-&gt;N;
+<a name="line1108">1108: </a>    N = B-&gt;cmap-&gt;N;
+<a name="line1109">1109: </a>    <font color="#4169E1">break</font>;
+<a name="line1110">1110: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_PtAP</a>:
+<a name="line1111">1111: </a>    m = B-&gt;cmap-&gt;n;
+<a name="line1112">1112: </a>    n = B-&gt;cmap-&gt;n;
+<a name="line1113">1113: </a>    M = B-&gt;cmap-&gt;N;
+<a name="line1114">1114: </a>    N = B-&gt;cmap-&gt;N;
+<a name="line1115">1115: </a>    <font color="#4169E1">break</font>; <font color="#B22222">/* BtAB */</font>
+<a name="line1116">1116: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line1117">1117: </a>    <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)C), PETSC_ERR_PLIB, <font color="#666666">"Not for product type %s"</font>, MatProductTypes[ptype]);
+<a name="line1118">1118: </a>  }
+
+<a name="line1120">1120: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSetSizes.html">MatSetSizes</a>(C, m, n, M, N);
+<a name="line1121">1121: </a>  <a href="../../../../../../docs/manualpages/IS/PetscLayoutSetUp.html">PetscLayoutSetUp</a>(C-&gt;rmap);
+<a name="line1122">1122: </a>  <a href="../../../../../../docs/manualpages/IS/PetscLayoutSetUp.html">PetscLayoutSetUp</a>(C-&gt;cmap);
+<a name="line1123">1123: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(C, ((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A)-&gt;type_name);
+
+<a name="line1125">1125: </a>  mmdata           = new MatProductData_MPIAIJKokkos();
+<a name="line1126">1126: </a>  mmdata-&gt;reusesym = product-&gt;api_user;
+
+<a name="line1128">1128: </a>  <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AB</a>) {
+<a name="line1129">1129: </a>    mmdata-&gt;mmAB = new MatMatStruct_AB();
+<a name="line1130">1130: </a>    MatProductSymbolic_MPIAIJKokkos_AB(product, A, B, mmdata-&gt;mmAB);
+<a name="line1131">1131: </a>    mm = static_cast&lt;MatMatStruct *&gt;(mmdata-&gt;mmAB);
+<a name="line1132">1132: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AtB</a>) {
+<a name="line1133">1133: </a>    mmdata-&gt;mmAtB = new MatMatStruct_AtB();
+<a name="line1134">1134: </a>    auto atb      = mmdata-&gt;mmAtB;
+<a name="line1135">1135: </a>    <a href="../../../../../../docs/manualpages/Mat/MatMPIAIJGetLocalMatMerge.html">MatMPIAIJGetLocalMatMerge</a>(B, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>, &amp;glob, &amp;atb-&gt;B_local);
+<a name="line1136">1136: </a>    <a href="../../../../../../docs/manualpages/IS/ISGetIndices.html">ISGetIndices</a>(glob, &amp;garray);
+<a name="line1137">1137: </a>    <a href="../../../../../../docs/manualpages/IS/ISGetSize.html">ISGetSize</a>(glob, &amp;sz);
+<a name="line1138">1138: </a>    l2g = Kokkos::create_mirror_view_and_copy(DefaultMemorySpace(), ConstMatColIdxKokkosViewHost(garray, sz));
+<a name="line1139">1139: </a>    MatProductSymbolic_MPIAIJKokkos_AtB(product, A, atb-&gt;B_local, <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, N, l2g, atb);
+<a name="line1140">1140: </a>    <a href="../../../../../../docs/manualpages/IS/ISRestoreIndices.html">ISRestoreIndices</a>(glob, &amp;garray);
+<a name="line1141">1141: </a>    <a href="../../../../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;glob);
+<a name="line1142">1142: </a>    mm = static_cast&lt;MatMatStruct *&gt;(atb);
+<a name="line1143">1143: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_PtAP</a>) {    <font color="#B22222">/* BtAB */</font>
+<a name="line1144">1144: </a>    mmdata-&gt;mmAB  = new MatMatStruct_AB();  <font color="#B22222">/* tmp=A*B */</font>
+<a name="line1145">1145: </a>    mmdata-&gt;mmAtB = new MatMatStruct_AtB(); <font color="#B22222">/* C=B^t*tmp */</font>
+<a name="line1146">1146: </a>    auto ab       = mmdata-&gt;mmAB;
+<a name="line1147">1147: </a>    auto atb      = mmdata-&gt;mmAtB;
+<a name="line1148">1148: </a>    MatProductSymbolic_MPIAIJKokkos_AB(product, A, B, ab);
+<a name="line1149">1149: </a>    auto tmp = new Mat_SeqAIJKokkos(ab-&gt;C_global); <font color="#B22222">/* Memory will be owned by ab-&gt;C_petsc */</font>
+<a name="line1150">1150: </a>    MatCreateSeqAIJKokkosWithCSRMatrix(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, tmp, &amp;ab-&gt;C_petsc);
+<a name="line1151">1151: </a>    MatProductSymbolic_MPIAIJKokkos_AtB(product, B, ab-&gt;C_petsc, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, N, l2g <font color="#B22222">/*not used*/</font>, atb);
+<a name="line1152">1152: </a>    mm = static_cast&lt;MatMatStruct *&gt;(atb);
+<a name="line1153">1153: </a>  }
+<a name="line1154">1154: </a>  <font color="#B22222">/* Split the C_global into petsc A, B format */</font>
+<a name="line1155">1155: </a>  MatSetMPIAIJKokkosWithGlobalCSRMatrix(C, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>, mm-&gt;C_global, mm-&gt;Cdstart);
+<a name="line1156">1156: </a>  C-&gt;product-&gt;data       = mmdata;
+<a name="line1157">1157: </a>  C-&gt;product-&gt;destroy    = MatProductDataDestroy_MPIAIJKokkos;
+<a name="line1158">1158: </a>  C-&gt;ops-&gt;productnumeric = MatProductNumeric_MPIAIJKokkos;
+<a name="line1159">1159: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1160">1160: </a>}
+
+<a name="line1162">1162: </a><strong><font color="#4169E1"><a name="MatProductSetFromOptions_MPIAIJKokkos"></a>PETSC_INTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatProductSetFromOptions_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> mat)</font></strong>
+<a name="line1163">1163: </a>{
+<a name="line1164">1164: </a>  Mat_Product *product = mat-&gt;product;
+<a name="line1165">1165: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>    match   = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line1166">1166: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>    usecpu  = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line1168">1168: </a>  MatCheckProduct(mat, 1);
+<a name="line1169">1169: </a>  <font color="#4169E1">if</font> (!product-&gt;A-&gt;boundtocpu &amp;&amp; !product-&gt;B-&gt;boundtocpu) <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)product-&gt;B, ((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)product-&gt;A)-&gt;type_name, &amp;match);
+<a name="line1170">1170: </a>  <font color="#4169E1">if</font> (match) { <font color="#B22222">/* we can always fallback to the CPU if requested */</font>
+<a name="line1171">1171: </a>    <font color="#4169E1">switch</font> (product-&gt;type) {
+<a name="line1172">1172: </a>    <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AB</a>:
+<a name="line1173">1173: </a>      <font color="#4169E1">if</font> (product-&gt;api_user) {
+<a name="line1174">1174: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat), ((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat)-&gt;prefix, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/MatMatMult.html">MatMatMult</a>"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>"</font>);
+<a name="line1175">1175: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-matmatmult_backend_cpu"</font>, <font color="#666666">"Use CPU code"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/MatMatMult.html">MatMatMult</a>"</font>, usecpu, &amp;usecpu, NULL);
+<a name="line1176">1176: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line1177">1177: </a>      } <font color="#4169E1">else</font> {
+<a name="line1178">1178: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat), ((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat)-&gt;prefix, <font color="#666666">"MatProduct_AB"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>"</font>);
+<a name="line1179">1179: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-mat_product_algorithm_backend_cpu"</font>, <font color="#666666">"Use CPU code"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/MatMatMult.html">MatMatMult</a>"</font>, usecpu, &amp;usecpu, NULL);
+<a name="line1180">1180: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line1181">1181: </a>      }
+<a name="line1182">1182: </a>      <font color="#4169E1">break</font>;
+<a name="line1183">1183: </a>    <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AtB</a>:
+<a name="line1184">1184: </a>      <font color="#4169E1">if</font> (product-&gt;api_user) {
+<a name="line1185">1185: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat), ((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat)-&gt;prefix, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/MatTransposeMatMult.html">MatTransposeMatMult</a>"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>"</font>);
+<a name="line1186">1186: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-mattransposematmult_backend_cpu"</font>, <font color="#666666">"Use CPU code"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/MatTransposeMatMult.html">MatTransposeMatMult</a>"</font>, usecpu, &amp;usecpu, NULL);
+<a name="line1187">1187: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line1188">1188: </a>      } <font color="#4169E1">else</font> {
+<a name="line1189">1189: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat), ((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat)-&gt;prefix, <font color="#666666">"MatProduct_AtB"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>"</font>);
+<a name="line1190">1190: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-mat_product_algorithm_backend_cpu"</font>, <font color="#666666">"Use CPU code"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/MatTransposeMatMult.html">MatTransposeMatMult</a>"</font>, usecpu, &amp;usecpu, NULL);
+<a name="line1191">1191: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line1192">1192: </a>      }
+<a name="line1193">1193: </a>      <font color="#4169E1">break</font>;
+<a name="line1194">1194: </a>    <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_PtAP</a>:
+<a name="line1195">1195: </a>      <font color="#4169E1">if</font> (product-&gt;api_user) {
+<a name="line1196">1196: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat), ((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat)-&gt;prefix, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/MatPtAP.html">MatPtAP</a>"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>"</font>);
+<a name="line1197">1197: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-matptap_backend_cpu"</font>, <font color="#666666">"Use CPU code"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/MatPtAP.html">MatPtAP</a>"</font>, usecpu, &amp;usecpu, NULL);
+<a name="line1198">1198: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line1199">1199: </a>      } <font color="#4169E1">else</font> {
+<a name="line1200">1200: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat), ((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat)-&gt;prefix, <font color="#666666">"MatProduct_PtAP"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>"</font>);
+<a name="line1201">1201: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-mat_product_algorithm_backend_cpu"</font>, <font color="#666666">"Use CPU code"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Mat/MatPtAP.html">MatPtAP</a>"</font>, usecpu, &amp;usecpu, NULL);
+<a name="line1202">1202: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line1203">1203: </a>      }
+<a name="line1204">1204: </a>      <font color="#4169E1">break</font>;
+<a name="line1205">1205: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line1206">1206: </a>      <font color="#4169E1">break</font>;
+<a name="line1207">1207: </a>    }
+<a name="line1208">1208: </a>    match = (<a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)!usecpu;
+<a name="line1209">1209: </a>  }
+<a name="line1210">1210: </a>  <font color="#4169E1">if</font> (match) {
+<a name="line1211">1211: </a>    <font color="#4169E1">switch</font> (product-&gt;type) {
+<a name="line1212">1212: </a>    <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AB</a>:
+<a name="line1213">1213: </a>    <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_AtB</a>:
+<a name="line1214">1214: </a>    <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Mat/MatProductType.html">MATPRODUCT_PtAP</a>:
+<a name="line1215">1215: </a>      mat-&gt;ops-&gt;productsymbolic = MatProductSymbolic_MPIAIJKokkos;
+<a name="line1216">1216: </a>      <font color="#4169E1">break</font>;
+<a name="line1217">1217: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line1218">1218: </a>      <font color="#4169E1">break</font>;
+<a name="line1219">1219: </a>    }
+<a name="line1220">1220: </a>  }
+<a name="line1221">1221: </a>  <font color="#B22222">/* fallback to MPIAIJ ops */</font>
+<a name="line1222">1222: </a>  <font color="#4169E1">if</font> (!mat-&gt;ops-&gt;productsymbolic) MatProductSetFromOptions_MPIAIJ(mat);
+<a name="line1223">1223: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1224">1224: </a>}
+
+<a name="line1226">1226: </a><strong><font color="#4169E1"><a name="MatSetPreallocationCOO_MPIAIJKokkos"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSetPreallocationCOO_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> mat, <a href="../../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> coo_n, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> coo_i[], <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> coo_j[])</font></strong>
+<a name="line1227">1227: </a>{
+<a name="line1228">1228: </a>  Mat_MPIAIJ       *mpiaij = (Mat_MPIAIJ *)mat-&gt;data;
+<a name="line1229">1229: </a>  Mat_MPIAIJKokkos *mpikok;
+
+<a name="line1231">1231: </a>  MatSetPreallocationCOO_MPIAIJ(mat, coo_n, coo_i, coo_j); <font color="#B22222">/* mpiaij-&gt;A,B's type is set to seqaijkokkos */</font>
+<a name="line1232">1232: </a>  mat-&gt;preallocated = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line1233">1233: </a>  <a href="../../../../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(mat, <a href="../../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line1234">1234: </a>  <a href="../../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(mat, <a href="../../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line1235">1235: </a>  <a href="../../../../../../docs/manualpages/Mat/MatZeroEntries.html">MatZeroEntries</a>(mat);
+<a name="line1236">1236: </a>  mpikok = static_cast&lt;Mat_MPIAIJKokkos *&gt;(mpiaij-&gt;spptr);
+<a name="line1237">1237: </a>  delete mpikok;
+<a name="line1238">1238: </a>  mpiaij-&gt;spptr = new Mat_MPIAIJKokkos(mpiaij);
+<a name="line1239">1239: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1240">1240: </a>}
+
+<a name="line1242">1242: </a><strong><font color="#4169E1"><a name="MatSetValuesCOO_MPIAIJKokkos"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSetValuesCOO_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> mat, const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> v[], <a href="../../../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a> imode)</font></strong>
+<a name="line1243">1243: </a>{
+<a name="line1244">1244: </a>  Mat_MPIAIJ                 *mpiaij = static_cast&lt;Mat_MPIAIJ *&gt;(mat-&gt;data);
+<a name="line1245">1245: </a>  Mat_MPIAIJKokkos           *mpikok = static_cast&lt;Mat_MPIAIJKokkos *&gt;(mpiaij-&gt;spptr);
+<a name="line1246">1246: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>                         A = mpiaij-&gt;A, B = mpiaij-&gt;B;
+<a name="line1247">1247: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a>                  Annz = mpiaij-&gt;Annz, Annz2 = mpiaij-&gt;Annz2, Bnnz = mpiaij-&gt;Bnnz, Bnnz2 = mpiaij-&gt;Bnnz2;
+<a name="line1248">1248: </a>  MatScalarKokkosView         Aa, Ba;
+<a name="line1249">1249: </a>  MatScalarKokkosView         v1;
+<a name="line1250">1250: </a>  MatScalarKokkosView        &amp;vsend  = mpikok-&gt;sendbuf_d;
+<a name="line1251">1251: </a>  const MatScalarKokkosView  &amp;v2     = mpikok-&gt;recvbuf_d;
+<a name="line1252">1252: </a>  const PetscCountKokkosView &amp;Ajmap1 = mpikok-&gt;Ajmap1_d, Ajmap2 = mpikok-&gt;Ajmap2_d, Aimap2 = mpikok-&gt;Aimap2_d;
+<a name="line1253">1253: </a>  const PetscCountKokkosView &amp;Bjmap1 = mpikok-&gt;Bjmap1_d, Bjmap2 = mpikok-&gt;Bjmap2_d, Bimap2 = mpikok-&gt;Bimap2_d;
+<a name="line1254">1254: </a>  const PetscCountKokkosView &amp;Aperm1 = mpikok-&gt;Aperm1_d, Aperm2 = mpikok-&gt;Aperm2_d, Bperm1 = mpikok-&gt;Bperm1_d, Bperm2 = mpikok-&gt;Bperm2_d;
+<a name="line1255">1255: </a>  const PetscCountKokkosView &amp;Cperm1 = mpikok-&gt;Cperm1_d;
+<a name="line1256">1256: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a>                memtype;
+
+<a name="line1258">1258: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscGetMemType.html">PetscGetMemType</a>(v, &amp;memtype); <font color="#B22222">/* Return <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_HOST</a> when v is NULL */</font>
+<a name="line1259">1259: </a>  <font color="#4169E1">if</font> (PetscMemTypeHost(memtype)) {         <font color="#B22222">/* If user gave v[] in host, we need to copy it to device if any */</font>
+<a name="line1260">1260: </a>    v1 = Kokkos::create_mirror_view_and_copy(DefaultMemorySpace(), MatScalarKokkosViewHost((<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)v, mpiaij-&gt;coo_n));
+<a name="line1261">1261: </a>  } <font color="#4169E1">else</font> {
+<a name="line1262">1262: </a>    v1 = MatScalarKokkosView((<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)v, mpiaij-&gt;coo_n); <font color="#B22222">/* Directly use v[]'s memory */</font>
+<a name="line1263">1263: </a>  }
+
+<a name="line1265">1265: </a>  <font color="#4169E1">if</font> (imode == <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>) {
+<a name="line1266">1266: </a>    MatSeqAIJGetKokkosViewWrite(A, &amp;Aa); <font color="#B22222">/* write matrix values */</font>
+<a name="line1267">1267: </a>    MatSeqAIJGetKokkosViewWrite(B, &amp;Ba);
+<a name="line1268">1268: </a>  } <font color="#4169E1">else</font> {
+<a name="line1269">1269: </a>    MatSeqAIJGetKokkosView(A, &amp;Aa); <font color="#B22222">/* read &amp; write matrix values */</font>
+<a name="line1270">1270: </a>    MatSeqAIJGetKokkosView(B, &amp;Ba);
+<a name="line1271">1271: </a>  }
+
+<a name="line1273">1273: </a>  <font color="#B22222">/* Pack entries to be sent to remote */</font>
+<a name="line1274">1274: </a><strong><font color="#FF0000">  Kokkos:</font></strong>:parallel_for(
+<a name="line1275">1275: </a>    vsend.extent(0), KOKKOS_LAMBDA(const <a href="../../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> i) { vsend(i) = v1(Cperm1(i)); });
+
+<a name="line1277">1277: </a>  <font color="#B22222">/* Send remote entries to their owner and overlap the communication with local computation */</font>
+<a name="line1278">1278: </a>  <a href="../../../../../../docs/manualpages/PetscSF/PetscSFReduceWithMemTypeBegin.html">PetscSFReduceWithMemTypeBegin</a>(mpiaij-&gt;coo_sf, <a href="../../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, PETSC_MEMTYPE_KOKKOS, vsend.data(), PETSC_MEMTYPE_KOKKOS, v2.data(), MPI_REPLACE);
+<a name="line1279">1279: </a>  <font color="#B22222">/* Add local entries to A and B in one kernel */</font>
+<a name="line1280">1280: </a><strong><font color="#FF0000">  Kokkos:</font></strong>:parallel_for(
+<a name="line1281">1281: </a>    Annz + Bnnz, KOKKOS_LAMBDA(<a href="../../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> i) {
+<a name="line1282">1282: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> sum = 0.0;
+<a name="line1283">1283: </a>      <font color="#4169E1">if</font> (i &lt; Annz) {
+<a name="line1284">1284: </a>        <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> k = Ajmap1(i); k &lt; Ajmap1(i + 1); k++) sum += v1(Aperm1(k));
+<a name="line1285">1285: </a>        Aa(i) = (imode == <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a> ? 0.0 : Aa(i)) + sum;
+<a name="line1286">1286: </a>      } <font color="#4169E1">else</font> {
+<a name="line1287">1287: </a>        i -= Annz;
+<a name="line1288">1288: </a>        <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> k = Bjmap1(i); k &lt; Bjmap1(i + 1); k++) sum += v1(Bperm1(k));
+<a name="line1289">1289: </a>        Ba(i) = (imode == <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a> ? 0.0 : Ba(i)) + sum;
+<a name="line1290">1290: </a>      }
+<a name="line1291">1291: </a>    });
+<a name="line1292">1292: </a>  <a href="../../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html">PetscSFReduceEnd</a>(mpiaij-&gt;coo_sf, <a href="../../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, vsend.data(), v2.data(), MPI_REPLACE);
+
+<a name="line1294">1294: </a>  <font color="#B22222">/* Add received remote entries to A and B in one kernel */</font>
+<a name="line1295">1295: </a><strong><font color="#FF0000">  Kokkos:</font></strong>:parallel_for(
+<a name="line1296">1296: </a>    Annz2 + Bnnz2, KOKKOS_LAMBDA(<a href="../../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> i) {
+<a name="line1297">1297: </a>      <font color="#4169E1">if</font> (i &lt; Annz2) {
+<a name="line1298">1298: </a>        <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> k = Ajmap2(i); k &lt; Ajmap2(i + 1); k++) Aa(Aimap2(i)) += v2(Aperm2(k));
+<a name="line1299">1299: </a>      } <font color="#4169E1">else</font> {
+<a name="line1300">1300: </a>        i -= Annz2;
+<a name="line1301">1301: </a>        <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscCount.html">PetscCount</a> k = Bjmap2(i); k &lt; Bjmap2(i + 1); k++) Ba(Bimap2(i)) += v2(Bperm2(k));
+<a name="line1302">1302: </a>      }
+<a name="line1303">1303: </a>    });
+
+<a name="line1305">1305: </a>  <font color="#4169E1">if</font> (imode == <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>) {
+<a name="line1306">1306: </a>    MatSeqAIJRestoreKokkosViewWrite(A, &amp;Aa); <font color="#B22222">/* Increase A &amp; B's state etc. */</font>
+<a name="line1307">1307: </a>    MatSeqAIJRestoreKokkosViewWrite(B, &amp;Ba);
+<a name="line1308">1308: </a>  } <font color="#4169E1">else</font> {
+<a name="line1309">1309: </a>    MatSeqAIJRestoreKokkosView(A, &amp;Aa);
+<a name="line1310">1310: </a>    MatSeqAIJRestoreKokkosView(B, &amp;Ba);
+<a name="line1311">1311: </a>  }
+<a name="line1312">1312: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1313">1313: </a>}
+
+<a name="line1315">1315: </a><strong><font color="#4169E1"><a name="MatDestroy_MPIAIJKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDestroy_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A)</font></strong>
+<a name="line1316">1316: </a>{
+<a name="line1317">1317: </a>  Mat_MPIAIJ *mpiaij = (Mat_MPIAIJ *)A-&gt;data;
+
+<a name="line1319">1319: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatMPIAIJSetPreallocation_C"</font>, NULL);
+<a name="line1320">1320: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatMPIAIJGetLocalMatMerge_C"</font>, NULL);
+<a name="line1321">1321: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatSetPreallocationCOO_C"</font>, NULL);
+<a name="line1322">1322: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatSetValuesCOO_C"</font>, NULL);
+<a name="line1323">1323: </a>  delete (Mat_MPIAIJKokkos *)mpiaij-&gt;spptr;
+<a name="line1324">1324: </a>  MatDestroy_MPIAIJ(A);
+<a name="line1325">1325: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1326">1326: </a>}
+
+<a name="line1328">1328: </a><strong><font color="#4169E1"><a name="MatConvert_MPIAIJ_MPIAIJKokkos"></a>PETSC_INTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatConvert_MPIAIJ_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Mat/MatType.html">MatType</a> mtype, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MatReuse</a> reuse, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *newmat)</font></strong>
+<a name="line1329">1329: </a>{
+<a name="line1330">1330: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>         B;
+<a name="line1331">1331: </a>  Mat_MPIAIJ *a;
+
+<a name="line1333">1333: </a>  <font color="#4169E1">if</font> (reuse == <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>) {
+<a name="line1334">1334: </a>    <a href="../../../../../../docs/manualpages/Mat/MatDuplicate.html">MatDuplicate</a>(A, <a href="../../../../../../docs/manualpages/Mat/MatDuplicateOption.html">MAT_COPY_VALUES</a>, newmat);
+<a name="line1335">1335: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (reuse == <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>) {
+<a name="line1336">1336: </a>    <a href="../../../../../../docs/manualpages/Mat/MatCopy.html">MatCopy</a>(A, *newmat, <a href="../../../../../../docs/manualpages/Mat/MatStructure.html">SAME_NONZERO_PATTERN</a>);
+<a name="line1337">1337: </a>  }
+<a name="line1338">1338: </a>  B = *newmat;
+
+<a name="line1340">1340: </a>  B-&gt;boundtocpu = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line1341">1341: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(B-&gt;defaultvectype);
+<a name="line1342">1342: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(<a href="../../../../../../docs/manualpages/Vec/VECKOKKOS.html">VECKOKKOS</a>, &amp;B-&gt;defaultvectype);
+<a name="line1343">1343: </a>  PetscObjectChangeTypeName((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATMPIAIJKOKKOS);
+
+<a name="line1345">1345: </a>  a = static_cast&lt;Mat_MPIAIJ *&gt;(A-&gt;data);
+<a name="line1346">1346: </a>  <font color="#4169E1">if</font> (a-&gt;A) <a href="../../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(a-&gt;A, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJKOKKOS.html">MATSEQAIJKOKKOS</a>);
+<a name="line1347">1347: </a>  <font color="#4169E1">if</font> (a-&gt;B) <a href="../../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(a-&gt;B, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJKOKKOS.html">MATSEQAIJKOKKOS</a>);
+<a name="line1348">1348: </a>  <font color="#4169E1">if</font> (a-&gt;lvec) <a href="../../../../../../docs/manualpages/Vec/VecSetType.html">VecSetType</a>(a-&gt;lvec, <a href="../../../../../../docs/manualpages/Vec/VECSEQKOKKOS.html">VECSEQKOKKOS</a>);
+
+<a name="line1350">1350: </a>  B-&gt;ops-&gt;assemblyend           = MatAssemblyEnd_MPIAIJKokkos;
+<a name="line1351">1351: </a>  B-&gt;ops-&gt;mult                  = MatMult_MPIAIJKokkos;
+<a name="line1352">1352: </a>  B-&gt;ops-&gt;multadd               = MatMultAdd_MPIAIJKokkos;
+<a name="line1353">1353: </a>  B-&gt;ops-&gt;multtranspose         = MatMultTranspose_MPIAIJKokkos;
+<a name="line1354">1354: </a>  B-&gt;ops-&gt;productsetfromoptions = MatProductSetFromOptions_MPIAIJKokkos;
+<a name="line1355">1355: </a>  B-&gt;ops-&gt;destroy               = MatDestroy_MPIAIJKokkos;
+
+<a name="line1357">1357: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, <font color="#666666">"MatMPIAIJSetPreallocation_C"</font>, MatMPIAIJSetPreallocation_MPIAIJKokkos);
+<a name="line1358">1358: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, <font color="#666666">"MatMPIAIJGetLocalMatMerge_C"</font>, MatMPIAIJGetLocalMatMerge_MPIAIJKokkos);
+<a name="line1359">1359: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, <font color="#666666">"MatSetPreallocationCOO_C"</font>, MatSetPreallocationCOO_MPIAIJKokkos);
+<a name="line1360">1360: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, <font color="#666666">"MatSetValuesCOO_C"</font>, MatSetValuesCOO_MPIAIJKokkos);
+<a name="line1361">1361: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1362">1362: </a>}
+<a name="line1363">1363: </a><font color="#B22222">/*MC</font>
+<a name="line1364">1364: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Mat/MATAIJKOKKOS.html">MATAIJKOKKOS</a> - "mpiaijkokkos", a matrix type to be used for CSR sparse matrices with Kokkos</font>
+
+<a name="line1366">1366: </a><font color="#B22222">   A matrix type type using Kokkos-Kernels CrsMatrix type for portability across different device types</font>
+
+<a name="line1368">1368: </a><font color="#B22222">   Options Database Keys:</font>
+<a name="line1369">1369: </a><font color="#B22222">.  -mat_type aijkokkos - sets the matrix type to "aijkokkos" during a call to <a href="../../../../../../docs/manualpages/Mat/MatSetFromOptions.html">MatSetFromOptions</a>()</font>
+
+<a name="line1371">1371: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line1373">1373: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Mat/MatCreateAIJKokkos.html">MatCreateAIJKokkos</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MATSEQAIJKOKKOS.html">MATSEQAIJKOKKOS</a>`, `<a href="../../../../../../docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a>`, `<a href="../../../../../../docs/manualpages/Mat/MATMPIAIJ.html">MATMPIAIJ</a>`</font>
+<a name="line1374">1374: </a><font color="#B22222">M*/</font>
+<a name="line1375">1375: </a><strong><font color="#4169E1"><a name="MatCreate_MPIAIJKokkos"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatCreate_MPIAIJKokkos(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A)</font></strong>
+<a name="line1376">1376: </a>{
+<a name="line1377">1377: </a>  PetscKokkosInitializeCheck();
+<a name="line1378">1378: </a>  MatCreate_MPIAIJ(A);
+<a name="line1379">1379: </a>  MatConvert_MPIAIJ_MPIAIJKokkos(A, MATMPIAIJKOKKOS, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INPLACE_MATRIX</a>, &amp;A);
+<a name="line1380">1380: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1381">1381: </a>}
+
+<a name="line1383">1383: </a><font color="#B22222">/*@C</font>
+<a name="line1384">1384: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Mat/MatCreateAIJKokkos.html">MatCreateAIJKokkos</a> - Creates a sparse matrix in `MATAIJKOKOS` (compressed row) format</font>
+<a name="line1385">1385: </a><font color="#B22222">   (the default parallel PETSc format).  This matrix will ultimately pushed down</font>
+<a name="line1386">1386: </a><font color="#B22222">   to Kokkos for calculations. For good matrix</font>
+<a name="line1387">1387: </a><font color="#B22222">   assembly performance the user should preallocate the matrix storage by setting</font>
+<a name="line1388">1388: </a><font color="#B22222">   the parameter nz (or the array nnz).  By setting these parameters accurately,</font>
+<a name="line1389">1389: </a><font color="#B22222">   performance during matrix assembly can be increased by more than a factor of 50.</font>
+
+<a name="line1391">1391: </a><font color="#B22222">   Collective</font>
+
+<a name="line1393">1393: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line1394">1394: </a><font color="#B22222">+  comm - MPI communicator, set to `<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>`</font>
+<a name="line1395">1395: </a><font color="#B22222">.  m - number of rows</font>
+<a name="line1396">1396: </a><font color="#B22222">.  n - number of columns</font>
+<a name="line1397">1397: </a><font color="#B22222">.  nz - number of nonzeros per row (same for all rows)</font>
+<a name="line1398">1398: </a><font color="#B22222">-  nnz - array containing the number of nonzeros in the various rows</font>
+<a name="line1399">1399: </a><font color="#B22222">         (possibly different for each row) or NULL</font>
+
+<a name="line1401">1401: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line1402">1402: </a><font color="#B22222">.  A - the matrix</font>
+
+<a name="line1404">1404: </a><font color="#B22222">   It is recommended that one use the `<a href="../../../../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>()` and/or `<a href="../../../../../../docs/manualpages/Mat/MatSetFromOptions.html">MatSetFromOptions</a>()`,</font>
+<a name="line1405">1405: </a><font color="#B22222">   MatXXXXSetPreallocation() paradigm instead of this routine directly.</font>
+<a name="line1406">1406: </a><font color="#B22222">   [MatXXXXSetPreallocation() is, for example, `<a href="../../../../../../docs/manualpages/Mat/MatSeqAIJSetPreallocation.html">MatSeqAIJSetPreallocation</a>()`]</font>
+
+<a name="line1408">1408: </a><font color="#B22222">   Notes:</font>
+<a name="line1409">1409: </a><font color="#B22222">   If nnz is given then nz is ignored</font>
+
+<a name="line1411">1411: </a><font color="#B22222">   The AIJ format, also called compressed row storage), is fully compatible with standard Fortran 77</font>
+<a name="line1412">1412: </a><font color="#B22222">   storage.  That is, the stored row and column indices can begin at</font>
+<a name="line1413">1413: </a><font color="#B22222">   either one (as in Fortran) or zero.  See the users' manual for details.</font>
+
+<a name="line1415">1415: </a><font color="#B22222">   Specify the preallocated storage with either nz or nnz (not both).</font>
+<a name="line1416">1416: </a><font color="#B22222">   Set nz = `<a href="../../../../../../docs/manualpages/Sys/PETSC_DEFAULT.html">PETSC_DEFAULT</a>` and nnz = NULL for PETSc to control dynamic memory</font>
+<a name="line1417">1417: </a><font color="#B22222">   allocation.  For large problems you MUST preallocate memory or you</font>
+<a name="line1418">1418: </a><font color="#B22222">   will get TERRIBLE performance, see the users' manual chapter on matrices.</font>
+
+<a name="line1420">1420: </a><font color="#B22222">   By default, this format uses inodes (identical nodes) when possible, to</font>
+<a name="line1421">1421: </a><font color="#B22222">   improve numerical efficiency of matrix-vector products and solves. We</font>
+<a name="line1422">1422: </a><font color="#B22222">   search for consecutive rows with the same nonzero structure, thereby</font>
+<a name="line1423">1423: </a><font color="#B22222">   reusing matrix information to achieve increased efficiency.</font>
+
+<a name="line1425">1425: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line1427">1427: </a><font color="#B22222">.seealso: `MATAIJKOKOS`, `MATSEQAIJKOKOS`, `MATMPIAIJKOKOS`, `<a href="../../../../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatCreateAIJ.html">MatCreateAIJ</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatSeqAIJSetColumnIndices.html">MatSeqAIJSetColumnIndices</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatCreateSeqAIJWithArrays.html">MatCreateSeqAIJWithArrays</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatCreateAIJ.html">MatCreateAIJ</a>()`, `MATMPIAIJKOKKOS`, `<a href="../../../../../../docs/manualpages/Mat/MATAIJKOKKOS.html">MATAIJKOKKOS</a>`</font>
+<a name="line1428">1428: </a><font color="#B22222">@*/</font>
+<a name="line1429">1429: </a><strong><font color="#4169E1"><a name="MatCreateAIJKokkos"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Mat/MatCreateAIJKokkos.html">MatCreateAIJKokkos</a>(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> m, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> M, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> N, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> d_nz, const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> d_nnz[], <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> o_nz, const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> o_nnz[], <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *A)</font></strong>
+<a name="line1430">1430: </a>{
+<a name="line1431">1431: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size;
+
+<a name="line1433">1433: </a>  <a href="../../../../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>(comm, A);
+<a name="line1434">1434: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSetSizes.html">MatSetSizes</a>(*A, m, n, M, N);
+<a name="line1435">1435: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line1436">1436: </a>  <font color="#4169E1">if</font> (size &gt; 1) {
+<a name="line1437">1437: </a>    <a href="../../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(*A, MATMPIAIJKOKKOS);
+<a name="line1438">1438: </a>    <a href="../../../../../../docs/manualpages/Mat/MatMPIAIJSetPreallocation.html">MatMPIAIJSetPreallocation</a>(*A, d_nz, d_nnz, o_nz, o_nnz);
+<a name="line1439">1439: </a>  } <font color="#4169E1">else</font> {
+<a name="line1440">1440: </a>    <a href="../../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(*A, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJKOKKOS.html">MATSEQAIJKOKKOS</a>);
+<a name="line1441">1441: </a>    <a href="../../../../../../docs/manualpages/Mat/MatSeqAIJSetPreallocation.html">MatSeqAIJSetPreallocation</a>(*A, d_nz, d_nnz);
+<a name="line1442">1442: </a>  }
+<a name="line1443">1443: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1444">1444: </a>}
+
+<a name="line1446">1446: </a>// get GPU pointer to stripped down <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>. For both Seq and MPI <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>.
+<a name="line1447">1447: </a><strong><font color="#4169E1"><a name="MatKokkosGetDeviceMatWrite"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatKokkosGetDeviceMatWrite(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, PetscSplitCSRDataStructure *B)</font></strong>
+<a name="line1448">1448: </a>{
+<a name="line1449">1449: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>                size, rank;
+<a name="line1450">1450: </a>  <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>                   comm;
+<a name="line1451">1451: </a>  PetscSplitCSRDataStructure d_mat = NULL;
+
+<a name="line1453">1453: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, &amp;comm);
+<a name="line1454">1454: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line1455">1455: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line1456">1456: </a>  <font color="#4169E1">if</font> (size == 1) {
+<a name="line1457">1457: </a>    MatSeqAIJKokkosGetDeviceMat(A, &amp;d_mat);
+<a name="line1458">1458: </a>    MatSeqAIJKokkosModifyDevice(A); <font color="#B22222">/* Since we are going to modify matrix values on device */</font>
+<a name="line1459">1459: </a>  } <font color="#4169E1">else</font> {
+<a name="line1460">1460: </a>    Mat_MPIAIJ *aij = (Mat_MPIAIJ *)A-&gt;data;
+<a name="line1461">1461: </a>    MatSeqAIJKokkosGetDeviceMat(aij-&gt;A, &amp;d_mat);
+<a name="line1462">1462: </a>    MatSeqAIJKokkosModifyDevice(aij-&gt;A);
+<a name="line1463">1463: </a>    MatSeqAIJKokkosModifyDevice(aij-&gt;B);
+<a name="line1465">1465: </a>  }
+<a name="line1466">1466: </a>  // act like <a href="../../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a> because not called on host
+<a name="line1467">1467: </a>  <font color="#4169E1">if</font> (A-&gt;assembled) {
+<a name="line1468">1468: </a>    <font color="#4169E1">if</font> (A-&gt;was_assembled) <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(A, <font color="#666666">"Assemble more than once already\n"</font>);
+<a name="line1469">1469: </a>    A-&gt;was_assembled = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>; // this is done (lazy) in MatAssemble but we are not calling it anymore - done in AIJ AssemblyEnd, need here?
+<a name="line1470">1470: </a>  } <font color="#4169E1">else</font> {
+<a name="line1471">1471: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(A, <font color="#666666">"Warning !assemble ??? assembled=%"</font> PetscInt_FMT <font color="#666666">"\n"</font>, A-&gt;assembled);
+<a name="line1472">1472: </a>  }
+<a name="line1473">1473: </a>  <font color="#4169E1">if</font> (!d_mat) {
+<a name="line1474">1474: </a>    <font color="#4169E1">struct _n_SplitCSRMat</font> h_mat; <font color="#B22222">/* host container */</font>
+<a name="line1475">1475: </a>    Mat_SeqAIJKokkos     *aijkokA;
+<a name="line1476">1476: </a>    Mat_SeqAIJ           *jaca;
+<a name="line1477">1477: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>              n = A-&gt;rmap-&gt;n, nnz;
+<a name="line1478">1478: </a>    <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>                   Amat;
+<a name="line1479">1479: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>             *colmap;
+
+<a name="line1481">1481: </a>    <font color="#B22222">/* create and copy h_mat */</font>
+<a name="line1482">1482: </a>    h_mat.M = A-&gt;cmap-&gt;N; // use <font color="#4169E1">for</font> debug build
+<a name="line1483">1483: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(A, <font color="#666666">"Create device matrix in Kokkos\n"</font>);
+<a name="line1484">1484: </a>    <font color="#4169E1">if</font> (size == 1) {
+<a name="line1485">1485: </a>      Amat            = A;
+<a name="line1486">1486: </a>      jaca            = (Mat_SeqAIJ *)A-&gt;data;
+<a name="line1487">1487: </a>      h_mat.rstart    = 0;
+<a name="line1488">1488: </a>      h_mat.rend      = A-&gt;rmap-&gt;n;
+<a name="line1489">1489: </a>      h_mat.cstart    = 0;
+<a name="line1490">1490: </a>      h_mat.cend      = A-&gt;cmap-&gt;n;
+<a name="line1491">1491: </a>      h_mat.offdiag.i = h_mat.offdiag.j = NULL;
+<a name="line1492">1492: </a>      h_mat.offdiag.a                   = NULL;
+<a name="line1493">1493: </a>      aijkokA                           = static_cast&lt;Mat_SeqAIJKokkos *&gt;(A-&gt;spptr);
+<a name="line1494">1494: </a>    } <font color="#4169E1">else</font> {
+<a name="line1495">1495: </a>      Mat_MPIAIJ       *aij  = (Mat_MPIAIJ *)A-&gt;data;
+<a name="line1496">1496: </a>      Mat_SeqAIJ       *jacb = (Mat_SeqAIJ *)aij-&gt;B-&gt;data;
+<a name="line1497">1497: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          ii;
+<a name="line1498">1498: </a>      Mat_SeqAIJKokkos *aijkokB;
+
+<a name="line1500">1500: </a>      Amat    = aij-&gt;A;
+<a name="line1501">1501: </a>      aijkokA = static_cast&lt;Mat_SeqAIJKokkos *&gt;(aij-&gt;A-&gt;spptr);
+<a name="line1502">1502: </a>      aijkokB = static_cast&lt;Mat_SeqAIJKokkos *&gt;(aij-&gt;B-&gt;spptr);
+<a name="line1503">1503: </a>      jaca    = (Mat_SeqAIJ *)aij-&gt;A-&gt;data;
+<a name="line1506">1506: </a>      aij-&gt;donotstash          = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line1507">1507: </a>      aij-&gt;A-&gt;nooffprocentries = aij-&gt;B-&gt;nooffprocentries = A-&gt;nooffprocentries = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line1508">1508: </a>      jaca-&gt;nonew = jacb-&gt;nonew = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>; // no more disassembly
+<a name="line1509">1509: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(A-&gt;cmap-&gt;N, &amp;colmap);
+<a name="line1510">1510: </a>      <font color="#4169E1">for</font> (ii = 0; ii &lt; aij-&gt;B-&gt;cmap-&gt;n; ii++) colmap[aij-&gt;garray[ii]] = ii + 1;
+<a name="line1511">1511: </a>      // allocate B copy data
+<a name="line1512">1512: </a>      h_mat.rstart = A-&gt;rmap-&gt;rstart;
+<a name="line1513">1513: </a>      h_mat.rend   = A-&gt;rmap-&gt;rend;
+<a name="line1514">1514: </a>      h_mat.cstart = A-&gt;cmap-&gt;rstart;
+<a name="line1515">1515: </a>      h_mat.cend   = A-&gt;cmap-&gt;rend;
+<a name="line1516">1516: </a>      nnz          = jacb-&gt;i[n];
+<a name="line1517">1517: </a>      <font color="#4169E1">if</font> (jacb-&gt;compressedrow.use) {
+<a name="line1518">1518: </a>        const Kokkos::View&lt;<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *, Kokkos::HostSpace, Kokkos::MemoryTraits&lt;Kokkos::Unmanaged&gt;&gt; h_i_k(jacb-&gt;i, n + 1);
+<a name="line1519">1519: </a>        aijkokB-&gt;i_uncompressed_d = Kokkos::View&lt;<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *&gt;(Kokkos::create_mirror(DefaultMemorySpace(), h_i_k));
+<a name="line1520">1520: </a><strong><font color="#FF0000">        Kokkos:</font></strong>:deep_copy(aijkokB-&gt;i_uncompressed_d, h_i_k);
+<a name="line1521">1521: </a>        h_mat.offdiag.i = aijkokB-&gt;i_uncompressed_d.data();
+<a name="line1522">1522: </a>      } <font color="#4169E1">else</font> {
+<a name="line1523">1523: </a>        h_mat.offdiag.i = aijkokB-&gt;i_device_data();
+<a name="line1524">1524: </a>      }
+<a name="line1525">1525: </a>      h_mat.offdiag.j = aijkokB-&gt;j_device_data();
+<a name="line1526">1526: </a>      h_mat.offdiag.a = aijkokB-&gt;a_device_data();
+<a name="line1527">1527: </a>      {
+<a name="line1528">1528: </a><strong><font color="#FF0000">        Kokkos:</font></strong>:View&lt;<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *, Kokkos::HostSpace, Kokkos::MemoryTraits&lt;Kokkos::Unmanaged&gt;&gt; h_colmap_k(colmap, A-&gt;cmap-&gt;N);
+<a name="line1529">1529: </a>        aijkokB-&gt;colmap_d = Kokkos::View&lt;<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *&gt;(Kokkos::create_mirror(DefaultMemorySpace(), h_colmap_k));
+<a name="line1530">1530: </a><strong><font color="#FF0000">        Kokkos:</font></strong>:deep_copy(aijkokB-&gt;colmap_d, h_colmap_k);
+<a name="line1531">1531: </a>        h_mat.colmap = aijkokB-&gt;colmap_d.data();
+<a name="line1532">1532: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(colmap);
+<a name="line1533">1533: </a>      }
+<a name="line1534">1534: </a>      h_mat.offdiag.ignorezeroentries = jacb-&gt;ignorezeroentries;
+<a name="line1535">1535: </a>      h_mat.offdiag.n                 = n;
+<a name="line1536">1536: </a>    }
+<a name="line1537">1537: </a>    // allocate A copy data
+<a name="line1538">1538: </a>    nnz                          = jaca-&gt;i[n];
+<a name="line1539">1539: </a>    h_mat.diag.n                 = n;
+<a name="line1540">1540: </a>    h_mat.diag.ignorezeroentries = jaca-&gt;ignorezeroentries;
+<a name="line1541">1541: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;h_mat.rank);
+<a name="line1543">1543: </a>    h_mat.diag.i = aijkokA-&gt;i_device_data();
+<a name="line1544">1544: </a>    h_mat.diag.j = aijkokA-&gt;j_device_data();
+<a name="line1545">1545: </a>    h_mat.diag.a = aijkokA-&gt;a_device_data();
+<a name="line1546">1546: </a>    // copy pointers and metadata to device
+<a name="line1547">1547: </a>    MatSeqAIJKokkosSetDeviceMat(Amat, &amp;h_mat);
+<a name="line1548">1548: </a>    MatSeqAIJKokkosGetDeviceMat(Amat, &amp;d_mat);
+<a name="line1549">1549: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(A, <font color="#666666">"Create device <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> n=%"</font> PetscInt_FMT <font color="#666666">" nnz=%"</font> PetscInt_FMT <font color="#666666">"\n"</font>, h_mat.diag.n, nnz);
+<a name="line1550">1550: </a>  }
+<a name="line1551">1551: </a>  *B           = d_mat;       // <font color="#4169E1">return</font> it, set it in <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, and set it up
+<a name="line1552">1552: </a>  A-&gt;assembled = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>; // ready to write with matsetvalues - this done (lazy) in normal <a href="../../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>
+<a name="line1553">1553: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1554">1554: </a>}
+
+<a name="line1556">1556: </a><strong><font color="#4169E1"><a name="MatSeqAIJKokkosGetOffloadMask"></a>PETSC_INTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSeqAIJKokkosGetOffloadMask(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, const char **mask)</font></strong>
+<a name="line1557">1557: </a>{
+<a name="line1558">1558: </a>  Mat_SeqAIJKokkos *aijkok = static_cast&lt;Mat_SeqAIJKokkos *&gt;(A-&gt;spptr);
+
+<a name="line1560">1560: </a>  <font color="#4169E1">if</font> (!aijkok) *mask = <font color="#666666">"AIJKOK_UNALLOCATED"</font>;
+<a name="line1561">1561: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (aijkok-&gt;a_dual.need_sync_host()) *mask = <font color="#666666">"<a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_GPU</a>"</font>;
+<a name="line1562">1562: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (aijkok-&gt;a_dual.need_sync_device()) *mask = <font color="#666666">"<a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_CPU</a>"</font>;
+<a name="line1563">1563: </a>  <font color="#4169E1">else</font> *mask = <font color="#666666">"<a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_BOTH</a>"</font>;
+<a name="line1564">1564: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1565">1565: </a>}
+
+<a name="line1567">1567: </a><strong><font color="#4169E1"><a name="MatAIJKokkosPrintOffloadMask"></a>PETSC_INTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatAIJKokkosPrintOffloadMask(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A)</font></strong>
+<a name="line1568">1568: </a>{
+<a name="line1569">1569: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size;
+<a name="line1570">1570: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>         Ad, Ao;
+<a name="line1571">1571: </a>  const char *amask, *bmask;
+
+<a name="line1573">1573: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A), &amp;size);
+
+<a name="line1575">1575: </a>  <font color="#4169E1">if</font> (size == 1) {
+<a name="line1576">1576: </a>    MatSeqAIJKokkosGetOffloadMask(A, &amp;amask);
+<a name="line1577">1577: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"%s\n"</font>, amask);
+<a name="line1578">1578: </a>  } <font color="#4169E1">else</font> {
+<a name="line1579">1579: </a>    Ad = ((Mat_MPIAIJ *)A-&gt;data)-&gt;A;
+<a name="line1580">1580: </a>    Ao = ((Mat_MPIAIJ *)A-&gt;data)-&gt;B;
+<a name="line1581">1581: </a>    MatSeqAIJKokkosGetOffloadMask(Ad, &amp;amask);
+<a name="line1582">1582: </a>    MatSeqAIJKokkosGetOffloadMask(Ao, &amp;bmask);
+<a name="line1583">1583: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"Diag : Off-diag = %s : %s\n"</font>, amask, bmask);
+<a name="line1584">1584: </a>  }
+<a name="line1585">1585: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1586">1586: </a>}
+</pre>
+</body>
+
+</html>

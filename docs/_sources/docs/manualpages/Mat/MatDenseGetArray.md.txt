@@ -1,0 +1,48 @@
+# MatDenseGetArray
+gives read-write access to the array where the data for a `MATDENSE` matrix is stored 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatDenseGetArray(Mat A, PetscScalar **array)
+```
+Logically Collective
+
+
+## Input Parameter
+
+- ***mat -*** a dense matrix
+
+
+
+## Output Parameter
+
+- ***array -*** pointer to the data
+
+
+
+
+
+## See Also
+ `MATDENSE`, `MatDenseRestoreArray()`, `MatDenseGetArrayRead()`, `MatDenseRestoreArrayRead()`, `MatDenseGetArrayWrite()`, `MatDenseRestoreArrayWrite()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/seq/dense.c.html#MatDenseGetArray">src/mat/impls/dense/seq/dense.c</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/mpi/mpidense.c.html#MatDenseGetArray_MPIDense">MatDenseGetArray_MPIDense in src/mat/impls/dense/mpi/mpidense.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/seq/cuda/densecuda.cu.html#MatDenseGetArray_SeqDenseCUDA">MatDenseGetArray_SeqDenseCUDA in src/mat/impls/dense/seq/cuda/densecuda.cu</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/seq/dense.c.html#MatDenseGetArray_SeqDense">MatDenseGetArray_SeqDense in src/mat/impls/dense/seq/dense.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/seq/hip/densehip.hip.c.html#MatDenseGetArray_SeqDenseHIP">MatDenseGetArray_SeqDenseHIP in src/mat/impls/dense/seq/hip/densehip.hip.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/dense/seq/dense.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

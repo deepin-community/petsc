@@ -1,0 +1,1023 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>DT Manual Pages &#8212; PETSc 3.18.6 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../../_static/styles/bootstrap.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/katex-math.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script src="../../../_static/katex.min.js"></script>
+    <script src="../../../_static/auto-render.min.js"></script>
+    <script src="../../../_static/katex_autorenderer.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/manualpages/DT/index';</script>
+    <link rel="shortcut icon" href="../../../_static/petsc_favicon.png"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="PETSCDSBASIC" href="PETSCDSBASIC.html" />
+    <link rel="prev" title="DMSwarmViewXDMF" href="../DMSwarm/DMSwarmViewXDMF.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../../../index.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../../../_static/PETSc-TAO_RGB.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../../../_static/PETSc-TAO_RGB_white.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        API-Docs
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+    </ul>
+</nav>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+        <div class="navbar-end-item navbar-persistent--container">
+          
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+        </div>
+      
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+
+
+  
+  
+    <div class="navbar-persistent--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+    </div>
+  
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+  </label>
+  
+
+</div>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        API-Docs
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+  <div class="sidebar-start-items sidebar-primary__section">
+    <div class="sidebar-start-items__item"><nav class="bd-links" id="bd-docs-nav" aria-label="Section navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">
+    Section Navigation
+  </p>
+  <div class="bd-toc-item navbar-nav">
+    <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../changes/index.html">Changes for each release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+</ul>
+
+  </div>
+</nav>
+    </div>
+  </div>
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+  
+  <div id="rtd-footer-container"></div>
+
+      </div>
+      <main id="main-content" class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+            </div>
+            
+            
+            <article class="bd-article" role="main">
+              
+  <section class="tex2jax_ignore mathjax_ignore" id="dt-manual-pages">
+<h1>DT Manual Pages<a class="headerlink" href="#dt-manual-pages" title="Permalink to this heading">#</a></h1>
+<p>DT objects are discretization technology, for instance quadrature, finite element, or finite volume support.</p>
+<p><a class="reference internal" href="../index.html"><span class="doc std std-doc">Manual Pages Table of Contents</span></a></p>
+<section id="manual-pages-by-level">
+<h2>Manual Pages by Level<a class="headerlink" href="#manual-pages-by-level" title="Permalink to this heading">#</a></h2>
+<section id="beginner-basic-usage">
+<h3>Beginner - Basic usage<a class="headerlink" href="#beginner-basic-usage" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscCDFConstant1D.html"><span class="doc std std-doc">PetscCDFConstant1D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscCDFConstant2D.html"><span class="doc std std-doc">PetscCDFConstant2D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscCDFConstant3D.html"><span class="doc std std-doc">PetscCDFConstant3D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscCDFMaxwellBoltzmann1D.html"><span class="doc std std-doc">PetscCDFMaxwellBoltzmann1D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscCDFMaxwellBoltzmann2D.html"><span class="doc std std-doc">PetscCDFMaxwellBoltzmann2D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscCDFMaxwellBoltzmann3D.html"><span class="doc std std-doc">PetscCDFMaxwellBoltzmann3D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSAddDiscretization.html"><span class="doc std std-doc">PetscDSAddDiscretization</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSCreate.html"><span class="doc std std-doc">PetscDSCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetComponentDerivativeOffsets.html"><span class="doc std std-doc">PetscDSGetComponentDerivativeOffsets</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetComponentDerivativeOffsetsCohesive.html"><span class="doc std std-doc">PetscDSGetComponentDerivativeOffsetsCohesive</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetComponentOffset.html"><span class="doc std std-doc">PetscDSGetComponentOffset</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetComponentOffsets.html"><span class="doc std std-doc">PetscDSGetComponentOffsets</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetComponentOffsetsCohesive.html"><span class="doc std std-doc">PetscDSGetComponentOffsetsCohesive</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetComponents.html"><span class="doc std std-doc">PetscDSGetComponents</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetCoordinateDimension.html"><span class="doc std std-doc">PetscDSGetCoordinateDimension</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetDimensions.html"><span class="doc std std-doc">PetscDSGetDimensions</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetDiscretization.html"><span class="doc std std-doc">PetscDSGetDiscretization</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetFieldIndex.html"><span class="doc std std-doc">PetscDSGetFieldIndex</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetFieldOffset.html"><span class="doc std std-doc">PetscDSGetFieldOffset</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetFieldOffsetCohesive.html"><span class="doc std std-doc">PetscDSGetFieldOffsetCohesive</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetFieldSize.html"><span class="doc std std-doc">PetscDSGetFieldSize</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetNumFields.html"><span class="doc std std-doc">PetscDSGetNumFields</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetSpatialDimension.html"><span class="doc std std-doc">PetscDSGetSpatialDimension</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetTotalComponents.html"><span class="doc std std-doc">PetscDSGetTotalComponents</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetTotalDimension.html"><span class="doc std std-doc">PetscDSGetTotalDimension</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDSGetWeakForm.html"><span class="doc std std-doc">PetscDSGetWeakForm</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetCoordinateDimension.html"><span class="doc std std-doc">PetscDSSetCoordinateDimension</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetDiscretization.html"><span class="doc std std-doc">PetscDSSetDiscretization</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetWeakForm.html"><span class="doc std std-doc">PetscDSSetWeakForm</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSType.html"><span class="doc std std-doc">PetscDSType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTBaryToIndex.html"><span class="doc std std-doc">PetscDTBaryToIndex</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTBinomial.html"><span class="doc std std-doc">PetscDTBinomial</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTBinomialInt.html"><span class="doc std std-doc">PetscDTBinomialInt</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTEnumPerm.html"><span class="doc std std-doc">PetscDTEnumPerm</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTEnumSubset.html"><span class="doc std std-doc">PetscDTEnumSubset</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTFactorial.html"><span class="doc std std-doc">PetscDTFactorial</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTFactorialInt.html"><span class="doc std std-doc">PetscDTFactorialInt</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTGradedOrderToIndex.html"><span class="doc std std-doc">PetscDTGradedOrderToIndex</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTIndexToBary.html"><span class="doc std std-doc">PetscDTIndexToBary</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTIndexToGradedOrder.html"><span class="doc std std-doc">PetscDTIndexToGradedOrder</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTJacobiNorm.html"><span class="doc std std-doc">PetscDTJacobiNorm</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTPermIndex.html"><span class="doc std std-doc">PetscDTPermIndex</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTSubsetIndex.html"><span class="doc std std-doc">PetscDTSubsetIndex</span></a></p></li>
+<li><p><a class="reference internal" href="PetscGaussLobattoLegendreElementAdvectionCreate.html"><span class="doc std std-doc">PetscGaussLobattoLegendreElementAdvectionCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscGaussLobattoLegendreElementAdvectionDestroy.html"><span class="doc std std-doc">PetscGaussLobattoLegendreElementAdvectionDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscGaussLobattoLegendreElementGradientCreate.html"><span class="doc std std-doc">PetscGaussLobattoLegendreElementGradientCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscGaussLobattoLegendreElementGradientDestroy.html"><span class="doc std std-doc">PetscGaussLobattoLegendreElementGradientDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscGaussLobattoLegendreElementLaplacianCreate.html"><span class="doc std std-doc">PetscGaussLobattoLegendreElementLaplacianCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscGaussLobattoLegendreElementLaplacianDestroy.html"><span class="doc std std-doc">PetscGaussLobattoLegendreElementLaplacianDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscGaussLobattoLegendreIntegrate.html"><span class="doc std std-doc">PetscGaussLobattoLegendreIntegrate</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscPDFConstant1D.html"><span class="doc std std-doc">PetscPDFConstant1D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFConstant2D.html"><span class="doc std std-doc">PetscPDFConstant2D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFConstant3D.html"><span class="doc std std-doc">PetscPDFConstant3D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFGaussian1D.html"><span class="doc std std-doc">PetscPDFGaussian1D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFGaussian2D.html"><span class="doc std std-doc">PetscPDFGaussian2D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFGaussian3D.html"><span class="doc std std-doc">PetscPDFGaussian3D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFMaxwellBoltzmann1D.html"><span class="doc std std-doc">PetscPDFMaxwellBoltzmann1D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFMaxwellBoltzmann2D.html"><span class="doc std std-doc">PetscPDFMaxwellBoltzmann2D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFMaxwellBoltzmann3D.html"><span class="doc std std-doc">PetscPDFMaxwellBoltzmann3D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFSampleConstant1D.html"><span class="doc std std-doc">PetscPDFSampleConstant1D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFSampleConstant2D.html"><span class="doc std std-doc">PetscPDFSampleConstant2D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFSampleConstant3D.html"><span class="doc std std-doc">PetscPDFSampleConstant3D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFSampleGaussian1D.html"><span class="doc std std-doc">PetscPDFSampleGaussian1D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFSampleGaussian2D.html"><span class="doc std std-doc">PetscPDFSampleGaussian2D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscPDFSampleGaussian3D.html"><span class="doc std std-doc">PetscPDFSampleGaussian3D</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadrature.html"><span class="doc std std-doc">PetscQuadrature</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadratureCreate.html"><span class="doc std std-doc">PetscQuadratureCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadratureDestroy.html"><span class="doc std std-doc">PetscQuadratureDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadratureDuplicate.html"><span class="doc std std-doc">PetscQuadratureDuplicate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadratureView.html"><span class="doc std std-doc">PetscQuadratureView</span></a></p></li>
+<li><p><a class="reference internal" href="PetscWeakFormCreate.html"><span class="doc std std-doc">PetscWeakFormCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscWeakFormGetNumFields.html"><span class="doc std std-doc">PetscWeakFormGetNumFields</span></a></p></li>
+<li><p><a class="reference internal" href="PetscWeakFormKind.html"><span class="doc std std-doc">PetscWeakFormKind</span></a></p></li>
+<li><p><a class="reference internal" href="PetscWeakFormSetNumFields.html"><span class="doc std std-doc">PetscWeakFormSetNumFields</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="intermediate-setting-options-for-algorithms-and-data-structures">
+<h3>Intermediate - Setting options for algorithms and data structures<a class="headerlink" href="#intermediate-setting-options-for-algorithms-and-data-structures" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="PETSCDSBASIC.html"><span class="doc std std-doc">PETSCDSBASIC</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDS.html"><span class="doc std std-doc">PetscDS</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSCopyBoundary.html"><span class="doc std std-doc">PetscDSCopyBoundary</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSCopyConstants.html"><span class="doc std std-doc">PetscDSCopyConstants</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSCopyEquations.html"><span class="doc std std-doc">PetscDSCopyEquations</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSCopyExactSolutions.html"><span class="doc std std-doc">PetscDSCopyExactSolutions</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSDestroyBoundary.html"><span class="doc std std-doc">PetscDSDestroyBoundary</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetBdJacobian.html"><span class="doc std std-doc">PetscDSGetBdJacobian</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetBdJacobianPreconditioner.html"><span class="doc std std-doc">PetscDSGetBdJacobianPreconditioner</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetBdResidual.html"><span class="doc std std-doc">PetscDSGetBdResidual</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetConstants.html"><span class="doc std std-doc">PetscDSGetConstants</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetDynamicJacobian.html"><span class="doc std std-doc">PetscDSGetDynamicJacobian</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetExactSolution.html"><span class="doc std std-doc">PetscDSGetExactSolution</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetExactSolutionTimeDerivative.html"><span class="doc std std-doc">PetscDSGetExactSolutionTimeDerivative</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetFaceTabulation.html"><span class="doc std std-doc">PetscDSGetFaceTabulation</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetJacobian.html"><span class="doc std std-doc">PetscDSGetJacobian</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetJacobianPreconditioner.html"><span class="doc std std-doc">PetscDSGetJacobianPreconditioner</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetNumBoundary.html"><span class="doc std std-doc">PetscDSGetNumBoundary</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetQuadrature.html"><span class="doc std std-doc">PetscDSGetQuadrature</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetRHSResidual.html"><span class="doc std std-doc">PetscDSGetRHSResidual</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetResidual.html"><span class="doc std std-doc">PetscDSGetResidual</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetRiemannSolver.html"><span class="doc std std-doc">PetscDSGetRiemannSolver</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetTabulation.html"><span class="doc std std-doc">PetscDSGetTabulation</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetType.html"><span class="doc std std-doc">PetscDSGetType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetUpdate.html"><span class="doc std std-doc">PetscDSGetUpdate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSHasBdJacobian.html"><span class="doc std std-doc">PetscDSHasBdJacobian</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSHasBdJacobianPreconditioner.html"><span class="doc std std-doc">PetscDSHasBdJacobianPreconditioner</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSHasDynamicJacobian.html"><span class="doc std std-doc">PetscDSHasDynamicJacobian</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSHasJacobian.html"><span class="doc std std-doc">PetscDSHasJacobian</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSHasJacobianPreconditioner.html"><span class="doc std std-doc">PetscDSHasJacobianPreconditioner</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDSSelectDiscretizations.html"><span class="doc std std-doc">PetscDSSelectDiscretizations</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSelectEquations.html"><span class="doc std std-doc">PetscDSSelectEquations</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetBdJacobian.html"><span class="doc std std-doc">PetscDSSetBdJacobian</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetBdJacobianPreconditioner.html"><span class="doc std std-doc">PetscDSSetBdJacobianPreconditioner</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetBdResidual.html"><span class="doc std std-doc">PetscDSSetBdResidual</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetConstants.html"><span class="doc std std-doc">PetscDSSetConstants</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetDynamicJacobian.html"><span class="doc std std-doc">PetscDSSetDynamicJacobian</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetExactSolution.html"><span class="doc std std-doc">PetscDSSetExactSolution</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetExactSolutionTimeDerivative.html"><span class="doc std std-doc">PetscDSSetExactSolutionTimeDerivative</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetFromOptions.html"><span class="doc std std-doc">PetscDSSetFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetJacobian.html"><span class="doc std std-doc">PetscDSSetJacobian</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetJacobianPreconditioner.html"><span class="doc std std-doc">PetscDSSetJacobianPreconditioner</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetRHSResidual.html"><span class="doc std std-doc">PetscDSSetRHSResidual</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetResidual.html"><span class="doc std std-doc">PetscDSSetResidual</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetRiemannSolver.html"><span class="doc std std-doc">PetscDSSetRiemannSolver</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetType.html"><span class="doc std std-doc">PetscDSSetType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetUpdate.html"><span class="doc std std-doc">PetscDSSetUpdate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSUseJacobianPreconditioner.html"><span class="doc std std-doc">PetscDSUseJacobianPreconditioner</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSViewFromOptions.html"><span class="doc std std-doc">PetscDSViewFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTAltV.html"><span class="doc std std-doc">PetscDTAltV</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTAltVApply.html"><span class="doc std std-doc">PetscDTAltVApply</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTAltVInterior.html"><span class="doc std std-doc">PetscDTAltVInterior</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTAltVInteriorMatrix.html"><span class="doc std std-doc">PetscDTAltVInteriorMatrix</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTAltVInteriorPattern.html"><span class="doc std std-doc">PetscDTAltVInteriorPattern</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTAltVPullback.html"><span class="doc std std-doc">PetscDTAltVPullback</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTAltVPullbackMatrix.html"><span class="doc std std-doc">PetscDTAltVPullbackMatrix</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTAltVStar.html"><span class="doc std std-doc">PetscDTAltVStar</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTAltVWedge.html"><span class="doc std std-doc">PetscDTAltVWedge</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTAltVWedgeMatrix.html"><span class="doc std std-doc">PetscDTAltVWedgeMatrix</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTGaussJacobiQuadrature.html"><span class="doc std std-doc">PetscDTGaussJacobiQuadrature</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDTGaussLobattoJacobiQuadrature.html"><span class="doc std std-doc">PetscDTGaussLobattoJacobiQuadrature</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTGaussLobattoLegendreQuadrature.html"><span class="doc std std-doc">PetscDTGaussLobattoLegendreQuadrature</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTGaussQuadrature.html"><span class="doc std std-doc">PetscDTGaussQuadrature</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTGaussTensorQuadrature.html"><span class="doc std std-doc">PetscDTGaussTensorQuadrature</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTJacobiEval.html"><span class="doc std std-doc">PetscDTJacobiEval</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTLegendreEval.html"><span class="doc std std-doc">PetscDTLegendreEval</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTNodeType.html"><span class="doc std std-doc">PetscDTNodeType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTSimplexQuadrature.html"><span class="doc std std-doc">PetscDTSimplexQuadrature</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTSimplexQuadratureType.html"><span class="doc std std-doc">PetscDTSimplexQuadratureType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTStroudConicalQuadrature.html"><span class="doc std std-doc">PetscDTStroudConicalQuadrature</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTTanhSinhTensorQuadrature.html"><span class="doc std std-doc">PetscDTTanhSinhTensorQuadrature</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTTensorQuadratureCreate.html"><span class="doc std std-doc">PetscDTTensorQuadratureCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscFormKey.html"><span class="doc std std-doc">PetscFormKey</span></a></p></li>
+<li><p><a class="reference internal" href="PetscFormKeySort.html"><span class="doc std std-doc">PetscFormKeySort</span></a></p></li>
+<li><p><a class="reference internal" href="PetscGaussLobattoLegendreCreateType.html"><span class="doc std std-doc">PetscGaussLobattoLegendreCreateType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscProbCreateFromOptions.html"><span class="doc std std-doc">PetscProbCreateFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadratureEqual.html"><span class="doc std std-doc">PetscQuadratureEqual</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadratureExpandComposite.html"><span class="doc std std-doc">PetscQuadratureExpandComposite</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadratureGetData.html"><span class="doc std std-doc">PetscQuadratureGetData</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadratureGetNumComponents.html"><span class="doc std std-doc">PetscQuadratureGetNumComponents</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadratureGetOrder.html"><span class="doc std std-doc">PetscQuadratureGetOrder</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadraturePushForward.html"><span class="doc std std-doc">PetscQuadraturePushForward</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadratureSetData.html"><span class="doc std std-doc">PetscQuadratureSetData</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadratureSetNumComponents.html"><span class="doc std std-doc">PetscQuadratureSetNumComponents</span></a></p></li>
+<li><p><a class="reference internal" href="PetscQuadratureSetOrder.html"><span class="doc std std-doc">PetscQuadratureSetOrder</span></a></p></li>
+<li><p><a class="reference internal" href="PetscWeakForm.html"><span class="doc std std-doc">PetscWeakForm</span></a></p></li>
+<li><p><a class="reference internal" href="PetscWeakFormClear.html"><span class="doc std std-doc">PetscWeakFormClear</span></a></p></li>
+<li><p><a class="reference internal" href="PetscWeakFormCopy.html"><span class="doc std std-doc">PetscWeakFormCopy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscWeakFormReplaceLabel.html"><span class="doc std std-doc">PetscWeakFormReplaceLabel</span></a></p></li>
+<li><p><a class="reference internal" href="PetscWeakFormRewriteKeys.html"><span class="doc std std-doc">PetscWeakFormRewriteKeys</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="advanced-setting-more-advanced-options-and-customization">
+<h3>Advanced - Setting more advanced options and customization<a class="headerlink" href="#advanced-setting-more-advanced-options-and-customization" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDSRegister.html"><span class="doc std std-doc">PetscDSRegister</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTJacobiEvalJet.html"><span class="doc std std-doc">PetscDTJacobiEvalJet</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTPKDEvalJet.html"><span class="doc std std-doc">PetscDTPKDEvalJet</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDTPTrimmedEvalJet.html"><span class="doc std std-doc">PetscDTPTrimmedEvalJet</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDTPTrimmedSize.html"><span class="doc std std-doc">PetscDTPTrimmedSize</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDTReconstructPoly.html"><span class="doc std std-doc">PetscDTReconstructPoly</span></a></p></li>
+<li><p><a class="reference internal" href="PetscProbComputeKSStatistic.html"><span class="doc std std-doc">PetscProbComputeKSStatistic</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="developer-interfaces-intended-primarily-for-library-developers-not-for-typical-applications-programmers">
+<h3>Developer - Interfaces intended primarily for library developers, not for typical applications programmers<a class="headerlink" href="#developer-interfaces-intended-primarily-for-library-developers-not-for-typical-applications-programmers" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDSAddBoundary.html"><span class="doc std std-doc">PetscDSAddBoundary</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSAddBoundaryByName.html"><span class="doc std std-doc">PetscDSAddBoundaryByName</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSDestroy.html"><span class="doc std std-doc">PetscDSDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetBoundary.html"><span class="doc std std-doc">PetscDSGetBoundary</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetCohesive.html"><span class="doc std std-doc">PetscDSGetCohesive</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetImplicit.html"><span class="doc std std-doc">PetscDSGetImplicit</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDSGetJetDegree.html"><span class="doc std std-doc">PetscDSGetJetDegree</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSGetNumCohesive.html"><span class="doc std std-doc">PetscDSGetNumCohesive</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSIsCohesive.html"><span class="doc std std-doc">PetscDSIsCohesive</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetCohesive.html"><span class="doc std std-doc">PetscDSSetCohesive</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetImplicit.html"><span class="doc std std-doc">PetscDSSetImplicit</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSSetJetDegree.html"><span class="doc std std-doc">PetscDSSetJetDegree</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDSSetUp.html"><span class="doc std std-doc">PetscDSSetUp</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSUpdateBoundary.html"><span class="doc std std-doc">PetscDSUpdateBoundary</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDSView.html"><span class="doc std std-doc">PetscDSView</span></a></p></li>
+<li><p><a class="reference internal" href="PetscWeakFormDestroy.html"><span class="doc std std-doc">PetscWeakFormDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscWeakFormView.html"><span class="doc std std-doc">PetscWeakFormView</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="no-deprecated-routines">
+<h3>No deprecated routines<a class="headerlink" href="#no-deprecated-routines" title="Permalink to this heading">#</a></h3>
+</section>
+</section>
+<section id="single-list-of-manual-pages">
+<h2>Single list of manual pages<a class="headerlink" href="#single-list-of-manual-pages" title="Permalink to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="PETSCDSBASIC.html">PETSCDSBASIC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscCDFConstant1D.html">PetscCDFConstant1D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscCDFConstant2D.html">PetscCDFConstant2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscCDFConstant3D.html">PetscCDFConstant3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscCDFMaxwellBoltzmann1D.html">PetscCDFMaxwellBoltzmann1D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscCDFMaxwellBoltzmann2D.html">PetscCDFMaxwellBoltzmann2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscCDFMaxwellBoltzmann3D.html">PetscCDFMaxwellBoltzmann3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDS.html">PetscDS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSAddBoundary.html">PetscDSAddBoundary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSAddBoundaryByName.html">PetscDSAddBoundaryByName</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSAddDiscretization.html">PetscDSAddDiscretization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSCopyBoundary.html">PetscDSCopyBoundary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSCopyConstants.html">PetscDSCopyConstants</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSCopyEquations.html">PetscDSCopyEquations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSCopyExactSolutions.html">PetscDSCopyExactSolutions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSCreate.html">PetscDSCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSDestroy.html">PetscDSDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSDestroyBoundary.html">PetscDSDestroyBoundary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetBdJacobian.html">PetscDSGetBdJacobian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetBdJacobianPreconditioner.html">PetscDSGetBdJacobianPreconditioner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetBdResidual.html">PetscDSGetBdResidual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetBoundary.html">PetscDSGetBoundary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetCohesive.html">PetscDSGetCohesive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetComponentDerivativeOffsets.html">PetscDSGetComponentDerivativeOffsets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetComponentDerivativeOffsetsCohesive.html">PetscDSGetComponentDerivativeOffsetsCohesive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetComponentOffset.html">PetscDSGetComponentOffset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetComponentOffsets.html">PetscDSGetComponentOffsets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetComponentOffsetsCohesive.html">PetscDSGetComponentOffsetsCohesive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetComponents.html">PetscDSGetComponents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetConstants.html">PetscDSGetConstants</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetCoordinateDimension.html">PetscDSGetCoordinateDimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetDimensions.html">PetscDSGetDimensions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetDiscretization.html">PetscDSGetDiscretization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetDynamicJacobian.html">PetscDSGetDynamicJacobian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetExactSolution.html">PetscDSGetExactSolution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetExactSolutionTimeDerivative.html">PetscDSGetExactSolutionTimeDerivative</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetFaceTabulation.html">PetscDSGetFaceTabulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetFieldIndex.html">PetscDSGetFieldIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetFieldOffset.html">PetscDSGetFieldOffset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetFieldOffsetCohesive.html">PetscDSGetFieldOffsetCohesive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetFieldSize.html">PetscDSGetFieldSize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetImplicit.html">PetscDSGetImplicit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetJacobian.html">PetscDSGetJacobian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetJacobianPreconditioner.html">PetscDSGetJacobianPreconditioner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetJetDegree.html">PetscDSGetJetDegree</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetNumBoundary.html">PetscDSGetNumBoundary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetNumCohesive.html">PetscDSGetNumCohesive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetNumFields.html">PetscDSGetNumFields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetQuadrature.html">PetscDSGetQuadrature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetRHSResidual.html">PetscDSGetRHSResidual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetResidual.html">PetscDSGetResidual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetRiemannSolver.html">PetscDSGetRiemannSolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetSpatialDimension.html">PetscDSGetSpatialDimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetTabulation.html">PetscDSGetTabulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetTotalComponents.html">PetscDSGetTotalComponents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetTotalDimension.html">PetscDSGetTotalDimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetType.html">PetscDSGetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetUpdate.html">PetscDSGetUpdate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSGetWeakForm.html">PetscDSGetWeakForm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSHasBdJacobian.html">PetscDSHasBdJacobian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSHasBdJacobianPreconditioner.html">PetscDSHasBdJacobianPreconditioner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSHasDynamicJacobian.html">PetscDSHasDynamicJacobian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSHasJacobian.html">PetscDSHasJacobian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSHasJacobianPreconditioner.html">PetscDSHasJacobianPreconditioner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSIsCohesive.html">PetscDSIsCohesive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSRegister.html">PetscDSRegister</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSelectDiscretizations.html">PetscDSSelectDiscretizations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSelectEquations.html">PetscDSSelectEquations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetBdJacobian.html">PetscDSSetBdJacobian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetBdJacobianPreconditioner.html">PetscDSSetBdJacobianPreconditioner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetBdResidual.html">PetscDSSetBdResidual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetCohesive.html">PetscDSSetCohesive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetConstants.html">PetscDSSetConstants</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetCoordinateDimension.html">PetscDSSetCoordinateDimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetDiscretization.html">PetscDSSetDiscretization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetDynamicJacobian.html">PetscDSSetDynamicJacobian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetExactSolution.html">PetscDSSetExactSolution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetExactSolutionTimeDerivative.html">PetscDSSetExactSolutionTimeDerivative</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetFromOptions.html">PetscDSSetFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetImplicit.html">PetscDSSetImplicit</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetJacobian.html">PetscDSSetJacobian</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetJacobianPreconditioner.html">PetscDSSetJacobianPreconditioner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetJetDegree.html">PetscDSSetJetDegree</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetRHSResidual.html">PetscDSSetRHSResidual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetResidual.html">PetscDSSetResidual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetRiemannSolver.html">PetscDSSetRiemannSolver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetType.html">PetscDSSetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetUp.html">PetscDSSetUp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetUpdate.html">PetscDSSetUpdate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSSetWeakForm.html">PetscDSSetWeakForm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSType.html">PetscDSType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSUpdateBoundary.html">PetscDSUpdateBoundary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSUseJacobianPreconditioner.html">PetscDSUseJacobianPreconditioner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSView.html">PetscDSView</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDSViewFromOptions.html">PetscDSViewFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTAltV.html">PetscDTAltV</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTAltVApply.html">PetscDTAltVApply</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTAltVInterior.html">PetscDTAltVInterior</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTAltVInteriorMatrix.html">PetscDTAltVInteriorMatrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTAltVInteriorPattern.html">PetscDTAltVInteriorPattern</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTAltVPullback.html">PetscDTAltVPullback</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTAltVPullbackMatrix.html">PetscDTAltVPullbackMatrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTAltVStar.html">PetscDTAltVStar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTAltVWedge.html">PetscDTAltVWedge</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTAltVWedgeMatrix.html">PetscDTAltVWedgeMatrix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTBaryToIndex.html">PetscDTBaryToIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTBinomial.html">PetscDTBinomial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTBinomialInt.html">PetscDTBinomialInt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTEnumPerm.html">PetscDTEnumPerm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTEnumSubset.html">PetscDTEnumSubset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTFactorial.html">PetscDTFactorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTFactorialInt.html">PetscDTFactorialInt</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTGaussJacobiQuadrature.html">PetscDTGaussJacobiQuadrature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTGaussLobattoJacobiQuadrature.html">PetscDTGaussLobattoJacobiQuadrature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTGaussLobattoLegendreQuadrature.html">PetscDTGaussLobattoLegendreQuadrature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTGaussQuadrature.html">PetscDTGaussQuadrature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTGaussTensorQuadrature.html">PetscDTGaussTensorQuadrature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTGradedOrderToIndex.html">PetscDTGradedOrderToIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTIndexToBary.html">PetscDTIndexToBary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTIndexToGradedOrder.html">PetscDTIndexToGradedOrder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTJacobiEval.html">PetscDTJacobiEval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTJacobiEvalJet.html">PetscDTJacobiEvalJet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTJacobiNorm.html">PetscDTJacobiNorm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTLegendreEval.html">PetscDTLegendreEval</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTNodeType.html">PetscDTNodeType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTPKDEvalJet.html">PetscDTPKDEvalJet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTPTrimmedEvalJet.html">PetscDTPTrimmedEvalJet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTPTrimmedSize.html">PetscDTPTrimmedSize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTPermIndex.html">PetscDTPermIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTReconstructPoly.html">PetscDTReconstructPoly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTSimplexQuadrature.html">PetscDTSimplexQuadrature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTSimplexQuadratureType.html">PetscDTSimplexQuadratureType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTStroudConicalQuadrature.html">PetscDTStroudConicalQuadrature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTSubsetIndex.html">PetscDTSubsetIndex</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTTanhSinhTensorQuadrature.html">PetscDTTanhSinhTensorQuadrature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDTTensorQuadratureCreate.html">PetscDTTensorQuadratureCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscFormKey.html">PetscFormKey</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscFormKeySort.html">PetscFormKeySort</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscGaussLobattoLegendreCreateType.html">PetscGaussLobattoLegendreCreateType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscGaussLobattoLegendreElementAdvectionCreate.html">PetscGaussLobattoLegendreElementAdvectionCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscGaussLobattoLegendreElementAdvectionDestroy.html">PetscGaussLobattoLegendreElementAdvectionDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscGaussLobattoLegendreElementGradientCreate.html">PetscGaussLobattoLegendreElementGradientCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscGaussLobattoLegendreElementGradientDestroy.html">PetscGaussLobattoLegendreElementGradientDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscGaussLobattoLegendreElementLaplacianCreate.html">PetscGaussLobattoLegendreElementLaplacianCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscGaussLobattoLegendreElementLaplacianDestroy.html">PetscGaussLobattoLegendreElementLaplacianDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscGaussLobattoLegendreIntegrate.html">PetscGaussLobattoLegendreIntegrate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFConstant1D.html">PetscPDFConstant1D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFConstant2D.html">PetscPDFConstant2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFConstant3D.html">PetscPDFConstant3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFGaussian1D.html">PetscPDFGaussian1D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFGaussian2D.html">PetscPDFGaussian2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFGaussian3D.html">PetscPDFGaussian3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFMaxwellBoltzmann1D.html">PetscPDFMaxwellBoltzmann1D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFMaxwellBoltzmann2D.html">PetscPDFMaxwellBoltzmann2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFMaxwellBoltzmann3D.html">PetscPDFMaxwellBoltzmann3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFSampleConstant1D.html">PetscPDFSampleConstant1D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFSampleConstant2D.html">PetscPDFSampleConstant2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFSampleConstant3D.html">PetscPDFSampleConstant3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFSampleGaussian1D.html">PetscPDFSampleGaussian1D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFSampleGaussian2D.html">PetscPDFSampleGaussian2D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscPDFSampleGaussian3D.html">PetscPDFSampleGaussian3D</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscProbComputeKSStatistic.html">PetscProbComputeKSStatistic</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscProbCreateFromOptions.html">PetscProbCreateFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadrature.html">PetscQuadrature</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadratureCreate.html">PetscQuadratureCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadratureDestroy.html">PetscQuadratureDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadratureDuplicate.html">PetscQuadratureDuplicate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadratureEqual.html">PetscQuadratureEqual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadratureExpandComposite.html">PetscQuadratureExpandComposite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadratureGetData.html">PetscQuadratureGetData</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadratureGetNumComponents.html">PetscQuadratureGetNumComponents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadratureGetOrder.html">PetscQuadratureGetOrder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadraturePushForward.html">PetscQuadraturePushForward</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadratureSetData.html">PetscQuadratureSetData</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadratureSetNumComponents.html">PetscQuadratureSetNumComponents</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadratureSetOrder.html">PetscQuadratureSetOrder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscQuadratureView.html">PetscQuadratureView</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscWeakForm.html">PetscWeakForm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscWeakFormClear.html">PetscWeakFormClear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscWeakFormCopy.html">PetscWeakFormCopy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscWeakFormCreate.html">PetscWeakFormCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscWeakFormDestroy.html">PetscWeakFormDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscWeakFormGetNumFields.html">PetscWeakFormGetNumFields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscWeakFormKind.html">PetscWeakFormKind</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscWeakFormReplaceLabel.html">PetscWeakFormReplaceLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscWeakFormRewriteKeys.html">PetscWeakFormRewriteKeys</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscWeakFormSetNumFields.html">PetscWeakFormSetNumFields</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscWeakFormView.html">PetscWeakFormView</a></li>
+</ul>
+</div>
+</section>
+</section>
+
+
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+  <a class='left-prev' id="prev-link" href="../DMSwarm/DMSwarmViewXDMF.html" title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">DMSwarmViewXDMF</p>
+      </div>
+  </a>
+  <a class='right-next' id="next-link" href="PETSCDSBASIC.html" title="next page">
+  <div class="prev-next-info">
+      <p class="prev-next-subtitle">next</p>
+      <p class="prev-next-title">PETSCDSBASIC</p>
+  </div>
+  <i class="fa-solid fa-angle-right"></i>
+  </a>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div class="tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+</div>
+<nav id="bd-toc-nav" class="page-toc">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#manual-pages-by-level">
+   Manual Pages by Level
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#beginner-basic-usage">
+     Beginner - Basic usage
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#intermediate-setting-options-for-algorithms-and-data-structures">
+     Intermediate - Setting options for algorithms and data structures
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#advanced-setting-more-advanced-options-and-customization">
+     Advanced - Setting more advanced options and customization
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#developer-interfaces-intended-primarily-for-library-developers-not-for-typical-applications-programmers">
+     Developer - Interfaces intended primarily for library developers, not for typical applications programmers
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#no-deprecated-routines">
+     No deprecated routines
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#single-list-of-manual-pages">
+   Single list of manual pages
+  </a>
+  <ul class="simple nav section-nav flex-column">
+  </ul>
+ </li>
+</ul>
+
+</nav>
+</div>
+
+<div class="toc-item">
+  
+<div id="searchbox"></div>
+</div>
+
+<div class="toc-item">
+  
+
+<div class="tocsection editthispage">
+    <a href="https://gitlab.com/petsc/petsc/edit/release/doc/docs/manualpages/DT/index.md">
+        <i class="fa-solid fa-pencil"></i> Edit this page
+    </a>
+</div>
+
+</div>
+
+<div class="toc-item">
+  
+<div class="tocsection sourcelink">
+    <a href="../../../_sources/docs/manualpages/DT/index.md.txt">
+        <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+</div>
+
+</div>
+
+            </div>
+          
+          
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+</p>
+  </div>
+  
+</div>
+  </footer>
+  </body>
+</html>

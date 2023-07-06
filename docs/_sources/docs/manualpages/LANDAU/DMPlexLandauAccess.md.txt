@@ -1,0 +1,42 @@
+# DMPlexLandauAccess
+Access to the distribution function with user callback 
+## Synopsis
+```
+#include "petscdmplex.h" 
+#include "petsclandau.h"   
+PetscErrorCode DMPlexLandauAccess(DM pack, Vec X, PetscErrorCode (*func)(DM, Vec, PetscInt, PetscInt, PetscInt, void *), void *user_ctx)
+```
+Collective
+
+
+## Input Parameters
+.   pack - the DMComposite
++   func - call back function
+.   user_ctx - user context
+
+
+## Input/Output Parameters
++   X - Vector to data to
+
+
+
+.keywords: mesh
+.seealso: `DMPlexLandauCreateVelocitySpace()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/utils/dmplexlandauplexland.c.html#DMPlexLandauAccess">src/ts/utils/dmplexlandauplexland.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/utils/dmplexlandau/tutorials/ex1.c.html">src/ts/utils/dmplexlandau/tutorials/ex1.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/ts/utils/dmplexlandauplexland.c)
+
+
+[Index of all LANDAU routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

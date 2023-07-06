@@ -1,0 +1,43 @@
+# PetscLs
+produce a listing of the files in a directory 
+## Synopsis
+```
+PetscErrorCode PetscLs(MPI_Comm comm, const char dirname[], char found[], size_t tlen, PetscBool *flg)
+```
+Collective
+
+
+## Input Parameters
+
+- ***comm -*** the MPI communicator
+- ***dirname -*** the directory name
+- ***tlen -*** the length of the buffer found[]
+
+
+
+## Output Parameters
+
+- ***found -*** listing of files
+- ***flg -*** the directory exists
+
+
+
+
+
+## See Also
+ `PetscTestFile()`, `PetscLs()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/fileio/ftest.c.html#PetscLs">src/sys/fileio/ftest.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/fileio/ftest.c)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

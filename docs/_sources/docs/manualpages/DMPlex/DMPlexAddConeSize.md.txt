@@ -1,0 +1,41 @@
+# DMPlexAddConeSize
+Add the given number of in-edges to this point in the DAG 
+## Synopsis
+```
+#include "petscdmplex.h"   
+PetscErrorCode DMPlexAddConeSize(DM dm, PetscInt p, PetscInt size)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***mesh -*** The `DMPLEX`
+- ***p -*** The point, which must lie in the chart set with `DMPlexSetChart()`
+- ***size -*** The additional cone size for point p
+
+
+
+
+
+## Note
+This should be called after `DMPlexSetChart()`.
+
+
+## See Also
+ [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexCreate()`, `DMPlexSetConeSize()`, `DMPlexGetConeSize()`, `DMPlexSetChart()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/plex.c.html#DMPlexAddConeSize">src/dm/impls/plex/plex.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/plex/plex.c)
+
+
+[Index of all DMPlex routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,505 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/impls/aij/seq/seqviennacl/aijviennacl.cxx">Actual source code: aijviennacl.cxx</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:38+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/*</font>
+<a name="line3">  3: </a><font color="#B22222">    Defines the basic matrix operations for the AIJ (compressed row)</font>
+<a name="line4">  4: </a><font color="#B22222">  matrix storage format.</font>
+<a name="line5">  5: </a><font color="#B22222">*/</font>
+
+<a name="line7">  7: </a><font color="#A020F0">#include &lt;petscconf.h&gt;</font>
+<a name="line8">  8: </a><strong><font color="#228B22">#define PETSC_SKIP_IMMINTRIN_H_CUDAWORKAROUND 1</font></strong>
+<a name="line9">  9: </a>#include <A href="../aij.h.html">&lt;../src/mat/impls/aij/seq/aij.h&gt;</A>
+<a name="line10"> 10: </a>#include <A href="../../../../../../include/petscbt.h.html">&lt;petscbt.h&gt;</A>
+<a name="line11"> 11: </a>#include <A href="../../../../../vec/vec/impls/dvecimpl.h.html">&lt;../src/vec/vec/impls/dvecimpl.h&gt;</A>
+<a name="line12"> 12: </a>#include <A href="../../../../../../include/petsc/private/vecimpl.h.html">&lt;petsc/private/vecimpl.h&gt;</A>
+
+<a name="line14"> 14: </a>#include <A href="viennaclmatimpl.h.html">&lt;../src/mat/impls/aij/seq/seqviennacl/viennaclmatimpl.h&gt;</A>
+
+<a name="line16"> 16: </a><font color="#A020F0">#include &lt;algorithm&gt;</font>
+<a name="line17"> 17: </a><font color="#A020F0">#include &lt;vector&gt;</font>
+<a name="line18"> 18: </a><font color="#A020F0">#include &lt;string&gt;</font>
+
+<a name="line20"> 20: </a><font color="#A020F0">#include </font><font color="#666666">"viennacl/linalg/prod.hpp"</font><font color="#A020F0"></font>
+
+<a name="line22"> 22: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatConvert_SeqAIJ_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Mat/MatType.html">MatType</a> type, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MatReuse</a> reuse, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *newmat)</font></strong>;
+<a name="line23"> 23: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatGetFactor_seqaij_petsc(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../../docs/manualpages/Mat/MatFactorType.html">MatFactorType</a>, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *)</font></strong>;
+<a name="line24"> 24: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatProductSetFromOptions_SeqAIJ_SeqDense(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>)</font></strong>;
+
+<a name="line26"> 26: </a><strong><font color="#4169E1"><a name="MatViennaCLCopyToGPU"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatViennaCLCopyToGPU(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A)</font></strong>
+<a name="line27"> 27: </a>{
+<a name="line28"> 28: </a>  Mat_SeqAIJViennaCL *viennaclstruct = (Mat_SeqAIJViennaCL *)A-&gt;spptr;
+<a name="line29"> 29: </a>  Mat_SeqAIJ         *a              = (Mat_SeqAIJ *)A-&gt;data;
+
+<a name="line31"> 31: </a>  <font color="#4169E1">if</font> (A-&gt;rmap-&gt;n &gt; 0 &amp;&amp; A-&gt;cmap-&gt;n &gt; 0 &amp;&amp; a-&gt;nz) { //some OpenCL SDKs have issues with buffers of size 0
+<a name="line32"> 32: </a>    <font color="#4169E1">if</font> (A-&gt;offloadmask == <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_UNALLOCATED</a> || A-&gt;offloadmask == <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_CPU</a>) {
+<a name="line33"> 33: </a>      <a href="../../../../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(MAT_ViennaCLCopyToGPU, A, 0, 0, 0);
+
+<a name="line35"> 35: </a>      try {
+<a name="line36"> 36: </a>        <font color="#4169E1">if</font> (a-&gt;compressedrow.use) {
+<a name="line37"> 37: </a>          <font color="#4169E1">if</font> (!viennaclstruct-&gt;compressed_mat) viennaclstruct-&gt;compressed_mat = new ViennaCLCompressedAIJMatrix();
+
+<a name="line39"> 39: </a>          // Since <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> is different from cl_uint, we have to convert:
+<a name="line40"> 40: </a><strong><font color="#FF0000">          viennacl:</font></strong>:backend::mem_handle dummy;
+
+<a name="line42"> 42: </a><strong><font color="#FF0000">          viennacl:</font></strong>:backend::typesafe_host_array&lt;unsigned int&gt; row_buffer;
+<a name="line43"> 43: </a>          row_buffer.raw_resize(dummy, a-&gt;compressedrow.nrows + 1);
+<a name="line44"> 44: </a>          <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i = 0; i &lt;= a-&gt;compressedrow.nrows; ++i) row_buffer.set(i, (a-&gt;compressedrow.i)[i]);
+
+<a name="line46"> 46: </a><strong><font color="#FF0000">          viennacl:</font></strong>:backend::typesafe_host_array&lt;unsigned int&gt; row_indices;
+<a name="line47"> 47: </a>          row_indices.raw_resize(dummy, a-&gt;compressedrow.nrows);
+<a name="line48"> 48: </a>          <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i = 0; i &lt; a-&gt;compressedrow.nrows; ++i) row_indices.set(i, (a-&gt;compressedrow.rindex)[i]);
+
+<a name="line50"> 50: </a><strong><font color="#FF0000">          viennacl:</font></strong>:backend::typesafe_host_array&lt;unsigned int&gt; col_buffer;
+<a name="line51"> 51: </a>          col_buffer.raw_resize(dummy, a-&gt;nz);
+<a name="line52"> 52: </a>          <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i = 0; i &lt; a-&gt;nz; ++i) col_buffer.set(i, (a-&gt;j)[i]);
+
+<a name="line54"> 54: </a>          viennaclstruct-&gt;compressed_mat-&gt;set(row_buffer.get(), row_indices.get(), col_buffer.get(), a-&gt;a, A-&gt;rmap-&gt;n, A-&gt;cmap-&gt;n, a-&gt;compressedrow.nrows, a-&gt;nz);
+<a name="line55"> 55: </a>          PetscLogCpuToGpu(((2 * a-&gt;compressedrow.nrows) + 1 + a-&gt;nz) * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>) + (a-&gt;nz) * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>));
+<a name="line56"> 56: </a>        } <font color="#4169E1">else</font> {
+<a name="line57"> 57: </a>          <font color="#4169E1">if</font> (!viennaclstruct-&gt;mat) viennaclstruct-&gt;mat = new ViennaCLAIJMatrix();
+
+<a name="line59"> 59: </a>          // Since <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> is in general different from cl_uint, we have to convert:
+<a name="line60"> 60: </a><strong><font color="#FF0000">          viennacl:</font></strong>:backend::mem_handle dummy;
+
+<a name="line62"> 62: </a><strong><font color="#FF0000">          viennacl:</font></strong>:backend::typesafe_host_array&lt;unsigned int&gt; row_buffer;
+<a name="line63"> 63: </a>          row_buffer.raw_resize(dummy, A-&gt;rmap-&gt;n + 1);
+<a name="line64"> 64: </a>          <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i = 0; i &lt;= A-&gt;rmap-&gt;n; ++i) row_buffer.set(i, (a-&gt;i)[i]);
+
+<a name="line66"> 66: </a><strong><font color="#FF0000">          viennacl:</font></strong>:backend::typesafe_host_array&lt;unsigned int&gt; col_buffer;
+<a name="line67"> 67: </a>          col_buffer.raw_resize(dummy, a-&gt;nz);
+<a name="line68"> 68: </a>          <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i = 0; i &lt; a-&gt;nz; ++i) col_buffer.set(i, (a-&gt;j)[i]);
+
+<a name="line70"> 70: </a>          viennaclstruct-&gt;mat-&gt;set(row_buffer.get(), col_buffer.get(), a-&gt;a, A-&gt;rmap-&gt;n, A-&gt;cmap-&gt;n, a-&gt;nz);
+<a name="line71"> 71: </a>          PetscLogCpuToGpu(((A-&gt;rmap-&gt;n + 1) + a-&gt;nz) * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>) + (a-&gt;nz) * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>));
+<a name="line72"> 72: </a>        }
+<a name="line73"> 73: </a>        ViennaCLWaitForGPU();
+<a name="line74"> 74: </a>      } catch (std::exception const &amp;ex) {
+<a name="line75"> 75: </a>        <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_LIB, <font color="#666666">"ViennaCL error: %s"</font>, ex.what());
+<a name="line76"> 76: </a>      }
+
+<a name="line78"> 78: </a>      // Create temporary vector <font color="#4169E1">for</font> v += A*x:
+<a name="line79"> 79: </a>      <font color="#4169E1">if</font> (viennaclstruct-&gt;tempvec) {
+<a name="line80"> 80: </a>        <font color="#4169E1">if</font> (viennaclstruct-&gt;tempvec-&gt;size() != static_cast&lt;std::size_t&gt;(A-&gt;rmap-&gt;n)) {
+<a name="line81"> 81: </a>          delete (ViennaCLVector *)viennaclstruct-&gt;tempvec;
+<a name="line82"> 82: </a>          viennaclstruct-&gt;tempvec = new ViennaCLVector(A-&gt;rmap-&gt;n);
+<a name="line83"> 83: </a>        } <font color="#4169E1">else</font> {
+<a name="line84"> 84: </a>          viennaclstruct-&gt;tempvec-&gt;clear();
+<a name="line85"> 85: </a>        }
+<a name="line86"> 86: </a>      } <font color="#4169E1">else</font> {
+<a name="line87"> 87: </a>        viennaclstruct-&gt;tempvec = new ViennaCLVector(A-&gt;rmap-&gt;n);
+<a name="line88"> 88: </a>      }
+
+<a name="line90"> 90: </a>      A-&gt;offloadmask = <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_BOTH</a>;
+
+<a name="line92"> 92: </a>      <a href="../../../../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(MAT_ViennaCLCopyToGPU, A, 0, 0, 0);
+<a name="line93"> 93: </a>    }
+<a name="line94"> 94: </a>  }
+<a name="line95"> 95: </a>  <font color="#4169E1">return</font> 0;
+<a name="line96"> 96: </a>}
+
+<a name="line98"> 98: </a><strong><font color="#4169E1"><a name="MatViennaCLCopyFromGPU"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatViennaCLCopyFromGPU(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, const ViennaCLAIJMatrix *Agpu)</font></strong>
+<a name="line99"> 99: </a>{
+<a name="line100">100: </a>  Mat_SeqAIJViennaCL *viennaclstruct = (Mat_SeqAIJViennaCL *)A-&gt;spptr;
+<a name="line101">101: </a>  Mat_SeqAIJ         *a              = (Mat_SeqAIJ *)A-&gt;data;
+<a name="line102">102: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>            m              = A-&gt;rmap-&gt;n;
+
+<a name="line104">104: </a>  <font color="#4169E1">if</font> (A-&gt;offloadmask == <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_BOTH</a>) <font color="#4169E1">return</font> 0;
+<a name="line105">105: </a>  <font color="#4169E1">if</font> (A-&gt;offloadmask == <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_UNALLOCATED</a> &amp;&amp; Agpu) {
+<a name="line106">106: </a>    try {
+<a name="line109">109: </a>      a-&gt;nz           = Agpu-&gt;nnz();
+<a name="line110">110: </a>      a-&gt;maxnz        = a-&gt;nz; <font color="#B22222">/* Since we allocate exactly the right amount */</font>
+<a name="line111">111: </a>      A-&gt;preallocated = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line112">112: </a>      <font color="#4169E1">if</font> (a-&gt;singlemalloc) {
+<a name="line113">113: </a>        <font color="#4169E1">if</font> (a-&gt;a) <a href="../../../../../../docs/manualpages/Sys/PetscFree3.html">PetscFree3</a>(a-&gt;a, a-&gt;j, a-&gt;i);
+<a name="line114">114: </a>      } <font color="#4169E1">else</font> {
+<a name="line115">115: </a>        <font color="#4169E1">if</font> (a-&gt;i) <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(a-&gt;i);
+<a name="line116">116: </a>        <font color="#4169E1">if</font> (a-&gt;j) <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(a-&gt;j);
+<a name="line117">117: </a>        <font color="#4169E1">if</font> (a-&gt;a) <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(a-&gt;a);
+<a name="line118">118: </a>      }
+<a name="line119">119: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscMalloc3.html">PetscMalloc3</a>(a-&gt;nz, &amp;a-&gt;a, a-&gt;nz, &amp;a-&gt;j, m + 1, &amp;a-&gt;i);
+
+<a name="line121">121: </a>      a-&gt;singlemalloc = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+
+<a name="line123">123: </a>      <font color="#B22222">/* Setup row lengths */</font>
+<a name="line124">124: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(a-&gt;imax);
+<a name="line125">125: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(a-&gt;ilen);
+<a name="line126">126: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(m, &amp;a-&gt;imax);
+<a name="line127">127: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(m, &amp;a-&gt;ilen);
+
+<a name="line129">129: </a>      <font color="#B22222">/* Copy data back from GPU */</font>
+<a name="line130">130: </a><strong><font color="#FF0000">      viennacl:</font></strong>:backend::typesafe_host_array&lt;unsigned int&gt; row_buffer;
+<a name="line131">131: </a>      row_buffer.raw_resize(Agpu-&gt;handle1(), Agpu-&gt;size1() + 1);
+
+<a name="line133">133: </a>      // copy row array
+<a name="line134">134: </a><strong><font color="#FF0000">      viennacl:</font></strong>:backend::memory_read(Agpu-&gt;handle1(), 0, row_buffer.raw_size(), row_buffer.get());
+<a name="line135">135: </a>      (a-&gt;i)[0] = row_buffer[0];
+<a name="line136">136: </a>      <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i = 0; i &lt; (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)Agpu-&gt;size1(); ++i) {
+<a name="line137">137: </a>        (a-&gt;i)[i + 1] = row_buffer[i + 1];
+<a name="line138">138: </a>        a-&gt;imax[i] = a-&gt;ilen[i] = a-&gt;i[i + 1] - a-&gt;i[i]; //Set imax[] and ilen[] arrays at the same time as i[] <font color="#4169E1">for</font> better cache reuse
+<a name="line139">139: </a>      }
+
+<a name="line141">141: </a>      // copy column indices
+<a name="line142">142: </a><strong><font color="#FF0000">      viennacl:</font></strong>:backend::typesafe_host_array&lt;unsigned int&gt; col_buffer;
+<a name="line143">143: </a>      col_buffer.raw_resize(Agpu-&gt;handle2(), Agpu-&gt;nnz());
+<a name="line144">144: </a><strong><font color="#FF0000">      viennacl:</font></strong>:backend::memory_read(Agpu-&gt;handle2(), 0, col_buffer.raw_size(), col_buffer.get());
+<a name="line145">145: </a>      <font color="#4169E1">for</font> (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i = 0; i &lt; (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)Agpu-&gt;nnz(); ++i) (a-&gt;j)[i] = col_buffer[i];
+
+<a name="line147">147: </a>      // copy nonzero entries directly to destination (no conversion required)
+<a name="line148">148: </a><strong><font color="#FF0000">      viennacl:</font></strong>:backend::memory_read(Agpu-&gt;handle(), 0, <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>) * Agpu-&gt;nnz(), a-&gt;a);
+
+<a name="line150">150: </a>      PetscLogGpuToCpu(row_buffer.raw_size() + col_buffer.raw_size() + (Agpu-&gt;nnz() * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)));
+<a name="line151">151: </a>      ViennaCLWaitForGPU();
+<a name="line152">152: </a>      <font color="#B22222">/* TODO: Once a-&gt;diag is moved out of <a href="../../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(), invalidate it here. */</font>
+<a name="line153">153: </a>    } catch (std::exception const &amp;ex) {
+<a name="line154">154: </a>      <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_LIB, <font color="#666666">"ViennaCL error: %s"</font>, ex.what());
+<a name="line155">155: </a>    }
+<a name="line156">156: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (A-&gt;offloadmask == <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_UNALLOCATED</a>) {
+<a name="line157">157: </a>    <font color="#4169E1">return</font> 0;
+<a name="line158">158: </a>  } <font color="#4169E1">else</font> {
+<a name="line159">159: </a>    <font color="#4169E1">if</font> (!Agpu &amp;&amp; A-&gt;offloadmask != <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_GPU</a>) <font color="#4169E1">return</font> 0;
+
+<a name="line162">162: </a>    <font color="#4169E1">if</font> (!Agpu) {
+<a name="line163">163: </a><strong><font color="#FF0000">      viennacl:</font></strong>:backend::memory_read(viennaclstruct-&gt;mat-&gt;handle(), 0, <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>) * viennaclstruct-&gt;mat-&gt;nnz(), a-&gt;a);
+<a name="line164">164: </a>    } <font color="#4169E1">else</font> {
+<a name="line165">165: </a><strong><font color="#FF0000">      viennacl:</font></strong>:backend::memory_read(Agpu-&gt;handle(), 0, <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>) * Agpu-&gt;nnz(), a-&gt;a);
+<a name="line166">166: </a>    }
+<a name="line167">167: </a>  }
+<a name="line168">168: </a>  A-&gt;offloadmask = <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_BOTH</a>;
+<a name="line169">169: </a>  <font color="#B22222">/* This assembly prevents resetting the flag to <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_CPU</a> and recopying */</font>
+<a name="line170">170: </a>  <a href="../../../../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(A, <a href="../../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line171">171: </a>  <a href="../../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(A, <a href="../../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line172">172: </a>  <font color="#4169E1">return</font> 0;
+<a name="line173">173: </a>}
+
+<a name="line175">175: </a><strong><font color="#4169E1"><a name="MatMult_SeqAIJViennaCL"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatMult_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xx, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yy)</font></strong>
+<a name="line176">176: </a>{
+<a name="line177">177: </a>  Mat_SeqAIJ           *a              = (Mat_SeqAIJ *)A-&gt;data;
+<a name="line178">178: </a>  Mat_SeqAIJViennaCL   *viennaclstruct = (Mat_SeqAIJViennaCL *)A-&gt;spptr;
+<a name="line179">179: </a>  const ViennaCLVector *xgpu           = NULL;
+<a name="line180">180: </a>  ViennaCLVector       *ygpu           = NULL;
+
+<a name="line182">182: </a>  <font color="#B22222">/* The line below is necessary due to the operations that modify the matrix on the CPU (axpy, scale, etc) */</font>
+<a name="line183">183: </a>  MatViennaCLCopyToGPU(A);
+<a name="line184">184: </a>  <font color="#4169E1">if</font> (A-&gt;rmap-&gt;n &gt; 0 &amp;&amp; A-&gt;cmap-&gt;n &gt; 0 &amp;&amp; a-&gt;nz) {
+<a name="line185">185: </a>    VecViennaCLGetArrayRead(xx, &amp;xgpu);
+<a name="line186">186: </a>    VecViennaCLGetArrayWrite(yy, &amp;ygpu);
+<a name="line187">187: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line188">188: </a>    try {
+<a name="line189">189: </a>      <font color="#4169E1">if</font> (a-&gt;compressedrow.use) {
+<a name="line190">190: </a>        *ygpu = viennacl::linalg::prod(*viennaclstruct-&gt;compressed_mat, *xgpu);
+<a name="line191">191: </a>      } <font color="#4169E1">else</font> {
+<a name="line192">192: </a>        *ygpu = viennacl::linalg::prod(*viennaclstruct-&gt;mat, *xgpu);
+<a name="line193">193: </a>      }
+<a name="line194">194: </a>      ViennaCLWaitForGPU();
+<a name="line195">195: </a>    } catch (std::exception const &amp;ex) {
+<a name="line196">196: </a>      <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_LIB, <font color="#666666">"ViennaCL error: %s"</font>, ex.what());
+<a name="line197">197: </a>    }
+<a name="line198">198: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line199">199: </a>    VecViennaCLRestoreArrayRead(xx, &amp;xgpu);
+<a name="line200">200: </a>    VecViennaCLRestoreArrayWrite(yy, &amp;ygpu);
+<a name="line201">201: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(2.0 * a-&gt;nz - a-&gt;nonzerorowcnt);
+<a name="line202">202: </a>  } <font color="#4169E1">else</font> {
+<a name="line203">203: </a>    VecSet_SeqViennaCL(yy, 0);
+<a name="line204">204: </a>  }
+<a name="line205">205: </a>  <font color="#4169E1">return</font> 0;
+<a name="line206">206: </a>}
+
+<a name="line208">208: </a><strong><font color="#4169E1"><a name="MatMultAdd_SeqAIJViennaCL"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatMultAdd_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xx, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> yy, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> zz)</font></strong>
+<a name="line209">209: </a>{
+<a name="line210">210: </a>  Mat_SeqAIJ           *a              = (Mat_SeqAIJ *)A-&gt;data;
+<a name="line211">211: </a>  Mat_SeqAIJViennaCL   *viennaclstruct = (Mat_SeqAIJViennaCL *)A-&gt;spptr;
+<a name="line212">212: </a>  const ViennaCLVector *xgpu = NULL, *ygpu = NULL;
+<a name="line213">213: </a>  ViennaCLVector       *zgpu = NULL;
+
+<a name="line215">215: </a>  <font color="#B22222">/* The line below is necessary due to the operations that modify the matrix on the CPU (axpy, scale, etc) */</font>
+<a name="line216">216: </a>  MatViennaCLCopyToGPU(A);
+<a name="line217">217: </a>  <font color="#4169E1">if</font> (A-&gt;rmap-&gt;n &gt; 0 &amp;&amp; A-&gt;cmap-&gt;n &gt; 0 &amp;&amp; a-&gt;nz) {
+<a name="line218">218: </a>    try {
+<a name="line219">219: </a>      VecViennaCLGetArrayRead(xx, &amp;xgpu);
+<a name="line220">220: </a>      VecViennaCLGetArrayRead(yy, &amp;ygpu);
+<a name="line221">221: </a>      VecViennaCLGetArrayWrite(zz, &amp;zgpu);
+<a name="line222">222: </a>      <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line223">223: </a>      <font color="#4169E1">if</font> (a-&gt;compressedrow.use) *viennaclstruct-&gt;tempvec = viennacl::linalg::prod(*viennaclstruct-&gt;compressed_mat, *xgpu);
+<a name="line224">224: </a>      <font color="#4169E1">else</font> *viennaclstruct-&gt;tempvec = viennacl::linalg::prod(*viennaclstruct-&gt;mat, *xgpu);
+<a name="line225">225: </a>      <font color="#4169E1">if</font> (zz != yy) *zgpu = *ygpu + *viennaclstruct-&gt;tempvec;
+<a name="line226">226: </a>      <font color="#4169E1">else</font> *zgpu += *viennaclstruct-&gt;tempvec;
+<a name="line227">227: </a>      ViennaCLWaitForGPU();
+<a name="line228">228: </a>      <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line229">229: </a>      VecViennaCLRestoreArrayRead(xx, &amp;xgpu);
+<a name="line230">230: </a>      VecViennaCLRestoreArrayRead(yy, &amp;ygpu);
+<a name="line231">231: </a>      VecViennaCLRestoreArrayWrite(zz, &amp;zgpu);
+
+<a name="line233">233: </a>    } catch (std::exception const &amp;ex) {
+<a name="line234">234: </a>      <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_LIB, <font color="#666666">"ViennaCL error: %s"</font>, ex.what());
+<a name="line235">235: </a>    }
+<a name="line236">236: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(2.0 * a-&gt;nz);
+<a name="line237">237: </a>  } <font color="#4169E1">else</font> {
+<a name="line238">238: </a>    VecCopy_SeqViennaCL(yy, zz);
+<a name="line239">239: </a>  }
+<a name="line240">240: </a>  <font color="#4169E1">return</font> 0;
+<a name="line241">241: </a>}
+
+<a name="line243">243: </a><strong><font color="#4169E1"><a name="MatAssemblyEnd_SeqAIJViennaCL"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatAssemblyEnd_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Mat/MatAssemblyType.html">MatAssemblyType</a> mode)</font></strong>
+<a name="line244">244: </a>{
+<a name="line245">245: </a>  MatAssemblyEnd_SeqAIJ(A, mode);
+<a name="line246">246: </a>  <font color="#4169E1">if</font> (mode == <a href="../../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FLUSH_ASSEMBLY</a>) <font color="#4169E1">return</font> 0;
+<a name="line247">247: </a>  <font color="#4169E1">if</font> (!A-&gt;boundtocpu) MatViennaCLCopyToGPU(A);
+<a name="line248">248: </a>  <font color="#4169E1">return</font> 0;
+<a name="line249">249: </a>}
+
+<a name="line251">251: </a><font color="#B22222">/* --------------------------------------------------------------------------------*/</font>
+<a name="line252">252: </a><font color="#B22222">/*@C</font>
+<a name="line253">253: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Mat/MatCreateSeqAIJViennaCL.html">MatCreateSeqAIJViennaCL</a> - Creates a sparse matrix in `<a href="../../../../../../docs/manualpages/Mat/MATSEQAIJVIENNACL.html">MATSEQAIJVIENNACL</a>` (compressed row) format</font>
+<a name="line254">254: </a><font color="#B22222">   (the default parallel PETSc format).  This matrix will ultimately be pushed down</font>
+<a name="line255">255: </a><font color="#B22222">   to GPUs and use the ViennaCL library for calculations. For good matrix</font>
+<a name="line256">256: </a><font color="#B22222">   assembly performance the user should preallocate the matrix storage by setting</font>
+<a name="line257">257: </a><font color="#B22222">   the parameter nz (or the array nnz).  By setting these parameters accurately,</font>
+<a name="line258">258: </a><font color="#B22222">   performance during matrix assembly can be increased substantially.</font>
+
+<a name="line260">260: </a><font color="#B22222">   Collective</font>
+
+<a name="line262">262: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line263">263: </a><font color="#B22222">+  comm - MPI communicator, set to `<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>`</font>
+<a name="line264">264: </a><font color="#B22222">.  m - number of rows</font>
+<a name="line265">265: </a><font color="#B22222">.  n - number of columns</font>
+<a name="line266">266: </a><font color="#B22222">.  nz - number of nonzeros per row (same for all rows)</font>
+<a name="line267">267: </a><font color="#B22222">-  nnz - array containing the number of nonzeros in the various rows</font>
+<a name="line268">268: </a><font color="#B22222">         (possibly different for each row) or NULL</font>
+
+<a name="line270">270: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line271">271: </a><font color="#B22222">.  A - the matrix</font>
+
+<a name="line273">273: </a><font color="#B22222">   It is recommended that one use the `<a href="../../../../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>()` and/or `<a href="../../../../../../docs/manualpages/Mat/MatSetFromOptions.html">MatSetFromOptions</a>()`,</font>
+<a name="line274">274: </a><font color="#B22222">   MatXXXXSetPreallocation() paradigm instead of this routine directly.</font>
+<a name="line275">275: </a><font color="#B22222">   [MatXXXXSetPreallocation() is, for example, `<a href="../../../../../../docs/manualpages/Mat/MatSeqAIJSetPreallocation.html">MatSeqAIJSetPreallocation</a>()`]</font>
+
+<a name="line277">277: </a><font color="#B22222">   Notes:</font>
+<a name="line278">278: </a><font color="#B22222">   If nnz is given then nz is ignored</font>
+
+<a name="line280">280: </a><font color="#B22222">   The AIJ format, also called</font>
+<a name="line281">281: </a><font color="#B22222">   compressed row storage, is fully compatible with standard Fortran 77</font>
+<a name="line282">282: </a><font color="#B22222">   storage.  That is, the stored row and column indices can begin at</font>
+<a name="line283">283: </a><font color="#B22222">   either one (as in Fortran) or zero.  See the users' manual for details.</font>
+
+<a name="line285">285: </a><font color="#B22222">   Specify the preallocated storage with either nz or nnz (not both).</font>
+<a name="line286">286: </a><font color="#B22222">   Set nz = `<a href="../../../../../../docs/manualpages/Sys/PETSC_DEFAULT.html">PETSC_DEFAULT</a>` and nnz = NULL for PETSc to control dynamic memory</font>
+<a name="line287">287: </a><font color="#B22222">   allocation.  For large problems you MUST preallocate memory or you</font>
+<a name="line288">288: </a><font color="#B22222">   will get TERRIBLE performance, see the users' manual chapter on matrices.</font>
+
+<a name="line290">290: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line292">292: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Mat/MATSEQAIJVIENNACL.html">MATSEQAIJVIENNACL</a>`, `<a href="../../../../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatCreateAIJ.html">MatCreateAIJ</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatCreateAIJCUSPARSE.html">MatCreateAIJCUSPARSE</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatSeqAIJSetColumnIndices.html">MatSeqAIJSetColumnIndices</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatCreateSeqAIJWithArrays.html">MatCreateSeqAIJWithArrays</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatCreateAIJ.html">MatCreateAIJ</a>()`</font>
+<a name="line293">293: </a><font color="#B22222">@*/</font>
+<a name="line294">294: </a><strong><font color="#4169E1"><a name="MatCreateSeqAIJViennaCL"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Mat/MatCreateSeqAIJViennaCL.html">MatCreateSeqAIJViennaCL</a>(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> m, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nz, const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nnz[], <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *A)</font></strong>
+<a name="line295">295: </a>{
+<a name="line296">296: </a>  <a href="../../../../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>(comm, A);
+<a name="line297">297: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSetSizes.html">MatSetSizes</a>(*A, m, n, m, n);
+<a name="line298">298: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(*A, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJVIENNACL.html">MATSEQAIJVIENNACL</a>);
+<a name="line299">299: </a>  MatSeqAIJSetPreallocation_SeqAIJ(*A, nz, (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)nnz);
+<a name="line300">300: </a>  <font color="#4169E1">return</font> 0;
+<a name="line301">301: </a>}
+
+<a name="line303">303: </a><strong><font color="#4169E1"><a name="MatDestroy_SeqAIJViennaCL"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDestroy_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A)</font></strong>
+<a name="line304">304: </a>{
+<a name="line305">305: </a>  Mat_SeqAIJViennaCL *viennaclcontainer = (Mat_SeqAIJViennaCL *)A-&gt;spptr;
+
+<a name="line307">307: </a>  try {
+<a name="line308">308: </a>    <font color="#4169E1">if</font> (viennaclcontainer) {
+<a name="line309">309: </a>      delete viennaclcontainer-&gt;tempvec;
+<a name="line310">310: </a>      delete viennaclcontainer-&gt;mat;
+<a name="line311">311: </a>      delete viennaclcontainer-&gt;compressed_mat;
+<a name="line312">312: </a>      delete viennaclcontainer;
+<a name="line313">313: </a>    }
+<a name="line314">314: </a>    A-&gt;offloadmask = <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_UNALLOCATED</a>;
+<a name="line315">315: </a>  } catch (std::exception const &amp;ex) {
+<a name="line316">316: </a>    <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_LIB, <font color="#666666">"ViennaCL error: %s"</font>, ex.what());
+<a name="line317">317: </a>  }
+
+<a name="line319">319: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatConvert_seqaij_seqaijviennacl_C"</font>, NULL);
+<a name="line320">320: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatProductSetFromOptions_seqaijviennacl_seqdense_C"</font>, NULL);
+<a name="line321">321: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatProductSetFromOptions_seqaijviennacl_seqaij_C"</font>, NULL);
+
+<a name="line323">323: </a>  <font color="#B22222">/* this next line is because <a href="../../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a> tries to <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a> spptr if it is not zero, and <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a> only works if the memory was allocated with <a href="../../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a> or <a href="../../../../../../docs/manualpages/Sys/PetscMalloc.html">PetscMalloc</a>, which don't call the constructor */</font>
+<a name="line324">324: </a>  A-&gt;spptr = 0;
+<a name="line325">325: </a>  MatDestroy_SeqAIJ(A);
+<a name="line326">326: </a>  <font color="#4169E1">return</font> 0;
+<a name="line327">327: </a>}
+
+<a name="line329">329: </a><strong><font color="#4169E1"><a name="MatCreate_SeqAIJViennaCL"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatCreate_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B)</font></strong>
+<a name="line330">330: </a>{
+<a name="line331">331: </a>  MatCreate_SeqAIJ(B);
+<a name="line332">332: </a>  MatConvert_SeqAIJ_SeqAIJViennaCL(B, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJVIENNACL.html">MATSEQAIJVIENNACL</a>, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INPLACE_MATRIX</a>, &amp;B);
+<a name="line333">333: </a>  <font color="#4169E1">return</font> 0;
+<a name="line334">334: </a>}
+
+<a name="line336">336: </a><strong><font color="#4169E1">static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatBindToCPU_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)</font></strong>;
+<a name="line337">337: </a><strong><font color="#4169E1"><a name="MatDuplicate_SeqAIJViennaCL"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDuplicate_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Mat/MatDuplicateOption.html">MatDuplicateOption</a> cpvalues, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *B)</font></strong>
+<a name="line338">338: </a>{
+<a name="line339">339: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> C;
+
+<a name="line341">341: </a>  MatDuplicate_SeqAIJ(A, cpvalues, B);
+<a name="line342">342: </a>  C = *B;
+
+<a name="line344">344: </a>  MatBindToCPU_SeqAIJViennaCL(A, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line345">345: </a>  C-&gt;ops-&gt;bindtocpu = MatBindToCPU_SeqAIJViennaCL;
+
+<a name="line347">347: </a>  C-&gt;spptr                                         = new Mat_SeqAIJViennaCL();
+<a name="line348">348: </a>  ((Mat_SeqAIJViennaCL *)C-&gt;spptr)-&gt;tempvec        = NULL;
+<a name="line349">349: </a>  ((Mat_SeqAIJViennaCL *)C-&gt;spptr)-&gt;mat            = NULL;
+<a name="line350">350: </a>  ((Mat_SeqAIJViennaCL *)C-&gt;spptr)-&gt;compressed_mat = NULL;
+
+<a name="line352">352: </a>  PetscObjectChangeTypeName((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)C, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJVIENNACL.html">MATSEQAIJVIENNACL</a>);
+
+<a name="line354">354: </a>  C-&gt;offloadmask = <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_UNALLOCATED</a>;
+
+<a name="line356">356: </a>  <font color="#B22222">/* If the source matrix is already assembled, copy the destination matrix to the GPU */</font>
+<a name="line357">357: </a>  <font color="#4169E1">if</font> (C-&gt;assembled) MatViennaCLCopyToGPU(C);
+<a name="line358">358: </a>  <font color="#4169E1">return</font> 0;
+<a name="line359">359: </a>}
+
+<a name="line361">361: </a><strong><font color="#4169E1"><a name="MatSeqAIJGetArray_SeqAIJViennaCL"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSeqAIJGetArray_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array[])</font></strong>
+<a name="line362">362: </a>{
+<a name="line363">363: </a>  MatViennaCLCopyFromGPU(A, (const ViennaCLAIJMatrix *)NULL);
+<a name="line364">364: </a>  *array = ((Mat_SeqAIJ *)A-&gt;data)-&gt;a;
+<a name="line365">365: </a>  <font color="#4169E1">return</font> 0;
+<a name="line366">366: </a>}
+
+<a name="line368">368: </a><strong><font color="#4169E1"><a name="MatSeqAIJRestoreArray_SeqAIJViennaCL"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSeqAIJRestoreArray_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array[])</font></strong>
+<a name="line369">369: </a>{
+<a name="line370">370: </a>  A-&gt;offloadmask = <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_CPU</a>;
+<a name="line371">371: </a>  *array         = NULL;
+<a name="line372">372: </a>  <font color="#4169E1">return</font> 0;
+<a name="line373">373: </a>}
+
+<a name="line375">375: </a><strong><font color="#4169E1"><a name="MatSeqAIJGetArrayRead_SeqAIJViennaCL"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSeqAIJGetArrayRead_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array[])</font></strong>
+<a name="line376">376: </a>{
+<a name="line377">377: </a>  MatViennaCLCopyFromGPU(A, (const ViennaCLAIJMatrix *)NULL);
+<a name="line378">378: </a>  *array = ((Mat_SeqAIJ *)A-&gt;data)-&gt;a;
+<a name="line379">379: </a>  <font color="#4169E1">return</font> 0;
+<a name="line380">380: </a>}
+
+<a name="line382">382: </a><strong><font color="#4169E1"><a name="MatSeqAIJRestoreArrayRead_SeqAIJViennaCL"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSeqAIJRestoreArrayRead_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array[])</font></strong>
+<a name="line383">383: </a>{
+<a name="line384">384: </a>  *array = NULL;
+<a name="line385">385: </a>  <font color="#B22222">/* No A-&gt;offloadmask = <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_CPU</a> since if A-&gt;offloadmask was <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_BOTH</a>, it is still BOTH */</font>
+<a name="line386">386: </a>  <font color="#4169E1">return</font> 0;
+<a name="line387">387: </a>}
+
+<a name="line389">389: </a><strong><font color="#4169E1"><a name="MatSeqAIJGetArrayWrite_SeqAIJViennaCL"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSeqAIJGetArrayWrite_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array[])</font></strong>
+<a name="line390">390: </a>{
+<a name="line391">391: </a>  *array = ((Mat_SeqAIJ *)A-&gt;data)-&gt;a;
+<a name="line392">392: </a>  <font color="#4169E1">return</font> 0;
+<a name="line393">393: </a>}
+
+<a name="line395">395: </a><strong><font color="#4169E1"><a name="MatSeqAIJRestoreArrayWrite_SeqAIJViennaCL"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSeqAIJRestoreArrayWrite_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array[])</font></strong>
+<a name="line396">396: </a>{
+<a name="line397">397: </a>  A-&gt;offloadmask = <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_CPU</a>;
+<a name="line398">398: </a>  *array         = NULL;
+<a name="line399">399: </a>  <font color="#4169E1">return</font> 0;
+<a name="line400">400: </a>}
+
+<a name="line402">402: </a><strong><font color="#4169E1"><a name="MatBindToCPU_SeqAIJViennaCL"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatBindToCPU_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg)</font></strong>
+<a name="line403">403: </a>{
+<a name="line404">404: </a>  Mat_SeqAIJ *a = (Mat_SeqAIJ *)A-&gt;data;
+
+<a name="line406">406: </a>  A-&gt;boundtocpu = flg;
+<a name="line407">407: </a>  <font color="#4169E1">if</font> (flg &amp;&amp; a-&gt;inode.size) {
+<a name="line408">408: </a>    a-&gt;inode.use = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line409">409: </a>  } <font color="#4169E1">else</font> {
+<a name="line410">410: </a>    a-&gt;inode.use = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line411">411: </a>  }
+<a name="line412">412: </a>  <font color="#4169E1">if</font> (flg) {
+<a name="line413">413: </a>    <font color="#B22222">/* make sure we have an up-to-date copy on the CPU */</font>
+<a name="line414">414: </a>    MatViennaCLCopyFromGPU(A, (const ViennaCLAIJMatrix *)NULL);
+<a name="line415">415: </a>    A-&gt;ops-&gt;mult        = MatMult_SeqAIJ;
+<a name="line416">416: </a>    A-&gt;ops-&gt;multadd     = MatMultAdd_SeqAIJ;
+<a name="line417">417: </a>    A-&gt;ops-&gt;assemblyend = MatAssemblyEnd_SeqAIJ;
+<a name="line418">418: </a>    A-&gt;ops-&gt;duplicate   = MatDuplicate_SeqAIJ;
+<a name="line419">419: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMemzero.html">PetscMemzero</a>(a-&gt;ops, <font color="#4169E1">sizeof</font>(Mat_SeqAIJOps));
+<a name="line420">420: </a>  } <font color="#4169E1">else</font> {
+<a name="line421">421: </a>    A-&gt;ops-&gt;mult        = MatMult_SeqAIJViennaCL;
+<a name="line422">422: </a>    A-&gt;ops-&gt;multadd     = MatMultAdd_SeqAIJViennaCL;
+<a name="line423">423: </a>    A-&gt;ops-&gt;assemblyend = MatAssemblyEnd_SeqAIJViennaCL;
+<a name="line424">424: </a>    A-&gt;ops-&gt;destroy     = MatDestroy_SeqAIJViennaCL;
+<a name="line425">425: </a>    A-&gt;ops-&gt;duplicate   = MatDuplicate_SeqAIJViennaCL;
+
+<a name="line427">427: </a>    a-&gt;ops-&gt;getarray          = MatSeqAIJGetArray_SeqAIJViennaCL;
+<a name="line428">428: </a>    a-&gt;ops-&gt;restorearray      = MatSeqAIJRestoreArray_SeqAIJViennaCL;
+<a name="line429">429: </a>    a-&gt;ops-&gt;getarrayread      = MatSeqAIJGetArrayRead_SeqAIJViennaCL;
+<a name="line430">430: </a>    a-&gt;ops-&gt;restorearrayread  = MatSeqAIJRestoreArrayRead_SeqAIJViennaCL;
+<a name="line431">431: </a>    a-&gt;ops-&gt;getarraywrite     = MatSeqAIJGetArrayWrite_SeqAIJViennaCL;
+<a name="line432">432: </a>    a-&gt;ops-&gt;restorearraywrite = MatSeqAIJRestoreArrayWrite_SeqAIJViennaCL;
+<a name="line433">433: </a>  }
+<a name="line434">434: </a>  <font color="#4169E1">return</font> 0;
+<a name="line435">435: </a>}
+
+<a name="line437">437: </a><strong><font color="#4169E1"><a name="MatConvert_SeqAIJ_SeqAIJViennaCL"></a>PETSC_INTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatConvert_SeqAIJ_SeqAIJViennaCL(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Mat/MatType.html">MatType</a> type, <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MatReuse</a> reuse, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *newmat)</font></strong>
+<a name="line438">438: </a>{
+<a name="line439">439: </a>  <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B;
+
+
+<a name="line443">443: </a>  <font color="#4169E1">if</font> (reuse == <a href="../../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INITIAL_MATRIX</a>) <a href="../../../../../../docs/manualpages/Mat/MatDuplicate.html">MatDuplicate</a>(A, <a href="../../../../../../docs/manualpages/Mat/MatDuplicateOption.html">MAT_COPY_VALUES</a>, newmat);
+
+<a name="line445">445: </a>  B = *newmat;
+
+<a name="line447">447: </a>  B-&gt;spptr = new Mat_SeqAIJViennaCL();
+
+<a name="line449">449: </a>  ((Mat_SeqAIJViennaCL *)B-&gt;spptr)-&gt;tempvec        = NULL;
+<a name="line450">450: </a>  ((Mat_SeqAIJViennaCL *)B-&gt;spptr)-&gt;mat            = NULL;
+<a name="line451">451: </a>  ((Mat_SeqAIJViennaCL *)B-&gt;spptr)-&gt;compressed_mat = NULL;
+
+<a name="line453">453: </a>  MatBindToCPU_SeqAIJViennaCL(A, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line454">454: </a>  A-&gt;ops-&gt;bindtocpu = MatBindToCPU_SeqAIJViennaCL;
+
+<a name="line456">456: </a>  PetscObjectChangeTypeName((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJVIENNACL.html">MATSEQAIJVIENNACL</a>);
+<a name="line457">457: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(B-&gt;defaultvectype);
+<a name="line458">458: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(<a href="../../../../../../docs/manualpages/Vec/VECVIENNACL.html">VECVIENNACL</a>, &amp;B-&gt;defaultvectype);
+
+<a name="line460">460: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatConvert_seqaij_seqaijviennacl_C"</font>, MatConvert_SeqAIJ_SeqAIJViennaCL);
+<a name="line461">461: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatProductSetFromOptions_seqaijviennacl_seqdense_C"</font>, MatProductSetFromOptions_SeqAIJ_SeqDense);
+<a name="line462">462: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatProductSetFromOptions_seqaijviennacl_seqaij_C"</font>, MatProductSetFromOptions_SeqAIJ);
+
+<a name="line464">464: </a>  B-&gt;offloadmask = <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_UNALLOCATED</a>;
+
+<a name="line466">466: </a>  <font color="#B22222">/* If the source matrix is already assembled, copy the destination matrix to the GPU */</font>
+<a name="line467">467: </a>  <font color="#4169E1">if</font> (B-&gt;assembled) MatViennaCLCopyToGPU(B);
+<a name="line468">468: </a>  <font color="#4169E1">return</font> 0;
+<a name="line469">469: </a>}
+
+<a name="line471">471: </a><font color="#B22222">/*MC</font>
+<a name="line472">472: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJVIENNACL.html">MATSEQAIJVIENNACL</a> - <a href="../../../../../../docs/manualpages/Mat/MATAIJVIENNACL.html">MATAIJVIENNACL</a> = "aijviennacl" = "seqaijviennacl" - A matrix type to be used for sparse matrices.</font>
+
+<a name="line474">474: </a><font color="#B22222">   A matrix type type whose data resides on GPUs. These matrices are in CSR format by</font>
+<a name="line475">475: </a><font color="#B22222">   default. All matrix calculations are performed using the ViennaCL library.</font>
+
+<a name="line477">477: </a><font color="#B22222">   Options Database Keys:</font>
+<a name="line478">478: </a><font color="#B22222">+  -mat_type aijviennacl - sets the matrix type to `<a href="../../../../../../docs/manualpages/Mat/MATSEQAIJVIENNACL.html">MATSEQAIJVIENNACL</a>` during a call to `<a href="../../../../../../docs/manualpages/Mat/MatSetFromOptions.html">MatSetFromOptions</a>()</font>
+<a name="line479">479: </a><font color="#B22222">.  -mat_viennacl_storage_format csr - sets the storage format of matrices for `<a href="../../../../../../docs/manualpages/Mat/MatMult.html">MatMult</a>()` during a call to `<a href="../../../../../../docs/manualpages/Mat/MatSetFromOptions.html">MatSetFromOptions</a>()`.</font>
+<a name="line480">480: </a><font color="#B22222">-  -mat_viennacl_mult_storage_format csr - sets the storage format of matrices for `<a href="../../../../../../docs/manualpages/Mat/MatMult.html">MatMult</a>()` during a call to `<a href="../../../../../../docs/manualpages/Mat/MatSetFromOptions.html">MatSetFromOptions</a>()`.</font>
+
+<a name="line482">482: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line484">484: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Mat/MatCreateSeqAIJViennaCL.html">MatCreateSeqAIJViennaCL</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MATAIJVIENNACL.html">MATAIJVIENNACL</a>`, `<a href="../../../../../../docs/manualpages/Mat/MatCreateAIJViennaCL.html">MatCreateAIJViennaCL</a>()`</font>
+<a name="line485">485: </a><font color="#B22222">M*/</font>
+
+<a name="line487">487: </a><strong><font color="#4169E1"><a name="MatSolverTypeRegister_ViennaCL"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolverTypeRegister_ViennaCL(void)</font></strong>
+<a name="line488">488: </a>{
+<a name="line489">489: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSolverTypeRegister.html">MatSolverTypeRegister</a>(MATSOLVERPETSC, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJVIENNACL.html">MATSEQAIJVIENNACL</a>, <a href="../../../../../../docs/manualpages/Mat/MatFactorType.html">MAT_FACTOR_LU</a>, MatGetFactor_seqaij_petsc);
+<a name="line490">490: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSolverTypeRegister.html">MatSolverTypeRegister</a>(MATSOLVERPETSC, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJVIENNACL.html">MATSEQAIJVIENNACL</a>, <a href="../../../../../../docs/manualpages/Mat/MatFactorType.html">MAT_FACTOR_CHOLESKY</a>, MatGetFactor_seqaij_petsc);
+<a name="line491">491: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSolverTypeRegister.html">MatSolverTypeRegister</a>(MATSOLVERPETSC, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJVIENNACL.html">MATSEQAIJVIENNACL</a>, <a href="../../../../../../docs/manualpages/Mat/MatFactorType.html">MAT_FACTOR_ILU</a>, MatGetFactor_seqaij_petsc);
+<a name="line492">492: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSolverTypeRegister.html">MatSolverTypeRegister</a>(MATSOLVERPETSC, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJVIENNACL.html">MATSEQAIJVIENNACL</a>, <a href="../../../../../../docs/manualpages/Mat/MatFactorType.html">MAT_FACTOR_ICC</a>, MatGetFactor_seqaij_petsc);
+<a name="line493">493: </a>  <font color="#4169E1">return</font> 0;
+<a name="line494">494: </a>}
+</pre>
+</body>
+
+</html>

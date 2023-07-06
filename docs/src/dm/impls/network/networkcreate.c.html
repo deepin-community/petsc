@@ -1,0 +1,439 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/network/networkcreate.c">Actual source code: networkcreate.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:33+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><strong><font color="#228B22">#define PETSCDM_DLL</font></strong>
+<a name="line2">  2: </a>#include <A href="../../../../include/petsc/private/dmnetworkimpl.h.html">&lt;petsc/private/dmnetworkimpl.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="../../../../include/petsc/private/vecimpl.h.html">&lt;petsc/private/vecimpl.h&gt;</A>
+
+<a name="line5">  5: </a><strong><font color="#4169E1"><a name="DMSetFromOptions_Network"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMSetFromOptions_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line6">  6: </a>{
+<a name="line7">  7: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"DMNetwork Options"</font>);
+<a name="line8">  8: </a>  PetscOptionsHeadEnd();
+<a name="line9">  9: </a>  <font color="#4169E1">return</font> 0;
+<a name="line10"> 10: </a>}
+
+<a name="line12"> 12: </a><font color="#B22222">/* External function declarations here */</font>
+<a name="line13"> 13: </a><strong><font color="#4169E1">extern <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCreateMatrix_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../../docs/manualpages/Mat/Mat.html">Mat</a> *)</font></strong>;
+<a name="line14"> 14: </a><strong><font color="#4169E1">extern <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMDestroy_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>)</font></strong>;
+<a name="line15"> 15: </a><strong><font color="#4169E1">extern <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMView_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>)</font></strong>;
+<a name="line16"> 16: </a><strong><font color="#4169E1">extern <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMGlobalToLocalBegin_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a>, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>)</font></strong>;
+<a name="line17"> 17: </a><strong><font color="#4169E1">extern <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMGlobalToLocalEnd_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a>, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>)</font></strong>;
+<a name="line18"> 18: </a><strong><font color="#4169E1">extern <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMLocalToGlobalBegin_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a>, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>)</font></strong>;
+<a name="line19"> 19: </a><strong><font color="#4169E1">extern <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMLocalToGlobalEnd_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../docs/manualpages/Sys/InsertMode.html">InsertMode</a>, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>)</font></strong>;
+<a name="line20"> 20: </a><strong><font color="#4169E1">extern <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMSetUp_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>)</font></strong>;
+<a name="line21"> 21: </a><strong><font color="#4169E1">extern <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMClone_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *)</font></strong>;
+
+<a name="line23"> 23: </a><strong><font color="#4169E1"><a name="VecArrayPrint_private"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecArrayPrint_private(<a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *xv)</font></strong>
+<a name="line24"> 24: </a>{
+<a name="line25"> 25: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i;
+
+<a name="line27"> 27: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; n; i++) {
+<a name="line28"> 28: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line29"> 29: </a>    <font color="#4169E1">if</font> (<a href="../../../../docs/manualpages/Sys/PetscImaginaryPart.html">PetscImaginaryPart</a>(xv[i]) &gt; 0.0) {
+<a name="line30"> 30: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"    %g + %g i\n"</font>, (double)<a href="../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(xv[i]), (double)<a href="../../../../docs/manualpages/Sys/PetscImaginaryPart.html">PetscImaginaryPart</a>(xv[i]));
+<a name="line31"> 31: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (<a href="../../../../docs/manualpages/Sys/PetscImaginaryPart.html">PetscImaginaryPart</a>(xv[i]) &lt; 0.0) {
+<a name="line32"> 32: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"    %g - %g i\n"</font>, (double)<a href="../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(xv[i]), -(double)<a href="../../../../docs/manualpages/Sys/PetscImaginaryPart.html">PetscImaginaryPart</a>(xv[i]));
+<a name="line33"> 33: </a>    } <font color="#4169E1">else</font> <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"    %g\n"</font>, (double)<a href="../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(xv[i]));
+<a name="line34"> 34: </a><font color="#A020F0">#else</font>
+<a name="line35"> 35: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"    %g\n"</font>, (double)xv[i]);
+<a name="line36"> 36: </a><font color="#A020F0">#endif</font>
+<a name="line37"> 37: </a>  }
+<a name="line38"> 38: </a>  <font color="#4169E1">return</font> 0;
+<a name="line39"> 39: </a>}
+
+<a name="line41"> 41: </a><strong><font color="#4169E1"><a name="VecView_Network_Seq"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecView_Network_Seq(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> networkdm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line42"> 42: </a>{
+<a name="line43"> 43: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           e, v, Start, End, offset, nvar, id;
+<a name="line44"> 44: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *xv;
+
+<a name="line46"> 46: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(X, &amp;xv);
+
+<a name="line48"> 48: </a>  <font color="#B22222">/* iterate over edges */</font>
+<a name="line49"> 49: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetEdgeRange.html">DMNetworkGetEdgeRange</a>(networkdm, &amp;Start, &amp;End);
+<a name="line50"> 50: </a>  <font color="#4169E1">for</font> (e = Start; e &lt; End; e++) {
+<a name="line51"> 51: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetComponent.html">DMNetworkGetComponent</a>(networkdm, e, ALL_COMPONENTS, NULL, NULL, &amp;nvar);
+<a name="line52"> 52: </a>    <font color="#4169E1">if</font> (!nvar) <font color="#4169E1">continue</font>;
+
+<a name="line54"> 54: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetLocalVecOffset.html">DMNetworkGetLocalVecOffset</a>(networkdm, e, ALL_COMPONENTS, &amp;offset);
+<a name="line55"> 55: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetGlobalEdgeIndex.html">DMNetworkGetGlobalEdgeIndex</a>(networkdm, e, &amp;id);
+
+<a name="line57"> 57: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Edge %"</font> PetscInt_FMT <font color="#666666">":\n"</font>, id);
+<a name="line58"> 58: </a>    VecArrayPrint_private(viewer, nvar, xv + offset);
+<a name="line59"> 59: </a>  }
+
+<a name="line61"> 61: </a>  <font color="#B22222">/* iterate over vertices */</font>
+<a name="line62"> 62: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetVertexRange.html">DMNetworkGetVertexRange</a>(networkdm, &amp;Start, &amp;End);
+<a name="line63"> 63: </a>  <font color="#4169E1">for</font> (v = Start; v &lt; End; v++) {
+<a name="line64"> 64: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetComponent.html">DMNetworkGetComponent</a>(networkdm, v, ALL_COMPONENTS, NULL, NULL, &amp;nvar);
+<a name="line65"> 65: </a>    <font color="#4169E1">if</font> (!nvar) <font color="#4169E1">continue</font>;
+
+<a name="line67"> 67: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetLocalVecOffset.html">DMNetworkGetLocalVecOffset</a>(networkdm, v, ALL_COMPONENTS, &amp;offset);
+<a name="line68"> 68: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetGlobalVertexIndex.html">DMNetworkGetGlobalVertexIndex</a>(networkdm, v, &amp;id);
+
+<a name="line70"> 70: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Vertex %"</font> PetscInt_FMT <font color="#666666">":\n"</font>, id);
+<a name="line71"> 71: </a>    VecArrayPrint_private(viewer, nvar, xv + offset);
+<a name="line72"> 72: </a>  }
+<a name="line73"> 73: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(viewer);
+<a name="line74"> 74: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(X, &amp;xv);
+<a name="line75"> 75: </a>  <font color="#4169E1">return</font> 0;
+<a name="line76"> 76: </a>}
+
+<a name="line78"> 78: </a><strong><font color="#4169E1"><a name="VecView_Network_MPI"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecView_Network_MPI(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> networkdm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line79"> 79: </a>{
+<a name="line80"> 80: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           i, e, v, eStart, eEnd, vStart, vEnd, offset, nvar, len_loc, len, k;
+<a name="line81"> 81: </a>  const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *xv;
+<a name="line82"> 82: </a>  <a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>           comm;
+<a name="line83"> 83: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>        size, rank, tag = ((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer)-&gt;tag;
+<a name="line84"> 84: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>                localX;
+<a name="line85"> 85: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>          ghostvtex;
+<a name="line86"> 86: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *values;
+<a name="line87"> 87: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           j, ne, nv, id;
+<a name="line88"> 88: </a>  MPI_Status         status;
+
+<a name="line90"> 90: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)networkdm, &amp;comm);
+<a name="line91"> 91: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line92"> 92: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+
+<a name="line94"> 94: </a>  <a href="../../../../docs/manualpages/DM/DMGetLocalVector.html">DMGetLocalVector</a>(networkdm, &amp;localX);
+<a name="line95"> 95: </a>  <a href="../../../../docs/manualpages/DM/DMGlobalToLocalBegin.html">DMGlobalToLocalBegin</a>(networkdm, X, <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, localX);
+<a name="line96"> 96: </a>  <a href="../../../../docs/manualpages/DM/DMGlobalToLocalEnd.html">DMGlobalToLocalEnd</a>(networkdm, X, <a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, localX);
+<a name="line97"> 97: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(localX, &amp;xv);
+
+<a name="line99"> 99: </a>  <a href="../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(localX, &amp;len_loc);
+
+<a name="line101">101: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetEdgeRange.html">DMNetworkGetEdgeRange</a>(networkdm, &amp;eStart, &amp;eEnd);
+<a name="line102">102: </a>  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetVertexRange.html">DMNetworkGetVertexRange</a>(networkdm, &amp;vStart, &amp;vEnd);
+<a name="line103">103: </a>  len_loc += 2 * (1 + eEnd - eStart + vEnd - vStart);
+
+<a name="line105">105: </a>  <font color="#B22222">/* values = [nedges, nvertices; id, nvar, xedge; ...; id, nvars, xvertex;...], to be sent to proc[0] */</font>
+<a name="line106">106: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a>(&amp;len_loc, &amp;len, 1, <a href="../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_MAX, comm);
+<a name="line107">107: </a>  <a href="../../../../docs/manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(len, &amp;values);
+
+<a name="line109">109: </a>  <font color="#4169E1">if</font> (rank == 0) <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Process [%d]\n"</font>, rank);
+
+<a name="line111">111: </a>  <font color="#B22222">/* iterate over edges */</font>
+<a name="line112">112: </a>  k = 2;
+<a name="line113">113: </a>  <font color="#4169E1">for</font> (e = eStart; e &lt; eEnd; e++) {
+<a name="line114">114: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetComponent.html">DMNetworkGetComponent</a>(networkdm, e, ALL_COMPONENTS, NULL, NULL, &amp;nvar);
+<a name="line115">115: </a>    <font color="#4169E1">if</font> (!nvar) <font color="#4169E1">continue</font>;
+
+<a name="line117">117: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetLocalVecOffset.html">DMNetworkGetLocalVecOffset</a>(networkdm, e, ALL_COMPONENTS, &amp;offset);
+<a name="line118">118: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetGlobalEdgeIndex.html">DMNetworkGetGlobalEdgeIndex</a>(networkdm, e, &amp;id);
+
+<a name="line120">120: </a>    <font color="#4169E1">if</font> (rank == 0) { <font color="#B22222">/* print its own entries */</font>
+<a name="line121">121: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Edge %"</font> PetscInt_FMT <font color="#666666">":\n"</font>, id);
+<a name="line122">122: </a>      VecArrayPrint_private(viewer, nvar, xv + offset);
+<a name="line123">123: </a>    } <font color="#4169E1">else</font> {
+<a name="line124">124: </a>      values[0] += 1; <font color="#B22222">/* number of edges */</font>
+<a name="line125">125: </a>      values[k++] = id;
+<a name="line126">126: </a>      values[k++] = nvar;
+<a name="line127">127: </a>      <font color="#4169E1">for</font> (i = offset; i &lt; offset + nvar; i++) values[k++] = xv[i];
+<a name="line128">128: </a>    }
+<a name="line129">129: </a>  }
+
+<a name="line131">131: </a>  <font color="#B22222">/* iterate over vertices */</font>
+<a name="line132">132: </a>  <font color="#4169E1">for</font> (v = vStart; v &lt; vEnd; v++) {
+<a name="line133">133: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkIsGhostVertex.html">DMNetworkIsGhostVertex</a>(networkdm, v, &amp;ghostvtex);
+<a name="line134">134: </a>    <font color="#4169E1">if</font> (ghostvtex) <font color="#4169E1">continue</font>;
+<a name="line135">135: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetComponent.html">DMNetworkGetComponent</a>(networkdm, v, ALL_COMPONENTS, NULL, NULL, &amp;nvar);
+<a name="line136">136: </a>    <font color="#4169E1">if</font> (!nvar) <font color="#4169E1">continue</font>;
+
+<a name="line138">138: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetLocalVecOffset.html">DMNetworkGetLocalVecOffset</a>(networkdm, v, ALL_COMPONENTS, &amp;offset);
+<a name="line139">139: </a>    <a href="../../../../docs/manualpages/DMNetwork/DMNetworkGetGlobalVertexIndex.html">DMNetworkGetGlobalVertexIndex</a>(networkdm, v, &amp;id);
+
+<a name="line141">141: </a>    <font color="#4169E1">if</font> (rank == 0) {
+<a name="line142">142: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Vertex %"</font> PetscInt_FMT <font color="#666666">":\n"</font>, id);
+<a name="line143">143: </a>      VecArrayPrint_private(viewer, nvar, xv + offset);
+<a name="line144">144: </a>    } <font color="#4169E1">else</font> {
+<a name="line145">145: </a>      values[1] += 1; <font color="#B22222">/* number of vertices */</font>
+<a name="line146">146: </a>      values[k++] = id;
+<a name="line147">147: </a>      values[k++] = nvar;
+<a name="line148">148: </a>      <font color="#4169E1">for</font> (i = offset; i &lt; offset + nvar; i++) values[k++] = xv[i];
+<a name="line149">149: </a>    }
+<a name="line150">150: </a>  }
+
+<a name="line152">152: </a>  <font color="#4169E1">if</font> (rank == 0) {
+<a name="line153">153: </a>    <font color="#B22222">/* proc[0] receives and prints messages */</font>
+<a name="line154">154: </a>    <font color="#4169E1">for</font> (j = 1; j &lt; size; j++) {
+<a name="line155">155: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Process [%"</font> PetscInt_FMT <font color="#666666">"]\n"</font>, j);
+
+<a name="line157">157: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(values, (<a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>)len, <a href="../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, j, tag, comm, &amp;status);
+
+<a name="line159">159: </a>      ne = (<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)PetscAbsScalar(values[0]);
+<a name="line160">160: </a>      nv = (<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)PetscAbsScalar(values[1]);
+
+<a name="line162">162: </a>      <font color="#B22222">/* print received edges */</font>
+<a name="line163">163: </a>      k = 2;
+<a name="line164">164: </a>      <font color="#4169E1">for</font> (i = 0; i &lt; ne; i++) {
+<a name="line165">165: </a>        id   = (<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)PetscAbsScalar(values[k++]);
+<a name="line166">166: </a>        nvar = (<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)PetscAbsScalar(values[k++]);
+<a name="line167">167: </a>        <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Edge %"</font> PetscInt_FMT <font color="#666666">":\n"</font>, id);
+<a name="line168">168: </a>        VecArrayPrint_private(viewer, nvar, values + k);
+<a name="line169">169: </a>        k += nvar;
+<a name="line170">170: </a>      }
+
+<a name="line172">172: </a>      <font color="#B22222">/* print received vertices */</font>
+<a name="line173">173: </a>      <font color="#4169E1">for</font> (i = 0; i &lt; nv; i++) {
+<a name="line174">174: </a>        id   = (<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)PetscAbsScalar(values[k++]);
+<a name="line175">175: </a>        nvar = (<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)PetscAbsScalar(values[k++]);
+<a name="line176">176: </a>        <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Vertex %"</font> PetscInt_FMT <font color="#666666">":\n"</font>, id);
+<a name="line177">177: </a>        VecArrayPrint_private(viewer, nvar, values + k);
+<a name="line178">178: </a>        k += nvar;
+<a name="line179">179: </a>      }
+<a name="line180">180: </a>    }
+<a name="line181">181: </a>  } <font color="#4169E1">else</font> {
+<a name="line182">182: </a>    <font color="#B22222">/* sends values to proc[0] */</font>
+<a name="line183">183: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>((void *)values, k, <a href="../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, 0, tag, comm);
+<a name="line184">184: </a>  }
+
+<a name="line186">186: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(values);
+<a name="line187">187: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(localX, &amp;xv);
+<a name="line188">188: </a>  <a href="../../../../docs/manualpages/DM/DMRestoreLocalVector.html">DMRestoreLocalVector</a>(networkdm, &amp;localX);
+<a name="line189">189: </a>  <font color="#4169E1">return</font> 0;
+<a name="line190">190: </a>}
+
+<a name="line192">192: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecView_MPI(<a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>)</font></strong>;
+
+<a name="line194">194: </a><strong><font color="#4169E1"><a name="VecView_Network"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecView_Network(<a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line195">195: </a>{
+<a name="line196">196: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>        dm;
+<a name="line197">197: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> isseq;
+<a name="line198">198: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> iascii;
+
+<a name="line200">200: </a>  <a href="../../../../docs/manualpages/DM/VecGetDM.html">VecGetDM</a>(v, &amp;dm);
+<a name="line202">202: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line203">203: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, <a href="../../../../docs/manualpages/Vec/VECSEQ.html">VECSEQ</a>, &amp;isseq);
+
+<a name="line205">205: </a>  <font color="#B22222">/* Use VecView_Network if the viewer is ASCII; use VecView_Seq/MPI for other viewer formats */</font>
+<a name="line206">206: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line207">207: </a>    <font color="#4169E1">if</font> (isseq) VecView_Network_Seq(dm, v, viewer);
+<a name="line208">208: </a>    <font color="#4169E1">else</font> VecView_Network_MPI(dm, v, viewer);
+<a name="line209">209: </a>  } <font color="#4169E1">else</font> {
+<a name="line210">210: </a>    <font color="#4169E1">if</font> (isseq) VecView_Seq(v, viewer);
+<a name="line211">211: </a>    <font color="#4169E1">else</font> VecView_MPI(v, viewer);
+<a name="line212">212: </a>  }
+<a name="line213">213: </a>  <font color="#4169E1">return</font> 0;
+<a name="line214">214: </a>}
+
+<a name="line216">216: </a><strong><font color="#4169E1"><a name="DMCreateGlobalVector_Network"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCreateGlobalVector_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *vec)</font></strong>
+<a name="line217">217: </a>{
+<a name="line218">218: </a>  DM_Network *network = (DM_Network *)dm-&gt;data;
+
+<a name="line220">220: </a>  <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html">DMCreateGlobalVector</a>(network-&gt;plex, vec);
+<a name="line221">221: </a>  <a href="../../../../docs/manualpages/Vec/VecSetOperation.html">VecSetOperation</a>(*vec, VECOP_VIEW, (void (*)(void))VecView_Network);
+<a name="line222">222: </a>  <a href="../../../../docs/manualpages/DM/VecSetDM.html">VecSetDM</a>(*vec, dm);
+<a name="line223">223: </a>  <font color="#4169E1">return</font> 0;
+<a name="line224">224: </a>}
+
+<a name="line226">226: </a><strong><font color="#4169E1"><a name="DMCreateLocalVector_Network"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCreateLocalVector_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *vec)</font></strong>
+<a name="line227">227: </a>{
+<a name="line228">228: </a>  DM_Network *network = (DM_Network *)dm-&gt;data;
+
+<a name="line230">230: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLocalVector.html">DMCreateLocalVector</a>(network-&gt;plex, vec);
+<a name="line231">231: </a>  <a href="../../../../docs/manualpages/DM/VecSetDM.html">VecSetDM</a>(*vec, dm);
+<a name="line232">232: </a>  <font color="#4169E1">return</font> 0;
+<a name="line233">233: </a>}
+
+<a name="line235">235: </a><strong><font color="#4169E1"><a name="DMNetworkInitializeToDefault_NonShared"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMNetworkInitializeToDefault_NonShared(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm)</font></strong>
+<a name="line236">236: </a>{
+<a name="line237">237: </a>  DM_Network *network = (DM_Network *)dm-&gt;data;
+
+<a name="line239">239: </a>  network-&gt;Je                 = NULL;
+<a name="line240">240: </a>  network-&gt;Jv                 = NULL;
+<a name="line241">241: </a>  network-&gt;Jvptr              = NULL;
+<a name="line242">242: </a>  network-&gt;userEdgeJacobian   = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line243">243: </a>  network-&gt;userVertexJacobian = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line245">245: </a>  network-&gt;vertex.DofSection       = NULL;
+<a name="line246">246: </a>  network-&gt;vertex.GlobalDofSection = NULL;
+<a name="line247">247: </a>  network-&gt;vertex.mapping          = NULL;
+<a name="line248">248: </a>  network-&gt;vertex.sf               = NULL;
+
+<a name="line250">250: </a>  network-&gt;edge.DofSection       = NULL;
+<a name="line251">251: </a>  network-&gt;edge.GlobalDofSection = NULL;
+<a name="line252">252: </a>  network-&gt;edge.mapping          = NULL;
+<a name="line253">253: </a>  network-&gt;edge.sf               = NULL;
+
+<a name="line255">255: </a>  network-&gt;DataSection      = NULL;
+<a name="line256">256: </a>  network-&gt;DofSection       = NULL;
+<a name="line257">257: </a>  network-&gt;GlobalDofSection = NULL;
+<a name="line258">258: </a>  network-&gt;componentsetup   = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line260">260: </a>  network-&gt;plex = NULL;
+
+<a name="line262">262: </a>  network-&gt;component  = NULL;
+<a name="line263">263: </a>  network-&gt;ncomponent = 0;
+
+<a name="line265">265: </a>  network-&gt;header             = NULL;
+<a name="line266">266: </a>  network-&gt;cvalue             = NULL;
+<a name="line267">267: </a>  network-&gt;componentdataarray = NULL;
+
+<a name="line269">269: </a>  network-&gt;max_comps_registered = DMNETWORK_MAX_COMP_REGISTERED_DEFAULT; <font color="#B22222">/* return to default */</font>
+<a name="line270">270: </a>  <font color="#4169E1">return</font> 0;
+<a name="line271">271: </a>}
+<a name="line272">272: </a><font color="#B22222">/* Default values for the parameters in DMNetwork */</font>
+<a name="line273">273: </a><strong><font color="#4169E1"><a name="DMNetworkInitializeToDefault"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMNetworkInitializeToDefault(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm)</font></strong>
+<a name="line274">274: </a>{
+<a name="line275">275: </a>  DM_Network          *network     = (DM_Network *)dm-&gt;data;
+<a name="line276">276: </a>  DMNetworkCloneShared cloneshared = network-&gt;cloneshared;
+
+<a name="line278">278: </a>  DMNetworkInitializeToDefault_NonShared(dm);
+<a name="line279">279: </a>  <font color="#B22222">/* Default values for shared data */</font>
+<a name="line280">280: </a>  cloneshared-&gt;refct            = 1;
+<a name="line281">281: </a>  cloneshared-&gt;NVertices        = 0;
+<a name="line282">282: </a>  cloneshared-&gt;NEdges           = 0;
+<a name="line283">283: </a>  cloneshared-&gt;nVertices        = 0;
+<a name="line284">284: </a>  cloneshared-&gt;nEdges           = 0;
+<a name="line285">285: </a>  cloneshared-&gt;nsubnet          = 0;
+<a name="line286">286: </a>  cloneshared-&gt;pStart           = -1;
+<a name="line287">287: </a>  cloneshared-&gt;pEnd             = -1;
+<a name="line288">288: </a>  cloneshared-&gt;vStart           = -1;
+<a name="line289">289: </a>  cloneshared-&gt;vEnd             = -1;
+<a name="line290">290: </a>  cloneshared-&gt;eStart           = -1;
+<a name="line291">291: </a>  cloneshared-&gt;eEnd             = -1;
+<a name="line292">292: </a>  cloneshared-&gt;vltog            = NULL;
+<a name="line293">293: </a>  cloneshared-&gt;distributecalled = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line295">295: </a>  cloneshared-&gt;subnet     = NULL;
+<a name="line296">296: </a>  cloneshared-&gt;subnetvtx  = NULL;
+<a name="line297">297: </a>  cloneshared-&gt;subnetedge = NULL;
+<a name="line298">298: </a>  cloneshared-&gt;svtx       = NULL;
+<a name="line299">299: </a>  cloneshared-&gt;nsvtx      = 0;
+<a name="line300">300: </a>  cloneshared-&gt;Nsvtx      = 0;
+<a name="line301">301: </a>  cloneshared-&gt;svertices  = NULL;
+<a name="line302">302: </a>  cloneshared-&gt;sedgelist  = NULL;
+<a name="line303">303: </a>  cloneshared-&gt;svtable    = NULL;
+<a name="line304">304: </a>  <font color="#4169E1">return</font> 0;
+<a name="line305">305: </a>}
+
+<a name="line307">307: </a><strong><font color="#4169E1"><a name="DMInitialize_Network"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMInitialize_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm)</font></strong>
+<a name="line308">308: </a>{
+<a name="line309">309: </a>  <a href="../../../../docs/manualpages/DM/DMSetDimension.html">DMSetDimension</a>(dm, 1);
+<a name="line310">310: </a>  dm-&gt;ops-&gt;view                    = DMView_Network;
+<a name="line311">311: </a>  dm-&gt;ops-&gt;setfromoptions          = DMSetFromOptions_Network;
+<a name="line312">312: </a>  dm-&gt;ops-&gt;clone                   = DMClone_Network;
+<a name="line313">313: </a>  dm-&gt;ops-&gt;setup                   = DMSetUp_Network;
+<a name="line314">314: </a>  dm-&gt;ops-&gt;createglobalvector      = DMCreateGlobalVector_Network;
+<a name="line315">315: </a>  dm-&gt;ops-&gt;createlocalvector       = DMCreateLocalVector_Network;
+<a name="line316">316: </a>  dm-&gt;ops-&gt;getlocaltoglobalmapping = NULL;
+<a name="line317">317: </a>  dm-&gt;ops-&gt;createfieldis           = NULL;
+<a name="line318">318: </a>  dm-&gt;ops-&gt;createcoordinatedm      = NULL;
+<a name="line319">319: </a>  dm-&gt;ops-&gt;getcoloring             = NULL;
+<a name="line320">320: </a>  dm-&gt;ops-&gt;creatematrix            = DMCreateMatrix_Network;
+<a name="line321">321: </a>  dm-&gt;ops-&gt;createinterpolation     = NULL;
+<a name="line322">322: </a>  dm-&gt;ops-&gt;createinjection         = NULL;
+<a name="line323">323: </a>  dm-&gt;ops-&gt;refine                  = NULL;
+<a name="line324">324: </a>  dm-&gt;ops-&gt;coarsen                 = NULL;
+<a name="line325">325: </a>  dm-&gt;ops-&gt;refinehierarchy         = NULL;
+<a name="line326">326: </a>  dm-&gt;ops-&gt;coarsenhierarchy        = NULL;
+<a name="line327">327: </a>  dm-&gt;ops-&gt;globaltolocalbegin      = DMGlobalToLocalBegin_Network;
+<a name="line328">328: </a>  dm-&gt;ops-&gt;globaltolocalend        = DMGlobalToLocalEnd_Network;
+<a name="line329">329: </a>  dm-&gt;ops-&gt;localtoglobalbegin      = DMLocalToGlobalBegin_Network;
+<a name="line330">330: </a>  dm-&gt;ops-&gt;localtoglobalend        = DMLocalToGlobalEnd_Network;
+<a name="line331">331: </a>  dm-&gt;ops-&gt;destroy                 = DMDestroy_Network;
+<a name="line332">332: </a>  dm-&gt;ops-&gt;createsubdm             = NULL;
+<a name="line333">333: </a>  dm-&gt;ops-&gt;locatepoints            = NULL;
+<a name="line334">334: </a>  <font color="#4169E1">return</font> 0;
+<a name="line335">335: </a>}
+<a name="line336">336: </a><font color="#B22222">/*</font>
+<a name="line337">337: </a><font color="#B22222">  copies over the subnetid and index portions of the DMNetworkComponentHeader from original dm to the newdm</font>
+<a name="line338">338: </a><font color="#B22222">*/</font>
+<a name="line339">339: </a><strong><font color="#4169E1"><a name="DMNetworkCopyHeaderTopological"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMNetworkCopyHeaderTopological(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> newdm)</font></strong>
+<a name="line340">340: </a>{
+<a name="line341">341: </a>  DM_Network *network = (DM_Network *)dm-&gt;data, *newnetwork = (DM_Network *)newdm-&gt;data;
+<a name="line342">342: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    p, i, np, index, subnetid;
+
+<a name="line344">344: </a>  np = network-&gt;cloneshared-&gt;pEnd - network-&gt;cloneshared-&gt;pStart;
+<a name="line345">345: </a>  <a href="../../../../docs/manualpages/Sys/PetscCalloc2.html">PetscCalloc2</a>(np, &amp;newnetwork-&gt;header, np, &amp;newnetwork-&gt;cvalue);
+<a name="line346">346: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; np; i++) {
+<a name="line347">347: </a>    p = i + network-&gt;cloneshared-&gt;pStart;
+<a name="line348">348: </a>    DMNetworkGetSubnetID(dm, p, &amp;subnetid);
+<a name="line349">349: </a>    DMNetworkGetIndex(dm, p, &amp;index);
+<a name="line350">350: </a>    newnetwork-&gt;header[i].index        = index;
+<a name="line351">351: </a>    newnetwork-&gt;header[i].subnetid     = subnetid;
+<a name="line352">352: </a>    newnetwork-&gt;header[i].size         = NULL;
+<a name="line353">353: </a>    newnetwork-&gt;header[i].key          = NULL;
+<a name="line354">354: </a>    newnetwork-&gt;header[i].offset       = NULL;
+<a name="line355">355: </a>    newnetwork-&gt;header[i].nvar         = NULL;
+<a name="line356">356: </a>    newnetwork-&gt;header[i].offsetvarrel = NULL;
+<a name="line357">357: </a>    newnetwork-&gt;header[i].ndata        = 0;
+<a name="line358">358: </a>    newnetwork-&gt;header[i].maxcomps     = DMNETWORK_MAX_COMP_AT_POINT_DEFAULT;
+<a name="line359">359: </a>    newnetwork-&gt;header[i].hsize        = <font color="#4169E1">sizeof</font>(<font color="#4169E1">struct _p_DMNetworkComponentHeader</font>) / <font color="#4169E1">sizeof</font>(<font color="#4169E1">sizeof</font>(DMNetworkComponentGenericDataType));
+<a name="line360">360: </a>  }
+<a name="line361">361: </a>  <font color="#4169E1">return</font> 0;
+<a name="line362">362: </a>}
+
+<a name="line364">364: </a><strong><font color="#4169E1"><a name="DMClone_Network"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMClone_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *newdm)</font></strong>
+<a name="line365">365: </a>{
+<a name="line366">366: </a>  DM_Network *network = (DM_Network *)dm-&gt;data, *newnetwork = NULL;
+
+<a name="line368">368: </a>  network-&gt;cloneshared-&gt;refct++;
+<a name="line369">369: </a>  <a href="../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;newnetwork);
+<a name="line370">370: </a>  (*newdm)-&gt;data = newnetwork;
+<a name="line371">371: </a>  DMNetworkInitializeToDefault_NonShared(*newdm);
+<a name="line372">372: </a>  newnetwork-&gt;cloneshared = network-&gt;cloneshared; <font color="#B22222">/* Share all data that can be cloneshared */</font>
+<a name="line373">373: </a>  <a href="../../../../docs/manualpages/DM/DMClone.html">DMClone</a>(network-&gt;plex, &amp;newnetwork-&gt;plex);
+<a name="line374">374: </a>  DMNetworkCopyHeaderTopological(dm, *newdm);
+<a name="line375">375: </a>  DMNetworkInitializeNonTopological(*newdm); <font color="#B22222">/* initialize all non-topological data to the state after <a href="../../../../docs/manualpages/DMNetwork/DMNetworkLayoutSetUp.html">DMNetworkLayoutSetUp</a> as been called */</font>
+<a name="line376">376: </a>  PetscObjectChangeTypeName((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)*newdm, <a href="../../../../docs/manualpages/DMNetwork/DMNETWORK.html">DMNETWORK</a>);
+<a name="line377">377: </a>  DMInitialize_Network(*newdm);
+<a name="line378">378: </a>  <font color="#4169E1">return</font> 0;
+<a name="line379">379: </a>}
+
+<a name="line381">381: </a><font color="#B22222">/*MC</font>
+<a name="line382">382: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMNetwork/DMNETWORK.html">DMNETWORK</a> = "network" - A <a href="../../../../docs/manualpages/DM/DM.html">DM</a> object that encapsulates an unstructured network. The implementation is based on the <a href="../../../../docs/manualpages/DM/DM.html">DM</a> object</font>
+<a name="line383">383: </a><font color="#B22222">                          DMPlex that manages unstructured grids. Distributed networks use a non-overlapping partitioning of</font>
+<a name="line384">384: </a><font color="#B22222">                          the edges. In the local representation, <a href="../../../../docs/manualpages/Vec/Vecs.html">Vecs</a> contain all unknowns in the interior and shared boundary.</font>
+<a name="line385">385: </a><font color="#B22222">                          This is specified by a <a href="../../../../docs/manualpages/PetscSection/PetscSection.html">PetscSection</a> object. Ownership in the global representation is determined by</font>
+<a name="line386">386: </a><font color="#B22222">                          ownership of the underlying DMPlex points. This is specified by another <a href="../../../../docs/manualpages/PetscSection/PetscSection.html">PetscSection</a> object.</font>
+
+<a name="line388">388: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line390">390: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/DM/DMType.html">DMType</a>`, `<a href="../../../../docs/manualpages/DMNetwork/DMNetworkCreate.html">DMNetworkCreate</a>()`, `<a href="../../../../docs/manualpages/DM/DMCreate.html">DMCreate</a>()`, `<a href="../../../../docs/manualpages/DM/DMSetType.html">DMSetType</a>()`</font>
+<a name="line391">391: </a><font color="#B22222">M*/</font>
+
+<a name="line393">393: </a><strong><font color="#4169E1"><a name="DMCreate_Network"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCreate_Network(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm)</font></strong>
+<a name="line394">394: </a>{
+<a name="line395">395: </a>  DM_Network *network;
+
+<a name="line398">398: </a>  <a href="../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;network);
+<a name="line399">399: </a>  <a href="../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;network-&gt;cloneshared);
+<a name="line400">400: </a>  dm-&gt;data = network;
+
+<a name="line402">402: </a>  DMNetworkInitializeToDefault(dm);
+<a name="line403">403: </a>  DMInitialize_Network(dm);
+<a name="line404">404: </a>  <font color="#4169E1">return</font> 0;
+<a name="line405">405: </a>}
+
+<a name="line407">407: </a><font color="#B22222">/*@</font>
+<a name="line408">408: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMNetwork/DMNetworkCreate.html">DMNetworkCreate</a> - Creates a DMNetwork object, which encapsulates an unstructured network.</font>
+
+<a name="line410">410: </a><font color="#B22222">  Collective</font>
+
+<a name="line412">412: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line413">413: </a><font color="#B22222">. comm - The communicator for the DMNetwork object</font>
+
+<a name="line415">415: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line416">416: </a><font color="#B22222">. network  - The DMNetwork object</font>
+
+<a name="line418">418: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line420">420: </a><font color="#B22222">@*/</font>
+<a name="line421">421: </a><strong><font color="#4169E1"><a name="DMNetworkCreate"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMNetwork/DMNetworkCreate.html">DMNetworkCreate</a>(<a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *network)</font></strong>
+<a name="line422">422: </a>{
+<a name="line424">424: </a>  <a href="../../../../docs/manualpages/DM/DMCreate.html">DMCreate</a>(comm, network);
+<a name="line425">425: </a>  <a href="../../../../docs/manualpages/DM/DMSetType.html">DMSetType</a>(*network, <a href="../../../../docs/manualpages/DMNetwork/DMNETWORK.html">DMNETWORK</a>);
+<a name="line426">426: </a>  <font color="#4169E1">return</font> 0;
+<a name="line427">427: </a>}
+</pre>
+</body>
+
+</html>

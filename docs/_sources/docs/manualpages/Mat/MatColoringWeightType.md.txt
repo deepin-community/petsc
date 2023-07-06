@@ -1,0 +1,43 @@
+# MatColoringWeightType
+Type of weight scheme 
+## Synopsis
+```
+typedef enum {
+  MAT_COLORING_WEIGHT_RANDOM,
+  MAT_COLORING_WEIGHT_LEXICAL,
+  MAT_COLORING_WEIGHT_LF,
+  MAT_COLORING_WEIGHT_SL
+} MatColoringWeightType;
+```
+Not Collective
+
+
+- ***`MAT_COLORING_RANDOM`  -*** Random weights
+- ***`MAT_COLORING_LEXICAL` -*** Lexical weighting based upon global numbering.
+- ***`MAT_COLORING_LF`      -*** Last-first weighting.
+
+
+
+
+
+## Developer Note
+Any additions/changes here MUST also be made in include/petsc/finclude/petscmat.h
+
+
+## See Also
+ `MatColoring`, `MatColoringCreate()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscmat.h.html#MatColoringWeightType">include/petscmat.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscmat.h)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,40 @@
+# TSEIMEXSetMaxRows
+Set the maximum number of rows for `TSEIMEX` schemes 
+## Synopsis
+```
+#include "petscts.h"   
+PetscErrorCode TSEIMEXSetMaxRows(TS ts, PetscInt nrows)
+```
+Logically collective
+
+
+## Input Parameters
+
+- ***ts -*** timestepping context
+- ***nrows -*** maximum number of rows
+
+
+
+
+
+## See Also
+ [](chapter_ts), `TSEIMEXSetRowCol()`, `TSEIMEXSetOrdAdapt()`, `TSEIMEX`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/impls/eimex/eimex.c.html#TSEIMEXSetMaxRows">src/ts/impls/eimex/eimex.c</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/impls/eimex/eimex.c.html#TSEIMEXSetMaxRows_EIMEX">TSEIMEXSetMaxRows_EIMEX in src/ts/impls/eimex/eimex.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/ts/impls/eimex/eimex.c)
+
+
+[Index of all TS routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

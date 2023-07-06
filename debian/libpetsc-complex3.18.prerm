@@ -1,0 +1,12 @@
+#!/bin/sh -e
+
+DEB_HOST_MULTIARCH=__DEB_HOST_MULTIARCH__
+PETSC_VERSION=__PETSC_VERSION__
+SONAME=__PETSC_SONAME_VERSION__
+
+# Remove alternatives links
+if [ "$1" = "remove" ]; then
+  update-alternatives --remove libpetsc.so.${SONAME} /usr/lib/${DEB_HOST_MULTIARCH}/libpetsc_complex.so.${PETSC_VERSION}
+fi
+
+#DEBHELPER#

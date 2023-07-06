@@ -1,0 +1,30 @@
+# VecTaggerCDFMethod
+Determines what method is used to compute absolute values from cumulative distribution values (e.g., what value is the preimage of .95 in the cdf). Relevant only in parallel: in serial it is directly computed. 
+## Synopsis
+```
+typedef enum {
+  VECTAGGER_CDF_GATHER,
+  VECTAGGER_CDF_ITERATIVE,
+  VECTAGGER_CDF_NUM_METHODS
+} VecTaggerCDFMethod;
+```
+
+
+
+## See Also
+ `VecTaggerCDFSetMethod()`, `VecTaggerCDFMethods`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscvec.h.html#VecTaggerCDFMethod">include/petscvec.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscvec.h)
+
+
+[Index of all Vec routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

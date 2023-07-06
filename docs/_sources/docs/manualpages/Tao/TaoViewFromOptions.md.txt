@@ -1,0 +1,37 @@
+# TaoViewFromOptions
+View a Tao options from the options database 
+## Synopsis
+```
+#include "petsctao.h" 
+PetscErrorCode TaoViewFromOptions(Tao A, PetscObject obj, const char name[])
+```
+Collective
+
+
+## Input Parameters
+
+- ***A -*** the  Tao context
+- ***obj -*** Optional object
+- ***name -*** command line option
+
+
+
+
+
+## See Also
+ `Tao`, `TaoView`, `PetscObjectViewFromOptions()`, `TaoCreate()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/interface/taosolver.c.html#TaoViewFromOptions">src/tao/interface/taosolver.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/tao/interface/taosolver.c)
+
+
+[Index of all Tao routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

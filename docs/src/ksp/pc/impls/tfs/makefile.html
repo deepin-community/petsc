@@ -1,0 +1,27 @@
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:58+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">-include ../../../../../petscdir.mk
+<font color="#A020F0">#requiresscalar real</font>
+
+SOURCEC   = bitmask.c comm.c gs.c ivec.c  xxt.c xyt.c tfs.c
+SOURCEF   =
+SOURCEH   = tfs.h
+LIBBASE   = libpetscksp
+MANSEC    = <a href="ROOT/docs/manualpages/KSP/KSP.html">KSP</a>
+SUBMANSEC = <a href="ROOT/docs/manualpages/PC/PC.html">PC</a>
+LOCDIR    = src/ksp/pc/impls/tfs/
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+include ${PETSC_DIR}/lib/petsc/conf/test
+</pre>
+</body>
+
+</html>

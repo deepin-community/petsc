@@ -1,0 +1,40 @@
+# ISLocalToGlobalMapping
+mappings from an arbitrary local ordering from 0 to n-1 to a global PETSc ordering used by a vector or matrix. 
+## Synopsis
+```
+typedef struct _p_ISLocalToGlobalMapping *ISLocalToGlobalMapping;
+```
+
+
+
+## Notes
+Mapping from local to global is scalable; but global
+to local may not be if the range of global values represented locally
+is very large.
+
+`ISLocalToGlobalMapping` is actually a private object; it is included
+here for the inline function `ISLocalToGlobalMappingApply()` to allow it to be inlined since
+it is used so often.
+
+
+## See Also
+ `ISLocalToGlobalMappingCreate()`, `ISLocalToGlobalMappingApply()`, `ISLocalToGlobalMappingDestroy()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscistypes.h.html#ISLocalToGlobalMapping">include/petscistypes.h</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petsc/private/isimpl.h.html#_p_ISLocalToGlobalMapping">_p_ISLocalToGlobalMapping in include/petsc/private/isimpl.h</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscistypes.h)
+
+
+[Index of all IS routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

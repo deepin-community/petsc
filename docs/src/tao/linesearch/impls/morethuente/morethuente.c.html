@@ -1,0 +1,519 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/tao/linesearch/impls/morethuente/morethuente.c">Actual source code: morethuente.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:59+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../include/petsc/private/taolinesearchimpl.h.html">&lt;petsc/private/taolinesearchimpl.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="morethuente.h.html">&lt;../src/tao/linesearch/impls/morethuente/morethuente.h&gt;</A>
+
+<a name="line4">  4: </a><font color="#B22222">/*</font>
+<a name="line5">  5: </a><font color="#B22222">   This algorithm is taken from More' and Thuente, "Line search algorithms</font>
+<a name="line6">  6: </a><font color="#B22222">   with guaranteed sufficient decrease", Argonne National Laboratory,</font>
+<a name="line7">  7: </a><font color="#B22222">   Technical Report MCS-P330-1092.</font>
+<a name="line8">  8: </a><font color="#B22222">*/</font>
+
+<a name="line10"> 10: </a><strong><font color="#4169E1">static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Tao_mcstep(TaoLineSearch ls, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *stx, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *fx, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *dx, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *sty, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *fy, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *dy, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *stp, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *fp, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *dp)</font></strong>;
+
+<a name="line12"> 12: </a><strong><font color="#4169E1"><a name="TaoLineSearchDestroy_MT"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoLineSearchDestroy_MT(TaoLineSearch ls)</font></strong>
+<a name="line13"> 13: </a>{
+<a name="line14"> 14: </a>  TaoLineSearch_MT *mt = (TaoLineSearch_MT *)(ls-&gt;data);
+
+<a name="line16"> 16: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectDereference.html">PetscObjectDereference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mt-&gt;x);
+<a name="line17"> 17: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;mt-&gt;work);
+<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(ls-&gt;data);
+<a name="line19"> 19: </a>  <font color="#4169E1">return</font> 0;
+<a name="line20"> 20: </a>}
+
+<a name="line22"> 22: </a><strong><font color="#4169E1"><a name="TaoLineSearchSetFromOptions_MT"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoLineSearchSetFromOptions_MT(TaoLineSearch ls, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line23"> 23: </a>{
+<a name="line24"> 24: </a>  <font color="#4169E1">return</font> 0;
+<a name="line25"> 25: </a>}
+
+<a name="line27"> 27: </a><strong><font color="#4169E1"><a name="TaoLineSearchMonitor_MT"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoLineSearchMonitor_MT(TaoLineSearch ls)</font></strong>
+<a name="line28"> 28: </a>{
+<a name="line29"> 29: </a>  TaoLineSearch_MT *mt = (TaoLineSearch_MT *)ls-&gt;data;
+
+<a name="line31"> 31: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(ls-&gt;viewer, <font color="#666666">"stx: %g, fx: %g, dgx: %g\n"</font>, (double)mt-&gt;stx, (double)mt-&gt;fx, (double)mt-&gt;dgx);
+<a name="line32"> 32: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(ls-&gt;viewer, <font color="#666666">"sty: %g, fy: %g, dgy: %g\n"</font>, (double)mt-&gt;sty, (double)mt-&gt;fy, (double)mt-&gt;dgy);
+<a name="line33"> 33: </a>  <font color="#4169E1">return</font> 0;
+<a name="line34"> 34: </a>}
+
+<a name="line36"> 36: </a><strong><font color="#4169E1"><a name="TaoLineSearchApply_MT"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoLineSearchApply_MT(TaoLineSearch ls, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *f, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> g, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> s)</font></strong>
+<a name="line37"> 37: </a>{
+<a name="line38"> 38: </a>  TaoLineSearch_MT *mt     = (TaoLineSearch_MT *)(ls-&gt;data);
+<a name="line39"> 39: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>         xtrapf = 4.0;
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>         finit, width, width1, dginit, fm, fxm, fym, dgm, dgxm, dgym;
+<a name="line41"> 41: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>         dgx, dgy, dg, dg2, fx, fy, stx, sty, dgtest;
+<a name="line42"> 42: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>         ftest1 = 0.0, ftest2 = 0.0;
+<a name="line43"> 43: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          i, stage1, n1, n2, nn1, nn2;
+<a name="line44"> 44: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>         bstepmin1, bstepmin2, bstepmax, ostepmin, ostepmax;
+<a name="line45"> 45: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>         g_computed = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>; <font color="#B22222">/* to prevent extra gradient computation */</font>
+
+<a name="line47"> 47: </a>  ls-&gt;reason = TAOLINESEARCH_CONTINUE_ITERATING;
+<a name="line48"> 48: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchMonitor.html">TaoLineSearchMonitor</a>(ls, 0, *f, 0.0);
+<a name="line49"> 49: </a>  <font color="#B22222">/* Check work vector */</font>
+<a name="line50"> 50: </a>  <font color="#4169E1">if</font> (!mt-&gt;work) {
+<a name="line51"> 51: </a>    <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(x, &amp;mt-&gt;work);
+<a name="line52"> 52: </a>    mt-&gt;x = x;
+<a name="line53"> 53: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mt-&gt;x);
+<a name="line54"> 54: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (x != mt-&gt;x) {
+<a name="line55"> 55: </a>    <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;mt-&gt;work);
+<a name="line56"> 56: </a>    <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(x, &amp;mt-&gt;work);
+<a name="line57"> 57: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectDereference.html">PetscObjectDereference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mt-&gt;x);
+<a name="line58"> 58: </a>    mt-&gt;x = x;
+<a name="line59"> 59: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mt-&gt;x);
+<a name="line60"> 60: </a>  }
+
+<a name="line62"> 62: </a>  ostepmax = ls-&gt;stepmax;
+<a name="line63"> 63: </a>  ostepmin = ls-&gt;stepmin;
+
+<a name="line65"> 65: </a>  <font color="#4169E1">if</font> (ls-&gt;bounded) {
+<a name="line66"> 66: </a>    <font color="#B22222">/* Compute step length needed to make all variables equal a bound */</font>
+<a name="line67"> 67: </a>    <font color="#B22222">/* Compute the smallest steplength that will make one nonbinding variable</font>
+<a name="line68"> 68: </a><font color="#B22222">     equal the bound */</font>
+<a name="line69"> 69: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(ls-&gt;upper, &amp;n1);
+<a name="line70"> 70: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(mt-&gt;x, &amp;n2);
+<a name="line71"> 71: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetSize.html">VecGetSize</a>(ls-&gt;upper, &amp;nn1);
+<a name="line72"> 72: </a>    <a href="../../../../../docs/manualpages/Vec/VecGetSize.html">VecGetSize</a>(mt-&gt;x, &amp;nn2);
+<a name="line74"> 74: </a>    <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(s, -1.0);
+<a name="line75"> 75: </a>    <a href="../../../../../docs/manualpages/Vec/VecBoundGradientProjection.html">VecBoundGradientProjection</a>(s, x, ls-&gt;lower, ls-&gt;upper, s);
+<a name="line76"> 76: </a>    <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(s, -1.0);
+<a name="line77"> 77: </a>    <a href="../../../../../docs/manualpages/Vec/VecStepBoundInfo.html">VecStepBoundInfo</a>(x, s, ls-&gt;lower, ls-&gt;upper, &amp;bstepmin1, &amp;bstepmin2, &amp;bstepmax);
+<a name="line78"> 78: </a>    ls-&gt;stepmax = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(bstepmax, ls-&gt;stepmax);
+<a name="line79"> 79: </a>  }
+
+<a name="line81"> 81: </a>  <a href="../../../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(g, s, &amp;dginit);
+<a name="line82"> 82: </a>  <font color="#4169E1">if</font> (PetscIsInfOrNanReal(dginit)) {
+<a name="line83"> 83: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(ls, <font color="#666666">"Initial Line Search step * g is Inf or Nan (%g)\n"</font>, (double)dginit);
+<a name="line84"> 84: </a>    ls-&gt;reason = TAOLINESEARCH_FAILED_INFORNAN;
+<a name="line85"> 85: </a>    <font color="#4169E1">return</font> 0;
+<a name="line86"> 86: </a>  }
+<a name="line87"> 87: </a>  <font color="#4169E1">if</font> (dginit &gt;= 0.0) {
+<a name="line88"> 88: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(ls, <font color="#666666">"Initial Line Search step * g is not descent direction (%g)\n"</font>, (double)dginit);
+<a name="line89"> 89: </a>    ls-&gt;reason = TAOLINESEARCH_FAILED_ASCENT;
+<a name="line90"> 90: </a>    <font color="#4169E1">return</font> 0;
+<a name="line91"> 91: </a>  }
+
+<a name="line93"> 93: </a>  <font color="#B22222">/* Initialization */</font>
+<a name="line94"> 94: </a>  mt-&gt;bracket = 0;
+<a name="line95"> 95: </a>  stage1      = 1;
+<a name="line96"> 96: </a>  finit       = *f;
+<a name="line97"> 97: </a>  dgtest      = ls-&gt;ftol * dginit;
+<a name="line98"> 98: </a>  width       = ls-&gt;stepmax - ls-&gt;stepmin;
+<a name="line99"> 99: </a>  width1      = width * 2.0;
+<a name="line100">100: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(x, mt-&gt;work);
+<a name="line101">101: </a>  <font color="#B22222">/* Variable dictionary:</font>
+<a name="line102">102: </a><font color="#B22222">   stx, fx, dgx - the step, function, and derivative at the best step</font>
+<a name="line103">103: </a><font color="#B22222">   sty, fy, dgy - the step, function, and derivative at the other endpoint</font>
+<a name="line104">104: </a><font color="#B22222">   of the interval of uncertainty</font>
+<a name="line105">105: </a><font color="#B22222">   step, f, dg - the step, function, and derivative at the current step */</font>
+
+<a name="line107">107: </a>  stx = 0.0;
+<a name="line108">108: </a>  fx  = finit;
+<a name="line109">109: </a>  dgx = dginit;
+<a name="line110">110: </a>  sty = 0.0;
+<a name="line111">111: </a>  fy  = finit;
+<a name="line112">112: </a>  dgy = dginit;
+
+<a name="line114">114: </a>  ls-&gt;step = ls-&gt;initstep;
+<a name="line115">115: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; ls-&gt;max_funcs; i++) {
+<a name="line116">116: </a>    <font color="#B22222">/* Set min and max steps to correspond to the interval of uncertainty */</font>
+<a name="line117">117: </a>    <font color="#4169E1">if</font> (mt-&gt;bracket) {
+<a name="line118">118: </a>      ls-&gt;stepmin = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(stx, sty);
+<a name="line119">119: </a>      ls-&gt;stepmax = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(stx, sty);
+<a name="line120">120: </a>    } <font color="#4169E1">else</font> {
+<a name="line121">121: </a>      ls-&gt;stepmin = stx;
+<a name="line122">122: </a>      ls-&gt;stepmax = ls-&gt;step + xtrapf * (ls-&gt;step - stx);
+<a name="line123">123: </a>    }
+
+<a name="line125">125: </a>    <font color="#B22222">/* Force the step to be within the bounds */</font>
+<a name="line126">126: </a>    ls-&gt;step = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(ls-&gt;step, ls-&gt;stepmin);
+<a name="line127">127: </a>    ls-&gt;step = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(ls-&gt;step, ls-&gt;stepmax);
+
+<a name="line129">129: </a>    <font color="#B22222">/* If an unusual termination is to occur, then let step be the lowest</font>
+<a name="line130">130: </a><font color="#B22222">     point obtained thus far */</font>
+<a name="line131">131: </a>    <font color="#4169E1">if</font> (stx != 0 &amp;&amp; ((mt-&gt;bracket &amp;&amp; (ls-&gt;step &lt;= ls-&gt;stepmin || ls-&gt;step &gt;= ls-&gt;stepmax)) || (mt-&gt;bracket &amp;&amp; (ls-&gt;stepmax - ls-&gt;stepmin &lt;= ls-&gt;rtol * ls-&gt;stepmax)) || (ls-&gt;nfeval + ls-&gt;nfgeval &gt;= ls-&gt;max_funcs - 1) || mt-&gt;infoc == 0))
+<a name="line132">132: </a>      ls-&gt;step = stx;
+
+<a name="line134">134: </a>    <a href="../../../../../docs/manualpages/Vec/VecWAXPY.html">VecWAXPY</a>(mt-&gt;work, ls-&gt;step, s, x); <font color="#B22222">/* W = X + step*S */</font>
+
+<a name="line136">136: </a>    <font color="#4169E1">if</font> (ls-&gt;bounded) <a href="../../../../../docs/manualpages/Vec/VecMedian.html">VecMedian</a>(ls-&gt;lower, mt-&gt;work, ls-&gt;upper, mt-&gt;work);
+<a name="line137">137: </a>    <font color="#4169E1">if</font> (ls-&gt;usegts) {
+<a name="line138">138: </a>      <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchComputeObjectiveAndGTS.html">TaoLineSearchComputeObjectiveAndGTS</a>(ls, mt-&gt;work, f, &amp;dg);
+<a name="line139">139: </a>      g_computed = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line140">140: </a>    } <font color="#4169E1">else</font> {
+<a name="line141">141: </a>      <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchComputeObjectiveAndGradient.html">TaoLineSearchComputeObjectiveAndGradient</a>(ls, mt-&gt;work, f, g);
+<a name="line142">142: </a>      g_computed = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line143">143: </a>      <font color="#4169E1">if</font> (ls-&gt;bounded) {
+<a name="line144">144: </a>        <a href="../../../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(g, x, &amp;dg);
+<a name="line145">145: </a>        <a href="../../../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(g, mt-&gt;work, &amp;dg2);
+<a name="line146">146: </a>        dg = (dg2 - dg) / ls-&gt;step;
+<a name="line147">147: </a>      } <font color="#4169E1">else</font> {
+<a name="line148">148: </a>        <a href="../../../../../docs/manualpages/Vec/VecDot.html">VecDot</a>(g, s, &amp;dg);
+<a name="line149">149: </a>      }
+<a name="line150">150: </a>    }
+
+<a name="line152">152: </a>    <font color="#B22222">/* update bracketing parameters in the MT context for printouts in monitor */</font>
+<a name="line153">153: </a>    mt-&gt;stx = stx;
+<a name="line154">154: </a>    mt-&gt;fx  = fx;
+<a name="line155">155: </a>    mt-&gt;dgx = dgx;
+<a name="line156">156: </a>    mt-&gt;sty = sty;
+<a name="line157">157: </a>    mt-&gt;fy  = fy;
+<a name="line158">158: </a>    mt-&gt;dgy = dgy;
+<a name="line159">159: </a>    <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchMonitor.html">TaoLineSearchMonitor</a>(ls, i + 1, *f, ls-&gt;step);
+
+<a name="line161">161: </a>    <font color="#4169E1">if</font> (i == 0) ls-&gt;f_fullstep = *f;
+
+<a name="line163">163: </a>    <font color="#4169E1">if</font> (PetscIsInfOrNanReal(*f) || PetscIsInfOrNanReal(dg)) {
+<a name="line164">164: </a>      <font color="#B22222">/* User provided compute function generated Not-a-Number, assume</font>
+<a name="line165">165: </a><font color="#B22222">       domain violation and set function value and directional</font>
+<a name="line166">166: </a><font color="#B22222">       derivative to infinity. */</font>
+<a name="line167">167: </a>      *f = PETSC_INFINITY;
+<a name="line168">168: </a>      dg = PETSC_INFINITY;
+<a name="line169">169: </a>    }
+
+<a name="line171">171: </a>    ftest1 = finit + ls-&gt;step * dgtest;
+<a name="line172">172: </a>    <font color="#4169E1">if</font> (ls-&gt;bounded) ftest2 = finit + ls-&gt;step * dgtest * ls-&gt;ftol;
+
+<a name="line174">174: </a>    <font color="#B22222">/* Convergence testing */</font>
+<a name="line175">175: </a>    <font color="#4169E1">if</font> ((*f - ftest1 &lt;= PETSC_SMALL * <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(finit)) &amp;&amp; (<a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(dg) + ls-&gt;gtol * dginit &lt;= 0.0)) {
+<a name="line176">176: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(ls, <font color="#666666">"Line search success: Sufficient decrease and directional deriv conditions hold\n"</font>);
+<a name="line177">177: </a>      ls-&gt;reason = TAOLINESEARCH_SUCCESS;
+<a name="line178">178: </a>      <font color="#4169E1">break</font>;
+<a name="line179">179: </a>    }
+
+<a name="line181">181: </a>    <font color="#B22222">/* Check Armijo if beyond the first breakpoint */</font>
+<a name="line182">182: </a>    <font color="#4169E1">if</font> (ls-&gt;bounded &amp;&amp; *f &lt;= ftest2 &amp;&amp; ls-&gt;step &gt;= bstepmin2) {
+<a name="line183">183: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(ls, <font color="#666666">"Line search success: Sufficient decrease.\n"</font>);
+<a name="line184">184: </a>      ls-&gt;reason = TAOLINESEARCH_SUCCESS;
+<a name="line185">185: </a>      <font color="#4169E1">break</font>;
+<a name="line186">186: </a>    }
+
+<a name="line188">188: </a>    <font color="#B22222">/* Checks for bad cases */</font>
+<a name="line189">189: </a>    <font color="#4169E1">if</font> ((mt-&gt;bracket &amp;&amp; (ls-&gt;step &lt;= ls-&gt;stepmin || ls-&gt;step &gt;= ls-&gt;stepmax)) || !mt-&gt;infoc) {
+<a name="line190">190: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(ls, <font color="#666666">"Rounding errors may prevent further progress. May not be a step satisfying\nsufficient decrease and curvature conditions. Tolerances may be too small.\n"</font>);
+<a name="line191">191: </a>      ls-&gt;reason = TAOLINESEARCH_HALTED_OTHER;
+<a name="line192">192: </a>      <font color="#4169E1">break</font>;
+<a name="line193">193: </a>    }
+<a name="line194">194: </a>    <font color="#4169E1">if</font> (ls-&gt;step == ls-&gt;stepmax &amp;&amp; *f &lt;= ftest1 &amp;&amp; dg &lt;= dgtest) {
+<a name="line195">195: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(ls, <font color="#666666">"Step is at the upper bound, stepmax (%g)\n"</font>, (double)ls-&gt;stepmax);
+<a name="line196">196: </a>      ls-&gt;reason = TAOLINESEARCH_HALTED_UPPERBOUND;
+<a name="line197">197: </a>      <font color="#4169E1">break</font>;
+<a name="line198">198: </a>    }
+<a name="line199">199: </a>    <font color="#4169E1">if</font> (ls-&gt;step == ls-&gt;stepmin &amp;&amp; *f &gt;= ftest1 &amp;&amp; dg &gt;= dgtest) {
+<a name="line200">200: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(ls, <font color="#666666">"Step is at the lower bound, stepmin (%g)\n"</font>, (double)ls-&gt;stepmin);
+<a name="line201">201: </a>      ls-&gt;reason = TAOLINESEARCH_HALTED_LOWERBOUND;
+<a name="line202">202: </a>      <font color="#4169E1">break</font>;
+<a name="line203">203: </a>    }
+<a name="line204">204: </a>    <font color="#4169E1">if</font> (mt-&gt;bracket &amp;&amp; (ls-&gt;stepmax - ls-&gt;stepmin &lt;= ls-&gt;rtol * ls-&gt;stepmax)) {
+<a name="line205">205: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(ls, <font color="#666666">"Relative width of interval of uncertainty is at most rtol (%g)\n"</font>, (double)ls-&gt;rtol);
+<a name="line206">206: </a>      ls-&gt;reason = TAOLINESEARCH_HALTED_RTOL;
+<a name="line207">207: </a>      <font color="#4169E1">break</font>;
+<a name="line208">208: </a>    }
+
+<a name="line210">210: </a>    <font color="#B22222">/* In the first stage, we seek a step for which the modified function</font>
+<a name="line211">211: </a><font color="#B22222">     has a nonpositive value and nonnegative derivative */</font>
+<a name="line212">212: </a>    <font color="#4169E1">if</font> (stage1 &amp;&amp; *f &lt;= ftest1 &amp;&amp; dg &gt;= dginit * <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(ls-&gt;ftol, ls-&gt;gtol)) stage1 = 0;
+
+<a name="line214">214: </a>    <font color="#B22222">/* A modified function is used to predict the step only if we</font>
+<a name="line215">215: </a><font color="#B22222">     have not obtained a step for which the modified function has a</font>
+<a name="line216">216: </a><font color="#B22222">     nonpositive function value and nonnegative derivative, and if a</font>
+<a name="line217">217: </a><font color="#B22222">     lower function value has been obtained but the decrease is not</font>
+<a name="line218">218: </a><font color="#B22222">     sufficient */</font>
+
+<a name="line220">220: </a>    <font color="#4169E1">if</font> (stage1 &amp;&amp; *f &lt;= fx &amp;&amp; *f &gt; ftest1) {
+<a name="line221">221: </a>      fm   = *f - ls-&gt;step * dgtest; <font color="#B22222">/* Define modified function */</font>
+<a name="line222">222: </a>      fxm  = fx - stx * dgtest;      <font color="#B22222">/* and derivatives */</font>
+<a name="line223">223: </a>      fym  = fy - sty * dgtest;
+<a name="line224">224: </a>      dgm  = dg - dgtest;
+<a name="line225">225: </a>      dgxm = dgx - dgtest;
+<a name="line226">226: </a>      dgym = dgy - dgtest;
+
+<a name="line228">228: </a>      <font color="#B22222">/* if (dgxm * (ls-&gt;step - stx) &gt;= 0.0) */</font>
+<a name="line229">229: </a>      <font color="#B22222">/* Update the interval of uncertainty and compute the new step */</font>
+<a name="line230">230: </a>      Tao_mcstep(ls, &amp;stx, &amp;fxm, &amp;dgxm, &amp;sty, &amp;fym, &amp;dgym, &amp;ls-&gt;step, &amp;fm, &amp;dgm);
+
+<a name="line232">232: </a>      fx  = fxm + stx * dgtest; <font color="#B22222">/* Reset the function and */</font>
+<a name="line233">233: </a>      fy  = fym + sty * dgtest; <font color="#B22222">/* gradient values */</font>
+<a name="line234">234: </a>      dgx = dgxm + dgtest;
+<a name="line235">235: </a>      dgy = dgym + dgtest;
+<a name="line236">236: </a>    } <font color="#4169E1">else</font> {
+<a name="line237">237: </a>      <font color="#B22222">/* Update the interval of uncertainty and compute the new step */</font>
+<a name="line238">238: </a>      Tao_mcstep(ls, &amp;stx, &amp;fx, &amp;dgx, &amp;sty, &amp;fy, &amp;dgy, &amp;ls-&gt;step, f, &amp;dg);
+<a name="line239">239: </a>    }
+
+<a name="line241">241: </a>    <font color="#B22222">/* Force a sufficient decrease in the interval of uncertainty */</font>
+<a name="line242">242: </a>    <font color="#4169E1">if</font> (mt-&gt;bracket) {
+<a name="line243">243: </a>      <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(sty - stx) &gt;= 0.66 * width1) ls-&gt;step = stx + 0.5 * (sty - stx);
+<a name="line244">244: </a>      width1 = width;
+<a name="line245">245: </a>      width  = <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(sty - stx);
+<a name="line246">246: </a>    }
+<a name="line247">247: </a>  }
+<a name="line248">248: </a>  <font color="#4169E1">if</font> (ls-&gt;nfeval + ls-&gt;nfgeval &gt; ls-&gt;max_funcs) {
+<a name="line249">249: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(ls, <font color="#666666">"Number of line search function evals (%"</font> PetscInt_FMT <font color="#666666">") &gt; maximum (%"</font> PetscInt_FMT <font color="#666666">")\n"</font>, ls-&gt;nfeval + ls-&gt;nfgeval, ls-&gt;max_funcs);
+<a name="line250">250: </a>    ls-&gt;reason = TAOLINESEARCH_HALTED_MAXFCN;
+<a name="line251">251: </a>  }
+<a name="line252">252: </a>  ls-&gt;stepmax = ostepmax;
+<a name="line253">253: </a>  ls-&gt;stepmin = ostepmin;
+
+<a name="line255">255: </a>  <font color="#B22222">/* Finish computations */</font>
+<a name="line256">256: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(ls, <font color="#666666">"%"</font> PetscInt_FMT <font color="#666666">" function evals in line search, step = %g\n"</font>, ls-&gt;nfeval + ls-&gt;nfgeval, (double)ls-&gt;step);
+
+<a name="line258">258: </a>  <font color="#B22222">/* Set new solution vector and compute gradient if needed */</font>
+<a name="line259">259: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(mt-&gt;work, x);
+<a name="line260">260: </a>  <font color="#4169E1">if</font> (!g_computed) <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchComputeGradient.html">TaoLineSearchComputeGradient</a>(ls, mt-&gt;work, g);
+<a name="line261">261: </a>  <font color="#4169E1">return</font> 0;
+<a name="line262">262: </a>}
+
+<a name="line264">264: </a><font color="#B22222">/*MC</font>
+<a name="line265">265: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/TaoLineSearch/TAOLINESEARCHMT.html">TAOLINESEARCHMT</a> - Line-search type with cubic interpolation that satisfies both the sufficient decrease and</font>
+<a name="line266">266: </a><font color="#B22222">   curvature conditions. This method can take step lengths greater than 1.</font>
+
+<a name="line268">268: </a><font color="#B22222">   More-Thuente line-search can be selected with "-tao_ls_type more-thuente".</font>
+
+<a name="line270">270: </a><font color="#B22222">   References:</font>
+<a name="line271">271: </a><font color="#B22222">.  * - JORGE J. MORE AND DAVID J. THUENTE, LINE SEARCH ALGORITHMS WITH GUARANTEED SUFFICIENT DECREASE.</font>
+<a name="line272">272: </a><font color="#B22222">          ACM Trans. Math. Software 20, no. 3 (1994): 286-307.</font>
+
+<a name="line274">274: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line276">276: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchCreate.html">TaoLineSearchCreate</a>()`, `<a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetType.html">TaoLineSearchSetType</a>()`, `<a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchApply.html">TaoLineSearchApply</a>()`</font>
+
+<a name="line278">278: </a><font color="#B22222">.keywords: <a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a>, linesearch</font>
+<a name="line279">279: </a><font color="#B22222">M*/</font>
+<a name="line280">280: </a><strong><font color="#4169E1"><a name="TaoLineSearchCreate_MT"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoLineSearchCreate_MT(TaoLineSearch ls)</font></strong>
+<a name="line281">281: </a>{
+<a name="line282">282: </a>  TaoLineSearch_MT *ctx;
+
+<a name="line285">285: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;ctx);
+<a name="line286">286: </a>  ctx-&gt;bracket            = 0;
+<a name="line287">287: </a>  ctx-&gt;infoc              = 1;
+<a name="line288">288: </a>  ls-&gt;data                = (void *)ctx;
+<a name="line289">289: </a>  ls-&gt;initstep            = 1.0;
+<a name="line290">290: </a>  ls-&gt;ops-&gt;setup          = NULL;
+<a name="line291">291: </a>  ls-&gt;ops-&gt;reset          = NULL;
+<a name="line292">292: </a>  ls-&gt;ops-&gt;apply          = TaoLineSearchApply_MT;
+<a name="line293">293: </a>  ls-&gt;ops-&gt;destroy        = TaoLineSearchDestroy_MT;
+<a name="line294">294: </a>  ls-&gt;ops-&gt;setfromoptions = TaoLineSearchSetFromOptions_MT;
+<a name="line295">295: </a>  ls-&gt;ops-&gt;monitor        = TaoLineSearchMonitor_MT;
+<a name="line296">296: </a>  <font color="#4169E1">return</font> 0;
+<a name="line297">297: </a>}
+
+<a name="line299">299: </a><font color="#B22222">/*</font>
+<a name="line300">300: </a><font color="#B22222">     The subroutine mcstep is taken from the work of Jorge Nocedal.</font>
+<a name="line301">301: </a><font color="#B22222">     this is a variant of More' and Thuente's routine.</font>
+
+<a name="line303">303: </a><font color="#B22222">     subroutine mcstep</font>
+
+<a name="line305">305: </a><font color="#B22222">     the purpose of mcstep is to compute a safeguarded step for</font>
+<a name="line306">306: </a><font color="#B22222">     a linesearch and to update an interval of uncertainty for</font>
+<a name="line307">307: </a><font color="#B22222">     a minimizer of the function.</font>
+
+<a name="line309">309: </a><font color="#B22222">     the parameter stx contains the step with the least function</font>
+<a name="line310">310: </a><font color="#B22222">     value. the parameter stp contains the current step. it is</font>
+<a name="line311">311: </a><font color="#B22222">     assumed that the derivative at stx is negative in the</font>
+<a name="line312">312: </a><font color="#B22222">     direction of the step. if bracket is set true then a</font>
+<a name="line313">313: </a><font color="#B22222">     minimizer has been bracketed in an interval of uncertainty</font>
+<a name="line314">314: </a><font color="#B22222">     with endpoints stx and sty.</font>
+
+<a name="line316">316: </a><font color="#B22222">     the subroutine statement is</font>
+
+<a name="line318">318: </a><font color="#B22222">     subroutine mcstep(stx,fx,dx,sty,fy,dy,stp,fp,dp,bracket,</font>
+<a name="line319">319: </a><font color="#B22222">                       stpmin,stpmax,info)</font>
+
+<a name="line321">321: </a><font color="#B22222">     where</font>
+
+<a name="line323">323: </a><font color="#B22222">       stx, fx, and dx are variables which specify the step,</font>
+<a name="line324">324: </a><font color="#B22222">         the function, and the derivative at the best step obtained</font>
+<a name="line325">325: </a><font color="#B22222">         so far. The derivative must be negative in the direction</font>
+<a name="line326">326: </a><font color="#B22222">         of the step, that is, dx and stp-stx must have opposite</font>
+<a name="line327">327: </a><font color="#B22222">         signs. On output these parameters are updated appropriately.</font>
+
+<a name="line329">329: </a><font color="#B22222">       sty, fy, and dy are variables which specify the step,</font>
+<a name="line330">330: </a><font color="#B22222">         the function, and the derivative at the other endpoint of</font>
+<a name="line331">331: </a><font color="#B22222">         the interval of uncertainty. On output these parameters are</font>
+<a name="line332">332: </a><font color="#B22222">         updated appropriately.</font>
+
+<a name="line334">334: </a><font color="#B22222">       stp, fp, and dp are variables which specify the step,</font>
+<a name="line335">335: </a><font color="#B22222">         the function, and the derivative at the current step.</font>
+<a name="line336">336: </a><font color="#B22222">         If bracket is set true then on input stp must be</font>
+<a name="line337">337: </a><font color="#B22222">         between stx and sty. On output stp is set to the new step.</font>
+
+<a name="line339">339: </a><font color="#B22222">       bracket is a logical variable which specifies if a minimizer</font>
+<a name="line340">340: </a><font color="#B22222">         has been bracketed.  If the minimizer has not been bracketed</font>
+<a name="line341">341: </a><font color="#B22222">         then on input bracket must be set false.  If the minimizer</font>
+<a name="line342">342: </a><font color="#B22222">         is bracketed then on output bracket is set true.</font>
+
+<a name="line344">344: </a><font color="#B22222">       stpmin and stpmax are input variables which specify lower</font>
+<a name="line345">345: </a><font color="#B22222">         and upper bounds for the step.</font>
+
+<a name="line347">347: </a><font color="#B22222">       info is an integer output variable set as follows:</font>
+<a name="line348">348: </a><font color="#B22222">         if info = 1,2,3,4,5, then the step has been computed</font>
+<a name="line349">349: </a><font color="#B22222">         according to one of the five cases below. otherwise</font>
+<a name="line350">350: </a><font color="#B22222">         info = 0, and this indicates improper input parameters.</font>
+
+<a name="line352">352: </a><font color="#B22222">     subprograms called</font>
+
+<a name="line354">354: </a><font color="#B22222">       fortran-supplied ... abs,max,min,sqrt</font>
+
+<a name="line356">356: </a><font color="#B22222">     argonne national laboratory. minpack project. june 1983</font>
+<a name="line357">357: </a><font color="#B22222">     jorge j. more', david j. thuente</font>
+
+<a name="line359">359: </a><font color="#B22222">*/</font>
+
+<a name="line361">361: </a><strong><font color="#4169E1"><a name="Tao_mcstep"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Tao_mcstep(TaoLineSearch ls, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *stx, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *fx, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *dx, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *sty, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *fy, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *dy, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *stp, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *fp, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *dp)</font></strong>
+<a name="line362">362: </a>{
+<a name="line363">363: </a>  TaoLineSearch_MT *mtP = (TaoLineSearch_MT *)ls-&gt;data;
+<a name="line364">364: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>         gamma1, p, q, r, s, sgnd, stpc, stpf, stpq, theta;
+<a name="line365">365: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          bound;
+
+<a name="line367">367: </a>  <font color="#B22222">/* Check the input parameters for errors */</font>
+<a name="line368">368: </a>  mtP-&gt;infoc = 0;
+
+<a name="line373">373: </a>  <font color="#B22222">/* Determine if the derivatives have opposite sign */</font>
+<a name="line374">374: </a>  sgnd = *dp * (*dx / <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*dx));
+
+<a name="line376">376: </a>  <font color="#4169E1">if</font> (*fp &gt; *fx) {
+<a name="line377">377: </a>    <font color="#B22222">/* Case 1: a higher function value.</font>
+<a name="line378">378: </a><font color="#B22222">     The minimum is bracketed. If the cubic step is closer</font>
+<a name="line379">379: </a><font color="#B22222">     to stx than the quadratic step, the cubic step is taken,</font>
+<a name="line380">380: </a><font color="#B22222">     else the average of the cubic and quadratic steps is taken. */</font>
+
+<a name="line382">382: </a>    mtP-&gt;infoc = 1;
+<a name="line383">383: </a>    bound      = 1;
+<a name="line384">384: </a>    theta      = 3 * (*fx - *fp) / (*stp - *stx) + *dx + *dp;
+<a name="line385">385: </a>    s          = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(<a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(theta), <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*dx));
+<a name="line386">386: </a>    s          = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(s, <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*dp));
+<a name="line387">387: </a>    gamma1     = s * PetscSqrtScalar(PetscPowScalar(theta / s, 2.0) - (*dx / s) * (*dp / s));
+<a name="line388">388: </a>    <font color="#4169E1">if</font> (*stp &lt; *stx) gamma1 = -gamma1;
+<a name="line389">389: </a>    <font color="#B22222">/* Can p be 0?  Check */</font>
+<a name="line390">390: </a>    p    = (gamma1 - *dx) + theta;
+<a name="line391">391: </a>    q    = ((gamma1 - *dx) + gamma1) + *dp;
+<a name="line392">392: </a>    r    = p / q;
+<a name="line393">393: </a>    stpc = *stx + r * (*stp - *stx);
+<a name="line394">394: </a>    stpq = *stx + ((*dx / ((*fx - *fp) / (*stp - *stx) + *dx)) * 0.5) * (*stp - *stx);
+
+<a name="line396">396: </a>    <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(stpc - *stx) &lt; <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(stpq - *stx)) stpf = stpc;
+<a name="line397">397: </a>    <font color="#4169E1">else</font> stpf = stpc + 0.5 * (stpq - stpc);
+<a name="line398">398: </a>    mtP-&gt;bracket = 1;
+<a name="line399">399: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (sgnd &lt; 0.0) {
+<a name="line400">400: </a>    <font color="#B22222">/* Case 2: A lower function value and derivatives of</font>
+<a name="line401">401: </a><font color="#B22222">     opposite sign. The minimum is bracketed. If the cubic</font>
+<a name="line402">402: </a><font color="#B22222">     step is closer to stx than the quadratic (secant) step,</font>
+<a name="line403">403: </a><font color="#B22222">     the cubic step is taken, else the quadratic step is taken. */</font>
+
+<a name="line405">405: </a>    mtP-&gt;infoc = 2;
+<a name="line406">406: </a>    bound      = 0;
+<a name="line407">407: </a>    theta      = 3 * (*fx - *fp) / (*stp - *stx) + *dx + *dp;
+<a name="line408">408: </a>    s          = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(<a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(theta), <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*dx));
+<a name="line409">409: </a>    s          = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(s, <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*dp));
+<a name="line410">410: </a>    gamma1     = s * PetscSqrtScalar(PetscPowScalar(theta / s, 2.0) - (*dx / s) * (*dp / s));
+<a name="line411">411: </a>    <font color="#4169E1">if</font> (*stp &gt; *stx) gamma1 = -gamma1;
+<a name="line412">412: </a>    p    = (gamma1 - *dp) + theta;
+<a name="line413">413: </a>    q    = ((gamma1 - *dp) + gamma1) + *dx;
+<a name="line414">414: </a>    r    = p / q;
+<a name="line415">415: </a>    stpc = *stp + r * (*stx - *stp);
+<a name="line416">416: </a>    stpq = *stp + (*dp / (*dp - *dx)) * (*stx - *stp);
+
+<a name="line418">418: </a>    <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(stpc - *stp) &gt; <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(stpq - *stp)) stpf = stpc;
+<a name="line419">419: </a>    <font color="#4169E1">else</font> stpf = stpq;
+<a name="line420">420: </a>    mtP-&gt;bracket = 1;
+<a name="line421">421: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*dp) &lt; <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*dx)) {
+<a name="line422">422: </a>    <font color="#B22222">/* Case 3: A lower function value, derivatives of the</font>
+<a name="line423">423: </a><font color="#B22222">     same sign, and the magnitude of the derivative decreases.</font>
+<a name="line424">424: </a><font color="#B22222">     The cubic step is only used if the cubic tends to infinity</font>
+<a name="line425">425: </a><font color="#B22222">     in the direction of the step or if the minimum of the cubic</font>
+<a name="line426">426: </a><font color="#B22222">     is beyond stp. Otherwise the cubic step is defined to be</font>
+<a name="line427">427: </a><font color="#B22222">     either stepmin or stepmax. The quadratic (secant) step is also</font>
+<a name="line428">428: </a><font color="#B22222">     computed and if the minimum is bracketed then the step</font>
+<a name="line429">429: </a><font color="#B22222">     closest to stx is taken, else the step farthest away is taken. */</font>
+
+<a name="line431">431: </a>    mtP-&gt;infoc = 3;
+<a name="line432">432: </a>    bound      = 1;
+<a name="line433">433: </a>    theta      = 3 * (*fx - *fp) / (*stp - *stx) + *dx + *dp;
+<a name="line434">434: </a>    s          = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(<a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(theta), <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*dx));
+<a name="line435">435: </a>    s          = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(s, <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*dp));
+
+<a name="line437">437: </a>    <font color="#B22222">/* The case gamma1 = 0 only arises if the cubic does not tend</font>
+<a name="line438">438: </a><font color="#B22222">       to infinity in the direction of the step. */</font>
+<a name="line439">439: </a>    gamma1 = s * PetscSqrtScalar(<a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(0.0, PetscPowScalar(theta / s, 2.0) - (*dx / s) * (*dp / s)));
+<a name="line440">440: </a>    <font color="#4169E1">if</font> (*stp &gt; *stx) gamma1 = -gamma1;
+<a name="line441">441: </a>    p = (gamma1 - *dp) + theta;
+<a name="line442">442: </a>    q = (gamma1 + (*dx - *dp)) + gamma1;
+<a name="line443">443: </a>    r = p / q;
+<a name="line444">444: </a>    <font color="#4169E1">if</font> (r &lt; 0.0 &amp;&amp; gamma1 != 0.0) stpc = *stp + r * (*stx - *stp);
+<a name="line445">445: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (*stp &gt; *stx) stpc = ls-&gt;stepmax;
+<a name="line446">446: </a>    <font color="#4169E1">else</font> stpc = ls-&gt;stepmin;
+<a name="line447">447: </a>    stpq = *stp + (*dp / (*dp - *dx)) * (*stx - *stp);
+
+<a name="line449">449: </a>    <font color="#4169E1">if</font> (mtP-&gt;bracket) {
+<a name="line450">450: </a>      <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*stp - stpc) &lt; <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*stp - stpq)) stpf = stpc;
+<a name="line451">451: </a>      <font color="#4169E1">else</font> stpf = stpq;
+<a name="line452">452: </a>    } <font color="#4169E1">else</font> {
+<a name="line453">453: </a>      <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*stp - stpc) &gt; <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*stp - stpq)) stpf = stpc;
+<a name="line454">454: </a>      <font color="#4169E1">else</font> stpf = stpq;
+<a name="line455">455: </a>    }
+<a name="line456">456: </a>  } <font color="#4169E1">else</font> {
+<a name="line457">457: </a>    <font color="#B22222">/* Case 4: A lower function value, derivatives of the</font>
+<a name="line458">458: </a><font color="#B22222">       same sign, and the magnitude of the derivative does</font>
+<a name="line459">459: </a><font color="#B22222">       not decrease. If the minimum is not bracketed, the step</font>
+<a name="line460">460: </a><font color="#B22222">       is either stpmin or stpmax, else the cubic step is taken. */</font>
+
+<a name="line462">462: </a>    mtP-&gt;infoc = 4;
+<a name="line463">463: </a>    bound      = 0;
+<a name="line464">464: </a>    <font color="#4169E1">if</font> (mtP-&gt;bracket) {
+<a name="line465">465: </a>      theta  = 3 * (*fp - *fy) / (*sty - *stp) + *dy + *dp;
+<a name="line466">466: </a>      s      = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(<a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(theta), <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*dy));
+<a name="line467">467: </a>      s      = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(s, <a href="../../../../../docs/manualpages/Sys/PetscAbsReal.html">PetscAbsReal</a>(*dp));
+<a name="line468">468: </a>      gamma1 = s * PetscSqrtScalar(PetscPowScalar(theta / s, 2.0) - (*dy / s) * (*dp / s));
+<a name="line469">469: </a>      <font color="#4169E1">if</font> (*stp &gt; *sty) gamma1 = -gamma1;
+<a name="line470">470: </a>      p    = (gamma1 - *dp) + theta;
+<a name="line471">471: </a>      q    = ((gamma1 - *dp) + gamma1) + *dy;
+<a name="line472">472: </a>      r    = p / q;
+<a name="line473">473: </a>      stpc = *stp + r * (*sty - *stp);
+<a name="line474">474: </a>      stpf = stpc;
+<a name="line475">475: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (*stp &gt; *stx) {
+<a name="line476">476: </a>      stpf = ls-&gt;stepmax;
+<a name="line477">477: </a>    } <font color="#4169E1">else</font> {
+<a name="line478">478: </a>      stpf = ls-&gt;stepmin;
+<a name="line479">479: </a>    }
+<a name="line480">480: </a>  }
+
+<a name="line482">482: </a>  <font color="#B22222">/* Update the interval of uncertainty.  This update does not</font>
+<a name="line483">483: </a><font color="#B22222">     depend on the new step or the case analysis above. */</font>
+
+<a name="line485">485: </a>  <font color="#4169E1">if</font> (*fp &gt; *fx) {
+<a name="line486">486: </a>    *sty = *stp;
+<a name="line487">487: </a>    *fy  = *fp;
+<a name="line488">488: </a>    *dy  = *dp;
+<a name="line489">489: </a>  } <font color="#4169E1">else</font> {
+<a name="line490">490: </a>    <font color="#4169E1">if</font> (sgnd &lt; 0.0) {
+<a name="line491">491: </a>      *sty = *stx;
+<a name="line492">492: </a>      *fy  = *fx;
+<a name="line493">493: </a>      *dy  = *dx;
+<a name="line494">494: </a>    }
+<a name="line495">495: </a>    *stx = *stp;
+<a name="line496">496: </a>    *fx  = *fp;
+<a name="line497">497: </a>    *dx  = *dp;
+<a name="line498">498: </a>  }
+
+<a name="line500">500: </a>  <font color="#B22222">/* Compute the new step and safeguard it. */</font>
+<a name="line501">501: </a>  stpf = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(ls-&gt;stepmax, stpf);
+<a name="line502">502: </a>  stpf = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(ls-&gt;stepmin, stpf);
+<a name="line503">503: </a>  *stp = stpf;
+<a name="line504">504: </a>  <font color="#4169E1">if</font> (mtP-&gt;bracket &amp;&amp; bound) {
+<a name="line505">505: </a>    <font color="#4169E1">if</font> (*sty &gt; *stx) *stp = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(*stx + 0.66 * (*sty - *stx), *stp);
+<a name="line506">506: </a>    <font color="#4169E1">else</font> *stp = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(*stx + 0.66 * (*sty - *stx), *stp);
+<a name="line507">507: </a>  }
+<a name="line508">508: </a>  <font color="#4169E1">return</font> 0;
+<a name="line509">509: </a>}
+</pre>
+</body>
+
+</html>

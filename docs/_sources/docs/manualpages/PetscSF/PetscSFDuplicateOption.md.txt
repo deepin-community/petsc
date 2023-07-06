@@ -1,0 +1,40 @@
+# PetscSFDuplicateOption
+Aspects to preserve when duplicating a `PetscSF` 
+## Synopsis
+```
+typedef enum {
+  PETSCSF_DUPLICATE_CONFONLY,
+  PETSCSF_DUPLICATE_RANKS,
+  PETSCSF_DUPLICATE_GRAPH
+} PetscSFDuplicateOption;
+```
+```none
+`PETSCSF_DUPLICATE_CONFONLY` - configuration only, user must call `PetscSFSetGraph()`
+```
+```none
+`PETSCSF_DUPLICATE_RANKS` - communication ranks preserved, but different graph (allows simpler setup after calling `PetscSFSetGraph()`)
+```
+```none
+`PETSCSF_DUPLICATE_GRAPH` - entire graph duplicated
+```
+
+
+
+
+## See Also
+ `PetscSFDuplicate()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscsf.h.html#PetscSFDuplicateOption">include/petscsf.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscsf.h)
+
+
+[Index of all PetscSF routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

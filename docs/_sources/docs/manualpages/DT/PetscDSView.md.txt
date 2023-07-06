@@ -1,0 +1,36 @@
+# PetscDSView
+Views a `PetscDS` 
+## Synopsis
+```
+#include "petscds.h" 
+PetscErrorCode PetscDSView(PetscDS prob, PetscViewer v)
+```
+Collective on prob
+
+
+## Input Parameters
+
+- ***prob -*** the `PetscDS` object to view
+- ***v  -*** the viewer
+
+
+
+
+
+## See Also
+ `PetscDSType`, `PetscDS`, `PetscViewer`, `PetscDSDestroy()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/dt/interface/dtds.c.html#PetscDSView">src/dm/dt/interface/dtds.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/dt/interface/dtds.c)
+
+
+[Index of all DT routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

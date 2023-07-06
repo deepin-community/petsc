@@ -1,0 +1,26 @@
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:50:01+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">-include ../../../../../petscdir.mk
+<font color="#A020F0"># This directory contains access to matlab test problems for the derivative free</font>
+<font color="#A020F0"># least squares solvers.</font>
+
+LOCDIR           = src/tao/leastsquares/tutorials/matlab/
+MANSEC           = <a href="ROOT/docs/manualpages/Tao/Tao.html">Tao</a>
+EXAMPLESMATLAB   = TestingInitialize.m TestingFinalize.m ProblemInitialize.m ProblemFinalize.m
+DIRS             =
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+include ${PETSC_DIR}/lib/petsc/conf/test
+
+</pre>
+</body>
+
+</html>

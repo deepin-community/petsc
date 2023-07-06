@@ -1,0 +1,75 @@
+# MatDuplicateOption
+Indicates if a duplicated sparse matrix should have its numerical values copied over or just its nonzero structure. 
+## Synopsis
+```
+typedef enum {
+  MAT_DO_NOT_COPY_VALUES,
+  MAT_COPY_VALUES,
+  MAT_SHARE_NONZERO_PATTERN
+} MatDuplicateOption;
+```
+
+
+Any additions/changes here MUST also be made in include/petsc/finclude/petscmat.h
+
+```none
+`MAT_DO_NOT_COPY_VALUES`    - Create a matrix using the same nonzero pattern as the original matrix,
+```
+```none
+with zeros for the numerical values.
+```
+```none
+`MAT_COPY_VALUES`           - Create a matrix with the same nonzero pattern as the original matrix
+```
+```none
+and with the same numerical values.
+```
+```none
+`MAT_SHARE_NONZERO_PATTERN` - Create a matrix that shares the nonzero structure with the previous matrix
+```
+```none
+and does not copy it, using zeros for the numerical values. The parent and
+```
+```none
+child matrices will share their index (i and j) arrays, and you cannot
+```
+```none
+insert new nonzero entries into either matrix.
+```
+
+
+## Note
+Many matrix types (including `MATSEQAIJ`) do not support the `MAT_SHARE_NONZERO_PATTERN` optimization; in
+this case the behavior is as if `MAT_DO_NOT_COPY_VALUES` has been specified.
+
+
+## See Also
+ `MatDuplicate()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscmat.h.html#MatDuplicateOption">include/petscmat.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex42.c.html">src/ksp/ksp/tutorials/ex42.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex5.c.html">src/ksp/ksp/tutorials/ex5.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex5f.F90.html">src/ksp/ksp/tutorials/ex5f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex76.c.html">src/ksp/ksp/tutorials/ex76.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex81.c.html">src/ksp/ksp/tutorials/ex81.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex3.c.html">src/ts/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex50.c.html">src/ts/tutorials/ex50.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/unconstrained/tutorials/burgers_spectral.c.html">src/tao/unconstrained/tutorials/burgers_spectral.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/unconstrained/tutorials/spectraladjointassimilation.c.html">src/tao/unconstrained/tutorials/spectraladjointassimilation.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/pde_constrained/tutorials/elliptic.c.html">src/tao/pde_constrained/tutorials/elliptic.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/pde_constrained/tutorials/hyperbolic.c.html">src/tao/pde_constrained/tutorials/hyperbolic.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscmat.h)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

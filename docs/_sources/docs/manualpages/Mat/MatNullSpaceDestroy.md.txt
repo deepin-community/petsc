@@ -1,0 +1,48 @@
+# MatNullSpaceDestroy
+Destroys a data structure used to project vectors out of null spaces. 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatNullSpaceDestroy(MatNullSpace *sp)
+```
+Collective
+
+
+## Input Parameter
+
+- ***sp -*** the null space context to be destroyed
+
+
+
+
+
+## See Also
+ `MatNullSpace`, `MatNullSpaceCreate()`, `MatNullSpaceRemove()`, `MatNullSpaceSetFunction()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/interface/matnull.c.html#MatNullSpaceDestroy">src/mat/interface/matnull.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/stag/tutorials/ex2.c.html">src/dm/impls/stag/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/stag/tutorials/ex3.c.html">src/dm/impls/stag/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/stag/tutorials/ex4.c.html">src/dm/impls/stag/tutorials/ex4.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex29.c.html">src/ksp/ksp/tutorials/ex29.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex32.c.html">src/ksp/ksp/tutorials/ex32.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex34.c.html">src/ksp/ksp/tutorials/ex34.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex35.cxx.html">src/ksp/ksp/tutorials/ex35.cxx.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex36.cxx.html">src/ksp/ksp/tutorials/ex36.cxx.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex49.c.html">src/ksp/ksp/tutorials/ex49.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex50.c.html">src/ksp/ksp/tutorials/ex50.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex56.c.html">src/ksp/ksp/tutorials/ex56.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/interface/matnull.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

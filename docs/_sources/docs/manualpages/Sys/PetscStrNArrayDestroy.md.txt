@@ -1,0 +1,40 @@
+# PetscStrNArrayDestroy
+Frees array of strings created with `PetscStrNArrayallocpy()`. 
+## Synopsis
+```
+#include "petscsys.h"   
+PetscErrorCode PetscStrNArrayDestroy(PetscInt n, char ***list)
+```
+Not Collective
+
+
+## Output Parameters
+
+- ***n -*** number of string entries
+- ***list -*** array of strings
+
+
+
+
+
+## Fortran Note
+Not for use in Fortran
+
+
+## See Also
+ `PetscStrNArrayallocpy()`, `PetscStrArrayallocpy()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/utils/str.c.html#PetscStrNArrayDestroy">src/sys/utils/str.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/utils/str.c)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

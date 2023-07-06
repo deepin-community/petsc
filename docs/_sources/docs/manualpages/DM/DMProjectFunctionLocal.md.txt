@@ -1,0 +1,79 @@
+# DMProjectFunctionLocal
+This projects the given function into the function space provided by a `DM`, putting the coefficients in a local vector. 
+## Synopsis
+```
+#include "petscdm.h"          
+#include "petscdmlabel.h"     
+#include "petscds.h"     
+PetscErrorCode DMProjectFunctionLocal(DM dm, PetscReal time, PetscErrorCode (**funcs)(PetscInt, PetscReal, const PetscReal[], PetscInt, PetscScalar *, void *), void **ctxs, InsertMode mode, Vec localX)
+```
+Not collective
+
+
+## Input Parameters
+
+- ***dm      -*** The `DM`
+- ***time    -*** The time
+- ***funcs   -*** The coordinate functions to evaluate, one per field
+- ***ctxs    -*** Optional array of contexts to pass to each coordinate function.  ctxs itself may be null.
+- ***mode    -*** The insertion mode for values
+
+
+
+## Output Parameter
+
+- ***localX -*** vector
+
+
+
+## Calling sequence of func
+```none
+func(PetscInt dim, PetscReal time, const PetscReal x[], PetscInt Nc, PetscScalar u[], void *ctx);
+```
+
+
+- ***dim -*** The spatial dimension
+- ***x   -*** The coordinates
+- ***Nc  -*** The number of components
+- ***u   -*** The output field values
+- ***ctx -*** optional user-defined function context
+
+
+
+
+
+## Developer Notes
+This API is specific to only particular usage of `DM`
+
+The notes need to provide some information about what has to be provided to the `DM` to be able to perform the computation.
+
+
+## See Also
+ `DMProjectFunction()`, `DMProjectFunctionLabel()`, `DMComputeL2Diff()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/interface/dm.c.html#DMProjectFunctionLocal">src/dm/interface/dm.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/field/tutorials/ex1.c.html">src/dm/field/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex12.c.html">src/snes/tutorials/ex12.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex77.c.html">src/snes/tutorials/ex77.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex47.c.html">src/ts/tutorials/ex47.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex48.c.html">src/ts/tutorials/ex48.c.html</A><BR>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/forest/p4est/pforest.h.html#DMProjectFunctionLocal_pforest(DM dm, PetscReal time, PetscErrorCode (**funcs)">DMProjectFunctionLocal_pforest(DM dm, PetscReal time, PetscErrorCode (**funcs) in src/dm/impls/forest/p4est/pforest.h</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/plexproject.c.html#DMProjectFunctionLocal_Plex(DM dm, PetscReal time, PetscErrorCode (**funcs)">DMProjectFunctionLocal_Plex(DM dm, PetscReal time, PetscErrorCode (**funcs) in src/dm/impls/plex/plexproject.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/interface/dm.c)
+
+
+[Index of all DM routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

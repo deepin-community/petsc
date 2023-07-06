@@ -1,0 +1,30 @@
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:52+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80"><font color="#A020F0">#requirespackage 'PETSC_HAVE_KOKKOS_KERNELS'</font>
+-include ../../../../../petscdir.mk
+
+SOURCEKOKKOS = landau.kokkos.cxx
+SOURCECU =
+SOURCEF  =
+SOURCEH  =
+DIRS     =
+LIBBASE  = libpetscts
+MANSEC   = <a href="ROOT/docs/manualpages/TS/TS.html">TS</a>
+SUBMANSEC= LANDAU
+LOCDIR   = src/ts/utils/dmplexlandau/kokkos
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+include ${PETSC_DIR}/lib/petsc/conf/test
+
+</pre>
+</body>
+
+</html>

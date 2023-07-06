@@ -1,0 +1,41 @@
+# DMNetworkGetPlex
+Gets the Plex DM associated with this network DM 
+## Synopsis
+```
+#include "petscdmnetwork.h"  
+PetscErrorCode DMNetworkGetPlex(DM dm, DM *plexdm)
+```
+Not collective
+
+
+## Input Parameters
+
+- ***dm -*** the dm object
+
+
+
+## Output Parameters
+
+- ***plexdm -*** the plex dm object
+
+
+
+
+
+## See Also
+ `DMNetworkCreate()`
+
+## Level
+Advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/network/network.c.html#DMNetworkGetPlex">src/dm/impls/network/network.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/network/network.c)
+
+
+[Index of all DMNetwork routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

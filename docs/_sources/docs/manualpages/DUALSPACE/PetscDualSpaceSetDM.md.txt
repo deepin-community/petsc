@@ -1,0 +1,39 @@
+# PetscDualSpaceSetDM
+Get the `DM` representing the reference cell 
+## Synopsis
+```
+#include "petscfe.h" 
+PetscErrorCode PetscDualSpaceSetDM(PetscDualSpace sp, DM dm)
+```
+Not collective
+
+
+## Input Parameters
+
+- ***sp -*** The `PetscDual`Space
+- ***dm -*** The reference cell
+
+
+
+
+
+## See Also
+ `PetscDualSpace`, `DM`, `PetscDualSpaceGetDM()`, `PetscDualSpaceCreate()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/dt/dualspace/interface/dualspace.c.html#PetscDualSpaceSetDM">src/dm/dt/dualspace/interface/dualspace.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/dt/dualspace/impls/lagrange/tutorials/ex1.c.html">src/dm/dt/dualspace/impls/lagrange/tutorials/ex1.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/dt/dualspace/interface/dualspace.c)
+
+
+[Index of all DUALSPACE routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

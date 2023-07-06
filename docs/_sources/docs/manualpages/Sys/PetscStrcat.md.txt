@@ -1,0 +1,47 @@
+# PetscStrcat
+Concatenates a string onto a given string 
+## Synopsis
+```
+#include "petscsys.h"   
+PetscErrorCode PetscStrcat(char s[], const char t[])
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***s -*** string to be added to
+- ***t -*** pointer to string to be added to end
+
+
+
+
+
+## Note
+It is recommended you use `PetscStrlcat()` instead of this routine
+
+
+## Fortran Note
+Not for use in Fortran
+
+
+## See Also
+ `PetscStrcpy()`, `PetscStrncpy()`, `PetscStrlcat()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/utils/str.c.html#PetscStrcat">src/sys/utils/str.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex18.c.html">src/ts/tutorials/ex18.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/utils/str.c)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

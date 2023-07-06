@@ -1,0 +1,3 @@
+#! /bin/sh
+echo ${PACKAGE_REAL_DEBUG_INSTALL_DIR}/${PETSC_REAL_DEBUG_DIR_PREFIX}/share/petsc/examples usr/share/petsc/${PETSC_SONAME_VERSION}/share/petsc
+echo ${PACKAGE_REAL_DEBUG_INSTALL_DIR}/${PETSC_REAL_DEBUG_DIR_PREFIX}/share/petsc/datafiles usr/share/petsc/${PETSC_SONAME_VERSION}/share/petsc

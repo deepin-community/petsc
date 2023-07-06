@@ -1,0 +1,29 @@
+Index: petsc/setup.py
+===================================================================
+--- petsc.orig/setup.py	2021-11-09 21:06:54.035492066 +0100
++++ petsc/setup.py	2021-11-09 21:06:54.031492033 +0100
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ 
+ """
+ PETSc: Portable, Extensible Toolkit for Scientific Computation
+Index: petsc/src/sys/tests/ex55.py
+===================================================================
+--- petsc.orig/src/sys/tests/ex55.py	2021-11-09 21:06:54.035492066 +0100
++++ petsc/src/sys/tests/ex55.py	2021-11-09 21:06:54.031492033 +0100
+@@ -1,3 +1,4 @@
++#!/usr/bin/python3
+ from mpi4py import MPI
+ import numpy
+ 
+Index: petsc/src/ts/tutorials/extchem.py
+===================================================================
+--- petsc.orig/src/ts/tutorials/extchem.py	2021-11-09 21:06:54.035492066 +0100
++++ petsc/src/ts/tutorials/extchem.py	2021-11-09 21:06:54.031492033 +0100
+@@ -1,4 +1,4 @@
+-#!/usr/bin/env python
++#!/usr/bin/env python3
+ #
+ #    Reads in the output trajectory data from a run of extchem and
+ #  formats it for graphing

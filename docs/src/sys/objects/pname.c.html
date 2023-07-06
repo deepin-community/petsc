@@ -1,0 +1,149 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/objects/pname.c">Actual source code: pname.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:56+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../../include/petsc/private/petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="../../../include/petscviewer.h.html">&lt;petscviewer.h&gt;</A>
+
+<a name="line5">  5: </a><font color="#B22222">/*@C</font>
+<a name="line6">  6: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a> - Sets a string name associated with a PETSc object.</font>
+
+<a name="line8">  8: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line10"> 10: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line11"> 11: </a><font color="#B22222">+  obj - the Petsc variable</font>
+<a name="line12"> 12: </a><font color="#B22222">         Thus must be cast with a (`<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>`), for example,</font>
+<a name="line13"> 13: </a><font color="#B22222">         `<a href="../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>`((`<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>`)mat,name);</font>
+<a name="line14"> 14: </a><font color="#B22222">-  name - the name to give obj</font>
+
+<a name="line16"> 16: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line18"> 18: </a><font color="#B22222">   Note:</font>
+<a name="line19"> 19: </a><font color="#B22222">    If this routine is not called then the object may end up being name by `<a href="../../../docs/manualpages/Sys/PetscObjectName.html">PetscObjectName</a>()`.</font>
+
+<a name="line21"> 21: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>()`, `<a href="../../../docs/manualpages/Sys/PetscObjectName.html">PetscObjectName</a>()`</font>
+<a name="line22"> 22: </a><font color="#B22222">@*/</font>
+<a name="line23"> 23: </a><strong><font color="#4169E1"><a name="PetscObjectSetName"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>(<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> obj, const char name[])</font></strong>
+<a name="line24"> 24: </a>{
+<a name="line26"> 26: </a>  <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(obj-&gt;name);
+<a name="line27"> 27: </a>  <a href="../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(name, &amp;obj-&gt;name);
+<a name="line28"> 28: </a>  <font color="#4169E1">return</font> 0;
+<a name="line29"> 29: </a>}
+
+<a name="line31"> 31: </a><font color="#B22222">/*@C</font>
+<a name="line32"> 32: </a><font color="#B22222">      <a href="../../../docs/manualpages/Sys/PetscObjectPrintClassNamePrefixType.html">PetscObjectPrintClassNamePrefixType</a> - used in the `XXXView()` methods to display information about the class, name, prefix and type of an object</font>
+
+<a name="line34"> 34: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line35"> 35: </a><font color="#B22222">+     obj - the PETSc object</font>
+<a name="line36"> 36: </a><font color="#B22222">-     viewer - ASCII viewer where the information is printed, function does nothing if the viewer is not `<a href="../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>` type</font>
+
+<a name="line38"> 38: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line40"> 40: </a><font color="#B22222">   Notes:</font>
+<a name="line41"> 41: </a><font color="#B22222">   If the viewer format is `<a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_MATLAB</a>` then the information is printed after a % symbol</font>
+<a name="line42"> 42: </a><font color="#B22222">   so that MATLAB will treat it as a comment.</font>
+
+<a name="line44"> 44: </a><font color="#B22222">   If the viewer format is `PETSC_VIEWER_ASCII_VTK*`, `<a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_LATEX</a>`, or</font>
+<a name="line45"> 45: </a><font color="#B22222">   `<a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_MATRIXMARKET</a>` then don't print header information</font>
+<a name="line46"> 46: </a><font color="#B22222">   as these formats can't process it.</font>
+
+<a name="line48"> 48: </a><font color="#B22222">   Developer Note:</font>
+<a name="line49"> 49: </a><font color="#B22222">   The flag donotPetscObjectPrintClassNamePrefixType is useful to prevent double printing of the information when recursion is used to actually print the object.</font>
+
+<a name="line51"> 51: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>()`, `<a href="../../../docs/manualpages/Sys/PetscObjectName.html">PetscObjectName</a>()`</font>
+<a name="line52"> 52: </a><font color="#B22222">@*/</font>
+<a name="line53"> 53: </a><strong><font color="#4169E1"><a name="PetscObjectPrintClassNamePrefixType"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscObjectPrintClassNamePrefixType.html">PetscObjectPrintClassNamePrefixType</a>(<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> obj, <a href="../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line54"> 54: </a>{
+<a name="line55"> 55: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>       size;
+<a name="line56"> 56: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PetscViewerFormat</a> format;
+<a name="line57"> 57: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>         flg;
+
+<a name="line59"> 59: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;flg);
+<a name="line60"> 60: </a>  <font color="#4169E1">if</font> (obj-&gt;donotPetscObjectPrintClassNamePrefixType) <font color="#4169E1">return</font> 0;
+<a name="line61"> 61: </a>  <font color="#4169E1">if</font> (!flg) <font color="#4169E1">return</font> 0;
+
+<a name="line63"> 63: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerGetFormat.html">PetscViewerGetFormat</a>(viewer, &amp;format);
+<a name="line64"> 64: </a>  <font color="#4169E1">if</font> (format == <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_VTK_DEPRECATED</a> || format == <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_VTK_CELL_DEPRECATED</a> || format == <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_VTK_COORDS_DEPRECATED</a> || format == <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_MATRIXMARKET</a> || format == <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_LATEX</a> || format == <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_GLVIS</a>)
+<a name="line65"> 65: </a>    <font color="#4169E1">return</font> 0;
+
+<a name="line67"> 67: </a>  <font color="#4169E1">if</font> (format == <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_MATLAB</a>) <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"%%"</font>);
+<a name="line68"> 68: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>(obj), &amp;size);
+<a name="line69"> 69: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"%s Object:%s%s%s%s%s %d MPI process%s\n"</font>, obj-&gt;class_name, obj-&gt;name ? <font color="#666666">" "</font> : <font color="#666666">""</font>, obj-&gt;name ? obj-&gt;name : <font color="#666666">""</font>, obj-&gt;prefix ? <font color="#666666">" ("</font> : <font color="#666666">""</font>, obj-&gt;prefix ? obj-&gt;prefix : <font color="#666666">""</font>, obj-&gt;prefix ? <font color="#666666">")"</font> : <font color="#666666">""</font>, size, size &gt; 1 ? <font color="#666666">"es"</font> : <font color="#666666">""</font>);
+<a name="line70"> 70: </a>  <font color="#4169E1">if</font> (format == <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_MATLAB</a>) <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"%%"</font>);
+<a name="line71"> 71: </a>  <font color="#4169E1">if</font> (obj-&gt;type_name) {
+<a name="line72"> 72: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  type: %s\n"</font>, obj-&gt;type_name);
+<a name="line73"> 73: </a>  } <font color="#4169E1">else</font> {
+<a name="line74"> 74: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  type not yet set\n"</font>);
+<a name="line75"> 75: </a>  }
+<a name="line76"> 76: </a>  <font color="#4169E1">return</font> 0;
+<a name="line77"> 77: </a>}
+
+<a name="line79"> 79: </a><font color="#B22222">/*@C</font>
+<a name="line80"> 80: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscObjectName.html">PetscObjectName</a> - Gives an object a name if it does not have one</font>
+
+<a name="line82"> 82: </a><font color="#B22222">   Collective</font>
+
+<a name="line84"> 84: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line85"> 85: </a><font color="#B22222">.  obj - the Petsc variable</font>
+<a name="line86"> 86: </a><font color="#B22222">         Thus must be cast with a (`<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>`), for example,</font>
+<a name="line87"> 87: </a><font color="#B22222">         `<a href="../../../docs/manualpages/Sys/PetscObjectName.html">PetscObjectName</a>`((`<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>`)mat,name);</font>
+
+<a name="line89"> 89: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line91"> 91: </a><font color="#B22222">   Notes:</font>
+<a name="line92"> 92: </a><font color="#B22222">   This is used in a small number of places when an object NEEDS a name, for example when it is saved to MATLAB with that variable name.</font>
+
+<a name="line94"> 94: </a><font color="#B22222">   Use `<a href="../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>()` to set the name of an object to what you want. The SAWs viewer requires that no two published objects</font>
+<a name="line95"> 95: </a><font color="#B22222">   share the same name.</font>
+
+<a name="line97"> 97: </a><font color="#B22222">   Developer Note:</font>
+<a name="line98"> 98: </a><font color="#B22222">   This needs to generate the exact same string on all ranks that share the object. The current algorithm may not always work.</font>
+
+<a name="line100">100: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>()`, `<a href="../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>()`</font>
+<a name="line101">101: </a><font color="#B22222">@*/</font>
+<a name="line102">102: </a><strong><font color="#4169E1"><a name="PetscObjectName"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscObjectName.html">PetscObjectName</a>(<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> obj)</font></strong>
+<a name="line103">103: </a>{
+<a name="line104">104: </a>  PetscCommCounter *counter;
+<a name="line105">105: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>       flg;
+<a name="line106">106: </a>  char              name[64];
+
+<a name="line109">109: </a>  <font color="#4169E1">if</font> (!obj-&gt;name) {
+<a name="line110">110: </a>    <font color="#4169E1">union</font>
+<a name="line111">111: </a>    {
+<a name="line112">112: </a>      <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm;
+<a name="line113">113: </a>      void    *ptr;
+<a name="line114">114: </a>      char     raw[<font color="#4169E1">sizeof</font>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>)];
+<a name="line115">115: </a>    } ucomm;
+<a name="line116">116: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(obj-&gt;comm, Petsc_Counter_keyval, (void *)&amp;counter, &amp;flg);
+<a name="line118">118: </a>    ucomm.ptr  = NULL;
+<a name="line119">119: </a>    ucomm.comm = obj-&gt;comm;
+<a name="line120">120: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(ucomm.raw, <font color="#4169E1">sizeof</font>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>), MPI_BYTE, 0, obj-&gt;comm);
+<a name="line121">121: </a>    <font color="#B22222">/* If the union has extra bytes, their value is implementation-dependent, but they will normally be what we set last</font>
+<a name="line122">122: </a><font color="#B22222">     * in 'ucomm.ptr = NULL'.  This output is always implementation-defined (and varies from run to run) so the union</font>
+<a name="line123">123: </a><font color="#B22222">     * abuse acceptable. */</font>
+<a name="line124">124: </a>    <a href="../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(name, 64, <font color="#666666">"%s_%p_%"</font> PetscInt_FMT, obj-&gt;class_name, ucomm.ptr, counter-&gt;namecount++);
+<a name="line125">125: </a>    <a href="../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(name, &amp;obj-&gt;name);
+<a name="line126">126: </a>  }
+<a name="line127">127: </a>  <font color="#4169E1">return</font> 0;
+<a name="line128">128: </a>}
+
+<a name="line130">130: </a><strong><font color="#4169E1"><a name="PetscObjectChangeTypeName"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscObjectChangeTypeName(<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> obj, const char type_name[])</font></strong>
+<a name="line131">131: </a>{
+<a name="line133">133: </a>  <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(obj-&gt;type_name);
+<a name="line134">134: </a>  <a href="../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(type_name, &amp;obj-&gt;type_name);
+<a name="line135">135: </a>  <font color="#B22222">/* Clear all the old subtype callbacks so they can't accidentally be called (shouldn't happen anyway) */</font>
+<a name="line136">136: </a>  <a href="../../../docs/manualpages/Sys/PetscMemzero.html">PetscMemzero</a>(obj-&gt;fortrancallback[PETSC_FORTRAN_CALLBACK_SUBTYPE], obj-&gt;num_fortrancallback[PETSC_FORTRAN_CALLBACK_SUBTYPE] * <font color="#4169E1">sizeof</font>(PetscFortranCallback));
+<a name="line137">137: </a>  <font color="#4169E1">return</font> 0;
+<a name="line138">138: </a>}
+</pre>
+</body>
+
+</html>
