@@ -1,0 +1,36 @@
+# NORM_2
+the two norm, ||v|| = sqrt(sum_i |v_i|^2) (vectors only) 
+
+
+## See Also
+ `NormType`, `MatNorm()`, `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `NORM_1`, `NORM_FROBENIUS`,
+`NORM_INFINITY`, `NORM_1_AND_2`
+
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscvec.h.html#NORM_2">include/petscvec.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex1.c.html">src/vec/vec/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex11.c.html">src/vec/vec/tutorials/ex11.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex11f.F90.html">src/vec/vec/tutorials/ex11f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex11f90.F90.html">src/vec/vec/tutorials/ex11f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex1f.F90.html">src/vec/vec/tutorials/ex1f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex1f90.F90.html">src/vec/vec/tutorials/ex1f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex20f90.F90.html">src/vec/vec/tutorials/ex20f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/performance.c.html">src/vec/vec/tutorials/performance.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex10.c.html">src/mat/tutorials/ex10.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex2.c.html">src/mat/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex3.c.html">src/mat/tutorials/ex3.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscvec.h)
+
+
+[Index of all Vec routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

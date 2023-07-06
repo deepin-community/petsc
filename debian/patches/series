@@ -1,0 +1,14 @@
+build-no-rpath.patch
+docs.patch
+lib-versions.patch
+sprng-2.patch
+clean-no-double-colon.patch
+#mumps.patch
+nocleanup.patch
+soname_extension
+hurd.patch
+label_tests.patch
+downloaded_SAWs.js.patch
+configure_python3.patch
+petscmatmod_split.patch
+ptscotch_without_bison_MR5787.diff

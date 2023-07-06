@@ -1,0 +1,44 @@
+# DMPlexInterpolatePointSF
+Insert interpolated points in the overlap into the PointSF in parallel, following local interpolation 
+## Synopsis
+```
+#include "petscdmplex.h"   
+PetscErrorCode DMPlexInterpolatePointSF(DM dm, PetscSF pointSF)
+```
+Collective on dm
+
+
+## Input Parameters
+
+- ***dm      -*** The interpolated DM
+- ***pointSF -*** The initial SF without interpolated points
+
+
+
+## Output Parameter
+
+- ***pointSF -*** The SF including interpolated points
+
+
+
+
+Note: All debugging for this process can be turned on with the options: -dm_interp_pre_view -petscsf_interp_pre_view -petscsection_interp_candidate_view -petscsection_interp_candidate_remote_view -petscsection_interp_claim_view -petscsf_interp_pre_view -dmplex_interp_debug
+
+
+## See Also
+ `DMPlexInterpolate()`, `DMPlexUninterpolate()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/plexinterpolate.c.html#DMPlexInterpolatePointSF">src/dm/impls/plex/plexinterpolate.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/plex/plexinterpolate.c)
+
+
+[Index of all DMPlex routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

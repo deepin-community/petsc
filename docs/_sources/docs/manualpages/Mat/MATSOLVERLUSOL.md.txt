@@ -1,0 +1,26 @@
+# MATSOLVERLUSOL
+"lusol" - Provides direct solvers, LU, for sequential matrices via the external package LUSOL. If LUSOL is installed (see the manual for
+instructions on how to declare the existence of external packages),
+
+Works with `MATSEQAIJ` matrices
+
+
+
+
+## See Also
+ `PCLU`, `PCFactorSetMatSolverType()`, `MatSolverType`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/aij/seq/lusol/lusol.c.html#MATSOLVERLUSOL">src/mat/impls/aij/seq/lusol/lusol.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/aij/seq/lusol/lusol.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

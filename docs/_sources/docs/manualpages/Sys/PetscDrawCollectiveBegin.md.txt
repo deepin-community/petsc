@@ -1,0 +1,50 @@
+# PetscDrawCollectiveBegin
+Begins a set of draw operations Collective
+
+
+## Synopsis
+```
+#include <petscdraw.h>
+PetscErrorCode PetscDrawCollectiveBegin(PetscDraw draw)
+```
+Collective
+
+
+## Input Parameters
+
+- ***draw -*** the draw object
+
+
+
+## Notes
+This is a macro that handles its own error checking, it does not return an error code.
+
+The set of operations needs to be ended by a call to `PetscDrawCollectiveEnd()`.
+
+X windows draw operations that are enclosed by these routines handle correctly resizing or closing of
+the window without crashing the program.
+
+
+## Developer Notes
+This only applies to X windows and so should have a more specific name such as `PetscDrawXCollectiveBegin()`
+
+
+
+
+## See Also
+ `PetscDrawCollectiveEnd()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscdraw.h.html#PetscDrawCollectiveBegin">include/petscdraw.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscdraw.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,40 @@
+# PetscSectionSetNumFields
+Sets the number of fields in a `PetscSection` 
+## Synopsis
+```
+#include "petscsection.h"   
+PetscErrorCode PetscSectionSetNumFields(PetscSection s, PetscInt numFields)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***s -*** the PetscSection
+- ***numFields -*** the number of fields
+
+
+
+
+
+## See Also
+ [PetscSection](sec_petscsection), `PetscSection()`, `PetscSectionGetNumFields()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/section/interface/section.c.html#PetscSectionSetNumFields">src/vec/is/section/interface/section.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/tutorials/ex7.c.html">src/dm/impls/plex/tutorials/ex7.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex11_sa.c.html">src/ts/tutorials/ex11_sa.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/is/section/interface/section.c)
+
+
+[Index of all PetscSection routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

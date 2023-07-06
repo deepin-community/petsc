@@ -1,0 +1,6 @@
+#! /bin/sh
+for common in include/petsc lib/petsc/bin share; do
+  echo usr/share/petsc/${PETSC_SONAME_VERSION}/${common} ${PETSC64_COMPLEX_DEBUG_DIR_PREFIX}/${common}
+done
+echo ${PETSC64_COMPLEX_DEBUG_DIR_PREFIX}/lib/pkgconfig/petsc.pc ${PETSC64_COMPLEX_DEBUG_DIR_PREFIX}/lib/pkgconfig/petsc64.pc
+echo ${PETSC64_COMPLEX_DEBUG_DIR_PREFIX}/lib/pkgconfig/PETSc.pc ${PETSC64_COMPLEX_DEBUG_DIR_PREFIX}/lib/pkgconfig/PETSc64.pc

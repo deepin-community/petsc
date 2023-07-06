@@ -1,0 +1,41 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/plex/plexcoarsen.c">Actual source code: plexcoarsen.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:24+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petsc/private/dmpleximpl.h.html">&lt;petsc/private/dmpleximpl.h&gt;</A>
+
+<a name="line3">  3: </a><strong><font color="#4169E1"><a name="DMCoarsen_Plex"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCoarsen_Plex(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *dmCoarsened)</font></strong>
+<a name="line4">  4: </a>{
+<a name="line5">  5: </a>  <font color="#4169E1">if</font> (!dm-&gt;coarseMesh) DMPlexCoarsen_Internal(dm, NULL, NULL, NULL, &amp;dm-&gt;coarseMesh);
+<a name="line6">  6: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm-&gt;coarseMesh);
+<a name="line7">  7: </a>  *dmCoarsened = dm-&gt;coarseMesh;
+<a name="line8">  8: </a>  <font color="#4169E1">return</font> 0;
+<a name="line9">  9: </a>}
+
+<a name="line11"> 11: </a><strong><font color="#4169E1"><a name="DMCoarsenHierarchy_Plex"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCoarsenHierarchy_Plex(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nlevels, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> dmCoarsened[])</font></strong>
+<a name="line12"> 12: </a>{
+<a name="line13"> 13: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>        rdm = dm;
+<a name="line14"> 14: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  c;
+<a name="line15"> 15: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> localized;
+
+<a name="line17"> 17: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinatesLocalized.html">DMGetCoordinatesLocalized</a>(dm, &amp;localized);
+<a name="line18"> 18: </a>  <font color="#4169E1">for</font> (c = nlevels - 1; c &gt;= 0; --c) {
+<a name="line19"> 19: </a>    <a href="../../../../docs/manualpages/DM/DMCoarsen.html">DMCoarsen</a>(rdm, <a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), &amp;dmCoarsened[c]);
+<a name="line20"> 20: </a>    <a href="../../../../docs/manualpages/DM/DMCopyDisc.html">DMCopyDisc</a>(rdm, dmCoarsened[c]);
+<a name="line21"> 21: </a>    <font color="#4169E1">if</font> (localized) <a href="../../../../docs/manualpages/DM/DMLocalizeCoordinates.html">DMLocalizeCoordinates</a>(dmCoarsened[c]);
+<a name="line22"> 22: </a>    <a href="../../../../docs/manualpages/DM/DMSetCoarseDM.html">DMSetCoarseDM</a>(rdm, dmCoarsened[c]);
+<a name="line23"> 23: </a>    rdm = dmCoarsened[c];
+<a name="line24"> 24: </a>  }
+<a name="line25"> 25: </a>  <font color="#4169E1">return</font> 0;
+<a name="line26"> 26: </a>}
+</pre>
+</body>
+
+</html>

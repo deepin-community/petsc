@@ -1,15 +1,517 @@
-Source: template-repository
-Section: unknown
+Source: petsc
+Section: devel
 Priority: optional
-Maintainer: Tsic404 <liuheng@deepin.org>
-Build-Depends: debhelper (>= 11)
-Standards-Version: 4.1.3
-Homepage: https://github.com/deepin-community/template-repository
-#Vcs-Browser: https://salsa.debian.org/debian/deepin-community-template-repository
-#Vcs-Git: https://salsa.debian.org/debian/deepin-community-template-repository.git
+Maintainer: Debian Science Maintainers <debian-science-maintainers@lists.alioth.debian.org>
+Uploaders: "Adam C. Powell, IV" <hazelsct@debian.org>, Drew Parsons <dparsons@debian.org>
+Standards-Version: 4.6.2
+Build-Depends: debhelper-compat (= 13), python3, gfortran,
+ pkg-config, dh-python,
+ dh-fortran-mod,
+ gdb,
+ mpi-default-dev (>= 1.0.2),
+ ocl-icd-opencl-dev | opencl-dev,
+ libblas-dev | libopenblas-dev | libatlas-base-dev | libblas.so,
+ liblapack-dev | libopenblas-dev | libatlas-base-dev | liblapack.so,
+ libsuitesparse-dev (>= 1:5.6.0),
+ libhypre-dev (>= 2.21.0),
+ libhypre64m-dev (>= 2.21.0) [amd64 arm64 mips64el ppc64el s390x alpha ia64 ppc64 riscv64 sparc64],
+ libptscotch-dev,
+ libhdf5-mpi-dev (>= 1.10.6+repack-1),
+ libscalapack-mpi-dev,
+ libmumps-dev (>= 5.2.1~), libmumps64-dev,
+ libfftw3-dev, libfftw3-mpi-dev, libssl-dev,
+ libsuperlu-dev (>= 5.2.1), libsuperlu-dist-dev (>= 6.1.1),
+ libtrilinos-ml-dev [amd64 arm64 ppc64el s390x ppc64],
+ libtrilinos-zoltan-dev [amd64 arm64 ppc64el s390x ppc64],
+ libx11-dev,
+ libyaml-dev,
+ valgrind-mpi [amd64 arm64 armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64],
+ sphinx-common | python3-sphinx | dh-sequence-sphinxdoc
+Build-Depends-Indep: libjs-mathjax,
+ libjs-jquery, libjs-jquery-ui
+Vcs-Git: https://salsa.debian.org/science-team/petsc.git
+Vcs-Browser: https://salsa.debian.org/science-team/petsc
+Homepage: http://www.mcs.anl.gov/petsc
 
-Package: template-repository
+Package: petsc-dev
+Architecture: all
+Multi-Arch: foreign
+Section: libdevel
+Depends: libpetsc-real-dev, ${misc:Depends}
+Description: Virtual package depending on latest PETSc development package
+ PETSc is the "Portable Extensible Toolkit for Scientific Computation", a suite
+ of data structures and routines for the scalable (parallel) solution of
+ scientific applications modeled by partial differential equations.  It employs
+ the MPI standard for all message-passing communication.  Several sample
+ scientific applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This metapackage installs libpetsc-real-dev, which will always depend
+ on the most recent version of PETSc with real number support. So if
+ you install it then you will get upgrades automatically.
+
+Package: libpetsc-real-dev
+Architecture: all
+Multi-Arch: foreign
+Section: libdevel
+Depends: libpetsc-real3.18-dev, ${misc:Depends}
+Description: Virtual package depending on latest PETSc development package
+ PETSc is the "Portable Extensible Toolkit for Scientific Computation", a suite
+ of data structures and routines for the scalable (parallel) solution of
+ scientific applications modeled by partial differential equations.  It employs
+ the MPI standard for all message-passing communication.  Several sample
+ scientific applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This is a dummy package which depends on the most recent version of
+ libpetsc-realX-dev with real number support (X=version).
+
+Package: libpetsc-complex-dev
+Architecture: all
+Multi-Arch: foreign
+Section: libdevel
+Depends: libpetsc-complex3.18-dev, ${misc:Depends}
+Description: Virtual package depending on latest PETSc development package
+ PETSc is the "Portable Extensible Toolkit for Scientific Computation", a suite
+ of data structures and routines for the scalable (parallel) solution of
+ scientific applications modeled by partial differential equations.  It employs
+ the MPI standard for all message-passing communication.  Several sample
+ scientific applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This is a dummy package which depends on the most recent version of
+ libpetsc-complexX-dev with complex number support (X=version).
+
+Package: libpetsc-real3.18-dev
+Multi-Arch: same
 Architecture: any
+Section: libdevel
+Depends: libpetsc-real3.18 (= ${binary:Version}),
+ libpetsc3.18-dev-common (= ${source:Version}),
+ ${MPI:Depends},
+ libhypre-dev (>= 2.15.1),
+ libmumps-dev,
+ libtrilinos-ml-dev [amd64 arm64 ppc64el s390x ppc64],
+ libtrilinos-zoltan-dev [amd64 arm64 ppc64el s390x ppc64],
+ gfortran,
+ valgrind-mpi [amd64 arm64 armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64],
+ ${misc:Depends}, python3, ${python3:Depends}
+Conflicts: libpetsc3.6.3-dev (<< 3.6.3.dfsg2-2), libpetsc-complex-3.6.3-dev (<< 3.6.3.dfsg2-2),
+ libpetsc3.6.2-dev (<= 3.6.2.dfsg1-3), libpetsc-complex-3.6.2-dev (<= 3.6.2.dfsg1-3)
+Recommends: libpetsc3.18-dev-examples, ksh | mksh | pdksh | zsh
+Suggests: petsc-dev, libpetsc-real3.18-dbg (= ${binary:Version}), petsc3.18-doc, libluminate-dev
+Description: Static libraries, shared links, header files for PETSc
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package provides the development files for building applications
+ using PETSc 3.18 with real numbers.
+
+Package: libpetsc-real3.18
+Architecture: any
+Multi-Arch: same
+Section: libs
+Provides: libpetsc3.18
+Pre-Depends: ${misc:Pre-Depends}
 Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: <insert up to 60 chars description>
- <insert long description, indented with spaces>
+Conflicts: libpetsc3.6 (<< 3.6.2.dfsg1-4)
+Breaks: libpetsc-real3.10, libslepc-real3.10, libpetsc3.10-dev-common, libpetsc3.10-dev-examples
+Replaces: libpetsc3.6 (<< 3.6.2.dfsg1-4)
+Description: Shared libraries for version 3.18 of PETSc
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package contains the PETSc 3.18 shared library for real numbers.
+ .
+ It provides soname libpetsc-real3.18
+
+Package: libpetsc3.18-dev-common
+Architecture: all
+Multi-Arch: foreign
+Section: libdevel
+Depends: libjs-jquery, libjs-jquery-ui,
+ libjs-mathjax,
+ libblas-dev | libopenblas-dev | libatlas-base-dev | libblas.so,
+ liblapack-dev | libopenblas-dev | libatlas-base-dev | liblapack.so,
+ libsuitesparse-dev,
+ libptscotch-dev, libscalapack-mpi-dev,
+ libfftw3-dev, libfftw3-mpi-dev, libssl-dev,
+ ocl-icd-opencl-dev | opencl-dev,
+ libhdf5-mpi-dev (>= 1.8.8),
+ libsuperlu-dev (>= 5.2), libsuperlu-dist-dev,
+ libx11-dev,
+ libyaml-dev,
+ ${misc:Depends}, ${python3:Depends},
+ ${sphinxdoc:Depends}
+Recommends: libpetsc-real3.18-dev | libpetsc-complex3.18-dev
+Description: Common header and support dev files for PETSc
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package provides header and other support files common to the
+ various dev packages (with real or complex number support) for PETSc 3.18.
+
+Package: libpetsc3.18-dev-examples
+Architecture: all
+Multi-Arch: foreign
+Section: libdevel
+Depends: ${misc:Depends}, ${python3:Depends},
+ libjs-mathjax
+Recommends: ksh | mksh | pdksh | zsh,
+ libpetsc-real3.18-dev | libpetsc-complex3.18-dev | libpetsc-real3.18-dbg | libpetsc-complex3.18-dbg
+Suggests: petsc3.18-doc
+Description: Static libraries, shared links, header files for PETSc
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package provides example, test, and tutorial scripts for PETSc 3.18.
+
+Package: libpetsc-real3.18-dbg
+Architecture: any
+Multi-Arch: same
+Section: debug
+Pre-Depends: ${misc:Pre-Depends}
+Depends: libpetsc-real3.18-dev (= ${binary:Version}),
+ libpetsc3.18-dev-common (= ${source:Version}),
+ libtrilinos-ml-dev [amd64 arm64 ppc64el s390x ppc64],
+ libtrilinos-zoltan-dev [amd64 arm64 ppc64el s390x ppc64],
+ ${misc:Depends}, ${shlibs:Depends},
+ python3, ${python3:Depends}
+Recommends: libpetsc3.18-dev-examples, ksh | mksh | pdksh | zsh
+Provides: petsc3.18-dbg
+Description: Debugging libraries for PETSc
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package provides the development files and debugging libraries for
+ debugging applications using PETSc 3.18 with real numbers.
+ .
+ Libraries include unstripped symbols, but this package is also built with
+ internal PETSc debugging activated.
+
+Package: petsc3.18-doc
+Architecture: all
+Multi-Arch: foreign
+Section: doc
+Depends: sphinx-common, ${misc:Depends}, ${sphinxdoc:Depends}
+Suggests: libpetsc-real3.18-dev (= ${binary:Version}), illuminator-doc
+Description: Documentation and examples for PETSc
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package contains documentation for developing with PETSc 3.18.
+
+Package: libpetsc-complex3.18-dev
+Architecture: any
+Multi-Arch: same
+Section: libdevel
+Depends: libpetsc-complex3.18 (= ${binary:Version}),
+ libpetsc3.18-dev-common (= ${source:Version}),
+ ${MPI:Depends},
+ libmumps-dev,
+ libtrilinos-zoltan-dev [amd64 arm64 ppc64el s390x ppc64],
+ gfortran,
+ valgrind-mpi [amd64 arm64 armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64],
+ ${misc:Depends}, python3, ${python3:Depends}
+Conflicts: libpetsc-complex-3.6.3-dev (<< 3.6.3.dfsg2-2), libpetsc3.6.3-dev (<< 3.6.3.dfsg2-2),
+ libpetsc3.6.2-dev (<= 3.6.2.dfsg1-3), libpetsc-complex-3.6.2-dev (<= 3.6.2.dfsg1-3)
+Recommends: libpetsc3.18-dev-examples, ksh | mksh | pdksh | zsh
+Suggests: petsc-dev, libpetsc-complex3.18-dbg (= ${binary:Version}), petsc3.18-doc, libluminate-dev
+Description: Static libraries, shared links, header files for PETSc
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package provides the development files for building applications
+ using PETSc 3.18 with support for complex numbers.
+ .
+ Note HYPRE is not supported with PETSc complex.
+
+Package: libpetsc-complex3.18
+Architecture: any
+Multi-Arch: same
+Section: libs
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Conflicts: libpetsc-complex-3.6 (<< 3.6.2.dfsg1-4)
+Breaks: libpetsc-complex3.10, libslepc-complex3.10, libpetsc3.10-dev-common, libpetsc3.10-dev-examples
+Replaces: libpetsc-complex-3.6 (<< 3.6.2.dfsg1-4)
+Description: Shared libraries for version 3.18 of PETSc with Complex Numbers
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package contains the PETSc 3.18 shared library, supporting
+ complex numbers.
+ .
+ It provides soname libpetsc-complex3.18
+
+Package: libpetsc-complex3.18-dbg
+Architecture: any
+Multi-Arch: same
+Section: debug
+Pre-Depends: ${misc:Pre-Depends}
+Depends: libpetsc-complex3.18-dev (= ${binary:Version}),
+ libpetsc3.18-dev-common (= ${source:Version}),
+ libtrilinos-zoltan-dev [amd64 arm64 ppc64el s390x ppc64],
+ ${misc:Depends}, ${shlibs:Depends},
+ python3, ${python3:Depends}
+Recommends: libpetsc3.18-dev-examples, ksh | mksh | pdksh | zsh
+Provides: petsc-complex3.18-dbg
+Description: Debugging libraries for PETSc
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package provides the development files and debugging libraries for
+ debugging applications using PETSc 3.18 with complex number support.
+ .
+ Libraries include unstripped symbols, but this package is also built with
+ internal PETSc debugging activated.
+
+Package: petsc64-dev
+Architecture: all
+Multi-Arch: foreign
+Section: libdevel
+Depends: libpetsc64-real-dev, ${misc:Depends}
+Description: Virtual package depending on latest 64-bit PETSc development package
+ PETSc is the "Portable Extensible Toolkit for Scientific Computation", a suite
+ of data structures and routines for the scalable (parallel) solution of
+ scientific applications modeled by partial differential equations.  It employs
+ the MPI standard for all message-passing communication.  Several sample
+ scientific applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This metapackage installs libpetsc64-real-dev, which will always
+ depend on the most recent version of PETSc with real number support
+ and 64-bit indexing. So if you install it then you will get upgrades
+ automatically.
+
+Package: libpetsc64-real-dev
+Architecture: all
+Multi-Arch: foreign
+Section: libdevel
+Depends: libpetsc64-real3.18-dev, ${misc:Depends}
+Description: Virtual package depending on latest 64-bit PETSc development package
+ PETSc is the "Portable Extensible Toolkit for Scientific Computation", a suite
+ of data structures and routines for the scalable (parallel) solution of
+ scientific applications modeled by partial differential equations.  It employs
+ the MPI standard for all message-passing communication.  Several sample
+ scientific applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This is a dummy package which depends on the most recent version of
+ libpetsc64-realX-dev with real number support and 64-bit indexing
+ (X=version).
+
+Package: libpetsc64-complex-dev
+Architecture: all
+Multi-Arch: foreign
+Section: libdevel
+Depends: libpetsc64-complex3.18-dev, ${misc:Depends}
+Description: Latest 64-bit PETSc development package with complex numbers
+ PETSc is the "Portable Extensible Toolkit for Scientific Computation", a suite
+ of data structures and routines for the scalable (parallel) solution of
+ scientific applications modeled by partial differential equations.  It employs
+ the MPI standard for all message-passing communication.  Several sample
+ scientific applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This is a dummy package which depends on the most recent version of
+ libpetsc64-complexX-dev with complex number support and 64-bit
+ indexing (X=version).
+
+Package: libpetsc64-real3.18-dev
+Multi-Arch: same
+Architecture: any
+Section: libdevel
+Depends: libpetsc64-real3.18 (= ${binary:Version}),
+ libpetsc3.18-dev-common (= ${source:Version}),
+ ${MPI:Depends},
+ libhypre64m-dev (>= 2.21.0) [amd64 arm64 mips64el ppc64el s390x alpha ia64 ppc64 riscv64 sparc64],
+ libmumps64-dev,
+ libtrilinos-zoltan-dev [amd64 arm64 ppc64el s390x ppc64],
+ gfortran,
+ valgrind-mpi [amd64 arm64 armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64],
+ ${misc:Depends}, python3, ${python3:Depends}
+Recommends: libpetsc3.18-dev-examples, ksh | mksh | pdksh | zsh
+Suggests: petsc64-dev, libpetsc64-real3.18-dbg (= ${binary:Version}), petsc3.18-doc, libluminate-dev
+Description: Static libraries, shared links, header files for 64-bit PETSc
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package provides the development files for building applications
+ using PETSc 3.18 with real numbers and 64-bit indexing.
+
+Package: libpetsc64-real3.18
+Architecture: any
+Multi-Arch: same
+Section: libs
+Provides: libpetsc64-3.18
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Shared libraries for version 3.18 of 64-bit PETSc
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package contains the PETSc 3.18 shared library for real numbers
+ and 64-bit indexing.
+ .
+ It provides soname libpetsc-real3.18
+
+Package: libpetsc64-real3.18-dbg
+Architecture: any
+Multi-Arch: same
+Section: debug
+Pre-Depends: ${misc:Pre-Depends}
+Depends: libpetsc-real3.18-dev (= ${binary:Version}),
+ libpetsc3.18-dev-common (= ${source:Version}),
+ libhypre64m-dev (>= 2.21.0) [amd64 arm64 mips64el ppc64el s390x alpha ia64 ppc64 riscv64 sparc64],
+ libtrilinos-zoltan-dev [amd64 arm64 ppc64el s390x ppc64],
+ ${misc:Depends}, ${shlibs:Depends},
+ python3, ${python3:Depends}
+Recommends: libpetsc3.18-dev-examples, ksh | mksh | pdksh | zsh
+Provides: petsc64-3.18-dbg
+Description: Debugging libraries for PETSc
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package provides the development files and debugging libraries for
+ debugging applications using PETSc 3.18 with real numbers and 64-bit indexing.
+ .
+ Libraries include unstripped symbols, but this package is also built with
+ internal PETSc debugging activated.
+
+Package: libpetsc64-complex3.18-dev
+Architecture: any
+Multi-Arch: same
+Section: libdevel
+Depends: libpetsc64-complex3.18 (= ${binary:Version}),
+ libpetsc3.18-dev-common (= ${source:Version}),
+ ${MPI:Depends},
+ libmumps64-dev,
+ libtrilinos-zoltan-dev [amd64 arm64 ppc64el s390x ppc64],
+ gfortran,
+ valgrind-mpi [amd64 arm64 armhf i386 mips64el mipsel ppc64el s390x powerpc ppc64],
+ ${misc:Depends}, python3, ${python3:Depends}
+Recommends: libpetsc3.18-dev-examples, ksh | mksh | pdksh | zsh
+Suggests: petsc64-dev, libpetsc64-complex3.18-dbg (= ${binary:Version}), petsc3.18-doc, libluminate-dev
+Description: Development files for 64-bit PETSc with complex numbers
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package provides the development files for building applications
+ using PETSc 3.18 with support for complex numbers and 64-bit
+ indexing.
+ .
+ Note HYPRE is not supported with PETSc complex.
+
+Package: libpetsc64-complex3.18
+Architecture: any
+Multi-Arch: same
+Section: libs
+Pre-Depends: ${misc:Pre-Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Shared libraries for version 3.18 of 64-bit PETSc with Complex Numbers
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package contains the PETSc 3.18 shared library, supporting
+ complex numbers and 64-bit indexing.
+ .
+ It provides soname libpetsc64-complex3.18
+
+Package: libpetsc64-complex3.18-dbg
+Architecture: any
+Multi-Arch: same
+Section: debug
+Pre-Depends: ${misc:Pre-Depends}
+Depends: libpetsc64-complex3.18-dev (= ${binary:Version}),
+ libpetsc3.18-dev-common (= ${source:Version}),
+ libtrilinos-zoltan-dev [amd64 arm64 ppc64el s390x ppc64],
+ ${misc:Depends}, ${shlibs:Depends},
+ python3, ${python3:Depends}
+Recommends: libpetsc3.18-dev-examples, ksh | mksh | pdksh | zsh
+Provides: petsc64-complex3.18-dbg
+Description: Debugging libraries for 64-bit PETSc with Complex Numbers
+ PETSc is the "Portable Extensible Toolkit for Scientific
+ Computation", a suite of data structures and routines for the
+ scalable (parallel) solution of scientific applications modeled by
+ partial differential equations.  It employs the MPI standard for all
+ message-passing communication.  Several sample scientific
+ applications, as well as various papers and talks, demonstrate the
+ features of the PETSc libraries.
+ .
+ This package provides the development files and debugging libraries
+ for debugging applications using PETSc 3.18 with complex number
+ support and 64-bit indexing.
+ .
+ Libraries include unstripped symbols, but this package is also built
+ with internal PETSc debugging activated.

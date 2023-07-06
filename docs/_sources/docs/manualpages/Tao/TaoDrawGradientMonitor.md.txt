@@ -1,0 +1,42 @@
+# TaoDrawGradientMonitor
+Plots the gradient at each iteration It can be turned on from the command line using the -tao_draw_gradient option 
+## Synopsis
+```
+#include "petsctao.h" 
+PetscErrorCode TaoDrawGradientMonitor(Tao tao, void *ctx)
+```
+Collective
+
+
+## Input Parameters
+
+- ***tao -*** the Tao context
+- ***ctx -*** `PetscViewer` context
+
+
+
+## Options Database Keys
+
+- ***-tao_draw_gradient -*** draw the gradient at each iteration
+
+
+
+
+
+## See Also
+ `TaoGradientMonitor()`, `TaoSetMonitor()`, `TaoDrawSolutionMonitor`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/interface/taosolver.c.html#TaoDrawGradientMonitor">src/tao/interface/taosolver.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/tao/interface/taosolver.c)
+
+
+[Index of all Tao routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

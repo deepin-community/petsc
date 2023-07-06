@@ -1,0 +1,69 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ksp/pc/impls/mat/pcmat.c">Actual source code: pcmat.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:57+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../../../../include/petsc/private/pcimpl.h.html">&lt;petsc/private/pcimpl.h&gt;</A>
+
+<a name="line4">  4: </a><strong><font color="#4169E1"><a name="PCApply_Mat"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCApply_Mat(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> y)</font></strong>
+<a name="line5">  5: </a>{
+<a name="line6">  6: </a>  <a href="../../../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(pc-&gt;pmat, x, y);
+<a name="line7">  7: </a>  <font color="#4169E1">return</font> 0;
+<a name="line8">  8: </a>}
+
+<a name="line10"> 10: </a><strong><font color="#4169E1"><a name="PCMatApply_Mat"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCMatApply_Mat(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> X, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> Y)</font></strong>
+<a name="line11"> 11: </a>{
+<a name="line12"> 12: </a>  <a href="../../../../../docs/manualpages/Mat/MatMatMult.html">MatMatMult</a>(pc-&gt;pmat, X, <a href="../../../../../docs/manualpages/Mat/MatReuse.html">MAT_REUSE_MATRIX</a>, <a href="../../../../../docs/manualpages/Sys/PETSC_DEFAULT.html">PETSC_DEFAULT</a>, &amp;Y);
+<a name="line13"> 13: </a>  <font color="#4169E1">return</font> 0;
+<a name="line14"> 14: </a>}
+
+<a name="line16"> 16: </a><strong><font color="#4169E1"><a name="PCApplyTranspose_Mat"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCApplyTranspose_Mat(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> y)</font></strong>
+<a name="line17"> 17: </a>{
+<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/Mat/MatMultTranspose.html">MatMultTranspose</a>(pc-&gt;pmat, x, y);
+<a name="line19"> 19: </a>  <font color="#4169E1">return</font> 0;
+<a name="line20"> 20: </a>}
+
+<a name="line22"> 22: </a><strong><font color="#4169E1"><a name="PCDestroy_Mat"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCDestroy_Mat(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line23"> 23: </a>{
+<a name="line24"> 24: </a>  <font color="#4169E1">return</font> 0;
+<a name="line25"> 25: </a>}
+
+<a name="line27"> 27: </a><font color="#B22222">/*MC</font>
+<a name="line28"> 28: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/PC/PCMAT.html">PCMAT</a> - A preconditioner obtained by multiplying by the preconditioner matrix supplied</font>
+<a name="line29"> 29: </a><font color="#B22222">             in `<a href="../../../../../docs/manualpages/PC/PCSetOperators.html">PCSetOperators</a>()` or `<a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>()`</font>
+
+<a name="line31"> 31: </a><font color="#B22222">   Note:</font>
+<a name="line32"> 32: </a><font color="#B22222">    This one is a little strange. One rarely has an explicit matrix that approximates the</font>
+<a name="line33"> 33: </a><font color="#B22222">         inverse of the matrix they wish to solve for.</font>
+
+<a name="line35"> 35: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line37"> 37: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/PC/PCCreate.html">PCCreate</a>()`, `<a href="../../../../../docs/manualpages/PC/PCSetType.html">PCSetType</a>()`, `<a href="../../../../../docs/manualpages/PC/PCType.html">PCType</a>`, `<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>`,</font>
+<a name="line38"> 38: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/PC/PCSHELL.html">PCSHELL</a>`</font>
+<a name="line39"> 39: </a><font color="#B22222">M*/</font>
+
+<a name="line41"> 41: </a><strong><font color="#4169E1"><a name="PCCreate_Mat"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCCreate_Mat(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line42"> 42: </a>{
+<a name="line43"> 43: </a>  pc-&gt;ops-&gt;apply               = PCApply_Mat;
+<a name="line44"> 44: </a>  pc-&gt;ops-&gt;matapply            = PCMatApply_Mat;
+<a name="line45"> 45: </a>  pc-&gt;ops-&gt;applytranspose      = PCApplyTranspose_Mat;
+<a name="line46"> 46: </a>  pc-&gt;ops-&gt;setup               = NULL;
+<a name="line47"> 47: </a>  pc-&gt;ops-&gt;destroy             = PCDestroy_Mat;
+<a name="line48"> 48: </a>  pc-&gt;ops-&gt;setfromoptions      = NULL;
+<a name="line49"> 49: </a>  pc-&gt;ops-&gt;view                = NULL;
+<a name="line50"> 50: </a>  pc-&gt;ops-&gt;applyrichardson     = NULL;
+<a name="line51"> 51: </a>  pc-&gt;ops-&gt;applysymmetricleft  = NULL;
+<a name="line52"> 52: </a>  pc-&gt;ops-&gt;applysymmetricright = NULL;
+<a name="line53"> 53: </a>  <font color="#4169E1">return</font> 0;
+<a name="line54"> 54: </a>}
+</pre>
+</body>
+
+</html>

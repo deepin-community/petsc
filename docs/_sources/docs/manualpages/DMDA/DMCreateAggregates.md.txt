@@ -1,0 +1,23 @@
+# DMCreateAggregates
+Deprecated, see DMDACreateAggregates. 
+## Synopsis
+```
+#include "petscdmda.h"   
+PetscErrorCode DMCreateAggregates(DM dac, DM daf, Mat *mat)
+```
+
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/da/dainterp.c.html#DMCreateAggregates">src/dm/impls/da/dainterp.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/da/dainterp.c)
+
+
+[Index of all DMDA routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

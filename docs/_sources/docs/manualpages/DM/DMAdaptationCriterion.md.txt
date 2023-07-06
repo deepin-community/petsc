@@ -1,0 +1,36 @@
+# DMAdaptationCriterion
+Describes the test used to decide whether to coarsen or refine parts of the mesh 
+## Synopsis
+```
+typedef enum {
+  DM_ADAPTATION_NONE,
+  DM_ADAPTATION_REFINE,
+  DM_ADAPTATION_LABEL,
+  DM_ADAPTATION_METRIC
+} DMAdaptationCriterion;
+```
+
+
+`DM_ADAPTATION_REFINE` will uniformly refine a mesh, much like grid sequencing. `DM_ADAPTATION_LABEL` will adapt
+the mesh based upon a label of the cells filled with `DMAdaptFlag` markers. `DM_ADAPTATION_METRIC` will try to
+mesh the manifold described by the input metric tensor uniformly. PETSc can also construct such a metric based
+upon an input primal or a gradient field.
+
+
+## See Also
+ `DMAdaptorSolve()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscdmtypes.h.html#DMAdaptationCriterion">include/petscdmtypes.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscdmtypes.h)
+
+
+[Index of all DM routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

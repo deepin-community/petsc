@@ -1,0 +1,52 @@
+# PetscSFSetType
+Set the `PetscSF` communication implementation 
+## Synopsis
+```
+#include "petscsf.h" 
+PetscErrorCode PetscSFSetType(PetscSF sf, PetscSFType type)
+```
+Collective
+
+
+## Input Parameters
+
+- ***sf -*** the `PetscSF` context
+- ***type -*** a known method
+
+
+```none
+    PETSCSFWINDOW - MPI-2/3 one-sided
+    PETSCSFBASIC - basic implementation using MPI-1 two-sided
+```
+
+
+
+## Options Database Key
+
+- ***-sf_type <type> -*** Sets the method; for example basic or window use -help for a list of available methods (for instance, window, basic, neighbor)
+
+
+
+
+
+## Notes
+See "include/petscsf.h" for available methods (for instance)
+
+
+## See Also
+ `PetscSFType`, `PetscSFCreate()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/sf/interface/sf.c.html#PetscSFSetType">src/vec/is/sf/interface/sf.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/is/sf/interface/sf.c)
+
+
+[Index of all PetscSF routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

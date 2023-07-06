@@ -1,0 +1,102 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/classes/random/impls/curand/curand.c">Actual source code: curand.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:52+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../../include/petsc/private/deviceimpl.h.html">&lt;petsc/private/deviceimpl.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../../../include/petsc/private/randomimpl.h.html">&lt;petsc/private/randomimpl.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="../../../../../../include/petscdevice_cuda.h.html">&lt;petscdevice_cuda.h&gt;</A>
+<a name="line4">  4: </a><font color="#A020F0">#include &lt;curand.h&gt;</font>
+
+<a name="line6">  6: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line7">  7: </a>  curandGenerator_t gen;
+<a name="line8">  8: </a>} PetscRandom_CURAND;
+
+<a name="line10"> 10: </a><strong><font color="#4169E1"><a name="PetscRandomSeed_CURAND"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscRandomSeed_CURAND(<a href="../../../../../../docs/manualpages/Sys/PetscRandom.html">PetscRandom</a> r)</font></strong>
+<a name="line11"> 11: </a>{
+<a name="line12"> 12: </a>  PetscRandom_CURAND *curand = (PetscRandom_CURAND *)r-&gt;data;
+
+<a name="line14"> 14: </a>  curandSetPseudoRandomGeneratorSeed(curand-&gt;gen, r-&gt;seed);
+<a name="line15"> 15: </a>  <font color="#4169E1">return</font> 0;
+<a name="line16"> 16: </a>}
+
+<a name="line18"> 18: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscRandomCurandScale_Private(<a href="../../../../../../docs/manualpages/Sys/PetscRandom.html">PetscRandom</a>, size_t, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)</font></strong>;
+
+<a name="line20"> 20: </a><strong><font color="#4169E1"><a name="PetscRandomGetValuesReal_CURAND"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscRandomGetValuesReal_CURAND(<a href="../../../../../../docs/manualpages/Sys/PetscRandom.html">PetscRandom</a> r, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *val)</font></strong>
+<a name="line21"> 21: </a>{
+<a name="line22"> 22: </a>  PetscRandom_CURAND *curand = (PetscRandom_CURAND *)r-&gt;data;
+<a name="line23"> 23: </a>  size_t              nn     = n &lt; 0 ? (size_t)(-2 * n) : n; <font color="#B22222">/* handle complex case */</font>
+
+<a name="line25"> 25: </a><font color="#A020F0">#if defined(PETSC_USE_REAL_SINGLE)</font>
+<a name="line26"> 26: </a>  curandGenerateUniform(curand-&gt;gen, val, nn);
+<a name="line27"> 27: </a><font color="#A020F0">#else</font>
+<a name="line28"> 28: </a>  curandGenerateUniformDouble(curand-&gt;gen, val, nn);
+<a name="line29"> 29: </a><font color="#A020F0">#endif</font>
+<a name="line30"> 30: </a>  <font color="#4169E1">if</font> (r-&gt;iset) PetscRandomCurandScale_Private(r, nn, val, (<a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)(n &lt; 0));
+<a name="line31"> 31: </a>  <font color="#4169E1">return</font> 0;
+<a name="line32"> 32: </a>}
+
+<a name="line34"> 34: </a><strong><font color="#4169E1"><a name="PetscRandomGetValues_CURAND"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscRandomGetValues_CURAND(<a href="../../../../../../docs/manualpages/Sys/PetscRandom.html">PetscRandom</a> r, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *val)</font></strong>
+<a name="line35"> 35: </a>{
+<a name="line36"> 36: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line37"> 37: </a>  <font color="#B22222">/* pass negative size to flag complex scaling (if needed) */</font>
+<a name="line38"> 38: </a>  PetscRandomGetValuesReal_CURAND(r, -n, (<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)val);
+<a name="line39"> 39: </a><font color="#A020F0">#else</font>
+<a name="line40"> 40: </a>  PetscRandomGetValuesReal_CURAND(r, n, val);
+<a name="line41"> 41: </a><font color="#A020F0">#endif</font>
+<a name="line42"> 42: </a>  <font color="#4169E1">return</font> 0;
+<a name="line43"> 43: </a>}
+
+<a name="line45"> 45: </a><strong><font color="#4169E1"><a name="PetscRandomDestroy_CURAND"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscRandomDestroy_CURAND(<a href="../../../../../../docs/manualpages/Sys/PetscRandom.html">PetscRandom</a> r)</font></strong>
+<a name="line46"> 46: </a>{
+<a name="line47"> 47: </a>  PetscRandom_CURAND *curand = (PetscRandom_CURAND *)r-&gt;data;
+
+<a name="line49"> 49: </a>  curandDestroyGenerator(curand-&gt;gen);
+<a name="line50"> 50: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(r-&gt;data);
+<a name="line51"> 51: </a>  <font color="#4169E1">return</font> 0;
+<a name="line52"> 52: </a>}
+
+<a name="line54"> 54: </a>static <font color="#4169E1">struct _PetscRandomOps</font> PetscRandomOps_Values = {
+<a name="line55"> 55: </a>  PetscDesignatedInitializer(seed, PetscRandomSeed_CURAND),
+<a name="line56"> 56: </a>  PetscDesignatedInitializer(getvalue, NULL),
+<a name="line57"> 57: </a>  PetscDesignatedInitializer(getvaluereal, NULL),
+<a name="line58"> 58: </a>  PetscDesignatedInitializer(getvalues, PetscRandomGetValues_CURAND),
+<a name="line59"> 59: </a>  PetscDesignatedInitializer(getvaluesreal, PetscRandomGetValuesReal_CURAND),
+<a name="line60"> 60: </a>  PetscDesignatedInitializer(destroy, PetscRandomDestroy_CURAND),
+<a name="line61"> 61: </a>};
+
+<a name="line63"> 63: </a><font color="#B22222">/*MC</font>
+<a name="line64"> 64: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Sys/PETSCCURAND.html">PETSCCURAND</a> - access to the CUDA random number generator from a `<a href="../../../../../../docs/manualpages/Sys/PetscRandom.html">PetscRandom</a>` object</font>
+
+<a name="line66"> 66: </a><font color="#B22222">  PETSc must be ./configure with the option --with-cuda to use this random number generator.</font>
+
+<a name="line68"> 68: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line70"> 70: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Sys/PetscRandomCreate.html">PetscRandomCreate</a>()`, `<a href="../../../../../../docs/manualpages/Sys/PetscRandomSetType.html">PetscRandomSetType</a>()`, `<a href="../../../../../../docs/manualpages/Sys/PetscRandomType.html">PetscRandomType</a>`</font>
+<a name="line71"> 71: </a><font color="#B22222">M*/</font>
+
+<a name="line73"> 73: </a><strong><font color="#4169E1"><a name="PetscRandomCreate_CURAND"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscRandomCreate_CURAND(<a href="../../../../../../docs/manualpages/Sys/PetscRandom.html">PetscRandom</a> r)</font></strong>
+<a name="line74"> 74: </a>{
+<a name="line75"> 75: </a>  PetscRandom_CURAND *curand;
+
+<a name="line77"> 77: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscDeviceInitialize.html">PetscDeviceInitialize</a>(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceType.html">PETSC_DEVICE_CUDA</a>);
+<a name="line78"> 78: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;curand);
+<a name="line79"> 79: </a>  curandCreateGenerator(&amp;curand-&gt;gen, CURAND_RNG_PSEUDO_DEFAULT);
+<a name="line80"> 80: </a>  <font color="#B22222">/* https://docs.nvidia.com/cuda/curand/host-api-overview.html#performance-notes2 */</font>
+<a name="line81"> 81: </a>  curandSetGeneratorOrdering(curand-&gt;gen, CURAND_ORDERING_PSEUDO_SEEDED);
+<a name="line82"> 82: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMemcpy.html">PetscMemcpy</a>(r-&gt;ops, &amp;PetscRandomOps_Values, <font color="#4169E1">sizeof</font>(PetscRandomOps_Values));
+<a name="line83"> 83: </a>  PetscObjectChangeTypeName((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)r, <a href="../../../../../../docs/manualpages/Sys/PETSCCURAND.html">PETSCCURAND</a>);
+<a name="line84"> 84: </a>  r-&gt;data = curand;
+<a name="line85"> 85: </a>  PetscRandomSeed_CURAND(r);
+<a name="line86"> 86: </a>  <font color="#4169E1">return</font> 0;
+<a name="line87"> 87: </a>}
+</pre>
+</body>
+
+</html>

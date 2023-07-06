@@ -1,0 +1,46 @@
+# KSPHPDDMPrecision
+Precision of Krylov bases used by `KSPHPDDM` 
+## Synopsis
+```
+typedef enum {
+  KSP_HPDDM_PRECISION_HALF      = 0,
+  KSP_HPDDM_PRECISION_SINGLE    = 1,
+  KSP_HPDDM_PRECISION_DOUBLE    = 2,
+  KSP_HPDDM_PRECISION_QUADRUPLE = 3
+} KSPHPDDMPrecision;
+```
+
+
+
+## Values
+```none
+`KSP_HPDDM_PRECISION_HALF`
+```
+```none
+`KSP_HPDDM_PRECISION_SINGLE` (default when PETSc is configured --with-precision=single)
+```
+```none
+`KSP_HPDDM_PRECISION_DOUBLE` (default when PETSc is configured --with-precision=double)
+```
+```none
+`KSP_HPDDM_PRECISION_QUADRUPLE` (default when PETSc is configured --with-precision=__float128)
+```
+
+
+## See Also
+ `KSPHPDDM`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscksp.h.html#KSPHPDDMPrecision">include/petscksp.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscksp.h)
+
+
+[Index of all KSP routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

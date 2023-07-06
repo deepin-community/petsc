@@ -1,0 +1,377 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ksp/pc/impls/tfs/comm.c">Actual source code: comm.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:57+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/***********************************comm.c*************************************</font>
+
+<a name="line4">  4: </a><font color="#B22222">Author: Henry M. Tufo III</font>
+
+<a name="line6">  6: </a><font color="#B22222">e-mail: hmt@cs.brown.edu</font>
+
+<a name="line8">  8: </a><font color="#B22222">snail-mail:</font>
+<a name="line9">  9: </a><font color="#B22222">Division of Applied Mathematics</font>
+<a name="line10"> 10: </a><font color="#B22222">Brown University</font>
+<a name="line11"> 11: </a><font color="#B22222">Providence, RI 02912</font>
+
+<a name="line13"> 13: </a><font color="#B22222">Last Modification:</font>
+<a name="line14"> 14: </a><font color="#B22222">11.21.97</font>
+<a name="line15"> 15: </a><font color="#B22222">***********************************comm.c*************************************/</font>
+<a name="line16"> 16: </a>#include <A href="tfs.h.html">&lt;../src/ksp/pc/impls/tfs/tfs.h&gt;</A>
+
+<a name="line18"> 18: </a><font color="#B22222">/* global program control variables - explicitly exported */</font>
+<a name="line19"> 19: </a><a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> PCTFS_my_id            = 0;
+<a name="line20"> 20: </a><a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> PCTFS_num_nodes        = 1;
+<a name="line21"> 21: </a><a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> PCTFS_floor_num_nodes  = 0;
+<a name="line22"> 22: </a><a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> PCTFS_i_log2_num_nodes = 0;
+
+<a name="line24"> 24: </a><font color="#B22222">/* global program control variables */</font>
+<a name="line25"> 25: </a>static <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> p_init = 0;
+<a name="line26"> 26: </a>static <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> modfl_num_nodes;
+<a name="line27"> 27: </a>static <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> edge_not_pow_2;
+
+<a name="line29"> 29: </a>static <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> edge_node[<font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>) * 32];
+
+<a name="line31"> 31: </a><font color="#B22222">/***********************************comm.c*************************************/</font>
+<a name="line32"> 32: </a><strong><font color="#4169E1"><a name="PCTFS_comm_init"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCTFS_comm_init(void)</font></strong>
+<a name="line33"> 33: </a>{
+<a name="line34"> 34: </a>  <font color="#4169E1">if</font> (p_init++) <font color="#4169E1">return</font> 0;
+
+<a name="line36"> 36: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(MPI_COMM_WORLD, &amp;PCTFS_num_nodes);
+<a name="line37"> 37: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(MPI_COMM_WORLD, &amp;PCTFS_my_id);
+
+
+<a name="line41"> 41: </a>  PCTFS_ivec_zero((<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)edge_node, <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>) * 32);
+
+<a name="line43"> 43: </a>  PCTFS_floor_num_nodes  = 1;
+<a name="line44"> 44: </a>  PCTFS_i_log2_num_nodes = modfl_num_nodes = 0;
+<a name="line45"> 45: </a>  <font color="#4169E1">while</font> (PCTFS_floor_num_nodes &lt;= PCTFS_num_nodes) {
+<a name="line46"> 46: </a>    edge_node[PCTFS_i_log2_num_nodes] = PCTFS_my_id ^ PCTFS_floor_num_nodes;
+<a name="line47"> 47: </a>    PCTFS_floor_num_nodes &lt;&lt;= 1;
+<a name="line48"> 48: </a>    PCTFS_i_log2_num_nodes++;
+<a name="line49"> 49: </a>  }
+
+<a name="line51"> 51: </a>  PCTFS_i_log2_num_nodes--;
+<a name="line52"> 52: </a>  PCTFS_floor_num_nodes &gt;&gt;= 1;
+<a name="line53"> 53: </a>  modfl_num_nodes = (PCTFS_num_nodes - PCTFS_floor_num_nodes);
+
+<a name="line55"> 55: </a>  <font color="#4169E1">if</font> ((PCTFS_my_id &gt; 0) &amp;&amp; (PCTFS_my_id &lt;= modfl_num_nodes)) edge_not_pow_2 = ((PCTFS_my_id | PCTFS_floor_num_nodes) - 1);
+<a name="line56"> 56: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (PCTFS_my_id &gt;= PCTFS_floor_num_nodes) edge_not_pow_2 = ((PCTFS_my_id ^ PCTFS_floor_num_nodes) + 1);
+<a name="line57"> 57: </a>  <font color="#4169E1">else</font> edge_not_pow_2 = 0;
+<a name="line58"> 58: </a>  <font color="#4169E1">return</font> 0;
+<a name="line59"> 59: </a>}
+
+<a name="line61"> 61: </a><font color="#B22222">/***********************************comm.c*************************************/</font>
+<a name="line62"> 62: </a><strong><font color="#4169E1"><a name="PCTFS_giop"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCTFS_giop(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *vals, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *work, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *oprs)</font></strong>
+<a name="line63"> 63: </a>{
+<a name="line64"> 64: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   mask, edge;
+<a name="line65"> 65: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   type, dest;
+<a name="line66"> 66: </a>  vfp        fp;
+<a name="line67"> 67: </a>  MPI_Status status;
+
+<a name="line69"> 69: </a>  <font color="#B22222">/* ok ... should have some data, work, and operator(s) */</font>
+
+<a name="line72"> 72: </a>  <font color="#B22222">/* non-uniform should have at least two entries */</font>
+
+<a name="line75"> 75: </a>  <font color="#B22222">/* check to make sure comm package has been initialized */</font>
+<a name="line76"> 76: </a>  <font color="#4169E1">if</font> (!p_init) PCTFS_comm_init();
+
+<a name="line78"> 78: </a>  <font color="#B22222">/* if there's nothing to do return */</font>
+<a name="line79"> 79: </a>  <font color="#4169E1">if</font> ((PCTFS_num_nodes &lt; 2) || (!n)) <font color="#4169E1">return</font> 0;
+
+<a name="line81"> 81: </a>  <font color="#B22222">/* a negative number if items to send ==&gt; fatal */</font>
+
+<a name="line84"> 84: </a>  <font color="#B22222">/* advance to list of n operations for custom */</font>
+<a name="line85"> 85: </a>  <font color="#4169E1">if</font> ((type = oprs[0]) == NON_UNIFORM) oprs++;
+
+<a name="line87"> 87: </a>  <font color="#B22222">/* major league hack */</font>
+
+<a name="line90"> 90: </a>  <font color="#B22222">/* all msgs will be of the same length */</font>
+<a name="line91"> 91: </a>  <font color="#B22222">/* if not a hypercube must colapse partial dim */</font>
+<a name="line92"> 92: </a>  <font color="#4169E1">if</font> (edge_not_pow_2) {
+<a name="line93"> 93: </a>    <font color="#4169E1">if</font> (PCTFS_my_id &gt;= PCTFS_floor_num_nodes) {
+<a name="line94"> 94: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, edge_not_pow_2, MSGTAG0 + PCTFS_my_id, MPI_COMM_WORLD);
+<a name="line95"> 95: </a>    } <font color="#4169E1">else</font> {
+<a name="line96"> 96: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(work, n, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_ANY_SOURCE, MSGTAG0 + edge_not_pow_2, MPI_COMM_WORLD, &amp;status);
+<a name="line97"> 97: </a>      (*fp)(vals, work, n, oprs);
+<a name="line98"> 98: </a>    }
+<a name="line99"> 99: </a>  }
+
+<a name="line101">101: </a>  <font color="#B22222">/* implement the mesh fan in/out exchange algorithm */</font>
+<a name="line102">102: </a>  <font color="#4169E1">if</font> (PCTFS_my_id &lt; PCTFS_floor_num_nodes) {
+<a name="line103">103: </a>    <font color="#4169E1">for</font> (mask = 1, edge = 0; edge &lt; PCTFS_i_log2_num_nodes; edge++, mask &lt;&lt;= 1) {
+<a name="line104">104: </a>      dest = PCTFS_my_id ^ mask;
+<a name="line105">105: </a>      <font color="#4169E1">if</font> (PCTFS_my_id &gt; dest) {
+<a name="line106">106: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, dest, MSGTAG2 + PCTFS_my_id, MPI_COMM_WORLD);
+<a name="line107">107: </a>      } <font color="#4169E1">else</font> {
+<a name="line108">108: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(work, n, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_ANY_SOURCE, MSGTAG2 + dest, MPI_COMM_WORLD, &amp;status);
+<a name="line109">109: </a>        (*fp)(vals, work, n, oprs);
+<a name="line110">110: </a>      }
+<a name="line111">111: </a>    }
+
+<a name="line113">113: </a>    mask = PCTFS_floor_num_nodes &gt;&gt; 1;
+<a name="line114">114: </a>    <font color="#4169E1">for</font> (edge = 0; edge &lt; PCTFS_i_log2_num_nodes; edge++, mask &gt;&gt;= 1) {
+<a name="line115">115: </a>      <font color="#4169E1">if</font> (PCTFS_my_id % mask) <font color="#4169E1">continue</font>;
+
+<a name="line117">117: </a>      dest = PCTFS_my_id ^ mask;
+<a name="line118">118: </a>      <font color="#4169E1">if</font> (PCTFS_my_id &lt; dest) {
+<a name="line119">119: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, dest, MSGTAG4 + PCTFS_my_id, MPI_COMM_WORLD);
+<a name="line120">120: </a>      } <font color="#4169E1">else</font> {
+<a name="line121">121: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_ANY_SOURCE, MSGTAG4 + dest, MPI_COMM_WORLD, &amp;status);
+<a name="line122">122: </a>      }
+<a name="line123">123: </a>    }
+<a name="line124">124: </a>  }
+
+<a name="line126">126: </a>  <font color="#B22222">/* if not a hypercube must expand to partial dim */</font>
+<a name="line127">127: </a>  <font color="#4169E1">if</font> (edge_not_pow_2) {
+<a name="line128">128: </a>    <font color="#4169E1">if</font> (PCTFS_my_id &gt;= PCTFS_floor_num_nodes) {
+<a name="line129">129: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_ANY_SOURCE, MSGTAG5 + edge_not_pow_2, MPI_COMM_WORLD, &amp;status);
+<a name="line130">130: </a>    } <font color="#4169E1">else</font> {
+<a name="line131">131: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, edge_not_pow_2, MSGTAG5 + PCTFS_my_id, MPI_COMM_WORLD);
+<a name="line132">132: </a>    }
+<a name="line133">133: </a>  }
+<a name="line134">134: </a>  <font color="#4169E1">return</font> 0;
+<a name="line135">135: </a>}
+
+<a name="line137">137: </a><font color="#B22222">/***********************************comm.c*************************************/</font>
+<a name="line138">138: </a><strong><font color="#4169E1"><a name="PCTFS_grop"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCTFS_grop(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *vals, <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *work, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *oprs)</font></strong>
+<a name="line139">139: </a>{
+<a name="line140">140: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   mask, edge;
+<a name="line141">141: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   type, dest;
+<a name="line142">142: </a>  vfp        fp;
+<a name="line143">143: </a>  MPI_Status status;
+
+<a name="line145">145: </a>  <font color="#B22222">/* ok ... should have some data, work, and operator(s) */</font>
+
+<a name="line148">148: </a>  <font color="#B22222">/* non-uniform should have at least two entries */</font>
+
+<a name="line151">151: </a>  <font color="#B22222">/* check to make sure comm package has been initialized */</font>
+<a name="line152">152: </a>  <font color="#4169E1">if</font> (!p_init) PCTFS_comm_init();
+
+<a name="line154">154: </a>  <font color="#B22222">/* if there's nothing to do return */</font>
+<a name="line155">155: </a>  <font color="#4169E1">if</font> ((PCTFS_num_nodes &lt; 2) || (!n)) <font color="#4169E1">return</font> 0;
+
+<a name="line157">157: </a>  <font color="#B22222">/* a negative number of items to send ==&gt; fatal */</font>
+
+<a name="line160">160: </a>  <font color="#B22222">/* advance to list of n operations for custom */</font>
+<a name="line161">161: </a>  <font color="#4169E1">if</font> ((type = oprs[0]) == NON_UNIFORM) oprs++;
+
+
+<a name="line165">165: </a>  <font color="#B22222">/* all msgs will be of the same length */</font>
+<a name="line166">166: </a>  <font color="#B22222">/* if not a hypercube must colapse partial dim */</font>
+<a name="line167">167: </a>  <font color="#4169E1">if</font> (edge_not_pow_2) {
+<a name="line168">168: </a>    <font color="#4169E1">if</font> (PCTFS_my_id &gt;= PCTFS_floor_num_nodes) {
+<a name="line169">169: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, edge_not_pow_2, MSGTAG0 + PCTFS_my_id, MPI_COMM_WORLD);
+<a name="line170">170: </a>    } <font color="#4169E1">else</font> {
+<a name="line171">171: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(work, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, MPI_ANY_SOURCE, MSGTAG0 + edge_not_pow_2, MPI_COMM_WORLD, &amp;status);
+<a name="line172">172: </a>      (*fp)(vals, work, n, oprs);
+<a name="line173">173: </a>    }
+<a name="line174">174: </a>  }
+
+<a name="line176">176: </a>  <font color="#B22222">/* implement the mesh fan in/out exchange algorithm */</font>
+<a name="line177">177: </a>  <font color="#4169E1">if</font> (PCTFS_my_id &lt; PCTFS_floor_num_nodes) {
+<a name="line178">178: </a>    <font color="#4169E1">for</font> (mask = 1, edge = 0; edge &lt; PCTFS_i_log2_num_nodes; edge++, mask &lt;&lt;= 1) {
+<a name="line179">179: </a>      dest = PCTFS_my_id ^ mask;
+<a name="line180">180: </a>      <font color="#4169E1">if</font> (PCTFS_my_id &gt; dest) {
+<a name="line181">181: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, dest, MSGTAG2 + PCTFS_my_id, MPI_COMM_WORLD);
+<a name="line182">182: </a>      } <font color="#4169E1">else</font> {
+<a name="line183">183: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(work, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, MPI_ANY_SOURCE, MSGTAG2 + dest, MPI_COMM_WORLD, &amp;status);
+<a name="line184">184: </a>        (*fp)(vals, work, n, oprs);
+<a name="line185">185: </a>      }
+<a name="line186">186: </a>    }
+
+<a name="line188">188: </a>    mask = PCTFS_floor_num_nodes &gt;&gt; 1;
+<a name="line189">189: </a>    <font color="#4169E1">for</font> (edge = 0; edge &lt; PCTFS_i_log2_num_nodes; edge++, mask &gt;&gt;= 1) {
+<a name="line190">190: </a>      <font color="#4169E1">if</font> (PCTFS_my_id % mask) <font color="#4169E1">continue</font>;
+
+<a name="line192">192: </a>      dest = PCTFS_my_id ^ mask;
+<a name="line193">193: </a>      <font color="#4169E1">if</font> (PCTFS_my_id &lt; dest) {
+<a name="line194">194: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, dest, MSGTAG4 + PCTFS_my_id, MPI_COMM_WORLD);
+<a name="line195">195: </a>      } <font color="#4169E1">else</font> {
+<a name="line196">196: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, MPI_ANY_SOURCE, MSGTAG4 + dest, MPI_COMM_WORLD, &amp;status);
+<a name="line197">197: </a>      }
+<a name="line198">198: </a>    }
+<a name="line199">199: </a>  }
+
+<a name="line201">201: </a>  <font color="#B22222">/* if not a hypercube must expand to partial dim */</font>
+<a name="line202">202: </a>  <font color="#4169E1">if</font> (edge_not_pow_2) {
+<a name="line203">203: </a>    <font color="#4169E1">if</font> (PCTFS_my_id &gt;= PCTFS_floor_num_nodes) {
+<a name="line204">204: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, MPI_ANY_SOURCE, MSGTAG5 + edge_not_pow_2, MPI_COMM_WORLD, &amp;status);
+<a name="line205">205: </a>    } <font color="#4169E1">else</font> {
+<a name="line206">206: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, edge_not_pow_2, MSGTAG5 + PCTFS_my_id, MPI_COMM_WORLD);
+<a name="line207">207: </a>    }
+<a name="line208">208: </a>  }
+<a name="line209">209: </a>  <font color="#4169E1">return</font> 0;
+<a name="line210">210: </a>}
+
+<a name="line212">212: </a><font color="#B22222">/***********************************comm.c*************************************/</font>
+<a name="line213">213: </a><strong><font color="#4169E1"><a name="PCTFS_grop_hc"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCTFS_grop_hc(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *vals, <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *work, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *oprs, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dim)</font></strong>
+<a name="line214">214: </a>{
+<a name="line215">215: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   mask, edge;
+<a name="line216">216: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   type, dest;
+<a name="line217">217: </a>  vfp        fp;
+<a name="line218">218: </a>  MPI_Status status;
+
+<a name="line220">220: </a>  <font color="#B22222">/* ok ... should have some data, work, and operator(s) */</font>
+
+<a name="line223">223: </a>  <font color="#B22222">/* non-uniform should have at least two entries */</font>
+
+<a name="line226">226: </a>  <font color="#B22222">/* check to make sure comm package has been initialized */</font>
+<a name="line227">227: </a>  <font color="#4169E1">if</font> (!p_init) PCTFS_comm_init();
+
+<a name="line229">229: </a>  <font color="#B22222">/* if there's nothing to do return */</font>
+<a name="line230">230: </a>  <font color="#4169E1">if</font> ((PCTFS_num_nodes &lt; 2) || (!n) || (dim &lt;= 0)) <font color="#4169E1">return</font> 0;
+
+<a name="line232">232: </a>  <font color="#B22222">/* the error msg says it all!!! */</font>
+
+<a name="line235">235: </a>  <font color="#B22222">/* a negative number of items to send ==&gt; fatal */</font>
+
+<a name="line238">238: </a>  <font color="#B22222">/* can't do more dimensions then exist */</font>
+<a name="line239">239: </a>  dim = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(dim, PCTFS_i_log2_num_nodes);
+
+<a name="line241">241: </a>  <font color="#B22222">/* advance to list of n operations for custom */</font>
+<a name="line242">242: </a>  <font color="#4169E1">if</font> ((type = oprs[0]) == NON_UNIFORM) oprs++;
+
+
+<a name="line246">246: </a>  <font color="#4169E1">for</font> (mask = 1, edge = 0; edge &lt; dim; edge++, mask &lt;&lt;= 1) {
+<a name="line247">247: </a>    dest = PCTFS_my_id ^ mask;
+<a name="line248">248: </a>    <font color="#4169E1">if</font> (PCTFS_my_id &gt; dest) {
+<a name="line249">249: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, dest, MSGTAG2 + PCTFS_my_id, MPI_COMM_WORLD);
+<a name="line250">250: </a>    } <font color="#4169E1">else</font> {
+<a name="line251">251: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(work, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, MPI_ANY_SOURCE, MSGTAG2 + dest, MPI_COMM_WORLD, &amp;status);
+<a name="line252">252: </a>      (*fp)(vals, work, n, oprs);
+<a name="line253">253: </a>    }
+<a name="line254">254: </a>  }
+
+<a name="line256">256: </a>  <font color="#4169E1">if</font> (edge == dim) mask &gt;&gt;= 1;
+<a name="line257">257: </a>  <font color="#4169E1">else</font> {
+<a name="line258">258: </a>    <font color="#4169E1">while</font> (++edge &lt; dim) mask &lt;&lt;= 1;
+<a name="line259">259: </a>  }
+
+<a name="line261">261: </a>  <font color="#4169E1">for</font> (edge = 0; edge &lt; dim; edge++, mask &gt;&gt;= 1) {
+<a name="line262">262: </a>    <font color="#4169E1">if</font> (PCTFS_my_id % mask) <font color="#4169E1">continue</font>;
+
+<a name="line264">264: </a>    dest = PCTFS_my_id ^ mask;
+<a name="line265">265: </a>    <font color="#4169E1">if</font> (PCTFS_my_id &lt; dest) {
+<a name="line266">266: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, dest, MSGTAG4 + PCTFS_my_id, MPI_COMM_WORLD);
+<a name="line267">267: </a>    } <font color="#4169E1">else</font> {
+<a name="line268">268: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, MPI_ANY_SOURCE, MSGTAG4 + dest, MPI_COMM_WORLD, &amp;status);
+<a name="line269">269: </a>    }
+<a name="line270">270: </a>  }
+<a name="line271">271: </a>  <font color="#4169E1">return</font> 0;
+<a name="line272">272: </a>}
+
+<a name="line274">274: </a><font color="#B22222">/******************************************************************************/</font>
+<a name="line275">275: </a><strong><font color="#4169E1"><a name="PCTFS_ssgl_radd"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCTFS_ssgl_radd(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *vals, <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *work, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> level, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *segs)</font></strong>
+<a name="line276">276: </a>{
+<a name="line277">277: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     edge, type, dest, mask;
+<a name="line278">278: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     stage_n;
+<a name="line279">279: </a>  MPI_Status   status;
+<a name="line280">280: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *maxval, flg;
+
+<a name="line282">282: </a>  <font color="#B22222">/* check to make sure comm package has been initialized */</font>
+<a name="line283">283: </a>  <font color="#4169E1">if</font> (!p_init) PCTFS_comm_init();
+
+<a name="line285">285: </a>  <font color="#B22222">/* all msgs are *NOT* the same length */</font>
+<a name="line286">286: </a>  <font color="#B22222">/* implement the mesh fan in/out exchange algorithm */</font>
+<a name="line287">287: </a>  <font color="#4169E1">for</font> (mask = 0, edge = 0; edge &lt; level; edge++, mask++) {
+<a name="line288">288: </a>    stage_n = (segs[level] - segs[edge]);
+<a name="line289">289: </a>    <font color="#4169E1">if</font> (stage_n &amp;&amp; !(PCTFS_my_id &amp; mask)) {
+<a name="line290">290: </a>      dest = edge_node[edge];
+<a name="line291">291: </a>      type = MSGTAG3 + PCTFS_my_id + (PCTFS_num_nodes * edge);
+<a name="line292">292: </a>      <font color="#4169E1">if</font> (PCTFS_my_id &gt; dest) {
+<a name="line293">293: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals + segs[edge], stage_n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, dest, type, MPI_COMM_WORLD);
+<a name="line294">294: </a>      } <font color="#4169E1">else</font> {
+<a name="line295">295: </a>        type = type - PCTFS_my_id + dest;
+<a name="line296">296: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(work, stage_n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, MPI_ANY_SOURCE, type, MPI_COMM_WORLD, &amp;status);
+<a name="line297">297: </a>        PCTFS_rvec_add(vals + segs[edge], work, stage_n);
+<a name="line298">298: </a>      }
+<a name="line299">299: </a>    }
+<a name="line300">300: </a>    mask &lt;&lt;= 1;
+<a name="line301">301: </a>  }
+<a name="line302">302: </a>  mask &gt;&gt;= 1;
+<a name="line303">303: </a>  <font color="#4169E1">for</font> (edge = 0; edge &lt; level; edge++) {
+<a name="line304">304: </a>    stage_n = (segs[level] - segs[level - 1 - edge]);
+<a name="line305">305: </a>    <font color="#4169E1">if</font> (stage_n &amp;&amp; !(PCTFS_my_id &amp; mask)) {
+<a name="line306">306: </a>      dest = edge_node[level - edge - 1];
+<a name="line307">307: </a>      type = MSGTAG6 + PCTFS_my_id + (PCTFS_num_nodes * edge);
+<a name="line308">308: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_get_attr.html#MPI_Comm_get_attr">MPI_Comm_get_attr</a>(MPI_COMM_WORLD, MPI_TAG_UB, &amp;maxval, &amp;flg);
+<a name="line311">311: </a>      <font color="#4169E1">if</font> (PCTFS_my_id &lt; dest) {
+<a name="line312">312: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals + segs[level - 1 - edge], stage_n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, dest, type, MPI_COMM_WORLD);
+<a name="line313">313: </a>      } <font color="#4169E1">else</font> {
+<a name="line314">314: </a>        type = type - PCTFS_my_id + dest;
+<a name="line315">315: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(vals + segs[level - 1 - edge], stage_n, <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, MPI_ANY_SOURCE, type, MPI_COMM_WORLD, &amp;status);
+<a name="line316">316: </a>      }
+<a name="line317">317: </a>    }
+<a name="line318">318: </a>    mask &gt;&gt;= 1;
+<a name="line319">319: </a>  }
+<a name="line320">320: </a>  <font color="#4169E1">return</font> 0;
+<a name="line321">321: </a>}
+
+<a name="line323">323: </a><font color="#B22222">/***********************************comm.c*************************************/</font>
+<a name="line324">324: </a><strong><font color="#4169E1"><a name="PCTFS_giop_hc"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCTFS_giop_hc(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *vals, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *work, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *oprs, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dim)</font></strong>
+<a name="line325">325: </a>{
+<a name="line326">326: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   mask, edge;
+<a name="line327">327: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   type, dest;
+<a name="line328">328: </a>  vfp        fp;
+<a name="line329">329: </a>  MPI_Status status;
+
+<a name="line331">331: </a>  <font color="#B22222">/* ok ... should have some data, work, and operator(s) */</font>
+
+<a name="line334">334: </a>  <font color="#B22222">/* non-uniform should have at least two entries */</font>
+
+<a name="line337">337: </a>  <font color="#B22222">/* check to make sure comm package has been initialized */</font>
+<a name="line338">338: </a>  <font color="#4169E1">if</font> (!p_init) PCTFS_comm_init();
+
+<a name="line340">340: </a>  <font color="#B22222">/* if there's nothing to do return */</font>
+<a name="line341">341: </a>  <font color="#4169E1">if</font> ((PCTFS_num_nodes &lt; 2) || (!n) || (dim &lt;= 0)) <font color="#4169E1">return</font> 0;
+
+<a name="line343">343: </a>  <font color="#B22222">/* the error msg says it all!!! */</font>
+
+<a name="line346">346: </a>  <font color="#B22222">/* a negative number of items to send ==&gt; fatal */</font>
+
+<a name="line349">349: </a>  <font color="#B22222">/* can't do more dimensions then exist */</font>
+<a name="line350">350: </a>  dim = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(dim, PCTFS_i_log2_num_nodes);
+
+<a name="line352">352: </a>  <font color="#B22222">/* advance to list of n operations for custom */</font>
+<a name="line353">353: </a>  <font color="#4169E1">if</font> ((type = oprs[0]) == NON_UNIFORM) oprs++;
+
+
+<a name="line357">357: </a>  <font color="#4169E1">for</font> (mask = 1, edge = 0; edge &lt; dim; edge++, mask &lt;&lt;= 1) {
+<a name="line358">358: </a>    dest = PCTFS_my_id ^ mask;
+<a name="line359">359: </a>    <font color="#4169E1">if</font> (PCTFS_my_id &gt; dest) {
+<a name="line360">360: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, dest, MSGTAG2 + PCTFS_my_id, MPI_COMM_WORLD);
+<a name="line361">361: </a>    } <font color="#4169E1">else</font> {
+<a name="line362">362: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(work, n, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_ANY_SOURCE, MSGTAG2 + dest, MPI_COMM_WORLD, &amp;status);
+<a name="line363">363: </a>      (*fp)(vals, work, n, oprs);
+<a name="line364">364: </a>    }
+<a name="line365">365: </a>  }
+
+<a name="line367">367: </a>  <font color="#4169E1">if</font> (edge == dim) mask &gt;&gt;= 1;
+<a name="line368">368: </a>  <font color="#4169E1">else</font> {
+<a name="line369">369: </a>    <font color="#4169E1">while</font> (++edge &lt; dim) mask &lt;&lt;= 1;
+<a name="line370">370: </a>  }
+
+<a name="line372">372: </a>  <font color="#4169E1">for</font> (edge = 0; edge &lt; dim; edge++, mask &gt;&gt;= 1) {
+<a name="line373">373: </a>    <font color="#4169E1">if</font> (PCTFS_my_id % mask) <font color="#4169E1">continue</font>;
+
+<a name="line375">375: </a>    dest = PCTFS_my_id ^ mask;
+<a name="line376">376: </a>    <font color="#4169E1">if</font> (PCTFS_my_id &lt; dest) {
+<a name="line377">377: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, dest, MSGTAG4 + PCTFS_my_id, MPI_COMM_WORLD);
+<a name="line378">378: </a>    } <font color="#4169E1">else</font> {
+<a name="line379">379: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(vals, n, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_ANY_SOURCE, MSGTAG4 + dest, MPI_COMM_WORLD, &amp;status);
+<a name="line380">380: </a>    }
+<a name="line381">381: </a>  }
+<a name="line382">382: </a>  <font color="#4169E1">return</font> 0;
+<a name="line383">383: </a>}
+</pre>
+</body>
+
+</html>

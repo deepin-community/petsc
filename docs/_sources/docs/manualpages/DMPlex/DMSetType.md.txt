@@ -1,0 +1,46 @@
+# DMSetType
+Sets the particular implementation for a transform. 
+## Synopsis
+```
+#include "petscdmplextransform.h" 
+PetscErrorCode DMPlexTransformSetType(DMPlexTransform tr, DMPlexTransformType method)
+```
+Collective on tr
+
+
+## Input Parameters
+
+- ***tr     -*** The transform
+- ***method -*** The name of the transform type
+
+
+
+## Options Database Key
+
+- ***-dm_plex_transform_type <type> -*** Sets the transform type; use -help for a list of available types
+
+
+
+
+
+## Notes
+See "petsc/include/petscdmplextransform.h" for available transform types
+
+
+## See Also
+ [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexTransform`, `DMPlexTransformType`, `DMPlexTransformGetType()`, `DMPlexTransformCreate()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/transform/interface/plextransform.c.html#DMSetType">src/dm/impls/plex/transform/interface/plextransform.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/plex/transform/interface/plextransform.c)
+
+
+[Index of all DMPlex routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

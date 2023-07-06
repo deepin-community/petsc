@@ -1,0 +1,38 @@
+# PetscFormatConvert
+Takes a PETSc format string and converts the %D to %d for 32 bit PETSc indices and %lld for 64 bit PETSc indices. Also converts %g to [|%g|] so that PetscVSNPrintf() can easily insure all %g formatted numbers have a decimal point when printed. 
+## Synopsis
+```
+PetscErrorCode PetscFormatConvert(const char *format, char *newformat)
+```
+Deprecated
+
+
+## Input Parameters
+
+- ***format -*** the PETSc format string
+- ***newformat -*** the location to put the new format
+- ***size -*** the length of newformat, you can use `PetscFormatConvertGetSize()` to compute the needed size
+
+
+Note: this exists so we can have the same code when `PetscInt` is either int or long long int
+
+
+
+
+## See Also
+ `PetscFormatConvertGetSize()`, `PetscVSNPrintf()`, `PetscVFPrintf()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/fileio/mprint.c.html#PetscFormatConvert">src/sys/fileio/mprint.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/fileio/mprint.c)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,57 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ksp/pc/impls/spai/dspai.c">Actual source code: dspai.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:56+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../../../../include/petscmat.h.html">&lt;petscmat.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="../../../../../include/petsc/private/petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
+
+<a name="line5">  5: </a><font color="#B22222">/*</font>
+<a name="line6">  6: </a><font color="#B22222">     MatDumpSPAI - Dumps a PETSc matrix to a file in an ASCII format</font>
+<a name="line7">  7: </a><font color="#B22222">  suitable for the SPAI code of Stephen Barnard to solve. This routine</font>
+<a name="line8">  8: </a><font color="#B22222">  is simply here to allow testing of matrices directly with the SPAI</font>
+<a name="line9">  9: </a><font color="#B22222">  code, rather then through the PETSc interface.</font>
+
+<a name="line11"> 11: </a><font color="#B22222">*/</font>
+<a name="line12"> 12: </a><strong><font color="#4169E1"><a name="MatDumpSPAI"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDumpSPAI(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, FILE *file)</font></strong>
+<a name="line13"> 13: </a>{
+<a name="line14"> 14: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *vals;
+<a name="line15"> 15: </a>  int                i, j, n, size, nz;
+<a name="line16"> 16: </a>  const int         *cols;
+<a name="line17"> 17: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>           comm;
+
+<a name="line19"> 19: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, &amp;comm);
+<a name="line20"> 20: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Mat/MatGetSize.html">MatGetSize</a>(A, &amp;n, &amp;n);
+<a name="line23"> 23: </a>  <font color="#B22222">/* print the matrix */</font>
+<a name="line24"> 24: </a>  fprintf(file, <font color="#666666">"%d\n"</font>, n);
+<a name="line25"> 25: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; n; i++) {
+<a name="line26"> 26: </a>    <a href="../../../../../docs/manualpages/Mat/MatGetRow.html">MatGetRow</a>(A, i, &amp;nz, &amp;cols, &amp;vals);
+<a name="line27"> 27: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; nz; j++) fprintf(file, <font color="#666666">"%d %d %16.14e\n"</font>, i + 1, cols[j] + 1, vals[j]);
+<a name="line28"> 28: </a>    <a href="../../../../../docs/manualpages/Mat/MatRestoreRow.html">MatRestoreRow</a>(A, i, &amp;nz, &amp;cols, &amp;vals);
+<a name="line29"> 29: </a>  }
+<a name="line30"> 30: </a>  <font color="#4169E1">return</font> 0;
+<a name="line31"> 31: </a>}
+
+<a name="line33"> 33: </a><strong><font color="#4169E1"><a name="VecDumpSPAI"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecDumpSPAI(<a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> b, FILE *file)</font></strong>
+<a name="line34"> 34: </a>{
+<a name="line35"> 35: </a>  int          n, i;
+<a name="line36"> 36: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array;
+
+<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetSize.html">VecGetSize</a>(b, &amp;n);
+<a name="line39"> 39: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(b, &amp;array);
+<a name="line40"> 40: </a>  fprintf(file, <font color="#666666">"%d\n"</font>, n);
+<a name="line41"> 41: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; n; i++) fprintf(file, <font color="#666666">"%d %16.14e\n"</font>, i + 1, array[i]);
+<a name="line42"> 42: </a>  <font color="#4169E1">return</font> 0;
+<a name="line43"> 43: </a>}
+</pre>
+</body>
+
+</html>

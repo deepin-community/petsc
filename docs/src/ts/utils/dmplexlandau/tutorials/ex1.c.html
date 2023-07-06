@@ -1,0 +1,139 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ts/utils/dmplexlandau/tutorials/ex1.c">Actual source code: ex1.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:52+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>static char help[] = <font color="#666666">"Landau collision operator driver\n\n"</font>;
+
+<a name="line3">  3: </a>#include <A href="../../../../../include/petscts.h.html">&lt;petscts.h&gt;</A>
+<a name="line4">  4: </a>#include <A href="../../../../../include/petsclandau.h.html">&lt;petsclandau.h&gt;</A>
+
+<a name="line6">  6: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line7">  7: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  grid_target, batch_target, field_target;
+<a name="line8">  8: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> init;
+<a name="line9">  9: </a>} ex1Ctx;
+
+<a name="line11"> 11: </a><font color="#B22222">/*</font>
+<a name="line12"> 12: </a><font color="#B22222"> call back method for <a href="../../../../../docs/manualpages/LANDAU/DMPlexLandauAccess.html">DMPlexLandauAccess</a>:</font>
+
+<a name="line14"> 14: </a><font color="#B22222">Input Parameters:</font>
+<a name="line15"> 15: </a><font color="#B22222"> .   dm - a <a href="../../../../../docs/manualpages/DM/DM.html">DM</a> for this field</font>
+<a name="line16"> 16: </a><font color="#B22222"> -   local_field - the local index in the grid for this field</font>
+<a name="line17"> 17: </a><font color="#B22222"> .   grid - the grid index</font>
+<a name="line18"> 18: </a><font color="#B22222"> +   b_id - the batch index</font>
+<a name="line19"> 19: </a><font color="#B22222"> -   vctx - a user context</font>
+
+<a name="line21"> 21: </a><font color="#B22222"> Input/Output Parameters:</font>
+<a name="line22"> 22: </a><font color="#B22222"> +   x - Vector to data to</font>
+
+<a name="line24"> 24: </a><font color="#B22222"> */</font>
+<a name="line25"> 25: </a><strong><font color="#4169E1"><a name="landau_field_print_access_callback"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> landau_field_print_access_callback(<a href="../../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> local_field, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> grid, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> b_id, void *vctx)</font></strong>
+<a name="line26"> 26: </a>{
+<a name="line27"> 27: </a>  ex1Ctx    *user = (ex1Ctx *)vctx;
+<a name="line28"> 28: </a>  LandauCtx *ctx;
+
+<a name="line30"> 30: </a>  <a href="../../../../../docs/manualpages/DM/DMGetApplicationContext.html">DMGetApplicationContext</a>(dm, &amp;ctx);
+<a name="line31"> 31: </a>  <font color="#4169E1">if</font> (grid == user-&gt;grid_target &amp;&amp; b_id == user-&gt;batch_target &amp;&amp; local_field == user-&gt;field_target) {
+<a name="line32"> 32: </a>    <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> one = 1.0e10;
+
+<a name="line34"> 34: </a>    <a href="../../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(x, one);
+<a name="line35"> 35: </a>    <font color="#4169E1">if</font> (!user-&gt;init) {
+<a name="line36"> 36: </a>      <a href="../../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm, <font color="#666666">"single"</font>);
+<a name="line37"> 37: </a>      <a href="../../../../../docs/manualpages/DM/DMViewFromOptions.html">DMViewFromOptions</a>(dm, NULL, <font color="#666666">"-ex1_dm_view"</font>); // <a href="../../../../../docs/manualpages/DM/DMCreateSubDM.html">DMCreateSubDM</a> does seem to give the <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>'s fild the name from the original <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>
+<a name="line38"> 38: </a>      user-&gt;init = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line39"> 39: </a>    }
+<a name="line40"> 40: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)x, <font color="#666666">"u"</font>);      // this gives the vector a nicer name, <a href="../../../../../docs/manualpages/DM/DMCreateSubDM.html">DMCreateSubDM</a> could <font color="#4169E1">do</font> this <font color="#4169E1">for</font> us and get the correct name
+<a name="line41"> 41: </a>    <a href="../../../../../docs/manualpages/Vec/VecViewFromOptions.html">VecViewFromOptions</a>(x, NULL, <font color="#666666">"-ex1_vec_view"</font>); // this causes diffs with Kokkos, etc
+<a name="line42"> 42: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(dm, <font color="#666666">"<a href="../../../../../docs/manualpages/LANDAU/DMPlexLandauAccess.html">DMPlexLandauAccess</a> user 'add' method to grid %"</font> PetscInt_FMT <font color="#666666">", batch %"</font> PetscInt_FMT <font color="#666666">" and species %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, grid, b_id, ctx-&gt;species_offset[grid] + local_field);
+<a name="line43"> 43: </a>  }
+<a name="line44"> 44: </a>  <font color="#4169E1">return</font> 0;
+<a name="line45"> 45: </a>}
+
+<a name="line47"> 47: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
+<a name="line48"> 48: </a>{
+<a name="line49"> 49: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>             pack;
+<a name="line50"> 50: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>            X, X_0;
+<a name="line51"> 51: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       dim = 2;
+<a name="line52"> 52: </a>  <a href="../../../../../docs/manualpages/TS/TS.html">TS</a>             ts;
+<a name="line53"> 53: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>            J;
+<a name="line54"> 54: </a>  <a href="../../../../../docs/manualpages/SNES/SNES.html">SNES</a>           snes;
+<a name="line55"> 55: </a>  <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>            ksp;
+<a name="line56"> 56: </a>  <a href="../../../../../docs/manualpages/PC/PC.html">PC</a>             pc;
+<a name="line57"> 57: </a>  <a href="../../../../../docs/manualpages/SNES/SNESLineSearch.html">SNESLineSearch</a> linesearch;
+<a name="line58"> 58: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>      time;
+
+<a name="line61"> 61: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help);
+<a name="line62"> 62: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(NULL, NULL, <font color="#666666">"-dim"</font>, &amp;dim, NULL);
+<a name="line63"> 63: </a>  <font color="#B22222">/* Create a mesh */</font>
+<a name="line64"> 64: </a>  <a href="../../../../../docs/manualpages/LANDAU/DMPlexLandauCreateVelocitySpace.html">DMPlexLandauCreateVelocitySpace</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, dim, <font color="#666666">""</font>, &amp;X, &amp;J, &amp;pack);
+<a name="line65"> 65: </a>  <a href="../../../../../docs/manualpages/DM/DMSetUp.html">DMSetUp</a>(pack);
+<a name="line66"> 66: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(X, &amp;X_0);
+<a name="line67"> 67: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(X, X_0);
+<a name="line68"> 68: </a>  <a href="../../../../../docs/manualpages/LANDAU/DMPlexLandauPrintNorms.html">DMPlexLandauPrintNorms</a>(X, 0);
+<a name="line69"> 69: </a>  <a href="../../../../../docs/manualpages/DM/DMSetOutputSequenceNumber.html">DMSetOutputSequenceNumber</a>(pack, 0, 0.0);
+<a name="line70"> 70: </a>  <font color="#B22222">/* Create timestepping solver context */</font>
+<a name="line71"> 71: </a>  <a href="../../../../../docs/manualpages/TS/TSCreate.html">TSCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;ts);
+<a name="line72"> 72: </a>  <a href="../../../../../docs/manualpages/TS/TSSetDM.html">TSSetDM</a>(ts, pack);
+<a name="line73"> 73: </a>  <a href="../../../../../docs/manualpages/TS/TSGetSNES.html">TSGetSNES</a>(ts, &amp;snes);
+<a name="line74"> 74: </a>  <a href="../../../../../docs/manualpages/SNES/SNESGetLineSearch.html">SNESGetLineSearch</a>(snes, &amp;linesearch);
+<a name="line75"> 75: </a>  <a href="../../../../../docs/manualpages/SNES/SNESLineSearchSetType.html">SNESLineSearchSetType</a>(linesearch, <a href="../../../../../docs/manualpages/SNES/SNESLINESEARCHBASIC.html">SNESLINESEARCHBASIC</a>);
+<a name="line76"> 76: </a>  <a href="../../../../../docs/manualpages/TS/TSSetIFunction.html">TSSetIFunction</a>(ts, NULL, <a href="../../../../../docs/manualpages/LANDAU/DMPlexLandauIFunction.html">DMPlexLandauIFunction</a>, NULL);
+<a name="line77"> 77: </a>  <a href="../../../../../docs/manualpages/TS/TSSetIJacobian.html">TSSetIJacobian</a>(ts, J, J, <a href="../../../../../docs/manualpages/LANDAU/DMPlexLandauIJacobian.html">DMPlexLandauIJacobian</a>, NULL);
+<a name="line78"> 78: </a>  <a href="../../../../../docs/manualpages/TS/TSSetExactFinalTime.html">TSSetExactFinalTime</a>(ts, <a href="../../../../../docs/manualpages/TS/TSExactFinalTimeOption.html">TS_EXACTFINALTIME_STEPOVER</a>);
+<a name="line79"> 79: </a>  <a href="../../../../../docs/manualpages/SNES/SNESGetKSP.html">SNESGetKSP</a>(snes, &amp;ksp);
+<a name="line80"> 80: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetPC.html">KSPGetPC</a>(ksp, &amp;pc);
+<a name="line81"> 81: </a>  <a href="../../../../../docs/manualpages/TS/TSSetFromOptions.html">TSSetFromOptions</a>(ts);
+<a name="line82"> 82: </a>  <a href="../../../../../docs/manualpages/TS/TSSetSolution.html">TSSetSolution</a>(ts, X);
+<a name="line83"> 83: </a>  <a href="../../../../../docs/manualpages/TS/TSSolve.html">TSSolve</a>(ts, X);
+<a name="line84"> 84: </a>  <a href="../../../../../docs/manualpages/LANDAU/DMPlexLandauPrintNorms.html">DMPlexLandauPrintNorms</a>(X, 1);
+<a name="line85"> 85: </a>  <a href="../../../../../docs/manualpages/TS/TSGetTime.html">TSGetTime</a>(ts, &amp;time);
+<a name="line86"> 86: </a>  <a href="../../../../../docs/manualpages/DM/DMSetOutputSequenceNumber.html">DMSetOutputSequenceNumber</a>(pack, 1, time);
+<a name="line87"> 87: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(X, -1, X_0);
+<a name="line88"> 88: </a>  { <font color="#B22222">/* test add field method */</font>
+<a name="line89"> 89: </a>    ex1Ctx    *user;
+<a name="line90"> 90: </a>    LandauCtx *ctx;
+<a name="line91"> 91: </a>    <a href="../../../../../docs/manualpages/DM/DMGetApplicationContext.html">DMGetApplicationContext</a>(pack, &amp;ctx);
+<a name="line92"> 92: </a>    <a href="../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;user);
+<a name="line93"> 93: </a>    user-&gt;grid_target  = 1; // 2nd ion species
+<a name="line94"> 94: </a>    user-&gt;field_target = 1;
+<a name="line95"> 95: </a>    <a href="../../../../../docs/manualpages/LANDAU/DMPlexLandauAccess.html">DMPlexLandauAccess</a>(pack, X, landau_field_print_access_callback, user);
+<a name="line96"> 96: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(user);
+<a name="line97"> 97: </a>  }
+<a name="line98"> 98: </a>  <font color="#B22222">/* clean up */</font>
+<a name="line99"> 99: </a>  <a href="../../../../../docs/manualpages/LANDAU/DMPlexLandauDestroyVelocitySpace.html">DMPlexLandauDestroyVelocitySpace</a>(&amp;pack);
+<a name="line100">100: </a>  <a href="../../../../../docs/manualpages/TS/TSDestroy.html">TSDestroy</a>(&amp;ts);
+<a name="line101">101: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;X);
+<a name="line102">102: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;X_0);
+<a name="line103">103: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line104">104: </a>  <font color="#4169E1">return</font> 0;
+<a name="line105">105: </a>}
+
+<a name="line107">107: </a><font color="#B22222">/*TEST</font>
+<a name="line108">108: </a><font color="#B22222">  testset:</font>
+<a name="line109">109: </a><font color="#B22222">    requires: p4est !complex double defined(PETSC_USE_DMLANDAU_2D)</font>
+<a name="line110">110: </a><font color="#B22222">    output_file: output/ex1_0.out</font>
+<a name="line111">111: </a><font color="#B22222">    filter: grep -v "%  type: seq"</font>
+<a name="line112">112: </a><font color="#B22222">    args: -dm_landau_num_species_grid 1,2 -petscspace_degree 3 -petscspace_poly_tensor 1 -dm_landau_type p4est -dm_landau_ion_masses 2,4 -dm_landau_ion_charges 1,18 -dm_landau_thermal_temps 5,5,.5 -dm_landau_n 1.00018,1,1e-5 -dm_landau_n_0 1e20 -ts_monitor -snes_rtol 1.e-14 -snes_stol 1.e-14 -snes_monitor -snes_converged_reason -ts_type arkimex -ts_arkimex_type 1bee -ts_max_snes_failures -1 -ts_rtol 1e-1 -ts_dt 1.e-1 -ts_max_time 1 -ts_adapt_clip .5,1.25 -ts_adapt_scale_solve_failed 0.75 -ts_adapt_time_step_increase_delay 5 -ts_max_steps 1 -pc_type lu -ksp_type preonly -dm_landau_amr_levels_max 2,1 -ex1_dm_view  -ex1_vec_view ::ascii_matlab</font>
+<a name="line113">113: </a><font color="#B22222">    test:</font>
+<a name="line114">114: </a><font color="#B22222">      suffix: cpu</font>
+<a name="line115">115: </a><font color="#B22222">      args: -dm_landau_device_type cpu</font>
+<a name="line116">116: </a><font color="#B22222">    test:</font>
+<a name="line117">117: </a><font color="#B22222">      suffix: kokkos</font>
+<a name="line118">118: </a><font color="#B22222">      requires: kokkos_kernels</font>
+<a name="line119">119: </a><font color="#B22222">      args: -dm_landau_device_type kokkos -dm_mat_type aijkokkos -dm_vec_type kokkos</font>
+<a name="line120">120: </a><font color="#B22222">    test:</font>
+<a name="line121">121: </a><font color="#B22222">      suffix: cuda</font>
+<a name="line122">122: </a><font color="#B22222">      requires: cuda</font>
+<a name="line123">123: </a><font color="#B22222">      args: -dm_landau_device_type cuda -dm_mat_type aijcusparse -dm_vec_type cuda -mat_cusparse_use_cpu_solve</font>
+
+<a name="line125">125: </a><font color="#B22222">TEST*/</font>
+</pre>
+</body>
+
+</html>

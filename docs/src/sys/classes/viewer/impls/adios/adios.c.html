@@ -1,0 +1,227 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/classes/viewer/impls/adios/adios.c">Actual source code: adios.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:45+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../../include/petsc/private/viewerimpl.h.html">&lt;petsc/private/viewerimpl.h&gt;</A>
+<a name="line2">  2: </a><font color="#A020F0">#include &lt;adios.h&gt;</font>
+<a name="line3">  3: </a><font color="#A020F0">#include &lt;adios_read.h&gt;</font>
+
+<a name="line5">  5: </a>#include <A href="../../../../../../include/petsc/private/vieweradiosimpl.h.html">&lt;petsc/private/vieweradiosimpl.h&gt;</A>
+
+<a name="line7">  7: </a><strong><font color="#4169E1"><a name="PetscViewerSetFromOptions_ADIOS"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerSetFromOptions_ADIOS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> v, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line8">  8: </a>{
+<a name="line9">  9: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"ADIOS <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> Options"</font>);
+<a name="line10"> 10: </a>  PetscOptionsHeadEnd();
+<a name="line11"> 11: </a>  <font color="#4169E1">return</font> 0;
+<a name="line12"> 12: </a>}
+
+<a name="line14"> 14: </a><strong><font color="#4169E1"><a name="PetscViewerFileClose_ADIOS"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerFileClose_ADIOS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line15"> 15: </a>{
+<a name="line16"> 16: </a>  PetscViewer_ADIOS *adios = (PetscViewer_ADIOS *)viewer-&gt;data;
+
+<a name="line18"> 18: </a>  <font color="#4169E1">switch</font> (adios-&gt;btype) {
+<a name="line19"> 19: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_READ</a>:
+<a name="line20"> 20: </a>    adios_read_close(adios-&gt;adios_fp);
+<a name="line21"> 21: </a>    <font color="#4169E1">break</font>;
+<a name="line22"> 22: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_WRITE</a>:
+<a name="line23"> 23: </a>    adios_close(adios-&gt;adios_handle);
+<a name="line24"> 24: </a>    <font color="#4169E1">break</font>;
+<a name="line25"> 25: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line26"> 26: </a>    <font color="#4169E1">break</font>;
+<a name="line27"> 27: </a>  }
+<a name="line28"> 28: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(adios-&gt;filename);
+<a name="line29"> 29: </a>  <font color="#4169E1">return</font> 0;
+<a name="line30"> 30: </a>}
+
+<a name="line32"> 32: </a><strong><font color="#4169E1"><a name="PetscViewerDestroy_ADIOS"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerDestroy_ADIOS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line33"> 33: </a>{
+<a name="line34"> 34: </a>  PetscViewer_ADIOS *adios = (PetscViewer_ADIOS *)viewer-&gt;data;
+
+<a name="line36"> 36: </a>  PetscViewerFileClose_ADIOS(viewer);
+<a name="line37"> 37: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(adios);
+<a name="line38"> 38: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerFileSetName_C"</font>, NULL);
+<a name="line39"> 39: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerFileGetName_C"</font>, NULL);
+<a name="line40"> 40: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <font color="#666666">"PetscViewerFileSetMode_C"</font>, NULL);
+<a name="line41"> 41: </a>  <font color="#4169E1">return</font> 0;
+<a name="line42"> 42: </a>}
+
+<a name="line44"> 44: </a><strong><font color="#4169E1"><a name="PetscViewerFileSetMode_ADIOS"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerFileSetMode_ADIOS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">PetscFileMode</a> type)</font></strong>
+<a name="line45"> 45: </a>{
+<a name="line46"> 46: </a>  PetscViewer_ADIOS *adios = (PetscViewer_ADIOS *)viewer-&gt;data;
+
+<a name="line48"> 48: </a>  adios-&gt;btype = type;
+<a name="line49"> 49: </a>  <font color="#4169E1">return</font> 0;
+<a name="line50"> 50: </a>}
+
+<a name="line52"> 52: </a><strong><font color="#4169E1"><a name="PetscViewerFileSetName_ADIOS"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerFileSetName_ADIOS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, const char name[])</font></strong>
+<a name="line53"> 53: </a>{
+<a name="line54"> 54: </a>  PetscViewer_ADIOS *adios = (PetscViewer_ADIOS *)viewer-&gt;data;
+
+<a name="line56"> 56: </a>  <font color="#4169E1">if</font> (adios-&gt;filename) <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(adios-&gt;filename);
+<a name="line57"> 57: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(name, &amp;adios-&gt;filename);
+<a name="line58"> 58: </a>  <font color="#B22222">/* Create or open the file collectively */</font>
+<a name="line59"> 59: </a>  <font color="#4169E1">switch</font> (adios-&gt;btype) {
+<a name="line60"> 60: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_READ</a>:
+<a name="line61"> 61: </a>    adios-&gt;adios_fp = adios_read_open_file(adios-&gt;filename, ADIOS_READ_METHOD_BP, <a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer));
+<a name="line62"> 62: </a>    <font color="#4169E1">break</font>;
+<a name="line63"> 63: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_WRITE</a>:
+<a name="line64"> 64: </a>    adios_open(&amp;adios-&gt;adios_handle, <font color="#666666">"PETSc"</font>, adios-&gt;filename, <font color="#666666">"w"</font>, <a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer));
+<a name="line65"> 65: </a>    <font color="#4169E1">break</font>;
+<a name="line66"> 66: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_UNDEFINED</a>:
+<a name="line67"> 67: </a>    <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer), PETSC_ERR_ORDER, <font color="#666666">"Must call <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetMode.html">PetscViewerFileSetMode</a>() before <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetName.html">PetscViewerFileSetName</a>()"</font>);
+<a name="line68"> 68: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line69"> 69: </a>    <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer), PETSC_ERR_SUP, <font color="#666666">"Unsupported file mode %s"</font>, PetscFileModes[adios-&gt;btype]);
+<a name="line70"> 70: </a>  }
+<a name="line71"> 71: </a>  <font color="#4169E1">return</font> 0;
+<a name="line72"> 72: </a>}
+
+<a name="line74"> 74: </a><strong><font color="#4169E1"><a name="PetscViewerFileGetName_ADIOS"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerFileGetName_ADIOS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, const char **name)</font></strong>
+<a name="line75"> 75: </a>{
+<a name="line76"> 76: </a>  PetscViewer_ADIOS *vadios = (PetscViewer_ADIOS *)viewer-&gt;data;
+
+<a name="line78"> 78: </a>  *name = vadios-&gt;filename;
+<a name="line79"> 79: </a>  <font color="#4169E1">return</font> 0;
+<a name="line80"> 80: </a>}
+
+<a name="line82"> 82: </a><font color="#B22222">/*MC</font>
+<a name="line83"> 83: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERADIOS.html">PETSCVIEWERADIOS</a> - A viewer that writes to an ADIOS file</font>
+
+<a name="line85"> 85: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line87"> 87: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerADIOSOpen.html">PetscViewerADIOSOpen</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerStringSPrintf.html">PetscViewerStringSPrintf</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerSocketOpen.html">PetscViewerSocketOpen</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html">PetscViewerDrawOpen</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERSOCKET.html">PETSCVIEWERSOCKET</a>`,</font>
+<a name="line88"> 88: </a><font color="#B22222">          `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html">PetscViewerASCIIOpen</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html">PetscViewerBinaryOpen</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERBINARY.html">PETSCVIEWERBINARY</a>`, `<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERDRAW.html">PETSCVIEWERDRAW</a>`, `<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERSTRING.html">PETSCVIEWERSTRING</a>`,</font>
+<a name="line89"> 89: </a><font color="#B22222">          `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerMatlabOpen.html">PetscViewerMatlabOpen</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecView.html">VecView</a>()`, `<a href="../../../../../../docs/manualpages/DM/DMView.html">DMView</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerMatlabPutArray.html">PetscViewerMatlabPutArray</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>`, `<a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERMATLAB.html">PETSCVIEWERMATLAB</a>`,</font>
+<a name="line90"> 90: </a><font color="#B22222">          `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetName.html">PetscViewerFileSetName</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetMode.html">PetscViewerFileSetMode</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PetscViewerFormat</a>`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerType.html">PetscViewerType</a>`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html">PetscViewerSetType</a>()`</font>
+<a name="line91"> 91: </a><font color="#B22222">M*/</font>
+
+<a name="line93"> 93: </a><strong><font color="#4169E1"><a name="PetscViewerCreate_ADIOS"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerCreate_ADIOS(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> v)</font></strong>
+<a name="line94"> 94: </a>{
+<a name="line95"> 95: </a>  PetscViewer_ADIOS *adios;
+
+<a name="line97"> 97: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;adios);
+
+<a name="line99"> 99: </a>  v-&gt;data                = (void *)adios;
+<a name="line100">100: </a>  v-&gt;ops-&gt;destroy        = PetscViewerDestroy_ADIOS;
+<a name="line101">101: </a>  v-&gt;ops-&gt;setfromoptions = PetscViewerSetFromOptions_ADIOS;
+<a name="line102">102: </a>  v-&gt;ops-&gt;flush          = NULL;
+<a name="line103">103: </a>  adios-&gt;btype           = <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_UNDEFINED</a>;
+<a name="line104">104: </a>  adios-&gt;filename        = NULL;
+<a name="line105">105: </a>  adios-&gt;timestep        = -1;
+
+<a name="line107">107: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, <font color="#666666">"PetscViewerFileSetName_C"</font>, PetscViewerFileSetName_ADIOS);
+<a name="line108">108: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, <font color="#666666">"PetscViewerFileGetName_C"</font>, PetscViewerFileGetName_ADIOS);
+<a name="line109">109: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, <font color="#666666">"PetscViewerFileSetMode_C"</font>, PetscViewerFileSetMode_ADIOS);
+<a name="line110">110: </a>  <font color="#4169E1">return</font> 0;
+<a name="line111">111: </a>}
+
+<a name="line113">113: </a><font color="#B22222">/*@C</font>
+<a name="line114">114: </a><font color="#B22222">   <a href="../../../../../../docs/manualpages/Viewer/PetscViewerADIOSOpen.html">PetscViewerADIOSOpen</a> - Opens a file for ADIOS input/output.</font>
+
+<a name="line116">116: </a><font color="#B22222">   Collective</font>
+
+<a name="line118">118: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line119">119: </a><font color="#B22222">+  comm - MPI communicator</font>
+<a name="line120">120: </a><font color="#B22222">.  name - name of file</font>
+<a name="line121">121: </a><font color="#B22222">-  type - type of file</font>
+<a name="line122">122: </a><font color="#B22222">$    <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_WRITE</a> - create new file for binary output</font>
+<a name="line123">123: </a><font color="#B22222">$    <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_READ</a> - open existing file for binary input</font>
+<a name="line124">124: </a><font color="#B22222">$    <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_APPEND</a> - open existing file for binary output</font>
+
+<a name="line126">126: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line127">127: </a><font color="#B22222">.  adiosv - `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>` for ADIOS input/output to use with the specified file</font>
+
+<a name="line129">129: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line131">131: </a><font color="#B22222">   Note:</font>
+<a name="line132">132: </a><font color="#B22222">   This <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> should be destroyed with `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>()`.</font>
+
+<a name="line134">134: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html">PetscViewerASCIIOpen</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerPushFormat.html">PetscViewerPushFormat</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerHDF5Open.html">PetscViewerHDF5Open</a>()`,</font>
+<a name="line135">135: </a><font color="#B22222">          `<a href="../../../../../../docs/manualpages/Vec/VecView.html">VecView</a>()`, `<a href="../../../../../../docs/manualpages/Mat/MatView.html">MatView</a>()`, `<a href="../../../../../../docs/manualpages/Vec/VecLoad.html">VecLoad</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html">PetscViewerSetType</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetMode.html">PetscViewerFileSetMode</a>()`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetName.html">PetscViewerFileSetName</a>()`</font>
+<a name="line136">136: </a><font color="#B22222">          `<a href="../../../../../../docs/manualpages/Mat/MatLoad.html">MatLoad</a>()`, `<a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">PetscFileMode</a>`, `<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`</font>
+<a name="line137">137: </a><font color="#B22222">@*/</font>
+<a name="line138">138: </a><strong><font color="#4169E1"><a name="PetscViewerADIOSOpen"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Viewer/PetscViewerADIOSOpen.html">PetscViewerADIOSOpen</a>(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, const char name[], <a href="../../../../../../docs/manualpages/Sys/PetscFileMode.html">PetscFileMode</a> type, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *adiosv)</font></strong>
+<a name="line139">139: </a>{
+<a name="line140">140: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>(comm, adiosv);
+<a name="line141">141: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerSetType.html">PetscViewerSetType</a>(*adiosv, <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERADIOS.html">PETSCVIEWERADIOS</a>);
+<a name="line142">142: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetMode.html">PetscViewerFileSetMode</a>(*adiosv, type);
+<a name="line143">143: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFileSetName.html">PetscViewerFileSetName</a>(*adiosv, name);
+<a name="line144">144: </a>  <font color="#4169E1">return</font> 0;
+<a name="line145">145: </a>}
+
+<a name="line147">147: </a><font color="#B22222">/*@C</font>
+<a name="line148">148: </a><font color="#B22222">  <a href="../../../../../../docs/manualpages/Viewer/PetscDataTypeToADIOSDataType.html">PetscDataTypeToADIOSDataType</a> - Converts the PETSc name of a datatype to its ADIOS name.</font>
+
+<a name="line150">150: </a><font color="#B22222">  Not collective</font>
+
+<a name="line152">152: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line153">153: </a><font color="#B22222">. ptype - the PETSc datatype name (for example `<a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_DOUBLE</a>`)</font>
+
+<a name="line155">155: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line156">156: </a><font color="#B22222">. mtype - the ADIOS datatype (for example MPI_DOUBLE, ...)</font>
+
+<a name="line158">158: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line160">160: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PetscDataType</a>`, `<a href="../../../../../../docs/manualpages/Viewer/PetscADIOSDataTypeToPetscDataType.html">PetscADIOSDataTypeToPetscDataType</a>()`</font>
+<a name="line161">161: </a><font color="#B22222">@*/</font>
+<a name="line162">162: </a><strong><font color="#4169E1"><a name="PetscDataTypeToADIOSDataType"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Viewer/PetscDataTypeToADIOSDataType.html">PetscDataTypeToADIOSDataType</a>(<a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PetscDataType</a> ptype, enum ADIOS_DATATYPES *htype)</font></strong>
+<a name="line163">163: </a>{
+<a name="line164">164: </a>  <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_INT</a>)
+<a name="line165">165: </a><font color="#A020F0">#if defined(PETSC_USE_64BIT_INDICES)</font>
+<a name="line166">166: </a>    *htype = adios_long;
+<a name="line167">167: </a><font color="#A020F0">#else</font>
+<a name="line168">168: </a>    *htype = adios_integer;
+<a name="line169">169: </a><font color="#A020F0">#endif</font>
+<a name="line170">170: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_ENUM</a>) *htype = adios_integer;
+<a name="line171">171: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_DOUBLE</a>) *htype = adios_double;
+<a name="line172">172: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_LONG</a>) *htype = adios_long;
+<a name="line173">173: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_SHORT</a>) *htype = adios_short;
+<a name="line174">174: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_FLOAT</a>) *htype = adios_real;
+<a name="line175">175: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_CHAR</a>) *htype = adios_string_array;
+<a name="line176">176: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (ptype == <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_STRING</a>) *htype = adios_string;
+<a name="line177">177: </a>  <font color="#4169E1">else</font> <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Unsupported PETSc datatype"</font>);
+<a name="line178">178: </a>  <font color="#4169E1">return</font> 0;
+<a name="line179">179: </a>}
+
+<a name="line181">181: </a><font color="#B22222">/*@C</font>
+<a name="line182">182: </a><font color="#B22222">  <a href="../../../../../../docs/manualpages/Viewer/PetscADIOSDataTypeToPetscDataType.html">PetscADIOSDataTypeToPetscDataType</a> - Finds the PETSc name of a datatype from its ADIOS name</font>
+
+<a name="line184">184: </a><font color="#B22222">  Not collective</font>
+
+<a name="line186">186: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line187">187: </a><font color="#B22222">. htype - the ADIOS datatype (for example H5T_NATIVE_DOUBLE, ...)</font>
+
+<a name="line189">189: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line190">190: </a><font color="#B22222">. ptype - the PETSc datatype name (for example `<a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_DOUBLE</a>`)</font>
+
+<a name="line192">192: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line194">194: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PetscDataType</a>`, `<a href="../../../../../../docs/manualpages/Viewer/PetscADIOSDataTypeToPetscDataType.html">PetscADIOSDataTypeToPetscDataType</a>()`</font>
+<a name="line195">195: </a><font color="#B22222">@*/</font>
+<a name="line196">196: </a><strong><font color="#4169E1"><a name="PetscADIOSDataTypeToPetscDataType"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Viewer/PetscADIOSDataTypeToPetscDataType.html">PetscADIOSDataTypeToPetscDataType</a>(enum ADIOS_DATATYPES htype, <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PetscDataType</a> *ptype)</font></strong>
+<a name="line197">197: </a>{
+<a name="line198">198: </a><font color="#A020F0">#if defined(PETSC_USE_64BIT_INDICES)</font>
+<a name="line199">199: </a>  <font color="#4169E1">if</font> (htype == adios_integer) *ptype = <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_ENUM</a>;
+<a name="line200">200: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (htype == adios_long) *ptype = <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_INT</a>;
+<a name="line201">201: </a><font color="#A020F0">#else</font>
+<a name="line202">202: </a>  <font color="#4169E1">if</font> (htype == adios_integer) *ptype = <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_INT</a>;
+<a name="line203">203: </a><font color="#A020F0">#endif</font>
+<a name="line204">204: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (htype == adios_double) *ptype = <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_DOUBLE</a>;
+<a name="line205">205: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (htype == adios_long) *ptype = <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_LONG</a>;
+<a name="line206">206: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (htype == adios_short) *ptype = <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_SHORT</a>;
+<a name="line207">207: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (htype == adios_real) *ptype = <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_FLOAT</a>;
+<a name="line208">208: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (htype == adios_string_array) *ptype = <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_CHAR</a>;
+<a name="line209">209: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (htype == adios_string) *ptype = <a href="../../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_STRING</a>;
+<a name="line210">210: </a>  <font color="#4169E1">else</font> <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Unsupported ADIOS datatype"</font>);
+<a name="line211">211: </a>  <font color="#4169E1">return</font> 0;
+<a name="line212">212: </a>}
+</pre>
+</body>
+
+</html>

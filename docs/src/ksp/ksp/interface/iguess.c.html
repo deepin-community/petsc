@@ -1,0 +1,329 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ksp/ksp/interface/iguess.c">Actual source code: iguess.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:04+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petsc/private/kspimpl.h.html">&lt;petsc/private/kspimpl.h&gt;</A>
+
+<a name="line3">  3: </a><a href="../../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> KSPGuessList = NULL;
+<a name="line4">  4: </a>static <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>  KSPGuessRegisterAllCalled;
+
+<a name="line6">  6: </a><font color="#B22222">/*</font>
+<a name="line7">  7: </a><font color="#B22222">  KSPGuessRegister -  Adds a method for initial guess computation in Krylov subspace solver package.</font>
+
+<a name="line9">  9: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line11"> 11: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line12"> 12: </a><font color="#B22222">+  name_solver - name of a new user-defined solver</font>
+<a name="line13"> 13: </a><font color="#B22222">-  routine_create - routine to create method context</font>
+
+<a name="line15"> 15: </a><font color="#B22222">   Notes:</font>
+<a name="line16"> 16: </a><font color="#B22222">   KSPGuessRegister() may be called multiple times to add several user-defined solvers.</font>
+
+<a name="line18"> 18: </a><font color="#B22222">   Sample usage:</font>
+<a name="line19"> 19: </a><font color="#B22222">.vb</font>
+<a name="line20"> 20: </a><font color="#B22222">   KSPGuessRegister("my_initial_guess",MyInitialGuessCreate);</font>
+<a name="line21"> 21: </a><font color="#B22222">.ve</font>
+
+<a name="line23"> 23: </a><font color="#B22222">   Then, it can be chosen with the procedural interface via</font>
+<a name="line24"> 24: </a><font color="#B22222">$     KSPSetGuessType(ksp,"my_initial_guess")</font>
+<a name="line25"> 25: </a><font color="#B22222">   or at runtime via the option</font>
+<a name="line26"> 26: </a><font color="#B22222">$     -ksp_guess_type my_initial_guess</font>
+
+<a name="line28"> 28: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line30"> 30: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>`, `<a href="../../../../docs/manualpages/KSP/KSPGuessRegisterAll.html">KSPGuessRegisterAll</a>()`</font>
+<a name="line31"> 31: </a><font color="#B22222">@*/</font>
+<a name="line32"> 32: </a><strong><font color="#4169E1"><a name="KSPGuessRegister"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPGuessRegister(const char sname[], <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*function)(<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>))</font></strong>
+<a name="line33"> 33: </a>{
+<a name="line34"> 34: </a>  <a href="../../../../docs/manualpages/KSP/KSPInitializePackage.html">KSPInitializePackage</a>();
+<a name="line35"> 35: </a>  <a href="../../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>(&amp;KSPGuessList, sname, function);
+<a name="line36"> 36: </a>  <font color="#4169E1">return</font> 0;
+<a name="line37"> 37: </a>}
+
+<a name="line39"> 39: </a><font color="#B22222">/*@C</font>
+<a name="line40"> 40: </a><font color="#B22222">  <a href="../../../../docs/manualpages/KSP/KSPGuessRegisterAll.html">KSPGuessRegisterAll</a> - Registers all `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>` implementations in the `<a href="../../../../docs/manualpages/KSP/KSP.html">KSP</a>` package.</font>
+
+<a name="line42"> 42: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line44"> 44: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line46"> 46: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>`, `<a href="../../../../docs/manualpages/KSP/KSPRegisterAll.html">KSPRegisterAll</a>()`, `<a href="../../../../docs/manualpages/KSP/KSPInitializePackage.html">KSPInitializePackage</a>()`</font>
+<a name="line47"> 47: </a><font color="#B22222">@*/</font>
+<a name="line48"> 48: </a><strong><font color="#4169E1"><a name="KSPGuessRegisterAll"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/KSP/KSPGuessRegisterAll.html">KSPGuessRegisterAll</a>(void)</font></strong>
+<a name="line49"> 49: </a>{
+<a name="line50"> 50: </a>  <font color="#4169E1">if</font> (KSPGuessRegisterAllCalled) <font color="#4169E1">return</font> 0;
+<a name="line51"> 51: </a>  KSPGuessRegisterAllCalled = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line52"> 52: </a>  KSPGuessRegister(KSPGUESSFISCHER, KSPGuessCreate_Fischer);
+<a name="line53"> 53: </a>  KSPGuessRegister(KSPGUESSPOD, KSPGuessCreate_POD);
+<a name="line54"> 54: </a>  <font color="#4169E1">return</font> 0;
+<a name="line55"> 55: </a>}
+
+<a name="line57"> 57: </a><font color="#B22222">/*@</font>
+<a name="line58"> 58: </a><font color="#B22222">    <a href="../../../../docs/manualpages/KSP/KSPGuessSetFromOptions.html">KSPGuessSetFromOptions</a> - Sets the options for a `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>` from the options database</font>
+
+<a name="line60"> 60: </a><font color="#B22222">    Collective</font>
+
+<a name="line62"> 62: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line63"> 63: </a><font color="#B22222">.    guess - `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>` object</font>
+
+<a name="line65"> 65: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line67"> 67: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>`, `<a href="../../../../docs/manualpages/KSP/KSPGetGuess.html">KSPGetGuess</a>()`, `KSPSetGuessType()`, `<a href="../../../../docs/manualpages/KSP/KSPGuessType.html">KSPGuessType</a>`</font>
+<a name="line68"> 68: </a><font color="#B22222">@*/</font>
+<a name="line69"> 69: </a><strong><font color="#4169E1"><a name="KSPGuessSetFromOptions"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/KSP/KSPGuessSetFromOptions.html">KSPGuessSetFromOptions</a>(<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> guess)</font></strong>
+<a name="line70"> 70: </a>{
+<a name="line72"> 72: </a>  <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(guess, setfromoptions);
+<a name="line73"> 73: </a>  <font color="#4169E1">return</font> 0;
+<a name="line74"> 74: </a>}
+
+<a name="line76"> 76: </a><font color="#B22222">/*@</font>
+<a name="line77"> 77: </a><font color="#B22222">    <a href="../../../../docs/manualpages/KSP/KSPGuessSetTolerance.html">KSPGuessSetTolerance</a> - Sets the relative tolerance used in either eigenvalue (POD) or singular value (Fischer type 3) calculations.</font>
+<a name="line78"> 78: </a><font color="#B22222">    Ignored by the first and second Fischer types.</font>
+
+<a name="line80"> 80: </a><font color="#B22222">    Collective</font>
+
+<a name="line82"> 82: </a><font color="#B22222">    Input Parameter:</font>
+<a name="line83"> 83: </a><font color="#B22222">.    guess - `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>` object</font>
+
+<a name="line85"> 85: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line87"> 87: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>`, `<a href="../../../../docs/manualpages/KSP/KSPGuessType.html">KSPGuessType</a>`, `<a href="../../../../docs/manualpages/KSP/KSPGuessSetFromOptions.html">KSPGuessSetFromOptions</a>()`</font>
+<a name="line88"> 88: </a><font color="#B22222">@*/</font>
+<a name="line89"> 89: </a><strong><font color="#4169E1"><a name="KSPGuessSetTolerance"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/KSP/KSPGuessSetTolerance.html">KSPGuessSetTolerance</a>(<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> guess, <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> tol)</font></strong>
+<a name="line90"> 90: </a>{
+<a name="line92"> 92: </a>  <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(guess, settolerance, tol);
+<a name="line93"> 93: </a>  <font color="#4169E1">return</font> 0;
+<a name="line94"> 94: </a>}
+
+<a name="line96"> 96: </a><font color="#B22222">/*@</font>
+<a name="line97"> 97: </a><font color="#B22222">   <a href="../../../../docs/manualpages/KSP/KSPGuessDestroy.html">KSPGuessDestroy</a> - Destroys `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>` context.</font>
+
+<a name="line99"> 99: </a><font color="#B22222">   Collective</font>
+
+<a name="line101">101: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line102">102: </a><font color="#B22222">.  guess - initial guess object</font>
+
+<a name="line104">104: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line106">106: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../docs/manualpages/KSP/KSPGuessCreate.html">KSPGuessCreate</a>()`, `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>`, `<a href="../../../../docs/manualpages/KSP/KSPGuessType.html">KSPGuessType</a>`</font>
+<a name="line107">107: </a><font color="#B22222">@*/</font>
+<a name="line108">108: </a><strong><font color="#4169E1"><a name="KSPGuessDestroy"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/KSP/KSPGuessDestroy.html">KSPGuessDestroy</a>(<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> *guess)</font></strong>
+<a name="line109">109: </a>{
+<a name="line110">110: </a>  <font color="#4169E1">if</font> (!*guess) <font color="#4169E1">return</font> 0;
+<a name="line112">112: </a>  <font color="#4169E1">if</font> (--((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(*guess))-&gt;refct &gt; 0) {
+<a name="line113">113: </a>    *guess = NULL;
+<a name="line114">114: </a>    <font color="#4169E1">return</font> 0;
+<a name="line115">115: </a>  }
+<a name="line116">116: </a>  <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>((*guess), destroy);
+<a name="line117">117: </a>  <a href="../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;(*guess)-&gt;A);
+<a name="line118">118: </a>  <a href="../../../../docs/manualpages/Sys/PetscHeaderDestroy.html">PetscHeaderDestroy</a>(guess);
+<a name="line119">119: </a>  <font color="#4169E1">return</font> 0;
+<a name="line120">120: </a>}
+
+<a name="line122">122: </a><font color="#B22222">/*@C</font>
+<a name="line123">123: </a><font color="#B22222">   <a href="../../../../docs/manualpages/KSP/KSPGuessView.html">KSPGuessView</a> - View the `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>` object</font>
+
+<a name="line125">125: </a><font color="#B22222">   Logically Collective</font>
+
+<a name="line127">127: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line128">128: </a><font color="#B22222">+  guess  - the initial guess object for the Krylov method</font>
+<a name="line129">129: </a><font color="#B22222">-  viewer - the viewer object</font>
+
+<a name="line131">131: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line133">133: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../docs/manualpages/KSP/KSP.html">KSP</a>`, `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>`, `<a href="../../../../docs/manualpages/KSP/KSPGuessType.html">KSPGuessType</a>`, `KSPGuessRegister()`, `<a href="../../../../docs/manualpages/KSP/KSPGuessCreate.html">KSPGuessCreate</a>()`, `<a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`</font>
+<a name="line134">134: </a><font color="#B22222">@*/</font>
+<a name="line135">135: </a><strong><font color="#4169E1"><a name="KSPGuessView"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/KSP/KSPGuessView.html">KSPGuessView</a>(<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> guess, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> view)</font></strong>
+<a name="line136">136: </a>{
+<a name="line137">137: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> ascii;
+
+<a name="line140">140: </a>  <font color="#4169E1">if</font> (!view) <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIGetStdout.html">PetscViewerASCIIGetStdout</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)guess), &amp;view);
+<a name="line143">143: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)view, <a href="../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;ascii);
+<a name="line144">144: </a>  <font color="#4169E1">if</font> (ascii) {
+<a name="line145">145: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectPrintClassNamePrefixType.html">PetscObjectPrintClassNamePrefixType</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)guess, view);
+<a name="line146">146: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(view);
+<a name="line147">147: </a>    <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(guess, view, view);
+<a name="line148">148: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(view);
+<a name="line149">149: </a>  }
+<a name="line150">150: </a>  <font color="#4169E1">return</font> 0;
+<a name="line151">151: </a>}
+
+<a name="line153">153: </a><font color="#B22222">/*@</font>
+<a name="line154">154: </a><font color="#B22222">   <a href="../../../../docs/manualpages/KSP/KSPGuessCreate.html">KSPGuessCreate</a> - Creates the default `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>` context.</font>
+
+<a name="line156">156: </a><font color="#B22222">   Collective</font>
+
+<a name="line158">158: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line159">159: </a><font color="#B22222">.  comm - MPI communicator</font>
+
+<a name="line161">161: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line162">162: </a><font color="#B22222">.  guess - location to put the `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>` context</font>
+
+<a name="line164">164: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line166">166: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>()`, `<a href="../../../../docs/manualpages/KSP/KSPGuessDestroy.html">KSPGuessDestroy</a>()`, `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>`, `<a href="../../../../docs/manualpages/KSP/KSPGuessType.html">KSPGuessType</a>`, `<a href="../../../../docs/manualpages/KSP/KSP.html">KSP</a>`</font>
+<a name="line167">167: </a><font color="#B22222">@*/</font>
+<a name="line168">168: </a><strong><font color="#4169E1"><a name="KSPGuessCreate"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/KSP/KSPGuessCreate.html">KSPGuessCreate</a>(<a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> *guess)</font></strong>
+<a name="line169">169: </a>{
+<a name="line170">170: </a>  <a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> tguess;
+
+<a name="line173">173: </a>  *guess = NULL;
+<a name="line174">174: </a>  <a href="../../../../docs/manualpages/KSP/KSPInitializePackage.html">KSPInitializePackage</a>();
+<a name="line175">175: </a>  <a href="../../../../docs/manualpages/Sys/PetscHeaderCreate.html">PetscHeaderCreate</a>(tguess, KSPGUESS_CLASSID, <font color="#666666">"<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>"</font>, <font color="#666666">"Initial guess for Krylov Method"</font>, <font color="#666666">"<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>"</font>, comm, <a href="../../../../docs/manualpages/KSP/KSPGuessDestroy.html">KSPGuessDestroy</a>, <a href="../../../../docs/manualpages/KSP/KSPGuessView.html">KSPGuessView</a>);
+<a name="line176">176: </a>  tguess-&gt;omatstate = -1;
+<a name="line177">177: </a>  *guess            = tguess;
+<a name="line178">178: </a>  <font color="#4169E1">return</font> 0;
+<a name="line179">179: </a>}
+
+<a name="line181">181: </a><font color="#B22222">/*@C</font>
+<a name="line182">182: </a><font color="#B22222">   <a href="../../../../docs/manualpages/KSP/KSPGuessSetType.html">KSPGuessSetType</a> - Sets the type of a `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>`</font>
+
+<a name="line184">184: </a><font color="#B22222">   Logically Collective</font>
+
+<a name="line186">186: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line187">187: </a><font color="#B22222">+  guess - the initial guess object for the Krylov method</font>
+<a name="line188">188: </a><font color="#B22222">-  type  - a known `<a href="../../../../docs/manualpages/KSP/KSPGuessType.html">KSPGuessType</a>`</font>
+
+<a name="line190">190: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line191">191: </a><font color="#B22222">.  -ksp_guess_type  &lt;method&gt; - Sets the method; use -help for a list of available methods</font>
+
+<a name="line193">193: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line195">195: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../docs/manualpages/KSP/KSP.html">KSP</a>`, `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>`, `<a href="../../../../docs/manualpages/KSP/KSPGuessType.html">KSPGuessType</a>`, `KSPGuessRegister()`, `<a href="../../../../docs/manualpages/KSP/KSPGuessCreate.html">KSPGuessCreate</a>()`</font>
+<a name="line196">196: </a><font color="#B22222">@*/</font>
+<a name="line197">197: </a><strong><font color="#4169E1"><a name="KSPGuessSetType"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/KSP/KSPGuessSetType.html">KSPGuessSetType</a>(<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> guess, <a href="../../../../docs/manualpages/KSP/KSPGuessType.html">KSPGuessType</a> type)</font></strong>
+<a name="line198">198: </a>{
+<a name="line199">199: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> match;
+<a name="line200">200: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*r)(<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>);
+
+
+<a name="line205">205: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)guess, type, &amp;match);
+<a name="line206">206: </a>  <font color="#4169E1">if</font> (match) <font color="#4169E1">return</font> 0;
+
+<a name="line208">208: </a>  <a href="../../../../docs/manualpages/Sys/PetscFunctionListFind.html">PetscFunctionListFind</a>(KSPGuessList, type, &amp;r);
+<a name="line210">210: </a>  <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(guess, destroy);
+<a name="line211">211: </a>  guess-&gt;ops-&gt;destroy = NULL;
+
+<a name="line213">213: </a>  <a href="../../../../docs/manualpages/Sys/PetscMemzero.html">PetscMemzero</a>(guess-&gt;ops, <font color="#4169E1">sizeof</font>(<font color="#4169E1">struct _KSPGuessOps</font>));
+<a name="line214">214: </a>  PetscObjectChangeTypeName((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)guess, type);
+<a name="line215">215: </a>  (*r)(guess);
+<a name="line216">216: </a>  <font color="#4169E1">return</font> 0;
+<a name="line217">217: </a>}
+
+<a name="line219">219: </a><font color="#B22222">/*@C</font>
+<a name="line220">220: </a><font color="#B22222">   <a href="../../../../docs/manualpages/KSP/KSPGuessGetType.html">KSPGuessGetType</a> - Gets the `<a href="../../../../docs/manualpages/KSP/KSPGuessType.html">KSPGuessType</a>` as a string from the `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>` object.</font>
+
+<a name="line222">222: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line224">224: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line225">225: </a><font color="#B22222">.  guess - the initial guess context</font>
+
+<a name="line227">227: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line228">228: </a><font color="#B22222">.  name - type of `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>` method</font>
+
+<a name="line230">230: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line232">232: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>`, `<a href="../../../../docs/manualpages/KSP/KSPGuessSetType.html">KSPGuessSetType</a>()`</font>
+<a name="line233">233: </a><font color="#B22222">@*/</font>
+<a name="line234">234: </a><strong><font color="#4169E1"><a name="KSPGuessGetType"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/KSP/KSPGuessGetType.html">KSPGuessGetType</a>(<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> guess, <a href="../../../../docs/manualpages/KSP/KSPGuessType.html">KSPGuessType</a> *type)</font></strong>
+<a name="line235">235: </a>{
+<a name="line238">238: </a>  *type = ((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)guess)-&gt;type_name;
+<a name="line239">239: </a>  <font color="#4169E1">return</font> 0;
+<a name="line240">240: </a>}
+
+<a name="line242">242: </a><font color="#B22222">/*@</font>
+<a name="line243">243: </a><font color="#B22222">    <a href="../../../../docs/manualpages/KSP/KSPGuessUpdate.html">KSPGuessUpdate</a> - Updates the guess object with the current solution and rhs vector</font>
+
+<a name="line245">245: </a><font color="#B22222">   Collective</font>
+
+<a name="line247">247: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line248">248: </a><font color="#B22222">+  guess - the initial guess context</font>
+<a name="line249">249: </a><font color="#B22222">.  rhs   - the corresponding rhs</font>
+<a name="line250">250: </a><font color="#B22222">-  sol   - the computed solution</font>
+
+<a name="line252">252: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line254">254: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../docs/manualpages/KSP/KSPGuessCreate.html">KSPGuessCreate</a>()`, `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>`</font>
+<a name="line255">255: </a><font color="#B22222">@*/</font>
+<a name="line256">256: </a><strong><font color="#4169E1"><a name="KSPGuessUpdate"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/KSP/KSPGuessUpdate.html">KSPGuessUpdate</a>(<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> guess, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> rhs, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> sol)</font></strong>
+<a name="line257">257: </a>{
+<a name="line261">261: </a>  <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(guess, update, rhs, sol);
+<a name="line262">262: </a>  <font color="#4169E1">return</font> 0;
+<a name="line263">263: </a>}
+
+<a name="line265">265: </a><font color="#B22222">/*@</font>
+<a name="line266">266: </a><font color="#B22222">    <a href="../../../../docs/manualpages/KSP/KSPGuessFormGuess.html">KSPGuessFormGuess</a> - Form the initial guess</font>
+
+<a name="line268">268: </a><font color="#B22222">   Collective</font>
+
+<a name="line270">270: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line271">271: </a><font color="#B22222">+  guess - the initial guess context</font>
+<a name="line272">272: </a><font color="#B22222">.  rhs   - the current rhs vector</font>
+<a name="line273">273: </a><font color="#B22222">-  sol   - the initial guess vector</font>
+
+<a name="line275">275: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line277">277: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../docs/manualpages/KSP/KSPGuessCreate.html">KSPGuessCreate</a>()`, `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>`</font>
+<a name="line278">278: </a><font color="#B22222">@*/</font>
+<a name="line279">279: </a><strong><font color="#4169E1"><a name="KSPGuessFormGuess"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/KSP/KSPGuessFormGuess.html">KSPGuessFormGuess</a>(<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> guess, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> rhs, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> sol)</font></strong>
+<a name="line280">280: </a>{
+<a name="line284">284: </a>  <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(guess, formguess, rhs, sol);
+<a name="line285">285: </a>  <font color="#4169E1">return</font> 0;
+<a name="line286">286: </a>}
+
+<a name="line288">288: </a><font color="#B22222">/*@</font>
+<a name="line289">289: </a><font color="#B22222">    <a href="../../../../docs/manualpages/KSP/KSPGuessSetUp.html">KSPGuessSetUp</a> - Setup the initial guess object</font>
+
+<a name="line291">291: </a><font color="#B22222">   Collective</font>
+
+<a name="line293">293: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line294">294: </a><font color="#B22222">-  guess - the initial guess context</font>
+
+<a name="line296">296: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line298">298: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../docs/manualpages/KSP/KSPGuessCreate.html">KSPGuessCreate</a>()`, `<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a>`</font>
+<a name="line299">299: </a><font color="#B22222">@*/</font>
+<a name="line300">300: </a><strong><font color="#4169E1"><a name="KSPGuessSetUp"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/KSP/KSPGuessSetUp.html">KSPGuessSetUp</a>(<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> guess)</font></strong>
+<a name="line301">301: </a>{
+<a name="line302">302: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectState.html">PetscObjectState</a> matstate;
+<a name="line303">303: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         oM = 0, oN = 0, M, N;
+<a name="line304">304: </a>  <a href="../../../../docs/manualpages/Mat/Mat.html">Mat</a>              omat = NULL;
+<a name="line305">305: </a>  <a href="../../../../docs/manualpages/PC/PC.html">PC</a>               pc;
+<a name="line306">306: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>        reuse;
+
+<a name="line309">309: </a>  <font color="#4169E1">if</font> (guess-&gt;A) {
+<a name="line310">310: </a>    omat = guess-&gt;A;
+<a name="line311">311: </a>    <a href="../../../../docs/manualpages/Mat/MatGetSize.html">MatGetSize</a>(guess-&gt;A, &amp;oM, &amp;oN);
+<a name="line312">312: </a>  }
+<a name="line313">313: </a>  <a href="../../../../docs/manualpages/KSP/KSPGetOperators.html">KSPGetOperators</a>(guess-&gt;ksp, &amp;guess-&gt;A, NULL);
+<a name="line314">314: </a>  <a href="../../../../docs/manualpages/KSP/KSPGetPC.html">KSPGetPC</a>(guess-&gt;ksp, &amp;pc);
+<a name="line315">315: </a>  <a href="../../../../docs/manualpages/PC/PCGetReusePreconditioner.html">PCGetReusePreconditioner</a>(pc, &amp;reuse);
+<a name="line316">316: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)guess-&gt;A);
+<a name="line317">317: </a>  <a href="../../../../docs/manualpages/Mat/MatGetSize.html">MatGetSize</a>(guess-&gt;A, &amp;M, &amp;N);
+<a name="line318">318: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectStateGet.html">PetscObjectStateGet</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)guess-&gt;A, &amp;matstate);
+<a name="line319">319: </a>  <font color="#4169E1">if</font> (M != oM || N != oN) {
+<a name="line320">320: </a>    <a href="../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(guess, <font color="#666666">"Resetting <a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> since matrix sizes have changed (%"</font> PetscInt_FMT <font color="#666666">" != %"</font> PetscInt_FMT <font color="#666666">", %"</font> PetscInt_FMT <font color="#666666">" != %"</font> PetscInt_FMT <font color="#666666">")\n"</font>, oM, M, oN, N);
+<a name="line321">321: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (!reuse &amp;&amp; (omat != guess-&gt;A || guess-&gt;omatstate != matstate)) {
+<a name="line322">322: </a>    <a href="../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(guess, <font color="#666666">"Resetting <a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> since %s has changed\n"</font>, omat != guess-&gt;A ? <font color="#666666">"matrix"</font> : <font color="#666666">"matrix state"</font>);
+<a name="line323">323: </a>    <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(guess, reset);
+<a name="line324">324: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (reuse) {
+<a name="line325">325: </a>    <a href="../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(guess, <font color="#666666">"Not resettting <a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> since reuse preconditioner has been specified\n"</font>);
+<a name="line326">326: </a>  } <font color="#4169E1">else</font> {
+<a name="line327">327: </a>    <a href="../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(guess, <font color="#666666">"<a href="../../../../docs/manualpages/KSP/KSPGuess.html">KSPGuess</a> status unchanged\n"</font>);
+<a name="line328">328: </a>  }
+<a name="line329">329: </a>  <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(guess, setup);
+<a name="line330">330: </a>  guess-&gt;omatstate = matstate;
+<a name="line331">331: </a>  <a href="../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;omat);
+<a name="line332">332: </a>  <font color="#4169E1">return</font> 0;
+<a name="line333">333: </a>}
+</pre>
+</body>
+
+</html>

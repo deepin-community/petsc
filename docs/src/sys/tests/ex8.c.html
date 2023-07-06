@@ -1,0 +1,207 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/tests/ex8.c">Actual source code: ex8.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:07+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>static char help[] = <font color="#666666">"Demonstrates BuildTwoSided functions.\n"</font>;
+
+<a name="line3">  3: </a>#include <A href="../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+
+<a name="line5">  5: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line6">  6: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    rank;
+<a name="line7">  7: </a>  <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> value;
+<a name="line8">  8: </a>  char        ok[3];
+<a name="line9">  9: </a>} Unit;
+
+<a name="line11"> 11: </a><strong><font color="#4169E1"><a name="MakeDatatype"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MakeDatatype(MPI_Datatype *dtype)</font></strong>
+<a name="line12"> 12: </a>{
+<a name="line13"> 13: </a>  MPI_Datatype dtypes[3], tmptype;
+<a name="line14"> 14: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>  lengths[3];
+<a name="line15"> 15: </a>  MPI_Aint     displs[3];
+<a name="line16"> 16: </a>  Unit         dummy;
+
+<a name="line18"> 18: </a>  dtypes[0]  = <a href="../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>;
+<a name="line19"> 19: </a>  dtypes[1]  = <a href="../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>;
+<a name="line20"> 20: </a>  dtypes[2]  = MPI_CHAR;
+<a name="line21"> 21: </a>  lengths[0] = 1;
+<a name="line22"> 22: </a>  lengths[1] = 1;
+<a name="line23"> 23: </a>  lengths[2] = 3;
+<a name="line24"> 24: </a>  <font color="#B22222">/* Curse the evil beings that made std::complex a non-POD type. */</font>
+<a name="line25"> 25: </a>  displs[0] = (char *)&amp;dummy.rank - (char *)&amp;dummy;  <font color="#B22222">/* offsetof(Unit,rank); */</font>
+<a name="line26"> 26: </a>  displs[1] = (char *)&amp;dummy.value - (char *)&amp;dummy; <font color="#B22222">/* offsetof(Unit,value); */</font>
+<a name="line27"> 27: </a>  displs[2] = (char *)&amp;dummy.ok - (char *)&amp;dummy;    <font color="#B22222">/* offsetof(Unit,ok); */</font>
+<a name="line28"> 28: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_create_struct.html#MPI_Type_create_struct">MPI_Type_create_struct</a>(3, lengths, displs, dtypes, &amp;tmptype);
+<a name="line29"> 29: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_commit.html#MPI_Type_commit">MPI_Type_commit</a>(&amp;tmptype);
+<a name="line30"> 30: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_create_resized.html#MPI_Type_create_resized">MPI_Type_create_resized</a>(tmptype, 0, <font color="#4169E1">sizeof</font>(Unit), dtype);
+<a name="line31"> 31: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_commit.html#MPI_Type_commit">MPI_Type_commit</a>(dtype);
+<a name="line32"> 32: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_free.html#MPI_Type_free">MPI_Type_free</a>(&amp;tmptype);
+<a name="line33"> 33: </a>  {
+<a name="line34"> 34: </a>    MPI_Aint lb, extent;
+<a name="line35"> 35: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_get_extent.html#MPI_Type_get_extent">MPI_Type_get_extent</a>(*dtype, &amp;lb, &amp;extent);
+<a name="line37"> 37: </a>  }
+<a name="line38"> 38: </a>  <font color="#4169E1">return</font> 0;
+<a name="line39"> 39: </a>}
+
+<a name="line41"> 41: </a><font color="#4169E1"><a name="FCtx"></a>struct FCtx </font>{
+<a name="line42"> 42: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>    rank;
+<a name="line43"> 43: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>    nto;
+<a name="line44"> 44: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>   *toranks;
+<a name="line45"> 45: </a>  Unit          *todata;
+<a name="line46"> 46: </a>  <a href="../../../docs/manualpages/Sys/PetscSegBuffer.html">PetscSegBuffer</a> seg;
+<a name="line47"> 47: </a>};
+
+<a name="line49"> 49: </a><strong><font color="#4169E1"><a name="FSend"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> FSend(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, const <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> tag[], <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> tonum, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank, void *todata, MPI_Request req[], void *ctx)</font></strong>
+<a name="line50"> 50: </a>{
+<a name="line51"> 51: </a>  <font color="#4169E1">struct FCtx</font> *fctx = (<font color="#4169E1">struct FCtx</font> *)ctx;
+
+<a name="line55"> 55: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(&amp;fctx-&gt;todata[tonum].rank, 1, <a href="../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, rank, tag[0], comm, &amp;req[0]);
+<a name="line56"> 56: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(&amp;fctx-&gt;todata[tonum].value, 1, <a href="../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, rank, tag[1], comm, &amp;req[1]);
+<a name="line57"> 57: </a>  <font color="#4169E1">return</font> 0;
+<a name="line58"> 58: </a>}
+
+<a name="line60"> 60: </a><strong><font color="#4169E1"><a name="FRecv"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> FRecv(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, const <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> tag[], <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank, void *fromdata, MPI_Request req[], void *ctx)</font></strong>
+<a name="line61"> 61: </a>{
+<a name="line62"> 62: </a>  <font color="#4169E1">struct FCtx</font> *fctx = (<font color="#4169E1">struct FCtx</font> *)ctx;
+<a name="line63"> 63: </a>  Unit        *buf;
+
+<a name="line66"> 66: </a>  <a href="../../../docs/manualpages/Sys/PetscSegBufferGet.html">PetscSegBufferGet</a>(fctx-&gt;seg, 1, &amp;buf);
+<a name="line67"> 67: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(&amp;buf-&gt;rank, 1, <a href="../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, rank, tag[0], comm, &amp;req[0]);
+<a name="line68"> 68: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(&amp;buf-&gt;value, 1, <a href="../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, rank, tag[1], comm, &amp;req[1]);
+<a name="line69"> 69: </a>  buf-&gt;ok[0] = 'o';
+<a name="line70"> 70: </a>  buf-&gt;ok[1] = 'k';
+<a name="line71"> 71: </a>  buf-&gt;ok[2] = 0;
+<a name="line72"> 72: </a>  <font color="#4169E1">return</font> 0;
+<a name="line73"> 73: </a>}
+
+<a name="line75"> 75: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
+<a name="line76"> 76: </a>{
+<a name="line77"> 77: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>  rank, size, *toranks, *fromranks, nto, nfrom;
+<a name="line78"> 78: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     i, n;
+<a name="line79"> 79: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>    verbose, build_twosided_f;
+<a name="line80"> 80: </a>  Unit        *todata, *fromdata;
+<a name="line81"> 81: </a>  MPI_Datatype dtype;
+
+<a name="line84"> 84: </a>  <a href="../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, (char *)0, help);
+<a name="line85"> 85: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;size);
+<a name="line86"> 86: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;rank);
+
+<a name="line88"> 88: </a>  verbose = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line89"> 89: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, <font color="#666666">"-verbose"</font>, &amp;verbose, NULL);
+<a name="line90"> 90: </a>  build_twosided_f = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line91"> 91: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, <font color="#666666">"-build_twosided_f"</font>, &amp;build_twosided_f, NULL);
+
+<a name="line93"> 93: </a>  <font color="#4169E1">for</font> (i = 1, nto = 0; i &lt; size; i *= 2) nto++;
+<a name="line94"> 94: </a>  <a href="../../../docs/manualpages/Sys/PetscMalloc2.html">PetscMalloc2</a>(nto, &amp;todata, nto, &amp;toranks);
+<a name="line95"> 95: </a>  <font color="#4169E1">for</font> (n = 0, i = 1; i &lt; size; n++, i *= 2) {
+<a name="line96"> 96: </a>    toranks[n]      = (rank + i) % size;
+<a name="line97"> 97: </a>    todata[n].rank  = (rank + i) % size;
+<a name="line98"> 98: </a>    todata[n].value = (<a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)rank;
+<a name="line99"> 99: </a>    todata[n].ok[0] = 'o';
+<a name="line100">100: </a>    todata[n].ok[1] = 'k';
+<a name="line101">101: </a>    todata[n].ok[2] = 0;
+<a name="line102">102: </a>  }
+<a name="line103">103: </a>  <font color="#4169E1">if</font> (verbose) {
+<a name="line104">104: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nto; i++) <a href="../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html">PetscSynchronizedPrintf</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"[%d] TO %d: {%"</font> PetscInt_FMT <font color="#666666">", %g, \"%s\"}\n"</font>, rank, toranks[i], todata[i].rank, (double)<a href="../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(todata[i].value), todata[i].ok);
+<a name="line105">105: </a>    <a href="../../../docs/manualpages/Sys/PetscSynchronizedFlush.html">PetscSynchronizedFlush</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, PETSC_STDOUT);
+<a name="line106">106: </a>  }
+
+<a name="line108">108: </a>  MakeDatatype(&amp;dtype);
+
+<a name="line110">110: </a>  <font color="#4169E1">if</font> (build_twosided_f) {
+<a name="line111">111: </a>    <font color="#4169E1">struct FCtx</font>  fctx;
+<a name="line112">112: </a>    <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *todummy, *fromdummy;
+<a name="line113">113: </a>    fctx.rank    = rank;
+<a name="line114">114: </a>    fctx.nto     = nto;
+<a name="line115">115: </a>    fctx.toranks = toranks;
+<a name="line116">116: </a>    fctx.todata  = todata;
+<a name="line117">117: </a>    <a href="../../../docs/manualpages/Sys/PetscSegBufferCreate.html">PetscSegBufferCreate</a>(<font color="#4169E1">sizeof</font>(Unit), 1, &amp;fctx.seg);
+<a name="line118">118: </a>    <a href="../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(nto, &amp;todummy);
+<a name="line119">119: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nto; i++) todummy[i] = rank;
+<a name="line120">120: </a>    <a href="../../../docs/manualpages/Sys/PetscCommBuildTwoSidedF.html">PetscCommBuildTwoSidedF</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, 1, MPI_INT, nto, toranks, todummy, &amp;nfrom, &amp;fromranks, &amp;fromdummy, 2, FSend, FRecv, &amp;fctx);
+<a name="line121">121: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(todummy);
+<a name="line122">122: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(fromdummy);
+<a name="line123">123: </a>    <a href="../../../docs/manualpages/Sys/PetscSegBufferExtractAlloc.html">PetscSegBufferExtractAlloc</a>(fctx.seg, &amp;fromdata);
+<a name="line124">124: </a>    <a href="../../../docs/manualpages/Sys/PetscSegBufferDestroy.html">PetscSegBufferDestroy</a>(&amp;fctx.seg);
+<a name="line125">125: </a>  } <font color="#4169E1">else</font> {
+<a name="line126">126: </a>    <a href="../../../docs/manualpages/Sys/PetscCommBuildTwoSided.html">PetscCommBuildTwoSided</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, 1, dtype, nto, toranks, todata, &amp;nfrom, &amp;fromranks, &amp;fromdata);
+<a name="line127">127: </a>  }
+<a name="line128">128: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_free.html#MPI_Type_free">MPI_Type_free</a>(&amp;dtype);
+
+<a name="line130">130: </a>  <font color="#4169E1">if</font> (verbose) {
+<a name="line131">131: </a>    <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *iranks, *iperm;
+<a name="line132">132: </a>    <a href="../../../docs/manualpages/Sys/PetscMalloc2.html">PetscMalloc2</a>(nfrom, &amp;iranks, nfrom, &amp;iperm);
+<a name="line133">133: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nfrom; i++) {
+<a name="line134">134: </a>      iranks[i] = fromranks[i];
+<a name="line135">135: </a>      iperm[i]  = i;
+<a name="line136">136: </a>    }
+<a name="line137">137: </a>    <font color="#B22222">/* Receive ordering is non-deterministic in general, so sort to make verbose output deterministic. */</font>
+<a name="line138">138: </a>    <a href="../../../docs/manualpages/Sys/PetscSortIntWithPermutation.html">PetscSortIntWithPermutation</a>(nfrom, iranks, iperm);
+<a name="line139">139: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; nfrom; i++) {
+<a name="line140">140: </a>      <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ip = iperm[i];
+<a name="line141">141: </a>      <a href="../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html">PetscSynchronizedPrintf</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"[%d] FROM %d: {%"</font> PetscInt_FMT <font color="#666666">", %g, \"%s\"}\n"</font>, rank, fromranks[ip], fromdata[ip].rank, (double)<a href="../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(fromdata[ip].value), fromdata[ip].ok);
+<a name="line142">142: </a>    }
+<a name="line143">143: </a>    <a href="../../../docs/manualpages/Sys/PetscSynchronizedFlush.html">PetscSynchronizedFlush</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, PETSC_STDOUT);
+<a name="line144">144: </a>    <a href="../../../docs/manualpages/Sys/PetscFree2.html">PetscFree2</a>(iranks, iperm);
+<a name="line145">145: </a>  }
+
+<a name="line148">148: </a>  <font color="#4169E1">for</font> (i = 1; i &lt; size; i *= 2) {
+<a name="line149">149: </a>    <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> expected_rank = (rank - i + size) % size;
+<a name="line150">150: </a>    <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   flg;
+<a name="line151">151: </a>    <font color="#4169E1">for</font> (n = 0; n &lt; nfrom; n++) {
+<a name="line152">152: </a>      <font color="#4169E1">if</font> (expected_rank == fromranks[n]) <font color="#4169E1">goto</font> found;
+<a name="line153">153: </a>    }
+<a name="line154">154: </a>    <a href="../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, PETSC_ERR_PLIB, <font color="#666666">"[%d] Could not find expected from rank %d"</font>, rank, expected_rank);
+<a name="line155">155: </a><strong><font color="#FF0000">  found:</font></strong>
+<a name="line157">157: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(fromdata[n].ok, <font color="#666666">"ok"</font>, &amp;flg);
+<a name="line159">159: </a>  }
+<a name="line160">160: </a>  <a href="../../../docs/manualpages/Sys/PetscFree2.html">PetscFree2</a>(todata, toranks);
+<a name="line161">161: </a>  <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(fromdata);
+<a name="line162">162: </a>  <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(fromranks);
+<a name="line163">163: </a>  <a href="../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line164">164: </a>  <font color="#4169E1">return</font> 0;
+<a name="line165">165: </a>}
+
+<a name="line167">167: </a><font color="#B22222">/*TEST</font>
+
+<a name="line169">169: </a><font color="#B22222">   test:</font>
+<a name="line170">170: </a><font color="#B22222">      nsize: 4</font>
+<a name="line171">171: </a><font color="#B22222">      args: -verbose -build_twosided allreduce</font>
+
+<a name="line173">173: </a><font color="#B22222">   test:</font>
+<a name="line174">174: </a><font color="#B22222">      suffix: f</font>
+<a name="line175">175: </a><font color="#B22222">      nsize: 4</font>
+<a name="line176">176: </a><font color="#B22222">      args: -verbose -build_twosided_f -build_twosided allreduce</font>
+<a name="line177">177: </a><font color="#B22222">      output_file: output/ex8_1.out</font>
+
+<a name="line179">179: </a><font color="#B22222">   test:</font>
+<a name="line180">180: </a><font color="#B22222">      suffix: f_ibarrier</font>
+<a name="line181">181: </a><font color="#B22222">      nsize: 4</font>
+<a name="line182">182: </a><font color="#B22222">      args: -verbose -build_twosided_f -build_twosided ibarrier</font>
+<a name="line183">183: </a><font color="#B22222">      output_file: output/ex8_1.out</font>
+<a name="line184">184: </a><font color="#B22222">      requires: defined(PETSC_HAVE_MPI_NONBLOCKING_COLLECTIVES)</font>
+
+<a name="line186">186: </a><font color="#B22222">   test:</font>
+<a name="line187">187: </a><font color="#B22222">      suffix: ibarrier</font>
+<a name="line188">188: </a><font color="#B22222">      nsize: 4</font>
+<a name="line189">189: </a><font color="#B22222">      args: -verbose -build_twosided ibarrier</font>
+<a name="line190">190: </a><font color="#B22222">      output_file: output/ex8_1.out</font>
+<a name="line191">191: </a><font color="#B22222">      requires: defined(PETSC_HAVE_MPI_NONBLOCKING_COLLECTIVES)</font>
+
+<a name="line193">193: </a><font color="#B22222">   test:</font>
+<a name="line194">194: </a><font color="#B22222">      suffix: redscatter</font>
+<a name="line195">195: </a><font color="#B22222">      requires: mpi_reduce_scatter_block</font>
+<a name="line196">196: </a><font color="#B22222">      nsize: 4</font>
+<a name="line197">197: </a><font color="#B22222">      args: -verbose -build_twosided redscatter</font>
+<a name="line198">198: </a><font color="#B22222">      output_file: output/ex8_1.out</font>
+
+<a name="line200">200: </a><font color="#B22222">TEST*/</font>
+</pre>
+</body>
+
+</html>

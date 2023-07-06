@@ -1,0 +1,250 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/tao/bound/impls/bqnk/bqnk.c">Actual source code: bqnk.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:57+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="bqnk.h.html">&lt;../src/tao/bound/impls/bqnk/bqnk.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../../include/petscksp.h.html">&lt;petscksp.h&gt;</A>
+
+<a name="line4">  4: </a><strong><font color="#4169E1"><a name="TaoBQNKComputeHessian"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoBQNKComputeHessian(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line5">  5: </a>{
+<a name="line6">  6: </a>  TAO_BNK  *bnk  = (TAO_BNK *)tao-&gt;data;
+<a name="line7">  7: </a>  TAO_BQNK *bqnk = (TAO_BQNK *)bnk-&gt;ctx;
+<a name="line8">  8: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> gnorm2, delta;
+
+<a name="line10"> 10: </a>  <font color="#B22222">/* Alias the LMVM matrix into the TAO hessian */</font>
+<a name="line11"> 11: </a>  <font color="#4169E1">if</font> (tao-&gt;hessian) <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;tao-&gt;hessian);
+<a name="line12"> 12: </a>  <font color="#4169E1">if</font> (tao-&gt;hessian_pre) <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;tao-&gt;hessian_pre);
+<a name="line13"> 13: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)bqnk-&gt;B);
+<a name="line14"> 14: </a>  tao-&gt;hessian = bqnk-&gt;B;
+<a name="line15"> 15: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)bqnk-&gt;B);
+<a name="line16"> 16: </a>  tao-&gt;hessian_pre = bqnk-&gt;B;
+<a name="line17"> 17: </a>  <font color="#B22222">/* Update the Hessian with the latest solution */</font>
+<a name="line18"> 18: </a>  <font color="#4169E1">if</font> (bqnk-&gt;is_spd) {
+<a name="line19"> 19: </a>    gnorm2 = bnk-&gt;gnorm * bnk-&gt;gnorm;
+<a name="line20"> 20: </a>    <font color="#4169E1">if</font> (gnorm2 == 0.0) gnorm2 = PETSC_MACHINE_EPSILON;
+<a name="line21"> 21: </a>    <font color="#4169E1">if</font> (bnk-&gt;f == 0.0) {
+<a name="line22"> 22: </a>      delta = 2.0 / gnorm2;
+<a name="line23"> 23: </a>    } <font color="#4169E1">else</font> {
+<a name="line24"> 24: </a>      delta = 2.0 * PetscAbsScalar(bnk-&gt;f) / gnorm2;
+<a name="line25"> 25: </a>    }
+<a name="line26"> 26: </a>    <a href="../../../../../docs/manualpages/KSP/MatLMVMSymBroydenSetDelta.html">MatLMVMSymBroydenSetDelta</a>(bqnk-&gt;B, delta);
+<a name="line27"> 27: </a>  }
+<a name="line28"> 28: </a>  <a href="../../../../../docs/manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a>(tao-&gt;hessian, tao-&gt;solution, bnk-&gt;unprojected_gradient);
+<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/KSP/MatLMVMResetShift.html">MatLMVMResetShift</a>(tao-&gt;hessian);
+<a name="line30"> 30: </a>  <font color="#B22222">/* Prepare the reduced sub-matrices for the inactive set */</font>
+<a name="line31"> 31: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;bnk-&gt;H_inactive);
+<a name="line32"> 32: </a>  <font color="#4169E1">if</font> (bnk-&gt;active_idx) {
+<a name="line33"> 33: </a>    <a href="../../../../../docs/manualpages/Mat/MatCreateSubMatrixVirtual.html">MatCreateSubMatrixVirtual</a>(tao-&gt;hessian, bnk-&gt;inactive_idx, bnk-&gt;inactive_idx, &amp;bnk-&gt;H_inactive);
+<a name="line34"> 34: </a>    <a href="../../../../../docs/manualpages/PC/PCLMVMSetIS.html">PCLMVMSetIS</a>(bqnk-&gt;pc, bnk-&gt;inactive_idx);
+<a name="line35"> 35: </a>  } <font color="#4169E1">else</font> {
+<a name="line36"> 36: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao-&gt;hessian);
+<a name="line37"> 37: </a>    bnk-&gt;H_inactive = tao-&gt;hessian;
+<a name="line38"> 38: </a>    <a href="../../../../../docs/manualpages/PC/PCLMVMClearIS.html">PCLMVMClearIS</a>(bqnk-&gt;pc);
+<a name="line39"> 39: </a>  }
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;bnk-&gt;Hpre_inactive);
+<a name="line41"> 41: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)bnk-&gt;H_inactive);
+<a name="line42"> 42: </a>  bnk-&gt;Hpre_inactive = bnk-&gt;H_inactive;
+<a name="line43"> 43: </a>  <font color="#4169E1">return</font> 0;
+<a name="line44"> 44: </a>}
+
+<a name="line46"> 46: </a><strong><font color="#4169E1"><a name="TaoBQNKComputeStep"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoBQNKComputeStep(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> shift, <a href="../../../../../docs/manualpages/KSP/KSPConvergedReason.html">KSPConvergedReason</a> *ksp_reason, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *step_type)</font></strong>
+<a name="line47"> 47: </a>{
+<a name="line48"> 48: </a>  TAO_BNK  *bnk  = (TAO_BNK *)tao-&gt;data;
+<a name="line49"> 49: </a>  TAO_BQNK *bqnk = (TAO_BQNK *)bnk-&gt;ctx;
+
+<a name="line51"> 51: </a>  TaoBNKComputeStep(tao, shift, ksp_reason, step_type);
+<a name="line52"> 52: </a>  <font color="#4169E1">if</font> (*ksp_reason &lt; 0) {
+<a name="line53"> 53: </a>    <font color="#B22222">/* Krylov solver failed to converge so reset the LMVM matrix */</font>
+<a name="line54"> 54: </a>    <a href="../../../../../docs/manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>(bqnk-&gt;B, <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line55"> 55: </a>    <a href="../../../../../docs/manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a>(bqnk-&gt;B, tao-&gt;solution, bnk-&gt;unprojected_gradient);
+<a name="line56"> 56: </a>  }
+<a name="line57"> 57: </a>  <font color="#4169E1">return</font> 0;
+<a name="line58"> 58: </a>}
+
+<a name="line60"> 60: </a><strong><font color="#4169E1"><a name="TaoSolve_BQNK"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoSolve_BQNK(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line61"> 61: </a>{
+<a name="line62"> 62: </a>  TAO_BNK     *bnk  = (TAO_BNK *)tao-&gt;data;
+<a name="line63"> 63: </a>  TAO_BQNK    *bqnk = (TAO_BQNK *)bnk-&gt;ctx;
+<a name="line64"> 64: </a>  Mat_LMVM    *lmvm = (Mat_LMVM *)bqnk-&gt;B-&gt;data;
+<a name="line65"> 65: </a>  Mat_LMVM    *J0;
+<a name="line66"> 66: </a>  Mat_SymBrdn *diag_ctx;
+<a name="line67"> 67: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>    flg = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line69"> 69: </a>  <font color="#4169E1">if</font> (!tao-&gt;recycle) {
+<a name="line70"> 70: </a>    <a href="../../../../../docs/manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>(bqnk-&gt;B, <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line71"> 71: </a>    lmvm-&gt;nresets = 0;
+<a name="line72"> 72: </a>    <font color="#4169E1">if</font> (lmvm-&gt;J0) {
+<a name="line73"> 73: </a>      <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)lmvm-&gt;J0, MATLMVM, &amp;flg);
+<a name="line74"> 74: </a>      <font color="#4169E1">if</font> (flg) {
+<a name="line75"> 75: </a>        J0          = (Mat_LMVM *)lmvm-&gt;J0-&gt;data;
+<a name="line76"> 76: </a>        J0-&gt;nresets = 0;
+<a name="line77"> 77: </a>      }
+<a name="line78"> 78: </a>    }
+<a name="line79"> 79: </a>    flg = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line80"> 80: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompareAny.html">PetscObjectTypeCompareAny</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)bqnk-&gt;B, &amp;flg, MATLMVMSYMBROYDEN, MATLMVMSYMBADBROYDEN, MATLMVMBFGS, MATLMVMDFP, <font color="#666666">""</font>);
+<a name="line81"> 81: </a>    <font color="#4169E1">if</font> (flg) {
+<a name="line82"> 82: </a>      diag_ctx    = (Mat_SymBrdn *)lmvm-&gt;ctx;
+<a name="line83"> 83: </a>      J0          = (Mat_LMVM *)diag_ctx-&gt;D-&gt;data;
+<a name="line84"> 84: </a>      J0-&gt;nresets = 0;
+<a name="line85"> 85: </a>    }
+<a name="line86"> 86: </a>  }
+<a name="line87"> 87: </a>  (*bqnk-&gt;solve)(tao);
+<a name="line88"> 88: </a>  <font color="#4169E1">return</font> 0;
+<a name="line89"> 89: </a>}
+
+<a name="line91"> 91: </a><strong><font color="#4169E1"><a name="TaoSetUp_BQNK"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoSetUp_BQNK(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line92"> 92: </a>{
+<a name="line93"> 93: </a>  TAO_BNK  *bnk  = (TAO_BNK *)tao-&gt;data;
+<a name="line94"> 94: </a>  TAO_BQNK *bqnk = (TAO_BQNK *)bnk-&gt;ctx;
+<a name="line95"> 95: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  n, N;
+<a name="line96"> 96: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> is_lmvm, is_set, is_sym;
+
+<a name="line98"> 98: </a>  TaoSetUp_BNK(tao);
+<a name="line99"> 99: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(tao-&gt;solution, &amp;n);
+<a name="line100">100: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetSize.html">VecGetSize</a>(tao-&gt;solution, &amp;N);
+<a name="line101">101: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetSizes.html">MatSetSizes</a>(bqnk-&gt;B, n, n, N, N);
+<a name="line102">102: </a>  <a href="../../../../../docs/manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>(bqnk-&gt;B, tao-&gt;solution, bnk-&gt;unprojected_gradient);
+<a name="line103">103: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)bqnk-&gt;B, MATLMVM, &amp;is_lmvm);
+<a name="line105">105: </a>  <a href="../../../../../docs/manualpages/Mat/MatIsSymmetricKnown.html">MatIsSymmetricKnown</a>(bqnk-&gt;B, &amp;is_set, &amp;is_sym);
+<a name="line107">107: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetPC.html">KSPGetPC</a>(tao-&gt;ksp, &amp;bqnk-&gt;pc);
+<a name="line108">108: </a>  <a href="../../../../../docs/manualpages/PC/PCSetType.html">PCSetType</a>(bqnk-&gt;pc, <a href="../../../../../docs/manualpages/PC/PCLMVM.html">PCLMVM</a>);
+<a name="line109">109: </a>  <a href="../../../../../docs/manualpages/PC/PCLMVMSetMatLMVM.html">PCLMVMSetMatLMVM</a>(bqnk-&gt;pc, bqnk-&gt;B);
+<a name="line110">110: </a>  <font color="#4169E1">return</font> 0;
+<a name="line111">111: </a>}
+
+<a name="line113">113: </a><strong><font color="#4169E1"><a name="TaoSetFromOptions_BQNK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoSetFromOptions_BQNK(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line114">114: </a>{
+<a name="line115">115: </a>  TAO_BNK  *bnk  = (TAO_BNK *)tao-&gt;data;
+<a name="line116">116: </a>  TAO_BQNK *bqnk = (TAO_BQNK *)bnk-&gt;ctx;
+<a name="line117">117: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> is_set;
+
+<a name="line119">119: </a>  TaoSetFromOptions_BNK(tao, PetscOptionsObject);
+<a name="line120">120: </a>  <font color="#4169E1">if</font> (bnk-&gt;init_type == BNK_INIT_INTERPOLATION) bnk-&gt;init_type = BNK_INIT_DIRECTION;
+<a name="line121">121: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetOptionsPrefix.html">MatSetOptionsPrefix</a>(bqnk-&gt;B, ((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao)-&gt;prefix);
+<a name="line122">122: </a>  <a href="../../../../../docs/manualpages/Mat/MatAppendOptionsPrefix.html">MatAppendOptionsPrefix</a>(bqnk-&gt;B, <font color="#666666">"tao_bqnk_"</font>);
+<a name="line123">123: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetFromOptions.html">MatSetFromOptions</a>(bqnk-&gt;B);
+<a name="line124">124: </a>  <a href="../../../../../docs/manualpages/Mat/MatIsSPDKnown.html">MatIsSPDKnown</a>(bqnk-&gt;B, &amp;is_set, &amp;bqnk-&gt;is_spd);
+<a name="line125">125: </a>  <font color="#4169E1">if</font> (!is_set) bqnk-&gt;is_spd = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line126">126: </a>  <font color="#4169E1">return</font> 0;
+<a name="line127">127: </a>}
+
+<a name="line129">129: </a><strong><font color="#4169E1"><a name="TaoView_BQNK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoView_BQNK(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line130">130: </a>{
+<a name="line131">131: </a>  TAO_BNK  *bnk  = (TAO_BNK *)tao-&gt;data;
+<a name="line132">132: </a>  TAO_BQNK *bqnk = (TAO_BQNK *)bnk-&gt;ctx;
+<a name="line133">133: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> isascii;
+
+<a name="line135">135: </a>  TaoView_BNK(tao, viewer);
+<a name="line136">136: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;isascii);
+<a name="line137">137: </a>  <font color="#4169E1">if</font> (isascii) {
+<a name="line138">138: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerPushFormat.html">PetscViewerPushFormat</a>(viewer, <a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_INFO</a>);
+<a name="line139">139: </a>    <a href="../../../../../docs/manualpages/Mat/MatView.html">MatView</a>(bqnk-&gt;B, viewer);
+<a name="line140">140: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerPopFormat.html">PetscViewerPopFormat</a>(viewer);
+<a name="line141">141: </a>  }
+<a name="line142">142: </a>  <font color="#4169E1">return</font> 0;
+<a name="line143">143: </a>}
+
+<a name="line145">145: </a><strong><font color="#4169E1"><a name="TaoDestroy_BQNK"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoDestroy_BQNK(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line146">146: </a>{
+<a name="line147">147: </a>  TAO_BNK  *bnk  = (TAO_BNK *)tao-&gt;data;
+<a name="line148">148: </a>  TAO_BQNK *bqnk = (TAO_BQNK *)bnk-&gt;ctx;
+
+<a name="line150">150: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;bnk-&gt;Hpre_inactive);
+<a name="line151">151: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;bnk-&gt;H_inactive);
+<a name="line152">152: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;bqnk-&gt;B);
+<a name="line153">153: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(bnk-&gt;ctx);
+<a name="line154">154: </a>  TaoDestroy_BNK(tao);
+<a name="line155">155: </a>  <font color="#4169E1">return</font> 0;
+<a name="line156">156: </a>}
+
+<a name="line158">158: </a><strong><font color="#4169E1"><a name="TaoCreate_BQNK"></a>PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoCreate_BQNK(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao)</font></strong>
+<a name="line159">159: </a>{
+<a name="line160">160: </a>  TAO_BNK  *bnk;
+<a name="line161">161: </a>  TAO_BQNK *bqnk;
+
+<a name="line163">163: </a>  TaoCreate_BNK(tao);
+<a name="line164">164: </a>  tao-&gt;ops-&gt;solve          = TaoSolve_BQNK;
+<a name="line165">165: </a>  tao-&gt;ops-&gt;setfromoptions = TaoSetFromOptions_BQNK;
+<a name="line166">166: </a>  tao-&gt;ops-&gt;destroy        = TaoDestroy_BQNK;
+<a name="line167">167: </a>  tao-&gt;ops-&gt;view           = TaoView_BQNK;
+<a name="line168">168: </a>  tao-&gt;ops-&gt;setup          = TaoSetUp_BQNK;
+
+<a name="line170">170: </a>  bnk                 = (TAO_BNK *)tao-&gt;data;
+<a name="line171">171: </a>  bnk-&gt;computehessian = TaoBQNKComputeHessian;
+<a name="line172">172: </a>  bnk-&gt;computestep    = TaoBQNKComputeStep;
+<a name="line173">173: </a>  bnk-&gt;init_type      = BNK_INIT_DIRECTION;
+
+<a name="line175">175: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;bqnk);
+<a name="line176">176: </a>  bnk-&gt;ctx     = (void *)bqnk;
+<a name="line177">177: </a>  bqnk-&gt;is_spd = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+
+<a name="line179">179: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao), &amp;bqnk-&gt;B);
+<a name="line180">180: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectIncrementTabLevel.html">PetscObjectIncrementTabLevel</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)bqnk-&gt;B, (<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao, 1);
+<a name="line181">181: </a>  <a href="../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(bqnk-&gt;B, MATLMVMSR1);
+<a name="line182">182: </a>  <font color="#4169E1">return</font> 0;
+<a name="line183">183: </a>}
+
+<a name="line185">185: </a><font color="#B22222">/*@</font>
+<a name="line186">186: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Tao/TaoGetLMVMMatrix.html">TaoGetLMVMMatrix</a> - Returns a pointer to the internal LMVM matrix. Valid</font>
+<a name="line187">187: </a><font color="#B22222">   only for quasi-Newton family of methods.</font>
+
+<a name="line189">189: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line190">190: </a><font color="#B22222">.  tao - <a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> solver context</font>
+
+<a name="line192">192: </a><font color="#B22222">   Output Parameters:</font>
+<a name="line193">193: </a><font color="#B22222">.  B - LMVM matrix</font>
+
+<a name="line195">195: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line197">197: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Tao/TAOBQNLS.html">TAOBQNLS</a>`, `<a href="../../../../../docs/manualpages/Tao/TAOBQNKLS.html">TAOBQNKLS</a>`, `<a href="../../../../../docs/manualpages/Tao/TAOBQNKTL.html">TAOBQNKTL</a>`, `<a href="../../../../../docs/manualpages/Tao/TAOBQNKTR.html">TAOBQNKTR</a>`, `MATLMVM`, `<a href="../../../../../docs/manualpages/Tao/TaoSetLMVMMatrix.html">TaoSetLMVMMatrix</a>()`</font>
+<a name="line198">198: </a><font color="#B22222">@*/</font>
+<a name="line199">199: </a><strong><font color="#4169E1"><a name="TaoGetLMVMMatrix"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Tao/TaoGetLMVMMatrix.html">TaoGetLMVMMatrix</a>(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *B)</font></strong>
+<a name="line200">200: </a>{
+<a name="line201">201: </a>  TAO_BNK  *bnk  = (TAO_BNK *)tao-&gt;data;
+<a name="line202">202: </a>  TAO_BQNK *bqnk = (TAO_BQNK *)bnk-&gt;ctx;
+<a name="line203">203: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg  = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line205">205: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompareAny.html">PetscObjectTypeCompareAny</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao, &amp;flg, <a href="../../../../../docs/manualpages/Tao/TAOBQNLS.html">TAOBQNLS</a>, <a href="../../../../../docs/manualpages/Tao/TAOBQNKLS.html">TAOBQNKLS</a>, <a href="../../../../../docs/manualpages/Tao/TAOBQNKTR.html">TAOBQNKTR</a>, <a href="../../../../../docs/manualpages/Tao/TAOBQNKTL.html">TAOBQNKTL</a>, <font color="#666666">""</font>);
+<a name="line207">207: </a>  *B = bqnk-&gt;B;
+<a name="line208">208: </a>  <font color="#4169E1">return</font> 0;
+<a name="line209">209: </a>}
+
+<a name="line211">211: </a><font color="#B22222">/*@</font>
+<a name="line212">212: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Tao/TaoSetLMVMMatrix.html">TaoSetLMVMMatrix</a> - Sets an external LMVM matrix into the <a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> solver. Valid</font>
+<a name="line213">213: </a><font color="#B22222">   only for quasi-Newton family of methods.</font>
+
+<a name="line215">215: </a><font color="#B22222">   QN family of methods create their own LMVM matrices and users who wish to</font>
+<a name="line216">216: </a><font color="#B22222">   manipulate this matrix should use <a href="../../../../../docs/manualpages/Tao/TaoGetLMVMMatrix.html">TaoGetLMVMMatrix</a>() instead.</font>
+
+<a name="line218">218: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line219">219: </a><font color="#B22222">+  tao - <a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> solver context</font>
+<a name="line220">220: </a><font color="#B22222">-  B - LMVM matrix</font>
+
+<a name="line222">222: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line224">224: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Tao/TAOBQNLS.html">TAOBQNLS</a>`, `<a href="../../../../../docs/manualpages/Tao/TAOBQNKLS.html">TAOBQNKLS</a>`, `<a href="../../../../../docs/manualpages/Tao/TAOBQNKTL.html">TAOBQNKTL</a>`, `<a href="../../../../../docs/manualpages/Tao/TAOBQNKTR.html">TAOBQNKTR</a>`, `MATLMVM`, `<a href="../../../../../docs/manualpages/Tao/TaoGetLMVMMatrix.html">TaoGetLMVMMatrix</a>()`</font>
+<a name="line225">225: </a><font color="#B22222">@*/</font>
+<a name="line226">226: </a><strong><font color="#4169E1"><a name="TaoSetLMVMMatrix"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Tao/TaoSetLMVMMatrix.html">TaoSetLMVMMatrix</a>(<a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a> tao, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B)</font></strong>
+<a name="line227">227: </a>{
+<a name="line228">228: </a>  TAO_BNK  *bnk  = (TAO_BNK *)tao-&gt;data;
+<a name="line229">229: </a>  TAO_BQNK *bqnk = (TAO_BQNK *)bnk-&gt;ctx;
+<a name="line230">230: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg  = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line232">232: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompareAny.html">PetscObjectTypeCompareAny</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tao, &amp;flg, <a href="../../../../../docs/manualpages/Tao/TAOBQNLS.html">TAOBQNLS</a>, <a href="../../../../../docs/manualpages/Tao/TAOBQNKLS.html">TAOBQNKLS</a>, <a href="../../../../../docs/manualpages/Tao/TAOBQNKTR.html">TAOBQNKTR</a>, <a href="../../../../../docs/manualpages/Tao/TAOBQNKTL.html">TAOBQNKTL</a>, <font color="#666666">""</font>);
+<a name="line234">234: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;flg);
+<a name="line236">236: </a>  <font color="#4169E1">if</font> (bqnk-&gt;B) <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;bqnk-&gt;B);
+<a name="line237">237: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B);
+<a name="line238">238: </a>  bqnk-&gt;B = B;
+<a name="line239">239: </a>  <font color="#4169E1">return</font> 0;
+<a name="line240">240: </a>}
+</pre>
+</body>
+
+</html>

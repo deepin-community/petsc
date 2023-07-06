@@ -1,0 +1,29 @@
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:52+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">-include ../../../../../../petscdir.mk
+<font color="#A020F0">#requirespackage 'PETSC_HAVE_RANDOM123'</font>
+
+CFLAGS   = ${RANDOM123_INCLUDE}
+SOURCEC  = random123.c
+SOURCEF  =
+SOURCEH  =
+LIBBASE  = libpetscsys
+DIRS     =
+LOCDIR   = src/sys/classes/random/impls/random123/
+MANSEC	 = Sys
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+include ${PETSC_DIR}/lib/petsc/conf/test
+
+</pre>
+</body>
+
+</html>

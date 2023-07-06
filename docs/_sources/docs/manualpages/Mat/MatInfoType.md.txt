@@ -1,0 +1,35 @@
+# MatInfoType
+Indicates if you want information about the local part of the matrix, the entire parallel matrix or the maximum over all the local parts. 
+## Synopsis
+```
+typedef enum {
+  MAT_LOCAL      = 1,
+  MAT_GLOBAL_MAX = 2,
+  MAT_GLOBAL_SUM = 3
+} MatInfoType;
+```
+
+
+Any additions/changes here MUST also be made in include/petsc/finclude/petscmat.h
+
+
+## See Also
+ `MatGetInfo()`, `MatInfo`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscmat.h.html#MatInfoType">include/petscmat.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex16.c.html">src/mat/tutorials/ex16.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscmat.h)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

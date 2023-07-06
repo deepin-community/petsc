@@ -1,0 +1,79 @@
+SONAME and custom packages
+--------------------------
+
+Depending on the context of the installation and the configuration
+options you select, if you a recompiling for your local system then
+you may find you want to be able to control the soname of your PETSc
+shared library.  You can do this with the ./configure option
+
+   --shared-library-extension=<string>
+   
+The given string as added to the standard library name and to the soname,
+e.g. changing libpetsc.so.3.18 to libpetsc<string>.so.3.18
+
+The standard Debian build uses 
+  --shared-library-extension=_real 
+for the default build supporting real numbers, and 
+  --shared-library-extension=_complex
+for the build supporting complex numbers.
+
+
+Alternatives Priorities
+-----------------------
+
+The preferred PETSc installation is linked to /usr/lib/petsc:
+
+  update-alternatives --config petsc
+  
+and the corresponding preferred shared library is linked in
+/usr/lib/<arch> in a separately managed alternative link:
+
+  update-alternatives --config libpetsc.so.3.18
+
+(e.g. linking to libpetsc_real.so.3.18.0 or libpetsc_complex.so.3.18.0)
+
+The priorities of the alternatives used in automatic alternatives
+configuration are organised to prioritise the stripped over debug
+version and the real over the complex version. The priorities
+therefore are:
+
+  UDC
+
+U is an upstream value and D and C are single digits
+i.e.
+
+  U = upstream version e.g. 3.18.0
+  
+  D = stripped (D=7) or debug version (D=3)
+  
+  C = real (C=7) or complex (C=3)
+
+Digits 7 and 3 are chosen to given local administrators more freedom
+to set their own priorities, higher or lower, for custom builds.
+
+
+sed/sh Error During Build-Time Tests with pdebuild (pbuilder)
+-------------------------------------------------------------
+
+chroot builds with pdebuild (builder) might show the following error
+when running build-time tests (dh_auto_test):
+  sed: -e expression #1, char 29: unknown option to s'
+  /bin/sh: 4: [: -a: unexpected operator
+This happens when the build path contains a '+',
+e.g. from the DFSG version tag when the source dir is
+/build/petsc-3.18.0+dfsg1/.  The error occurs since '+' is used as the
+sed delimiter in the chk_petscdir rule in lib/petsc/conf/rules. It is
+probably safe to ignore this error (the PETSC_DIR warning being tested
+likely does not apply in this case).
+
+
+
+debian/js
+---------
+
+js scripts referenced by html docs have been downloaded into debian/js
+to avoid privacy breaches.
+Source urls are
+  https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/contrib/auto-render.min.js
+  https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.js
+  https://cdn.jsdelivr.net/npm/katex@0.11.1/dist/katex.min.css

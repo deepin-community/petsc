@@ -1,0 +1,947 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ts/trajectory/interface/traj.c">Actual source code: traj.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:35+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petsc/private/tsimpl.h.html">&lt;petsc/private/tsimpl.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../include/petsc/private/tshistoryimpl.h.html">&lt;petsc/private/tshistoryimpl.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="../../../../include/petscdm.h.html">&lt;petscdm.h&gt;</A>
+
+<a name="line5">  5: </a><a href="../../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> TSTrajectoryList              = NULL;
+<a name="line6">  6: </a><a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>         TSTrajectoryRegisterAllCalled = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line7">  7: </a><a href="../../../../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a>      TSTRAJECTORY_CLASSID;
+<a name="line8">  8: </a><a href="../../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>     TSTrajectory_Set, TSTrajectory_Get, TSTrajectory_GetVecs, TSTrajectory_SetUp;
+
+<a name="line10"> 10: </a><font color="#B22222">/*@C</font>
+<a name="line11"> 11: </a><font color="#B22222">  <a href="../../../../docs/manualpages/TS/TSTrajectoryRegister.html">TSTrajectoryRegister</a> - Adds a way of storing trajectories to the `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>` package</font>
+
+<a name="line13"> 13: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line15"> 15: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line16"> 16: </a><font color="#B22222">+ name        - the name of a new user-defined creation routine</font>
+<a name="line17"> 17: </a><font color="#B22222">- create_func - the creation routine itself</font>
+
+<a name="line19"> 19: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line21"> 21: </a><font color="#B22222">  Note:</font>
+<a name="line22"> 22: </a><font color="#B22222">  `<a href="../../../../docs/manualpages/TS/TSTrajectoryRegister.html">TSTrajectoryRegister</a>()` may be called multiple times to add several user-defined tses.</font>
+
+<a name="line24"> 24: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectoryRegisterAll.html">TSTrajectoryRegisterAll</a>()`</font>
+<a name="line25"> 25: </a><font color="#B22222">@*/</font>
+<a name="line26"> 26: </a><strong><font color="#4169E1"><a name="TSTrajectoryRegister"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryRegister.html">TSTrajectoryRegister</a>(const char sname[], <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*function)(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>, <a href="../../../../docs/manualpages/TS/TS.html">TS</a>))</font></strong>
+<a name="line27"> 27: </a>{
+<a name="line28"> 28: </a>  <a href="../../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>(&amp;TSTrajectoryList, sname, function);
+<a name="line29"> 29: </a>  <font color="#4169E1">return</font> 0;
+<a name="line30"> 30: </a>}
+
+<a name="line32"> 32: </a><font color="#B22222">/*@</font>
+<a name="line33"> 33: </a><font color="#B22222">  <a href="../../../../docs/manualpages/TS/TSTrajectorySet.html">TSTrajectorySet</a> - Sets a vector of state in the trajectory object</font>
+
+<a name="line35"> 35: </a><font color="#B22222">  Collective</font>
+
+<a name="line37"> 37: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line38"> 38: </a><font color="#B22222">+ tj      - the trajectory object</font>
+<a name="line39"> 39: </a><font color="#B22222">. ts      - the time stepper object (optional)</font>
+<a name="line40"> 40: </a><font color="#B22222">. stepnum - the step number</font>
+<a name="line41"> 41: </a><font color="#B22222">. time    - the current time</font>
+<a name="line42"> 42: </a><font color="#B22222">- X       - the current solution</font>
+
+<a name="line44"> 44: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line46"> 46: </a><font color="#B22222">  Note:</font>
+<a name="line47"> 47: </a><font color="#B22222">  Usually one does not call this routine, it is called automatically during `<a href="../../../../docs/manualpages/TS/TSSolve.html">TSSolve</a>()`</font>
+
+<a name="line49"> 49: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetType.html">TSTrajectorySetType</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetVariableNames.html">TSTrajectorySetVariableNames</a>()`, `<a href="../../../../docs/manualpages/TS/TSGetTrajectory.html">TSGetTrajectory</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryGet.html">TSTrajectoryGet</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryGetVecs.html">TSTrajectoryGetVecs</a>()`</font>
+<a name="line50"> 50: </a><font color="#B22222">@*/</font>
+<a name="line51"> 51: </a><strong><font color="#4169E1"><a name="TSTrajectorySet"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectorySet.html">TSTrajectorySet</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> stepnum, <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> time, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> X)</font></strong>
+<a name="line52"> 52: </a>{
+<a name="line53"> 53: </a>  <font color="#4169E1">if</font> (!tj) <font color="#4169E1">return</font> 0;
+<a name="line60"> 60: </a>  <font color="#4169E1">if</font> (tj-&gt;monitor) <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(tj-&gt;monitor, <font color="#666666">"<a href="../../../../docs/manualpages/TS/TSTrajectorySet.html">TSTrajectorySet</a>: stepnum %"</font> PetscInt_FMT <font color="#666666">", time %g (stages %"</font> PetscInt_FMT <font color="#666666">")\n"</font>, stepnum, (double)time, (<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)!tj-&gt;solution_only);
+<a name="line61"> 61: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(TSTrajectory_Set, tj, ts, 0, 0);
+<a name="line62"> 62: </a>  <a href="../../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(tj, set, ts, stepnum, time, X);
+<a name="line63"> 63: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(TSTrajectory_Set, tj, ts, 0, 0);
+<a name="line64"> 64: </a>  <font color="#4169E1">if</font> (tj-&gt;usehistory) TSHistoryUpdate(tj-&gt;tsh, stepnum, time);
+<a name="line65"> 65: </a>  <font color="#4169E1">if</font> (tj-&gt;lag.caching) tj-&gt;lag.Udotcached.time = PETSC_MIN_REAL;
+<a name="line66"> 66: </a>  <font color="#4169E1">return</font> 0;
+<a name="line67"> 67: </a>}
+
+<a name="line69"> 69: </a><font color="#B22222">/*@</font>
+<a name="line70"> 70: </a><font color="#B22222">  <a href="../../../../docs/manualpages/TS/TSTrajectoryGetNumSteps.html">TSTrajectoryGetNumSteps</a> - Return the number of steps registered in the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` via `<a href="../../../../docs/manualpages/TS/TSTrajectorySet.html">TSTrajectorySet</a>()`.</font>
+
+<a name="line72"> 72: </a><font color="#B22222">  Not collective.</font>
+
+<a name="line74"> 74: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line75"> 75: </a><font color="#B22222">. tj - the trajectory object</font>
+
+<a name="line77"> 77: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line78"> 78: </a><font color="#B22222">. steps - the number of steps</font>
+
+<a name="line80"> 80: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line82"> 82: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySet.html">TSTrajectorySet</a>()`</font>
+<a name="line83"> 83: </a><font color="#B22222">@*/</font>
+<a name="line84"> 84: </a><strong><font color="#4169E1"><a name="TSTrajectoryGetNumSteps"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryGetNumSteps.html">TSTrajectoryGetNumSteps</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *steps)</font></strong>
+<a name="line85"> 85: </a>{
+<a name="line88"> 88: </a>  TSHistoryGetNumSteps(tj-&gt;tsh, steps);
+<a name="line89"> 89: </a>  <font color="#4169E1">return</font> 0;
+<a name="line90"> 90: </a>}
+
+<a name="line92"> 92: </a><font color="#B22222">/*@</font>
+<a name="line93"> 93: </a><font color="#B22222">  <a href="../../../../docs/manualpages/TS/TSTrajectoryGet.html">TSTrajectoryGet</a> - Updates the solution vector of a time stepper object by querying the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`</font>
+
+<a name="line95"> 95: </a><font color="#B22222">  Collective</font>
+
+<a name="line97"> 97: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line98"> 98: </a><font color="#B22222">+ tj      - the trajectory object</font>
+<a name="line99"> 99: </a><font color="#B22222">. ts      - the time stepper object</font>
+<a name="line100">100: </a><font color="#B22222">- stepnum - the step number</font>
+
+<a name="line102">102: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line103">103: </a><font color="#B22222">. time    - the time associated with the step number</font>
+
+<a name="line105">105: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line107">107: </a><font color="#B22222">  Note:</font>
+<a name="line108">108: </a><font color="#B22222">  Usually one does not call this routine, it is called automatically during `<a href="../../../../docs/manualpages/TS/TSSolve.html">TSSolve</a>()`</font>
+
+<a name="line110">110: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>`, `<a href="../../../../docs/manualpages/TS/TSSolve.html">TSSolve</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetType.html">TSTrajectorySetType</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetVariableNames.html">TSTrajectorySetVariableNames</a>()`, `<a href="../../../../docs/manualpages/TS/TSGetTrajectory.html">TSGetTrajectory</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySet.html">TSTrajectorySet</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryGetVecs.html">TSTrajectoryGetVecs</a>()`, `<a href="../../../../docs/manualpages/TS/TSGetSolution.html">TSGetSolution</a>()`</font>
+<a name="line111">111: </a><font color="#B22222">@*/</font>
+<a name="line112">112: </a><strong><font color="#4169E1"><a name="TSTrajectoryGet"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryGet.html">TSTrajectoryGet</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> stepnum, <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *time)</font></strong>
+<a name="line113">113: </a>{
+<a name="line121">121: </a>  <font color="#4169E1">if</font> (tj-&gt;monitor) {
+<a name="line122">122: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(tj-&gt;monitor, <font color="#666666">"<a href="../../../../docs/manualpages/TS/TSTrajectoryGet.html">TSTrajectoryGet</a>: stepnum %"</font> PetscInt_FMT <font color="#666666">", stages %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, stepnum, (<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)!tj-&gt;solution_only);
+<a name="line123">123: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(tj-&gt;monitor);
+<a name="line124">124: </a>  }
+<a name="line125">125: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(TSTrajectory_Get, tj, ts, 0, 0);
+<a name="line126">126: </a>  <a href="../../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(tj, get, ts, stepnum, time);
+<a name="line127">127: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(TSTrajectory_Get, tj, ts, 0, 0);
+<a name="line128">128: </a>  <font color="#4169E1">return</font> 0;
+<a name="line129">129: </a>}
+
+<a name="line131">131: </a><font color="#B22222">/*@</font>
+<a name="line132">132: </a><font color="#B22222">  <a href="../../../../docs/manualpages/TS/TSTrajectoryGetVecs.html">TSTrajectoryGetVecs</a> - Reconstructs the vector of state and its time derivative using information from the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` and, possibly, from the `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>`</font>
+
+<a name="line134">134: </a><font color="#B22222">  Collective</font>
+
+<a name="line136">136: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line137">137: </a><font color="#B22222">+ tj      - the trajectory object</font>
+<a name="line138">138: </a><font color="#B22222">. ts      - the time stepper object (optional)</font>
+<a name="line139">139: </a><font color="#B22222">- stepnum - the requested step number</font>
+
+<a name="line141">141: </a><font color="#B22222">  Input/Output Parameter:</font>
+
+<a name="line143">143: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line144">144: </a><font color="#B22222">+ time - On input time for the step if step number is `<a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>`, on output the time associated with the step number</font>
+<a name="line145">145: </a><font color="#B22222">. U    - state vector (can be NULL)</font>
+<a name="line146">146: </a><font color="#B22222">- Udot - time derivative of state vector (can be NULL)</font>
+
+<a name="line148">148: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line150">150: </a><font color="#B22222">  Notes:</font>
+<a name="line151">151: </a><font color="#B22222">  If the step number is `<a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>`, the time argument is used to inquire the trajectory.</font>
+<a name="line152">152: </a><font color="#B22222">  If the requested time does not match any in the trajectory, Lagrangian interpolations are returned.</font>
+
+<a name="line154">154: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetType.html">TSTrajectorySetType</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetVariableNames.html">TSTrajectorySetVariableNames</a>()`, `<a href="../../../../docs/manualpages/TS/TSGetTrajectory.html">TSGetTrajectory</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySet.html">TSTrajectorySet</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryGet.html">TSTrajectoryGet</a>()`</font>
+<a name="line155">155: </a><font color="#B22222">@*/</font>
+<a name="line156">156: </a><strong><font color="#4169E1"><a name="TSTrajectoryGetVecs"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryGetVecs.html">TSTrajectoryGetVecs</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> stepnum, <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *time, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> U, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> Udot)</font></strong>
+<a name="line157">157: </a>{
+<a name="line165">165: </a>  <font color="#4169E1">if</font> (!U &amp;&amp; !Udot) <font color="#4169E1">return</font> 0;
+<a name="line167">167: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(TSTrajectory_GetVecs, tj, ts, 0, 0);
+<a name="line168">168: </a>  <font color="#4169E1">if</font> (tj-&gt;monitor) {
+<a name="line169">169: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> pU, pUdot;
+<a name="line170">170: </a>    pU    = U ? 1 : 0;
+<a name="line171">171: </a>    pUdot = Udot ? 1 : 0;
+<a name="line172">172: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(tj-&gt;monitor, <font color="#666666">"Requested by GetVecs %"</font> PetscInt_FMT <font color="#666666">" %"</font> PetscInt_FMT <font color="#666666">": stepnum %"</font> PetscInt_FMT <font color="#666666">", time %g\n"</font>, pU, pUdot, stepnum, (double)*time);
+<a name="line173">173: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(tj-&gt;monitor);
+<a name="line174">174: </a>  }
+<a name="line175">175: </a>  <font color="#4169E1">if</font> (U &amp;&amp; tj-&gt;lag.caching) {
+<a name="line176">176: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectId.html">PetscObjectId</a>    id;
+<a name="line177">177: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectState.html">PetscObjectState</a> state;
+
+<a name="line179">179: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectStateGet.html">PetscObjectStateGet</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)U, &amp;state);
+<a name="line180">180: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectGetId.html">PetscObjectGetId</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)U, &amp;id);
+<a name="line181">181: </a>    <font color="#4169E1">if</font> (stepnum == <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>) {
+<a name="line182">182: </a>      <font color="#4169E1">if</font> (id == tj-&gt;lag.Ucached.id &amp;&amp; *time == tj-&gt;lag.Ucached.time &amp;&amp; state == tj-&gt;lag.Ucached.state) U = NULL;
+<a name="line183">183: </a>    } <font color="#4169E1">else</font> {
+<a name="line184">184: </a>      <font color="#4169E1">if</font> (id == tj-&gt;lag.Ucached.id &amp;&amp; stepnum == tj-&gt;lag.Ucached.step &amp;&amp; state == tj-&gt;lag.Ucached.state) U = NULL;
+<a name="line185">185: </a>    }
+<a name="line186">186: </a>    <font color="#4169E1">if</font> (tj-&gt;monitor &amp;&amp; !U) {
+<a name="line187">187: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(tj-&gt;monitor);
+<a name="line188">188: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(tj-&gt;monitor, <font color="#666666">"State vector cached\n"</font>);
+<a name="line189">189: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(tj-&gt;monitor);
+<a name="line190">190: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(tj-&gt;monitor);
+<a name="line191">191: </a>    }
+<a name="line192">192: </a>  }
+<a name="line193">193: </a>  <font color="#4169E1">if</font> (Udot &amp;&amp; tj-&gt;lag.caching) {
+<a name="line194">194: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectId.html">PetscObjectId</a>    id;
+<a name="line195">195: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectState.html">PetscObjectState</a> state;
+
+<a name="line197">197: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectStateGet.html">PetscObjectStateGet</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)Udot, &amp;state);
+<a name="line198">198: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectGetId.html">PetscObjectGetId</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)Udot, &amp;id);
+<a name="line199">199: </a>    <font color="#4169E1">if</font> (stepnum == <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>) {
+<a name="line200">200: </a>      <font color="#4169E1">if</font> (id == tj-&gt;lag.Udotcached.id &amp;&amp; *time == tj-&gt;lag.Udotcached.time &amp;&amp; state == tj-&gt;lag.Udotcached.state) Udot = NULL;
+<a name="line201">201: </a>    } <font color="#4169E1">else</font> {
+<a name="line202">202: </a>      <font color="#4169E1">if</font> (id == tj-&gt;lag.Udotcached.id &amp;&amp; stepnum == tj-&gt;lag.Udotcached.step &amp;&amp; state == tj-&gt;lag.Udotcached.state) Udot = NULL;
+<a name="line203">203: </a>    }
+<a name="line204">204: </a>    <font color="#4169E1">if</font> (tj-&gt;monitor &amp;&amp; !Udot) {
+<a name="line205">205: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(tj-&gt;monitor);
+<a name="line206">206: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(tj-&gt;monitor, <font color="#666666">"Derivative vector cached\n"</font>);
+<a name="line207">207: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(tj-&gt;monitor);
+<a name="line208">208: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(tj-&gt;monitor);
+<a name="line209">209: </a>    }
+<a name="line210">210: </a>  }
+<a name="line211">211: </a>  <font color="#4169E1">if</font> (!U &amp;&amp; !Udot) {
+<a name="line212">212: </a>    <a href="../../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(TSTrajectory_GetVecs, tj, ts, 0, 0);
+<a name="line213">213: </a>    <font color="#4169E1">return</font> 0;
+<a name="line214">214: </a>  }
+
+<a name="line216">216: </a>  <font color="#4169E1">if</font> (stepnum == <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a> || Udot) { <font color="#B22222">/* reverse search for requested time in TSHistory */</font>
+<a name="line217">217: </a>    <font color="#4169E1">if</font> (tj-&gt;monitor) <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(tj-&gt;monitor);
+<a name="line218">218: </a>    <font color="#B22222">/* cached states will be updated in the function */</font>
+<a name="line219">219: </a>    TSTrajectoryReconstruct_Private(tj, ts, *time, U, Udot);
+<a name="line220">220: </a>    <font color="#4169E1">if</font> (tj-&gt;monitor) {
+<a name="line221">221: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(tj-&gt;monitor);
+<a name="line222">222: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(tj-&gt;monitor);
+<a name="line223">223: </a>    }
+<a name="line224">224: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (U) { <font color="#B22222">/* we were asked to load from stepnum, use <a href="../../../../docs/manualpages/TS/TSTrajectoryGet.html">TSTrajectoryGet</a> */</font>
+<a name="line225">225: </a>    <a href="../../../../docs/manualpages/TS/TS.html">TS</a>  fakets = ts;
+<a name="line226">226: </a>    <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> U2;
+
+<a name="line228">228: </a>    <font color="#B22222">/* use a fake <a href="../../../../docs/manualpages/TS/TS.html">TS</a> if ts is missing */</font>
+<a name="line229">229: </a>    <font color="#4169E1">if</font> (!ts) {
+<a name="line230">230: </a>      <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj, <font color="#666666">"__fake_ts"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;fakets);
+<a name="line231">231: </a>      <font color="#4169E1">if</font> (!fakets) {
+<a name="line232">232: </a>        <a href="../../../../docs/manualpages/TS/TSCreate.html">TSCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj), &amp;fakets);
+<a name="line233">233: </a>        <a href="../../../../docs/manualpages/Sys/PetscObjectCompose.html">PetscObjectCompose</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj, <font color="#666666">"__fake_ts"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)fakets);
+<a name="line234">234: </a>        <a href="../../../../docs/manualpages/Sys/PetscObjectDereference.html">PetscObjectDereference</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)fakets);
+<a name="line235">235: </a>        <a href="../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(U, &amp;U2);
+<a name="line236">236: </a>        <a href="../../../../docs/manualpages/TS/TSSetSolution.html">TSSetSolution</a>(fakets, U2);
+<a name="line237">237: </a>        <a href="../../../../docs/manualpages/Sys/PetscObjectDereference.html">PetscObjectDereference</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)U2);
+<a name="line238">238: </a>      }
+<a name="line239">239: </a>    }
+<a name="line240">240: </a>    <a href="../../../../docs/manualpages/TS/TSTrajectoryGet.html">TSTrajectoryGet</a>(tj, fakets, stepnum, time);
+<a name="line241">241: </a>    <a href="../../../../docs/manualpages/TS/TSGetSolution.html">TSGetSolution</a>(fakets, &amp;U2);
+<a name="line242">242: </a>    <a href="../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(U2, U);
+<a name="line243">243: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectStateGet.html">PetscObjectStateGet</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)U, &amp;tj-&gt;lag.Ucached.state);
+<a name="line244">244: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectGetId.html">PetscObjectGetId</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)U, &amp;tj-&gt;lag.Ucached.id);
+<a name="line245">245: </a>    tj-&gt;lag.Ucached.time = *time;
+<a name="line246">246: </a>    tj-&gt;lag.Ucached.step = stepnum;
+<a name="line247">247: </a>  }
+<a name="line248">248: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(TSTrajectory_GetVecs, tj, ts, 0, 0);
+<a name="line249">249: </a>  <font color="#4169E1">return</font> 0;
+<a name="line250">250: </a>}
+
+<a name="line252">252: </a><font color="#B22222">/*@C</font>
+<a name="line253">253: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectoryViewFromOptions.html">TSTrajectoryViewFromOptions</a> - View a `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` based on values in the options database</font>
+
+<a name="line255">255: </a><font color="#B22222">   Collective</font>
+
+<a name="line257">257: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line258">258: </a><font color="#B22222">+  A - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+<a name="line259">259: </a><font color="#B22222">.  obj - Optional object that provides prefix used for option name</font>
+<a name="line260">260: </a><font color="#B22222">-  name - command line option</font>
+
+<a name="line262">262: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line264">264: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryView.html">TSTrajectoryView</a>`, `<a href="../../../../docs/manualpages/Sys/PetscObjectViewFromOptions.html">PetscObjectViewFromOptions</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`</font>
+<a name="line265">265: </a><font color="#B22222">@*/</font>
+<a name="line266">266: </a><strong><font color="#4169E1"><a name="TSTrajectoryViewFromOptions"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryViewFromOptions.html">TSTrajectoryViewFromOptions</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> A, <a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> obj, const char name[])</font></strong>
+<a name="line267">267: </a>{
+<a name="line269">269: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectViewFromOptions.html">PetscObjectViewFromOptions</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A, obj, name);
+<a name="line270">270: </a>  <font color="#4169E1">return</font> 0;
+<a name="line271">271: </a>}
+
+<a name="line273">273: </a><font color="#B22222">/*@C</font>
+<a name="line274">274: </a><font color="#B22222">    <a href="../../../../docs/manualpages/TS/TSTrajectoryView.html">TSTrajectoryView</a> - Prints information about the trajectory object</font>
+
+<a name="line276">276: </a><font color="#B22222">    Collective</font>
+
+<a name="line278">278: </a><font color="#B22222">    Input Parameters:</font>
+<a name="line279">279: </a><font color="#B22222">+   tj - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context obtained from `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`</font>
+<a name="line280">280: </a><font color="#B22222">-   viewer - visualization context</font>
+
+<a name="line282">282: </a><font color="#B22222">    Options Database Key:</font>
+<a name="line283">283: </a><font color="#B22222">.   -ts_trajectory_view - calls `<a href="../../../../docs/manualpages/TS/TSTrajectoryView.html">TSTrajectoryView</a>()` at end of `<a href="../../../../docs/manualpages/Sensitivity/TSAdjointStep.html">TSAdjointStep</a>()`</font>
+
+<a name="line285">285: </a><font color="#B22222">    Level: developer</font>
+
+<a name="line287">287: </a><font color="#B22222">    Notes:</font>
+<a name="line288">288: </a><font color="#B22222">    The available visualization contexts include</font>
+<a name="line289">289: </a><font color="#B22222">+     `<a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_SELF.html">PETSC_VIEWER_STDOUT_SELF</a>` - standard output (default)</font>
+<a name="line290">290: </a><font color="#B22222">-     `<a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>` - synchronized standard</font>
+<a name="line291">291: </a><font color="#B22222">         output where only the first processor opens</font>
+<a name="line292">292: </a><font color="#B22222">         the file.  All other processors send their</font>
+<a name="line293">293: </a><font color="#B22222">         data to the first processor to print.</font>
+
+<a name="line295">295: </a><font color="#B22222">    The user can open an alternative visualization context with</font>
+<a name="line296">296: </a><font color="#B22222">    `<a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html">PetscViewerASCIIOpen</a>()` - output to a specified file.</font>
+
+<a name="line298">298: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`, `<a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html">PetscViewerASCIIOpen</a>()`</font>
+<a name="line299">299: </a><font color="#B22222">@*/</font>
+<a name="line300">300: </a><strong><font color="#4169E1"><a name="TSTrajectoryView"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryView.html">TSTrajectoryView</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line301">301: </a>{
+<a name="line302">302: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> iascii;
+
+<a name="line305">305: </a>  <font color="#4169E1">if</font> (!viewer) <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIGetStdout.html">PetscViewerASCIIGetStdout</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj), &amp;viewer);
+
+<a name="line309">309: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line310">310: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line311">311: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectPrintClassNamePrefixType.html">PetscObjectPrintClassNamePrefixType</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj, viewer);
+<a name="line312">312: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  total number of recomputations for adjoint calculation = %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, tj-&gt;recomps);
+<a name="line313">313: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  disk checkpoint reads = %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, tj-&gt;diskreads);
+<a name="line314">314: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  disk checkpoint writes = %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, tj-&gt;diskwrites);
+<a name="line315">315: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(viewer);
+<a name="line316">316: </a>    <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(tj, view, viewer);
+<a name="line317">317: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(viewer);
+<a name="line318">318: </a>  }
+<a name="line319">319: </a>  <font color="#4169E1">return</font> 0;
+<a name="line320">320: </a>}
+
+<a name="line322">322: </a><font color="#B22222">/*@C</font>
+<a name="line323">323: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectorySetVariableNames.html">TSTrajectorySetVariableNames</a> - Sets the name of each component in the solution vector so that it may be saved with the trajectory</font>
+
+<a name="line325">325: </a><font color="#B22222">   Collective</font>
+
+<a name="line327">327: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line328">328: </a><font color="#B22222">+  tr - the trajectory context</font>
+<a name="line329">329: </a><font color="#B22222">-  names - the names of the components, final string must be NULL</font>
+
+<a name="line331">331: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line333">333: </a><font color="#B22222">   Fortran Note:</font>
+<a name="line334">334: </a><font color="#B22222">   Fortran interface is not possible because of the string array argument</font>
+
+<a name="line336">336: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSGetTrajectory.html">TSGetTrajectory</a>()`</font>
+<a name="line337">337: </a><font color="#B22222">@*/</font>
+<a name="line338">338: </a><strong><font color="#4169E1"><a name="TSTrajectorySetVariableNames"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectorySetVariableNames.html">TSTrajectorySetVariableNames</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> ctx, const char *const *names)</font></strong>
+<a name="line339">339: </a>{
+<a name="line342">342: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrArrayDestroy.html">PetscStrArrayDestroy</a>(&amp;ctx-&gt;names);
+<a name="line343">343: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrArrayallocpy.html">PetscStrArrayallocpy</a>(names, &amp;ctx-&gt;names);
+<a name="line344">344: </a>  <font color="#4169E1">return</font> 0;
+<a name="line345">345: </a>}
+
+<a name="line347">347: </a><font color="#B22222">/*@C</font>
+<a name="line348">348: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectorySetTransform.html">TSTrajectorySetTransform</a> - Solution vector will be transformed by provided function before being saved to disk</font>
+
+<a name="line350">350: </a><font color="#B22222">   Collective</font>
+
+<a name="line352">352: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line353">353: </a><font color="#B22222">+  tj - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+<a name="line354">354: </a><font color="#B22222">.  transform - the transform function</font>
+<a name="line355">355: </a><font color="#B22222">.  destroy - function to destroy the optional context</font>
+<a name="line356">356: </a><font color="#B22222">-  ctx - optional context used by transform function</font>
+
+<a name="line358">358: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line360">360: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectorySetVariableNames.html">TSTrajectorySetVariableNames</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSMonitorLGSetTransform.html">TSMonitorLGSetTransform</a>()`</font>
+<a name="line361">361: </a><font color="#B22222">@*/</font>
+<a name="line362">362: </a><strong><font color="#4169E1"><a name="TSTrajectorySetTransform"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectorySetTransform.html">TSTrajectorySetTransform</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*transform)(void *, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *), <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*destroy)(void *), void *tctx)</font></strong>
+<a name="line363">363: </a>{
+<a name="line365">365: </a>  tj-&gt;transform        = transform;
+<a name="line366">366: </a>  tj-&gt;transformdestroy = destroy;
+<a name="line367">367: </a>  tj-&gt;transformctx     = tctx;
+<a name="line368">368: </a>  <font color="#4169E1">return</font> 0;
+<a name="line369">369: </a>}
+
+<a name="line371">371: </a><font color="#B22222">/*@</font>
+<a name="line372">372: </a><font color="#B22222">  <a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a> - This function creates an empty trajectory object used to store the time dependent solution of an ODE/DAE</font>
+
+<a name="line374">374: </a><font color="#B22222">  Collective</font>
+
+<a name="line376">376: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line377">377: </a><font color="#B22222">. comm - the communicator</font>
+
+<a name="line379">379: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line380">380: </a><font color="#B22222">. tj   - the trajectory object</font>
+
+<a name="line382">382: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line384">384: </a><font color="#B22222">  Notes:</font>
+<a name="line385">385: </a><font color="#B22222">    Usually one does not call this routine, it is called automatically when one calls `<a href="../../../../docs/manualpages/TS/TSSetSaveTrajectory.html">TSSetSaveTrajectory</a>()`.</font>
+
+<a name="line387">387: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetType.html">TSTrajectorySetType</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetVariableNames.html">TSTrajectorySetVariableNames</a>()`, `<a href="../../../../docs/manualpages/TS/TSGetTrajectory.html">TSGetTrajectory</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetKeepFiles.html">TSTrajectorySetKeepFiles</a>()`</font>
+<a name="line388">388: </a><font color="#B22222">@*/</font>
+<a name="line389">389: </a><strong><font color="#4169E1"><a name="TSTrajectoryCreate"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>(<a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> *tj)</font></strong>
+<a name="line390">390: </a>{
+<a name="line391">391: </a>  <a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> t;
+
+<a name="line394">394: </a>  *tj = NULL;
+<a name="line395">395: </a>  <a href="../../../../docs/manualpages/TS/TSInitializePackage.html">TSInitializePackage</a>();
+
+<a name="line397">397: </a>  <a href="../../../../docs/manualpages/Sys/PetscHeaderCreate.html">PetscHeaderCreate</a>(t, TSTRAJECTORY_CLASSID, <font color="#666666">"<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>"</font>, <font color="#666666">"Time stepping"</font>, <font color="#666666">"<a href="../../../../docs/manualpages/TS/TS.html">TS</a>"</font>, comm, <a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>, <a href="../../../../docs/manualpages/TS/TSTrajectoryView.html">TSTrajectoryView</a>);
+<a name="line398">398: </a>  t-&gt;setupcalled = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line399">399: </a>  TSHistoryCreate(comm, &amp;t-&gt;tsh);
+
+<a name="line401">401: </a>  t-&gt;lag.order            = 1;
+<a name="line402">402: </a>  t-&gt;lag.L                = NULL;
+<a name="line403">403: </a>  t-&gt;lag.T                = NULL;
+<a name="line404">404: </a>  t-&gt;lag.W                = NULL;
+<a name="line405">405: </a>  t-&gt;lag.WW               = NULL;
+<a name="line406">406: </a>  t-&gt;lag.TW               = NULL;
+<a name="line407">407: </a>  t-&gt;lag.TT               = NULL;
+<a name="line408">408: </a>  t-&gt;lag.caching          = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line409">409: </a>  t-&gt;lag.Ucached.id       = 0;
+<a name="line410">410: </a>  t-&gt;lag.Ucached.state    = -1;
+<a name="line411">411: </a>  t-&gt;lag.Ucached.time     = PETSC_MIN_REAL;
+<a name="line412">412: </a>  t-&gt;lag.Ucached.step     = PETSC_MAX_INT;
+<a name="line413">413: </a>  t-&gt;lag.Udotcached.id    = 0;
+<a name="line414">414: </a>  t-&gt;lag.Udotcached.state = -1;
+<a name="line415">415: </a>  t-&gt;lag.Udotcached.time  = PETSC_MIN_REAL;
+<a name="line416">416: </a>  t-&gt;lag.Udotcached.step  = PETSC_MAX_INT;
+<a name="line417">417: </a>  t-&gt;adjoint_solve_mode   = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line418">418: </a>  t-&gt;solution_only        = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line419">419: </a>  t-&gt;keepfiles            = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line420">420: </a>  t-&gt;usehistory           = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line421">421: </a>  *tj                     = t;
+<a name="line422">422: </a>  <a href="../../../../docs/manualpages/TS/TSTrajectorySetFiletemplate.html">TSTrajectorySetFiletemplate</a>(t, <font color="#666666">"<a href="../../../../docs/manualpages/TS/TS.html">TS</a>-%06"</font> PetscInt_FMT <font color="#666666">".bin"</font>);
+<a name="line423">423: </a>  <font color="#4169E1">return</font> 0;
+<a name="line424">424: </a>}
+
+<a name="line426">426: </a><font color="#B22222">/*@C</font>
+<a name="line427">427: </a><font color="#B22222">  <a href="../../../../docs/manualpages/TS/TSTrajectorySetType.html">TSTrajectorySetType</a> - Sets the storage method to be used as in a trajectory</font>
+
+<a name="line429">429: </a><font color="#B22222">  Collective</font>
+
+<a name="line431">431: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line432">432: </a><font color="#B22222">+ tj   - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+<a name="line433">433: </a><font color="#B22222">. ts   - the `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>` context</font>
+<a name="line434">434: </a><font color="#B22222">- type - a known method</font>
+
+<a name="line436">436: </a><font color="#B22222">  Options Database Key:</font>
+<a name="line437">437: </a><font color="#B22222">. -ts_trajectory_type &lt;type&gt; - Sets the method; use -help for a list of available methods (for instance, basic)</font>
+
+<a name="line439">439: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line441">441: </a><font color="#B22222">  Developer Note:</font>
+<a name="line442">442: </a><font color="#B22222">  Why does this option require access to the `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>`</font>
+
+<a name="line444">444: </a><font color="#B22222">.seealso: [](chapter_ts),  `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetFromOptions.html">TSTrajectorySetFromOptions</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryGetType.html">TSTrajectoryGetType</a>()`</font>
+<a name="line445">445: </a><font color="#B22222">@*/</font>
+<a name="line446">446: </a><strong><font color="#4169E1"><a name="TSTrajectorySetType"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectorySetType.html">TSTrajectorySetType</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/TS/TS.html">TS</a> ts, TSTrajectoryType type)</font></strong>
+<a name="line447">447: </a>{
+<a name="line448">448: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*r)(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>, <a href="../../../../docs/manualpages/TS/TS.html">TS</a>);
+<a name="line449">449: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> match;
+
+<a name="line452">452: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj, type, &amp;match);
+<a name="line453">453: </a>  <font color="#4169E1">if</font> (match) <font color="#4169E1">return</font> 0;
+
+<a name="line455">455: </a>  <a href="../../../../docs/manualpages/Sys/PetscFunctionListFind.html">PetscFunctionListFind</a>(TSTrajectoryList, type, &amp;r);
+<a name="line457">457: </a>  <font color="#4169E1">if</font> (tj-&gt;ops-&gt;destroy) {
+<a name="line458">458: </a>    (*(tj)-&gt;ops-&gt;destroy)(tj);
+
+<a name="line460">460: </a>    tj-&gt;ops-&gt;destroy = NULL;
+<a name="line461">461: </a>  }
+<a name="line462">462: </a>  <a href="../../../../docs/manualpages/Sys/PetscMemzero.html">PetscMemzero</a>(tj-&gt;ops, <font color="#4169E1">sizeof</font>(*tj-&gt;ops));
+
+<a name="line464">464: </a>  PetscObjectChangeTypeName((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj, type);
+<a name="line465">465: </a>  (*r)(tj, ts);
+<a name="line466">466: </a>  <font color="#4169E1">return</font> 0;
+<a name="line467">467: </a>}
+
+<a name="line469">469: </a><font color="#B22222">/*@C</font>
+<a name="line470">470: </a><font color="#B22222">  <a href="../../../../docs/manualpages/TS/TSTrajectoryGetType.html">TSTrajectoryGetType</a> - Gets the trajectory type</font>
+
+<a name="line472">472: </a><font color="#B22222">  Collective</font>
+
+<a name="line474">474: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line475">475: </a><font color="#B22222">+ tj   - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+<a name="line476">476: </a><font color="#B22222">- ts   - the `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>` context</font>
+
+<a name="line478">478: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line479">479: </a><font color="#B22222">. type - a known method</font>
+
+<a name="line481">481: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line483">483: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetFromOptions.html">TSTrajectorySetFromOptions</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetType.html">TSTrajectorySetType</a>()`</font>
+<a name="line484">484: </a><font color="#B22222">@*/</font>
+<a name="line485">485: </a><strong><font color="#4169E1"><a name="TSTrajectoryGetType"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryGetType.html">TSTrajectoryGetType</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/TS/TS.html">TS</a> ts, TSTrajectoryType *type)</font></strong>
+<a name="line486">486: </a>{
+<a name="line488">488: </a>  <font color="#4169E1">if</font> (type) *type = ((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj)-&gt;type_name;
+<a name="line489">489: </a>  <font color="#4169E1">return</font> 0;
+<a name="line490">490: </a>}
+
+<a name="line492">492: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TSTrajectoryCreate_Basic(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>, <a href="../../../../docs/manualpages/TS/TS.html">TS</a>)</font></strong>;
+<a name="line493">493: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TSTrajectoryCreate_Singlefile(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>, <a href="../../../../docs/manualpages/TS/TS.html">TS</a>)</font></strong>;
+<a name="line494">494: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TSTrajectoryCreate_Memory(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>, <a href="../../../../docs/manualpages/TS/TS.html">TS</a>)</font></strong>;
+<a name="line495">495: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TSTrajectoryCreate_Visualization(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>, <a href="../../../../docs/manualpages/TS/TS.html">TS</a>)</font></strong>;
+
+<a name="line497">497: </a><font color="#B22222">/*@C</font>
+<a name="line498">498: </a><font color="#B22222">  <a href="../../../../docs/manualpages/TS/TSTrajectoryRegisterAll.html">TSTrajectoryRegisterAll</a> - Registers all of the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` storage schecmes in the `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>` package.</font>
+
+<a name="line500">500: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line502">502: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line504">504: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryRegister.html">TSTrajectoryRegister</a>()`</font>
+<a name="line505">505: </a><font color="#B22222">@*/</font>
+<a name="line506">506: </a><strong><font color="#4169E1"><a name="TSTrajectoryRegisterAll"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryRegisterAll.html">TSTrajectoryRegisterAll</a>(void)</font></strong>
+<a name="line507">507: </a>{
+<a name="line508">508: </a>  <font color="#4169E1">if</font> (TSTrajectoryRegisterAllCalled) <font color="#4169E1">return</font> 0;
+<a name="line509">509: </a>  TSTrajectoryRegisterAllCalled = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+
+<a name="line511">511: </a>  <a href="../../../../docs/manualpages/TS/TSTrajectoryRegister.html">TSTrajectoryRegister</a>(<a href="../../../../docs/manualpages/TS/TSTRAJECTORYBASIC.html">TSTRAJECTORYBASIC</a>, TSTrajectoryCreate_Basic);
+<a name="line512">512: </a>  <a href="../../../../docs/manualpages/TS/TSTrajectoryRegister.html">TSTrajectoryRegister</a>(<a href="../../../../docs/manualpages/TS/TSTRAJECTORYSINGLEFILE.html">TSTRAJECTORYSINGLEFILE</a>, TSTrajectoryCreate_Singlefile);
+<a name="line513">513: </a>  <a href="../../../../docs/manualpages/TS/TSTrajectoryRegister.html">TSTrajectoryRegister</a>(<a href="../../../../docs/manualpages/TS/TSTRAJECTORYMEMORY.html">TSTRAJECTORYMEMORY</a>, TSTrajectoryCreate_Memory);
+<a name="line514">514: </a>  <a href="../../../../docs/manualpages/TS/TSTrajectoryRegister.html">TSTrajectoryRegister</a>(<a href="../../../../docs/manualpages/TS/TSTRAJECTORYVISUALIZATION.html">TSTRAJECTORYVISUALIZATION</a>, TSTrajectoryCreate_Visualization);
+<a name="line515">515: </a>  <font color="#4169E1">return</font> 0;
+<a name="line516">516: </a>}
+
+<a name="line518">518: </a><font color="#B22222">/*@</font>
+<a name="line519">519: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectoryReset.html">TSTrajectoryReset</a> - Resets a trajectory context</font>
+
+<a name="line521">521: </a><font color="#B22222">   Collective</font>
+
+<a name="line523">523: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line524">524: </a><font color="#B22222">.  tj - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context obtained from `<a href="../../../../docs/manualpages/TS/TSGetTrajectory.html">TSGetTrajectory</a>()`</font>
+
+<a name="line526">526: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line528">528: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a>()`</font>
+<a name="line529">529: </a><font color="#B22222">@*/</font>
+<a name="line530">530: </a><strong><font color="#4169E1"><a name="TSTrajectoryReset"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryReset.html">TSTrajectoryReset</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj)</font></strong>
+<a name="line531">531: </a>{
+<a name="line532">532: </a>  <font color="#4169E1">if</font> (!tj) <font color="#4169E1">return</font> 0;
+<a name="line534">534: </a>  <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(tj, reset);
+<a name="line535">535: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tj-&gt;dirfiletemplate);
+<a name="line536">536: </a>  TSHistoryDestroy(&amp;tj-&gt;tsh);
+<a name="line537">537: </a>  TSHistoryCreate(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj), &amp;tj-&gt;tsh);
+<a name="line538">538: </a>  tj-&gt;setupcalled = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line539">539: </a>  <font color="#4169E1">return</font> 0;
+<a name="line540">540: </a>}
+
+<a name="line542">542: </a><font color="#B22222">/*@</font>
+<a name="line543">543: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a> - Destroys a trajectory context</font>
+
+<a name="line545">545: </a><font color="#B22222">   Collective</font>
+
+<a name="line547">547: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line548">548: </a><font color="#B22222">.  tj - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context obtained from `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`</font>
+
+<a name="line550">550: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line552">552: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a>()`</font>
+<a name="line553">553: </a><font color="#B22222">@*/</font>
+<a name="line554">554: </a><strong><font color="#4169E1"><a name="TSTrajectoryDestroy"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> *tj)</font></strong>
+<a name="line555">555: </a>{
+<a name="line556">556: </a>  <font color="#4169E1">if</font> (!*tj) <font color="#4169E1">return</font> 0;
+<a name="line558">558: </a>  <font color="#4169E1">if</font> (--((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(*tj))-&gt;refct &gt; 0) {
+<a name="line559">559: </a>    *tj = NULL;
+<a name="line560">560: </a>    <font color="#4169E1">return</font> 0;
+<a name="line561">561: </a>  }
+
+<a name="line563">563: </a>  <a href="../../../../docs/manualpages/TS/TSTrajectoryReset.html">TSTrajectoryReset</a>(*tj);
+<a name="line564">564: </a>  TSHistoryDestroy(&amp;(*tj)-&gt;tsh);
+<a name="line565">565: </a>  <a href="../../../../docs/manualpages/Vec/VecDestroyVecs.html">VecDestroyVecs</a>((*tj)-&gt;lag.order + 1, &amp;(*tj)-&gt;lag.W);
+<a name="line566">566: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree5.html">PetscFree5</a>((*tj)-&gt;lag.L, (*tj)-&gt;lag.T, (*tj)-&gt;lag.WW, (*tj)-&gt;lag.TT, (*tj)-&gt;lag.TW);
+<a name="line567">567: </a>  <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;(*tj)-&gt;U);
+<a name="line568">568: </a>  <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;(*tj)-&gt;Udot);
+
+<a name="line570">570: </a>  <font color="#4169E1">if</font> ((*tj)-&gt;transformdestroy) (*(*tj)-&gt;transformdestroy)((*tj)-&gt;transformctx);
+<a name="line571">571: </a>  <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>((*tj), destroy);
+<a name="line572">572: </a>  <font color="#4169E1">if</font> (!((*tj)-&gt;keepfiles)) {
+<a name="line573">573: </a>    <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+<a name="line574">574: </a>    <a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>    comm;
+
+<a name="line576">576: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(*tj), &amp;comm);
+<a name="line577">577: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line578">578: </a>    <font color="#4169E1">if</font> (rank == 0 &amp;&amp; (*tj)-&gt;dirname) { <font color="#B22222">/* we own the directory, so we run PetscRMTree on it */</font>
+<a name="line579">579: </a>      PetscRMTree((*tj)-&gt;dirname);
+<a name="line580">580: </a>    }
+<a name="line581">581: </a>  }
+<a name="line582">582: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrArrayDestroy.html">PetscStrArrayDestroy</a>(&amp;(*tj)-&gt;names);
+<a name="line583">583: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>((*tj)-&gt;dirname);
+<a name="line584">584: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>((*tj)-&gt;filetemplate);
+<a name="line585">585: </a>  <a href="../../../../docs/manualpages/Sys/PetscHeaderDestroy.html">PetscHeaderDestroy</a>(tj);
+<a name="line586">586: </a>  <font color="#4169E1">return</font> 0;
+<a name="line587">587: </a>}
+
+<a name="line589">589: </a><font color="#B22222">/*</font>
+<a name="line590">590: </a><font color="#B22222">  TSTrajectorySetTypeFromOptions_Private - Sets the type of `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` from user options.</font>
+
+<a name="line592">592: </a><font color="#B22222">  Collective</font>
+
+<a name="line594">594: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line595">595: </a><font color="#B22222">+ tj - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+<a name="line596">596: </a><font color="#B22222">- ts - the <a href="../../../../docs/manualpages/TS/TS.html">TS</a> context</font>
+
+<a name="line598">598: </a><font color="#B22222">  Options Database Key:</font>
+<a name="line599">599: </a><font color="#B22222">. -ts_trajectory_type &lt;type&gt; - <a href="../../../../docs/manualpages/TS/TSTRAJECTORYBASIC.html">TSTRAJECTORYBASIC</a>, <a href="../../../../docs/manualpages/TS/TSTRAJECTORYMEMORY.html">TSTRAJECTORYMEMORY</a>, <a href="../../../../docs/manualpages/TS/TSTRAJECTORYSINGLEFILE.html">TSTRAJECTORYSINGLEFILE</a>, <a href="../../../../docs/manualpages/TS/TSTRAJECTORYVISUALIZATION.html">TSTRAJECTORYVISUALIZATION</a></font>
+
+<a name="line601">601: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line603">603: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `TSTrajectoryType`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetFromOptions.html">TSTrajectorySetFromOptions</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetType.html">TSTrajectorySetType</a>()`</font>
+<a name="line604">604: </a><font color="#B22222">*/</font>
+<a name="line605">605: </a><strong><font color="#4169E1"><a name="TSTrajectorySetTypeFromOptions_Private"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TSTrajectorySetTypeFromOptions_Private(PetscOptionItems *PetscOptionsObject, <a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/TS/TS.html">TS</a> ts)</font></strong>
+<a name="line606">606: </a>{
+<a name="line607">607: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   opt;
+<a name="line608">608: </a>  const char *defaultType;
+<a name="line609">609: </a>  char        typeName[256];
+
+<a name="line611">611: </a>  <font color="#4169E1">if</font> (((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj)-&gt;type_name) defaultType = ((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj)-&gt;type_name;
+<a name="line612">612: </a>  <font color="#4169E1">else</font> defaultType = <a href="../../../../docs/manualpages/TS/TSTRAJECTORYBASIC.html">TSTRAJECTORYBASIC</a>;
+
+<a name="line614">614: </a>  <a href="../../../../docs/manualpages/TS/TSTrajectoryRegisterAll.html">TSTrajectoryRegisterAll</a>();
+<a name="line615">615: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsFList.html">PetscOptionsFList</a>(<font color="#666666">"-ts_trajectory_type"</font>, <font color="#666666">"<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> method"</font>, <font color="#666666">"<a href="../../../../docs/manualpages/TS/TSTrajectorySetType.html">TSTrajectorySetType</a>"</font>, TSTrajectoryList, defaultType, typeName, 256, &amp;opt);
+<a name="line616">616: </a>  <font color="#4169E1">if</font> (opt) {
+<a name="line617">617: </a>    <a href="../../../../docs/manualpages/TS/TSTrajectorySetType.html">TSTrajectorySetType</a>(tj, ts, typeName);
+<a name="line618">618: </a>  } <font color="#4169E1">else</font> {
+<a name="line619">619: </a>    <a href="../../../../docs/manualpages/TS/TSTrajectorySetType.html">TSTrajectorySetType</a>(tj, ts, defaultType);
+<a name="line620">620: </a>  }
+<a name="line621">621: </a>  <font color="#4169E1">return</font> 0;
+<a name="line622">622: </a>}
+
+<a name="line624">624: </a><font color="#B22222">/*@</font>
+<a name="line625">625: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectorySetUseHistory.html">TSTrajectorySetUseHistory</a> - Use `TSHistory` in `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`</font>
+
+<a name="line627">627: </a><font color="#B22222">   Collective</font>
+
+<a name="line629">629: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line630">630: </a><font color="#B22222">+  tj - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+<a name="line631">631: </a><font color="#B22222">-  flg - `<a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>` to save, `<a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>` to disable</font>
+
+<a name="line633">633: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line634">634: </a><font color="#B22222">.  -ts_trajectory_use_history - have it use `TSHistory`</font>
+
+<a name="line636">636: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line638">638: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a>()`</font>
+<a name="line639">639: </a><font color="#B22222">@*/</font>
+<a name="line640">640: </a><strong><font color="#4169E1"><a name="TSTrajectorySetUseHistory"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectorySetUseHistory.html">TSTrajectorySetUseHistory</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg)</font></strong>
+<a name="line641">641: </a>{
+<a name="line644">644: </a>  tj-&gt;usehistory = flg;
+<a name="line645">645: </a>  <font color="#4169E1">return</font> 0;
+<a name="line646">646: </a>}
+
+<a name="line648">648: </a><font color="#B22222">/*@</font>
+<a name="line649">649: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectorySetMonitor.html">TSTrajectorySetMonitor</a> - Monitor the schedules generated by the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` checkpointing controller</font>
+
+<a name="line651">651: </a><font color="#B22222">   Collective</font>
+
+<a name="line653">653: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line654">654: </a><font color="#B22222">+  tj - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+<a name="line655">655: </a><font color="#B22222">-  flg - `<a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>` to active a monitor, `<a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>` to disable</font>
+
+<a name="line657">657: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line658">658: </a><font color="#B22222">.  -ts_trajectory_monitor - print `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` information</font>
+
+<a name="line660">660: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line662">662: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a>()`</font>
+<a name="line663">663: </a><font color="#B22222">@*/</font>
+<a name="line664">664: </a><strong><font color="#4169E1"><a name="TSTrajectorySetMonitor"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectorySetMonitor.html">TSTrajectorySetMonitor</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg)</font></strong>
+<a name="line665">665: </a>{
+<a name="line668">668: </a>  <font color="#4169E1">if</font> (flg) tj-&gt;monitor = <a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_.html">PETSC_VIEWER_STDOUT_</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj));
+<a name="line669">669: </a>  <font color="#4169E1">else</font> tj-&gt;monitor = NULL;
+<a name="line670">670: </a>  <font color="#4169E1">return</font> 0;
+<a name="line671">671: </a>}
+
+<a name="line673">673: </a><font color="#B22222">/*@</font>
+<a name="line674">674: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectorySetKeepFiles.html">TSTrajectorySetKeepFiles</a> - Keep the files generated by the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` once the program is done</font>
+
+<a name="line676">676: </a><font color="#B22222">   Collective</font>
+
+<a name="line678">678: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line679">679: </a><font color="#B22222">+  tj - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+<a name="line680">680: </a><font color="#B22222">-  flg - `<a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>` to save, `<a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>` to disable</font>
+
+<a name="line682">682: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line683">683: </a><font color="#B22222">.  -ts_trajectory_keep_files - have it keep the files</font>
+
+<a name="line685">685: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line687">687: </a><font color="#B22222">   Note:</font>
+<a name="line688">688: </a><font color="#B22222">    By default the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` used for adjoint computations, `<a href="../../../../docs/manualpages/TS/TSTRAJECTORYBASIC.html">TSTRAJECTORYBASIC</a>`, removes the files it generates at the end of the run. This causes the files to be kept.</font>
+
+<a name="line690">690: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetMonitor.html">TSTrajectorySetMonitor</a>()`</font>
+<a name="line691">691: </a><font color="#B22222">@*/</font>
+<a name="line692">692: </a><strong><font color="#4169E1"><a name="TSTrajectorySetKeepFiles"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectorySetKeepFiles.html">TSTrajectorySetKeepFiles</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg)</font></strong>
+<a name="line693">693: </a>{
+<a name="line696">696: </a>  tj-&gt;keepfiles = flg;
+<a name="line697">697: </a>  <font color="#4169E1">return</font> 0;
+<a name="line698">698: </a>}
+
+<a name="line700">700: </a><font color="#B22222">/*@C</font>
+<a name="line701">701: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectorySetDirname.html">TSTrajectorySetDirname</a> - Specify the name of the directory where `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` disk checkpoints are stored.</font>
+
+<a name="line703">703: </a><font color="#B22222">   Collective</font>
+
+<a name="line705">705: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line706">706: </a><font color="#B22222">+  tj      - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+<a name="line707">707: </a><font color="#B22222">-  dirname - the directory name</font>
+
+<a name="line709">709: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line710">710: </a><font color="#B22222">.  -ts_trajectory_dirname - set the directory name</font>
+
+<a name="line712">712: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line714">714: </a><font color="#B22222">   Notes:</font>
+<a name="line715">715: </a><font color="#B22222">    The final location of the files is determined by dirname/filetemplate where filetemplate was provided by `<a href="../../../../docs/manualpages/TS/TSTrajectorySetFiletemplate.html">TSTrajectorySetFiletemplate</a>()`</font>
+
+<a name="line717">717: </a><font color="#B22222">   If this is not called `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` selects a unique new name for the directory</font>
+
+<a name="line719">719: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetFiletemplate.html">TSTrajectorySetFiletemplate</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a>()`</font>
+<a name="line720">720: </a><font color="#B22222">@*/</font>
+<a name="line721">721: </a><strong><font color="#4169E1"><a name="TSTrajectorySetDirname"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectorySetDirname.html">TSTrajectorySetDirname</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, const char dirname[])</font></strong>
+<a name="line722">722: </a>{
+<a name="line723">723: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg;
+
+<a name="line726">726: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(tj-&gt;dirname, dirname, &amp;flg);
+<a name="line728">728: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tj-&gt;dirname);
+<a name="line729">729: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(dirname, &amp;tj-&gt;dirname);
+<a name="line730">730: </a>  <font color="#4169E1">return</font> 0;
+<a name="line731">731: </a>}
+
+<a name="line733">733: </a><font color="#B22222">/*@C</font>
+<a name="line734">734: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectorySetFiletemplate.html">TSTrajectorySetFiletemplate</a> - Specify the name template for the files storing `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` checkpoints.</font>
+
+<a name="line736">736: </a><font color="#B22222">   Collective</font>
+
+<a name="line738">738: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line739">739: </a><font color="#B22222">+  tj      - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+<a name="line740">740: </a><font color="#B22222">-  filetemplate - the template</font>
+
+<a name="line742">742: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line743">743: </a><font color="#B22222">.  -ts_trajectory_file_template - set the file name template</font>
+
+<a name="line745">745: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line747">747: </a><font color="#B22222">   Notes:</font>
+<a name="line748">748: </a><font color="#B22222">    The name template should be of the form, for example filename-%06" PetscInt_FMT ".bin It should not begin with a leading /</font>
+
+<a name="line750">750: </a><font color="#B22222">   The final location of the files is determined by dirname/filetemplate where dirname was provided by `<a href="../../../../docs/manualpages/TS/TSTrajectorySetDirname.html">TSTrajectorySetDirname</a>()`. The %06" PetscInt_FMT " is replaced by the</font>
+<a name="line751">751: </a><font color="#B22222">   timestep counter</font>
+
+<a name="line753">753: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetDirname.html">TSTrajectorySetDirname</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a>()`</font>
+<a name="line754">754: </a><font color="#B22222">@*/</font>
+<a name="line755">755: </a><strong><font color="#4169E1"><a name="TSTrajectorySetFiletemplate"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectorySetFiletemplate.html">TSTrajectorySetFiletemplate</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, const char filetemplate[])</font></strong>
+<a name="line756">756: </a>{
+<a name="line757">757: </a>  const char *ptr, *ptr2;
+
+
+<a name="line764">764: </a>  <font color="#B22222">/* Do some cursory validation of the input. */</font>
+<a name="line765">765: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrstr.html">PetscStrstr</a>(filetemplate, <font color="#666666">"%"</font>, (char **)&amp;ptr);
+<a name="line767">767: </a>  <font color="#4169E1">for</font> (ptr++; ptr &amp;&amp; *ptr; ptr++) {
+<a name="line768">768: </a>    <a href="../../../../docs/manualpages/Sys/PetscStrchr.html">PetscStrchr</a>(PetscInt_FMT <font color="#666666">"DiouxX"</font>, *ptr, (char **)&amp;ptr2);
+<a name="line770">770: </a>    <font color="#4169E1">if</font> (ptr2) <font color="#4169E1">break</font>;
+<a name="line771">771: </a>  }
+<a name="line772">772: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tj-&gt;filetemplate);
+<a name="line773">773: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(filetemplate, &amp;tj-&gt;filetemplate);
+<a name="line774">774: </a>  <font color="#4169E1">return</font> 0;
+<a name="line775">775: </a>}
+
+<a name="line777">777: </a><font color="#B22222">/*@</font>
+<a name="line778">778: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectorySetFromOptions.html">TSTrajectorySetFromOptions</a> - Sets various `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` parameters from user options.</font>
+
+<a name="line780">780: </a><font color="#B22222">   Collective</font>
+
+<a name="line782">782: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line783">783: </a><font color="#B22222">+  tj - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context obtained from `<a href="../../../../docs/manualpages/TS/TSGetTrajectory.html">TSGetTrajectory</a>()`</font>
+<a name="line784">784: </a><font color="#B22222">-  ts - the `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>` context</font>
+
+<a name="line786">786: </a><font color="#B22222">   Options Database Keys:</font>
+<a name="line787">787: </a><font color="#B22222">+  -ts_trajectory_type &lt;type&gt; - basic, memory, singlefile, visualization</font>
+<a name="line788">788: </a><font color="#B22222">.  -ts_trajectory_keep_files &lt;true,false&gt; - keep the files generated by the code after the program ends. This is true by default for singlefile and visualization</font>
+<a name="line789">789: </a><font color="#B22222">-  -ts_trajectory_monitor - print `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` information</font>
+
+<a name="line791">791: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line793">793: </a><font color="#B22222">   Note:</font>
+<a name="line794">794: </a><font color="#B22222">    This is not normally called directly by users</font>
+
+<a name="line796">796: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSSetSaveTrajectory.html">TSSetSaveTrajectory</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a>()`</font>
+<a name="line797">797: </a><font color="#B22222">@*/</font>
+<a name="line798">798: </a><strong><font color="#4169E1"><a name="TSTrajectorySetFromOptions"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectorySetFromOptions.html">TSTrajectorySetFromOptions</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/TS/TS.html">TS</a> ts)</font></strong>
+<a name="line799">799: </a>{
+<a name="line800">800: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> set, flg;
+<a name="line801">801: </a>  char      dirname[PETSC_MAX_PATH_LEN], filetemplate[PETSC_MAX_PATH_LEN];
+
+<a name="line805">805: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectOptionsBegin.html">PetscObjectOptionsBegin</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj);
+<a name="line806">806: </a>  TSTrajectorySetTypeFromOptions_Private(PetscOptionsObject, tj, ts);
+<a name="line807">807: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-ts_trajectory_use_history"</font>, <font color="#666666">"Turn on/off usage of TSHistory"</font>, NULL, tj-&gt;usehistory, &amp;tj-&gt;usehistory, NULL);
+<a name="line808">808: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-ts_trajectory_monitor"</font>, <font color="#666666">"Print checkpointing schedules"</font>, <font color="#666666">"<a href="../../../../docs/manualpages/TS/TSTrajectorySetMonitor.html">TSTrajectorySetMonitor</a>"</font>, tj-&gt;monitor ? <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, &amp;flg, &amp;set);
+<a name="line809">809: </a>  <font color="#4169E1">if</font> (set) <a href="../../../../docs/manualpages/TS/TSTrajectorySetMonitor.html">TSTrajectorySetMonitor</a>(tj, flg);
+<a name="line810">810: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsInt.html">PetscOptionsInt</a>(<font color="#666666">"-ts_trajectory_reconstruction_order"</font>, <font color="#666666">"Interpolation order for reconstruction"</font>, NULL, tj-&gt;lag.order, &amp;tj-&gt;lag.order, NULL);
+<a name="line811">811: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-ts_trajectory_reconstruction_caching"</font>, <font color="#666666">"Turn on/off caching of <a href="../../../../docs/manualpages/TS/TSTrajectoryGetVecs.html">TSTrajectoryGetVecs</a> input"</font>, NULL, tj-&gt;lag.caching, &amp;tj-&gt;lag.caching, NULL);
+<a name="line812">812: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-ts_trajectory_adjointmode"</font>, <font color="#666666">"Instruct the trajectory that will be used in a <a href="../../../../docs/manualpages/Sensitivity/TSAdjointSolve.html">TSAdjointSolve</a>()"</font>, NULL, tj-&gt;adjoint_solve_mode, &amp;tj-&gt;adjoint_solve_mode, NULL);
+<a name="line813">813: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-ts_trajectory_solution_only"</font>, <font color="#666666">"Checkpoint solution only"</font>, <font color="#666666">"<a href="../../../../docs/manualpages/TS/TSTrajectorySetSolutionOnly.html">TSTrajectorySetSolutionOnly</a>"</font>, tj-&gt;solution_only, &amp;tj-&gt;solution_only, NULL);
+<a name="line814">814: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-ts_trajectory_keep_files"</font>, <font color="#666666">"Keep any trajectory files generated during the run"</font>, <font color="#666666">"<a href="../../../../docs/manualpages/TS/TSTrajectorySetKeepFiles.html">TSTrajectorySetKeepFiles</a>"</font>, tj-&gt;keepfiles, &amp;flg, &amp;set);
+<a name="line815">815: </a>  <font color="#4169E1">if</font> (set) <a href="../../../../docs/manualpages/TS/TSTrajectorySetKeepFiles.html">TSTrajectorySetKeepFiles</a>(tj, flg);
+
+<a name="line817">817: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsString.html">PetscOptionsString</a>(<font color="#666666">"-ts_trajectory_dirname"</font>, <font color="#666666">"Directory name for <a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> file"</font>, <font color="#666666">"<a href="../../../../docs/manualpages/TS/TSTrajectorySetDirname.html">TSTrajectorySetDirname</a>"</font>, NULL, dirname, <font color="#4169E1">sizeof</font>(dirname) - 14, &amp;set);
+<a name="line818">818: </a>  <font color="#4169E1">if</font> (set) <a href="../../../../docs/manualpages/TS/TSTrajectorySetDirname.html">TSTrajectorySetDirname</a>(tj, dirname);
+
+<a name="line820">820: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsString.html">PetscOptionsString</a>(<font color="#666666">"-ts_trajectory_file_template"</font>, <font color="#666666">"Template for <a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> file name, use filename-%06"</font> PetscInt_FMT <font color="#666666">".bin"</font>, <font color="#666666">"<a href="../../../../docs/manualpages/TS/TSTrajectorySetFiletemplate.html">TSTrajectorySetFiletemplate</a>"</font>, NULL, filetemplate, <font color="#4169E1">sizeof</font>(filetemplate), &amp;set);
+<a name="line821">821: </a>  <font color="#4169E1">if</font> (set) <a href="../../../../docs/manualpages/TS/TSTrajectorySetFiletemplate.html">TSTrajectorySetFiletemplate</a>(tj, filetemplate);
+
+<a name="line823">823: </a>  <font color="#B22222">/* Handle specific <a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> options */</font>
+<a name="line824">824: </a>  <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(tj, setfromoptions, PetscOptionsObject);
+<a name="line825">825: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line826">826: </a>  <font color="#4169E1">return</font> 0;
+<a name="line827">827: </a>}
+
+<a name="line829">829: </a><font color="#B22222">/*@</font>
+<a name="line830">830: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a> - Sets up the internal data structures, e.g. stacks, for the later use</font>
+<a name="line831">831: </a><font color="#B22222">   of a `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>` `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`.</font>
+
+<a name="line833">833: </a><font color="#B22222">   Collective</font>
+
+<a name="line835">835: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line836">836: </a><font color="#B22222">+  tj - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+<a name="line837">837: </a><font color="#B22222">-  ts - the <a href="../../../../docs/manualpages/TS/TS.html">TS</a> context obtained from `<a href="../../../../docs/manualpages/TS/TSCreate.html">TSCreate</a>()`</font>
+
+<a name="line839">839: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line841">841: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSSetSaveTrajectory.html">TSSetSaveTrajectory</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>()`</font>
+<a name="line842">842: </a><font color="#B22222">@*/</font>
+<a name="line843">843: </a><strong><font color="#4169E1"><a name="TSTrajectorySetUp"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectorySetUp.html">TSTrajectorySetUp</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/TS/TS.html">TS</a> ts)</font></strong>
+<a name="line844">844: </a>{
+<a name="line845">845: </a>  size_t s1, s2;
+
+<a name="line847">847: </a>  <font color="#4169E1">if</font> (!tj) <font color="#4169E1">return</font> 0;
+<a name="line850">850: </a>  <font color="#4169E1">if</font> (tj-&gt;setupcalled) <font color="#4169E1">return</font> 0;
+
+<a name="line852">852: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(TSTrajectory_SetUp, tj, ts, 0, 0);
+<a name="line853">853: </a>  <font color="#4169E1">if</font> (!((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tj)-&gt;type_name) <a href="../../../../docs/manualpages/TS/TSTrajectorySetType.html">TSTrajectorySetType</a>(tj, ts, <a href="../../../../docs/manualpages/TS/TSTRAJECTORYBASIC.html">TSTRAJECTORYBASIC</a>);
+<a name="line854">854: </a>  <a href="../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(tj, setup, ts);
+
+<a name="line856">856: </a>  tj-&gt;setupcalled = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+
+<a name="line858">858: </a>  <font color="#B22222">/* Set the counters to zero */</font>
+<a name="line859">859: </a>  tj-&gt;recomps    = 0;
+<a name="line860">860: </a>  tj-&gt;diskreads  = 0;
+<a name="line861">861: </a>  tj-&gt;diskwrites = 0;
+<a name="line862">862: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrlen.html">PetscStrlen</a>(tj-&gt;dirname, &amp;s1);
+<a name="line863">863: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrlen.html">PetscStrlen</a>(tj-&gt;filetemplate, &amp;s2);
+<a name="line864">864: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tj-&gt;dirfiletemplate);
+<a name="line865">865: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc.html">PetscMalloc</a>((s1 + s2 + 10) * <font color="#4169E1">sizeof</font>(char), &amp;tj-&gt;dirfiletemplate);
+<a name="line866">866: </a>  <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(tj-&gt;dirfiletemplate, s1 + s2 + 10, <font color="#666666">"%s/%s"</font>, tj-&gt;dirname, tj-&gt;filetemplate);
+<a name="line867">867: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(TSTrajectory_SetUp, tj, ts, 0, 0);
+<a name="line868">868: </a>  <font color="#4169E1">return</font> 0;
+<a name="line869">869: </a>}
+
+<a name="line871">871: </a><font color="#B22222">/*@</font>
+<a name="line872">872: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectorySetSolutionOnly.html">TSTrajectorySetSolutionOnly</a> - Tells the trajectory to store just the solution, and not any intermediate stage information</font>
+
+<a name="line874">874: </a><font color="#B22222">   Collective</font>
+
+<a name="line876">876: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line877">877: </a><font color="#B22222">+  tj  - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context obtained with `<a href="../../../../docs/manualpages/TS/TSGetTrajectory.html">TSGetTrajectory</a>()`</font>
+<a name="line878">878: </a><font color="#B22222">-  flg - the boolean flag</font>
+
+<a name="line880">880: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line882">882: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSSetSaveTrajectory.html">TSSetSaveTrajectory</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryGetSolutionOnly.html">TSTrajectoryGetSolutionOnly</a>()`</font>
+<a name="line883">883: </a><font color="#B22222">@*/</font>
+<a name="line884">884: </a><strong><font color="#4169E1"><a name="TSTrajectorySetSolutionOnly"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectorySetSolutionOnly.html">TSTrajectorySetSolutionOnly</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> solution_only)</font></strong>
+<a name="line885">885: </a>{
+<a name="line888">888: </a>  tj-&gt;solution_only = solution_only;
+<a name="line889">889: </a>  <font color="#4169E1">return</font> 0;
+<a name="line890">890: </a>}
+
+<a name="line892">892: </a><font color="#B22222">/*@</font>
+<a name="line893">893: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectoryGetSolutionOnly.html">TSTrajectoryGetSolutionOnly</a> - Gets the value set with `<a href="../../../../docs/manualpages/TS/TSTrajectorySetSolutionOnly.html">TSTrajectorySetSolutionOnly</a>()`.</font>
+
+<a name="line895">895: </a><font color="#B22222">   Logically collective</font>
+
+<a name="line897">897: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line898">898: </a><font color="#B22222">.  tj  - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+
+<a name="line900">900: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line901">901: </a><font color="#B22222">.  flg - the boolean flag</font>
+
+<a name="line903">903: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line905">905: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSSetSaveTrajectory.html">TSSetSaveTrajectory</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectorySetSolutionOnly.html">TSTrajectorySetSolutionOnly</a>()`</font>
+<a name="line906">906: </a><font color="#B22222">@*/</font>
+<a name="line907">907: </a><strong><font color="#4169E1"><a name="TSTrajectoryGetSolutionOnly"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryGetSolutionOnly.html">TSTrajectoryGetSolutionOnly</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *solution_only)</font></strong>
+<a name="line908">908: </a>{
+<a name="line911">911: </a>  *solution_only = tj-&gt;solution_only;
+<a name="line912">912: </a>  <font color="#4169E1">return</font> 0;
+<a name="line913">913: </a>}
+
+<a name="line915">915: </a><font color="#B22222">/*@</font>
+<a name="line916">916: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectoryGetUpdatedHistoryVecs.html">TSTrajectoryGetUpdatedHistoryVecs</a> - Get updated state and time-derivative history vectors.</font>
+
+<a name="line918">918: </a><font color="#B22222">   Collective</font>
+
+<a name="line920">920: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line921">921: </a><font color="#B22222">+  tj   - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+<a name="line922">922: </a><font color="#B22222">.  ts   - the `<a href="../../../../docs/manualpages/TS/TS.html">TS</a>` solver context</font>
+<a name="line923">923: </a><font color="#B22222">-  time - the requested time</font>
+
+<a name="line925">925: </a><font color="#B22222">   Output Parameters:</font>
+<a name="line926">926: </a><font color="#B22222">+  U    - state vector at given time (can be interpolated)</font>
+<a name="line927">927: </a><font color="#B22222">-  Udot - time-derivative vector at given time (can be interpolated)</font>
+
+<a name="line929">929: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line931">931: </a><font color="#B22222">   Notes:</font>
+<a name="line932">932: </a><font color="#B22222">   The vectors are interpolated if time does not match any time step stored in the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>()`. Pass NULL to not request a vector.</font>
+
+<a name="line934">934: </a><font color="#B22222">   This function differs from `<a href="../../../../docs/manualpages/TS/TSTrajectoryGetVecs.html">TSTrajectoryGetVecs</a>()` since the vectors obtained cannot be modified, and they need to be returned by</font>
+<a name="line935">935: </a><font color="#B22222">   calling `<a href="../../../../docs/manualpages/TS/TSTrajectoryRestoreUpdatedHistoryVecs.html">TSTrajectoryRestoreUpdatedHistoryVecs</a>()`.</font>
+
+<a name="line937">937: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSSetSaveTrajectory.html">TSSetSaveTrajectory</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryCreate.html">TSTrajectoryCreate</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryDestroy.html">TSTrajectoryDestroy</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryRestoreUpdatedHistoryVecs.html">TSTrajectoryRestoreUpdatedHistoryVecs</a>()`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryGetVecs.html">TSTrajectoryGetVecs</a>()`</font>
+<a name="line938">938: </a><font color="#B22222">@*/</font>
+<a name="line939">939: </a><strong><font color="#4169E1"><a name="TSTrajectoryGetUpdatedHistoryVecs"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryGetUpdatedHistoryVecs.html">TSTrajectoryGetUpdatedHistoryVecs</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> time, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *U, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *Udot)</font></strong>
+<a name="line940">940: </a>{
+<a name="line946">946: </a>  <font color="#4169E1">if</font> (U &amp;&amp; !tj-&gt;U) {
+<a name="line947">947: </a>    <a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm;
+
+<a name="line949">949: </a>    <a href="../../../../docs/manualpages/TS/TSGetDM.html">TSGetDM</a>(ts, &amp;dm);
+<a name="line950">950: </a>    <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html">DMCreateGlobalVector</a>(dm, &amp;tj-&gt;U);
+<a name="line951">951: </a>  }
+<a name="line952">952: </a>  <font color="#4169E1">if</font> (Udot &amp;&amp; !tj-&gt;Udot) {
+<a name="line953">953: </a>    <a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm;
+
+<a name="line955">955: </a>    <a href="../../../../docs/manualpages/TS/TSGetDM.html">TSGetDM</a>(ts, &amp;dm);
+<a name="line956">956: </a>    <a href="../../../../docs/manualpages/DM/DMCreateGlobalVector.html">DMCreateGlobalVector</a>(dm, &amp;tj-&gt;Udot);
+<a name="line957">957: </a>  }
+<a name="line958">958: </a>  <a href="../../../../docs/manualpages/TS/TSTrajectoryGetVecs.html">TSTrajectoryGetVecs</a>(tj, ts, <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, &amp;time, U ? tj-&gt;U : NULL, Udot ? tj-&gt;Udot : NULL);
+<a name="line959">959: </a>  <font color="#4169E1">if</font> (U) {
+<a name="line960">960: </a>    <a href="../../../../docs/manualpages/Vec/VecLockReadPush.html">VecLockReadPush</a>(tj-&gt;U);
+<a name="line961">961: </a>    *U = tj-&gt;U;
+<a name="line962">962: </a>  }
+<a name="line963">963: </a>  <font color="#4169E1">if</font> (Udot) {
+<a name="line964">964: </a>    <a href="../../../../docs/manualpages/Vec/VecLockReadPush.html">VecLockReadPush</a>(tj-&gt;Udot);
+<a name="line965">965: </a>    *Udot = tj-&gt;Udot;
+<a name="line966">966: </a>  }
+<a name="line967">967: </a>  <font color="#4169E1">return</font> 0;
+<a name="line968">968: </a>}
+
+<a name="line970">970: </a><font color="#B22222">/*@</font>
+<a name="line971">971: </a><font color="#B22222">   <a href="../../../../docs/manualpages/TS/TSTrajectoryRestoreUpdatedHistoryVecs.html">TSTrajectoryRestoreUpdatedHistoryVecs</a> - Restores updated state and time-derivative history vectors obtained with `<a href="../../../../docs/manualpages/TS/TSTrajectoryGetUpdatedHistoryVecs.html">TSTrajectoryGetUpdatedHistoryVecs</a>()`.</font>
+
+<a name="line973">973: </a><font color="#B22222">   Collective</font>
+
+<a name="line975">975: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line976">976: </a><font color="#B22222">+  tj   - the `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>` context</font>
+<a name="line977">977: </a><font color="#B22222">.  U    - state vector at given time (can be interpolated)</font>
+<a name="line978">978: </a><font color="#B22222">-  Udot - time-derivative vector at given time (can be interpolated)</font>
+
+<a name="line980">980: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line982">982: </a><font color="#B22222">.seealso: [](chapter_ts), `<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a>`, `<a href="../../../../docs/manualpages/TS/TSTrajectoryGetUpdatedHistoryVecs.html">TSTrajectoryGetUpdatedHistoryVecs</a>()`</font>
+<a name="line983">983: </a><font color="#B22222">@*/</font>
+<a name="line984">984: </a><strong><font color="#4169E1"><a name="TSTrajectoryRestoreUpdatedHistoryVecs"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/TS/TSTrajectoryRestoreUpdatedHistoryVecs.html">TSTrajectoryRestoreUpdatedHistoryVecs</a>(<a href="../../../../docs/manualpages/TS/TSTrajectory.html">TSTrajectory</a> tj, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *U, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *Udot)</font></strong>
+<a name="line985">985: </a>{
+<a name="line991">991: </a>  <font color="#4169E1">if</font> (U) {
+<a name="line992">992: </a>    <a href="../../../../docs/manualpages/Vec/VecLockReadPop.html">VecLockReadPop</a>(tj-&gt;U);
+<a name="line993">993: </a>    *U = NULL;
+<a name="line994">994: </a>  }
+<a name="line995">995: </a>  <font color="#4169E1">if</font> (Udot) {
+<a name="line996">996: </a>    <a href="../../../../docs/manualpages/Vec/VecLockReadPop.html">VecLockReadPop</a>(tj-&gt;Udot);
+<a name="line997">997: </a>    *Udot = NULL;
+<a name="line998">998: </a>  }
+<a name="line999">999: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1000">1000: </a>}
+</pre>
+</body>
+
+</html>

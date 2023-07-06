@@ -1,0 +1,335 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/objects/device/impls/cupm/cupmdevice.cxx">Actual source code: cupmdevice.cxx</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:58+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../../include/petsc/private/cpp/memory.hpp.html">&lt;petsc/private/cpp/memory.hpp&gt;</A>
+
+<a name="line3">  3: </a><font color="#A020F0">#include </font><font color="#666666">"cupmdevice.hpp"</font><font color="#A020F0"></font>
+
+<a name="line5">  5: </a><font color="#A020F0">#include &lt;algorithm&gt;</font>
+<a name="line6">  6: </a><font color="#A020F0">#include &lt;csetjmp&gt; // for cuda mpi awareness</font>
+<a name="line7">  7: </a><font color="#A020F0">#include &lt;csignal&gt; // SIGSEGV</font>
+<a name="line8">  8: </a><font color="#A020F0">#include &lt;iterator&gt;</font>
+<a name="line9">  9: </a><font color="#A020F0">#include &lt;type_traits&gt;</font>
+
+<a name="line11"> 11: </a>namespace Petsc
+<a name="line12"> 12: </a>{
+
+<a name="line14"> 14: </a>namespace device
+<a name="line15"> 15: </a>{
+
+<a name="line17"> 17: </a>namespace cupm
+<a name="line18"> 18: </a>{
+
+<a name="line20"> 20: </a>// internal <font color="#666666">"impls"</font> class <font color="#4169E1">for</font> CUPMDevice. Each instance represents a single cupm device
+<a name="line21"> 21: </a>template &lt;DeviceType T&gt;
+<a name="line22"> 22: </a>class Device&lt;T&gt;::DeviceInternal {
+<a name="line23"> 23: </a>  const int        id_;
+<a name="line24"> 24: </a>  bool             devInitialized_ = false;
+<a name="line25"> 25: </a>  cupmDeviceProp_t dprop_{}; // cudaDeviceProp appears to be an actual <font color="#4169E1">struct</font>, i.e. you can't
+<a name="line26"> 26: </a>                             // initialize it with nullptr or NULL (i've tried)
+
+<a name="line28"> 28: </a>  PETSC_CXX_COMPAT_DECL(<a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMAwareMPI_(bool *));
+
+<a name="line30"> 30: </a><strong><font color="#FF0000">public:</font></strong>
+<a name="line31"> 31: </a>  // <font color="#4169E1">default</font> constructor
+<a name="line32"> 32: </a>  explicit constexpr DeviceInternal(int dev) noexcept : id_(dev) { }
+
+<a name="line34"> 34: </a>  // gather all relevant information <font color="#4169E1">for</font> a particular device, a cupmDeviceProp_t is
+<a name="line35"> 35: </a>  // usually sufficient here
+<a name="line36"> 36: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> initialize() noexcept;
+<a name="line37"> 37: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> configure() noexcept;
+<a name="line38"> 38: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> view(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>) const noexcept;
+<a name="line39"> 39: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> getattribute(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceAttribute.html">PetscDeviceAttribute</a>, void *) const noexcept;
+
+<a name="line41"> 41: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> auto id() const -&gt; decltype(id_) { <font color="#4169E1">return</font> id_; }
+<a name="line42"> 42: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> auto initialized() const -&gt; decltype(devInitialized_) { <font color="#4169E1">return</font> devInitialized_; }
+<a name="line43"> 43: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> auto prop() const -&gt; const decltype(dprop_) &amp; { <font color="#4169E1">return</font> dprop_; }
+<a name="line44"> 44: </a>};
+
+<a name="line46"> 46: </a>// the goal here is simply to get the cupm backend to create its context, not to <font color="#4169E1">do</font> any type of
+<a name="line47"> 47: </a>// modification of it, or create objects (since these may be affected by subsequent
+<a name="line48"> 48: </a>// configuration changes)
+<a name="line49"> 49: </a>template &lt;DeviceType T&gt;
+<a name="line50"> 50: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device&lt;T&gt;::DeviceInternal::initialize() noexcept
+<a name="line51"> 51: </a>{
+<a name="line52"> 52: </a>  <font color="#4169E1">if</font> (initialized()) <font color="#4169E1">return</font> 0;
+<a name="line53"> 53: </a>  devInitialized_ = true;
+<a name="line54"> 54: </a>  // need to <font color="#4169E1">do</font> this BEFORE device has been set, although <font color="#4169E1">if</font> the user
+<a name="line55"> 55: </a>  // has already done this then we just ignore it
+<a name="line56"> 56: </a>  <font color="#4169E1">if</font> (cupmSetDeviceFlags(cupmDeviceMapHost) == cupmErrorSetOnActiveProcess) {
+<a name="line57"> 57: </a>    // reset the error <font color="#4169E1">if</font> it was cupmErrorSetOnActiveProcess
+<a name="line58"> 58: </a>    const auto PETSC_UNUSED unused = cupmGetLastError();
+<a name="line59"> 59: </a>  } <font color="#4169E1">else</font> cupmGetLastError();
+<a name="line60"> 60: </a>  // cuda 5.0+ will create a context when cupmSetDevice is called
+<a name="line61"> 61: </a>  <font color="#4169E1">if</font> (cupmSetDevice(id()) != cupmErrorDeviceAlreadyInUse) cupmGetLastError();
+<a name="line62"> 62: </a>  // and in <font color="#4169E1">case</font> it doesn't, explicitly call init here
+<a name="line63"> 63: </a>  cupmInit(0);
+<a name="line64"> 64: </a>  // where is this variable defined and when is it set? who knows! but it is defined and set
+<a name="line65"> 65: </a>  // at this point. either way, each device must make this check since I guess MPI might not be
+<a name="line66"> 66: </a>  // aware of all of them?
+<a name="line67"> 67: </a>  <font color="#4169E1">if</font> (use_gpu_aware_mpi) {
+<a name="line68"> 68: </a>    bool aware;
+
+<a name="line70"> 70: </a>    CUPMAwareMPI_(&amp;aware);
+<a name="line71"> 71: </a>    // For OpenMPI, we could <font color="#4169E1">do</font> a compile time check with
+<a name="line72"> 72: </a>    // <font color="#666666">"defined(PETSC_HAVE_OMPI_MAJOR_VERSION) &amp;&amp; defined(MPIX_CUDA_AWARE_SUPPORT) &amp;&amp;</font>
+<a name="line73"> 73: </a><font color="#666666">    // MPIX_CUDA_AWARE_SUPPORT"</font> to see <font color="#4169E1">if</font> it is CUDA-aware. However, recent versions of IBM
+<a name="line74"> 74: </a>    // Spectrum MPI (e.g., 10.3.1) on Summit meet above conditions, but one has to use jsrun
+<a name="line75"> 75: </a>    // --smpiargs=-gpu to really enable GPU-aware MPI. So we <font color="#4169E1">do</font> the check at runtime with a
+<a name="line76"> 76: </a>    // code that works only with GPU-aware MPI.
+<a name="line77"> 77: </a>    <font color="#4169E1">if</font> (<a href="../../../../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(!aware)) {
+<a name="line78"> 78: </a>      (*<a href="../../../../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"PETSc is configured with GPU support, but your MPI is not GPU-aware. For better performance, please use a GPU-aware MPI.\n"</font>);
+<a name="line79"> 79: </a>      (*<a href="../../../../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"If you do not care, add option -use_gpu_aware_mpi 0. To not see the message again, add the option to your .petscrc, OR add it to the env var PETSC_OPTIONS.\n"</font>);
+<a name="line80"> 80: </a>      (*<a href="../../../../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"If you do care, for IBM Spectrum MPI on OLCF Summit, you may need jsrun --smpiargs=-gpu.\n"</font>);
+<a name="line81"> 81: </a>      (*<a href="../../../../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"For OpenMPI, you need to configure it --with-cuda (https://www.open-mpi.org/faq/?category=buildcuda)\n"</font>);
+<a name="line82"> 82: </a>      (*<a href="../../../../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"For MVAPICH2-GDR, you need to set MV2_USE_CUDA=1 (http://mvapich.cse.ohio-state.edu/userguide/gdr/)\n"</font>);
+<a name="line83"> 83: </a>      (*<a href="../../../../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"For Cray-MPICH, you need to set MPICH_RDMA_ENABLED_CUDA=1 (https://www.olcf.ornl.gov/tutorials/gpudirect-mpich-enabled-cuda/)\n"</font>);
+<a name="line84"> 84: </a>      <a href="../../../../../../docs/manualpages/Sys/PETSCABORT.html">PETSCABORT</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_LIB);
+<a name="line85"> 85: </a>    }
+<a name="line86"> 86: </a>  }
+<a name="line87"> 87: </a>  <font color="#4169E1">return</font> 0;
+<a name="line88"> 88: </a>}
+
+<a name="line90"> 90: </a>template &lt;DeviceType T&gt;
+<a name="line91"> 91: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device&lt;T&gt;::DeviceInternal::configure() noexcept
+<a name="line92"> 92: </a>{
+<a name="line93"> 93: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscAssert.html">PetscAssert</a>(initialized(), <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_COR, <font color="#666666">"Device %d being configured before it was initialized"</font>, id());
+<a name="line94"> 94: </a>  // why on EARTH nvidia insists on making otherwise informational states into
+<a name="line95"> 95: </a>  // fully-fledged error codes is beyond me. Why couldn't a pointer to bool argument have
+<a name="line96"> 96: </a>  // sufficed?!?!?!
+<a name="line97"> 97: </a>  <font color="#4169E1">if</font> (cupmSetDevice(id_) != cupmErrorDeviceAlreadyInUse) cupmGetLastError();
+<a name="line98"> 98: </a>  // need to update the device properties
+<a name="line99"> 99: </a>  cupmGetDeviceProperties(&amp;dprop_, id_);
+<a name="line100">100: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(nullptr, <font color="#666666">"Configured device %d\n"</font>, id_);
+<a name="line101">101: </a>  <font color="#4169E1">return</font> 0;
+<a name="line102">102: </a>}
+
+<a name="line104">104: </a>template &lt;DeviceType T&gt;
+<a name="line105">105: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device&lt;T&gt;::DeviceInternal::view(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer) const noexcept
+<a name="line106">106: </a>{
+<a name="line107">107: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> iascii;
+
+<a name="line109">109: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscAssert.html">PetscAssert</a>(initialized(), <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_COR, <font color="#666666">"Device %d being viewed before it was initialized or configured"</font>, id());
+<a name="line110">110: </a>  // we don't print device-specific info in CI-mode
+<a name="line111">111: </a>  <font color="#4169E1">if</font> (<a href="../../../../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(PetscCIEnabled)) <font color="#4169E1">return</font> 0;
+<a name="line112">112: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>(PetscObjectCast(viewer), <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line113">113: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line114">114: </a>    <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>    comm;
+<a name="line115">115: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+<a name="line116">116: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> sviewer;
+
+<a name="line118">118: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>(PetscObjectCast(viewer), &amp;comm);
+<a name="line119">119: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line120">120: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGetSubViewer.html">PetscViewerGetSubViewer</a>(viewer, <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;sviewer);
+<a name="line121">121: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"[%d] name: %s\n"</font>, rank, dprop_.name);
+<a name="line122">122: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(sviewer);
+<a name="line123">123: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Compute capability: %d.%d\n"</font>, dprop_.major, dprop_.minor);
+<a name="line124">124: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Multiprocessor Count: %d\n"</font>, dprop_.multiProcessorCount);
+<a name="line125">125: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Maximum Grid Dimensions: %d x %d x %d\n"</font>, dprop_.maxGridSize[0], dprop_.maxGridSize[1], dprop_.maxGridSize[2]);
+<a name="line126">126: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Maximum Block Dimensions: %d x %d x %d\n"</font>, dprop_.maxThreadsDim[0], dprop_.maxThreadsDim[1], dprop_.maxThreadsDim[2]);
+<a name="line127">127: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Maximum Threads Per Block: %d\n"</font>, dprop_.maxThreadsPerBlock);
+<a name="line128">128: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Warp Size: %d\n"</font>, dprop_.warpSize);
+<a name="line129">129: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Total Global Memory (bytes): %zu\n"</font>, dprop_.totalGlobalMem);
+<a name="line130">130: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Total Constant Memory (bytes): %zu\n"</font>, dprop_.totalConstMem);
+<a name="line131">131: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Shared Memory Per Block (bytes): %zu\n"</font>, dprop_.sharedMemPerBlock);
+<a name="line132">132: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Multiprocessor Clock Rate (KHz): %d\n"</font>, dprop_.clockRate);
+<a name="line133">133: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Memory Clock Rate (KHz): %d\n"</font>, dprop_.memoryClockRate);
+<a name="line134">134: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Memory Bus Width (bits): %d\n"</font>, dprop_.memoryBusWidth);
+<a name="line135">135: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Peak Memory Bandwidth (GB/s): %f\n"</font>, 2.0 * dprop_.memoryClockRate * (dprop_.memoryBusWidth / 8) / 1.0e6);
+<a name="line136">136: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Can map host memory: %s\n"</font>, dprop_.canMapHostMemory ? <font color="#666666">"<a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>"</font> : <font color="#666666">"<a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>"</font>);
+<a name="line137">137: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"Can execute multiple kernels concurrently: %s\n"</font>, dprop_.concurrentKernels ? <font color="#666666">"<a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>"</font> : <font color="#666666">"<a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>"</font>);
+<a name="line138">138: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(sviewer);
+<a name="line139">139: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerRestoreSubViewer.html">PetscViewerRestoreSubViewer</a>(viewer, <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;sviewer);
+<a name="line140">140: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(viewer);
+<a name="line141">141: </a>  }
+<a name="line142">142: </a>  <font color="#4169E1">return</font> 0;
+<a name="line143">143: </a>}
+
+<a name="line145">145: </a>template &lt;DeviceType T&gt;
+<a name="line146">146: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device&lt;T&gt;::DeviceInternal::getattribute(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceAttribute.html">PetscDeviceAttribute</a> attr, void *value) const noexcept
+<a name="line147">147: </a>{
+<a name="line148">148: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscAssert.html">PetscAssert</a>(initialized(), <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_COR, <font color="#666666">"Device %d was not initialized"</font>, id());
+<a name="line149">149: </a>  <font color="#4169E1">switch</font> (attr) {
+<a name="line150">150: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscDeviceAttribute.html">PETSC_DEVICE_ATTR_SIZE_T_SHARED_MEM_PER_BLOCK</a>:
+<a name="line151">151: </a>    *static_cast&lt;std::size_t *&gt;(value) = prop().sharedMemPerBlock;
+<a name="line152">152: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscDeviceAttribute.html">PETSC_DEVICE_ATTR_MAX</a>:
+<a name="line153">153: </a>    <font color="#4169E1">break</font>;
+<a name="line154">154: </a>  }
+<a name="line155">155: </a>  <font color="#4169E1">return</font> 0;
+<a name="line156">156: </a>}
+
+<a name="line158">158: </a>static std::jmp_buf cupmMPIAwareJumpBuffer;
+<a name="line159">159: </a>static bool         cupmMPIAwareJumpBufferSet;
+
+<a name="line161">161: </a>// godspeed to anyone that attempts to call this function
+<a name="line162">162: </a><strong><font color="#4169E1"><a name="SilenceVariableIsNotNeededAndWillNotBeEmittedWarning_ThisFunctionShouldNeverBeCalled"></a>void SilenceVariableIsNotNeededAndWillNotBeEmittedWarning_ThisFunctionShouldNeverBeCalled()</font></strong>
+<a name="line163">163: </a>{
+<a name="line164">164: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSCABORT.html">PETSCABORT</a>(MPI_COMM_NULL, INT_MAX);
+<a name="line165">165: </a>  <font color="#4169E1">if</font> (cupmMPIAwareJumpBufferSet) (void)cupmMPIAwareJumpBuffer;
+<a name="line166">166: </a>}
+
+<a name="line168">168: </a>template &lt;DeviceType T&gt;
+<a name="line169">169: </a>PETSC_CXX_COMPAT_DEFN(<a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device&lt;T&gt;::DeviceInternal::CUPMAwareMPI_(bool *awareness))
+<a name="line170">170: </a>{
+<a name="line171">171: </a>  constexpr int  bufSize           = 2;
+<a name="line172">172: </a>  constexpr int  hbuf[bufSize]     = {1, 0};
+<a name="line173">173: </a>  int           *dbuf              = nullptr;
+<a name="line174">174: </a>  constexpr auto bytes             = bufSize * <font color="#4169E1">sizeof</font>(*dbuf);
+<a name="line175">175: </a>  const auto     cupmSignalHandler = [](int signal, void *ptr) -&gt; <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> {
+<a name="line176">176: </a>    <font color="#4169E1">if</font> ((signal == SIGSEGV) &amp;&amp; cupmMPIAwareJumpBufferSet) std::longjmp(cupmMPIAwareJumpBuffer, 1);
+<a name="line177">177: </a>    <font color="#4169E1">return</font> <a href="../../../../../../docs/manualpages/Sys/PetscSignalHandlerDefault.html">PetscSignalHandlerDefault</a>(signal, ptr);
+<a name="line178">178: </a>  };
+
+<a name="line180">180: </a>  *awareness = false;
+<a name="line181">181: </a>  cupmMalloc(reinterpret_cast&lt;void **&gt;(&amp;dbuf), bytes);
+<a name="line182">182: </a>  cupmMemcpy(dbuf, hbuf, bytes, cupmMemcpyHostToDevice);
+<a name="line183">183: </a>  cupmDeviceSynchronize();
+<a name="line184">184: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscPushSignalHandler.html">PetscPushSignalHandler</a>(cupmSignalHandler, nullptr);
+<a name="line185">185: </a>  cupmMPIAwareJumpBufferSet = true;
+<a name="line186">186: </a>  <font color="#4169E1">if</font> (!setjmp(cupmMPIAwareJumpBuffer) &amp;&amp; !<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a>(dbuf, dbuf + 1, 1, MPI_INT, MPI_SUM, <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>)) *awareness = true;
+<a name="line187">187: </a>  cupmMPIAwareJumpBufferSet = false;
+<a name="line188">188: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscPopSignalHandler.html">PetscPopSignalHandler</a>();
+<a name="line189">189: </a>  cupmFree(dbuf);
+<a name="line190">190: </a>  <font color="#4169E1">return</font> 0;
+<a name="line191">191: </a>}
+
+<a name="line193">193: </a>template &lt;DeviceType T&gt;
+<a name="line194">194: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device&lt;T&gt;::finalize_() noexcept
+<a name="line195">195: </a>{
+<a name="line196">196: </a>  <font color="#4169E1">if</font> (<a href="../../../../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(!initialized_)) <font color="#4169E1">return</font> 0;
+<a name="line197">197: </a>  <font color="#4169E1">for</font> (auto &amp;&amp;device : devices_) device.reset();
+<a name="line198">198: </a>  defaultDevice_ = PETSC_CUPM_DEVICE_NONE; // disabled by <font color="#4169E1">default</font>
+<a name="line199">199: </a>  initialized_   = false;
+<a name="line200">200: </a>  <font color="#4169E1">return</font> 0;
+<a name="line201">201: </a>}
+
+<a name="line203">203: </a>template &lt;DeviceType T&gt;
+<a name="line204">204: </a><strong><font color="#4169E1"><a name="ETSC_CXX_COMPAT_DECL"></a>PETSC_CXX_COMPAT_DECL(<a href="../../../../../../docs/manualpages/Sys/PETSC_CONSTEXPR_14.html">PETSC_CONSTEXPR_14</a> const char *CUPM_VISIBLE_DEVICES())</font></strong>
+<a name="line205">205: </a>{
+<a name="line206">206: </a>  <font color="#4169E1">switch</font> (T) {
+<a name="line207">207: </a>  <font color="#4169E1">case</font> DeviceType::CUDA:
+<a name="line208">208: </a>    <font color="#4169E1">return</font> <font color="#666666">"CUDA_VISIBLE_DEVICES"</font>;
+<a name="line209">209: </a>  <font color="#4169E1">case</font> DeviceType::HIP:
+<a name="line210">210: </a>    <font color="#4169E1">return</font> <font color="#666666">"HIP_VISIBLE_DEVICES"</font>;
+<a name="line211">211: </a>  }
+<a name="line212">212: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscUnreachable.html">PetscUnreachable</a>();
+<a name="line213">213: </a>  <font color="#4169E1">return</font> <font color="#666666">"PETSC_ERROR_PLIB"</font>;
+<a name="line214">214: </a>}
+
+<a name="line216">216: </a>template &lt;DeviceType T&gt;
+<a name="line217">217: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device&lt;T&gt;::initialize(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *defaultDeviceId, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *defaultView, <a href="../../../../../../docs/manualpages/Sys/PetscDeviceInitType.html">PetscDeviceInitType</a> *defaultInitType) noexcept
+<a name="line218">218: </a>{
+<a name="line219">219: </a>  auto initId   = std::make_pair(*defaultDeviceId, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line220">220: </a>  auto initView = std::make_pair(*defaultView, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line221">221: </a>  auto initType = std::make_pair(*defaultInitType, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line222">222: </a>  int  ndev     = 0;
+
+<a name="line224">224: </a>  <font color="#4169E1">if</font> (initialized_) <font color="#4169E1">return</font> 0;
+<a name="line225">225: </a>  initialized_ = true;
+<a name="line226">226: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscRegisterFinalize.html">PetscRegisterFinalize</a>(finalize_);
+<a name="line227">227: </a><strong><font color="#FF0000">  base_type:</font></strong>:PetscOptionDeviceAll(comm, initType, initId, initView);
+
+<a name="line229">229: </a>  <font color="#4169E1">if</font> (initType.first == <a href="../../../../../../docs/manualpages/Sys/PetscDeviceInitType.html">PETSC_DEVICE_INIT_NONE</a>) {
+<a name="line230">230: </a>    initId.first = PETSC_CUPM_DEVICE_NONE;
+<a name="line231">231: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (const auto cerr = cupmGetDeviceCount(&amp;ndev)) {
+<a name="line232">232: </a>    auto PETSC_UNUSED ignored = cupmGetLastError();
+<a name="line233">233: </a>    // we won't be initializing anything anyways
+<a name="line234">234: </a>    initType.first = <a href="../../../../../../docs/manualpages/Sys/PetscDeviceInitType.html">PETSC_DEVICE_INIT_NONE</a>;
+<a name="line235">235: </a>    // save the error code <font color="#4169E1">for</font> later
+<a name="line236">236: </a>    initId.first = -static_cast&lt;decltype(initId.first)&gt;(cerr);
+
+<a name="line239">239: </a>  }
+
+<a name="line241">241: </a>  // check again <font color="#4169E1">for</font> init type, since the device count may have changed it
+<a name="line242">242: </a>  <font color="#4169E1">if</font> (initType.first == <a href="../../../../../../docs/manualpages/Sys/PetscDeviceInitType.html">PETSC_DEVICE_INIT_NONE</a>) {
+<a name="line243">243: </a>    // id &lt; 0 (excluding <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>) indicates an error has occurred during setup
+<a name="line244">244: </a>    <font color="#4169E1">if</font> ((initId.first &gt; 0) || (initId.first == <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>)) initId.first = PETSC_CUPM_DEVICE_NONE;
+<a name="line245">245: </a>    // initType overrides initView
+<a name="line246">246: </a>    initView.first = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line247">247: </a>  } <font color="#4169E1">else</font> {
+<a name="line248">248: </a>    PetscDeviceCheckDeviceCount_Internal(ndev);
+<a name="line249">249: </a>    <font color="#4169E1">if</font> (initId.first == <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>) {
+<a name="line250">250: </a>      <font color="#4169E1">if</font> (ndev) {
+<a name="line251">251: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+
+<a name="line253">253: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line254">254: </a>        initId.first = rank % ndev;
+<a name="line255">255: </a>      } <font color="#4169E1">else</font> initId.first = 0;
+<a name="line256">256: </a>    }
+<a name="line257">257: </a>    <font color="#4169E1">if</font> (initView.first) initType.first = <a href="../../../../../../docs/manualpages/Sys/PetscDeviceInitType.html">PETSC_DEVICE_INIT_EAGER</a>;
+<a name="line258">258: </a>  }
+
+<a name="line260">260: </a>  static_assert(std::is_same&lt;<a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>, decltype(defaultDevice_)&gt;::value, <font color="#666666">""</font>);
+<a name="line261">261: </a>  // initId.first is <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, _defaultDevice is int
+<a name="line262">262: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIIntCast.html">PetscMPIIntCast</a>(initId.first, &amp;defaultDevice_);
+<a name="line263">263: </a>  // record the results of the initialization
+<a name="line264">264: </a>  *defaultDeviceId = initId.first;
+<a name="line265">265: </a>  *defaultView     = initView.first;
+<a name="line266">266: </a>  *defaultInitType = initType.first;
+<a name="line267">267: </a>  <font color="#4169E1">return</font> 0;
+<a name="line268">268: </a>}
+
+<a name="line270">270: </a>template &lt;DeviceType T&gt;
+<a name="line271">271: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device&lt;T&gt;::init_device_id_(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *inid) const noexcept
+<a name="line272">272: </a>{
+<a name="line273">273: </a>  const auto id   = *inid == <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a> ? defaultDevice_ : *inid;
+<a name="line274">274: </a>  const auto cerr = static_cast&lt;cupmError_t&gt;(-defaultDevice_);
+
+<a name="line278">278: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscAssert.html">PetscAssert</a>(static_cast&lt;decltype(devices_.size())&gt;(id) &lt; devices_.size(), <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Only supports %zu number of devices but trying to get device with id %"</font> PetscInt_FMT, devices_.size(), id);
+
+<a name="line280">280: </a>  <font color="#4169E1">if</font> (!devices_[id]) devices_[id] = util::make_unique&lt;DeviceInternal&gt;(id);
+<a name="line281">281: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscAssert.html">PetscAssert</a>(id == devices_[id]-&gt;id(), <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_PLIB, <font color="#666666">"Entry %"</font> PetscInt_FMT <font color="#666666">" contains device with mismatching id %d"</font>, id, devices_[id]-&gt;id());
+<a name="line282">282: </a>  devices_[id]-&gt;initialize();
+<a name="line283">283: </a>  *inid = id;
+<a name="line284">284: </a>  <font color="#4169E1">return</font> 0;
+<a name="line285">285: </a>}
+
+<a name="line287">287: </a>template &lt;DeviceType T&gt;
+<a name="line288">288: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device&lt;T&gt;::configure_device_(<a href="../../../../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> device) noexcept
+<a name="line289">289: </a>{
+<a name="line290">290: </a>  devices_[device-&gt;deviceId]-&gt;configure();
+<a name="line291">291: </a>  <font color="#4169E1">return</font> 0;
+<a name="line292">292: </a>}
+
+<a name="line294">294: </a>template &lt;DeviceType T&gt;
+<a name="line295">295: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device&lt;T&gt;::view_device_(<a href="../../../../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> device, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer) noexcept
+<a name="line296">296: </a>{
+<a name="line297">297: </a>  // now this __shouldn't__ reconfigure the device, but there is a petscinfo call to indicate
+<a name="line298">298: </a>  // it is being reconfigured
+<a name="line299">299: </a>  devices_[device-&gt;deviceId]-&gt;configure();
+<a name="line300">300: </a>  devices_[device-&gt;deviceId]-&gt;view(viewer);
+<a name="line301">301: </a>  <font color="#4169E1">return</font> 0;
+<a name="line302">302: </a>}
+
+<a name="line304">304: </a>template &lt;DeviceType T&gt;
+<a name="line305">305: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device&lt;T&gt;::get_attribute_(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> id, <a href="../../../../../../docs/manualpages/Sys/PetscDeviceAttribute.html">PetscDeviceAttribute</a> attr, void *value) noexcept
+<a name="line306">306: </a>{
+<a name="line307">307: </a>  devices_[id]-&gt;getattribute(attr, value);
+<a name="line308">308: </a>  <font color="#4169E1">return</font> 0;
+<a name="line309">309: </a>}
+
+<a name="line311">311: </a>// explicitly instantiate the classes
+<a name="line312">312: </a><font color="#A020F0">#if <a href="../../../../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_CUDA)</font>
+<a name="line313">313: </a>template class Device&lt;DeviceType::CUDA&gt;;
+<a name="line314">314: </a><font color="#A020F0">#endif</font>
+<a name="line315">315: </a><font color="#A020F0">#if <a href="../../../../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_HIP)</font>
+<a name="line316">316: </a>template class Device&lt;DeviceType::HIP&gt;;
+<a name="line317">317: </a><font color="#A020F0">#endif</font>
+
+<a name="line319">319: </a>} // namespace cupm
+
+<a name="line321">321: </a>} // namespace device
+
+<a name="line323">323: </a>} // namespace Petsc
+</pre>
+</body>
+
+</html>

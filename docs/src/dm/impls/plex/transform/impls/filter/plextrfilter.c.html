@@ -1,0 +1,72 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/plex/transform/impls/filter/plextrfilter.c">Actual source code: plextrfilter.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:27+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../../../include/petsc/private/dmplextransformimpl.h.html">&lt;petsc/private/dmplextransformimpl.h&gt;</A>
+
+<a name="line3">  3: </a><strong><font color="#4169E1"><a name="DMPlexTransformView_Filter"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformView_Filter(<a href="../../../../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> tr, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line4">  4: </a>{
+<a name="line5">  5: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> isascii;
+
+<a name="line9">  9: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;isascii);
+<a name="line10"> 10: </a>  <font color="#4169E1">if</font> (isascii) {
+<a name="line11"> 11: </a>    const char *name;
+
+<a name="line13"> 13: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tr, &amp;name);
+<a name="line14"> 14: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Filter transformation %s\n"</font>, name ? name : <font color="#666666">""</font>);
+<a name="line15"> 15: </a>  } <font color="#4169E1">else</font> {
+<a name="line16"> 16: </a>    <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tr), PETSC_ERR_SUP, <font color="#666666">"Viewer type %s not yet supported for <a href="../../../../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> writing"</font>, ((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer)-&gt;type_name);
+<a name="line17"> 17: </a>  }
+<a name="line18"> 18: </a>  <font color="#4169E1">return</font> 0;
+<a name="line19"> 19: </a>}
+
+<a name="line21"> 21: </a><strong><font color="#4169E1"><a name="DMPlexTransformSetUp_Filter"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformSetUp_Filter(<a href="../../../../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> tr)</font></strong>
+<a name="line22"> 22: </a>{
+<a name="line23"> 23: </a>  <font color="#4169E1">return</font> 0;
+<a name="line24"> 24: </a>}
+
+<a name="line26"> 26: </a><strong><font color="#4169E1"><a name="DMPlexTransformDestroy_Filter"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformDestroy_Filter(<a href="../../../../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> tr)</font></strong>
+<a name="line27"> 27: </a>{
+<a name="line28"> 28: </a>  DMPlexTransform_Filter *f = (DMPlexTransform_Filter *)tr-&gt;data;
+
+<a name="line30"> 30: </a>  <a href="../../../../../../docs/manualpages/DMLabel/DMLabelDestroy.html">DMLabelDestroy</a>(&amp;f-&gt;label);
+<a name="line31"> 31: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(f);
+<a name="line32"> 32: </a>  <font color="#4169E1">return</font> 0;
+<a name="line33"> 33: </a>}
+
+<a name="line35"> 35: </a><strong><font color="#4169E1"><a name="DMPlexTransformCellTransform_Filter"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformCellTransform_Filter(<a href="../../../../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> cr, <a href="../../../../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a> source, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> p, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *rt, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *Nt, <a href="../../../../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a> *target[], <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *size[], <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *cone[], <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *ornt[])</font></strong>
+<a name="line36"> 36: </a>{
+<a name="line37"> 37: </a>  <font color="#4169E1">return</font> 0;
+<a name="line38"> 38: </a>}
+
+<a name="line40"> 40: </a><strong><font color="#4169E1"><a name="DMPlexTransformInitialize_Filter"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformInitialize_Filter(<a href="../../../../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> tr)</font></strong>
+<a name="line41"> 41: </a>{
+<a name="line42"> 42: </a>  tr-&gt;ops-&gt;view           = DMPlexTransformView_Filter;
+<a name="line43"> 43: </a>  tr-&gt;ops-&gt;setup          = DMPlexTransformSetUp_Filter;
+<a name="line44"> 44: </a>  tr-&gt;ops-&gt;destroy        = DMPlexTransformDestroy_Filter;
+<a name="line45"> 45: </a>  tr-&gt;ops-&gt;celltransform  = DMPlexTransformCellTransform_Filter;
+<a name="line46"> 46: </a>  tr-&gt;ops-&gt;mapcoordinates = DMPlexTransformMapCoordinatesBarycenter_Internal;
+<a name="line47"> 47: </a>  <font color="#4169E1">return</font> 0;
+<a name="line48"> 48: </a>}
+
+<a name="line50"> 50: </a><strong><font color="#4169E1"><a name="DMPlexTransformCreate_Filter"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformCreate_Filter(<a href="../../../../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a> tr)</font></strong>
+<a name="line51"> 51: </a>{
+<a name="line52"> 52: </a>  DMPlexTransform_Filter *f;
+
+<a name="line55"> 55: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;f);
+<a name="line56"> 56: </a>  tr-&gt;data = f;
+
+<a name="line58"> 58: </a>  DMPlexTransformInitialize_Filter(tr);
+<a name="line59"> 59: </a>  <font color="#4169E1">return</font> 0;
+<a name="line60"> 60: </a>}
+</pre>
+</body>
+
+</html>

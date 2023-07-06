@@ -1,0 +1,27 @@
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:35+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">-include ../../../../petscdir.mk
+
+SOURCEC  = swarm.c data_bucket.c data_ex.c swarm_migrate.c swarmpic.c swarmpic_da.c swarmpic_plex.c swarmpic_view.c swarmpic_sort.c
+SOURCEF  =
+SOURCEH  =
+DIRS     = tests tutorials
+LIBBASE  = libpetscdm
+MANSEC   = <a href="ROOT/docs/manualpages/DM/DM.html">DM</a>
+SUBMANSEC= DMSwarm
+LOCDIR   = src/dm/impls/swarm/
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+include ${PETSC_DIR}/lib/petsc/conf/test
+</pre>
+</body>
+
+</html>

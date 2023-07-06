@@ -1,0 +1,43 @@
+# SNESNEWTONTR
+Newton based nonlinear solver that uses a trust region Deprecated use `SNESNEWTONTRDC`
+
+
+## Options Database Keys
+
+- ***-snes_trtol <tol> -*** trust region tolerance
+- ***-snes_tr_mu <mu> -*** trust region parameter
+- ***-snes_tr_eta <eta> -*** trust region parameter
+- ***-snes_tr_sigma <sigma> -*** trust region parameter
+- ***-snes_tr_delta0 <delta0> -*** initial size of the trust region is delta0*norm2(x)
+- ***-snes_tr_delta1 <delta1> -*** trust region parameter
+- ***-snes_tr_delta2 <delta2> -*** trust region parameter
+- ***-snes_tr_delta3 <delta3> -*** trust region parameter
+
+
+
+## Reference
+
+- ***- *  "The Minpack Project", by More', Sorensen, Garbow, Hillstrom, pages 88-*** 111 of "Sources and Development
+of Mathematical Software", Wayne Cowell, editor.
+
+
+
+
+
+## See Also
+ `SNESNEWTONTRDC`, `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESNEWTONLS`, `SNESSetTrustRegionTolerance()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/impls/tr/tr.c.html#SNESNEWTONTR">src/snes/impls/tr/tr.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/snes/impls/tr/tr.c)
+
+
+[Index of all SNES routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

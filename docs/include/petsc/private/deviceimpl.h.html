@@ -1,0 +1,367 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/include/petsc/private/deviceimpl.h">Actual source code: deviceimpl.h</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:50:07+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#ifndef PETSCDEVICEIMPL_H</font>
+<a name="line2">  2: </a><strong><font color="#228B22">#define PETSCDEVICEIMPL_H</font></strong>
+
+<a name="line4">  4: </a>#include <A href="../../petscdevice.h.html">&lt;petscdevice.h&gt;</A>
+<a name="line5">  5: </a>#include <A href="petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
+
+<a name="line7">  7: </a><font color="#B22222">/* logging support */</font>
+<a name="line8">  8: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> CUBLAS_HANDLE_CREATE;
+<a name="line9">  9: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> CUSOLVER_HANDLE_CREATE;
+<a name="line10"> 10: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> HIPSOLVER_HANDLE_CREATE;
+<a name="line11"> 11: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> HIPBLAS_HANDLE_CREATE;
+
+<a name="line13"> 13: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> DCONTEXT_Create;
+<a name="line14"> 14: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> DCONTEXT_Destroy;
+<a name="line15"> 15: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> DCONTEXT_ChangeStream;
+<a name="line16"> 16: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> DCONTEXT_SetDevice;
+<a name="line17"> 17: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> DCONTEXT_SetUp;
+<a name="line18"> 18: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> DCONTEXT_Duplicate;
+<a name="line19"> 19: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> DCONTEXT_QueryIdle;
+<a name="line20"> 20: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> DCONTEXT_WaitForCtx;
+<a name="line21"> 21: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> DCONTEXT_Fork;
+<a name="line22"> 22: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> DCONTEXT_Join;
+<a name="line23"> 23: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> DCONTEXT_Sync;
+<a name="line24"> 24: </a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a> DCONTEXT_Mark;
+
+<a name="line26"> 26: </a><font color="#B22222">/* type cast macros for some additional type-safety in C++ land */</font>
+<a name="line27"> 27: </a><font color="#A020F0">#if defined(__cplusplus)</font>
+<a name="line28"> 28: </a><strong><font color="#228B22">  #define PetscStreamTypeCast(...)     static_cast&lt;<a href="../../../docs/manualpages/Sys/PetscStreamType.html">PetscStreamType</a>&gt;(__VA_ARGS__)</font></strong>
+<a name="line29"> 29: </a><strong><font color="#228B22">  #define PetscDeviceTypeCast(...)     static_cast&lt;<a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a>&gt;(__VA_ARGS__)</font></strong>
+<a name="line30"> 30: </a><strong><font color="#228B22">  #define PetscDeviceInitTypeCast(...) static_cast&lt;<a href="../../../docs/manualpages/Sys/PetscDeviceInitType.html">PetscDeviceInitType</a>&gt;(__VA_ARGS__)</font></strong>
+<a name="line31"> 31: </a><font color="#A020F0">#else</font>
+<a name="line32"> 32: </a><strong><font color="#228B22">  #define PetscStreamTypeCast(...)     ((<a href="../../../docs/manualpages/Sys/PetscStreamType.html">PetscStreamType</a>)(__VA_ARGS__))</font></strong>
+<a name="line33"> 33: </a><strong><font color="#228B22">  #define PetscDeviceTypeCast(...)     ((<a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a>)(__VA_ARGS__))</font></strong>
+<a name="line34"> 34: </a><strong><font color="#228B22">  #define PetscDeviceInitTypeCast(...) ((<a href="../../../docs/manualpages/Sys/PetscDeviceInitType.html">PetscDeviceInitType</a>)(__VA_ARGS__))</font></strong>
+<a name="line35"> 35: </a><font color="#A020F0">#endif</font>
+
+<a name="line37"> 37: </a><font color="#A020F0">#if defined(PETSC_CLANG_STATIC_ANALYZER)</font>
+<a name="line38"> 38: </a>template &lt;typename T&gt;
+<a name="line40"> 40: </a>template &lt;typename T, typename U&gt;
+<a name="line42"> 42: </a>template &lt;typename T&gt;
+<a name="line44"> 44: </a>template &lt;typename T&gt;
+<a name="line46"> 46: </a>template &lt;typename T, typename U&gt;
+<a name="line48"> 48: </a>template &lt;typename T&gt;
+<a name="line50"> 50: </a>template &lt;typename T&gt;
+<a name="line52"> 52: </a>template &lt;typename T, typename U&gt;
+<a name="line54"> 54: </a><font color="#A020F0">#elif <a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_CXX) &amp;&amp; (<a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG) || <a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(DEVICE_KEEP_ERROR_CHECKING_MACROS))</font>
+<a name="line56"> 56: </a><strong><font color="#228B22">    do { \</font></strong>
+<a name="line57"> 57: </a><strong><font color="#228B22">      <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a> pvdt_dtype_ = PetscDeviceTypeCast(dtype); \</font></strong>
+<a name="line58"> 58: </a><strong><font color="#228B22">      int             pvdt_argno_ = (int)(argno); \</font></strong>
+<a name="line60"> 60: </a><strong><font color="#228B22">      if (<a href="../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(!PetscDeviceConfiguredFor_Internal(pvdt_dtype_))) { \</font></strong>
+<a name="line62"> 62: </a><strong><font color="#228B22">        <a href="../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, \</font></strong>
+<a name="line63"> 63: </a><strong><font color="#228B22">                </font><font color="#666666">"Not configured for <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a> '%s': Argument #%d;"</font><font color="#228B22"> \</font></strong>
+<a name="line64"> 64: </a><strong><font color="#228B22">                </font><font color="#666666">" run configure --help %s for available options"</font><font color="#228B22">, \</font></strong>
+<a name="line65"> 65: </a><strong><font color="#228B22">                PetscDeviceTypes[pvdt_dtype_], pvdt_argno_, PetscDeviceTypes[pvdt_dtype_]); \</font></strong>
+<a name="line66"> 66: </a><strong><font color="#228B22">      } \</font></strong>
+<a name="line67"> 67: </a><strong><font color="#228B22">    } while (0)</font></strong>
+
+<a name="line70"> 70: </a><strong><font color="#228B22">    do { \</font></strong>
+<a name="line71"> 71: </a><strong><font color="#228B22">      <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a> pccdt_dtype1_ = PetscDeviceTypeCast(dtype1); \</font></strong>
+<a name="line72"> 72: </a><strong><font color="#228B22">      <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a> pccdt_dtype2_ = PetscDeviceTypeCast(dtype2); \</font></strong>
+<a name="line76"> 76: </a><strong><font color="#228B22">    } while (0)</font></strong>
+
+<a name="line79"> 79: </a><strong><font color="#228B22">    do { \</font></strong>
+<a name="line80"> 80: </a><strong><font color="#228B22">      <a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> pvd_dev_   = dev; \</font></strong>
+<a name="line81"> 81: </a><strong><font color="#228B22">      int         pvd_argno_ = (int)(argno); \</font></strong>
+<a name="line86"> 86: </a><strong><font color="#228B22">    } while (0)</font></strong>
+
+<a name="line89"> 89: </a><strong><font color="#228B22">    do { \</font></strong>
+<a name="line90"> 90: </a><strong><font color="#228B22">      <a href="../../../docs/manualpages/Sys/PetscDeviceAttribute.html">PetscDeviceAttribute</a> pvda_attr_  = (dattr); \</font></strong>
+<a name="line91"> 91: </a><strong><font color="#228B22">      int                  pvda_argno_ = (int)(argno); \</font></strong>
+<a name="line94"> 94: </a><strong><font color="#228B22">    } while (0)</font></strong>
+
+<a name="line96"> 96: </a>  <font color="#B22222">/*</font>
+<a name="line97"> 97: </a><font color="#B22222">  for now just checks strict equality, but this can be changed as some devices (i.e. kokkos and</font>
+<a name="line98"> 98: </a><font color="#B22222">  any cupm should be compatible once implemented)</font>
+<a name="line99"> 99: </a><font color="#B22222">*/</font>
+<a name="line101">101: </a><strong><font color="#228B22">    do { \</font></strong>
+<a name="line102">102: </a><strong><font color="#228B22">      <a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> pccd_dev1_ = (dev1), pccd_dev2_ = (dev2); \</font></strong>
+<a name="line103">103: </a><strong><font color="#228B22">      int         pccd_argno1_ = (int)(argno1), pccd_argno2_ = (int)(argno2); \</font></strong>
+<a name="line107">107: </a><strong><font color="#228B22">    } while (0)</font></strong>
+
+<a name="line110">110: </a><strong><font color="#228B22">    do { \</font></strong>
+<a name="line111">111: </a><strong><font color="#228B22">      <a href="../../../docs/manualpages/Sys/PetscStreamType.html">PetscStreamType</a> pvst_stype_ = PetscStreamTypeCast(stype); \</font></strong>
+<a name="line112">112: </a><strong><font color="#228B22">      int             pvst_argno_ = (int)(argno); \</font></strong>
+<a name="line115">115: </a><strong><font color="#228B22">    } while (0)</font></strong>
+
+<a name="line118">118: </a><strong><font color="#228B22">    do { \</font></strong>
+<a name="line119">119: </a><strong><font color="#228B22">      <a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> pvdc_dctx_  = dctx; \</font></strong>
+<a name="line120">120: </a><strong><font color="#228B22">      int                pvdc_argno_ = (int)(argno); \</font></strong>
+<a name="line123">123: </a><strong><font color="#228B22">      if (pvdc_dctx_-&gt;device) { \</font></strong>
+<a name="line125">125: </a><strong><font color="#228B22">      } else { \</font></strong>
+<a name="line127">127: </a><strong><font color="#228B22">                   </font><font color="#666666">"Invalid <a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>: Argument #%d; "</font><font color="#228B22"> \</font></strong>
+<a name="line128">128: </a><strong><font color="#228B22">                   </font><font color="#666666">"<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> is setup but has no <a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a>"</font><font color="#228B22">, \</font></strong>
+<a name="line129">129: </a><strong><font color="#228B22">                   pvdc_argno_); \</font></strong>
+<a name="line130">130: </a><strong><font color="#228B22">      } \</font></strong>
+<a name="line133">133: </a><strong><font color="#228B22">                 pvdc_dctx_-&gt;numChildren, pvdc_dctx_-&gt;maxNumChildren); \</font></strong>
+<a name="line134">134: </a><strong><font color="#228B22">    } while (0)</font></strong>
+
+<a name="line137">137: </a><strong><font color="#228B22">    do { \</font></strong>
+<a name="line138">138: </a><strong><font color="#228B22">      <a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> pccdc_dctx1_ = (dctx1), pccdc_dctx2_ = (dctx2); \</font></strong>
+<a name="line139">139: </a><strong><font color="#228B22">      int                pccdc_argno1_ = (int)(argno1), pccdc_argno2_ = (int)(argno2); \</font></strong>
+<a name="line143">143: </a><strong><font color="#228B22">    } while (0)</font></strong>
+<a name="line144">144: </a><font color="#A020F0">#else </font><font color="#B22222">/* <a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG) */</font><font color="#A020F0"></font>
+<a name="line153">153: </a><font color="#A020F0">#endif </font><font color="#B22222">/* <a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG) */</font><font color="#A020F0"></font>
+
+<a name="line155">155: </a><font color="#B22222">/* if someone is ready to rock with more than 128 GPUs on hand then we're in real trouble */</font>
+<a name="line156">156: </a><strong><font color="#228B22">#define PETSC_DEVICE_MAX_DEVICES 128</font></strong>
+
+<a name="line158">158: </a><font color="#B22222">/*</font>
+<a name="line159">159: </a><font color="#B22222">  the configure-time default device type, used as the initial the value of</font>
+<a name="line160">160: </a><font color="#B22222">  <a href="../../../docs/manualpages/Sys/PETSC_DEVICE_DEFAULT.html">PETSC_DEVICE_DEFAULT</a>() as well as what it is restored to during <a href="../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>()</font>
+<a name="line161">161: </a><font color="#B22222">*/</font>
+<a name="line162">162: </a><font color="#A020F0">#if <a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_HIP)</font>
+<a name="line163">163: </a><strong><font color="#228B22">  #define PETSC_DEVICE_HARDWARE_DEFAULT_TYPE <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PETSC_DEVICE_HIP</a></font></strong>
+<a name="line164">164: </a><font color="#A020F0">#elif <a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_CUDA)</font>
+<a name="line165">165: </a><strong><font color="#228B22">  #define PETSC_DEVICE_HARDWARE_DEFAULT_TYPE <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PETSC_DEVICE_CUDA</a></font></strong>
+<a name="line166">166: </a><font color="#A020F0">#elif <a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_SYCL)</font>
+<a name="line167">167: </a><strong><font color="#228B22">  #define PETSC_DEVICE_HARDWARE_DEFAULT_TYPE <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PETSC_DEVICE_SYCL</a></font></strong>
+<a name="line168">168: </a><font color="#A020F0">#else</font>
+<a name="line169">169: </a><strong><font color="#228B22">  #define PETSC_DEVICE_HARDWARE_DEFAULT_TYPE <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PETSC_DEVICE_HOST</a></font></strong>
+<a name="line170">170: </a><font color="#A020F0">#endif</font>
+
+<a name="line172">172: </a><strong><font color="#228B22">#define PETSC_DEVICE_CONTEXT_DEFAULT_DEVICE_TYPE PETSC_DEVICE_HARDWARE_DEFAULT_TYPE</font></strong>
+<a name="line173">173: </a>// REMOVE ME (change)
+<a name="line174">174: </a><strong><font color="#228B22">#define PETSC_DEVICE_CONTEXT_DEFAULT_STREAM_TYPE <a href="../../../docs/manualpages/Sys/PetscStreamType.html">PETSC_STREAM_GLOBAL_BLOCKING</a></font></strong>
+
+<a name="line176">176: </a><font color="#4169E1">typedef struct _DeviceOps *DeviceOps;</font>
+<a name="line177">177: </a><font color="#4169E1"><a name="_DeviceOps"></a>struct _DeviceOps </font>{
+<a name="line178">178: </a>  <font color="#B22222">/* the creation routine for the corresponding <a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, this is NOT intended</font>
+<a name="line179">179: </a><font color="#B22222">   * to be called by the <a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> itself */</font>
+<a name="line180">180: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*createcontext)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>);
+<a name="line181">181: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*configure)(<a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a>);
+<a name="line182">182: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*view)(<a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a>, <a href="../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>);
+<a name="line183">183: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*getattribute)(<a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a>, <a href="../../../docs/manualpages/Sys/PetscDeviceAttribute.html">PetscDeviceAttribute</a>, void *);
+<a name="line184">184: </a>};
+
+<a name="line186">186: </a><font color="#4169E1"><a name="_n_PetscDevice"></a>struct _n_PetscDevice </font>{
+<a name="line187">187: </a>  <font color="#4169E1">struct _DeviceOps</font> ops[1];
+<a name="line188">188: </a>  void             *data;     <font color="#B22222">/* placeholder */</font>
+<a name="line189">189: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          refcnt;   <font color="#B22222">/* reference count for the device */</font>
+<a name="line190">190: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          id;       <font color="#B22222">/* unique id per created <a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> */</font>
+<a name="line191">191: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          deviceId; <font color="#B22222">/* the id of the underlying device, i.e. the return of</font>
+<a name="line192">192: </a><font color="#B22222">                               * cudaGetDevice() for example */</font>
+<a name="line193">193: </a>  <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a>   type;     <font color="#B22222">/* type of device */</font>
+<a name="line194">194: </a>};
+
+<a name="line196">196: </a><font color="#4169E1">typedef struct _n_PetscEvent *PetscEvent;</font>
+<a name="line197">197: </a><font color="#4169E1"><a name="_n_PetscEvent"></a>struct _n_PetscEvent </font>{
+<a name="line198">198: </a>  <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a>  dtype;      // this cannot change <font color="#4169E1">for</font> the lifetime of the event
+<a name="line199">199: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectId.html">PetscObjectId</a>    dctx_id;    // id of last dctx to record this event
+<a name="line200">200: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectState.html">PetscObjectState</a> dctx_state; // state of last dctx to record this event
+<a name="line201">201: </a>  void            *data;       // event handle
+<a name="line202">202: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*destroy)(PetscEvent);
+<a name="line203">203: </a>};
+
+<a name="line205">205: </a><font color="#4169E1">typedef struct _DeviceContextOps *DeviceContextOps;</font>
+<a name="line206">206: </a><font color="#4169E1"><a name="_DeviceContextOps"></a>struct _DeviceContextOps </font>{
+<a name="line207">207: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*destroy)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>);
+<a name="line208">208: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*changestreamtype)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, <a href="../../../docs/manualpages/Sys/PetscStreamType.html">PetscStreamType</a>);
+<a name="line209">209: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*setup)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>);
+<a name="line210">210: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*query)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *);
+<a name="line211">211: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*waitforcontext)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, <a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>);
+<a name="line212">212: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*synchronize)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>);
+<a name="line213">213: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*getblashandle)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, void *);
+<a name="line214">214: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*getsolverhandle)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, void *);
+<a name="line215">215: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*getstreamhandle)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, void *);
+<a name="line216">216: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*begintimer)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>);
+<a name="line217">217: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*endtimer)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, <a href="../../../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> *);
+<a name="line218">218: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*memalloc)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>, <a href="../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a>, size_t, size_t, void **);                             // optional
+<a name="line219">219: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*memfree)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, <a href="../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a>, void **);                                                         // optional
+<a name="line220">220: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*memcopy)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, void *PETSC_RESTRICT, const void *PETSC_RESTRICT, size_t, <a href="../../../docs/manualpages/Sys/PetscDeviceCopyMode.html">PetscDeviceCopyMode</a>); // optional
+<a name="line221">221: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*memset)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, <a href="../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a>, void *, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, size_t);                                         // optional
+<a name="line222">222: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*createevent)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, PetscEvent);                                                                // optional
+<a name="line223">223: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*recordevent)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, PetscEvent);                                                                // optional
+<a name="line224">224: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*waitforevent)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, PetscEvent);                                                               // optional
+<a name="line225">225: </a>};
+
+<a name="line227">227: </a><font color="#4169E1"><a name="_p_PetscDeviceContext"></a>struct _p_PetscDeviceContext </font>{
+<a name="line228">228: </a>  PETSCHEADER(<font color="#4169E1">struct _DeviceContextOps</font>);
+<a name="line229">229: </a>  <a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a>     device;         <font color="#B22222">/* the device this context stems from */</font>
+<a name="line230">230: </a>  void           *data;           <font color="#B22222">/* solver contexts, event, stream */</font>
+<a name="line231">231: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectId.html">PetscObjectId</a>  *childIDs;       <font color="#B22222">/* array containing ids of contexts currently forked from this one */</font>
+<a name="line232">232: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        numChildren;    <font color="#B22222">/* how many children does this context expect to destroy */</font>
+<a name="line233">233: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        maxNumChildren; <font color="#B22222">/* how many children can this context have room for without realloc'ing */</font>
+<a name="line234">234: </a>  <a href="../../../docs/manualpages/Sys/PetscStreamType.html">PetscStreamType</a> streamType;     <font color="#B22222">/* how should this contexts stream behave around other streams? */</font>
+<a name="line235">235: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>       setup;
+<a name="line236">236: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>       usersetdevice;
+<a name="line237">237: </a>};
+
+<a name="line239">239: </a>// ===================================================================================
+<a name="line240">240: </a>//                            <a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> Internal Functions
+<a name="line241">241: </a>// ===================================================================================
+<a name="line242">242: </a><font color="#A020F0">#if <a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_CXX)</font>
+<a name="line243">243: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>                PetscDeviceInitializeFromOptions_Internal(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>)</font></strong>;
+<a name="line244">244: </a><strong><font color="#4169E1">PETSC_SINGLE_LIBRARY_INTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceGetDefaultForType_Internal(<a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a>, <a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> *)</font></strong>;
+
+<a name="line246">246: </a><strong><font color="#4169E1"><a name="PetscDeviceReference_Internal"></a>static inline <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceReference_Internal(<a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> device)</font></strong>
+<a name="line247">247: </a>{
+<a name="line248">248: </a>  ++(device-&gt;refcnt);
+<a name="line249">249: </a>  <font color="#4169E1">return</font> 0;
+<a name="line250">250: </a>}
+
+<a name="line252">252: </a><strong><font color="#4169E1"><a name="PetscDeviceDereference_Internal"></a>static inline <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceDereference_Internal(<a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> device)</font></strong>
+<a name="line253">253: </a>{
+<a name="line254">254: </a>  --(device-&gt;refcnt);
+<a name="line255">255: </a>  <a href="../../../docs/manualpages/Sys/PetscAssert.html">PetscAssert</a>(device-&gt;refcnt &gt;= 0, <a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_CORRUPT, <font color="#666666">"<a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> has negative reference count %"</font> PetscInt_FMT, device-&gt;refcnt);
+<a name="line256">256: </a>  <font color="#4169E1">return</font> 0;
+<a name="line257">257: </a>}
+<a name="line258">258: </a><font color="#A020F0">#else </font><font color="#B22222">/* PETSC_HAVE_CXX for <a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> Internal Functions */</font><font color="#A020F0"></font>
+<a name="line259">259: </a><strong><font color="#228B22">  #define PetscDeviceInitializeFromOptions_Internal(comm)     0</font></strong>
+<a name="line260">260: </a><strong><font color="#228B22">  #define PetscDeviceGetDefaultForType_Internal(Type, device) 0</font></strong>
+<a name="line261">261: </a><strong><font color="#228B22">  #define PetscDeviceReference_Internal(device)               0</font></strong>
+<a name="line262">262: </a><strong><font color="#228B22">  #define PetscDeviceDereference_Internal(device)             0</font></strong>
+<a name="line263">263: </a><font color="#A020F0">#endif </font><font color="#B22222">/* PETSC_HAVE_CXX for <a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> Internal Functions */</font><font color="#A020F0"></font>
+
+<a name="line265">265: </a><strong><font color="#4169E1"><a name="PetscDeviceCheckDeviceCount_Internal"></a>static inline <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceCheckDeviceCount_Internal(<a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count)</font></strong>
+<a name="line266">266: </a>{
+<a name="line267">267: </a>  <a href="../../../docs/manualpages/Sys/PetscAssert.html">PetscAssert</a>(count &lt; PETSC_DEVICE_MAX_DEVICES, <a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_SIZ, <font color="#666666">"Detected %"</font> PetscInt_FMT <font color="#666666">" devices, which is larger than maximum supported number of devices %d"</font>, count, PETSC_DEVICE_MAX_DEVICES);
+<a name="line268">268: </a>  <font color="#4169E1">return</font> 0;
+<a name="line269">269: </a>}
+
+<a name="line271">271: </a><font color="#B22222">/* More general form of PetscDeviceDefaultType_Internal(), as it calls the former using</font>
+<a name="line272">272: </a><font color="#B22222"> * the automatically selected default <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a> */</font>
+<a name="line273">273: </a><strong><font color="#228B22">#define PetscDeviceGetDefault_Internal(device) PetscDeviceGetDefaultForType_Internal(<a href="../../../docs/manualpages/Sys/PETSC_DEVICE_DEFAULT.html">PETSC_DEVICE_DEFAULT</a>(), device)</font></strong>
+
+<a name="line275">275: </a><strong><font color="#4169E1"><a name="PetscDeviceConfiguredFor_Internal"></a>static inline <a href="../../../docs/manualpages/Sys/PETSC_CONSTEXPR_14.html">PETSC_CONSTEXPR_14</a> <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> PetscDeviceConfiguredFor_Internal(<a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a> type)</font></strong>
+<a name="line276">276: </a>{
+<a name="line277">277: </a>  <font color="#4169E1">switch</font> (type) {
+<a name="line278">278: </a>  <font color="#4169E1">case</font> <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PETSC_DEVICE_HOST</a>:
+<a name="line279">279: </a>    <font color="#4169E1">return</font> <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line280">280: </a>    <font color="#B22222">/* casts are needed in C++ */</font>
+<a name="line281">281: </a>  <font color="#4169E1">case</font> <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PETSC_DEVICE_CUDA</a>:
+<a name="line282">282: </a>    <font color="#4169E1">return</font> (<a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)<a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_CUDA);
+<a name="line283">283: </a>  <font color="#4169E1">case</font> <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PETSC_DEVICE_HIP</a>:
+<a name="line284">284: </a>    <font color="#4169E1">return</font> (<a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)<a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_HIP);
+<a name="line285">285: </a>  <font color="#4169E1">case</font> <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PETSC_DEVICE_SYCL</a>:
+<a name="line286">286: </a>    <font color="#4169E1">return</font> (<a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)<a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_SYCL);
+<a name="line287">287: </a>  <font color="#4169E1">case</font> <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PETSC_DEVICE_MAX</a>:
+<a name="line288">288: </a>    <font color="#4169E1">return</font> <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line289">289: </a>    <font color="#B22222">/* Do not add default case! Will make compiler warn on new additions to <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a>! */</font>
+<a name="line290">290: </a>  }
+<a name="line291">291: </a>  <a href="../../../docs/manualpages/Sys/PetscUnreachable.html">PetscUnreachable</a>();
+<a name="line292">292: </a>  <font color="#4169E1">return</font> <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line293">293: </a>}
+
+<a name="line295">295: </a>// ===================================================================================
+<a name="line296">296: </a>//                     <a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> Internal Functions
+<a name="line297">297: </a>// ===================================================================================
+<a name="line298">298: </a><font color="#A020F0">#if <a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_CXX)</font>
+<a name="line299">299: </a><strong><font color="#4169E1">PETSC_SINGLE_LIBRARY_INTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextGetNullContext_Internal(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *)</font></strong>;
+
+<a name="line301">301: </a><strong><font color="#4169E1"><a name="PetscDeviceContextGetHandle_Private"></a>static inline <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextGetHandle_Private(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx, void *handle, <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*gethandle_op)(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, void *))</font></strong>
+<a name="line302">302: </a>{
+<a name="line305">305: </a>  (*gethandle_op)(dctx, handle);
+<a name="line306">306: </a>  <font color="#4169E1">return</font> 0;
+<a name="line307">307: </a>}
+
+<a name="line309">309: </a><strong><font color="#4169E1"><a name="PetscDeviceContextGetBLASHandle_Internal"></a>static inline <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextGetBLASHandle_Internal(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx, void *handle)</font></strong>
+<a name="line310">310: </a>{
+<a name="line311">311: </a>  <font color="#B22222">/* we do error checking here as this routine is an entry-point */</font>
+<a name="line313">313: </a>  PetscDeviceContextGetHandle_Private(dctx, handle, dctx-&gt;ops-&gt;getblashandle);
+<a name="line314">314: </a>  <font color="#4169E1">return</font> 0;
+<a name="line315">315: </a>}
+
+<a name="line317">317: </a><strong><font color="#4169E1"><a name="PetscDeviceContextGetSOLVERHandle_Internal"></a>static inline <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextGetSOLVERHandle_Internal(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx, void *handle)</font></strong>
+<a name="line318">318: </a>{
+<a name="line319">319: </a>  <font color="#B22222">/* we do error checking here as this routine is an entry-point */</font>
+<a name="line321">321: </a>  PetscDeviceContextGetHandle_Private(dctx, handle, dctx-&gt;ops-&gt;getsolverhandle);
+<a name="line322">322: </a>  <font color="#4169E1">return</font> 0;
+<a name="line323">323: </a>}
+
+<a name="line325">325: </a><strong><font color="#4169E1"><a name="PetscDeviceContextGetStreamHandle_Internal"></a>static inline <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextGetStreamHandle_Internal(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx, void *handle)</font></strong>
+<a name="line326">326: </a>{
+<a name="line327">327: </a>  <font color="#B22222">/* we do error checking here as this routine is an entry-point */</font>
+<a name="line329">329: </a>  PetscDeviceContextGetHandle_Private(dctx, handle, dctx-&gt;ops-&gt;getstreamhandle);
+<a name="line330">330: </a>  <font color="#4169E1">return</font> 0;
+<a name="line331">331: </a>}
+
+<a name="line333">333: </a><strong><font color="#4169E1"><a name="PetscDeviceContextBeginTimer_Internal"></a>static inline <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextBeginTimer_Internal(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx)</font></strong>
+<a name="line334">334: </a>{
+<a name="line335">335: </a>  <font color="#B22222">/* we do error checking here as this routine is an entry-point */</font>
+<a name="line337">337: </a>  <a href="../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(dctx, begintimer);
+<a name="line338">338: </a>  <font color="#4169E1">return</font> 0;
+<a name="line339">339: </a>}
+
+<a name="line341">341: </a><strong><font color="#4169E1"><a name="PetscDeviceContextEndTimer_Internal"></a>static inline <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextEndTimer_Internal(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx, <a href="../../../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> *elapsed)</font></strong>
+<a name="line342">342: </a>{
+<a name="line343">343: </a>  <font color="#B22222">/* we do error checking here as this routine is an entry-point */</font>
+<a name="line346">346: </a>  <a href="../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(dctx, endtimer, elapsed);
+<a name="line347">347: </a>  <font color="#4169E1">return</font> 0;
+<a name="line348">348: </a>}
+<a name="line349">349: </a><font color="#A020F0">#else </font><font color="#B22222">/* PETSC_HAVE_CXX for <a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> Internal Functions */</font><font color="#A020F0"></font>
+<a name="line350">350: </a><strong><font color="#228B22">  #define PetscDeviceContextGetNullContext_Internal(dctx)          (*(dctx) = <a href="../../../docs/manualpages/Sys/PETSC_NULLPTR.html">PETSC_NULLPTR</a>, 0)</font></strong>
+<a name="line351">351: </a><strong><font color="#228B22">  #define PetscDeviceContextGetBLASHandle_Internal(dctx, handle)   (*(handle) = <a href="../../../docs/manualpages/Sys/PETSC_NULLPTR.html">PETSC_NULLPTR</a>, 0)</font></strong>
+<a name="line352">352: </a><strong><font color="#228B22">  #define PetscDeviceContextGetSOLVERHandle_Internal(dctx, handle) (*(handle) = <a href="../../../docs/manualpages/Sys/PETSC_NULLPTR.html">PETSC_NULLPTR</a>, 0)</font></strong>
+<a name="line353">353: </a><strong><font color="#228B22">  #define PetscDeviceContextGetStreamHandle_Internal(dctx, handle) (*(handle) = <a href="../../../docs/manualpages/Sys/PETSC_NULLPTR.html">PETSC_NULLPTR</a>, 0)</font></strong>
+<a name="line354">354: </a><strong><font color="#228B22">  #define PetscDeviceContextBeginTimer_Internal(dctx)              0</font></strong>
+<a name="line355">355: </a><strong><font color="#228B22">  #define PetscDeviceContextEndTimer_Internal(dctx, elapsed)       0</font></strong>
+<a name="line356">356: </a><font color="#A020F0">#endif </font><font color="#B22222">/* PETSC_HAVE_CXX for <a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> Internal Functions */</font><font color="#A020F0"></font>
+
+<a name="line358">358: </a><font color="#B22222">/* note, only does assertion checking in debug mode */</font>
+<a name="line359">359: </a><strong><font color="#4169E1"><a name="PetscDeviceContextGetCurrentContextAssertType_Internal"></a>static inline <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextGetCurrentContextAssertType_Internal(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *dctx, <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a> type)</font></strong>
+<a name="line360">360: </a>{
+<a name="line361">361: </a>  <a href="../../../docs/manualpages/Sys/PetscDeviceContextGetCurrentContext.html">PetscDeviceContextGetCurrentContext</a>(dctx);
+<a name="line362">362: </a>  <font color="#4169E1">if</font> (<a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG)) {
+<a name="line363">363: </a>    <a href="../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a> dtype;
+
+<a name="line366">366: </a>    <a href="../../../docs/manualpages/Sys/PetscDeviceContextGetDeviceType.html">PetscDeviceContextGetDeviceType</a>(*dctx, &amp;dtype);
+<a name="line368">368: </a>  }
+<a name="line369">369: </a>  <font color="#4169E1">return</font> 0;
+<a name="line370">370: </a>}
+
+<a name="line372">372: </a><strong><font color="#4169E1"><a name="PetscDeviceContextGetOptionalNullContext_Internal"></a>static inline <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextGetOptionalNullContext_Internal(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *dctx)</font></strong>
+<a name="line373">373: </a>{
+<a name="line375">375: </a>  <font color="#4169E1">if</font> (!*dctx) PetscDeviceContextGetNullContext_Internal(dctx);
+<a name="line377">377: </a>  <font color="#4169E1">return</font> 0;
+<a name="line378">378: </a>}
+
+<a name="line380">380: </a><font color="#B22222">/* Experimental API -- it will eventually become public */</font>
+<a name="line381">381: </a><font color="#A020F0">#if <a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_CXX)</font>
+<a name="line382">382: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscDeviceRegisterMemory.html">PetscDeviceRegisterMemory</a>(const void *PETSC_RESTRICT, <a href="../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a>, size_t)</font></strong>;
+<a name="line383">383: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscDeviceGetAttribute.html">PetscDeviceGetAttribute</a>(<a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a>, <a href="../../../docs/manualpages/Sys/PetscDeviceAttribute.html">PetscDeviceAttribute</a>, void *)</font></strong>;
+<a name="line384">384: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscDeviceContextMarkIntentFromID.html">PetscDeviceContextMarkIntentFromID</a>(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, <a href="../../../docs/manualpages/Sys/PetscObjectId.html">PetscObjectId</a>, <a href="../../../docs/manualpages/Sys/PetscMemoryAccessMode.html">PetscMemoryAccessMode</a>, const char name[])</font></strong>;
+<a name="line385">385: </a><font color="#A020F0">  #if defined(__cplusplus)</font>
+<a name="line386">386: </a>namespace
+<a name="line387">387: </a>{
+
+<a name="line389">389: </a><strong><font color="#4169E1"><a name="PetscDeviceContextMarkIntentFromID"></a><a href="../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> inline <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscDeviceContextMarkIntentFromID.html">PetscDeviceContextMarkIntentFromID</a>(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx, <a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> obj, <a href="../../../docs/manualpages/Sys/PetscMemoryAccessMode.html">PetscMemoryAccessMode</a> mode, const char name[])</font></strong>
+<a name="line390">390: </a>{
+<a name="line391">391: </a>  <a href="../../../docs/manualpages/Sys/PetscDeviceContextMarkIntentFromID.html">PetscDeviceContextMarkIntentFromID</a>(dctx, obj-&gt;id, mode, name);
+<a name="line392">392: </a>  <font color="#4169E1">return</font> 0;
+<a name="line393">393: </a>}
+
+<a name="line395">395: </a>} // anonymous namespace
+<a name="line396">396: </a><font color="#A020F0">  #endif // __cplusplus</font>
+<a name="line397">397: </a><font color="#A020F0">#else</font>
+<a name="line398">398: </a><strong><font color="#228B22">  #define <a href="../../../docs/manualpages/Sys/PetscDeviceRegisterMemory.html">PetscDeviceRegisterMemory</a>(void_ptr, <a href="../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a>, size)                                           0</font></strong>
+<a name="line399">399: </a><strong><font color="#228B22">  #define <a href="../../../docs/manualpages/Sys/PetscDeviceGetAttribute.html">PetscDeviceGetAttribute</a>(<a href="../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a>, <a href="../../../docs/manualpages/Sys/PetscDeviceAttribute.html">PetscDeviceAttribute</a>, void_star)                             ((*((int *)(void_star)) = 0), 0)</font></strong>
+<a name="line400">400: </a><strong><font color="#228B22">  #define <a href="../../../docs/manualpages/Sys/PetscDeviceContextMarkIntentFromID.html">PetscDeviceContextMarkIntentFromID</a>(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, <a href="../../../docs/manualpages/Sys/PetscObjectId.html">PetscObjectId</a>, <a href="../../../docs/manualpages/Sys/PetscMemoryAccessMode.html">PetscMemoryAccessMode</a>, ptr) 0</font></strong>
+<a name="line401">401: </a><font color="#A020F0">#endif</font>
+
+<a name="line403">403: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextCreate_HOST(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>)</font></strong>;
+<a name="line404">404: </a><font color="#A020F0">#if <a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_CUDA)</font>
+<a name="line405">405: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextCreate_CUDA(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>)</font></strong>;
+<a name="line406">406: </a><font color="#A020F0">#endif</font>
+<a name="line407">407: </a><font color="#A020F0">#if <a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_HIP)</font>
+<a name="line408">408: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextCreate_HIP(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>)</font></strong>;
+<a name="line409">409: </a><font color="#A020F0">#endif</font>
+<a name="line410">410: </a><font color="#A020F0">#if <a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_SYCL)</font>
+<a name="line411">411: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextCreate_SYCL(<a href="../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>)</font></strong>;
+<a name="line412">412: </a><font color="#A020F0">#endif</font>
+<a name="line413">413: </a><font color="#A020F0">#endif </font><font color="#B22222">/* PETSCDEVICEIMPL_H */</font><font color="#A020F0"></font>
+</pre>
+</body>
+
+</html>

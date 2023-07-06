@@ -1,0 +1,36 @@
+# DMDirection
+Indicates a coordinate direction 
+## Synopsis
+```
+typedef enum {
+  DM_X,
+  DM_Y,
+  DM_Z
+} DMDirection;
+```
+
+
+
+## See Also
+ `DMDAGetRay()`, `DMDAGetProcessorSubset()`, `DMPlexShearGeometry()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscdmtypes.h.html#DMDirection">include/petscdmtypes.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex22.c.html">src/dm/tutorials/ex22.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex51.c.html">src/dm/tutorials/ex51.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex13.c.html">src/snes/tutorials/ex13.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex17.c.html">src/snes/tutorials/ex17.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscdmtypes.h)
+
+
+[Index of all DM routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

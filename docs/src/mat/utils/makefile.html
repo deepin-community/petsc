@@ -1,0 +1,27 @@
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:13+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">-include ../../../petscdir.mk
+
+SOURCEC  = convert.c matstash.c axpy.c zerodiag.c factorschur.c matio.c getcolv.c gcreate.c freespace.c compressedrow.c multequal.c matstashspace.c pheap.c bandwidth.c overlapsplit.c zerorows.c
+SOURCEF  =
+SOURCEH  = freespace.h
+LIBBASE  = libpetscmat
+DIRS     =
+MANSEC   = <a href="ROOT/docs/manualpages/Mat/Mat.html">Mat</a>
+LOCDIR   = src/mat/utils/
+
+include ${PETSC_DIR}/lib/petsc/conf/variables
+include ${PETSC_DIR}/lib/petsc/conf/rules
+include ${PETSC_DIR}/lib/petsc/conf/test
+
+</pre>
+</body>
+
+</html>

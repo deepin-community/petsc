@@ -1,0 +1,53 @@
+# PetscLogFlops
+Adds floating point operations to the global counter. 
+## Synopsis
+```
+#include <petsclog.h>
+PetscErrorCode PetscLogFlops(PetscLogDouble f)
+```
+Not Collective
+
+
+## Input Parameter
+
+- ***f -*** flop counter
+
+
+
+## Usage
+```none
+     PetscLogEvent USER_EVENT;
+     PetscLogEventRegister("User event",0,&USER_EVENT);
+     PetscLogEventBegin(USER_EVENT,0,0,0,0);
+        [code segment to monitor]
+        PetscLogFlops(user_flops)
+     PetscLogEventEnd(USER_EVENT,0,0,0,0);
+```
+
+
+
+
+
+## Note
+A global counter logs all PETSc flop counts.  The user can use
+PetscLogFlops() to increment this counter to include flops for the
+application code.
+
+
+## See Also
+ [](ch_profiling), `PetscLogGPUFlops()`, `PetscLogEventRegister()`, `PetscLogEventBegin()`, `PetscLogEventEnd()`, `PetscGetFlops()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/logging/plog.c.html#PetscLogFlops">src/sys/logging/plog.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/logging/plog.c)
+
+
+[Index of all Profiling routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

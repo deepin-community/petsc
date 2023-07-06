@@ -1,0 +1,47 @@
+# DMNetworkRegisterComponent
+Registers the network component 
+## Synopsis
+```
+#include "petscdmnetwork.h"  
+PetscErrorCode DMNetworkRegisterComponent(DM dm, const char *name, size_t size, PetscInt *key)
+```
+Logically collective on dm
+
+
+## Input Parameters
+
+- ***dm -*** the network object
+- ***name -*** the component name
+- ***size -*** the storage size in bytes for this component data
+
+
+
+## Output Parameters
+
+- ***key -*** an integer key that defines the component
+
+
+
+## Note
+This routine should be called by all processors before calling `DMNetworkLayoutSetup()`.
+
+
+
+
+## See Also
+ `DMNetworkCreate()`, `DMNetworkLayoutSetUp()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/network/network.c.html#DMNetworkRegisterComponent">src/dm/impls/network/network.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/network/network.c)
+
+
+[Index of all DMNetwork routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

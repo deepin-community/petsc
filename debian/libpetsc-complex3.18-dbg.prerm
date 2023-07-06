@@ -1,0 +1,16 @@
+#!/bin/sh -e
+
+DEB_HOST_MULTIARCH=__DEB_HOST_MULTIARCH__
+
+PETSC_VERSION=__PETSC_VERSION__
+PETSC_ARCH=${DEB_HOST_MULTIARCH}
+PETSC_DEBUG_ARCH=${PETSC_ARCH}-complex-debug
+PETSC_SONAME_VERSION=__PETSC_SONAME_VERSION__
+PETSC_NAME=petsc${PETSC_SONAME_VERSION}
+
+# Remove alternatives links
+if [ "$1" = "remove" ]; then
+  update-alternatives --remove petsc /usr/lib/petscdir/${PETSC_NAME}/${PETSC_DEBUG_ARCH}
+fi
+
+#DEBHELPER#

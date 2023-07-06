@@ -1,0 +1,74 @@
+#!/bin/bash
+# tests adapted from the test_build target of the toplevel makefile
+
+export OMPI_MCA_plm_rsh_agent=/bin/false
+export OMPI_MCA_rmaps_base_oversubscribe=1
+export OMPI_MCA_btl_base_warn_component_unused=0
+
+if [ "x$PETSC_DIR" = "x" ]; then
+  # use default petsc dir if not otherwise specified
+  PETSC_DIR=/usr/lib/petsc
+fi
+
+echo "Running test examples to verify correct PETSc installation"
+echo "Using PETSC_DIR=${PETSC_DIR}"
+
+cp makefile makefile.orig
+sed "s|include ././\${PETSC_ARCH}/lib/petsc/conf/petscvariables|include \${PETSC_DIR}/lib/petsc/conf/petscvariables|" -i makefile
+
+BASEDIR=`pwd`
+TESTDIR=src/snes/tutorials
+
+cd ${TESTDIR}
+make PETSC_ARCH=${PETSC_ARCH}  PETSC_DIR=${PETSC_DIR} clean
+
+echo "run SNES testex19"
+make PETSC_ARCH=${PETSC_ARCH}  PETSC_DIR=${PETSC_DIR} testex19
+
+echo "test MUMPS"
+make PETSC_ARCH=${PETSC_ARCH}  PETSC_DIR=${PETSC_DIR} DIFF=${PETSC_DIR}/lib/petsc/bin/petscdiff runex19_fieldsplit_mumps | tee mumps.diff
+
+# SuiteSparse is not available in the 64-bit build, so confirm it was used before running tests
+SUITESPARSE_LIB=`grep -E "^SUITESPARSE_LIB" ${PETSC_DIR}/lib/petsc/conf/petscvariables | awk '{print $3}'`
+if [ "x${SUITESPARSE_LIB}" != "x" ]; then
+  echo "test SuiteSparse"
+  make PETSC_ARCH=${PETSC_ARCH}  PETSC_DIR=${PETSC_DIR} DIFF=${PETSC_DIR}/lib/petsc/bin/petscdiff runex19_suitesparse | tee suitesparse.diff
+fi
+
+# HYPRE is not supported in the complex number builds or 64-bit builds on 32-bit arches
+if grep -q HYPRE_LIB ${PETSC_DIR}/lib/petsc/conf/petscvariables; then
+  echo "test HYPRE"
+  make PETSC_ARCH=${PETSC_ARCH}  PETSC_DIR=${PETSC_DIR} DIFF=${PETSC_DIR}/lib/petsc/bin/petscdiff runex19_hypre | tee hypre.diff
+else
+  echo "run successfully (Hypre test skipped)" > hypre.diff
+fi
+
+# these tests are not supported in the 64-bit builds
+if [ "$PETSC_DIR" = "${PETSC_DIR/64/}" ]; then
+  echo "test SuperLU-Dist"
+  make PETSC_ARCH=${PETSC_ARCH}  PETSC_DIR=${PETSC_DIR} DIFF=${PETSC_DIR}/lib/petsc/bin/petscdiff runex19_superlu_dist | tee superlu_dist.diff
+fi
+
+# trilinos ml is generally only available on 64-bit arches, test if it was used
+ML_LIB=`grep -E "^ML_LIB" ${PETSC_DIR}/lib/petsc/conf/petscvariables | awk '{print $3}'`
+if [ "x${ML_LIB}" != "x" ]; then
+  echo "test ML (from Trilinos)"
+  make PETSC_ARCH=${PETSC_ARCH}  PETSC_DIR=${PETSC_DIR} DIFF=${PETSC_DIR}/lib/petsc/bin/petscdiff runex19_ml | tee ml.diff
+fi
+
+echo "run testex5f"
+make PETSC_ARCH=${PETSC_ARCH}  PETSC_DIR=${PETSC_DIR} testex5f
+
+make PETSC_ARCH=${PETSC_ARCH}  PETSC_DIR=${PETSC_DIR} clean
+
+cd ${BASEDIR}
+
+echo "Completed test examples"
+mv makefile.orig makefile
+
+if grep -v "run successfully" ${TESTDIR}/hypre.diff ${TESTDIR}/mumps.diff ; then
+  echo "Tests failed"
+  exit 1
+else
+  rm -f ${TESTDIR}/hypre.diff ${TESTDIR}/mumps.diff
+fi

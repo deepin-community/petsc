@@ -1,0 +1,413 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/logging/utils/classlog.c">Actual source code: classlog.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:03+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/*</font>
+<a name="line3">  3: </a><font color="#B22222">     This defines part of the private API for logging performance information. It is intended to be used only by the</font>
+<a name="line4">  4: </a><font color="#B22222">   PETSc PetscLog...() interface and not elsewhere, nor by users. Hence the prototypes for these functions are NOT</font>
+<a name="line5">  5: </a><font color="#B22222">   in the public PETSc include files.</font>
+
+<a name="line7">  7: </a><font color="#B22222">*/</font>
+<a name="line8">  8: </a>#include <A href="../../../../include/petsc/private/logimpl.h.html">&lt;petsc/private/logimpl.h&gt;</A>
+
+<a name="line10"> 10: </a><font color="#B22222">/*@C</font>
+<a name="line11"> 11: </a><font color="#B22222">  <a href="../../../../docs/manualpages/Profiling/PetscClassRegLogCreate.html">PetscClassRegLogCreate</a> - This creates a `PetscClassRegLog` object.</font>
+
+<a name="line13"> 13: </a><font color="#B22222">  Not collective</font>
+
+<a name="line15"> 15: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line16"> 16: </a><font color="#B22222">. classLog - The `PetscClassRegLog`</font>
+
+<a name="line18"> 18: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line20"> 20: </a><font color="#B22222">  Note:</font>
+<a name="line21"> 21: </a><font color="#B22222">  This is a low level routine used by the logging functions in PETSc</font>
+
+<a name="line23"> 23: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/Profiling/PetscClassRegLogDestroy.html">PetscClassRegLogDestroy</a>()`, `<a href="../../../../docs/manualpages/Profiling/PetscStageLogCreate.html">PetscStageLogCreate</a>()`</font>
+<a name="line24"> 24: </a><font color="#B22222">@*/</font>
+<a name="line25"> 25: </a><strong><font color="#4169E1"><a name="PetscClassRegLogCreate"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/Profiling/PetscClassRegLogCreate.html">PetscClassRegLogCreate</a>(PetscClassRegLog *classLog)</font></strong>
+<a name="line26"> 26: </a>{
+<a name="line27"> 27: </a>  PetscClassRegLog l;
+
+<a name="line29"> 29: </a>  <a href="../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;l);
+
+<a name="line31"> 31: </a>  l-&gt;numClasses = 0;
+<a name="line32"> 32: </a>  l-&gt;maxClasses = 100;
+
+<a name="line34"> 34: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(l-&gt;maxClasses, &amp;l-&gt;classInfo);
+
+<a name="line36"> 36: </a>  *classLog = l;
+<a name="line37"> 37: </a>  <font color="#4169E1">return</font> 0;
+<a name="line38"> 38: </a>}
+
+<a name="line40"> 40: </a><font color="#B22222">/*@C</font>
+<a name="line41"> 41: </a><font color="#B22222">  <a href="../../../../docs/manualpages/Profiling/PetscClassRegLogDestroy.html">PetscClassRegLogDestroy</a> - This destroys a `PetscClassRegLog` object.</font>
+
+<a name="line43"> 43: </a><font color="#B22222">  Not collective</font>
+
+<a name="line45"> 45: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line46"> 46: </a><font color="#B22222">. classLog - The `PetscClassRegLog`</font>
+
+<a name="line48"> 48: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line50"> 50: </a><font color="#B22222">  Note:</font>
+<a name="line51"> 51: </a><font color="#B22222">  This is a low level routine used by the logging functions in PETSc</font>
+
+<a name="line53"> 53: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/Profiling/PetscClassRegLogCreate.html">PetscClassRegLogCreate</a>()`</font>
+<a name="line54"> 54: </a><font color="#B22222">@*/</font>
+<a name="line55"> 55: </a><strong><font color="#4169E1"><a name="PetscClassRegLogDestroy"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/Profiling/PetscClassRegLogDestroy.html">PetscClassRegLogDestroy</a>(PetscClassRegLog classLog)</font></strong>
+<a name="line56"> 56: </a>{
+<a name="line57"> 57: </a>  int c;
+
+<a name="line59"> 59: </a>  <font color="#4169E1">for</font> (c = 0; c &lt; classLog-&gt;numClasses; c++) <a href="../../../../docs/manualpages/Profiling/PetscClassRegInfoDestroy.html">PetscClassRegInfoDestroy</a>(&amp;classLog-&gt;classInfo[c]);
+<a name="line60"> 60: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(classLog-&gt;classInfo);
+<a name="line61"> 61: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(classLog);
+<a name="line62"> 62: </a>  <font color="#4169E1">return</font> 0;
+<a name="line63"> 63: </a>}
+
+<a name="line65"> 65: </a><font color="#B22222">/*@C</font>
+<a name="line66"> 66: </a><font color="#B22222">  <a href="../../../../docs/manualpages/Profiling/PetscClassRegInfoDestroy.html">PetscClassRegInfoDestroy</a> - This destroys a `PetscClassRegInfo` object.</font>
+
+<a name="line68"> 68: </a><font color="#B22222">  Not collective</font>
+
+<a name="line70"> 70: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line71"> 71: </a><font color="#B22222">. c - The PetscClassRegInfo</font>
+
+<a name="line73"> 73: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line75"> 75: </a><font color="#B22222">  Note:</font>
+<a name="line76"> 76: </a><font color="#B22222">  This is a low level routine used by the logging functions in PETSc</font>
+
+<a name="line78"> 78: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/Profiling/PetscStageLogDestroy.html">PetscStageLogDestroy</a>()`, `EventLogDestroy()`</font>
+<a name="line79"> 79: </a><font color="#B22222">@*/</font>
+<a name="line80"> 80: </a><strong><font color="#4169E1"><a name="PetscClassRegInfoDestroy"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/Profiling/PetscClassRegInfoDestroy.html">PetscClassRegInfoDestroy</a>(PetscClassRegInfo *c)</font></strong>
+<a name="line81"> 81: </a>{
+<a name="line82"> 82: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(c-&gt;name);
+<a name="line83"> 83: </a>  <font color="#4169E1">return</font> 0;
+<a name="line84"> 84: </a>}
+
+<a name="line86"> 86: </a><font color="#B22222">/*@C</font>
+<a name="line87"> 87: </a><font color="#B22222">  <a href="../../../../docs/manualpages/Profiling/PetscClassPerfLogCreate.html">PetscClassPerfLogCreate</a> - This creates a `PetscClassPerfLog` object.</font>
+
+<a name="line89"> 89: </a><font color="#B22222">  Not collective</font>
+
+<a name="line91"> 91: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line92"> 92: </a><font color="#B22222">. classLog - The `PetscClassPerfLog`</font>
+
+<a name="line94"> 94: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line96"> 96: </a><font color="#B22222">  Note:</font>
+<a name="line97"> 97: </a><font color="#B22222">  This is a low level routine used by the logging functions in PETSc</font>
+
+<a name="line99"> 99: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/Profiling/PetscClassPerfLogDestroy.html">PetscClassPerfLogDestroy</a>()`, `<a href="../../../../docs/manualpages/Profiling/PetscStageLogCreate.html">PetscStageLogCreate</a>()`</font>
+<a name="line100">100: </a><font color="#B22222">@*/</font>
+<a name="line101">101: </a><strong><font color="#4169E1"><a name="PetscClassPerfLogCreate"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/Profiling/PetscClassPerfLogCreate.html">PetscClassPerfLogCreate</a>(PetscClassPerfLog *classLog)</font></strong>
+<a name="line102">102: </a>{
+<a name="line103">103: </a>  PetscClassPerfLog l;
+
+<a name="line105">105: </a>  <a href="../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;l);
+
+<a name="line107">107: </a>  l-&gt;numClasses = 0;
+<a name="line108">108: </a>  l-&gt;maxClasses = 100;
+
+<a name="line110">110: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(l-&gt;maxClasses, &amp;l-&gt;classInfo);
+
+<a name="line112">112: </a>  *classLog = l;
+<a name="line113">113: </a>  <font color="#4169E1">return</font> 0;
+<a name="line114">114: </a>}
+
+<a name="line116">116: </a><font color="#B22222">/*@C</font>
+<a name="line117">117: </a><font color="#B22222">  <a href="../../../../docs/manualpages/Profiling/PetscClassPerfLogDestroy.html">PetscClassPerfLogDestroy</a> - This destroys a `PetscClassPerfLog` object.</font>
+
+<a name="line119">119: </a><font color="#B22222">  Not collective</font>
+
+<a name="line121">121: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line122">122: </a><font color="#B22222">. classLog - The `PetscClassPerfLog`</font>
+
+<a name="line124">124: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line126">126: </a><font color="#B22222">  Note:</font>
+<a name="line127">127: </a><font color="#B22222">  This is a low level routine used by the logging functions in PETSc</font>
+
+<a name="line129">129: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/Profiling/PetscClassPerfLogCreate.html">PetscClassPerfLogCreate</a>()`</font>
+<a name="line130">130: </a><font color="#B22222">@*/</font>
+<a name="line131">131: </a><strong><font color="#4169E1"><a name="PetscClassPerfLogDestroy"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/Profiling/PetscClassPerfLogDestroy.html">PetscClassPerfLogDestroy</a>(PetscClassPerfLog classLog)</font></strong>
+<a name="line132">132: </a>{
+<a name="line133">133: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(classLog-&gt;classInfo);
+<a name="line134">134: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(classLog);
+<a name="line135">135: </a>  <font color="#4169E1">return</font> 0;
+<a name="line136">136: </a>}
+
+<a name="line138">138: </a><font color="#B22222">/*------------------------------------------------ General Functions -------------------------------------------------*/</font>
+<a name="line139">139: </a><font color="#B22222">/*@C</font>
+<a name="line140">140: </a><font color="#B22222">  <a href="../../../../docs/manualpages/Profiling/PetscClassPerfInfoClear.html">PetscClassPerfInfoClear</a> - This clears a `PetscClassPerfInfo` object.</font>
+
+<a name="line142">142: </a><font color="#B22222">  Not collective</font>
+
+<a name="line144">144: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line145">145: </a><font color="#B22222">. classInfo - The `PetscClassPerfInfo`</font>
+
+<a name="line147">147: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line149">149: </a><font color="#B22222">  Note:</font>
+<a name="line150">150: </a><font color="#B22222">  This is a low level routine used by the logging functions in PETSc</font>
+
+<a name="line152">152: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/Profiling/PetscClassPerfLogCreate.html">PetscClassPerfLogCreate</a>()`</font>
+<a name="line153">153: </a><font color="#B22222">@*/</font>
+<a name="line154">154: </a><strong><font color="#4169E1"><a name="PetscClassPerfInfoClear"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/Profiling/PetscClassPerfInfoClear.html">PetscClassPerfInfoClear</a>(PetscClassPerfInfo *classInfo)</font></strong>
+<a name="line155">155: </a>{
+<a name="line156">156: </a>  classInfo-&gt;id           = -1;
+<a name="line157">157: </a>  classInfo-&gt;creations    = 0;
+<a name="line158">158: </a>  classInfo-&gt;destructions = 0;
+<a name="line159">159: </a>  classInfo-&gt;mem          = 0.0;
+<a name="line160">160: </a>  classInfo-&gt;descMem      = 0.0;
+<a name="line161">161: </a>  <font color="#4169E1">return</font> 0;
+<a name="line162">162: </a>}
+
+<a name="line164">164: </a><font color="#B22222">/*@C</font>
+<a name="line165">165: </a><font color="#B22222">  <a href="../../../../docs/manualpages/Profiling/PetscClassPerfLogEnsureSize.html">PetscClassPerfLogEnsureSize</a> - This ensures that a `PetscClassPerfLog` is at least of a certain size.</font>
+
+<a name="line167">167: </a><font color="#B22222">  Not collective</font>
+
+<a name="line169">169: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line170">170: </a><font color="#B22222">+ classLog - The `PetscClassPerfLog`</font>
+<a name="line171">171: </a><font color="#B22222">- size     - The size</font>
+
+<a name="line173">173: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line175">175: </a><font color="#B22222">  Note:</font>
+<a name="line176">176: </a><font color="#B22222">  This is a low level routine used by the logging functions in PETSc</font>
+
+<a name="line178">178: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/Profiling/PetscClassPerfLogCreate.html">PetscClassPerfLogCreate</a>()`</font>
+<a name="line179">179: </a><font color="#B22222">@*/</font>
+<a name="line180">180: </a><strong><font color="#4169E1"><a name="PetscClassPerfLogEnsureSize"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/Profiling/PetscClassPerfLogEnsureSize.html">PetscClassPerfLogEnsureSize</a>(PetscClassPerfLog classLog, int size)</font></strong>
+<a name="line181">181: </a>{
+<a name="line182">182: </a>  PetscClassPerfInfo *classInfo;
+
+<a name="line184">184: </a>  <font color="#4169E1">while</font> (size &gt; classLog-&gt;maxClasses) {
+<a name="line185">185: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(classLog-&gt;maxClasses * 2, &amp;classInfo);
+<a name="line186">186: </a>    <a href="../../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(classInfo, classLog-&gt;classInfo, classLog-&gt;maxClasses);
+<a name="line187">187: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(classLog-&gt;classInfo);
+
+<a name="line189">189: </a>    classLog-&gt;classInfo = classInfo;
+<a name="line190">190: </a>    classLog-&gt;maxClasses *= 2;
+<a name="line191">191: </a>  }
+<a name="line192">192: </a>  <font color="#4169E1">while</font> (classLog-&gt;numClasses &lt; size) <a href="../../../../docs/manualpages/Profiling/PetscClassPerfInfoClear.html">PetscClassPerfInfoClear</a>(&amp;classLog-&gt;classInfo[classLog-&gt;numClasses++]);
+<a name="line193">193: </a>  <font color="#4169E1">return</font> 0;
+<a name="line194">194: </a>}
+
+<a name="line196">196: </a><font color="#B22222">/*--------------------------------------------- Registration Functions ----------------------------------------------*/</font>
+<a name="line197">197: </a><font color="#B22222">/*@C</font>
+<a name="line198">198: </a><font color="#B22222">  <a href="../../../../docs/manualpages/Profiling/PetscClassRegLogRegister.html">PetscClassRegLogRegister</a> - Registers a class for logging operations in an application code.</font>
+
+<a name="line200">200: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line202">202: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line203">203: </a><font color="#B22222">+ classLog - The `PetscClassRegLog`</font>
+<a name="line204">204: </a><font color="#B22222">- cname    - The name associated with the class</font>
+
+<a name="line206">206: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line207">207: </a><font color="#B22222">.  classid   - The classid</font>
+
+<a name="line209">209: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line211">211: </a><font color="#B22222">  Note:</font>
+<a name="line212">212: </a><font color="#B22222">  This is a low level routine used by the logging functions in PETSc</font>
+
+<a name="line214">214: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/Profiling/PetscClassIdRegister.html">PetscClassIdRegister</a>()`</font>
+<a name="line215">215: </a><font color="#B22222">@*/</font>
+<a name="line216">216: </a><strong><font color="#4169E1"><a name="PetscClassRegLogRegister"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/Profiling/PetscClassRegLogRegister.html">PetscClassRegLogRegister</a>(PetscClassRegLog classLog, const char cname[], <a href="../../../../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a> classid)</font></strong>
+<a name="line217">217: </a>{
+<a name="line218">218: </a>  PetscClassRegInfo *classInfo;
+<a name="line219">219: </a>  char              *str;
+<a name="line220">220: </a>  int                c;
+
+<a name="line223">223: </a>  c = classLog-&gt;numClasses++;
+<a name="line224">224: </a>  <font color="#4169E1">if</font> (classLog-&gt;numClasses &gt; classLog-&gt;maxClasses) {
+<a name="line225">225: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(classLog-&gt;maxClasses * 2, &amp;classInfo);
+<a name="line226">226: </a>    <a href="../../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(classInfo, classLog-&gt;classInfo, classLog-&gt;maxClasses);
+<a name="line227">227: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(classLog-&gt;classInfo);
+
+<a name="line229">229: </a>    classLog-&gt;classInfo = classInfo;
+<a name="line230">230: </a>    classLog-&gt;maxClasses *= 2;
+<a name="line231">231: </a>  }
+<a name="line232">232: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(cname, &amp;str);
+
+<a name="line234">234: </a>  classLog-&gt;classInfo[c].name    = str;
+<a name="line235">235: </a>  classLog-&gt;classInfo[c].classid = classid;
+<a name="line236">236: </a>  <font color="#4169E1">return</font> 0;
+<a name="line237">237: </a>}
+
+<a name="line239">239: </a><font color="#B22222">/*------------------------------------------------ Query Functions --------------------------------------------------*/</font>
+<a name="line240">240: </a><font color="#B22222">/*@C</font>
+<a name="line241">241: </a><font color="#B22222">  <a href="../../../../docs/manualpages/Profiling/PetscClassRegLogGetClass.html">PetscClassRegLogGetClass</a> - This function returns the class corresponding to a given classid.</font>
+
+<a name="line243">243: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line245">245: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line246">246: </a><font color="#B22222">+ classLog - The `PetscClassRegLog`</font>
+<a name="line247">247: </a><font color="#B22222">- classid  - The cookie</font>
+
+<a name="line249">249: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line250">250: </a><font color="#B22222">. oclass   - The class id</font>
+
+<a name="line252">252: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line254">254: </a><font color="#B22222">  Note:</font>
+<a name="line255">255: </a><font color="#B22222">  This is a low level routine used by the logging functions in PETSc</font>
+
+<a name="line257">257: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/Profiling/PetscClassIdRegister.html">PetscClassIdRegister</a>()`, `PetscLogObjCreateDefault()`, `PetscLogObjDestroyDefault()`</font>
+<a name="line258">258: </a><font color="#B22222">@*/</font>
+<a name="line259">259: </a><strong><font color="#4169E1"><a name="PetscClassRegLogGetClass"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/Profiling/PetscClassRegLogGetClass.html">PetscClassRegLogGetClass</a>(PetscClassRegLog classLog, <a href="../../../../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a> classid, int *oclass)</font></strong>
+<a name="line260">260: </a>{
+<a name="line261">261: </a>  int c;
+
+<a name="line264">264: </a>  <font color="#4169E1">for</font> (c = 0; c &lt; classLog-&gt;numClasses; c++) {
+<a name="line265">265: </a>    <font color="#B22222">/* Could do bisection here */</font>
+<a name="line266">266: </a>    <font color="#4169E1">if</font> (classLog-&gt;classInfo[c].classid == classid) <font color="#4169E1">break</font>;
+<a name="line267">267: </a>  }
+<a name="line269">269: </a>  *oclass = c;
+<a name="line270">270: </a>  <font color="#4169E1">return</font> 0;
+<a name="line271">271: </a>}
+
+<a name="line273">273: </a><font color="#B22222">/*----------------------------------------------- Logging Functions -------------------------------------------------*/</font>
+<a name="line274">274: </a><font color="#B22222">/* Default object create logger */</font>
+<a name="line275">275: </a><strong><font color="#4169E1"><a name="PetscLogObjCreateDefault"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogObjCreateDefault(<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> obj)</font></strong>
+<a name="line276">276: </a>{
+<a name="line277">277: </a>  PetscStageLog     stageLog;
+<a name="line278">278: </a>  PetscClassRegLog  classRegLog;
+<a name="line279">279: </a>  PetscClassPerfLog classPerfLog;
+<a name="line280">280: </a>  Action           *tmpAction;
+<a name="line281">281: </a>  Object           *tmpObjects;
+<a name="line282">282: </a>  <a href="../../../../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>    start, end;
+<a name="line283">283: </a>  int               oclass = 0;
+<a name="line284">284: </a>  int               stage;
+
+<a name="line286">286: </a>  <font color="#B22222">/* Record stage info */</font>
+<a name="line287">287: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogGetStageLog.html">PetscLogGetStageLog</a>(&amp;stageLog);
+<a name="line288">288: </a>  <a href="../../../../docs/manualpages/Profiling/PetscStageLogGetCurrent.html">PetscStageLogGetCurrent</a>(stageLog, &amp;stage);
+<a name="line289">289: </a>  <a href="../../../../docs/manualpages/Profiling/PetscStageLogGetClassRegLog.html">PetscStageLogGetClassRegLog</a>(stageLog, &amp;classRegLog);
+<a name="line290">290: </a>  <a href="../../../../docs/manualpages/Profiling/PetscStageLogGetClassPerfLog.html">PetscStageLogGetClassPerfLog</a>(stageLog, stage, &amp;classPerfLog);
+<a name="line291">291: </a>  <a href="../../../../docs/manualpages/Profiling/PetscClassRegLogGetClass.html">PetscClassRegLogGetClass</a>(classRegLog, obj-&gt;classid, &amp;oclass);
+<a name="line292">292: </a>  classPerfLog-&gt;classInfo[oclass].creations++;
+<a name="line293">293: </a>  <font color="#B22222">/* Dynamically enlarge logging structures */</font>
+<a name="line294">294: </a>  <font color="#4169E1">if</font> (petsc_numActions &gt;= petsc_maxActions) {
+<a name="line295">295: </a>    <a href="../../../../docs/manualpages/Sys/PetscTime.html">PetscTime</a>(&amp;start);
+<a name="line296">296: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(petsc_maxActions * 2, &amp;tmpAction);
+<a name="line297">297: </a>    <a href="../../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(tmpAction, petsc_actions, petsc_maxActions);
+<a name="line298">298: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(petsc_actions);
+
+<a name="line300">300: </a>    petsc_actions = tmpAction;
+<a name="line301">301: </a>    petsc_maxActions *= 2;
+<a name="line302">302: </a>    <a href="../../../../docs/manualpages/Sys/PetscTime.html">PetscTime</a>(&amp;end);
+<a name="line303">303: </a>    petsc_BaseTime += (end - start);
+<a name="line304">304: </a>  }
+
+<a name="line306">306: </a>  petsc_numObjects = obj-&gt;id;
+<a name="line307">307: </a>  <font color="#B22222">/* Record the creation action */</font>
+<a name="line308">308: </a>  <font color="#4169E1">if</font> (petsc_logActions) {
+<a name="line309">309: </a>    <a href="../../../../docs/manualpages/Sys/PetscTime.html">PetscTime</a>(&amp;petsc_actions[petsc_numActions].time);
+<a name="line310">310: </a>    petsc_actions[petsc_numActions].time -= petsc_BaseTime;
+<a name="line311">311: </a>    petsc_actions[petsc_numActions].action  = CREATE;
+<a name="line312">312: </a>    petsc_actions[petsc_numActions].classid = obj-&gt;classid;
+<a name="line313">313: </a>    petsc_actions[petsc_numActions].id1     = petsc_numObjects;
+<a name="line314">314: </a>    petsc_actions[petsc_numActions].id2     = -1;
+<a name="line315">315: </a>    petsc_actions[petsc_numActions].id3     = -1;
+<a name="line316">316: </a>    petsc_actions[petsc_numActions].flops   = petsc_TotalFlops;
+
+<a name="line318">318: </a>    <a href="../../../../docs/manualpages/Sys/PetscMallocGetCurrentUsage.html">PetscMallocGetCurrentUsage</a>(&amp;petsc_actions[petsc_numActions].mem);
+<a name="line319">319: </a>    <a href="../../../../docs/manualpages/Sys/PetscMallocGetMaximumUsage.html">PetscMallocGetMaximumUsage</a>(&amp;petsc_actions[petsc_numActions].maxmem);
+<a name="line320">320: </a>    petsc_numActions++;
+<a name="line321">321: </a>  }
+<a name="line322">322: </a>  <font color="#B22222">/* Record the object */</font>
+<a name="line323">323: </a>  <font color="#4169E1">if</font> (petsc_logObjects) {
+<a name="line324">324: </a>    petsc_objects[petsc_numObjects].parent = -1;
+<a name="line325">325: </a>    petsc_objects[petsc_numObjects].obj    = obj;
+
+<a name="line327">327: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemzero.html">PetscMemzero</a>(petsc_objects[petsc_numObjects].name, <font color="#4169E1">sizeof</font>(petsc_objects[0].name));
+<a name="line328">328: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemzero.html">PetscMemzero</a>(petsc_objects[petsc_numObjects].info, <font color="#4169E1">sizeof</font>(petsc_objects[0].info));
+
+<a name="line330">330: </a>    <font color="#B22222">/* Dynamically enlarge logging structures */</font>
+<a name="line331">331: </a>    <font color="#4169E1">if</font> (petsc_numObjects &gt;= petsc_maxObjects) {
+<a name="line332">332: </a>      <a href="../../../../docs/manualpages/Sys/PetscTime.html">PetscTime</a>(&amp;start);
+<a name="line333">333: </a>      <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(petsc_maxObjects * 2, &amp;tmpObjects);
+<a name="line334">334: </a>      <a href="../../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(tmpObjects, petsc_objects, petsc_maxObjects);
+<a name="line335">335: </a>      <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(petsc_objects);
+
+<a name="line337">337: </a>      petsc_objects = tmpObjects;
+<a name="line338">338: </a>      petsc_maxObjects *= 2;
+<a name="line339">339: </a>      <a href="../../../../docs/manualpages/Sys/PetscTime.html">PetscTime</a>(&amp;end);
+<a name="line340">340: </a>      petsc_BaseTime += (end - start);
+<a name="line341">341: </a>    }
+<a name="line342">342: </a>  }
+<a name="line343">343: </a>  <font color="#4169E1">return</font> 0;
+<a name="line344">344: </a>}
+
+<a name="line346">346: </a><font color="#B22222">/* Default object destroy logger */</font>
+<a name="line347">347: </a><strong><font color="#4169E1"><a name="PetscLogObjDestroyDefault"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogObjDestroyDefault(<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> obj)</font></strong>
+<a name="line348">348: </a>{
+<a name="line349">349: </a>  PetscStageLog     stageLog;
+<a name="line350">350: </a>  PetscClassRegLog  classRegLog;
+<a name="line351">351: </a>  PetscClassPerfLog classPerfLog;
+<a name="line352">352: </a>  Action           *tmpAction;
+<a name="line353">353: </a>  <a href="../../../../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>    start, end;
+<a name="line354">354: </a>  int               oclass = 0;
+<a name="line355">355: </a>  int               stage;
+
+<a name="line357">357: </a>  <font color="#B22222">/* Record stage info */</font>
+<a name="line358">358: </a>  <a href="../../../../docs/manualpages/Profiling/PetscLogGetStageLog.html">PetscLogGetStageLog</a>(&amp;stageLog);
+<a name="line359">359: </a>  <a href="../../../../docs/manualpages/Profiling/PetscStageLogGetCurrent.html">PetscStageLogGetCurrent</a>(stageLog, &amp;stage);
+<a name="line360">360: </a>  <font color="#4169E1">if</font> (stage != -1) {
+<a name="line361">361: </a>    <font color="#B22222">/* That can happen if the log summary is output before some things are destroyed */</font>
+<a name="line362">362: </a>    <a href="../../../../docs/manualpages/Profiling/PetscStageLogGetClassRegLog.html">PetscStageLogGetClassRegLog</a>(stageLog, &amp;classRegLog);
+<a name="line363">363: </a>    <a href="../../../../docs/manualpages/Profiling/PetscStageLogGetClassPerfLog.html">PetscStageLogGetClassPerfLog</a>(stageLog, stage, &amp;classPerfLog);
+<a name="line364">364: </a>    <a href="../../../../docs/manualpages/Profiling/PetscClassRegLogGetClass.html">PetscClassRegLogGetClass</a>(classRegLog, obj-&gt;classid, &amp;oclass);
+<a name="line365">365: </a>    classPerfLog-&gt;classInfo[oclass].destructions++;
+<a name="line366">366: </a>  }
+<a name="line367">367: </a>  <font color="#B22222">/* Cannot Credit all ancestors with your memory because they may have already been destroyed*/</font>
+<a name="line368">368: </a>  petsc_numObjectsDestroyed++;
+<a name="line369">369: </a>  <font color="#B22222">/* Dynamically enlarge logging structures */</font>
+<a name="line370">370: </a>  <font color="#4169E1">if</font> (petsc_numActions &gt;= petsc_maxActions) {
+<a name="line371">371: </a>    <a href="../../../../docs/manualpages/Sys/PetscTime.html">PetscTime</a>(&amp;start);
+<a name="line372">372: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(petsc_maxActions * 2, &amp;tmpAction);
+<a name="line373">373: </a>    <a href="../../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(tmpAction, petsc_actions, petsc_maxActions);
+<a name="line374">374: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(petsc_actions);
+
+<a name="line376">376: </a>    petsc_actions = tmpAction;
+<a name="line377">377: </a>    petsc_maxActions *= 2;
+<a name="line378">378: </a>    <a href="../../../../docs/manualpages/Sys/PetscTime.html">PetscTime</a>(&amp;end);
+<a name="line379">379: </a>    petsc_BaseTime += (end - start);
+<a name="line380">380: </a>  }
+<a name="line381">381: </a>  <font color="#B22222">/* Record the destruction action */</font>
+<a name="line382">382: </a>  <font color="#4169E1">if</font> (petsc_logActions) {
+<a name="line383">383: </a>    <a href="../../../../docs/manualpages/Sys/PetscTime.html">PetscTime</a>(&amp;petsc_actions[petsc_numActions].time);
+<a name="line384">384: </a>    petsc_actions[petsc_numActions].time -= petsc_BaseTime;
+<a name="line385">385: </a>    petsc_actions[petsc_numActions].action  = DESTROY;
+<a name="line386">386: </a>    petsc_actions[petsc_numActions].classid = obj-&gt;classid;
+<a name="line387">387: </a>    petsc_actions[petsc_numActions].id1     = obj-&gt;id;
+<a name="line388">388: </a>    petsc_actions[petsc_numActions].id2     = -1;
+<a name="line389">389: </a>    petsc_actions[petsc_numActions].id3     = -1;
+<a name="line390">390: </a>    petsc_actions[petsc_numActions].flops   = petsc_TotalFlops;
+
+<a name="line392">392: </a>    <a href="../../../../docs/manualpages/Sys/PetscMallocGetCurrentUsage.html">PetscMallocGetCurrentUsage</a>(&amp;petsc_actions[petsc_numActions].mem);
+<a name="line393">393: </a>    <a href="../../../../docs/manualpages/Sys/PetscMallocGetMaximumUsage.html">PetscMallocGetMaximumUsage</a>(&amp;petsc_actions[petsc_numActions].maxmem);
+<a name="line394">394: </a>    petsc_numActions++;
+<a name="line395">395: </a>  }
+<a name="line396">396: </a>  <font color="#4169E1">if</font> (petsc_logObjects) {
+<a name="line397">397: </a>    <font color="#4169E1">if</font> (obj-&gt;name) <a href="../../../../docs/manualpages/Sys/PetscStrncpy.html">PetscStrncpy</a>(petsc_objects[obj-&gt;id].name, obj-&gt;name, 64);
+<a name="line398">398: </a>    petsc_objects[obj-&gt;id].obj = NULL;
+<a name="line399">399: </a>  }
+<a name="line400">400: </a>  <font color="#4169E1">return</font> 0;
+<a name="line401">401: </a>}
+</pre>
+</body>
+
+</html>

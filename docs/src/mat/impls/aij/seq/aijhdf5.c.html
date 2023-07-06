@@ -1,0 +1,177 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/impls/aij/seq/aijhdf5.c">Actual source code: aijhdf5.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:35+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="aij.h.html">&lt;../src/mat/impls/aij/seq/aij.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="../../../../../include/petsc/private/isimpl.h.html">&lt;petsc/private/isimpl.h&gt;</A>
+<a name="line4">  4: </a>#include <A href="../../../../../include/petsc/private/vecimpl.h.html">&lt;petsc/private/vecimpl.h&gt;</A>
+<a name="line5">  5: </a>#include <A href="../../../../../include/petsclayouthdf5.h.html">&lt;petsclayouthdf5.h&gt;</A>
+
+<a name="line7">  7: </a><font color="#A020F0">#if defined(PETSC_HAVE_HDF5)</font>
+<a name="line8">  8: </a><strong><font color="#4169E1"><a name="MatLoad_AIJ_HDF5"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatLoad_AIJ_HDF5(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> mat, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line9">  9: </a>{
+<a name="line10"> 10: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PetscViewerFormat</a>  format;
+<a name="line11"> 11: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *i_glob = NULL;
+<a name="line12"> 12: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          *i      = NULL;
+<a name="line13"> 13: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *j      = NULL;
+<a name="line14"> 14: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *a      = NULL;
+<a name="line15"> 15: </a>  char              *a_name = NULL, *i_name = NULL, *j_name = NULL, *c_name = NULL;
+<a name="line16"> 16: </a>  const char        *mat_name = NULL;
+<a name="line17"> 17: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           p, m, M, N;
+<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           bs = mat-&gt;rmap-&gt;bs;
+<a name="line19"> 19: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          *range;
+<a name="line20"> 20: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>          flg;
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/IS/IS.html">IS</a>                 is_i = NULL, is_j = NULL;
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>                vec_a = NULL;
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayout.html">PetscLayout</a>        jmap  = NULL;
+<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>           comm;
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>        rank, size;
+
+<a name="line27"> 27: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerGetFormat.html">PetscViewerGetFormat</a>(viewer, &amp;format);
+<a name="line28"> 28: </a>  <font color="#4169E1">switch</font> (format) {
+<a name="line29"> 29: </a>  <font color="#4169E1">case</font> <a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_HDF5_PETSC</a>:
+<a name="line30"> 30: </a>  <font color="#4169E1">case</font> <a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_DEFAULT</a>:
+<a name="line31"> 31: </a>  <font color="#4169E1">case</font> <a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_NATIVE</a>:
+<a name="line32"> 32: </a>  <font color="#4169E1">case</font> <a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_HDF5_MAT</a>:
+<a name="line33"> 33: </a>    <font color="#4169E1">break</font>;
+<a name="line34"> 34: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line35"> 35: </a>    <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat), PETSC_ERR_SUP, <font color="#666666">"<a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PetscViewerFormat</a> %s not supported for HDF5 input."</font>, PetscViewerFormats[format]);
+<a name="line36"> 36: </a>  }
+
+<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat, &amp;comm);
+<a name="line39"> 39: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line40"> 40: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line41"> 41: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat, &amp;mat_name);
+<a name="line42"> 42: </a>  <font color="#4169E1">if</font> (format == <a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_HDF5_MAT</a>) {
+<a name="line43"> 43: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(<font color="#666666">"jc"</font>, &amp;i_name);
+<a name="line44"> 44: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(<font color="#666666">"ir"</font>, &amp;j_name);
+<a name="line45"> 45: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(<font color="#666666">"data"</font>, &amp;a_name);
+<a name="line46"> 46: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(<font color="#666666">"MATLAB_sparse"</font>, &amp;c_name);
+<a name="line47"> 47: </a>  } <font color="#4169E1">else</font> {
+<a name="line48"> 48: </a>    <font color="#B22222">/* TODO Once corresponding <a href="../../../../../docs/manualpages/Mat/MatView.html">MatView</a> is implemented, change the names to i,j,a */</font>
+<a name="line49"> 49: </a>    <font color="#B22222">/* TODO Maybe there could be both namings in the file, using "symbolic link" features of HDF5. */</font>
+<a name="line50"> 50: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(<font color="#666666">"jc"</font>, &amp;i_name);
+<a name="line51"> 51: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(<font color="#666666">"ir"</font>, &amp;j_name);
+<a name="line52"> 52: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(<font color="#666666">"data"</font>, &amp;a_name);
+<a name="line53"> 53: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(<font color="#666666">"MATLAB_sparse"</font>, &amp;c_name);
+<a name="line54"> 54: </a>  }
+
+<a name="line56"> 56: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(comm, NULL, <font color="#666666">"Options for loading matrix from HDF5"</font>, <font color="#666666">"<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>"</font>);
+<a name="line57"> 57: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsInt.html">PetscOptionsInt</a>(<font color="#666666">"-matload_block_size"</font>, <font color="#666666">"Set the blocksize used to store the matrix"</font>, <font color="#666666">"<a href="../../../../../docs/manualpages/Mat/MatLoad.html">MatLoad</a>"</font>, bs, &amp;bs, &amp;flg);
+<a name="line58"> 58: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line59"> 59: </a>  <font color="#4169E1">if</font> (flg) <a href="../../../../../docs/manualpages/Mat/MatSetBlockSize.html">MatSetBlockSize</a>(mat, bs);
+
+<a name="line61"> 61: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerHDF5PushGroup.html">PetscViewerHDF5PushGroup</a>(viewer, mat_name);
+<a name="line62"> 62: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(viewer, NULL, c_name, <a href="../../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_INT</a>, NULL, &amp;N);
+<a name="line63"> 63: </a>  <a href="../../../../../docs/manualpages/IS/PetscViewerHDF5ReadSizes.html">PetscViewerHDF5ReadSizes</a>(viewer, i_name, NULL, &amp;M);
+<a name="line64"> 64: </a>  --M; <font color="#B22222">/* i has size M+1 as there is global number of nonzeros stored at the end */</font>
+
+<a name="line66"> 66: </a>  <font color="#4169E1">if</font> (format == <a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_HDF5_MAT</a> &amp;&amp; mat-&gt;symmetric != <a href="../../../../../docs/manualpages/Sys/PetscBool3.html">PETSC_BOOL3_TRUE</a>) {
+<a name="line67"> 67: </a>    <font color="#B22222">/* Swap row and columns layout for unallocated matrix. I want to avoid calling <a href="../../../../../docs/manualpages/Mat/MatTranspose.html">MatTranspose</a>() just to transpose sparsity pattern and layout. */</font>
+<a name="line68"> 68: </a>    <font color="#4169E1">if</font> (!mat-&gt;preallocated) {
+<a name="line69"> 69: </a>      <a href="../../../../../docs/manualpages/IS/PetscLayout.html">PetscLayout</a> tmp;
+<a name="line70"> 70: </a>      tmp       = mat-&gt;rmap;
+<a name="line71"> 71: </a>      mat-&gt;rmap = mat-&gt;cmap;
+<a name="line72"> 72: </a>      mat-&gt;cmap = tmp;
+<a name="line73"> 73: </a>    } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(comm, PETSC_ERR_SUP, <font color="#666666">"Not for preallocated matrix - we would need to transpose it here which we want to avoid"</font>);
+<a name="line74"> 74: </a>  }
+
+<a name="line76"> 76: </a>  <font color="#B22222">/* If global sizes are set, check if they are consistent with that given in the file */</font>
+
+<a name="line80"> 80: </a>  <font color="#B22222">/* Determine ownership of all (block) rows and columns */</font>
+<a name="line81"> 81: </a>  mat-&gt;rmap-&gt;N = M;
+<a name="line82"> 82: </a>  mat-&gt;cmap-&gt;N = N;
+<a name="line83"> 83: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetUp.html">PetscLayoutSetUp</a>(mat-&gt;rmap);
+<a name="line84"> 84: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetUp.html">PetscLayoutSetUp</a>(mat-&gt;cmap);
+<a name="line85"> 85: </a>  m = mat-&gt;rmap-&gt;n;
+
+<a name="line87"> 87: </a>  <font color="#B22222">/* Read array i (array of row indices) */</font>
+<a name="line88"> 88: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(m + 1, &amp;i); <font color="#B22222">/* allocate i with one more position for local number of nonzeros on each rank */</font>
+<a name="line89"> 89: </a>  i[0] = i[m] = 0;                    <font color="#B22222">/* make the last entry always defined - the code block below overwrites it just on last rank */</font>
+<a name="line90"> 90: </a>  <font color="#4169E1">if</font> (rank == size - 1) m++;          <font color="#B22222">/* in the loaded array i_glob, only the last rank has one more position with the global number of nonzeros */</font>
+<a name="line91"> 91: </a>  M++;
+<a name="line92"> 92: </a>  <a href="../../../../../docs/manualpages/IS/ISCreate.html">ISCreate</a>(comm, &amp;is_i);
+<a name="line93"> 93: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)is_i, i_name);
+<a name="line94"> 94: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetLocalSize.html">PetscLayoutSetLocalSize</a>(is_i-&gt;map, m);
+<a name="line95"> 95: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutSetSize.html">PetscLayoutSetSize</a>(is_i-&gt;map, M);
+<a name="line96"> 96: </a>  <a href="../../../../../docs/manualpages/IS/ISLoad.html">ISLoad</a>(is_i, viewer);
+<a name="line97"> 97: </a>  <a href="../../../../../docs/manualpages/IS/ISGetIndices.html">ISGetIndices</a>(is_i, &amp;i_glob);
+<a name="line98"> 98: </a>  <a href="../../../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(i, i_glob, m);
+
+<a name="line100">100: </a>  <font color="#B22222">/* Reset m and M to the matrix sizes */</font>
+<a name="line101">101: </a>  m = mat-&gt;rmap-&gt;n;
+<a name="line102">102: </a>  M--;
+
+<a name="line104">104: </a>  <font color="#B22222">/* Create <a href="../../../../../docs/manualpages/IS/PetscLayout.html">PetscLayout</a> for j and a vectors; construct ranges first */</font>
+<a name="line105">105: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(size + 1, &amp;range);
+<a name="line106">106: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allgather.html#MPI_Allgather">MPI_Allgather</a>(i, 1, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, range, 1, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, comm);
+<a name="line107">107: </a>  <font color="#B22222">/* Last rank has global number of nonzeros (= length of j and a arrays) in i[m] (last i entry) so broadcast it */</font>
+<a name="line108">108: </a>  range[size] = i[m];
+<a name="line109">109: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(&amp;range[size], 1, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, size - 1, comm);
+<a name="line110">110: </a>  <font color="#4169E1">for</font> (p = size - 1; p &gt; 0; p--) {
+<a name="line111">111: </a>    <font color="#4169E1">if</font> (!range[p]) range[p] = range[p + 1]; <font color="#B22222">/* for ranks with 0 rows, take the value from the next processor */</font>
+<a name="line112">112: </a>  }
+<a name="line113">113: </a>  i[m] = range[rank + 1]; <font color="#B22222">/* i[m] (last i entry) is equal to next rank's offset */</font>
+<a name="line114">114: </a>  <font color="#B22222">/* Deduce rstart, rend, n and N from the ranges */</font>
+<a name="line115">115: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutCreateFromRanges.html">PetscLayoutCreateFromRanges</a>(comm, range, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, 1, &amp;jmap);
+
+<a name="line117">117: </a>  <font color="#B22222">/* Convert global to local indexing of rows */</font>
+<a name="line118">118: </a>  <font color="#4169E1">for</font> (p = 1; p &lt; m + 1; ++p) i[p] -= i[0];
+<a name="line119">119: </a>  i[0] = 0;
+
+<a name="line121">121: </a>  <font color="#B22222">/* Read array j (array of column indices) */</font>
+<a name="line122">122: </a>  <a href="../../../../../docs/manualpages/IS/ISCreate.html">ISCreate</a>(comm, &amp;is_j);
+<a name="line123">123: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)is_j, j_name);
+<a name="line124">124: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutDuplicate.html">PetscLayoutDuplicate</a>(jmap, &amp;is_j-&gt;map);
+<a name="line125">125: </a>  <a href="../../../../../docs/manualpages/IS/ISLoad.html">ISLoad</a>(is_j, viewer);
+<a name="line126">126: </a>  <a href="../../../../../docs/manualpages/IS/ISGetIndices.html">ISGetIndices</a>(is_j, &amp;j);
+
+<a name="line128">128: </a>  <font color="#B22222">/* Read array a (array of values) */</font>
+<a name="line129">129: </a>  <a href="../../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>(comm, &amp;vec_a);
+<a name="line130">130: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vec_a, a_name);
+<a name="line131">131: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutDuplicate.html">PetscLayoutDuplicate</a>(jmap, &amp;vec_a-&gt;map);
+<a name="line132">132: </a>  <a href="../../../../../docs/manualpages/Vec/VecLoad.html">VecLoad</a>(vec_a, viewer);
+<a name="line133">133: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(vec_a, &amp;a);
+
+<a name="line135">135: </a>  <font color="#B22222">/* populate matrix */</font>
+<a name="line136">136: </a>  <font color="#4169E1">if</font> (!((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)mat)-&gt;type_name) <a href="../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(mat, <a href="../../../../../docs/manualpages/Mat/MATAIJ.html">MATAIJ</a>);
+<a name="line137">137: </a>  <a href="../../../../../docs/manualpages/Mat/MatSeqAIJSetPreallocationCSR.html">MatSeqAIJSetPreallocationCSR</a>(mat, i, j, a);
+<a name="line138">138: </a>  <a href="../../../../../docs/manualpages/Mat/MatMPIAIJSetPreallocationCSR.html">MatMPIAIJSetPreallocationCSR</a>(mat, i, j, a);
+<a name="line139">139: </a>  <font color="#B22222">/*</font>
+<a name="line140">140: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Mat/MatSeqBAIJSetPreallocationCSR.html">MatSeqBAIJSetPreallocationCSR</a>(mat,bs,i,j,a);</font>
+<a name="line141">141: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Mat/MatMPIBAIJSetPreallocationCSR.html">MatMPIBAIJSetPreallocationCSR</a>(mat,bs,i,j,a);</font>
+<a name="line142">142: </a><font color="#B22222">  */</font>
+
+<a name="line144">144: </a>  <font color="#4169E1">if</font> (format == <a href="../../../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_HDF5_MAT</a> &amp;&amp; mat-&gt;symmetric != <a href="../../../../../docs/manualpages/Sys/PetscBool3.html">PETSC_BOOL3_TRUE</a>) {
+<a name="line145">145: </a>    <font color="#B22222">/* Transpose the input matrix back */</font>
+<a name="line146">146: </a>    <a href="../../../../../docs/manualpages/Mat/MatTranspose.html">MatTranspose</a>(mat, <a href="../../../../../docs/manualpages/Mat/MatReuse.html">MAT_INPLACE_MATRIX</a>, &amp;mat);
+<a name="line147">147: </a>  }
+
+<a name="line149">149: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerHDF5PopGroup.html">PetscViewerHDF5PopGroup</a>(viewer);
+<a name="line150">150: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(i_name);
+<a name="line151">151: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(j_name);
+<a name="line152">152: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(a_name);
+<a name="line153">153: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(c_name);
+<a name="line154">154: </a>  <a href="../../../../../docs/manualpages/IS/PetscLayoutDestroy.html">PetscLayoutDestroy</a>(&amp;jmap);
+<a name="line155">155: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(i);
+<a name="line156">156: </a>  <a href="../../../../../docs/manualpages/IS/ISRestoreIndices.html">ISRestoreIndices</a>(is_i, &amp;i_glob);
+<a name="line157">157: </a>  <a href="../../../../../docs/manualpages/IS/ISRestoreIndices.html">ISRestoreIndices</a>(is_j, &amp;j);
+<a name="line158">158: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(vec_a, &amp;a);
+<a name="line159">159: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;is_i);
+<a name="line160">160: </a>  <a href="../../../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;is_j);
+<a name="line161">161: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;vec_a);
+<a name="line162">162: </a>  <font color="#4169E1">return</font> 0;
+<a name="line163">163: </a>}
+<a name="line164">164: </a><font color="#A020F0">#endif</font>
+</pre>
+</body>
+
+</html>

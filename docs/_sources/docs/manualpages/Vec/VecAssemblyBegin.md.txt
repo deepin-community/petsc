@@ -1,0 +1,53 @@
+# VecAssemblyBegin
+Begins assembling the vector.  This routine should be called after completing all calls to `VecSetValues()`. 
+## Synopsis
+```
+#include "petscvec.h"   
+PetscErrorCode VecAssemblyBegin(Vec vec)
+```
+Collective
+
+
+## Input Parameter
+
+- ***vec -*** the vector
+
+
+
+
+
+## See Also
+ [](chapter_vectors), `Vec`, `VecAssemblyEnd()`, `VecSetValues()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/interface/vector.c.html#VecAssemblyBegin">src/vec/vec/interface/vector.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex10.c.html">src/vec/vec/tutorials/ex10.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex14f.F90.html">src/vec/vec/tutorials/ex14f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex15.c.html">src/vec/vec/tutorials/ex15.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex18.c.html">src/vec/vec/tutorials/ex18.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex18f.F90.html">src/vec/vec/tutorials/ex18f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex2.c.html">src/vec/vec/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex2f.F90.html">src/vec/vec/tutorials/ex2f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex3.c.html">src/vec/vec/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex3f.F90.html">src/vec/vec/tutorials/ex3f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex44.c.html">src/vec/vec/tutorials/ex44.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex4f.F90.html">src/vec/vec/tutorials/ex4f.F90.html</A><BR>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/mpi/pdvec.c.html#VecAssemblyBegin_MPI">VecAssemblyBegin_MPI in src/vec/vec/impls/mpi/pdvec.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/nest/vecnest.c.html#VecAssemblyBegin_Nest">VecAssemblyBegin_Nest in src/vec/vec/impls/nest/vecnest.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/vec/interface/vector.c)
+
+
+[Index of all Vec routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

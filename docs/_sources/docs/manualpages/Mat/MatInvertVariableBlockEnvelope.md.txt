@@ -1,0 +1,45 @@
+# MatInvertVariableBlockEnvelope
+set matrix C to be the inverted block diagonal of matrix A 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatInvertVariableBlockEnvelope(Mat A, MatReuse reuse, Mat *C)
+```
+Collective
+
+
+## Input Parameters
+
+- ***A -*** the matrix
+
+
+
+## Output Parameters
+
+- ***C -*** matrix with inverted block diagonal of A.  This matrix should be created and may have its type set.
+
+
+
+
+
+## Note
+For efficiency the matrix A should have all the nonzero entries clustered in smallish blocks along the diagonal.
+
+
+## See Also
+ `Mat`, `MatInvertBlockDiagonal()`, `MatComputeBlockDiagonal()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/interface/matrix.c.html#MatInvertVariableBlockEnvelope">src/mat/interface/matrix.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/interface/matrix.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

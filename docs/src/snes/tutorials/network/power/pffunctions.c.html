@@ -1,0 +1,400 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/snes/tutorials/network/power/pffunctions.c">Actual source code: pffunctions.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:33+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/* function subroutines used by power.c */</font>
+
+<a name="line3">  3: </a><font color="#A020F0">#include </font><font color="#666666">"power.h"</font><font color="#A020F0"></font>
+
+<a name="line5">  5: </a><strong><font color="#4169E1"><a name="GetListofEdges_Power"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetListofEdges_Power(PFDATA *pfdata, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *edgelist)</font></strong>
+<a name="line6">  6: </a>{
+<a name="line7">  7: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   i, fbus, tbus, nbranches = pfdata-&gt;nbranch;
+<a name="line8">  8: </a>  EDGE_Power branch  = pfdata-&gt;branch;
+<a name="line9">  9: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>  netview = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line11"> 11: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsHasName.html">PetscOptionsHasName</a>(NULL, NULL, <font color="#666666">"-powernet_view"</font>, &amp;netview);
+<a name="line12"> 12: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nbranches; i++) {
+<a name="line13"> 13: </a>    fbus                = branch[i].internal_i;
+<a name="line14"> 14: </a>    tbus                = branch[i].internal_j;
+<a name="line15"> 15: </a>    edgelist[2 * i]     = fbus;
+<a name="line16"> 16: </a>    edgelist[2 * i + 1] = tbus;
+<a name="line17"> 17: </a>    <font color="#4169E1">if</font> (netview) <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"branch %"</font> PetscInt_FMT <font color="#666666">", bus[%"</font> PetscInt_FMT <font color="#666666">"] -&gt; bus[%"</font> PetscInt_FMT <font color="#666666">"]\n"</font>, i, fbus, tbus);
+<a name="line18"> 18: </a>  }
+<a name="line19"> 19: </a>  <font color="#4169E1">if</font> (netview) {
+<a name="line20"> 20: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; pfdata-&gt;nbus; i++) {
+<a name="line21"> 21: </a>      <font color="#4169E1">if</font> (pfdata-&gt;bus[i].ngen) {
+<a name="line22"> 22: </a>        <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">" bus %"</font> PetscInt_FMT <font color="#666666">": gen\n"</font>, i);
+<a name="line23"> 23: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (pfdata-&gt;bus[i].nload) {
+<a name="line24"> 24: </a>        <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">" bus %"</font> PetscInt_FMT <font color="#666666">": load\n"</font>, i);
+<a name="line25"> 25: </a>      }
+<a name="line26"> 26: </a>    }
+<a name="line27"> 27: </a>  }
+<a name="line28"> 28: </a>  <font color="#4169E1">return</font> 0;
+<a name="line29"> 29: </a>}
+
+<a name="line31"> 31: </a><strong><font color="#4169E1"><a name="FormJacobian_Power_private"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> FormJacobian_Power_private(<a href="../../../../../docs/manualpages/DM/DM.html">DM</a> networkdm, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> localX, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> J, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nv, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ne, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *vtx, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *edges, void *appctx)</font></strong>
+<a name="line32"> 32: </a>{
+<a name="line33"> 33: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *xarr;
+<a name="line34"> 34: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           i, v, row[2], col[8], e, vfrom, vto;
+<a name="line35"> 35: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           offsetfrom, offsetto, goffsetfrom, goffsetto, numComps;
+<a name="line36"> 36: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>        values[8];
+<a name="line37"> 37: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           j, key, offset, goffset;
+<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>        Vm;
+<a name="line39"> 39: </a>  UserCtx_Power     *user_power = (UserCtx_Power *)appctx;
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>        Sbase      = user_power-&gt;Sbase;
+<a name="line41"> 41: </a>  VERTEX_Power       bus;
+<a name="line42"> 42: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>          ghostvtex;
+<a name="line43"> 43: </a>  void              *component;
+
+<a name="line45"> 45: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(localX, &amp;xarr);
+
+<a name="line47"> 47: </a>  <font color="#4169E1">for</font> (v = 0; v &lt; nv; v++) {
+<a name="line48"> 48: </a>    <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkIsGhostVertex.html">DMNetworkIsGhostVertex</a>(networkdm, vtx[v], &amp;ghostvtex);
+
+<a name="line50"> 50: </a>    <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetNumComponents.html">DMNetworkGetNumComponents</a>(networkdm, vtx[v], &amp;numComps);
+<a name="line51"> 51: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; numComps; j++) {
+<a name="line52"> 52: </a>      <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetLocalVecOffset.html">DMNetworkGetLocalVecOffset</a>(networkdm, vtx[v], ALL_COMPONENTS, &amp;offset);
+<a name="line53"> 53: </a>      <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetGlobalVecOffset.html">DMNetworkGetGlobalVecOffset</a>(networkdm, vtx[v], ALL_COMPONENTS, &amp;goffset);
+<a name="line54"> 54: </a>      <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetComponent.html">DMNetworkGetComponent</a>(networkdm, vtx[v], j, &amp;key, &amp;component, NULL);
+
+<a name="line56"> 56: </a>      <font color="#4169E1">if</font> (key == user_power-&gt;compkey_bus) {
+<a name="line57"> 57: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        nconnedges;
+<a name="line58"> 58: </a>        const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *connedges;
+
+<a name="line60"> 60: </a>        bus = (VERTEX_Power)(component);
+<a name="line61"> 61: </a>        <font color="#4169E1">if</font> (!ghostvtex) {
+<a name="line62"> 62: </a>          <font color="#B22222">/* Handle reference bus constrained dofs */</font>
+<a name="line63"> 63: </a>          <font color="#4169E1">if</font> (bus-&gt;ide == REF_BUS || bus-&gt;ide == ISOLATED_BUS) {
+<a name="line64"> 64: </a>            row[0]    = goffset;
+<a name="line65"> 65: </a>            row[1]    = goffset + 1;
+<a name="line66"> 66: </a>            col[0]    = goffset;
+<a name="line67"> 67: </a>            col[1]    = goffset + 1;
+<a name="line68"> 68: </a>            col[2]    = goffset;
+<a name="line69"> 69: </a>            col[3]    = goffset + 1;
+<a name="line70"> 70: </a>            values[0] = 1.0;
+<a name="line71"> 71: </a>            values[1] = 0.0;
+<a name="line72"> 72: </a>            values[2] = 0.0;
+<a name="line73"> 73: </a>            values[3] = 1.0;
+<a name="line74"> 74: </a>            <a href="../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(J, 2, row, 2, col, values, <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line75"> 75: </a>            <font color="#4169E1">break</font>;
+<a name="line76"> 76: </a>          }
+
+<a name="line78"> 78: </a>          Vm = xarr[offset + 1];
+
+<a name="line80"> 80: </a>          <font color="#B22222">/* Shunt injections */</font>
+<a name="line81"> 81: </a>          row[0]    = goffset;
+<a name="line82"> 82: </a>          row[1]    = goffset + 1;
+<a name="line83"> 83: </a>          col[0]    = goffset;
+<a name="line84"> 84: </a>          col[1]    = goffset + 1;
+<a name="line85"> 85: </a>          values[0] = values[1] = values[2] = values[3] = 0.0;
+<a name="line86"> 86: </a>          <font color="#4169E1">if</font> (bus-&gt;ide != PV_BUS) {
+<a name="line87"> 87: </a>            values[1] = 2.0 * Vm * bus-&gt;gl / Sbase;
+<a name="line88"> 88: </a>            values[3] = -2.0 * Vm * bus-&gt;bl / Sbase;
+<a name="line89"> 89: </a>          }
+<a name="line90"> 90: </a>          <a href="../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(J, 2, row, 2, col, values, <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line91"> 91: </a>        }
+
+<a name="line93"> 93: </a>        <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetSupportingEdges.html">DMNetworkGetSupportingEdges</a>(networkdm, vtx[v], &amp;nconnedges, &amp;connedges);
+
+<a name="line95"> 95: </a>        <font color="#4169E1">for</font> (i = 0; i &lt; nconnedges; i++) {
+<a name="line96"> 96: </a>          EDGE_Power      branch;
+<a name="line97"> 97: </a>          VERTEX_Power    busf, bust;
+<a name="line98"> 98: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        keyf, keyt;
+<a name="line99"> 99: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>     Gff, Bff, Gft, Bft, Gtf, Btf, Gtt, Btt;
+<a name="line100">100: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *cone;
+<a name="line101">101: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>     Vmf, Vmt, thetaf, thetat, thetaft, thetatf;
+
+<a name="line103">103: </a>          e = connedges[i];
+<a name="line104">104: </a>          <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetComponent.html">DMNetworkGetComponent</a>(networkdm, e, 0, &amp;key, (void **)&amp;branch, NULL);
+<a name="line105">105: </a>          <font color="#4169E1">if</font> (!branch-&gt;status) <font color="#4169E1">continue</font>;
+
+<a name="line107">107: </a>          Gff = branch-&gt;yff[0];
+<a name="line108">108: </a>          Bff = branch-&gt;yff[1];
+<a name="line109">109: </a>          Gft = branch-&gt;yft[0];
+<a name="line110">110: </a>          Bft = branch-&gt;yft[1];
+<a name="line111">111: </a>          Gtf = branch-&gt;ytf[0];
+<a name="line112">112: </a>          Btf = branch-&gt;ytf[1];
+<a name="line113">113: </a>          Gtt = branch-&gt;ytt[0];
+<a name="line114">114: </a>          Btt = branch-&gt;ytt[1];
+
+<a name="line116">116: </a>          <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetConnectedVertices.html">DMNetworkGetConnectedVertices</a>(networkdm, edges[e], &amp;cone);
+<a name="line117">117: </a>          vfrom = cone[0];
+<a name="line118">118: </a>          vto   = cone[1];
+
+<a name="line120">120: </a>          <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetLocalVecOffset.html">DMNetworkGetLocalVecOffset</a>(networkdm, vfrom, ALL_COMPONENTS, &amp;offsetfrom);
+<a name="line121">121: </a>          <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetLocalVecOffset.html">DMNetworkGetLocalVecOffset</a>(networkdm, vto, ALL_COMPONENTS, &amp;offsetto);
+<a name="line122">122: </a>          <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetGlobalVecOffset.html">DMNetworkGetGlobalVecOffset</a>(networkdm, vfrom, ALL_COMPONENTS, &amp;goffsetfrom);
+<a name="line123">123: </a>          <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetGlobalVecOffset.html">DMNetworkGetGlobalVecOffset</a>(networkdm, vto, ALL_COMPONENTS, &amp;goffsetto);
+
+<a name="line125">125: </a>          <font color="#4169E1">if</font> (goffsetto &lt; 0) goffsetto = -goffsetto - 1;
+
+<a name="line127">127: </a>          thetaf  = xarr[offsetfrom];
+<a name="line128">128: </a>          Vmf     = xarr[offsetfrom + 1];
+<a name="line129">129: </a>          thetat  = xarr[offsetto];
+<a name="line130">130: </a>          Vmt     = xarr[offsetto + 1];
+<a name="line131">131: </a>          thetaft = thetaf - thetat;
+<a name="line132">132: </a>          thetatf = thetat - thetaf;
+
+<a name="line134">134: </a>          <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetComponent.html">DMNetworkGetComponent</a>(networkdm, vfrom, 0, &amp;keyf, (void **)&amp;busf, NULL);
+<a name="line135">135: </a>          <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetComponent.html">DMNetworkGetComponent</a>(networkdm, vto, 0, &amp;keyt, (void **)&amp;bust, NULL);
+
+<a name="line137">137: </a>          <font color="#4169E1">if</font> (vfrom == vtx[v]) {
+<a name="line138">138: </a>            <font color="#4169E1">if</font> (busf-&gt;ide != REF_BUS) {
+<a name="line139">139: </a>              <font color="#B22222">/*    farr[offsetfrom]   += Gff*Vmf*Vmf + Vmf*Vmt*(Gft*PetscCosScalar(thetaft) + Bft*PetscSinScalar(thetaft));  */</font>
+<a name="line140">140: </a>              row[0]    = goffsetfrom;
+<a name="line141">141: </a>              col[0]    = goffsetfrom;
+<a name="line142">142: </a>              col[1]    = goffsetfrom + 1;
+<a name="line143">143: </a>              col[2]    = goffsetto;
+<a name="line144">144: </a>              col[3]    = goffsetto + 1;
+<a name="line145">145: </a>              values[0] = Vmf * Vmt * (Gft * -PetscSinScalar(thetaft) + Bft * PetscCosScalar(thetaft));            <font color="#B22222">/* df_dthetaf */</font>
+<a name="line146">146: </a>              values[1] = 2.0 * Gff * Vmf + Vmt * (Gft * PetscCosScalar(thetaft) + Bft * PetscSinScalar(thetaft)); <font color="#B22222">/* df_dVmf */</font>
+<a name="line147">147: </a>              values[2] = Vmf * Vmt * (Gft * PetscSinScalar(thetaft) + Bft * -PetscCosScalar(thetaft));            <font color="#B22222">/* df_dthetat */</font>
+<a name="line148">148: </a>              values[3] = Vmf * (Gft * PetscCosScalar(thetaft) + Bft * PetscSinScalar(thetaft));                   <font color="#B22222">/* df_dVmt */</font>
+
+<a name="line150">150: </a>              <a href="../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(J, 1, row, 4, col, values, <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line151">151: </a>            }
+<a name="line152">152: </a>            <font color="#4169E1">if</font> (busf-&gt;ide != PV_BUS &amp;&amp; busf-&gt;ide != REF_BUS) {
+<a name="line153">153: </a>              row[0] = goffsetfrom + 1;
+<a name="line154">154: </a>              col[0] = goffsetfrom;
+<a name="line155">155: </a>              col[1] = goffsetfrom + 1;
+<a name="line156">156: </a>              col[2] = goffsetto;
+<a name="line157">157: </a>              col[3] = goffsetto + 1;
+<a name="line158">158: </a>              <font color="#B22222">/*    farr[offsetfrom+1] += -Bff*Vmf*Vmf + Vmf*Vmt*(-Bft*PetscCosScalar(thetaft) + Gft*PetscSinScalar(thetaft)); */</font>
+<a name="line159">159: </a>              values[0] = Vmf * Vmt * (Bft * PetscSinScalar(thetaft) + Gft * PetscCosScalar(thetaft));
+<a name="line160">160: </a>              values[1] = -2.0 * Bff * Vmf + Vmt * (-Bft * PetscCosScalar(thetaft) + Gft * PetscSinScalar(thetaft));
+<a name="line161">161: </a>              values[2] = Vmf * Vmt * (-Bft * PetscSinScalar(thetaft) + Gft * -PetscCosScalar(thetaft));
+<a name="line162">162: </a>              values[3] = Vmf * (-Bft * PetscCosScalar(thetaft) + Gft * PetscSinScalar(thetaft));
+
+<a name="line164">164: </a>              <a href="../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(J, 1, row, 4, col, values, <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line165">165: </a>            }
+<a name="line166">166: </a>          } <font color="#4169E1">else</font> {
+<a name="line167">167: </a>            <font color="#4169E1">if</font> (bust-&gt;ide != REF_BUS) {
+<a name="line168">168: </a>              row[0] = goffsetto;
+<a name="line169">169: </a>              col[0] = goffsetto;
+<a name="line170">170: </a>              col[1] = goffsetto + 1;
+<a name="line171">171: </a>              col[2] = goffsetfrom;
+<a name="line172">172: </a>              col[3] = goffsetfrom + 1;
+<a name="line173">173: </a>              <font color="#B22222">/*    farr[offsetto]   += Gtt*Vmt*Vmt + Vmt*Vmf*(Gtf*PetscCosScalar(thetatf) + Btf*PetscSinScalar(thetatf)); */</font>
+<a name="line174">174: </a>              values[0] = Vmt * Vmf * (Gtf * -PetscSinScalar(thetatf) + Btf * PetscCosScalar(thetaft));            <font color="#B22222">/* df_dthetat */</font>
+<a name="line175">175: </a>              values[1] = 2.0 * Gtt * Vmt + Vmf * (Gtf * PetscCosScalar(thetatf) + Btf * PetscSinScalar(thetatf)); <font color="#B22222">/* df_dVmt */</font>
+<a name="line176">176: </a>              values[2] = Vmt * Vmf * (Gtf * PetscSinScalar(thetatf) + Btf * -PetscCosScalar(thetatf));            <font color="#B22222">/* df_dthetaf */</font>
+<a name="line177">177: </a>              values[3] = Vmt * (Gtf * PetscCosScalar(thetatf) + Btf * PetscSinScalar(thetatf));                   <font color="#B22222">/* df_dVmf */</font>
+
+<a name="line179">179: </a>              <a href="../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(J, 1, row, 4, col, values, <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line180">180: </a>            }
+<a name="line181">181: </a>            <font color="#4169E1">if</font> (bust-&gt;ide != PV_BUS &amp;&amp; bust-&gt;ide != REF_BUS) {
+<a name="line182">182: </a>              row[0] = goffsetto + 1;
+<a name="line183">183: </a>              col[0] = goffsetto;
+<a name="line184">184: </a>              col[1] = goffsetto + 1;
+<a name="line185">185: </a>              col[2] = goffsetfrom;
+<a name="line186">186: </a>              col[3] = goffsetfrom + 1;
+<a name="line187">187: </a>              <font color="#B22222">/*    farr[offsetto+1] += -Btt*Vmt*Vmt + Vmt*Vmf*(-Btf*PetscCosScalar(thetatf) + Gtf*PetscSinScalar(thetatf)); */</font>
+<a name="line188">188: </a>              values[0] = Vmt * Vmf * (Btf * PetscSinScalar(thetatf) + Gtf * PetscCosScalar(thetatf));
+<a name="line189">189: </a>              values[1] = -2.0 * Btt * Vmt + Vmf * (-Btf * PetscCosScalar(thetatf) + Gtf * PetscSinScalar(thetatf));
+<a name="line190">190: </a>              values[2] = Vmt * Vmf * (-Btf * PetscSinScalar(thetatf) + Gtf * -PetscCosScalar(thetatf));
+<a name="line191">191: </a>              values[3] = Vmt * (-Btf * PetscCosScalar(thetatf) + Gtf * PetscSinScalar(thetatf));
+
+<a name="line193">193: </a>              <a href="../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(J, 1, row, 4, col, values, <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line194">194: </a>            }
+<a name="line195">195: </a>          }
+<a name="line196">196: </a>        }
+<a name="line197">197: </a>        <font color="#4169E1">if</font> (!ghostvtex &amp;&amp; bus-&gt;ide == PV_BUS) {
+<a name="line198">198: </a>          row[0]    = goffset + 1;
+<a name="line199">199: </a>          col[0]    = goffset + 1;
+<a name="line200">200: </a>          values[0] = 1.0;
+<a name="line201">201: </a>          <font color="#4169E1">if</font> (user_power-&gt;jac_error) values[0] = 50.0;
+<a name="line202">202: </a>          <a href="../../../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(J, 1, row, 1, col, values, <a href="../../../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line203">203: </a>        }
+<a name="line204">204: </a>      }
+<a name="line205">205: </a>    }
+<a name="line206">206: </a>  }
+
+<a name="line208">208: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(localX, &amp;xarr);
+<a name="line209">209: </a>  <font color="#4169E1">return</font> 0;
+<a name="line210">210: </a>}
+
+<a name="line212">212: </a><strong><font color="#4169E1"><a name="FormJacobian_Power"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> FormJacobian_Power(<a href="../../../../../docs/manualpages/SNES/SNES.html">SNES</a> snes, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> J, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> Jpre, void *appctx)</font></strong>
+<a name="line213">213: </a>{
+<a name="line214">214: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>              networkdm;
+<a name="line215">215: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>             localX;
+<a name="line216">216: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        nv, ne;
+<a name="line217">217: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *vtx, *edges;
+
+<a name="line219">219: </a>  <a href="../../../../../docs/manualpages/Mat/MatZeroEntries.html">MatZeroEntries</a>(J);
+
+<a name="line221">221: </a>  <a href="../../../../../docs/manualpages/SNES/SNESGetDM.html">SNESGetDM</a>(snes, &amp;networkdm);
+<a name="line222">222: </a>  <a href="../../../../../docs/manualpages/DM/DMGetLocalVector.html">DMGetLocalVector</a>(networkdm, &amp;localX);
+
+<a name="line224">224: </a>  <a href="../../../../../docs/manualpages/DM/DMGlobalToLocalBegin.html">DMGlobalToLocalBegin</a>(networkdm, X, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, localX);
+<a name="line225">225: </a>  <a href="../../../../../docs/manualpages/DM/DMGlobalToLocalEnd.html">DMGlobalToLocalEnd</a>(networkdm, X, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, localX);
+
+<a name="line227">227: </a>  <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetSubnetwork.html">DMNetworkGetSubnetwork</a>(networkdm, 0, &amp;nv, &amp;ne, &amp;vtx, &amp;edges);
+<a name="line228">228: </a>  FormJacobian_Power_private(networkdm, localX, J, nv, ne, vtx, edges, appctx);
+
+<a name="line230">230: </a>  <a href="../../../../../docs/manualpages/DM/DMRestoreLocalVector.html">DMRestoreLocalVector</a>(networkdm, &amp;localX);
+
+<a name="line232">232: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(J, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line233">233: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(J, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line234">234: </a>  <font color="#4169E1">return</font> 0;
+<a name="line235">235: </a>}
+
+<a name="line237">237: </a><strong><font color="#4169E1"><a name="FormFunction_Power"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> FormFunction_Power(<a href="../../../../../docs/manualpages/DM/DM.html">DM</a> networkdm, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> localX, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> localF, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nv, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ne, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *vtx, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *edges, void *appctx)</font></strong>
+<a name="line238">238: </a>{
+<a name="line239">239: </a>  UserCtx_Power     *User = (UserCtx_Power *)appctx;
+<a name="line240">240: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           e, v, vfrom, vto;
+<a name="line241">241: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *xarr;
+<a name="line242">242: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *farr;
+<a name="line243">243: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           offsetfrom, offsetto, offset, i, j, key, numComps;
+<a name="line244">244: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>        Vm;
+<a name="line245">245: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>        Sbase = User-&gt;Sbase;
+<a name="line246">246: </a>  VERTEX_Power       bus   = NULL;
+<a name="line247">247: </a>  GEN                gen;
+<a name="line248">248: </a>  LOAD               load;
+<a name="line249">249: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>          ghostvtex;
+<a name="line250">250: </a>  void              *component;
+
+<a name="line252">252: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(localX, &amp;xarr);
+<a name="line253">253: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(localF, &amp;farr);
+
+<a name="line255">255: </a>  <font color="#4169E1">for</font> (v = 0; v &lt; nv; v++) {
+<a name="line256">256: </a>    <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkIsGhostVertex.html">DMNetworkIsGhostVertex</a>(networkdm, vtx[v], &amp;ghostvtex);
+<a name="line257">257: </a>    <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetNumComponents.html">DMNetworkGetNumComponents</a>(networkdm, vtx[v], &amp;numComps);
+<a name="line258">258: </a>    <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetLocalVecOffset.html">DMNetworkGetLocalVecOffset</a>(networkdm, vtx[v], ALL_COMPONENTS, &amp;offset);
+
+<a name="line260">260: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; numComps; j++) {
+<a name="line261">261: </a>      <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetComponent.html">DMNetworkGetComponent</a>(networkdm, vtx[v], j, &amp;key, &amp;component, NULL);
+<a name="line262">262: </a>      <font color="#4169E1">if</font> (key == User-&gt;compkey_bus) {
+<a name="line263">263: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        nconnedges;
+<a name="line264">264: </a>        const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *connedges;
+
+<a name="line266">266: </a>        bus = (VERTEX_Power)(component);
+<a name="line267">267: </a>        <font color="#B22222">/* Handle reference bus constrained dofs */</font>
+<a name="line268">268: </a>        <font color="#4169E1">if</font> (bus-&gt;ide == REF_BUS || bus-&gt;ide == ISOLATED_BUS) {
+<a name="line269">269: </a>          farr[offset]     = xarr[offset] - bus-&gt;va * PETSC_PI / 180.0;
+<a name="line270">270: </a>          farr[offset + 1] = xarr[offset + 1] - bus-&gt;vm;
+<a name="line271">271: </a>          <font color="#4169E1">break</font>;
+<a name="line272">272: </a>        }
+
+<a name="line274">274: </a>        <font color="#4169E1">if</font> (!ghostvtex) {
+<a name="line275">275: </a>          Vm = xarr[offset + 1];
+
+<a name="line277">277: </a>          <font color="#B22222">/* Shunt injections */</font>
+<a name="line278">278: </a>          farr[offset] += Vm * Vm * bus-&gt;gl / Sbase;
+<a name="line279">279: </a>          <font color="#4169E1">if</font> (bus-&gt;ide != PV_BUS) farr[offset + 1] += -Vm * Vm * bus-&gt;bl / Sbase;
+<a name="line280">280: </a>        }
+
+<a name="line282">282: </a>        <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetSupportingEdges.html">DMNetworkGetSupportingEdges</a>(networkdm, vtx[v], &amp;nconnedges, &amp;connedges);
+<a name="line283">283: </a>        <font color="#4169E1">for</font> (i = 0; i &lt; nconnedges; i++) {
+<a name="line284">284: </a>          EDGE_Power      branch;
+<a name="line285">285: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        keye;
+<a name="line286">286: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>     Gff, Bff, Gft, Bft, Gtf, Btf, Gtt, Btt;
+<a name="line287">287: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *cone;
+<a name="line288">288: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>     Vmf, Vmt, thetaf, thetat, thetaft, thetatf;
+
+<a name="line290">290: </a>          e = connedges[i];
+<a name="line291">291: </a>          <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetComponent.html">DMNetworkGetComponent</a>(networkdm, e, 0, &amp;keye, (void **)&amp;branch, NULL);
+<a name="line292">292: </a>          <font color="#4169E1">if</font> (!branch-&gt;status) <font color="#4169E1">continue</font>;
+<a name="line293">293: </a>          Gff = branch-&gt;yff[0];
+<a name="line294">294: </a>          Bff = branch-&gt;yff[1];
+<a name="line295">295: </a>          Gft = branch-&gt;yft[0];
+<a name="line296">296: </a>          Bft = branch-&gt;yft[1];
+<a name="line297">297: </a>          Gtf = branch-&gt;ytf[0];
+<a name="line298">298: </a>          Btf = branch-&gt;ytf[1];
+<a name="line299">299: </a>          Gtt = branch-&gt;ytt[0];
+<a name="line300">300: </a>          Btt = branch-&gt;ytt[1];
+
+<a name="line302">302: </a>          <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetConnectedVertices.html">DMNetworkGetConnectedVertices</a>(networkdm, e, &amp;cone);
+<a name="line303">303: </a>          vfrom = cone[0];
+<a name="line304">304: </a>          vto   = cone[1];
+
+<a name="line306">306: </a>          <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetLocalVecOffset.html">DMNetworkGetLocalVecOffset</a>(networkdm, vfrom, ALL_COMPONENTS, &amp;offsetfrom);
+<a name="line307">307: </a>          <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetLocalVecOffset.html">DMNetworkGetLocalVecOffset</a>(networkdm, vto, ALL_COMPONENTS, &amp;offsetto);
+
+<a name="line309">309: </a>          thetaf  = xarr[offsetfrom];
+<a name="line310">310: </a>          Vmf     = xarr[offsetfrom + 1];
+<a name="line311">311: </a>          thetat  = xarr[offsetto];
+<a name="line312">312: </a>          Vmt     = xarr[offsetto + 1];
+<a name="line313">313: </a>          thetaft = thetaf - thetat;
+<a name="line314">314: </a>          thetatf = thetat - thetaf;
+
+<a name="line316">316: </a>          <font color="#4169E1">if</font> (vfrom == vtx[v]) {
+<a name="line317">317: </a>            farr[offsetfrom] += Gff * Vmf * Vmf + Vmf * Vmt * (Gft * PetscCosScalar(thetaft) + Bft * PetscSinScalar(thetaft));
+<a name="line318">318: </a>            farr[offsetfrom + 1] += -Bff * Vmf * Vmf + Vmf * Vmt * (-Bft * PetscCosScalar(thetaft) + Gft * PetscSinScalar(thetaft));
+<a name="line319">319: </a>          } <font color="#4169E1">else</font> {
+<a name="line320">320: </a>            farr[offsetto] += Gtt * Vmt * Vmt + Vmt * Vmf * (Gtf * PetscCosScalar(thetatf) + Btf * PetscSinScalar(thetatf));
+<a name="line321">321: </a>            farr[offsetto + 1] += -Btt * Vmt * Vmt + Vmt * Vmf * (-Btf * PetscCosScalar(thetatf) + Gtf * PetscSinScalar(thetatf));
+<a name="line322">322: </a>          }
+<a name="line323">323: </a>        }
+<a name="line324">324: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (key == User-&gt;compkey_gen) {
+<a name="line325">325: </a>        <font color="#4169E1">if</font> (!ghostvtex) {
+<a name="line326">326: </a>          gen = (GEN)(component);
+<a name="line327">327: </a>          <font color="#4169E1">if</font> (!gen-&gt;status) <font color="#4169E1">continue</font>;
+<a name="line328">328: </a>          farr[offset] += -gen-&gt;pg / Sbase;
+<a name="line329">329: </a>          farr[offset + 1] += -gen-&gt;qg / Sbase;
+<a name="line330">330: </a>        }
+<a name="line331">331: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (key == User-&gt;compkey_load) {
+<a name="line332">332: </a>        <font color="#4169E1">if</font> (!ghostvtex) {
+<a name="line333">333: </a>          load = (LOAD)(component);
+<a name="line334">334: </a>          farr[offset] += load-&gt;pl / Sbase;
+<a name="line335">335: </a>          farr[offset + 1] += load-&gt;ql / Sbase;
+<a name="line336">336: </a>        }
+<a name="line337">337: </a>      }
+<a name="line338">338: </a>    }
+<a name="line339">339: </a>    <font color="#4169E1">if</font> (bus &amp;&amp; bus-&gt;ide == PV_BUS) farr[offset + 1] = xarr[offset + 1] - bus-&gt;vm;
+<a name="line340">340: </a>  }
+<a name="line341">341: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(localX, &amp;xarr);
+<a name="line342">342: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(localF, &amp;farr);
+<a name="line343">343: </a>  <font color="#4169E1">return</font> 0;
+<a name="line344">344: </a>}
+
+<a name="line346">346: </a><strong><font color="#4169E1"><a name="SetInitialGuess_Power"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> SetInitialGuess_Power(<a href="../../../../../docs/manualpages/DM/DM.html">DM</a> networkdm, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> localX, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nv, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ne, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *vtx, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *edges, void *appctx)</font></strong>
+<a name="line347">347: </a>{
+<a name="line348">348: </a>  VERTEX_Power   bus;
+<a name="line349">349: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       i;
+<a name="line350">350: </a>  GEN            gen;
+<a name="line351">351: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>      ghostvtex, sharedv;
+<a name="line352">352: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   *xarr;
+<a name="line353">353: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       key, numComps, j, offset;
+<a name="line354">354: </a>  void          *component;
+<a name="line355">355: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>    rank;
+<a name="line356">356: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>       comm;
+<a name="line357">357: </a>  UserCtx_Power *User = (UserCtx_Power *)appctx;
+
+<a name="line359">359: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)networkdm, &amp;comm);
+<a name="line360">360: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line361">361: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(localX, &amp;xarr);
+<a name="line362">362: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nv; i++) {
+<a name="line363">363: </a>    <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkIsGhostVertex.html">DMNetworkIsGhostVertex</a>(networkdm, vtx[i], &amp;ghostvtex);
+<a name="line364">364: </a>    <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkIsSharedVertex.html">DMNetworkIsSharedVertex</a>(networkdm, vtx[i], &amp;sharedv);
+<a name="line365">365: </a>    <font color="#4169E1">if</font> (ghostvtex || sharedv) <font color="#4169E1">continue</font>;
+
+<a name="line367">367: </a>    <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetLocalVecOffset.html">DMNetworkGetLocalVecOffset</a>(networkdm, vtx[i], ALL_COMPONENTS, &amp;offset);
+<a name="line368">368: </a>    <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetNumComponents.html">DMNetworkGetNumComponents</a>(networkdm, vtx[i], &amp;numComps);
+<a name="line369">369: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; numComps; j++) {
+<a name="line370">370: </a>      <a href="../../../../../docs/manualpages/DMNetwork/DMNetworkGetComponent.html">DMNetworkGetComponent</a>(networkdm, vtx[i], j, &amp;key, &amp;component, NULL);
+<a name="line371">371: </a>      <font color="#4169E1">if</font> (key == User-&gt;compkey_bus) {
+<a name="line372">372: </a>        bus              = (VERTEX_Power)(component);
+<a name="line373">373: </a>        xarr[offset]     = bus-&gt;va * PETSC_PI / 180.0;
+<a name="line374">374: </a>        xarr[offset + 1] = bus-&gt;vm;
+<a name="line375">375: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (key == User-&gt;compkey_gen) {
+<a name="line376">376: </a>        gen = (GEN)(component);
+<a name="line377">377: </a>        <font color="#4169E1">if</font> (!gen-&gt;status) <font color="#4169E1">continue</font>;
+<a name="line378">378: </a>        xarr[offset + 1] = gen-&gt;vs;
+<a name="line379">379: </a>        <font color="#4169E1">break</font>;
+<a name="line380">380: </a>      }
+<a name="line381">381: </a>    }
+<a name="line382">382: </a>  }
+<a name="line383">383: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(localX, &amp;xarr);
+<a name="line384">384: </a>  <font color="#4169E1">return</font> 0;
+<a name="line385">385: </a>}
+</pre>
+</body>
+
+</html>

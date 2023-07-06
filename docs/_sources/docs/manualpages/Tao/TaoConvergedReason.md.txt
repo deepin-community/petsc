@@ -1,0 +1,66 @@
+# TaoConvergedReason
+reason a Tao method was said to have converged or diverged 
+## Synopsis
+```
+typedef enum {               /* converged */
+  TAO_CONVERGED_GATOL   = 3, /* ||g(X)|| < gatol */
+  TAO_CONVERGED_GRTOL   = 4, /* ||g(X)|| / f(X)  < grtol */
+  TAO_CONVERGED_GTTOL   = 5, /* ||g(X)|| / ||g(X0)|| < gttol */
+  TAO_CONVERGED_STEPTOL = 6, /* step size small */
+  TAO_CONVERGED_MINF    = 7, /* F < F_min */
+  TAO_CONVERGED_USER    = 8, /* User defined */
+  /* diverged */
+  TAO_DIVERGED_MAXITS       = -2,
+  TAO_DIVERGED_NAN          = -4,
+  TAO_DIVERGED_MAXFCN       = -5,
+  TAO_DIVERGED_LS_FAILURE   = -6,
+  TAO_DIVERGED_TR_REDUCTION = -7,
+  TAO_DIVERGED_USER         = -8, /* User defined */
+  /* keep going */
+  TAO_CONTINUE_ITERATING = 0
+} TaoConvergedReason;
+```
+
+
+The two most common reasons for divergence are
+```none
+1) an incorrectly coded or computed gradient or Hessian
+```
+```none
+2) failure or lack of convergence in the linear system (in this case we recommend
+```
+```none
+testing with -pc_type lu to eliminate the linear solver as the cause of the problem).
+```
+
+
+## Developer Notes
+This must match petsc/finclude/petsctao.h
+
+The string versions of these are in `TAOConvergedReasons`, if you change any value here you must
+also adjust that array.
+
+
+## See Also
+ `Tao`, `TaoSolve()`, `TaoGetConvergedReason()`, `KSPConvergedReason`, `SNESConvergedReason`, `TSConvergedReason`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petsctao.h.html#TaoConvergedReason">include/petsctao.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/unconstrained/tutorials/eptorsion2f.F90.html">src/tao/unconstrained/tutorials/eptorsion2f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/unconstrained/tutorials/rosenbrock2.c.html">src/tao/unconstrained/tutorials/rosenbrock2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/unconstrained/tutorials/rosenbrock3.c.html">src/tao/unconstrained/tutorials/rosenbrock3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/bound/tutorials/jbearing2.c.html">src/tao/bound/tutorials/jbearing2.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petsctao.h)
+
+
+[Index of all Tao routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

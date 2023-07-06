@@ -1,0 +1,48 @@
+# PetscLayoutFindOwnerIndex
+Find the owning rank and the local index for a global index 
+## Synopsis
+```
+#include "petscis.h" 
+static inline PetscErrorCode PetscLayoutFindOwnerIndex(PetscLayout map, PetscInt idx, PetscMPIInt *owner, PetscInt *lidx)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***map   -*** the layout
+- ***idx   -*** global index to find the owner of
+
+
+
+## Output Parameters
+
+- ***owner -*** the owning rank
+- ***lidx  -*** local index used by the owner for idx
+
+
+
+
+
+## Fortran Note
+Not available from Fortran
+
+
+## See Also
+ `PetscLayoutFindOwner()`
+
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscis.h.html#PetscLayoutFindOwnerIndex">include/petscis.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscis.h)
+
+
+[Index of all IS routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,46 @@
+# MatDenseSetLDA
+Sets the leading dimension of the array used by the `MATDENSE` matrix 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatDenseSetLDA(Mat A, PetscInt lda)
+```
+Not collective
+
+
+## Input Parameters
+
+- ***mat -*** a `MATDENSE` or `MATDENSECUDA` matrix
+- ***lda -*** the leading dimension
+
+
+
+
+
+## See Also
+ `MATDENSE`, `MATDENSECUDA`, `MatDenseGetArray()`, `MatDenseRestoreArray()`, `MatDenseGetArrayRead()`, `MatDenseRestoreArrayRead()`, `MatDenseGetLDA()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/seq/dense.c.html#MatDenseSetLDA">src/mat/impls/dense/seq/dense.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex2.c.html">src/mat/tutorials/ex2.c.html</A><BR>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/mpi/mpidense.c.html#MatDenseSetLDA_MPIDense">MatDenseSetLDA_MPIDense in src/mat/impls/dense/mpi/mpidense.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/seq/cuda/densecuda.cu.html#MatDenseSetLDA_SeqDenseCUDA">MatDenseSetLDA_SeqDenseCUDA in src/mat/impls/dense/seq/cuda/densecuda.cu</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/seq/dense.c.html#MatDenseSetLDA_SeqDense">MatDenseSetLDA_SeqDense in src/mat/impls/dense/seq/dense.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/seq/hip/densehip.hip.c.html#MatDenseSetLDA_SeqDenseHIP">MatDenseSetLDA_SeqDenseHIP in src/mat/impls/dense/seq/hip/densehip.hip.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/dense/seq/dense.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

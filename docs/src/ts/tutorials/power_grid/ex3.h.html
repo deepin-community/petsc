@@ -1,0 +1,228 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ts/tutorials/power_grid/ex3.h">Actual source code: ex3.h</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:47+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#4169E1">typedef</font> <font color="#4169E1">enum</font> {
+<a name="line2">  2: </a>  SA_ADJ,
+<a name="line3">  3: </a>  SA_TLM
+<a name="line4">  4: </a>} SAMethod;
+<a name="line5">  5: </a>static const char *const SAMethods[] = {<font color="#666666">"ADJ"</font>, <font color="#666666">"TLM"</font>, <font color="#666666">"SAMethod"</font>, <font color="#666666">"SA_"</font>, 0};
+
+<a name="line7">  7: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line8">  8: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> H, D, omega_b, omega_s, Pmax, Pmax_ini, Pm, E, V, X, u_s, c;
+<a name="line9">  9: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    beta;
+<a name="line10"> 10: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscReal.html">PetscReal</a>   tf, tcl;
+<a name="line11"> 11: </a>  <font color="#B22222">/* Solver context */</font>
+<a name="line12"> 12: </a>  <a href="../../.._grid/../docs/manualpages/TS/TS.html">TS</a>       ts, quadts;
+<a name="line13"> 13: </a>  <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a>      U;    <font color="#B22222">/* solution will be stored here */</font>
+<a name="line14"> 14: </a>  <a href="../../.._grid/../docs/manualpages/Mat/Mat.html">Mat</a>      Jac;  <font color="#B22222">/* Jacobian matrix */</font>
+<a name="line15"> 15: </a>  <a href="../../.._grid/../docs/manualpages/Mat/Mat.html">Mat</a>      Jacp; <font color="#B22222">/* Jacobianp matrix */</font>
+<a name="line16"> 16: </a>  <a href="../../.._grid/../docs/manualpages/Mat/Mat.html">Mat</a>      DRDU, DRDP;
+<a name="line17"> 17: </a>  SAMethod sa;
+<a name="line18"> 18: </a>} AppCtx;
+
+<a name="line20"> 20: </a><font color="#B22222">/* Event check */</font>
+<a name="line21"> 21: </a><strong><font color="#4169E1"><a name="EventFunction"></a><a href="../../.._grid/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> EventFunction(<a href="../../.._grid/../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../.._grid/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *fvalue, void *ctx)</font></strong>
+<a name="line22"> 22: </a>{
+<a name="line23"> 23: </a>  AppCtx *user = (AppCtx *)ctx;
+
+<a name="line25"> 25: </a>  <font color="#B22222">/* Event for fault-on time */</font>
+<a name="line26"> 26: </a>  fvalue[0] = t - user-&gt;tf;
+<a name="line27"> 27: </a>  <font color="#B22222">/* Event for fault-off time */</font>
+<a name="line28"> 28: </a>  fvalue[1] = t - user-&gt;tcl;
+
+<a name="line30"> 30: </a>  <font color="#4169E1">return</font> 0;
+<a name="line31"> 31: </a>}
+
+<a name="line33"> 33: </a><strong><font color="#4169E1"><a name="PostEventFunction"></a><a href="../../.._grid/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PostEventFunction(<a href="../../.._grid/../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../.._grid/../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nevents, <a href="../../.._grid/../docs/manualpages/Sys/PetscInt.html">PetscInt</a> event_list[], <a href="../../.._grid/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../.._grid/../docs/manualpages/Sys/PetscBool.html">PetscBool</a> forwardsolve, void *ctx)</font></strong>
+<a name="line34"> 34: </a>{
+<a name="line35"> 35: </a>  AppCtx *user = (AppCtx *)ctx;
+
+<a name="line37"> 37: </a>  <font color="#4169E1">if</font> (event_list[0] == 0) {
+<a name="line38"> 38: </a>    <font color="#4169E1">if</font> (forwardsolve) user-&gt;Pmax = 0.0; <font color="#B22222">/* Apply disturbance - this is done by setting Pmax = 0 */</font>
+<a name="line39"> 39: </a>    <font color="#4169E1">else</font> user-&gt;Pmax = user-&gt;Pmax_ini;   <font color="#B22222">/* Going backward, reversal of event */</font>
+<a name="line40"> 40: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (event_list[0] == 1) {
+<a name="line41"> 41: </a>    <font color="#4169E1">if</font> (forwardsolve) user-&gt;Pmax = user-&gt;Pmax_ini; <font color="#B22222">/* Remove the fault  - this is done by setting Pmax = Pmax_ini */</font>
+<a name="line42"> 42: </a>    <font color="#4169E1">else</font> user-&gt;Pmax = 0.0;                         <font color="#B22222">/* Going backward, reversal of event */</font>
+<a name="line43"> 43: </a>  }
+<a name="line44"> 44: </a>  <a href="../../.._grid/../docs/manualpages/TS/TSRestartStep.html">TSRestartStep</a>(ts); <font color="#B22222">/* Must set restart flag to ture, otherwise methods with FSAL will fail */</font>
+<a name="line45"> 45: </a>  <font color="#4169E1">return</font> 0;
+<a name="line46"> 46: </a>}
+
+<a name="line48"> 48: </a><font color="#B22222">/*</font>
+<a name="line49"> 49: </a><font color="#B22222">     Defines the ODE passed to the ODE solver</font>
+<a name="line50"> 50: </a><font color="#B22222">*/</font>
+<a name="line51"> 51: </a><strong><font color="#4169E1"><a name="RHSFunction"></a><a href="../../.._grid/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> RHSFunction(<a href="../../.._grid/../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../.._grid/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> U, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> F, AppCtx *ctx)</font></strong>
+<a name="line52"> 52: </a>{
+<a name="line53"> 53: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *f, Pmax;
+<a name="line54"> 54: </a>  const <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *u;
+
+<a name="line56"> 56: </a>  <font color="#B22222">/*  The next three lines allow us to access the entries of the vectors directly */</font>
+<a name="line57"> 57: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(U, &amp;u);
+<a name="line58"> 58: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(F, &amp;f);
+<a name="line59"> 59: </a>  Pmax = ctx-&gt;Pmax;
+<a name="line60"> 60: </a>  f[0] = ctx-&gt;omega_b * (u[1] - ctx-&gt;omega_s);
+<a name="line61"> 61: </a>  f[1] = ctx-&gt;omega_s / (2.0 * ctx-&gt;H) * (ctx-&gt;Pm - Pmax * PetscSinScalar(u[0]) - ctx-&gt;D * (u[1] - ctx-&gt;omega_s));
+
+<a name="line63"> 63: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(U, &amp;u);
+<a name="line64"> 64: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(F, &amp;f);
+<a name="line65"> 65: </a>  <font color="#4169E1">return</font> 0;
+<a name="line66"> 66: </a>}
+
+<a name="line68"> 68: </a><font color="#B22222">/*</font>
+<a name="line69"> 69: </a><font color="#B22222">     Defines the Jacobian of the ODE passed to the ODE solver. See <a href="../../.._grid/../docs/manualpages/TS/TSSetRHSJacobian.html">TSSetRHSJacobian</a>() for the meaning of a and the Jacobian.</font>
+<a name="line70"> 70: </a><font color="#B22222">*/</font>
+<a name="line71"> 71: </a><strong><font color="#4169E1"><a name="RHSJacobian"></a><a href="../../.._grid/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> RHSJacobian(<a href="../../.._grid/../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../.._grid/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> U, <a href="../../.._grid/../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../.._grid/../docs/manualpages/Mat/Mat.html">Mat</a> B, AppCtx *ctx)</font></strong>
+<a name="line72"> 72: </a>{
+<a name="line73"> 73: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           rowcol[] = {0, 1};
+<a name="line74"> 74: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>        J[2][2], Pmax;
+<a name="line75"> 75: </a>  const <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *u;
+
+<a name="line77"> 77: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(U, &amp;u);
+<a name="line78"> 78: </a>  Pmax    = ctx-&gt;Pmax;
+<a name="line79"> 79: </a>  J[0][0] = 0;
+<a name="line80"> 80: </a>  J[0][1] = ctx-&gt;omega_b;
+<a name="line81"> 81: </a>  J[1][0] = -ctx-&gt;omega_s / (2.0 * ctx-&gt;H) * Pmax * PetscCosScalar(u[0]);
+<a name="line82"> 82: </a>  J[1][1] = -ctx-&gt;omega_s / (2.0 * ctx-&gt;H) * ctx-&gt;D;
+<a name="line83"> 83: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(B, 2, rowcol, 2, rowcol, &amp;J[0][0], <a href="../../.._grid/../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line84"> 84: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(U, &amp;u);
+
+<a name="line86"> 86: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(A, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line87"> 87: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(A, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line88"> 88: </a>  <font color="#4169E1">if</font> (A != B) {
+<a name="line89"> 89: </a>    <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(B, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line90"> 90: </a>    <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(B, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line91"> 91: </a>  }
+<a name="line92"> 92: </a>  <font color="#4169E1">return</font> 0;
+<a name="line93"> 93: </a>}
+
+<a name="line95"> 95: </a><font color="#B22222">/*</font>
+<a name="line96"> 96: </a><font color="#B22222">     Defines the ODE passed to the ODE solver</font>
+<a name="line97"> 97: </a><font color="#B22222">*/</font>
+<a name="line98"> 98: </a><strong><font color="#4169E1"><a name="IFunction"></a><a href="../../.._grid/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> IFunction(<a href="../../.._grid/../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../.._grid/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> U, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> Udot, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> F, AppCtx *ctx)</font></strong>
+<a name="line99"> 99: </a>{
+<a name="line100">100: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *f, Pmax;
+<a name="line101">101: </a>  const <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *u, *udot;
+
+<a name="line103">103: </a>  <font color="#B22222">/*  The next three lines allow us to access the entries of the vectors directly */</font>
+<a name="line104">104: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(U, &amp;u);
+<a name="line105">105: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(Udot, &amp;udot);
+<a name="line106">106: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(F, &amp;f);
+<a name="line107">107: </a>  Pmax = ctx-&gt;Pmax;
+<a name="line108">108: </a>  f[0] = udot[0] - ctx-&gt;omega_b * (u[1] - ctx-&gt;omega_s);
+<a name="line109">109: </a>  f[1] = 2.0 * ctx-&gt;H / ctx-&gt;omega_s * udot[1] + Pmax * PetscSinScalar(u[0]) + ctx-&gt;D * (u[1] - ctx-&gt;omega_s) - ctx-&gt;Pm;
+
+<a name="line111">111: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(U, &amp;u);
+<a name="line112">112: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(Udot, &amp;udot);
+<a name="line113">113: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(F, &amp;f);
+<a name="line114">114: </a>  <font color="#4169E1">return</font> 0;
+<a name="line115">115: </a>}
+
+<a name="line117">117: </a><font color="#B22222">/*</font>
+<a name="line118">118: </a><font color="#B22222">     Defines the Jacobian of the ODE passed to the ODE solver. See <a href="../../.._grid/../docs/manualpages/TS/TSSetIJacobian.html">TSSetIJacobian</a>() for the meaning of a and the Jacobian.</font>
+<a name="line119">119: </a><font color="#B22222">*/</font>
+<a name="line120">120: </a><strong><font color="#4169E1"><a name="IJacobian"></a><a href="../../.._grid/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> IJacobian(<a href="../../.._grid/../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../.._grid/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> U, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> Udot, <a href="../../.._grid/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> a, <a href="../../.._grid/../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../.._grid/../docs/manualpages/Mat/Mat.html">Mat</a> B, AppCtx *ctx)</font></strong>
+<a name="line121">121: </a>{
+<a name="line122">122: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           rowcol[] = {0, 1};
+<a name="line123">123: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>        J[2][2], Pmax;
+<a name="line124">124: </a>  const <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *u, *udot;
+
+<a name="line126">126: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(U, &amp;u);
+<a name="line127">127: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(Udot, &amp;udot);
+<a name="line128">128: </a>  Pmax    = ctx-&gt;Pmax;
+<a name="line129">129: </a>  J[0][0] = a;
+<a name="line130">130: </a>  J[0][1] = -ctx-&gt;omega_b;
+<a name="line131">131: </a>  J[1][1] = 2.0 * ctx-&gt;H / ctx-&gt;omega_s * a + ctx-&gt;D;
+<a name="line132">132: </a>  J[1][0] = Pmax * PetscCosScalar(u[0]);
+
+<a name="line134">134: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(B, 2, rowcol, 2, rowcol, &amp;J[0][0], <a href="../../.._grid/../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line135">135: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(U, &amp;u);
+<a name="line136">136: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(Udot, &amp;udot);
+
+<a name="line138">138: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(A, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line139">139: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(A, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line140">140: </a>  <font color="#4169E1">if</font> (A != B) {
+<a name="line141">141: </a>    <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(B, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line142">142: </a>    <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(B, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line143">143: </a>  }
+<a name="line144">144: </a>  <font color="#4169E1">return</font> 0;
+<a name="line145">145: </a>}
+
+<a name="line147">147: </a><strong><font color="#4169E1"><a name="RHSJacobianP"></a><a href="../../.._grid/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> RHSJacobianP(<a href="../../.._grid/../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../.._grid/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../.._grid/../docs/manualpages/Mat/Mat.html">Mat</a> A, void *ctx0)</font></strong>
+<a name="line148">148: </a>{
+<a name="line149">149: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     row[] = {0, 1}, col[] = {0};
+<a name="line150">150: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *x, J[2][1];
+<a name="line151">151: </a>  AppCtx      *ctx = (AppCtx *)ctx0;
+
+<a name="line154">154: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(X, &amp;x);
+<a name="line155">155: </a>  J[0][0] = 0;
+<a name="line156">156: </a>  J[1][0] = ctx-&gt;omega_s / (2.0 * ctx-&gt;H);
+<a name="line157">157: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(A, 2, row, 1, col, &amp;J[0][0], <a href="../../.._grid/../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+
+<a name="line159">159: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(A, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line160">160: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(A, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line161">161: </a>  <font color="#4169E1">return</font> 0;
+<a name="line162">162: </a>}
+
+<a name="line164">164: </a><strong><font color="#4169E1"><a name="CostIntegrand"></a><a href="../../.._grid/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CostIntegrand(<a href="../../.._grid/../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../.._grid/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> U, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> R, AppCtx *ctx)</font></strong>
+<a name="line165">165: </a>{
+<a name="line166">166: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *r;
+<a name="line167">167: </a>  const <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *u;
+
+<a name="line169">169: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(U, &amp;u);
+<a name="line170">170: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(R, &amp;r);
+<a name="line171">171: </a>  r[0] = ctx-&gt;c * PetscPowScalarInt(<a href="../../.._grid/../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(0., u[0] - ctx-&gt;u_s), ctx-&gt;beta);
+<a name="line172">172: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(R, &amp;r);
+<a name="line173">173: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(U, &amp;u);
+<a name="line174">174: </a>  <font color="#4169E1">return</font> 0;
+<a name="line175">175: </a>}
+
+<a name="line177">177: </a><font color="#B22222">/* Transpose of DRDU */</font>
+<a name="line178">178: </a><strong><font color="#4169E1"><a name="DRDUJacobianTranspose"></a><a href="../../.._grid/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DRDUJacobianTranspose(<a href="../../.._grid/../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../.._grid/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> U, <a href="../../.._grid/../docs/manualpages/Mat/Mat.html">Mat</a> DRDU, <a href="../../.._grid/../docs/manualpages/Mat/Mat.html">Mat</a> B, AppCtx *ctx)</font></strong>
+<a name="line179">179: </a>{
+<a name="line180">180: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>        ru[2];
+<a name="line181">181: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           row[] = {0, 1}, col[] = {0};
+<a name="line182">182: </a>  const <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *u;
+
+<a name="line184">184: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(U, &amp;u);
+<a name="line185">185: </a>  ru[0] = ctx-&gt;c * ctx-&gt;beta * PetscPowScalarInt(<a href="../../.._grid/../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(0., u[0] - ctx-&gt;u_s), ctx-&gt;beta - 1);
+<a name="line186">186: </a>  ru[1] = 0;
+<a name="line187">187: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(DRDU, 2, row, 1, col, ru, <a href="../../.._grid/../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line188">188: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(U, &amp;u);
+<a name="line189">189: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(DRDU, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line190">190: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(DRDU, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line191">191: </a>  <font color="#4169E1">return</font> 0;
+<a name="line192">192: </a>}
+
+<a name="line194">194: </a><strong><font color="#4169E1"><a name="DRDPJacobianTranspose"></a><a href="../../.._grid/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DRDPJacobianTranspose(<a href="../../.._grid/../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../.._grid/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> U, <a href="../../.._grid/../docs/manualpages/Mat/Mat.html">Mat</a> DRDP, void *ctx)</font></strong>
+<a name="line195">195: </a>{
+<a name="line196">196: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatZeroEntries.html">MatZeroEntries</a>(DRDP);
+<a name="line197">197: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(DRDP, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line198">198: </a>  <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(DRDP, <a href="../../.._grid/../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line199">199: </a>  <font color="#4169E1">return</font> 0;
+<a name="line200">200: </a>}
+
+<a name="line202">202: </a><strong><font color="#4169E1"><a name="ComputeSensiP"></a><a href="../../.._grid/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ComputeSensiP(<a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> lambda, <a href="../../.._grid/../docs/manualpages/Vec/Vec.html">Vec</a> mu, AppCtx *ctx)</font></strong>
+<a name="line203">203: </a>{
+<a name="line204">204: </a>  <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *y, sensip;
+<a name="line205">205: </a>  const <a href="../../.._grid/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *x;
+
+<a name="line207">207: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(lambda, &amp;x);
+<a name="line208">208: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(mu, &amp;y);
+<a name="line209">209: </a>  sensip = 1. / PetscSqrtScalar(1. - (ctx-&gt;Pm / ctx-&gt;Pmax) * (ctx-&gt;Pm / ctx-&gt;Pmax)) / ctx-&gt;Pmax * x[0] + y[0];
+<a name="line210">210: </a>  y[0]   = sensip;
+<a name="line211">211: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(mu, &amp;y);
+<a name="line212">212: </a>  <a href="../../.._grid/../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(lambda, &amp;x);
+<a name="line213">213: </a>  <font color="#4169E1">return</font> 0;
+<a name="line214">214: </a>}
+</pre>
+</body>
+
+</html>

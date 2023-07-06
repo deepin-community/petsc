@@ -1,0 +1,15 @@
+Turn off cleanup.
+
+Index: petsc/config/BuildSystem/config/framework.py
+===================================================================
+--- petsc.orig/config/BuildSystem/config/framework.py	2022-10-30 13:54:12.142121898 +0100
++++ petsc/config/BuildSystem/config/framework.py	2022-10-30 13:54:12.138121868 +0100
+@@ -173,7 +173,7 @@
+     help.addArgument('Framework', '-ignoreCompileOutput=<bool>', nargs.ArgBool(None, 1, 'Ignore compiler output'))
+     help.addArgument('Framework', '-ignoreLinkOutput=<bool>',    nargs.ArgBool(None, 0, 'Ignore linker output'))
+     help.addArgument('Framework', '-ignoreWarnings=<bool>',      nargs.ArgBool(None, 0, 'Ignore compiler and linker warnings'))
+-    help.addArgument('Framework', '-doCleanup=<bool>',           nargs.ArgBool(None, 1, 'Delete any configure generated files (turn off for debugging)'))
++    help.addArgument('Framework', '-doCleanup=<bool>',           nargs.ArgBool(None, 0, 'Delete any configure generated files (turn off for debugging)'))
+     help.addArgument('Framework', '-with-executables-search-path', nargs.Arg(None, searchdirs, 'A list of directories used to search for executables'))
+     help.addArgument('Framework', '-with-packages-search-path',  nargs.Arg(None, packagedirs, 'A list of directories used to search for packages'))
+     help.addArgument('Framework', '-with-packages-build-dir=<dir>', nargs.Arg(None, None, 'Location to unpack and run the build process for downloaded packages'))

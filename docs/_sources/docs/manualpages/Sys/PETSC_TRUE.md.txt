@@ -1,0 +1,38 @@
+# PETSC_TRUE
+True value of `PetscBool` 
+
+
+## Note
+Nonzero integer
+
+
+## See Also
+ `PetscBool`, `PetscBool3`, `PETSC_FALSE`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscsystypes.h.html#PETSC_TRUE">include/petscsystypes.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex5f90.F90.html">src/sys/tutorials/ex5f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex12.c.html">src/mat/tutorials/ex12.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex4.c.html">src/mat/tutorials/ex4.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex4f.F90.html">src/mat/tutorials/ex4f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex5cu.cu.html">src/mat/tutorials/ex5cu.cu.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex5k.kokkos.cxx.html">src/mat/tutorials/ex5k.kokkos.cxx.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex7.c.html">src/mat/tutorials/ex7.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/tutorials/ex10.c.html">src/dm/impls/plex/tutorials/ex10.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/tutorials/ex11.c.html">src/dm/impls/plex/tutorials/ex11.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/tutorials/ex13.c.html">src/dm/impls/plex/tutorials/ex13.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/tutorials/ex4f90.F90.html">src/dm/impls/plex/tutorials/ex4f90.F90.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscsystypes.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

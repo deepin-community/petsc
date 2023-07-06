@@ -1,0 +1,959 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Draw Manual Pages &#8212; PETSc 3.18.6 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../../_static/styles/bootstrap.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/katex-math.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script src="../../../_static/katex.min.js"></script>
+    <script src="../../../_static/auto-render.min.js"></script>
+    <script src="../../../_static/katex_autorenderer.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/manualpages/Draw/index';</script>
+    <link rel="shortcut icon" href="../../../_static/petsc_favicon.png"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="PETSC_DRAW_IMAGE" href="PETSC_DRAW_IMAGE.html" />
+    <link rel="prev" title="PetscDualSpaceViewFromOptions" href="../DUALSPACE/PetscDualSpaceViewFromOptions.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../../../index.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../../../_static/PETSc-TAO_RGB.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../../../_static/PETSc-TAO_RGB_white.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        API-Docs
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+    </ul>
+</nav>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+        <div class="navbar-end-item navbar-persistent--container">
+          
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+        </div>
+      
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+
+
+  
+  
+    <div class="navbar-persistent--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+    </div>
+  
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+  </label>
+  
+
+</div>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        API-Docs
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+  <div class="sidebar-start-items sidebar-primary__section">
+    <div class="sidebar-start-items__item"><nav class="bd-links" id="bd-docs-nav" aria-label="Section navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">
+    Section Navigation
+  </p>
+  <div class="bd-toc-item navbar-nav">
+    <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../changes/index.html">Changes for each release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+</ul>
+
+  </div>
+</nav>
+    </div>
+  </div>
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+  
+  <div id="rtd-footer-container"></div>
+
+      </div>
+      <main id="main-content" class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+            </div>
+            
+            
+            <article class="bd-article" role="main">
+              
+  <section class="tex2jax_ignore mathjax_ignore" id="draw-manual-pages">
+<h1>Draw Manual Pages<a class="headerlink" href="#draw-manual-pages" title="Permalink to this heading">#</a></h1>
+<p>The PetscDraw routines are used to produce simple on-screen graphics.</p>
+<p><a class="reference internal" href="../index.html"><span class="doc std std-doc">Manual Pages Table of Contents</span></a></p>
+<section id="manual-pages-by-level">
+<h2>Manual Pages by Level<a class="headerlink" href="#manual-pages-by-level" title="Permalink to this heading">#</a></h2>
+<section id="beginner-basic-usage">
+<h3>Beginner - Basic usage<a class="headerlink" href="#beginner-basic-usage" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="PETSC_DRAW_IMAGE.html"><span class="doc std std-doc">PETSC_DRAW_IMAGE</span></a></p></li>
+<li><p><a class="reference internal" href="PETSC_DRAW_NULL.html"><span class="doc std std-doc">PETSC_DRAW_NULL</span></a></p></li>
+<li><p><a class="reference internal" href="PETSC_DRAW_X.html"><span class="doc std std-doc">PETSC_DRAW_X</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDraw.html"><span class="doc std std-doc">PetscDraw</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawArrow.html"><span class="doc std std-doc">PetscDrawArrow</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawCreate.html"><span class="doc std std-doc">PetscDrawCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawDestroy.html"><span class="doc std std-doc">PetscDrawDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawEllipse.html"><span class="doc std std-doc">PetscDrawEllipse</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawFlush.html"><span class="doc std std-doc">PetscDrawFlush</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawGetMarkerType.html"><span class="doc std std-doc">PetscDrawGetMarkerType</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDrawHGView.html"><span class="doc std std-doc">PetscDrawHGView</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGView.html"><span class="doc std std-doc">PetscDrawLGView</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLine.html"><span class="doc std std-doc">PetscDrawLine</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawMarker.html"><span class="doc std std-doc">PetscDrawMarker</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawOpenImage.html"><span class="doc std std-doc">PetscDrawOpenImage</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawOpenX.html"><span class="doc std std-doc">PetscDrawOpenX</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawPause.html"><span class="doc std std-doc">PetscDrawPause</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawPoint.html"><span class="doc std std-doc">PetscDrawPoint</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawPointPixel.html"><span class="doc std std-doc">PetscDrawPointPixel</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDrawRectangle.html"><span class="doc std std-doc">PetscDrawRectangle</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetMarkerType.html"><span class="doc std std-doc">PetscDrawSetMarkerType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawString.html"><span class="doc std std-doc">PetscDrawString</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawStringBoxed.html"><span class="doc std std-doc">PetscDrawStringBoxed</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawStringCentered.html"><span class="doc std std-doc">PetscDrawStringCentered</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawStringVertical.html"><span class="doc std std-doc">PetscDrawStringVertical</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawTriangle.html"><span class="doc std std-doc">PetscDrawTriangle</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawType.html"><span class="doc std std-doc">PetscDrawType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawView.html"><span class="doc std std-doc">PetscDrawView</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="intermediate-setting-options-for-algorithms-and-data-structures">
+<h3>Intermediate - Setting options for algorithms and data structures<a class="headerlink" href="#intermediate-setting-options-for-algorithms-and-data-structures" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDrawBarCreate.html"><span class="doc std std-doc">PetscDrawBarCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawBarDestroy.html"><span class="doc std std-doc">PetscDrawBarDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawBarDraw.html"><span class="doc std std-doc">PetscDrawBarDraw</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawBarGetAxis.html"><span class="doc std std-doc">PetscDrawBarGetAxis</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawBarGetDraw.html"><span class="doc std std-doc">PetscDrawBarGetDraw</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawBarSave.html"><span class="doc std std-doc">PetscDrawBarSave</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawBarSetColor.html"><span class="doc std std-doc">PetscDrawBarSetColor</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawBarSetData.html"><span class="doc std std-doc">PetscDrawBarSetData</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawBarSetFromOptions.html"><span class="doc std std-doc">PetscDrawBarSetFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawBarSetLimits.html"><span class="doc std std-doc">PetscDrawBarSetLimits</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawBarSort.html"><span class="doc std std-doc">PetscDrawBarSort</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawClear.html"><span class="doc std std-doc">PetscDrawClear</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawGetBoundingBox.html"><span class="doc std std-doc">PetscDrawGetBoundingBox</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawGetCurrentPoint.html"><span class="doc std std-doc">PetscDrawGetCurrentPoint</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawGetMouseButton.html"><span class="doc std std-doc">PetscDrawGetMouseButton</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawGetPause.html"><span class="doc std std-doc">PetscDrawGetPause</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawGetTitle.html"><span class="doc std std-doc">PetscDrawGetTitle</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawGetWindowSize.html"><span class="doc std std-doc">PetscDrawGetWindowSize</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawHGAddValue.html"><span class="doc std std-doc">PetscDrawHGAddValue</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawHGCalcStats.html"><span class="doc std std-doc">PetscDrawHGCalcStats</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawHGCreate.html"><span class="doc std std-doc">PetscDrawHGCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawHGDestroy.html"><span class="doc std std-doc">PetscDrawHGDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawHGDraw.html"><span class="doc std std-doc">PetscDrawHGDraw</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawHGGetAxis.html"><span class="doc std std-doc">PetscDrawHGGetAxis</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawHGGetDraw.html"><span class="doc std std-doc">PetscDrawHGGetDraw</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawHGIntegerBins.html"><span class="doc std std-doc">PetscDrawHGIntegerBins</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDrawHGReset.html"><span class="doc std std-doc">PetscDrawHGReset</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawHGSave.html"><span class="doc std std-doc">PetscDrawHGSave</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawHGSetColor.html"><span class="doc std std-doc">PetscDrawHGSetColor</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawHGSetLimits.html"><span class="doc std std-doc">PetscDrawHGSetLimits</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawHGSetNumberBins.html"><span class="doc std std-doc">PetscDrawHGSetNumberBins</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGAddCommonPoint.html"><span class="doc std std-doc">PetscDrawLGAddCommonPoint</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGAddPoint.html"><span class="doc std std-doc">PetscDrawLGAddPoint</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGAddPoints.html"><span class="doc std std-doc">PetscDrawLGAddPoints</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGCreate.html"><span class="doc std std-doc">PetscDrawLGCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGDestroy.html"><span class="doc std std-doc">PetscDrawLGDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGDraw.html"><span class="doc std std-doc">PetscDrawLGDraw</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGGetDimension.html"><span class="doc std std-doc">PetscDrawLGGetDimension</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGGetDraw.html"><span class="doc std std-doc">PetscDrawLGGetDraw</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGReset.html"><span class="doc std std-doc">PetscDrawLGReset</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGSPDraw.html"><span class="doc std std-doc">PetscDrawLGSPDraw</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGSave.html"><span class="doc std std-doc">PetscDrawLGSave</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGSetColors.html"><span class="doc std std-doc">PetscDrawLGSetColors</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGSetDimension.html"><span class="doc std std-doc">PetscDrawLGSetDimension</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGSetFromOptions.html"><span class="doc std std-doc">PetscDrawLGSetFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGSetLegend.html"><span class="doc std std-doc">PetscDrawLGSetLegend</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGSetLimits.html"><span class="doc std std-doc">PetscDrawLGSetLimits</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGSetUseMarkers.html"><span class="doc std std-doc">PetscDrawLGSetUseMarkers</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawPopCurrentPoint.html"><span class="doc std std-doc">PetscDrawPopCurrentPoint</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawPushCurrentPoint.html"><span class="doc std std-doc">PetscDrawPushCurrentPoint</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawResizeWindow.html"><span class="doc std std-doc">PetscDrawResizeWindow</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDrawSPAddPoint.html"><span class="doc std std-doc">PetscDrawSPAddPoint</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSPAddPointColorized.html"><span class="doc std std-doc">PetscDrawSPAddPointColorized</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSPAddPoints.html"><span class="doc std std-doc">PetscDrawSPAddPoints</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSPCreate.html"><span class="doc std std-doc">PetscDrawSPCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSPDestroy.html"><span class="doc std std-doc">PetscDrawSPDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSPDraw.html"><span class="doc std std-doc">PetscDrawSPDraw</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSPGetAxis.html"><span class="doc std std-doc">PetscDrawSPGetAxis</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSPGetDimension.html"><span class="doc std std-doc">PetscDrawSPGetDimension</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSPGetDraw.html"><span class="doc std std-doc">PetscDrawSPGetDraw</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSPReset.html"><span class="doc std std-doc">PetscDrawSPReset</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSPSave.html"><span class="doc std std-doc">PetscDrawSPSave</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSPSetDimension.html"><span class="doc std std-doc">PetscDrawSPSetDimension</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSPSetLimits.html"><span class="doc std std-doc">PetscDrawSPSetLimits</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawScalePopup.html"><span class="doc std std-doc">PetscDrawScalePopup</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetCurrentPoint.html"><span class="doc std std-doc">PetscDrawSetCurrentPoint</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetDoubleBuffer.html"><span class="doc std std-doc">PetscDrawSetDoubleBuffer</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetFromOptions.html"><span class="doc std std-doc">PetscDrawSetFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetPause.html"><span class="doc std std-doc">PetscDrawSetPause</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetSave.html"><span class="doc std std-doc">PetscDrawSetSave</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetSaveFinalImage.html"><span class="doc std std-doc">PetscDrawSetSaveFinalImage</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetSaveMovie.html"><span class="doc std std-doc">PetscDrawSetSaveMovie</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetTitle.html"><span class="doc std std-doc">PetscDrawSetTitle</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetType.html"><span class="doc std std-doc">PetscDrawSetType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawTensorContour.html"><span class="doc std std-doc">PetscDrawTensorContour</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawViewFromOptions.html"><span class="doc std std-doc">PetscDrawViewFromOptions</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="advanced-setting-more-advanced-options-and-customization">
+<h3>Advanced - Setting more advanced options and customization<a class="headerlink" href="#advanced-setting-more-advanced-options-and-customization" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDrawAppendTitle.html"><span class="doc std std-doc">PetscDrawAppendTitle</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawAxis.html"><span class="doc std std-doc">PetscDrawAxis</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawAxisCreate.html"><span class="doc std std-doc">PetscDrawAxisCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawAxisDestroy.html"><span class="doc std std-doc">PetscDrawAxisDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawAxisDraw.html"><span class="doc std std-doc">PetscDrawAxisDraw</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawAxisGetLimits.html"><span class="doc std std-doc">PetscDrawAxisGetLimits</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawAxisSetColors.html"><span class="doc std std-doc">PetscDrawAxisSetColors</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawAxisSetHoldLimits.html"><span class="doc std std-doc">PetscDrawAxisSetHoldLimits</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawAxisSetLabels.html"><span class="doc std std-doc">PetscDrawAxisSetLabels</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawAxisSetLimits.html"><span class="doc std std-doc">PetscDrawAxisSetLimits</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawBOP.html"><span class="doc std std-doc">PetscDrawBOP</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawBar.html"><span class="doc std std-doc">PetscDrawBar</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawCheckResizedWindow.html"><span class="doc std std-doc">PetscDrawCheckResizedWindow</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawEOP.html"><span class="doc std std-doc">PetscDrawEOP</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawGetCoordinates.html"><span class="doc std std-doc">PetscDrawGetCoordinates</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDrawGetPopup.html"><span class="doc std std-doc">PetscDrawGetPopup</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawGetSingleton.html"><span class="doc std std-doc">PetscDrawGetSingleton</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawGetType.html"><span class="doc std std-doc">PetscDrawGetType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawGetViewPort.html"><span class="doc std std-doc">PetscDrawGetViewPort</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawHG.html"><span class="doc std std-doc">PetscDrawHG</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawIsNull.html"><span class="doc std std-doc">PetscDrawIsNull</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLG.html"><span class="doc std std-doc">PetscDrawLG</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGGetAxis.html"><span class="doc std std-doc">PetscDrawLGGetAxis</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLGSetOptionsPrefix.html"><span class="doc std std-doc">PetscDrawLGSetOptionsPrefix</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLineGetWidth.html"><span class="doc std std-doc">PetscDrawLineGetWidth</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawLineSetWidth.html"><span class="doc std std-doc">PetscDrawLineSetWidth</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawOpenNull.html"><span class="doc std std-doc">PetscDrawOpenNull</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawPointSetSize.html"><span class="doc std std-doc">PetscDrawPointSetSize</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawRestoreSingleton.html"><span class="doc std std-doc">PetscDrawRestoreSingleton</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSP.html"><span class="doc std std-doc">PetscDrawSP</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDrawSave.html"><span class="doc std std-doc">PetscDrawSave</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSaveMovie.html"><span class="doc std std-doc">PetscDrawSaveMovie</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetCoordinates.html"><span class="doc std std-doc">PetscDrawSetCoordinates</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetDisplay.html"><span class="doc std std-doc">PetscDrawSetDisplay</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetOptionsPrefix.html"><span class="doc std std-doc">PetscDrawSetOptionsPrefix</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSetViewPort.html"><span class="doc std std-doc">PetscDrawSetViewPort</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawSplitViewPort.html"><span class="doc std std-doc">PetscDrawSplitViewPort</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawStringGetSize.html"><span class="doc std std-doc">PetscDrawStringGetSize</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawStringSetSize.html"><span class="doc std std-doc">PetscDrawStringSetSize</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawTensorContourPatch.html"><span class="doc std std-doc">PetscDrawTensorContourPatch</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawViewPortsCreate.html"><span class="doc std std-doc">PetscDrawViewPortsCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawViewPortsCreateRect.html"><span class="doc std std-doc">PetscDrawViewPortsCreateRect</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawViewPortsDestroy.html"><span class="doc std std-doc">PetscDrawViewPortsDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawViewPortsSet.html"><span class="doc std std-doc">PetscDrawViewPortsSet</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawZoom.html"><span class="doc std std-doc">PetscDrawZoom</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="developer-interfaces-intended-primarily-for-library-developers-not-for-typical-applications-programmers">
+<h3>Developer - Interfaces intended primarily for library developers, not for typical applications programmers<a class="headerlink" href="#developer-interfaces-intended-primarily-for-library-developers-not-for-typical-applications-programmers" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDrawCoordinateToPixel.html"><span class="doc std std-doc">PetscDrawCoordinateToPixel</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawFinalizePackage.html"><span class="doc std std-doc">PetscDrawFinalizePackage</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawIndicatorFunction.html"><span class="doc std std-doc">PetscDrawIndicatorFunction</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDrawPixelToCoordinate.html"><span class="doc std std-doc">PetscDrawPixelToCoordinate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscDrawRegister.html"><span class="doc std std-doc">PetscDrawRegister</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscDrawRegisterAll.html"><span class="doc std std-doc">PetscDrawRegisterAll</span></a></p></li>
+<li><p><a class="reference internal" href="PetscInitializeDrawPackage.html"><span class="doc std std-doc">PetscInitializeDrawPackage</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="no-deprecated-routines">
+<h3>No deprecated routines<a class="headerlink" href="#no-deprecated-routines" title="Permalink to this heading">#</a></h3>
+</section>
+</section>
+<section id="single-list-of-manual-pages">
+<h2>Single list of manual pages<a class="headerlink" href="#single-list-of-manual-pages" title="Permalink to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="PETSC_DRAW_IMAGE.html">PETSC_DRAW_IMAGE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PETSC_DRAW_NULL.html">PETSC_DRAW_NULL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PETSC_DRAW_X.html">PETSC_DRAW_X</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDraw.html">PetscDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawAppendTitle.html">PetscDrawAppendTitle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawArrow.html">PetscDrawArrow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawAxis.html">PetscDrawAxis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawAxisCreate.html">PetscDrawAxisCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawAxisDestroy.html">PetscDrawAxisDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawAxisDraw.html">PetscDrawAxisDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawAxisGetLimits.html">PetscDrawAxisGetLimits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawAxisSetColors.html">PetscDrawAxisSetColors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawAxisSetHoldLimits.html">PetscDrawAxisSetHoldLimits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawAxisSetLabels.html">PetscDrawAxisSetLabels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawAxisSetLimits.html">PetscDrawAxisSetLimits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawBOP.html">PetscDrawBOP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawBar.html">PetscDrawBar</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawBarCreate.html">PetscDrawBarCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawBarDestroy.html">PetscDrawBarDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawBarDraw.html">PetscDrawBarDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawBarGetAxis.html">PetscDrawBarGetAxis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawBarGetDraw.html">PetscDrawBarGetDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawBarSave.html">PetscDrawBarSave</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawBarSetColor.html">PetscDrawBarSetColor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawBarSetData.html">PetscDrawBarSetData</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawBarSetFromOptions.html">PetscDrawBarSetFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawBarSetLimits.html">PetscDrawBarSetLimits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawBarSort.html">PetscDrawBarSort</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawCheckResizedWindow.html">PetscDrawCheckResizedWindow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawClear.html">PetscDrawClear</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawCoordinateToPixel.html">PetscDrawCoordinateToPixel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawCreate.html">PetscDrawCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawDestroy.html">PetscDrawDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawEOP.html">PetscDrawEOP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawEllipse.html">PetscDrawEllipse</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawFinalizePackage.html">PetscDrawFinalizePackage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawFlush.html">PetscDrawFlush</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawGetBoundingBox.html">PetscDrawGetBoundingBox</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawGetCoordinates.html">PetscDrawGetCoordinates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawGetCurrentPoint.html">PetscDrawGetCurrentPoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawGetMarkerType.html">PetscDrawGetMarkerType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawGetMouseButton.html">PetscDrawGetMouseButton</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawGetPause.html">PetscDrawGetPause</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawGetPopup.html">PetscDrawGetPopup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawGetSingleton.html">PetscDrawGetSingleton</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawGetTitle.html">PetscDrawGetTitle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawGetType.html">PetscDrawGetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawGetViewPort.html">PetscDrawGetViewPort</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawGetWindowSize.html">PetscDrawGetWindowSize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHG.html">PetscDrawHG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGAddValue.html">PetscDrawHGAddValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGCalcStats.html">PetscDrawHGCalcStats</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGCreate.html">PetscDrawHGCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGDestroy.html">PetscDrawHGDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGDraw.html">PetscDrawHGDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGGetAxis.html">PetscDrawHGGetAxis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGGetDraw.html">PetscDrawHGGetDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGIntegerBins.html">PetscDrawHGIntegerBins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGReset.html">PetscDrawHGReset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGSave.html">PetscDrawHGSave</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGSetColor.html">PetscDrawHGSetColor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGSetLimits.html">PetscDrawHGSetLimits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGSetNumberBins.html">PetscDrawHGSetNumberBins</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawHGView.html">PetscDrawHGView</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawIndicatorFunction.html">PetscDrawIndicatorFunction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawIsNull.html">PetscDrawIsNull</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLG.html">PetscDrawLG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGAddCommonPoint.html">PetscDrawLGAddCommonPoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGAddPoint.html">PetscDrawLGAddPoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGAddPoints.html">PetscDrawLGAddPoints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGCreate.html">PetscDrawLGCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGDestroy.html">PetscDrawLGDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGDraw.html">PetscDrawLGDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGGetAxis.html">PetscDrawLGGetAxis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGGetDimension.html">PetscDrawLGGetDimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGGetDraw.html">PetscDrawLGGetDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGReset.html">PetscDrawLGReset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGSPDraw.html">PetscDrawLGSPDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGSave.html">PetscDrawLGSave</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGSetColors.html">PetscDrawLGSetColors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGSetDimension.html">PetscDrawLGSetDimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGSetFromOptions.html">PetscDrawLGSetFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGSetLegend.html">PetscDrawLGSetLegend</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGSetLimits.html">PetscDrawLGSetLimits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGSetOptionsPrefix.html">PetscDrawLGSetOptionsPrefix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGSetUseMarkers.html">PetscDrawLGSetUseMarkers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLGView.html">PetscDrawLGView</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLine.html">PetscDrawLine</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLineGetWidth.html">PetscDrawLineGetWidth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawLineSetWidth.html">PetscDrawLineSetWidth</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawMarker.html">PetscDrawMarker</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawOpenImage.html">PetscDrawOpenImage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawOpenNull.html">PetscDrawOpenNull</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawOpenX.html">PetscDrawOpenX</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawPause.html">PetscDrawPause</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawPixelToCoordinate.html">PetscDrawPixelToCoordinate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawPoint.html">PetscDrawPoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawPointPixel.html">PetscDrawPointPixel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawPointSetSize.html">PetscDrawPointSetSize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawPopCurrentPoint.html">PetscDrawPopCurrentPoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawPushCurrentPoint.html">PetscDrawPushCurrentPoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawRectangle.html">PetscDrawRectangle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawRegister.html">PetscDrawRegister</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawRegisterAll.html">PetscDrawRegisterAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawResizeWindow.html">PetscDrawResizeWindow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawRestoreSingleton.html">PetscDrawRestoreSingleton</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSP.html">PetscDrawSP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSPAddPoint.html">PetscDrawSPAddPoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSPAddPointColorized.html">PetscDrawSPAddPointColorized</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSPAddPoints.html">PetscDrawSPAddPoints</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSPCreate.html">PetscDrawSPCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSPDestroy.html">PetscDrawSPDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSPDraw.html">PetscDrawSPDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSPGetAxis.html">PetscDrawSPGetAxis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSPGetDimension.html">PetscDrawSPGetDimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSPGetDraw.html">PetscDrawSPGetDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSPReset.html">PetscDrawSPReset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSPSave.html">PetscDrawSPSave</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSPSetDimension.html">PetscDrawSPSetDimension</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSPSetLimits.html">PetscDrawSPSetLimits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSave.html">PetscDrawSave</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSaveMovie.html">PetscDrawSaveMovie</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawScalePopup.html">PetscDrawScalePopup</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetCoordinates.html">PetscDrawSetCoordinates</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetCurrentPoint.html">PetscDrawSetCurrentPoint</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetDisplay.html">PetscDrawSetDisplay</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetDoubleBuffer.html">PetscDrawSetDoubleBuffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetFromOptions.html">PetscDrawSetFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetMarkerType.html">PetscDrawSetMarkerType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetOptionsPrefix.html">PetscDrawSetOptionsPrefix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetPause.html">PetscDrawSetPause</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetSave.html">PetscDrawSetSave</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetSaveFinalImage.html">PetscDrawSetSaveFinalImage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetSaveMovie.html">PetscDrawSetSaveMovie</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetTitle.html">PetscDrawSetTitle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetType.html">PetscDrawSetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSetViewPort.html">PetscDrawSetViewPort</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawSplitViewPort.html">PetscDrawSplitViewPort</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawString.html">PetscDrawString</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawStringBoxed.html">PetscDrawStringBoxed</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawStringCentered.html">PetscDrawStringCentered</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawStringGetSize.html">PetscDrawStringGetSize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawStringSetSize.html">PetscDrawStringSetSize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawStringVertical.html">PetscDrawStringVertical</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawTensorContour.html">PetscDrawTensorContour</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawTensorContourPatch.html">PetscDrawTensorContourPatch</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawTriangle.html">PetscDrawTriangle</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawType.html">PetscDrawType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawView.html">PetscDrawView</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawViewFromOptions.html">PetscDrawViewFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawViewPortsCreate.html">PetscDrawViewPortsCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawViewPortsCreateRect.html">PetscDrawViewPortsCreateRect</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawViewPortsDestroy.html">PetscDrawViewPortsDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawViewPortsSet.html">PetscDrawViewPortsSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscDrawZoom.html">PetscDrawZoom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscInitializeDrawPackage.html">PetscInitializeDrawPackage</a></li>
+</ul>
+</div>
+</section>
+</section>
+
+
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+  <a class='left-prev' id="prev-link" href="../DUALSPACE/PetscDualSpaceViewFromOptions.html" title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">PetscDualSpaceViewFromOptions</p>
+      </div>
+  </a>
+  <a class='right-next' id="next-link" href="PETSC_DRAW_IMAGE.html" title="next page">
+  <div class="prev-next-info">
+      <p class="prev-next-subtitle">next</p>
+      <p class="prev-next-title">PETSC_DRAW_IMAGE</p>
+  </div>
+  <i class="fa-solid fa-angle-right"></i>
+  </a>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div class="tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+</div>
+<nav id="bd-toc-nav" class="page-toc">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#manual-pages-by-level">
+   Manual Pages by Level
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#beginner-basic-usage">
+     Beginner - Basic usage
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#intermediate-setting-options-for-algorithms-and-data-structures">
+     Intermediate - Setting options for algorithms and data structures
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#advanced-setting-more-advanced-options-and-customization">
+     Advanced - Setting more advanced options and customization
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#developer-interfaces-intended-primarily-for-library-developers-not-for-typical-applications-programmers">
+     Developer - Interfaces intended primarily for library developers, not for typical applications programmers
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#no-deprecated-routines">
+     No deprecated routines
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#single-list-of-manual-pages">
+   Single list of manual pages
+  </a>
+  <ul class="simple nav section-nav flex-column">
+  </ul>
+ </li>
+</ul>
+
+</nav>
+</div>
+
+<div class="toc-item">
+  
+<div id="searchbox"></div>
+</div>
+
+<div class="toc-item">
+  
+
+<div class="tocsection editthispage">
+    <a href="https://gitlab.com/petsc/petsc/edit/release/doc/docs/manualpages/Draw/index.md">
+        <i class="fa-solid fa-pencil"></i> Edit this page
+    </a>
+</div>
+
+</div>
+
+<div class="toc-item">
+  
+<div class="tocsection sourcelink">
+    <a href="../../../_sources/docs/manualpages/Draw/index.md.txt">
+        <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+</div>
+
+</div>
+
+            </div>
+          
+          
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+</p>
+  </div>
+  
+</div>
+  </footer>
+  </body>
+</html>

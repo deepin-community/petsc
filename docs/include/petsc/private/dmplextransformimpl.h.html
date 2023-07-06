@@ -1,0 +1,120 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/include/petsc/private/dmplextransformimpl.h">Actual source code: dmplextransformimpl.h</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:50:07+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#ifndef _PLEXTRANSFORMIMPL_H</font>
+<a name="line2">  2: </a><strong><font color="#228B22">#define _PLEXTRANSFORMIMPL_H</font></strong>
+
+<a name="line4">  4: </a>#include <A href="dmpleximpl.h.html">&lt;petsc/private/dmpleximpl.h&gt;</A>
+<a name="line5">  5: </a>#include <A href="../../petscdmplextransform.h.html">&lt;petscdmplextransform.h&gt;</A>
+
+<a name="line7">  7: </a><font color="#4169E1">typedef struct _p_DMPlexTransformOps *DMPlexTransformOps;</font>
+<a name="line8">  8: </a><font color="#4169E1"><a name="_p_DMPlexTransformOps"></a>struct _p_DMPlexTransformOps </font>{
+<a name="line9">  9: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*view)(<a href="../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a>, <a href="../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>);
+<a name="line10"> 10: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*setfromoptions)(<a href="../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a>, PetscOptionItems *);
+<a name="line11"> 11: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*setup)(<a href="../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a>);
+<a name="line12"> 12: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*destroy)(<a href="../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a>);
+<a name="line13"> 13: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*setdimensions)(<a href="../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a>, <a href="../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../docs/manualpages/DM/DM.html">DM</a>);
+<a name="line14"> 14: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*celltransform)(<a href="../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a>, <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *, <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a> *[], <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *[], <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *[], <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *[]);
+<a name="line15"> 15: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*getsubcellorientation)(<a href="../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a>, <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *);
+<a name="line16"> 16: </a>  <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*mapcoordinates)(<a href="../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a>, <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a>, <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>[], <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>[]);
+<a name="line17"> 17: </a>};
+
+<a name="line19"> 19: </a><font color="#4169E1"><a name="_p_DMPlexTransform"></a>struct _p_DMPlexTransform </font>{
+<a name="line20"> 20: </a>  PETSCHEADER(<font color="#4169E1">struct _p_DMPlexTransformOps</font>);
+<a name="line21"> 21: </a>  void *data;
+
+<a name="line23"> 23: </a>  <a href="../../../docs/manualpages/DM/DM.html">DM</a>            dm;            <font color="#B22222">/* This is the <a href="../../../docs/manualpages/DM/DM.html">DM</a> for which the transform has been computed */</font>
+<a name="line24"> 24: </a>  <a href="../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>       active;        <font color="#B22222">/* If not NULL, indicates points that are participating in the transform */</font>
+<a name="line25"> 25: </a>  <a href="../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>       trType;        <font color="#B22222">/* If not NULL, this holds the transformation type for each point */</font>
+<a name="line26"> 26: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      setupcalled;   <font color="#B22222">/* Flag to indicate the setup stage */</font>
+<a name="line27"> 27: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     *ctOrderOld;    <font color="#B22222">/* [i] = ct: An array with original cell types in depth order */</font>
+<a name="line28"> 28: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     *ctOrderInvOld; <font color="#B22222">/* [ct] = i: An array with the ordinal numbers for each original cell type */</font>
+<a name="line29"> 29: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     *ctStart;       <font color="#B22222">/* [ct]: The number for the first cell of each polytope type in the original mesh */</font>
+<a name="line30"> 30: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     *ctOrderNew;    <font color="#B22222">/* [i] = ct: An array with produced cell types in depth order */</font>
+<a name="line31"> 31: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     *ctOrderInvNew; <font color="#B22222">/* [ct] = i: An array with the ordinal numbers for each produced cell type */</font>
+<a name="line32"> 32: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     *ctStartNew;    <font color="#B22222">/* [ctNew]: The number for the first cell of each polytope type in the new mesh */</font>
+<a name="line33"> 33: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     *offset;        <font color="#B22222">/* [ct/rt][ctNew]: The offset from ctStartNew[ctNew] in the new point numbering of a point of type ctNew produced from an old point of type ct or refine type rt */</font>
+<a name="line34"> 34: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     *trNv;          <font color="#B22222">/* The number of transformed vertices in the closure of a cell of each type */</font>
+<a name="line35"> 35: </a>  <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> **trVerts;       <font color="#B22222">/* The transformed vertex coordinates in the closure of a cell of each type */</font>
+<a name="line36"> 36: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  ****trSubVerts;    <font color="#B22222">/* The indices for vertices of subcell (rct, r) in a cell of each type */</font>
+<a name="line37"> 37: </a>  <a href="../../../docs/manualpages/FE/PetscFE.html">PetscFE</a>      *coordFE;       <font color="#B22222">/* Finite element for each cell type, used for localized coordinate interpolation */</font>
+<a name="line38"> 38: </a>  <a href="../../../docs/manualpages/FE/PetscFEGeom.html">PetscFEGeom</a> **refGeom;       <font color="#B22222">/* Geometry of the reference cell for each cell type */</font>
+<a name="line39"> 39: </a>};
+
+<a name="line41"> 41: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line42"> 42: </a>  <a href="../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> label; <font color="#B22222">/* This marks the points to be deleted/ignored */</font>
+<a name="line43"> 43: </a>} DMPlexTransform_Filter;
+
+<a name="line45"> 45: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line46"> 46: </a>  <font color="#B22222">/* Inputs */</font>
+<a name="line47"> 47: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>             dimEx;       <font color="#B22222">/* The dimension of the extruded mesh */</font>
+<a name="line48"> 48: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>             cdim;        <font color="#B22222">/* The coordinate dimension of the input mesh */</font>
+<a name="line49"> 49: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>             cdimEx;      <font color="#B22222">/* The coordinate dimension of the extruded mesh */</font>
+<a name="line50"> 50: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>             layers;      <font color="#B22222">/* The number of extruded layers */</font>
+<a name="line51"> 51: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>            thickness;   <font color="#B22222">/* The total thickness of the extruded layers */</font>
+<a name="line52"> 52: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>             Nth;         <font color="#B22222">/* The number of specified thicknesses */</font>
+<a name="line53"> 53: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>           *thicknesses; <font color="#B22222">/* The input layer thicknesses */</font>
+<a name="line54"> 54: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>            useTensor;   <font color="#B22222">/* Flag to create tensor cells */</font>
+<a name="line55"> 55: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>            useNormal;   <font color="#B22222">/* Use input normal instead of calculating it */</font>
+<a name="line56"> 56: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>            normal[3];   <font color="#B22222">/* Surface normal from input */</font>
+<a name="line57"> 57: </a>  PetscSimplePointFunc normalFunc;  <font color="#B22222">/* A function returning the normal at a given point */</font>
+<a name="line58"> 58: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>            symmetric;   <font color="#B22222">/* Extrude layers symmetrically about the surface */</font>
+<a name="line59"> 59: </a>  <font color="#B22222">/* Calculated quantities */</font>
+<a name="line60"> 60: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>       *layerPos; <font color="#B22222">/* The position of each layer relative to the original surface, along the local normal direction */</font>
+<a name="line61"> 61: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        *Nt;       <font color="#B22222">/* The array of the number of target types */</font>
+<a name="line62"> 62: </a>  <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a> **target;   <font color="#B22222">/* The array of target types */</font>
+<a name="line63"> 63: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       **size;     <font color="#B22222">/* The array of the number of each target type */</font>
+<a name="line64"> 64: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       **cone;     <font color="#B22222">/* The array of cones for each target cell */</font>
+<a name="line65"> 65: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       **ornt;     <font color="#B22222">/* The array of orientation for each target cell */</font>
+<a name="line66"> 66: </a>} DMPlexTransform_Extrude;
+
+<a name="line68"> 68: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line69"> 69: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dummy;
+<a name="line70"> 70: </a>} DMPlexRefine_Regular;
+
+<a name="line72"> 72: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line73"> 73: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dummy;
+<a name="line74"> 74: </a>} DMPlexRefine_ToBox;
+
+<a name="line76"> 76: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line77"> 77: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dummy;
+<a name="line78"> 78: </a>} DMPlexRefine_Alfeld;
+
+<a name="line80"> 80: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line81"> 81: </a>  <a href="../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>      splitPoints; <font color="#B22222">/* List of edges to be bisected (1) and cells to be divided (2) */</font>
+<a name="line82"> 82: </a>  <a href="../../../docs/manualpages/PetscSection/PetscSection.html">PetscSection</a> secEdgeLen;  <font color="#B22222">/* Section for edge length field */</font>
+<a name="line83"> 83: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>   *edgeLen;     <font color="#B22222">/* Storage for edge length field */</font>
+<a name="line84"> 84: </a>} DMPlexRefine_SBR;
+
+<a name="line86"> 86: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line87"> 87: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dummy;
+<a name="line88"> 88: </a>} DMPlexRefine_1D;
+
+<a name="line90"> 90: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line91"> 91: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         n;      <font color="#B22222">/* The number of divisions to produce, so n = 1 gives 2 new cells */</font>
+<a name="line92"> 92: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>        r;      <font color="#B22222">/* The factor increase for cell height */</font>
+<a name="line93"> 93: </a>  <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>     *h;      <font color="#B22222">/* The computed cell heights, based on r */</font>
+<a name="line94"> 94: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        *Nt;     <font color="#B22222">/* The array of the number of target types */</font>
+<a name="line95"> 95: </a>  <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a> **target; <font color="#B22222">/* The array of target types */</font>
+<a name="line96"> 96: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       **size;   <font color="#B22222">/* The array of the number of each target type */</font>
+<a name="line97"> 97: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       **cone;   <font color="#B22222">/* The array of cones for each target cell */</font>
+<a name="line98"> 98: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       **ornt;   <font color="#B22222">/* The array of orientation for each target cell */</font>
+<a name="line99"> 99: </a>} DMPlexRefine_BL;
+
+<a name="line101">101: </a><strong><font color="#4169E1"><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformMapCoordinatesBarycenter_Internal(<a href="../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a>, <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a>, <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>[], <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>[])</font></strong>;
+<a name="line102">102: </a><strong><font color="#4169E1"><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformGetSubcellOrientation_Regular(<a href="../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a>, <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)</font></strong>;
+<a name="line103">103: </a><strong><font color="#4169E1"><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexTransformCellRefine_Regular(<a href="../../../docs/manualpages/DMPlex/DMPlexTransform.html">DMPlexTransform</a>, <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *, <a href="../../../docs/manualpages/DM/DMPolytopeType.html">DMPolytopeType</a> *[], <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *[], <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *[], <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *[])</font></strong>;
+
+<a name="line105">105: </a><font color="#A020F0">#endif</font>
+</pre>
+</body>
+
+</html>

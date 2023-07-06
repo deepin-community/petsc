@@ -1,0 +1,711 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Changes: 3.6 &#8212; PETSc 3.18.6 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../_static/styles/bootstrap.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/katex-math.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script src="../../_static/katex.min.js"></script>
+    <script src="../../_static/auto-render.min.js"></script>
+    <script src="../../_static/katex_autorenderer.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/changes/36';</script>
+    <link rel="shortcut icon" href="../../_static/petsc_favicon.png"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Changes: 3.5" href="35.html" />
+    <link rel="prev" title="Changes: 3.7" href="37.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../../index.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../../_static/PETSc-TAO_RGB.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../../_static/PETSc-TAO_RGB_white.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        API-Docs
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+    </ul>
+</nav>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+        <div class="navbar-end-item navbar-persistent--container">
+          
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+        </div>
+      
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+
+
+  
+  
+    <div class="navbar-persistent--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+    </div>
+  
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+  </label>
+  
+
+</div>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        API-Docs
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+  <div class="sidebar-start-items sidebar-primary__section">
+    <div class="sidebar-start-items__item"><nav class="bd-links" id="bd-docs-nav" aria-label="Section navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">
+    Section Navigation
+  </p>
+  <div class="bd-toc-item navbar-nav">
+    <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="index.html">Changes for each release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../manualpages/singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+</ul>
+
+  </div>
+</nav>
+    </div>
+  </div>
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+  
+  <div id="rtd-footer-container"></div>
+
+      </div>
+      <main id="main-content" class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+            </div>
+            
+            
+            <article class="bd-article" role="main">
+              
+  <section id="changes-3-6">
+<h1>Changes: 3.6<a class="headerlink" href="#changes-3-6" title="Permalink to this heading">#</a></h1>
+<p class="rubric">General:</p>
+<ul>
+<li><p>User makefiles must be updated. You must change the lines</p>
+<ul class="simple">
+<li><p>include ${PETSC_DIR}/conf/variables and</p></li>
+<li><p>include ${PETSC_DIR}/conf/rules</p></li>
+</ul>
+<p>to</p>
+<ul class="simple">
+<li><p>include ${PETSC_DIR}/lib/petsc/conf/variables and</p></li>
+<li><p>include ${PETSC_DIR}/lib/petsc/conf/rules</p></li>
+</ul>
+</li>
+<li><p>PetscOptionsBool() no longer sets the value of the boolean based
+on the value passed in</p></li>
+<li><p>Script for running MPIUni jobs is now bin/petsc-mpiexec.uni</p></li>
+<li><p>Removed all threadcomm support including –with-pthreadclasses and
+–with-openmpclasses configure arguments</p></li>
+<li><p>Updated MUMPS version to 5.0.0 - and updated metis to 5.1.0,
+parmetis to 4.0.3-p1 - in sync with MUMPS.</p></li>
+<li><p>Updated to hypre-2.10.0b, scotch_6.0.3, Elemental-0.85</p></li>
+</ul>
+<p class="rubric">Configure/Build:</p>
+<ul class="simple">
+<li><p>Add toplevel makefile targets <em>clean</em> and <em>distclean</em>. Target
+<em>clean</em> deletes petsc libraries built by makefile target <em>all</em>.
+Target <em>distclean</em> deletes all build files created by <em>configure</em>
+and [<em>make all</em>]. Target <em>clean</em> in example directories continues
+to work as before [deletes object files and executables]</p></li>
+</ul>
+<p class="rubric">IS:</p>
+<p class="rubric">PetscDraw:</p>
+<ul class="simple">
+<li><p>PetscDrawBoxedString() changed to PetscDrawStringBoxed() added
+PetscDrawBar object for drawing bar graphs added
+PetscDrawStringCentered()</p></li>
+</ul>
+<p class="rubric">PF:</p>
+<p class="rubric">Vec:</p>
+<p class="rubric">VecScatter:</p>
+<p class="rubric">PetscSection:</p>
+<p class="rubric">Mat:</p>
+<ul class="simple">
+<li><p>MatGetVecs() replaced with MatCreateVecs() because it actually
+does create the Vecs that need to be destroyed</p></li>
+<li><p>MatCreateMPIAIJConcatenateSeqAIJ and
+MatCreateMPIBAIJConcatenateSeqBAIJ replaced with
+MatCreateMPIMatConcatenateSeqMat</p></li>
+<li><p>MatGetRedundantMatrix() replaced with MatCreateRedundantMatrix()</p></li>
+<li><p>Added support for MUMPS sequential solver in Schur complement mode</p></li>
+<li><p>MatGetSubMatricesMPI() will extract parallel submatrices on
+subcommunicators of the supplied IS objects. Unsorted, but not
+repeated indices are okay.</p></li>
+<li><p>Removed MatMFFDAddNullSpace() just use MatSetNullSpace()</p></li>
+</ul>
+<p class="rubric">PC:</p>
+<ul class="simple">
+<li><p>Removed -pc_hypre_type euclid due to bit-rot</p></li>
+<li><p>Upgraded to SuiteSparse 4.4.1; Cholmod supports using GPUs
+(developer repository only feature) –with-cuda
+–download-suitesparse-gpu –with-64-bit-indices;
+-mat_cholmod_useGPU 1 or 0; 1 by default when configured for it</p></li>
+<li><p>Upgraded to Superlu_DIST 4.0; Superlu_DIST supports using GPUs
+(developer repository only feature) –with-cuda –with-openmp
+–download-superlu_dist-gpu (developer repository only feature)
+–with-64-bit-indices -mat_cholmod_useGPU 1 or 0; 1 by default
+when configured for it</p></li>
+<li><p>Added PCBDDCSetChangeOfBasisMat for user defined change of basis</p></li>
+<li><p>PCBDDC: added adaptive selection of constraints: it is available
+by command line options</p></li>
+<li><p>PCJacobiSetUseAbs() now takes a PetscBool argument allowing
+toggling the option</p></li>
+<li><p>PCJacobiSetUseRowMax() and PCJacobiSetUseRowSum() have been merged
+into PCJacobiSetType()</p></li>
+<li><p>PCFactorSetUseInplace() now takes a PetscBool argument. Added
+PCFactorGetUseInplace()</p></li>
+<li><p>PCFactorSetAllowDiagonalFill() now takes a PetscBool argument.
+Added PCFactorGetAllowDiagonalFill()</p></li>
+<li><p>PCEisenstatNoDiagonalScaling() changed to
+PCEisenstatSetNoDiagonalScaling() and takes a boolean</p></li>
+<li><p>Added Interface to AMS solver from HYPRE for Nedelec
+discretizations (-pc_hypre_type ams)</p></li>
+<li><p>Added Interface to ADS solver from HYPRE for Raviart-Thomas
+discretizations (-pc_hypre_type ads)</p></li>
+<li><p>Contributed MKL Pardiso interface providing PCCholesky support.
+Useable with: -pc_type cholesky -mat_type sbaij
+-pc_factor_mat_solver_package mkl_pardiso</p></li>
+<li><p>PCGASMSetTotalSubdomains() can now create multirank subdomains if
+their number is less than comm size.</p></li>
+<li><p>PCGAMGSetReuseProl() is changed to PCGAMGSetReuseInterpolation()</p></li>
+</ul>
+<p class="rubric">KSP:</p>
+<ul class="simple">
+<li><p>Removed KSPSetNullSpace() always use MatSetNullSpace() provided to
+the FIRST matrix argument to KSPSetOperators(), or
+SNESSetJacobian(), or TSSetIJacobian()</p></li>
+<li><p>Added MatSetTransposeNullSpace() to indicate the null space of the
+transpose operator</p></li>
+<li><p>Removed KSPSPECEST since its functionality is replaced by the
+esteig functionality within KSPChebyshev</p></li>
+<li><p>Unified KSPChebyshev routines that work with estimating
+eigenvalues with the prefix name KSPChebyshevEstEig… For example
+KSPChebyshevSetEstimateEigenvalues() is now
+KSPChebyshevEstEigSet() and
+KSPChebyshevSetEstimateEigenvaluesRandom() is now
+KSPChebyshevEstEigSetRandom() similarly
+-ksp_chebyshev_estimate_eigenvalues_random is
+-ksp_chebyshev_esteig_random. The previous for the (GMRES) KSP
+used to estimate the eigenvalues is now esteig_ not est_</p></li>
+<li><p>KSPGetVecs() replaced with KSPCreateVecs() because it actually
+does create the Vecs that need to be destroyed</p></li>
+</ul>
+<p class="rubric">SNES:</p>
+<ul class="simple">
+<li><p>Added KSPMonitorSNES() with command line option -ksp_monitor_snes
+and -ksp_monitor_snes_lg to monitor SNES residual norm at each
+linear iteration SNESMonitorVI() becomes SNESVIMonitor()</p></li>
+<li><p>Added SNESVIMonitorResidual() and -snes_vi_monitor_residual</p></li>
+</ul>
+<p class="rubric">SNESLineSearch:</p>
+<p class="rubric">TS:</p>
+<ul class="simple">
+<li><p>The postevent routine set with TSSetEventMonitor() now takes an
+additional PetscBool argument ‘forwardsolve’. The forwardsolve
+flag is used to distinguish between a TS forward solve
+(forwardsolve = 1) and adjoint solve (forwardsolve = 0).</p></li>
+<li><p>Added TSAdjointSolve() for adjoint sensitivity analysis</p></li>
+<li><p>EquationType is introduced to distinguish between ODEs and DAEs.
+It needs to be set accordingly before solving the problem through
+TSSetEquationType(). It currently only affects arkimex methods.</p></li>
+</ul>
+<p class="rubric">DM/DA:</p>
+<ul class="simple">
+<li><p>DMCreateInjection() now returns a Mat, rather than a VecScatter</p></li>
+<li><p>The MatType argument is removed from DMCreateMatrix(), you can use
+DMSetMatType() to indicate the type you want used with a DM,
+defaults to MATAIJ</p></li>
+<li><p>You can now use DMDASetAOType() to indicate the type of AO you
+want used with a DMDA (defaults to AOBASIC)</p></li>
+</ul>
+<p class="rubric">DMPlex:</p>
+<ul class="simple">
+<li><p>Can now redistribute parallel meshes</p></li>
+<li><p>Can now increase the overlap of parallel meshes</p></li>
+<li><p>Added new mesh formats, Fluent CAS and Gmsh</p></li>
+</ul>
+<p class="rubric">PetscViewer:</p>
+<ul class="simple">
+<li><p>HDF5 viewer will save Vecs and DMDA Vecs with a dimension of 1 if
+the bs/dof of the vector is 1. To always include this dimension as
+a specific dimension in the HDF5 file even if if it is of size 1
+use PetscViewerHDF5SetBaseDimension2() or
+-viewer_hdf5_base_dimension2 true</p></li>
+</ul>
+<p class="rubric">SYS:</p>
+<ul class="simple">
+<li><p>PetscOptionsHead() now takes a PetscOptions argument.</p></li>
+<li><p>PetscObjectAddOptionsHandler() now takes an event handler that
+includes a PetscOptions argument.
+PetscObjectProcessOptionsHandlers() requires this as input.</p></li>
+</ul>
+<p class="rubric">AO:</p>
+<p class="rubric">Fortran:</p>
+<ul class="simple">
+<li><p>Fortran include files are now in include/petsc/finclude instead of
+include/finclude. Thus replace uses of #include “finclude/xxx.h”
+with #include “petsc/finclude/xxx.h”. Reason for change: to
+namespace the finclude directory with PETSc for –prefix installs
+of PETSc and for packaging systems</p></li>
+</ul>
+</section>
+
+
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+  <a class='left-prev' id="prev-link" href="37.html" title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">Changes: 3.7</p>
+      </div>
+  </a>
+  <a class='right-next' id="next-link" href="35.html" title="next page">
+  <div class="prev-next-info">
+      <p class="prev-next-subtitle">next</p>
+      <p class="prev-next-title">Changes: 3.5</p>
+  </div>
+  <i class="fa-solid fa-angle-right"></i>
+  </a>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div id="searchbox"></div>
+</div>
+
+<div class="toc-item">
+  
+
+<div class="tocsection editthispage">
+    <a href="https://gitlab.com/petsc/petsc/edit/release/doc/docs/changes/36.rst">
+        <i class="fa-solid fa-pencil"></i> Edit this page
+    </a>
+</div>
+
+</div>
+
+<div class="toc-item">
+  
+<div class="tocsection sourcelink">
+    <a href="../../_sources/docs/changes/36.rst.txt">
+        <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+</div>
+
+</div>
+
+            </div>
+          
+          
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+</p>
+  </div>
+  
+</div>
+  </footer>
+  </body>
+</html>

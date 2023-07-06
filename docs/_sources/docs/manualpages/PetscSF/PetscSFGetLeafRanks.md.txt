@@ -1,0 +1,49 @@
+# PetscSFGetLeafRanks
+Get leaf ranks referencing roots on this process 
+## Synopsis
+```
+#include "petscsf.h" 
+PetscErrorCode PetscSFGetLeafRanks(PetscSF sf, PetscInt *niranks, const PetscMPIInt **iranks, const PetscInt **ioffset, const PetscInt **irootloc)
+```
+Not Collective
+
+
+## Input Parameter
+
+- ***sf -*** star forest
+
+
+
+## Output Parameters
+
+- ***niranks -*** number of leaf ranks referencing roots on this process
+- ***iranks -*** array of ranks
+- ***ioffset -*** offset in irootloc for each rank (length niranks+1)
+- ***irootloc -*** concatenated array holding local indices of roots referenced by each leaf rank
+
+
+
+
+
+## See Also
+ `PetscSF`, `PetscSFGetRootRanks()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/sf/interface/sf.c.html#PetscSFGetLeafRanks">src/vec/is/sf/interface/sf.c</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/sf/impls/basic/allgatherv/sfallgatherv.c.html#PetscSFGetLeafRanks_Allgatherv">PetscSFGetLeafRanks_Allgatherv in src/vec/is/sf/impls/basic/allgatherv/sfallgatherv.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/sf/impls/basic/sfbasic.c.html#PetscSFGetLeafRanks_Basic">PetscSFGetLeafRanks_Basic in src/vec/is/sf/impls/basic/sfbasic.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/is/sf/interface/sf.c)
+
+
+[Index of all PetscSF routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,42 @@
+# TaoGradientMonitor
+Views the gradient at each iteration It can be turned on from the command line using the -tao_view_gradient option 
+## Synopsis
+```
+#include "petsctao.h" 
+PetscErrorCode TaoGradientMonitor(Tao tao, void *ctx)
+```
+Collective
+
+
+## Input Parameters
+
+- ***tao -*** the Tao context
+- ***ctx -*** `PetscViewer` context or NULL
+
+
+
+## Options Database Keys
+
+- ***-tao_view_gradient -*** view the gradient at each iteration
+
+
+
+
+
+## See Also
+ `TaoDefaultSMonitor()`, `TaoSetMonitor()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/interface/taosolver.c.html#TaoGradientMonitor">src/tao/interface/taosolver.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/tao/interface/taosolver.c)
+
+
+[Index of all Tao routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

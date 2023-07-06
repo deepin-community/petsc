@@ -1,0 +1,59 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/snes/impls/python/pythonsnes.c">Actual source code: pythonsnes.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:26+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petsc/private/snesimpl.h.html">&lt;petsc/private/snesimpl.h&gt;</A>
+
+<a name="line3">  3: </a><font color="#B22222">/*@C</font>
+<a name="line4">  4: </a><font color="#B22222">   <a href="../../../../docs/manualpages/SNES/SNESPythonSetType.html">SNESPythonSetType</a> - Initialize a `<a href="../../../../docs/manualpages/SNES/SNES.html">SNES</a>` object implemented in Python.</font>
+
+<a name="line6">  6: </a><font color="#B22222">   Collective</font>
+
+<a name="line8">  8: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line9">  9: </a><font color="#B22222">+  snes - the nonlinear solver (`<a href="../../../../docs/manualpages/SNES/SNES.html">SNES</a>`) context.</font>
+<a name="line10"> 10: </a><font color="#B22222">-  pyname - full dotted Python name [package].module[.{class|function}]</font>
+
+<a name="line12"> 12: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line13"> 13: </a><font color="#B22222">.  -snes_python_type &lt;pyname&gt; - python class</font>
+
+<a name="line15"> 15: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line17"> 17: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/SNES/SNESCreate.html">SNESCreate</a>()`, `<a href="../../../../docs/manualpages/SNES/SNESSetType.html">SNESSetType</a>()`, `SNESPYTHON`, `<a href="../../../../docs/manualpages/Sys/PetscPythonInitialize.html">PetscPythonInitialize</a>()`, `<a href="../../../../docs/manualpages/SNES/SNESPythonGetType.html">SNESPythonGetType</a>()`</font>
+<a name="line18"> 18: </a><font color="#B22222">@*/</font>
+<a name="line19"> 19: </a><strong><font color="#4169E1"><a name="SNESPythonSetType"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/SNES/SNESPythonSetType.html">SNESPythonSetType</a>(<a href="../../../../docs/manualpages/SNES/SNES.html">SNES</a> snes, const char pyname[])</font></strong>
+<a name="line20"> 20: </a>{
+<a name="line23"> 23: </a>  <a href="../../../../docs/manualpages/Sys/PetscTryMethod.html">PetscTryMethod</a>(snes, <font color="#666666">"SNESPythonSetType_C"</font>, (<a href="../../../../docs/manualpages/SNES/SNES.html">SNES</a>, const char[]), (snes, pyname));
+<a name="line24"> 24: </a>  <font color="#4169E1">return</font> 0;
+<a name="line25"> 25: </a>}
+
+<a name="line27"> 27: </a><font color="#B22222">/*@C</font>
+<a name="line28"> 28: </a><font color="#B22222">   <a href="../../../../docs/manualpages/SNES/SNESPythonGetType.html">SNESPythonGetType</a> - Get the type of a `<a href="../../../../docs/manualpages/SNES/SNES.html">SNES</a>` object implemented in Python.</font>
+
+<a name="line30"> 30: </a><font color="#B22222">   Not collective</font>
+
+<a name="line32"> 32: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line33"> 33: </a><font color="#B22222">.  snes - the nonlinear solver (`<a href="../../../../docs/manualpages/SNES/SNES.html">SNES</a>`) context.</font>
+
+<a name="line35"> 35: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line36"> 36: </a><font color="#B22222">.  pyname - full dotted Python name [package].module[.{class|function}]</font>
+
+<a name="line38"> 38: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line40"> 40: </a><font color="#B22222">.seealso: `<a href="../../../../docs/manualpages/SNES/SNESCreate.html">SNESCreate</a>()`, `<a href="../../../../docs/manualpages/SNES/SNESSetType.html">SNESSetType</a>()`, `SNESPYTHON`, `<a href="../../../../docs/manualpages/Sys/PetscPythonInitialize.html">PetscPythonInitialize</a>()`, `<a href="../../../../docs/manualpages/SNES/SNESPythonSetType.html">SNESPythonSetType</a>()`</font>
+<a name="line41"> 41: </a><font color="#B22222">@*/</font>
+<a name="line42"> 42: </a><strong><font color="#4169E1"><a name="SNESPythonGetType"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/SNES/SNESPythonGetType.html">SNESPythonGetType</a>(<a href="../../../../docs/manualpages/SNES/SNES.html">SNES</a> snes, const char *pyname[])</font></strong>
+<a name="line43"> 43: </a>{
+<a name="line46"> 46: </a>  <a href="../../../../docs/manualpages/Sys/PetscUseMethod.html">PetscUseMethod</a>(snes, <font color="#666666">"SNESPythonGetType_C"</font>, (<a href="../../../../docs/manualpages/SNES/SNES.html">SNES</a>, const char *[]), (snes, pyname));
+<a name="line47"> 47: </a>  <font color="#4169E1">return</font> 0;
+<a name="line48"> 48: </a>}
+</pre>
+</body>
+
+</html>

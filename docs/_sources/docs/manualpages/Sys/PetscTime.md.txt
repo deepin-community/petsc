@@ -1,0 +1,53 @@
+# PetscTime
+Returns the current time of day in seconds. 
+## Synopsis
+```
+#include <petsctime.h>
+PetscErrorCode PetscTime(PetscLogDouble *v)
+```
+Not Collective
+
+
+## Output Parameter
+
+- ***v -*** time counter
+
+
+
+## Usage
+PetscLogDouble v;
+PetscTime(&v);
+.... perform some calculation ...
+printf("Time for operation %g\n",v);
+
+
+
+
+## Notes
+Since the PETSc libraries incorporate timing of phases and operations,
+we do not recommend ever using PetscTime()
+The options database command  -log_view activate
+PETSc library timing. See Users-Manual: ch_profiling for more details.
+
+
+## See Also
+ `PetscTimeSubtract()`, `PetscTimeAdd()`, `PetscLogStageRegister()`, `PetscLogEventRegister()`, `PetscLogEventBegin()`, `PetscLogEventEnd()`
+
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petsctime.h.html#PetscTime">include/petsctime.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/bench_pcsetup.c.html">src/ksp/ksp/tutorials/bench_pcsetup.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petsctime.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

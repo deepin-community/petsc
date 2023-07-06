@@ -1,0 +1,38 @@
+# PetscSpaceTensorSetNumSubspaces
+Set the number of spaces in the tensor product 
+## Synopsis
+```
+#include "petscfe.h" 
+PetscErrorCode PetscSpaceTensorSetNumSubspaces(PetscSpace sp, PetscInt numTensSpaces)
+```
+
+## Input Parameters
+
+- ***sp  -*** the function space object
+- ***numTensSpaces -*** the number of spaces
+
+
+
+
+
+## See Also
+ `PETSCSPACETENSOR`, `PetscSpace`, `PetscSpaceTensorGetNumSubspaces()`, `PetscSpaceSetDegree()`, `PetscSpaceSetNumVariables()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/dt/space/impls/tensor/spacetensor.c.html#PetscSpaceTensorSetNumSubspaces">src/dm/dt/space/impls/tensor/spacetensor.c</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/dt/space/impls/tensor/spacetensor.c.html#PetscSpaceTensorSetNumSubspaces_Tensor">PetscSpaceTensorSetNumSubspaces_Tensor in src/dm/dt/space/impls/tensor/spacetensor.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/dt/space/impls/tensor/spacetensor.c)
+
+
+[Index of all SPACE routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

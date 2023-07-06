@@ -1,0 +1,38 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/classes/draw/interface/dflush.c">Actual source code: dflush.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:47+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">       Provides the calling sequences for all the basic <a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> routines.</font>
+<a name="line3">  3: </a><font color="#B22222">*/</font>
+<a name="line4">  4: </a>#include <A href="../../../../../include/petsc/private/drawimpl.h.html">&lt;petsc/private/drawimpl.h&gt;</A>
+
+<a name="line6">  6: </a><font color="#B22222">/*@</font>
+<a name="line7">  7: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawFlush.html">PetscDrawFlush</a> - Flushes graphical output.</font>
+
+<a name="line9">  9: </a><font color="#B22222">   Collective</font>
+
+<a name="line11"> 11: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line12"> 12: </a><font color="#B22222">.  draw - the drawing context</font>
+
+<a name="line14"> 14: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line16"> 16: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawClear.html">PetscDrawClear</a>()`</font>
+<a name="line17"> 17: </a><font color="#B22222">@*/</font>
+<a name="line18"> 18: </a><strong><font color="#4169E1"><a name="PetscDrawFlush"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawFlush.html">PetscDrawFlush</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
+<a name="line19"> 19: </a>{
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(draw, flush);
+<a name="line22"> 22: </a>  <font color="#4169E1">if</font> (draw-&gt;saveonflush) <a href="../../../../../docs/manualpages/Draw/PetscDrawSave.html">PetscDrawSave</a>(draw);
+<a name="line23"> 23: </a>  <font color="#4169E1">return</font> 0;
+<a name="line24"> 24: </a>}
+</pre>
+</body>
+
+</html>

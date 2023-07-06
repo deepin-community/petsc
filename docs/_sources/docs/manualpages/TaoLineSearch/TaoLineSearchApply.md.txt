@@ -1,0 +1,80 @@
+# TaoLineSearchApply
+Performs a line-search in a given step direction.  Criteria for acceptable step length depends on the line-search algorithm chosen 
+## Synopsis
+```
+#include "petsctaolinesearch.h" 
+PetscErrorCode TaoLineSearchApply(TaoLineSearch ls, Vec x, PetscReal *f, Vec g, Vec s, PetscReal *steplength, TaoLineSearchConvergedReason *reason)
+```
+Collective
+
+
+## Input Parameters
+
+- ***ls -*** the Tao context
+- ***s -*** search direction
+
+
+
+## Input/Output Parameters
+
+
+## Output Parameters
+
+- ***x -*** On input the current solution, on output x contains the new solution determined by the line search
+- ***f -*** On input the objective function value at current solution, on output contains the objective function value at new solution
+- ***g -*** On input the gradient evaluated at x, on output contains the gradient at new solution
+- ***steplength -*** scalar multiplier of s used ( x = x0 + steplength * x)
+- ***reason -*** reason why the line-search stopped
+
+
+
+## Notes
+
+## reason will be set to one of
+
+
+- ***TAOLINESEARCH_FAILED_ASCENT -*** initial line search step * g is not descent direction
+- ***TAOLINESEARCH_FAILED_INFORNAN -*** function evaluation gives Inf or Nan value
+- ***TAOLINESEARCH_FAILED_BADPARAMETER -*** negative value set as parameter
+- ***TAOLINESEARCH_HALTED_MAXFCN -*** maximum number of function evaluation reached
+- ***TAOLINESEARCH_HALTED_UPPERBOUND -*** step is at upper bound
+- ***TAOLINESEARCH_HALTED_LOWERBOUND -*** step is at lower bound
+- ***TAOLINESEARCH_HALTED_RTOL -*** range of uncertainty is smaller than given tolerance
+- ***TAOLINESEARCH_HALTED_USER -*** user can set this reason to stop line search
+- ***TAOLINESEARCH_HALTED_OTHER -*** any other reason
+- ***TAOLINESEARCH_SUCCESS -*** successful line search
+
+
+The algorithm developer must set up the TaoLineSearch with calls to
+TaoLineSearchSetObjectiveRoutine() and TaoLineSearchSetGradientRoutine(), TaoLineSearchSetObjectiveAndGradientRoutine(), or TaoLineSearchUseTaoRoutines()
+
+You may or may not need to follow this with a call to
+TaoAddLineSearchCounts(), depending on whether you want these
+evaluations to count toward the total function/gradient evaluations.
+
+
+
+.seealso: `TaoLineSearchCreate()`, `TaoLineSearchSetType()`, `TaoLineSearchSetInitialStepLength()`, `TaoAddLineSearchCounts()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/linesearch/interface/taolinesearch.c.html#TaoLineSearchApply">src/tao/linesearch/interface/taolinesearch.c</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/linesearch/impls/armijo/armijo.c.html#TaoLineSearchApply_Armijo">TaoLineSearchApply_Armijo in src/tao/linesearch/impls/armijo/armijo.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/linesearch/impls/gpcglinesearch/gpcglinesearch.c.html#TaoLineSearchApply_GPCG">TaoLineSearchApply_GPCG in src/tao/linesearch/impls/gpcglinesearch/gpcglinesearch.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/linesearch/impls/morethuente/morethuente.c.html#TaoLineSearchApply_MT">TaoLineSearchApply_MT in src/tao/linesearch/impls/morethuente/morethuente.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/linesearch/impls/owarmijo/owarmijo.c.html#TaoLineSearchApply_OWArmijo">TaoLineSearchApply_OWArmijo in src/tao/linesearch/impls/owarmijo/owarmijo.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/linesearch/impls/unit/unit.c.html#TaoLineSearchApply_Unit">TaoLineSearchApply_Unit in src/tao/linesearch/impls/unit/unit.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/tao/linesearch/interface/taolinesearch.c)
+
+
+[Index of all TaoLineSearch routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

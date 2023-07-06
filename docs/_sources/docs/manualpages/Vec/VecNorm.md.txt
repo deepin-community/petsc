@@ -1,0 +1,100 @@
+# VecNorm
+Computes the vector norm. 
+## Synopsis
+```
+#include "petscvec.h"   
+PetscErrorCode VecNorm(Vec x, NormType type, PetscReal *val)
+```
+Collective
+
+
+## Input Parameters
+
+- ***x -*** the vector
+- ***type -*** the type of the norm requested
+
+
+
+## Output Parameter
+
+- ***val -*** the norm
+
+
+
+## Values of NormType
+
+- ***`NORM_1` -*** sum_i |x[i]|
+- ***`NORM_2` -*** sqrt(sum_i |x[i]|^2)
+- ***`NORM_INFINITY` -*** max_i |x[i]|
+- ***`NORM_1_AND_2` -*** computes efficiently both  `NORM_1` and `NORM_2` and stores them each in an output array
+
+
+
+
+
+## Notes
+For complex numbers `NORM_1` will return the traditional 1 norm of the 2 norm of the complex numbers; that is the 1
+norm of the absolute values of the complex entries. In PETSc 3.6 and earlier releases it returned the 1 norm of
+the 1 norm of the complex entries (what is returned by the BLAS routine asum()). Both are valid norms but most
+people expect the former.
+
+This routine stashes the computed norm value, repeated calls before the vector entries are changed are then rapid since the
+precomputed value is immediately available. Certain vector operations such as VecSet() store the norms so the value is
+immediately available and does not need to be explicitly computed. `VecScale()` updates any stashed norm values, thus calls after `VecScale()`
+do not need to explicitly recompute the norm.
+
+
+## Performance Issues
+
+- ***per-*** processor memory bandwidth - limits the speed of the computation of local portion of the norm
+- ***interprocessor latency -*** limits the accumulation of the result across ranks, .i.e. MPI_Allreduce() time
+- ***number of ranks -*** the time for the result will grow with the log base 2 of the number of ranks sharing the vector
+- ***work load imbalance -*** the rank with the largest number of vector entries will limit the speed up
+
+
+
+## See Also
+ [](chapter_vectors), `Vec`, `VecDot()`, `VecTDot()`, `VecDotBegin()`, `VecDotEnd()`, `VecNormAvailable()`,
+`VecNormBegin()`, `VecNormEnd()`, `NormType()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/interface/rvector.c.html#VecNorm">src/vec/vec/interface/rvector.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex1.c.html">src/vec/vec/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex11.c.html">src/vec/vec/tutorials/ex11.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex11f.F90.html">src/vec/vec/tutorials/ex11f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex11f90.F90.html">src/vec/vec/tutorials/ex11f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex1f.F90.html">src/vec/vec/tutorials/ex1f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex1f90.F90.html">src/vec/vec/tutorials/ex1f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex20f90.F90.html">src/vec/vec/tutorials/ex20f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/performance.c.html">src/vec/vec/tutorials/performance.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex2.c.html">src/mat/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex3.c.html">src/mat/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex9.c.html">src/mat/tutorials/ex9.c.html</A><BR>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/mpi/kokkos/mpikok.kokkos.cxx.html#VecNorm_MPIKokkos">VecNorm_MPIKokkos in src/vec/vec/impls/mpi/kokkos/mpikok.kokkos.cxx</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/mpi/mpicuda/mpicuda.cu.html#VecNorm_MPICUDA">VecNorm_MPICUDA in src/vec/vec/impls/mpi/mpicuda/mpicuda.cu</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/mpi/mpihip/mpihip.hip.c.html#VecNorm_MPIHIP">VecNorm_MPIHIP in src/vec/vec/impls/mpi/mpihip/mpihip.hip.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/mpi/mpiviennacl/mpiviennacl.cxx.html#VecNorm_MPIViennaCL">VecNorm_MPIViennaCL in src/vec/vec/impls/mpi/mpiviennacl/mpiviennacl.cxx</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/mpi/pvec2.c.html#VecNorm_MPI">VecNorm_MPI in src/vec/vec/impls/mpi/pvec2.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/nest/vecnest.c.html#VecNorm_Nest">VecNorm_Nest in src/vec/vec/impls/nest/vecnest.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/bvec2.c.html#VecNorm_Seq">VecNorm_Seq in src/vec/vec/impls/seq/bvec2.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/kokkos/veckok.kokkos.cxx.html#VecNorm_SeqKokkos">VecNorm_SeqKokkos in src/vec/vec/impls/seq/kokkos/veckok.kokkos.cxx</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/seqcuda/veccuda2.cu.html#VecNorm_SeqCUDA">VecNorm_SeqCUDA in src/vec/vec/impls/seq/seqcuda/veccuda2.cu</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/seqhip/vechip2.hip.c.html#VecNorm_SeqHIP">VecNorm_SeqHIP in src/vec/vec/impls/seq/seqhip/vechip2.hip.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/seqviennacl/vecviennacl.cxx.html#VecNorm_SeqViennaCL">VecNorm_SeqViennaCL in src/vec/vec/impls/seq/seqviennacl/vecviennacl.cxx</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/vec/interface/rvector.c)
+
+
+[Index of all Vec routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,54 @@
+# ISDestroy
+Destroys an index set. 
+## Synopsis
+```
+#include "petscis.h" 
+PetscErrorCode ISDestroy(IS *is)
+```
+Collective
+
+
+## Input Parameters
+
+- ***is -*** the index set
+
+
+
+
+
+## See Also
+ `ISCreateGeneral()`, `ISCreateStride()`, `ISCreateBlocked()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/interface/index.c.html#ISDestroy">src/vec/is/is/interface/index.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/utils/tagger/tutorials/ex1.c.html">src/vec/vec/utils/tagger/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex44.c.html">src/vec/vec/tutorials/ex44.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex1.c.html">src/vec/is/is/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex1f.F90.html">src/vec/is/is/tutorials/ex1f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex1f90.F90.html">src/vec/is/is/tutorials/ex1f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex2.c.html">src/vec/is/is/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex2f.F90.html">src/vec/is/is/tutorials/ex2f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex3.c.html">src/vec/is/is/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex3f90.F90.html">src/vec/is/is/tutorials/ex3f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex1.c.html">src/mat/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex11.c.html">src/mat/tutorials/ex11.c.html</A><BR>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/impls/block/block.c.html#ISDestroy_Block">ISDestroy_Block in src/vec/is/is/impls/block/block.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/impls/general/general.c.html#ISDestroy_General">ISDestroy_General in src/vec/is/is/impls/general/general.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/impls/stride/stride.c.html#ISDestroy_Stride">ISDestroy_Stride in src/vec/is/is/impls/stride/stride.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/is/is/interface/index.c)
+
+
+[Index of all IS routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

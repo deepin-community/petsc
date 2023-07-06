@@ -1,0 +1,82 @@
+# MatSetUp
+Sets up the internal matrix data structures for later use. 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatSetUp(Mat A)
+```
+Collective
+
+
+## Input Parameters
+
+- ***A -*** the matrix
+
+
+
+
+
+## Notes
+If the user has not set preallocation for this matrix then a default preallocation that is likely to be inefficient is used.
+
+If a suitable preallocation routine is used, this function does not need to be called.
+
+See the Performance chapter of the PETSc users manual for how to preallocate matrices
+
+This routine is called internally by other matrix functions when needed so rarely needs to be called by users
+
+
+## See Also
+ `Mat`, `MatMult()`, `MatCreate()`, `MatDestroy()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/interface/matrix.c.html#MatSetUp">src/mat/interface/matrix.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex4.c.html">src/mat/tutorials/ex4.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex4f.F90.html">src/mat/tutorials/ex4f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex8.c.html">src/mat/tutorials/ex8.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/pc/tutorials/ex3.c.html">src/ksp/pc/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/bench_pcsetup.c.html">src/ksp/ksp/tutorials/bench_pcsetup.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex1.c.html">src/ksp/ksp/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex100.c.html">src/ksp/ksp/tutorials/ex100.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex100f.F90.html">src/ksp/ksp/tutorials/ex100f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex11.c.html">src/ksp/ksp/tutorials/ex11.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex11f.F90.html">src/ksp/ksp/tutorials/ex11f.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex12.c.html">src/ksp/ksp/tutorials/ex12.c.html</A><BR>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/da/hypre/mhyp.c.html#MatSetUp_HYPREStruct">MatSetUp_HYPREStruct in src/dm/impls/da/hypre/mhyp.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/da/hypre/mhyp.c.html#MatSetUp_HYPRESStruct">MatSetUp_HYPRESStruct in src/dm/impls/da/hypre/mhyp.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/aij/mpi/mpiaij.c.html#MatSetUp_MPIAIJ">MatSetUp_MPIAIJ in src/mat/impls/aij/mpi/mpiaij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/aij/seq/aij.c.html#MatSetUp_SeqAIJ">MatSetUp_SeqAIJ in src/mat/impls/aij/seq/aij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/baij/mpi/mpibaij.c.html#MatSetUp_MPIBAIJ">MatSetUp_MPIBAIJ in src/mat/impls/baij/mpi/mpibaij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/baij/seq/baij.c.html#MatSetUp_SeqBAIJ">MatSetUp_SeqBAIJ in src/mat/impls/baij/seq/baij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/mpi/mpidense.c.html#MatSetUp_MPIDense">MatSetUp_MPIDense in src/mat/impls/dense/mpi/mpidense.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/seq/cuda/densecuda.cu.html#MatSetUp_SeqDenseCUDA">MatSetUp_SeqDenseCUDA in src/mat/impls/dense/seq/cuda/densecuda.cu</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/seq/dense.c.html#MatSetUp_SeqDense">MatSetUp_SeqDense in src/mat/impls/dense/seq/dense.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/seq/hip/densehip.hip.c.html#MatSetUp_SeqDenseHIP">MatSetUp_SeqDenseHIP in src/mat/impls/dense/seq/hip/densehip.hip.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/elemental/matelem.cxx.html#MatSetUp_Elemental">MatSetUp_Elemental in src/mat/impls/elemental/matelem.cxx</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/hypre/mhypre.c.html#MatSetUp_HYPRE">MatSetUp_HYPRE in src/mat/impls/hypre/mhypre.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/is/matis.c.html#MatSetUp_IS">MatSetUp_IS in src/mat/impls/is/matis.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/kaij/kaij.c.html#MatSetUp_KAIJ">MatSetUp_KAIJ in src/mat/impls/kaij/kaij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/maij/maij.c.html#MatSetUp_MAIJ">MatSetUp_MAIJ in src/mat/impls/maij/maij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/preallocator/matpreallocator.c.html#MatSetUp_Preallocator">MatSetUp_Preallocator in src/mat/impls/preallocator/matpreallocator.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/sbaij/mpi/mpisbaij.c.html#MatSetUp_MPISBAIJ">MatSetUp_MPISBAIJ in src/mat/impls/sbaij/mpi/mpisbaij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/sbaij/seq/sbaij.c.html#MatSetUp_SeqSBAIJ">MatSetUp_SeqSBAIJ in src/mat/impls/sbaij/seq/sbaij.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/scalapack/matscalapack.c.html#MatSetUp_ScaLAPACK">MatSetUp_ScaLAPACK in src/mat/impls/scalapack/matscalapack.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/sell/mpi/mpisell.c.html#MatSetUp_MPISELL">MatSetUp_MPISELL in src/mat/impls/sell/mpi/mpisell.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/sell/seq/sell.c.html#MatSetUp_SeqSELL">MatSetUp_SeqSELL in src/mat/impls/sell/seq/sell.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/interface/matrix.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

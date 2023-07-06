@@ -1,0 +1,46 @@
+# MatDenseHIPPlaceArray
+Allows one to replace the GPU array in a dense matrix with an array provided by the user. This is useful to avoid copying an array into a matrix 
+## Synopsis
+```
+#include "petscmat.h"  
+PetscErrorCode MatDenseHIPPlaceArray(Mat mat, const PetscScalar *array)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***mat -*** the matrix
+- ***array -*** the array in column major order
+
+
+
+## Notes
+You can return to the original array with a call to MatDenseHIPResetArray(). The user is responsible for freeing this array; it will not be
+freed when the matrix is destroyed. The array must have been allocated with hipMalloc().
+
+
+
+
+## See Also
+ MatDenseHIPGetArray(), MatDenseHIPResetArray()
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/mpi/mpidense.c.html#MatDenseHIPPlaceArray">src/mat/impls/dense/mpi/mpidense.c</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/mpi/mpidense.c.html#MatDenseHIPPlaceArray_MPIDenseHIP">MatDenseHIPPlaceArray_MPIDenseHIP in src/mat/impls/dense/mpi/mpidense.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/dense/seq/hip/densehip.hip.c.html#MatDenseHIPPlaceArray_SeqDenseHIP">MatDenseHIPPlaceArray_SeqDenseHIP in src/mat/impls/dense/seq/hip/densehip.hip.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/dense/mpi/mpidense.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

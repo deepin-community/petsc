@@ -1,0 +1,1391 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Krylov Methods - KSP Manual Pages &#8212; PETSc 3.18.6 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../../_static/styles/bootstrap.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/katex-math.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script src="../../../_static/katex.min.js"></script>
+    <script src="../../../_static/auto-render.min.js"></script>
+    <script src="../../../_static/katex_autorenderer.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/manualpages/KSP/index';</script>
+    <link rel="shortcut icon" href="../../../_static/petsc_favicon.png"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="DMCopyDMKSP" href="DMCopyDMKSP.html" />
+    <link rel="prev" title="PetscViewerHDF5ReadSizes" href="../IS/PetscViewerHDF5ReadSizes.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../../../index.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../../../_static/PETSc-TAO_RGB.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../../../_static/PETSc-TAO_RGB_white.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        API-Docs
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+    </ul>
+</nav>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+        <div class="navbar-end-item navbar-persistent--container">
+          
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+        </div>
+      
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+
+
+  
+  
+    <div class="navbar-persistent--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+    </div>
+  
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+  </label>
+  
+
+</div>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        API-Docs
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+  <div class="sidebar-start-items sidebar-primary__section">
+    <div class="sidebar-start-items__item"><nav class="bd-links" id="bd-docs-nav" aria-label="Section navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">
+    Section Navigation
+  </p>
+  <div class="bd-toc-item navbar-nav">
+    <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../changes/index.html">Changes for each release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+</ul>
+
+  </div>
+</nav>
+    </div>
+  </div>
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+  
+  <div id="rtd-footer-container"></div>
+
+      </div>
+      <main id="main-content" class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+            </div>
+            
+            
+            <article class="bd-article" role="main">
+              
+  <section class="tex2jax_ignore mathjax_ignore" id="krylov-methods-ksp-manual-pages">
+<h1>Krylov Methods - KSP Manual Pages<a class="headerlink" href="#krylov-methods-ksp-manual-pages" title="Permalink to this heading">#</a></h1>
+<p><A HREF="../../../src/ksp/ksp/tutorials/index.html">Examples</A><BR></p>
+<p>The
+<A HREF="../../../docs/manualpages/KSP/index.html">scalable linear equations solvers (KSP)</A>
+component provides an easy-to-use interface to the combination of
+a Krylov subspace iterative method and a preconditioner (in the KSP and
+<A HREF="../../../docs/manualpages/PC/index.html">PC</A>
+components, respectively) or a sequential direct solver.  KSP users can set various Krylov
+subspace options at runtime via the options database (e.g., <code class="docutils literal notranslate"><span class="pre">-ksp_type</span> <span class="pre">cg</span></code>).
+KSP users can also set KSP options directly in application
+by directly calling the KSP routines listed below (e.g.,
+<A HREF="../../../docs/manualpages/KSP/KSPSetType.html">KSPSetType()</A>
+).
+KSP components can be used directly to create and
+destroy solvers; this is not needed for users but
+is intended for library developers.
+<a class="reference internal" href="../index.html"><span class="doc std std-doc">Manual Pages Table of Contents</span></a></p>
+<section id="manual-pages-by-level">
+<h2>Manual Pages by Level<a class="headerlink" href="#manual-pages-by-level" title="Permalink to this heading">#</a></h2>
+<section id="beginner-basic-usage">
+<h3>Beginner - Basic usage<a class="headerlink" href="#beginner-basic-usage" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="KSP.html"><span class="doc std std-doc">KSP</span></a></p></li>
+<li><p><a class="reference internal" href="KSPBCGS.html"><span class="doc std std-doc">KSPBCGS</span></a></p></li>
+<li><p><a class="reference internal" href="KSPBICG.html"><span class="doc std std-doc">KSPBICG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCG.html"><span class="doc std std-doc">KSPCG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCGLS.html"><span class="doc std std-doc">KSPCGLS</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCGNE.html"><span class="doc std std-doc">KSPCGNE</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCGS.html"><span class="doc std std-doc">KSPCGS</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCGType.html"><span class="doc std std-doc">KSPCGType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCHEBYSHEV.html"><span class="doc std std-doc">KSPCHEBYSHEV</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCR.html"><span class="doc std std-doc">KSPCR</span></a></p></li>
+<li><p><a class="reference internal" href="KSPConvergedReason.html"><span class="doc std std-doc">KSPConvergedReason</span></a></p></li>
+<li><p><a class="reference internal" href="KSPConvergedReasonView.html"><span class="doc std std-doc">KSPConvergedReasonView</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCreate.html"><span class="doc std std-doc">KSPCreate</span></a></p></li>
+<li><p><a class="reference internal" href="KSPDGMRES.html"><span class="doc std std-doc">KSPDGMRES</span></a></p></li>
+<li><p><a class="reference internal" href="KSPDestroy.html"><span class="doc std std-doc">KSPDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFBCGS.html"><span class="doc std std-doc">KSPFBCGS</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFBCGSR.html"><span class="doc std std-doc">KSPFBCGSR</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFCG.html"><span class="doc std std-doc">KSPFCG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFGMRES.html"><span class="doc std std-doc">KSPFGMRES</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGCR.html"><span class="doc std std-doc">KSPGCR</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="KSPGMRES.html"><span class="doc std std-doc">KSPGMRES</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetConvergedReasonString.html"><span class="doc std std-doc">KSPGetConvergedReasonString</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuess.html"><span class="doc std std-doc">KSPGuess</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuessType.html"><span class="doc std std-doc">KSPGuessType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPIBCGS.html"><span class="doc std std-doc">KSPIBCGS</span></a></p></li>
+<li><p><a class="reference internal" href="KSPLCD.html"><span class="doc std std-doc">KSPLCD</span></a></p></li>
+<li><p><a class="reference internal" href="KSPLGMRES.html"><span class="doc std std-doc">KSPLGMRES</span></a></p></li>
+<li><p><a class="reference internal" href="KSPLSQR.html"><span class="doc std std-doc">KSPLSQR</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMINRES.html"><span class="doc std std-doc">KSPMINRES</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorSet.html"><span class="doc std std-doc">KSPMonitorSet</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPGMRES.html"><span class="doc std std-doc">KSPPGMRES</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPREONLY.html"><span class="doc std std-doc">KSPPREONLY</span></a></p></li>
+<li><p><a class="reference internal" href="KSPQMRCGS.html"><span class="doc std std-doc">KSPQMRCGS</span></a></p></li>
+<li><p><a class="reference internal" href="KSPRICHARDSON.html"><span class="doc std std-doc">KSPRICHARDSON</span></a></p></li>
+<li><p><a class="reference internal" href="KSPReset.html"><span class="doc std std-doc">KSPReset</span></a></p></li>
+<li><p><a class="reference internal" href="KSPResetViewers.html"><span class="doc std std-doc">KSPResetViewers</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSYMMLQ.html"><span class="doc std std-doc">KSPSYMMLQ</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetComputeInitialGuess.html"><span class="doc std std-doc">KSPSetComputeInitialGuess</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetComputeOperators.html"><span class="doc std std-doc">KSPSetComputeOperators</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetComputeRHS.html"><span class="doc std std-doc">KSPSetComputeRHS</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="KSPSetFromOptions.html"><span class="doc std std-doc">KSPSetFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetInitialGuessNonzero.html"><span class="doc std std-doc">KSPSetInitialGuessNonzero</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetOperators.html"><span class="doc std std-doc">KSPSetOperators</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSolve.html"><span class="doc std std-doc">KSPSolve</span></a></p></li>
+<li><p><a class="reference internal" href="KSPTCQMR.html"><span class="doc std std-doc">KSPTCQMR</span></a></p></li>
+<li><p><a class="reference internal" href="KSPTFQMR.html"><span class="doc std std-doc">KSPTFQMR</span></a></p></li>
+<li><p><a class="reference internal" href="KSPType.html"><span class="doc std std-doc">KSPType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPView.html"><span class="doc std std-doc">KSPView</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_CONVERGED_ATOL.html"><span class="doc std std-doc">KSP_CONVERGED_ATOL</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_CONVERGED_ITERATING.html"><span class="doc std std-doc">KSP_CONVERGED_ITERATING</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_CONVERGED_ITS.html"><span class="doc std std-doc">KSP_CONVERGED_ITS</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_CONVERGED_RTOL.html"><span class="doc std std-doc">KSP_CONVERGED_RTOL</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_DIVERGED_BREAKDOWN.html"><span class="doc std std-doc">KSP_DIVERGED_BREAKDOWN</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_DIVERGED_BREAKDOWN_BICG.html"><span class="doc std std-doc">KSP_DIVERGED_BREAKDOWN_BICG</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_DIVERGED_DTOL.html"><span class="doc std std-doc">KSP_DIVERGED_DTOL</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_DIVERGED_INDEFINITE_PC.html"><span class="doc std std-doc">KSP_DIVERGED_INDEFINITE_PC</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_DIVERGED_ITS.html"><span class="doc std std-doc">KSP_DIVERGED_ITS</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_DIVERGED_NONSYMMETRIC.html"><span class="doc std std-doc">KSP_DIVERGED_NONSYMMETRIC</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_DIVERGED_PC_FAILED.html"><span class="doc std std-doc">KSP_DIVERGED_PC_FAILED</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMSetHistorySize.html"><span class="doc std std-doc">MatLMVMSetHistorySize</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="intermediate-setting-options-for-algorithms-and-data-structures">
+<h3>Intermediate - Setting options for algorithms and data structures<a class="headerlink" href="#intermediate-setting-options-for-algorithms-and-data-structures" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="KSPAGMRES.html"><span class="doc std std-doc">KSPAGMRES</span></a></p></li>
+<li><p><a class="reference internal" href="KSPBCGSL.html"><span class="doc std std-doc">KSPBCGSL</span></a></p></li>
+<li><p><a class="reference internal" href="KSPBCGSLSetEll.html"><span class="doc std std-doc">KSPBCGSLSetEll</span></a></p></li>
+<li><p><a class="reference internal" href="KSPBCGSLSetPol.html"><span class="doc std std-doc">KSPBCGSLSetPol</span></a></p></li>
+<li><p><a class="reference internal" href="KSPBCGSLSetUsePseudoinverse.html"><span class="doc std std-doc">KSPBCGSLSetUsePseudoinverse</span></a></p></li>
+<li><p><a class="reference internal" href="KSPBCGSLSetXRes.html"><span class="doc std std-doc">KSPBCGSLSetXRes</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCGSetType.html"><span class="doc std std-doc">KSPCGSetType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCGUseSingleReduction.html"><span class="doc std std-doc">KSPCGUseSingleReduction</span></a></p></li>
+<li><p><a class="reference internal" href="KSPChebyshevEstEigSet.html"><span class="doc std std-doc">KSPChebyshevEstEigSet</span></a></p></li>
+<li><p><a class="reference internal" href="KSPChebyshevEstEigSetUseNoisy.html"><span class="doc std std-doc">KSPChebyshevEstEigSetUseNoisy</span></a></p></li>
+<li><p><a class="reference internal" href="KSPChebyshevSetEigenvalues.html"><span class="doc std std-doc">KSPChebyshevSetEigenvalues</span></a></p></li>
+<li><p><a class="reference internal" href="KSPConvergedDefaultCreate.html"><span class="doc std std-doc">KSPConvergedDefaultCreate</span></a></p></li>
+<li><p><a class="reference internal" href="KSPConvergedDefaultDestroy.html"><span class="doc std std-doc">KSPConvergedDefaultDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="KSPConvergedDefaultSetConvergedMaxits.html"><span class="doc std std-doc">KSPConvergedDefaultSetConvergedMaxits</span></a></p></li>
+<li><p><a class="reference internal" href="KSPConvergedDefaultSetUIRNorm.html"><span class="doc std std-doc">KSPConvergedDefaultSetUIRNorm</span></a></p></li>
+<li><p><a class="reference internal" href="KSPConvergedDefaultSetUMIRNorm.html"><span class="doc std std-doc">KSPConvergedDefaultSetUMIRNorm</span></a></p></li>
+<li><p><a class="reference internal" href="KSPConvergedRateView.html"><span class="doc std std-doc">KSPConvergedRateView</span></a></p></li>
+<li><p><a class="reference internal" href="KSPConvergedReasonViewCancel.html"><span class="doc std std-doc">KSPConvergedReasonViewCancel</span></a></p></li>
+<li><p><a class="reference internal" href="KSPConvergedReasonViewFromOptions.html"><span class="doc std std-doc">KSPConvergedReasonViewFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="KSPConvergedReasonViewSet.html"><span class="doc std std-doc">KSPConvergedReasonViewSet</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFCDTruncationType.html"><span class="doc std std-doc">KSPFCDTruncationType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFCGGetMmax.html"><span class="doc std std-doc">KSPFCGGetMmax</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFCGGetTruncationType.html"><span class="doc std std-doc">KSPFCGGetTruncationType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFCGSetMmax.html"><span class="doc std std-doc">KSPFCGSetMmax</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFCGSetTruncationType.html"><span class="doc std std-doc">KSPFCGSetTruncationType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFGMRESModifyPCKSP.html"><span class="doc std std-doc">KSPFGMRESModifyPCKSP</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFGMRESModifyPCNoChange.html"><span class="doc std std-doc">KSPFGMRESModifyPCNoChange</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFGMRESSetModifyPC.html"><span class="doc std std-doc">KSPFGMRESSetModifyPC</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGCRGetRestart.html"><span class="doc std std-doc">KSPGCRGetRestart</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGCRSetModifyPC.html"><span class="doc std std-doc">KSPGCRSetModifyPC</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGCRSetRestart.html"><span class="doc std std-doc">KSPGCRSetRestart</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGMRESClassicalGramSchmidtOrthogonalization.html"><span class="doc std std-doc">KSPGMRESClassicalGramSchmidtOrthogonalization</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGMRESGetCGSRefinementType.html"><span class="doc std std-doc">KSPGMRESGetCGSRefinementType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGMRESGetOrthogonalization.html"><span class="doc std std-doc">KSPGMRESGetOrthogonalization</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGMRESGetRestart.html"><span class="doc std std-doc">KSPGMRESGetRestart</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGMRESModifiedGramSchmidtOrthogonalization.html"><span class="doc std std-doc">KSPGMRESModifiedGramSchmidtOrthogonalization</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGMRESMonitorKrylov.html"><span class="doc std std-doc">KSPGMRESMonitorKrylov</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGMRESSetBreakdownTolerance.html"><span class="doc std std-doc">KSPGMRESSetBreakdownTolerance</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGMRESSetCGSRefinementType.html"><span class="doc std std-doc">KSPGMRESSetCGSRefinementType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGMRESSetHapTol.html"><span class="doc std std-doc">KSPGMRESSetHapTol</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGMRESSetOrthogonalization.html"><span class="doc std std-doc">KSPGMRESSetOrthogonalization</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGMRESSetPreAllocateVectors.html"><span class="doc std std-doc">KSPGMRESSetPreAllocateVectors</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGMRESSetRestart.html"><span class="doc std std-doc">KSPGMRESSetRestart</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGROPPCG.html"><span class="doc std std-doc">KSPGROPPCG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetApplicationContext.html"><span class="doc std std-doc">KSPGetApplicationContext</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetConvergedReason.html"><span class="doc std std-doc">KSPGetConvergedReason</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetDM.html"><span class="doc std std-doc">KSPGetDM</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetDiagonalScale.html"><span class="doc std std-doc">KSPGetDiagonalScale</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetDiagonalScaleFix.html"><span class="doc std std-doc">KSPGetDiagonalScaleFix</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetErrorIfNotConverged.html"><span class="doc std std-doc">KSPGetErrorIfNotConverged</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetInitialGuessNonzero.html"><span class="doc std std-doc">KSPGetInitialGuessNonzero</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetIterationNumber.html"><span class="doc std std-doc">KSPGetIterationNumber</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetMonitorContext.html"><span class="doc std std-doc">KSPGetMonitorContext</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="KSPGetOperators.html"><span class="doc std std-doc">KSPGetOperators</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetOperatorsSet.html"><span class="doc std std-doc">KSPGetOperatorsSet</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetPCSide.html"><span class="doc std std-doc">KSPGetPCSide</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetResidualNorm.html"><span class="doc std std-doc">KSPGetResidualNorm</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetReusePreconditioner.html"><span class="doc std std-doc">KSPGetReusePreconditioner</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetTolerances.html"><span class="doc std std-doc">KSPGetTolerances</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetTotalIterations.html"><span class="doc std std-doc">KSPGetTotalIterations</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetType.html"><span class="doc std std-doc">KSPGetType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPHPDDM.html"><span class="doc std std-doc">KSPHPDDM</span></a></p></li>
+<li><p><a class="reference internal" href="KSPHPDDMGetDeflationMat.html"><span class="doc std std-doc">KSPHPDDMGetDeflationMat</span></a></p></li>
+<li><p><a class="reference internal" href="KSPHPDDMGetType.html"><span class="doc std std-doc">KSPHPDDMGetType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPHPDDMPrecision.html"><span class="doc std std-doc">KSPHPDDMPrecision</span></a></p></li>
+<li><p><a class="reference internal" href="KSPHPDDMSetDeflationMat.html"><span class="doc std std-doc">KSPHPDDMSetDeflationMat</span></a></p></li>
+<li><p><a class="reference internal" href="KSPHPDDMSetType.html"><span class="doc std std-doc">KSPHPDDMSetType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPHPDDMType.html"><span class="doc std std-doc">KSPHPDDMType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPLSQRConvergedDefault.html"><span class="doc std std-doc">KSPLSQRConvergedDefault</span></a></p></li>
+<li><p><a class="reference internal" href="KSPLSQRGetNorms.html"><span class="doc std std-doc">KSPLSQRGetNorms</span></a></p></li>
+<li><p><a class="reference internal" href="KSPLSQRGetStandardErrorVec.html"><span class="doc std std-doc">KSPLSQRGetStandardErrorVec</span></a></p></li>
+<li><p><a class="reference internal" href="KSPLSQRMonitorResidual.html"><span class="doc std std-doc">KSPLSQRMonitorResidual</span></a></p></li>
+<li><p><a class="reference internal" href="KSPLSQRMonitorResidualDrawLG.html"><span class="doc std std-doc">KSPLSQRMonitorResidualDrawLG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPLSQRMonitorResidualDrawLGCreate.html"><span class="doc std std-doc">KSPLSQRMonitorResidualDrawLGCreate</span></a></p></li>
+<li><p><a class="reference internal" href="KSPLSQRSetComputeStandardErrorVec.html"><span class="doc std std-doc">KSPLSQRSetComputeStandardErrorVec</span></a></p></li>
+<li><p><a class="reference internal" href="KSPLSQRSetExactMatNorm.html"><span class="doc std std-doc">KSPLSQRSetExactMatNorm</span></a></p></li>
+<li><p><a class="reference internal" href="KSPLoad.html"><span class="doc std std-doc">KSPLoad</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMatSolve.html"><span class="doc std std-doc">KSPMatSolve</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorCancel.html"><span class="doc std std-doc">KSPMonitorCancel</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorError.html"><span class="doc std std-doc">KSPMonitorError</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorErrorDraw.html"><span class="doc std std-doc">KSPMonitorErrorDraw</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorErrorDrawLG.html"><span class="doc std std-doc">KSPMonitorErrorDrawLG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorErrorDrawLGCreate.html"><span class="doc std std-doc">KSPMonitorErrorDrawLGCreate</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorResidual.html"><span class="doc std std-doc">KSPMonitorResidual</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorResidualDraw.html"><span class="doc std std-doc">KSPMonitorResidualDraw</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorResidualDrawLG.html"><span class="doc std std-doc">KSPMonitorResidualDrawLG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorResidualDrawLGCreate.html"><span class="doc std std-doc">KSPMonitorResidualDrawLGCreate</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorResidualRange.html"><span class="doc std std-doc">KSPMonitorResidualRange</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorSingularValue.html"><span class="doc std std-doc">KSPMonitorSingularValue</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorSingularValueCreate.html"><span class="doc std std-doc">KSPMonitorSingularValueCreate</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorSolution.html"><span class="doc std std-doc">KSPMonitorSolution</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorSolutionDraw.html"><span class="doc std std-doc">KSPMonitorSolutionDraw</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorSolutionDrawLG.html"><span class="doc std std-doc">KSPMonitorSolutionDrawLG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorSolutionDrawLGCreate.html"><span class="doc std std-doc">KSPMonitorSolutionDrawLGCreate</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorTrueResidual.html"><span class="doc std std-doc">KSPMonitorTrueResidual</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorTrueResidualDraw.html"><span class="doc std std-doc">KSPMonitorTrueResidualDraw</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorTrueResidualDrawLG.html"><span class="doc std std-doc">KSPMonitorTrueResidualDrawLG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorTrueResidualDrawLGCreate.html"><span class="doc std std-doc">KSPMonitorTrueResidualDrawLGCreate</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorTrueResidualMax.html"><span class="doc std std-doc">KSPMonitorTrueResidualMax</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEBCGS.html"><span class="doc std std-doc">KSPPIPEBCGS</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPECG.html"><span class="doc std std-doc">KSPPIPECG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPECG2.html"><span class="doc std std-doc">KSPPIPECG2</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPECGRR.html"><span class="doc std std-doc">KSPPIPECGRR</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPECR.html"><span class="doc std std-doc">KSPPIPECR</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEFCG.html"><span class="doc std std-doc">KSPPIPEFCG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEFCGGetMmax.html"><span class="doc std std-doc">KSPPIPEFCGGetMmax</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="KSPPIPEFCGGetTruncationType.html"><span class="doc std std-doc">KSPPIPEFCGGetTruncationType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEFCGSetMmax.html"><span class="doc std std-doc">KSPPIPEFCGSetMmax</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEFCGSetTruncationType.html"><span class="doc std std-doc">KSPPIPEFCGSetTruncationType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEFGMRES.html"><span class="doc std std-doc">KSPPIPEFGMRES</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEFGMRESSetShift.html"><span class="doc std std-doc">KSPPIPEFGMRESSetShift</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEGCR.html"><span class="doc std std-doc">KSPPIPEGCR</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEGCRGetMmax.html"><span class="doc std std-doc">KSPPIPEGCRGetMmax</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEGCRGetTruncationType.html"><span class="doc std std-doc">KSPPIPEGCRGetTruncationType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEGCRGetUnrollW.html"><span class="doc std std-doc">KSPPIPEGCRGetUnrollW</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEGCRSetMmax.html"><span class="doc std std-doc">KSPPIPEGCRSetMmax</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEGCRSetModifyPC.html"><span class="doc std std-doc">KSPPIPEGCRSetModifyPC</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEGCRSetTruncationType.html"><span class="doc std std-doc">KSPPIPEGCRSetTruncationType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEGCRSetUnrollW.html"><span class="doc std std-doc">KSPPIPEGCRSetUnrollW</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEPRCG.html"><span class="doc std std-doc">KSPPIPEPRCG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPythonGetType.html"><span class="doc std std-doc">KSPPythonGetType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPythonSetType.html"><span class="doc std std-doc">KSPPythonSetType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPRichardsonSetScale.html"><span class="doc std std-doc">KSPRichardsonSetScale</span></a></p></li>
+<li><p><a class="reference internal" href="KSPRichardsonSetSelfScale.html"><span class="doc std std-doc">KSPRichardsonSetSelfScale</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetApplicationContext.html"><span class="doc std std-doc">KSPSetApplicationContext</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetDM.html"><span class="doc std std-doc">KSPSetDM</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetDMActive.html"><span class="doc std std-doc">KSPSetDMActive</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetDiagonalScaleFix.html"><span class="doc std std-doc">KSPSetDiagonalScaleFix</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetErrorIfNotConverged.html"><span class="doc std std-doc">KSPSetErrorIfNotConverged</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetPCSide.html"><span class="doc std std-doc">KSPSetPCSide</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetReusePreconditioner.html"><span class="doc std std-doc">KSPSetReusePreconditioner</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetSkipPCSetFromOptions.html"><span class="doc std std-doc">KSPSetSkipPCSetFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetTolerances.html"><span class="doc std std-doc">KSPSetTolerances</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetType.html"><span class="doc std std-doc">KSPSetType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPViewFromOptions.html"><span class="doc std std-doc">KSPViewFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="MatCreateLMVMBFGS.html"><span class="doc std std-doc">MatCreateLMVMBFGS</span></a></p></li>
+<li><p><a class="reference internal" href="MatCreateLMVMBadBroyden.html"><span class="doc std std-doc">MatCreateLMVMBadBroyden</span></a></p></li>
+<li><p><a class="reference internal" href="MatCreateLMVMBroyden.html"><span class="doc std std-doc">MatCreateLMVMBroyden</span></a></p></li>
+<li><p><a class="reference internal" href="MatCreateLMVMDFP.html"><span class="doc std std-doc">MatCreateLMVMDFP</span></a></p></li>
+<li><p><a class="reference internal" href="MatCreateLMVMDiagBroyden.html"><span class="doc std std-doc">MatCreateLMVMDiagBroyden</span></a></p></li>
+<li><p><a class="reference internal" href="MatCreateLMVMSR1.html"><span class="doc std std-doc">MatCreateLMVMSR1</span></a></p></li>
+<li><p><a class="reference internal" href="MatCreateLMVMSymBadBroyden.html"><span class="doc std std-doc">MatCreateLMVMSymBadBroyden</span></a></p></li>
+<li><p><a class="reference internal" href="MatCreateLMVMSymBroyden.html"><span class="doc std std-doc">MatCreateLMVMSymBroyden</span></a></p></li>
+<li><p><a class="reference internal" href="MatCreateSchurComplement.html"><span class="doc std std-doc">MatCreateSchurComplement</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMAllocate.html"><span class="doc std std-doc">MatLMVMAllocate</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMGetRejectCount.html"><span class="doc std std-doc">MatLMVMGetRejectCount</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMGetUpdateCount.html"><span class="doc std std-doc">MatLMVMGetUpdateCount</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMIsAllocated.html"><span class="doc std std-doc">MatLMVMIsAllocated</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMReset.html"><span class="doc std std-doc">MatLMVMReset</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMResetShift.html"><span class="doc std std-doc">MatLMVMResetShift</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMSymBroydenSetDelta.html"><span class="doc std std-doc">MatLMVMSymBroydenSetDelta</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMSymBroydenSetScaleType.html"><span class="doc std std-doc">MatLMVMSymBroydenSetScaleType</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMUpdate.html"><span class="doc std std-doc">MatLMVMUpdate</span></a></p></li>
+<li><p><a class="reference internal" href="MatSchurComplementAinvType.html"><span class="doc std std-doc">MatSchurComplementAinvType</span></a></p></li>
+<li><p><a class="reference internal" href="MatSchurComplementGetKSP.html"><span class="doc std std-doc">MatSchurComplementGetKSP</span></a></p></li>
+<li><p><a class="reference internal" href="MatSchurComplementGetSubMatrices.html"><span class="doc std std-doc">MatSchurComplementGetSubMatrices</span></a></p></li>
+<li><p><a class="reference internal" href="MatSchurComplementSetSubMatrices.html"><span class="doc std std-doc">MatSchurComplementSetSubMatrices</span></a></p></li>
+<li><p><a class="reference internal" href="MatSchurComplementUpdateSubMatrices.html"><span class="doc std std-doc">MatSchurComplementUpdateSubMatrices</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="advanced-setting-more-advanced-options-and-customization">
+<h3>Advanced - Setting more advanced options and customization<a class="headerlink" href="#advanced-setting-more-advanced-options-and-customization" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="DMGlobalToLocalSolve.html"><span class="doc std std-doc">DMGlobalToLocalSolve</span></a></p></li>
+<li><p><a class="reference internal" href="DMKSPGetComputeInitialGuess.html"><span class="doc std std-doc">DMKSPGetComputeInitialGuess</span></a></p></li>
+<li><p><a class="reference internal" href="DMKSPGetComputeRHS.html"><span class="doc std std-doc">DMKSPGetComputeRHS</span></a></p></li>
+<li><p><a class="reference internal" href="DMProjectField.html"><span class="doc std std-doc">DMProjectField</span></a></p></li>
+<li><p><a class="reference internal" href="KSPAppendOptionsPrefix.html"><span class="doc std std-doc">KSPAppendOptionsPrefix</span></a></p></li>
+<li><p><a class="reference internal" href="KSPBuildResidual.html"><span class="doc std std-doc">KSPBuildResidual</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCGGetNormD.html"><span class="doc std std-doc">KSPCGGetNormD</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCGGetObjFcn.html"><span class="doc std std-doc">KSPCGGetObjFcn</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCGSetRadius.html"><span class="doc std std-doc">KSPCGSetRadius</span></a></p></li>
+<li><p><a class="reference internal" href="KSPChebyshevEstEigGetKSP.html"><span class="doc std std-doc">KSPChebyshevEstEigGetKSP</span></a></p></li>
+<li><p><a class="reference internal" href="KSPComputeEigenvalues.html"><span class="doc std std-doc">KSPComputeEigenvalues</span></a></p></li>
+<li><p><a class="reference internal" href="KSPComputeEigenvaluesExplicitly.html"><span class="doc std std-doc">KSPComputeEigenvaluesExplicitly</span></a></p></li>
+<li><p><a class="reference internal" href="KSPComputeExtremeSingularValues.html"><span class="doc std std-doc">KSPComputeExtremeSingularValues</span></a></p></li>
+<li><p><a class="reference internal" href="KSPComputeOperator.html"><span class="doc std std-doc">KSPComputeOperator</span></a></p></li>
+<li><p><a class="reference internal" href="KSPComputeRitz.html"><span class="doc std std-doc">KSPComputeRitz</span></a></p></li>
+<li><p><a class="reference internal" href="KSPConvergedDefault.html"><span class="doc std std-doc">KSPConvergedDefault</span></a></p></li>
+<li><p><a class="reference internal" href="KSPConvergedSkip.html"><span class="doc std std-doc">KSPConvergedSkip</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCreateVecs.html"><span class="doc std std-doc">KSPCreateVecs</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFCGGetNprealloc.html"><span class="doc std std-doc">KSPFCGGetNprealloc</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFCGSetNprealloc.html"><span class="doc std std-doc">KSPFCGSetNprealloc</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFETIDP.html"><span class="doc std std-doc">KSPFETIDP</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFETIDPGetInnerBDDC.html"><span class="doc std std-doc">KSPFETIDPGetInnerBDDC</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFETIDPGetInnerKSP.html"><span class="doc std std-doc">KSPFETIDPGetInnerKSP</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFETIDPSetInnerBDDC.html"><span class="doc std std-doc">KSPFETIDPSetInnerBDDC</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFETIDPSetPressureOperator.html"><span class="doc std std-doc">KSPFETIDPSetPressureOperator</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGLTRGetLambda.html"><span class="doc std std-doc">KSPGLTRGetLambda</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGLTRGetMinEig.html"><span class="doc std std-doc">KSPGLTRGetMinEig</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGMRESCGSRefinementType.html"><span class="doc std std-doc">KSPGMRESCGSRefinementType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetAndClearConvergenceTest.html"><span class="doc std std-doc">KSPGetAndClearConvergenceTest</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetComputeEigenvalues.html"><span class="doc std std-doc">KSPGetComputeEigenvalues</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetComputeSingularValues.html"><span class="doc std std-doc">KSPGetComputeSingularValues</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetConvergenceContext.html"><span class="doc std std-doc">KSPGetConvergenceContext</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetConvergenceTest.html"><span class="doc std std-doc">KSPGetConvergenceTest</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="KSPGetErrorHistory.html"><span class="doc std std-doc">KSPGetErrorHistory</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetInitialGuessKnoll.html"><span class="doc std std-doc">KSPGetInitialGuessKnoll</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetMatSolveBatchSize.html"><span class="doc std std-doc">KSPGetMatSolveBatchSize</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetNormType.html"><span class="doc std std-doc">KSPGetNormType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetOptionsPrefix.html"><span class="doc std std-doc">KSPGetOptionsPrefix</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetResidualHistory.html"><span class="doc std std-doc">KSPGetResidualHistory</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuessFischerSetModel.html"><span class="doc std std-doc">KSPGuessFischerSetModel</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMatRegisterAll.html"><span class="doc std std-doc">KSPMatRegisterAll</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitoRegisterAll.html"><span class="doc std std-doc">KSPMonitoRegisterAll</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorDynamicTolerance.html"><span class="doc std std-doc">KSPMonitorDynamicTolerance</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorRegister.html"><span class="doc std std-doc">KSPMonitorRegister</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorSAWs.html"><span class="doc std std-doc">KSPMonitorSAWs</span></a></p></li>
+<li><p><a class="reference internal" href="KSPNormType.html"><span class="doc std std-doc">KSPNormType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEFCGGetNprealloc.html"><span class="doc std std-doc">KSPPIPEFCGGetNprealloc</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEFCGSetNprealloc.html"><span class="doc std std-doc">KSPPIPEFCGSetNprealloc</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEGCRGetNprealloc.html"><span class="doc std std-doc">KSPPIPEGCRGetNprealloc</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPEGCRSetNprealloc.html"><span class="doc std std-doc">KSPPIPEGCRSetNprealloc</span></a></p></li>
+<li><p><a class="reference internal" href="KSPPIPELCG.html"><span class="doc std std-doc">KSPPIPELCG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPQCGGetQuadratic.html"><span class="doc std std-doc">KSPQCGGetQuadratic</span></a></p></li>
+<li><p><a class="reference internal" href="KSPQCGGetTrialStepNorm.html"><span class="doc std std-doc">KSPQCGGetTrialStepNorm</span></a></p></li>
+<li><p><a class="reference internal" href="KSPQCGSetTrustRegionRadius.html"><span class="doc std std-doc">KSPQCGSetTrustRegionRadius</span></a></p></li>
+<li><p><a class="reference internal" href="KSPRegister.html"><span class="doc std std-doc">KSPRegister</span></a></p></li>
+<li><p><a class="reference internal" href="KSPRegisterAll.html"><span class="doc std std-doc">KSPRegisterAll</span></a></p></li>
+<li><p><a class="reference internal" href="KSPResetFromOptions.html"><span class="doc std std-doc">KSPResetFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetCheckNormIteration.html"><span class="doc std std-doc">KSPSetCheckNormIteration</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetComputeEigenvalues.html"><span class="doc std std-doc">KSPSetComputeEigenvalues</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetComputeRitz.html"><span class="doc std std-doc">KSPSetComputeRitz</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetComputeSingularValues.html"><span class="doc std std-doc">KSPSetComputeSingularValues</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetConvergenceTest.html"><span class="doc std std-doc">KSPSetConvergenceTest</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetDiagonalScale.html"><span class="doc std std-doc">KSPSetDiagonalScale</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetErrorHistory.html"><span class="doc std std-doc">KSPSetErrorHistory</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetGuess.html"><span class="doc std std-doc">KSPSetGuess</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetInitialGuessKnoll.html"><span class="doc std std-doc">KSPSetInitialGuessKnoll</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="KSPSetLagNorm.html"><span class="doc std std-doc">KSPSetLagNorm</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetMatSolveBatchSize.html"><span class="doc std std-doc">KSPSetMatSolveBatchSize</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetNormType.html"><span class="doc std std-doc">KSPSetNormType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetOptionsPrefix.html"><span class="doc std std-doc">KSPSetOptionsPrefix</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetResidualHistory.html"><span class="doc std std-doc">KSPSetResidualHistory</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetUpOnBlocks.html"><span class="doc std std-doc">KSPSetUpOnBlocks</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetUseExplicitTranspose.html"><span class="doc std std-doc">KSPSetUseExplicitTranspose</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetUseFischerGuess.html"><span class="doc std std-doc">KSPSetUseFischerGuess</span></a></p></li>
+<li><p><a class="reference internal" href="KSPTSIRM.html"><span class="doc std std-doc">KSPTSIRM</span></a></p></li>
+<li><p><a class="reference internal" href="KSPUnwindPreconditioner.html"><span class="doc std std-doc">KSPUnwindPreconditioner</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_GMRES_CGS_REFINE_IFNEEDED.html"><span class="doc std std-doc">KSP_GMRES_CGS_REFINE_IFNEEDED</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_GMRES_CGS_REFINE_NEVER.html"><span class="doc std std-doc">KSP_GMRES_CGS_REFINE_NEVER</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_NORM_NATURAL.html"><span class="doc std std-doc">KSP_NORM_NATURAL</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_NORM_NONE.html"><span class="doc std std-doc">KSP_NORM_NONE</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_NORM_PRECONDITIONED.html"><span class="doc std std-doc">KSP_NORM_PRECONDITIONED</span></a></p></li>
+<li><p><a class="reference internal" href="KSP_NORM_UNPRECONDITIONED.html"><span class="doc std std-doc">KSP_NORM_UNPRECONDITIONED</span></a></p></li>
+<li><p><a class="reference internal" href="MatCreateSchurComplementPmat.html"><span class="doc std std-doc">MatCreateSchurComplementPmat</span></a></p></li>
+<li><p><a class="reference internal" href="MatGetSchurComplement.html"><span class="doc std std-doc">MatGetSchurComplement</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMApplyJ0Fwd.html"><span class="doc std std-doc">MatLMVMApplyJ0Fwd</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMApplyJ0Inv.html"><span class="doc std std-doc">MatLMVMApplyJ0Inv</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMClearJ0.html"><span class="doc std std-doc">MatLMVMClearJ0</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMGetJ0.html"><span class="doc std std-doc">MatLMVMGetJ0</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMGetJ0KSP.html"><span class="doc std std-doc">MatLMVMGetJ0KSP</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMGetJ0PC.html"><span class="doc std std-doc">MatLMVMGetJ0PC</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMSetJ0.html"><span class="doc std std-doc">MatLMVMSetJ0</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMSetJ0Diag.html"><span class="doc std std-doc">MatLMVMSetJ0Diag</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMSetJ0KSP.html"><span class="doc std std-doc">MatLMVMSetJ0KSP</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMSetJ0PC.html"><span class="doc std std-doc">MatLMVMSetJ0PC</span></a></p></li>
+<li><p><a class="reference internal" href="MatLMVMSetJ0Scale.html"><span class="doc std std-doc">MatLMVMSetJ0Scale</span></a></p></li>
+<li><p><a class="reference internal" href="MatSchurComplementComputeExplicitOperator.html"><span class="doc std std-doc">MatSchurComplementComputeExplicitOperator</span></a></p></li>
+<li><p><a class="reference internal" href="MatSchurComplementGetAinvType.html"><span class="doc std std-doc">MatSchurComplementGetAinvType</span></a></p></li>
+<li><p><a class="reference internal" href="MatSchurComplementGetPmat.html"><span class="doc std std-doc">MatSchurComplementGetPmat</span></a></p></li>
+<li><p><a class="reference internal" href="MatSchurComplementSetAinvType.html"><span class="doc std std-doc">MatSchurComplementSetAinvType</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="developer-interfaces-intended-primarily-for-library-developers-not-for-typical-applications-programmers">
+<h3>Developer - Interfaces intended primarily for library developers, not for typical applications programmers<a class="headerlink" href="#developer-interfaces-intended-primarily-for-library-developers-not-for-typical-applications-programmers" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="DMCopyDMKSP.html"><span class="doc std std-doc">DMCopyDMKSP</span></a></p></li>
+<li><p><a class="reference internal" href="DMGetDMKSP.html"><span class="doc std std-doc">DMGetDMKSP</span></a></p></li>
+<li><p><a class="reference internal" href="DMGetDMKSPWrite.html"><span class="doc std std-doc">DMGetDMKSPWrite</span></a></p></li>
+<li><p><a class="reference internal" href="DMKSPCopy.html"><span class="doc std std-doc">DMKSPCopy</span></a></p></li>
+<li><p><a class="reference internal" href="DMKSPGetComputeOperators.html"><span class="doc std std-doc">DMKSPGetComputeOperators</span></a></p></li>
+<li><p><a class="reference internal" href="DMKSPSetComputeInitialGuess.html"><span class="doc std std-doc">DMKSPSetComputeInitialGuess</span></a></p></li>
+<li><p><a class="reference internal" href="DMKSPSetComputeOperators.html"><span class="doc std std-doc">DMKSPSetComputeOperators</span></a></p></li>
+<li><p><a class="reference internal" href="DMKSPSetComputeRHS.html"><span class="doc std std-doc">DMKSPSetComputeRHS</span></a></p></li>
+<li><p><a class="reference internal" href="KSPBuildSolution.html"><span class="doc std std-doc">KSPBuildSolution</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCheckDot.html"><span class="doc std std-doc">KSPCheckDot</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCheckNorm.html"><span class="doc std std-doc">KSPCheckNorm</span></a></p></li>
+<li><p><a class="reference internal" href="KSPCheckSolve.html"><span class="doc std std-doc">KSPCheckSolve</span></a></p></li>
+<li><p><a class="reference internal" href="KSPFinalizePackage.html"><span class="doc std std-doc">KSPFinalizePackage</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGLTR.html"><span class="doc std std-doc">KSPGLTR</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetGuess.html"><span class="doc std std-doc">KSPGetGuess</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetPC.html"><span class="doc std std-doc">KSPGetPC</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="KSPGetRhs.html"><span class="doc std std-doc">KSPGetRhs</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGetSolution.html"><span class="doc std std-doc">KSPGetSolution</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuessCreate.html"><span class="doc std std-doc">KSPGuessCreate</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuessDestroy.html"><span class="doc std std-doc">KSPGuessDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuessFormGuess.html"><span class="doc std std-doc">KSPGuessFormGuess</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuessGetType.html"><span class="doc std std-doc">KSPGuessGetType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuessRegisterAll.html"><span class="doc std std-doc">KSPGuessRegisterAll</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuessSetFromOptions.html"><span class="doc std std-doc">KSPGuessSetFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuessSetTolerance.html"><span class="doc std std-doc">KSPGuessSetTolerance</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuessSetType.html"><span class="doc std std-doc">KSPGuessSetType</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuessSetUp.html"><span class="doc std std-doc">KSPGuessSetUp</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuessUpdate.html"><span class="doc std std-doc">KSPGuessUpdate</span></a></p></li>
+<li><p><a class="reference internal" href="KSPGuessView.html"><span class="doc std std-doc">KSPGuessView</span></a></p></li>
+<li><p><a class="reference internal" href="KSPInitialResidual.html"><span class="doc std std-doc">KSPInitialResidual</span></a></p></li>
+<li><p><a class="reference internal" href="KSPInitializePackage.html"><span class="doc std std-doc">KSPInitializePackage</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitor.html"><span class="doc std std-doc">KSPMonitor</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="KSPMonitorSAWsCreate.html"><span class="doc std std-doc">KSPMonitorSAWsCreate</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorSAWsDestroy.html"><span class="doc std std-doc">KSPMonitorSAWsDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="KSPMonitorSetFromOptions.html"><span class="doc std std-doc">KSPMonitorSetFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="KSPNASH.html"><span class="doc std std-doc">KSPNASH</span></a></p></li>
+<li><p><a class="reference internal" href="KSPQCG.html"><span class="doc std std-doc">KSPQCG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSTCG.html"><span class="doc std std-doc">KSPSTCG</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetPC.html"><span class="doc std std-doc">KSPSetPC</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetPostSolve.html"><span class="doc std std-doc">KSPSetPostSolve</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetPreSolve.html"><span class="doc std std-doc">KSPSetPreSolve</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetSupportedNorm.html"><span class="doc std std-doc">KSPSetSupportedNorm</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetUp.html"><span class="doc std std-doc">KSPSetUp</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSetWorkVecs.html"><span class="doc std std-doc">KSPSetWorkVecs</span></a></p></li>
+<li><p><a class="reference internal" href="KSPSolveTranspose.html"><span class="doc std std-doc">KSPSolveTranspose</span></a></p></li>
+<li><p><a class="reference internal" href="MatSchurComplementSetKSP.html"><span class="doc std std-doc">MatSchurComplementSetKSP</span></a></p></li>
+<li><p><a class="reference internal" href="PCFinalizePackage.html"><span class="doc std std-doc">PCFinalizePackage</span></a></p></li>
+<li><p><a class="reference internal" href="PCInitializePackage.html"><span class="doc std std-doc">PCInitializePackage</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="no-deprecated-routines">
+<h3>No deprecated routines<a class="headerlink" href="#no-deprecated-routines" title="Permalink to this heading">#</a></h3>
+</section>
+</section>
+<section id="single-list-of-manual-pages">
+<h2>Single list of manual pages<a class="headerlink" href="#single-list-of-manual-pages" title="Permalink to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="DMCopyDMKSP.html">DMCopyDMKSP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMGetDMKSP.html">DMGetDMKSP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMGetDMKSPWrite.html">DMGetDMKSPWrite</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMGlobalToLocalSolve.html">DMGlobalToLocalSolve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMKSPCopy.html">DMKSPCopy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMKSPGetComputeInitialGuess.html">DMKSPGetComputeInitialGuess</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMKSPGetComputeOperators.html">DMKSPGetComputeOperators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMKSPGetComputeRHS.html">DMKSPGetComputeRHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMKSPSetComputeInitialGuess.html">DMKSPSetComputeInitialGuess</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMKSPSetComputeOperators.html">DMKSPSetComputeOperators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMKSPSetComputeRHS.html">DMKSPSetComputeRHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DMProjectField.html">DMProjectField</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP.html">KSP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPAGMRES.html">KSPAGMRES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPAppendOptionsPrefix.html">KSPAppendOptionsPrefix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPBCGS.html">KSPBCGS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPBCGSL.html">KSPBCGSL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPBCGSLSetEll.html">KSPBCGSLSetEll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPBCGSLSetPol.html">KSPBCGSLSetPol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPBCGSLSetUsePseudoinverse.html">KSPBCGSLSetUsePseudoinverse</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPBCGSLSetXRes.html">KSPBCGSLSetXRes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPBICG.html">KSPBICG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPBuildResidual.html">KSPBuildResidual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPBuildSolution.html">KSPBuildSolution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCG.html">KSPCG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCGGetNormD.html">KSPCGGetNormD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCGGetObjFcn.html">KSPCGGetObjFcn</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCGLS.html">KSPCGLS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCGNE.html">KSPCGNE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCGS.html">KSPCGS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCGSetRadius.html">KSPCGSetRadius</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCGSetType.html">KSPCGSetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCGType.html">KSPCGType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCGUseSingleReduction.html">KSPCGUseSingleReduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCHEBYSHEV.html">KSPCHEBYSHEV</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCR.html">KSPCR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPChebyshevEstEigGetKSP.html">KSPChebyshevEstEigGetKSP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPChebyshevEstEigSet.html">KSPChebyshevEstEigSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPChebyshevEstEigSetUseNoisy.html">KSPChebyshevEstEigSetUseNoisy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPChebyshevSetEigenvalues.html">KSPChebyshevSetEigenvalues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCheckDot.html">KSPCheckDot</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCheckNorm.html">KSPCheckNorm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCheckSolve.html">KSPCheckSolve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPComputeEigenvalues.html">KSPComputeEigenvalues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPComputeEigenvaluesExplicitly.html">KSPComputeEigenvaluesExplicitly</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPComputeExtremeSingularValues.html">KSPComputeExtremeSingularValues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPComputeOperator.html">KSPComputeOperator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPComputeRitz.html">KSPComputeRitz</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPConvergedDefault.html">KSPConvergedDefault</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPConvergedDefaultCreate.html">KSPConvergedDefaultCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPConvergedDefaultDestroy.html">KSPConvergedDefaultDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPConvergedDefaultSetConvergedMaxits.html">KSPConvergedDefaultSetConvergedMaxits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPConvergedDefaultSetUIRNorm.html">KSPConvergedDefaultSetUIRNorm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPConvergedDefaultSetUMIRNorm.html">KSPConvergedDefaultSetUMIRNorm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPConvergedRateView.html">KSPConvergedRateView</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPConvergedReason.html">KSPConvergedReason</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPConvergedReasonView.html">KSPConvergedReasonView</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPConvergedReasonViewCancel.html">KSPConvergedReasonViewCancel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPConvergedReasonViewFromOptions.html">KSPConvergedReasonViewFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPConvergedReasonViewSet.html">KSPConvergedReasonViewSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPConvergedSkip.html">KSPConvergedSkip</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCreate.html">KSPCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPCreateVecs.html">KSPCreateVecs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPDGMRES.html">KSPDGMRES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPDestroy.html">KSPDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFBCGS.html">KSPFBCGS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFBCGSR.html">KSPFBCGSR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFCDTruncationType.html">KSPFCDTruncationType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFCG.html">KSPFCG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFCGGetMmax.html">KSPFCGGetMmax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFCGGetNprealloc.html">KSPFCGGetNprealloc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFCGGetTruncationType.html">KSPFCGGetTruncationType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFCGSetMmax.html">KSPFCGSetMmax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFCGSetNprealloc.html">KSPFCGSetNprealloc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFCGSetTruncationType.html">KSPFCGSetTruncationType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFETIDP.html">KSPFETIDP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFETIDPGetInnerBDDC.html">KSPFETIDPGetInnerBDDC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFETIDPGetInnerKSP.html">KSPFETIDPGetInnerKSP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFETIDPSetInnerBDDC.html">KSPFETIDPSetInnerBDDC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFETIDPSetPressureOperator.html">KSPFETIDPSetPressureOperator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFGMRES.html">KSPFGMRES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFGMRESModifyPCKSP.html">KSPFGMRESModifyPCKSP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFGMRESModifyPCNoChange.html">KSPFGMRESModifyPCNoChange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFGMRESSetModifyPC.html">KSPFGMRESSetModifyPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPFinalizePackage.html">KSPFinalizePackage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGCR.html">KSPGCR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGCRGetRestart.html">KSPGCRGetRestart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGCRSetModifyPC.html">KSPGCRSetModifyPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGCRSetRestart.html">KSPGCRSetRestart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGLTR.html">KSPGLTR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGLTRGetLambda.html">KSPGLTRGetLambda</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGLTRGetMinEig.html">KSPGLTRGetMinEig</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRES.html">KSPGMRES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRESCGSRefinementType.html">KSPGMRESCGSRefinementType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRESClassicalGramSchmidtOrthogonalization.html">KSPGMRESClassicalGramSchmidtOrthogonalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRESGetCGSRefinementType.html">KSPGMRESGetCGSRefinementType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRESGetOrthogonalization.html">KSPGMRESGetOrthogonalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRESGetRestart.html">KSPGMRESGetRestart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRESModifiedGramSchmidtOrthogonalization.html">KSPGMRESModifiedGramSchmidtOrthogonalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRESMonitorKrylov.html">KSPGMRESMonitorKrylov</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRESSetBreakdownTolerance.html">KSPGMRESSetBreakdownTolerance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRESSetCGSRefinementType.html">KSPGMRESSetCGSRefinementType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRESSetHapTol.html">KSPGMRESSetHapTol</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRESSetOrthogonalization.html">KSPGMRESSetOrthogonalization</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRESSetPreAllocateVectors.html">KSPGMRESSetPreAllocateVectors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGMRESSetRestart.html">KSPGMRESSetRestart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGROPPCG.html">KSPGROPPCG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetAndClearConvergenceTest.html">KSPGetAndClearConvergenceTest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetApplicationContext.html">KSPGetApplicationContext</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetComputeEigenvalues.html">KSPGetComputeEigenvalues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetComputeSingularValues.html">KSPGetComputeSingularValues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetConvergedReason.html">KSPGetConvergedReason</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetConvergedReasonString.html">KSPGetConvergedReasonString</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetConvergenceContext.html">KSPGetConvergenceContext</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetConvergenceTest.html">KSPGetConvergenceTest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetDM.html">KSPGetDM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetDiagonalScale.html">KSPGetDiagonalScale</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetDiagonalScaleFix.html">KSPGetDiagonalScaleFix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetErrorHistory.html">KSPGetErrorHistory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetErrorIfNotConverged.html">KSPGetErrorIfNotConverged</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetGuess.html">KSPGetGuess</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetInitialGuessKnoll.html">KSPGetInitialGuessKnoll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetInitialGuessNonzero.html">KSPGetInitialGuessNonzero</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetIterationNumber.html">KSPGetIterationNumber</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetMatSolveBatchSize.html">KSPGetMatSolveBatchSize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetMonitorContext.html">KSPGetMonitorContext</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetNormType.html">KSPGetNormType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetOperators.html">KSPGetOperators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetOperatorsSet.html">KSPGetOperatorsSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetOptionsPrefix.html">KSPGetOptionsPrefix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetPC.html">KSPGetPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetPCSide.html">KSPGetPCSide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetResidualHistory.html">KSPGetResidualHistory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetResidualNorm.html">KSPGetResidualNorm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetReusePreconditioner.html">KSPGetReusePreconditioner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetRhs.html">KSPGetRhs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetSolution.html">KSPGetSolution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetTolerances.html">KSPGetTolerances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetTotalIterations.html">KSPGetTotalIterations</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGetType.html">KSPGetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuess.html">KSPGuess</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuessCreate.html">KSPGuessCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuessDestroy.html">KSPGuessDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuessFischerSetModel.html">KSPGuessFischerSetModel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuessFormGuess.html">KSPGuessFormGuess</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuessGetType.html">KSPGuessGetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuessRegisterAll.html">KSPGuessRegisterAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuessSetFromOptions.html">KSPGuessSetFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuessSetTolerance.html">KSPGuessSetTolerance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuessSetType.html">KSPGuessSetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuessSetUp.html">KSPGuessSetUp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuessType.html">KSPGuessType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuessUpdate.html">KSPGuessUpdate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPGuessView.html">KSPGuessView</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPHPDDM.html">KSPHPDDM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPHPDDMGetDeflationMat.html">KSPHPDDMGetDeflationMat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPHPDDMGetType.html">KSPHPDDMGetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPHPDDMPrecision.html">KSPHPDDMPrecision</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPHPDDMSetDeflationMat.html">KSPHPDDMSetDeflationMat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPHPDDMSetType.html">KSPHPDDMSetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPHPDDMType.html">KSPHPDDMType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPIBCGS.html">KSPIBCGS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPInitialResidual.html">KSPInitialResidual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPInitializePackage.html">KSPInitializePackage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPLCD.html">KSPLCD</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPLGMRES.html">KSPLGMRES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPLSQR.html">KSPLSQR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPLSQRConvergedDefault.html">KSPLSQRConvergedDefault</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPLSQRGetNorms.html">KSPLSQRGetNorms</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPLSQRGetStandardErrorVec.html">KSPLSQRGetStandardErrorVec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPLSQRMonitorResidual.html">KSPLSQRMonitorResidual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPLSQRMonitorResidualDrawLG.html">KSPLSQRMonitorResidualDrawLG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPLSQRMonitorResidualDrawLGCreate.html">KSPLSQRMonitorResidualDrawLGCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPLSQRSetComputeStandardErrorVec.html">KSPLSQRSetComputeStandardErrorVec</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPLSQRSetExactMatNorm.html">KSPLSQRSetExactMatNorm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPLoad.html">KSPLoad</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMINRES.html">KSPMINRES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMatRegisterAll.html">KSPMatRegisterAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMatSolve.html">KSPMatSolve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitoRegisterAll.html">KSPMonitoRegisterAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitor.html">KSPMonitor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorCancel.html">KSPMonitorCancel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorDynamicTolerance.html">KSPMonitorDynamicTolerance</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorError.html">KSPMonitorError</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorErrorDraw.html">KSPMonitorErrorDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorErrorDrawLG.html">KSPMonitorErrorDrawLG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorErrorDrawLGCreate.html">KSPMonitorErrorDrawLGCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorRegister.html">KSPMonitorRegister</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorResidual.html">KSPMonitorResidual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorResidualDraw.html">KSPMonitorResidualDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorResidualDrawLG.html">KSPMonitorResidualDrawLG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorResidualDrawLGCreate.html">KSPMonitorResidualDrawLGCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorResidualRange.html">KSPMonitorResidualRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorSAWs.html">KSPMonitorSAWs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorSAWsCreate.html">KSPMonitorSAWsCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorSAWsDestroy.html">KSPMonitorSAWsDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorSet.html">KSPMonitorSet</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorSetFromOptions.html">KSPMonitorSetFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorSingularValue.html">KSPMonitorSingularValue</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorSingularValueCreate.html">KSPMonitorSingularValueCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorSolution.html">KSPMonitorSolution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorSolutionDraw.html">KSPMonitorSolutionDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorSolutionDrawLG.html">KSPMonitorSolutionDrawLG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorSolutionDrawLGCreate.html">KSPMonitorSolutionDrawLGCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorTrueResidual.html">KSPMonitorTrueResidual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorTrueResidualDraw.html">KSPMonitorTrueResidualDraw</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorTrueResidualDrawLG.html">KSPMonitorTrueResidualDrawLG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorTrueResidualDrawLGCreate.html">KSPMonitorTrueResidualDrawLGCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPMonitorTrueResidualMax.html">KSPMonitorTrueResidualMax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPNASH.html">KSPNASH</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPNormType.html">KSPNormType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPGMRES.html">KSPPGMRES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEBCGS.html">KSPPIPEBCGS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPECG.html">KSPPIPECG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPECG2.html">KSPPIPECG2</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPECGRR.html">KSPPIPECGRR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPECR.html">KSPPIPECR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEFCG.html">KSPPIPEFCG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEFCGGetMmax.html">KSPPIPEFCGGetMmax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEFCGGetNprealloc.html">KSPPIPEFCGGetNprealloc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEFCGGetTruncationType.html">KSPPIPEFCGGetTruncationType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEFCGSetMmax.html">KSPPIPEFCGSetMmax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEFCGSetNprealloc.html">KSPPIPEFCGSetNprealloc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEFCGSetTruncationType.html">KSPPIPEFCGSetTruncationType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEFGMRES.html">KSPPIPEFGMRES</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEFGMRESSetShift.html">KSPPIPEFGMRESSetShift</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEGCR.html">KSPPIPEGCR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEGCRGetMmax.html">KSPPIPEGCRGetMmax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEGCRGetNprealloc.html">KSPPIPEGCRGetNprealloc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEGCRGetTruncationType.html">KSPPIPEGCRGetTruncationType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEGCRGetUnrollW.html">KSPPIPEGCRGetUnrollW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEGCRSetMmax.html">KSPPIPEGCRSetMmax</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEGCRSetModifyPC.html">KSPPIPEGCRSetModifyPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEGCRSetNprealloc.html">KSPPIPEGCRSetNprealloc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEGCRSetTruncationType.html">KSPPIPEGCRSetTruncationType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEGCRSetUnrollW.html">KSPPIPEGCRSetUnrollW</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPELCG.html">KSPPIPELCG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPIPEPRCG.html">KSPPIPEPRCG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPREONLY.html">KSPPREONLY</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPythonGetType.html">KSPPythonGetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPPythonSetType.html">KSPPythonSetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPQCG.html">KSPQCG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPQCGGetQuadratic.html">KSPQCGGetQuadratic</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPQCGGetTrialStepNorm.html">KSPQCGGetTrialStepNorm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPQCGSetTrustRegionRadius.html">KSPQCGSetTrustRegionRadius</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPQMRCGS.html">KSPQMRCGS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPRICHARDSON.html">KSPRICHARDSON</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPRegister.html">KSPRegister</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPRegisterAll.html">KSPRegisterAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPReset.html">KSPReset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPResetFromOptions.html">KSPResetFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPResetViewers.html">KSPResetViewers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPRichardsonSetScale.html">KSPRichardsonSetScale</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPRichardsonSetSelfScale.html">KSPRichardsonSetSelfScale</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSTCG.html">KSPSTCG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSYMMLQ.html">KSPSYMMLQ</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetApplicationContext.html">KSPSetApplicationContext</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetCheckNormIteration.html">KSPSetCheckNormIteration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetComputeEigenvalues.html">KSPSetComputeEigenvalues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetComputeInitialGuess.html">KSPSetComputeInitialGuess</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetComputeOperators.html">KSPSetComputeOperators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetComputeRHS.html">KSPSetComputeRHS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetComputeRitz.html">KSPSetComputeRitz</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetComputeSingularValues.html">KSPSetComputeSingularValues</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetConvergenceTest.html">KSPSetConvergenceTest</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetDM.html">KSPSetDM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetDMActive.html">KSPSetDMActive</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetDiagonalScale.html">KSPSetDiagonalScale</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetDiagonalScaleFix.html">KSPSetDiagonalScaleFix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetErrorHistory.html">KSPSetErrorHistory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetErrorIfNotConverged.html">KSPSetErrorIfNotConverged</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetFromOptions.html">KSPSetFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetGuess.html">KSPSetGuess</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetInitialGuessKnoll.html">KSPSetInitialGuessKnoll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetInitialGuessNonzero.html">KSPSetInitialGuessNonzero</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetLagNorm.html">KSPSetLagNorm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetMatSolveBatchSize.html">KSPSetMatSolveBatchSize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetNormType.html">KSPSetNormType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetOperators.html">KSPSetOperators</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetOptionsPrefix.html">KSPSetOptionsPrefix</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetPC.html">KSPSetPC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetPCSide.html">KSPSetPCSide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetPostSolve.html">KSPSetPostSolve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetPreSolve.html">KSPSetPreSolve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetResidualHistory.html">KSPSetResidualHistory</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetReusePreconditioner.html">KSPSetReusePreconditioner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetSkipPCSetFromOptions.html">KSPSetSkipPCSetFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetSupportedNorm.html">KSPSetSupportedNorm</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetTolerances.html">KSPSetTolerances</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetType.html">KSPSetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetUp.html">KSPSetUp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetUpOnBlocks.html">KSPSetUpOnBlocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetUseExplicitTranspose.html">KSPSetUseExplicitTranspose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetUseFischerGuess.html">KSPSetUseFischerGuess</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSetWorkVecs.html">KSPSetWorkVecs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSolve.html">KSPSolve</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPSolveTranspose.html">KSPSolveTranspose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPTCQMR.html">KSPTCQMR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPTFQMR.html">KSPTFQMR</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPTSIRM.html">KSPTSIRM</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPType.html">KSPType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPUnwindPreconditioner.html">KSPUnwindPreconditioner</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPView.html">KSPView</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSPViewFromOptions.html">KSPViewFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_CONVERGED_ATOL.html">KSP_CONVERGED_ATOL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_CONVERGED_ITERATING.html">KSP_CONVERGED_ITERATING</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_CONVERGED_ITS.html">KSP_CONVERGED_ITS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_CONVERGED_RTOL.html">KSP_CONVERGED_RTOL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_DIVERGED_BREAKDOWN.html">KSP_DIVERGED_BREAKDOWN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_DIVERGED_BREAKDOWN_BICG.html">KSP_DIVERGED_BREAKDOWN_BICG</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_DIVERGED_DTOL.html">KSP_DIVERGED_DTOL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_DIVERGED_INDEFINITE_PC.html">KSP_DIVERGED_INDEFINITE_PC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_DIVERGED_ITS.html">KSP_DIVERGED_ITS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_DIVERGED_NONSYMMETRIC.html">KSP_DIVERGED_NONSYMMETRIC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_DIVERGED_PC_FAILED.html">KSP_DIVERGED_PC_FAILED</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_GMRES_CGS_REFINE_IFNEEDED.html">KSP_GMRES_CGS_REFINE_IFNEEDED</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_GMRES_CGS_REFINE_NEVER.html">KSP_GMRES_CGS_REFINE_NEVER</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_NORM_NATURAL.html">KSP_NORM_NATURAL</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_NORM_NONE.html">KSP_NORM_NONE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_NORM_PRECONDITIONED.html">KSP_NORM_PRECONDITIONED</a></li>
+<li class="toctree-l1"><a class="reference internal" href="KSP_NORM_UNPRECONDITIONED.html">KSP_NORM_UNPRECONDITIONED</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatCreateLMVMBFGS.html">MatCreateLMVMBFGS</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatCreateLMVMBadBroyden.html">MatCreateLMVMBadBroyden</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatCreateLMVMBroyden.html">MatCreateLMVMBroyden</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatCreateLMVMDFP.html">MatCreateLMVMDFP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatCreateLMVMDiagBroyden.html">MatCreateLMVMDiagBroyden</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatCreateLMVMSR1.html">MatCreateLMVMSR1</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatCreateLMVMSymBadBroyden.html">MatCreateLMVMSymBadBroyden</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatCreateLMVMSymBroyden.html">MatCreateLMVMSymBroyden</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatCreateSchurComplement.html">MatCreateSchurComplement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatCreateSchurComplementPmat.html">MatCreateSchurComplementPmat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatGetSchurComplement.html">MatGetSchurComplement</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMAllocate.html">MatLMVMAllocate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMApplyJ0Fwd.html">MatLMVMApplyJ0Fwd</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMApplyJ0Inv.html">MatLMVMApplyJ0Inv</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMClearJ0.html">MatLMVMClearJ0</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMGetJ0.html">MatLMVMGetJ0</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMGetJ0KSP.html">MatLMVMGetJ0KSP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMGetJ0PC.html">MatLMVMGetJ0PC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMGetRejectCount.html">MatLMVMGetRejectCount</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMGetUpdateCount.html">MatLMVMGetUpdateCount</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMIsAllocated.html">MatLMVMIsAllocated</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMReset.html">MatLMVMReset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMResetShift.html">MatLMVMResetShift</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMSetHistorySize.html">MatLMVMSetHistorySize</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMSetJ0.html">MatLMVMSetJ0</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMSetJ0Diag.html">MatLMVMSetJ0Diag</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMSetJ0KSP.html">MatLMVMSetJ0KSP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMSetJ0PC.html">MatLMVMSetJ0PC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMSetJ0Scale.html">MatLMVMSetJ0Scale</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMSymBroydenSetDelta.html">MatLMVMSymBroydenSetDelta</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMSymBroydenSetScaleType.html">MatLMVMSymBroydenSetScaleType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatLMVMUpdate.html">MatLMVMUpdate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatSchurComplementAinvType.html">MatSchurComplementAinvType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatSchurComplementComputeExplicitOperator.html">MatSchurComplementComputeExplicitOperator</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatSchurComplementGetAinvType.html">MatSchurComplementGetAinvType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatSchurComplementGetKSP.html">MatSchurComplementGetKSP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatSchurComplementGetPmat.html">MatSchurComplementGetPmat</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatSchurComplementGetSubMatrices.html">MatSchurComplementGetSubMatrices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatSchurComplementSetAinvType.html">MatSchurComplementSetAinvType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatSchurComplementSetKSP.html">MatSchurComplementSetKSP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatSchurComplementSetSubMatrices.html">MatSchurComplementSetSubMatrices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="MatSchurComplementUpdateSubMatrices.html">MatSchurComplementUpdateSubMatrices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PCFinalizePackage.html">PCFinalizePackage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PCInitializePackage.html">PCInitializePackage</a></li>
+</ul>
+</div>
+</section>
+</section>
+
+
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+  <a class='left-prev' id="prev-link" href="../IS/PetscViewerHDF5ReadSizes.html" title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">PetscViewerHDF5ReadSizes</p>
+      </div>
+  </a>
+  <a class='right-next' id="next-link" href="DMCopyDMKSP.html" title="next page">
+  <div class="prev-next-info">
+      <p class="prev-next-subtitle">next</p>
+      <p class="prev-next-title">DMCopyDMKSP</p>
+  </div>
+  <i class="fa-solid fa-angle-right"></i>
+  </a>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div class="tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+</div>
+<nav id="bd-toc-nav" class="page-toc">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#manual-pages-by-level">
+   Manual Pages by Level
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#beginner-basic-usage">
+     Beginner - Basic usage
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#intermediate-setting-options-for-algorithms-and-data-structures">
+     Intermediate - Setting options for algorithms and data structures
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#advanced-setting-more-advanced-options-and-customization">
+     Advanced - Setting more advanced options and customization
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#developer-interfaces-intended-primarily-for-library-developers-not-for-typical-applications-programmers">
+     Developer - Interfaces intended primarily for library developers, not for typical applications programmers
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#no-deprecated-routines">
+     No deprecated routines
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#single-list-of-manual-pages">
+   Single list of manual pages
+  </a>
+  <ul class="simple nav section-nav flex-column">
+  </ul>
+ </li>
+</ul>
+
+</nav>
+</div>
+
+<div class="toc-item">
+  
+<div id="searchbox"></div>
+</div>
+
+<div class="toc-item">
+  
+
+<div class="tocsection editthispage">
+    <a href="https://gitlab.com/petsc/petsc/edit/release/doc/docs/manualpages/KSP/index.md">
+        <i class="fa-solid fa-pencil"></i> Edit this page
+    </a>
+</div>
+
+</div>
+
+<div class="toc-item">
+  
+<div class="tocsection sourcelink">
+    <a href="../../../_sources/docs/manualpages/KSP/index.md.txt">
+        <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+</div>
+
+</div>
+
+            </div>
+          
+          
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+</p>
+  </div>
+  
+</div>
+  </footer>
+  </body>
+</html>

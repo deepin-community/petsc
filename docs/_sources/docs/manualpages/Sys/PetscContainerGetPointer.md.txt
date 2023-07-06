@@ -1,0 +1,42 @@
+# PetscContainerGetPointer
+Gets the pointer value contained in the container that was provided with `PetscContainerSetPointer()` 
+## Synopsis
+```
+#include "petscsys.h"    
+PetscErrorCode PetscContainerGetPointer(PetscContainer obj, void **ptr)
+```
+Not Collective
+
+
+## Input Parameter
+
+- ***obj -*** the object created with `PetscContainerCreate()`
+
+
+
+## Output Parameter
+
+- ***ptr -*** the pointer value
+
+
+
+
+
+## See Also
+ `PetscContainerCreate()`, `PetscContainerDestroy()`,
+`PetscContainerSetPointer()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/objects/inherit.c.html#PetscContainerGetPointer">src/sys/objects/inherit.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/objects/inherit.c)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

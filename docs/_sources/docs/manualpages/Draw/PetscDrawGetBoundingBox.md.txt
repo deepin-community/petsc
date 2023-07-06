@@ -1,0 +1,41 @@
+# PetscDrawGetBoundingBox
+Gets the bounding box of all `PetscDrawStringBoxed()` commands 
+## Synopsis
+```
+#include "petscdraw.h" 
+PetscErrorCode PetscDrawGetBoundingBox(PetscDraw draw, PetscReal *xl, PetscReal *yl, PetscReal *xr, PetscReal *yr)
+```
+Not collective
+
+
+## Input Parameter
+
+- ***draw -*** the drawing context
+
+
+
+## Output Parameters
+
+- ***xl,yl,xr,yr -*** coordinates of lower left and upper right corners of bounding box
+
+
+
+
+
+## See Also
+ `PetscDraw`, `PetscDrawPushCurrentPoint()`, `PetscDrawPopCurrentPoint()`, `PetscDrawSetCurrentPoint()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/classes/draw/interface/dline.c.html#PetscDrawGetBoundingBox">src/sys/classes/draw/interface/dline.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/classes/draw/interface/dline.c)
+
+
+[Index of all Draw routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

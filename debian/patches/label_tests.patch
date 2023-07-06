@@ -1,0 +1,33 @@
+Index: petsc/makefile
+===================================================================
+--- petsc.orig/makefile	2022-10-30 13:51:28.588870414 +0100
++++ petsc/makefile	2022-10-30 13:53:35.437841076 +0100
+@@ -162,8 +162,8 @@
+         fi;
+ 
+ check_build:
+-	+@cd src/snes/tutorials >/dev/null; ${RUN_TEST} clean-legacy
+-	+@cd src/snes/tutorials >/dev/null; ${RUN_TEST} testex19
++	+cd src/snes/tutorials >/dev/null; ${RUN_TEST} clean-legacy
++	+cd src/snes/tutorials >/dev/null; ${RUN_TEST} testex19
+ 	+@if [ ! "${MPI_IS_MPIUNI}" ]; then cd src/snes/tutorials >/dev/null; ${RUN_TEST} testex19_mpi; fi
+ 	+@if [ "${HYPRE_LIB}" != "" ] && [ "${PETSC_SCALAR}" = "real" ]; then \
+           if [ "${CUDA_LIB}" != "" ]; then HYPRE_TEST=runex19_hypre_cuda; \
+@@ -174,7 +174,7 @@
+ 	+@if [ "${CUDA_LIB}" != "" ]; then \
+           cd src/snes/tutorials >/dev/null; ${RUN_TEST} runex19_cuda; \
+         fi;
+-	+@if [ "${MPI_IS_MPIUNI}" = "" ]; then \
++	+if [ "${MPI_IS_MPIUNI}" = "" ]; then \
+           cd src/snes/tutorials >/dev/null; \
+           if [ "${KOKKOS_KERNELS_LIB}" != "" ]  &&  [ "${PETSC_SCALAR}" = "real" ] && [ "${PETSC_PRECISION}" = "double" ]; then \
+             ${RUN_TEST} runex3k_kokkos; \
+@@ -221,7 +221,7 @@
+            ${RUN_TEST} testex100; \
+            ${RUN_TEST} clean-legacy; \
+          fi;
+-	+@grep -E "^#define PETSC_HAVE_FORTRAN 1" ${PETSCCONF_H} | tee .ftn.log > /dev/null; \
++	+grep -E "^#define PETSC_HAVE_FORTRAN 1" ${PETSCCONF_H} | tee .ftn.log > /dev/null; \
+          if test -s .ftn.log; then \
+            cd src/snes/tutorials >/dev/null; \
+            ${RUN_TEST} clean-legacy; \

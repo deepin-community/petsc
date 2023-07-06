@@ -1,0 +1,47 @@
+# DMPATCH Manual Pages
+
+The DMPATCH class is intended to handle adaptive refinement calculated in serial using patches that fill the local machine. It is currently not working.
+
+
+[Manual Pages Table of Contents](/docs/manualpages/index.md)
+
+## Manual Pages by Level
+
+### Beginner - Basic usage
+```{hlist}
+---
+columns: 3
+---
+- [](DMPatchCreate.md)
+```
+
+
+
+### Intermediate - Setting options for algorithms and data structures
+```{hlist}
+---
+columns: 3
+---
+- [](DMPATCH.md)
+- [](DMPatchZoom.md)
+```
+
+
+
+### No advanced routines
+
+### No developer routines
+
+### No deprecated routines
+
+## Single list of manual pages
+```{toctree}
+---
+maxdepth: 1
+---
+DMPATCH.md
+DMPatchCreate.md
+DMPatchZoom.md
+```
+
+

@@ -1,0 +1,58 @@
+# PetscCheck
+Check that a particular condition is true 
+## Synopsis
+```
+#include <petscerror.h>
+void PetscCheck(bool cond, MPI_Comm comm, PetscErrorCode ierr, const char *message, ...)
+```
+Collective
+
+
+## Input Parameters
+
+- ***cond    -*** The boolean condition
+- ***comm    -*** The communicator on which the check can be collective on
+- ***ierr    -*** A nonzero error code, see include/petscerror.h for the complete list
+- ***message -*** Error message in printf format
+
+
+
+## Notes
+Enabled in both optimized and debug builds.
+
+Calls `SETERRQ()` if the assertion fails, so can only be called from functions returning a
+`PetscErrorCode` (or equivalent type after conversion).
+
+
+
+
+## See Also
+ `PetscAssert()`, `SETERRQ()`, `PetscError()`, `PetscCall()`, `PetscCheckAbort()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscerror.h.html#PetscCheck">include/petscerror.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/classes/random/tutorials/ex1.c.html">src/sys/classes/random/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/classes/random/tutorials/ex2.c.html">src/sys/classes/random/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex17.c.html">src/sys/tutorials/ex17.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex20.c.html">src/sys/tutorials/ex20.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/tutorials/ex3.c.html">src/sys/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex10.c.html">src/vec/vec/tutorials/ex10.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex19.c.html">src/vec/vec/tutorials/ex19.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex6.c.html">src/vec/vec/tutorials/ex6.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex9.c.html">src/vec/vec/tutorials/ex9.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex2.c.html">src/vec/is/is/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex3.c.html">src/vec/is/is/tutorials/ex3.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscerror.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

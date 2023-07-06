@@ -1,0 +1,14 @@
+Index: petsc/src/sys/memory/mem.c
+===================================================================
+--- petsc.orig/src/sys/memory/mem.c	2022-10-30 13:49:33.787991705 +0100
++++ petsc/src/sys/memory/mem.c	2022-10-30 13:50:10.128269888 +0100
+@@ -21,6 +21,9 @@
+   #include <sys/resource.h>
+ #endif
+ #if defined(PETSC_HAVE_SYS_PROCFS_H)
++#if defined __GNU__
++#include <mach/std_types.h>
++#endif
+   /* #include <sys/int_types.h> Required if using gcc on solaris 2.6 */
+   #include <sys/procfs.h>
+ #endif

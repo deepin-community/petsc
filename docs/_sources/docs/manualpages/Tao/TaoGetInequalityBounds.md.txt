@@ -1,0 +1,42 @@
+# TaoGetInequalityBounds
+Gets the upper and lower bounds set via `TaoSetInequalityBounds()` 
+## Synopsis
+```
+#include "petsctao.h" 
+PetscErrorCode TaoGetInequalityBounds(Tao tao, Vec *IL, Vec *IU)
+```
+Logically collective
+
+
+## Input Parameter
+
+- ***tao -*** the Tao context
+
+
+
+## Output Parameters
+
+- ***IL  -*** vector of lower bounds
+- ***IU  -*** vector of upper bounds
+
+
+
+
+
+## See Also
+ `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoSetInequalityBounds()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/interface/taosolver_bounds.c.html#TaoGetInequalityBounds">src/tao/interface/taosolver_bounds.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/tao/interface/taosolver_bounds.c)
+
+
+[Index of all Tao routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

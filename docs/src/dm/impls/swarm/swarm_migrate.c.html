@@ -1,0 +1,670 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/swarm/swarm_migrate.c">Actual source code: swarm_migrate.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:35+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petscsf.h.html">&lt;petscsf.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../include/petscdmswarm.h.html">&lt;petscdmswarm.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="../../../../include/petscdmda.h.html">&lt;petscdmda.h&gt;</A>
+<a name="line4">  4: </a>#include <A href="../../../../include/petsc/private/dmswarmimpl.h.html">&lt;petsc/private/dmswarmimpl.h&gt;</A>
+<a name="line5">  5: </a><font color="#A020F0">#include </font><font color="#666666">"../src/dm/impls/swarm/data_bucket.h"</font><font color="#A020F0"></font>
+<a name="line6">  6: </a><font color="#A020F0">#include </font><font color="#666666">"../src/dm/impls/swarm/data_ex.h"</font><font color="#A020F0"></font>
+
+<a name="line8">  8: </a><font color="#B22222">/*</font>
+<a name="line9">  9: </a><font color="#B22222"> User loads desired location (MPI rank) into field DMSwarm_rank</font>
+<a name="line10"> 10: </a><font color="#B22222">*/</font>
+<a name="line11"> 11: </a><strong><font color="#4169E1"><a name="DMSwarmMigrate_Push_Basic"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMSwarmMigrate_Push_Basic(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> remove_sent_points)</font></strong>
+<a name="line12"> 12: </a>{
+<a name="line13"> 13: </a>  DM_Swarm     *swarm = (DM_Swarm *)dm-&gt;data;
+<a name="line14"> 14: </a>  DMSwarmDataEx de;
+<a name="line15"> 15: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      p, npoints, *rankval, n_points_recv;
+<a name="line16"> 16: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>   rank, nrank;
+<a name="line17"> 17: </a>  void         *point_buffer, *recv_points;
+<a name="line18"> 18: </a>  size_t        sizeof_dmswarm_point;
+<a name="line19"> 19: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     debug = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line21"> 21: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), &amp;rank);
+
+<a name="line23"> 23: </a>  DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL);
+<a name="line24"> 24: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line25"> 25: </a>  DMSwarmDataExCreate(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), 0, &amp;de);
+<a name="line26"> 26: </a>  DMSwarmDataExTopologyInitialize(de);
+<a name="line27"> 27: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; npoints; ++p) {
+<a name="line28"> 28: </a>    nrank = rankval[p];
+<a name="line29"> 29: </a>    <font color="#4169E1">if</font> (nrank != rank) DMSwarmDataExTopologyAddNeighbour(de, nrank);
+<a name="line30"> 30: </a>  }
+<a name="line31"> 31: </a>  DMSwarmDataExTopologyFinalize(de);
+<a name="line32"> 32: </a>  DMSwarmDataExInitializeSendCount(de);
+<a name="line33"> 33: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; npoints; p++) {
+<a name="line34"> 34: </a>    nrank = rankval[p];
+<a name="line35"> 35: </a>    <font color="#4169E1">if</font> (nrank != rank) DMSwarmDataExAddToSendCount(de, nrank, 1);
+<a name="line36"> 36: </a>  }
+<a name="line37"> 37: </a>  DMSwarmDataExFinalizeSendCount(de);
+<a name="line38"> 38: </a>  DMSwarmDataBucketCreatePackedArray(swarm-&gt;db, &amp;sizeof_dmswarm_point, &amp;point_buffer);
+<a name="line39"> 39: </a>  DMSwarmDataExPackInitialize(de, sizeof_dmswarm_point);
+<a name="line40"> 40: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; npoints; p++) {
+<a name="line41"> 41: </a>    nrank = rankval[p];
+<a name="line42"> 42: </a>    <font color="#4169E1">if</font> (nrank != rank) {
+<a name="line43"> 43: </a>      <font color="#B22222">/* copy point into buffer */</font>
+<a name="line44"> 44: </a>      DMSwarmDataBucketFillPackedArray(swarm-&gt;db, p, point_buffer);
+<a name="line45"> 45: </a>      <font color="#B22222">/* insert point buffer into DMSwarmDataExchanger */</font>
+<a name="line46"> 46: </a>      DMSwarmDataExPackData(de, nrank, 1, point_buffer);
+<a name="line47"> 47: </a>    }
+<a name="line48"> 48: </a>  }
+<a name="line49"> 49: </a>  DMSwarmDataExPackFinalize(de);
+<a name="line50"> 50: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+
+<a name="line52"> 52: </a>  <font color="#4169E1">if</font> (remove_sent_points) {
+<a name="line53"> 53: </a>    DMSwarmDataField gfield;
+
+<a name="line55"> 55: </a>    DMSwarmDataBucketGetDMSwarmDataFieldByName(swarm-&gt;db, DMSwarmField_rank, &amp;gfield);
+<a name="line56"> 56: </a>    DMSwarmDataFieldGetAccess(gfield);
+<a name="line57"> 57: </a>    DMSwarmDataFieldGetEntries(gfield, (void **)&amp;rankval);
+
+<a name="line59"> 59: </a>    <font color="#B22222">/* remove points which left processor */</font>
+<a name="line60"> 60: </a>    DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL);
+<a name="line61"> 61: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; npoints; p++) {
+<a name="line62"> 62: </a>      nrank = rankval[p];
+<a name="line63"> 63: </a>      <font color="#4169E1">if</font> (nrank != rank) {
+<a name="line64"> 64: </a>        <font color="#B22222">/* kill point */</font>
+<a name="line65"> 65: </a>        DMSwarmDataFieldRestoreAccess(gfield);
+
+<a name="line67"> 67: </a>        DMSwarmDataBucketRemovePointAtIndex(swarm-&gt;db, p);
+
+<a name="line69"> 69: </a>        DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL); <font color="#B22222">/* you need to update npoints as the list size decreases! */</font>
+<a name="line70"> 70: </a>        DMSwarmDataFieldGetAccess(gfield);
+<a name="line71"> 71: </a>        DMSwarmDataFieldGetEntries(gfield, (void **)&amp;rankval);
+<a name="line72"> 72: </a>        p--; <font color="#B22222">/* check replacement point */</font>
+<a name="line73"> 73: </a>      }
+<a name="line74"> 74: </a>    }
+<a name="line75"> 75: </a>    DMSwarmDataFieldRestoreEntries(gfield, (void **)&amp;rankval);
+<a name="line76"> 76: </a>    DMSwarmDataFieldRestoreAccess(gfield);
+<a name="line77"> 77: </a>  }
+<a name="line78"> 78: </a>  DMSwarmDataExBegin(de);
+<a name="line79"> 79: </a>  DMSwarmDataExEnd(de);
+<a name="line80"> 80: </a>  DMSwarmDataExGetRecvData(de, &amp;n_points_recv, (void **)&amp;recv_points);
+<a name="line81"> 81: </a>  DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL);
+<a name="line82"> 82: </a>  DMSwarmDataBucketSetSizes(swarm-&gt;db, npoints + n_points_recv, DMSWARM_DATA_BUCKET_BUFFER_DEFAULT);
+<a name="line83"> 83: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; n_points_recv; p++) {
+<a name="line84"> 84: </a>    void *data_p = (void *)((char *)recv_points + p * sizeof_dmswarm_point);
+
+<a name="line86"> 86: </a>    DMSwarmDataBucketInsertPackedArray(swarm-&gt;db, npoints + p, data_p);
+<a name="line87"> 87: </a>  }
+<a name="line88"> 88: </a>  <font color="#4169E1">if</font> (debug) DMSwarmDataExView(de);
+<a name="line89"> 89: </a>  DMSwarmDataBucketDestroyPackedArray(swarm-&gt;db, &amp;point_buffer);
+<a name="line90"> 90: </a>  DMSwarmDataExDestroy(de);
+<a name="line91"> 91: </a>  <font color="#4169E1">return</font> 0;
+<a name="line92"> 92: </a>}
+
+<a name="line94"> 94: </a><strong><font color="#4169E1"><a name="DMSwarmMigrate_DMNeighborScatter"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMSwarmMigrate_DMNeighborScatter(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> dmcell, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> remove_sent_points, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *npoints_prior_migration)</font></strong>
+<a name="line95"> 95: </a>{
+<a name="line96"> 96: </a>  DM_Swarm          *swarm = (DM_Swarm *)dm-&gt;data;
+<a name="line97"> 97: </a>  DMSwarmDataEx      de;
+<a name="line98"> 98: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           r, p, npoints, *rankval, n_points_recv;
+<a name="line99"> 99: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>        rank, _rank;
+<a name="line100">100: </a>  const <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *neighbourranks;
+<a name="line101">101: </a>  void              *point_buffer, *recv_points;
+<a name="line102">102: </a>  size_t             sizeof_dmswarm_point;
+<a name="line103">103: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           nneighbors;
+<a name="line104">104: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>        mynneigh, *myneigh;
+
+<a name="line106">106: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), &amp;rank);
+<a name="line107">107: </a>  DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL);
+<a name="line108">108: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line109">109: </a>  DMSwarmDataExCreate(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), 0, &amp;de);
+<a name="line110">110: </a>  <a href="../../../../docs/manualpages/DM/DMGetNeighbors.html">DMGetNeighbors</a>(dmcell, &amp;nneighbors, &amp;neighbourranks);
+<a name="line111">111: </a>  DMSwarmDataExTopologyInitialize(de);
+<a name="line112">112: </a>  <font color="#4169E1">for</font> (r = 0; r &lt; nneighbors; r++) {
+<a name="line113">113: </a>    _rank = neighbourranks[r];
+<a name="line114">114: </a>    <font color="#4169E1">if</font> ((_rank != rank) &amp;&amp; (_rank &gt; 0)) DMSwarmDataExTopologyAddNeighbour(de, _rank);
+<a name="line115">115: </a>  }
+<a name="line116">116: </a>  DMSwarmDataExTopologyFinalize(de);
+<a name="line117">117: </a>  DMSwarmDataExTopologyGetNeighbours(de, &amp;mynneigh, &amp;myneigh);
+<a name="line118">118: </a>  DMSwarmDataExInitializeSendCount(de);
+<a name="line119">119: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; npoints; p++) {
+<a name="line120">120: </a>    <font color="#4169E1">if</font> (rankval[p] == DMLOCATEPOINT_POINT_NOT_FOUND) {
+<a name="line121">121: </a>      <font color="#4169E1">for</font> (r = 0; r &lt; mynneigh; r++) {
+<a name="line122">122: </a>        _rank = myneigh[r];
+<a name="line123">123: </a>        DMSwarmDataExAddToSendCount(de, _rank, 1);
+<a name="line124">124: </a>      }
+<a name="line125">125: </a>    }
+<a name="line126">126: </a>  }
+<a name="line127">127: </a>  DMSwarmDataExFinalizeSendCount(de);
+<a name="line128">128: </a>  DMSwarmDataBucketCreatePackedArray(swarm-&gt;db, &amp;sizeof_dmswarm_point, &amp;point_buffer);
+<a name="line129">129: </a>  DMSwarmDataExPackInitialize(de, sizeof_dmswarm_point);
+<a name="line130">130: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; npoints; p++) {
+<a name="line131">131: </a>    <font color="#4169E1">if</font> (rankval[p] == DMLOCATEPOINT_POINT_NOT_FOUND) {
+<a name="line132">132: </a>      <font color="#4169E1">for</font> (r = 0; r &lt; mynneigh; r++) {
+<a name="line133">133: </a>        _rank = myneigh[r];
+<a name="line134">134: </a>        <font color="#B22222">/* copy point into buffer */</font>
+<a name="line135">135: </a>        DMSwarmDataBucketFillPackedArray(swarm-&gt;db, p, point_buffer);
+<a name="line136">136: </a>        <font color="#B22222">/* insert point buffer into DMSwarmDataExchanger */</font>
+<a name="line137">137: </a>        DMSwarmDataExPackData(de, _rank, 1, point_buffer);
+<a name="line138">138: </a>      }
+<a name="line139">139: </a>    }
+<a name="line140">140: </a>  }
+<a name="line141">141: </a>  DMSwarmDataExPackFinalize(de);
+<a name="line142">142: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line143">143: </a>  <font color="#4169E1">if</font> (remove_sent_points) {
+<a name="line144">144: </a>    DMSwarmDataField PField;
+
+<a name="line146">146: </a>    DMSwarmDataBucketGetDMSwarmDataFieldByName(swarm-&gt;db, DMSwarmField_rank, &amp;PField);
+<a name="line147">147: </a>    DMSwarmDataFieldGetEntries(PField, (void **)&amp;rankval);
+<a name="line148">148: </a>    <font color="#B22222">/* remove points which left processor */</font>
+<a name="line149">149: </a>    DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL);
+<a name="line150">150: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; npoints; p++) {
+<a name="line151">151: </a>      <font color="#4169E1">if</font> (rankval[p] == DMLOCATEPOINT_POINT_NOT_FOUND) {
+<a name="line152">152: </a>        <font color="#B22222">/* kill point */</font>
+<a name="line153">153: </a>        DMSwarmDataBucketRemovePointAtIndex(swarm-&gt;db, p);
+<a name="line154">154: </a>        DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL); <font color="#B22222">/* you need to update npoints as the list size decreases! */</font>
+<a name="line155">155: </a>        DMSwarmDataFieldGetEntries(PField, (void **)&amp;rankval);      <font color="#B22222">/* update date point increase realloc performed */</font>
+<a name="line156">156: </a>        p--;                                                                   <font color="#B22222">/* check replacement point */</font>
+<a name="line157">157: </a>      }
+<a name="line158">158: </a>    }
+<a name="line159">159: </a>  }
+<a name="line160">160: </a>  DMSwarmDataBucketGetSizes(swarm-&gt;db, npoints_prior_migration, NULL, NULL);
+<a name="line161">161: </a>  DMSwarmDataExBegin(de);
+<a name="line162">162: </a>  DMSwarmDataExEnd(de);
+<a name="line163">163: </a>  DMSwarmDataExGetRecvData(de, &amp;n_points_recv, (void **)&amp;recv_points);
+<a name="line164">164: </a>  DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL);
+<a name="line165">165: </a>  DMSwarmDataBucketSetSizes(swarm-&gt;db, npoints + n_points_recv, DMSWARM_DATA_BUCKET_BUFFER_DEFAULT);
+<a name="line166">166: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; n_points_recv; p++) {
+<a name="line167">167: </a>    void *data_p = (void *)((char *)recv_points + p * sizeof_dmswarm_point);
+
+<a name="line169">169: </a>    DMSwarmDataBucketInsertPackedArray(swarm-&gt;db, npoints + p, data_p);
+<a name="line170">170: </a>  }
+<a name="line171">171: </a>  DMSwarmDataBucketDestroyPackedArray(swarm-&gt;db, &amp;point_buffer);
+<a name="line172">172: </a>  DMSwarmDataExDestroy(de);
+<a name="line173">173: </a>  <font color="#4169E1">return</font> 0;
+<a name="line174">174: </a>}
+
+<a name="line176">176: </a><strong><font color="#4169E1"><a name="DMSwarmMigrate_CellDMScatter"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMSwarmMigrate_CellDMScatter(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> remove_sent_points)</font></strong>
+<a name="line177">177: </a>{
+<a name="line178">178: </a>  DM_Swarm          *swarm = (DM_Swarm *)dm-&gt;data;
+<a name="line179">179: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           p, npoints, npointsg = 0, npoints2, npoints2g, *rankval, npoints_prior_migration;
+<a name="line180">180: </a>  <a href="../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a>            sfcell = NULL;
+<a name="line181">181: </a>  const <a href="../../../../docs/manualpages/PetscSF/PetscSFNode.html">PetscSFNode</a> *LA_sfcell;
+<a name="line182">182: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>                 dmcell;
+<a name="line183">183: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>                pos;
+<a name="line184">184: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>          error_check = swarm-&gt;migrate_error_on_missing_point;
+<a name="line185">185: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>        size, rank;
+
+<a name="line187">187: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetCellDM.html">DMSwarmGetCellDM</a>(dm, &amp;dmcell);
+
+<a name="line190">190: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), &amp;size);
+<a name="line191">191: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), &amp;rank);
+
+<a name="line193">193: </a><font color="#A020F0">#if 1</font>
+<a name="line194">194: </a>  {
+<a name="line195">195: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *p_cellid;
+<a name="line196">196: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     npoints_curr, range = 0;
+<a name="line197">197: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFNode.html">PetscSFNode</a> *sf_cells;
+
+<a name="line199">199: </a>    DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints_curr, NULL, NULL);
+<a name="line200">200: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(npoints_curr, &amp;sf_cells);
+
+<a name="line202">202: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line203">203: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, DMSwarmPICField_cellid, NULL, NULL, (void **)&amp;p_cellid);
+<a name="line204">204: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; npoints_curr; p++) {
+<a name="line205">205: </a>      sf_cells[p].rank  = 0;
+<a name="line206">206: </a>      sf_cells[p].index = p_cellid[p];
+<a name="line207">207: </a>      <font color="#4169E1">if</font> (p_cellid[p] &gt; range) range = p_cellid[p];
+<a name="line208">208: </a>    }
+<a name="line209">209: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, DMSwarmPICField_cellid, NULL, NULL, (void **)&amp;p_cellid);
+<a name="line210">210: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+
+<a name="line212">212: </a>    <font color="#B22222">/* <a href="../../../../docs/manualpages/PetscSF/PetscSFCreate.html">PetscSFCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm),&amp;sfcell); */</font>
+<a name="line213">213: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFCreate.html">PetscSFCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;sfcell);
+<a name="line214">214: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html">PetscSFSetGraph</a>(sfcell, range, npoints_curr, NULL, <a href="../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, sf_cells, <a href="../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>);
+<a name="line215">215: </a>  }
+<a name="line216">216: </a><font color="#A020F0">#endif</font>
+
+<a name="line218">218: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmCreateLocalVectorFromField.html">DMSwarmCreateLocalVectorFromField</a>(dm, DMSwarmPICField_coor, &amp;pos);
+<a name="line219">219: </a>  <a href="../../../../docs/manualpages/DM/DMLocatePoints.html">DMLocatePoints</a>(dmcell, pos, <a href="../../../../docs/manualpages/DM/DMPointLocationType.html">DM_POINTLOCATION_NONE</a>, &amp;sfcell);
+<a name="line220">220: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmDestroyLocalVectorFromField.html">DMSwarmDestroyLocalVectorFromField</a>(dm, DMSwarmPICField_coor, &amp;pos);
+
+<a name="line222">222: </a>  <font color="#4169E1">if</font> (error_check) <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetSize.html">DMSwarmGetSize</a>(dm, &amp;npointsg);
+<a name="line223">223: </a>  DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL);
+<a name="line224">224: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line225">225: </a>  <a href="../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html">PetscSFGetGraph</a>(sfcell, NULL, NULL, NULL, &amp;LA_sfcell);
+<a name="line226">226: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; npoints; p++) rankval[p] = LA_sfcell[p].index;
+<a name="line227">227: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line228">228: </a>  <a href="../../../../docs/manualpages/PetscSF/PetscSFDestroy.html">PetscSFDestroy</a>(&amp;sfcell);
+
+<a name="line230">230: </a>  <font color="#4169E1">if</font> (size &gt; 1) {
+<a name="line231">231: </a>    DMSwarmMigrate_DMNeighborScatter(dm, dmcell, remove_sent_points, &amp;npoints_prior_migration);
+<a name="line232">232: </a>  } <font color="#4169E1">else</font> {
+<a name="line233">233: </a>    DMSwarmDataField PField;
+<a name="line234">234: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         npoints_curr;
+
+<a name="line236">236: </a>    <font color="#B22222">/* remove points which the domain */</font>
+<a name="line237">237: </a>    DMSwarmDataBucketGetDMSwarmDataFieldByName(swarm-&gt;db, DMSwarmField_rank, &amp;PField);
+<a name="line238">238: </a>    DMSwarmDataFieldGetEntries(PField, (void **)&amp;rankval);
+
+<a name="line240">240: </a>    DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints_curr, NULL, NULL);
+<a name="line241">241: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; npoints_curr; p++) {
+<a name="line242">242: </a>      <font color="#4169E1">if</font> (rankval[p] == DMLOCATEPOINT_POINT_NOT_FOUND) {
+<a name="line243">243: </a>        <font color="#B22222">/* kill point */</font>
+<a name="line244">244: </a>        DMSwarmDataBucketRemovePointAtIndex(swarm-&gt;db, p);
+<a name="line245">245: </a>        DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints_curr, NULL, NULL); <font color="#B22222">/* you need to update npoints as the list size decreases! */</font>
+<a name="line246">246: </a>        DMSwarmDataFieldGetEntries(PField, (void **)&amp;rankval);           <font color="#B22222">/* update date point increase realloc performed */</font>
+<a name="line247">247: </a>        p--;                                                                        <font color="#B22222">/* check replacement point */</font>
+<a name="line248">248: </a>      }
+<a name="line249">249: </a>    }
+<a name="line250">250: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetSize.html">DMSwarmGetSize</a>(dm, &amp;npoints_prior_migration);
+<a name="line251">251: </a>  }
+
+<a name="line253">253: </a>  <font color="#B22222">/* locate points newly received */</font>
+<a name="line254">254: </a>  DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints2, NULL, NULL);
+
+<a name="line256">256: </a><font color="#A020F0">#if 0</font>
+<a name="line257">257: </a>  { <font color="#B22222">/* safe alternative - however this performs two point locations on: (i) the initial points set and; (ii) the (initial + received) point set */</font>
+<a name="line258">258: </a>    <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *LA_coor;
+<a name="line259">259: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> bs;
+<a name="line260">260: </a>    DMSwarmDataField PField;
+
+<a name="line262">262: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm,DMSwarmPICField_coor,&amp;bs,NULL,(void**)&amp;LA_coor);
+<a name="line263">263: </a>    <a href="../../../../docs/manualpages/Vec/VecCreateSeqWithArray.html">VecCreateSeqWithArray</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>,bs,bs*npoints2,(const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>*)LA_coor,&amp;pos);
+<a name="line264">264: </a>    <a href="../../../../docs/manualpages/DM/DMLocatePoints.html">DMLocatePoints</a>(dmcell,pos,<a href="../../../../docs/manualpages/DM/DMPointLocationType.html">DM_POINTLOCATION_NONE</a>,&amp;sfcell);
+
+<a name="line266">266: </a>    <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;pos);
+<a name="line267">267: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm,DMSwarmPICField_coor,&amp;bs,NULL,(void**)&amp;LA_coor);
+
+<a name="line269">269: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html">PetscSFGetGraph</a>(sfcell, NULL, NULL, NULL, &amp;LA_sfcell);
+<a name="line270">270: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm,DMSwarmField_rank,NULL,NULL,(void**)&amp;rankval);
+<a name="line271">271: </a>    <font color="#4169E1">for</font> (p=0; p&lt;npoints2; p++) {
+<a name="line272">272: </a>      rankval[p] = LA_sfcell[p].index;
+<a name="line273">273: </a>    }
+<a name="line274">274: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFDestroy.html">PetscSFDestroy</a>(&amp;sfcell);
+<a name="line275">275: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm,DMSwarmField_rank,NULL,NULL,(void**)&amp;rankval);
+
+<a name="line277">277: </a>    <font color="#B22222">/* remove points which left processor */</font>
+<a name="line278">278: </a>    DMSwarmDataBucketGetDMSwarmDataFieldByName(swarm-&gt;db,DMSwarmField_rank,&amp;PField);
+<a name="line279">279: </a>    DMSwarmDataFieldGetEntries(PField,(void**)&amp;rankval);
+
+<a name="line281">281: </a>    DMSwarmDataBucketGetSizes(swarm-&gt;db,&amp;npoints2,NULL,NULL);
+<a name="line282">282: </a>    <font color="#4169E1">for</font> (p=0; p&lt;npoints2; p++) {
+<a name="line283">283: </a>      <font color="#4169E1">if</font> (rankval[p] == DMLOCATEPOINT_POINT_NOT_FOUND) {
+<a name="line284">284: </a>        <font color="#B22222">/* kill point */</font>
+<a name="line285">285: </a>        DMSwarmDataBucketRemovePointAtIndex(swarm-&gt;db,p);
+<a name="line286">286: </a>        DMSwarmDataBucketGetSizes(swarm-&gt;db,&amp;npoints2,NULL,NULL); <font color="#B22222">/* you need to update npoints as the list size decreases! */</font>
+<a name="line287">287: </a>        DMSwarmDataFieldGetEntries(PField,(void**)&amp;rankval); <font color="#B22222">/* update date point increase realloc performed */</font>
+<a name="line288">288: </a>        p--; <font color="#B22222">/* check replacement point */</font>
+<a name="line289">289: </a>      }
+<a name="line290">290: </a>    }
+<a name="line291">291: </a>  }
+<a name="line292">292: </a><font color="#A020F0">#endif</font>
+
+<a name="line294">294: </a>  { <font color="#B22222">/* perform two point locations: (i) on the initial points set prior to communication; and (ii) on the new (received) points */</font>
+<a name="line295">295: </a>    <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>     *LA_coor;
+<a name="line296">296: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         npoints_from_neighbours, bs;
+<a name="line297">297: </a>    DMSwarmDataField PField;
+
+<a name="line299">299: </a>    npoints_from_neighbours = npoints2 - npoints_prior_migration;
+
+<a name="line301">301: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, DMSwarmPICField_coor, &amp;bs, NULL, (void **)&amp;LA_coor);
+<a name="line302">302: </a>    <a href="../../../../docs/manualpages/Vec/VecCreateSeqWithArray.html">VecCreateSeqWithArray</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, bs, bs * npoints_from_neighbours, (const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)&amp;LA_coor[bs * npoints_prior_migration], &amp;pos);
+
+<a name="line304">304: </a>    <a href="../../../../docs/manualpages/DM/DMLocatePoints.html">DMLocatePoints</a>(dmcell, pos, <a href="../../../../docs/manualpages/DM/DMPointLocationType.html">DM_POINTLOCATION_NONE</a>, &amp;sfcell);
+
+<a name="line306">306: </a>    <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;pos);
+<a name="line307">307: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, DMSwarmPICField_coor, &amp;bs, NULL, (void **)&amp;LA_coor);
+
+<a name="line309">309: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFGetGraph.html">PetscSFGetGraph</a>(sfcell, NULL, NULL, NULL, &amp;LA_sfcell);
+<a name="line310">310: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line311">311: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; npoints_from_neighbours; p++) rankval[npoints_prior_migration + p] = LA_sfcell[p].index;
+<a name="line312">312: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line313">313: </a>    <a href="../../../../docs/manualpages/PetscSF/PetscSFDestroy.html">PetscSFDestroy</a>(&amp;sfcell);
+
+<a name="line315">315: </a>    <font color="#B22222">/* remove points which left processor */</font>
+<a name="line316">316: </a>    DMSwarmDataBucketGetDMSwarmDataFieldByName(swarm-&gt;db, DMSwarmField_rank, &amp;PField);
+<a name="line317">317: </a>    DMSwarmDataFieldGetEntries(PField, (void **)&amp;rankval);
+
+<a name="line319">319: </a>    DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints2, NULL, NULL);
+<a name="line320">320: </a>    <font color="#4169E1">for</font> (p = npoints_prior_migration; p &lt; npoints2; p++) {
+<a name="line321">321: </a>      <font color="#4169E1">if</font> (rankval[p] == DMLOCATEPOINT_POINT_NOT_FOUND) {
+<a name="line322">322: </a>        <font color="#B22222">/* kill point */</font>
+<a name="line323">323: </a>        DMSwarmDataBucketRemovePointAtIndex(swarm-&gt;db, p);
+<a name="line324">324: </a>        DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints2, NULL, NULL); <font color="#B22222">/* you need to update npoints as the list size decreases! */</font>
+<a name="line325">325: </a>        DMSwarmDataFieldGetEntries(PField, (void **)&amp;rankval);       <font color="#B22222">/* update date point increase realloc performed */</font>
+<a name="line326">326: </a>        p--;                                                                    <font color="#B22222">/* check replacement point */</font>
+<a name="line327">327: </a>      }
+<a name="line328">328: </a>    }
+<a name="line329">329: </a>  }
+
+<a name="line331">331: </a>  {
+<a name="line332">332: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *p_cellid;
+
+<a name="line334">334: </a>    DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints2, NULL, NULL);
+<a name="line335">335: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line336">336: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, DMSwarmPICField_cellid, NULL, NULL, (void **)&amp;p_cellid);
+<a name="line337">337: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; npoints2; p++) p_cellid[p] = rankval[p];
+<a name="line338">338: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, DMSwarmPICField_cellid, NULL, NULL, (void **)&amp;p_cellid);
+<a name="line339">339: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line340">340: </a>  }
+
+<a name="line342">342: </a>  <font color="#B22222">/* check for error on removed points */</font>
+<a name="line343">343: </a>  <font color="#4169E1">if</font> (error_check) {
+<a name="line344">344: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetSize.html">DMSwarmGetSize</a>(dm, &amp;npoints2g);
+<a name="line346">346: </a>  }
+<a name="line347">347: </a>  <font color="#4169E1">return</font> 0;
+<a name="line348">348: </a>}
+
+<a name="line350">350: </a><strong><font color="#4169E1"><a name="DMSwarmMigrate_CellDMExact"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMSwarmMigrate_CellDMExact(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> remove_sent_points)</font></strong>
+<a name="line351">351: </a>{
+<a name="line352">352: </a>  <font color="#4169E1">return</font> 0;
+<a name="line353">353: </a>}
+
+<a name="line355">355: </a><font color="#B22222">/*</font>
+<a name="line356">356: </a><font color="#B22222"> Redundant as this assumes points can only be sent to a single rank</font>
+<a name="line357">357: </a><font color="#B22222">*/</font>
+<a name="line358">358: </a><strong><font color="#4169E1"><a name="DMSwarmMigrate_GlobalToLocal_Basic"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMSwarmMigrate_GlobalToLocal_Basic(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *globalsize)</font></strong>
+<a name="line359">359: </a>{
+<a name="line360">360: </a>  DM_Swarm     *swarm = (DM_Swarm *)dm-&gt;data;
+<a name="line361">361: </a>  DMSwarmDataEx de;
+<a name="line362">362: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      p, npoints, *rankval, n_points_recv;
+<a name="line363">363: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>   rank, nrank, negrank;
+<a name="line364">364: </a>  void         *point_buffer, *recv_points;
+<a name="line365">365: </a>  size_t        sizeof_dmswarm_point;
+
+<a name="line367">367: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), &amp;rank);
+<a name="line368">368: </a>  DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL);
+<a name="line369">369: </a>  *globalsize = npoints;
+<a name="line370">370: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line371">371: </a>  DMSwarmDataExCreate(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), 0, &amp;de);
+<a name="line372">372: </a>  DMSwarmDataExTopologyInitialize(de);
+<a name="line373">373: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; npoints; p++) {
+<a name="line374">374: </a>    negrank = rankval[p];
+<a name="line375">375: </a>    <font color="#4169E1">if</font> (negrank &lt; 0) {
+<a name="line376">376: </a>      nrank = -negrank - 1;
+<a name="line377">377: </a>      DMSwarmDataExTopologyAddNeighbour(de, nrank);
+<a name="line378">378: </a>    }
+<a name="line379">379: </a>  }
+<a name="line380">380: </a>  DMSwarmDataExTopologyFinalize(de);
+<a name="line381">381: </a>  DMSwarmDataExInitializeSendCount(de);
+<a name="line382">382: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; npoints; p++) {
+<a name="line383">383: </a>    negrank = rankval[p];
+<a name="line384">384: </a>    <font color="#4169E1">if</font> (negrank &lt; 0) {
+<a name="line385">385: </a>      nrank = -negrank - 1;
+<a name="line386">386: </a>      DMSwarmDataExAddToSendCount(de, nrank, 1);
+<a name="line387">387: </a>    }
+<a name="line388">388: </a>  }
+<a name="line389">389: </a>  DMSwarmDataExFinalizeSendCount(de);
+<a name="line390">390: </a>  DMSwarmDataBucketCreatePackedArray(swarm-&gt;db, &amp;sizeof_dmswarm_point, &amp;point_buffer);
+<a name="line391">391: </a>  DMSwarmDataExPackInitialize(de, sizeof_dmswarm_point);
+<a name="line392">392: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; npoints; p++) {
+<a name="line393">393: </a>    negrank = rankval[p];
+<a name="line394">394: </a>    <font color="#4169E1">if</font> (negrank &lt; 0) {
+<a name="line395">395: </a>      nrank      = -negrank - 1;
+<a name="line396">396: </a>      rankval[p] = nrank;
+<a name="line397">397: </a>      <font color="#B22222">/* copy point into buffer */</font>
+<a name="line398">398: </a>      DMSwarmDataBucketFillPackedArray(swarm-&gt;db, p, point_buffer);
+<a name="line399">399: </a>      <font color="#B22222">/* insert point buffer into DMSwarmDataExchanger */</font>
+<a name="line400">400: </a>      DMSwarmDataExPackData(de, nrank, 1, point_buffer);
+<a name="line401">401: </a>      rankval[p] = negrank;
+<a name="line402">402: </a>    }
+<a name="line403">403: </a>  }
+<a name="line404">404: </a>  DMSwarmDataExPackFinalize(de);
+<a name="line405">405: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line406">406: </a>  DMSwarmDataExBegin(de);
+<a name="line407">407: </a>  DMSwarmDataExEnd(de);
+<a name="line408">408: </a>  DMSwarmDataExGetRecvData(de, &amp;n_points_recv, (void **)&amp;recv_points);
+<a name="line409">409: </a>  DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL);
+<a name="line410">410: </a>  DMSwarmDataBucketSetSizes(swarm-&gt;db, npoints + n_points_recv, DMSWARM_DATA_BUCKET_BUFFER_DEFAULT);
+<a name="line411">411: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; n_points_recv; p++) {
+<a name="line412">412: </a>    void *data_p = (void *)((char *)recv_points + p * sizeof_dmswarm_point);
+
+<a name="line414">414: </a>    DMSwarmDataBucketInsertPackedArray(swarm-&gt;db, npoints + p, data_p);
+<a name="line415">415: </a>  }
+<a name="line416">416: </a>  DMSwarmDataExView(de);
+<a name="line417">417: </a>  DMSwarmDataBucketDestroyPackedArray(swarm-&gt;db, &amp;point_buffer);
+<a name="line418">418: </a>  DMSwarmDataExDestroy(de);
+<a name="line419">419: </a>  <font color="#4169E1">return</font> 0;
+<a name="line420">420: </a>}
+
+<a name="line422">422: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line423">423: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> owner_rank;
+<a name="line424">424: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>   min[3], max[3];
+<a name="line425">425: </a>} CollectBBox;
+
+<a name="line427">427: </a><strong><font color="#4169E1"><a name="DMSwarmCollect_DMDABoundingBox"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMSwarmCollect_DMDABoundingBox(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *globalsize)</font></strong>
+<a name="line428">428: </a>{
+<a name="line429">429: </a>  DM_Swarm          *swarm = (DM_Swarm *)dm-&gt;data;
+<a name="line430">430: </a>  DMSwarmDataEx      de;
+<a name="line431">431: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           p, pk, npoints, *rankval, n_points_recv, n_bbox_recv, dim, neighbour_cells;
+<a name="line432">432: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>        rank, nrank;
+<a name="line433">433: </a>  void              *point_buffer, *recv_points;
+<a name="line434">434: </a>  size_t             sizeof_dmswarm_point, sizeof_bbox_ctx;
+<a name="line435">435: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>          isdmda;
+<a name="line436">436: </a>  CollectBBox       *bbox, *recv_bbox;
+<a name="line437">437: </a>  const <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *dmneighborranks;
+<a name="line438">438: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>                 dmcell;
+
+<a name="line440">440: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), &amp;rank);
+
+<a name="line442">442: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetCellDM.html">DMSwarmGetCellDM</a>(dm, &amp;dmcell);
+<a name="line444">444: </a>  isdmda = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line445">445: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dmcell, <a href="../../../../docs/manualpages/DMDA/DMDA.html">DMDA</a>, &amp;isdmda);
+
+<a name="line448">448: </a>  <a href="../../../../docs/manualpages/DM/DMGetDimension.html">DMGetDimension</a>(dm, &amp;dim);
+<a name="line449">449: </a>  sizeof_bbox_ctx = <font color="#4169E1">sizeof</font>(CollectBBox);
+<a name="line450">450: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(1, &amp;bbox);
+<a name="line451">451: </a>  bbox-&gt;owner_rank = rank;
+
+<a name="line453">453: </a>  <font color="#B22222">/* compute the bounding box based on the overlapping / stenctil size */</font>
+<a name="line454">454: </a>  {
+<a name="line455">455: </a>    <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> lcoor;
+
+<a name="line457">457: </a>    <a href="../../../../docs/manualpages/DM/DMGetCoordinatesLocal.html">DMGetCoordinatesLocal</a>(dmcell, &amp;lcoor);
+<a name="line458">458: </a>    <font color="#4169E1">if</font> (dim &gt;= 1) {
+<a name="line459">459: </a>      <a href="../../../../docs/manualpages/Vec/VecStrideMin.html">VecStrideMin</a>(lcoor, 0, NULL, &amp;bbox-&gt;min[0]);
+<a name="line460">460: </a>      <a href="../../../../docs/manualpages/Vec/VecStrideMax.html">VecStrideMax</a>(lcoor, 0, NULL, &amp;bbox-&gt;max[0]);
+<a name="line461">461: </a>    }
+<a name="line462">462: </a>    <font color="#4169E1">if</font> (dim &gt;= 2) {
+<a name="line463">463: </a>      <a href="../../../../docs/manualpages/Vec/VecStrideMin.html">VecStrideMin</a>(lcoor, 1, NULL, &amp;bbox-&gt;min[1]);
+<a name="line464">464: </a>      <a href="../../../../docs/manualpages/Vec/VecStrideMax.html">VecStrideMax</a>(lcoor, 1, NULL, &amp;bbox-&gt;max[1]);
+<a name="line465">465: </a>    }
+<a name="line466">466: </a>    <font color="#4169E1">if</font> (dim == 3) {
+<a name="line467">467: </a>      <a href="../../../../docs/manualpages/Vec/VecStrideMin.html">VecStrideMin</a>(lcoor, 2, NULL, &amp;bbox-&gt;min[2]);
+<a name="line468">468: </a>      <a href="../../../../docs/manualpages/Vec/VecStrideMax.html">VecStrideMax</a>(lcoor, 2, NULL, &amp;bbox-&gt;max[2]);
+<a name="line469">469: </a>    }
+<a name="line470">470: </a>  }
+<a name="line471">471: </a>  DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL);
+<a name="line472">472: </a>  *globalsize = npoints;
+<a name="line473">473: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line474">474: </a>  DMSwarmDataExCreate(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), 0, &amp;de);
+<a name="line475">475: </a>  <font color="#B22222">/* use <a href="../../../../docs/manualpages/DMDA/DMDA.html">DMDA</a> neighbours */</font>
+<a name="line476">476: </a>  <a href="../../../../docs/manualpages/DMDA/DMDAGetNeighbors.html">DMDAGetNeighbors</a>(dmcell, &amp;dmneighborranks);
+<a name="line477">477: </a>  <font color="#4169E1">if</font> (dim == 1) {
+<a name="line478">478: </a>    neighbour_cells = 3;
+<a name="line479">479: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (dim == 2) {
+<a name="line480">480: </a>    neighbour_cells = 9;
+<a name="line481">481: </a>  } <font color="#4169E1">else</font> {
+<a name="line482">482: </a>    neighbour_cells = 27;
+<a name="line483">483: </a>  }
+<a name="line484">484: </a>  DMSwarmDataExTopologyInitialize(de);
+<a name="line485">485: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; neighbour_cells; p++) {
+<a name="line486">486: </a>    <font color="#4169E1">if</font> ((dmneighborranks[p] &gt;= 0) &amp;&amp; (dmneighborranks[p] != rank)) DMSwarmDataExTopologyAddNeighbour(de, dmneighborranks[p]);
+<a name="line487">487: </a>  }
+<a name="line488">488: </a>  DMSwarmDataExTopologyFinalize(de);
+<a name="line489">489: </a>  DMSwarmDataExInitializeSendCount(de);
+<a name="line490">490: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; neighbour_cells; p++) {
+<a name="line491">491: </a>    <font color="#4169E1">if</font> ((dmneighborranks[p] &gt;= 0) &amp;&amp; (dmneighborranks[p] != rank)) DMSwarmDataExAddToSendCount(de, dmneighborranks[p], 1);
+<a name="line492">492: </a>  }
+<a name="line493">493: </a>  DMSwarmDataExFinalizeSendCount(de);
+<a name="line494">494: </a>  <font color="#B22222">/* send bounding boxes */</font>
+<a name="line495">495: </a>  DMSwarmDataExPackInitialize(de, sizeof_bbox_ctx);
+<a name="line496">496: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; neighbour_cells; p++) {
+<a name="line497">497: </a>    nrank = dmneighborranks[p];
+<a name="line498">498: </a>    <font color="#4169E1">if</font> ((nrank &gt;= 0) &amp;&amp; (nrank != rank)) {
+<a name="line499">499: </a>      <font color="#B22222">/* insert bbox buffer into DMSwarmDataExchanger */</font>
+<a name="line500">500: </a>      DMSwarmDataExPackData(de, nrank, 1, bbox);
+<a name="line501">501: </a>    }
+<a name="line502">502: </a>  }
+<a name="line503">503: </a>  DMSwarmDataExPackFinalize(de);
+<a name="line504">504: </a>  <font color="#B22222">/* recv bounding boxes */</font>
+<a name="line505">505: </a>  DMSwarmDataExBegin(de);
+<a name="line506">506: </a>  DMSwarmDataExEnd(de);
+<a name="line507">507: </a>  DMSwarmDataExGetRecvData(de, &amp;n_bbox_recv, (void **)&amp;recv_bbox);
+<a name="line508">508: </a>  <font color="#B22222">/*  Wrong, should not be using <a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a> */</font>
+<a name="line509">509: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; n_bbox_recv; p++) {
+<a name="line510">510: </a>    <a href="../../../../docs/manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../docs/manualpages/Sys/PetscSynchronizedPrintf.html">PetscSynchronizedPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"[rank %d]: box from %d : range[%+1.4e,%+1.4e]x[%+1.4e,%+1.4e]\n"</font>, rank, recv_bbox[p].owner_rank, (double)recv_bbox[p].min[0], (double)recv_bbox[p].max[0], (double)recv_bbox[p].min[1],
+<a name="line511">511: </a>                                      (double)recv_bbox[p].max[1]));
+<a name="line512">512: </a>  }
+<a name="line513">513: </a>  <a href="../../../../docs/manualpages/Sys/PetscSynchronizedFlush.html">PetscSynchronizedFlush</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, stdout);
+<a name="line514">514: </a>  <font color="#B22222">/* of course this is stupid as this "generic" function should have a better way to know what the coordinates are called */</font>
+<a name="line515">515: </a>  DMSwarmDataExInitializeSendCount(de);
+<a name="line516">516: </a>  <font color="#4169E1">for</font> (pk = 0; pk &lt; n_bbox_recv; pk++) {
+<a name="line517">517: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *array_x, *array_y;
+
+<a name="line519">519: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, <font color="#666666">"coorx"</font>, NULL, NULL, (void **)&amp;array_x);
+<a name="line520">520: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, <font color="#666666">"coory"</font>, NULL, NULL, (void **)&amp;array_y);
+<a name="line521">521: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; npoints; p++) {
+<a name="line522">522: </a>      <font color="#4169E1">if</font> ((array_x[p] &gt;= recv_bbox[pk].min[0]) &amp;&amp; (array_x[p] &lt;= recv_bbox[pk].max[0])) {
+<a name="line523">523: </a>        <font color="#4169E1">if</font> ((array_y[p] &gt;= recv_bbox[pk].min[1]) &amp;&amp; (array_y[p] &lt;= recv_bbox[pk].max[1])) DMSwarmDataExAddToSendCount(de, recv_bbox[pk].owner_rank, 1);
+<a name="line524">524: </a>      }
+<a name="line525">525: </a>    }
+<a name="line526">526: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, <font color="#666666">"coory"</font>, NULL, NULL, (void **)&amp;array_y);
+<a name="line527">527: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, <font color="#666666">"coorx"</font>, NULL, NULL, (void **)&amp;array_x);
+<a name="line528">528: </a>  }
+<a name="line529">529: </a>  DMSwarmDataExFinalizeSendCount(de);
+<a name="line530">530: </a>  DMSwarmDataBucketCreatePackedArray(swarm-&gt;db, &amp;sizeof_dmswarm_point, &amp;point_buffer);
+<a name="line531">531: </a>  DMSwarmDataExPackInitialize(de, sizeof_dmswarm_point);
+<a name="line532">532: </a>  <font color="#4169E1">for</font> (pk = 0; pk &lt; n_bbox_recv; pk++) {
+<a name="line533">533: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *array_x, *array_y;
+
+<a name="line535">535: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, <font color="#666666">"coorx"</font>, NULL, NULL, (void **)&amp;array_x);
+<a name="line536">536: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmGetField.html">DMSwarmGetField</a>(dm, <font color="#666666">"coory"</font>, NULL, NULL, (void **)&amp;array_y);
+<a name="line537">537: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; npoints; p++) {
+<a name="line538">538: </a>      <font color="#4169E1">if</font> ((array_x[p] &gt;= recv_bbox[pk].min[0]) &amp;&amp; (array_x[p] &lt;= recv_bbox[pk].max[0])) {
+<a name="line539">539: </a>        <font color="#4169E1">if</font> ((array_y[p] &gt;= recv_bbox[pk].min[1]) &amp;&amp; (array_y[p] &lt;= recv_bbox[pk].max[1])) {
+<a name="line540">540: </a>          <font color="#B22222">/* copy point into buffer */</font>
+<a name="line541">541: </a>          DMSwarmDataBucketFillPackedArray(swarm-&gt;db, p, point_buffer);
+<a name="line542">542: </a>          <font color="#B22222">/* insert point buffer into DMSwarmDataExchanger */</font>
+<a name="line543">543: </a>          DMSwarmDataExPackData(de, recv_bbox[pk].owner_rank, 1, point_buffer);
+<a name="line544">544: </a>        }
+<a name="line545">545: </a>      }
+<a name="line546">546: </a>    }
+<a name="line547">547: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, <font color="#666666">"coory"</font>, NULL, NULL, (void **)&amp;array_y);
+<a name="line548">548: </a>    <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, <font color="#666666">"coorx"</font>, NULL, NULL, (void **)&amp;array_x);
+<a name="line549">549: </a>  }
+<a name="line550">550: </a>  DMSwarmDataExPackFinalize(de);
+<a name="line551">551: </a>  <a href="../../../../docs/manualpages/DMSwarm/DMSwarmRestoreField.html">DMSwarmRestoreField</a>(dm, DMSwarmField_rank, NULL, NULL, (void **)&amp;rankval);
+<a name="line552">552: </a>  DMSwarmDataExBegin(de);
+<a name="line553">553: </a>  DMSwarmDataExEnd(de);
+<a name="line554">554: </a>  DMSwarmDataExGetRecvData(de, &amp;n_points_recv, (void **)&amp;recv_points);
+<a name="line555">555: </a>  DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL);
+<a name="line556">556: </a>  DMSwarmDataBucketSetSizes(swarm-&gt;db, npoints + n_points_recv, DMSWARM_DATA_BUCKET_BUFFER_DEFAULT);
+<a name="line557">557: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; n_points_recv; p++) {
+<a name="line558">558: </a>    void *data_p = (void *)((char *)recv_points + p * sizeof_dmswarm_point);
+
+<a name="line560">560: </a>    DMSwarmDataBucketInsertPackedArray(swarm-&gt;db, npoints + p, data_p);
+<a name="line561">561: </a>  }
+<a name="line562">562: </a>  DMSwarmDataBucketDestroyPackedArray(swarm-&gt;db, &amp;point_buffer);
+<a name="line563">563: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(bbox);
+<a name="line564">564: </a>  DMSwarmDataExView(de);
+<a name="line565">565: </a>  DMSwarmDataExDestroy(de);
+<a name="line566">566: </a>  <font color="#4169E1">return</font> 0;
+<a name="line567">567: </a>}
+
+<a name="line569">569: </a><font color="#B22222">/* General collection when no order, or neighbour information is provided */</font>
+<a name="line570">570: </a><font color="#B22222">/*</font>
+<a name="line571">571: </a><font color="#B22222"> User provides context and collect() method</font>
+<a name="line572">572: </a><font color="#B22222"> Broadcast user context</font>
+
+<a name="line574">574: </a><font color="#B22222"> for each context / rank {</font>
+<a name="line575">575: </a><font color="#B22222">   collect(swarm,context,n,list)</font>
+<a name="line576">576: </a><font color="#B22222"> }</font>
+<a name="line577">577: </a><font color="#B22222">*/</font>
+<a name="line578">578: </a><strong><font color="#4169E1"><a name="DMSwarmCollect_General"></a>PETSC_EXTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMSwarmCollect_General(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*collect)(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>, void *, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> **), size_t ctx_size, void *ctx, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *globalsize)</font></strong>
+<a name="line579">579: </a>{
+<a name="line580">580: </a>  DM_Swarm     *swarm = (DM_Swarm *)dm-&gt;data;
+<a name="line581">581: </a>  DMSwarmDataEx de;
+<a name="line582">582: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      p, r, npoints, n_points_recv;
+<a name="line583">583: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>   size, rank;
+<a name="line584">584: </a>  void         *point_buffer, *recv_points;
+<a name="line585">585: </a>  void         *ctxlist;
+<a name="line586">586: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     *n2collect, **collectlist;
+<a name="line587">587: </a>  size_t        sizeof_dmswarm_point;
+
+<a name="line589">589: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), &amp;size);
+<a name="line590">590: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), &amp;rank);
+<a name="line591">591: </a>  DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL);
+<a name="line592">592: </a>  *globalsize = npoints;
+<a name="line593">593: </a>  <font color="#B22222">/* Broadcast user context */</font>
+<a name="line594">594: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc.html">PetscMalloc</a>(ctx_size * size, &amp;ctxlist);
+<a name="line595">595: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allgather.html#MPI_Allgather">MPI_Allgather</a>(ctx, ctx_size, MPI_CHAR, ctxlist, ctx_size, MPI_CHAR, <a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm));
+<a name="line596">596: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(size, &amp;n2collect);
+<a name="line597">597: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(size, &amp;collectlist);
+<a name="line598">598: </a>  <font color="#4169E1">for</font> (r = 0; r &lt; size; r++) {
+<a name="line599">599: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  _n2collect;
+<a name="line600">600: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *_collectlist;
+<a name="line601">601: </a>    void     *_ctx_r;
+
+<a name="line603">603: </a>    _n2collect   = 0;
+<a name="line604">604: </a>    _collectlist = NULL;
+<a name="line605">605: </a>    <font color="#4169E1">if</font> (r != rank) { <font color="#B22222">/* don't collect data from yourself */</font>
+<a name="line606">606: </a>      _ctx_r = (void *)((char *)ctxlist + r * ctx_size);
+<a name="line607">607: </a>      collect(dm, _ctx_r, &amp;_n2collect, &amp;_collectlist);
+<a name="line608">608: </a>    }
+<a name="line609">609: </a>    n2collect[r]   = _n2collect;
+<a name="line610">610: </a>    collectlist[r] = _collectlist;
+<a name="line611">611: </a>  }
+<a name="line612">612: </a>  DMSwarmDataExCreate(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), 0, &amp;de);
+<a name="line613">613: </a>  <font color="#B22222">/* Define topology */</font>
+<a name="line614">614: </a>  DMSwarmDataExTopologyInitialize(de);
+<a name="line615">615: </a>  <font color="#4169E1">for</font> (r = 0; r &lt; size; r++) {
+<a name="line616">616: </a>    <font color="#4169E1">if</font> (n2collect[r] &gt; 0) DMSwarmDataExTopologyAddNeighbour(de, (<a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>)r);
+<a name="line617">617: </a>  }
+<a name="line618">618: </a>  DMSwarmDataExTopologyFinalize(de);
+<a name="line619">619: </a>  <font color="#B22222">/* Define send counts */</font>
+<a name="line620">620: </a>  DMSwarmDataExInitializeSendCount(de);
+<a name="line621">621: </a>  <font color="#4169E1">for</font> (r = 0; r &lt; size; r++) {
+<a name="line622">622: </a>    <font color="#4169E1">if</font> (n2collect[r] &gt; 0) DMSwarmDataExAddToSendCount(de, r, n2collect[r]);
+<a name="line623">623: </a>  }
+<a name="line624">624: </a>  DMSwarmDataExFinalizeSendCount(de);
+<a name="line625">625: </a>  <font color="#B22222">/* Pack data */</font>
+<a name="line626">626: </a>  DMSwarmDataBucketCreatePackedArray(swarm-&gt;db, &amp;sizeof_dmswarm_point, &amp;point_buffer);
+<a name="line627">627: </a>  DMSwarmDataExPackInitialize(de, sizeof_dmswarm_point);
+<a name="line628">628: </a>  <font color="#4169E1">for</font> (r = 0; r &lt; size; r++) {
+<a name="line629">629: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; n2collect[r]; p++) {
+<a name="line630">630: </a>      DMSwarmDataBucketFillPackedArray(swarm-&gt;db, collectlist[r][p], point_buffer);
+<a name="line631">631: </a>      <font color="#B22222">/* insert point buffer into the data exchanger */</font>
+<a name="line632">632: </a>      DMSwarmDataExPackData(de, r, 1, point_buffer);
+<a name="line633">633: </a>    }
+<a name="line634">634: </a>  }
+<a name="line635">635: </a>  DMSwarmDataExPackFinalize(de);
+<a name="line636">636: </a>  <font color="#B22222">/* Scatter */</font>
+<a name="line637">637: </a>  DMSwarmDataExBegin(de);
+<a name="line638">638: </a>  DMSwarmDataExEnd(de);
+<a name="line639">639: </a>  <font color="#B22222">/* Collect data in DMSwarm container */</font>
+<a name="line640">640: </a>  DMSwarmDataExGetRecvData(de, &amp;n_points_recv, (void **)&amp;recv_points);
+<a name="line641">641: </a>  DMSwarmDataBucketGetSizes(swarm-&gt;db, &amp;npoints, NULL, NULL);
+<a name="line642">642: </a>  DMSwarmDataBucketSetSizes(swarm-&gt;db, npoints + n_points_recv, DMSWARM_DATA_BUCKET_BUFFER_DEFAULT);
+<a name="line643">643: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; n_points_recv; p++) {
+<a name="line644">644: </a>    void *data_p = (void *)((char *)recv_points + p * sizeof_dmswarm_point);
+
+<a name="line646">646: </a>    DMSwarmDataBucketInsertPackedArray(swarm-&gt;db, npoints + p, data_p);
+<a name="line647">647: </a>  }
+<a name="line648">648: </a>  <font color="#B22222">/* Release memory */</font>
+<a name="line649">649: </a>  <font color="#4169E1">for</font> (r = 0; r &lt; size; r++) {
+<a name="line650">650: </a>    <font color="#4169E1">if</font> (collectlist[r]) <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(collectlist[r]);
+<a name="line651">651: </a>  }
+<a name="line652">652: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(collectlist);
+<a name="line653">653: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(n2collect);
+<a name="line654">654: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(ctxlist);
+<a name="line655">655: </a>  DMSwarmDataBucketDestroyPackedArray(swarm-&gt;db, &amp;point_buffer);
+<a name="line656">656: </a>  DMSwarmDataExView(de);
+<a name="line657">657: </a>  DMSwarmDataExDestroy(de);
+<a name="line658">658: </a>  <font color="#4169E1">return</font> 0;
+<a name="line659">659: </a>}
+</pre>
+</body>
+
+</html>

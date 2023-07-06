@@ -1,0 +1,171 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/snes/interface/snesj.c">Actual source code: snesj.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:24+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../../include/petsc/private/snesimpl.h.html">&lt;petsc/private/snesimpl.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="../../../include/petscdm.h.html">&lt;petscdm.h&gt;</A>
+
+<a name="line5">  5: </a><font color="#B22222">/*@C</font>
+<a name="line6">  6: </a><font color="#B22222">   <a href="../../../docs/manualpages/SNES/SNESComputeJacobianDefault.html">SNESComputeJacobianDefault</a> - Computes the Jacobian using finite differences.</font>
+
+<a name="line8">  8: </a><font color="#B22222">   Collective</font>
+
+<a name="line10"> 10: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line11"> 11: </a><font color="#B22222">+  snes - the `<a href="../../../docs/manualpages/SNES/SNES.html">SNES</a>` context</font>
+<a name="line12"> 12: </a><font color="#B22222">.  x1 - compute Jacobian at this point</font>
+<a name="line13"> 13: </a><font color="#B22222">-  ctx - application's function context, as set with `<a href="../../../docs/manualpages/SNES/SNESSetFunction.html">SNESSetFunction</a>()`</font>
+
+<a name="line15"> 15: </a><font color="#B22222">   Output Parameters:</font>
+<a name="line16"> 16: </a><font color="#B22222">+  J - Jacobian matrix (not altered in this routine)</font>
+<a name="line17"> 17: </a><font color="#B22222">-  B - newly computed Jacobian matrix to use with preconditioner (generally the same as J)</font>
+
+<a name="line19"> 19: </a><font color="#B22222">   Options Database Keys:</font>
+<a name="line20"> 20: </a><font color="#B22222">+  -snes_fd - Activates `<a href="../../../docs/manualpages/SNES/SNESComputeJacobianDefault.html">SNESComputeJacobianDefault</a>()`</font>
+<a name="line21"> 21: </a><font color="#B22222">.  -snes_test_err - Square root of function error tolerance, default square root of machine</font>
+<a name="line22"> 22: </a><font color="#B22222">                    epsilon (1.e-8 in double, 3.e-4 in single)</font>
+<a name="line23"> 23: </a><font color="#B22222">-  -mat_fd_type - Either wp or ds (see `<a href="../../../docs/manualpages/Mat/MATMFFD_WP.html">MATMFFD_WP</a>` or `<a href="../../../docs/manualpages/Mat/MATMFFD_DS.html">MATMFFD_DS</a>`)</font>
+
+<a name="line25"> 25: </a><font color="#B22222">   Notes:</font>
+<a name="line26"> 26: </a><font color="#B22222">   This routine is slow and expensive, and is not currently optimized</font>
+<a name="line27"> 27: </a><font color="#B22222">   to take advantage of sparsity in the problem.  Although</font>
+<a name="line28"> 28: </a><font color="#B22222">   `<a href="../../../docs/manualpages/SNES/SNESComputeJacobianDefault.html">SNESComputeJacobianDefault</a>()` is not recommended for general use</font>
+<a name="line29"> 29: </a><font color="#B22222">   in large-scale applications, It can be useful in checking the</font>
+<a name="line30"> 30: </a><font color="#B22222">   correctness of a user-provided Jacobian.</font>
+
+<a name="line32"> 32: </a><font color="#B22222">   An alternative routine that uses coloring to exploit matrix sparsity is</font>
+<a name="line33"> 33: </a><font color="#B22222">   `<a href="../../../docs/manualpages/SNES/SNESComputeJacobianDefaultColor.html">SNESComputeJacobianDefaultColor</a>()`.</font>
+
+<a name="line35"> 35: </a><font color="#B22222">   This routine ignores the maximum number of function evaluations set with `<a href="../../../docs/manualpages/SNES/SNESSetTolerances.html">SNESSetTolerances</a>()` and the function</font>
+<a name="line36"> 36: </a><font color="#B22222">   evaluations it performs are not counted in what is returned by of `<a href="../../../docs/manualpages/SNES/SNESGetNumberFunctionEvals.html">SNESGetNumberFunctionEvals</a>()`.</font>
+
+<a name="line38"> 38: </a><font color="#B22222">   This function can be provided to `<a href="../../../docs/manualpages/SNES/SNESSetJacobian.html">SNESSetJacobian</a>()` along with a dense matrix to hold the Jacobian</font>
+
+<a name="line40"> 40: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line42"> 42: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/SNES/SNES.html">SNES</a>`, `<a href="../../../docs/manualpages/SNES/SNESSetJacobian.html">SNESSetJacobian</a>()`, `<a href="../../../docs/manualpages/SNES/SNESSetJacobian.html">SNESSetJacobian</a>()`, `<a href="../../../docs/manualpages/SNES/SNESComputeJacobianDefaultColor.html">SNESComputeJacobianDefaultColor</a>()`, `<a href="../../../docs/manualpages/SNES/MatCreateSNESMF.html">MatCreateSNESMF</a>()`</font>
+<a name="line43"> 43: </a><font color="#B22222">@*/</font>
+<a name="line44"> 44: </a><strong><font color="#4169E1"><a name="SNESComputeJacobianDefault"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/SNES/SNESComputeJacobianDefault.html">SNESComputeJacobianDefault</a>(<a href="../../../docs/manualpages/SNES/SNES.html">SNES</a> snes, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> x1, <a href="../../../docs/manualpages/Mat/Mat.html">Mat</a> J, <a href="../../../docs/manualpages/Mat/Mat.html">Mat</a> B, void *ctx)</font></strong>
+<a name="line45"> 45: </a>{
+<a name="line46"> 46: </a>  <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>                j1a, j2a, x2;
+<a name="line47"> 47: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           i, N, start, end, j, value, root, max_funcs = snes-&gt;max_funcs;
+<a name="line48"> 48: </a>  <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>        dx, *y, wscale;
+<a name="line49"> 49: </a>  const <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *xx;
+<a name="line50"> 50: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>          amax, epsilon = PETSC_SQRT_MACHINE_EPSILON;
+<a name="line51"> 51: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>          dx_min = 1.e-16, dx_par = 1.e-1, unorm;
+<a name="line52"> 52: </a>  <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>           comm;
+<a name="line53"> 53: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>          assembled, use_wp = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, flg;
+<a name="line54"> 54: </a>  const char        *list[2] = {<font color="#666666">"ds"</font>, <font color="#666666">"wp"</font>};
+<a name="line55"> 55: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>        size;
+<a name="line56"> 56: </a>  const <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *ranges;
+<a name="line57"> 57: </a>  <a href="../../../docs/manualpages/DM/DM.html">DM</a>                 dm;
+<a name="line58"> 58: </a>  DMSNES             dms;
+
+<a name="line60"> 60: </a>  snes-&gt;max_funcs = PETSC_MAX_INT;
+<a name="line61"> 61: </a>  <font color="#B22222">/* Since this Jacobian will possibly have "extra" nonzero locations just turn off errors for these locations */</font>
+<a name="line62"> 62: </a>  <a href="../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(B, <a href="../../../docs/manualpages/Mat/MatOption.html">MAT_NEW_NONZERO_ALLOCATION_ERR</a>, <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line63"> 63: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetReal.html">PetscOptionsGetReal</a>(((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)snes)-&gt;options, ((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)snes)-&gt;prefix, <font color="#666666">"-snes_test_err"</font>, &amp;epsilon, NULL);
+
+<a name="line65"> 65: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)x1, &amp;comm);
+<a name="line66"> 66: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line67"> 67: </a>  <a href="../../../docs/manualpages/Mat/MatAssembled.html">MatAssembled</a>(B, &amp;assembled);
+<a name="line68"> 68: </a>  <font color="#4169E1">if</font> (assembled) <a href="../../../docs/manualpages/Mat/MatZeroEntries.html">MatZeroEntries</a>(B);
+<a name="line69"> 69: </a>  <font color="#4169E1">if</font> (!snes-&gt;nvwork) {
+<a name="line70"> 70: </a>    <font color="#4169E1">if</font> (snes-&gt;dm) {
+<a name="line71"> 71: </a>      <a href="../../../docs/manualpages/DM/DMGetGlobalVector.html">DMGetGlobalVector</a>(snes-&gt;dm, &amp;j1a);
+<a name="line72"> 72: </a>      <a href="../../../docs/manualpages/DM/DMGetGlobalVector.html">DMGetGlobalVector</a>(snes-&gt;dm, &amp;j2a);
+<a name="line73"> 73: </a>      <a href="../../../docs/manualpages/DM/DMGetGlobalVector.html">DMGetGlobalVector</a>(snes-&gt;dm, &amp;x2);
+<a name="line74"> 74: </a>    } <font color="#4169E1">else</font> {
+<a name="line75"> 75: </a>      snes-&gt;nvwork = 3;
+<a name="line76"> 76: </a>      <a href="../../../docs/manualpages/Vec/VecDuplicateVecs.html">VecDuplicateVecs</a>(x1, snes-&gt;nvwork, &amp;snes-&gt;vwork);
+<a name="line77"> 77: </a>      j1a = snes-&gt;vwork[0];
+<a name="line78"> 78: </a>      j2a = snes-&gt;vwork[1];
+<a name="line79"> 79: </a>      x2  = snes-&gt;vwork[2];
+<a name="line80"> 80: </a>    }
+<a name="line81"> 81: </a>  }
+
+<a name="line83"> 83: </a>  <a href="../../../docs/manualpages/Vec/VecGetSize.html">VecGetSize</a>(x1, &amp;N);
+<a name="line84"> 84: </a>  <a href="../../../docs/manualpages/Vec/VecGetOwnershipRange.html">VecGetOwnershipRange</a>(x1, &amp;start, &amp;end);
+<a name="line85"> 85: </a>  <a href="../../../docs/manualpages/SNES/SNESGetDM.html">SNESGetDM</a>(snes, &amp;dm);
+<a name="line86"> 86: </a>  <a href="../../../docs/manualpages/SNES/DMGetDMSNES.html">DMGetDMSNES</a>(dm, &amp;dms);
+<a name="line87"> 87: </a>  <font color="#4169E1">if</font> (dms-&gt;ops-&gt;computemffunction) {
+<a name="line88"> 88: </a>    <a href="../../../docs/manualpages/SNES/SNESComputeMFFunction.html">SNESComputeMFFunction</a>(snes, x1, j1a);
+<a name="line89"> 89: </a>  } <font color="#4169E1">else</font> {
+<a name="line90"> 90: </a>    <a href="../../../docs/manualpages/SNES/SNESComputeFunction.html">SNESComputeFunction</a>(snes, x1, j1a);
+<a name="line91"> 91: </a>  }
+
+<a name="line93"> 93: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(<a href="../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)snes), ((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)snes)-&gt;prefix, <font color="#666666">"Differencing options"</font>, <font color="#666666">"<a href="../../../docs/manualpages/SNES/SNES.html">SNES</a>"</font>);
+<a name="line94"> 94: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsEList.html">PetscOptionsEList</a>(<font color="#666666">"-mat_fd_type"</font>, <font color="#666666">"Algorithm to compute difference parameter"</font>, <font color="#666666">"<a href="../../../docs/manualpages/SNES/SNESComputeJacobianDefault.html">SNESComputeJacobianDefault</a>"</font>, list, 2, <font color="#666666">"wp"</font>, &amp;value, &amp;flg);
+<a name="line95"> 95: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line96"> 96: </a>  <font color="#4169E1">if</font> (flg &amp;&amp; !value) use_wp = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line98"> 98: </a>  <font color="#4169E1">if</font> (use_wp) <a href="../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(x1, <a href="../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;unorm);
+<a name="line99"> 99: </a>  <font color="#B22222">/* Compute Jacobian approximation, 1 column at a time.</font>
+<a name="line100">100: </a><font color="#B22222">      x1 = current iterate, j1a = F(x1)</font>
+<a name="line101">101: </a><font color="#B22222">      x2 = perturbed iterate, j2a = F(x2)</font>
+<a name="line102">102: </a><font color="#B22222">   */</font>
+<a name="line103">103: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; N; i++) {
+<a name="line104">104: </a>    <a href="../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(x1, x2);
+<a name="line105">105: </a>    <font color="#4169E1">if</font> (i &gt;= start &amp;&amp; i &lt; end) {
+<a name="line106">106: </a>      <a href="../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(x1, &amp;xx);
+<a name="line107">107: </a>      <font color="#4169E1">if</font> (use_wp) dx = PetscSqrtReal(1.0 + unorm);
+<a name="line108">108: </a>      <font color="#4169E1">else</font> dx = xx[i - start];
+<a name="line109">109: </a>      <a href="../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(x1, &amp;xx);
+<a name="line110">110: </a>      <font color="#4169E1">if</font> (PetscAbsScalar(dx) &lt; dx_min) dx = (<a href="../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(dx) &lt; 0. ? -1. : 1.) * dx_par;
+<a name="line111">111: </a>      dx *= epsilon;
+<a name="line112">112: </a>      wscale = 1.0 / dx;
+<a name="line113">113: </a>      <a href="../../../docs/manualpages/Vec/VecSetValues.html">VecSetValues</a>(x2, 1, &amp;i, &amp;dx, <a href="../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line114">114: </a>    } <font color="#4169E1">else</font> {
+<a name="line115">115: </a>      wscale = 0.0;
+<a name="line116">116: </a>    }
+<a name="line117">117: </a>    <a href="../../../docs/manualpages/Vec/VecAssemblyBegin.html">VecAssemblyBegin</a>(x2);
+<a name="line118">118: </a>    <a href="../../../docs/manualpages/Vec/VecAssemblyEnd.html">VecAssemblyEnd</a>(x2);
+<a name="line119">119: </a>    <font color="#4169E1">if</font> (dms-&gt;ops-&gt;computemffunction) {
+<a name="line120">120: </a>      <a href="../../../docs/manualpages/SNES/SNESComputeMFFunction.html">SNESComputeMFFunction</a>(snes, x2, j2a);
+<a name="line121">121: </a>    } <font color="#4169E1">else</font> {
+<a name="line122">122: </a>      <a href="../../../docs/manualpages/SNES/SNESComputeFunction.html">SNESComputeFunction</a>(snes, x2, j2a);
+<a name="line123">123: </a>    }
+<a name="line124">124: </a>    <a href="../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(j2a, -1.0, j1a);
+<a name="line125">125: </a>    <font color="#B22222">/* Communicate scale=1/dx_i to all processors */</font>
+<a name="line126">126: </a>    <a href="../../../docs/manualpages/Vec/VecGetOwnershipRanges.html">VecGetOwnershipRanges</a>(x1, &amp;ranges);
+<a name="line127">127: </a>    root = size;
+<a name="line128">128: </a>    <font color="#4169E1">for</font> (j = size - 1; j &gt; -1; j--) {
+<a name="line129">129: </a>      root--;
+<a name="line130">130: </a>      <font color="#4169E1">if</font> (i &gt;= ranges[j]) <font color="#4169E1">break</font>;
+<a name="line131">131: </a>    }
+<a name="line132">132: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>(&amp;wscale, 1, <a href="../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, root, comm);
+<a name="line133">133: </a>    <a href="../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(j2a, wscale);
+<a name="line134">134: </a>    <a href="../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(j2a, <a href="../../../docs/manualpages/Vec/NORM_INFINITY.html">NORM_INFINITY</a>, &amp;amax);
+<a name="line135">135: </a>    amax *= 1.e-14;
+<a name="line136">136: </a>    <a href="../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(j2a, &amp;y);
+<a name="line137">137: </a>    <font color="#4169E1">for</font> (j = start; j &lt; end; j++) {
+<a name="line138">138: </a>      <font color="#4169E1">if</font> (PetscAbsScalar(y[j - start]) &gt; amax || j == i) <a href="../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(B, 1, &amp;j, 1, &amp;i, y + j - start, <a href="../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line139">139: </a>    }
+<a name="line140">140: </a>    <a href="../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(j2a, &amp;y);
+<a name="line141">141: </a>  }
+<a name="line142">142: </a>  <font color="#4169E1">if</font> (snes-&gt;dm) {
+<a name="line143">143: </a>    <a href="../../../docs/manualpages/DM/DMRestoreGlobalVector.html">DMRestoreGlobalVector</a>(snes-&gt;dm, &amp;j1a);
+<a name="line144">144: </a>    <a href="../../../docs/manualpages/DM/DMRestoreGlobalVector.html">DMRestoreGlobalVector</a>(snes-&gt;dm, &amp;j2a);
+<a name="line145">145: </a>    <a href="../../../docs/manualpages/DM/DMRestoreGlobalVector.html">DMRestoreGlobalVector</a>(snes-&gt;dm, &amp;x2);
+<a name="line146">146: </a>  }
+<a name="line147">147: </a>  <a href="../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(B, <a href="../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line148">148: </a>  <a href="../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(B, <a href="../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line149">149: </a>  <font color="#4169E1">if</font> (B != J) {
+<a name="line150">150: </a>    <a href="../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(J, <a href="../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line151">151: </a>    <a href="../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(J, <a href="../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line152">152: </a>  }
+<a name="line153">153: </a>  snes-&gt;max_funcs = max_funcs;
+<a name="line154">154: </a>  snes-&gt;nfuncs -= N;
+<a name="line155">155: </a>  <font color="#4169E1">return</font> 0;
+<a name="line156">156: </a>}
+</pre>
+</body>
+
+</html>

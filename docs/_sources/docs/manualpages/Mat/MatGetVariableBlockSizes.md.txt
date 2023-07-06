@@ -1,0 +1,42 @@
+# MatGetVariableBlockSizes
+Gets a diagonal blocks of the matrix that need not be of the same size 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatGetVariableBlockSizes(Mat mat, PetscInt *nblocks, const PetscInt **bsizes)
+```
+Logically Collective; No Fortran Support
+
+
+## Input Parameter
+
+- ***mat -*** the matrix
+
+
+
+## Output Parameters
+
+- ***nblocks -*** the number of blocks on this process
+- ***bsizes -*** the block sizes
+
+
+
+
+
+## See Also
+ `Mat`, `MatCreateSeqBAIJ()`, `MatCreateBAIJ()`, `MatGetBlockSize()`, `MatSetBlockSizes()`, `MatGetBlockSizes()`, `MatSetVariableBlockSizes()`, `MatComputeVariableBlockEnvelope()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/interface/matrix.c.html#MatGetVariableBlockSizes">src/mat/interface/matrix.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/interface/matrix.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

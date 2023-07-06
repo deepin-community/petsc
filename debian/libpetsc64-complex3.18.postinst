@@ -1,0 +1,15 @@
+#!/bin/sh -e
+
+DEB_HOST_MULTIARCH=__DEB_HOST_MULTIARCH__
+
+PETSC_VERSION=__PETSC_VERSION__
+PETSC_VERSION_NUMBER=$( echo ${PETSC_VERSION} | sed "s/\.//g" )
+SONAME=__PETSC_SONAME_VERSION__
+
+# Make alternatives links
+if [ "$1" = "configure" ]; then
+  # alternative petsc version (for given soname), real or complex
+  update-alternatives --install /usr/lib/${DEB_HOST_MULTIARCH}/libpetsc64.so.${SONAME} libpetsc64.so.${SONAME} /usr/lib/${DEB_HOST_MULTIARCH}/libpetsc64_complex.so.${PETSC_VERSION} ${PETSC_VERSION_NUMBER}73
+fi
+
+#DEBHELPER#

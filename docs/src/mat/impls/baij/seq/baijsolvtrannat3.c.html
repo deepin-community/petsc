@@ -1,0 +1,137 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/impls/baij/seq/baijsolvtrannat3.c">Actual source code: baijsolvtrannat3.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:45+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="baij.h.html">&lt;../src/mat/impls/baij/seq/baij.h&gt;</A>
+
+<a name="line3">  3: </a><strong><font color="#4169E1"><a name="MatSolveTranspose_SeqBAIJ_3_NaturalOrdering_inplace"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolveTranspose_SeqBAIJ_3_NaturalOrdering_inplace(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> bb, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xx)</font></strong>
+<a name="line4">  4: </a>{
+<a name="line5">  5: </a>  Mat_SeqBAIJ     *a = (Mat_SeqBAIJ *)A-&gt;data;
+<a name="line6">  6: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   n = a-&gt;mbs, *vi, *ai = a-&gt;i, *aj = a-&gt;j, *diag = a-&gt;diag;
+<a name="line7">  7: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         i, nz, idx, idt, oidx;
+<a name="line8">  8: </a>  const MatScalar *aa = a-&gt;a, *v;
+<a name="line9">  9: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>      s1, s2, s3, x1, x2, x3, *x;
+
+<a name="line11"> 11: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(bb, xx);
+<a name="line12"> 12: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(xx, &amp;x);
+
+<a name="line14"> 14: </a>  <font color="#B22222">/* forward solve the U^T */</font>
+<a name="line15"> 15: </a>  idx = 0;
+<a name="line16"> 16: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; n; i++) {
+<a name="line17"> 17: </a>    v = aa + 9 * diag[i];
+<a name="line18"> 18: </a>    <font color="#B22222">/* multiply by the inverse of the block diagonal */</font>
+<a name="line19"> 19: </a>    x1 = x[idx];
+<a name="line20"> 20: </a>    x2 = x[1 + idx];
+<a name="line21"> 21: </a>    x3 = x[2 + idx];
+<a name="line22"> 22: </a>    s1 = v[0] * x1 + v[1] * x2 + v[2] * x3;
+<a name="line23"> 23: </a>    s2 = v[3] * x1 + v[4] * x2 + v[5] * x3;
+<a name="line24"> 24: </a>    s3 = v[6] * x1 + v[7] * x2 + v[8] * x3;
+<a name="line25"> 25: </a>    v += 9;
+
+<a name="line27"> 27: </a>    vi = aj + diag[i] + 1;
+<a name="line28"> 28: </a>    nz = ai[i + 1] - diag[i] - 1;
+<a name="line29"> 29: </a>    <font color="#4169E1">while</font> (nz--) {
+<a name="line30"> 30: </a>      oidx = 3 * (*vi++);
+<a name="line31"> 31: </a>      x[oidx] -= v[0] * s1 + v[1] * s2 + v[2] * s3;
+<a name="line32"> 32: </a>      x[oidx + 1] -= v[3] * s1 + v[4] * s2 + v[5] * s3;
+<a name="line33"> 33: </a>      x[oidx + 2] -= v[6] * s1 + v[7] * s2 + v[8] * s3;
+<a name="line34"> 34: </a>      v += 9;
+<a name="line35"> 35: </a>    }
+<a name="line36"> 36: </a>    x[idx]     = s1;
+<a name="line37"> 37: </a>    x[1 + idx] = s2;
+<a name="line38"> 38: </a>    x[2 + idx] = s3;
+<a name="line39"> 39: </a>    idx += 3;
+<a name="line40"> 40: </a>  }
+<a name="line41"> 41: </a>  <font color="#B22222">/* backward solve the L^T */</font>
+<a name="line42"> 42: </a>  <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0; i--) {
+<a name="line43"> 43: </a>    v   = aa + 9 * diag[i] - 9;
+<a name="line44"> 44: </a>    vi  = aj + diag[i] - 1;
+<a name="line45"> 45: </a>    nz  = diag[i] - ai[i];
+<a name="line46"> 46: </a>    idt = 3 * i;
+<a name="line47"> 47: </a>    s1  = x[idt];
+<a name="line48"> 48: </a>    s2  = x[1 + idt];
+<a name="line49"> 49: </a>    s3  = x[2 + idt];
+<a name="line50"> 50: </a>    <font color="#4169E1">while</font> (nz--) {
+<a name="line51"> 51: </a>      idx = 3 * (*vi--);
+<a name="line52"> 52: </a>      x[idx] -= v[0] * s1 + v[1] * s2 + v[2] * s3;
+<a name="line53"> 53: </a>      x[idx + 1] -= v[3] * s1 + v[4] * s2 + v[5] * s3;
+<a name="line54"> 54: </a>      x[idx + 2] -= v[6] * s1 + v[7] * s2 + v[8] * s3;
+<a name="line55"> 55: </a>      v -= 9;
+<a name="line56"> 56: </a>    }
+<a name="line57"> 57: </a>  }
+<a name="line58"> 58: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xx, &amp;x);
+<a name="line59"> 59: </a>  <a href="../../../../../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>(2.0 * 9.0 * (a-&gt;nz) - 3.0 * A-&gt;cmap-&gt;n);
+<a name="line60"> 60: </a>  <font color="#4169E1">return</font> 0;
+<a name="line61"> 61: </a>}
+
+<a name="line63"> 63: </a><strong><font color="#4169E1"><a name="MatSolveTranspose_SeqBAIJ_3_NaturalOrdering"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolveTranspose_SeqBAIJ_3_NaturalOrdering(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> bb, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xx)</font></strong>
+<a name="line64"> 64: </a>{
+<a name="line65"> 65: </a>  Mat_SeqBAIJ     *a = (Mat_SeqBAIJ *)A-&gt;data;
+<a name="line66"> 66: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   n = a-&gt;mbs, *vi, *ai = a-&gt;i, *aj = a-&gt;j, *diag = a-&gt;diag;
+<a name="line67"> 67: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         nz, idx, idt, j, i, oidx;
+<a name="line68"> 68: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   bs = A-&gt;rmap-&gt;bs, bs2 = a-&gt;bs2;
+<a name="line69"> 69: </a>  const MatScalar *aa = a-&gt;a, *v;
+<a name="line70"> 70: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>      s1, s2, s3, x1, x2, x3, *x;
+
+<a name="line72"> 72: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(bb, xx);
+<a name="line73"> 73: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(xx, &amp;x);
+
+<a name="line75"> 75: </a>  <font color="#B22222">/* forward solve the U^T */</font>
+<a name="line76"> 76: </a>  idx = 0;
+<a name="line77"> 77: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; n; i++) {
+<a name="line78"> 78: </a>    v = aa + bs2 * diag[i];
+<a name="line79"> 79: </a>    <font color="#B22222">/* multiply by the inverse of the block diagonal */</font>
+<a name="line80"> 80: </a>    x1 = x[idx];
+<a name="line81"> 81: </a>    x2 = x[1 + idx];
+<a name="line82"> 82: </a>    x3 = x[2 + idx];
+<a name="line83"> 83: </a>    s1 = v[0] * x1 + v[1] * x2 + v[2] * x3;
+<a name="line84"> 84: </a>    s2 = v[3] * x1 + v[4] * x2 + v[5] * x3;
+<a name="line85"> 85: </a>    s3 = v[6] * x1 + v[7] * x2 + v[8] * x3;
+<a name="line86"> 86: </a>    v -= bs2;
+
+<a name="line88"> 88: </a>    vi = aj + diag[i] - 1;
+<a name="line89"> 89: </a>    nz = diag[i] - diag[i + 1] - 1;
+<a name="line90"> 90: </a>    <font color="#4169E1">for</font> (j = 0; j &gt; -nz; j--) {
+<a name="line91"> 91: </a>      oidx = bs * vi[j];
+<a name="line92"> 92: </a>      x[oidx] -= v[0] * s1 + v[1] * s2 + v[2] * s3;
+<a name="line93"> 93: </a>      x[oidx + 1] -= v[3] * s1 + v[4] * s2 + v[5] * s3;
+<a name="line94"> 94: </a>      x[oidx + 2] -= v[6] * s1 + v[7] * s2 + v[8] * s3;
+<a name="line95"> 95: </a>      v -= bs2;
+<a name="line96"> 96: </a>    }
+<a name="line97"> 97: </a>    x[idx]     = s1;
+<a name="line98"> 98: </a>    x[1 + idx] = s2;
+<a name="line99"> 99: </a>    x[2 + idx] = s3;
+<a name="line100">100: </a>    idx += bs;
+<a name="line101">101: </a>  }
+<a name="line102">102: </a>  <font color="#B22222">/* backward solve the L^T */</font>
+<a name="line103">103: </a>  <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0; i--) {
+<a name="line104">104: </a>    v   = aa + bs2 * ai[i];
+<a name="line105">105: </a>    vi  = aj + ai[i];
+<a name="line106">106: </a>    nz  = ai[i + 1] - ai[i];
+<a name="line107">107: </a>    idt = bs * i;
+<a name="line108">108: </a>    s1  = x[idt];
+<a name="line109">109: </a>    s2  = x[1 + idt];
+<a name="line110">110: </a>    s3  = x[2 + idt];
+<a name="line111">111: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; nz; j++) {
+<a name="line112">112: </a>      idx = bs * vi[j];
+<a name="line113">113: </a>      x[idx] -= v[0] * s1 + v[1] * s2 + v[2] * s3;
+<a name="line114">114: </a>      x[idx + 1] -= v[3] * s1 + v[4] * s2 + v[5] * s3;
+<a name="line115">115: </a>      x[idx + 2] -= v[6] * s1 + v[7] * s2 + v[8] * s3;
+<a name="line116">116: </a>      v += bs2;
+<a name="line117">117: </a>    }
+<a name="line118">118: </a>  }
+<a name="line119">119: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xx, &amp;x);
+<a name="line120">120: </a>  <a href="../../../../../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>(2.0 * bs2 * (a-&gt;nz) - bs * A-&gt;cmap-&gt;n);
+<a name="line121">121: </a>  <font color="#4169E1">return</font> 0;
+<a name="line122">122: </a>}
+</pre>
+</body>
+
+</html>

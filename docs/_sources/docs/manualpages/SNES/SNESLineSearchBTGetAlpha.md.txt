@@ -1,0 +1,39 @@
+# SNESLineSearchBTGetAlpha
+Gets the descent parameter, alpha, in the `SNESLINESEARCHBT` variant. 
+## Synopsis
+```
+#include "petscsnes.h"  
+PetscErrorCode SNESLineSearchBTGetAlpha(SNESLineSearch linesearch, PetscReal *alpha)
+```
+
+## Input Parameter
+
+- ***linesearch -*** linesearch context
+
+
+
+## Output Parameter
+
+- ***alpha -*** The descent parameter
+
+
+
+
+
+## See Also
+ `SNESLineSearchGetLambda()`, `SNESLineSearchGetTolerances()` `SNESLINESEARCHBT`, `SNESLineSearchBTGetAlpha()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/linesearch/impls/bt/linesearchbt.c.html#SNESLineSearchBTGetAlpha">src/snes/linesearch/impls/bt/linesearchbt.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/snes/linesearch/impls/bt/linesearchbt.c)
+
+
+[Index of all SNES routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

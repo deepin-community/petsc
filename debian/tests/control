@@ -1,0 +1,3 @@
+Tests: test-petsc-common, test-petsc-complex
+ test-petsc64, test-petsc64-complex
+Depends: @, @builddeps@

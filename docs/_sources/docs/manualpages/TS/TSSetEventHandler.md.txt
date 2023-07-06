@@ -1,0 +1,85 @@
+# TSSetEventHandler
+Sets a function used for detecting events 
+## Synopsis
+```
+#include "petscts.h" 
+PetscErrorCode TSSetEventHandler(TS ts, PetscInt nevents, PetscInt direction[], PetscBool terminate[], PetscErrorCode (*eventhandler)(TS, PetscReal, Vec, PetscScalar[], void *), PetscErrorCode (*postevent)(TS, PetscInt, PetscInt[], PetscReal, Vec, PetscBool, void *), void *ctx)
+```
+Logically Collective
+
+
+## Input Parameters
+
+- ***ts -*** the `TS` context obtained from `TSCreate()`
+- ***nevents -*** number of local events
+- ***direction -*** direction of zero crossing to be detected. -1 => Zero crossing in negative direction,
++1 => Zero crossing in positive direction, 0 => both ways (one for each event)
+- ***terminate -*** flag to indicate whether time stepping should be terminated after
+event is detected (one for each event)
+- ***eventhandler -*** event monitoring routine
+- ***postevent -*** [optional] post-event function
+- ***ctx       -*** [optional] user-defined context for private data for the
+event monitor and post event routine (use NULL if no
+context is desired)
+
+
+
+## Calling sequence of eventhandler
+PetscErrorCode PetscEventHandler(TS ts,PetscReal t,Vec U,PetscScalar fvalue[],void* ctx)
+
+
+## Input Parameters
+
+- ***ts  -*** the TS context
+- ***t   -*** current time
+- ***U   -*** current iterate
+- ***ctx -*** [optional] context passed with eventhandler
+
+
+
+## Output parameters
+
+- ***fvalue    -*** function value of events at time t
+
+
+
+## Calling sequence of postevent
+PetscErrorCode PostEvent(TS ts,PetscInt nevents_zero,PetscInt events_zero[],PetscReal t,Vec U,PetscBool forwardsolve,void* ctx)
+
+
+## Input Parameters
+
+- ***ts -*** the TS context
+- ***nevents_zero -*** number of local events whose event function is zero
+- ***events_zero  -*** indices of local events which have reached zero
+- ***t            -*** current time
+- ***U            -*** current solution
+- ***forwardsolve -*** Flag to indicate whether TS is doing a forward solve (1) or adjoint solve (0)
+- ***ctx          -*** the context passed with eventhandler
+
+
+
+
+
+## See Also
+ [](chapter_ts), `TSEvent`, `TSCreate()`, `TSSetTimeStep()`, `TSSetConvergedReason()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/event/tsevent.c.html#TSSetEventHandler">src/ts/event/tsevent.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex40.c.html">src/ts/tutorials/ex40.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex41.c.html">src/ts/tutorials/ex41.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex44.c.html">src/ts/tutorials/ex44.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/ts/event/tsevent.c)
+
+
+[Index of all TS routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

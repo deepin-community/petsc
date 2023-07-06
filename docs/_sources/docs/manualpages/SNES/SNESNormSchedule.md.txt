@@ -1,0 +1,41 @@
+# SNESNormSchedule
+Frequency with which the norm is computed 
+## Synopsis
+```
+typedef enum {
+  SNES_NORM_DEFAULT            = -1,
+  SNES_NORM_NONE               = 0,
+  SNES_NORM_ALWAYS             = 1,
+  SNES_NORM_INITIAL_ONLY       = 2,
+  SNES_NORM_FINAL_ONLY         = 3,
+  SNES_NORM_INITIAL_FINAL_ONLY = 4
+} SNESNormSchedule;
+```
+
+
+Support for these is highly dependent on the solver.
+
+
+## Notes
+This is primarily used to turn off extra norm and function computation
+when the solvers are composed.
+
+
+## See Also
+ `SNESSolve()`, `SNESGetConvergedReason()`, `KSPSetNormType()`,
+`KSPSetConvergenceTest()`, `KSPSetPCSide()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscsnes.h.html#SNESNormSchedule">include/petscsnes.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscsnes.h)
+
+
+[Index of all SNES routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

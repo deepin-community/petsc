@@ -1,0 +1,423 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/classes/draw/interface/draw.c">Actual source code: draw.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:47+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/*</font>
+<a name="line3">  3: </a><font color="#B22222">       Provides the calling sequences for all the basic <a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> routines.</font>
+<a name="line4">  4: </a><font color="#B22222">*/</font>
+<a name="line5">  5: </a>#include <A href="../../../../../include/petsc/private/drawimpl.h.html">&lt;petsc/private/drawimpl.h&gt;</A>
+<a name="line6">  6: </a>#include <A href="../../../../../include/petscviewer.h.html">&lt;petscviewer.h&gt;</A>
+
+<a name="line8">  8: </a><a href="../../../../../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a> PETSC_DRAW_CLASSID;
+
+<a name="line10"> 10: </a>static <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> PetscDrawPackageInitialized = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line11"> 11: </a><font color="#B22222">/*@C</font>
+<a name="line12"> 12: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawFinalizePackage.html">PetscDrawFinalizePackage</a> - This function destroys everything in the Petsc interface to the `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>` package. It is</font>
+<a name="line13"> 13: </a><font color="#B22222">  called from `<a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>()`.</font>
+
+<a name="line15"> 15: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line17"> 17: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>()`</font>
+<a name="line18"> 18: </a><font color="#B22222">@*/</font>
+<a name="line19"> 19: </a><strong><font color="#4169E1"><a name="PetscDrawFinalizePackage"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawFinalizePackage.html">PetscDrawFinalizePackage</a>(void)</font></strong>
+<a name="line20"> 20: </a>{
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFunctionListDestroy.html">PetscFunctionListDestroy</a>(&amp;PetscDrawList);
+<a name="line22"> 22: </a>  PetscDrawPackageInitialized = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line23"> 23: </a>  PetscDrawRegisterAllCalled  = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line24"> 24: </a>  <font color="#4169E1">return</font> 0;
+<a name="line25"> 25: </a>}
+
+<a name="line27"> 27: </a><font color="#B22222">/*@C</font>
+<a name="line28"> 28: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscInitializeDrawPackage.html">PetscInitializeDrawPackage</a> - This function initializes everything in the `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>` package. It is called</font>
+<a name="line29"> 29: </a><font color="#B22222">  from PetscDLLibraryRegister_petsc() when using dynamic libraries, and on the call to `<a href="../../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>()`</font>
+<a name="line30"> 30: </a><font color="#B22222">  when using shared or static libraries.</font>
+
+<a name="line32"> 32: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line34"> 34: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>()`</font>
+<a name="line35"> 35: </a><font color="#B22222">@*/</font>
+<a name="line36"> 36: </a><strong><font color="#4169E1"><a name="PetscDrawInitializePackage"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawInitializePackage(void)</font></strong>
+<a name="line37"> 37: </a>{
+<a name="line38"> 38: </a>  char      logList[256];
+<a name="line39"> 39: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> opt, pkg;
+
+<a name="line41"> 41: </a>  <font color="#4169E1">if</font> (PetscDrawPackageInitialized) <font color="#4169E1">return</font> 0;
+<a name="line42"> 42: </a>  PetscDrawPackageInitialized = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line43"> 43: </a>  <font color="#B22222">/* Register Classes */</font>
+<a name="line44"> 44: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscClassIdRegister.html">PetscClassIdRegister</a>(<font color="#666666">"Draw"</font>, &amp;PETSC_DRAW_CLASSID);
+<a name="line45"> 45: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscClassIdRegister.html">PetscClassIdRegister</a>(<font color="#666666">"Draw Axis"</font>, &amp;PETSC_DRAWAXIS_CLASSID);
+<a name="line46"> 46: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscClassIdRegister.html">PetscClassIdRegister</a>(<font color="#666666">"Line Graph"</font>, &amp;PETSC_DRAWLG_CLASSID);
+<a name="line47"> 47: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscClassIdRegister.html">PetscClassIdRegister</a>(<font color="#666666">"Histogram"</font>, &amp;PETSC_DRAWHG_CLASSID);
+<a name="line48"> 48: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscClassIdRegister.html">PetscClassIdRegister</a>(<font color="#666666">"Bar Graph"</font>, &amp;PETSC_DRAWBAR_CLASSID);
+<a name="line49"> 49: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscClassIdRegister.html">PetscClassIdRegister</a>(<font color="#666666">"Scatter Plot"</font>, &amp;PETSC_DRAWSP_CLASSID);
+<a name="line50"> 50: </a>  <font color="#B22222">/* Register Constructors */</font>
+<a name="line51"> 51: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawRegisterAll.html">PetscDrawRegisterAll</a>();
+<a name="line52"> 52: </a>  <font color="#B22222">/* Process Info */</font>
+<a name="line53"> 53: </a>  {
+<a name="line54"> 54: </a>    <a href="../../../../../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a> classids[6];
+
+<a name="line56"> 56: </a>    classids[0] = PETSC_DRAW_CLASSID;
+<a name="line57"> 57: </a>    classids[1] = PETSC_DRAWAXIS_CLASSID;
+<a name="line58"> 58: </a>    classids[2] = PETSC_DRAWLG_CLASSID;
+<a name="line59"> 59: </a>    classids[3] = PETSC_DRAWHG_CLASSID;
+<a name="line60"> 60: </a>    classids[4] = PETSC_DRAWBAR_CLASSID;
+<a name="line61"> 61: </a>    classids[5] = PETSC_DRAWSP_CLASSID;
+<a name="line62"> 62: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscInfoProcessClass.html">PetscInfoProcessClass</a>(<font color="#666666">"draw"</font>, 6, classids);
+<a name="line63"> 63: </a>  }
+<a name="line64"> 64: </a>  <font color="#B22222">/* Process summary exclusions */</font>
+<a name="line65"> 65: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(NULL, NULL, <font color="#666666">"-log_exclude"</font>, logList, <font color="#4169E1">sizeof</font>(logList), &amp;opt);
+<a name="line66"> 66: </a>  <font color="#4169E1">if</font> (opt) {
+<a name="line67"> 67: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrInList.html">PetscStrInList</a>(<font color="#666666">"draw"</font>, logList, ',', &amp;pkg);
+<a name="line68"> 68: </a>    <font color="#4169E1">if</font> (pkg) {
+<a name="line69"> 69: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscLogEventExcludeClass.html">PetscLogEventExcludeClass</a>(PETSC_DRAW_CLASSID);
+<a name="line70"> 70: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscLogEventExcludeClass.html">PetscLogEventExcludeClass</a>(PETSC_DRAWAXIS_CLASSID);
+<a name="line71"> 71: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscLogEventExcludeClass.html">PetscLogEventExcludeClass</a>(PETSC_DRAWLG_CLASSID);
+<a name="line72"> 72: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscLogEventExcludeClass.html">PetscLogEventExcludeClass</a>(PETSC_DRAWHG_CLASSID);
+<a name="line73"> 73: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscLogEventExcludeClass.html">PetscLogEventExcludeClass</a>(PETSC_DRAWBAR_CLASSID);
+<a name="line74"> 74: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscLogEventExcludeClass.html">PetscLogEventExcludeClass</a>(PETSC_DRAWSP_CLASSID);
+<a name="line75"> 75: </a>    }
+<a name="line76"> 76: </a>  }
+<a name="line77"> 77: </a>  <font color="#B22222">/* Register package finalizer */</font>
+<a name="line78"> 78: </a>  <a href="../../../../../docs/manualpages/Sys/PetscRegisterFinalize.html">PetscRegisterFinalize</a>(<a href="../../../../../docs/manualpages/Draw/PetscDrawFinalizePackage.html">PetscDrawFinalizePackage</a>);
+<a name="line79"> 79: </a>  <font color="#4169E1">return</font> 0;
+<a name="line80"> 80: </a>}
+
+<a name="line82"> 82: </a><font color="#B22222">/*@</font>
+<a name="line83"> 83: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawResizeWindow.html">PetscDrawResizeWindow</a> - Allows one to resize a window from a program.</font>
+
+<a name="line85"> 85: </a><font color="#B22222">   Collective</font>
+
+<a name="line87"> 87: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line88"> 88: </a><font color="#B22222">+  draw - the window</font>
+<a name="line89"> 89: </a><font color="#B22222">-  w,h - the new width and height of the window</font>
+
+<a name="line91"> 91: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line93"> 93: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawCheckResizedWindow.html">PetscDrawCheckResizedWindow</a>()`</font>
+<a name="line94"> 94: </a><font color="#B22222">@*/</font>
+<a name="line95"> 95: </a><strong><font color="#4169E1"><a name="PetscDrawResizeWindow"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawResizeWindow.html">PetscDrawResizeWindow</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, int w, int h)</font></strong>
+<a name="line96"> 96: </a>{
+<a name="line100">100: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(draw, resizewindow, w, h);
+<a name="line101">101: </a>  <font color="#4169E1">return</font> 0;
+<a name="line102">102: </a>}
+
+<a name="line104">104: </a><font color="#B22222">/*@</font>
+<a name="line105">105: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawGetWindowSize.html">PetscDrawGetWindowSize</a> - Gets the size of the window.</font>
+
+<a name="line107">107: </a><font color="#B22222">   Not collective</font>
+
+<a name="line109">109: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line110">110: </a><font color="#B22222">.  draw - the window</font>
+
+<a name="line112">112: </a><font color="#B22222">   Output Parameters:</font>
+<a name="line113">113: </a><font color="#B22222">.  w,h - the window width and height</font>
+
+<a name="line115">115: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line117">117: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawResizeWindow.html">PetscDrawResizeWindow</a>()`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawCheckResizedWindow.html">PetscDrawCheckResizedWindow</a>()`</font>
+<a name="line118">118: </a><font color="#B22222">@*/</font>
+<a name="line119">119: </a><strong><font color="#4169E1"><a name="PetscDrawGetWindowSize"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawGetWindowSize.html">PetscDrawGetWindowSize</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, int *w, int *h)</font></strong>
+<a name="line120">120: </a>{
+<a name="line124">124: </a>  <font color="#4169E1">if</font> (w) *w = draw-&gt;w;
+<a name="line125">125: </a>  <font color="#4169E1">if</font> (h) *h = draw-&gt;h;
+<a name="line126">126: </a>  <font color="#4169E1">return</font> 0;
+<a name="line127">127: </a>}
+
+<a name="line129">129: </a><font color="#B22222">/*@</font>
+<a name="line130">130: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawCheckResizedWindow.html">PetscDrawCheckResizedWindow</a> - Checks if the user has resized the window.</font>
+
+<a name="line132">132: </a><font color="#B22222">   Collective</font>
+
+<a name="line134">134: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line135">135: </a><font color="#B22222">.  draw - the window</font>
+
+<a name="line137">137: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line139">139: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawResizeWindow.html">PetscDrawResizeWindow</a>()`</font>
+<a name="line140">140: </a><font color="#B22222">@*/</font>
+<a name="line141">141: </a><strong><font color="#4169E1"><a name="PetscDrawCheckResizedWindow"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawCheckResizedWindow.html">PetscDrawCheckResizedWindow</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
+<a name="line142">142: </a>{
+<a name="line144">144: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(draw, checkresizedwindow);
+<a name="line145">145: </a>  <font color="#4169E1">return</font> 0;
+<a name="line146">146: </a>}
+
+<a name="line148">148: </a><font color="#B22222">/*@C</font>
+<a name="line149">149: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawGetTitle.html">PetscDrawGetTitle</a> - Gets pointer to title of a `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>` context.</font>
+
+<a name="line151">151: </a><font color="#B22222">   Not collective</font>
+
+<a name="line153">153: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line154">154: </a><font color="#B22222">.  draw - the graphics context</font>
+
+<a name="line156">156: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line157">157: </a><font color="#B22222">.  title - the title</font>
+
+<a name="line159">159: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line161">161: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawSetTitle.html">PetscDrawSetTitle</a>()`</font>
+<a name="line162">162: </a><font color="#B22222">@*/</font>
+<a name="line163">163: </a><strong><font color="#4169E1"><a name="PetscDrawGetTitle"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawGetTitle.html">PetscDrawGetTitle</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, const char *title[])</font></strong>
+<a name="line164">164: </a>{
+<a name="line167">167: </a>  *title = draw-&gt;title;
+<a name="line168">168: </a>  <font color="#4169E1">return</font> 0;
+<a name="line169">169: </a>}
+
+<a name="line171">171: </a><font color="#B22222">/*@C</font>
+<a name="line172">172: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawSetTitle.html">PetscDrawSetTitle</a> - Sets the title of a `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>` context.</font>
+
+<a name="line174">174: </a><font color="#B22222">   Collective</font>
+
+<a name="line176">176: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line177">177: </a><font color="#B22222">+  draw - the graphics context</font>
+<a name="line178">178: </a><font color="#B22222">-  title - the title</font>
+
+<a name="line180">180: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line182">182: </a><font color="#B22222">   Notes:</font>
+<a name="line183">183: </a><font color="#B22222">   The title is positioned in the windowing system title bar for the window. Hence it will not be saved with -draw_save</font>
+<a name="line184">184: </a><font color="#B22222">   in the image.</font>
+
+<a name="line186">186: </a><font color="#B22222">   A copy of the string is made, so you may destroy the</font>
+<a name="line187">187: </a><font color="#B22222">   title string after calling this routine.</font>
+
+<a name="line189">189: </a><font color="#B22222">   You can use `<a href="../../../../../docs/manualpages/Draw/PetscDrawAxisSetLabels.html">PetscDrawAxisSetLabels</a>()` to indicate a title within the window</font>
+
+<a name="line191">191: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawGetTitle.html">PetscDrawGetTitle</a>()`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawAppendTitle.html">PetscDrawAppendTitle</a>()`</font>
+<a name="line192">192: </a><font color="#B22222">@*/</font>
+<a name="line193">193: </a><strong><font color="#4169E1"><a name="PetscDrawSetTitle"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawSetTitle.html">PetscDrawSetTitle</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, const char title[])</font></strong>
+<a name="line194">194: </a>{
+<a name="line197">197: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(draw-&gt;title);
+<a name="line198">198: </a>  <a href="../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(title, &amp;draw-&gt;title);
+<a name="line199">199: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(draw, settitle, draw-&gt;title);
+<a name="line200">200: </a>  <font color="#4169E1">return</font> 0;
+<a name="line201">201: </a>}
+
+<a name="line203">203: </a><font color="#B22222">/*@C</font>
+<a name="line204">204: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawAppendTitle.html">PetscDrawAppendTitle</a> - Appends to the title of a `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>` context.</font>
+
+<a name="line206">206: </a><font color="#B22222">   Collective</font>
+
+<a name="line208">208: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line209">209: </a><font color="#B22222">+  draw - the graphics context</font>
+<a name="line210">210: </a><font color="#B22222">-  title - the title</font>
+
+<a name="line212">212: </a><font color="#B22222">   Note:</font>
+<a name="line213">213: </a><font color="#B22222">   A copy of the string is made, so you may destroy the</font>
+<a name="line214">214: </a><font color="#B22222">   title string after calling this routine.</font>
+
+<a name="line216">216: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line218">218: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawSetTitle.html">PetscDrawSetTitle</a>()`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawGetTitle.html">PetscDrawGetTitle</a>()`</font>
+<a name="line219">219: </a><font color="#B22222">@*/</font>
+<a name="line220">220: </a><strong><font color="#4169E1"><a name="PetscDrawAppendTitle"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawAppendTitle.html">PetscDrawAppendTitle</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, const char title[])</font></strong>
+<a name="line221">221: </a>{
+<a name="line224">224: </a>  <font color="#4169E1">if</font> (!title || !title[0]) <font color="#4169E1">return</font> 0;
+
+<a name="line226">226: </a>  <font color="#4169E1">if</font> (draw-&gt;title) {
+<a name="line227">227: </a>    size_t len1, len2;
+<a name="line228">228: </a>    char  *newtitle;
+<a name="line229">229: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrlen.html">PetscStrlen</a>(title, &amp;len1);
+<a name="line230">230: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrlen.html">PetscStrlen</a>(draw-&gt;title, &amp;len2);
+<a name="line231">231: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(len1 + len2 + 1, &amp;newtitle);
+<a name="line232">232: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrcpy.html">PetscStrcpy</a>(newtitle, draw-&gt;title);
+<a name="line233">233: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrcat.html">PetscStrcat</a>(newtitle, title);
+<a name="line234">234: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(draw-&gt;title);
+<a name="line235">235: </a>    draw-&gt;title = newtitle;
+<a name="line236">236: </a>  } <font color="#4169E1">else</font> {
+<a name="line237">237: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(title, &amp;draw-&gt;title);
+<a name="line238">238: </a>  }
+<a name="line239">239: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(draw, settitle, draw-&gt;title);
+<a name="line240">240: </a>  <font color="#4169E1">return</font> 0;
+<a name="line241">241: </a>}
+
+<a name="line243">243: </a><strong><font color="#4169E1"><a name="PetscDrawDestroy_Private"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawDestroy_Private(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
+<a name="line244">244: </a>{
+<a name="line245">245: </a>  <font color="#4169E1">if</font> (!draw-&gt;ops-&gt;save &amp;&amp; !draw-&gt;ops-&gt;getimage) <font color="#4169E1">return</font> 0;
+<a name="line246">246: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawSaveMovie.html">PetscDrawSaveMovie</a>(draw);
+<a name="line247">247: </a>  <font color="#4169E1">if</font> (draw-&gt;savefinalfilename) {
+<a name="line248">248: </a>    draw-&gt;savesinglefile = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line249">249: </a>    <a href="../../../../../docs/manualpages/Draw/PetscDrawSetSave.html">PetscDrawSetSave</a>(draw, draw-&gt;savefinalfilename);
+<a name="line250">250: </a>    <a href="../../../../../docs/manualpages/Draw/PetscDrawSave.html">PetscDrawSave</a>(draw);
+<a name="line251">251: </a>  }
+<a name="line252">252: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBarrier.html">PetscBarrier</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)draw);
+<a name="line253">253: </a>  <font color="#4169E1">return</font> 0;
+<a name="line254">254: </a>}
+
+<a name="line256">256: </a><font color="#B22222">/*@</font>
+<a name="line257">257: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawDestroy.html">PetscDrawDestroy</a> - Deletes a draw context.</font>
+
+<a name="line259">259: </a><font color="#B22222">   Collective</font>
+
+<a name="line261">261: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line262">262: </a><font color="#B22222">.  draw - the drawing context</font>
+
+<a name="line264">264: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line266">266: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawCreate.html">PetscDrawCreate</a>()`</font>
+<a name="line267">267: </a><font color="#B22222">@*/</font>
+<a name="line268">268: </a><strong><font color="#4169E1"><a name="PetscDrawDestroy"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawDestroy.html">PetscDrawDestroy</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> *draw)</font></strong>
+<a name="line269">269: </a>{
+<a name="line270">270: </a>  <font color="#4169E1">if</font> (!*draw) <font color="#4169E1">return</font> 0;
+<a name="line272">272: </a>  <font color="#4169E1">if</font> (--((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(*draw))-&gt;refct &gt; 0) <font color="#4169E1">return</font> 0;
+
+<a name="line274">274: </a>  <font color="#4169E1">if</font> ((*draw)-&gt;pause == -2) {
+<a name="line275">275: </a>    (*draw)-&gt;pause = -1;
+<a name="line276">276: </a>    <a href="../../../../../docs/manualpages/Draw/PetscDrawPause.html">PetscDrawPause</a>(*draw);
+<a name="line277">277: </a>  }
+
+<a name="line279">279: </a>  <font color="#B22222">/* if memory was published then destroy it */</font>
+<a name="line280">280: </a>  PetscObjectSAWsViewOff((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)*draw);
+
+<a name="line282">282: </a>  PetscDrawDestroy_Private(*draw);
+
+<a name="line284">284: </a>  <font color="#4169E1">if</font> ((*draw)-&gt;ops-&gt;destroy) (*(*draw)-&gt;ops-&gt;destroy)(*draw);
+<a name="line285">285: </a>  <a href="../../../../../docs/manualpages/Draw/PetscDrawDestroy.html">PetscDrawDestroy</a>(&amp;(*draw)-&gt;popup);
+<a name="line286">286: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>((*draw)-&gt;title);
+<a name="line287">287: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>((*draw)-&gt;display);
+<a name="line288">288: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>((*draw)-&gt;savefilename);
+<a name="line289">289: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>((*draw)-&gt;saveimageext);
+<a name="line290">290: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>((*draw)-&gt;savemovieext);
+<a name="line291">291: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>((*draw)-&gt;savefinalfilename);
+<a name="line292">292: </a>  <a href="../../../../../docs/manualpages/Sys/PetscHeaderDestroy.html">PetscHeaderDestroy</a>(draw);
+<a name="line293">293: </a>  <font color="#4169E1">return</font> 0;
+<a name="line294">294: </a>}
+
+<a name="line296">296: </a><font color="#B22222">/*@</font>
+<a name="line297">297: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawGetPopup.html">PetscDrawGetPopup</a> - Creates a popup window associated with a `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>` window.</font>
+
+<a name="line299">299: </a><font color="#B22222">   Collective</font>
+
+<a name="line301">301: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line302">302: </a><font color="#B22222">.  draw - the original window</font>
+
+<a name="line304">304: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line305">305: </a><font color="#B22222">.  popup - the new popup window</font>
+
+<a name="line307">307: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line309">309: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawScalePopup.html">PetscDrawScalePopup</a>()`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawCreate.html">PetscDrawCreate</a>()`</font>
+<a name="line310">310: </a><font color="#B22222">@*/</font>
+<a name="line311">311: </a><strong><font color="#4169E1"><a name="PetscDrawGetPopup"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawGetPopup.html">PetscDrawGetPopup</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> *popup)</font></strong>
+<a name="line312">312: </a>{
+
+<a name="line316">316: </a>  <font color="#4169E1">if</font> (draw-&gt;popup) *popup = draw-&gt;popup;
+<a name="line317">317: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (draw-&gt;ops-&gt;getpopup) {
+<a name="line318">318: </a>    <a href="../../../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(draw, getpopup, popup);
+<a name="line319">319: </a>    <font color="#4169E1">if</font> (*popup) {
+<a name="line320">320: </a>      <a href="../../../../../docs/manualpages/Sys/PetscObjectSetOptionsPrefix.html">PetscObjectSetOptionsPrefix</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)*popup, <font color="#666666">"popup_"</font>);
+<a name="line321">321: </a>      (*popup)-&gt;pause = 0.0;
+<a name="line322">322: </a>      <a href="../../../../../docs/manualpages/Draw/PetscDrawSetFromOptions.html">PetscDrawSetFromOptions</a>(*popup);
+<a name="line323">323: </a>    }
+<a name="line324">324: </a>  } <font color="#4169E1">else</font> *popup = NULL;
+<a name="line325">325: </a>  <font color="#4169E1">return</font> 0;
+<a name="line326">326: </a>}
+
+<a name="line328">328: </a><font color="#B22222">/*@C</font>
+<a name="line329">329: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Draw/PetscDrawSetDisplay.html">PetscDrawSetDisplay</a> - Sets the display where a `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>` object will be displayed</font>
+
+<a name="line331">331: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line332">332: </a><font color="#B22222">+ draw - the drawing context</font>
+<a name="line333">333: </a><font color="#B22222">- display - the X windows display</font>
+
+<a name="line335">335: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line337">337: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawOpenX.html">PetscDrawOpenX</a>()`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawCreate.html">PetscDrawCreate</a>()`</font>
+<a name="line338">338: </a><font color="#B22222">@*/</font>
+<a name="line339">339: </a><strong><font color="#4169E1"><a name="PetscDrawSetDisplay"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawSetDisplay.html">PetscDrawSetDisplay</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, const char display[])</font></strong>
+<a name="line340">340: </a>{
+<a name="line341">341: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(draw-&gt;display);
+<a name="line342">342: </a>  <a href="../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(display, &amp;draw-&gt;display);
+<a name="line343">343: </a>  <font color="#4169E1">return</font> 0;
+<a name="line344">344: </a>}
+
+<a name="line346">346: </a><font color="#B22222">/*@</font>
+<a name="line347">347: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawSetDoubleBuffer.html">PetscDrawSetDoubleBuffer</a> - Sets a window to be double buffered.</font>
+
+<a name="line349">349: </a><font color="#B22222">   Logically Collective</font>
+
+<a name="line351">351: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line352">352: </a><font color="#B22222">.  draw - the drawing context</font>
+
+<a name="line354">354: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line356">356: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawOpenX.html">PetscDrawOpenX</a>()`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawCreate.html">PetscDrawCreate</a>()`</font>
+<a name="line357">357: </a><font color="#B22222">@*/</font>
+<a name="line358">358: </a><strong><font color="#4169E1"><a name="PetscDrawSetDoubleBuffer"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawSetDoubleBuffer.html">PetscDrawSetDoubleBuffer</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
+<a name="line359">359: </a>{
+<a name="line361">361: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(draw, setdoublebuffer);
+<a name="line362">362: </a>  <font color="#4169E1">return</font> 0;
+<a name="line363">363: </a>}
+
+<a name="line365">365: </a><font color="#B22222">/*@C</font>
+<a name="line366">366: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawGetSingleton.html">PetscDrawGetSingleton</a> - Gain access to a `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>` object as if it were owned</font>
+<a name="line367">367: </a><font color="#B22222">        by the one process.</font>
+
+<a name="line369">369: </a><font color="#B22222">   Collective</font>
+
+<a name="line371">371: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line372">372: </a><font color="#B22222">.  draw - the original window</font>
+
+<a name="line374">374: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line375">375: </a><font color="#B22222">.  sdraw - the singleton window</font>
+
+<a name="line377">377: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line379">379: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawRestoreSingleton.html">PetscDrawRestoreSingleton</a>()`, `PetscViewerGetSingleton()`, `PetscViewerRestoreSingleton()`</font>
+<a name="line380">380: </a><font color="#B22222">@*/</font>
+<a name="line381">381: </a><strong><font color="#4169E1"><a name="PetscDrawGetSingleton"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawGetSingleton.html">PetscDrawGetSingleton</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> *sdraw)</font></strong>
+<a name="line382">382: </a>{
+<a name="line383">383: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size;
+
+
+<a name="line388">388: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)draw), &amp;size);
+<a name="line389">389: </a>  <font color="#4169E1">if</font> (size == 1) {
+<a name="line390">390: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)draw);
+<a name="line391">391: </a>    *sdraw = draw;
+<a name="line392">392: </a>  } <font color="#4169E1">else</font> {
+<a name="line393">393: </a>    <font color="#4169E1">if</font> (draw-&gt;ops-&gt;getsingleton) {
+<a name="line394">394: </a>      <a href="../../../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(draw, getsingleton, sdraw);
+<a name="line395">395: </a>    } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Cannot get singleton for this type %s of draw object"</font>, ((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)draw)-&gt;type_name);
+<a name="line396">396: </a>  }
+<a name="line397">397: </a>  <font color="#4169E1">return</font> 0;
+<a name="line398">398: </a>}
+
+<a name="line400">400: </a><font color="#B22222">/*@C</font>
+<a name="line401">401: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawRestoreSingleton.html">PetscDrawRestoreSingleton</a> - Remove access to a `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>` object obtained with `<a href="../../../../../docs/manualpages/Draw/PetscDrawGetSingleton.html">PetscDrawGetSingleton</a>()`</font>
+<a name="line402">402: </a><font color="#B22222">        by the one process.</font>
+
+<a name="line404">404: </a><font color="#B22222">   Collective</font>
+
+<a name="line406">406: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line407">407: </a><font color="#B22222">+  draw - the original window</font>
+<a name="line408">408: </a><font color="#B22222">-  sdraw - the singleton window</font>
+
+<a name="line410">410: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line412">412: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawGetSingleton.html">PetscDrawGetSingleton</a>()`, `PetscViewerGetSingleton()`, `PetscViewerRestoreSingleton()`</font>
+<a name="line413">413: </a><font color="#B22222">@*/</font>
+<a name="line414">414: </a><strong><font color="#4169E1"><a name="PetscDrawRestoreSingleton"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawRestoreSingleton.html">PetscDrawRestoreSingleton</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> *sdraw)</font></strong>
+<a name="line415">415: </a>{
+<a name="line416">416: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size;
+
+
+<a name="line422">422: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)draw), &amp;size);
+<a name="line423">423: </a>  <font color="#4169E1">if</font> (size == 1) {
+<a name="line424">424: </a>    <font color="#4169E1">if</font> (draw == *sdraw) {
+<a name="line425">425: </a>      <a href="../../../../../docs/manualpages/Sys/PetscObjectDereference.html">PetscObjectDereference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)draw);
+<a name="line426">426: </a>      *sdraw = NULL;
+<a name="line427">427: </a>    } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_WRONG, <font color="#666666">"Cannot restore singleton, it is not the parent draw"</font>);
+<a name="line428">428: </a>  } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/PetscUseTypeMethod.html">PetscUseTypeMethod</a>(draw, restoresingleton, sdraw);
+<a name="line429">429: </a>  <font color="#4169E1">return</font> 0;
+<a name="line430">430: </a>}
+</pre>
+</body>
+
+</html>

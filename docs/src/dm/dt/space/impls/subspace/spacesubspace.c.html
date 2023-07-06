@@ -1,0 +1,499 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/dt/space/impls/subspace/spacesubspace.c">Actual source code: spacesubspace.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:49+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../../include/petsc/private/petscfeimpl.h.html">&lt;petsc/private/petscfeimpl.h&gt;</A>
+
+<a name="line3">  3: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line4">  4: </a>  <a href="../../../../../../docs/manualpages/FE/PetscDualSpace.html">PetscDualSpace</a> dualSubspace;
+<a name="line5">  5: </a>  <a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a>     origSpace;
+<a name="line6">  6: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     *x;
+<a name="line7">  7: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     *x_alloc;
+<a name="line8">  8: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     *Jx;
+<a name="line9">  9: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     *Jx_alloc;
+<a name="line10"> 10: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     *u;
+<a name="line11"> 11: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     *u_alloc;
+<a name="line12"> 12: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     *Ju;
+<a name="line13"> 13: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     *Ju_alloc;
+<a name="line14"> 14: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     *Q;
+<a name="line15"> 15: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       Nb;
+<a name="line16"> 16: </a>} PetscSpace_Subspace;
+
+<a name="line18"> 18: </a><strong><font color="#4169E1"><a name="PetscSpaceDestroy_Subspace"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceDestroy_Subspace(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp)</font></strong>
+<a name="line19"> 19: </a>{
+<a name="line20"> 20: </a>  PetscSpace_Subspace *subsp;
+
+<a name="line22"> 22: </a>  subsp    = (PetscSpace_Subspace *)sp-&gt;data;
+<a name="line23"> 23: </a>  subsp-&gt;x = NULL;
+<a name="line24"> 24: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(subsp-&gt;x_alloc);
+<a name="line25"> 25: </a>  subsp-&gt;Jx = NULL;
+<a name="line26"> 26: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(subsp-&gt;Jx_alloc);
+<a name="line27"> 27: </a>  subsp-&gt;u = NULL;
+<a name="line28"> 28: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(subsp-&gt;u_alloc);
+<a name="line29"> 29: </a>  subsp-&gt;Ju = NULL;
+<a name="line30"> 30: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(subsp-&gt;Ju_alloc);
+<a name="line31"> 31: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(subsp-&gt;Q);
+<a name="line32"> 32: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceDestroy.html">PetscSpaceDestroy</a>(&amp;subsp-&gt;origSpace);
+<a name="line33"> 33: </a>  <a href="../../../../../../docs/manualpages/DUALSPACE/PetscDualSpaceDestroy.html">PetscDualSpaceDestroy</a>(&amp;subsp-&gt;dualSubspace);
+<a name="line34"> 34: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(subsp);
+<a name="line35"> 35: </a>  sp-&gt;data = NULL;
+<a name="line36"> 36: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)sp, <font color="#666666">"PetscSpacePolynomialGetTensor_C"</font>, NULL);
+<a name="line37"> 37: </a>  <font color="#4169E1">return</font> 0;
+<a name="line38"> 38: </a>}
+
+<a name="line40"> 40: </a><strong><font color="#4169E1"><a name="PetscSpaceView_Subspace"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceView_Subspace(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line41"> 41: </a>{
+<a name="line42"> 42: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>            iascii;
+<a name="line43"> 43: </a>  PetscSpace_Subspace *subsp;
+
+<a name="line45"> 45: </a>  subsp = (PetscSpace_Subspace *)sp-&gt;data;
+<a name="line46"> 46: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line47"> 47: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line48"> 48: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> origDim, subDim, origNc, subNc, o, s;
+
+<a name="line50"> 50: </a>    <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumVariables.html">PetscSpaceGetNumVariables</a>(subsp-&gt;origSpace, &amp;origDim);
+<a name="line51"> 51: </a>    <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumComponents.html">PetscSpaceGetNumComponents</a>(subsp-&gt;origSpace, &amp;origNc);
+<a name="line52"> 52: </a>    <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumVariables.html">PetscSpaceGetNumVariables</a>(sp, &amp;subDim);
+<a name="line53"> 53: </a>    <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumComponents.html">PetscSpaceGetNumComponents</a>(sp, &amp;subNc);
+<a name="line54"> 54: </a>    <font color="#4169E1">if</font> (subsp-&gt;x) {
+<a name="line55"> 55: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Subspace-to-space domain shift:\n\n"</font>);
+<a name="line56"> 56: </a>      <font color="#4169E1">for</font> (o = 0; o &lt; origDim; o++) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">" %g\n"</font>, (double)subsp-&gt;x[o]);
+<a name="line57"> 57: </a>    }
+<a name="line58"> 58: </a>    <font color="#4169E1">if</font> (subsp-&gt;Jx) {
+<a name="line59"> 59: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Subspace-to-space domain transform:\n\n"</font>);
+<a name="line60"> 60: </a>      <font color="#4169E1">for</font> (o = 0; o &lt; origDim; o++) {
+<a name="line61"> 61: </a>        <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">" %g"</font>, (double)subsp-&gt;Jx[o * subDim + 0]);
+<a name="line62"> 62: </a>        <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIUseTabs.html">PetscViewerASCIIUseTabs</a>(viewer, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line63"> 63: </a>        <font color="#4169E1">for</font> (s = 1; s &lt; subDim; s++) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">" %g"</font>, (double)subsp-&gt;Jx[o * subDim + s]);
+<a name="line64"> 64: </a>        <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"\n"</font>);
+<a name="line65"> 65: </a>        <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIUseTabs.html">PetscViewerASCIIUseTabs</a>(viewer, <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+<a name="line66"> 66: </a>      }
+<a name="line67"> 67: </a>    }
+<a name="line68"> 68: </a>    <font color="#4169E1">if</font> (subsp-&gt;u) {
+<a name="line69"> 69: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Space-to-subspace range shift:\n\n"</font>);
+<a name="line70"> 70: </a>      <font color="#4169E1">for</font> (o = 0; o &lt; origNc; o++) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">" %g\n"</font>, (double)subsp-&gt;u[o]);
+<a name="line71"> 71: </a>    }
+<a name="line72"> 72: </a>    <font color="#4169E1">if</font> (subsp-&gt;Ju) {
+<a name="line73"> 73: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Space-to-subsace domain transform:\n"</font>);
+<a name="line74"> 74: </a>      <font color="#4169E1">for</font> (o = 0; o &lt; origNc; o++) {
+<a name="line75"> 75: </a>        <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIUseTabs.html">PetscViewerASCIIUseTabs</a>(viewer, <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line76"> 76: </a>        <font color="#4169E1">for</font> (s = 0; s &lt; subNc; s++) <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">" %g"</font>, (double)subsp-&gt;Ju[o * subNc + s]);
+<a name="line77"> 77: </a>        <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIUseTabs.html">PetscViewerASCIIUseTabs</a>(viewer, <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+<a name="line78"> 78: </a>      }
+<a name="line79"> 79: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"\n"</font>);
+<a name="line80"> 80: </a>    }
+<a name="line81"> 81: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Original space:\n"</font>);
+<a name="line82"> 82: </a>  }
+<a name="line83"> 83: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(viewer);
+<a name="line84"> 84: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceView.html">PetscSpaceView</a>(subsp-&gt;origSpace, viewer);
+<a name="line85"> 85: </a>  <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(viewer);
+<a name="line86"> 86: </a>  <font color="#4169E1">return</font> 0;
+<a name="line87"> 87: </a>}
+
+<a name="line89"> 89: </a><strong><font color="#4169E1"><a name="PetscSpaceEvaluate_Subspace"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceEvaluate_Subspace(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> npoints, const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> points[], <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> B[], <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> D[], <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> H[])</font></strong>
+<a name="line90"> 90: </a>{
+<a name="line91"> 91: </a>  PetscSpace_Subspace *subsp = (PetscSpace_Subspace *)sp-&gt;data;
+<a name="line92"> 92: </a>  <a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a>           origsp;
+<a name="line93"> 93: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>             origDim, subDim, origNc, subNc, subNb, origNb, i, j, k, l, m, n, o;
+<a name="line94"> 94: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>           *inpoints, *inB = NULL, *inD = NULL, *inH = NULL;
+
+<a name="line96"> 96: </a>  origsp = subsp-&gt;origSpace;
+<a name="line97"> 97: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumVariables.html">PetscSpaceGetNumVariables</a>(sp, &amp;subDim);
+<a name="line98"> 98: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumVariables.html">PetscSpaceGetNumVariables</a>(origsp, &amp;origDim);
+<a name="line99"> 99: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumComponents.html">PetscSpaceGetNumComponents</a>(sp, &amp;subNc);
+<a name="line100">100: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumComponents.html">PetscSpaceGetNumComponents</a>(origsp, &amp;origNc);
+<a name="line101">101: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetDimension.html">PetscSpaceGetDimension</a>(sp, &amp;subNb);
+<a name="line102">102: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetDimension.html">PetscSpaceGetDimension</a>(origsp, &amp;origNb);
+<a name="line103">103: </a>  <a href="../../../../../../docs/manualpages/DM/DMGetWorkArray.html">DMGetWorkArray</a>(sp-&gt;dm, npoints * origDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;inpoints);
+<a name="line104">104: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; npoints; i++) {
+<a name="line105">105: </a>    <font color="#4169E1">if</font> (subsp-&gt;x) {
+<a name="line106">106: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; origDim; j++) inpoints[i * origDim + j] = subsp-&gt;x[j];
+<a name="line107">107: </a>    } <font color="#4169E1">else</font> {
+<a name="line108">108: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; origDim; j++) inpoints[i * origDim + j] = 0.0;
+<a name="line109">109: </a>    }
+<a name="line110">110: </a>    <font color="#4169E1">if</font> (subsp-&gt;Jx) {
+<a name="line111">111: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; origDim; j++) {
+<a name="line112">112: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; subDim; k++) inpoints[i * origDim + j] += subsp-&gt;Jx[j * subDim + k] * points[i * subDim + k];
+<a name="line113">113: </a>      }
+<a name="line114">114: </a>    } <font color="#4169E1">else</font> {
+<a name="line115">115: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(subDim, origDim); j++) inpoints[i * origDim + j] += points[i * subDim + j];
+<a name="line116">116: </a>    }
+<a name="line117">117: </a>  }
+<a name="line118">118: </a>  <font color="#4169E1">if</font> (B) <a href="../../../../../../docs/manualpages/DM/DMGetWorkArray.html">DMGetWorkArray</a>(sp-&gt;dm, npoints * origNb * origNc, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;inB);
+<a name="line119">119: </a>  <font color="#4169E1">if</font> (D) <a href="../../../../../../docs/manualpages/DM/DMGetWorkArray.html">DMGetWorkArray</a>(sp-&gt;dm, npoints * origNb * origNc * origDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;inD);
+<a name="line120">120: </a>  <font color="#4169E1">if</font> (H) <a href="../../../../../../docs/manualpages/DM/DMGetWorkArray.html">DMGetWorkArray</a>(sp-&gt;dm, npoints * origNb * origNc * origDim * origDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;inH);
+<a name="line121">121: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceEvaluate.html">PetscSpaceEvaluate</a>(origsp, npoints, inpoints, inB, inD, inH);
+<a name="line122">122: </a>  <font color="#4169E1">if</font> (H) {
+<a name="line123">123: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *phi, *psi;
+
+<a name="line125">125: </a>    <a href="../../../../../../docs/manualpages/DM/DMGetWorkArray.html">DMGetWorkArray</a>(sp-&gt;dm, origNc * origDim * origDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;phi);
+<a name="line126">126: </a>    <a href="../../../../../../docs/manualpages/DM/DMGetWorkArray.html">DMGetWorkArray</a>(sp-&gt;dm, origNc * subDim * subDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;psi);
+<a name="line127">127: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; npoints * subNb * subNc * subDim; i++) D[i] = 0.0;
+<a name="line128">128: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; subNb; i++) {
+<a name="line129">129: </a>      const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *subq = &amp;subsp-&gt;Q[i * origNb];
+
+<a name="line131">131: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; npoints; j++) {
+<a name="line132">132: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; origNc * origDim; k++) phi[k] = 0.;
+<a name="line133">133: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; origNc * subDim; k++) psi[k] = 0.;
+<a name="line134">134: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; origNb; k++) {
+<a name="line135">135: </a>          <font color="#4169E1">for</font> (l = 0; l &lt; origNc * origDim * origDim; l++) phi[l] += inH[(j * origNb + k) * origNc * origDim * origDim + l] * subq[k];
+<a name="line136">136: </a>        }
+<a name="line137">137: </a>        <font color="#4169E1">if</font> (subsp-&gt;Jx) {
+<a name="line138">138: </a>          <font color="#4169E1">for</font> (k = 0; k &lt; subNc; k++) {
+<a name="line139">139: </a>            <font color="#4169E1">for</font> (l = 0; l &lt; subDim; l++) {
+<a name="line140">140: </a>              <font color="#4169E1">for</font> (m = 0; m &lt; origDim; m++) {
+<a name="line141">141: </a>                <font color="#4169E1">for</font> (n = 0; n &lt; subDim; n++) {
+<a name="line142">142: </a>                  <font color="#4169E1">for</font> (o = 0; o &lt; origDim; o++) psi[(k * subDim + l) * subDim + n] += subsp-&gt;Jx[m * subDim + l] * subsp-&gt;Jx[o * subDim + n] * phi[(k * origDim + m) * origDim + o];
+<a name="line143">143: </a>                }
+<a name="line144">144: </a>              }
+<a name="line145">145: </a>            }
+<a name="line146">146: </a>          }
+<a name="line147">147: </a>        } <font color="#4169E1">else</font> {
+<a name="line148">148: </a>          <font color="#4169E1">for</font> (k = 0; k &lt; subNc; k++) {
+<a name="line149">149: </a>            <font color="#4169E1">for</font> (l = 0; l &lt; <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(subDim, origDim); l++) {
+<a name="line150">150: </a>              <font color="#4169E1">for</font> (m = 0; m &lt; <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(subDim, origDim); m++) psi[(k * subDim + l) * subDim + m] += phi[(k * origDim + l) * origDim + m];
+<a name="line151">151: </a>            }
+<a name="line152">152: </a>          }
+<a name="line153">153: </a>        }
+<a name="line154">154: </a>        <font color="#4169E1">if</font> (subsp-&gt;Ju) {
+<a name="line155">155: </a>          <font color="#4169E1">for</font> (k = 0; k &lt; subNc; k++) {
+<a name="line156">156: </a>            <font color="#4169E1">for</font> (l = 0; l &lt; origNc; l++) {
+<a name="line157">157: </a>              <font color="#4169E1">for</font> (m = 0; m &lt; subDim * subDim; m++) H[((j * subNb + i) * subNc + k) * subDim * subDim + m] += subsp-&gt;Ju[k * origNc + l] * psi[l * subDim * subDim + m];
+<a name="line158">158: </a>            }
+<a name="line159">159: </a>          }
+<a name="line160">160: </a>        } <font color="#4169E1">else</font> {
+<a name="line161">161: </a>          <font color="#4169E1">for</font> (k = 0; k &lt; <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(subNc, origNc); k++) {
+<a name="line162">162: </a>            <font color="#4169E1">for</font> (l = 0; l &lt; subDim * subDim; l++) H[((j * subNb + i) * subNc + k) * subDim * subDim + l] += psi[k * subDim * subDim + l];
+<a name="line163">163: </a>          }
+<a name="line164">164: </a>        }
+<a name="line165">165: </a>      }
+<a name="line166">166: </a>    }
+<a name="line167">167: </a>    <a href="../../../../../../docs/manualpages/DM/DMRestoreWorkArray.html">DMRestoreWorkArray</a>(sp-&gt;dm, subNc * origDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;psi);
+<a name="line168">168: </a>    <a href="../../../../../../docs/manualpages/DM/DMRestoreWorkArray.html">DMRestoreWorkArray</a>(sp-&gt;dm, origNc * origDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;phi);
+<a name="line169">169: </a>    <a href="../../../../../../docs/manualpages/DM/DMRestoreWorkArray.html">DMRestoreWorkArray</a>(sp-&gt;dm, npoints * origNb * origNc * origDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;inH);
+<a name="line170">170: </a>  }
+<a name="line171">171: </a>  <font color="#4169E1">if</font> (D) {
+<a name="line172">172: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *phi, *psi;
+
+<a name="line174">174: </a>    <a href="../../../../../../docs/manualpages/DM/DMGetWorkArray.html">DMGetWorkArray</a>(sp-&gt;dm, origNc * origDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;phi);
+<a name="line175">175: </a>    <a href="../../../../../../docs/manualpages/DM/DMGetWorkArray.html">DMGetWorkArray</a>(sp-&gt;dm, origNc * subDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;psi);
+<a name="line176">176: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; npoints * subNb * subNc * subDim; i++) D[i] = 0.0;
+<a name="line177">177: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; subNb; i++) {
+<a name="line178">178: </a>      const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *subq = &amp;subsp-&gt;Q[i * origNb];
+
+<a name="line180">180: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; npoints; j++) {
+<a name="line181">181: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; origNc * origDim; k++) phi[k] = 0.;
+<a name="line182">182: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; origNc * subDim; k++) psi[k] = 0.;
+<a name="line183">183: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; origNb; k++) {
+<a name="line184">184: </a>          <font color="#4169E1">for</font> (l = 0; l &lt; origNc * origDim; l++) phi[l] += inD[(j * origNb + k) * origNc * origDim + l] * subq[k];
+<a name="line185">185: </a>        }
+<a name="line186">186: </a>        <font color="#4169E1">if</font> (subsp-&gt;Jx) {
+<a name="line187">187: </a>          <font color="#4169E1">for</font> (k = 0; k &lt; subNc; k++) {
+<a name="line188">188: </a>            <font color="#4169E1">for</font> (l = 0; l &lt; subDim; l++) {
+<a name="line189">189: </a>              <font color="#4169E1">for</font> (m = 0; m &lt; origDim; m++) psi[k * subDim + l] += subsp-&gt;Jx[m * subDim + l] * phi[k * origDim + m];
+<a name="line190">190: </a>            }
+<a name="line191">191: </a>          }
+<a name="line192">192: </a>        } <font color="#4169E1">else</font> {
+<a name="line193">193: </a>          <font color="#4169E1">for</font> (k = 0; k &lt; subNc; k++) {
+<a name="line194">194: </a>            <font color="#4169E1">for</font> (l = 0; l &lt; <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(subDim, origDim); l++) psi[k * subDim + l] += phi[k * origDim + l];
+<a name="line195">195: </a>          }
+<a name="line196">196: </a>        }
+<a name="line197">197: </a>        <font color="#4169E1">if</font> (subsp-&gt;Ju) {
+<a name="line198">198: </a>          <font color="#4169E1">for</font> (k = 0; k &lt; subNc; k++) {
+<a name="line199">199: </a>            <font color="#4169E1">for</font> (l = 0; l &lt; origNc; l++) {
+<a name="line200">200: </a>              <font color="#4169E1">for</font> (m = 0; m &lt; subDim; m++) D[((j * subNb + i) * subNc + k) * subDim + m] += subsp-&gt;Ju[k * origNc + l] * psi[l * subDim + m];
+<a name="line201">201: </a>            }
+<a name="line202">202: </a>          }
+<a name="line203">203: </a>        } <font color="#4169E1">else</font> {
+<a name="line204">204: </a>          <font color="#4169E1">for</font> (k = 0; k &lt; <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(subNc, origNc); k++) {
+<a name="line205">205: </a>            <font color="#4169E1">for</font> (l = 0; l &lt; subDim; l++) D[((j * subNb + i) * subNc + k) * subDim + l] += psi[k * subDim + l];
+<a name="line206">206: </a>          }
+<a name="line207">207: </a>        }
+<a name="line208">208: </a>      }
+<a name="line209">209: </a>    }
+<a name="line210">210: </a>    <a href="../../../../../../docs/manualpages/DM/DMRestoreWorkArray.html">DMRestoreWorkArray</a>(sp-&gt;dm, subNc * origDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;psi);
+<a name="line211">211: </a>    <a href="../../../../../../docs/manualpages/DM/DMRestoreWorkArray.html">DMRestoreWorkArray</a>(sp-&gt;dm, origNc * origDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;phi);
+<a name="line212">212: </a>    <a href="../../../../../../docs/manualpages/DM/DMRestoreWorkArray.html">DMRestoreWorkArray</a>(sp-&gt;dm, npoints * origNb * origNc * origDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;inD);
+<a name="line213">213: </a>  }
+<a name="line214">214: </a>  <font color="#4169E1">if</font> (B) {
+<a name="line215">215: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *phi;
+
+<a name="line217">217: </a>    <a href="../../../../../../docs/manualpages/DM/DMGetWorkArray.html">DMGetWorkArray</a>(sp-&gt;dm, origNc, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;phi);
+<a name="line218">218: </a>    <font color="#4169E1">if</font> (subsp-&gt;u) {
+<a name="line219">219: </a>      <font color="#4169E1">for</font> (i = 0; i &lt; npoints * subNb; i++) {
+<a name="line220">220: </a>        <font color="#4169E1">for</font> (j = 0; j &lt; subNc; j++) B[i * subNc + j] = subsp-&gt;u[j];
+<a name="line221">221: </a>      }
+<a name="line222">222: </a>    } <font color="#4169E1">else</font> {
+<a name="line223">223: </a>      <font color="#4169E1">for</font> (i = 0; i &lt; npoints * subNb * subNc; i++) B[i] = 0.0;
+<a name="line224">224: </a>    }
+<a name="line225">225: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; subNb; i++) {
+<a name="line226">226: </a>      const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *subq = &amp;subsp-&gt;Q[i * origNb];
+
+<a name="line228">228: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; npoints; j++) {
+<a name="line229">229: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; origNc; k++) phi[k] = 0.;
+<a name="line230">230: </a>        <font color="#4169E1">for</font> (k = 0; k &lt; origNb; k++) {
+<a name="line231">231: </a>          <font color="#4169E1">for</font> (l = 0; l &lt; origNc; l++) phi[l] += inB[(j * origNb + k) * origNc + l] * subq[k];
+<a name="line232">232: </a>        }
+<a name="line233">233: </a>        <font color="#4169E1">if</font> (subsp-&gt;Ju) {
+<a name="line234">234: </a>          <font color="#4169E1">for</font> (k = 0; k &lt; subNc; k++) {
+<a name="line235">235: </a>            <font color="#4169E1">for</font> (l = 0; l &lt; origNc; l++) B[(j * subNb + i) * subNc + k] += subsp-&gt;Ju[k * origNc + l] * phi[l];
+<a name="line236">236: </a>          }
+<a name="line237">237: </a>        } <font color="#4169E1">else</font> {
+<a name="line238">238: </a>          <font color="#4169E1">for</font> (k = 0; k &lt; <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(subNc, origNc); k++) B[(j * subNb + i) * subNc + k] += phi[k];
+<a name="line239">239: </a>        }
+<a name="line240">240: </a>      }
+<a name="line241">241: </a>    }
+<a name="line242">242: </a>    <a href="../../../../../../docs/manualpages/DM/DMRestoreWorkArray.html">DMRestoreWorkArray</a>(sp-&gt;dm, origNc, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;phi);
+<a name="line243">243: </a>    <a href="../../../../../../docs/manualpages/DM/DMRestoreWorkArray.html">DMRestoreWorkArray</a>(sp-&gt;dm, npoints * origNb * origNc, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;inB);
+<a name="line244">244: </a>  }
+<a name="line245">245: </a>  <a href="../../../../../../docs/manualpages/DM/DMRestoreWorkArray.html">DMRestoreWorkArray</a>(sp-&gt;dm, npoints * origDim, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;inpoints);
+<a name="line246">246: </a>  <font color="#4169E1">return</font> 0;
+<a name="line247">247: </a>}
+
+<a name="line249">249: </a><strong><font color="#4169E1"><a name="PetscSpaceCreate_Subspace"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceCreate_Subspace(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp)</font></strong>
+<a name="line250">250: </a>{
+<a name="line251">251: </a>  PetscSpace_Subspace *subsp;
+
+<a name="line253">253: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;subsp);
+<a name="line254">254: </a>  sp-&gt;data = (void *)subsp;
+<a name="line255">255: </a>  <font color="#4169E1">return</font> 0;
+<a name="line256">256: </a>}
+
+<a name="line258">258: </a><strong><font color="#4169E1"><a name="PetscSpaceGetDimension_Subspace"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceGetDimension_Subspace(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *dim)</font></strong>
+<a name="line259">259: </a>{
+<a name="line260">260: </a>  PetscSpace_Subspace *subsp;
+
+<a name="line262">262: </a>  subsp = (PetscSpace_Subspace *)sp-&gt;data;
+<a name="line263">263: </a>  *dim  = subsp-&gt;Nb;
+<a name="line264">264: </a>  <font color="#4169E1">return</font> 0;
+<a name="line265">265: </a>}
+
+<a name="line267">267: </a><strong><font color="#4169E1"><a name="PetscSpaceSetUp_Subspace"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceSetUp_Subspace(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp)</font></strong>
+<a name="line268">268: </a>{
+<a name="line269">269: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     *x;
+<a name="line270">270: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     *Jx;
+<a name="line271">271: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     *u;
+<a name="line272">272: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     *Ju;
+<a name="line273">273: </a>  <a href="../../../../../../docs/manualpages/FE/PetscDualSpace.html">PetscDualSpace</a>       dualSubspace;
+<a name="line274">274: </a>  <a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a>           origSpace;
+<a name="line275">275: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>             origDim, subDim, origNc, subNc, origNb, subNb, f, i, j, numPoints, offset;
+<a name="line276">276: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>           *allPoints, *allWeights, *B, *V;
+<a name="line277">277: </a>  <a href="../../../../../../docs/manualpages/DM/DM.html">DM</a>                   dm;
+<a name="line278">278: </a>  PetscSpace_Subspace *subsp;
+
+<a name="line280">280: </a>  subsp        = (PetscSpace_Subspace *)sp-&gt;data;
+<a name="line281">281: </a>  x            = subsp-&gt;x;
+<a name="line282">282: </a>  Jx           = subsp-&gt;Jx;
+<a name="line283">283: </a>  u            = subsp-&gt;u;
+<a name="line284">284: </a>  Ju           = subsp-&gt;Ju;
+<a name="line285">285: </a>  origSpace    = subsp-&gt;origSpace;
+<a name="line286">286: </a>  dualSubspace = subsp-&gt;dualSubspace;
+<a name="line287">287: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumComponents.html">PetscSpaceGetNumComponents</a>(origSpace, &amp;origNc);
+<a name="line288">288: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumVariables.html">PetscSpaceGetNumVariables</a>(origSpace, &amp;origDim);
+<a name="line289">289: </a>  <a href="../../../../../../docs/manualpages/DUALSPACE/PetscDualSpaceGetDM.html">PetscDualSpaceGetDM</a>(dualSubspace, &amp;dm);
+<a name="line290">290: </a>  <a href="../../../../../../docs/manualpages/DM/DMGetDimension.html">DMGetDimension</a>(dm, &amp;subDim);
+<a name="line291">291: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetDimension.html">PetscSpaceGetDimension</a>(origSpace, &amp;origNb);
+<a name="line292">292: </a>  <a href="../../../../../../docs/manualpages/DUALSPACE/PetscDualSpaceGetDimension.html">PetscDualSpaceGetDimension</a>(dualSubspace, &amp;subNb);
+<a name="line293">293: </a>  <a href="../../../../../../docs/manualpages/DUALSPACE/PetscDualSpaceGetNumComponents.html">PetscDualSpaceGetNumComponents</a>(dualSubspace, &amp;subNc);
+
+<a name="line295">295: </a>  <font color="#4169E1">for</font> (f = 0, numPoints = 0; f &lt; subNb; f++) {
+<a name="line296">296: </a>    <a href="../../../../../../docs/manualpages/DT/PetscQuadrature.html">PetscQuadrature</a> q;
+<a name="line297">297: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        qNp;
+
+<a name="line299">299: </a>    <a href="../../../../../../docs/manualpages/DUALSPACE/PetscDualSpaceGetFunctional.html">PetscDualSpaceGetFunctional</a>(dualSubspace, f, &amp;q);
+<a name="line300">300: </a>    <a href="../../../../../../docs/manualpages/DT/PetscQuadratureGetData.html">PetscQuadratureGetData</a>(q, NULL, NULL, &amp;qNp, NULL, NULL);
+<a name="line301">301: </a>    numPoints += qNp;
+<a name="line302">302: </a>  }
+<a name="line303">303: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(subNb * origNb, &amp;V);
+<a name="line304">304: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc3.html">PetscMalloc3</a>(numPoints * origDim, &amp;allPoints, numPoints * origNc, &amp;allWeights, numPoints * origNb * origNc, &amp;B);
+<a name="line305">305: </a>  <font color="#4169E1">for</font> (f = 0, offset = 0; f &lt; subNb; f++) {
+<a name="line306">306: </a>    <a href="../../../../../../docs/manualpages/DT/PetscQuadrature.html">PetscQuadrature</a>  q;
+<a name="line307">307: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         qNp, p;
+<a name="line308">308: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *qp;
+<a name="line309">309: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *qw;
+
+<a name="line311">311: </a>    <a href="../../../../../../docs/manualpages/DUALSPACE/PetscDualSpaceGetFunctional.html">PetscDualSpaceGetFunctional</a>(dualSubspace, f, &amp;q);
+<a name="line312">312: </a>    <a href="../../../../../../docs/manualpages/DT/PetscQuadratureGetData.html">PetscQuadratureGetData</a>(q, NULL, NULL, &amp;qNp, &amp;qp, &amp;qw);
+<a name="line313">313: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; qNp; p++, offset++) {
+<a name="line314">314: </a>      <font color="#4169E1">if</font> (x) {
+<a name="line315">315: </a>        <font color="#4169E1">for</font> (i = 0; i &lt; origDim; i++) allPoints[origDim * offset + i] = x[i];
+<a name="line316">316: </a>      } <font color="#4169E1">else</font> {
+<a name="line317">317: </a>        <font color="#4169E1">for</font> (i = 0; i &lt; origDim; i++) allPoints[origDim * offset + i] = 0.0;
+<a name="line318">318: </a>      }
+<a name="line319">319: </a>      <font color="#4169E1">if</font> (Jx) {
+<a name="line320">320: </a>        <font color="#4169E1">for</font> (i = 0; i &lt; origDim; i++) {
+<a name="line321">321: </a>          <font color="#4169E1">for</font> (j = 0; j &lt; subDim; j++) allPoints[origDim * offset + i] += Jx[i * subDim + j] * qp[j];
+<a name="line322">322: </a>        }
+<a name="line323">323: </a>      } <font color="#4169E1">else</font> {
+<a name="line324">324: </a>        <font color="#4169E1">for</font> (i = 0; i &lt; <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(subDim, origDim); i++) allPoints[origDim * offset + i] += qp[i];
+<a name="line325">325: </a>      }
+<a name="line326">326: </a>      <font color="#4169E1">for</font> (i = 0; i &lt; origNc; i++) allWeights[origNc * offset + i] = 0.0;
+<a name="line327">327: </a>      <font color="#4169E1">if</font> (Ju) {
+<a name="line328">328: </a>        <font color="#4169E1">for</font> (i = 0; i &lt; origNc; i++) {
+<a name="line329">329: </a>          <font color="#4169E1">for</font> (j = 0; j &lt; subNc; j++) allWeights[offset * origNc + i] += qw[j] * Ju[j * origNc + i];
+<a name="line330">330: </a>        }
+<a name="line331">331: </a>      } <font color="#4169E1">else</font> {
+<a name="line332">332: </a>        <font color="#4169E1">for</font> (i = 0; i &lt; <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(subNc, origNc); i++) allWeights[offset * origNc + i] += qw[i];
+<a name="line333">333: </a>      }
+<a name="line334">334: </a>    }
+<a name="line335">335: </a>  }
+<a name="line336">336: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceEvaluate.html">PetscSpaceEvaluate</a>(origSpace, numPoints, allPoints, B, NULL, NULL);
+<a name="line337">337: </a>  <font color="#4169E1">for</font> (f = 0, offset = 0; f &lt; subNb; f++) {
+<a name="line338">338: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         b, p, s, qNp;
+<a name="line339">339: </a>    <a href="../../../../../../docs/manualpages/DT/PetscQuadrature.html">PetscQuadrature</a>  q;
+<a name="line340">340: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *qw;
+
+<a name="line342">342: </a>    <a href="../../../../../../docs/manualpages/DUALSPACE/PetscDualSpaceGetFunctional.html">PetscDualSpaceGetFunctional</a>(dualSubspace, f, &amp;q);
+<a name="line343">343: </a>    <a href="../../../../../../docs/manualpages/DT/PetscQuadratureGetData.html">PetscQuadratureGetData</a>(q, NULL, NULL, &amp;qNp, NULL, &amp;qw);
+<a name="line344">344: </a>    <font color="#4169E1">if</font> (u) {
+<a name="line345">345: </a>      <font color="#4169E1">for</font> (b = 0; b &lt; origNb; b++) {
+<a name="line346">346: </a>        <font color="#4169E1">for</font> (s = 0; s &lt; subNc; s++) V[f * origNb + b] += qw[s] * u[s];
+<a name="line347">347: </a>      }
+<a name="line348">348: </a>    } <font color="#4169E1">else</font> {
+<a name="line349">349: </a>      <font color="#4169E1">for</font> (b = 0; b &lt; origNb; b++) V[f * origNb + b] = 0.0;
+<a name="line350">350: </a>    }
+<a name="line351">351: </a>    <font color="#4169E1">for</font> (p = 0; p &lt; qNp; p++, offset++) {
+<a name="line352">352: </a>      <font color="#4169E1">for</font> (b = 0; b &lt; origNb; b++) {
+<a name="line353">353: </a>        <font color="#4169E1">for</font> (s = 0; s &lt; origNc; s++) V[f * origNb + b] += B[(offset * origNb + b) * origNc + s] * allWeights[offset * origNc + s];
+<a name="line354">354: </a>      }
+<a name="line355">355: </a>    }
+<a name="line356">356: </a>  }
+<a name="line357">357: </a>  <font color="#B22222">/* orthnormalize rows of V */</font>
+<a name="line358">358: </a>  <font color="#4169E1">for</font> (f = 0; f &lt; subNb; f++) {
+<a name="line359">359: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> rho = 0.0, scal;
+
+<a name="line361">361: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; origNb; i++) rho += <a href="../../../../../../docs/manualpages/Sys/PetscSqr.html">PetscSqr</a>(V[f * origNb + i]);
+
+<a name="line363">363: </a>    scal = 1. / PetscSqrtReal(rho);
+
+<a name="line365">365: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; origNb; i++) V[f * origNb + i] *= scal;
+<a name="line366">366: </a>    <font color="#4169E1">for</font> (j = f + 1; j &lt; subNb; j++) {
+<a name="line367">367: </a>      <font color="#4169E1">for</font> (i = 0, scal = 0.; i &lt; origNb; i++) scal += V[f * origNb + i] * V[j * origNb + i];
+<a name="line368">368: </a>      <font color="#4169E1">for</font> (i = 0; i &lt; origNb; i++) V[j * origNb + i] -= V[f * origNb + i] * scal;
+<a name="line369">369: </a>    }
+<a name="line370">370: </a>  }
+<a name="line371">371: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree3.html">PetscFree3</a>(allPoints, allWeights, B);
+<a name="line372">372: </a>  subsp-&gt;Q = V;
+<a name="line373">373: </a>  <font color="#4169E1">return</font> 0;
+<a name="line374">374: </a>}
+
+<a name="line376">376: </a><strong><font color="#4169E1"><a name="PetscSpacePolynomialGetTensor_Subspace"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpacePolynomialGetTensor_Subspace(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *poly)</font></strong>
+<a name="line377">377: </a>{
+<a name="line378">378: </a>  PetscSpace_Subspace *subsp = (PetscSpace_Subspace *)sp-&gt;data;
+
+<a name="line380">380: </a>  *poly = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line381">381: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpacePolynomialGetTensor.html">PetscSpacePolynomialGetTensor</a>(subsp-&gt;origSpace, poly);
+<a name="line382">382: </a>  <font color="#4169E1">if</font> (*poly) {
+<a name="line383">383: </a>    <font color="#4169E1">if</font> (subsp-&gt;Jx) {
+<a name="line384">384: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> subDim, origDim, i, j;
+<a name="line385">385: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> maxnnz;
+
+<a name="line387">387: </a>      <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumVariables.html">PetscSpaceGetNumVariables</a>(subsp-&gt;origSpace, &amp;origDim);
+<a name="line388">388: </a>      <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumVariables.html">PetscSpaceGetNumVariables</a>(sp, &amp;subDim);
+<a name="line389">389: </a>      maxnnz = 0;
+<a name="line390">390: </a>      <font color="#4169E1">for</font> (i = 0; i &lt; origDim; i++) {
+<a name="line391">391: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nnz = 0;
+
+<a name="line393">393: </a>        <font color="#4169E1">for</font> (j = 0; j &lt; subDim; j++) nnz += (subsp-&gt;Jx[i * subDim + j] != 0.);
+<a name="line394">394: </a>        maxnnz = <a href="../../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(maxnnz, nnz);
+<a name="line395">395: </a>      }
+<a name="line396">396: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; subDim; j++) {
+<a name="line397">397: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nnz = 0;
+
+<a name="line399">399: </a>        <font color="#4169E1">for</font> (i = 0; i &lt; origDim; i++) nnz += (subsp-&gt;Jx[i * subDim + j] != 0.);
+<a name="line400">400: </a>        maxnnz = <a href="../../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(maxnnz, nnz);
+<a name="line401">401: </a>      }
+<a name="line402">402: </a>      <font color="#4169E1">if</font> (maxnnz &gt; 1) *poly = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line403">403: </a>    }
+<a name="line404">404: </a>  }
+<a name="line405">405: </a>  <font color="#4169E1">return</font> 0;
+<a name="line406">406: </a>}
+
+<a name="line408">408: </a><strong><font color="#4169E1"><a name="PetscSpaceInitialize_Subspace"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceInitialize_Subspace(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> sp)</font></strong>
+<a name="line409">409: </a>{
+<a name="line410">410: </a>  sp-&gt;ops-&gt;setup        = PetscSpaceSetUp_Subspace;
+<a name="line411">411: </a>  sp-&gt;ops-&gt;view         = PetscSpaceView_Subspace;
+<a name="line412">412: </a>  sp-&gt;ops-&gt;destroy      = PetscSpaceDestroy_Subspace;
+<a name="line413">413: </a>  sp-&gt;ops-&gt;getdimension = PetscSpaceGetDimension_Subspace;
+<a name="line414">414: </a>  sp-&gt;ops-&gt;evaluate     = PetscSpaceEvaluate_Subspace;
+<a name="line415">415: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)sp, <font color="#666666">"PetscSpacePolynomialGetTensor_C"</font>, PetscSpacePolynomialGetTensor_Subspace);
+<a name="line416">416: </a>  <font color="#4169E1">return</font> 0;
+<a name="line417">417: </a>}
+
+<a name="line419">419: </a><strong><font color="#4169E1"><a name="PetscSpaceCreateSubspace"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSpaceCreateSubspace(<a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> origSpace, <a href="../../../../../../docs/manualpages/FE/PetscDualSpace.html">PetscDualSpace</a> dualSubspace, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *x, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *Jx, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *u, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *Ju, <a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html">PetscCopyMode</a> copymode, <a href="../../../../../../docs/manualpages/FE/PetscSpace.html">PetscSpace</a> *subspace)</font></strong>
+<a name="line420">420: </a>{
+<a name="line421">421: </a>  PetscSpace_Subspace *subsp;
+<a name="line422">422: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>             origDim, subDim, origNc, subNc, subNb;
+<a name="line423">423: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>             order;
+<a name="line424">424: </a>  <a href="../../../../../../docs/manualpages/DM/DM.html">DM</a>                   dm;
+
+<a name="line433">433: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumComponents.html">PetscSpaceGetNumComponents</a>(origSpace, &amp;origNc);
+<a name="line434">434: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetNumVariables.html">PetscSpaceGetNumVariables</a>(origSpace, &amp;origDim);
+<a name="line435">435: </a>  <a href="../../../../../../docs/manualpages/DUALSPACE/PetscDualSpaceGetDM.html">PetscDualSpaceGetDM</a>(dualSubspace, &amp;dm);
+<a name="line436">436: </a>  <a href="../../../../../../docs/manualpages/DM/DMGetDimension.html">DMGetDimension</a>(dm, &amp;subDim);
+<a name="line437">437: </a>  <a href="../../../../../../docs/manualpages/DUALSPACE/PetscDualSpaceGetDimension.html">PetscDualSpaceGetDimension</a>(dualSubspace, &amp;subNb);
+<a name="line438">438: </a>  <a href="../../../../../../docs/manualpages/DUALSPACE/PetscDualSpaceGetNumComponents.html">PetscDualSpaceGetNumComponents</a>(dualSubspace, &amp;subNc);
+<a name="line439">439: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceCreate.html">PetscSpaceCreate</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)origSpace), subspace);
+<a name="line440">440: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceSetType.html">PetscSpaceSetType</a>(*subspace, PETSCSPACESUBSPACE);
+<a name="line441">441: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceSetNumVariables.html">PetscSpaceSetNumVariables</a>(*subspace, subDim);
+<a name="line442">442: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceSetNumComponents.html">PetscSpaceSetNumComponents</a>(*subspace, subNc);
+<a name="line443">443: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceGetDegree.html">PetscSpaceGetDegree</a>(origSpace, &amp;order, NULL);
+<a name="line444">444: </a>  <a href="../../../../../../docs/manualpages/SPACE/PetscSpaceSetDegree.html">PetscSpaceSetDegree</a>(*subspace, order, <a href="../../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html">PETSC_DETERMINE</a>);
+<a name="line445">445: </a>  subsp     = (PetscSpace_Subspace *)(*subspace)-&gt;data;
+<a name="line446">446: </a>  subsp-&gt;Nb = subNb;
+<a name="line447">447: </a>  <font color="#4169E1">switch</font> (copymode) {
+<a name="line448">448: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>:
+<a name="line449">449: </a>    <font color="#4169E1">if</font> (x) subsp-&gt;x_alloc = x;
+<a name="line450">450: </a>    <font color="#4169E1">if</font> (Jx) subsp-&gt;Jx_alloc = Jx;
+<a name="line451">451: </a>    <font color="#4169E1">if</font> (u) subsp-&gt;u_alloc = u;
+<a name="line452">452: </a>    <font color="#4169E1">if</font> (Ju) subsp-&gt;Ju_alloc = Ju;
+<a name="line453">453: </a>    <font color="#B22222">/* fall through */</font>
+<a name="line454">454: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_USE_POINTER</a>:
+<a name="line455">455: </a>    <font color="#4169E1">if</font> (x) subsp-&gt;x = x;
+<a name="line456">456: </a>    <font color="#4169E1">if</font> (Jx) subsp-&gt;Jx = Jx;
+<a name="line457">457: </a>    <font color="#4169E1">if</font> (u) subsp-&gt;u = u;
+<a name="line458">458: </a>    <font color="#4169E1">if</font> (Ju) subsp-&gt;Ju = Ju;
+<a name="line459">459: </a>    <font color="#4169E1">break</font>;
+<a name="line460">460: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_COPY_VALUES</a>:
+<a name="line461">461: </a>    <font color="#4169E1">if</font> (x) {
+<a name="line462">462: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(origDim, &amp;subsp-&gt;x_alloc);
+<a name="line463">463: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(subsp-&gt;x_alloc, x, origDim);
+<a name="line464">464: </a>      subsp-&gt;x = subsp-&gt;x_alloc;
+<a name="line465">465: </a>    }
+<a name="line466">466: </a>    <font color="#4169E1">if</font> (Jx) {
+<a name="line467">467: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(origDim * subDim, &amp;subsp-&gt;Jx_alloc);
+<a name="line468">468: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(subsp-&gt;Jx_alloc, Jx, origDim * subDim);
+<a name="line469">469: </a>      subsp-&gt;Jx = subsp-&gt;Jx_alloc;
+<a name="line470">470: </a>    }
+<a name="line471">471: </a>    <font color="#4169E1">if</font> (u) {
+<a name="line472">472: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(subNc, &amp;subsp-&gt;u_alloc);
+<a name="line473">473: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(subsp-&gt;u_alloc, u, subNc);
+<a name="line474">474: </a>      subsp-&gt;u = subsp-&gt;u_alloc;
+<a name="line475">475: </a>    }
+<a name="line476">476: </a>    <font color="#4169E1">if</font> (Ju) {
+<a name="line477">477: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(origNc * subNc, &amp;subsp-&gt;Ju_alloc);
+<a name="line478">478: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(subsp-&gt;Ju_alloc, Ju, origNc * subNc);
+<a name="line479">479: </a>      subsp-&gt;Ju = subsp-&gt;Ju_alloc;
+<a name="line480">480: </a>    }
+<a name="line481">481: </a>    <font color="#4169E1">break</font>;
+<a name="line482">482: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line483">483: </a>    <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)origSpace), PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Unknown copy mode"</font>);
+<a name="line484">484: </a>  }
+<a name="line485">485: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)origSpace);
+<a name="line486">486: </a>  subsp-&gt;origSpace = origSpace;
+<a name="line487">487: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dualSubspace);
+<a name="line488">488: </a>  subsp-&gt;dualSubspace = dualSubspace;
+<a name="line489">489: </a>  PetscSpaceInitialize_Subspace(*subspace);
+<a name="line490">490: </a>  <font color="#4169E1">return</font> 0;
+<a name="line491">491: </a>}
+</pre>
+</body>
+
+</html>

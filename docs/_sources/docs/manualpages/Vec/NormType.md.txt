@@ -1,0 +1,32 @@
+# NormType
+determines what type of norm to compute 
+## Synopsis
+```
+typedef enum {
+  NORM_1         = 0,
+  NORM_2         = 1,
+  NORM_FROBENIUS = 2,
+  NORM_INFINITY  = 3,
+  NORM_1_AND_2   = 4
+} NormType;
+```
+
+
+
+## See Also
+ `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `MatNorm()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscvec.h.html#NormType">include/petscvec.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscvec.h)
+
+
+[Index of all Vec routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

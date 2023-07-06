@@ -1,0 +1,72 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/tao/linesearch/impls/unit/unit.c">Actual source code: unit.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:59+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../../../../include/petsc/private/taolinesearchimpl.h.html">&lt;petsc/private/taolinesearchimpl.h&gt;</A>
+
+<a name="line4">  4: </a><strong><font color="#4169E1"><a name="TaoLineSearchDestroy_Unit"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoLineSearchDestroy_Unit(TaoLineSearch ls)</font></strong>
+<a name="line5">  5: </a>{
+<a name="line6">  6: </a>  <font color="#4169E1">return</font> 0;
+<a name="line7">  7: </a>}
+
+<a name="line9">  9: </a><strong><font color="#4169E1"><a name="TaoLineSearchSetFromOptions_Unit"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoLineSearchSetFromOptions_Unit(TaoLineSearch ls, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line10"> 10: </a>{
+<a name="line11"> 11: </a>  <font color="#4169E1">return</font> 0;
+<a name="line12"> 12: </a>}
+
+<a name="line14"> 14: </a><strong><font color="#4169E1"><a name="TaoLineSearchView_Unit"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoLineSearchView_Unit(TaoLineSearch ls, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line15"> 15: </a>{
+<a name="line16"> 16: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> isascii;
+
+<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;isascii);
+<a name="line19"> 19: </a>  <font color="#4169E1">if</font> (isascii) <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  Line Search: Unit Step %g.\n"</font>, (double)ls-&gt;initstep);
+<a name="line20"> 20: </a>  <font color="#4169E1">return</font> 0;
+<a name="line21"> 21: </a>}
+
+<a name="line23"> 23: </a><font color="#B22222">/* Take unit step (newx = startx + initstep*step_direction) */</font>
+<a name="line24"> 24: </a><strong><font color="#4169E1"><a name="TaoLineSearchApply_Unit"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoLineSearchApply_Unit(TaoLineSearch ls, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *f, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> g, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> step_direction)</font></strong>
+<a name="line25"> 25: </a>{
+<a name="line26"> 26: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchMonitor.html">TaoLineSearchMonitor</a>(ls, 0, *f, 0.0);
+<a name="line27"> 27: </a>  ls-&gt;step = ls-&gt;initstep;
+<a name="line28"> 28: </a>  <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(x, ls-&gt;step, step_direction);
+<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchComputeObjectiveAndGradient.html">TaoLineSearchComputeObjectiveAndGradient</a>(ls, x, f, g);
+<a name="line30"> 30: </a>  <a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchMonitor.html">TaoLineSearchMonitor</a>(ls, 1, *f, ls-&gt;step);
+<a name="line31"> 31: </a>  ls-&gt;reason = TAOLINESEARCH_SUCCESS;
+<a name="line32"> 32: </a>  <font color="#4169E1">return</font> 0;
+<a name="line33"> 33: </a>}
+
+<a name="line35"> 35: </a><font color="#B22222">/*MC</font>
+<a name="line36"> 36: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/TaoLineSearch/TAOLINESEARCHUNIT.html">TAOLINESEARCHUNIT</a> - Line-search type that disables line search and accepts the unit step length every time</font>
+
+<a name="line38"> 38: </a><font color="#B22222">  Options Database Keys:</font>
+<a name="line39"> 39: </a><font color="#B22222">. -tao_ls_stepinit &lt;step&gt; - steplength</font>
+
+<a name="line41"> 41: </a><font color="#B22222">   Level: developer</font>
+
+<a name="line43"> 43: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchCreate.html">TaoLineSearchCreate</a>()`, `<a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchSetType.html">TaoLineSearchSetType</a>()`, `<a href="../../../../../docs/manualpages/TaoLineSearch/TaoLineSearchApply.html">TaoLineSearchApply</a>()`</font>
+
+<a name="line45"> 45: </a><font color="#B22222">.keywords: <a href="../../../../../docs/manualpages/Tao/Tao.html">Tao</a>, linesearch</font>
+<a name="line46"> 46: </a><font color="#B22222">M*/</font>
+<a name="line47"> 47: </a><strong><font color="#4169E1"><a name="TaoLineSearchCreate_Unit"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TaoLineSearchCreate_Unit(TaoLineSearch ls)</font></strong>
+<a name="line48"> 48: </a>{
+<a name="line49"> 49: </a>  ls-&gt;ops-&gt;setup          = NULL;
+<a name="line50"> 50: </a>  ls-&gt;ops-&gt;reset          = NULL;
+<a name="line51"> 51: </a>  ls-&gt;ops-&gt;monitor        = NULL;
+<a name="line52"> 52: </a>  ls-&gt;ops-&gt;apply          = TaoLineSearchApply_Unit;
+<a name="line53"> 53: </a>  ls-&gt;ops-&gt;view           = TaoLineSearchView_Unit;
+<a name="line54"> 54: </a>  ls-&gt;ops-&gt;destroy        = TaoLineSearchDestroy_Unit;
+<a name="line55"> 55: </a>  ls-&gt;ops-&gt;setfromoptions = TaoLineSearchSetFromOptions_Unit;
+<a name="line56"> 56: </a>  <font color="#4169E1">return</font> 0;
+<a name="line57"> 57: </a>}
+</pre>
+</body>
+
+</html>

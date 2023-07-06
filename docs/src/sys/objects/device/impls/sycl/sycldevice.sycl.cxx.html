@@ -1,0 +1,221 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/objects/device/impls/sycl/sycldevice.sycl.cxx">Actual source code: sycldevice.sycl.cxx</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:59+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#include </font><font color="#666666">"sycldevice.hpp"</font><font color="#A020F0"></font>
+<a name="line2">  2: </a><font color="#A020F0">#include &lt;limits&gt;  // for std::numeric_limits</font>
+<a name="line3">  3: </a><font color="#A020F0">#include &lt;csetjmp&gt; // for MPI sycl device awareness</font>
+<a name="line4">  4: </a><font color="#A020F0">#include &lt;csignal&gt; // SIGSEGV</font>
+<a name="line5">  5: </a><font color="#A020F0">#include &lt;vector&gt;</font>
+<a name="line6">  6: </a><font color="#A020F0">#include &lt;CL/sycl.hpp&gt;</font>
+
+<a name="line8">  8: </a>namespace Petsc
+<a name="line9">  9: </a>{
+
+<a name="line11"> 11: </a>namespace device
+<a name="line12"> 12: </a>{
+
+<a name="line14"> 14: </a>namespace sycl
+<a name="line15"> 15: </a>{
+
+<a name="line17"> 17: </a>// definition <font color="#4169E1">for</font> static
+<a name="line18"> 18: </a><strong><font color="#FF0000">std:</font></strong>:array&lt;Device::DeviceInternal *, PETSC_DEVICE_MAX_DEVICES&gt; Device::devices_array_ = {};
+<a name="line19"> 19: </a><strong><font color="#FF0000">Device:</font></strong>:DeviceInternal                                       **Device::devices_       = &amp;Device::devices_array_[1];
+<a name="line20"> 20: </a>int                                                            Device::defaultDevice_ = PETSC_SYCL_DEVICE_NONE;
+<a name="line21"> 21: </a>bool                                                           Device::initialized_   = false;
+
+<a name="line23"> 23: </a>static std::jmp_buf MPISyclAwareJumpBuffer;
+<a name="line24"> 24: </a>static bool         MPISyclAwareJumpBufferSet;
+
+<a name="line26"> 26: </a>// internal <font color="#666666">"impls"</font> class <font color="#4169E1">for</font> SyclDevice. Each instance represents a single sycl device
+<a name="line27"> 27: </a>class <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> Device::DeviceInternal {
+<a name="line28"> 28: </a>  const int            id_; // -1 <font color="#4169E1">for</font> the host device; 0 and up <font color="#4169E1">for</font> gpu devices
+<a name="line29"> 29: </a>  bool                 devInitialized_;
+<a name="line30"> 30: </a>  const ::sycl::device syclDevice_;
+
+<a name="line32"> 32: </a><strong><font color="#FF0000">public:</font></strong>
+<a name="line33"> 33: </a>  // <font color="#4169E1">default</font> constructor
+<a name="line34"> 34: </a>  DeviceInternal(int id) noexcept : id_(id), devInitialized_(false), syclDevice_(chooseSYCLDevice_(id)) { }
+<a name="line35"> 35: </a>  int  id() const { <font color="#4169E1">return</font> id_; }
+<a name="line36"> 36: </a>  bool initialized() const { <font color="#4169E1">return</font> devInitialized_; }
+
+<a name="line38"> 38: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> initialize() noexcept
+<a name="line39"> 39: </a>  {
+<a name="line40"> 40: </a>    <font color="#4169E1">if</font> (initialized()) <font color="#4169E1">return</font> 0;
+<a name="line41"> 41: </a>    <font color="#4169E1">if</font> (syclDevice_.is_gpu() &amp;&amp; use_gpu_aware_mpi) {
+<a name="line42"> 42: </a>      <font color="#4169E1">if</font> (!isMPISyclAware_()) {
+<a name="line43"> 43: </a>        (*<a href="../../../../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"PETSc is configured with sycl support, but your MPI is not aware of sycl GPU devices. For better performance, please use a sycl GPU-aware MPI.\n"</font>);
+<a name="line44"> 44: </a>        (*<a href="../../../../../../docs/manualpages/Sys/PetscErrorPrintf.html">PetscErrorPrintf</a>)(<font color="#666666">"If you do not care, add option -use_gpu_aware_mpi 0. To not see the message again, add the option to your .petscrc, OR add it to the env var PETSC_OPTIONS.\n"</font>);
+<a name="line45"> 45: </a>        <a href="../../../../../../docs/manualpages/Sys/PETSCABORT.html">PETSCABORT</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_LIB);
+<a name="line46"> 46: </a>      }
+<a name="line47"> 47: </a>    }
+<a name="line48"> 48: </a>    devInitialized_ = true;
+<a name="line49"> 49: </a>    <font color="#4169E1">return</font> 0;
+<a name="line50"> 50: </a>  }
+
+<a name="line52"> 52: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> view(<a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer) const noexcept
+<a name="line53"> 53: </a>  {
+<a name="line54"> 54: </a>    <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>    comm;
+<a name="line55"> 55: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+<a name="line56"> 56: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   iascii;
+
+<a name="line59"> 59: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>(reinterpret_cast&lt;<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>&gt;(viewer), <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line60"> 60: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>(reinterpret_cast&lt;<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>&gt;(viewer), &amp;comm);
+<a name="line61"> 61: </a>    <font color="#4169E1">if</font> (iascii) {
+<a name="line62"> 62: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> sviewer;
+
+<a name="line64"> 64: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line65"> 65: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerGetSubViewer.html">PetscViewerGetSubViewer</a>(viewer, <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;sviewer);
+<a name="line66"> 66: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"[%d] device: %s\n"</font>, rank, syclDevice_.get_info&lt;::sycl::info::device::name&gt;().c_str());
+<a name="line67"> 67: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(sviewer);
+<a name="line68"> 68: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(sviewer, <font color="#666666">"-&gt; Device vendor: %s\n"</font>, syclDevice_.get_info&lt;::sycl::info::device::vendor&gt;().c_str());
+<a name="line69"> 69: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(sviewer);
+<a name="line70"> 70: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(sviewer);
+<a name="line71"> 71: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerRestoreSubViewer.html">PetscViewerRestoreSubViewer</a>(viewer, <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;sviewer);
+<a name="line72"> 72: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(viewer);
+<a name="line73"> 73: </a>    }
+<a name="line74"> 74: </a>    <font color="#4169E1">return</font> 0;
+<a name="line75"> 75: </a>  }
+
+<a name="line77"> 77: </a>  <a href="../../../../../../docs/manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> getattribute(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceAttribute.html">PetscDeviceAttribute</a> attr, void *value) const noexcept
+<a name="line78"> 78: </a>  {
+<a name="line80"> 80: </a>    <font color="#4169E1">switch</font> (attr) {
+<a name="line81"> 81: </a>    <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscDeviceAttribute.html">PETSC_DEVICE_ATTR_SIZE_T_SHARED_MEM_PER_BLOCK</a>:
+<a name="line82"> 82: </a>      *static_cast&lt;std::size_t *&gt;(value) = syclDevice_.get_info&lt;::sycl::info::device::local_mem_size&gt;();
+<a name="line83"> 83: </a>    <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Sys/PetscDeviceAttribute.html">PETSC_DEVICE_ATTR_MAX</a>:
+<a name="line84"> 84: </a>      <font color="#4169E1">break</font>;
+<a name="line85"> 85: </a>    }
+<a name="line86"> 86: </a>    <font color="#4169E1">return</font> 0;
+<a name="line87"> 87: </a>  }
+
+<a name="line89"> 89: </a><strong><font color="#FF0000">private:</font></strong>
+<a name="line90"> 90: </a>  static ::sycl::device chooseSYCLDevice_(int id)
+<a name="line91"> 91: </a>  {
+<a name="line92"> 92: </a>    <font color="#4169E1">if</font> (id == PETSC_SYCL_DEVICE_HOST) {
+<a name="line93"> 93: </a>      <font color="#4169E1">return</font> ::sycl::device(::sycl::host_selector());
+<a name="line94"> 94: </a>    } <font color="#4169E1">else</font> {
+<a name="line95"> 95: </a>      <font color="#4169E1">return</font> ::sycl::device::get_devices(::sycl::info::device_type::gpu)[id];
+<a name="line96"> 96: </a>    }
+<a name="line97"> 97: </a>  }
+
+<a name="line99"> 99: </a>  // Is the underlying MPI aware of sycl (GPU) devices?
+<a name="line100">100: </a>  bool isMPISyclAware_() noexcept
+<a name="line101">101: </a>  {
+<a name="line102">102: </a>    const int  bufSize           = 2;
+<a name="line103">103: </a>    const int  hbuf[bufSize]     = {1, 0};
+<a name="line104">104: </a>    int       *dbuf              = nullptr;
+<a name="line105">105: </a>    bool       awareness         = false;
+<a name="line106">106: </a>    const auto SyclSignalHandler = [](int signal, void *ptr) -&gt; <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> {
+<a name="line107">107: </a>      <font color="#4169E1">if</font> ((signal == SIGSEGV) &amp;&amp; MPISyclAwareJumpBufferSet) std::longjmp(MPISyclAwareJumpBuffer, 1);
+<a name="line108">108: </a>      <font color="#4169E1">return</font> <a href="../../../../../../docs/manualpages/Sys/PetscSignalHandlerDefault.html">PetscSignalHandlerDefault</a>(signal, ptr);
+<a name="line109">109: </a>    };
+
+<a name="line111">111: </a>    auto Q = ::sycl::queue(syclDevice_);
+<a name="line112">112: </a>    dbuf   = ::sycl::malloc_device&lt;int&gt;(bufSize, Q);
+<a name="line113">113: </a>    Q.memcpy(dbuf, hbuf, <font color="#4169E1">sizeof</font>(int) * bufSize).wait();
+<a name="line114">114: </a>    <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../../../../docs/manualpages/Sys/PetscPushSignalHandler.html">PetscPushSignalHandler</a>(SyclSignalHandler, nullptr);
+<a name="line115">115: </a>    MPISyclAwareJumpBufferSet = true;
+<a name="line116">116: </a>    <font color="#4169E1">if</font> (setjmp(MPISyclAwareJumpBuffer)) {
+<a name="line117">117: </a>      // <font color="#4169E1">if</font> a segv was triggered in the <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a> below, it is very likely due to MPI not being GPU-aware
+<a name="line118">118: </a>      awareness = false;
+<a name="line119">119: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscStackPop.html">PetscStackPop</a>;
+<a name="line120">120: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (!<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a>(dbuf, dbuf + 1, 1, MPI_INT, MPI_SUM, <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>)) awareness = true;
+<a name="line121">121: </a>    MPISyclAwareJumpBufferSet = false;
+<a name="line122">122: </a>    <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../../../../docs/manualpages/Sys/PetscPopSignalHandler.html">PetscPopSignalHandler</a>();
+<a name="line123">123: </a>    ::sycl::free(dbuf, Q);
+<a name="line124">124: </a>    <font color="#4169E1">return</font> awareness;
+<a name="line125">125: </a>  }
+<a name="line126">126: </a>};
+
+<a name="line128">128: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device::initialize(<a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *defaultDeviceId, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *defaultView, <a href="../../../../../../docs/manualpages/Sys/PetscDeviceInitType.html">PetscDeviceInitType</a> *defaultInitType) noexcept
+<a name="line129">129: </a>{
+<a name="line130">130: </a>  auto     id       = *defaultDeviceId;
+<a name="line131">131: </a>  auto     initType = *defaultInitType;
+<a name="line132">132: </a>  auto     view = *defaultView, flg = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line133">133: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ngpus;
+
+<a name="line135">135: </a>  <font color="#4169E1">if</font> (initialized_) <font color="#4169E1">return</font> 0;
+<a name="line136">136: </a>  initialized_ = true;
+<a name="line137">137: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscRegisterFinalize.html">PetscRegisterFinalize</a>(finalize_);
+<a name="line138">138: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(comm, nullptr, <font color="#666666">"<a href="../../../../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> sycl Options"</font>, <font color="#666666">"Sys"</font>);
+<a name="line139">139: </a><strong><font color="#FF0000">  base_type:</font></strong>:PetscOptionDeviceInitialize(PetscOptionsObject, &amp;initType, nullptr);
+<a name="line140">140: </a><strong><font color="#FF0000">  base_type:</font></strong>:PetscOptionDeviceSelect(PetscOptionsObject, <font color="#666666">"Which sycl device to use? Pass -2 for host, <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a> ("</font> <a href="../../../../../../docs/manualpages/Sys/PetscStringize.html">PetscStringize</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>) <font color="#666666">") to let PETSc decide, 0 and up for GPUs"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Sys/PetscDeviceCreate.html">PetscDeviceCreate</a>()"</font>, id, &amp;id, nullptr, -2, std::numeric_limits&lt;decltype(ngpus)&gt;::max());
+<a name="line141">141: </a>  static_assert(<a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a> - 1 == -2, <font color="#666666">""</font>);
+<a name="line142">142: </a><strong><font color="#FF0000">  base_type:</font></strong>:PetscOptionDeviceView(PetscOptionsObject, &amp;view, &amp;flg);
+<a name="line143">143: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+
+<a name="line145">145: </a>  // post-process the options and lay the groundwork <font color="#4169E1">for</font> initialization <font color="#4169E1">if</font> needs be
+<a name="line146">146: </a><strong><font color="#FF0000">  std:</font></strong>:vector&lt;::sycl::device&gt; gpu_devices = ::sycl::device::get_devices(::sycl::info::device_type::gpu);
+<a name="line147">147: </a>  ngpus                                   = static_cast&lt;<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>&gt;(gpu_devices.size());
+
+<a name="line151">151: </a>  <font color="#4169E1">if</font> (initType == <a href="../../../../../../docs/manualpages/Sys/PetscDeviceInitType.html">PETSC_DEVICE_INIT_NONE</a>) id = PETSC_SYCL_DEVICE_NONE; <font color="#B22222">/* user wants to disable all sycl devices */</font>
+<a name="line152">152: </a>  <font color="#4169E1">else</font> {
+<a name="line153">153: </a>    PetscDeviceCheckDeviceCount_Internal(ngpus);
+<a name="line154">154: </a>    <font color="#4169E1">if</font> (id == <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>) { <font color="#B22222">/* petsc will choose a GPU device if any, otherwise a CPU device */</font>
+<a name="line155">155: </a>      <font color="#4169E1">if</font> (ngpus) {
+<a name="line156">156: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+<a name="line157">157: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line158">158: </a>        id = rank % ngpus;
+<a name="line159">159: </a>      } <font color="#4169E1">else</font> id = PETSC_SYCL_DEVICE_HOST;
+<a name="line160">160: </a>    }
+<a name="line161">161: </a>    <font color="#4169E1">if</font> (view) initType = <a href="../../../../../../docs/manualpages/Sys/PetscDeviceInitType.html">PETSC_DEVICE_INIT_EAGER</a>;
+<a name="line162">162: </a>  }
+
+<a name="line164">164: </a>  <font color="#4169E1">if</font> (id == -2) id = PETSC_SYCL_DEVICE_HOST; // user passed in '-device_select_sycl -2'. We transform it into canonical form
+
+<a name="line166">166: </a>  defaultDevice_ = static_cast&lt;decltype(defaultDevice_)&gt;(id);
+<a name="line168">168: </a>  // record the results of the initialization
+<a name="line169">169: </a>  *defaultDeviceId = id;
+<a name="line170">170: </a>  *defaultView     = view;
+<a name="line171">171: </a>  *defaultInitType = initType;
+<a name="line172">172: </a>  <font color="#4169E1">return</font> 0;
+<a name="line173">173: </a>}
+
+<a name="line175">175: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device::finalize_() noexcept
+<a name="line176">176: </a>{
+<a name="line177">177: </a>  <font color="#4169E1">if</font> (!initialized_) <font color="#4169E1">return</font> 0;
+<a name="line178">178: </a>  <font color="#4169E1">for</font> (auto &amp;&amp;devPtr : devices_array_) delete devPtr;
+<a name="line179">179: </a>  defaultDevice_ = PETSC_SYCL_DEVICE_NONE; // disabled by <font color="#4169E1">default</font>
+<a name="line180">180: </a>  initialized_   = false;
+<a name="line181">181: </a>  <font color="#4169E1">return</font> 0;
+<a name="line182">182: </a>}
+
+<a name="line184">184: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device::init_device_id_(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *inid) const noexcept
+<a name="line185">185: </a>{
+<a name="line186">186: </a>  const auto id = *inid == <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a> ? defaultDevice_ : *inid;
+
+<a name="line190">190: </a>             devices_array_.size(), id);
+<a name="line191">191: </a>  <font color="#4169E1">if</font> (!devices_[id]) devices_[id] = new DeviceInternal(id);
+<a name="line193">193: </a>  devices_[id]-&gt;initialize();
+<a name="line194">194: </a>  *inid = id;
+<a name="line195">195: </a>  <font color="#4169E1">return</font> 0;
+<a name="line196">196: </a>}
+
+<a name="line198">198: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device::view_device_(<a href="../../../../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a> device, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer) noexcept
+<a name="line199">199: </a>{
+<a name="line200">200: </a>  devices_[device-&gt;deviceId]-&gt;view(viewer);
+<a name="line201">201: </a>  <font color="#4169E1">return</font> 0;
+<a name="line202">202: </a>}
+
+<a name="line204">204: </a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> Device::get_attribute_(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> id, <a href="../../../../../../docs/manualpages/Sys/PetscDeviceAttribute.html">PetscDeviceAttribute</a> attr, void *value) noexcept
+<a name="line205">205: </a>{
+<a name="line206">206: </a>  devices_[id]-&gt;getattribute(attr, value);
+<a name="line207">207: </a>  <font color="#4169E1">return</font> 0;
+<a name="line208">208: </a>}
+
+<a name="line210">210: </a>} // namespace sycl
+
+<a name="line212">212: </a>} // namespace device
+
+<a name="line214">214: </a>} // namespace Petsc
+</pre>
+</body>
+
+</html>

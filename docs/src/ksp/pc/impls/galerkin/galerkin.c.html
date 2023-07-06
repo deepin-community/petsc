@@ -1,0 +1,331 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ksp/pc/impls/galerkin/galerkin.c">Actual source code: galerkin.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:59+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/*</font>
+<a name="line3">  3: </a><font color="#B22222">      Defines a preconditioner defined by R^T S R</font>
+<a name="line4">  4: </a><font color="#B22222">*/</font>
+<a name="line5">  5: </a>#include <A href="../../../../../include/petsc/private/pcimpl.h.html">&lt;petsc/private/pcimpl.h&gt;</A>
+<a name="line6">  6: </a>#include <A href="../../../../../include/petscksp.h.html">&lt;petscksp.h&gt;</A>
+
+<a name="line8">  8: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line9">  9: </a>  <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp;
+<a name="line10"> 10: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> R, P;
+<a name="line11"> 11: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> b, x;
+<a name="line12"> 12: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*computeasub)(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *, void *);
+<a name="line13"> 13: </a>  void *computeasub_ctx;
+<a name="line14"> 14: </a>} PC_Galerkin;
+
+<a name="line16"> 16: </a><strong><font color="#4169E1"><a name="PCApply_Galerkin"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCApply_Galerkin(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> y)</font></strong>
+<a name="line17"> 17: </a>{
+<a name="line18"> 18: </a>  PC_Galerkin *jac = (PC_Galerkin *)pc-&gt;data;
+
+<a name="line20"> 20: </a>  <font color="#4169E1">if</font> (jac-&gt;R) {
+<a name="line21"> 21: </a>    <a href="../../../../../docs/manualpages/Mat/MatRestrict.html">MatRestrict</a>(jac-&gt;R, x, jac-&gt;b);
+<a name="line22"> 22: </a>  } <font color="#4169E1">else</font> {
+<a name="line23"> 23: </a>    <a href="../../../../../docs/manualpages/Mat/MatRestrict.html">MatRestrict</a>(jac-&gt;P, x, jac-&gt;b);
+<a name="line24"> 24: </a>  }
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>(jac-&gt;ksp, jac-&gt;b, jac-&gt;x);
+<a name="line26"> 26: </a>  <a href="../../../../../docs/manualpages/KSP/KSPCheckSolve.html">KSPCheckSolve</a>(jac-&gt;ksp, pc, jac-&gt;x);
+<a name="line27"> 27: </a>  <font color="#4169E1">if</font> (jac-&gt;P) {
+<a name="line28"> 28: </a>    <a href="../../../../../docs/manualpages/Mat/MatInterpolate.html">MatInterpolate</a>(jac-&gt;P, jac-&gt;x, y);
+<a name="line29"> 29: </a>  } <font color="#4169E1">else</font> {
+<a name="line30"> 30: </a>    <a href="../../../../../docs/manualpages/Mat/MatInterpolate.html">MatInterpolate</a>(jac-&gt;R, jac-&gt;x, y);
+<a name="line31"> 31: </a>  }
+<a name="line32"> 32: </a>  <font color="#4169E1">return</font> 0;
+<a name="line33"> 33: </a>}
+
+<a name="line35"> 35: </a><strong><font color="#4169E1"><a name="PCSetUp_Galerkin"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCSetUp_Galerkin(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line36"> 36: </a>{
+<a name="line37"> 37: </a>  PC_Galerkin *jac = (PC_Galerkin *)pc-&gt;data;
+<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>    a;
+<a name="line39"> 39: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>         *xx, *yy;
+
+<a name="line41"> 41: </a>  <font color="#4169E1">if</font> (jac-&gt;computeasub) {
+<a name="line42"> 42: </a>    <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> Ap;
+<a name="line43"> 43: </a>    <font color="#4169E1">if</font> (!pc-&gt;setupcalled) {
+<a name="line44"> 44: </a>      (*jac-&gt;computeasub)(pc, pc-&gt;pmat, NULL, &amp;Ap, jac-&gt;computeasub_ctx);
+<a name="line45"> 45: </a>      <a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>(jac-&gt;ksp, Ap, Ap);
+<a name="line46"> 46: </a>      <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;Ap);
+<a name="line47"> 47: </a>    } <font color="#4169E1">else</font> {
+<a name="line48"> 48: </a>      <a href="../../../../../docs/manualpages/KSP/KSPGetOperators.html">KSPGetOperators</a>(jac-&gt;ksp, NULL, &amp;Ap);
+<a name="line49"> 49: </a>      (*jac-&gt;computeasub)(pc, pc-&gt;pmat, Ap, NULL, jac-&gt;computeasub_ctx);
+<a name="line50"> 50: </a>    }
+<a name="line51"> 51: </a>  }
+
+<a name="line53"> 53: </a>  <font color="#4169E1">if</font> (!jac-&gt;x) {
+<a name="line54"> 54: </a>    <a href="../../../../../docs/manualpages/KSP/KSPGetOperatorsSet.html">KSPGetOperatorsSet</a>(jac-&gt;ksp, &amp;a, NULL);
+<a name="line56"> 56: </a>    <a href="../../../../../docs/manualpages/KSP/KSPCreateVecs.html">KSPCreateVecs</a>(jac-&gt;ksp, 1, &amp;xx, 1, &amp;yy);
+<a name="line57"> 57: </a>    jac-&gt;x = *xx;
+<a name="line58"> 58: </a>    jac-&gt;b = *yy;
+<a name="line59"> 59: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(xx);
+<a name="line60"> 60: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(yy);
+<a name="line61"> 61: </a>  }
+<a name="line63"> 63: </a>  <font color="#B22222">/* should check here that sizes of R/P match size of a */</font>
+
+<a name="line65"> 65: </a>  <font color="#4169E1">return</font> 0;
+<a name="line66"> 66: </a>}
+
+<a name="line68"> 68: </a><strong><font color="#4169E1"><a name="PCReset_Galerkin"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCReset_Galerkin(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line69"> 69: </a>{
+<a name="line70"> 70: </a>  PC_Galerkin *jac = (PC_Galerkin *)pc-&gt;data;
+
+<a name="line72"> 72: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;jac-&gt;R);
+<a name="line73"> 73: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;jac-&gt;P);
+<a name="line74"> 74: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;jac-&gt;x);
+<a name="line75"> 75: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;jac-&gt;b);
+<a name="line76"> 76: </a>  <a href="../../../../../docs/manualpages/KSP/KSPReset.html">KSPReset</a>(jac-&gt;ksp);
+<a name="line77"> 77: </a>  <font color="#4169E1">return</font> 0;
+<a name="line78"> 78: </a>}
+
+<a name="line80"> 80: </a><strong><font color="#4169E1"><a name="PCDestroy_Galerkin"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCDestroy_Galerkin(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line81"> 81: </a>{
+<a name="line82"> 82: </a>  PC_Galerkin *jac = (PC_Galerkin *)pc-&gt;data;
+
+<a name="line84"> 84: </a>  PCReset_Galerkin(pc);
+<a name="line85"> 85: </a>  <a href="../../../../../docs/manualpages/KSP/KSPDestroy.html">KSPDestroy</a>(&amp;jac-&gt;ksp);
+<a name="line86"> 86: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(pc-&gt;data);
+<a name="line87"> 87: </a>  <font color="#4169E1">return</font> 0;
+<a name="line88"> 88: </a>}
+
+<a name="line90"> 90: </a><strong><font color="#4169E1"><a name="PCView_Galerkin"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCView_Galerkin(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line91"> 91: </a>{
+<a name="line92"> 92: </a>  PC_Galerkin *jac = (PC_Galerkin *)pc-&gt;data;
+<a name="line93"> 93: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>    iascii;
+
+<a name="line95"> 95: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line96"> 96: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line97"> 97: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> on Galerkin follow\n"</font>);
+<a name="line98"> 98: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  ---------------------------------\n"</font>);
+<a name="line99"> 99: </a>  }
+<a name="line100">100: </a>  <a href="../../../../../docs/manualpages/KSP/KSPView.html">KSPView</a>(jac-&gt;ksp, viewer);
+<a name="line101">101: </a>  <font color="#4169E1">return</font> 0;
+<a name="line102">102: </a>}
+
+<a name="line104">104: </a><strong><font color="#4169E1"><a name="PCGalerkinGetKSP_Galerkin"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCGalerkinGetKSP_Galerkin(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> *ksp)</font></strong>
+<a name="line105">105: </a>{
+<a name="line106">106: </a>  PC_Galerkin *jac = (PC_Galerkin *)pc-&gt;data;
+
+<a name="line108">108: </a>  *ksp = jac-&gt;ksp;
+<a name="line109">109: </a>  <font color="#4169E1">return</font> 0;
+<a name="line110">110: </a>}
+
+<a name="line112">112: </a><strong><font color="#4169E1"><a name="PCGalerkinSetRestriction_Galerkin"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCGalerkinSetRestriction_Galerkin(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> R)</font></strong>
+<a name="line113">113: </a>{
+<a name="line114">114: </a>  PC_Galerkin *jac = (PC_Galerkin *)pc-&gt;data;
+
+<a name="line116">116: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)R);
+<a name="line117">117: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;jac-&gt;R);
+<a name="line118">118: </a>  jac-&gt;R = R;
+<a name="line119">119: </a>  <font color="#4169E1">return</font> 0;
+<a name="line120">120: </a>}
+
+<a name="line122">122: </a><strong><font color="#4169E1"><a name="PCGalerkinSetInterpolation_Galerkin"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCGalerkinSetInterpolation_Galerkin(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> P)</font></strong>
+<a name="line123">123: </a>{
+<a name="line124">124: </a>  PC_Galerkin *jac = (PC_Galerkin *)pc-&gt;data;
+
+<a name="line126">126: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)P);
+<a name="line127">127: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;jac-&gt;P);
+<a name="line128">128: </a>  jac-&gt;P = P;
+<a name="line129">129: </a>  <font color="#4169E1">return</font> 0;
+<a name="line130">130: </a>}
+
+<a name="line132">132: </a><strong><font color="#4169E1"><a name="PCGalerkinSetComputeSubmatrix_Galerkin"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCGalerkinSetComputeSubmatrix_Galerkin(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*computeAsub)(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *, void *), void *ctx)</font></strong>
+<a name="line133">133: </a>{
+<a name="line134">134: </a>  PC_Galerkin *jac = (PC_Galerkin *)pc-&gt;data;
+
+<a name="line136">136: </a>  jac-&gt;computeasub     = computeAsub;
+<a name="line137">137: </a>  jac-&gt;computeasub_ctx = ctx;
+<a name="line138">138: </a>  <font color="#4169E1">return</font> 0;
+<a name="line139">139: </a>}
+
+<a name="line141">141: </a><font color="#B22222">/*@</font>
+<a name="line142">142: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PC/PCGalerkinSetRestriction.html">PCGalerkinSetRestriction</a> - Sets the restriction operator for the `<a href="../../../../../docs/manualpages/PC/PCGALERKIN.html">PCGALERKIN</a>` preconditioner</font>
+
+<a name="line144">144: </a><font color="#B22222">   Logically Collective</font>
+
+<a name="line146">146: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line147">147: </a><font color="#B22222">+  pc - the preconditioner context</font>
+<a name="line148">148: </a><font color="#B22222">-  R - the restriction operator</font>
+
+<a name="line150">150: </a><font color="#B22222">   Note:</font>
+<a name="line151">151: </a><font color="#B22222">   Either this or `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetInterpolation.html">PCGalerkinSetInterpolation</a>()` or both must be called</font>
+
+<a name="line153">153: </a><font color="#B22222">   Level: Intermediate</font>
+
+<a name="line155">155: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/PC/PCCreate.html">PCCreate</a>()`, `<a href="../../../../../docs/manualpages/PC/PCSetType.html">PCSetType</a>()`, `<a href="../../../../../docs/manualpages/PC/PCType.html">PCType</a>`, `<a href="../../../../../docs/manualpages/PC/PCGALERKIN.html">PCGALERKIN</a>`,</font>
+<a name="line156">156: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetInterpolation.html">PCGalerkinSetInterpolation</a>()`, `<a href="../../../../../docs/manualpages/PC/PCGalerkinGetKSP.html">PCGalerkinGetKSP</a>()`</font>
+<a name="line157">157: </a><font color="#B22222">@*/</font>
+<a name="line158">158: </a><strong><font color="#4169E1"><a name="PCGalerkinSetRestriction"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PC/PCGalerkinSetRestriction.html">PCGalerkinSetRestriction</a>(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> R)</font></strong>
+<a name="line159">159: </a>{
+<a name="line161">161: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryMethod.html">PetscTryMethod</a>(pc, <font color="#666666">"PCGalerkinSetRestriction_C"</font>, (<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>), (pc, R));
+<a name="line162">162: </a>  <font color="#4169E1">return</font> 0;
+<a name="line163">163: </a>}
+
+<a name="line165">165: </a><font color="#B22222">/*@</font>
+<a name="line166">166: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PC/PCGalerkinSetInterpolation.html">PCGalerkinSetInterpolation</a> - Sets the interpolation operator for the `<a href="../../../../../docs/manualpages/PC/PCGALERKIN.html">PCGALERKIN</a>` preconditioner</font>
+
+<a name="line168">168: </a><font color="#B22222">   Logically Collective</font>
+
+<a name="line170">170: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line171">171: </a><font color="#B22222">+  pc - the preconditioner context</font>
+<a name="line172">172: </a><font color="#B22222">-  R - the interpolation operator</font>
+
+<a name="line174">174: </a><font color="#B22222">   Note:</font>
+<a name="line175">175: </a><font color="#B22222">   Either this or `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetRestriction.html">PCGalerkinSetRestriction</a>()` or both must be called</font>
+
+<a name="line177">177: </a><font color="#B22222">   Level: Intermediate</font>
+
+<a name="line179">179: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/PC/PCCreate.html">PCCreate</a>()`, `<a href="../../../../../docs/manualpages/PC/PCSetType.html">PCSetType</a>()`, `<a href="../../../../../docs/manualpages/PC/PCType.html">PCType</a>`, `<a href="../../../../../docs/manualpages/PC/PCGALERKIN.html">PCGALERKIN</a>`,</font>
+<a name="line180">180: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetRestriction.html">PCGalerkinSetRestriction</a>()`, `<a href="../../../../../docs/manualpages/PC/PCGalerkinGetKSP.html">PCGalerkinGetKSP</a>()`</font>
+<a name="line181">181: </a><font color="#B22222">@*/</font>
+<a name="line182">182: </a><strong><font color="#4169E1"><a name="PCGalerkinSetInterpolation"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PC/PCGalerkinSetInterpolation.html">PCGalerkinSetInterpolation</a>(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> P)</font></strong>
+<a name="line183">183: </a>{
+<a name="line185">185: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryMethod.html">PetscTryMethod</a>(pc, <font color="#666666">"PCGalerkinSetInterpolation_C"</font>, (<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>), (pc, P));
+<a name="line186">186: </a>  <font color="#4169E1">return</font> 0;
+<a name="line187">187: </a>}
+
+<a name="line189">189: </a><font color="#B22222">/*@</font>
+<a name="line190">190: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PC/PCGalerkinSetComputeSubmatrix.html">PCGalerkinSetComputeSubmatrix</a> - Provide a routine that will be called to compute the Galerkin submatrix</font>
+
+<a name="line192">192: </a><font color="#B22222">   Logically Collective</font>
+
+<a name="line194">194: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line195">195: </a><font color="#B22222">+  pc - the preconditioner context</font>
+<a name="line196">196: </a><font color="#B22222">.  computeAsub - routine that computes the submatrix from the global matrix</font>
+<a name="line197">197: </a><font color="#B22222">-  ctx - context used by the routine, or NULL</font>
+
+<a name="line199">199: </a><font color="#B22222">   Calling sequence of computeAsub:</font>
+<a name="line200">200: </a><font color="#B22222">$    computeAsub(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc,<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> Ap, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *cAP,void *ctx);</font>
+
+<a name="line202">202: </a><font color="#B22222">+  <a href="../../../../../docs/manualpages/PC/PC.html">PC</a> - the `<a href="../../../../../docs/manualpages/PC/PCGALERKIN.html">PCGALERKIN</a>`</font>
+<a name="line203">203: </a><font color="#B22222">.  A - the matrix in the `<a href="../../../../../docs/manualpages/PC/PCGALERKIN.html">PCGALERKIN</a>`</font>
+<a name="line204">204: </a><font color="#B22222">.  Ap - the computed submatrix from any previous computation, if NULL it has not previously been computed</font>
+<a name="line205">205: </a><font color="#B22222">.  cAp - the submatrix computed by this routine</font>
+<a name="line206">206: </a><font color="#B22222">-  ctx - optional user-defined function context</font>
+
+<a name="line208">208: </a><font color="#B22222">   Level: Intermediate</font>
+
+<a name="line210">210: </a><font color="#B22222">   Notes:</font>
+<a name="line211">211: </a><font color="#B22222">   Instead of providing this routine you can call `<a href="../../../../../docs/manualpages/PC/PCGalerkinGetKSP.html">PCGalerkinGetKSP</a>()` and then `<a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>()` to provide the submatrix,</font>
+<a name="line212">212: </a><font color="#B22222">   but that will not work for multiple `<a href="../../../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>()`s with different matrices unless you call it for each solve.</font>
+
+<a name="line214">214: </a><font color="#B22222">   This routine is called each time the outer matrix is changed. In the first call the Ap argument is NULL and the routine should create the</font>
+<a name="line215">215: </a><font color="#B22222">   matrix and computes its values in cAp. On each subsequent call the routine should up the Ap matrix.</font>
+
+<a name="line217">217: </a><font color="#B22222">   Developer Note:</font>
+<a name="line218">218: </a><font color="#B22222">   If the user does not call this routine nor call `<a href="../../../../../docs/manualpages/PC/PCGalerkinGetKSP.html">PCGalerkinGetKSP</a>()` and `<a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>()` then `<a href="../../../../../docs/manualpages/PC/PCGALERKIN.html">PCGALERKIN</a>`</font>
+<a name="line219">219: </a><font color="#B22222">   could automatically compute the submatrix via calls to `<a href="../../../../../docs/manualpages/Mat/MatGalerkin.html">MatGalerkin</a>()` or `<a href="../../../../../docs/manualpages/Mat/MatRARt.html">MatRARt</a>()`</font>
+
+<a name="line221">221: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/PC/PCCreate.html">PCCreate</a>()`, `<a href="../../../../../docs/manualpages/PC/PCSetType.html">PCSetType</a>()`, `<a href="../../../../../docs/manualpages/PC/PCType.html">PCType</a>`, `<a href="../../../../../docs/manualpages/PC/PCGALERKIN.html">PCGALERKIN</a>`,</font>
+<a name="line222">222: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetRestriction.html">PCGalerkinSetRestriction</a>()`, `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetInterpolation.html">PCGalerkinSetInterpolation</a>()`, `<a href="../../../../../docs/manualpages/PC/PCGalerkinGetKSP.html">PCGalerkinGetKSP</a>()`</font>
+<a name="line223">223: </a><font color="#B22222">@*/</font>
+<a name="line224">224: </a><strong><font color="#4169E1"><a name="PCGalerkinSetComputeSubmatrix"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PC/PCGalerkinSetComputeSubmatrix.html">PCGalerkinSetComputeSubmatrix</a>(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*computeAsub)(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *, void *), void *ctx)</font></strong>
+<a name="line225">225: </a>{
+<a name="line227">227: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryMethod.html">PetscTryMethod</a>(pc, <font color="#666666">"PCGalerkinSetComputeSubmatrix_C"</font>, (<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>, <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>(*)(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *, void *), void *), (pc, computeAsub, ctx));
+<a name="line228">228: </a>  <font color="#4169E1">return</font> 0;
+<a name="line229">229: </a>}
+
+<a name="line231">231: </a><font color="#B22222">/*@</font>
+<a name="line232">232: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/PC/PCGalerkinGetKSP.html">PCGalerkinGetKSP</a> - Gets the `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` object in the `<a href="../../../../../docs/manualpages/PC/PCGALERKIN.html">PCGALERKIN</a>`</font>
+
+<a name="line234">234: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line236">236: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line237">237: </a><font color="#B22222">.  pc - the preconditioner context</font>
+
+<a name="line239">239: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line240">240: </a><font color="#B22222">.  ksp - the `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` object</font>
+
+<a name="line242">242: </a><font color="#B22222">   Level: Intermediate</font>
+
+<a name="line244">244: </a><font color="#B22222">   Note:</font>
+<a name="line245">245: </a><font color="#B22222">   Once you have called this routine you can call `<a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>()` on the resulting ksp to provide the operator for the Galerkin problem,</font>
+<a name="line246">246: </a><font color="#B22222">   an alternative is to use `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetComputeSubmatrix.html">PCGalerkinSetComputeSubmatrix</a>()` to provide a routine that computes the submatrix as needed.</font>
+
+<a name="line248">248: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/PC/PCCreate.html">PCCreate</a>()`, `<a href="../../../../../docs/manualpages/PC/PCSetType.html">PCSetType</a>()`, `<a href="../../../../../docs/manualpages/PC/PCType.html">PCType</a>`, `<a href="../../../../../docs/manualpages/PC/PCGALERKIN.html">PCGALERKIN</a>`,</font>
+<a name="line249">249: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetRestriction.html">PCGalerkinSetRestriction</a>()`, `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetInterpolation.html">PCGalerkinSetInterpolation</a>()`, `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetComputeSubmatrix.html">PCGalerkinSetComputeSubmatrix</a>()`</font>
+<a name="line250">250: </a><font color="#B22222">@*/</font>
+<a name="line251">251: </a><strong><font color="#4169E1"><a name="PCGalerkinGetKSP"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/PC/PCGalerkinGetKSP.html">PCGalerkinGetKSP</a>(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> *ksp)</font></strong>
+<a name="line252">252: </a>{
+<a name="line255">255: </a>  <a href="../../../../../docs/manualpages/Sys/PetscUseMethod.html">PetscUseMethod</a>(pc, <font color="#666666">"PCGalerkinGetKSP_C"</font>, (<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>, <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> *), (pc, ksp));
+<a name="line256">256: </a>  <font color="#4169E1">return</font> 0;
+<a name="line257">257: </a>}
+
+<a name="line259">259: </a><strong><font color="#4169E1"><a name="PCSetFromOptions_Galerkin"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCSetFromOptions_Galerkin(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line260">260: </a>{
+<a name="line261">261: </a>  PC_Galerkin *jac = (PC_Galerkin *)pc-&gt;data;
+<a name="line262">262: </a>  const char  *prefix;
+<a name="line263">263: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>    flg;
+
+<a name="line265">265: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetOptionsPrefix.html">KSPGetOptionsPrefix</a>(jac-&gt;ksp, &amp;prefix);
+<a name="line266">266: </a>  <a href="../../../../../docs/manualpages/Sys/PetscStrendswith.html">PetscStrendswith</a>(prefix, <font color="#666666">"galerkin_"</font>, &amp;flg);
+<a name="line267">267: </a>  <font color="#4169E1">if</font> (!flg) {
+<a name="line268">268: </a>    <a href="../../../../../docs/manualpages/PC/PCGetOptionsPrefix.html">PCGetOptionsPrefix</a>(pc, &amp;prefix);
+<a name="line269">269: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSetOptionsPrefix.html">KSPSetOptionsPrefix</a>(jac-&gt;ksp, prefix);
+<a name="line270">270: </a>    <a href="../../../../../docs/manualpages/KSP/KSPAppendOptionsPrefix.html">KSPAppendOptionsPrefix</a>(jac-&gt;ksp, <font color="#666666">"galerkin_"</font>);
+<a name="line271">271: </a>  }
+
+<a name="line273">273: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"Galerkin options"</font>);
+<a name="line274">274: </a>  <font color="#4169E1">if</font> (jac-&gt;ksp) <a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html">KSPSetFromOptions</a>(jac-&gt;ksp);
+<a name="line275">275: </a>  PetscOptionsHeadEnd();
+<a name="line276">276: </a>  <font color="#4169E1">return</font> 0;
+<a name="line277">277: </a>}
+
+<a name="line279">279: </a><font color="#B22222">/*MC</font>
+<a name="line280">280: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/PC/PCGALERKIN.html">PCGALERKIN</a> - Build (part of) a preconditioner by P S R (where P is often R^T)</font>
+
+<a name="line282">282: </a><font color="#B22222">    Use `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetRestriction.html">PCGalerkinSetRestriction</a>`(pc,R) and/or `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetInterpolation.html">PCGalerkinSetInterpolation</a>`(pc,P) followed by `<a href="../../../../../docs/manualpages/PC/PCGalerkinGetKSP.html">PCGalerkinGetKSP</a>`(pc,&amp;ksp); `<a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>`(ksp,A,....)</font>
+
+<a name="line284">284: </a><font color="#B22222">    Level: intermediate</font>
+
+<a name="line286">286: </a><font color="#B22222">    Developer Notes:</font>
+<a name="line287">287: </a><font color="#B22222">    If `<a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>()` has not been called on the inner `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` then `<a href="../../../../../docs/manualpages/PC/PCGALERKIN.html">PCGALERKIN</a>` could use `<a href="../../../../../docs/manualpages/Mat/MatRARt.html">MatRARt</a>()` or `<a href="../../../../../docs/manualpages/Mat/MatPtAP.html">MatPtAP</a>()` to compute</font>
+<a name="line288">288: </a><font color="#B22222">    the operators automatically.</font>
+
+<a name="line290">290: </a><font color="#B22222">    Should there be a prefix for the inner `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>`?</font>
+
+<a name="line292">292: </a><font color="#B22222">    There is no `KSPSetFromOptions_Galerkin()` that calls `<a href="../../../../../docs/manualpages/KSP/KSPSetFromOptions.html">KSPSetFromOptions</a>()` on the inner `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>`</font>
+
+<a name="line294">294: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/PC/PCCreate.html">PCCreate</a>()`, `<a href="../../../../../docs/manualpages/PC/PCSetType.html">PCSetType</a>()`, `<a href="../../../../../docs/manualpages/PC/PCType.html">PCType</a>`, `<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>`,</font>
+<a name="line295">295: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/PC/PCSHELL.html">PCSHELL</a>`, `<a href="../../../../../docs/manualpages/PC/PCKSP.html">PCKSP</a>`, `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetRestriction.html">PCGalerkinSetRestriction</a>()`, `<a href="../../../../../docs/manualpages/PC/PCGalerkinSetInterpolation.html">PCGalerkinSetInterpolation</a>()`, `<a href="../../../../../docs/manualpages/PC/PCGalerkinGetKSP.html">PCGalerkinGetKSP</a>()`</font>
+<a name="line296">296: </a><font color="#B22222">M*/</font>
+
+<a name="line298">298: </a><strong><font color="#4169E1"><a name="PCCreate_Galerkin"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCCreate_Galerkin(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line299">299: </a>{
+<a name="line300">300: </a>  PC_Galerkin *jac;
+
+<a name="line302">302: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;jac);
+
+<a name="line304">304: </a>  pc-&gt;ops-&gt;apply           = PCApply_Galerkin;
+<a name="line305">305: </a>  pc-&gt;ops-&gt;setup           = PCSetUp_Galerkin;
+<a name="line306">306: </a>  pc-&gt;ops-&gt;reset           = PCReset_Galerkin;
+<a name="line307">307: </a>  pc-&gt;ops-&gt;destroy         = PCDestroy_Galerkin;
+<a name="line308">308: </a>  pc-&gt;ops-&gt;view            = PCView_Galerkin;
+<a name="line309">309: </a>  pc-&gt;ops-&gt;setfromoptions  = PCSetFromOptions_Galerkin;
+<a name="line310">310: </a>  pc-&gt;ops-&gt;applyrichardson = NULL;
+
+<a name="line312">312: </a>  <a href="../../../../../docs/manualpages/KSP/KSPCreate.html">KSPCreate</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pc), &amp;jac-&gt;ksp);
+<a name="line313">313: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetErrorIfNotConverged.html">KSPSetErrorIfNotConverged</a>(jac-&gt;ksp, pc-&gt;erroriffailure);
+<a name="line314">314: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectIncrementTabLevel.html">PetscObjectIncrementTabLevel</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)jac-&gt;ksp, (<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pc, 1);
+
+<a name="line316">316: </a>  pc-&gt;data = (void *)jac;
+
+<a name="line318">318: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pc, <font color="#666666">"PCGalerkinSetRestriction_C"</font>, PCGalerkinSetRestriction_Galerkin);
+<a name="line319">319: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pc, <font color="#666666">"PCGalerkinSetInterpolation_C"</font>, PCGalerkinSetInterpolation_Galerkin);
+<a name="line320">320: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pc, <font color="#666666">"PCGalerkinGetKSP_C"</font>, PCGalerkinGetKSP_Galerkin);
+<a name="line321">321: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)pc, <font color="#666666">"PCGalerkinSetComputeSubmatrix_C"</font>, PCGalerkinSetComputeSubmatrix_Galerkin);
+<a name="line322">322: </a>  <font color="#4169E1">return</font> 0;
+<a name="line323">323: </a>}
+</pre>
+</body>
+
+</html>

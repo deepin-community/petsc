@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# PETSc depends on the specific MPI minor version (not release/patch version)
+# that it was built against, whether OpenMPI or MPICH, see include/petscsys.h.
+#
+# This script returns a string identifying the required dependency,
+# intended to be inserted as a Dependency for the version-specific PETSc -dev packages.
+
+source <(sed "s/=/=\"/; s/$/\"/"  /usr/share/mpi-default-dev/debian_defaults)
+
+if [ "x$ARCH_DEFAULT_MPI_IMPL" != "xopenmpi" ]; then
+    # "not OpenMPI", assume MPICH
+    MPI_DEV_PACKAGE=libmpich-dev
+else
+    # OpenMPI
+    MPI_DEV_PACKAGE=libopenmpi-dev
+fi
+
+MPI_DEB_VERSION=$(dpkg -s $MPI_DEV_PACKAGE | awk '/Version:/ {print $2}')
+
+# extract the current MPI version Major.Minor.Release (drop epoch and debian package version)
+MPI_VERSION=$(echo $MPI_DEB_VERSION | sed "s/^.[^:]*://; s/-[^-]*$//")
+
+# "Major.Minor" version drops the Release (Patch) version
+MPI_MAJOR_MINOR_VERSION=$(echo $MPI_VERSION | awk 'BEGIN { FS="."}; {print $1"."$2 }')
+# "Major" version is upstream version up to the '.'
+MPI_MAJOR_VERSION=$(echo $MPI_MAJOR_MINOR_VERSION | sed "s/.[^.]*$//")
+# "Minor" version is upstream version after the '.'
+MPI_MINOR_VERSION=$(echo $MPI_MAJOR_MINOR_VERSION | sed "s/^.*\.//")
+# clean any alpha/beta markers (anything in the minor version following ~)
+MPI_CLEAN_MINOR_VERSION=$(echo $MPI_MINOR_VERSION | sed "s/~.*$//")
+
+# Hopefully the release version is just a number. Use it to form the "next" version.
+MPI_NEXT_VERSION=${MPI_MAJOR_VERSION}.$(( $MPI_CLEAN_MINOR_VERSION + 1 ))
+
+# MPI_DEV_DEPENDS is a string like "libopenmpi-dev (>= 2.1), libopenmpi-dev (<< 2.2)"
+MPI_DEV_DEPENDS="$MPI_DEV_PACKAGE (>= $MPI_VERSION), $MPI_DEV_PACKAGE (<< $MPI_NEXT_VERSION)"
+
+echo $MPI_DEV_DEPENDS

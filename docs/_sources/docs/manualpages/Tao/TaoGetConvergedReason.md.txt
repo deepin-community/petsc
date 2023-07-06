@@ -1,0 +1,77 @@
+# TaoGetConvergedReason
+Gets the reason the Tao iteration was stopped. 
+## Synopsis
+```
+#include "petsctao.h" 
+PetscErrorCode TaoGetConvergedReason(Tao tao, TaoConvergedReason *reason)
+```
+Not Collective
+
+
+## Input Parameter
+
+- ***tao -*** the Tao solver context
+
+
+
+## Output Parameter
+
+- ***reason -*** one of
+
+
+```none
+  TAO_CONVERGED_GATOL (3)           ||g(X)|| < gatol
+  TAO_CONVERGED_GRTOL (4)           ||g(X)|| / f(X)  < grtol
+  TAO_CONVERGED_GTTOL (5)           ||g(X)|| / ||g(X0)|| < gttol
+  TAO_CONVERGED_STEPTOL (6)         step size small
+  TAO_CONVERGED_MINF (7)            F < F_min
+  TAO_CONVERGED_USER (8)            User defined
+  TAO_DIVERGED_MAXITS (-2)          its > maxits
+  TAO_DIVERGED_NAN (-4)             Numerical problems
+  TAO_DIVERGED_MAXFCN (-5)          fevals > max_funcsals
+  TAO_DIVERGED_LS_FAILURE (-6)      line search failure
+  TAO_DIVERGED_TR_REDUCTION (-7)    trust region failure
+  TAO_DIVERGED_USER (-8)             (user defined)
+  TAO_CONTINUE_ITERATING (0)
+```
+
+
+where
+
+- ***X -*** current solution
+- ***X0 -*** initial guess
+- ***f(X) -*** current function value
+- ***f(X*) -*** true solution (estimated)
+- ***g(X) -*** current gradient
+- ***its -*** current iterate number
+- ***maxits -*** maximum number of iterates
+- ***fevals -*** number of function evaluations
+- ***max_funcsals -*** maximum number of function evaluations
+
+
+
+
+
+## See Also
+ `TaoSetConvergenceTest()`, `TaoSetTolerances()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/interface/taosolver.c.html#TaoGetConvergedReason">src/tao/interface/taosolver.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/unconstrained/tutorials/rosenbrock2.c.html">src/tao/unconstrained/tutorials/rosenbrock2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/unconstrained/tutorials/rosenbrock3.c.html">src/tao/unconstrained/tutorials/rosenbrock3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/constrained/tutorials/maros.c.html">src/tao/constrained/tutorials/maros.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/leastsquares/tutorials/chwirut1f.F90.html">src/tao/leastsquares/tutorials/chwirut1f.F90.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/tao/interface/taosolver.c)
+
+
+[Index of all Tao routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

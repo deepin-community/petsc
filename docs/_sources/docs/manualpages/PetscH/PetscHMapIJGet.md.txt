@@ -1,0 +1,40 @@
+# PetscHMapIJGet
+Get the value for a key in the hash table 
+## Synopsis
+```
+#include <petsc/private/hashmapij.h>
+PetscErrorCode PetscHMapIJGet(PetscHMapIJ ht, struct {PetscInt i, j;} key, PetscInt *val)
+```
+
+## Input Parameters
+
+- ***ht  -*** The hash table
+- ***key -*** The key
+
+
+
+## Output Parameter
+
+- ***val -*** The value
+
+
+
+
+
+## See Also
+ `PetscHMapIJSet()`, `PetscHMapIJIterGet()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petsc/private/generated_khash.h.html#PetscHMapIJGet">include/petsc/private/generated_khash.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petsc/private/generated_khash.h)
+
+
+[Index of all PetscH routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

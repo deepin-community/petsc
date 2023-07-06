@@ -1,0 +1,60 @@
+# TaoType
+String with the name of a `Tao` method 
+## Synopsis
+```
+typedef const char *TaoType;
+#define TAOLMVM     "lmvm"
+#define TAONLS      "nls"
+#define TAONTR      "ntr"
+#define TAONTL      "ntl"
+#define TAOCG       "cg"
+#define TAOTRON     "tron"
+#define TAOOWLQN    "owlqn"
+#define TAOBMRM     "bmrm"
+#define TAOBLMVM    "blmvm"
+#define TAOBQNLS    "bqnls"
+#define TAOBNCG     "bncg"
+#define TAOBNLS     "bnls"
+#define TAOBNTR     "bntr"
+#define TAOBNTL     "bntl"
+#define TAOBQNKLS   "bqnkls"
+#define TAOBQNKTR   "bqnktr"
+#define TAOBQNKTL   "bqnktl"
+#define TAOBQPIP    "bqpip"
+#define TAOGPCG     "gpcg"
+#define TAONM       "nm"
+#define TAOPOUNDERS "pounders"
+#define TAOBRGN     "brgn"
+#define TAOLCL      "lcl"
+#define TAOSSILS    "ssils"
+#define TAOSSFLS    "ssfls"
+#define TAOASILS    "asils"
+#define TAOASFLS    "asfls"
+#define TAOIPM      "ipm"
+#define TAOPDIPM    "pdipm"
+#define TAOSHELL    "shell"
+#define TAOADMM     "admm"
+#define TAOALMM     "almm"
+#define TAOPYTHON   "python"
+
+```
+
+
+
+## See Also
+ `Tao`, `TaoCreate()`, `TaoSetType()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petsctao.h.html#TaoType">include/petsctao.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petsctao.h)
+
+
+[Index of all Tao routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

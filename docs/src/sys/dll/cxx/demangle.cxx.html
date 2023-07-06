@@ -1,0 +1,43 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/dll/cxx/demangle.cxx">Actual source code: demangle.cxx</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:54+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><strong><font color="#228B22">#define PETSC_SKIP_COMPLEX</font></strong>
+<a name="line2">  2: </a>#include <A href="../../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+
+<a name="line4">  4: </a><font color="#A020F0">#if defined(PETSC_HAVE_CXXABI_H)</font>
+<a name="line5">  5: </a><font color="#A020F0">  #include &lt;cxxabi.h&gt;</font>
+<a name="line6">  6: </a><font color="#A020F0">#endif</font>
+
+<a name="line8">  8: </a><strong><font color="#4169E1"><a name="PetscDemangleSymbol"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDemangleSymbol(const char mangledName[], char **name)</font></strong>
+<a name="line9">  9: </a>{
+<a name="line10"> 10: </a><font color="#A020F0">#if defined(PETSC_HAVE_CXXABI_H)</font>
+<a name="line11"> 11: </a>  char *newname;
+<a name="line12"> 12: </a>  int   status;
+
+<a name="line14"> 14: </a>  newname = __cxxabiv1::__cxa_demangle(mangledName, NULL, NULL, &amp;status);
+<a name="line15"> 15: </a>  <font color="#4169E1">if</font> (status) {
+<a name="line17"> 17: </a>    <font color="#4169E1">if</font> (status == -2) {
+<a name="line18"> 18: </a>      <font color="#B22222">/* Mangled name is not a valid name under the C++ ABI mangling rules */</font>
+<a name="line19"> 19: </a>      <a href="../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(mangledName, name);
+<a name="line20"> 20: </a>      <font color="#4169E1">return</font> 0;
+<a name="line21"> 21: </a>    } <font color="#4169E1">else</font> <a href="../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_LIB, <font color="#666666">"Demangling failed for symbol %s"</font>, mangledName);
+<a name="line22"> 22: </a>  }
+<a name="line23"> 23: </a>  <a href="../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(newname, name);
+<a name="line24"> 24: </a>  free(newname);
+<a name="line25"> 25: </a><font color="#A020F0">#else</font>
+<a name="line26"> 26: </a>  <a href="../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(mangledName, name);
+<a name="line27"> 27: </a><font color="#A020F0">#endif</font>
+<a name="line28"> 28: </a>  <font color="#4169E1">return</font> 0;
+<a name="line29"> 29: </a>}
+</pre>
+</body>
+
+</html>

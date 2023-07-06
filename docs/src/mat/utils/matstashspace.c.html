@@ -1,0 +1,77 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/utils/matstashspace.c">Actual source code: matstashspace.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:13+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../../include/petsc/private/matimpl.h.html">&lt;petsc/private/matimpl.h&gt;</A>
+
+<a name="line4">  4: </a><font color="#B22222">/* Get new PetscMatStashSpace into the existing space */</font>
+<a name="line5">  5: </a><strong><font color="#4169E1"><a name="PetscMatStashSpaceGet"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscMatStashSpaceGet(<a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> bs2, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, PetscMatStashSpace *space)</font></strong>
+<a name="line6">  6: </a>{
+<a name="line7">  7: </a>  PetscMatStashSpace a;
+
+<a name="line9">  9: </a>  <font color="#4169E1">if</font> (!n) <font color="#4169E1">return</font> 0;
+
+<a name="line11"> 11: </a>  <a href="../../../docs/manualpages/Sys/PetscMalloc.html">PetscMalloc</a>(<font color="#4169E1">sizeof</font>(<font color="#4169E1">struct _MatStashSpace</font>), &amp;a);
+<a name="line12"> 12: </a>  <a href="../../../docs/manualpages/Sys/PetscMalloc3.html">PetscMalloc3</a>(n * bs2, &amp;(a-&gt;space_head), n, &amp;a-&gt;idx, n, &amp;a-&gt;idy);
+
+<a name="line14"> 14: </a>  a-&gt;val              = a-&gt;space_head;
+<a name="line15"> 15: </a>  a-&gt;local_remaining  = n;
+<a name="line16"> 16: </a>  a-&gt;local_used       = 0;
+<a name="line17"> 17: </a>  a-&gt;total_space_size = 0;
+<a name="line18"> 18: </a>  a-&gt;next             = NULL;
+
+<a name="line20"> 20: </a>  <font color="#4169E1">if</font> (*space) {
+<a name="line21"> 21: </a>    (*space)-&gt;next      = a;
+<a name="line22"> 22: </a>    a-&gt;total_space_size = (*space)-&gt;total_space_size;
+<a name="line23"> 23: </a>  }
+<a name="line24"> 24: </a>  a-&gt;total_space_size += n;
+<a name="line25"> 25: </a>  *space = a;
+<a name="line26"> 26: </a>  <font color="#4169E1">return</font> 0;
+<a name="line27"> 27: </a>}
+
+<a name="line29"> 29: </a><font color="#B22222">/* Copy the values in space into arrays val, idx and idy. Then destroy space */</font>
+<a name="line30"> 30: </a><strong><font color="#4169E1"><a name="PetscMatStashSpaceContiguous"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscMatStashSpaceContiguous(<a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> bs2, PetscMatStashSpace *space, <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *val, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *idx, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *idy)</font></strong>
+<a name="line31"> 31: </a>{
+<a name="line32"> 32: </a>  PetscMatStashSpace a;
+
+<a name="line34"> 34: </a>  <font color="#4169E1">while</font> ((*space)) {
+<a name="line35"> 35: </a>    a = (*space)-&gt;next;
+<a name="line36"> 36: </a>    <a href="../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(val, (*space)-&gt;val, (*space)-&gt;local_used * bs2);
+<a name="line37"> 37: </a>    val += bs2 * (*space)-&gt;local_used;
+<a name="line38"> 38: </a>    <a href="../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(idx, (*space)-&gt;idx, (*space)-&gt;local_used);
+<a name="line39"> 39: </a>    idx += (*space)-&gt;local_used;
+<a name="line40"> 40: </a>    <a href="../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(idy, (*space)-&gt;idy, (*space)-&gt;local_used);
+<a name="line41"> 41: </a>    idy += (*space)-&gt;local_used;
+
+<a name="line43"> 43: </a>    <a href="../../../docs/manualpages/Sys/PetscFree3.html">PetscFree3</a>((*space)-&gt;space_head, (*space)-&gt;idx, (*space)-&gt;idy);
+<a name="line44"> 44: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(*space);
+<a name="line45"> 45: </a>    *space = a;
+<a name="line46"> 46: </a>  }
+<a name="line47"> 47: </a>  <font color="#4169E1">return</font> 0;
+<a name="line48"> 48: </a>}
+
+<a name="line50"> 50: </a><strong><font color="#4169E1"><a name="PetscMatStashSpaceDestroy"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscMatStashSpaceDestroy(PetscMatStashSpace *space)</font></strong>
+<a name="line51"> 51: </a>{
+<a name="line52"> 52: </a>  PetscMatStashSpace a;
+
+<a name="line54"> 54: </a>  <font color="#4169E1">while</font> (*space) {
+<a name="line55"> 55: </a>    a = (*space)-&gt;next;
+<a name="line56"> 56: </a>    <a href="../../../docs/manualpages/Sys/PetscFree3.html">PetscFree3</a>((*space)-&gt;space_head, (*space)-&gt;idx, (*space)-&gt;idy);
+<a name="line57"> 57: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>((*space));
+<a name="line58"> 58: </a>    *space = a;
+<a name="line59"> 59: </a>  }
+<a name="line60"> 60: </a>  *space = NULL;
+<a name="line61"> 61: </a>  <font color="#4169E1">return</font> 0;
+<a name="line62"> 62: </a>}
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,35 @@
+# TaoBRGNSetRegularizerHessianRoutine
+Sets the user-defined regularizer call-back function into the algorithm. 
+## Synopsis
+```
+#include "petsctao.h" 
+PetscErrorCode TaoBRGNSetRegularizerHessianRoutine(Tao tao, Mat Hreg, PetscErrorCode (*func)(Tao, Vec, Mat, void *), void *ctx)
+```
+
+## Input Parameters
+
+- ***tao -*** the Tao context
+- ***Hreg -*** user-created matrix for the Hessian of the regularization term
+- ***func -*** function pointer for the regularizer Hessian evaluation
+- ***ctx -*** user context for the regularizer Hessian
+
+
+
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/leastsquares/impls/brgn/brgn.c.html#TaoBRGNSetRegularizerHessianRoutine">src/tao/leastsquares/impls/brgn/brgn.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/leastsquares/tutorials/tomography.c.html">src/tao/leastsquares/tutorials/tomography.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/tao/leastsquares/impls/brgn/brgn.c)
+
+
+[Index of all Tao routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

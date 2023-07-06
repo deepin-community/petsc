@@ -1,0 +1,92 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/tests/ex8.c">Actual source code: ex8.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:44+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>static char help[] = <font color="#666666">"Test parallel ruotines for GLVis\n\n"</font>;
+
+<a name="line3">  3: </a>#include <A href="../../../include/petscdmshell.h.html">&lt;petscdmshell.h&gt;</A>
+<a name="line4">  4: </a>#include <A href="../../../include/petsc/private/glvisvecimpl.h.html">&lt;petsc/private/glvisvecimpl.h&gt;</A>
+
+<a name="line6">  6: </a><strong><font color="#4169E1"><a name="VecView_Shell"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecView_Shell(<a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> v, <a href="../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line7">  7: </a>{
+<a name="line8">  8: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PetscViewerFormat</a> format;
+<a name="line9">  9: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>         isglvis, isascii;
+
+<a name="line11"> 11: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerGetFormat.html">PetscViewerGetFormat</a>(viewer, &amp;format);
+<a name="line12"> 12: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, PETSCVIEWERGLVIS, &amp;isglvis);
+<a name="line13"> 13: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;isascii);
+<a name="line14"> 14: </a>  <font color="#4169E1">if</font> (isglvis) {
+<a name="line15"> 15: </a>    <a href="../../../docs/manualpages/DM/DM.html">DM</a> dm;
+
+<a name="line17"> 17: </a>    <a href="../../../docs/manualpages/DM/VecGetDM.html">VecGetDM</a>(v, &amp;dm);
+<a name="line18"> 18: </a>    <font color="#B22222">/* <a href="../../../docs/manualpages/DM/DMView.html">DMView</a>() cannot be tested, as DMView_Shell defaults to <a href="../../../docs/manualpages/Vec/VecView.html">VecView</a> */</font>
+<a name="line19"> 19: </a>    <font color="#4169E1">if</font> (!dm) <font color="#4169E1">return</font> 0;
+<a name="line20"> 20: </a>    VecView_GLVis(v, viewer);
+<a name="line21"> 21: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isascii) {
+<a name="line22"> 22: </a>    const char *name;
+<a name="line23"> 23: </a>    <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    n;
+
+<a name="line25"> 25: </a>    <a href="../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(v, &amp;n);
+<a name="line26"> 26: </a>    <a href="../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, &amp;name);
+<a name="line27"> 27: </a>    <font color="#4169E1">if</font> (!PetscGlobalRank) <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Hello from rank 0 -&gt; vector name %s, size %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, name, n);
+<a name="line28"> 28: </a>  }
+<a name="line29"> 29: </a>  <font color="#4169E1">return</font> 0;
+<a name="line30"> 30: </a>}
+
+<a name="line32"> 32: </a><strong><font color="#4169E1"><a name="DMSetUpGLVisViewer_Shell"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMSetUpGLVisViewer_Shell(<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> odm, <a href="../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line33"> 33: </a>{
+<a name="line34"> 34: </a>  <a href="../../../docs/manualpages/DM/DM.html">DM</a>          dm = (<a href="../../../docs/manualpages/DM/DM.html">DM</a>)odm;
+<a name="line35"> 35: </a>  <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>         V;
+<a name="line36"> 36: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    dim      = 2;
+<a name="line37"> 37: </a>  const char *fec_type = {<font color="#666666">"testme"</font>};
+
+<a name="line39"> 39: </a>  <a href="../../../docs/manualpages/DM/DMCreateGlobalVector.html">DMCreateGlobalVector</a>(dm, &amp;V);
+<a name="line40"> 40: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)V, <font color="#666666">"sample"</font>);
+<a name="line41"> 41: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerGLVisSetFields.html">PetscViewerGLVisSetFields</a>(viewer, 1, &amp;fec_type, &amp;dim, NULL, (<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;V, NULL, NULL);
+<a name="line42"> 42: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;V);
+<a name="line43"> 43: </a>  <font color="#4169E1">return</font> 0;
+<a name="line44"> 44: </a>}
+
+<a name="line46"> 46: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
+<a name="line47"> 47: </a>{
+<a name="line48"> 48: </a>  <a href="../../../docs/manualpages/DM/DM.html">DM</a>  dm;
+<a name="line49"> 49: </a>  <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> v;
+
+<a name="line52"> 52: </a>  <a href="../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help);
+<a name="line53"> 53: </a>  <a href="../../../docs/manualpages/DM/DMShellCreate.html">DMShellCreate</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;dm);
+<a name="line54"> 54: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm, <font color="#666666">"DMSetUpGLVisViewer_C"</font>, DMSetUpGLVisViewer_Shell);
+<a name="line55"> 55: </a>  <a href="../../../docs/manualpages/Vec/VecCreateMPI.html">VecCreateMPI</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, 1, <a href="../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, &amp;v);
+<a name="line56"> 56: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, <font color="#666666">"seed"</font>);
+<a name="line57"> 57: </a>  <a href="../../../docs/manualpages/Vec/VecSetOperation.html">VecSetOperation</a>(v, VECOP_VIEW, (void (*)(void))VecView_Shell);
+<a name="line58"> 58: </a>  <a href="../../../docs/manualpages/DM/DMShellSetGlobalVector.html">DMShellSetGlobalVector</a>(dm, v);
+<a name="line59"> 59: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;v);
+<a name="line60"> 60: </a>  <a href="../../../docs/manualpages/DM/DMViewFromOptions.html">DMViewFromOptions</a>(dm, NULL, <font color="#666666">"-dm_view"</font>);
+<a name="line61"> 61: </a>  <a href="../../../docs/manualpages/DM/DMGetGlobalVector.html">DMGetGlobalVector</a>(dm, &amp;v);
+<a name="line62"> 62: </a>  <a href="../../../docs/manualpages/Vec/VecViewFromOptions.html">VecViewFromOptions</a>(v, NULL, <font color="#666666">"-vec_view"</font>);
+<a name="line63"> 63: </a>  <a href="../../../docs/manualpages/DM/DMRestoreGlobalVector.html">DMRestoreGlobalVector</a>(dm, &amp;v);
+<a name="line64"> 64: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm, <font color="#666666">"DMSetUpGLVisViewer_C"</font>, NULL);
+<a name="line65"> 65: </a>  <a href="../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dm);
+<a name="line66"> 66: </a>  <a href="../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line67"> 67: </a>  <font color="#4169E1">return</font> 0;
+<a name="line68"> 68: </a>}
+
+<a name="line70"> 70: </a><font color="#B22222">/*TEST</font>
+
+<a name="line72"> 72: </a><font color="#B22222">  test:</font>
+<a name="line73"> 73: </a><font color="#B22222">    suffix: glvis_par</font>
+<a name="line74"> 74: </a><font color="#B22222">    nsize: {{1 2}}</font>
+<a name="line75"> 75: </a><font color="#B22222">    args: -dm_view glvis: -vec_view glvis:</font>
+<a name="line76"> 76: </a><font color="#B22222">    output_file: output/ex8_glvis.out</font>
+
+<a name="line78"> 78: </a><font color="#B22222">TEST*/</font>
+</pre>
+</body>
+
+</html>

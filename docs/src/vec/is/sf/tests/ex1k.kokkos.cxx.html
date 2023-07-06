@@ -1,0 +1,268 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/vec/is/sf/tests/ex1k.kokkos.cxx">Actual source code: ex1k.kokkos.cxx</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:29+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>static const char help[] = <font color="#666666">"Benchmarking <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> Ping-pong latency (similar to osu_latency)\n\n"</font>;
+
+<a name="line3">  3: </a><font color="#B22222">/*</font>
+<a name="line4">  4: </a><font color="#B22222">  This is a simple test to measure the latency of MPI communication.</font>
+<a name="line5">  5: </a><font color="#B22222">  The test is run with two processes.  The first process sends a message</font>
+<a name="line6">  6: </a><font color="#B22222">  to the second process, and after having received the message, the second</font>
+<a name="line7">  7: </a><font color="#B22222">  process sends a message back to the first process once.  The is repeated</font>
+<a name="line8">  8: </a><font color="#B22222">  a number of times.  The latency is defined as half time of the round-trip.</font>
+
+<a name="line10"> 10: </a><font color="#B22222">  It mimics osu_latency from the OSU microbenchmarks (https://mvapich.cse.ohio-state.edu/benchmarks/).</font>
+
+<a name="line12"> 12: </a><font color="#B22222">  Usage: mpirun -n 2 ./ex1k -mtype &lt;type&gt;</font>
+<a name="line13"> 13: </a><font color="#B22222">  Other arguments have a default value that is also used in osu_latency.</font>
+
+<a name="line15"> 15: </a><font color="#B22222">  Examples:</font>
+
+<a name="line17"> 17: </a><font color="#B22222">  On Summit at OLCF:</font>
+<a name="line18"> 18: </a><font color="#B22222">    jsrun --smpiargs "-gpu" -n 2 -a 1 -c 7 -g 1 -r 2 -l GPU-GPU -d packed -b packed:7 ./ex1k  -mtype cuda</font>
+
+<a name="line20"> 20: </a><font color="#B22222">  On Crusher at OLCF:</font>
+<a name="line21"> 21: </a><font color="#B22222">    srun -n2 -c32 --cpu-bind=map_cpu:0,1 --gpus-per-node=8 --gpu-bind=map_gpu:0,1 ./ex1k -mtype hip</font>
+<a name="line22"> 22: </a><font color="#B22222">*/</font>
+
+<a name="line24"> 24: </a>#include <A href="../../../../../include/petscsf.h.html">&lt;petscsf.h&gt;</A>
+<a name="line25"> 25: </a>#include <A href="../../../../../include/petscdevice.h.html">&lt;petscdevice.h&gt;</A>
+<a name="line26"> 26: </a><font color="#A020F0">#if defined(PETSC_HAVE_UNISTD_H)</font>
+<a name="line27"> 27: </a><font color="#A020F0">  #include &lt;unistd.h&gt;</font>
+<a name="line28"> 28: </a><font color="#A020F0">#endif</font>
+
+<a name="line30"> 30: </a><font color="#A020F0">#if defined(PETSC_HAVE_CUDA)</font>
+<a name="line31"> 31: </a><strong><font color="#228B22">  #define SyncDevice() PetscCallCUDA(cudaDeviceSynchronize())</font></strong>
+<a name="line32"> 32: </a><font color="#A020F0">#elif defined(PETSC_HAVE_HIP)</font>
+<a name="line33"> 33: </a><strong><font color="#228B22">  #define SyncDevice() PetscCallHIP(hipDeviceSynchronize())</font></strong>
+<a name="line34"> 34: </a><font color="#A020F0">#elif defined(PETSC_HAVE_KOKKOS)</font>
+<a name="line35"> 35: </a><font color="#A020F0">  #include &lt;Kokkos_Core.hpp&gt;</font>
+<a name="line36"> 36: </a><strong><font color="#228B22">  #define SyncDevice() Kokkos::fence()</font></strong>
+<a name="line37"> 37: </a><font color="#A020F0">#else</font>
+<a name="line38"> 38: </a><strong><font color="#228B22">  #define SyncDevice()</font></strong>
+<a name="line39"> 39: </a><font color="#A020F0">#endif</font>
+
+<a name="line41"> 41: </a><font color="#B22222">/* Same values as OSU microbenchmarks */</font>
+<a name="line42"> 42: </a><strong><font color="#228B22">#define LAT_LOOP_SMALL     10000</font></strong>
+<a name="line43"> 43: </a><strong><font color="#228B22">#define LAT_SKIP_SMALL     100</font></strong>
+<a name="line44"> 44: </a><strong><font color="#228B22">#define LAT_LOOP_LARGE     1000</font></strong>
+<a name="line45"> 45: </a><strong><font color="#228B22">#define LAT_SKIP_LARGE     10</font></strong>
+<a name="line46"> 46: </a><strong><font color="#228B22">#define LARGE_MESSAGE_SIZE 8192</font></strong>
+
+<a name="line48"> 48: </a><strong><font color="#4169E1"><a name="PetscMallocWithMemType"></a>static inline <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscMallocWithMemType(<a href="../../../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a> mtype, size_t size, void **ptr)</font></strong>
+<a name="line49"> 49: </a>{
+<a name="line50"> 50: </a>  <font color="#4169E1">if</font> (PetscMemTypeHost(mtype)) {
+<a name="line51"> 51: </a><font color="#A020F0">#if defined(PETSC_HAVE_GETPAGESIZE)</font>
+<a name="line52"> 52: </a>    posix_memalign(ptr, getpagesize(), size);
+<a name="line53"> 53: </a><font color="#A020F0">#else</font>
+<a name="line54"> 54: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc.html">PetscMalloc</a>(size, ptr);
+<a name="line55"> 55: </a><font color="#A020F0">#endif</font>
+<a name="line56"> 56: </a>  }
+<a name="line57"> 57: </a><font color="#A020F0">#if defined(PETSC_HAVE_CUDA)</font>
+<a name="line58"> 58: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (PetscMemTypeCUDA(mtype))
+<a name="line59"> 59: </a>    cudaMalloc(ptr, size);
+<a name="line60"> 60: </a><font color="#A020F0">#elif defined(PETSC_HAVE_HIP)</font>
+<a name="line61"> 61: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (PetscMemTypeHIP(mtype))
+<a name="line62"> 62: </a>    hipMalloc(ptr, size);
+<a name="line63"> 63: </a><font color="#A020F0">#elif defined(PETSC_HAVE_SYCL)</font>
+<a name="line64"> 64: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (PetscMemTypeSYCL(mtype))
+<a name="line65"> 65: </a>    *ptr = Kokkos::kokkos_malloc(size);
+<a name="line66"> 66: </a><font color="#A020F0">#endif</font>
+<a name="line67"> 67: </a>  <font color="#4169E1">return</font> 0;
+<a name="line68"> 68: </a>}
+
+<a name="line70"> 70: </a><strong><font color="#4169E1"><a name="PetscFreeWithMemType_Private"></a>static inline <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFreeWithMemType_Private(<a href="../../../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a> mtype, void *ptr)</font></strong>
+<a name="line71"> 71: </a>{
+<a name="line72"> 72: </a>  <font color="#4169E1">if</font> (PetscMemTypeHost(mtype)) {
+<a name="line73"> 73: </a>    free(ptr);
+<a name="line74"> 74: </a>  }
+<a name="line75"> 75: </a><font color="#A020F0">#if defined(PETSC_HAVE_CUDA)</font>
+<a name="line76"> 76: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (PetscMemTypeCUDA(mtype))
+<a name="line77"> 77: </a>    cudaFree(ptr);
+<a name="line78"> 78: </a><font color="#A020F0">#elif defined(PETSC_HAVE_HIP)</font>
+<a name="line79"> 79: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (PetscMemTypeHIP(mtype))
+<a name="line80"> 80: </a>    hipFree(ptr);
+<a name="line81"> 81: </a><font color="#A020F0">#elif defined(PETSC_HAVE_SYCL)</font>
+<a name="line82"> 82: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (PetscMemTypeSYCL(mtype))
+<a name="line83"> 83: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:kokkos_free(ptr);
+<a name="line84"> 84: </a><font color="#A020F0">#endif</font>
+<a name="line85"> 85: </a>  <font color="#4169E1">return</font> 0;
+<a name="line86"> 86: </a>}
+
+<a name="line88"> 88: </a><font color="#B22222">/* Free memory and set ptr to NULL when succeeded */</font>
+<a name="line89"> 89: </a><strong><font color="#228B22">#define PetscFreeWithMemType(t, p) ((p) &amp;&amp; (PetscFreeWithMemType_Private((t), (p)) || ((p) = NULL, 0)))</font></strong>
+
+<a name="line91"> 91: </a><strong><font color="#4169E1"><a name="PetscMemcpyFromHostWithMemType"></a>static inline <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscMemcpyFromHostWithMemType(<a href="../../../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a> mtype, void *dst, const void *src, size_t n)</font></strong>
+<a name="line92"> 92: </a>{
+<a name="line93"> 93: </a>  <font color="#4169E1">if</font> (PetscMemTypeHost(mtype)) <a href="../../../../../docs/manualpages/Sys/PetscMemcpy.html">PetscMemcpy</a>(dst, src, n);
+<a name="line94"> 94: </a><font color="#A020F0">#if defined(PETSC_HAVE_CUDA)</font>
+<a name="line95"> 95: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (PetscMemTypeCUDA(mtype)) cudaMemcpy(dst, src, n, cudaMemcpyHostToDevice);
+<a name="line96"> 96: </a><font color="#A020F0">#elif defined(PETSC_HAVE_HIP)</font>
+<a name="line97"> 97: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (PetscMemTypeHIP(mtype)) hipMemcpy(dst, src, n, hipMemcpyHostToDevice);
+<a name="line98"> 98: </a><font color="#A020F0">#elif defined(PETSC_HAVE_SYCL)</font>
+<a name="line99"> 99: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (PetscMemTypeSYCL(mtype)) {
+<a name="line100">100: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:View&lt;char *&gt;                          dstView((char *)dst, n);
+<a name="line101">101: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:View&lt;const char *, Kokkos::HostSpace&gt; srcView((const char *)src, n);
+<a name="line102">102: </a><strong><font color="#FF0000">    Kokkos:</font></strong>:deep_copy(dstView, srcView);
+<a name="line103">103: </a>  }
+<a name="line104">104: </a><font color="#A020F0">#endif</font>
+<a name="line105">105: </a>  <font color="#4169E1">return</font> 0;
+<a name="line106">106: </a>}
+
+<a name="line108">108: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
+<a name="line109">109: </a>{
+<a name="line110">110: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a>        sf[64];
+<a name="line111">111: </a>  <a href="../../../../../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> t_start = 0, t_end = 0, time[64];
+<a name="line112">112: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       i, j, n, nroots, nleaves, niter = 100, nskip = 10;
+<a name="line113">113: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       maxn = 512 * 1024; <font color="#B22222">/* max 4M bytes messages */</font>
+<a name="line114">114: </a>  <a href="../../../../../docs/manualpages/PetscSF/PetscSFNode.html">PetscSFNode</a>   *iremote;
+<a name="line115">115: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>    rank, size;
+<a name="line116">116: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   *rootdata = NULL, *leafdata = NULL, *pbuf, *ebuf;
+<a name="line117">117: </a>  size_t         msgsize;
+<a name="line118">118: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a>   mtype       = <a href="../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_HOST</a>;
+<a name="line119">119: </a>  char           mstring[16] = {0};
+<a name="line120">120: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>      isCuda, isHip, isHost, isKokkos, set;
+<a name="line121">121: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       skipSmall = -1, loopSmall = -1;
+<a name="line122">122: </a>  MPI_Op         op = MPI_REPLACE;
+
+<a name="line125">125: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help);
+<a name="line126">126: </a><font color="#A020F0">#if defined(PETSC_HAVE_CUDA)</font>
+<a name="line127">127: </a>  <a href="../../../../../docs/manualpages/Sys/PetscDeviceInitialize.html">PetscDeviceInitialize</a>(<a href="../../../../../docs/manualpages/Sys/PetscDeviceType.html">PETSC_DEVICE_CUDA</a>);
+<a name="line128">128: </a><font color="#A020F0">#elif defined(PETSC_HAVE_HIP)</font>
+<a name="line129">129: </a>  <a href="../../../../../docs/manualpages/Sys/PetscDeviceInitialize.html">PetscDeviceInitialize</a>(<a href="../../../../../docs/manualpages/Sys/PetscDeviceType.html">PETSC_DEVICE_HIP</a>);
+<a name="line130">130: </a><font color="#A020F0">#endif</font>
+<a name="line131">131: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;size);
+<a name="line132">132: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;rank);
+
+<a name="line135">135: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(NULL, NULL, <font color="#666666">"-maxn"</font>, &amp;maxn, NULL); <font color="#B22222">/* maxn PetscScalars */</font>
+<a name="line136">136: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(NULL, NULL, <font color="#666666">"-skipSmall"</font>, &amp;skipSmall, NULL);
+<a name="line137">137: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(NULL, NULL, <font color="#666666">"-loopSmall"</font>, &amp;loopSmall, NULL);
+
+<a name="line139">139: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(maxn, &amp;iremote);
+<a name="line140">140: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(NULL, NULL, <font color="#666666">"-mtype"</font>, mstring, 16, &amp;set);
+<a name="line141">141: </a>  <font color="#4169E1">if</font> (set) {
+<a name="line142">142: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrcasecmp.html">PetscStrcasecmp</a>(mstring, <font color="#666666">"cuda"</font>, &amp;isCuda);
+<a name="line143">143: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrcasecmp.html">PetscStrcasecmp</a>(mstring, <font color="#666666">"hip"</font>, &amp;isHip);
+<a name="line144">144: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrcasecmp.html">PetscStrcasecmp</a>(mstring, <font color="#666666">"host"</font>, &amp;isHost);
+<a name="line145">145: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrcasecmp.html">PetscStrcasecmp</a>(mstring, <font color="#666666">"kokkos"</font>, &amp;isKokkos);
+
+<a name="line147">147: </a>    <font color="#4169E1">if</font> (isHost) mtype = <a href="../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_HOST</a>;
+<a name="line148">148: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isCuda) mtype = <a href="../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_CUDA</a>;
+<a name="line149">149: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isHip) mtype = <a href="../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_HIP</a>;
+<a name="line150">150: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (isKokkos) {
+<a name="line151">151: </a>      mtype = PETSC_MEMTYPE_KOKKOS;
+<a name="line152">152: </a>      PetscKokkosInitializeCheck();
+<a name="line153">153: </a>    } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, PETSC_ERR_ARG_WRONG, <font color="#666666">"Unknown memory type: %s"</font>, mstring);
+<a name="line154">154: </a>  }
+
+<a name="line156">156: </a>  PetscMallocWithMemType(mtype, <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>) * maxn, (void **)&amp;rootdata);
+<a name="line157">157: </a>  PetscMallocWithMemType(mtype, <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>) * maxn, (void **)&amp;leafdata);
+
+<a name="line159">159: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc2.html">PetscMalloc2</a>(maxn, &amp;pbuf, maxn, &amp;ebuf);
+<a name="line160">160: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; maxn; i++) {
+<a name="line161">161: </a>    pbuf[i] = 123.0;
+<a name="line162">162: </a>    ebuf[i] = 456.0;
+<a name="line163">163: </a>  }
+
+<a name="line165">165: </a>  <font color="#4169E1">for</font> (n = 1, i = 0; n &lt;= maxn; n *= 2, i++) {
+<a name="line166">166: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFCreate.html">PetscSFCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;sf[i]);
+<a name="line167">167: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetFromOptions.html">PetscSFSetFromOptions</a>(sf[i]);
+<a name="line168">168: </a>    <font color="#4169E1">if</font> (rank == 0) {
+<a name="line169">169: </a>      nroots  = n;
+<a name="line170">170: </a>      nleaves = 0;
+<a name="line171">171: </a>    } <font color="#4169E1">else</font> {
+<a name="line172">172: </a>      nroots  = 0;
+<a name="line173">173: </a>      nleaves = n;
+<a name="line174">174: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; nleaves; j++) {
+<a name="line175">175: </a>        iremote[j].rank  = 0;
+<a name="line176">176: </a>        iremote[j].index = j;
+<a name="line177">177: </a>      }
+<a name="line178">178: </a>    }
+<a name="line179">179: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetGraph.html">PetscSFSetGraph</a>(sf[i], nroots, nleaves, NULL, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_COPY_VALUES</a>, iremote, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_COPY_VALUES</a>);
+<a name="line180">180: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFSetUp.html">PetscSFSetUp</a>(sf[i]);
+<a name="line181">181: </a>  }
+
+<a name="line183">183: </a>  <font color="#4169E1">if</font> (loopSmall &gt; 0) {
+<a name="line184">184: </a>    nskip = skipSmall;
+<a name="line185">185: </a>    niter = loopSmall;
+<a name="line186">186: </a>  } <font color="#4169E1">else</font> {
+<a name="line187">187: </a>    nskip = LAT_SKIP_SMALL;
+<a name="line188">188: </a>    niter = LAT_LOOP_SMALL;
+<a name="line189">189: </a>  }
+
+<a name="line191">191: </a>  <font color="#4169E1">for</font> (n = 1, j = 0; n &lt;= maxn; n *= 2, j++) {
+<a name="line192">192: </a>    msgsize = <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>) * n;
+<a name="line193">193: </a>    PetscMemcpyFromHostWithMemType(mtype, rootdata, pbuf, msgsize);
+<a name="line194">194: </a>    PetscMemcpyFromHostWithMemType(mtype, leafdata, ebuf, msgsize);
+
+<a name="line196">196: </a>    <font color="#4169E1">if</font> (msgsize &gt; LARGE_MESSAGE_SIZE) {
+<a name="line197">197: </a>      nskip = LAT_SKIP_LARGE;
+<a name="line198">198: </a>      niter = LAT_LOOP_LARGE;
+<a name="line199">199: </a>    }
+<a name="line200">200: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Barrier.html#MPI_Barrier">MPI_Barrier</a>(MPI_COMM_WORLD);
+
+<a name="line202">202: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; niter + nskip; i++) {
+<a name="line203">203: </a>      <font color="#4169E1">if</font> (i == nskip) {
+<a name="line204">204: </a>        SyncDevice();
+<a name="line205">205: </a>        <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Barrier.html#MPI_Barrier">MPI_Barrier</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>);
+<a name="line206">206: </a>        t_start = <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Wtime.html#MPI_Wtime">MPI_Wtime</a>();
+<a name="line207">207: </a>      }
+<a name="line208">208: </a>      <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastWithMemTypeBegin.html">PetscSFBcastWithMemTypeBegin</a>(sf[j], <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, mtype, rootdata, mtype, leafdata, op);
+<a name="line209">209: </a>      <a href="../../../../../docs/manualpages/PetscSF/PetscSFBcastEnd.html">PetscSFBcastEnd</a>(sf[j], <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, rootdata, leafdata, op);
+<a name="line210">210: </a>      <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceWithMemTypeBegin.html">PetscSFReduceWithMemTypeBegin</a>(sf[j], <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, mtype, leafdata, mtype, rootdata, op);
+<a name="line211">211: </a>      <a href="../../../../../docs/manualpages/PetscSF/PetscSFReduceEnd.html">PetscSFReduceEnd</a>(sf[j], <a href="../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, leafdata, rootdata, op);
+<a name="line212">212: </a>    }
+<a name="line213">213: </a>    SyncDevice();
+<a name="line214">214: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Barrier.html#MPI_Barrier">MPI_Barrier</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>);
+<a name="line215">215: </a>    t_end   = <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Wtime.html#MPI_Wtime">MPI_Wtime</a>();
+<a name="line216">216: </a>    time[j] = (t_end - t_start) * 1e6 / (niter * 2);
+<a name="line217">217: </a>  }
+
+<a name="line219">219: </a>  <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"\t##  <a href="../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> Ping-pong test on %s ##\n  Message(Bytes) \t\tLatency(us)\n"</font>, mtype == <a href="../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_HOST</a> ? <font color="#666666">"Host"</font> : <font color="#666666">"Device"</font>);
+<a name="line220">220: </a>  <font color="#4169E1">for</font> (n = 1, j = 0; n &lt;= maxn; n *= 2, j++) {
+<a name="line221">221: </a>    <a href="../../../../../docs/manualpages/PetscSF/PetscSFDestroy.html">PetscSFDestroy</a>(&amp;sf[j]);
+<a name="line222">222: </a>    <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"%16"</font> PetscInt_FMT <font color="#666666">" \t %16.4f\n"</font>, ((<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)<font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)) * n, time[j]);
+<a name="line223">223: </a>  }
+
+<a name="line225">225: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree2.html">PetscFree2</a>(pbuf, ebuf);
+<a name="line226">226: </a>  PetscFreeWithMemType(mtype, rootdata);
+<a name="line227">227: </a>  PetscFreeWithMemType(mtype, leafdata);
+<a name="line228">228: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(iremote);
+<a name="line229">229: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line230">230: </a>  <font color="#4169E1">return</font> 0;
+<a name="line231">231: </a>}
+
+<a name="line233">233: </a><font color="#B22222">/**TEST</font>
+<a name="line234">234: </a><font color="#B22222">  testset:</font>
+<a name="line235">235: </a><font color="#B22222">    # use small numbers to make the test cheap</font>
+<a name="line236">236: </a><font color="#B22222">    args: -maxn 4 -skipSmall 1 -loopSmall 1</font>
+<a name="line237">237: </a><font color="#B22222">    filter: grep "DOES_NOT_EXIST"</font>
+<a name="line238">238: </a><font color="#B22222">    output_file: output/empty.out</font>
+<a name="line239">239: </a><font color="#B22222">    nsize: 2</font>
+
+<a name="line241">241: </a><font color="#B22222">    test:</font>
+<a name="line242">242: </a><font color="#B22222">      args: -mtype host</font>
+
+<a name="line244">244: </a><font color="#B22222">    test:</font>
+<a name="line245">245: </a><font color="#B22222">      requires: cuda</font>
+<a name="line246">246: </a><font color="#B22222">      args: -mtype cuda</font>
+
+<a name="line248">248: </a><font color="#B22222">    test:</font>
+<a name="line249">249: </a><font color="#B22222">      requires: hip</font>
+<a name="line250">250: </a><font color="#B22222">      args: -mtype hip</font>
+
+<a name="line252">252: </a><font color="#B22222">    test:</font>
+<a name="line253">253: </a><font color="#B22222">      requires: kokkos</font>
+<a name="line254">254: </a><font color="#B22222">      args: -mtype kokkos</font>
+<a name="line255">255: </a><font color="#B22222">TEST**/</font>
+</pre>
+</body>
+
+</html>

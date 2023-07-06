@@ -1,0 +1,139 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/tutorials/ex5cu.cu">Actual source code: ex5cu.cu</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:12+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>static char help[] = <font color="#666666">"Test of CUDA matrix assemble with simple matrix.\n\n"</font>;
+
+<a name="line3">  3: </a>// This a minimal example of the use of the CUDA MatAIJ metadata <font color="#4169E1">for</font> assembly.
+<a name="line4">  4: </a>//
+<a name="line5">  5: </a>// The matrix must be a type 'aijcusparse' and must first be assembled on the CPU to provide the nonzero pattern.
+<a name="line6">  6: </a>// Next, get a pointer to a simple CSR mirror (PetscSplitCSRDataStructure) of the matrix data on
+<a name="line7">  7: </a>//    the GPU with MatCUSPARSEGetDeviceMatWrite().
+<a name="line8">  8: </a>// Then use this object to populate the matrix on the GPU with <a href="../../../docs/manualpages/Mat/MatSetValuesDevice.html">MatSetValuesDevice</a>().
+<a name="line9">  9: </a>// Finally call <a href="../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>/End() and the matrix is ready to use on the GPU without matrix data movement between the
+<a name="line10"> 10: </a>//    host and GPU.
+
+<a name="line12"> 12: </a><font color="#A020F0">#include &lt;petscconf.h&gt;</font>
+<a name="line13"> 13: </a>#include <A href="../../../include/petscmat.h.html">&lt;petscmat.h&gt;</A>
+<a name="line14"> 14: </a>#include <A href="../../../include/petscdevice_cuda.h.html">&lt;petscdevice_cuda.h&gt;</A>
+<a name="line15"> 15: </a><font color="#A020F0">#include &lt;assert.h&gt;</font>
+
+<a name="line17"> 17: </a>#include <A href="../../../include/petscaijdevice.h.html">&lt;petscaijdevice.h&gt;</A>
+<a name="line18"> 18: </a><strong><font color="#4169E1"><a name="assemble_on_gpu"></a>__global__ void assemble_on_gpu(PetscSplitCSRDataStructure d_mat, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> start, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> end, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> N, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank)</font></strong>
+<a name="line19"> 19: </a>{
+<a name="line20"> 20: </a>  const <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> inc = blockDim.x, my0 = threadIdx.x;
+<a name="line21"> 21: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       i;
+
+<a name="line24"> 24: </a>  <font color="#4169E1">for</font> (i = start + my0; i &lt; end + 1; i += inc) {
+<a name="line25"> 25: </a>    <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    js[] = {i - 1, i}, nn = (i == N) ? 1 : 2; // negative indices are ignored but &gt;= N are not, so clip end
+<a name="line26"> 26: </a>    <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> values[] = {1, 1, 1, 1};
+<a name="line27"> 27: </a>    <a href="../../../docs/manualpages/Mat/MatSetValuesDevice.html">MatSetValuesDevice</a>(d_mat, nn, js, nn, js, values, <a href="../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line28"> 28: </a>    <font color="#4169E1">if</font> (ierr) assert(0);
+<a name="line29"> 29: </a>  }
+<a name="line30"> 30: </a>}
+
+<a name="line32"> 32: </a><strong><font color="#4169E1"><a name="assemble_on_cpu"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> assemble_on_cpu(<a href="../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> start, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> end, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> N, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank)</font></strong>
+<a name="line33"> 33: </a>{
+<a name="line35"> 35: </a>  <font color="#4169E1">for</font> (<a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i = start; i &lt; end + 1; i++) {
+<a name="line36"> 36: </a>    <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    js[] = {i - 1, i}, nn = (i == N) ? 1 : 2;
+<a name="line37"> 37: </a>    <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> values[] = {1, 1, 1, 1};
+<a name="line38"> 38: </a>    <a href="../../../docs/manualpages/Mat/MatSetValues.html">MatSetValues</a>(A, nn, js, nn, js, values, <a href="../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line39"> 39: </a>  }
+<a name="line40"> 40: </a>  <font color="#4169E1">return</font> 0;
+<a name="line41"> 41: </a>}
+
+<a name="line43"> 43: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **args)</font></strong>
+<a name="line44"> 44: </a>{
+<a name="line45"> 45: </a>  <a href="../../../docs/manualpages/Mat/Mat.html">Mat</a>                        A;
+<a name="line46"> 46: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                   N = 11, nz = 3, Istart, Iend, num_threads = 128;
+<a name="line47"> 47: </a>  PetscSplitCSRDataStructure d_mat;
+<a name="line48"> 48: </a>  <a href="../../../docs/manualpages/Sys/PetscLogEvent.html">PetscLogEvent</a>              event;
+<a name="line49"> 49: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>                rank, size;
+<a name="line50"> 50: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>                  testmpiseq = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line51"> 51: </a>  <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>                        x, y;
+
+<a name="line54"> 54: </a>  <a href="../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;args, (char *)0, help);
+<a name="line55"> 55: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(NULL, NULL, <font color="#666666">"-n"</font>, &amp;N, NULL);
+<a name="line56"> 56: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(NULL, NULL, <font color="#666666">"-num_threads"</font>, &amp;num_threads, NULL);
+<a name="line57"> 57: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(NULL, NULL, <font color="#666666">"-nz_row"</font>, &amp;nz, NULL);
+<a name="line58"> 58: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, <font color="#666666">"-testmpiseq"</font>, &amp;testmpiseq, NULL);
+<a name="line59"> 59: </a>  <font color="#4169E1">if</font> (nz &lt; 3) nz = 3;
+<a name="line60"> 60: </a>  <font color="#4169E1">if</font> (nz &gt; N + 1) nz = N + 1;
+<a name="line61"> 61: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;rank);
+<a name="line62"> 62: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;size);
+
+<a name="line64"> 64: </a>  <a href="../../../docs/manualpages/Profiling/PetscLogEventRegister.html">PetscLogEventRegister</a>(<font color="#666666">"GPU operator"</font>, MAT_CLASSID, &amp;event);
+<a name="line65"> 65: </a>  <a href="../../../docs/manualpages/Mat/MatCreateAIJCUSPARSE.html">MatCreateAIJCUSPARSE</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <a href="../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, <a href="../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, N, N, nz, NULL, nz - 1, NULL, &amp;A);
+<a name="line66"> 66: </a>  <a href="../../../docs/manualpages/Mat/MatSetFromOptions.html">MatSetFromOptions</a>(A);
+<a name="line67"> 67: </a>  <a href="../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(A, <a href="../../../docs/manualpages/Mat/MatOption.html">MAT_IGNORE_OFF_PROC_ENTRIES</a>, <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+<a name="line68"> 68: </a>  <a href="../../../docs/manualpages/Mat/MatCreateVecs.html">MatCreateVecs</a>(A, &amp;x, &amp;y);
+<a name="line69"> 69: </a>  <a href="../../../docs/manualpages/Mat/MatGetOwnershipRange.html">MatGetOwnershipRange</a>(A, &amp;Istart, &amp;Iend);
+<a name="line70"> 70: </a>  <font color="#B22222">/* current GPU assembly code does not support offprocessor values insertion */</font>
+<a name="line71"> 71: </a>  assemble_on_cpu(A, Istart, Iend, N, rank);
+<a name="line72"> 72: </a>  <a href="../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(A, <a href="../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line73"> 73: </a>  <a href="../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(A, <a href="../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+
+<a name="line75"> 75: </a>  // test
+<a name="line76"> 76: </a>  <a href="../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(x, 1.0);
+<a name="line77"> 77: </a>  <a href="../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(A, x, y);
+<a name="line78"> 78: </a>  <a href="../../../docs/manualpages/Vec/VecViewFromOptions.html">VecViewFromOptions</a>(y, NULL, <font color="#666666">"-ex5_vec_view"</font>);
+
+<a name="line80"> 80: </a>  <font color="#4169E1">if</font> (testmpiseq &amp;&amp; size == 1) {
+<a name="line81"> 81: </a>    <a href="../../../docs/manualpages/Mat/MatConvert.html">MatConvert</a>(A, <a href="../../../docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a>, <a href="../../../docs/manualpages/Mat/MatReuse.html">MAT_INPLACE_MATRIX</a>, &amp;A);
+<a name="line82"> 82: </a>    <a href="../../../docs/manualpages/Mat/MatConvert.html">MatConvert</a>(A, <a href="../../../docs/manualpages/Mat/MATMPIAIJCUSPARSE.html">MATMPIAIJCUSPARSE</a>, <a href="../../../docs/manualpages/Mat/MatReuse.html">MAT_INPLACE_MATRIX</a>, &amp;A);
+<a name="line83"> 83: </a>  }
+<a name="line84"> 84: </a>  <a href="../../../docs/manualpages/Profiling/PetscLogEventBegin.html">PetscLogEventBegin</a>(event, 0, 0, 0, 0);
+<a name="line85"> 85: </a>  MatCUSPARSEGetDeviceMatWrite(A, &amp;d_mat);
+<a name="line86"> 86: </a>  assemble_on_gpu&lt;&lt;&lt;1, num_threads&gt;&gt;&gt;(d_mat, Istart, Iend, N, rank);
+<a name="line87"> 87: </a>  cudaDeviceSynchronize();
+<a name="line88"> 88: </a>  <a href="../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(A, <a href="../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line89"> 89: </a>  <a href="../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(A, <a href="../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line90"> 90: </a>  <a href="../../../docs/manualpages/Profiling/PetscLogEventEnd.html">PetscLogEventEnd</a>(event, 0, 0, 0, 0);
+
+<a name="line92"> 92: </a>  // test
+<a name="line93"> 93: </a>  <a href="../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(x, 1.0);
+<a name="line94"> 94: </a>  <a href="../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(A, x, y);
+<a name="line95"> 95: </a>  <a href="../../../docs/manualpages/Vec/VecViewFromOptions.html">VecViewFromOptions</a>(y, NULL, <font color="#666666">"-ex5_vec_view"</font>);
+
+<a name="line97"> 97: </a>  <a href="../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;A);
+<a name="line98"> 98: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;x);
+<a name="line99"> 99: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;y);
+<a name="line100">100: </a>  <a href="../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line101">101: </a>  <font color="#4169E1">return</font> 0;
+<a name="line102">102: </a>}
+
+<a name="line104">104: </a><font color="#B22222">/*TEST</font>
+
+<a name="line106">106: </a><font color="#B22222">   build:</font>
+<a name="line107">107: </a><font color="#B22222">      requires: cuda</font>
+
+<a name="line109">109: </a><font color="#B22222">   test:</font>
+<a name="line110">110: </a><font color="#B22222">      suffix: 0</font>
+<a name="line111">111: </a><font color="#B22222">      diff_args: -j</font>
+<a name="line112">112: </a><font color="#B22222">      args: -n 11 -ex5_vec_view</font>
+<a name="line113">113: </a><font color="#B22222">      nsize: 1</font>
+
+<a name="line115">115: </a><font color="#B22222">   test:</font>
+<a name="line116">116: </a><font color="#B22222">      suffix: 1</font>
+<a name="line117">117: </a><font color="#B22222">      diff_args: -j</font>
+<a name="line118">118: </a><font color="#B22222">      args: -n 11 -ex5_vec_view</font>
+<a name="line119">119: </a><font color="#B22222">      nsize: 2</font>
+
+<a name="line121">121: </a><font color="#B22222">   test:</font>
+<a name="line122">122: </a><font color="#B22222">      suffix: 2</font>
+<a name="line123">123: </a><font color="#B22222">      diff_args: -j</font>
+<a name="line124">124: </a><font color="#B22222">      args: -n 11 -testmpiseq -ex5_vec_view</font>
+<a name="line125">125: </a><font color="#B22222">      nsize: 1</font>
+
+<a name="line127">127: </a><font color="#B22222">TEST*/</font>
+</pre>
+</body>
+
+</html>

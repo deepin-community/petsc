@@ -1,0 +1,132 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/objects/device/interface/global_dcontext.cxx">Actual source code: global_dcontext.cxx</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:58+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#include </font><font color="#666666">"petscdevice_interface_internal.hpp"</font><font color="#A020F0"> </font><font color="#B22222">/*I &lt;petscdevice.h&gt; I*/</font><font color="#A020F0"></font>
+
+<a name="line3">  3: </a>static auto               rootDeviceType = PETSC_DEVICE_CONTEXT_DEFAULT_DEVICE_TYPE;
+<a name="line4">  4: </a>static auto               rootStreamType = PETSC_DEVICE_CONTEXT_DEFAULT_STREAM_TYPE;
+<a name="line5">  5: </a>static <a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> globalContext  = nullptr;
+
+<a name="line7">  7: </a><font color="#B22222">/* when PetsDevice initializes <a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> eagerly the type of device created should</font>
+<a name="line8">  8: </a><font color="#B22222"> * match whatever device is eagerly initialized */</font>
+<a name="line9">  9: </a><strong><font color="#4169E1"><a name="PetscDeviceContextSetRootDeviceType_Internal"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextSetRootDeviceType_Internal(<a href="../../../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a> type)</font></strong>
+<a name="line10"> 10: </a>{
+<a name="line12"> 12: </a>  rootDeviceType = type;
+<a name="line13"> 13: </a>  <font color="#4169E1">return</font> 0;
+<a name="line14"> 14: </a>}
+
+<a name="line16"> 16: </a><strong><font color="#4169E1"><a name="PetscDeviceContextSetRootStreamType_Internal"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextSetRootStreamType_Internal(<a href="../../../../../docs/manualpages/Sys/PetscStreamType.html">PetscStreamType</a> type)</font></strong>
+<a name="line17"> 17: </a>{
+<a name="line19"> 19: </a>  rootStreamType = type;
+<a name="line20"> 20: </a>  <font color="#4169E1">return</font> 0;
+<a name="line21"> 21: </a>}
+
+<a name="line23"> 23: </a><strong><font color="#4169E1"><a name="PetscDeviceContextSetupGlobalContext_Private"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDeviceContextSetupGlobalContext_Private()</font></strong> noexcept
+<a name="line24"> 24: </a>{
+<a name="line25"> 25: </a>  <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(!globalContext)) {
+<a name="line26"> 26: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> pobj;
+<a name="line27"> 27: </a>    const auto  dtype     = rootDeviceType;
+<a name="line28"> 28: </a>    const auto  finalizer = [] {
+<a name="line29"> 29: </a>      <a href="../../../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a> dtype;
+
+<a name="line31"> 31: </a>      <a href="../../../../../docs/manualpages/Sys/PetscDeviceContextGetDeviceType.html">PetscDeviceContextGetDeviceType</a>(globalContext, &amp;dtype);
+<a name="line32"> 32: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(globalContext, <font color="#666666">"Destroying global <a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> with device type %s\n"</font>, PetscDeviceTypes[dtype]);
+<a name="line33"> 33: </a>      <a href="../../../../../docs/manualpages/Sys/PetscDeviceContextDestroy.html">PetscDeviceContextDestroy</a>(&amp;globalContext);
+<a name="line34"> 34: </a>      rootDeviceType = PETSC_DEVICE_CONTEXT_DEFAULT_DEVICE_TYPE;
+<a name="line35"> 35: </a>      rootStreamType = PETSC_DEVICE_CONTEXT_DEFAULT_STREAM_TYPE;
+<a name="line36"> 36: </a>      <font color="#4169E1">return</font> 0;
+<a name="line37"> 37: </a>    };
+
+<a name="line39"> 39: </a>    <font color="#B22222">/* this exists purely as a valid device check. */</font>
+<a name="line40"> 40: </a>    <a href="../../../../../docs/manualpages/Sys/PetscDeviceInitializePackage.html">PetscDeviceInitializePackage</a>();
+<a name="line41"> 41: </a>    <a href="../../../../../docs/manualpages/Sys/PetscRegisterFinalize.html">PetscRegisterFinalize</a>(std::move(finalizer));
+<a name="line42"> 42: </a>    <a href="../../../../../docs/manualpages/Sys/PetscDeviceContextCreate.html">PetscDeviceContextCreate</a>(&amp;globalContext);
+<a name="line43"> 43: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(globalContext, <font color="#666666">"Initializing global <a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> with device type %s\n"</font>, PetscDeviceTypes[dtype]);
+<a name="line44"> 44: </a>    pobj = PetscObjectCast(globalContext);
+<a name="line45"> 45: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>(pobj, <font color="#666666">"global root"</font>);
+<a name="line46"> 46: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectSetOptionsPrefix.html">PetscObjectSetOptionsPrefix</a>(pobj, <font color="#666666">"root_"</font>);
+<a name="line47"> 47: </a>    <a href="../../../../../docs/manualpages/Sys/PetscDeviceContextSetStreamType.html">PetscDeviceContextSetStreamType</a>(globalContext, rootStreamType);
+<a name="line48"> 48: </a>    PetscDeviceContextSetDefaultDeviceForType_Internal(globalContext, dtype);
+<a name="line49"> 49: </a>    <a href="../../../../../docs/manualpages/Sys/PetscDeviceContextSetUp.html">PetscDeviceContextSetUp</a>(globalContext);
+<a name="line50"> 50: </a>  }
+<a name="line51"> 51: </a>  <font color="#4169E1">return</font> 0;
+<a name="line52"> 52: </a>}
+
+<a name="line54"> 54: </a><font color="#B22222">/*@C</font>
+<a name="line55"> 55: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Sys/PetscDeviceContextGetCurrentContext.html">PetscDeviceContextGetCurrentContext</a> - Get the current active `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>`</font>
+
+<a name="line57"> 57: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line59"> 59: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line60"> 60: </a><font color="#B22222">. dctx - The `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>`</font>
+
+<a name="line62"> 62: </a><font color="#B22222">  Notes:</font>
+<a name="line63"> 63: </a><font color="#B22222">  The user generally should not destroy contexts retrieved with this routine unless they</font>
+<a name="line64"> 64: </a><font color="#B22222">  themselves have created them. There exists no protection against destroying the root</font>
+<a name="line65"> 65: </a><font color="#B22222">  context.</font>
+
+<a name="line67"> 67: </a><font color="#B22222">  Developer Notes:</font>
+<a name="line68"> 68: </a><font color="#B22222">  Unless the user has set their own, this routine creates the "root" context the first time it</font>
+<a name="line69"> 69: </a><font color="#B22222">  is called, registering its destructor to `<a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>()`.</font>
+
+<a name="line71"> 71: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line73"> 73: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContextSetCurrentContext.html">PetscDeviceContextSetCurrentContext</a>()`, `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContextFork.html">PetscDeviceContextFork</a>()`,</font>
+<a name="line74"> 74: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContextJoin.html">PetscDeviceContextJoin</a>()`, `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContextCreate.html">PetscDeviceContextCreate</a>()`</font>
+<a name="line75"> 75: </a><font color="#B22222">@*/</font>
+<a name="line76"> 76: </a><strong><font color="#4169E1"><a name="PetscDeviceContextGetCurrentContext"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Sys/PetscDeviceContextGetCurrentContext.html">PetscDeviceContextGetCurrentContext</a>(<a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *dctx)</font></strong>
+<a name="line77"> 77: </a>{
+<a name="line79"> 79: </a>  PetscDeviceContextSetupGlobalContext_Private();
+<a name="line80"> 80: </a>  <font color="#B22222">/* while the static analyzer can find global variables, it will throw a warning about not</font>
+<a name="line81"> 81: </a><font color="#B22222">   * being able to connect this back to the function arguments */</font>
+<a name="line83"> 83: </a>  *dctx = globalContext;
+<a name="line84"> 84: </a>  <font color="#4169E1">return</font> 0;
+<a name="line85"> 85: </a>}
+
+<a name="line87"> 87: </a><font color="#B22222">/*@C</font>
+<a name="line88"> 88: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Sys/PetscDeviceContextSetCurrentContext.html">PetscDeviceContextSetCurrentContext</a> - Set the current active `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>`</font>
+
+<a name="line90"> 90: </a><font color="#B22222">  Not Collective</font>
+
+<a name="line92"> 92: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line93"> 93: </a><font color="#B22222">. dctx - The `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>`</font>
+
+<a name="line95"> 95: </a><font color="#B22222">  Notes:</font>
+<a name="line96"> 96: </a><font color="#B22222">  This routine can be used to set the defacto "root" `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>` to a user-defined</font>
+<a name="line97"> 97: </a><font color="#B22222">  implementation by calling this routine immediately after `<a href="../../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>()` and ensuring that</font>
+<a name="line98"> 98: </a><font color="#B22222">  `<a href="../../../../../docs/manualpages/Sys/PetscDevice.html">PetscDevice</a>` is not greedily initialized. In this case the user is responsible for destroying</font>
+<a name="line99"> 99: </a><font color="#B22222">  their `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>` before `<a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>()` returns.</font>
+
+<a name="line101">101: </a><font color="#B22222">  The old context is not stored in any way by this routine; if one is overriding a context that</font>
+<a name="line102">102: </a><font color="#B22222">  they themselves do not control, one should take care to temporarily store it by calling</font>
+<a name="line103">103: </a><font color="#B22222">  `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContextGetCurrentContext.html">PetscDeviceContextGetCurrentContext</a>()` before calling this routine.</font>
+
+<a name="line105">105: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line107">107: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContextGetCurrentContext.html">PetscDeviceContextGetCurrentContext</a>()`, `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContextFork.html">PetscDeviceContextFork</a>()`,</font>
+<a name="line108">108: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContextJoin.html">PetscDeviceContextJoin</a>()`, `<a href="../../../../../docs/manualpages/Sys/PetscDeviceContextCreate.html">PetscDeviceContextCreate</a>()`</font>
+<a name="line109">109: </a><font color="#B22222">@*/</font>
+<a name="line110">110: </a><strong><font color="#4169E1"><a name="PetscDeviceContextSetCurrentContext"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Sys/PetscDeviceContextSetCurrentContext.html">PetscDeviceContextSetCurrentContext</a>(<a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx)</font></strong>
+<a name="line111">111: </a>{
+<a name="line112">112: </a>  <a href="../../../../../docs/manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a> dtype;
+
+<a name="line114">114: </a>  PetscDeviceContextGetOptionalNullContext_Internal(&amp;dctx);
+<a name="line115">115: </a>  <a href="../../../../../docs/manualpages/Sys/PetscAssert.html">PetscAssert</a>(dctx-&gt;setup, <a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_WRONGSTATE, <font color="#666666">"<a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> %"</font> PetscInt64_FMT <font color="#666666">" must be set up before being set as global context"</font>, PetscObjectCast(dctx)-&gt;id);
+<a name="line116">116: </a>  <a href="../../../../../docs/manualpages/Sys/PetscDeviceContextGetDeviceType.html">PetscDeviceContextGetDeviceType</a>(dctx, &amp;dtype);
+<a name="line117">117: </a>  <a href="../../../../../docs/manualpages/Sys/PetscDeviceSetDefaultDeviceType.html">PetscDeviceSetDefaultDeviceType</a>(dtype);
+<a name="line118">118: </a>  globalContext = dctx;
+<a name="line119">119: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(dctx, <font color="#666666">"Set global <a href="../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> id %"</font> PetscInt64_FMT <font color="#666666">"\n"</font>, PetscObjectCast(dctx)-&gt;id);
+<a name="line120">120: </a>  <font color="#4169E1">return</font> 0;
+<a name="line121">121: </a>}
+</pre>
+</body>
+
+</html>

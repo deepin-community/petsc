@@ -1,0 +1,48 @@
+# VecScatterDestroy
+Destroys a scatter context created by `VecScatterCreate()` 
+## Synopsis
+```
+#include "petscsf.h" 
+PetscErrorCode VecScatterDestroy(VecScatter *sf)
+```
+Collective on sf
+
+
+## Input Parameter
+
+- ***sf -*** the scatter context
+
+
+
+
+
+## See Also
+ [](sec_scatter), `VecScatter`, `VecScatterCreate()`, `VecScatterCopy()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/sf/interface/vscat.c.html#VecScatterDestroy">src/vec/is/sf/interface/vscat.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/utils/tagger/tutorials/ex1.c.html">src/vec/vec/utils/tagger/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex44.c.html">src/vec/vec/tutorials/ex44.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex14.c.html">src/dm/tutorials/ex14.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex22.c.html">src/dm/tutorials/ex22.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex6.c.html">src/dm/tutorials/ex6.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex43.c.html">src/ksp/ksp/tutorials/ex43.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex49.c.html">src/ksp/ksp/tutorials/ex49.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex73.c.html">src/ksp/ksp/tutorials/ex73.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex29.c.html">src/ts/tutorials/ex29.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/constrained/tutorials/ex1.c.html">src/tao/constrained/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/pde_constrained/tutorials/elliptic.c.html">src/tao/pde_constrained/tutorials/elliptic.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/is/sf/interface/vscat.c)
+
+
+[Index of all PetscSF routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

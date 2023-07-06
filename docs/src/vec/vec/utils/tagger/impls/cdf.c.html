@@ -1,0 +1,574 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/vec/vec/utils/tagger/impls/cdf.c">Actual source code: cdf.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:12+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../../../../../include/petsc/private/vecimpl.h.html">&lt;petsc/private/vecimpl.h&gt;</A>
+<a name="line3">  3: </a><font color="#A020F0">#include </font><font color="#666666">"../src/vec/vec/utils/tagger/impls/simple.h"</font><font color="#A020F0"></font>
+
+<a name="line5">  5: </a>const char *const VecTaggerCDFMethods[<a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFMethod.html">VECTAGGER_CDF_NUM_METHODS</a>] = {<font color="#666666">"gather"</font>, <font color="#666666">"iterative"</font>};
+
+<a name="line7">  7: </a><font color="#A020F0">#if !defined(PETSC_USE_COMPLEX)</font>
+<a name="line8">  8: </a><font color="#4169E1">typedef <a href="../../../../../../docs/manualpages/Vec/VecTaggerBox.html">VecTaggerBox</a> VecTaggerBoxReal;</font>
+<a name="line9">  9: </a><font color="#A020F0">#else</font>
+<a name="line10"> 10: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line11"> 11: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> min;
+<a name="line12"> 12: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> max;
+<a name="line13"> 13: </a>} VecTaggerBoxReal;
+<a name="line14"> 14: </a><font color="#A020F0">#endif</font>
+
+<a name="line16"> 16: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line17"> 17: </a>  VecTagger_Simple   smpl;
+<a name="line18"> 18: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>          atol;
+<a name="line19"> 19: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>          rtol;
+<a name="line20"> 20: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           maxit;
+<a name="line21"> 21: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           numMoments;
+<a name="line22"> 22: </a>  <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFMethod.html">VecTaggerCDFMethod</a> method;
+<a name="line23"> 23: </a>} VecTagger_CDF;
+
+<a name="line25"> 25: </a><strong><font color="#4169E1"><a name="VecTaggerComputeBox_CDF_SortedArray"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecTaggerComputeBox_CDF_SortedArray(const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *cArray, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> m, const VecTaggerBoxReal *bxs, VecTaggerBoxReal *boxes)</font></strong>
+<a name="line26"> 26: </a>{
+<a name="line27"> 27: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  minInd, maxInd;
+<a name="line28"> 28: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> minCDF, maxCDF;
+
+<a name="line30"> 30: </a>  minCDF     = <a href="../../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(0., bxs-&gt;min);
+<a name="line31"> 31: </a>  maxCDF     = <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(1., bxs-&gt;max);
+<a name="line32"> 32: </a>  minInd     = (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)(minCDF * m);
+<a name="line33"> 33: </a>  maxInd     = (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)(maxCDF * m);
+<a name="line34"> 34: </a>  boxes-&gt;min = cArray[<a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(minInd, m - 1)];
+<a name="line35"> 35: </a>  boxes-&gt;max = cArray[<a href="../../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(minInd, maxInd - 1)];
+<a name="line36"> 36: </a>  <font color="#4169E1">return</font> 0;
+<a name="line37"> 37: </a>}
+
+<a name="line39"> 39: </a><strong><font color="#4169E1"><a name="VecTaggerComputeBoxes_CDF_Serial"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecTaggerComputeBoxes_CDF_Serial(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> vec, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> bs, <a href="../../../../../../docs/manualpages/Vec/VecTaggerBox.html">VecTaggerBox</a> *boxes)</font></strong>
+<a name="line40"> 40: </a>{
+<a name="line41"> 41: </a>  VecTagger_Simple *smpl = (VecTagger_Simple *)tagger-&gt;data;
+<a name="line42"> 42: </a>  <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>               vComp;
+<a name="line43"> 43: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          n, m;
+<a name="line44"> 44: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          i;
+<a name="line45"> 45: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line46"> 46: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *cReal, *cImag;
+<a name="line47"> 47: </a><font color="#A020F0">#endif</font>
+
+<a name="line49"> 49: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(vec, &amp;n);
+<a name="line50"> 50: </a>  m = n / bs;
+<a name="line51"> 51: </a>  <a href="../../../../../../docs/manualpages/Vec/VecCreateSeq.html">VecCreateSeq</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, m, &amp;vComp);
+<a name="line52"> 52: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line53"> 53: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc2.html">PetscMalloc2</a>(m, &amp;cReal, m, &amp;cImag);
+<a name="line54"> 54: </a><font color="#A020F0">#endif</font>
+<a name="line55"> 55: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; bs; i++) {
+<a name="line56"> 56: </a>    <a href="../../../../../../docs/manualpages/IS/IS.html">IS</a>           isStride;
+<a name="line57"> 57: </a>    <a href="../../../../../../docs/manualpages/PetscSF/VecScatter.html">VecScatter</a>   vScat;
+<a name="line58"> 58: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *cArray;
+
+<a name="line60"> 60: </a>    <a href="../../../../../../docs/manualpages/IS/ISCreateStride.html">ISCreateStride</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, m, i, bs, &amp;isStride);
+<a name="line61"> 61: </a>    <a href="../../../../../../docs/manualpages/PetscSF/VecScatterCreate.html">VecScatterCreate</a>(vec, isStride, vComp, NULL, &amp;vScat);
+<a name="line62"> 62: </a>    <a href="../../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(vScat, vec, vComp, <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line63"> 63: </a>    <a href="../../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(vScat, vec, vComp, <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line64"> 64: </a>    <a href="../../../../../../docs/manualpages/PetscSF/VecScatterDestroy.html">VecScatterDestroy</a>(&amp;vScat);
+<a name="line65"> 65: </a>    <a href="../../../../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;isStride);
+
+<a name="line67"> 67: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(vComp, &amp;cArray);
+<a name="line68"> 68: </a><font color="#A020F0">#if !defined(PETSC_USE_COMPLEX)</font>
+<a name="line69"> 69: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscSortReal.html">PetscSortReal</a>(m, cArray);
+<a name="line70"> 70: </a>    VecTaggerComputeBox_CDF_SortedArray(cArray, m, &amp;smpl-&gt;box[i], &amp;boxes[i]);
+<a name="line71"> 71: </a><font color="#A020F0">#else</font>
+<a name="line72"> 72: </a>    {
+<a name="line73"> 73: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         j;
+<a name="line74"> 74: </a>      VecTaggerBoxReal realBxs, imagBxs;
+<a name="line75"> 75: </a>      VecTaggerBoxReal realBoxes, imagBoxes;
+
+<a name="line77"> 77: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; m; j++) {
+<a name="line78"> 78: </a>        cReal[j] = <a href="../../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cArray[j]);
+<a name="line79"> 79: </a>        cImag[j] = <a href="../../../../../../docs/manualpages/Sys/PetscImaginaryPart.html">PetscImaginaryPart</a>(cArray[j]);
+<a name="line80"> 80: </a>      }
+<a name="line81"> 81: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscSortReal.html">PetscSortReal</a>(m, cReal);
+<a name="line82"> 82: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscSortReal.html">PetscSortReal</a>(m, cImag);
+
+<a name="line84"> 84: </a>      realBxs.min = <a href="../../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(smpl-&gt;box[i].min);
+<a name="line85"> 85: </a>      realBxs.max = <a href="../../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(smpl-&gt;box[i].max);
+<a name="line86"> 86: </a>      imagBxs.min = <a href="../../../../../../docs/manualpages/Sys/PetscImaginaryPart.html">PetscImaginaryPart</a>(smpl-&gt;box[i].min);
+<a name="line87"> 87: </a>      imagBxs.max = <a href="../../../../../../docs/manualpages/Sys/PetscImaginaryPart.html">PetscImaginaryPart</a>(smpl-&gt;box[i].max);
+<a name="line88"> 88: </a>      VecTaggerComputeBox_CDF_SortedArray(cReal, m, &amp;realBxs, &amp;realBoxes);
+<a name="line89"> 89: </a>      VecTaggerComputeBox_CDF_SortedArray(cImag, m, &amp;imagBxs, &amp;imagBoxes);
+<a name="line90"> 90: </a>      boxes[i].min = PetscCMPLX(realBoxes.min, imagBoxes.min);
+<a name="line91"> 91: </a>      boxes[i].max = PetscCMPLX(realBoxes.max, imagBoxes.max);
+<a name="line92"> 92: </a>    }
+<a name="line93"> 93: </a><font color="#A020F0">#endif</font>
+<a name="line94"> 94: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(vComp, &amp;cArray);
+<a name="line95"> 95: </a>  }
+<a name="line96"> 96: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line97"> 97: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree2.html">PetscFree2</a>(cReal, cImag);
+<a name="line98"> 98: </a><font color="#A020F0">#endif</font>
+<a name="line99"> 99: </a>  <a href="../../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;vComp);
+<a name="line100">100: </a>  <font color="#4169E1">return</font> 0;
+<a name="line101">101: </a>}
+
+<a name="line103">103: </a><strong><font color="#4169E1"><a name="VecTaggerComputeBoxes_CDF_Gather"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecTaggerComputeBoxes_CDF_Gather(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> vec, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> bs, <a href="../../../../../../docs/manualpages/Vec/VecTaggerBox.html">VecTaggerBox</a> *boxes)</font></strong>
+<a name="line104">104: </a>{
+<a name="line105">105: </a>  <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>         gVec = NULL;
+<a name="line106">106: </a>  <a href="../../../../../../docs/manualpages/PetscSF/VecScatter.html">VecScatter</a>  vScat;
+<a name="line107">107: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+
+<a name="line109">109: </a>  <a href="../../../../../../docs/manualpages/PetscSF/VecScatterCreateToZero.html">VecScatterCreateToZero</a>(vec, &amp;vScat, &amp;gVec);
+<a name="line110">110: </a>  <a href="../../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(vScat, vec, gVec, <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line111">111: </a>  <a href="../../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(vScat, vec, gVec, <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line112">112: </a>  <a href="../../../../../../docs/manualpages/PetscSF/VecScatterDestroy.html">VecScatterDestroy</a>(&amp;vScat);
+<a name="line113">113: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vec), &amp;rank);
+<a name="line114">114: </a>  <font color="#4169E1">if</font> (rank == 0) VecTaggerComputeBoxes_CDF_Serial(tagger, gVec, bs, boxes);
+<a name="line115">115: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Bcast.html#MPI_Bcast">MPI_Bcast</a>((<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *)boxes, 2 * bs, <a href="../../../../../../docs/manualpages/Sys/MPIU_SCALAR.html">MPIU_SCALAR</a>, 0, <a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vec));
+<a name="line116">116: </a>  <a href="../../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;gVec);
+<a name="line117">117: </a>  <font color="#4169E1">return</font> 0;
+<a name="line118">118: </a>}
+
+<a name="line120">120: </a><font color="#4169E1"><a name="_n_CDFStats"></a>typedef struct _n_CDFStats </font>{
+<a name="line121">121: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> min;
+<a name="line122">122: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> max;
+<a name="line123">123: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> moment[3];
+<a name="line124">124: </a>} CDFStats;
+
+<a name="line126">126: </a><strong><font color="#4169E1"><a name="VecTaggerCDFStatsReduce"></a>static void MPIAPI VecTaggerCDFStatsReduce(void *a, void *b, int *len, MPI_Datatype *datatype)</font></strong>
+<a name="line127">127: </a>{
+<a name="line128">128: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  i, j, N = *len;
+<a name="line129">129: </a>  CDFStats *A = (CDFStats *)a;
+<a name="line130">130: </a>  CDFStats *B = (CDFStats *)b;
+
+<a name="line132">132: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; N; i++) {
+<a name="line133">133: </a>    B[i].min = <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(A[i].min, B[i].min);
+<a name="line134">134: </a>    B[i].max = <a href="../../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(A[i].max, B[i].max);
+<a name="line135">135: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; 3; j++) B[i].moment[j] += A[i].moment[j];
+<a name="line136">136: </a>  }
+<a name="line137">137: </a>}
+
+<a name="line139">139: </a><strong><font color="#4169E1"><a name="CDFUtilInverseEstimate"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CDFUtilInverseEstimate(const CDFStats *stats, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> cdfTarget, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *absEst)</font></strong>
+<a name="line140">140: </a>{
+<a name="line141">141: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> min, max;
+
+<a name="line143">143: </a>  min     = stats-&gt;min;
+<a name="line144">144: </a>  max     = stats-&gt;max;
+<a name="line145">145: </a>  *absEst = min + cdfTarget * (max - min);
+<a name="line146">146: </a>  <font color="#4169E1">return</font> 0;
+<a name="line147">147: </a>}
+
+<a name="line149">149: </a><strong><font color="#4169E1"><a name="VecTaggerComputeBox_CDF_SortedArray_Iterative"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecTaggerComputeBox_CDF_SortedArray_Iterative(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger, MPI_Datatype statType, MPI_Op statReduce, const <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *cArray, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> m, const VecTaggerBoxReal *cdfBox, VecTaggerBoxReal *absBox)</font></strong>
+<a name="line150">150: </a>{
+<a name="line151">151: </a>  <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>       comm;
+<a name="line152">152: </a>  VecTagger_CDF *cdf;
+<a name="line153">153: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       maxit, i, j, k, l, M;
+<a name="line154">154: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       bounds[2][2];
+<a name="line155">155: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       offsets[2];
+<a name="line156">156: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>      intervalLen = cdfBox-&gt;max - cdfBox-&gt;min;
+<a name="line157">157: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>      rtol, atol;
+
+<a name="line159">159: </a>  comm  = <a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tagger);
+<a name="line160">160: </a>  cdf   = (VecTagger_CDF *)tagger-&gt;data;
+<a name="line161">161: </a>  maxit = cdf-&gt;maxit;
+<a name="line162">162: </a>  rtol  = cdf-&gt;rtol;
+<a name="line163">163: </a>  atol  = cdf-&gt;atol;
+<a name="line164">164: </a>  <font color="#B22222">/* local range of sorted values that can contain the sought radix */</font>
+<a name="line165">165: </a>  offsets[0]   = 0;
+<a name="line166">166: </a>  offsets[1]   = 0;
+<a name="line167">167: </a>  bounds[0][0] = 0;
+<a name="line168">168: </a>  bounds[0][1] = m;
+<a name="line169">169: </a>  bounds[1][0] = 0;
+<a name="line170">170: </a>  bounds[1][1] = m;
+<a name="line171">171: </a>  VecTaggerComputeBox_CDF_SortedArray(cArray, m, cdfBox, absBox); <font color="#B22222">/* compute a local estimate of the interval */</font>
+<a name="line172">172: </a>  {
+<a name="line173">173: </a>    CDFStats stats[3];
+
+<a name="line175">175: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; 2; i++) { <font color="#B22222">/* compute statistics of those local estimates */</font>
+<a name="line176">176: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> val = i ? absBox-&gt;max : absBox-&gt;min;
+
+<a name="line178">178: </a>      stats[i].min       = m ? val : PETSC_MAX_REAL;
+<a name="line179">179: </a>      stats[i].max       = m ? val : PETSC_MIN_REAL;
+<a name="line180">180: </a>      stats[i].moment[0] = m;
+<a name="line181">181: </a>      stats[i].moment[1] = m * val;
+<a name="line182">182: </a>      stats[i].moment[2] = m * val * val;
+<a name="line183">183: </a>    }
+<a name="line184">184: </a>    stats[2].min = PETSC_MAX_REAL;
+<a name="line185">185: </a>    stats[2].max = PETSC_MAX_REAL;
+<a name="line186">186: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; 3; i++) stats[2].moment[i] = 0.;
+<a name="line187">187: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; m; i++) {
+<a name="line188">188: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> val = cArray[i];
+
+<a name="line190">190: </a>      stats[2].min = <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(stats[2].min, val);
+<a name="line191">191: </a>      stats[2].max = <a href="../../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(stats[2].max, val);
+<a name="line192">192: </a>      stats[2].moment[0]++;
+<a name="line193">193: </a>      stats[2].moment[1] += val;
+<a name="line194">194: </a>      stats[2].moment[2] += val * val;
+<a name="line195">195: </a>    }
+<a name="line196">196: </a>    <font color="#B22222">/* reduce those statistics */</font>
+<a name="line197">197: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a>(MPI_IN_PLACE, stats, 3, statType, statReduce, comm);
+<a name="line198">198: </a>    M = (<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)stats[2].moment[0];
+<a name="line199">199: </a>    <font color="#B22222">/* use those initial statistics to get the initial (globally agreed-upon) choices for the absolute box bounds */</font>
+<a name="line200">200: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; 2; i++) CDFUtilInverseEstimate(&amp;stats[i], i ? cdfBox-&gt;max : cdfBox-&gt;min, (i ? &amp;absBox-&gt;max : &amp;absBox-&gt;min));
+<a name="line201">201: </a>  }
+<a name="line202">202: </a>  <font color="#B22222">/* refine the estimates by computing how close they come to the desired box and refining */</font>
+<a name="line203">203: </a>  <font color="#4169E1">for</font> (k = 0; k &lt; maxit; k++) {
+<a name="line204">204: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> maxDiff = 0.;
+
+<a name="line206">206: </a>    CDFStats stats[2][2];
+<a name="line207">207: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> newBounds[2][2][2];
+<a name="line208">208: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; 2; i++) {
+<a name="line209">209: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; 2; j++) {
+<a name="line210">210: </a>        stats[i][j].min = PETSC_MAX_REAL;
+<a name="line211">211: </a>        stats[i][j].max = PETSC_MIN_REAL;
+<a name="line212">212: </a>        <font color="#4169E1">for</font> (l = 0; l &lt; 3; l++) stats[i][j].moment[l] = 0.;
+<a name="line213">213: </a>        newBounds[i][j][0] = <a href="../../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(bounds[i][0], bounds[i][1]);
+<a name="line214">214: </a>        newBounds[i][j][1] = <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(bounds[i][0], bounds[i][1]);
+<a name="line215">215: </a>      }
+<a name="line216">216: </a>    }
+<a name="line217">217: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; 2; i++) {
+<a name="line218">218: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; bounds[i][1] - bounds[i][0]; j++) {
+<a name="line219">219: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  thisInd = bounds[i][0] + j;
+<a name="line220">220: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> val     = cArray[thisInd];
+<a name="line221">221: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  section;
+<a name="line222">222: </a>        <font color="#4169E1">if</font> (!i) {
+<a name="line223">223: </a>          section = (val &lt; absBox-&gt;min) ? 0 : 1;
+<a name="line224">224: </a>        } <font color="#4169E1">else</font> {
+<a name="line225">225: </a>          section = (val &lt;= absBox-&gt;max) ? 0 : 1;
+<a name="line226">226: </a>        }
+<a name="line227">227: </a>        stats[i][section].min = <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(stats[i][section].min, val);
+<a name="line228">228: </a>        stats[i][section].max = <a href="../../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(stats[i][section].max, val);
+<a name="line229">229: </a>        stats[i][section].moment[0]++;
+<a name="line230">230: </a>        stats[i][section].moment[1] += val;
+<a name="line231">231: </a>        stats[i][section].moment[2] += val * val;
+<a name="line232">232: </a>        newBounds[i][section][0] = <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(newBounds[i][section][0], thisInd);
+<a name="line233">233: </a>        newBounds[i][section][1] = <a href="../../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(newBounds[i][section][0], thisInd + 1);
+<a name="line234">234: </a>      }
+<a name="line235">235: </a>    }
+<a name="line236">236: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a>(MPI_IN_PLACE, stats, 4, statType, statReduce, comm);
+<a name="line237">237: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; 2; i++) {
+<a name="line238">238: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  totalLessThan = offsets[i] + stats[i][0].moment[0];
+<a name="line239">239: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> cdfOfAbs      = (<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>)totalLessThan / (<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>)M;
+<a name="line240">240: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> diff;
+<a name="line241">241: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  section;
+
+<a name="line243">243: </a>      <font color="#4169E1">if</font> (cdfOfAbs == (i ? cdfBox-&gt;max : cdfBox-&gt;min)) {
+<a name="line244">244: </a>        offsets[i]   = totalLessThan;
+<a name="line245">245: </a>        bounds[i][0] = bounds[i][1] = 0;
+<a name="line246">246: </a>        <font color="#4169E1">continue</font>;
+<a name="line247">247: </a>      }
+<a name="line248">248: </a>      <font color="#4169E1">if</font> (cdfOfAbs &gt; (i ? cdfBox-&gt;max : cdfBox-&gt;min)) { <font color="#B22222">/* the correct absolute value lies in the lower section */</font>
+<a name="line249">249: </a>        section = 0;
+<a name="line250">250: </a>      } <font color="#4169E1">else</font> {
+<a name="line251">251: </a>        section    = 1;
+<a name="line252">252: </a>        offsets[i] = totalLessThan;
+<a name="line253">253: </a>      }
+<a name="line254">254: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; 2; j++) bounds[i][j] = newBounds[i][section][j];
+<a name="line255">255: </a>      CDFUtilInverseEstimate(&amp;stats[i][section], ((i ? cdfBox-&gt;max : cdfBox-&gt;min) - ((<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>)offsets[i] / (<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>)M)) / stats[i][section].moment[0], (i ? &amp;absBox-&gt;max : &amp;absBox-&gt;min));
+<a name="line256">256: </a>      diff    = <a href="../../../../../../docs/manualpages/Sys/PetscAbs.html">PetscAbs</a>(cdfOfAbs - (i ? cdfBox-&gt;max : cdfBox-&gt;min));
+<a name="line257">257: </a>      maxDiff = <a href="../../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(maxDiff, diff);
+<a name="line258">258: </a>    }
+<a name="line259">259: </a>    <font color="#4169E1">if</font> (!maxDiff) <font color="#4169E1">return</font> 0;
+<a name="line260">260: </a>    <font color="#4169E1">if</font> ((atol || rtol) &amp;&amp; ((!atol) || (maxDiff &lt;= atol)) &amp;&amp; ((!rtol) || (maxDiff &lt;= rtol * intervalLen))) <font color="#4169E1">break</font>;
+<a name="line261">261: </a>  }
+<a name="line262">262: </a>  <font color="#4169E1">return</font> 0;
+<a name="line263">263: </a>}
+
+<a name="line265">265: </a><strong><font color="#4169E1"><a name="VecTaggerComputeBoxes_CDF_Iterative"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecTaggerComputeBoxes_CDF_Iterative(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> vec, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> bs, <a href="../../../../../../docs/manualpages/Vec/VecTaggerBox.html">VecTaggerBox</a> *boxes)</font></strong>
+<a name="line266">266: </a>{
+<a name="line267">267: </a>  VecTagger_CDF    *cdf  = (VecTagger_CDF *)tagger-&gt;data;
+<a name="line268">268: </a>  VecTagger_Simple *smpl = &amp;(cdf-&gt;smpl);
+<a name="line269">269: </a>  <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>               vComp;
+<a name="line270">270: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          i, N, M, n, m, rstart;
+<a name="line271">271: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line272">272: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *cReal, *cImag;
+<a name="line273">273: </a><font color="#A020F0">#endif</font>
+<a name="line274">274: </a>  <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>     comm;
+<a name="line275">275: </a>  MPI_Datatype statType;
+<a name="line276">276: </a>  MPI_Op       statReduce;
+
+<a name="line278">278: </a>  comm = <a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)vec);
+<a name="line279">279: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetSize.html">VecGetSize</a>(vec, &amp;N);
+<a name="line280">280: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(vec, &amp;n);
+<a name="line281">281: </a>  M = N / bs;
+<a name="line282">282: </a>  m = n / bs;
+<a name="line283">283: </a>  <a href="../../../../../../docs/manualpages/Vec/VecCreateMPI.html">VecCreateMPI</a>(comm, m, M, &amp;vComp);
+<a name="line284">284: </a>  <a href="../../../../../../docs/manualpages/Vec/VecSetUp.html">VecSetUp</a>(vComp);
+<a name="line285">285: </a>  <a href="../../../../../../docs/manualpages/Vec/VecGetOwnershipRange.html">VecGetOwnershipRange</a>(vComp, &amp;rstart, NULL);
+<a name="line286">286: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line287">287: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc2.html">PetscMalloc2</a>(m, &amp;cReal, m, &amp;cImag);
+<a name="line288">288: </a><font color="#A020F0">#endif</font>
+<a name="line289">289: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_contiguous.html#MPI_Type_contiguous">MPI_Type_contiguous</a>(5, <a href="../../../../../../docs/manualpages/Sys/MPIU_REAL.html">MPIU_REAL</a>, &amp;statType);
+<a name="line290">290: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_commit.html#MPI_Type_commit">MPI_Type_commit</a>(&amp;statType);
+<a name="line291">291: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Op_create.html#MPI_Op_create">MPI_Op_create</a>(VecTaggerCDFStatsReduce, 1, &amp;statReduce);
+<a name="line292">292: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; bs; i++) {
+<a name="line293">293: </a>    <a href="../../../../../../docs/manualpages/IS/IS.html">IS</a>           isStride;
+<a name="line294">294: </a>    <a href="../../../../../../docs/manualpages/PetscSF/VecScatter.html">VecScatter</a>   vScat;
+<a name="line295">295: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *cArray;
+
+<a name="line297">297: </a>    <a href="../../../../../../docs/manualpages/IS/ISCreateStride.html">ISCreateStride</a>(comm, m, bs * rstart + i, bs, &amp;isStride);
+<a name="line298">298: </a>    <a href="../../../../../../docs/manualpages/PetscSF/VecScatterCreate.html">VecScatterCreate</a>(vec, isStride, vComp, NULL, &amp;vScat);
+<a name="line299">299: </a>    <a href="../../../../../../docs/manualpages/PetscSF/VecScatterBegin.html">VecScatterBegin</a>(vScat, vec, vComp, <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line300">300: </a>    <a href="../../../../../../docs/manualpages/PetscSF/VecScatterEnd.html">VecScatterEnd</a>(vScat, vec, vComp, <a href="../../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>, <a href="../../../../../../docs/manualpages/Vec/SCATTER_FORWARD.html">SCATTER_FORWARD</a>);
+<a name="line301">301: </a>    <a href="../../../../../../docs/manualpages/PetscSF/VecScatterDestroy.html">VecScatterDestroy</a>(&amp;vScat);
+<a name="line302">302: </a>    <a href="../../../../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;isStride);
+
+<a name="line304">304: </a>    <a href="../../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(vComp, &amp;cArray);
+<a name="line305">305: </a><font color="#A020F0">#if !defined(PETSC_USE_COMPLEX)</font>
+<a name="line306">306: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscSortReal.html">PetscSortReal</a>(m, cArray);
+<a name="line307">307: </a>    VecTaggerComputeBox_CDF_SortedArray_Iterative(tagger, statType, statReduce, cArray, m, &amp;smpl-&gt;box[i], &amp;boxes[i]);
+<a name="line308">308: </a><font color="#A020F0">#else</font>
+<a name="line309">309: </a>    {
+<a name="line310">310: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         j;
+<a name="line311">311: </a>      VecTaggerBoxReal realBxs, imagBxs;
+<a name="line312">312: </a>      VecTaggerBoxReal realBoxes, imagBoxes;
+
+<a name="line314">314: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; m; j++) {
+<a name="line315">315: </a>        cReal[j] = <a href="../../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cArray[j]);
+<a name="line316">316: </a>        cImag[j] = <a href="../../../../../../docs/manualpages/Sys/PetscImaginaryPart.html">PetscImaginaryPart</a>(cArray[j]);
+<a name="line317">317: </a>      }
+<a name="line318">318: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscSortReal.html">PetscSortReal</a>(m, cReal);
+<a name="line319">319: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscSortReal.html">PetscSortReal</a>(m, cImag);
+
+<a name="line321">321: </a>      realBxs.min = <a href="../../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(smpl-&gt;box[i].min);
+<a name="line322">322: </a>      realBxs.max = <a href="../../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(smpl-&gt;box[i].max);
+<a name="line323">323: </a>      imagBxs.min = <a href="../../../../../../docs/manualpages/Sys/PetscImaginaryPart.html">PetscImaginaryPart</a>(smpl-&gt;box[i].min);
+<a name="line324">324: </a>      imagBxs.max = <a href="../../../../../../docs/manualpages/Sys/PetscImaginaryPart.html">PetscImaginaryPart</a>(smpl-&gt;box[i].max);
+<a name="line325">325: </a>      VecTaggerComputeBox_CDF_SortedArray_Iterative(tagger, statType, statReduce, cReal, m, &amp;realBxs, &amp;realBoxes);
+<a name="line326">326: </a>      VecTaggerComputeBox_CDF_SortedArray_Iterative(tagger, statType, statReduce, cImag, m, &amp;imagBxs, &amp;imagBoxes);
+<a name="line327">327: </a>      boxes[i].min = PetscCMPLX(realBoxes.min, imagBoxes.min);
+<a name="line328">328: </a>      boxes[i].max = PetscCMPLX(realBoxes.max, imagBoxes.max);
+<a name="line329">329: </a>    }
+<a name="line330">330: </a><font color="#A020F0">#endif</font>
+<a name="line331">331: </a>    <a href="../../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(vComp, &amp;cArray);
+<a name="line332">332: </a>  }
+<a name="line333">333: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Op_free.html#MPI_Op_free">MPI_Op_free</a>(&amp;statReduce);
+<a name="line334">334: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Type_free.html#MPI_Type_free">MPI_Type_free</a>(&amp;statType);
+<a name="line335">335: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line336">336: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree2.html">PetscFree2</a>(cReal, cImag);
+<a name="line337">337: </a><font color="#A020F0">#endif</font>
+<a name="line338">338: </a>  <a href="../../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;vComp);
+<a name="line339">339: </a>  <font color="#4169E1">return</font> 0;
+<a name="line340">340: </a>}
+
+<a name="line342">342: </a><strong><font color="#4169E1"><a name="VecTaggerComputeBoxes_CDF"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecTaggerComputeBoxes_CDF(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> vec, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *numBoxes, <a href="../../../../../../docs/manualpages/Vec/VecTaggerBox.html">VecTaggerBox</a> **boxes, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *listed)</font></strong>
+<a name="line343">343: </a>{
+<a name="line344">344: </a>  VecTagger_CDF *cuml = (VecTagger_CDF *)tagger-&gt;data;
+<a name="line345">345: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>    size;
+<a name="line346">346: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       bs;
+<a name="line347">347: </a>  <a href="../../../../../../docs/manualpages/Vec/VecTaggerBox.html">VecTaggerBox</a>  *bxs;
+
+<a name="line349">349: </a>  <a href="../../../../../../docs/manualpages/Vec/VecTaggerGetBlockSize.html">VecTaggerGetBlockSize</a>(tagger, &amp;bs);
+<a name="line350">350: </a>  *numBoxes = 1;
+<a name="line351">351: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(bs, &amp;bxs);
+<a name="line352">352: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tagger), &amp;size);
+<a name="line353">353: </a>  <font color="#4169E1">if</font> (size == 1) {
+<a name="line354">354: </a>    VecTaggerComputeBoxes_CDF_Serial(tagger, vec, bs, bxs);
+<a name="line355">355: </a>    *boxes = bxs;
+<a name="line356">356: </a>    <font color="#4169E1">return</font> 0;
+<a name="line357">357: </a>  }
+<a name="line358">358: </a>  <font color="#4169E1">switch</font> (cuml-&gt;method) {
+<a name="line359">359: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFMethod.html">VECTAGGER_CDF_GATHER</a>:
+<a name="line360">360: </a>    VecTaggerComputeBoxes_CDF_Gather(tagger, vec, bs, bxs);
+<a name="line361">361: </a>    <font color="#4169E1">break</font>;
+<a name="line362">362: </a>  <font color="#4169E1">case</font> <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFMethod.html">VECTAGGER_CDF_ITERATIVE</a>:
+<a name="line363">363: </a>    VecTaggerComputeBoxes_CDF_Iterative(tagger, vec, bs, bxs);
+<a name="line364">364: </a>    <font color="#4169E1">break</font>;
+<a name="line365">365: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line366">366: </a>    <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tagger), PETSC_ERR_SUP, <font color="#666666">"Unknown CDF calculation/estimation method."</font>);
+<a name="line367">367: </a>  }
+<a name="line368">368: </a>  *boxes = bxs;
+<a name="line369">369: </a>  <font color="#4169E1">if</font> (listed) *listed = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line370">370: </a>  <font color="#4169E1">return</font> 0;
+<a name="line371">371: </a>}
+
+<a name="line373">373: </a><strong><font color="#4169E1"><a name="VecTaggerView_CDF"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecTaggerView_CDF(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger, <a href="../../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line374">374: </a>{
+<a name="line375">375: </a>  VecTagger_CDF *cuml = (VecTagger_CDF *)tagger-&gt;data;
+<a name="line376">376: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>      iascii;
+<a name="line377">377: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>    size;
+
+<a name="line379">379: </a>  VecTaggerView_Simple(tagger, viewer);
+<a name="line380">380: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)tagger), &amp;size);
+<a name="line381">381: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line382">382: </a>  <font color="#4169E1">if</font> (size &gt; 1 &amp;&amp; iascii) {
+<a name="line383">383: </a>    <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"CDF computation method: %s\n"</font>, VecTaggerCDFMethods[cuml-&gt;method]);
+<a name="line384">384: </a>    <font color="#4169E1">if</font> (cuml-&gt;method == <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFMethod.html">VECTAGGER_CDF_ITERATIVE</a>) {
+<a name="line385">385: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(viewer);
+<a name="line386">386: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"max its: %"</font> PetscInt_FMT <font color="#666666">", abs tol: %g, rel tol %g\n"</font>, cuml-&gt;maxit, (double)cuml-&gt;atol, (double)cuml-&gt;rtol);
+<a name="line387">387: </a>      <a href="../../../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(viewer);
+<a name="line388">388: </a>    }
+<a name="line389">389: </a>  }
+<a name="line390">390: </a>  <font color="#4169E1">return</font> 0;
+<a name="line391">391: </a>}
+
+<a name="line393">393: </a><strong><font color="#4169E1"><a name="VecTaggerSetFromOptions_CDF"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecTaggerSetFromOptions_CDF(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line394">394: </a>{
+<a name="line395">395: </a>  VecTagger_CDF *cuml = (VecTagger_CDF *)tagger-&gt;data;
+<a name="line396">396: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       method;
+<a name="line397">397: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>      set;
+
+<a name="line399">399: </a>  VecTaggerSetFromOptions_Simple(tagger, PetscOptionsObject);
+<a name="line400">400: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> options for CDF boxes"</font>);
+<a name="line401">401: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsEList.html">PetscOptionsEList</a>(<font color="#666666">"-vec_tagger_cdf_method"</font>, <font color="#666666">"Method for computing absolute boxes from CDF boxes"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFSetMethod.html">VecTaggerCDFSetMethod</a>()"</font>, VecTaggerCDFMethods, <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFMethod.html">VECTAGGER_CDF_NUM_METHODS</a>, VecTaggerCDFMethods[cuml-&gt;method], &amp;method, &amp;set);
+<a name="line402">402: </a>  <font color="#4169E1">if</font> (set) cuml-&gt;method = (<a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFMethod.html">VecTaggerCDFMethod</a>)method;
+<a name="line403">403: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsInt.html">PetscOptionsInt</a>(<font color="#666666">"-vec_tagger_cdf_max_it"</font>, <font color="#666666">"Maximum iterations for iterative computation of absolute boxes from CDF boxes"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFIterativeSetTolerances.html">VecTaggerCDFIterativeSetTolerances</a>()"</font>, cuml-&gt;maxit, &amp;cuml-&gt;maxit, NULL);
+<a name="line404">404: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsReal.html">PetscOptionsReal</a>(<font color="#666666">"-vec_tagger_cdf_rtol"</font>, <font color="#666666">"Maximum relative tolerance for iterative computation of absolute boxes from CDF boxes"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFIterativeSetTolerances.html">VecTaggerCDFIterativeSetTolerances</a>()"</font>, cuml-&gt;rtol, &amp;cuml-&gt;rtol, NULL);
+<a name="line405">405: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscOptionsReal.html">PetscOptionsReal</a>(<font color="#666666">"-vec_tagger_cdf_atol"</font>, <font color="#666666">"Maximum absolute tolerance for iterative computation of absolute boxes from CDF boxes"</font>, <font color="#666666">"<a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFIterativeSetTolerances.html">VecTaggerCDFIterativeSetTolerances</a>()"</font>, cuml-&gt;atol, &amp;cuml-&gt;atol, NULL);
+<a name="line406">406: </a>  PetscOptionsHeadEnd();
+<a name="line407">407: </a>  <font color="#4169E1">return</font> 0;
+<a name="line408">408: </a>}
+
+<a name="line410">410: </a><font color="#B22222">/*@C</font>
+<a name="line411">411: </a><font color="#B22222">  <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFSetMethod.html">VecTaggerCDFSetMethod</a> - Set the method used to compute absolute boxes from CDF boxes</font>
+
+<a name="line413">413: </a><font color="#B22222">  Logically Collective on tagger</font>
+
+<a name="line415">415: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line417">417: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line418">418: </a><font color="#B22222">+ tagger - the `<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a>` context</font>
+<a name="line419">419: </a><font color="#B22222">- method - the method</font>
+
+<a name="line421">421: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>`, `<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a>`, `<a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFMethod.html">VecTaggerCDFMethod</a>`</font>
+<a name="line422">422: </a><font color="#B22222">@*/</font>
+<a name="line423">423: </a><strong><font color="#4169E1"><a name="VecTaggerCDFSetMethod"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFSetMethod.html">VecTaggerCDFSetMethod</a>(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger, <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFMethod.html">VecTaggerCDFMethod</a> method)</font></strong>
+<a name="line424">424: </a>{
+<a name="line425">425: </a>  VecTagger_CDF *cuml = (VecTagger_CDF *)tagger-&gt;data;
+
+<a name="line429">429: </a>  cuml-&gt;method = method;
+<a name="line430">430: </a>  <font color="#4169E1">return</font> 0;
+<a name="line431">431: </a>}
+
+<a name="line433">433: </a><font color="#B22222">/*@C</font>
+<a name="line434">434: </a><font color="#B22222">  <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFGetMethod.html">VecTaggerCDFGetMethod</a> - Get the method used to compute absolute boxes from CDF boxes</font>
+
+<a name="line436">436: </a><font color="#B22222">  Logically Collective on tagger</font>
+
+<a name="line438">438: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line440">440: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line441">441: </a><font color="#B22222">. tagger - the `<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a>` context</font>
+
+<a name="line443">443: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line444">444: </a><font color="#B22222">. method - the method</font>
+
+<a name="line446">446: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>`, `<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a>`, `<a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFMethod.html">VecTaggerCDFMethod</a>`</font>
+<a name="line447">447: </a><font color="#B22222">@*/</font>
+<a name="line448">448: </a><strong><font color="#4169E1"><a name="VecTaggerCDFGetMethod"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFGetMethod.html">VecTaggerCDFGetMethod</a>(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger, <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFMethod.html">VecTaggerCDFMethod</a> *method)</font></strong>
+<a name="line449">449: </a>{
+<a name="line450">450: </a>  VecTagger_CDF *cuml = (VecTagger_CDF *)tagger-&gt;data;
+
+<a name="line454">454: </a>  *method = cuml-&gt;method;
+<a name="line455">455: </a>  <font color="#4169E1">return</font> 0;
+<a name="line456">456: </a>}
+
+<a name="line458">458: </a><font color="#B22222">/*@C</font>
+<a name="line459">459: </a><font color="#B22222">  <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFIterativeSetTolerances.html">VecTaggerCDFIterativeSetTolerances</a> - Set the tolerances for iterative computation of absolute boxes from CDF boxes.</font>
+
+<a name="line461">461: </a><font color="#B22222">  Logically Collective on <a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a></font>
+
+<a name="line463">463: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line464">464: </a><font color="#B22222">+ tagger - the <a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> context</font>
+<a name="line465">465: </a><font color="#B22222">. maxit - the maximum number of iterations: 0 indicates the absolute values will be estimated from an initial guess based only on the minimum, maximum, mean, and standard deviation of the box endpoints.</font>
+<a name="line466">466: </a><font color="#B22222">. rtol - the acceptable relative tolerance in the absolute values from the initial guess</font>
+<a name="line467">467: </a><font color="#B22222">- atol - the acceptable absolute tolerance in the absolute values from the initial guess</font>
+
+<a name="line469">469: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line471">471: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFSetMethod.html">VecTaggerCDFSetMethod</a>()`</font>
+<a name="line472">472: </a><font color="#B22222">@*/</font>
+<a name="line473">473: </a><strong><font color="#4169E1"><a name="VecTaggerCDFIterativeSetTolerances"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFIterativeSetTolerances.html">VecTaggerCDFIterativeSetTolerances</a>(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> maxit, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> rtol, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> atol)</font></strong>
+<a name="line474">474: </a>{
+<a name="line475">475: </a>  VecTagger_CDF *cuml = (VecTagger_CDF *)tagger-&gt;data;
+
+<a name="line481">481: </a>  cuml-&gt;maxit = maxit;
+<a name="line482">482: </a>  cuml-&gt;rtol  = rtol;
+<a name="line483">483: </a>  cuml-&gt;atol  = atol;
+<a name="line484">484: </a>  <font color="#4169E1">return</font> 0;
+<a name="line485">485: </a>}
+
+<a name="line487">487: </a><font color="#B22222">/*@C</font>
+<a name="line488">488: </a><font color="#B22222">  <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFIterativeGetTolerances.html">VecTaggerCDFIterativeGetTolerances</a> - Get the tolerances for iterative computation of absolute boxes from CDF boxes.</font>
+
+<a name="line490">490: </a><font color="#B22222">  Logically Collective on <a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a></font>
+
+<a name="line492">492: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line493">493: </a><font color="#B22222">. tagger - the <a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> context</font>
+
+<a name="line495">495: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line496">496: </a><font color="#B22222">+ maxit - the maximum number of iterations: 0 indicates the absolute values will be estimated from an initial guess based only on the minimum, maximum, mean, and standard deviation of the box endpoints.</font>
+<a name="line497">497: </a><font color="#B22222">. rtol - the acceptable relative tolerance in the absolute values from the initial guess</font>
+<a name="line498">498: </a><font color="#B22222">- atol - the acceptable absolute tolerance in the absolute values from the initial guess</font>
+
+<a name="line500">500: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line502">502: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFSetMethod.html">VecTaggerCDFSetMethod</a>()`</font>
+<a name="line503">503: </a><font color="#B22222">@*/</font>
+<a name="line504">504: </a><strong><font color="#4169E1"><a name="VecTaggerCDFIterativeGetTolerances"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFIterativeGetTolerances.html">VecTaggerCDFIterativeGetTolerances</a>(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *maxit, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *rtol, <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *atol)</font></strong>
+<a name="line505">505: </a>{
+<a name="line506">506: </a>  VecTagger_CDF *cuml = (VecTagger_CDF *)tagger-&gt;data;
+
+<a name="line509">509: </a>  <font color="#4169E1">if</font> (maxit) *maxit = cuml-&gt;maxit;
+<a name="line510">510: </a>  <font color="#4169E1">if</font> (rtol) *rtol = cuml-&gt;rtol;
+<a name="line511">511: </a>  <font color="#4169E1">if</font> (atol) *atol = cuml-&gt;atol;
+<a name="line512">512: </a>  <font color="#4169E1">return</font> 0;
+<a name="line513">513: </a>}
+
+<a name="line515">515: </a><font color="#B22222">/*@C</font>
+<a name="line516">516: </a><font color="#B22222">  <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFSetBox.html">VecTaggerCDFSetBox</a> - Set the cumulative box defining the values to be tagged by the tagger, where cumulative boxes are subsets of [0,1], where 0 indicates the smallest value present in the vector and 1 indicates the largest.</font>
+
+<a name="line518">518: </a><font color="#B22222">  Logically Collective</font>
+
+<a name="line520">520: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line521">521: </a><font color="#B22222">+ tagger - the <a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> context</font>
+<a name="line522">522: </a><font color="#B22222">- boxes - a blocksize array of <a href="../../../../../../docs/manualpages/Vec/VecTaggerBox.html">VecTaggerBox</a> boxes</font>
+
+<a name="line524">524: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line526">526: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFGetBox.html">VecTaggerCDFGetBox</a>()`</font>
+<a name="line527">527: </a><font color="#B22222">@*/</font>
+<a name="line528">528: </a><strong><font color="#4169E1"><a name="VecTaggerCDFSetBox"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFSetBox.html">VecTaggerCDFSetBox</a>(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger, <a href="../../../../../../docs/manualpages/Vec/VecTaggerBox.html">VecTaggerBox</a> *box)</font></strong>
+<a name="line529">529: </a>{
+<a name="line530">530: </a>  VecTaggerSetBox_Simple(tagger, box);
+<a name="line531">531: </a>  <font color="#4169E1">return</font> 0;
+<a name="line532">532: </a>}
+
+<a name="line534">534: </a><font color="#B22222">/*@C</font>
+<a name="line535">535: </a><font color="#B22222">  <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFGetBox.html">VecTaggerCDFGetBox</a> - Get the cumulative box (multi-dimensional box) defining the values to be tagged by the tagger, where cumulative boxes are subsets of [0,1], where 0 indicates the smallest value present in the vector and 1 indicates the largest.</font>
+
+<a name="line537">537: </a><font color="#B22222">  Logically Collective</font>
+
+<a name="line539">539: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line540">540: </a><font color="#B22222">. tagger - the <a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> context</font>
+
+<a name="line542">542: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line543">543: </a><font color="#B22222">. boxes - a blocksize array of <a href="../../../../../../docs/manualpages/Vec/VecTaggerBox.html">VecTaggerBox</a> boxes</font>
+
+<a name="line545">545: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line547">547: </a><font color="#B22222">.seealso: `<a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFSetBox.html">VecTaggerCDFSetBox</a>()`</font>
+<a name="line548">548: </a><font color="#B22222">@*/</font>
+<a name="line549">549: </a><strong><font color="#4169E1"><a name="VecTaggerCDFGetBox"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../../docs/manualpages/Vec/VecTaggerCDFGetBox.html">VecTaggerCDFGetBox</a>(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger, const <a href="../../../../../../docs/manualpages/Vec/VecTaggerBox.html">VecTaggerBox</a> **box)</font></strong>
+<a name="line550">550: </a>{
+<a name="line551">551: </a>  VecTaggerGetBox_Simple(tagger, box);
+<a name="line552">552: </a>  <font color="#4169E1">return</font> 0;
+<a name="line553">553: </a>}
+
+<a name="line555">555: </a><strong><font color="#4169E1"><a name="VecTaggerCreate_CDF"></a>PETSC_INTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecTaggerCreate_CDF(<a href="../../../../../../docs/manualpages/Vec/VecTagger.html">VecTagger</a> tagger)</font></strong>
+<a name="line556">556: </a>{
+<a name="line557">557: </a>  VecTagger_CDF *cuml;
+
+<a name="line559">559: </a>  VecTaggerCreate_Simple(tagger);
+<a name="line560">560: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;cuml);
+<a name="line561">561: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMemcpy.html">PetscMemcpy</a>(&amp;cuml-&gt;smpl, tagger-&gt;data, <font color="#4169E1">sizeof</font>(VecTagger_Simple));
+<a name="line562">562: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tagger-&gt;data);
+<a name="line563">563: </a>  tagger-&gt;data                = cuml;
+<a name="line564">564: </a>  tagger-&gt;ops-&gt;view           = VecTaggerView_CDF;
+<a name="line565">565: </a>  tagger-&gt;ops-&gt;setfromoptions = VecTaggerSetFromOptions_CDF;
+<a name="line566">566: </a>  tagger-&gt;ops-&gt;computeboxes   = VecTaggerComputeBoxes_CDF;
+<a name="line567">567: </a>  <font color="#4169E1">return</font> 0;
+<a name="line568">568: </a>}
+</pre>
+</body>
+
+</html>

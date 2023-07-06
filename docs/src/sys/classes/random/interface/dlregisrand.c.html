@@ -1,0 +1,72 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/classes/random/interface/dlregisrand.c">Actual source code: dlregisrand.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:51+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../../../../include/petsc/private/randomimpl.h.html">&lt;petsc/private/randomimpl.h&gt;</A>
+
+<a name="line4">  4: </a>static <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> PetscRandomPackageInitialized = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line5">  5: </a><font color="#B22222">/*@C</font>
+<a name="line6">  6: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Sys/PetscRandomFinalizePackage.html">PetscRandomFinalizePackage</a> - This function destroys everything in the Petsc interface to the `<a href="../../../../../docs/manualpages/Sys/PetscRandom.html">PetscRandom</a>` package. It is</font>
+<a name="line7">  7: </a><font color="#B22222">  called from `<a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>()`.</font>
+
+<a name="line9">  9: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line11"> 11: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>()`</font>
+<a name="line12"> 12: </a><font color="#B22222">@*/</font>
+<a name="line13"> 13: </a><strong><font color="#4169E1"><a name="PetscRandomFinalizePackage"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Sys/PetscRandomFinalizePackage.html">PetscRandomFinalizePackage</a>(void)</font></strong>
+<a name="line14"> 14: </a>{
+<a name="line15"> 15: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFunctionListDestroy.html">PetscFunctionListDestroy</a>(&amp;PetscRandomList);
+<a name="line16"> 16: </a>  PetscRandomPackageInitialized = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line17"> 17: </a>  PetscRandomRegisterAllCalled  = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line18"> 18: </a>  <font color="#4169E1">return</font> 0;
+<a name="line19"> 19: </a>}
+
+<a name="line21"> 21: </a><font color="#B22222">/*@C</font>
+<a name="line22"> 22: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Sys/PetscRandomInitializePackage.html">PetscRandomInitializePackage</a> - This function initializes everything in the `<a href="../../../../../docs/manualpages/Sys/PetscRandom.html">PetscRandom</a>` package. It is called</font>
+<a name="line23"> 23: </a><font color="#B22222">  from PetscDLLibraryRegister_petsc() when using dynamic libraries, and on the first call to `<a href="../../../../../docs/manualpages/Sys/PetscRandomCreate.html">PetscRandomCreate</a>()`</font>
+<a name="line24"> 24: </a><font color="#B22222">  when using shared or static libraries.</font>
+
+<a name="line26"> 26: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line28"> 28: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>()`</font>
+<a name="line29"> 29: </a><font color="#B22222">@*/</font>
+<a name="line30"> 30: </a><strong><font color="#4169E1"><a name="PetscRandomInitializePackage"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Sys/PetscRandomInitializePackage.html">PetscRandomInitializePackage</a>(void)</font></strong>
+<a name="line31"> 31: </a>{
+<a name="line32"> 32: </a>  char      logList[256];
+<a name="line33"> 33: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> opt, pkg;
+
+<a name="line35"> 35: </a>  <font color="#4169E1">if</font> (PetscRandomPackageInitialized) <font color="#4169E1">return</font> 0;
+<a name="line36"> 36: </a>  PetscRandomPackageInitialized = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line37"> 37: </a>  <font color="#B22222">/* Register Class */</font>
+<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscClassIdRegister.html">PetscClassIdRegister</a>(<font color="#666666">"<a href="../../../../../docs/manualpages/Sys/PetscRandom.html">PetscRandom</a>"</font>, &amp;PETSC_RANDOM_CLASSID);
+<a name="line39"> 39: </a>  <font color="#B22222">/* Register Constructors */</font>
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/Sys/PetscRandomRegisterAll.html">PetscRandomRegisterAll</a>();
+<a name="line41"> 41: </a>  <font color="#B22222">/* Process Info */</font>
+<a name="line42"> 42: </a>  {
+<a name="line43"> 43: </a>    <a href="../../../../../docs/manualpages/Sys/PetscClassId.html">PetscClassId</a> classids[1];
+
+<a name="line45"> 45: </a>    classids[0] = PETSC_RANDOM_CLASSID;
+<a name="line46"> 46: </a>    <a href="../../../../../docs/manualpages/Profiling/PetscInfoProcessClass.html">PetscInfoProcessClass</a>(<font color="#666666">"random"</font>, 1, classids);
+<a name="line47"> 47: </a>  }
+<a name="line48"> 48: </a>  <font color="#B22222">/* Process summary exclusions */</font>
+<a name="line49"> 49: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(NULL, NULL, <font color="#666666">"-log_exclude"</font>, logList, <font color="#4169E1">sizeof</font>(logList), &amp;opt);
+<a name="line50"> 50: </a>  <font color="#4169E1">if</font> (opt) {
+<a name="line51"> 51: </a>    <a href="../../../../../docs/manualpages/Sys/PetscStrInList.html">PetscStrInList</a>(<font color="#666666">"random"</font>, logList, ',', &amp;pkg);
+<a name="line52"> 52: </a>    <font color="#4169E1">if</font> (pkg) <a href="../../../../../docs/manualpages/Profiling/PetscLogEventExcludeClass.html">PetscLogEventExcludeClass</a>(PETSC_RANDOM_CLASSID);
+<a name="line53"> 53: </a>  }
+<a name="line54"> 54: </a>  <font color="#B22222">/* Register package finalizer */</font>
+<a name="line55"> 55: </a>  <a href="../../../../../docs/manualpages/Sys/PetscRegisterFinalize.html">PetscRegisterFinalize</a>(<a href="../../../../../docs/manualpages/Sys/PetscRandomFinalizePackage.html">PetscRandomFinalizePackage</a>);
+<a name="line56"> 56: </a>  <font color="#4169E1">return</font> 0;
+<a name="line57"> 57: </a>}
+</pre>
+</body>
+
+</html>

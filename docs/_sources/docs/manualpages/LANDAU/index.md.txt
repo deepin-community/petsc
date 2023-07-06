@@ -1,0 +1,56 @@
+# LANDAU Manual Pages
+
+The LANDAU class implements an AMR discretization of the Fokker-Planck collision operator in Landau form using DMPlex and DMForest, within TS function and Jacobian methods.
+
+[Manual Pages Table of Contents](/docs/manualpages/index.md)
+
+## Manual Pages by Level
+
+### Beginner - Basic usage
+```{hlist}
+---
+columns: 3
+---
+- [](DMPlexLandauAddMaxwellians.md)
+- [](DMPlexLandauCreateMassMatrix.md)
+- [](DMPlexLandauCreateVelocitySpace.md)
+- [](DMPlexLandauDestroyVelocitySpace.md)
+- [](DMPlexLandauIFunction.md)
+- [](DMPlexLandauIJacobian.md)
+- [](DMPlexLandauPrintNorms.md)
+```
+
+
+
+### No intermediate routines
+
+### Advanced - Setting more advanced options and customization
+```{hlist}
+---
+columns: 3
+---
+- [](DMPlexLandauAccess.md)
+```
+
+
+
+### No developer routines
+
+### No deprecated routines
+
+## Single list of manual pages
+```{toctree}
+---
+maxdepth: 1
+---
+DMPlexLandauAccess.md
+DMPlexLandauAddMaxwellians.md
+DMPlexLandauCreateMassMatrix.md
+DMPlexLandauCreateVelocitySpace.md
+DMPlexLandauDestroyVelocitySpace.md
+DMPlexLandauIFunction.md
+DMPlexLandauIJacobian.md
+DMPlexLandauPrintNorms.md
+```
+
+

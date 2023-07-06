@@ -1,0 +1,43 @@
+# DMPlexRefineRegularGetAffineTransforms
+Gets the affine map from the reference cell to each subcell 
+## Synopsis
+```
+#include "petscdmplextransform.h" 
+PetscErrorCode DMPlexRefineRegularGetAffineTransforms(DMPlexTransform tr, DMPolytopeType ct, PetscInt *Nc, PetscReal *v0[], PetscReal *J[], PetscReal *invJ[])
+```
+
+## Input Parameters
+
+- ***cr -*** The DMPlexCellRefiner object
+- ***ct -*** The cell type
+
+
+
+## Output Parameters
+
+- ***Nc   -*** The number of subcells produced from this cell type
+- ***v0   -*** The translation of the first vertex for each subcell
+- ***J    -*** The Jacobian for each subcell (map from reference cell to subcell)
+- ***invJ -*** The inverse Jacobian for each subcell
+
+
+
+
+
+## See Also
+ `DMPlexRefineRegularGetAffineFaceTransforms()`, `DMPLEXREFINEREGULAR`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/transform/impls/refine/regularplexrefregular.c.html#DMPlexRefineRegularGetAffineTransforms">src/dm/impls/plex/transform/impls/refine/regularplexrefregular.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/plex/transform/impls/refine/regularplexrefregular.c)
+
+
+[Index of all DMPlex routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

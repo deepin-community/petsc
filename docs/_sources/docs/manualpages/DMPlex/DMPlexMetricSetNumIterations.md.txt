@@ -1,0 +1,38 @@
+# DMPlexMetricSetNumIterations
+Set the number of parallel adaptation iterations 
+## Synopsis
+```
+#include "petscdmplex.h"   
+PetscErrorCode DMPlexMetricSetNumIterations(DM dm, PetscInt numIter)
+```
+
+## Input parameters
+
+- ***dm      -*** The DM
+- ***numIter -*** the number of parallel adaptation iterations
+
+
+
+
+
+## Notes
+This is only used by ParMmg (not Pragmatic or Mmg).
+
+
+## See Also
+ `DMPlexMetricSetVerbosity()`, `DMPlexMetricGetNumIterations()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/plexmetric.c.html#DMPlexMetricSetNumIterations">src/dm/impls/plex/plexmetric.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/plex/plexmetric.c)
+
+
+[Index of all DMPlex routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

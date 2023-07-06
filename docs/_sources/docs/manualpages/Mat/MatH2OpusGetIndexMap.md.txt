@@ -1,0 +1,38 @@
+# MatH2OpusGetIndexMap
+Access reordering index set. 
+## Synopsis
+```
+PetscErrorCode MatH2OpusGetIndexMap(Mat A, IS *indexmap)
+```
+
+## Input Parameters
+
+- ***A -*** the matrix
+
+
+
+## Output Parameter
+
+- ***indexmap -*** the index set for the reordering
+
+
+
+
+
+## See Also
+ `MatCreate()`, `MATH2OPUS`, `MatCreateH2OpusFromMat()`, `MatCreateH2OpusFromKernel()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/h2opus/cuda/math2opus.cu.html#MatH2OpusGetIndexMap">src/mat/impls/h2opus/cuda/math2opus.cu</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/h2opus/cuda/math2opus.cu)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

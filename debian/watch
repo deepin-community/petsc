@@ -1,0 +1,3 @@
+version=3
+opts=dversionmangle=s/\+dfsg\d//,repacksuffix=+dfsg1 \
+ http://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-with-docs-([\d\.]+).tar.gz

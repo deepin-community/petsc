@@ -1,0 +1,45 @@
+# PetscDualSpaceSimpleSetFunctional
+Set the given basis element for this dual space 
+## Synopsis
+```
+#include "petscfe.h" 
+PetscErrorCode PetscDualSpaceSimpleSetFunctional(PetscDualSpace sp, PetscInt func, PetscQuadrature q)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***sp  -*** the `PetscDualSpace`
+- ***f -*** the basis index
+- ***q -*** the basis functional
+
+
+
+
+
+## Note
+The quadrature will be reweighted so that it has unit volume.
+
+
+## See Also
+ `PetscDualSpace`, `PetscDualSpaceSimpleSetDimension()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/dt/dualspace/impls/simple/dspacesimple.c.html#PetscDualSpaceSimpleSetFunctional">src/dm/dt/dualspace/impls/simple/dspacesimple.c</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/dt/dualspace/impls/simple/dspacesimple.c.html#PetscDualSpaceSimpleSetFunctional_Simple">PetscDualSpaceSimpleSetFunctional_Simple in src/dm/dt/dualspace/impls/simple/dspacesimple.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/dt/dualspace/impls/simple/dspacesimple.c)
+
+
+[Index of all DUALSPACE routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

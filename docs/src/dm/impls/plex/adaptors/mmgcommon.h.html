@@ -1,0 +1,31 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/plex/adaptors/mmgcommon.h">Actual source code: mmgcommon.h</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:25+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#ifndef PETSC_DM_PLEX_MMGCOMMON_H</font>
+<a name="line2">  2: </a><strong><font color="#228B22">#define PETSC_DM_PLEX_MMGCOMMON_H</font></strong>
+
+<a name="line4">  4: </a>#include <A href="../../../../../include/petsc/private/dmpleximpl.h.html">&lt;petsc/private/dmpleximpl.h&gt;</A>
+
+<a name="line6">  6: </a><strong><font color="#228B22">#define PetscCallMMG_Private(ret, ...) \</font></strong>
+<a name="line7">  7: </a><strong><font color="#228B22">  do { \</font></strong>
+<a name="line8">  8: </a><strong><font color="#228B22">    <a href="../../../../../docs/manualpages/Sys/PetscStackPushExternal.html">PetscStackPushExternal</a>(<a href="../../../../../docs/manualpages/Sys/PetscStringize.html">PetscStringize</a>(__VA_ARGS__)); \</font></strong>
+<a name="line9">  9: </a><strong><font color="#228B22">    <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PETSC_UNUSED mmg_ierr_ = __VA_ARGS__; \</font></strong>
+<a name="line10"> 10: </a><strong><font color="#228B22">    <a href="../../../../../docs/manualpages/Sys/PetscStackPop.html">PetscStackPop</a>; \</font></strong>
+<a name="line12"> 12: </a><strong><font color="#228B22">  } while (0)</font></strong>
+
+<a name="line14"> 14: </a>// MMG sometimes returns 1, sometimes 0 when an error has occurred
+<a name="line15"> 15: </a><strong><font color="#228B22">#define PetscCallMMG(...)             PetscCallMMG_Private(MMG5_SUCCESS, __VA_ARGS__)</font></strong>
+<a name="line16"> 16: </a><strong><font color="#228B22">#define PetscCallMMG_NONSTANDARD(...) PetscCallMMG_Private(1, __VA_ARGS__)</font></strong>
+<a name="line17"> 17: </a><font color="#A020F0">#endif // PETSC_DM_PLEX_MMGCOMMON_H</font>
+</pre>
+</body>
+
+</html>

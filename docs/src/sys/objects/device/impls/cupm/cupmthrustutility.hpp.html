@@ -1,0 +1,192 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/objects/device/impls/cupm/cupmthrustutility.hpp">Actual source code: cupmthrustutility.hpp</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:58+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#ifndef PETSC_CUPM_THRUST_UTILITY_HPP</font>
+<a name="line2">  2: </a><strong><font color="#228B22">#define PETSC_CUPM_THRUST_UTILITY_HPP</font></strong>
+
+<a name="line4">  4: </a>#include <A href="../../../../../../include/petsc/private/deviceimpl.h.html">&lt;petsc/private/deviceimpl.h&gt;</A>
+<a name="line5">  5: </a>#include <A href="../../../../../../include/petsc/private/cupminterface.hpp.html">&lt;petsc/private/cupminterface.hpp&gt;</A>
+
+<a name="line7">  7: </a><font color="#A020F0">#if defined(__cplusplus)</font>
+<a name="line8">  8: </a><font color="#A020F0">  #include &lt;thrust/device_ptr.h&gt;</font>
+<a name="line9">  9: </a><font color="#A020F0">  #include &lt;thrust/transform.h&gt;</font>
+
+<a name="line11"> 11: </a>namespace Petsc
+<a name="line12"> 12: </a>{
+
+<a name="line14"> 14: </a>namespace device
+<a name="line15"> 15: </a>{
+
+<a name="line17"> 17: </a>namespace cupm
+<a name="line18"> 18: </a>{
+
+<a name="line20"> 20: </a>namespace impl
+<a name="line21"> 21: </a>{
+
+<a name="line23"> 23: </a><font color="#A020F0">  #if <a href="../../../../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USING_NVCC)</font>
+<a name="line24"> 24: </a><font color="#A020F0">    #if !defined(THRUST_VERSION)</font>
+<a name="line25"> 25: </a><font color="#A020F0">      #error </font><font color="#666666">"THRUST_VERSION not defined!"</font><font color="#A020F0"></font>
+<a name="line26"> 26: </a><font color="#A020F0">    #endif</font>
+<a name="line27"> 27: </a><font color="#A020F0">    #if !<a href="../../../../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG) &amp;&amp; (THRUST_VERSION &gt;= 101600)</font>
+<a name="line28"> 28: </a><strong><font color="#228B22">      #define thrust_call_par_on(func, s, ...) func(thrust::cuda::par_nosync.on(s), __VA_ARGS__)</font></strong>
+<a name="line29"> 29: </a><font color="#A020F0">    #else</font>
+<a name="line30"> 30: </a><strong><font color="#228B22">      #define thrust_call_par_on(func, s, ...) func(thrust::cuda::par.on(s), __VA_ARGS__)</font></strong>
+<a name="line31"> 31: </a><font color="#A020F0">    #endif</font>
+<a name="line32"> 32: </a><font color="#A020F0">  #elif <a href="../../../../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USING_HCC) // rocThrust has no par_nosync</font>
+<a name="line33"> 33: </a><strong><font color="#228B22">    #define thrust_call_par_on(func, s, ...) func(thrust::hip::par.on(s), __VA_ARGS__)</font></strong>
+<a name="line34"> 34: </a><font color="#A020F0">  #else</font>
+<a name="line35"> 35: </a><strong><font color="#228B22">    #define thrust_call_par_on(func, s, ...) func(__VA_ARGS__)</font></strong>
+<a name="line36"> 36: </a><font color="#A020F0">  #endif</font>
+
+<a name="line38"> 38: </a>namespace detail
+<a name="line39"> 39: </a>{
+
+<a name="line41"> 41: </a><font color="#4169E1"><a name="PetscLogGpuTimer"></a>struct PetscLogGpuTimer </font>{
+<a name="line42"> 42: </a>  PetscLogGpuTimer() noexcept { <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>(); }
+<a name="line43"> 43: </a>  ~PetscLogGpuTimer() noexcept { <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>(); }
+<a name="line44"> 44: </a>};
+
+<a name="line46"> 46: </a><font color="#4169E1"><a name="private_tag"></a>struct private_tag </font>{ };
+
+<a name="line48"> 48: </a>} // namespace detail
+
+<a name="line50"> 50: </a><strong><font color="#228B22">  #define THRUST_CALL(...) \</font></strong>
+<a name="line51"> 51: </a><strong><font color="#228B22">    [&amp;] { \</font></strong>
+<a name="line52"> 52: </a><strong><font color="#228B22">      const auto timer = ::Petsc::device::cupm::impl::detail::PetscLogGpuTimer{}; \</font></strong>
+<a name="line53"> 53: </a><strong><font color="#228B22">      return thrust_call_par_on(__VA_ARGS__); \</font></strong>
+<a name="line54"> 54: </a><strong><font color="#228B22">    }()</font></strong>
+
+<a name="line56"> 56: </a><strong><font color="#228B22">  #define PetscCallThrust(...) \</font></strong>
+<a name="line57"> 57: </a><strong><font color="#228B22">    do { \</font></strong>
+<a name="line58"> 58: </a><strong><font color="#228B22">      try { \</font></strong>
+<a name="line59"> 59: </a><strong><font color="#228B22">        __VA_ARGS__; \</font></strong>
+<a name="line60"> 60: </a><strong><font color="#228B22">      } catch (const thrust::system_error &amp;ex) { \</font></strong>
+<a name="line61"> 61: </a><strong><font color="#228B22">        <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_LIB, </font><font color="#666666">"Thrust error: %s"</font><font color="#228B22">, ex.what()); \</font></strong>
+<a name="line62"> 62: </a><strong><font color="#228B22">      } \</font></strong>
+<a name="line63"> 63: </a><strong><font color="#228B22">    } while (0)</font></strong>
+
+<a name="line65"> 65: </a>template &lt;typename T, typename BinaryOperator&gt;
+<a name="line66"> 66: </a><font color="#4169E1"><a name="shift_operator"></a>struct shift_operator </font>{
+<a name="line67"> 67: </a>  const T *const       s;
+<a name="line68"> 68: </a>  const BinaryOperator op;
+
+<a name="line70"> 70: </a>  PETSC_HOSTDEVICE_DECL PETSC_FORCEINLINE auto operator()(T x) const PETSC_DECLTYPE_NOEXCEPT_AUTO_RETURNS(op(std::move(x), *s))
+<a name="line71"> 71: </a>};
+
+<a name="line73"> 73: </a>template &lt;typename T, typename BinaryOperator&gt;
+<a name="line74"> 74: </a>static inline auto make_shift_operator(T *s, BinaryOperator &amp;&amp;op) PETSC_DECLTYPE_NOEXCEPT_AUTO_RETURNS(shift_operator&lt;T, BinaryOperator&gt;{s, std::forward&lt;BinaryOperator&gt;(op)});
+
+
+<a name="line78"> 78: </a>// actual implementation that calls thrust, 2 argument version
+<a name="line79"> 79: </a>template &lt;DeviceType DT, typename FunctorType, typename T&gt;
+<a name="line80"> 80: </a>PETSC_CXX_COMPAT_DEFN(<a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ThrustApplyPointwise(detail::private_tag, typename Interface&lt;DT&gt;::cupmStream_t stream, FunctorType &amp;&amp;functor, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, T *xinout, T *yin = nullptr))
+<a name="line81"> 81: </a>{
+<a name="line82"> 82: </a>  const auto xptr   = thrust::device_pointer_cast(xinout);
+<a name="line83"> 83: </a>  const auto retptr = (yin &amp;&amp; (yin != xinout)) ? thrust::device_pointer_cast(yin) : xptr;
+
+<a name="line86"> 86: </a>  THRUST_CALL(thrust::transform, stream, xptr, xptr + n, retptr, std::forward&lt;FunctorType&gt;(functor));
+<a name="line87"> 87: </a>  <font color="#4169E1">return</font> 0;
+<a name="line88"> 88: </a>}
+
+<a name="line90"> 90: </a>// actual implementation that calls thrust, 3 argument version
+<a name="line91"> 91: </a>template &lt;DeviceType DT, typename FunctorType, typename T&gt;
+<a name="line92"> 92: </a>PETSC_CXX_COMPAT_DEFN(<a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ThrustApplyPointwise(detail::private_tag, typename Interface&lt;DT&gt;::cupmStream_t stream, FunctorType &amp;&amp;functor, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, T *xin, T *yin, T *zin))
+<a name="line93"> 93: </a>{
+<a name="line94"> 94: </a>  const auto xptr = thrust::device_pointer_cast(xin);
+
+<a name="line99"> 99: </a>  THRUST_CALL(thrust::transform, stream, xptr, xptr + n, thrust::device_pointer_cast(yin), thrust::device_pointer_cast(zin), std::forward&lt;FunctorType&gt;(functor));
+<a name="line100">100: </a>  <font color="#4169E1">return</font> 0;
+<a name="line101">101: </a>}
+
+<a name="line103">103: </a>// one last intermediate function to check n, and log flops <font color="#4169E1">for</font> everything
+<a name="line104">104: </a>template &lt;DeviceType DT, typename F, typename... T&gt;
+<a name="line105">105: </a>PETSC_CXX_COMPAT_DEFN(<a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ThrustApplyPointwise(typename Interface&lt;DT&gt;::cupmStream_t stream, F &amp;&amp;functor, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, T &amp;&amp;...rest))
+<a name="line106">106: </a>{
+<a name="line107">107: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscAssert.html">PetscAssert</a>(n &gt;= 0, <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_PLIB, <font color="#666666">"n %"</font> PetscInt_FMT <font color="#666666">" must be &gt;= 0"</font>, n);
+<a name="line108">108: </a>  <font color="#4169E1">if</font> (<a href="../../../../../../docs/manualpages/Sys/PetscLikely.html">PetscLikely</a>(n)) {
+<a name="line109">109: </a>    ThrustApplyPointwise&lt;DT&gt;(detail::private_tag{}, stream, std::forward&lt;F&gt;(functor), n, std::forward&lt;T&gt;(rest)...);
+<a name="line110">110: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(n);
+<a name="line111">111: </a>  }
+<a name="line112">112: </a>  <font color="#4169E1">return</font> 0;
+<a name="line113">113: </a>}
+
+<a name="line115">115: </a>// serves as setup to the real implementation above
+<a name="line116">116: </a>template &lt;DeviceType T, typename F, typename... Args&gt;
+<a name="line117">117: </a>PETSC_CXX_COMPAT_DEFN(<a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ThrustApplyPointwise(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx, F &amp;&amp;functor, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, Args &amp;&amp;...rest))
+<a name="line118">118: </a>{
+<a name="line119">119: </a>  typename Interface&lt;T&gt;::cupmStream_t stream;
+
+<a name="line121">121: </a>  static_assert(<font color="#4169E1">sizeof</font>...(Args) &lt;= 3, <font color="#666666">""</font>);
+<a name="line123">123: </a>  PetscDeviceContextGetStreamHandle_Internal(dctx, &amp;stream);
+<a name="line124">124: </a>  ThrustApplyPointwise&lt;T&gt;(stream, std::forward&lt;F&gt;(functor), n, std::forward&lt;Args&gt;(rest)...);
+<a name="line125">125: </a>  <font color="#4169E1">return</font> 0;
+<a name="line126">126: </a>}
+
+<a name="line128">128: </a><strong><font color="#228B22">  #define PetscCallCUPM_(...) \</font></strong>
+<a name="line129">129: </a><strong><font color="#228B22">    do { \</font></strong>
+<a name="line130">130: </a><strong><font color="#228B22">      using interface               = Interface&lt;DT&gt;; \</font></strong>
+<a name="line131">131: </a><strong><font color="#228B22">      using cupmError_t             = typename interface::cupmError_t; \</font></strong>
+<a name="line132">132: </a><strong><font color="#228B22">      const auto cupmName           = []() { return interface::cupmName(); }; \</font></strong>
+<a name="line133">133: </a><strong><font color="#228B22">      const auto cupmGetErrorName   = [](cupmError_t e) { return interface::cupmGetErrorName(e); }; \</font></strong>
+<a name="line134">134: </a><strong><font color="#228B22">      const auto cupmGetErrorString = [](cupmError_t e) { return interface::cupmGetErrorString(e); }; \</font></strong>
+<a name="line135">135: </a><strong><font color="#228B22">      const auto cupmSuccess        = interface::cupmSuccess; \</font></strong>
+<a name="line136">136: </a><strong><font color="#228B22">      __VA_ARGS__; \</font></strong>
+<a name="line137">137: </a><strong><font color="#228B22">    } while (0)</font></strong>
+
+<a name="line139">139: </a>template &lt;DeviceType DT, typename T&gt;
+<a name="line140">140: </a>PETSC_CXX_COMPAT_DEFN(<a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ThrustSet(typename Interface&lt;DT&gt;::cupmStream_t stream, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, T *ptr, const T *val))
+<a name="line141">141: </a>{
+<a name="line143">143: </a>  <font color="#4169E1">if</font> (n) {
+<a name="line144">144: </a>    const auto size = n * <font color="#4169E1">sizeof</font>(T);
+
+<a name="line147">147: </a>    <font color="#4169E1">if</font> (*val == T{0}) {
+<a name="line148">148: </a>      Interface&lt;DT&gt;::cupmMemsetAsync(ptr, 0, size, stream);
+<a name="line149">149: </a>    } <font color="#4169E1">else</font> {
+<a name="line150">150: </a>      const auto xptr = thrust::device_pointer_cast(ptr);
+
+<a name="line152">152: </a>      THRUST_CALL(thrust::fill, stream, xptr, xptr + n, *val);
+<a name="line153">153: </a>      <font color="#4169E1">if</font> (std::is_same&lt;util::remove_cv_t&lt;T&gt;, <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>&gt;::value) {
+<a name="line154">154: </a>        PetscLogCpuToGpuScalar(size);
+<a name="line155">155: </a>      } <font color="#4169E1">else</font> {
+<a name="line156">156: </a>        PetscLogCpuToGpu(size);
+<a name="line157">157: </a>      }
+<a name="line158">158: </a>    }
+<a name="line159">159: </a>  }
+<a name="line160">160: </a>  <font color="#4169E1">return</font> 0;
+<a name="line161">161: </a>}
+
+<a name="line163">163: </a><strong><font color="#228B22">  #undef PetscCallCUPM_</font></strong>
+
+<a name="line166">166: </a>template &lt;DeviceType DT, typename T&gt;
+<a name="line167">167: </a><strong><font color="#4169E1"><a name="ETSC_CXX_COMPAT_DEFN"></a>PETSC_CXX_COMPAT_DEFN(<a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ThrustSet(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, T *ptr, const T *val))</font></strong>
+<a name="line168">168: </a>{
+<a name="line169">169: </a>  typename Interface&lt;DT&gt;::cupmStream_t stream;
+
+<a name="line172">172: </a>  PetscDeviceContextGetStreamHandle_Internal(dctx, &amp;stream);
+<a name="line173">173: </a>  ThrustSet(stream, n, ptr, val);
+<a name="line174">174: </a>  <font color="#4169E1">return</font> 0;
+<a name="line175">175: </a>}
+
+<a name="line177">177: </a>} // namespace impl
+
+<a name="line179">179: </a>} // namespace cupm
+
+<a name="line181">181: </a>} // namespace device
+
+<a name="line183">183: </a>} // namespace Petsc
+
+<a name="line185">185: </a><font color="#A020F0">#endif // __cplusplus</font>
+
+<a name="line187">187: </a><font color="#A020F0">#endif // PETSC_CUPM_THRUST_UTILITY_HPP</font>
+</pre>
+</body>
+
+</html>

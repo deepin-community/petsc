@@ -1,0 +1,60 @@
+# VecDotNorm2
+computes the inner product of two vectors and the 2-norm squared of the second vector 
+## Synopsis
+```
+#include "petscvec.h" 
+PetscErrorCode VecDotNorm2(Vec s, Vec t, PetscScalar *dp, PetscReal *nm)
+```
+Collective
+
+
+## Input Parameters
+
+- ***s -*** first vector
+- ***t -*** second vector
+
+
+
+## Output Parameters
+
+- ***dp -*** s'conj(t)
+- ***nm -*** t'conj(t)
+
+
+
+
+
+## Notes
+conj(x) is the complex conjugate of x when x is complex
+
+
+## See Also
+ `VecDot()`, `VecNorm()`, `VecDotBegin()`, `VecNormBegin()`, `VecDotEnd()`, `VecNormEnd()`
+
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/utils/vinv.c.html#VecDotNorm2">src/vec/vec/utils/vinv.c</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/mpi/kokkos/mpikok.kokkos.cxx.html#VecDotNorm2_MPIKokkos">VecDotNorm2_MPIKokkos in src/vec/vec/impls/mpi/kokkos/mpikok.kokkos.cxx</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/mpi/mpicuda/mpicuda.cu.html#VecDotNorm2_MPICUDA">VecDotNorm2_MPICUDA in src/vec/vec/impls/mpi/mpicuda/mpicuda.cu</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/mpi/mpihip/mpihip.hip.c.html#VecDotNorm2_MPIHIP">VecDotNorm2_MPIHIP in src/vec/vec/impls/mpi/mpihip/mpihip.hip.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/mpi/mpiviennacl/mpiviennacl.cxx.html#VecDotNorm2_MPIViennaCL">VecDotNorm2_MPIViennaCL in src/vec/vec/impls/mpi/mpiviennacl/mpiviennacl.cxx</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/nest/vecnest.c.html#VecDotNorm2_Nest">VecDotNorm2_Nest in src/vec/vec/impls/nest/vecnest.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/kokkos/veckok.kokkos.cxx.html#VecDotNorm2_SeqKokkos">VecDotNorm2_SeqKokkos in src/vec/vec/impls/seq/kokkos/veckok.kokkos.cxx</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/seqcuda/veccuda2.cu.html#VecDotNorm2_SeqCUDA">VecDotNorm2_SeqCUDA in src/vec/vec/impls/seq/seqcuda/veccuda2.cu</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/seqhip/vechip2.hip.c.html#VecDotNorm2_SeqHIP">VecDotNorm2_SeqHIP in src/vec/vec/impls/seq/seqhip/vechip2.hip.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/impls/seq/seqviennacl/vecviennacl.cxx.html#VecDotNorm2_SeqViennaCL">VecDotNorm2_SeqViennaCL in src/vec/vec/impls/seq/seqviennacl/vecviennacl.cxx</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/vec/vec/utils/vinv.c)
+
+
+[Index of all Vec routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

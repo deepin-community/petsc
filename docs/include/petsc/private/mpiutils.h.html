@@ -1,0 +1,130 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/include/petsc/private/mpiutils.h">Actual source code: mpiutils.h</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:50:08+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#ifndef MPIUTILS_H</font>
+<a name="line2">  2: </a><strong><font color="#228B22">#define MPIUTILS_H</font></strong>
+
+<a name="line4">  4: </a>#include <A href="../../petscsys.h.html">&lt;petscsys.h&gt;</A>
+
+<a name="line6">  6: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscGatherNumberOfMessages_Private(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>, const <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>[], const <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>[], <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *)</font></strong>;
+<a name="line7">  7: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscGatherMessageLengths_Private(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>, const <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>[], <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> **, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> **)</font></strong>;
+
+<a name="line9">  9: </a><font color="#A020F0">#if !defined(PETSC_HAVE_MPI_LARGE_COUNT) </font><font color="#B22222">/* No matter <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> is 32-bit or 64-bit, without MPI large count we always do casting before MPI calls */</font><font color="#A020F0"></font>
+<a name="line10"> 10: </a><font color="#B22222">/* Cast <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> &lt;a&gt; to <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> &lt;b&gt;, where &lt;a&gt; is likely used for the 'count' argument in MPI routines.</font>
+<a name="line11"> 11: </a><font color="#B22222">    It is similar to <a href="../../../docs/manualpages/Sys/PetscMPIIntCast.html">PetscMPIIntCast</a>() execept that here it returns an MPI error code.</font>
+<a name="line12"> 12: </a><font color="#B22222">  */</font>
+<a name="line13"> 13: </a><strong><font color="#4169E1"><a name="PetscMPIIntCast_Internal"></a>static inline <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> PetscMPIIntCast_Internal(<a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> a, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *b)</font></strong>
+<a name="line14"> 14: </a>{
+<a name="line15"> 15: </a>  *b = (<a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>)(a);
+<a name="line16"> 16: </a>  <font color="#4169E1">if</font> (<a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_64BIT_INDICIES) &amp;&amp; <a href="../../../docs/manualpages/Sys/PetscUnlikely.html">PetscUnlikely</a>(a &gt; PETSC_MPI_INT_MAX)) <font color="#4169E1">return</font> MPI_ERR_COUNT;
+<a name="line17"> 17: </a>  <font color="#4169E1">return</font> MPI_SUCCESS;
+<a name="line18"> 18: </a>}
+
+<a name="line20"> 20: </a><strong><font color="#4169E1"><a name="MPIU_Send"></a>static inline <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> MPIU_Send(const void *buf, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count, MPI_Datatype datatype, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> dest, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> tag, <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm)</font></strong>
+<a name="line21"> 21: </a>{
+<a name="line22"> 22: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> count2;
+
+<a name="line24"> 24: </a>  PetscMPIIntCast_Internal(count, &amp;count2);
+<a name="line25"> 25: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(buf, count2, datatype, dest, tag, comm);
+<a name="line26"> 26: </a>  <font color="#4169E1">return</font> MPI_SUCCESS;
+<a name="line27"> 27: </a>}
+
+<a name="line29"> 29: </a><strong><font color="#4169E1"><a name="MPIU_Send_init"></a>static inline <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> MPIU_Send_init(const void *buf, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count, MPI_Datatype datatype, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> dest, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> tag, <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, MPI_Request *request)</font></strong>
+<a name="line30"> 30: </a>{
+<a name="line31"> 31: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> count2;
+
+<a name="line33"> 33: </a>  PetscMPIIntCast_Internal(count, &amp;count2);
+<a name="line34"> 34: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send_init.html#MPI_Send_init">MPI_Send_init</a>(buf, count2, datatype, dest, tag, comm, request);
+<a name="line35"> 35: </a>  <font color="#4169E1">return</font> MPI_SUCCESS;
+<a name="line36"> 36: </a>}
+
+<a name="line38"> 38: </a><strong><font color="#4169E1"><a name="MPIU_Isend"></a>static inline <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> MPIU_Isend(const void *buf, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count, MPI_Datatype datatype, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> dest, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> tag, <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, MPI_Request *request)</font></strong>
+<a name="line39"> 39: </a>{
+<a name="line40"> 40: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> count2;
+
+<a name="line42"> 42: </a>  PetscMPIIntCast_Internal(count, &amp;count2);
+<a name="line43"> 43: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(buf, count2, datatype, dest, tag, comm, request);
+<a name="line44"> 44: </a>  <font color="#4169E1">return</font> MPI_SUCCESS;
+<a name="line45"> 45: </a>}
+
+<a name="line47"> 47: </a><strong><font color="#4169E1"><a name="MPIU_Recv"></a>static inline <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> MPIU_Recv(void *buf, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count, MPI_Datatype datatype, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> source, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> tag, <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, MPI_Status *status)</font></strong>
+<a name="line48"> 48: </a>{
+<a name="line49"> 49: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> count2;
+
+<a name="line51"> 51: </a>  PetscMPIIntCast_Internal(count, &amp;count2);
+<a name="line52"> 52: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(buf, count2, datatype, source, tag, comm, status);
+<a name="line53"> 53: </a>  <font color="#4169E1">return</font> MPI_SUCCESS;
+<a name="line54"> 54: </a>}
+
+<a name="line56"> 56: </a><strong><font color="#4169E1"><a name="MPIU_Recv_init"></a>static inline <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> MPIU_Recv_init(void *buf, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count, MPI_Datatype datatype, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> source, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> tag, <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, MPI_Request *request)</font></strong>
+<a name="line57"> 57: </a>{
+<a name="line58"> 58: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> count2;
+
+<a name="line60"> 60: </a>  PetscMPIIntCast_Internal(count, &amp;count2);
+<a name="line61"> 61: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv_init.html#MPI_Recv_init">MPI_Recv_init</a>(buf, count2, datatype, source, tag, comm, request);
+<a name="line62"> 62: </a>  <font color="#4169E1">return</font> MPI_SUCCESS;
+<a name="line63"> 63: </a>}
+
+<a name="line65"> 65: </a><strong><font color="#4169E1"><a name="MPIU_Irecv"></a>static inline <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> MPIU_Irecv(void *buf, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count, MPI_Datatype datatype, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> source, <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> tag, <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, MPI_Request *request)</font></strong>
+<a name="line66"> 66: </a>{
+<a name="line67"> 67: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> count2;
+
+<a name="line69"> 69: </a>  PetscMPIIntCast_Internal(count, &amp;count2);
+<a name="line70"> 70: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(buf, count2, datatype, source, tag, comm, request);
+<a name="line71"> 71: </a>  <font color="#4169E1">return</font> MPI_SUCCESS;
+<a name="line72"> 72: </a>}
+<a name="line73"> 73: </a><font color="#A020F0">  #if defined(PETSC_HAVE_MPI_REDUCE_LOCAL)</font>
+<a name="line74"> 74: </a><strong><font color="#4169E1"><a name="MPIU_Reduce_local"></a>static inline <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> MPIU_Reduce_local(const void *inbuf, void *inoutbuf, <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count, MPI_Datatype datatype, MPI_Op op)</font></strong>
+<a name="line75"> 75: </a>{
+<a name="line76"> 76: </a>  <a href="../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> count2;
+
+<a name="line78"> 78: </a>  PetscMPIIntCast_Internal(count, &amp;count2);
+<a name="line79"> 79: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Reduce_local.html#MPI_Reduce_local">MPI_Reduce_local</a>(inbuf, inoutbuf, count, datatype, op);
+<a name="line80"> 80: </a>  <font color="#4169E1">return</font> MPI_SUCCESS;
+<a name="line81"> 81: </a>}
+<a name="line82"> 82: </a><font color="#A020F0">  #endif</font>
+
+<a name="line84"> 84: </a><font color="#A020F0">#elif defined(PETSC_USE_64BIT_INDICES)</font>
+<a name="line85"> 85: </a><strong><font color="#228B22">  #define MPIU_Send(buf, count, datatype, dest, tag, comm)                 MPI_Send_c(buf, count, datatype, dest, tag, comm)</font></strong>
+<a name="line86"> 86: </a><strong><font color="#228B22">  #define MPIU_Send_init(buf, count, datatype, dest, tag, comm, request)   MPI_Send_init_c(buf, count, datatype, dest, tag, comm, request)</font></strong>
+<a name="line87"> 87: </a><strong><font color="#228B22">  #define MPIU_Isend(buf, count, datatype, dest, tag, comm, request)       MPI_Isend_c(buf, count, datatype, dest, tag, comm, request)</font></strong>
+<a name="line88"> 88: </a><strong><font color="#228B22">  #define MPIU_Recv(buf, count, datatype, source, tag, comm, status)       MPI_Recv_c(buf, count, datatype, source, tag, comm, status)</font></strong>
+<a name="line89"> 89: </a><strong><font color="#228B22">  #define MPIU_Recv_init(buf, count, datatype, source, tag, comm, request) MPI_Recv_init_c(buf, count, datatype, source, tag, comm, request)</font></strong>
+<a name="line90"> 90: </a><strong><font color="#228B22">  #define MPIU_Irecv(buf, count, datatype, source, tag, comm, request)     MPI_Irecv_c(buf, count, datatype, source, tag, comm, request)</font></strong>
+<a name="line91"> 91: </a><font color="#A020F0">  #if defined(PETSC_HAVE_MPI_REDUCE_LOCAL)</font>
+<a name="line92"> 92: </a><strong><font color="#228B22">    #define MPIU_Reduce_local(inbuf, inoutbuf, count, datatype, op) MPI_Reduce_local_c(inbuf, inoutbuf, count, datatype, op)</font></strong>
+<a name="line93"> 93: </a><font color="#A020F0">  #endif</font>
+<a name="line94"> 94: </a><font color="#A020F0">#else</font>
+<a name="line95"> 95: </a><strong><font color="#228B22">  #define MPIU_Send(buf, count, datatype, dest, tag, comm)                 <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(buf, count, datatype, dest, tag, comm)</font></strong>
+<a name="line96"> 96: </a><strong><font color="#228B22">  #define MPIU_Send_init(buf, count, datatype, dest, tag, comm, request)   <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send_init.html#MPI_Send_init">MPI_Send_init</a>(buf, count, datatype, dest, tag, comm, request)</font></strong>
+<a name="line97"> 97: </a><strong><font color="#228B22">  #define MPIU_Isend(buf, count, datatype, dest, tag, comm, request)       <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Isend.html#MPI_Isend">MPI_Isend</a>(buf, count, datatype, dest, tag, comm, request)</font></strong>
+<a name="line98"> 98: </a><strong><font color="#228B22">  #define MPIU_Recv(buf, count, datatype, source, tag, comm, status)       <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv.html#MPI_Recv">MPI_Recv</a>(buf, count, datatype, source, tag, comm, status)</font></strong>
+<a name="line99"> 99: </a><strong><font color="#228B22">  #define MPIU_Recv_init(buf, count, datatype, source, tag, comm, request) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Recv_init.html#MPI_Recv_init">MPI_Recv_init</a>(buf, count, datatype, source, tag, comm, request)</font></strong>
+<a name="line100">100: </a><strong><font color="#228B22">  #define MPIU_Irecv(buf, count, datatype, source, tag, comm, request)     <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(buf, count, datatype, source, tag, comm, request)</font></strong>
+<a name="line101">101: </a><font color="#A020F0">  #if defined(PETSC_HAVE_MPI_REDUCE_LOCAL)</font>
+<a name="line102">102: </a><strong><font color="#228B22">    #define MPIU_Reduce_local(inbuf, inoutbuf, count, datatype, op) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Reduce_local.html#MPI_Reduce_local">MPI_Reduce_local</a>(inbuf, inoutbuf, count, datatype, op)</font></strong>
+<a name="line103">103: </a><font color="#A020F0">  #endif</font>
+<a name="line104">104: </a><font color="#A020F0">#endif</font>
+
+<a name="line106">106: </a><font color="#B22222">/* These APIs use arrays of MPI_Count/MPI_Aint */</font>
+<a name="line107">107: </a><font color="#A020F0">#if defined(PETSC_HAVE_MPI_LARGE_COUNT) &amp;&amp; defined(PETSC_USE_64BIT_INDICES)</font>
+<a name="line108">108: </a><strong><font color="#228B22">  #define MPIU_Neighbor_alltoallv(a, b, c, d, e, f, g, h, i)     MPI_Neighbor_alltoallv_c(a, b, c, d, e, f, g, h, i)</font></strong>
+<a name="line109">109: </a><strong><font color="#228B22">  #define MPIU_Ineighbor_alltoallv(a, b, c, d, e, f, g, h, i, j) MPI_Ineighbor_alltoallv_c(a, b, c, d, e, f, g, h, i, j)</font></strong>
+<a name="line110">110: </a><font color="#A020F0">#else</font>
+<a name="line111">111: </a><strong><font color="#228B22">  #define MPIU_Neighbor_alltoallv(a, b, c, d, e, f, g, h, i)     <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Neighbor_alltoallv.html#MPI_Neighbor_alltoallv">MPI_Neighbor_alltoallv</a>(a, b, c, d, e, f, g, h, i)</font></strong>
+<a name="line112">112: </a><strong><font color="#228B22">  #define MPIU_Ineighbor_alltoallv(a, b, c, d, e, f, g, h, i, j) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Ineighbor_alltoallv.html#MPI_Ineighbor_alltoallv">MPI_Ineighbor_alltoallv</a>(a, b, c, d, e, f, g, h, i, j)</font></strong>
+<a name="line113">113: </a><font color="#A020F0">#endif</font>
+
+<a name="line115">115: </a><font color="#A020F0">#endif</font>
+</pre>
+</body>
+
+</html>

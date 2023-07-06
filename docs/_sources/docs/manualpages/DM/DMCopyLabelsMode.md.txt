@@ -1,0 +1,40 @@
+# DMCopyLabelsMode
+Determines how `DMCopyLabels()` behaves when there is a `DMLabel` in the source and destination DMs with the same name 
+## Synopsis
+```
+typedef enum {
+  DM_COPY_LABELS_REPLACE,
+  DM_COPY_LABELS_KEEP,
+  DM_COPY_LABELS_FAIL
+} DMCopyLabelsMode;
+```
+
+
+```none
+DM_COPY_LABELS_REPLACE  - replace label in destination by label from source
+```
+```none
+DM_COPY_LABELS_KEEP     - keep destination label
+```
+```none
+DM_COPY_LABELS_FAIL     - throw error
+```
+
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscdm.h.html#DMCopyLabelsMode">include/petscdm.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/label/tutorials/ex1.c.html">src/dm/label/tutorials/ex1.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscdm.h)
+
+
+[Index of all DM routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

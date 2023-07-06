@@ -1,0 +1,49 @@
+# PetscObject
+any PETSc object, `PetscViewer`, `Mat`, `Vec`, `KSP` etc 
+## Synopsis
+```
+typedef struct _p_PetscObject *PetscObject;
+```
+
+
+
+## Notes
+This is the base class from which all PETSc objects are derived from.
+
+In certain situations one can cast an object, for example a `Vec`, to a `PetscObject` with (`PetscObject`)vec
+
+
+## See Also
+ `PetscObjectDestroy()`, `PetscObjectView()`, `PetscObjectGetName()`, `PetscObjectSetName()`, `PetscObjectReference()`, `PetscObjectDereference()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscsystypes.h.html#PetscObject">include/petscsystypes.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/utils/tagger/tutorials/ex1.c.html">src/vec/vec/utils/tagger/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex10.c.html">src/vec/vec/tutorials/ex10.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex19.c.html">src/vec/vec/tutorials/ex19.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex21.c.html">src/vec/vec/tutorials/ex21.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex3.c.html">src/vec/vec/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/vec/tutorials/ex31.c.html">src/vec/vec/tutorials/ex31.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/is/tutorials/ex3.c.html">src/vec/is/is/tutorials/ex3.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/vec/is/sf/tutorials/ex1.c.html">src/vec/is/sf/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex10.c.html">src/mat/tutorials/ex10.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex18.c.html">src/mat/tutorials/ex18.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/tutorials/ex3.c.html">src/mat/tutorials/ex3.c.html</A><BR>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petsc/private/petscimpl.h.html#_p_PetscObject">_p_PetscObject in include/petsc/private/petscimpl.h</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscsystypes.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

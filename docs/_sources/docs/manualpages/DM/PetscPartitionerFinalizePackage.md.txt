@@ -1,0 +1,27 @@
+# PetscPartitionerFinalizePackage
+This function finalizes everything in the PetscPartitioner package. It is called from PetscFinalize(). 
+## Synopsis
+```
+#include "petscpartitioner.h" 
+PetscErrorCode PetscPartitionerFinalizePackage(void)
+```
+
+
+
+## See Also
+ `PetscInitialize()`
+
+## Level
+developer
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/partitioner/interface/partitionerreg.c.html#PetscPartitionerFinalizePackage">src/dm/partitioner/interface/partitionerreg.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/partitioner/interface/partitionerreg.c)
+
+
+[Index of all DM routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

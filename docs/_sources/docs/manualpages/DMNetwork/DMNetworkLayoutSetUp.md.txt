@@ -1,0 +1,42 @@
+# DMNetworkLayoutSetUp
+Sets up the bare layout (graph) for the network 
+## Synopsis
+```
+#include "petscdmnetwork.h"  
+PetscErrorCode DMNetworkLayoutSetUp(DM dm)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***dm -*** the dmnetwork object
+
+
+
+## Notes
+This routine should be called after the network sizes and edgelists have been provided. It creates
+the bare layout of the network and sets up the network to begin insertion of components.
+
+All the components should be registered before calling this routine.
+
+
+
+
+## See Also
+ `DMNetworkSetNumSubNetworks()`, `DMNetworkAddSubnetwork()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/network/network.c.html#DMNetworkLayoutSetUp">src/dm/impls/network/network.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/network/network.c)
+
+
+[Index of all DMNetwork routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

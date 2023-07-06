@@ -1,0 +1,49 @@
+# MatPreallocateLocation
+An alternative to MatPreallocateSet() that puts the nonzero locations into the matrix if it exists 
+## Synopsis
+```
+#include <petscmat.h>
+PetscErrorCode MatPreallocateLocations(Mat A,PetscInt row,PetscInt ncols,PetscInt *cols,PetscInt *dnz,PetscInt *onz)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***A -*** matrix
+- ***row -*** row where values exist (must be local to this process)
+- ***ncols -*** number of columns
+- ***cols -*** columns with nonzeros
+- ***dnz -*** the array that will be passed to the matrix preallocation routines
+- ***onz -*** the other array passed to the matrix preallocation routines
+
+
+
+
+
+## Notes
+See Users-Manual: ch_performance for more details.
+
+Do not malloc or free dnz and onz that is handled internally by these routines
+
+This is a MACRO not a function because it uses a bunch of variables private to the MatPreallocation.... routines.
+
+
+## See Also
+ `MatPreallocateBegin()`, `MatPreallocateSet()`, `MatPreallocateSymmetricSetBlock()`, `MatPreallocateSetLocal()`,
+`MatPreallocateSymmetricSetLocalBlock()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscmat.h.html#MatPreallocateLocation">include/petscmat.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscmat.h)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

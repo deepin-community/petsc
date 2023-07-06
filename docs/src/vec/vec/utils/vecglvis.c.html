@@ -1,0 +1,123 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/vec/vec/utils/vecglvis.c">Actual source code: vecglvis.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:11+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petsc/private/glvisviewerimpl.h.html">&lt;petsc/private/glvisviewerimpl.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../include/petsc/private/glvisvecimpl.h.html">&lt;petsc/private/glvisvecimpl.h&gt;</A>
+
+<a name="line4">  4: </a><strong><font color="#4169E1"><a name="PetscViewerGLVisVecInfoDestroy_Private"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscViewerGLVisVecInfoDestroy_Private(void *ptr)</font></strong>
+<a name="line5">  5: </a>{
+<a name="line6">  6: </a>  PetscViewerGLVisVecInfo info = (PetscViewerGLVisVecInfo)ptr;
+
+<a name="line9">  9: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(info-&gt;fec_type);
+<a name="line10"> 10: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(info);
+<a name="line11"> 11: </a>  <font color="#4169E1">return</font> 0;
+<a name="line12"> 12: </a>}
+
+<a name="line14"> 14: </a><font color="#B22222">/* the main function to visualize vectors using GLVis */</font>
+<a name="line15"> 15: </a><strong><font color="#4169E1"><a name="VecView_GLVis"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecView_GLVis(<a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> U, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line16"> 16: </a>{
+<a name="line17"> 17: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*g2lfields)(<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>[], void *);
+<a name="line18"> 18: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>                   *Ufield;
+<a name="line19"> 19: </a>  const char           **fec_type;
+<a name="line20"> 20: </a>  PetscViewerGLVisStatus sockstatus;
+<a name="line21"> 21: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PetscViewerGLVisType</a>   socktype;
+<a name="line22"> 22: </a>  void                  *userctx;
+<a name="line23"> 23: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>               i, nfields, *spacedim;
+<a name="line24"> 24: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>              pause = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line26"> 26: </a>  PetscViewerGLVisGetStatus_Private(viewer, &amp;sockstatus);
+<a name="line27"> 27: </a>  <font color="#4169E1">if</font> (sockstatus == PETSCVIEWERGLVIS_DISABLED) <font color="#4169E1">return</font> 0;
+<a name="line28"> 28: </a>  <font color="#B22222">/* if the user did not customize the viewer through the API, we need extra data that can be attached to the <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> */</font>
+<a name="line29"> 29: </a>  PetscViewerGLVisGetFields_Private(viewer, &amp;nfields, NULL, NULL, NULL, NULL, NULL);
+<a name="line30"> 30: </a>  <font color="#4169E1">if</font> (!nfields) {
+<a name="line31"> 31: </a>    <a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> dm;
+
+<a name="line33"> 33: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)U, <font color="#666666">"__PETSc_dm"</font>, &amp;dm);
+<a name="line34"> 34: </a>    <font color="#4169E1">if</font> (dm) {
+<a name="line35"> 35: </a>      PetscViewerGLVisSetDM_Private(viewer, dm);
+<a name="line36"> 36: </a>    } <font color="#4169E1">else</font> <a href="../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)U), PETSC_ERR_SUP, <font color="#666666">"You need to provide a <a href="../../../../docs/manualpages/DM/DM.html">DM</a> or use <a href="../../../../docs/manualpages/Viewer/PetscViewerGLVisSetFields.html">PetscViewerGLVisSetFields</a>()"</font>);
+<a name="line37"> 37: </a>  }
+<a name="line38"> 38: </a>  PetscViewerGLVisGetFields_Private(viewer, &amp;nfields, &amp;fec_type, &amp;spacedim, &amp;g2lfields, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> **)&amp;Ufield, &amp;userctx);
+<a name="line39"> 39: </a>  <font color="#4169E1">if</font> (!nfields) <font color="#4169E1">return</font> 0;
+
+<a name="line41"> 41: </a>  PetscViewerGLVisGetType_Private(viewer, &amp;socktype);
+
+<a name="line43"> 43: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nfields; i++) {
+<a name="line44"> 44: </a>    <a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>    fdm;
+<a name="line45"> 45: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a> container;
+
+<a name="line47"> 47: </a>    <font color="#B22222">/* attach visualization info to the vector */</font>
+<a name="line48"> 48: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)Ufield[i], <font color="#666666">"_glvis_info_container"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;container);
+<a name="line49"> 49: </a>    <font color="#4169E1">if</font> (!container) {
+<a name="line50"> 50: </a>      PetscViewerGLVisVecInfo info;
+
+<a name="line52"> 52: </a>      <a href="../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;info);
+<a name="line53"> 53: </a>      <a href="../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(fec_type[i], &amp;info-&gt;fec_type);
+<a name="line54"> 54: </a>      <a href="../../../../docs/manualpages/Sys/PetscContainerCreate.html">PetscContainerCreate</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)U), &amp;container);
+<a name="line55"> 55: </a>      <a href="../../../../docs/manualpages/Sys/PetscContainerSetPointer.html">PetscContainerSetPointer</a>(container, (void *)info);
+<a name="line56"> 56: </a>      <a href="../../../../docs/manualpages/Sys/PetscContainerSetUserDestroy.html">PetscContainerSetUserDestroy</a>(container, PetscViewerGLVisVecInfoDestroy_Private);
+<a name="line57"> 57: </a>      <a href="../../../../docs/manualpages/Sys/PetscObjectCompose.html">PetscObjectCompose</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)Ufield[i], <font color="#666666">"_glvis_info_container"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)container);
+<a name="line58"> 58: </a>      <a href="../../../../docs/manualpages/Sys/PetscContainerDestroy.html">PetscContainerDestroy</a>(&amp;container);
+<a name="line59"> 59: </a>    }
+<a name="line60"> 60: </a>    <font color="#B22222">/* attach the mesh to the viz vectors */</font>
+<a name="line61"> 61: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)Ufield[i], <font color="#666666">"__PETSc_dm"</font>, &amp;fdm);
+<a name="line62"> 62: </a>    <font color="#4169E1">if</font> (!fdm) {
+<a name="line63"> 63: </a>      <a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> dm;
+
+<a name="line65"> 65: </a>      PetscViewerGLVisGetDM_Private(viewer, &amp;dm);
+<a name="line66"> 66: </a>      <font color="#4169E1">if</font> (!dm) <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)U, <font color="#666666">"__PETSc_dm"</font>, &amp;dm);
+<a name="line68"> 68: </a>      <a href="../../../../docs/manualpages/Sys/PetscObjectCompose.html">PetscObjectCompose</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)Ufield[i], <font color="#666666">"__PETSc_dm"</font>, dm);
+<a name="line69"> 69: </a>    }
+<a name="line70"> 70: </a>  }
+
+<a name="line72"> 72: </a>  <font color="#B22222">/* user-provided sampling */</font>
+<a name="line73"> 73: </a>  <font color="#4169E1">if</font> (g2lfields) {
+<a name="line74"> 74: </a>    (*g2lfields)((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)U, nfields, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)Ufield, userctx);
+<a name="line75"> 75: </a>  } <font color="#4169E1">else</font> {
+<a name="line77"> 77: </a>    <a href="../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(U, Ufield[0]);
+<a name="line78"> 78: </a>  }
+
+<a name="line80"> 80: </a>  <font color="#B22222">/* TODO callback to user routine to disable/enable subdomains */</font>
+<a name="line81"> 81: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nfields; i++) {
+<a name="line82"> 82: </a>    <a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> dm;
+<a name="line83"> 83: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> view;
+
+<a name="line85"> 85: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)Ufield[i], <font color="#666666">"__PETSc_dm"</font>, &amp;dm);
+<a name="line86"> 86: </a>    PetscViewerGLVisGetWindow_Private(viewer, i, &amp;view);
+<a name="line87"> 87: </a>    <font color="#4169E1">if</font> (!view) <font color="#4169E1">continue</font>; <font color="#B22222">/* socket window has been closed */</font>
+<a name="line88"> 88: </a>    <font color="#4169E1">if</font> (socktype == <a href="../../../../docs/manualpages/Viewer/PetscViewerGLVisType.html">PETSC_VIEWER_GLVIS_SOCKET</a>) {
+<a name="line89"> 89: </a>      <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size, rank;
+<a name="line90"> 90: </a>      const char *name;
+
+<a name="line92"> 92: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>(dm), &amp;size);
+<a name="line93"> 93: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>(dm), &amp;rank);
+<a name="line94"> 94: </a>      <a href="../../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)Ufield[i], &amp;name);
+
+<a name="line96"> 96: </a>      PetscGLVisCollectiveBegin(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>(dm), &amp;view);
+<a name="line97"> 97: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(view, <font color="#666666">"parallel %d %d\nsolution\n"</font>, size, rank);
+<a name="line98"> 98: </a>      <a href="../../../../docs/manualpages/Sys/PetscObjectView.html">PetscObjectView</a>(dm, view);
+<a name="line99"> 99: </a>      <a href="../../../../docs/manualpages/Vec/VecView.html">VecView</a>(Ufield[i], view);
+<a name="line100">100: </a>      PetscViewerGLVisInitWindow_Private(view, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, spacedim[i], name);
+<a name="line101">101: </a>      PetscGLVisCollectiveEnd(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>(dm), &amp;view);
+<a name="line102">102: </a>      <font color="#4169E1">if</font> (view) pause = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>; <font color="#B22222">/* at least one window is connected */</font>
+<a name="line103">103: </a>    } <font color="#4169E1">else</font> {
+<a name="line104">104: </a>      <a href="../../../../docs/manualpages/Sys/PetscObjectView.html">PetscObjectView</a>(dm, view);
+<a name="line105">105: </a>      <a href="../../../../docs/manualpages/Vec/VecView.html">VecView</a>(Ufield[i], view);
+<a name="line106">106: </a>    }
+<a name="line107">107: </a>    PetscViewerGLVisRestoreWindow_Private(viewer, i, &amp;view);
+<a name="line108">108: </a>  }
+<a name="line109">109: </a>  <font color="#4169E1">if</font> (pause) PetscViewerGLVisPause_Private(viewer);
+<a name="line110">110: </a>  <font color="#4169E1">return</font> 0;
+<a name="line111">111: </a>}
+</pre>
+</body>
+
+</html>

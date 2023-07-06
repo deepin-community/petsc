@@ -1,0 +1,107 @@
+# SNESLineSearchShellSetUserFunc
+Sets the user function for the `SNESLINESEARCHSHELL` implementation. 
+## Synopsis
+```
+PetscErrorCode SNESLineSearchShellSetUserFunc(SNESLineSearch linesearch, SNESLineSearchUserFunc func, void *ctx)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***linesearch -*** `SNESLineSearch` context
+- ***func -*** function implementing the linesearch shell.
+- ***ctx -*** context for func
+
+
+
+## Calling sequence of func
+
+- ***linesearch -*** the linesearch instance
+- ***ctx -*** the above mentioned context
+
+
+
+## Usage
+```none
+PetscErrorCode shellfunc(SNESLineSearch linesearch,void * ctx)
+```
+```none
+{
+```
+```none
+Vec  X,Y,F,W,G;
+```
+```none
+SNES snes;
+```
+```none
+PetscFunctionBegin;
+```
+```none
+PetscCall(SNESLineSearchGetSNES(linesearch,&snes));
+```
+```none
+PetscCall(SNESLineSearchSetReason(linesearch,SNES_LINESEARCH_SUCCEEDED));
+```
+```none
+PetscCall(SNESLineSearchGetVecs(linesearch,&X,&F,&Y,&W,&G));
+```
+```none
+.. determine lambda using W and G as work vecs..
+```
+```none
+PetscCall(VecAXPY(X,-lambda,Y));
+```
+```none
+PetscCall(SNESComputeFunction(snes,X,F));
+```
+```none
+PetscCall(SNESLineSearchComputeNorms(linesearch));
+```
+```none
+PetscFunctionReturn(0);
+```
+```none
+}
+```
+```none
+```
+```none
+...
+```
+```none
+```
+```none
+PetscCall(SNESGetLineSearch(snes, &linesearch));
+```
+```none
+PetscCall(SNESLineSearchSetType(linesearch, SNESLINESEARCHSHELL));
+```
+```none
+PetscCall(SNESLineSearchShellSetUserFunc(linesearch, shellfunc, NULL));
+```
+
+
+
+
+## See Also
+ `SNESLineSearchShellGetUserFunc()`, `SNESLINESEARCHSHELL`, `SNESLineSearchType`, `SNESLineSearch`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/linesearch/impls/shell/linesearchshell.c.html#SNESLineSearchShellSetUserFunc">src/snes/linesearch/impls/shell/linesearchshell.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex1f.F90.html">src/snes/tutorials/ex1f.F90.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/snes/linesearch/impls/shell/linesearchshell.c)
+
+
+[Index of all SNES routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

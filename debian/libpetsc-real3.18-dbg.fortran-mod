@@ -1,0 +1,5 @@
+#! /bin/sh
+for modpath in debian/tmp/petsc${PETSC_SONAME_VERSION}-real-debug/${PETSC_REAL_DEBUG_DIR_PREFIX}/include/*.mod; do
+  modfile=$(basename $modpath)
+  echo ${modpath} ${PETSC_REAL_DEBUG_DIR_PREFIX}/include
+done

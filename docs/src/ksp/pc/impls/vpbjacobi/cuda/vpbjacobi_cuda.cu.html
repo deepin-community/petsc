@@ -1,0 +1,182 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ksp/pc/impls/vpbjacobi/cuda/vpbjacobi_cuda.cu">Actual source code: vpbjacobi_cuda.cu</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:57+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../../include/petscdevice_cuda.h.html">&lt;petscdevice_cuda.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../vpbjacobi.h.html">&lt;../src/ksp/pc/impls/vpbjacobi/vpbjacobi.h&gt;</A>
+
+<a name="line4">  4: </a><font color="#B22222">/* A class that manages helper arrays assisting parallel <a href="../../../../../docs/manualpages/PC/PCApply.html">PCApply</a>() with CUDA */</font>
+<a name="line5">  5: </a><font color="#4169E1"><a name="PC_VPBJacobi_CUDA"></a>struct PC_VPBJacobi_CUDA </font>{
+<a name="line6">  6: </a>  <font color="#B22222">/* Cache the old sizes to check if we need realloc */</font>
+<a name="line7">  7: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n;       <font color="#B22222">/* number of rows of the local matrix */</font>
+<a name="line8">  8: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nblocks; <font color="#B22222">/* number of point blocks */</font>
+<a name="line9">  9: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nsize;   <font color="#B22222">/* sum of sizes of the point blocks */</font>
+
+<a name="line11"> 11: </a>  <font color="#B22222">/* Helper arrays that are pre-computed on host and then copied to device.</font>
+<a name="line12"> 12: </a><font color="#B22222">    bs:     [nblocks+1], "csr" version of bsizes[], with bs[0] = 0, bs[nblocks] = n.</font>
+<a name="line13"> 13: </a><font color="#B22222">    bs2:    [nblocks+1], "csr" version of squares of bsizes[], with bs2[0] = 0, bs2[nblocks] = nsize.</font>
+<a name="line14"> 14: </a><font color="#B22222">    matIdx: [n], row i of the local matrix belongs to the matIdx_d[i] block</font>
+<a name="line15"> 15: </a><font color="#B22222">  */</font>
+<a name="line16"> 16: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *bs_h, *bs2_h, *matIdx_h;
+<a name="line17"> 17: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *bs_d, *bs2_d, *matIdx_d;
+
+<a name="line19"> 19: </a>  MatScalar *diag_d; <font color="#B22222">/* [nsize], store inverse of the point blocks on device */</font>
+
+<a name="line21"> 21: </a>  PC_VPBJacobi_CUDA(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nblocks, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nsize, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *bsizes, MatScalar *diag_h) : n(n), nblocks(nblocks), nsize(nsize)
+<a name="line22"> 22: </a>  {
+<a name="line23"> 23: </a>    <font color="#B22222">/* malloc memory on host and device, and then update */</font>
+<a name="line24"> 24: </a>    <a href="../../../../../docs/manualpages/Sys/PetscMalloc3.html">PetscMalloc3</a>(nblocks + 1, &amp;bs_h, nblocks + 1, &amp;bs2_h, n, &amp;matIdx_h);
+<a name="line25"> 25: </a>    cudaMalloc(&amp;bs_d, <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>) * (nblocks + 1));
+<a name="line26"> 26: </a>    cudaMalloc(&amp;bs2_d, <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>) * (nblocks + 1));
+<a name="line27"> 27: </a>    cudaMalloc(&amp;matIdx_d, <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>) * n);
+<a name="line28"> 28: </a>    cudaMalloc(&amp;diag_d, <font color="#4169E1">sizeof</font>(MatScalar) * nsize);
+<a name="line29"> 29: </a>    UpdateOffsetsOnDevice(bsizes, diag_h);
+<a name="line30"> 30: </a>  }
+
+<a name="line32"> 32: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> UpdateOffsetsOnDevice(const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *bsizes, MatScalar *diag_h)
+<a name="line33"> 33: </a>  {
+<a name="line34"> 34: </a>    ComputeOffsetsOnHost(bsizes);
+<a name="line35"> 35: </a>    cudaMemcpy(bs_d, bs_h, <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>) * (nblocks + 1), cudaMemcpyHostToDevice);
+<a name="line36"> 36: </a>    cudaMemcpy(bs2_d, bs2_h, <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>) * (nblocks + 1), cudaMemcpyHostToDevice);
+<a name="line37"> 37: </a>    cudaMemcpy(matIdx_d, matIdx_h, <font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>) * n, cudaMemcpyHostToDevice);
+<a name="line38"> 38: </a>    cudaMemcpy(diag_d, diag_h, <font color="#4169E1">sizeof</font>(MatScalar) * nsize, cudaMemcpyHostToDevice);
+<a name="line39"> 39: </a>    PetscLogCpuToGpu(<font color="#4169E1">sizeof</font>(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>) * (2 * nblocks + 2 + n) + <font color="#4169E1">sizeof</font>(MatScalar) * nsize);
+<a name="line40"> 40: </a>    <font color="#4169E1">return</font> 0;
+<a name="line41"> 41: </a>  }
+
+<a name="line43"> 43: </a>  ~PC_VPBJacobi_CUDA()
+<a name="line44"> 44: </a>  {
+<a name="line45"> 45: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree3.html">PetscFree3</a>(bs_h, bs2_h, matIdx_h);
+<a name="line46"> 46: </a>    cudaFree(bs_d);
+<a name="line47"> 47: </a>    cudaFree(bs2_d);
+<a name="line48"> 48: </a>    cudaFree(matIdx_d);
+<a name="line49"> 49: </a>    cudaFree(diag_d);
+<a name="line50"> 50: </a>  }
+
+<a name="line52"> 52: </a><strong><font color="#FF0000">private:</font></strong>
+<a name="line53"> 53: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ComputeOffsetsOnHost(const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *bsizes)
+<a name="line54"> 54: </a>  {
+<a name="line55"> 55: </a>    bs_h[0] = bs2_h[0] = 0;
+<a name="line56"> 56: </a>    <font color="#4169E1">for</font> (<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i = 0; i &lt; nblocks; i++) {
+<a name="line57"> 57: </a>      bs_h[i + 1]  = bs_h[i] + bsizes[i];
+<a name="line58"> 58: </a>      bs2_h[i + 1] = bs2_h[i] + bsizes[i] * bsizes[i];
+<a name="line59"> 59: </a>      <font color="#4169E1">for</font> (<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> j = 0; j &lt; bsizes[i]; j++) matIdx_h[bs_h[i] + j] = i;
+<a name="line60"> 60: </a>    }
+<a name="line61"> 61: </a>    <font color="#4169E1">return</font> 0;
+<a name="line62"> 62: </a>  }
+<a name="line63"> 63: </a>};
+
+<a name="line65"> 65: </a><font color="#B22222">/* Like cublasDgemvBatched() but with variable-sized blocks</font>
+
+<a name="line67"> 67: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line68"> 68: </a><font color="#B22222">+ n       - number of rows of the local matrix</font>
+<a name="line69"> 69: </a><font color="#B22222">. bs      - [nblocks+1], prefix sum of bsizes[]</font>
+<a name="line70"> 70: </a><font color="#B22222">. bs2     - [nblocks+1], prefix sum of squares of bsizes[]</font>
+<a name="line71"> 71: </a><font color="#B22222">. matIdx  - [n], store block/matrix index for each row</font>
+<a name="line72"> 72: </a><font color="#B22222">. A       - blocks of the matrix back to back in column-major order</font>
+<a name="line73"> 73: </a><font color="#B22222">- x       - the input vector</font>
+
+<a name="line75"> 75: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line76"> 76: </a><font color="#B22222">. y - the output vector</font>
+<a name="line77"> 77: </a><font color="#B22222">*/</font>
+<a name="line78"> 78: </a><strong><font color="#4169E1"><a name="MatMultBatched"></a>__global__ static void MatMultBatched(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *bs, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *bs2, const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *matIdx, const MatScalar *A, const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *x, <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *y)</font></strong>
+<a name="line79"> 79: </a>{
+<a name="line80"> 80: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> gridSize = gridDim.x * blockDim.x;
+<a name="line81"> 81: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       tid      = blockIdx.x * blockDim.x + threadIdx.x;
+<a name="line82"> 82: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       i, j, k, m;
+
+<a name="line84"> 84: </a>  <font color="#B22222">/* One row per thread. The blocks/matrices are stored in column-major order */</font>
+<a name="line85"> 85: </a>  <font color="#4169E1">for</font> (; tid &lt; n; tid += gridSize) {
+<a name="line86"> 86: </a>    k = matIdx[tid];       <font color="#B22222">/* k-th block */</font>
+<a name="line87"> 87: </a>    m = bs[k + 1] - bs[k]; <font color="#B22222">/* block size of the k-th block */</font>
+<a name="line88"> 88: </a>    i = tid - bs[k];       <font color="#B22222">/* i-th row of the block */</font>
+<a name="line89"> 89: </a>    A += bs2[k] + i;       <font color="#B22222">/* advance A to the first entry of i-th row */</font>
+<a name="line90"> 90: </a>    x += bs[k];
+<a name="line91"> 91: </a>    y += bs[k];
+
+<a name="line93"> 93: </a>    y[i] = 0.0;
+<a name="line94"> 94: </a>    <font color="#4169E1">for</font> (j = 0; j &lt; m; j++) {
+<a name="line95"> 95: </a>      y[i] += A[0] * x[j];
+<a name="line96"> 96: </a>      A += m;
+<a name="line97"> 97: </a>    }
+<a name="line98"> 98: </a>  }
+<a name="line99"> 99: </a>}
+
+<a name="line101">101: </a><strong><font color="#4169E1"><a name="PCApply_VPBJacobi_CUDA"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCApply_VPBJacobi_CUDA(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> y)</font></strong>
+<a name="line102">102: </a>{
+<a name="line103">103: </a>  PC_VPBJacobi      *jac   = (PC_VPBJacobi *)pc-&gt;data;
+<a name="line104">104: </a>  PC_VPBJacobi_CUDA *pcuda = static_cast&lt;PC_VPBJacobi_CUDA *&gt;(jac-&gt;spptr);
+<a name="line105">105: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *xx;
+<a name="line106">106: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *yy;
+<a name="line107">107: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           n;
+
+<a name="line109">109: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line110">110: </a>  <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG)) {
+<a name="line111">111: </a>    <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> isCuda;
+<a name="line112">112: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompareAny.html">PetscObjectTypeCompareAny</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)x, &amp;isCuda, <a href="../../../../../docs/manualpages/Vec/VECSEQCUDA.html">VECSEQCUDA</a>, <a href="../../../../../docs/manualpages/Vec/VECMPICUDA.html">VECMPICUDA</a>, <font color="#666666">""</font>);
+<a name="line113">113: </a>    <font color="#4169E1">if</font> (isCuda) <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompareAny.html">PetscObjectTypeCompareAny</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)y, &amp;isCuda, <a href="../../../../../docs/manualpages/Vec/VECSEQCUDA.html">VECSEQCUDA</a>, <a href="../../../../../docs/manualpages/Vec/VECMPICUDA.html">VECMPICUDA</a>, <font color="#666666">""</font>);
+<a name="line115">115: </a>  }
+
+<a name="line117">117: </a>  <a href="../../../../../docs/manualpages/Mat/MatGetLocalSize.html">MatGetLocalSize</a>(pc-&gt;pmat, &amp;n, NULL);
+<a name="line118">118: </a>  <font color="#4169E1">if</font> (n) {
+<a name="line119">119: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> gridSize = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>((n + 255) / 256, 2147483647); <font color="#B22222">/* &lt;= 2^31-1 */</font>
+<a name="line120">120: </a>    <a href="../../../../../docs/manualpages/Vec/VecCUDAGetArrayRead.html">VecCUDAGetArrayRead</a>(x, &amp;xx);
+<a name="line121">121: </a>    <a href="../../../../../docs/manualpages/Vec/VecCUDAGetArrayWrite.html">VecCUDAGetArrayWrite</a>(y, &amp;yy);
+<a name="line122">122: </a>    MatMultBatched&lt;&lt;&lt;gridSize, 256&gt;&gt;&gt;(n, pcuda-&gt;bs_d, pcuda-&gt;bs2_d, pcuda-&gt;matIdx_d, pcuda-&gt;diag_d, xx, yy);
+<a name="line123">123: </a>    cudaGetLastError();
+<a name="line124">124: </a>    <a href="../../../../../docs/manualpages/Vec/VecCUDARestoreArrayRead.html">VecCUDARestoreArrayRead</a>(x, &amp;xx);
+<a name="line125">125: </a>    <a href="../../../../../docs/manualpages/Vec/VecCUDARestoreArrayWrite.html">VecCUDARestoreArrayWrite</a>(y, &amp;yy);
+<a name="line126">126: </a>  }
+<a name="line127">127: </a>  <a href="../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(pcuda-&gt;nsize * 2); <font color="#B22222">/* FMA on entries in all blocks */</font>
+<a name="line128">128: </a>  <a href="../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line129">129: </a>  <font color="#4169E1">return</font> 0;
+<a name="line130">130: </a>}
+
+<a name="line132">132: </a><strong><font color="#4169E1"><a name="PCDestroy_VPBJacobi_CUDA"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCDestroy_VPBJacobi_CUDA(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line133">133: </a>{
+<a name="line134">134: </a>  PC_VPBJacobi *jac = (PC_VPBJacobi *)pc-&gt;data;
+
+<a name="line136">136: </a>  delete static_cast&lt;PC_VPBJacobi_CUDA *&gt;(jac-&gt;spptr);
+<a name="line137">137: </a>  PCDestroy_VPBJacobi(pc);
+<a name="line138">138: </a>  <font color="#4169E1">return</font> 0;
+<a name="line139">139: </a>}
+
+<a name="line141">141: </a><strong><font color="#4169E1"><a name="PCSetUp_VPBJacobi_CUDA"></a>PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PCSetUp_VPBJacobi_CUDA(<a href="../../../../../docs/manualpages/PC/PC.html">PC</a> pc)</font></strong>
+<a name="line142">142: </a>{
+<a name="line143">143: </a>  PC_VPBJacobi      *jac   = (PC_VPBJacobi *)pc-&gt;data;
+<a name="line144">144: </a>  PC_VPBJacobi_CUDA *pcuda = static_cast&lt;PC_VPBJacobi_CUDA *&gt;(jac-&gt;spptr);
+<a name="line145">145: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           i, n, nblocks, nsize = 0;
+<a name="line146">146: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *bsizes;
+
+<a name="line148">148: </a>  PCSetUp_VPBJacobi_Host(pc); <font color="#B22222">/* Compute the inverse on host now. Might worth doing it on device directly */</font>
+<a name="line149">149: </a>  <a href="../../../../../docs/manualpages/Mat/MatGetVariableBlockSizes.html">MatGetVariableBlockSizes</a>(pc-&gt;pmat, &amp;nblocks, &amp;bsizes);
+<a name="line150">150: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nblocks; i++) nsize += bsizes[i] * bsizes[i];
+<a name="line151">151: </a>  <a href="../../../../../docs/manualpages/Mat/MatGetLocalSize.html">MatGetLocalSize</a>(pc-&gt;pmat, &amp;n, NULL);
+
+<a name="line153">153: </a>  <font color="#B22222">/* If one calls <a href="../../../../../docs/manualpages/Mat/MatSetVariableBlockSizes.html">MatSetVariableBlockSizes</a>() multiple times and sizes have been changed (is it allowed?), we delete the old and rebuild anyway */</font>
+<a name="line154">154: </a>  <font color="#4169E1">if</font> (pcuda &amp;&amp; (pcuda-&gt;n != n || pcuda-&gt;nblocks != nblocks || pcuda-&gt;nsize != nsize)) {
+<a name="line155">155: </a>    delete pcuda;
+<a name="line156">156: </a>    pcuda = nullptr;
+<a name="line157">157: </a>  }
+
+<a name="line159">159: </a>  <font color="#4169E1">if</font> (!pcuda) { <font color="#B22222">/* allocate the struct along with the helper arrays from the scratch */</font>
+<a name="line160">160: </a>    jac-&gt;spptr = new PC_VPBJacobi_CUDA(n, nblocks, nsize, bsizes, jac-&gt;diag);
+<a name="line161">161: </a>  } <font color="#4169E1">else</font> { <font color="#B22222">/* update the value only */</font>
+<a name="line162">162: </a>    pcuda-&gt;UpdateOffsetsOnDevice(bsizes, jac-&gt;diag);
+<a name="line163">163: </a>  }
+
+<a name="line165">165: </a>  pc-&gt;ops-&gt;apply   = PCApply_VPBJacobi_CUDA;
+<a name="line166">166: </a>  pc-&gt;ops-&gt;destroy = PCDestroy_VPBJacobi_CUDA;
+<a name="line167">167: </a>  <font color="#4169E1">return</font> 0;
+<a name="line168">168: </a>}
+</pre>
+</body>
+
+</html>

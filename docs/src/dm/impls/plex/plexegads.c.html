@@ -1,0 +1,1527 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/plex/plexegads.c">Actual source code: plexegads.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:24+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petsc/private/dmpleximpl.h.html">&lt;petsc/private/dmpleximpl.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../include/petsc/private/hashmapi.h.html">&lt;petsc/private/hashmapi.h&gt;</A>
+
+<a name="line4">  4: </a><font color="#A020F0">#ifdef PETSC_HAVE_EGADS</font>
+<a name="line5">  5: </a><font color="#A020F0">  #include &lt;egads.h&gt;</font>
+<a name="line6">  6: </a><font color="#A020F0">#endif</font>
+
+<a name="line8">  8: </a><font color="#B22222">/* We need to understand how to natively parse STEP files. There seems to be only one open source implementation of</font>
+<a name="line9">  9: </a><font color="#B22222">   the STEP parser contained in the OpenCASCADE package. It is enough to make a strong man weep:</font>
+
+<a name="line11"> 11: </a><font color="#B22222">     https://github.com/tpaviot/oce/tree/master/src/STEPControl</font>
+
+<a name="line13"> 13: </a><font color="#B22222">   The STEP, and inner EXPRESS, formats are ISO standards, so they are documented</font>
+
+<a name="line15"> 15: </a><font color="#B22222">     https://stackoverflow.com/questions/26774037/documentation-or-specification-for-step-and-stp-files</font>
+<a name="line16"> 16: </a><font color="#B22222">     http://stepmod.sourceforge.net/express_model_spec/</font>
+
+<a name="line18"> 18: </a><font color="#B22222">   but again it seems that there has been a deliberate effort at obfuscation, probably to raise the bar for entrants.</font>
+<a name="line19"> 19: </a><font color="#B22222">*/</font>
+
+<a name="line21"> 21: </a><font color="#A020F0">#ifdef PETSC_HAVE_EGADS</font>
+<a name="line22"> 22: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexSnapToGeomModel_EGADS_Internal(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, ego, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>[], <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>[])</font></strong>;
+<a name="line23"> 23: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexSnapToGeomModel_EGADSLite_Internal(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, ego, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>[], <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>[])</font></strong>;
+
+<a name="line25"> 25: </a><strong><font color="#4169E1"><a name="DMPlexSnapToGeomModel_EGADS_Internal"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexSnapToGeomModel_EGADS_Internal(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> p, ego model, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> bodyID, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> faceID, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> edgeID, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> mcoords[], <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> gcoords[])</font></strong>
+<a name="line26"> 26: </a>{
+<a name="line27"> 27: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>   cdm;
+<a name="line28"> 28: </a>  ego *bodies;
+<a name="line29"> 29: </a>  ego  geom, body, obj;
+<a name="line30"> 30: </a>  <font color="#B22222">/* result has to hold derivatives, along with the value */</font>
+<a name="line31"> 31: </a>  double       params[3], result[18], paramsV[16 * 3], resultV[16 * 3], range[4];
+<a name="line32"> 32: </a>  int          Nb, oclass, mtype, *senses, peri;
+<a name="line33"> 33: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>          coordinatesLocal;
+<a name="line34"> 34: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *coords = NULL;
+<a name="line35"> 35: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     Nv, v, Np = 0, pm;
+<a name="line36"> 36: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     dE, d;
+
+<a name="line39"> 39: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinateDM.html">DMGetCoordinateDM</a>(dm, &amp;cdm);
+<a name="line40"> 40: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinateDim.html">DMGetCoordinateDim</a>(dm, &amp;dE);
+<a name="line41"> 41: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinatesLocal.html">DMGetCoordinatesLocal</a>(dm, &amp;coordinatesLocal);
+<a name="line42"> 42: </a>  EG_getTopology(model, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Nb, &amp;bodies, &amp;senses);
+<a name="line44"> 44: </a>  body = bodies[bodyID];
+
+<a name="line46"> 46: </a>  <font color="#4169E1">if</font> (edgeID &gt;= 0) {
+<a name="line47"> 47: </a>    EG_objectBodyTopo(body, EDGE, edgeID, &amp;obj);
+<a name="line48"> 48: </a>    Np = 1;
+<a name="line49"> 49: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (faceID &gt;= 0) {
+<a name="line50"> 50: </a>    EG_objectBodyTopo(body, FACE, faceID, &amp;obj);
+<a name="line51"> 51: </a>    Np = 2;
+<a name="line52"> 52: </a>  } <font color="#4169E1">else</font> {
+<a name="line53"> 53: </a>    <font color="#4169E1">for</font> (d = 0; d &lt; dE; ++d) gcoords[d] = mcoords[d];
+<a name="line54"> 54: </a>    <font color="#4169E1">return</font> 0;
+<a name="line55"> 55: </a>  }
+
+<a name="line57"> 57: </a>  <font color="#B22222">/* Calculate parameters (t or u,v) for vertices */</font>
+<a name="line58"> 58: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexVecGetClosure.html">DMPlexVecGetClosure</a>(cdm, NULL, coordinatesLocal, p, &amp;Nv, &amp;coords);
+<a name="line59"> 59: </a>  Nv /= dE;
+<a name="line60"> 60: </a>  <font color="#4169E1">if</font> (Nv == 1) {
+<a name="line61"> 61: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexVecRestoreClosure.html">DMPlexVecRestoreClosure</a>(cdm, NULL, coordinatesLocal, p, &amp;Nv, &amp;coords);
+<a name="line62"> 62: </a>    <font color="#4169E1">for</font> (d = 0; d &lt; dE; ++d) gcoords[d] = mcoords[d];
+<a name="line63"> 63: </a>    <font color="#4169E1">return</font> 0;
+<a name="line64"> 64: </a>  }
+
+<a name="line67"> 67: </a>  <font color="#B22222">/* Correct EGADSlite 2pi bug when calculating nearest point on Periodic Surfaces */</font>
+<a name="line68"> 68: </a>  EG_getRange(obj, range, &amp;peri);
+<a name="line69"> 69: </a>  <font color="#4169E1">for</font> (v = 0; v &lt; Nv; ++v) {
+<a name="line70"> 70: </a>    EG_invEvaluate(obj, &amp;coords[v * dE], &amp;paramsV[v * 3], &amp;resultV[v * 3]);
+<a name="line71"> 71: </a><font color="#A020F0">  #if 1</font>
+<a name="line72"> 72: </a>    <font color="#4169E1">if</font> (peri &gt; 0) {
+<a name="line73"> 73: </a>      <font color="#4169E1">if</font> (paramsV[v * 3 + 0] + 1.e-4 &lt; range[0]) {
+<a name="line74"> 74: </a>        paramsV[v * 3 + 0] += 2. * PETSC_PI;
+<a name="line75"> 75: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (paramsV[v * 3 + 0] - 1.e-4 &gt; range[1]) {
+<a name="line76"> 76: </a>        paramsV[v * 3 + 0] -= 2. * PETSC_PI;
+<a name="line77"> 77: </a>      }
+<a name="line78"> 78: </a>    }
+<a name="line79"> 79: </a>    <font color="#4169E1">if</font> (peri &gt; 1) {
+<a name="line80"> 80: </a>      <font color="#4169E1">if</font> (paramsV[v * 3 + 1] + 1.e-4 &lt; range[2]) {
+<a name="line81"> 81: </a>        paramsV[v * 3 + 1] += 2. * PETSC_PI;
+<a name="line82"> 82: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (paramsV[v * 3 + 1] - 1.e-4 &gt; range[3]) {
+<a name="line83"> 83: </a>        paramsV[v * 3 + 1] -= 2. * PETSC_PI;
+<a name="line84"> 84: </a>      }
+<a name="line85"> 85: </a>    }
+<a name="line86"> 86: </a><font color="#A020F0">  #endif</font>
+<a name="line87"> 87: </a>  }
+<a name="line88"> 88: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexVecRestoreClosure.html">DMPlexVecRestoreClosure</a>(cdm, NULL, coordinatesLocal, p, &amp;Nv, &amp;coords);
+<a name="line89"> 89: </a>  <font color="#B22222">/* Calculate parameters (t or u,v) for new vertex at edge midpoint */</font>
+<a name="line90"> 90: </a>  <font color="#4169E1">for</font> (pm = 0; pm &lt; Np; ++pm) {
+<a name="line91"> 91: </a>    params[pm] = 0.;
+<a name="line92"> 92: </a>    <font color="#4169E1">for</font> (v = 0; v &lt; Nv; ++v) params[pm] += paramsV[v * 3 + pm];
+<a name="line93"> 93: </a>    params[pm] /= Nv;
+<a name="line94"> 94: </a>  }
+<a name="line97"> 97: </a>  <font color="#B22222">/* Put coordinates for new vertex in result[] */</font>
+<a name="line98"> 98: </a>  EG_evaluate(obj, params, result);
+<a name="line99"> 99: </a>  <font color="#4169E1">for</font> (d = 0; d &lt; dE; ++d) gcoords[d] = result[d];
+<a name="line100">100: </a>  <font color="#4169E1">return</font> 0;
+<a name="line101">101: </a>}
+<a name="line102">102: </a><font color="#A020F0">#endif</font>
+
+<a name="line104">104: </a><font color="#B22222">/*@</font>
+<a name="line105">105: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMPlex/DMPlexSnapToGeomModel.html">DMPlexSnapToGeomModel</a> - Given a coordinate point 'mcoords' on the mesh point 'p', return the closest coordinate point 'gcoords' on the geometry model associated with that point.</font>
+
+<a name="line107">107: </a><font color="#B22222">  Not collective</font>
+
+<a name="line109">109: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line110">110: </a><font color="#B22222">+ dm      - The `<a href="../../../../docs/manualpages/DMPlex/DMPLEX.html">DMPLEX</a>` object</font>
+<a name="line111">111: </a><font color="#B22222">. p       - The mesh point</font>
+<a name="line112">112: </a><font color="#B22222">. dE      - The coordinate dimension</font>
+<a name="line113">113: </a><font color="#B22222">- mcoords - A coordinate point lying on the mesh point</font>
+
+<a name="line115">115: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line116">116: </a><font color="#B22222">. gcoords - The closest coordinate point on the geometry model associated with 'p' to the given point</font>
+
+<a name="line118">118: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line120">120: </a><font color="#B22222">  Note:</font>
+<a name="line121">121: </a><font color="#B22222">  Returns the original coordinates if no geometry model is found. Right now the only supported geometry model is EGADS. The coordinate dimension may be different from the coordinate dimension of the dm, for example if the transformation is extrusion.</font>
+
+<a name="line123">123: </a><font color="#B22222">.seealso: [](chapter_unstructured), `<a href="../../../../docs/manualpages/DM/DM.html">DM</a>`, `<a href="../../../../docs/manualpages/DMPlex/DMPLEX.html">DMPLEX</a>`, `<a href="../../../../docs/manualpages/DM/DMRefine.html">DMRefine</a>()`, `<a href="../../../../docs/manualpages/DMPlex/DMPlexCreate.html">DMPlexCreate</a>()`, `<a href="../../../../docs/manualpages/DMPlex/DMPlexSetRefinementUniform.html">DMPlexSetRefinementUniform</a>()`</font>
+<a name="line124">124: </a><font color="#B22222">@*/</font>
+<a name="line125">125: </a><strong><font color="#4169E1"><a name="DMPlexSnapToGeomModel"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMPlex/DMPlexSnapToGeomModel.html">DMPlexSnapToGeomModel</a>(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> p, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dE, const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> mcoords[], <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> gcoords[])</font></strong>
+<a name="line126">126: </a>{
+<a name="line127">127: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> d;
+
+<a name="line130">130: </a><font color="#A020F0">#ifdef PETSC_HAVE_EGADS</font>
+<a name="line131">131: </a>  {
+<a name="line132">132: </a>    DM_Plex       *plex = (DM_Plex *)dm-&gt;data;
+<a name="line133">133: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>        bodyLabel, faceLabel, edgeLabel;
+<a name="line134">134: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       bodyID, faceID, edgeID;
+<a name="line135">135: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a> modelObj;
+<a name="line136">136: </a>    ego            model;
+<a name="line137">137: </a>    <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>      islite = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line139">139: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Body ID"</font>, &amp;bodyLabel);
+<a name="line140">140: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Face ID"</font>, &amp;faceLabel);
+<a name="line141">141: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Edge ID"</font>, &amp;edgeLabel);
+<a name="line142">142: </a>    <font color="#4169E1">if</font> (!bodyLabel || !faceLabel || !edgeLabel || plex-&gt;ignoreModel) {
+<a name="line143">143: </a>      <font color="#4169E1">for</font> (d = 0; d &lt; dE; ++d) gcoords[d] = mcoords[d];
+<a name="line144">144: </a>      <font color="#4169E1">return</font> 0;
+<a name="line145">145: </a>    }
+<a name="line146">146: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm, <font color="#666666">"EGADS Model"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;modelObj);
+<a name="line147">147: </a>    <font color="#4169E1">if</font> (!modelObj) {
+<a name="line148">148: </a>      <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm, <font color="#666666">"EGADSLite Model"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;modelObj);
+<a name="line149">149: </a>      islite = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line150">150: </a>    }
+<a name="line151">151: </a>    <font color="#4169E1">if</font> (!modelObj) {
+<a name="line152">152: </a>      <font color="#4169E1">for</font> (d = 0; d &lt; dE; ++d) gcoords[d] = mcoords[d];
+<a name="line153">153: </a>      <font color="#4169E1">return</font> 0;
+<a name="line154">154: </a>    }
+<a name="line155">155: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(modelObj, (void **)&amp;model);
+<a name="line156">156: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(bodyLabel, p, &amp;bodyID);
+<a name="line157">157: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(faceLabel, p, &amp;faceID);
+<a name="line158">158: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(edgeLabel, p, &amp;edgeID);
+<a name="line159">159: </a>    <font color="#B22222">/* Allows for "Connective" Plex Edges present in models with multiple non-touching Entities */</font>
+<a name="line160">160: </a>    <font color="#4169E1">if</font> (bodyID &lt; 0) {
+<a name="line161">161: </a>      <font color="#4169E1">for</font> (d = 0; d &lt; dE; ++d) gcoords[d] = mcoords[d];
+<a name="line162">162: </a>      <font color="#4169E1">return</font> 0;
+<a name="line163">163: </a>    }
+<a name="line164">164: </a>    <font color="#4169E1">if</font> (islite) DMPlexSnapToGeomModel_EGADSLite_Internal(dm, p, model, bodyID, faceID, edgeID, mcoords, gcoords);
+<a name="line165">165: </a>    <font color="#4169E1">else</font> DMPlexSnapToGeomModel_EGADS_Internal(dm, p, model, bodyID, faceID, edgeID, mcoords, gcoords);
+<a name="line166">166: </a>  }
+<a name="line167">167: </a><font color="#A020F0">#else</font>
+<a name="line168">168: </a>  <font color="#4169E1">for</font> (d = 0; d &lt; dE; ++d) gcoords[d] = mcoords[d];
+<a name="line169">169: </a><font color="#A020F0">#endif</font>
+<a name="line170">170: </a>  <font color="#4169E1">return</font> 0;
+<a name="line171">171: </a>}
+
+<a name="line173">173: </a><font color="#A020F0">#if defined(PETSC_HAVE_EGADS)</font>
+<a name="line174">174: </a><strong><font color="#4169E1"><a name="DMPlexEGADSPrintModel_Internal"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexEGADSPrintModel_Internal(ego model)</font></strong>
+<a name="line175">175: </a>{
+<a name="line176">176: </a>  ego geom, *bodies, *objs, *nobjs, *mobjs, *lobjs;
+<a name="line177">177: </a>  int oclass, mtype, *senses;
+<a name="line178">178: </a>  int Nb, b;
+
+<a name="line181">181: </a>  <font color="#B22222">/* test bodyTopo functions */</font>
+<a name="line182">182: </a>  EG_getTopology(model, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Nb, &amp;bodies, &amp;senses);
+<a name="line183">183: </a>  <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">" Number of BODIES (nbodies): %d \n"</font>, Nb);
+
+<a name="line185">185: </a>  <font color="#4169E1">for</font> (b = 0; b &lt; Nb; ++b) {
+<a name="line186">186: </a>    ego body = bodies[b];
+<a name="line187">187: </a>    int id, Nsh, Nf, Nl, l, Ne, e, Nv, v;
+
+<a name="line189">189: </a>    <font color="#B22222">/* Output Basic Model Topology */</font>
+<a name="line190">190: </a>    EG_getBodyTopos(body, NULL, SHELL, &amp;Nsh, &amp;objs);
+<a name="line191">191: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"   Number of SHELLS: %d \n"</font>, Nsh);
+<a name="line192">192: </a>    EG_free(objs);
+
+<a name="line194">194: </a>    EG_getBodyTopos(body, NULL, FACE, &amp;Nf, &amp;objs);
+<a name="line195">195: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"   Number of FACES: %d \n"</font>, Nf);
+<a name="line196">196: </a>    EG_free(objs);
+
+<a name="line198">198: </a>    EG_getBodyTopos(body, NULL, LOOP, &amp;Nl, &amp;lobjs);
+<a name="line199">199: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"   Number of LOOPS: %d \n"</font>, Nl);
+
+<a name="line201">201: </a>    EG_getBodyTopos(body, NULL, EDGE, &amp;Ne, &amp;objs);
+<a name="line202">202: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"   Number of EDGES: %d \n"</font>, Ne);
+<a name="line203">203: </a>    EG_free(objs);
+
+<a name="line205">205: </a>    EG_getBodyTopos(body, NULL, NODE, &amp;Nv, &amp;objs);
+<a name="line206">206: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"   Number of NODES: %d \n"</font>, Nv);
+<a name="line207">207: </a>    EG_free(objs);
+
+<a name="line209">209: </a>    <font color="#4169E1">for</font> (l = 0; l &lt; Nl; ++l) {
+<a name="line210">210: </a>      ego loop = lobjs[l];
+
+<a name="line212">212: </a>      id = EG_indexBodyTopo(body, loop);
+<a name="line213">213: </a>      <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"          LOOP ID: %d\n"</font>, id);
+
+<a name="line215">215: </a>      <font color="#B22222">/* Get EDGE info which associated with the current LOOP */</font>
+<a name="line216">216: </a>      EG_getTopology(loop, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Ne, &amp;objs, &amp;senses);
+
+<a name="line218">218: </a>      <font color="#4169E1">for</font> (e = 0; e &lt; Ne; ++e) {
+<a name="line219">219: </a>        ego    edge      = objs[e];
+<a name="line220">220: </a>        double range[4]  = {0., 0., 0., 0.};
+<a name="line221">221: </a>        double point[3]  = {0., 0., 0.};
+<a name="line222">222: </a>        double params[3] = {0., 0., 0.};
+<a name="line223">223: </a>        double result[18];
+<a name="line224">224: </a>        int    peri;
+
+<a name="line226">226: </a>        id = EG_indexBodyTopo(body, edge);
+<a name="line227">227: </a>        <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"            EDGE ID: %d (%d)\n"</font>, id, e);
+
+<a name="line229">229: </a>        EG_getRange(edge, range, &amp;peri);
+<a name="line230">230: </a>        <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"  Range = %lf, %lf, %lf, %lf \n"</font>, range[0], range[1], range[2], range[3]);
+
+<a name="line232">232: </a>        <font color="#B22222">/* Get NODE info which associated with the current EDGE */</font>
+<a name="line233">233: </a>        EG_getTopology(edge, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Nv, &amp;nobjs, &amp;senses);
+<a name="line234">234: </a>        <font color="#4169E1">if</font> (mtype == DEGENERATE) {
+<a name="line235">235: </a>          <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"  EDGE %d is DEGENERATE \n"</font>, id);
+<a name="line236">236: </a>        } <font color="#4169E1">else</font> {
+<a name="line237">237: </a>          params[0] = range[0];
+<a name="line238">238: </a>          EG_evaluate(edge, params, result);
+<a name="line239">239: </a>          <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"   between (%lf, %lf, %lf)"</font>, result[0], result[1], result[2]);
+<a name="line240">240: </a>          params[0] = range[1];
+<a name="line241">241: </a>          EG_evaluate(edge, params, result);
+<a name="line242">242: </a>          <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">" and (%lf, %lf, %lf)\n"</font>, result[0], result[1], result[2]);
+<a name="line243">243: </a>        }
+
+<a name="line245">245: </a>        <font color="#4169E1">for</font> (v = 0; v &lt; Nv; ++v) {
+<a name="line246">246: </a>          ego    vertex = nobjs[v];
+<a name="line247">247: </a>          double limits[4];
+<a name="line248">248: </a>          int    dummy;
+
+<a name="line250">250: </a>          EG_getTopology(vertex, &amp;geom, &amp;oclass, &amp;mtype, limits, &amp;dummy, &amp;mobjs, &amp;senses);
+<a name="line251">251: </a>          id = EG_indexBodyTopo(body, vertex);
+<a name="line252">252: </a>          <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"              NODE ID: %d \n"</font>, id);
+<a name="line253">253: </a>          <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"                 (x, y, z) = (%lf, %lf, %lf) \n"</font>, limits[0], limits[1], limits[2]);
+
+<a name="line255">255: </a>          point[0] = point[0] + limits[0];
+<a name="line256">256: </a>          point[1] = point[1] + limits[1];
+<a name="line257">257: </a>          point[2] = point[2] + limits[2];
+<a name="line258">258: </a>        }
+<a name="line259">259: </a>      }
+<a name="line260">260: </a>    }
+<a name="line261">261: </a>    EG_free(lobjs);
+<a name="line262">262: </a>  }
+<a name="line263">263: </a>  <font color="#4169E1">return</font> 0;
+<a name="line264">264: </a>}
+
+<a name="line266">266: </a><strong><font color="#4169E1"><a name="DMPlexEGADSDestroy_Private"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexEGADSDestroy_Private(void *context)</font></strong>
+<a name="line267">267: </a>{
+<a name="line268">268: </a>  <font color="#4169E1">if</font> (context) EG_close((ego)context);
+<a name="line269">269: </a>  <font color="#4169E1">return</font> 0;
+<a name="line270">270: </a>}
+
+<a name="line272">272: </a><strong><font color="#4169E1"><a name="DMPlexCreateEGADS_Internal"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexCreateEGADS_Internal(<a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, ego context, ego model, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *newdm)</font></strong>
+<a name="line273">273: </a>{
+<a name="line274">274: </a>  <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>  bodyLabel, faceLabel, edgeLabel, vertexLabel;
+<a name="line275">275: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cStart, cEnd, c;
+<a name="line276">276: </a>  <font color="#B22222">/* EGADSLite variables */</font>
+<a name="line277">277: </a>  ego geom, *bodies, *objs, *nobjs, *mobjs, *lobjs;
+<a name="line278">278: </a>  int oclass, mtype, nbodies, *senses;
+<a name="line279">279: </a>  int b;
+<a name="line280">280: </a>  <font color="#B22222">/* PETSc variables */</font>
+<a name="line281">281: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>          dm;
+<a name="line282">282: </a>  <a href="../../../../docs/manualpages/PetscH/PetscHMapI.html">PetscHMapI</a>  edgeMap = NULL;
+<a name="line283">283: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    dim = -1, cdim = -1, numCorners = 0, maxCorners = 0, numVertices = 0, newVertices = 0, numEdges = 0, numCells = 0, newCells = 0, numQuads = 0, cOff = 0, fOff = 0;
+<a name="line284">284: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   *cells = NULL, *cone = NULL;
+<a name="line285">285: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>  *coords = NULL;
+<a name="line286">286: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+
+<a name="line288">288: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line289">289: </a>  <font color="#4169E1">if</font> (rank == 0) {
+<a name="line290">290: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> debug = 0;
+
+<a name="line292">292: </a>    <font color="#B22222">/* ---------------------------------------------------------------------------------------------------</font>
+<a name="line293">293: </a><font color="#B22222">    Generate Petsc Plex</font>
+<a name="line294">294: </a><font color="#B22222">      Get all Nodes in model, record coordinates in a correctly formatted array</font>
+<a name="line295">295: </a><font color="#B22222">      Cycle through bodies, cycle through loops, recorde NODE IDs in a correctly formatted array</font>
+<a name="line296">296: </a><font color="#B22222">      We need to uniformly refine the initial geometry to guarantee a valid mesh</font>
+<a name="line297">297: </a><font color="#B22222">    */</font>
+
+<a name="line299">299: </a>    <font color="#B22222">/* Calculate cell and vertex sizes */</font>
+<a name="line300">300: </a>    EG_getTopology(model, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;nbodies, &amp;bodies, &amp;senses);
+<a name="line301">301: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;edgeMap);
+<a name="line302">302: </a>    numEdges = 0;
+<a name="line303">303: </a>    <font color="#4169E1">for</font> (b = 0; b &lt; nbodies; ++b) {
+<a name="line304">304: </a>      ego body = bodies[b];
+<a name="line305">305: </a>      int id, Nl, l, Nv, v;
+
+<a name="line307">307: </a>      EG_getBodyTopos(body, NULL, LOOP, &amp;Nl, &amp;lobjs);
+<a name="line308">308: </a>      <font color="#4169E1">for</font> (l = 0; l &lt; Nl; ++l) {
+<a name="line309">309: </a>        ego loop = lobjs[l];
+<a name="line310">310: </a>        int Ner  = 0, Ne, e, Nc;
+
+<a name="line312">312: </a>        EG_getTopology(loop, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Ne, &amp;objs, &amp;senses);
+<a name="line313">313: </a>        <font color="#4169E1">for</font> (e = 0; e &lt; Ne; ++e) {
+<a name="line314">314: </a>          ego           edge = objs[e];
+<a name="line315">315: </a>          int           Nv, id;
+<a name="line316">316: </a>          PetscHashIter iter;
+<a name="line317">317: </a>          <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     found;
+
+<a name="line319">319: </a>          EG_getTopology(edge, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Nv, &amp;nobjs, &amp;senses);
+<a name="line320">320: </a>          <font color="#4169E1">if</font> (mtype == DEGENERATE) <font color="#4169E1">continue</font>;
+<a name="line321">321: </a>          id = EG_indexBodyTopo(body, edge);
+<a name="line322">322: </a>          <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(edgeMap, id - 1, &amp;iter, &amp;found);
+<a name="line323">323: </a>          <font color="#4169E1">if</font> (!found) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(edgeMap, id - 1, numEdges++);
+<a name="line324">324: </a>          ++Ner;
+<a name="line325">325: </a>        }
+<a name="line326">326: </a>        <font color="#4169E1">if</font> (Ner == 2) {
+<a name="line327">327: </a>          Nc = 2;
+<a name="line328">328: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (Ner == 3) {
+<a name="line329">329: </a>          Nc = 4;
+<a name="line330">330: </a>        } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (Ner == 4) {
+<a name="line331">331: </a>          Nc = 8;
+<a name="line332">332: </a>          ++numQuads;
+<a name="line333">333: </a>        } <font color="#4169E1">else</font> <a href="../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Cannot support loop with %d edges"</font>, Ner);
+<a name="line334">334: </a>        numCells += Nc;
+<a name="line335">335: </a>        newCells += Nc - 1;
+<a name="line336">336: </a>        maxCorners = <a href="../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(Ner * 2 + 1, maxCorners);
+<a name="line337">337: </a>      }
+<a name="line338">338: </a>      EG_getBodyTopos(body, NULL, NODE, &amp;Nv, &amp;nobjs);
+<a name="line339">339: </a>      <font color="#4169E1">for</font> (v = 0; v &lt; Nv; ++v) {
+<a name="line340">340: </a>        ego vertex = nobjs[v];
+
+<a name="line342">342: </a>        id = EG_indexBodyTopo(body, vertex);
+<a name="line343">343: </a>        <font color="#B22222">/* TODO: Instead of assuming contiguous ids, we could use a hash table */</font>
+<a name="line344">344: </a>        numVertices = <a href="../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(id, numVertices);
+<a name="line345">345: </a>      }
+<a name="line346">346: </a>      EG_free(lobjs);
+<a name="line347">347: </a>      EG_free(nobjs);
+<a name="line348">348: </a>    }
+<a name="line349">349: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIGetSize.html">PetscHMapIGetSize</a>(edgeMap, &amp;numEdges);
+<a name="line350">350: </a>    newVertices = numEdges + numQuads;
+<a name="line351">351: </a>    numVertices += newVertices;
+
+<a name="line353">353: </a>    dim        = 2; <font color="#B22222">/* Assume 3D Models :: Need to update to handle 2D Models in the future */</font>
+<a name="line354">354: </a>    cdim       = 3; <font color="#B22222">/* Assume 3D Models :: Need to update to handle 2D Models in the future */</font>
+<a name="line355">355: </a>    numCorners = 3; <font color="#B22222">/* Split cells into triangles */</font>
+<a name="line356">356: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc3.html">PetscMalloc3</a>(numVertices * cdim, &amp;coords, numCells * numCorners, &amp;cells, maxCorners, &amp;cone);
+
+<a name="line358">358: </a>    <font color="#B22222">/* Get vertex coordinates */</font>
+<a name="line359">359: </a>    <font color="#4169E1">for</font> (b = 0; b &lt; nbodies; ++b) {
+<a name="line360">360: </a>      ego body = bodies[b];
+<a name="line361">361: </a>      int id, Nv, v;
+
+<a name="line363">363: </a>      EG_getBodyTopos(body, NULL, NODE, &amp;Nv, &amp;nobjs);
+<a name="line364">364: </a>      <font color="#4169E1">for</font> (v = 0; v &lt; Nv; ++v) {
+<a name="line365">365: </a>        ego    vertex = nobjs[v];
+<a name="line366">366: </a>        double limits[4];
+<a name="line367">367: </a>        int    dummy;
+
+<a name="line369">369: </a>        EG_getTopology(vertex, &amp;geom, &amp;oclass, &amp;mtype, limits, &amp;dummy, &amp;mobjs, &amp;senses);
+<a name="line370">370: </a>        id                          = EG_indexBodyTopo(body, vertex);
+<a name="line371">371: </a>        coords[(id - 1) * cdim + 0] = limits[0];
+<a name="line372">372: </a>        coords[(id - 1) * cdim + 1] = limits[1];
+<a name="line373">373: </a>        coords[(id - 1) * cdim + 2] = limits[2];
+<a name="line374">374: </a>      }
+<a name="line375">375: </a>      EG_free(nobjs);
+<a name="line376">376: </a>    }
+<a name="line377">377: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIClear.html">PetscHMapIClear</a>(edgeMap);
+<a name="line378">378: </a>    fOff     = numVertices - newVertices + numEdges;
+<a name="line379">379: </a>    numEdges = 0;
+<a name="line380">380: </a>    numQuads = 0;
+<a name="line381">381: </a>    <font color="#4169E1">for</font> (b = 0; b &lt; nbodies; ++b) {
+<a name="line382">382: </a>      ego body = bodies[b];
+<a name="line383">383: </a>      int Nl, l;
+
+<a name="line385">385: </a>      EG_getBodyTopos(body, NULL, LOOP, &amp;Nl, &amp;lobjs);
+<a name="line386">386: </a>      <font color="#4169E1">for</font> (l = 0; l &lt; Nl; ++l) {
+<a name="line387">387: </a>        ego loop = lobjs[l];
+<a name="line388">388: </a>        int lid, Ner = 0, Ne, e;
+
+<a name="line390">390: </a>        lid = EG_indexBodyTopo(body, loop);
+<a name="line391">391: </a>        EG_getTopology(loop, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Ne, &amp;objs, &amp;senses);
+<a name="line392">392: </a>        <font color="#4169E1">for</font> (e = 0; e &lt; Ne; ++e) {
+<a name="line393">393: </a>          ego           edge = objs[e];
+<a name="line394">394: </a>          int           eid, Nv;
+<a name="line395">395: </a>          PetscHashIter iter;
+<a name="line396">396: </a>          <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     found;
+
+<a name="line398">398: </a>          EG_getTopology(edge, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Nv, &amp;nobjs, &amp;senses);
+<a name="line399">399: </a>          <font color="#4169E1">if</font> (mtype == DEGENERATE) <font color="#4169E1">continue</font>;
+<a name="line400">400: </a>          ++Ner;
+<a name="line401">401: </a>          eid = EG_indexBodyTopo(body, edge);
+<a name="line402">402: </a>          <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(edgeMap, eid - 1, &amp;iter, &amp;found);
+<a name="line403">403: </a>          <font color="#4169E1">if</font> (!found) {
+<a name="line404">404: </a>            <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> v = numVertices - newVertices + numEdges;
+<a name="line405">405: </a>            double   range[4], params[3] = {0., 0., 0.}, result[18];
+<a name="line406">406: </a>            int      periodic[2];
+
+<a name="line408">408: </a>            <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(edgeMap, eid - 1, numEdges++);
+<a name="line409">409: </a>            EG_getRange(edge, range, periodic);
+<a name="line410">410: </a>            params[0] = 0.5 * (range[0] + range[1]);
+<a name="line411">411: </a>            EG_evaluate(edge, params, result);
+<a name="line412">412: </a>            coords[v * cdim + 0] = result[0];
+<a name="line413">413: </a>            coords[v * cdim + 1] = result[1];
+<a name="line414">414: </a>            coords[v * cdim + 2] = result[2];
+<a name="line415">415: </a>          }
+<a name="line416">416: </a>        }
+<a name="line417">417: </a>        <font color="#4169E1">if</font> (Ner == 4) {
+<a name="line418">418: </a>          <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> v = fOff + numQuads++;
+<a name="line419">419: </a>          ego     *fobjs, face;
+<a name="line420">420: </a>          double   range[4], params[3] = {0., 0., 0.}, result[18];
+<a name="line421">421: </a>          int      Nf, fid, periodic[2];
+
+<a name="line423">423: </a>          EG_getBodyTopos(body, loop, FACE, &amp;Nf, &amp;fobjs);
+<a name="line424">424: </a>          face = fobjs[0];
+<a name="line425">425: </a>          fid  = EG_indexBodyTopo(body, face);
+<a name="line427">427: </a>          EG_getRange(face, range, periodic);
+<a name="line428">428: </a>          params[0] = 0.5 * (range[0] + range[1]);
+<a name="line429">429: </a>          params[1] = 0.5 * (range[2] + range[3]);
+<a name="line430">430: </a>          EG_evaluate(face, params, result);
+<a name="line431">431: </a>          coords[v * cdim + 0] = result[0];
+<a name="line432">432: </a>          coords[v * cdim + 1] = result[1];
+<a name="line433">433: </a>          coords[v * cdim + 2] = result[2];
+<a name="line434">434: </a>        }
+<a name="line435">435: </a>      }
+<a name="line436">436: </a>    }
+
+<a name="line439">439: </a>    <font color="#B22222">/* Get cell vertices by traversing loops */</font>
+<a name="line440">440: </a>    numQuads = 0;
+<a name="line441">441: </a>    cOff     = 0;
+<a name="line442">442: </a>    <font color="#4169E1">for</font> (b = 0; b &lt; nbodies; ++b) {
+<a name="line443">443: </a>      ego body = bodies[b];
+<a name="line444">444: </a>      int id, Nl, l;
+
+<a name="line446">446: </a>      EG_getBodyTopos(body, NULL, LOOP, &amp;Nl, &amp;lobjs);
+<a name="line447">447: </a>      <font color="#4169E1">for</font> (l = 0; l &lt; Nl; ++l) {
+<a name="line448">448: </a>        ego loop = lobjs[l];
+<a name="line449">449: </a>        int lid, Ner = 0, Ne, e, nc = 0, c, Nt, t;
+
+<a name="line451">451: </a>        lid = EG_indexBodyTopo(body, loop);
+<a name="line452">452: </a>        EG_getTopology(loop, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Ne, &amp;objs, &amp;senses);
+
+<a name="line454">454: </a>        <font color="#4169E1">for</font> (e = 0; e &lt; Ne; ++e) {
+<a name="line455">455: </a>          ego edge = objs[e];
+<a name="line456">456: </a>          int points[3];
+<a name="line457">457: </a>          int eid, Nv, v, tmp;
+
+<a name="line459">459: </a>          eid = EG_indexBodyTopo(body, edge);
+<a name="line460">460: </a>          EG_getTopology(edge, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Nv, &amp;nobjs, &amp;senses);
+<a name="line461">461: </a>          <font color="#4169E1">if</font> (mtype == DEGENERATE) <font color="#4169E1">continue</font>;
+<a name="line462">462: </a>          <font color="#4169E1">else</font> ++Ner;
+
+<a name="line465">465: </a>          <font color="#4169E1">for</font> (v = 0; v &lt; Nv; ++v) {
+<a name="line466">466: </a>            ego vertex = nobjs[v];
+
+<a name="line468">468: </a>            id            = EG_indexBodyTopo(body, vertex);
+<a name="line469">469: </a>            points[v * 2] = id - 1;
+<a name="line470">470: </a>          }
+<a name="line471">471: </a>          {
+<a name="line472">472: </a>            <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> edgeNum;
+
+<a name="line474">474: </a>            <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(edgeMap, eid - 1, &amp;edgeNum);
+<a name="line475">475: </a>            points[1] = numVertices - newVertices + edgeNum;
+<a name="line476">476: </a>          }
+<a name="line477">477: </a>          <font color="#B22222">/* EGADS loops are not oriented, but seem to be in order, so we must piece them together */</font>
+<a name="line478">478: </a>          <font color="#4169E1">if</font> (!nc) {
+<a name="line479">479: </a>            <font color="#4169E1">for</font> (v = 0; v &lt; Nv + 1; ++v) cone[nc++] = points[v];
+<a name="line480">480: </a>          } <font color="#4169E1">else</font> {
+<a name="line481">481: </a>            <font color="#4169E1">if</font> (cone[nc - 1] == points[0]) {
+<a name="line482">482: </a>              cone[nc++] = points[1];
+<a name="line483">483: </a>              <font color="#4169E1">if</font> (cone[0] != points[2]) cone[nc++] = points[2];
+<a name="line484">484: </a>            } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (cone[nc - 1] == points[2]) {
+<a name="line485">485: </a>              cone[nc++] = points[1];
+<a name="line486">486: </a>              <font color="#4169E1">if</font> (cone[0] != points[0]) cone[nc++] = points[0];
+<a name="line487">487: </a>            } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (cone[nc - 3] == points[0]) {
+<a name="line488">488: </a>              tmp          = cone[nc - 3];
+<a name="line489">489: </a>              cone[nc - 3] = cone[nc - 1];
+<a name="line490">490: </a>              cone[nc - 1] = tmp;
+<a name="line491">491: </a>              cone[nc++]   = points[1];
+<a name="line492">492: </a>              <font color="#4169E1">if</font> (cone[0] != points[2]) cone[nc++] = points[2];
+<a name="line493">493: </a>            } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (cone[nc - 3] == points[2]) {
+<a name="line494">494: </a>              tmp          = cone[nc - 3];
+<a name="line495">495: </a>              cone[nc - 3] = cone[nc - 1];
+<a name="line496">496: </a>              cone[nc - 1] = tmp;
+<a name="line497">497: </a>              cone[nc++]   = points[1];
+<a name="line498">498: </a>              <font color="#4169E1">if</font> (cone[0] != points[0]) cone[nc++] = points[0];
+<a name="line499">499: </a>            } <font color="#4169E1">else</font> <a href="../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_WRONG, <font color="#666666">"Edge %d does not match its predecessor"</font>, eid);
+<a name="line500">500: </a>          }
+<a name="line501">501: </a>        }
+<a name="line503">503: </a>        <font color="#4169E1">if</font> (Ner == 4) cone[nc++] = numVertices - newVertices + numEdges + numQuads++;
+<a name="line505">505: </a>        <font color="#B22222">/* Triangulate the loop */</font>
+<a name="line506">506: </a>        <font color="#4169E1">switch</font> (Ner) {
+<a name="line507">507: </a>        <font color="#4169E1">case</font> 2: <font color="#B22222">/* Bi-Segment -&gt; 2 triangles */</font>
+<a name="line508">508: </a>          Nt                           = 2;
+<a name="line509">509: </a>          cells[cOff * numCorners + 0] = cone[0];
+<a name="line510">510: </a>          cells[cOff * numCorners + 1] = cone[1];
+<a name="line511">511: </a>          cells[cOff * numCorners + 2] = cone[2];
+<a name="line512">512: </a>          ++cOff;
+<a name="line513">513: </a>          cells[cOff * numCorners + 0] = cone[0];
+<a name="line514">514: </a>          cells[cOff * numCorners + 1] = cone[2];
+<a name="line515">515: </a>          cells[cOff * numCorners + 2] = cone[3];
+<a name="line516">516: </a>          ++cOff;
+<a name="line517">517: </a>          <font color="#4169E1">break</font>;
+<a name="line518">518: </a>        <font color="#4169E1">case</font> 3: <font color="#B22222">/* Triangle   -&gt; 4 triangles */</font>
+<a name="line519">519: </a>          Nt                           = 4;
+<a name="line520">520: </a>          cells[cOff * numCorners + 0] = cone[0];
+<a name="line521">521: </a>          cells[cOff * numCorners + 1] = cone[1];
+<a name="line522">522: </a>          cells[cOff * numCorners + 2] = cone[5];
+<a name="line523">523: </a>          ++cOff;
+<a name="line524">524: </a>          cells[cOff * numCorners + 0] = cone[1];
+<a name="line525">525: </a>          cells[cOff * numCorners + 1] = cone[2];
+<a name="line526">526: </a>          cells[cOff * numCorners + 2] = cone[3];
+<a name="line527">527: </a>          ++cOff;
+<a name="line528">528: </a>          cells[cOff * numCorners + 0] = cone[5];
+<a name="line529">529: </a>          cells[cOff * numCorners + 1] = cone[3];
+<a name="line530">530: </a>          cells[cOff * numCorners + 2] = cone[4];
+<a name="line531">531: </a>          ++cOff;
+<a name="line532">532: </a>          cells[cOff * numCorners + 0] = cone[1];
+<a name="line533">533: </a>          cells[cOff * numCorners + 1] = cone[3];
+<a name="line534">534: </a>          cells[cOff * numCorners + 2] = cone[5];
+<a name="line535">535: </a>          ++cOff;
+<a name="line536">536: </a>          <font color="#4169E1">break</font>;
+<a name="line537">537: </a>        <font color="#4169E1">case</font> 4: <font color="#B22222">/* Quad       -&gt; 8 triangles */</font>
+<a name="line538">538: </a>          Nt                           = 8;
+<a name="line539">539: </a>          cells[cOff * numCorners + 0] = cone[0];
+<a name="line540">540: </a>          cells[cOff * numCorners + 1] = cone[1];
+<a name="line541">541: </a>          cells[cOff * numCorners + 2] = cone[7];
+<a name="line542">542: </a>          ++cOff;
+<a name="line543">543: </a>          cells[cOff * numCorners + 0] = cone[1];
+<a name="line544">544: </a>          cells[cOff * numCorners + 1] = cone[2];
+<a name="line545">545: </a>          cells[cOff * numCorners + 2] = cone[3];
+<a name="line546">546: </a>          ++cOff;
+<a name="line547">547: </a>          cells[cOff * numCorners + 0] = cone[3];
+<a name="line548">548: </a>          cells[cOff * numCorners + 1] = cone[4];
+<a name="line549">549: </a>          cells[cOff * numCorners + 2] = cone[5];
+<a name="line550">550: </a>          ++cOff;
+<a name="line551">551: </a>          cells[cOff * numCorners + 0] = cone[5];
+<a name="line552">552: </a>          cells[cOff * numCorners + 1] = cone[6];
+<a name="line553">553: </a>          cells[cOff * numCorners + 2] = cone[7];
+<a name="line554">554: </a>          ++cOff;
+<a name="line555">555: </a>          cells[cOff * numCorners + 0] = cone[8];
+<a name="line556">556: </a>          cells[cOff * numCorners + 1] = cone[1];
+<a name="line557">557: </a>          cells[cOff * numCorners + 2] = cone[3];
+<a name="line558">558: </a>          ++cOff;
+<a name="line559">559: </a>          cells[cOff * numCorners + 0] = cone[8];
+<a name="line560">560: </a>          cells[cOff * numCorners + 1] = cone[3];
+<a name="line561">561: </a>          cells[cOff * numCorners + 2] = cone[5];
+<a name="line562">562: </a>          ++cOff;
+<a name="line563">563: </a>          cells[cOff * numCorners + 0] = cone[8];
+<a name="line564">564: </a>          cells[cOff * numCorners + 1] = cone[5];
+<a name="line565">565: </a>          cells[cOff * numCorners + 2] = cone[7];
+<a name="line566">566: </a>          ++cOff;
+<a name="line567">567: </a>          cells[cOff * numCorners + 0] = cone[8];
+<a name="line568">568: </a>          cells[cOff * numCorners + 1] = cone[7];
+<a name="line569">569: </a>          cells[cOff * numCorners + 2] = cone[1];
+<a name="line570">570: </a>          ++cOff;
+<a name="line571">571: </a>          <font color="#4169E1">break</font>;
+<a name="line572">572: </a><strong><font color="#FF0000">        default:</font></strong>
+<a name="line573">573: </a>          <a href="../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Loop %d has %d edges, which we do not support"</font>, lid, Ner);
+<a name="line574">574: </a>        }
+<a name="line575">575: </a>        <font color="#4169E1">if</font> (debug) {
+<a name="line576">576: </a>          <font color="#4169E1">for</font> (t = 0; t &lt; Nt; ++t) {
+<a name="line577">577: </a>            <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"  LOOP Corner NODEs Triangle %"</font> PetscInt_FMT <font color="#666666">" ("</font>, t);
+<a name="line578">578: </a>            <font color="#4169E1">for</font> (c = 0; c &lt; numCorners; ++c) {
+<a name="line579">579: </a>              <font color="#4169E1">if</font> (c &gt; 0) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">", "</font>);
+<a name="line580">580: </a>              <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"%"</font> PetscInt_FMT, cells[(cOff - Nt + t) * numCorners + c]);
+<a name="line581">581: </a>            }
+<a name="line582">582: </a>            <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">")\n"</font>);
+<a name="line583">583: </a>          }
+<a name="line584">584: </a>        }
+<a name="line585">585: </a>      }
+<a name="line586">586: </a>      EG_free(lobjs);
+<a name="line587">587: </a>    }
+<a name="line588">588: </a>  }
+<a name="line590">590: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexCreateFromCellListPetsc.html">DMPlexCreateFromCellListPetsc</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, dim, numCells, numVertices, numCorners, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, cells, cdim, coords, &amp;dm);
+<a name="line591">591: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree3.html">PetscFree3</a>(coords, cells, cone);
+<a name="line592">592: </a>  <a href="../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(dm, <font color="#666666">" Total Number of Unique Cells    = %"</font> PetscInt_FMT <font color="#666666">" (%"</font> PetscInt_FMT <font color="#666666">")\n"</font>, numCells, newCells);
+<a name="line593">593: </a>  <a href="../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(dm, <font color="#666666">" Total Number of Unique Vertices = %"</font> PetscInt_FMT <font color="#666666">" (%"</font> PetscInt_FMT <font color="#666666">")\n"</font>, numVertices, newVertices);
+<a name="line594">594: </a>  <font color="#B22222">/* Embed EGADS model in <a href="../../../../docs/manualpages/DM/DM.html">DM</a> */</font>
+<a name="line595">595: </a>  {
+<a name="line596">596: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a> modelObj, contextObj;
+
+<a name="line598">598: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerCreate.html">PetscContainerCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;modelObj);
+<a name="line599">599: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerSetPointer.html">PetscContainerSetPointer</a>(modelObj, model);
+<a name="line600">600: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectCompose.html">PetscObjectCompose</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm, <font color="#666666">"EGADS Model"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)modelObj);
+<a name="line601">601: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerDestroy.html">PetscContainerDestroy</a>(&amp;modelObj);
+
+<a name="line603">603: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerCreate.html">PetscContainerCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;contextObj);
+<a name="line604">604: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerSetPointer.html">PetscContainerSetPointer</a>(contextObj, context);
+<a name="line605">605: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerSetUserDestroy.html">PetscContainerSetUserDestroy</a>(contextObj, DMPlexEGADSDestroy_Private);
+<a name="line606">606: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectCompose.html">PetscObjectCompose</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm, <font color="#666666">"EGADS Context"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)contextObj);
+<a name="line607">607: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerDestroy.html">PetscContainerDestroy</a>(&amp;contextObj);
+<a name="line608">608: </a>  }
+<a name="line609">609: </a>  <font color="#B22222">/* Label points */</font>
+<a name="line610">610: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLabel.html">DMCreateLabel</a>(dm, <font color="#666666">"EGADS Body ID"</font>);
+<a name="line611">611: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Body ID"</font>, &amp;bodyLabel);
+<a name="line612">612: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLabel.html">DMCreateLabel</a>(dm, <font color="#666666">"EGADS Face ID"</font>);
+<a name="line613">613: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Face ID"</font>, &amp;faceLabel);
+<a name="line614">614: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLabel.html">DMCreateLabel</a>(dm, <font color="#666666">"EGADS Edge ID"</font>);
+<a name="line615">615: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Edge ID"</font>, &amp;edgeLabel);
+<a name="line616">616: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLabel.html">DMCreateLabel</a>(dm, <font color="#666666">"EGADS Vertex ID"</font>);
+<a name="line617">617: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Vertex ID"</font>, &amp;vertexLabel);
+<a name="line618">618: </a>  cOff = 0;
+<a name="line619">619: </a>  <font color="#4169E1">for</font> (b = 0; b &lt; nbodies; ++b) {
+<a name="line620">620: </a>    ego body = bodies[b];
+<a name="line621">621: </a>    int id, Nl, l;
+
+<a name="line623">623: </a>    EG_getBodyTopos(body, NULL, LOOP, &amp;Nl, &amp;lobjs);
+<a name="line624">624: </a>    <font color="#4169E1">for</font> (l = 0; l &lt; Nl; ++l) {
+<a name="line625">625: </a>      ego  loop = lobjs[l];
+<a name="line626">626: </a>      ego *fobjs;
+<a name="line627">627: </a>      int  lid, Nf, fid, Ner = 0, Ne, e, Nt = 0, t;
+
+<a name="line629">629: </a>      lid = EG_indexBodyTopo(body, loop);
+<a name="line630">630: </a>      EG_getBodyTopos(body, loop, FACE, &amp;Nf, &amp;fobjs);
+<a name="line632">632: </a>      fid = EG_indexBodyTopo(body, fobjs[0]);
+<a name="line633">633: </a>      EG_free(fobjs);
+<a name="line634">634: </a>      EG_getTopology(loop, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Ne, &amp;objs, &amp;senses);
+<a name="line635">635: </a>      <font color="#4169E1">for</font> (e = 0; e &lt; Ne; ++e) {
+<a name="line636">636: </a>        ego             edge = objs[e];
+<a name="line637">637: </a>        int             eid, Nv, v;
+<a name="line638">638: </a>        <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        points[3], support[2], numEdges, edgeNum;
+<a name="line639">639: </a>        const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *edges;
+
+<a name="line641">641: </a>        eid = EG_indexBodyTopo(body, edge);
+<a name="line642">642: </a>        EG_getTopology(edge, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Nv, &amp;nobjs, &amp;senses);
+<a name="line643">643: </a>        <font color="#4169E1">if</font> (mtype == DEGENERATE) <font color="#4169E1">continue</font>;
+<a name="line644">644: </a>        <font color="#4169E1">else</font> ++Ner;
+<a name="line645">645: </a>        <font color="#4169E1">for</font> (v = 0; v &lt; Nv; ++v) {
+<a name="line646">646: </a>          ego vertex = nobjs[v];
+
+<a name="line648">648: </a>          id = EG_indexBodyTopo(body, vertex);
+<a name="line649">649: </a>          <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(edgeLabel, numCells + id - 1, eid);
+<a name="line650">650: </a>          points[v * 2] = numCells + id - 1;
+<a name="line651">651: </a>        }
+<a name="line652">652: </a>        <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(edgeMap, eid - 1, &amp;edgeNum);
+<a name="line653">653: </a>        points[1] = numCells + numVertices - newVertices + edgeNum;
+
+<a name="line655">655: </a>        <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(edgeLabel, points[1], eid);
+<a name="line656">656: </a>        support[0] = points[0];
+<a name="line657">657: </a>        support[1] = points[1];
+<a name="line658">658: </a>        <a href="../../../../docs/manualpages/DMPlex/DMPlexGetJoin.html">DMPlexGetJoin</a>(dm, 2, support, &amp;numEdges, &amp;edges);
+<a name="line660">660: </a>        <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(edgeLabel, edges[0], eid);
+<a name="line661">661: </a>        <a href="../../../../docs/manualpages/DMPlex/DMPlexRestoreJoin.html">DMPlexRestoreJoin</a>(dm, 2, support, &amp;numEdges, &amp;edges);
+<a name="line662">662: </a>        support[0] = points[1];
+<a name="line663">663: </a>        support[1] = points[2];
+<a name="line664">664: </a>        <a href="../../../../docs/manualpages/DMPlex/DMPlexGetJoin.html">DMPlexGetJoin</a>(dm, 2, support, &amp;numEdges, &amp;edges);
+<a name="line666">666: </a>        <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(edgeLabel, edges[0], eid);
+<a name="line667">667: </a>        <a href="../../../../docs/manualpages/DMPlex/DMPlexRestoreJoin.html">DMPlexRestoreJoin</a>(dm, 2, support, &amp;numEdges, &amp;edges);
+<a name="line668">668: </a>      }
+<a name="line669">669: </a>      <font color="#4169E1">switch</font> (Ner) {
+<a name="line670">670: </a>      <font color="#4169E1">case</font> 2:
+<a name="line671">671: </a>        Nt = 2;
+<a name="line672">672: </a>        <font color="#4169E1">break</font>;
+<a name="line673">673: </a>      <font color="#4169E1">case</font> 3:
+<a name="line674">674: </a>        Nt = 4;
+<a name="line675">675: </a>        <font color="#4169E1">break</font>;
+<a name="line676">676: </a>      <font color="#4169E1">case</font> 4:
+<a name="line677">677: </a>        Nt = 8;
+<a name="line678">678: </a>        <font color="#4169E1">break</font>;
+<a name="line679">679: </a><strong><font color="#FF0000">      default:</font></strong>
+<a name="line680">680: </a>        <a href="../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_WRONG, <font color="#666666">"Loop with %d edges is unsupported"</font>, Ner);
+<a name="line681">681: </a>      }
+<a name="line682">682: </a>      <font color="#4169E1">for</font> (t = 0; t &lt; Nt; ++t) {
+<a name="line683">683: </a>        <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(bodyLabel, cOff + t, b);
+<a name="line684">684: </a>        <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(faceLabel, cOff + t, fid);
+<a name="line685">685: </a>      }
+<a name="line686">686: </a>      cOff += Nt;
+<a name="line687">687: </a>    }
+<a name="line688">688: </a>    EG_free(lobjs);
+<a name="line689">689: </a>  }
+<a name="line690">690: </a>  <a href="../../../../docs/manualpages/PetscH/PetscHMapIDestroy.html">PetscHMapIDestroy</a>(&amp;edgeMap);
+<a name="line691">691: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetHeightStratum.html">DMPlexGetHeightStratum</a>(dm, 0, &amp;cStart, &amp;cEnd);
+<a name="line692">692: </a>  <font color="#4169E1">for</font> (c = cStart; c &lt; cEnd; ++c) {
+<a name="line693">693: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *closure = NULL;
+<a name="line694">694: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  clSize, cl, bval, fval;
+
+<a name="line696">696: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetTransitiveClosure.html">DMPlexGetTransitiveClosure</a>(dm, c, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, &amp;clSize, &amp;closure);
+<a name="line697">697: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(bodyLabel, c, &amp;bval);
+<a name="line698">698: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(faceLabel, c, &amp;fval);
+<a name="line699">699: </a>    <font color="#4169E1">for</font> (cl = 0; cl &lt; clSize * 2; cl += 2) {
+<a name="line700">700: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(bodyLabel, closure[cl], bval);
+<a name="line701">701: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(faceLabel, closure[cl], fval);
+<a name="line702">702: </a>    }
+<a name="line703">703: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexRestoreTransitiveClosure.html">DMPlexRestoreTransitiveClosure</a>(dm, c, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, &amp;clSize, &amp;closure);
+<a name="line704">704: </a>  }
+<a name="line705">705: </a>  *newdm = dm;
+<a name="line706">706: </a>  <font color="#4169E1">return</font> 0;
+<a name="line707">707: </a>}
+
+<a name="line709">709: </a><strong><font color="#4169E1"><a name="DMPlexCreateEGADS"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexCreateEGADS(<a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, ego context, ego model, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *newdm)</font></strong>
+<a name="line710">710: </a>{
+<a name="line711">711: </a>  <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> bodyLabel, faceLabel, edgeLabel, vertexLabel;
+<a name="line712">712: </a>  // EGADS/EGADSLite variables
+<a name="line713">713: </a>  ego geom, *bodies, *mobjs, *fobjs, *lobjs, *eobjs, *nobjs;
+<a name="line714">714: </a>  ego topRef, prev, next;
+<a name="line715">715: </a>  int oclass, mtype, nbodies, *senses, *lSenses, *eSenses;
+<a name="line716">716: </a>  int b;
+<a name="line717">717: </a>  // PETSc variables
+<a name="line718">718: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>              dm;
+<a name="line719">719: </a>  <a href="../../../../docs/manualpages/PetscH/PetscHMapI.html">PetscHMapI</a>      edgeMap = NULL, bodyIndexMap = NULL, bodyVertexMap = NULL, bodyEdgeMap = NULL, bodyFaceMap = NULL, bodyEdgeGlobalMap = NULL;
+<a name="line720">720: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        dim = -1, cdim = -1, numCorners = 0, numVertices = 0, numEdges = 0, numFaces = 0, numCells = 0, edgeCntr = 0;
+<a name="line721">721: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        cellCntr = 0, numPoints = 0;
+<a name="line722">722: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       *cells  = NULL;
+<a name="line723">723: </a>  const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *cone   = NULL;
+<a name="line724">724: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>      *coords = NULL;
+<a name="line725">725: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>     rank;
+
+<a name="line728">728: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line729">729: </a>  <font color="#4169E1">if</font> (rank == 0) {
+<a name="line730">730: </a>    // ---------------------------------------------------------------------------------------------------
+<a name="line731">731: </a>    // Generate Petsc Plex
+<a name="line732">732: </a>    //  Get all Nodes in model, record coordinates in a correctly formatted array
+<a name="line733">733: </a>    //  Cycle through bodies, cycle through loops, recorde NODE IDs in a correctly formatted array
+<a name="line734">734: </a>    //  We need to uniformly refine the initial geometry to guarantee a valid mesh
+
+<a name="line736">736: </a>    // Calculate cell and vertex sizes
+<a name="line737">737: </a>    EG_getTopology(model, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;nbodies, &amp;bodies, &amp;senses);
+
+<a name="line739">739: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;edgeMap);
+<a name="line740">740: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;bodyIndexMap);
+<a name="line741">741: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;bodyVertexMap);
+<a name="line742">742: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;bodyEdgeMap);
+<a name="line743">743: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;bodyEdgeGlobalMap);
+<a name="line744">744: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;bodyFaceMap);
+
+<a name="line746">746: </a>    <font color="#4169E1">for</font> (b = 0; b &lt; nbodies; ++b) {
+<a name="line747">747: </a>      ego           body = bodies[b];
+<a name="line748">748: </a>      int           Nf, Ne, Nv;
+<a name="line749">749: </a>      PetscHashIter BIiter, BViter, BEiter, BEGiter, BFiter, EMiter;
+<a name="line750">750: </a>      <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     BIfound, BVfound, BEfound, BEGfound, BFfound, EMfound;
+
+<a name="line752">752: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(bodyIndexMap, b, &amp;BIiter, &amp;BIfound);
+<a name="line753">753: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(bodyVertexMap, b, &amp;BViter, &amp;BVfound);
+<a name="line754">754: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(bodyEdgeMap, b, &amp;BEiter, &amp;BEfound);
+<a name="line755">755: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(bodyEdgeGlobalMap, b, &amp;BEGiter, &amp;BEGfound);
+<a name="line756">756: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(bodyFaceMap, b, &amp;BFiter, &amp;BFfound);
+
+<a name="line758">758: </a>      <font color="#4169E1">if</font> (!BIfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(bodyIndexMap, b, numFaces + numEdges + numVertices);
+<a name="line759">759: </a>      <font color="#4169E1">if</font> (!BVfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(bodyVertexMap, b, numVertices);
+<a name="line760">760: </a>      <font color="#4169E1">if</font> (!BEfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(bodyEdgeMap, b, numEdges);
+<a name="line761">761: </a>      <font color="#4169E1">if</font> (!BEGfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(bodyEdgeGlobalMap, b, edgeCntr);
+<a name="line762">762: </a>      <font color="#4169E1">if</font> (!BFfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(bodyFaceMap, b, numFaces);
+
+<a name="line764">764: </a>      EG_getBodyTopos(body, NULL, FACE, &amp;Nf, &amp;fobjs);
+<a name="line765">765: </a>      EG_getBodyTopos(body, NULL, EDGE, &amp;Ne, &amp;eobjs);
+<a name="line766">766: </a>      EG_getBodyTopos(body, NULL, NODE, &amp;Nv, &amp;nobjs);
+<a name="line767">767: </a>      EG_free(fobjs);
+<a name="line768">768: </a>      EG_free(eobjs);
+<a name="line769">769: </a>      EG_free(nobjs);
+
+<a name="line771">771: </a>      // Remove DEGENERATE EDGES from Edge count
+<a name="line772">772: </a>      EG_getBodyTopos(body, NULL, EDGE, &amp;Ne, &amp;eobjs);
+<a name="line773">773: </a>      int Netemp = 0;
+<a name="line774">774: </a>      <font color="#4169E1">for</font> (int e = 0; e &lt; Ne; ++e) {
+<a name="line775">775: </a>        ego edge = eobjs[e];
+<a name="line776">776: </a>        int eid;
+
+<a name="line778">778: </a>        EG_getInfo(edge, &amp;oclass, &amp;mtype, &amp;topRef, &amp;prev, &amp;next);
+<a name="line779">779: </a>        eid = EG_indexBodyTopo(body, edge);
+
+<a name="line781">781: </a>        <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(edgeMap, edgeCntr + eid - 1, &amp;EMiter, &amp;EMfound);
+<a name="line782">782: </a>        <font color="#4169E1">if</font> (mtype == DEGENERATE) {
+<a name="line783">783: </a>          <font color="#4169E1">if</font> (!EMfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(edgeMap, edgeCntr + eid - 1, -1);
+<a name="line784">784: </a>        } <font color="#4169E1">else</font> {
+<a name="line785">785: </a>          ++Netemp;
+<a name="line786">786: </a>          <font color="#4169E1">if</font> (!EMfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(edgeMap, edgeCntr + eid - 1, Netemp);
+<a name="line787">787: </a>        }
+<a name="line788">788: </a>      }
+<a name="line789">789: </a>      EG_free(eobjs);
+
+<a name="line791">791: </a>      // Determine Number of Cells
+<a name="line792">792: </a>      EG_getBodyTopos(body, NULL, FACE, &amp;Nf, &amp;fobjs);
+<a name="line793">793: </a>      <font color="#4169E1">for</font> (int f = 0; f &lt; Nf; ++f) {
+<a name="line794">794: </a>        ego face     = fobjs[f];
+<a name="line795">795: </a>        int edgeTemp = 0;
+
+<a name="line797">797: </a>        EG_getBodyTopos(body, face, EDGE, &amp;Ne, &amp;eobjs);
+<a name="line798">798: </a>        <font color="#4169E1">for</font> (int e = 0; e &lt; Ne; ++e) {
+<a name="line799">799: </a>          ego edge = eobjs[e];
+
+<a name="line801">801: </a>          EG_getInfo(edge, &amp;oclass, &amp;mtype, &amp;topRef, &amp;prev, &amp;next);
+<a name="line802">802: </a>          <font color="#4169E1">if</font> (mtype != DEGENERATE) ++edgeTemp;
+<a name="line803">803: </a>        }
+<a name="line804">804: </a>        numCells += (2 * edgeTemp);
+<a name="line805">805: </a>        EG_free(eobjs);
+<a name="line806">806: </a>      }
+<a name="line807">807: </a>      EG_free(fobjs);
+
+<a name="line809">809: </a>      numFaces += Nf;
+<a name="line810">810: </a>      numEdges += Netemp;
+<a name="line811">811: </a>      numVertices += Nv;
+<a name="line812">812: </a>      edgeCntr += Ne;
+<a name="line813">813: </a>    }
+
+<a name="line815">815: </a>    // Set up basic DMPlex parameters
+<a name="line816">816: </a>    dim        = 2;                                 // Assumes 3D Models :: Need to handle 2D models in the future
+<a name="line817">817: </a>    cdim       = 3;                                 // Assumes 3D Models :: Need to update to handle 2D models in future
+<a name="line818">818: </a>    numCorners = 3;                                 // Split Faces into triangles
+<a name="line819">819: </a>    numPoints  = numVertices + numEdges + numFaces; // total number of coordinate points
+
+<a name="line821">821: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc2.html">PetscMalloc2</a>(numPoints * cdim, &amp;coords, numCells * numCorners, &amp;cells);
+
+<a name="line823">823: </a>    // Get Vertex Coordinates and Set up Cells
+<a name="line824">824: </a>    <font color="#4169E1">for</font> (b = 0; b &lt; nbodies; ++b) {
+<a name="line825">825: </a>      ego           body = bodies[b];
+<a name="line826">826: </a>      int           Nf, Ne, Nv;
+<a name="line827">827: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      bodyVertexIndexStart, bodyEdgeIndexStart, bodyEdgeGlobalIndexStart, bodyFaceIndexStart;
+<a name="line828">828: </a>      PetscHashIter BViter, BEiter, BEGiter, BFiter, EMiter;
+<a name="line829">829: </a>      <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     BVfound, BEfound, BEGfound, BFfound, EMfound;
+
+<a name="line831">831: </a>      // Vertices on Current Body
+<a name="line832">832: </a>      EG_getBodyTopos(body, NULL, NODE, &amp;Nv, &amp;nobjs);
+
+<a name="line834">834: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(bodyVertexMap, b, &amp;BViter, &amp;BVfound);
+<a name="line836">836: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(bodyVertexMap, b, &amp;bodyVertexIndexStart);
+
+<a name="line838">838: </a>      <font color="#4169E1">for</font> (int v = 0; v &lt; Nv; ++v) {
+<a name="line839">839: </a>        ego    vertex = nobjs[v];
+<a name="line840">840: </a>        double limits[4];
+<a name="line841">841: </a>        int    id, dummy;
+
+<a name="line843">843: </a>        EG_getTopology(vertex, &amp;geom, &amp;oclass, &amp;mtype, limits, &amp;dummy, &amp;mobjs, &amp;senses);
+<a name="line844">844: </a>        id = EG_indexBodyTopo(body, vertex);
+
+<a name="line846">846: </a>        coords[(bodyVertexIndexStart + id - 1) * cdim + 0] = limits[0];
+<a name="line847">847: </a>        coords[(bodyVertexIndexStart + id - 1) * cdim + 1] = limits[1];
+<a name="line848">848: </a>        coords[(bodyVertexIndexStart + id - 1) * cdim + 2] = limits[2];
+<a name="line849">849: </a>      }
+<a name="line850">850: </a>      EG_free(nobjs);
+
+<a name="line852">852: </a>      // Edge Midpoint Vertices on Current Body
+<a name="line853">853: </a>      EG_getBodyTopos(body, NULL, EDGE, &amp;Ne, &amp;eobjs);
+
+<a name="line855">855: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(bodyEdgeMap, b, &amp;BEiter, &amp;BEfound);
+<a name="line857">857: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(bodyEdgeMap, b, &amp;bodyEdgeIndexStart);
+
+<a name="line859">859: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(bodyEdgeGlobalMap, b, &amp;BEGiter, &amp;BEGfound);
+<a name="line861">861: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(bodyEdgeGlobalMap, b, &amp;bodyEdgeGlobalIndexStart);
+
+<a name="line863">863: </a>      <font color="#4169E1">for</font> (int e = 0; e &lt; Ne; ++e) {
+<a name="line864">864: </a>        ego    edge = eobjs[e];
+<a name="line865">865: </a>        double range[2], avgt[1], cntrPnt[9];
+<a name="line866">866: </a>        int    eid, eOffset;
+<a name="line867">867: </a>        int    periodic;
+
+<a name="line869">869: </a>        EG_getInfo(edge, &amp;oclass, &amp;mtype, &amp;topRef, &amp;prev, &amp;next);
+<a name="line870">870: </a>        <font color="#4169E1">if</font> (mtype == DEGENERATE) <font color="#4169E1">continue</font>;
+
+<a name="line872">872: </a>        eid = EG_indexBodyTopo(body, edge);
+
+<a name="line874">874: </a>        // get relative offset from globalEdgeID Vector
+<a name="line875">875: </a>        <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(edgeMap, bodyEdgeGlobalIndexStart + eid - 1, &amp;EMiter, &amp;EMfound);
+<a name="line877">877: </a>        <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(edgeMap, bodyEdgeGlobalIndexStart + eid - 1, &amp;eOffset);
+
+<a name="line879">879: </a>        EG_getRange(edge, range, &amp;periodic);
+<a name="line880">880: </a>        avgt[0] = (range[0] + range[1]) / 2.;
+
+<a name="line882">882: </a>        EG_evaluate(edge, avgt, cntrPnt);
+<a name="line883">883: </a>        coords[(numVertices + bodyEdgeIndexStart + eOffset - 1) * cdim + 0] = cntrPnt[0];
+<a name="line884">884: </a>        coords[(numVertices + bodyEdgeIndexStart + eOffset - 1) * cdim + 1] = cntrPnt[1];
+<a name="line885">885: </a>        coords[(numVertices + bodyEdgeIndexStart + eOffset - 1) * cdim + 2] = cntrPnt[2];
+<a name="line886">886: </a>      }
+<a name="line887">887: </a>      EG_free(eobjs);
+
+<a name="line889">889: </a>      // Face Midpoint Vertices on Current Body
+<a name="line890">890: </a>      EG_getBodyTopos(body, NULL, FACE, &amp;Nf, &amp;fobjs);
+
+<a name="line892">892: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(bodyFaceMap, b, &amp;BFiter, &amp;BFfound);
+<a name="line894">894: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(bodyFaceMap, b, &amp;bodyFaceIndexStart);
+
+<a name="line896">896: </a>      <font color="#4169E1">for</font> (int f = 0; f &lt; Nf; ++f) {
+<a name="line897">897: </a>        ego    face = fobjs[f];
+<a name="line898">898: </a>        double range[4], avgUV[2], cntrPnt[18];
+<a name="line899">899: </a>        int    peri, id;
+
+<a name="line901">901: </a>        id = EG_indexBodyTopo(body, face);
+<a name="line902">902: </a>        EG_getRange(face, range, &amp;peri);
+
+<a name="line904">904: </a>        avgUV[0] = (range[0] + range[1]) / 2.;
+<a name="line905">905: </a>        avgUV[1] = (range[2] + range[3]) / 2.;
+<a name="line906">906: </a>        EG_evaluate(face, avgUV, cntrPnt);
+
+<a name="line908">908: </a>        coords[(numVertices + numEdges + bodyFaceIndexStart + id - 1) * cdim + 0] = cntrPnt[0];
+<a name="line909">909: </a>        coords[(numVertices + numEdges + bodyFaceIndexStart + id - 1) * cdim + 1] = cntrPnt[1];
+<a name="line910">910: </a>        coords[(numVertices + numEdges + bodyFaceIndexStart + id - 1) * cdim + 2] = cntrPnt[2];
+<a name="line911">911: </a>      }
+<a name="line912">912: </a>      EG_free(fobjs);
+
+<a name="line914">914: </a>      // Define Cells :: Note - This could be incorporated in the Face Midpoint Vertices Loop but was kept separate <font color="#4169E1">for</font> clarity
+<a name="line915">915: </a>      EG_getBodyTopos(body, NULL, FACE, &amp;Nf, &amp;fobjs);
+<a name="line916">916: </a>      <font color="#4169E1">for</font> (int f = 0; f &lt; Nf; ++f) {
+<a name="line917">917: </a>        ego face = fobjs[f];
+<a name="line918">918: </a>        int fID, midFaceID, midPntID, startID, endID, Nl;
+
+<a name="line920">920: </a>        fID       = EG_indexBodyTopo(body, face);
+<a name="line921">921: </a>        midFaceID = numVertices + numEdges + bodyFaceIndexStart + fID - 1;
+<a name="line922">922: </a>        // Must Traverse Loop to ensure we have all necessary information like the sense (+/- 1) of the edges.
+<a name="line923">923: </a>        // TODO :: Only handles single loop faces (No holes). The choices <font color="#4169E1">for</font> handling multiloop faces are:
+<a name="line924">924: </a>        //            1) Use the <a href="../../../../docs/manualpages/DMPlex/DMPlexCreateEGADSFromFile.html">DMPlexCreateEGADSFromFile</a>() with the -dm_plex_egads_with_tess = 1 option.
+<a name="line925">925: </a>        //               This will use a <font color="#4169E1">default</font> EGADS tessellation as an initial surface mesh.
+<a name="line926">926: </a>        //            2) Create the initial surface mesh via a 2D mesher :: Currently not available (?future?)
+<a name="line927">927: </a>        //               May I suggest the XXXX as a starting point?
+
+<a name="line929">929: </a>        EG_getTopology(face, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Nl, &amp;lobjs, &amp;lSenses);
+
+<a name="line932">932: </a>        <font color="#4169E1">for</font> (int l = 0; l &lt; Nl; ++l) {
+<a name="line933">933: </a>          ego loop = lobjs[l];
+
+<a name="line935">935: </a>          EG_getTopology(loop, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Ne, &amp;eobjs, &amp;eSenses);
+<a name="line936">936: </a>          <font color="#4169E1">for</font> (int e = 0; e &lt; Ne; ++e) {
+<a name="line937">937: </a>            ego edge = eobjs[e];
+<a name="line938">938: </a>            int eid, eOffset;
+
+<a name="line940">940: </a>            EG_getInfo(edge, &amp;oclass, &amp;mtype, &amp;topRef, &amp;prev, &amp;next);
+<a name="line941">941: </a>            eid = EG_indexBodyTopo(body, edge);
+<a name="line942">942: </a>            <font color="#4169E1">if</font> (mtype == DEGENERATE) <font color="#4169E1">continue</font>;
+
+<a name="line944">944: </a>            // get relative offset from globalEdgeID Vector
+<a name="line945">945: </a>            <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(edgeMap, bodyEdgeGlobalIndexStart + eid - 1, &amp;EMiter, &amp;EMfound);
+<a name="line947">947: </a>            <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(edgeMap, bodyEdgeGlobalIndexStart + eid - 1, &amp;eOffset);
+
+<a name="line949">949: </a>            midPntID = numVertices + bodyEdgeIndexStart + eOffset - 1;
+
+<a name="line951">951: </a>            EG_getTopology(edge, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Nv, &amp;nobjs, &amp;senses);
+
+<a name="line953">953: </a>            <font color="#4169E1">if</font> (eSenses[e] &gt; 0) {
+<a name="line954">954: </a>              startID = EG_indexBodyTopo(body, nobjs[0]);
+<a name="line955">955: </a>              endID   = EG_indexBodyTopo(body, nobjs[1]);
+<a name="line956">956: </a>            } <font color="#4169E1">else</font> {
+<a name="line957">957: </a>              startID = EG_indexBodyTopo(body, nobjs[1]);
+<a name="line958">958: </a>              endID   = EG_indexBodyTopo(body, nobjs[0]);
+<a name="line959">959: </a>            }
+
+<a name="line961">961: </a>            // Define 2 Cells per Edge with correct orientation
+<a name="line962">962: </a>            cells[cellCntr * numCorners + 0] = midFaceID;
+<a name="line963">963: </a>            cells[cellCntr * numCorners + 1] = bodyVertexIndexStart + startID - 1;
+<a name="line964">964: </a>            cells[cellCntr * numCorners + 2] = midPntID;
+
+<a name="line966">966: </a>            cells[cellCntr * numCorners + 3] = midFaceID;
+<a name="line967">967: </a>            cells[cellCntr * numCorners + 4] = midPntID;
+<a name="line968">968: </a>            cells[cellCntr * numCorners + 5] = bodyVertexIndexStart + endID - 1;
+
+<a name="line970">970: </a>            cellCntr = cellCntr + 2;
+<a name="line971">971: </a>          }
+<a name="line972">972: </a>        }
+<a name="line973">973: </a>      }
+<a name="line974">974: </a>      EG_free(fobjs);
+<a name="line975">975: </a>    }
+<a name="line976">976: </a>  }
+
+<a name="line978">978: </a>  // Generate DMPlex
+<a name="line979">979: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexCreateFromCellListPetsc.html">DMPlexCreateFromCellListPetsc</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, dim, numCells, numPoints, numCorners, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, cells, cdim, coords, &amp;dm);
+<a name="line980">980: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree2.html">PetscFree2</a>(coords, cells);
+<a name="line981">981: </a>  <a href="../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(dm, <font color="#666666">" Total Number of Unique Cells    = %"</font> PetscInt_FMT <font color="#666666">" \n"</font>, numCells);
+<a name="line982">982: </a>  <a href="../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(dm, <font color="#666666">" Total Number of Unique Vertices = %"</font> PetscInt_FMT <font color="#666666">" \n"</font>, numVertices);
+
+<a name="line984">984: </a>  // Embed EGADS model in <a href="../../../../docs/manualpages/DM/DM.html">DM</a>
+<a name="line985">985: </a>  {
+<a name="line986">986: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a> modelObj, contextObj;
+
+<a name="line988">988: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerCreate.html">PetscContainerCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;modelObj);
+<a name="line989">989: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerSetPointer.html">PetscContainerSetPointer</a>(modelObj, model);
+<a name="line990">990: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectCompose.html">PetscObjectCompose</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm, <font color="#666666">"EGADS Model"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)modelObj);
+<a name="line991">991: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerDestroy.html">PetscContainerDestroy</a>(&amp;modelObj);
+
+<a name="line993">993: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerCreate.html">PetscContainerCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;contextObj);
+<a name="line994">994: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerSetPointer.html">PetscContainerSetPointer</a>(contextObj, context);
+<a name="line995">995: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerSetUserDestroy.html">PetscContainerSetUserDestroy</a>(contextObj, DMPlexEGADSDestroy_Private);
+<a name="line996">996: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectCompose.html">PetscObjectCompose</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm, <font color="#666666">"EGADS Context"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)contextObj);
+<a name="line997">997: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerDestroy.html">PetscContainerDestroy</a>(&amp;contextObj);
+<a name="line998">998: </a>  }
+<a name="line999">999: </a>  // Label points
+<a name="line1000">1000: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nStart, nEnd;
+
+<a name="line1002">1002: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLabel.html">DMCreateLabel</a>(dm, <font color="#666666">"EGADS Body ID"</font>);
+<a name="line1003">1003: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Body ID"</font>, &amp;bodyLabel);
+<a name="line1004">1004: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLabel.html">DMCreateLabel</a>(dm, <font color="#666666">"EGADS Face ID"</font>);
+<a name="line1005">1005: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Face ID"</font>, &amp;faceLabel);
+<a name="line1006">1006: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLabel.html">DMCreateLabel</a>(dm, <font color="#666666">"EGADS Edge ID"</font>);
+<a name="line1007">1007: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Edge ID"</font>, &amp;edgeLabel);
+<a name="line1008">1008: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLabel.html">DMCreateLabel</a>(dm, <font color="#666666">"EGADS Vertex ID"</font>);
+<a name="line1009">1009: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Vertex ID"</font>, &amp;vertexLabel);
+
+<a name="line1011">1011: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetHeightStratum.html">DMPlexGetHeightStratum</a>(dm, 2, &amp;nStart, &amp;nEnd);
+
+<a name="line1013">1013: </a>  cellCntr = 0;
+<a name="line1014">1014: </a>  <font color="#4169E1">for</font> (b = 0; b &lt; nbodies; ++b) {
+<a name="line1015">1015: </a>    ego           body = bodies[b];
+<a name="line1016">1016: </a>    int           Nv, Ne, Nf;
+<a name="line1017">1017: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      bodyVertexIndexStart, bodyEdgeIndexStart, bodyEdgeGlobalIndexStart, bodyFaceIndexStart;
+<a name="line1018">1018: </a>    PetscHashIter BViter, BEiter, BEGiter, BFiter, EMiter;
+<a name="line1019">1019: </a>    <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     BVfound, BEfound, BEGfound, BFfound, EMfound;
+
+<a name="line1021">1021: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(bodyVertexMap, b, &amp;BViter, &amp;BVfound);
+<a name="line1023">1023: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(bodyVertexMap, b, &amp;bodyVertexIndexStart);
+
+<a name="line1025">1025: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(bodyEdgeMap, b, &amp;BEiter, &amp;BEfound);
+<a name="line1027">1027: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(bodyEdgeMap, b, &amp;bodyEdgeIndexStart);
+
+<a name="line1029">1029: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(bodyFaceMap, b, &amp;BFiter, &amp;BFfound);
+<a name="line1031">1031: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(bodyFaceMap, b, &amp;bodyFaceIndexStart);
+
+<a name="line1033">1033: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(bodyEdgeGlobalMap, b, &amp;BEGiter, &amp;BEGfound);
+<a name="line1035">1035: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(bodyEdgeGlobalMap, b, &amp;bodyEdgeGlobalIndexStart);
+
+<a name="line1037">1037: </a>    EG_getBodyTopos(body, NULL, FACE, &amp;Nf, &amp;fobjs);
+<a name="line1038">1038: </a>    <font color="#4169E1">for</font> (int f = 0; f &lt; Nf; ++f) {
+<a name="line1039">1039: </a>      ego face = fobjs[f];
+<a name="line1040">1040: </a>      int fID, Nl;
+
+<a name="line1042">1042: </a>      fID = EG_indexBodyTopo(body, face);
+
+<a name="line1044">1044: </a>      EG_getBodyTopos(body, face, LOOP, &amp;Nl, &amp;lobjs);
+<a name="line1045">1045: </a>      <font color="#4169E1">for</font> (int l = 0; l &lt; Nl; ++l) {
+<a name="line1046">1046: </a>        ego loop = lobjs[l];
+<a name="line1047">1047: </a>        int lid;
+
+<a name="line1049">1049: </a>        lid = EG_indexBodyTopo(body, loop);
+
+<a name="line1052">1052: </a>        EG_getTopology(loop, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Ne, &amp;eobjs, &amp;eSenses);
+<a name="line1053">1053: </a>        <font color="#4169E1">for</font> (int e = 0; e &lt; Ne; ++e) {
+<a name="line1054">1054: </a>          ego edge = eobjs[e];
+<a name="line1055">1055: </a>          int eid, eOffset;
+
+<a name="line1057">1057: </a>          // Skip DEGENERATE Edges
+<a name="line1058">1058: </a>          EG_getInfo(edge, &amp;oclass, &amp;mtype, &amp;topRef, &amp;prev, &amp;next);
+<a name="line1059">1059: </a>          <font color="#4169E1">if</font> (mtype == DEGENERATE) <font color="#4169E1">continue</font>;
+<a name="line1060">1060: </a>          eid = EG_indexBodyTopo(body, edge);
+
+<a name="line1062">1062: </a>          // get relative offset from globalEdgeID Vector
+<a name="line1063">1063: </a>          <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(edgeMap, bodyEdgeGlobalIndexStart + eid - 1, &amp;EMiter, &amp;EMfound);
+<a name="line1065">1065: </a>          <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(edgeMap, bodyEdgeGlobalIndexStart + eid - 1, &amp;eOffset);
+
+<a name="line1067">1067: </a>          EG_getBodyTopos(body, edge, NODE, &amp;Nv, &amp;nobjs);
+<a name="line1068">1068: </a>          <font color="#4169E1">for</font> (int v = 0; v &lt; Nv; ++v) {
+<a name="line1069">1069: </a>            ego vertex = nobjs[v];
+<a name="line1070">1070: </a>            int vID;
+
+<a name="line1072">1072: </a>            vID = EG_indexBodyTopo(body, vertex);
+<a name="line1073">1073: </a>            <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(bodyLabel, nStart + bodyVertexIndexStart + vID - 1, b);
+<a name="line1074">1074: </a>            <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(vertexLabel, nStart + bodyVertexIndexStart + vID - 1, vID);
+<a name="line1075">1075: </a>          }
+<a name="line1076">1076: </a>          EG_free(nobjs);
+
+<a name="line1078">1078: </a>          <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(bodyLabel, nStart + numVertices + bodyEdgeIndexStart + eOffset - 1, b);
+<a name="line1079">1079: </a>          <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(edgeLabel, nStart + numVertices + bodyEdgeIndexStart + eOffset - 1, eid);
+
+<a name="line1081">1081: </a>          // Define Cell faces
+<a name="line1082">1082: </a>          <font color="#4169E1">for</font> (int jj = 0; jj &lt; 2; ++jj) {
+<a name="line1083">1083: </a>            <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(bodyLabel, cellCntr, b);
+<a name="line1084">1084: </a>            <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(faceLabel, cellCntr, fID);
+<a name="line1085">1085: </a>            <a href="../../../../docs/manualpages/DMPlex/DMPlexGetCone.html">DMPlexGetCone</a>(dm, cellCntr, &amp;cone);
+
+<a name="line1087">1087: </a>            <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(bodyLabel, cone[0], b);
+<a name="line1088">1088: </a>            <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(faceLabel, cone[0], fID);
+
+<a name="line1090">1090: </a>            <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(bodyLabel, cone[1], b);
+<a name="line1091">1091: </a>            <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(edgeLabel, cone[1], eid);
+
+<a name="line1093">1093: </a>            <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(bodyLabel, cone[2], b);
+<a name="line1094">1094: </a>            <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(faceLabel, cone[2], fID);
+
+<a name="line1096">1096: </a>            cellCntr = cellCntr + 1;
+<a name="line1097">1097: </a>          }
+<a name="line1098">1098: </a>        }
+<a name="line1099">1099: </a>      }
+<a name="line1100">1100: </a>      EG_free(lobjs);
+
+<a name="line1102">1102: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(bodyLabel, nStart + numVertices + numEdges + bodyFaceIndexStart + fID - 1, b);
+<a name="line1103">1103: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(faceLabel, nStart + numVertices + numEdges + bodyFaceIndexStart + fID - 1, fID);
+<a name="line1104">1104: </a>    }
+<a name="line1105">1105: </a>    EG_free(fobjs);
+<a name="line1106">1106: </a>  }
+
+<a name="line1108">1108: </a>  <a href="../../../../docs/manualpages/PetscH/PetscHMapIDestroy.html">PetscHMapIDestroy</a>(&amp;edgeMap);
+<a name="line1109">1109: </a>  <a href="../../../../docs/manualpages/PetscH/PetscHMapIDestroy.html">PetscHMapIDestroy</a>(&amp;bodyIndexMap);
+<a name="line1110">1110: </a>  <a href="../../../../docs/manualpages/PetscH/PetscHMapIDestroy.html">PetscHMapIDestroy</a>(&amp;bodyVertexMap);
+<a name="line1111">1111: </a>  <a href="../../../../docs/manualpages/PetscH/PetscHMapIDestroy.html">PetscHMapIDestroy</a>(&amp;bodyEdgeMap);
+<a name="line1112">1112: </a>  <a href="../../../../docs/manualpages/PetscH/PetscHMapIDestroy.html">PetscHMapIDestroy</a>(&amp;bodyEdgeGlobalMap);
+<a name="line1113">1113: </a>  <a href="../../../../docs/manualpages/PetscH/PetscHMapIDestroy.html">PetscHMapIDestroy</a>(&amp;bodyFaceMap);
+
+<a name="line1115">1115: </a>  *newdm = dm;
+<a name="line1116">1116: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1117">1117: </a>}
+
+<a name="line1119">1119: </a><strong><font color="#4169E1"><a name="DMPlexCreateEGADS_Tess_Internal"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexCreateEGADS_Tess_Internal(<a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, ego context, ego model, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *newdm)</font></strong>
+<a name="line1120">1120: </a>{
+<a name="line1121">1121: </a>  <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> bodyLabel, faceLabel, edgeLabel, vertexLabel;
+<a name="line1122">1122: </a>  <font color="#B22222">/* EGADSLite variables */</font>
+<a name="line1123">1123: </a>  ego    geom, *bodies, *fobjs;
+<a name="line1124">1124: </a>  int    b, oclass, mtype, nbodies, *senses;
+<a name="line1125">1125: </a>  int    totalNumTris = 0, totalNumPoints = 0;
+<a name="line1126">1126: </a>  double boundBox[6] = {0., 0., 0., 0., 0., 0.}, tessSize;
+<a name="line1127">1127: </a>  <font color="#B22222">/* PETSc variables */</font>
+<a name="line1128">1128: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>              dm;
+<a name="line1129">1129: </a>  <a href="../../../../docs/manualpages/PetscH/PetscHMapI.html">PetscHMapI</a>      pointIndexStartMap = NULL, triIndexStartMap = NULL, pTypeLabelMap = NULL, pIndexLabelMap = NULL;
+<a name="line1130">1130: </a>  <a href="../../../../docs/manualpages/PetscH/PetscHMapI.html">PetscHMapI</a>      pBodyIndexLabelMap = NULL, triFaceIDLabelMap = NULL, triBodyIDLabelMap = NULL;
+<a name="line1131">1131: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        dim = -1, cdim = -1, numCorners = 0, counter = 0;
+<a name="line1132">1132: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       *cells  = NULL;
+<a name="line1133">1133: </a>  const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *cone   = NULL;
+<a name="line1134">1134: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>      *coords = NULL;
+<a name="line1135">1135: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>     rank;
+
+<a name="line1138">1138: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line1139">1139: </a>  <font color="#4169E1">if</font> (rank == 0) {
+<a name="line1140">1140: </a>    // ---------------------------------------------------------------------------------------------------
+<a name="line1141">1141: </a>    // Generate Petsc Plex from EGADSlite created Tessellation of geometry
+<a name="line1142">1142: </a>    // ---------------------------------------------------------------------------------------------------
+
+<a name="line1144">1144: </a>    // Calculate cell and vertex sizes
+<a name="line1145">1145: </a>    EG_getTopology(model, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;nbodies, &amp;bodies, &amp;senses);
+
+<a name="line1147">1147: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;pointIndexStartMap);
+<a name="line1148">1148: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;triIndexStartMap);
+<a name="line1149">1149: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;pTypeLabelMap);
+<a name="line1150">1150: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;pIndexLabelMap);
+<a name="line1151">1151: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;pBodyIndexLabelMap);
+<a name="line1152">1152: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;triFaceIDLabelMap);
+<a name="line1153">1153: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapICreate.html">PetscHMapICreate</a>(&amp;triBodyIDLabelMap);
+
+<a name="line1155">1155: </a>    <font color="#B22222">/* Create Tessellation of Bodies */</font>
+<a name="line1156">1156: </a>    ego tessArray[nbodies];
+
+<a name="line1158">1158: </a>    <font color="#4169E1">for</font> (b = 0; b &lt; nbodies; ++b) {
+<a name="line1159">1159: </a>      ego           body      = bodies[b];
+<a name="line1160">1160: </a>      double        params[3] = {0.0, 0.0, 0.0}; // Parameters <font color="#4169E1">for</font> Tessellation
+<a name="line1161">1161: </a>      int           Nf, bodyNumPoints = 0, bodyNumTris = 0;
+<a name="line1162">1162: </a>      PetscHashIter PISiter, TISiter;
+<a name="line1163">1163: </a>      <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     PISfound, TISfound;
+
+<a name="line1165">1165: </a>      <font color="#B22222">/* Store Start Index for each Body's Point and Tris */</font>
+<a name="line1166">1166: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(pointIndexStartMap, b, &amp;PISiter, &amp;PISfound);
+<a name="line1167">1167: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(triIndexStartMap, b, &amp;TISiter, &amp;TISfound);
+
+<a name="line1169">1169: </a>      <font color="#4169E1">if</font> (!PISfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(pointIndexStartMap, b, totalNumPoints);
+<a name="line1170">1170: </a>      <font color="#4169E1">if</font> (!TISfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(triIndexStartMap, b, totalNumTris);
+
+<a name="line1172">1172: </a>      <font color="#B22222">/* Calculate Tessellation parameters based on Bounding Box */</font>
+<a name="line1173">1173: </a>      <font color="#B22222">/* Get Bounding Box Dimensions of the BODY */</font>
+<a name="line1174">1174: </a>      EG_getBoundingBox(body, boundBox);
+<a name="line1175">1175: </a>      tessSize = boundBox[3] - boundBox[0];
+<a name="line1176">1176: </a>      <font color="#4169E1">if</font> (tessSize &lt; boundBox[4] - boundBox[1]) tessSize = boundBox[4] - boundBox[1];
+<a name="line1177">1177: </a>      <font color="#4169E1">if</font> (tessSize &lt; boundBox[5] - boundBox[2]) tessSize = boundBox[5] - boundBox[2];
+
+<a name="line1179">1179: </a>      // TODO :: May want to give users tessellation parameter options //
+<a name="line1180">1180: </a>      params[0] = 0.0250 * tessSize;
+<a name="line1181">1181: </a>      params[1] = 0.0075 * tessSize;
+<a name="line1182">1182: </a>      params[2] = 15.0;
+
+<a name="line1184">1184: </a>      EG_makeTessBody(body, params, &amp;tessArray[b]);
+
+<a name="line1186">1186: </a>      EG_getBodyTopos(body, NULL, FACE, &amp;Nf, &amp;fobjs);
+
+<a name="line1188">1188: </a>      <font color="#4169E1">for</font> (int f = 0; f &lt; Nf; ++f) {
+<a name="line1189">1189: </a>        ego           face = fobjs[f];
+<a name="line1190">1190: </a>        int           len, fID, ntris;
+<a name="line1191">1191: </a>        const int    *ptype, *pindex, *ptris, *ptric;
+<a name="line1192">1192: </a>        const double *pxyz, *puv;
+
+<a name="line1194">1194: </a>        // Get Face ID //
+<a name="line1195">1195: </a>        fID = EG_indexBodyTopo(body, face);
+
+<a name="line1197">1197: </a>        // Checkout the Surface Tessellation //
+<a name="line1198">1198: </a>        EG_getTessFace(tessArray[b], fID, &amp;len, &amp;pxyz, &amp;puv, &amp;ptype, &amp;pindex, &amp;ntris, &amp;ptris, &amp;ptric);
+
+<a name="line1200">1200: </a>        // Determine total number of triangle cells in the tessellation //
+<a name="line1201">1201: </a>        bodyNumTris += (int)ntris;
+
+<a name="line1203">1203: </a>        // Check out the point index and coordinate //
+<a name="line1204">1204: </a>        <font color="#4169E1">for</font> (int p = 0; p &lt; len; ++p) {
+<a name="line1205">1205: </a>          int global;
+
+<a name="line1207">1207: </a>          EG_localToGlobal(tessArray[b], fID, p + 1, &amp;global);
+
+<a name="line1209">1209: </a>          // Determine the total number of points in the tessellation //
+<a name="line1210">1210: </a>          bodyNumPoints = <a href="../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(bodyNumPoints, global);
+<a name="line1211">1211: </a>        }
+<a name="line1212">1212: </a>      }
+<a name="line1213">1213: </a>      EG_free(fobjs);
+
+<a name="line1215">1215: </a>      totalNumPoints += bodyNumPoints;
+<a name="line1216">1216: </a>      totalNumTris += bodyNumTris;
+<a name="line1217">1217: </a>    }
+<a name="line1218">1218: </a>    //}  - Original End of (rank == 0)
+
+<a name="line1220">1220: </a>    dim        = 2;
+<a name="line1221">1221: </a>    cdim       = 3;
+<a name="line1222">1222: </a>    numCorners = 3;
+<a name="line1223">1223: </a>    //<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> counter = 0;
+
+<a name="line1225">1225: </a>    <font color="#B22222">/* NEED TO DEFINE MATRICES/VECTORS TO STORE GEOM REFERENCE DATA   */</font>
+<a name="line1226">1226: </a>    <font color="#B22222">/* Fill in below and use to define DMLabels after DMPlex creation */</font>
+<a name="line1227">1227: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc2.html">PetscMalloc2</a>(totalNumPoints * cdim, &amp;coords, totalNumTris * numCorners, &amp;cells);
+
+<a name="line1229">1229: </a>    <font color="#4169E1">for</font> (b = 0; b &lt; nbodies; ++b) {
+<a name="line1230">1230: </a>      ego           body = bodies[b];
+<a name="line1231">1231: </a>      int           Nf;
+<a name="line1232">1232: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      pointIndexStart;
+<a name="line1233">1233: </a>      PetscHashIter PISiter;
+<a name="line1234">1234: </a>      <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     PISfound;
+
+<a name="line1236">1236: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(pointIndexStartMap, b, &amp;PISiter, &amp;PISfound);
+<a name="line1238">1238: </a>      <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(pointIndexStartMap, b, &amp;pointIndexStart);
+
+<a name="line1240">1240: </a>      EG_getBodyTopos(body, NULL, FACE, &amp;Nf, &amp;fobjs);
+
+<a name="line1242">1242: </a>      <font color="#4169E1">for</font> (int f = 0; f &lt; Nf; ++f) {
+<a name="line1243">1243: </a>        <font color="#B22222">/* Get Face Object */</font>
+<a name="line1244">1244: </a>        ego           face = fobjs[f];
+<a name="line1245">1245: </a>        int           len, fID, ntris;
+<a name="line1246">1246: </a>        const int    *ptype, *pindex, *ptris, *ptric;
+<a name="line1247">1247: </a>        const double *pxyz, *puv;
+
+<a name="line1249">1249: </a>        <font color="#B22222">/* Get Face ID */</font>
+<a name="line1250">1250: </a>        fID = EG_indexBodyTopo(body, face);
+
+<a name="line1252">1252: </a>        <font color="#B22222">/* Checkout the Surface Tessellation */</font>
+<a name="line1253">1253: </a>        EG_getTessFace(tessArray[b], fID, &amp;len, &amp;pxyz, &amp;puv, &amp;ptype, &amp;pindex, &amp;ntris, &amp;ptris, &amp;ptric);
+
+<a name="line1255">1255: </a>        <font color="#B22222">/* Check out the point index and coordinate */</font>
+<a name="line1256">1256: </a>        <font color="#4169E1">for</font> (int p = 0; p &lt; len; ++p) {
+<a name="line1257">1257: </a>          int           global;
+<a name="line1258">1258: </a>          PetscHashIter PTLiter, PILiter, PBLiter;
+<a name="line1259">1259: </a>          <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     PTLfound, PILfound, PBLfound;
+
+<a name="line1261">1261: </a>          EG_localToGlobal(tessArray[b], fID, p + 1, &amp;global);
+
+<a name="line1263">1263: </a>          <font color="#B22222">/* Set the coordinates array for DAG */</font>
+<a name="line1264">1264: </a>          coords[((global - 1 + pointIndexStart) * 3) + 0] = pxyz[(p * 3) + 0];
+<a name="line1265">1265: </a>          coords[((global - 1 + pointIndexStart) * 3) + 1] = pxyz[(p * 3) + 1];
+<a name="line1266">1266: </a>          coords[((global - 1 + pointIndexStart) * 3) + 2] = pxyz[(p * 3) + 2];
+
+<a name="line1268">1268: </a>          <font color="#B22222">/* Store Geometry Label Information for <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> assignment later */</font>
+<a name="line1269">1269: </a>          <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(pTypeLabelMap, global - 1 + pointIndexStart, &amp;PTLiter, &amp;PTLfound);
+<a name="line1270">1270: </a>          <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(pIndexLabelMap, global - 1 + pointIndexStart, &amp;PILiter, &amp;PILfound);
+<a name="line1271">1271: </a>          <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(pBodyIndexLabelMap, global - 1 + pointIndexStart, &amp;PBLiter, &amp;PBLfound);
+
+<a name="line1273">1273: </a>          <font color="#4169E1">if</font> (!PTLfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(pTypeLabelMap, global - 1 + pointIndexStart, ptype[p]);
+<a name="line1274">1274: </a>          <font color="#4169E1">if</font> (!PILfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(pIndexLabelMap, global - 1 + pointIndexStart, pindex[p]);
+<a name="line1275">1275: </a>          <font color="#4169E1">if</font> (!PBLfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(pBodyIndexLabelMap, global - 1 + pointIndexStart, b);
+
+<a name="line1277">1277: </a>          <font color="#4169E1">if</font> (ptype[p] &lt; 0) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(pIndexLabelMap, global - 1 + pointIndexStart, fID);
+<a name="line1278">1278: </a>        }
+
+<a name="line1280">1280: </a>        <font color="#4169E1">for</font> (int t = 0; t &lt; (int)ntris; ++t) {
+<a name="line1281">1281: </a>          int           global, globalA, globalB;
+<a name="line1282">1282: </a>          PetscHashIter TFLiter, TBLiter;
+<a name="line1283">1283: </a>          <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     TFLfound, TBLfound;
+
+<a name="line1285">1285: </a>          EG_localToGlobal(tessArray[b], fID, ptris[(t * 3) + 0], &amp;global);
+<a name="line1286">1286: </a>          cells[(counter * 3) + 0] = global - 1 + pointIndexStart;
+
+<a name="line1288">1288: </a>          EG_localToGlobal(tessArray[b], fID, ptris[(t * 3) + 1], &amp;globalA);
+<a name="line1289">1289: </a>          cells[(counter * 3) + 1] = globalA - 1 + pointIndexStart;
+
+<a name="line1291">1291: </a>          EG_localToGlobal(tessArray[b], fID, ptris[(t * 3) + 2], &amp;globalB);
+<a name="line1292">1292: </a>          cells[(counter * 3) + 2] = globalB - 1 + pointIndexStart;
+
+<a name="line1294">1294: </a>          <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(triFaceIDLabelMap, counter, &amp;TFLiter, &amp;TFLfound);
+<a name="line1295">1295: </a>          <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(triBodyIDLabelMap, counter, &amp;TBLiter, &amp;TBLfound);
+
+<a name="line1297">1297: </a>          <font color="#4169E1">if</font> (!TFLfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(triFaceIDLabelMap, counter, fID);
+<a name="line1298">1298: </a>          <font color="#4169E1">if</font> (!TBLfound) <a href="../../../../docs/manualpages/PetscH/PetscHMapISet.html">PetscHMapISet</a>(triBodyIDLabelMap, counter, b);
+
+<a name="line1300">1300: </a>          counter += 1;
+<a name="line1301">1301: </a>        }
+<a name="line1302">1302: </a>      }
+<a name="line1303">1303: </a>      EG_free(fobjs);
+<a name="line1304">1304: </a>    }
+<a name="line1305">1305: </a>  }
+
+<a name="line1307">1307: </a>  //Build DMPlex
+<a name="line1308">1308: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexCreateFromCellListPetsc.html">DMPlexCreateFromCellListPetsc</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, dim, totalNumTris, totalNumPoints, numCorners, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, cells, cdim, coords, &amp;dm);
+<a name="line1309">1309: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree2.html">PetscFree2</a>(coords, cells);
+
+<a name="line1311">1311: </a>  // Embed EGADS model in <a href="../../../../docs/manualpages/DM/DM.html">DM</a>
+<a name="line1312">1312: </a>  {
+<a name="line1313">1313: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a> modelObj, contextObj;
+
+<a name="line1315">1315: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerCreate.html">PetscContainerCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;modelObj);
+<a name="line1316">1316: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerSetPointer.html">PetscContainerSetPointer</a>(modelObj, model);
+<a name="line1317">1317: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectCompose.html">PetscObjectCompose</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm, <font color="#666666">"EGADS Model"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)modelObj);
+<a name="line1318">1318: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerDestroy.html">PetscContainerDestroy</a>(&amp;modelObj);
+
+<a name="line1320">1320: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerCreate.html">PetscContainerCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;contextObj);
+<a name="line1321">1321: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerSetPointer.html">PetscContainerSetPointer</a>(contextObj, context);
+<a name="line1322">1322: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerSetUserDestroy.html">PetscContainerSetUserDestroy</a>(contextObj, DMPlexEGADSDestroy_Private);
+<a name="line1323">1323: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectCompose.html">PetscObjectCompose</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm, <font color="#666666">"EGADS Context"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)contextObj);
+<a name="line1324">1324: </a>    <a href="../../../../docs/manualpages/Sys/PetscContainerDestroy.html">PetscContainerDestroy</a>(&amp;contextObj);
+<a name="line1325">1325: </a>  }
+
+<a name="line1327">1327: </a>  // Label Points
+<a name="line1328">1328: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLabel.html">DMCreateLabel</a>(dm, <font color="#666666">"EGADS Body ID"</font>);
+<a name="line1329">1329: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Body ID"</font>, &amp;bodyLabel);
+<a name="line1330">1330: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLabel.html">DMCreateLabel</a>(dm, <font color="#666666">"EGADS Face ID"</font>);
+<a name="line1331">1331: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Face ID"</font>, &amp;faceLabel);
+<a name="line1332">1332: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLabel.html">DMCreateLabel</a>(dm, <font color="#666666">"EGADS Edge ID"</font>);
+<a name="line1333">1333: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Edge ID"</font>, &amp;edgeLabel);
+<a name="line1334">1334: </a>  <a href="../../../../docs/manualpages/DM/DMCreateLabel.html">DMCreateLabel</a>(dm, <font color="#666666">"EGADS Vertex ID"</font>);
+<a name="line1335">1335: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Vertex ID"</font>, &amp;vertexLabel);
+
+<a name="line1337">1337: </a>  <font color="#B22222">/* Get Number of DAG Nodes at each level */</font>
+<a name="line1338">1338: </a>  int fStart, fEnd, eStart, eEnd, nStart, nEnd;
+
+<a name="line1340">1340: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetHeightStratum.html">DMPlexGetHeightStratum</a>(dm, 0, &amp;fStart, &amp;fEnd);
+<a name="line1341">1341: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetHeightStratum.html">DMPlexGetHeightStratum</a>(dm, 1, &amp;eStart, &amp;eEnd);
+<a name="line1342">1342: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetHeightStratum.html">DMPlexGetHeightStratum</a>(dm, 2, &amp;nStart, &amp;nEnd);
+
+<a name="line1344">1344: </a>  <font color="#B22222">/* Set DMLabels for NODES */</font>
+<a name="line1345">1345: </a>  <font color="#4169E1">for</font> (int n = nStart; n &lt; nEnd; ++n) {
+<a name="line1346">1346: </a>    int           pTypeVal, pIndexVal, pBodyVal;
+<a name="line1347">1347: </a>    PetscHashIter PTLiter, PILiter, PBLiter;
+<a name="line1348">1348: </a>    <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     PTLfound, PILfound, PBLfound;
+
+<a name="line1350">1350: </a>    //Converted to Hash Tables
+<a name="line1351">1351: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(pTypeLabelMap, n - nStart, &amp;PTLiter, &amp;PTLfound);
+<a name="line1353">1353: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(pTypeLabelMap, n - nStart, &amp;pTypeVal);
+
+<a name="line1355">1355: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(pIndexLabelMap, n - nStart, &amp;PILiter, &amp;PILfound);
+<a name="line1357">1357: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(pIndexLabelMap, n - nStart, &amp;pIndexVal);
+
+<a name="line1359">1359: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(pBodyIndexLabelMap, n - nStart, &amp;PBLiter, &amp;PBLfound);
+<a name="line1361">1361: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(pBodyIndexLabelMap, n - nStart, &amp;pBodyVal);
+
+<a name="line1363">1363: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(bodyLabel, n, pBodyVal);
+<a name="line1364">1364: </a>    <font color="#4169E1">if</font> (pTypeVal == 0) <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(vertexLabel, n, pIndexVal);
+<a name="line1365">1365: </a>    <font color="#4169E1">if</font> (pTypeVal &gt; 0) <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(edgeLabel, n, pIndexVal);
+<a name="line1366">1366: </a>    <font color="#4169E1">if</font> (pTypeVal &lt; 0) <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(faceLabel, n, pIndexVal);
+<a name="line1367">1367: </a>  }
+
+<a name="line1369">1369: </a>  <font color="#B22222">/* Set DMLabels for Edges - Based on the DMLabels of the EDGE's NODES */</font>
+<a name="line1370">1370: </a>  <font color="#4169E1">for</font> (int e = eStart; e &lt; eEnd; ++e) {
+<a name="line1371">1371: </a>    int bodyID_0, vertexID_0, vertexID_1, edgeID_0, edgeID_1, faceID_0, faceID_1;
+
+<a name="line1373">1373: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetCone.html">DMPlexGetCone</a>(dm, e, &amp;cone);
+<a name="line1374">1374: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(bodyLabel, cone[0], &amp;bodyID_0); // Do I need to check the other end?
+<a name="line1375">1375: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(vertexLabel, cone[0], &amp;vertexID_0);
+<a name="line1376">1376: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(vertexLabel, cone[1], &amp;vertexID_1);
+<a name="line1377">1377: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(edgeLabel, cone[0], &amp;edgeID_0);
+<a name="line1378">1378: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(edgeLabel, cone[1], &amp;edgeID_1);
+<a name="line1379">1379: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(faceLabel, cone[0], &amp;faceID_0);
+<a name="line1380">1380: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(faceLabel, cone[1], &amp;faceID_1);
+
+<a name="line1382">1382: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(bodyLabel, e, bodyID_0);
+
+<a name="line1384">1384: </a>    <font color="#4169E1">if</font> (edgeID_0 == edgeID_1) <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(edgeLabel, e, edgeID_0);
+<a name="line1385">1385: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (vertexID_0 &gt; 0 &amp;&amp; edgeID_1 &gt; 0) <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(edgeLabel, e, edgeID_1);
+<a name="line1386">1386: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (vertexID_1 &gt; 0 &amp;&amp; edgeID_0 &gt; 0) <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(edgeLabel, e, edgeID_0);
+<a name="line1387">1387: </a>    <font color="#4169E1">else</font> { <font color="#B22222">/* Do Nothing */</font> }
+<a name="line1388">1388: </a>  }
+
+<a name="line1390">1390: </a>  <font color="#B22222">/* Set DMLabels for Cells */</font>
+<a name="line1391">1391: </a>  <font color="#4169E1">for</font> (int f = fStart; f &lt; fEnd; ++f) {
+<a name="line1392">1392: </a>    int           edgeID_0;
+<a name="line1393">1393: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      triBodyVal, triFaceVal;
+<a name="line1394">1394: </a>    PetscHashIter TFLiter, TBLiter;
+<a name="line1395">1395: </a>    <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     TFLfound, TBLfound;
+
+<a name="line1397">1397: </a>    // Convert to Hash Table
+<a name="line1398">1398: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(triFaceIDLabelMap, f - fStart, &amp;TFLiter, &amp;TFLfound);
+<a name="line1400">1400: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(triFaceIDLabelMap, f - fStart, &amp;triFaceVal);
+
+<a name="line1402">1402: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIFind.html">PetscHMapIFind</a>(triBodyIDLabelMap, f - fStart, &amp;TBLiter, &amp;TBLfound);
+<a name="line1404">1404: </a>    <a href="../../../../docs/manualpages/PetscH/PetscHMapIGet.html">PetscHMapIGet</a>(triBodyIDLabelMap, f - fStart, &amp;triBodyVal);
+
+<a name="line1406">1406: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(bodyLabel, f, triBodyVal);
+<a name="line1407">1407: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(faceLabel, f, triFaceVal);
+
+<a name="line1409">1409: </a>    <font color="#B22222">/* Finish Labeling previously unlabeled DMPlex Edges - Assumes Triangular Cell (3 Edges Max) */</font>
+<a name="line1410">1410: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetCone.html">DMPlexGetCone</a>(dm, f, &amp;cone);
+
+<a name="line1412">1412: </a>    <font color="#4169E1">for</font> (int jj = 0; jj &lt; 3; ++jj) {
+<a name="line1413">1413: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(edgeLabel, cone[jj], &amp;edgeID_0);
+
+<a name="line1415">1415: </a>      <font color="#4169E1">if</font> (edgeID_0 &lt; 0) {
+<a name="line1416">1416: </a>        <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(bodyLabel, cone[jj], triBodyVal);
+<a name="line1417">1417: </a>        <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(faceLabel, cone[jj], triFaceVal);
+<a name="line1418">1418: </a>      }
+<a name="line1419">1419: </a>    }
+<a name="line1420">1420: </a>  }
+
+<a name="line1422">1422: </a>  *newdm = dm;
+<a name="line1423">1423: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1424">1424: </a>}
+<a name="line1425">1425: </a><font color="#A020F0">#endif</font>
+
+<a name="line1427">1427: </a><font color="#B22222">/*@</font>
+<a name="line1428">1428: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMPlex/DMPlexInflateToGeomModel.html">DMPlexInflateToGeomModel</a> - Snaps the vertex coordinates of a `<a href="../../../../docs/manualpages/DMPlex/DMPLEX.html">DMPLEX</a>` object representing the mesh to its geometry if some vertices depart from the model. This usually happens with non-conforming refinement.</font>
+
+<a name="line1430">1430: </a><font color="#B22222">  Collective on dm</font>
+
+<a name="line1432">1432: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line1433">1433: </a><font color="#B22222">. dm - The uninflated `<a href="../../../../docs/manualpages/DM/DM.html">DM</a>` object representing the mesh</font>
+
+<a name="line1435">1435: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line1436">1436: </a><font color="#B22222">. dm - The inflated `<a href="../../../../docs/manualpages/DM/DM.html">DM</a>` object representing the mesh</font>
+
+<a name="line1438">1438: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line1440">1440: </a><font color="#B22222">.seealso: [](chapter_unstructured), `<a href="../../../../docs/manualpages/DM/DM.html">DM</a>`, `<a href="../../../../docs/manualpages/DMPlex/DMPLEX.html">DMPLEX</a>`, `<a href="../../../../docs/manualpages/DM/DMCreate.html">DMCreate</a>()`, `DMPlexCreateEGADS()`</font>
+<a name="line1441">1441: </a><font color="#B22222">@*/</font>
+<a name="line1442">1442: </a><strong><font color="#4169E1"><a name="DMPlexInflateToGeomModel"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMPlex/DMPlexInflateToGeomModel.html">DMPlexInflateToGeomModel</a>(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm)</font></strong>
+<a name="line1443">1443: </a>{
+<a name="line1444">1444: </a><font color="#A020F0">#if defined(PETSC_HAVE_EGADS)</font>
+<a name="line1445">1445: </a>  <font color="#B22222">/* EGADS Variables */</font>
+<a name="line1446">1446: </a>  ego    model, geom, body, face, edge;
+<a name="line1447">1447: </a>  ego   *bodies;
+<a name="line1448">1448: </a>  int    Nb, oclass, mtype, *senses;
+<a name="line1449">1449: </a>  double result[3];
+<a name="line1450">1450: </a>  <font color="#B22222">/* PETSc Variables */</font>
+<a name="line1451">1451: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>             cdm;
+<a name="line1452">1452: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainer.html">PetscContainer</a> modelObj;
+<a name="line1453">1453: </a>  <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>        bodyLabel, faceLabel, edgeLabel, vertexLabel;
+<a name="line1454">1454: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>            coordinates;
+<a name="line1455">1455: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   *coords;
+<a name="line1456">1456: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       bodyID, faceID, edgeID, vertexID;
+<a name="line1457">1457: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       cdim, d, vStart, vEnd, v;
+<a name="line1458">1458: </a><font color="#A020F0">#endif</font>
+
+<a name="line1460">1460: </a><font color="#A020F0">#if defined(PETSC_HAVE_EGADS)</font>
+<a name="line1461">1461: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm, <font color="#666666">"EGADS Model"</font>, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> *)&amp;modelObj);
+<a name="line1462">1462: </a>  <font color="#4169E1">if</font> (!modelObj) <font color="#4169E1">return</font> 0;
+<a name="line1463">1463: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinateDim.html">DMGetCoordinateDim</a>(dm, &amp;cdim);
+<a name="line1464">1464: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinateDM.html">DMGetCoordinateDM</a>(dm, &amp;cdm);
+<a name="line1465">1465: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinatesLocal.html">DMGetCoordinatesLocal</a>(dm, &amp;coordinates);
+<a name="line1466">1466: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Body ID"</font>, &amp;bodyLabel);
+<a name="line1467">1467: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Face ID"</font>, &amp;faceLabel);
+<a name="line1468">1468: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Edge ID"</font>, &amp;edgeLabel);
+<a name="line1469">1469: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"EGADS Vertex ID"</font>, &amp;vertexLabel);
+
+<a name="line1471">1471: </a>  <a href="../../../../docs/manualpages/Sys/PetscContainerGetPointer.html">PetscContainerGetPointer</a>(modelObj, (void **)&amp;model);
+<a name="line1472">1472: </a>  EG_getTopology(model, &amp;geom, &amp;oclass, &amp;mtype, NULL, &amp;Nb, &amp;bodies, &amp;senses);
+
+<a name="line1474">1474: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetDepthStratum.html">DMPlexGetDepthStratum</a>(dm, 0, &amp;vStart, &amp;vEnd);
+<a name="line1475">1475: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArrayWrite.html">VecGetArrayWrite</a>(coordinates, &amp;coords);
+<a name="line1476">1476: </a>  <font color="#4169E1">for</font> (v = vStart; v &lt; vEnd; ++v) {
+<a name="line1477">1477: </a>    <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *vcoords;
+
+<a name="line1479">1479: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(bodyLabel, v, &amp;bodyID);
+<a name="line1480">1480: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(faceLabel, v, &amp;faceID);
+<a name="line1481">1481: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(edgeLabel, v, &amp;edgeID);
+<a name="line1482">1482: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(vertexLabel, v, &amp;vertexID);
+
+<a name="line1485">1485: </a>    body = bodies[bodyID];
+
+<a name="line1487">1487: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexPointLocalRef.html">DMPlexPointLocalRef</a>(cdm, v, coords, (void *)&amp;vcoords);
+<a name="line1488">1488: </a>    <font color="#4169E1">if</font> (edgeID &gt; 0) {
+<a name="line1489">1489: </a>      <font color="#B22222">/* Snap to EDGE at nearest location */</font>
+<a name="line1490">1490: </a>      double params[1];
+<a name="line1491">1491: </a>      EG_objectBodyTopo(body, EDGE, edgeID, &amp;edge);
+<a name="line1492">1492: </a>      EG_invEvaluate(edge, vcoords, params, result); // Get (x,y,z) of nearest point on EDGE
+<a name="line1493">1493: </a>      <font color="#4169E1">for</font> (d = 0; d &lt; cdim; ++d) vcoords[d] = result[d];
+<a name="line1494">1494: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (faceID &gt; 0) {
+<a name="line1495">1495: </a>      <font color="#B22222">/* Snap to FACE at nearest location */</font>
+<a name="line1496">1496: </a>      double params[2];
+<a name="line1497">1497: </a>      EG_objectBodyTopo(body, FACE, faceID, &amp;face);
+<a name="line1498">1498: </a>      EG_invEvaluate(face, vcoords, params, result); // Get (x,y,z) of nearest point on FACE
+<a name="line1499">1499: </a>      <font color="#4169E1">for</font> (d = 0; d &lt; cdim; ++d) vcoords[d] = result[d];
+<a name="line1500">1500: </a>    }
+<a name="line1501">1501: </a>  }
+<a name="line1502">1502: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArrayWrite.html">VecRestoreArrayWrite</a>(coordinates, &amp;coords);
+<a name="line1503">1503: </a>  <font color="#B22222">/* Clear out global coordinates */</font>
+<a name="line1504">1504: </a>  <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;dm-&gt;coordinates[0].x);
+<a name="line1505">1505: </a><font color="#A020F0">#endif</font>
+<a name="line1506">1506: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1507">1507: </a>}
+
+<a name="line1509">1509: </a><font color="#B22222">/*@C</font>
+<a name="line1510">1510: </a><font color="#B22222">  <a href="../../../../docs/manualpages/DMPlex/DMPlexCreateEGADSFromFile.html">DMPlexCreateEGADSFromFile</a> - Create a `<a href="../../../../docs/manualpages/DMPlex/DMPLEX.html">DMPLEX</a>` mesh from an EGADS, IGES, or STEP file.</font>
+
+<a name="line1512">1512: </a><font color="#B22222">  Collective</font>
+
+<a name="line1514">1514: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line1515">1515: </a><font color="#B22222">+ comm     - The MPI communicator</font>
+<a name="line1516">1516: </a><font color="#B22222">- filename - The name of the EGADS, IGES, or STEP file</font>
+
+<a name="line1518">1518: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line1519">1519: </a><font color="#B22222">. dm       - The `<a href="../../../../docs/manualpages/DM/DM.html">DM</a>` object representing the mesh</font>
+
+<a name="line1521">1521: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line1523">1523: </a><font color="#B22222">.seealso: [](chapter_unstructured), `<a href="../../../../docs/manualpages/DM/DM.html">DM</a>`, `<a href="../../../../docs/manualpages/DMPlex/DMPLEX.html">DMPLEX</a>`, `<a href="../../../../docs/manualpages/DM/DMCreate.html">DMCreate</a>()`, `DMPlexCreateEGADS()`, `<a href="../../../../docs/manualpages/DMPlex/DMPlexCreateEGADSLiteFromFile.html">DMPlexCreateEGADSLiteFromFile</a>()`</font>
+<a name="line1524">1524: </a><font color="#B22222">@*/</font>
+<a name="line1525">1525: </a><strong><font color="#4169E1"><a name="DMPlexCreateEGADSFromFile"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../docs/manualpages/DMPlex/DMPlexCreateEGADSFromFile.html">DMPlexCreateEGADSFromFile</a>(<a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, const char filename[], <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *dm)</font></strong>
+<a name="line1526">1526: </a>{
+<a name="line1527">1527: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+<a name="line1528">1528: </a><font color="#A020F0">#if defined(PETSC_HAVE_EGADS)</font>
+<a name="line1529">1529: </a>  ego context = NULL, model = NULL;
+<a name="line1530">1530: </a><font color="#A020F0">#endif</font>
+<a name="line1531">1531: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> printModel = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, tessModel = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, newModel = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line1534">1534: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, <font color="#666666">"-dm_plex_egads_print_model"</font>, &amp;printModel, NULL);
+<a name="line1535">1535: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, <font color="#666666">"-dm_plex_egads_tess_model"</font>, &amp;tessModel, NULL);
+<a name="line1536">1536: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, <font color="#666666">"-dm_plex_egads_new_model"</font>, &amp;newModel, NULL);
+<a name="line1537">1537: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line1538">1538: </a><font color="#A020F0">#if defined(PETSC_HAVE_EGADS)</font>
+<a name="line1539">1539: </a>  <font color="#4169E1">if</font> (rank == 0) {
+<a name="line1540">1540: </a>    EG_open(&amp;context);
+<a name="line1541">1541: </a>    EG_loadModel(context, 0, filename, &amp;model);
+<a name="line1542">1542: </a>    <font color="#4169E1">if</font> (printModel) DMPlexEGADSPrintModel_Internal(model);
+<a name="line1543">1543: </a>  }
+<a name="line1544">1544: </a>  <font color="#4169E1">if</font> (tessModel) DMPlexCreateEGADS_Tess_Internal(comm, context, model, dm);
+<a name="line1545">1545: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (newModel) DMPlexCreateEGADS(comm, context, model, dm);
+<a name="line1546">1546: </a>  <font color="#4169E1">else</font> DMPlexCreateEGADS_Internal(comm, context, model, dm);
+<a name="line1547">1547: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1548">1548: </a><font color="#A020F0">#else</font>
+<a name="line1549">1549: </a>  <a href="../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(comm, PETSC_ERR_SUP, <font color="#666666">"This method requires EGADS support. Reconfigure using --download-egads"</font>);
+<a name="line1550">1550: </a><font color="#A020F0">#endif</font>
+<a name="line1551">1551: </a>}
+</pre>
+</body>
+
+</html>

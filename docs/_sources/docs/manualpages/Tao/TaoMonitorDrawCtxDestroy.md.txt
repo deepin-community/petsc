@@ -1,0 +1,35 @@
+# TaoMonitorDrawCtxDestroy
+Destroys the monitor context for `TaoMonitorDrawSolution()` 
+## Synopsis
+```
+#include "petsctao.h" 
+PetscErrorCode TaoMonitorDrawCtxDestroy(TaoMonitorDrawCtx *ictx)
+```
+Collective
+
+
+## Input Parameters
+
+- ***ctx -*** the monitor context
+
+
+
+
+
+## See Also
+ `TaoMonitorSet()`, `TaoMonitorDefault()`, `VecView()`, `TaoMonitorDrawSolution()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/interface/taosolver.c.html#TaoMonitorDrawCtxDestroy">src/tao/interface/taosolver.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/tao/interface/taosolver.c)
+
+
+[Index of all Tao routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

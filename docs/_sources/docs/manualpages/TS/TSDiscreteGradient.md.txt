@@ -1,0 +1,27 @@
+# TSDiscreteGradient
+The Discrete Gradient integrator is a timestepper for Hamiltonian systems designed to conserve the first integral (energy), but also has the property for some systems of monotonicity in a functional. 
+## Synopsis
+```
+PETSC_EXTERN PetscErrorCode TSDiscGradSetFormulation(TS, PetscErrorCode (*)(TS, PetscReal, Vec, Mat, void *), PetscErrorCode (*)(TS, PetscReal, Vec, PetscScalar *, void *), PetscErrorCode (*)(TS, PetscReal, Vec, Vec, void *), void *);
+PETSC_EXTERN PetscErrorCode TSDiscGradIsGonzalez(TS, PetscBool *);
+PETSC_EXTERN PetscErrorCode TSDiscGradUseGonzalez(TS, PetscBool);
+
+```
+
+
+.seealso: `TS`, `TSDISCGRAD`, `TSDiscGradSetFormulation()`, `TSDiscGradGetFormulation`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscts.h.html#TSDiscreteGradient">include/petscts.h</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscts.h)
+
+
+[Index of all TS routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

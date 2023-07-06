@@ -1,0 +1,822 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/vec/is/sf/impls/basic/nvshmem/sfnvshmem.cu">Actual source code: sfnvshmem.cu</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:27+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../../../include/petsc/private/cudavecimpl.h.html">&lt;petsc/private/cudavecimpl.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../sfpack.h.html">&lt;../src/vec/is/sf/impls/basic/sfpack.h&gt;</A>
+<a name="line3">  3: </a><font color="#A020F0">#include &lt;mpi.h&gt;</font>
+<a name="line4">  4: </a><font color="#A020F0">#include &lt;nvshmem.h&gt;</font>
+<a name="line5">  5: </a><font color="#A020F0">#include &lt;nvshmemx.h&gt;</font>
+
+<a name="line7">  7: </a><strong><font color="#4169E1"><a name="PetscNvshmemInitializeCheck"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscNvshmemInitializeCheck(void)</font></strong>
+<a name="line8">  8: </a>{
+<a name="line9">  9: </a>  <font color="#4169E1">if</font> (!PetscNvshmemInitialized) { <font color="#B22222">/* Note NVSHMEM does not provide a routine to check whether it is initialized */</font>
+<a name="line10"> 10: </a>    nvshmemx_init_attr_t attr;
+<a name="line11"> 11: </a>    attr.mpi_comm = &amp;<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>;
+<a name="line12"> 12: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscDeviceInitialize.html">PetscDeviceInitialize</a>(<a href="../../../../../../docs/manualpages/Sys/PetscDeviceType.html">PETSC_DEVICE_CUDA</a>);
+<a name="line13"> 13: </a>    nvshmemx_init_attr(NVSHMEMX_INIT_WITH_MPI_COMM, &amp;attr);
+<a name="line14"> 14: </a>    PetscNvshmemInitialized = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line15"> 15: </a>    PetscBeganNvshmem       = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line16"> 16: </a>  }
+<a name="line17"> 17: </a>  <font color="#4169E1">return</font> 0;
+<a name="line18"> 18: </a>}
+
+<a name="line20"> 20: </a><strong><font color="#4169E1"><a name="PetscNvshmemMalloc"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscNvshmemMalloc(size_t size, void **ptr)</font></strong>
+<a name="line21"> 21: </a>{
+<a name="line22"> 22: </a>  PetscNvshmemInitializeCheck();
+<a name="line23"> 23: </a>  *ptr = nvshmem_malloc(size);
+<a name="line25"> 25: </a>  <font color="#4169E1">return</font> 0;
+<a name="line26"> 26: </a>}
+
+<a name="line28"> 28: </a><strong><font color="#4169E1"><a name="PetscNvshmemCalloc"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscNvshmemCalloc(size_t size, void **ptr)</font></strong>
+<a name="line29"> 29: </a>{
+<a name="line30"> 30: </a>  PetscNvshmemInitializeCheck();
+<a name="line31"> 31: </a>  *ptr = nvshmem_calloc(size, 1);
+<a name="line33"> 33: </a>  <font color="#4169E1">return</font> 0;
+<a name="line34"> 34: </a>}
+
+<a name="line36"> 36: </a><strong><font color="#4169E1"><a name="PetscNvshmemFree_Private"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscNvshmemFree_Private(void *ptr)</font></strong>
+<a name="line37"> 37: </a>{
+<a name="line38"> 38: </a>  nvshmem_free(ptr);
+<a name="line39"> 39: </a>  <font color="#4169E1">return</font> 0;
+<a name="line40"> 40: </a>}
+
+<a name="line42"> 42: </a><strong><font color="#4169E1"><a name="PetscNvshmemFinalize"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscNvshmemFinalize(void)</font></strong>
+<a name="line43"> 43: </a>{
+<a name="line44"> 44: </a>  nvshmem_finalize();
+<a name="line45"> 45: </a>  <font color="#4169E1">return</font> 0;
+<a name="line46"> 46: </a>}
+
+<a name="line48"> 48: </a><font color="#B22222">/* Free nvshmem related fields in the SF */</font>
+<a name="line49"> 49: </a><strong><font color="#4169E1"><a name="PetscSFReset_Basic_NVSHMEM"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSFReset_Basic_NVSHMEM(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> sf)</font></strong>
+<a name="line50"> 50: </a>{
+<a name="line51"> 51: </a>  PetscSF_Basic *bas = (PetscSF_Basic *)sf-&gt;data;
+
+<a name="line53"> 53: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree2.html">PetscFree2</a>(bas-&gt;leafsigdisp, bas-&gt;leafbufdisp);
+<a name="line54"> 54: </a>  PetscSFFree(sf, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_CUDA</a>, bas-&gt;leafbufdisp_d);
+<a name="line55"> 55: </a>  PetscSFFree(sf, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_CUDA</a>, bas-&gt;leafsigdisp_d);
+<a name="line56"> 56: </a>  PetscSFFree(sf, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_CUDA</a>, bas-&gt;iranks_d);
+<a name="line57"> 57: </a>  PetscSFFree(sf, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_CUDA</a>, bas-&gt;ioffset_d);
+
+<a name="line59"> 59: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree2.html">PetscFree2</a>(sf-&gt;rootsigdisp, sf-&gt;rootbufdisp);
+<a name="line60"> 60: </a>  PetscSFFree(sf, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_CUDA</a>, sf-&gt;rootbufdisp_d);
+<a name="line61"> 61: </a>  PetscSFFree(sf, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_CUDA</a>, sf-&gt;rootsigdisp_d);
+<a name="line62"> 62: </a>  PetscSFFree(sf, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_CUDA</a>, sf-&gt;ranks_d);
+<a name="line63"> 63: </a>  PetscSFFree(sf, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_CUDA</a>, sf-&gt;roffset_d);
+<a name="line64"> 64: </a>  <font color="#4169E1">return</font> 0;
+<a name="line65"> 65: </a>}
+
+<a name="line67"> 67: </a><font color="#B22222">/* Set up NVSHMEM related fields for an SF of type SFBASIC (only after PetscSFSetup_Basic() already set up dependant fields */</font>
+<a name="line68"> 68: </a><strong><font color="#4169E1"><a name="PetscSFSetUp_Basic_NVSHMEM"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSFSetUp_Basic_NVSHMEM(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> sf)</font></strong>
+<a name="line69"> 69: </a>{
+<a name="line70"> 70: </a>  cudaError_t    cerr;
+<a name="line71"> 71: </a>  PetscSF_Basic *bas = (PetscSF_Basic *)sf-&gt;data;
+<a name="line72"> 72: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       i, nRemoteRootRanks, nRemoteLeafRanks;
+<a name="line73"> 73: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>    tag;
+<a name="line74"> 74: </a>  <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>       comm;
+<a name="line75"> 75: </a>  MPI_Request   *rootreqs, *leafreqs;
+<a name="line76"> 76: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       tmp, stmp[4], rtmp[4]; <font color="#B22222">/* tmps for send/recv buffers */</font>
+
+<a name="line78"> 78: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)sf, &amp;comm);
+<a name="line79"> 79: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetNewTag.html">PetscObjectGetNewTag</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)sf, &amp;tag);
+
+<a name="line81"> 81: </a>  nRemoteRootRanks      = sf-&gt;nranks - sf-&gt;ndranks;
+<a name="line82"> 82: </a>  nRemoteLeafRanks      = bas-&gt;niranks - bas-&gt;ndiranks;
+<a name="line83"> 83: </a>  sf-&gt;nRemoteRootRanks  = nRemoteRootRanks;
+<a name="line84"> 84: </a>  bas-&gt;nRemoteLeafRanks = nRemoteLeafRanks;
+
+<a name="line86"> 86: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc2.html">PetscMalloc2</a>(nRemoteLeafRanks, &amp;rootreqs, nRemoteRootRanks, &amp;leafreqs);
+
+<a name="line88"> 88: </a>  stmp[0] = nRemoteRootRanks;
+<a name="line89"> 89: </a>  stmp[1] = sf-&gt;leafbuflen[PETSCSF_REMOTE];
+<a name="line90"> 90: </a>  stmp[2] = nRemoteLeafRanks;
+<a name="line91"> 91: </a>  stmp[3] = bas-&gt;rootbuflen[PETSCSF_REMOTE];
+
+<a name="line93"> 93: </a>  <a href="../../../../../../docs/manualpages/Sys/MPIU_Allreduce.html">MPIU_Allreduce</a>(stmp, rtmp, 4, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_MAX, comm);
+
+<a name="line95"> 95: </a>  sf-&gt;nRemoteRootRanksMax  = rtmp[0];
+<a name="line96"> 96: </a>  sf-&gt;leafbuflen_rmax      = rtmp[1];
+<a name="line97"> 97: </a>  bas-&gt;nRemoteLeafRanksMax = rtmp[2];
+<a name="line98"> 98: </a>  bas-&gt;rootbuflen_rmax     = rtmp[3];
+
+<a name="line100">100: </a>  <font color="#B22222">/* Total four rounds of MPI communications to set up the nvshmem fields */</font>
+
+<a name="line102">102: </a>  <font color="#B22222">/* Root ranks to leaf ranks: send info about rootsigdisp[] and rootbufdisp[] */</font>
+<a name="line103">103: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc2.html">PetscMalloc2</a>(nRemoteRootRanks, &amp;sf-&gt;rootsigdisp, nRemoteRootRanks, &amp;sf-&gt;rootbufdisp);
+<a name="line104">104: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nRemoteRootRanks; i++) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(&amp;sf-&gt;rootsigdisp[i], 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, sf-&gt;ranks[i + sf-&gt;ndranks], tag, comm, &amp;leafreqs[i]); <font color="#B22222">/* Leaves recv */</font>
+<a name="line105">105: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nRemoteLeafRanks; i++) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(&amp;i, 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, bas-&gt;iranks[i + bas-&gt;ndiranks], tag, comm);                             <font color="#B22222">/* Roots send. Note i changes, so we use <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>. */</font>
+<a name="line106">106: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(nRemoteRootRanks, leafreqs, MPI_STATUSES_IGNORE);
+
+<a name="line108">108: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nRemoteRootRanks; i++) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(&amp;sf-&gt;rootbufdisp[i], 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, sf-&gt;ranks[i + sf-&gt;ndranks], tag, comm, &amp;leafreqs[i]); <font color="#B22222">/* Leaves recv */</font>
+<a name="line109">109: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nRemoteLeafRanks; i++) {
+<a name="line110">110: </a>    tmp = bas-&gt;ioffset[i + bas-&gt;ndiranks] - bas-&gt;ioffset[bas-&gt;ndiranks];
+<a name="line111">111: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(&amp;tmp, 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, bas-&gt;iranks[i + bas-&gt;ndiranks], tag, comm); <font color="#B22222">/* Roots send. Note tmp changes, so we use <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>. */</font>
+<a name="line112">112: </a>  }
+<a name="line113">113: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(nRemoteRootRanks, leafreqs, MPI_STATUSES_IGNORE);
+
+<a name="line115">115: </a>  cudaMalloc((void **)&amp;sf-&gt;rootbufdisp_d, nRemoteRootRanks * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>));
+<a name="line116">116: </a>  cudaMalloc((void **)&amp;sf-&gt;rootsigdisp_d, nRemoteRootRanks * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>));
+<a name="line117">117: </a>  cudaMalloc((void **)&amp;sf-&gt;ranks_d, nRemoteRootRanks * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>));
+<a name="line118">118: </a>  cudaMalloc((void **)&amp;sf-&gt;roffset_d, (nRemoteRootRanks + 1) * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>));
+
+<a name="line120">120: </a>  cudaMemcpyAsync(sf-&gt;rootbufdisp_d, sf-&gt;rootbufdisp, nRemoteRootRanks * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>), cudaMemcpyHostToDevice, PetscDefaultCudaStream);
+<a name="line121">121: </a>  cudaMemcpyAsync(sf-&gt;rootsigdisp_d, sf-&gt;rootsigdisp, nRemoteRootRanks * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>), cudaMemcpyHostToDevice, PetscDefaultCudaStream);
+<a name="line122">122: </a>  cudaMemcpyAsync(sf-&gt;ranks_d, sf-&gt;ranks + sf-&gt;ndranks, nRemoteRootRanks * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>), cudaMemcpyHostToDevice, PetscDefaultCudaStream);
+<a name="line123">123: </a>  cudaMemcpyAsync(sf-&gt;roffset_d, sf-&gt;roffset + sf-&gt;ndranks, (nRemoteRootRanks + 1) * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>), cudaMemcpyHostToDevice, PetscDefaultCudaStream);
+
+<a name="line125">125: </a>  <font color="#B22222">/* Leaf ranks to root ranks: send info about leafsigdisp[] and leafbufdisp[] */</font>
+<a name="line126">126: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc2.html">PetscMalloc2</a>(nRemoteLeafRanks, &amp;bas-&gt;leafsigdisp, nRemoteLeafRanks, &amp;bas-&gt;leafbufdisp);
+<a name="line127">127: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nRemoteLeafRanks; i++) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(&amp;bas-&gt;leafsigdisp[i], 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, bas-&gt;iranks[i + bas-&gt;ndiranks], tag, comm, &amp;rootreqs[i]);
+<a name="line128">128: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nRemoteRootRanks; i++) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(&amp;i, 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, sf-&gt;ranks[i + sf-&gt;ndranks], tag, comm);
+<a name="line129">129: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(nRemoteLeafRanks, rootreqs, MPI_STATUSES_IGNORE);
+
+<a name="line131">131: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nRemoteLeafRanks; i++) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Irecv.html#MPI_Irecv">MPI_Irecv</a>(&amp;bas-&gt;leafbufdisp[i], 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, bas-&gt;iranks[i + bas-&gt;ndiranks], tag, comm, &amp;rootreqs[i]);
+<a name="line132">132: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nRemoteRootRanks; i++) {
+<a name="line133">133: </a>    tmp = sf-&gt;roffset[i + sf-&gt;ndranks] - sf-&gt;roffset[sf-&gt;ndranks];
+<a name="line134">134: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Send.html#MPI_Send">MPI_Send</a>(&amp;tmp, 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, sf-&gt;ranks[i + sf-&gt;ndranks], tag, comm);
+<a name="line135">135: </a>  }
+<a name="line136">136: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Waitall.html#MPI_Waitall">MPI_Waitall</a>(nRemoteLeafRanks, rootreqs, MPI_STATUSES_IGNORE);
+
+<a name="line138">138: </a>  cudaMalloc((void **)&amp;bas-&gt;leafbufdisp_d, nRemoteLeafRanks * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>));
+<a name="line139">139: </a>  cudaMalloc((void **)&amp;bas-&gt;leafsigdisp_d, nRemoteLeafRanks * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>));
+<a name="line140">140: </a>  cudaMalloc((void **)&amp;bas-&gt;iranks_d, nRemoteLeafRanks * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>));
+<a name="line141">141: </a>  cudaMalloc((void **)&amp;bas-&gt;ioffset_d, (nRemoteLeafRanks + 1) * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>));
+
+<a name="line143">143: </a>  cudaMemcpyAsync(bas-&gt;leafbufdisp_d, bas-&gt;leafbufdisp, nRemoteLeafRanks * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>), cudaMemcpyHostToDevice, PetscDefaultCudaStream);
+<a name="line144">144: </a>  cudaMemcpyAsync(bas-&gt;leafsigdisp_d, bas-&gt;leafsigdisp, nRemoteLeafRanks * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>), cudaMemcpyHostToDevice, PetscDefaultCudaStream);
+<a name="line145">145: </a>  cudaMemcpyAsync(bas-&gt;iranks_d, bas-&gt;iranks + bas-&gt;ndiranks, nRemoteLeafRanks * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>), cudaMemcpyHostToDevice, PetscDefaultCudaStream);
+<a name="line146">146: </a>  cudaMemcpyAsync(bas-&gt;ioffset_d, bas-&gt;ioffset + bas-&gt;ndiranks, (nRemoteLeafRanks + 1) * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>), cudaMemcpyHostToDevice, PetscDefaultCudaStream);
+
+<a name="line148">148: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscFree2.html">PetscFree2</a>(rootreqs, leafreqs);
+<a name="line149">149: </a>  <font color="#4169E1">return</font> 0;
+<a name="line150">150: </a>}
+
+<a name="line152">152: </a><strong><font color="#4169E1"><a name="PetscSFLinkNvshmemCheck"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSFLinkNvshmemCheck(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> sf, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a> rootmtype, const void *rootdata, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a> leafmtype, const void *leafdata, <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *use_nvshmem)</font></strong>
+<a name="line153">153: </a>{
+<a name="line154">154: </a>  <a href="../../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>    comm;
+<a name="line155">155: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   isBasic;
+<a name="line156">156: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> result = MPI_UNEQUAL;
+
+<a name="line158">158: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)sf, &amp;comm);
+<a name="line159">159: </a>  <font color="#B22222">/* Check if the sf is eligible for NVSHMEM, if we have not checked yet.</font>
+<a name="line160">160: </a><font color="#B22222">     Note the check result &lt;use_nvshmem&gt; must be the same over comm, since an SFLink must be collectively either NVSHMEM or MPI.</font>
+<a name="line161">161: </a><font color="#B22222">  */</font>
+<a name="line162">162: </a>  sf-&gt;checked_nvshmem_eligibility = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line163">163: </a>  <font color="#4169E1">if</font> (sf-&gt;use_nvshmem &amp;&amp; !sf-&gt;checked_nvshmem_eligibility) {
+<a name="line164">164: </a>    <font color="#B22222">/* Only use NVSHMEM for SFBASIC on <a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>  */</font>
+<a name="line165">165: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)sf, PETSCSFBASIC, &amp;isBasic);
+<a name="line166">166: </a>    <font color="#4169E1">if</font> (isBasic) <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_compare.html#MPI_Comm_compare">MPI_Comm_compare</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, comm, &amp;result);
+<a name="line167">167: </a>    <font color="#4169E1">if</font> (!isBasic || (result != MPI_IDENT &amp;&amp; result != MPI_CONGRUENT)) sf-&gt;use_nvshmem = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>; <font color="#B22222">/* If not eligible, clear the flag so that we don't try again */</font>
+
+<a name="line169">169: </a>    <font color="#B22222">/* Do further check: If on a rank, both rootdata and leafdata are NULL, we might think they are <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_CUDA</a> (or HOST)</font>
+<a name="line170">170: </a><font color="#B22222">       and then use NVSHMEM. But if root/leafmtypes on other ranks are <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_HOST</a> (or DEVICE), this would lead to</font>
+<a name="line171">171: </a><font color="#B22222">       inconsistency on the return value &lt;use_nvshmem&gt;. To be safe, we simply disable nvshmem on these rare SFs.</font>
+<a name="line172">172: </a><font color="#B22222">    */</font>
+<a name="line173">173: </a>    <font color="#4169E1">if</font> (sf-&gt;use_nvshmem) {
+<a name="line174">174: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> hasNullRank = (!rootdata &amp;&amp; !leafdata) ? 1 : 0;
+<a name="line175">175: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a>(MPI_IN_PLACE, &amp;hasNullRank, 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_LOR, comm);
+<a name="line176">176: </a>      <font color="#4169E1">if</font> (hasNullRank) sf-&gt;use_nvshmem = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line177">177: </a>    }
+<a name="line178">178: </a>    sf-&gt;checked_nvshmem_eligibility = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>; <font color="#B22222">/* If eligible, don't do above check again */</font>
+<a name="line179">179: </a>  }
+
+<a name="line181">181: </a>  <font color="#B22222">/* Check if rootmtype and leafmtype collectively are <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_CUDA</a> */</font>
+<a name="line182">182: </a>  <font color="#4169E1">if</font> (sf-&gt;use_nvshmem) {
+<a name="line183">183: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> oneCuda = (!rootdata || PetscMemTypeCUDA(rootmtype)) &amp;&amp; (!leafdata || PetscMemTypeCUDA(leafmtype)) ? 1 : 0; <font color="#B22222">/* Do I use cuda for both root&amp;leafmtype? */</font>
+<a name="line184">184: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> allCuda = oneCuda;                                                                                          <font color="#B22222">/* Assume the same for all ranks. But if not, in opt mode, return value &lt;use_nvshmem&gt; won't be collective! */</font>
+<a name="line185">185: </a><font color="#A020F0">#if defined(PETSC_USE_DEBUG)                                                                                             </font><font color="#B22222">/* Check in debug mode. Note <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a> is expensive, so only in debug mode */</font><font color="#A020F0"></font>
+<a name="line186">186: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a>(&amp;oneCuda, &amp;allCuda, 1, <a href="../../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_LAND, comm);
+<a name="line188">188: </a><font color="#A020F0">#endif</font>
+<a name="line189">189: </a>    <font color="#4169E1">if</font> (allCuda) {
+<a name="line190">190: </a>      PetscNvshmemInitializeCheck();
+<a name="line191">191: </a>      <font color="#4169E1">if</font> (!sf-&gt;setup_nvshmem) { <font color="#B22222">/* Set up nvshmem related fields on this SF on-demand */</font>
+<a name="line192">192: </a>        PetscSFSetUp_Basic_NVSHMEM(sf);
+<a name="line193">193: </a>        sf-&gt;setup_nvshmem = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line194">194: </a>      }
+<a name="line195">195: </a>      *use_nvshmem = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line196">196: </a>    } <font color="#4169E1">else</font> {
+<a name="line197">197: </a>      *use_nvshmem = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line198">198: </a>    }
+<a name="line199">199: </a>  } <font color="#4169E1">else</font> {
+<a name="line200">200: </a>    *use_nvshmem = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line201">201: </a>  }
+<a name="line202">202: </a>  <font color="#4169E1">return</font> 0;
+<a name="line203">203: </a>}
+
+<a name="line205">205: </a><font color="#B22222">/* Build dependence between &lt;stream&gt; and &lt;remoteCommStream&gt; at the entry of NVSHMEM communication */</font>
+<a name="line206">206: </a><strong><font color="#4169E1"><a name="PetscSFLinkBuildDependenceBegin"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSFLinkBuildDependenceBegin(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> sf, PetscSFLink link, PetscSFDirection direction)</font></strong>
+<a name="line207">207: </a>{
+<a name="line208">208: </a>  cudaError_t    cerr;
+<a name="line209">209: </a>  PetscSF_Basic *bas    = (PetscSF_Basic *)sf-&gt;data;
+<a name="line210">210: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       buflen = (direction == PETSCSF_../../../../../..2LEAF) ? bas-&gt;rootbuflen[PETSCSF_REMOTE] : sf-&gt;leafbuflen[PETSCSF_REMOTE];
+
+<a name="line212">212: </a>  <font color="#4169E1">if</font> (buflen) {
+<a name="line213">213: </a>    cudaEventRecord(link-&gt;dataReady, link-&gt;stream);
+<a name="line214">214: </a>    cudaStreamWaitEvent(link-&gt;remoteCommStream, link-&gt;dataReady, 0);
+<a name="line215">215: </a>  }
+<a name="line216">216: </a>  <font color="#4169E1">return</font> 0;
+<a name="line217">217: </a>}
+
+<a name="line219">219: </a><font color="#B22222">/* Build dependence between &lt;stream&gt; and &lt;remoteCommStream&gt; at the exit of NVSHMEM communication */</font>
+<a name="line220">220: </a><strong><font color="#4169E1"><a name="PetscSFLinkBuildDependenceEnd"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSFLinkBuildDependenceEnd(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> sf, PetscSFLink link, PetscSFDirection direction)</font></strong>
+<a name="line221">221: </a>{
+<a name="line222">222: </a>  cudaError_t    cerr;
+<a name="line223">223: </a>  PetscSF_Basic *bas    = (PetscSF_Basic *)sf-&gt;data;
+<a name="line224">224: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       buflen = (direction == PETSCSF_../../../../../..2LEAF) ? sf-&gt;leafbuflen[PETSCSF_REMOTE] : bas-&gt;rootbuflen[PETSCSF_REMOTE];
+
+<a name="line226">226: </a>  <font color="#B22222">/* If unpack to non-null device buffer, build the endRemoteComm dependence */</font>
+<a name="line227">227: </a>  <font color="#4169E1">if</font> (buflen) {
+<a name="line228">228: </a>    cudaEventRecord(link-&gt;endRemoteComm, link-&gt;remoteCommStream);
+<a name="line229">229: </a>    cudaStreamWaitEvent(link-&gt;stream, link-&gt;endRemoteComm, 0);
+<a name="line230">230: </a>  }
+<a name="line231">231: </a>  <font color="#4169E1">return</font> 0;
+<a name="line232">232: </a>}
+
+<a name="line234">234: </a><font color="#B22222">/* Send/Put signals to remote ranks</font>
+
+<a name="line236">236: </a><font color="#B22222"> Input parameters:</font>
+<a name="line237">237: </a><font color="#B22222">  + n        - Number of remote ranks</font>
+<a name="line238">238: </a><font color="#B22222">  . sig      - Signal address in symmetric heap</font>
+<a name="line239">239: </a><font color="#B22222">  . sigdisp  - To i-th rank, use its signal at offset sigdisp[i]</font>
+<a name="line240">240: </a><font color="#B22222">  . ranks    - remote ranks</font>
+<a name="line241">241: </a><font color="#B22222">  - newval   - Set signals to this value</font>
+<a name="line242">242: </a><font color="#B22222">*/</font>
+<a name="line243">243: </a><strong><font color="#4169E1"><a name="NvshmemSendSignals"></a>__global__ static void NvshmemSendSignals(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, uint64_t *sig, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *sigdisp, <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *ranks, uint64_t newval)</font></strong>
+<a name="line244">244: </a>{
+<a name="line245">245: </a>  int i = blockIdx.x * blockDim.x + threadIdx.x;
+
+<a name="line247">247: </a>  <font color="#B22222">/* Each thread puts one remote signal */</font>
+<a name="line248">248: </a>  <font color="#4169E1">if</font> (i &lt; n) nvshmemx_uint64_signal(sig + sigdisp[i], newval, ranks[i]);
+<a name="line249">249: </a>}
+
+<a name="line251">251: </a><font color="#B22222">/* Wait until local signals equal to the expected value and then set them to a new value</font>
+
+<a name="line253">253: </a><font color="#B22222"> Input parameters:</font>
+<a name="line254">254: </a><font color="#B22222">  + n        - Number of signals</font>
+<a name="line255">255: </a><font color="#B22222">  . sig      - Local signal address</font>
+<a name="line256">256: </a><font color="#B22222">  . expval   - expected value</font>
+<a name="line257">257: </a><font color="#B22222">  - newval   - Set signals to this new value</font>
+<a name="line258">258: </a><font color="#B22222">*/</font>
+<a name="line259">259: </a><strong><font color="#4169E1"><a name="NvshmemWaitSignals"></a>__global__ static void NvshmemWaitSignals(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, uint64_t *sig, uint64_t expval, uint64_t newval)</font></strong>
+<a name="line260">260: </a>{
+<a name="line261">261: </a><font color="#A020F0">#if 0</font>
+<a name="line262">262: </a>  <font color="#B22222">/* Akhil Langer@NVIDIA said using 1 thread and nvshmem_uint64_wait_until_all is better */</font>
+<a name="line263">263: </a>  int i = blockIdx.x*blockDim.x + threadIdx.x;
+<a name="line264">264: </a>  <font color="#4169E1">if</font> (i &lt; n) {
+<a name="line265">265: </a>    nvshmem_signal_wait_until(sig+i,NVSHMEM_CMP_EQ,expval);
+<a name="line266">266: </a>    sig[i] = newval;
+<a name="line267">267: </a>  }
+<a name="line268">268: </a><font color="#A020F0">#else</font>
+<a name="line269">269: </a>  nvshmem_uint64_wait_until_all(sig, n, NULL <font color="#B22222">/*no mask*/</font>, NVSHMEM_CMP_EQ, expval);
+<a name="line270">270: </a>  <font color="#4169E1">for</font> (int i = 0; i &lt; n; i++) sig[i] = newval;
+<a name="line271">271: </a><font color="#A020F0">#endif</font>
+<a name="line272">272: </a>}
+
+<a name="line274">274: </a><font color="#B22222">/* ===========================================================================================================</font>
+
+<a name="line276">276: </a><font color="#B22222">   A set of routines to support receiver initiated communication using the get method</font>
+
+<a name="line278">278: </a><font color="#B22222">    The getting protocol is:</font>
+
+<a name="line280">280: </a><font color="#B22222">    Sender has a send buf (sbuf) and a signal variable (ssig);  Receiver has a recv buf (rbuf) and a signal variable (rsig);</font>
+<a name="line281">281: </a><font color="#B22222">    All signal variables have an initial value 0.</font>
+
+<a name="line283">283: </a><font color="#B22222">    Sender:                                 |  Receiver:</font>
+<a name="line284">284: </a><font color="#B22222">  1.  Wait ssig be 0, then set it to 1</font>
+<a name="line285">285: </a><font color="#B22222">  2.  Pack data into stand alone sbuf       |</font>
+<a name="line286">286: </a><font color="#B22222">  3.  Put 1 to receiver's rsig              |   1. Wait rsig to be 1, then set it 0</font>
+<a name="line287">287: </a><font color="#B22222">                                            |   2. Get data from remote sbuf to local rbuf</font>
+<a name="line288">288: </a><font color="#B22222">                                            |   3. Put 1 to sender's ssig</font>
+<a name="line289">289: </a><font color="#B22222">                                            |   4. Unpack data from local rbuf</font>
+<a name="line290">290: </a><font color="#B22222">   ===========================================================================================================*/</font>
+<a name="line291">291: </a><font color="#B22222">/* PrePack operation -- since sender will overwrite the send buffer which the receiver might be getting data from.</font>
+<a name="line292">292: </a><font color="#B22222">   Sender waits for signals (from receivers) indicating receivers have finished getting data</font>
+<a name="line293">293: </a><font color="#B22222">*/</font>
+<a name="line294">294: </a><strong><font color="#4169E1"><a name="PetscSFLinkWaitSignalsOfCompletionOfGettingData_NVSHMEM"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSFLinkWaitSignalsOfCompletionOfGettingData_NVSHMEM(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> sf, PetscSFLink link, PetscSFDirection direction)</font></strong>
+<a name="line295">295: </a>{
+<a name="line296">296: </a>  PetscSF_Basic *bas = (PetscSF_Basic *)sf-&gt;data;
+<a name="line297">297: </a>  uint64_t      *sig;
+<a name="line298">298: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       n;
+
+<a name="line300">300: </a>  <font color="#4169E1">if</font> (direction == PETSCSF_../../../../../..2LEAF) { <font color="#B22222">/* leaf ranks are getting data */</font>
+<a name="line301">301: </a>    sig = link-&gt;rootSendSig;            <font color="#B22222">/* leaf ranks set my rootSendsig */</font>
+<a name="line302">302: </a>    n   = bas-&gt;nRemoteLeafRanks;
+<a name="line303">303: </a>  } <font color="#4169E1">else</font> { <font color="#B22222">/* LEAF2../../../../../.. */</font>
+<a name="line304">304: </a>    sig = link-&gt;leafSendSig;
+<a name="line305">305: </a>    n   = sf-&gt;nRemoteRootRanks;
+<a name="line306">306: </a>  }
+
+<a name="line308">308: </a>  <font color="#4169E1">if</font> (n) {
+<a name="line309">309: </a>    NvshmemWaitSignals&lt;&lt;&lt;1, 1, 0, link-&gt;remoteCommStream&gt;&gt;&gt;(n, sig, 0, 1); <font color="#B22222">/* wait the signals to be 0, then set them to 1 */</font>
+<a name="line310">310: </a>    cudaGetLastError();
+<a name="line311">311: </a>  }
+<a name="line312">312: </a>  <font color="#4169E1">return</font> 0;
+<a name="line313">313: </a>}
+
+<a name="line315">315: </a><font color="#B22222">/* n thread blocks. Each takes in charge one remote rank */</font>
+<a name="line316">316: </a><strong><font color="#4169E1"><a name="GetDataFromRemotelyAccessible"></a>__global__ static void GetDataFromRemotelyAccessible(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nsrcranks, <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *srcranks, const char *src, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *srcdisp, char *dst, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *dstdisp, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> unitbytes)</font></strong>
+<a name="line317">317: </a>{
+<a name="line318">318: </a>  int         bid = blockIdx.x;
+<a name="line319">319: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> pe  = srcranks[bid];
+
+<a name="line321">321: </a>  <font color="#4169E1">if</font> (!nvshmem_ptr(src, pe)) {
+<a name="line322">322: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nelems = (dstdisp[bid + 1] - dstdisp[bid]) * unitbytes;
+<a name="line323">323: </a>    nvshmem_getmem_nbi(dst + (dstdisp[bid] - dstdisp[0]) * unitbytes, src + srcdisp[bid] * unitbytes, nelems, pe);
+<a name="line324">324: </a>  }
+<a name="line325">325: </a>}
+
+<a name="line327">327: </a><font color="#B22222">/* Start communication -- Get data in the given direction */</font>
+<a name="line328">328: </a><strong><font color="#4169E1"><a name="PetscSFLinkGetDataBegin_NVSHMEM"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSFLinkGetDataBegin_NVSHMEM(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> sf, PetscSFLink link, PetscSFDirection direction)</font></strong>
+<a name="line329">329: </a>{
+<a name="line330">330: </a>  cudaError_t    cerr;
+<a name="line331">331: </a>  PetscSF_Basic *bas = (PetscSF_Basic *)sf-&gt;data;
+
+<a name="line333">333: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nsrcranks, ndstranks, nLocallyAccessible = 0;
+
+<a name="line335">335: </a>  char        *src, *dst;
+<a name="line336">336: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *srcdisp_h, *dstdisp_h;
+<a name="line337">337: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *srcdisp_d, *dstdisp_d;
+<a name="line338">338: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *srcranks_h;
+<a name="line339">339: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *srcranks_d, *dstranks_d;
+<a name="line340">340: </a>  uint64_t    *dstsig;
+<a name="line341">341: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *dstsigdisp_d;
+
+<a name="line343">343: </a>  PetscSFLinkBuildDependenceBegin(sf, link, direction);
+<a name="line344">344: </a>  <font color="#4169E1">if</font> (direction == PETSCSF_../../../../../..2LEAF) { <font color="#B22222">/* src is root, dst is leaf; we will move data from src to dst */</font>
+<a name="line345">345: </a>    nsrcranks = sf-&gt;nRemoteRootRanks;
+<a name="line346">346: </a>    src       = link-&gt;rootbuf[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>]; <font color="#B22222">/* root buf is the send buf; it is in symmetric heap */</font>
+
+<a name="line348">348: </a>    srcdisp_h  = sf-&gt;rootbufdisp; <font color="#B22222">/* for my i-th remote root rank, I will access its buf at offset rootbufdisp[i] */</font>
+<a name="line349">349: </a>    srcdisp_d  = sf-&gt;rootbufdisp_d;
+<a name="line350">350: </a>    srcranks_h = sf-&gt;ranks + sf-&gt;ndranks; <font color="#B22222">/* my (remote) root ranks */</font>
+<a name="line351">351: </a>    srcranks_d = sf-&gt;ranks_d;
+
+<a name="line353">353: </a>    ndstranks = bas-&gt;nRemoteLeafRanks;
+<a name="line354">354: </a>    dst       = link-&gt;leafbuf[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>]; <font color="#B22222">/* recv buf is the local leaf buf, also in symmetric heap */</font>
+
+<a name="line356">356: </a>    dstdisp_h  = sf-&gt;roffset + sf-&gt;ndranks; <font color="#B22222">/* offsets of the local leaf buf. Note dstdisp[0] is not necessarily 0 */</font>
+<a name="line357">357: </a>    dstdisp_d  = sf-&gt;roffset_d;
+<a name="line358">358: </a>    dstranks_d = bas-&gt;iranks_d; <font color="#B22222">/* my (remote) leaf ranks */</font>
+
+<a name="line360">360: </a>    dstsig       = link-&gt;leafRecvSig;
+<a name="line361">361: </a>    dstsigdisp_d = bas-&gt;leafsigdisp_d;
+<a name="line362">362: </a>  } <font color="#4169E1">else</font> { <font color="#B22222">/* src is leaf, dst is root; we will move data from src to dst */</font>
+<a name="line363">363: </a>    nsrcranks = bas-&gt;nRemoteLeafRanks;
+<a name="line364">364: </a>    src       = link-&gt;leafbuf[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>]; <font color="#B22222">/* leaf buf is the send buf */</font>
+
+<a name="line366">366: </a>    srcdisp_h  = bas-&gt;leafbufdisp; <font color="#B22222">/* for my i-th remote root rank, I will access its buf at offset rootbufdisp[i] */</font>
+<a name="line367">367: </a>    srcdisp_d  = bas-&gt;leafbufdisp_d;
+<a name="line368">368: </a>    srcranks_h = bas-&gt;iranks + bas-&gt;ndiranks; <font color="#B22222">/* my (remote) root ranks */</font>
+<a name="line369">369: </a>    srcranks_d = bas-&gt;iranks_d;
+
+<a name="line371">371: </a>    ndstranks = sf-&gt;nRemoteRootRanks;
+<a name="line372">372: </a>    dst       = link-&gt;rootbuf[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>]; <font color="#B22222">/* the local root buf is the recv buf */</font>
+
+<a name="line374">374: </a>    dstdisp_h  = bas-&gt;ioffset + bas-&gt;ndiranks; <font color="#B22222">/* offsets of the local root buf. Note dstdisp[0] is not necessarily 0 */</font>
+<a name="line375">375: </a>    dstdisp_d  = bas-&gt;ioffset_d;
+<a name="line376">376: </a>    dstranks_d = sf-&gt;ranks_d; <font color="#B22222">/* my (remote) root ranks */</font>
+
+<a name="line378">378: </a>    dstsig       = link-&gt;rootRecvSig;
+<a name="line379">379: </a>    dstsigdisp_d = sf-&gt;rootsigdisp_d;
+<a name="line380">380: </a>  }
+
+<a name="line382">382: </a>  <font color="#B22222">/* After Pack operation -- src tells dst ranks that they are allowed to get data */</font>
+<a name="line383">383: </a>  <font color="#4169E1">if</font> (ndstranks) {
+<a name="line384">384: </a>    NvshmemSendSignals&lt;&lt;&lt;(ndstranks + 255) / 256, 256, 0, link-&gt;remoteCommStream&gt;&gt;&gt;(ndstranks, dstsig, dstsigdisp_d, dstranks_d, 1); <font color="#B22222">/* set signals to 1 */</font>
+<a name="line385">385: </a>    cudaGetLastError();
+<a name="line386">386: </a>  }
+
+<a name="line388">388: </a>  <font color="#B22222">/* dst waits for signals (permissions) from src ranks to start getting data */</font>
+<a name="line389">389: </a>  <font color="#4169E1">if</font> (nsrcranks) {
+<a name="line390">390: </a>    NvshmemWaitSignals&lt;&lt;&lt;1, 1, 0, link-&gt;remoteCommStream&gt;&gt;&gt;(nsrcranks, dstsig, 1, 0); <font color="#B22222">/* wait the signals to be 1, then set them to 0 */</font>
+<a name="line391">391: </a>    cudaGetLastError();
+<a name="line392">392: </a>  }
+
+<a name="line394">394: </a>  <font color="#B22222">/* dst gets data from src ranks using non-blocking nvshmem_gets, which are finished in PetscSFLinkGetDataEnd_NVSHMEM() */</font>
+
+<a name="line396">396: </a>  <font color="#B22222">/* Count number of locally accessible src ranks, which should be a small number */</font>
+<a name="line397">397: </a>  <font color="#4169E1">for</font> (int i = 0; i &lt; nsrcranks; i++) {
+<a name="line398">398: </a>    <font color="#4169E1">if</font> (nvshmem_ptr(src, srcranks_h[i])) nLocallyAccessible++;
+<a name="line399">399: </a>  }
+
+<a name="line401">401: </a>  <font color="#B22222">/* Get data from remotely accessible PEs */</font>
+<a name="line402">402: </a>  <font color="#4169E1">if</font> (nLocallyAccessible &lt; nsrcranks) {
+<a name="line403">403: </a>    GetDataFromRemotelyAccessible&lt;&lt;&lt;nsrcranks, 1, 0, link-&gt;remoteCommStream&gt;&gt;&gt;(nsrcranks, srcranks_d, src, srcdisp_d, dst, dstdisp_d, link-&gt;unitbytes);
+<a name="line404">404: </a>    cudaGetLastError();
+<a name="line405">405: </a>  }
+
+<a name="line407">407: </a>  <font color="#B22222">/* Get data from locally accessible PEs */</font>
+<a name="line408">408: </a>  <font color="#4169E1">if</font> (nLocallyAccessible) {
+<a name="line409">409: </a>    <font color="#4169E1">for</font> (int i = 0; i &lt; nsrcranks; i++) {
+<a name="line410">410: </a>      int pe = srcranks_h[i];
+<a name="line411">411: </a>      <font color="#4169E1">if</font> (nvshmem_ptr(src, pe)) {
+<a name="line412">412: </a>        size_t nelems = (dstdisp_h[i + 1] - dstdisp_h[i]) * link-&gt;unitbytes;
+<a name="line413">413: </a>        nvshmemx_getmem_nbi_on_stream(dst + (dstdisp_h[i] - dstdisp_h[0]) * link-&gt;unitbytes, src + srcdisp_h[i] * link-&gt;unitbytes, nelems, pe, link-&gt;remoteCommStream);
+<a name="line414">414: </a>      }
+<a name="line415">415: </a>    }
+<a name="line416">416: </a>  }
+<a name="line417">417: </a>  <font color="#4169E1">return</font> 0;
+<a name="line418">418: </a>}
+
+<a name="line420">420: </a><font color="#B22222">/* Finish the communication (can be done before Unpack)</font>
+<a name="line421">421: </a><font color="#B22222">   Receiver tells its senders that they are allowed to reuse their send buffer (since receiver has got data from their send buffer)</font>
+<a name="line422">422: </a><font color="#B22222">*/</font>
+<a name="line423">423: </a><strong><font color="#4169E1"><a name="PetscSFLinkGetDataEnd_NVSHMEM"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSFLinkGetDataEnd_NVSHMEM(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> sf, PetscSFLink link, PetscSFDirection direction)</font></strong>
+<a name="line424">424: </a>{
+<a name="line425">425: </a>  cudaError_t    cerr;
+<a name="line426">426: </a>  PetscSF_Basic *bas = (PetscSF_Basic *)sf-&gt;data;
+<a name="line427">427: </a>  uint64_t      *srcsig;
+<a name="line428">428: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       nsrcranks, *srcsigdisp;
+<a name="line429">429: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>   *srcranks;
+
+<a name="line431">431: </a>  <font color="#4169E1">if</font> (direction == PETSCSF_../../../../../..2LEAF) { <font color="#B22222">/* leaf ranks are getting data */</font>
+<a name="line432">432: </a>    nsrcranks  = sf-&gt;nRemoteRootRanks;
+<a name="line433">433: </a>    srcsig     = link-&gt;rootSendSig; <font color="#B22222">/* I want to set their root signal */</font>
+<a name="line434">434: </a>    srcsigdisp = sf-&gt;rootsigdisp_d; <font color="#B22222">/* offset of each root signal */</font>
+<a name="line435">435: </a>    srcranks   = sf-&gt;ranks_d;       <font color="#B22222">/* ranks of the n root ranks */</font>
+<a name="line436">436: </a>  } <font color="#4169E1">else</font> {                          <font color="#B22222">/* LEAF2../../../../../.., root ranks are getting data */</font>
+<a name="line437">437: </a>    nsrcranks  = bas-&gt;nRemoteLeafRanks;
+<a name="line438">438: </a>    srcsig     = link-&gt;leafSendSig;
+<a name="line439">439: </a>    srcsigdisp = bas-&gt;leafsigdisp_d;
+<a name="line440">440: </a>    srcranks   = bas-&gt;iranks_d;
+<a name="line441">441: </a>  }
+
+<a name="line443">443: </a>  <font color="#4169E1">if</font> (nsrcranks) {
+<a name="line444">444: </a>    nvshmemx_quiet_on_stream(link-&gt;remoteCommStream); <font color="#B22222">/* Finish the nonblocking get, so that we can unpack afterwards */</font>
+<a name="line445">445: </a>    cudaGetLastError();
+<a name="line446">446: </a>    NvshmemSendSignals&lt;&lt;&lt;(nsrcranks + 511) / 512, 512, 0, link-&gt;remoteCommStream&gt;&gt;&gt;(nsrcranks, srcsig, srcsigdisp, srcranks, 0); <font color="#B22222">/* set signals to 0 */</font>
+<a name="line447">447: </a>    cudaGetLastError();
+<a name="line448">448: </a>  }
+<a name="line449">449: </a>  PetscSFLinkBuildDependenceEnd(sf, link, direction);
+<a name="line450">450: </a>  <font color="#4169E1">return</font> 0;
+<a name="line451">451: </a>}
+
+<a name="line453">453: </a><font color="#B22222">/* ===========================================================================================================</font>
+
+<a name="line455">455: </a><font color="#B22222">   A set of routines to support sender initiated communication using the put-based method (the default)</font>
+
+<a name="line457">457: </a><font color="#B22222">    The putting protocol is:</font>
+
+<a name="line459">459: </a><font color="#B22222">    Sender has a send buf (sbuf) and a send signal var (ssig);  Receiver has a stand-alone recv buf (rbuf)</font>
+<a name="line460">460: </a><font color="#B22222">    and a recv signal var (rsig); All signal variables have an initial value 0. rbuf is allocated by SF and</font>
+<a name="line461">461: </a><font color="#B22222">    is in nvshmem space.</font>
+
+<a name="line463">463: </a><font color="#B22222">    Sender:                                 |  Receiver:</font>
+<a name="line464">464: </a><font color="#B22222">                                            |</font>
+<a name="line465">465: </a><font color="#B22222">  1.  Pack data into sbuf                   |</font>
+<a name="line466">466: </a><font color="#B22222">  2.  Wait ssig be 0, then set it to 1      |</font>
+<a name="line467">467: </a><font color="#B22222">  3.  Put data to remote stand-alone rbuf   |</font>
+<a name="line468">468: </a><font color="#B22222">  4.  Fence // make sure 5 happens after 3  |</font>
+<a name="line469">469: </a><font color="#B22222">  5.  Put 1 to receiver's rsig              |   1. Wait rsig to be 1, then set it 0</font>
+<a name="line470">470: </a><font color="#B22222">                                            |   2. Unpack data from local rbuf</font>
+<a name="line471">471: </a><font color="#B22222">                                            |   3. Put 0 to sender's ssig</font>
+<a name="line472">472: </a><font color="#B22222">   ===========================================================================================================*/</font>
+
+<a name="line474">474: </a><font color="#B22222">/* n thread blocks. Each takes in charge one remote rank */</font>
+<a name="line475">475: </a><strong><font color="#4169E1"><a name="WaitAndPutDataToRemotelyAccessible"></a>__global__ static void WaitAndPutDataToRemotelyAccessible(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ndstranks, <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *dstranks, char *dst, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *dstdisp, const char *src, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *srcdisp, uint64_t *srcsig, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> unitbytes)</font></strong>
+<a name="line476">476: </a>{
+<a name="line477">477: </a>  int         bid = blockIdx.x;
+<a name="line478">478: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> pe  = dstranks[bid];
+
+<a name="line480">480: </a>  <font color="#4169E1">if</font> (!nvshmem_ptr(dst, pe)) {
+<a name="line481">481: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nelems = (srcdisp[bid + 1] - srcdisp[bid]) * unitbytes;
+<a name="line482">482: </a>    nvshmem_uint64_wait_until(srcsig + bid, NVSHMEM_CMP_EQ, 0); <font color="#B22222">/* Wait until the sig = 0 */</font>
+<a name="line483">483: </a>    srcsig[bid] = 1;
+<a name="line484">484: </a>    nvshmem_putmem_nbi(dst + dstdisp[bid] * unitbytes, src + (srcdisp[bid] - srcdisp[0]) * unitbytes, nelems, pe);
+<a name="line485">485: </a>  }
+<a name="line486">486: </a>}
+
+<a name="line488">488: </a><font color="#B22222">/* one-thread kernel, which takes in charge all locally accessible */</font>
+<a name="line489">489: </a><strong><font color="#4169E1"><a name="WaitSignalsFromLocallyAccessible"></a>__global__ static void WaitSignalsFromLocallyAccessible(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ndstranks, <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *dstranks, uint64_t *srcsig, const char *dst)</font></strong>
+<a name="line490">490: </a>{
+<a name="line491">491: </a>  <font color="#4169E1">for</font> (int i = 0; i &lt; ndstranks; i++) {
+<a name="line492">492: </a>    int pe = dstranks[i];
+<a name="line493">493: </a>    <font color="#4169E1">if</font> (nvshmem_ptr(dst, pe)) {
+<a name="line494">494: </a>      nvshmem_uint64_wait_until(srcsig + i, NVSHMEM_CMP_EQ, 0); <font color="#B22222">/* Wait until the sig = 0 */</font>
+<a name="line495">495: </a>      srcsig[i] = 1;
+<a name="line496">496: </a>    }
+<a name="line497">497: </a>  }
+<a name="line498">498: </a>}
+
+<a name="line500">500: </a><font color="#B22222">/* Put data in the given direction  */</font>
+<a name="line501">501: </a><strong><font color="#4169E1"><a name="PetscSFLinkPutDataBegin_NVSHMEM"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSFLinkPutDataBegin_NVSHMEM(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> sf, PetscSFLink link, PetscSFDirection direction)</font></strong>
+<a name="line502">502: </a>{
+<a name="line503">503: </a>  cudaError_t    cerr;
+<a name="line504">504: </a>  PetscSF_Basic *bas = (PetscSF_Basic *)sf-&gt;data;
+<a name="line505">505: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       ndstranks, nLocallyAccessible = 0;
+<a name="line506">506: </a>  char          *src, *dst;
+<a name="line507">507: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      *srcdisp_h, *dstdisp_h;
+<a name="line508">508: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      *srcdisp_d, *dstdisp_d;
+<a name="line509">509: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>   *dstranks_h;
+<a name="line510">510: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>   *dstranks_d;
+<a name="line511">511: </a>  uint64_t      *srcsig;
+
+<a name="line513">513: </a>  PetscSFLinkBuildDependenceBegin(sf, link, direction);
+<a name="line514">514: </a>  <font color="#4169E1">if</font> (direction == PETSCSF_../../../../../..2LEAF) {                              <font color="#B22222">/* put data in rootbuf to leafbuf  */</font>
+<a name="line515">515: </a>    ndstranks = bas-&gt;nRemoteLeafRanks;                               <font color="#B22222">/* number of (remote) leaf ranks */</font>
+<a name="line516">516: </a>    src       = link-&gt;rootbuf[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>]; <font color="#B22222">/* Both src &amp; dst must be symmetric */</font>
+<a name="line517">517: </a>    dst       = link-&gt;leafbuf[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>];
+
+<a name="line519">519: </a>    srcdisp_h = bas-&gt;ioffset + bas-&gt;ndiranks; <font color="#B22222">/* offsets of rootbuf. srcdisp[0] is not necessarily zero */</font>
+<a name="line520">520: </a>    srcdisp_d = bas-&gt;ioffset_d;
+<a name="line521">521: </a>    srcsig    = link-&gt;rootSendSig;
+
+<a name="line523">523: </a>    dstdisp_h  = bas-&gt;leafbufdisp; <font color="#B22222">/* for my i-th remote leaf rank, I will access its leaf buf at offset leafbufdisp[i] */</font>
+<a name="line524">524: </a>    dstdisp_d  = bas-&gt;leafbufdisp_d;
+<a name="line525">525: </a>    dstranks_h = bas-&gt;iranks + bas-&gt;ndiranks; <font color="#B22222">/* remote leaf ranks */</font>
+<a name="line526">526: </a>    dstranks_d = bas-&gt;iranks_d;
+<a name="line527">527: </a>  } <font color="#4169E1">else</font> { <font color="#B22222">/* put data in leafbuf to rootbuf */</font>
+<a name="line528">528: </a>    ndstranks = sf-&gt;nRemoteRootRanks;
+<a name="line529">529: </a>    src       = link-&gt;leafbuf[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>];
+<a name="line530">530: </a>    dst       = link-&gt;rootbuf[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>];
+
+<a name="line532">532: </a>    srcdisp_h = sf-&gt;roffset + sf-&gt;ndranks; <font color="#B22222">/* offsets of leafbuf */</font>
+<a name="line533">533: </a>    srcdisp_d = sf-&gt;roffset_d;
+<a name="line534">534: </a>    srcsig    = link-&gt;leafSendSig;
+
+<a name="line536">536: </a>    dstdisp_h  = sf-&gt;rootbufdisp; <font color="#B22222">/* for my i-th remote root rank, I will access its root buf at offset rootbufdisp[i] */</font>
+<a name="line537">537: </a>    dstdisp_d  = sf-&gt;rootbufdisp_d;
+<a name="line538">538: </a>    dstranks_h = sf-&gt;ranks + sf-&gt;ndranks; <font color="#B22222">/* remote root ranks */</font>
+<a name="line539">539: </a>    dstranks_d = sf-&gt;ranks_d;
+<a name="line540">540: </a>  }
+
+<a name="line542">542: </a>  <font color="#B22222">/* Wait for signals and then put data to dst ranks using non-blocking nvshmem_put, which are finished in PetscSFLinkPutDataEnd_NVSHMEM */</font>
+
+<a name="line544">544: </a>  <font color="#B22222">/* Count number of locally accessible neighbors, which should be a small number */</font>
+<a name="line545">545: </a>  <font color="#4169E1">for</font> (int i = 0; i &lt; ndstranks; i++) {
+<a name="line546">546: </a>    <font color="#4169E1">if</font> (nvshmem_ptr(dst, dstranks_h[i])) nLocallyAccessible++;
+<a name="line547">547: </a>  }
+
+<a name="line549">549: </a>  <font color="#B22222">/* For remotely accessible PEs, send data to them in one kernel call */</font>
+<a name="line550">550: </a>  <font color="#4169E1">if</font> (nLocallyAccessible &lt; ndstranks) {
+<a name="line551">551: </a>    WaitAndPutDataToRemotelyAccessible&lt;&lt;&lt;ndstranks, 1, 0, link-&gt;remoteCommStream&gt;&gt;&gt;(ndstranks, dstranks_d, dst, dstdisp_d, src, srcdisp_d, srcsig, link-&gt;unitbytes);
+<a name="line552">552: </a>    cudaGetLastError();
+<a name="line553">553: </a>  }
+
+<a name="line555">555: </a>  <font color="#B22222">/* For locally accessible PEs, use host API, which uses CUDA copy-engines and is much faster than device API */</font>
+<a name="line556">556: </a>  <font color="#4169E1">if</font> (nLocallyAccessible) {
+<a name="line557">557: </a>    WaitSignalsFromLocallyAccessible&lt;&lt;&lt;1, 1, 0, link-&gt;remoteCommStream&gt;&gt;&gt;(ndstranks, dstranks_d, srcsig, dst);
+<a name="line558">558: </a>    <font color="#4169E1">for</font> (int i = 0; i &lt; ndstranks; i++) {
+<a name="line559">559: </a>      int pe = dstranks_h[i];
+<a name="line560">560: </a>      <font color="#4169E1">if</font> (nvshmem_ptr(dst, pe)) { <font color="#B22222">/* If return a non-null pointer, then &lt;pe&gt; is locally accessible */</font>
+<a name="line561">561: </a>        size_t nelems = (srcdisp_h[i + 1] - srcdisp_h[i]) * link-&gt;unitbytes;
+<a name="line562">562: </a>        <font color="#B22222">/* Initiate the nonblocking communication */</font>
+<a name="line563">563: </a>        nvshmemx_putmem_nbi_on_stream(dst + dstdisp_h[i] * link-&gt;unitbytes, src + (srcdisp_h[i] - srcdisp_h[0]) * link-&gt;unitbytes, nelems, pe, link-&gt;remoteCommStream);
+<a name="line564">564: </a>      }
+<a name="line565">565: </a>    }
+<a name="line566">566: </a>  }
+
+<a name="line568">568: </a>  <font color="#4169E1">if</font> (nLocallyAccessible) { nvshmemx_quiet_on_stream(link-&gt;remoteCommStream); <font color="#B22222">/* Calling nvshmem_fence/quiet() does not fence the above nvshmemx_putmem_nbi_on_stream! */</font> }
+<a name="line569">569: </a>  <font color="#4169E1">return</font> 0;
+<a name="line570">570: </a>}
+
+<a name="line572">572: </a><font color="#B22222">/* A one-thread kernel. The thread takes in charge all remote PEs */</font>
+<a name="line573">573: </a><strong><font color="#4169E1"><a name="PutDataEnd"></a>__global__ static void PutDataEnd(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nsrcranks, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ndstranks, <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> *dstranks, uint64_t *dstsig, <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *dstsigdisp)</font></strong>
+<a name="line574">574: </a>{
+<a name="line575">575: </a>  <font color="#B22222">/* TODO: Shall we finished the non-blocking remote puts? */</font>
+
+<a name="line577">577: </a>  <font color="#B22222">/* 1. Send a signal to each dst rank */</font>
+
+<a name="line579">579: </a>  <font color="#B22222">/* According to Akhil@NVIDIA, IB is orderred, so no fence is needed for remote PEs.</font>
+<a name="line580">580: </a><font color="#B22222">     For local PEs, we already called nvshmemx_quiet_on_stream(). Therefore, we are good to send signals to all dst ranks now.</font>
+<a name="line581">581: </a><font color="#B22222">  */</font>
+<a name="line582">582: </a>  <font color="#4169E1">for</font> (int i = 0; i &lt; ndstranks; i++) nvshmemx_uint64_signal(dstsig + dstsigdisp[i], 1, dstranks[i]); <font color="#B22222">/* set sig to 1 */</font>
+
+<a name="line584">584: </a>  <font color="#B22222">/* 2. Wait for signals from src ranks (if any) */</font>
+<a name="line585">585: </a>  <font color="#4169E1">if</font> (nsrcranks) {
+<a name="line586">586: </a>    nvshmem_uint64_wait_until_all(dstsig, nsrcranks, NULL <font color="#B22222">/*no mask*/</font>, NVSHMEM_CMP_EQ, 1); <font color="#B22222">/* wait sigs to be 1, then set them to 0 */</font>
+<a name="line587">587: </a>    <font color="#4169E1">for</font> (int i = 0; i &lt; nsrcranks; i++) dstsig[i] = 0;
+<a name="line588">588: </a>  }
+<a name="line589">589: </a>}
+
+<a name="line591">591: </a><font color="#B22222">/* Finish the communication -- A receiver waits until it can access its receive buffer */</font>
+<a name="line592">592: </a><strong><font color="#4169E1"><a name="PetscSFLinkPutDataEnd_NVSHMEM"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSFLinkPutDataEnd_NVSHMEM(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> sf, PetscSFLink link, PetscSFDirection direction)</font></strong>
+<a name="line593">593: </a>{
+<a name="line594">594: </a>  cudaError_t    cerr;
+<a name="line595">595: </a>  PetscSF_Basic *bas = (PetscSF_Basic *)sf-&gt;data;
+<a name="line596">596: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>   *dstranks;
+<a name="line597">597: </a>  uint64_t      *dstsig;
+<a name="line598">598: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       nsrcranks, ndstranks, *dstsigdisp;
+
+<a name="line600">600: </a>  <font color="#4169E1">if</font> (direction == PETSCSF_../../../../../..2LEAF) { <font color="#B22222">/* put root data to leaf */</font>
+<a name="line601">601: </a>    nsrcranks = sf-&gt;nRemoteRootRanks;
+
+<a name="line603">603: </a>    ndstranks  = bas-&gt;nRemoteLeafRanks;
+<a name="line604">604: </a>    dstranks   = bas-&gt;iranks_d;      <font color="#B22222">/* leaf ranks */</font>
+<a name="line605">605: </a>    dstsig     = link-&gt;leafRecvSig;  <font color="#B22222">/* I will set my leaf ranks's RecvSig */</font>
+<a name="line606">606: </a>    dstsigdisp = bas-&gt;leafsigdisp_d; <font color="#B22222">/* for my i-th remote leaf rank, I will access its signal at offset leafsigdisp[i] */</font>
+<a name="line607">607: </a>  } <font color="#4169E1">else</font> {                           <font color="#B22222">/* LEAF2../../../../../.. */</font>
+<a name="line608">608: </a>    nsrcranks = bas-&gt;nRemoteLeafRanks;
+
+<a name="line610">610: </a>    ndstranks  = sf-&gt;nRemoteRootRanks;
+<a name="line611">611: </a>    dstranks   = sf-&gt;ranks_d;
+<a name="line612">612: </a>    dstsig     = link-&gt;rootRecvSig;
+<a name="line613">613: </a>    dstsigdisp = sf-&gt;rootsigdisp_d;
+<a name="line614">614: </a>  }
+
+<a name="line616">616: </a>  <font color="#4169E1">if</font> (nsrcranks || ndstranks) {
+<a name="line617">617: </a>    PutDataEnd&lt;&lt;&lt;1, 1, 0, link-&gt;remoteCommStream&gt;&gt;&gt;(nsrcranks, ndstranks, dstranks, dstsig, dstsigdisp);
+<a name="line618">618: </a>    cudaGetLastError();
+<a name="line619">619: </a>  }
+<a name="line620">620: </a>  PetscSFLinkBuildDependenceEnd(sf, link, direction);
+<a name="line621">621: </a>  <font color="#4169E1">return</font> 0;
+<a name="line622">622: </a>}
+
+<a name="line624">624: </a><font color="#B22222">/* PostUnpack operation -- A receiver tells its senders that they are allowed to put data to here (it implies recv buf is free to take new data) */</font>
+<a name="line625">625: </a><strong><font color="#4169E1"><a name="PetscSFLinkSendSignalsToAllowPuttingData_NVSHMEM"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSFLinkSendSignalsToAllowPuttingData_NVSHMEM(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> sf, PetscSFLink link, PetscSFDirection direction)</font></strong>
+<a name="line626">626: </a>{
+<a name="line627">627: </a>  PetscSF_Basic *bas = (PetscSF_Basic *)sf-&gt;data;
+<a name="line628">628: </a>  uint64_t      *srcsig;
+<a name="line629">629: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       nsrcranks, *srcsigdisp_d;
+<a name="line630">630: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>   *srcranks_d;
+
+<a name="line632">632: </a>  <font color="#4169E1">if</font> (direction == PETSCSF_../../../../../..2LEAF) { <font color="#B22222">/* I allow my root ranks to put data to me */</font>
+<a name="line633">633: </a>    nsrcranks    = sf-&gt;nRemoteRootRanks;
+<a name="line634">634: </a>    srcsig       = link-&gt;rootSendSig; <font color="#B22222">/* I want to set their send signals */</font>
+<a name="line635">635: </a>    srcsigdisp_d = sf-&gt;rootsigdisp_d; <font color="#B22222">/* offset of each root signal */</font>
+<a name="line636">636: </a>    srcranks_d   = sf-&gt;ranks_d;       <font color="#B22222">/* ranks of the n root ranks */</font>
+<a name="line637">637: </a>  } <font color="#4169E1">else</font> {                            <font color="#B22222">/* LEAF2../../../../../.. */</font>
+<a name="line638">638: </a>    nsrcranks    = bas-&gt;nRemoteLeafRanks;
+<a name="line639">639: </a>    srcsig       = link-&gt;leafSendSig;
+<a name="line640">640: </a>    srcsigdisp_d = bas-&gt;leafsigdisp_d;
+<a name="line641">641: </a>    srcranks_d   = bas-&gt;iranks_d;
+<a name="line642">642: </a>  }
+
+<a name="line644">644: </a>  <font color="#4169E1">if</font> (nsrcranks) {
+<a name="line645">645: </a>    NvshmemSendSignals&lt;&lt;&lt;(nsrcranks + 255) / 256, 256, 0, link-&gt;remoteCommStream&gt;&gt;&gt;(nsrcranks, srcsig, srcsigdisp_d, srcranks_d, 0); <font color="#B22222">/* Set remote signals to 0 */</font>
+<a name="line646">646: </a>    cudaGetLastError();
+<a name="line647">647: </a>  }
+<a name="line648">648: </a>  <font color="#4169E1">return</font> 0;
+<a name="line649">649: </a>}
+
+<a name="line651">651: </a><font color="#B22222">/* Destructor when the link uses nvshmem for communication */</font>
+<a name="line652">652: </a><strong><font color="#4169E1"><a name="PetscSFLinkDestroy_NVSHMEM"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSFLinkDestroy_NVSHMEM(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> sf, PetscSFLink link)</font></strong>
+<a name="line653">653: </a>{
+<a name="line654">654: </a>  cudaError_t cerr;
+
+<a name="line656">656: </a>  cudaEventDestroy(link-&gt;dataReady);
+<a name="line657">657: </a>  cudaEventDestroy(link-&gt;endRemoteComm);
+<a name="line658">658: </a>  cudaStreamDestroy(link-&gt;remoteCommStream);
+
+<a name="line660">660: </a>  <font color="#B22222">/* nvshmem does not need buffers on host, which should be NULL */</font>
+<a name="line661">661: </a>  PetscNvshmemFree(link-&gt;leafbuf_alloc[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>]);
+<a name="line662">662: </a>  PetscNvshmemFree(link-&gt;leafSendSig);
+<a name="line663">663: </a>  PetscNvshmemFree(link-&gt;leafRecvSig);
+<a name="line664">664: </a>  PetscNvshmemFree(link-&gt;rootbuf_alloc[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>]);
+<a name="line665">665: </a>  PetscNvshmemFree(link-&gt;rootSendSig);
+<a name="line666">666: </a>  PetscNvshmemFree(link-&gt;rootRecvSig);
+<a name="line667">667: </a>  <font color="#4169E1">return</font> 0;
+<a name="line668">668: </a>}
+
+<a name="line670">670: </a><strong><font color="#4169E1"><a name="PetscSFLinkCreate_NVSHMEM"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscSFLinkCreate_NVSHMEM(<a href="../../../../../../docs/manualpages/PetscSF/PetscSF.html">PetscSF</a> sf, MPI_Datatype unit, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a> rootmtype, const void *rootdata, <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PetscMemType</a> leafmtype, const void *leafdata, MPI_Op op, PetscSFOperation sfop, PetscSFLink *mylink)</font></strong>
+<a name="line671">671: </a>{
+<a name="line672">672: </a>  cudaError_t    cerr;
+<a name="line673">673: </a>  PetscSF_Basic *bas = (PetscSF_Basic *)sf-&gt;data;
+<a name="line674">674: </a>  PetscSFLink   *p, link;
+<a name="line675">675: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>      match, rootdirect[2], leafdirect[2];
+<a name="line676">676: </a>  int            greatestPriority;
+
+<a name="line678">678: </a>  <font color="#B22222">/* Check to see if we can directly send/recv root/leafdata with the given sf, sfop and op.</font>
+<a name="line679">679: </a><font color="#B22222">     We only care root/leafdirect[PETSCSF_REMOTE], since we never need intermediate buffers in local communication with NVSHMEM.</font>
+<a name="line680">680: </a><font color="#B22222">  */</font>
+<a name="line681">681: </a>  <font color="#4169E1">if</font> (sfop == PETSCSF_BCAST) { <font color="#B22222">/* Move data from rootbuf to leafbuf */</font>
+<a name="line682">682: </a>    <font color="#4169E1">if</font> (sf-&gt;use_nvshmem_get) {
+<a name="line683">683: </a>      rootdirect[PETSCSF_REMOTE] = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>; <font color="#B22222">/* send buffer has to be stand-alone (can't be rootdata) */</font>
+<a name="line684">684: </a>      leafdirect[PETSCSF_REMOTE] = (PetscMemTypeNVSHMEM(leafmtype) &amp;&amp; sf-&gt;leafcontig[PETSCSF_REMOTE] &amp;&amp; op == MPI_REPLACE) ? <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line685">685: </a>    } <font color="#4169E1">else</font> {
+<a name="line686">686: </a>      rootdirect[PETSCSF_REMOTE] = (PetscMemTypeNVSHMEM(rootmtype) &amp;&amp; bas-&gt;rootcontig[PETSCSF_REMOTE]) ? <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line687">687: </a>      leafdirect[PETSCSF_REMOTE] = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>; <font color="#B22222">/* Our put-protocol always needs a nvshmem alloc'ed recv buffer */</font>
+<a name="line688">688: </a>    }
+<a name="line689">689: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (sfop == PETSCSF_REDUCE) { <font color="#B22222">/* Move data from leafbuf to rootbuf */</font>
+<a name="line690">690: </a>    <font color="#4169E1">if</font> (sf-&gt;use_nvshmem_get) {
+<a name="line691">691: </a>      rootdirect[PETSCSF_REMOTE] = (PetscMemTypeNVSHMEM(rootmtype) &amp;&amp; bas-&gt;rootcontig[PETSCSF_REMOTE] &amp;&amp; op == MPI_REPLACE) ? <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line692">692: </a>      leafdirect[PETSCSF_REMOTE] = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line693">693: </a>    } <font color="#4169E1">else</font> {
+<a name="line694">694: </a>      rootdirect[PETSCSF_REMOTE] = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line695">695: </a>      leafdirect[PETSCSF_REMOTE] = (PetscMemTypeNVSHMEM(leafmtype) &amp;&amp; sf-&gt;leafcontig[PETSCSF_REMOTE]) ? <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> : <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line696">696: </a>    }
+<a name="line697">697: </a>  } <font color="#4169E1">else</font> {                                    <font color="#B22222">/* PETSCSF_FETCH */</font>
+<a name="line698">698: </a>    rootdirect[PETSCSF_REMOTE] = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>; <font color="#B22222">/* FETCH always need a separate rootbuf */</font>
+<a name="line699">699: </a>    leafdirect[PETSCSF_REMOTE] = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>; <font color="#B22222">/* We also force allocating a separate leafbuf so that leafdata and leafupdate can share mpi requests */</font>
+<a name="line700">700: </a>  }
+
+<a name="line702">702: </a>  <font color="#B22222">/* Look for free nvshmem links in cache */</font>
+<a name="line703">703: </a>  <font color="#4169E1">for</font> (p = &amp;bas-&gt;avail; (link = *p); p = &amp;link-&gt;next) {
+<a name="line704">704: </a>    <font color="#4169E1">if</font> (link-&gt;use_nvshmem) {
+<a name="line705">705: </a>      MPIPetsc_Type_compare(unit, link-&gt;unit, &amp;match);
+<a name="line706">706: </a>      <font color="#4169E1">if</font> (match) {
+<a name="line707">707: </a>        *p = link-&gt;next; <font color="#B22222">/* Remove from available list */</font>
+<a name="line708">708: </a>        <font color="#4169E1">goto</font> found;
+<a name="line709">709: </a>      }
+<a name="line710">710: </a>    }
+<a name="line711">711: </a>  }
+<a name="line712">712: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;link);
+<a name="line713">713: </a>  PetscSFLinkSetUp_Host(sf, link, unit);                                          <font color="#B22222">/* Compute link-&gt;unitbytes, dup link-&gt;unit etc. */</font>
+<a name="line714">714: </a>  <font color="#4169E1">if</font> (sf-&gt;backend == PETSCSF_BACKEND_CUDA) PetscSFLinkSetUp_CUDA(sf, link, unit); <font color="#B22222">/* Setup pack routines, streams etc */</font>
+<a name="line715">715: </a><font color="#A020F0">#if defined(PETSC_HAVE_KOKKOS)</font>
+<a name="line716">716: </a>  <font color="#4169E1">else</font> <font color="#4169E1">if</font> (sf-&gt;backend == PETSCSF_BACKEND_KOKKOS) PetscSFLinkSetUp_Kokkos(sf, link, unit);
+<a name="line717">717: </a><font color="#A020F0">#endif</font>
+
+<a name="line719">719: </a>  link-&gt;rootdirect[PETSCSF_LOCAL] = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>; <font color="#B22222">/* For the local part we directly use root/leafdata */</font>
+<a name="line720">720: </a>  link-&gt;leafdirect[PETSCSF_LOCAL] = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+
+<a name="line722">722: </a>  <font color="#B22222">/* Init signals to zero */</font>
+<a name="line723">723: </a>  <font color="#4169E1">if</font> (!link-&gt;rootSendSig) PetscNvshmemCalloc(bas-&gt;nRemoteLeafRanksMax * <font color="#4169E1">sizeof</font>(uint64_t), (void **)&amp;link-&gt;rootSendSig);
+<a name="line724">724: </a>  <font color="#4169E1">if</font> (!link-&gt;rootRecvSig) PetscNvshmemCalloc(bas-&gt;nRemoteLeafRanksMax * <font color="#4169E1">sizeof</font>(uint64_t), (void **)&amp;link-&gt;rootRecvSig);
+<a name="line725">725: </a>  <font color="#4169E1">if</font> (!link-&gt;leafSendSig) PetscNvshmemCalloc(sf-&gt;nRemoteRootRanksMax * <font color="#4169E1">sizeof</font>(uint64_t), (void **)&amp;link-&gt;leafSendSig);
+<a name="line726">726: </a>  <font color="#4169E1">if</font> (!link-&gt;leafRecvSig) PetscNvshmemCalloc(sf-&gt;nRemoteRootRanksMax * <font color="#4169E1">sizeof</font>(uint64_t), (void **)&amp;link-&gt;leafRecvSig);
+
+<a name="line728">728: </a>  link-&gt;use_nvshmem = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line729">729: </a>  link-&gt;rootmtype   = <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>; <font color="#B22222">/* Only need 0/1-based mtype from now on */</font>
+<a name="line730">730: </a>  link-&gt;leafmtype   = <a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>;
+<a name="line731">731: </a>  <font color="#B22222">/* Overwrite some function pointers set by PetscSFLinkSetUp_CUDA */</font>
+<a name="line732">732: </a>  link-&gt;Destroy = PetscSFLinkDestroy_NVSHMEM;
+<a name="line733">733: </a>  <font color="#4169E1">if</font> (sf-&gt;use_nvshmem_get) { <font color="#B22222">/* get-based protocol */</font>
+<a name="line734">734: </a>    link-&gt;PrePack             = PetscSFLinkWaitSignalsOfCompletionOfGettingData_NVSHMEM;
+<a name="line735">735: </a>    link-&gt;StartCommunication  = PetscSFLinkGetDataBegin_NVSHMEM;
+<a name="line736">736: </a>    link-&gt;FinishCommunication = PetscSFLinkGetDataEnd_NVSHMEM;
+<a name="line737">737: </a>  } <font color="#4169E1">else</font> { <font color="#B22222">/* put-based protocol */</font>
+<a name="line738">738: </a>    link-&gt;StartCommunication  = PetscSFLinkPutDataBegin_NVSHMEM;
+<a name="line739">739: </a>    link-&gt;FinishCommunication = PetscSFLinkPutDataEnd_NVSHMEM;
+<a name="line740">740: </a>    link-&gt;PostUnpack          = PetscSFLinkSendSignalsToAllowPuttingData_NVSHMEM;
+<a name="line741">741: </a>  }
+
+<a name="line743">743: </a>  cudaDeviceGetStreamPriorityRange(NULL, &amp;greatestPriority);
+<a name="line744">744: </a>  cudaStreamCreateWithPriority(&amp;link-&gt;remoteCommStream, cudaStreamNonBlocking, greatestPriority);
+
+<a name="line746">746: </a>  cudaEventCreateWithFlags(&amp;link-&gt;dataReady, cudaEventDisableTiming);
+<a name="line747">747: </a>  cudaEventCreateWithFlags(&amp;link-&gt;endRemoteComm, cudaEventDisableTiming);
+
+<a name="line749">749: </a><strong><font color="#FF0000">found:</font></strong>
+<a name="line750">750: </a>  <font color="#4169E1">if</font> (rootdirect[PETSCSF_REMOTE]) {
+<a name="line751">751: </a>    link-&gt;rootbuf[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>] = (char *)rootdata + bas-&gt;rootstart[PETSCSF_REMOTE] * link-&gt;unitbytes;
+<a name="line752">752: </a>  } <font color="#4169E1">else</font> {
+<a name="line753">753: </a>    <font color="#4169E1">if</font> (!link-&gt;rootbuf_alloc[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>]) PetscNvshmemMalloc(bas-&gt;rootbuflen_rmax * link-&gt;unitbytes, (void **)&amp;link-&gt;rootbuf_alloc[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>]);
+<a name="line754">754: </a>    link-&gt;rootbuf[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>] = link-&gt;rootbuf_alloc[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>];
+<a name="line755">755: </a>  }
+
+<a name="line757">757: </a>  <font color="#4169E1">if</font> (leafdirect[PETSCSF_REMOTE]) {
+<a name="line758">758: </a>    link-&gt;leafbuf[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>] = (char *)leafdata + sf-&gt;leafstart[PETSCSF_REMOTE] * link-&gt;unitbytes;
+<a name="line759">759: </a>  } <font color="#4169E1">else</font> {
+<a name="line760">760: </a>    <font color="#4169E1">if</font> (!link-&gt;leafbuf_alloc[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>]) PetscNvshmemMalloc(sf-&gt;leafbuflen_rmax * link-&gt;unitbytes, (void **)&amp;link-&gt;leafbuf_alloc[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>]);
+<a name="line761">761: </a>    link-&gt;leafbuf[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>] = link-&gt;leafbuf_alloc[PETSCSF_REMOTE][<a href="../../../../../../docs/manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>];
+<a name="line762">762: </a>  }
+
+<a name="line764">764: </a>  link-&gt;rootdirect[PETSCSF_REMOTE] = rootdirect[PETSCSF_REMOTE];
+<a name="line765">765: </a>  link-&gt;leafdirect[PETSCSF_REMOTE] = leafdirect[PETSCSF_REMOTE];
+<a name="line766">766: </a>  link-&gt;rootdata                   = rootdata; <font color="#B22222">/* root/leafdata are keys to look up links in PetscSFXxxEnd */</font>
+<a name="line767">767: </a>  link-&gt;leafdata                   = leafdata;
+<a name="line768">768: </a>  link-&gt;next                       = bas-&gt;inuse;
+<a name="line769">769: </a>  bas-&gt;inuse                       = link;
+<a name="line770">770: </a>  *mylink                          = link;
+<a name="line771">771: </a>  <font color="#4169E1">return</font> 0;
+<a name="line772">772: </a>}
+
+<a name="line774">774: </a><font color="#A020F0">#if defined(PETSC_USE_REAL_SINGLE)</font>
+<a name="line775">775: </a><strong><font color="#4169E1"><a name="PetscNvshmemSum"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscNvshmemSum(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count, float *dst, const float *src)</font></strong>
+<a name="line776">776: </a>{
+<a name="line777">777: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> num; <font color="#B22222">/* Assume nvshmem's int is MPI's int */</font>
+
+<a name="line779">779: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIIntCast.html">PetscMPIIntCast</a>(count, &amp;num);
+<a name="line780">780: </a>  nvshmemx_float_sum_reduce_on_stream(NVSHMEM_TEAM_WORLD, dst, src, num, PetscDefaultCudaStream);
+<a name="line781">781: </a>  <font color="#4169E1">return</font> 0;
+<a name="line782">782: </a>}
+
+<a name="line784">784: </a><strong><font color="#4169E1"><a name="PetscNvshmemMax"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscNvshmemMax(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count, float *dst, const float *src)</font></strong>
+<a name="line785">785: </a>{
+<a name="line786">786: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> num;
+
+<a name="line788">788: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIIntCast.html">PetscMPIIntCast</a>(count, &amp;num);
+<a name="line789">789: </a>  nvshmemx_float_max_reduce_on_stream(NVSHMEM_TEAM_WORLD, dst, src, num, PetscDefaultCudaStream);
+<a name="line790">790: </a>  <font color="#4169E1">return</font> 0;
+<a name="line791">791: </a>}
+<a name="line792">792: </a><font color="#A020F0">#elif defined(PETSC_USE_REAL_DOUBLE)</font>
+<a name="line793">793: </a><strong><font color="#4169E1"><a name="PetscNvshmemSum"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscNvshmemSum(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count, double *dst, const double *src)</font></strong>
+<a name="line794">794: </a>{
+<a name="line795">795: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> num;
+
+<a name="line797">797: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIIntCast.html">PetscMPIIntCast</a>(count, &amp;num);
+<a name="line798">798: </a>  nvshmemx_double_sum_reduce_on_stream(NVSHMEM_TEAM_WORLD, dst, src, num, PetscDefaultCudaStream);
+<a name="line799">799: </a>  <font color="#4169E1">return</font> 0;
+<a name="line800">800: </a>}
+
+<a name="line802">802: </a><strong><font color="#4169E1"><a name="PetscNvshmemMax"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscNvshmemMax(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> count, double *dst, const double *src)</font></strong>
+<a name="line803">803: </a>{
+<a name="line804">804: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> num;
+
+<a name="line806">806: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMPIIntCast.html">PetscMPIIntCast</a>(count, &amp;num);
+<a name="line807">807: </a>  nvshmemx_double_max_reduce_on_stream(NVSHMEM_TEAM_WORLD, dst, src, num, PetscDefaultCudaStream);
+<a name="line808">808: </a>  <font color="#4169E1">return</font> 0;
+<a name="line809">809: </a>}
+<a name="line810">810: </a><font color="#A020F0">#endif</font>
+</pre>
+</body>
+
+</html>

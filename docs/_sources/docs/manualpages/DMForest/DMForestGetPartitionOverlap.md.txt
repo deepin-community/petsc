@@ -1,0 +1,43 @@
+# DMForestGetPartitionOverlap
+Get the amount of cell-overlap present in parallel partitions of a forest, with values > 0 indicating subdomains that are expanded by that many iterations of adding adjacent cells 
+## Synopsis
+```
+#include "petscdmforest.h" 
+#include "petscdm.h" 
+#include "petscdmlabel.h" 
+PetscErrorCode DMForestGetPartitionOverlap(DM dm, PetscInt *overlap)
+```
+Not collective
+
+
+## Input Parameter
+
+- ***dm -*** the forest
+
+
+
+## Output Parameter
+
+- ***overlap -*** default 0
+
+
+
+
+
+## See Also
+ `DMForestGetPartitionOverlap()`, `DMForestSetAdjacencyDimension()`, `DMForestSetAdjacencyCodimension()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/forest/forest.c.html#DMForestGetPartitionOverlap">src/dm/impls/forest/forest.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/forest/forest.c)
+
+
+[Index of all DMForest routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

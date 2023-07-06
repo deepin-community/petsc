@@ -1,0 +1,47 @@
+# DMPlexCopyCoordinates
+Copy coordinates from one mesh to another with the same vertices 
+## Synopsis
+```
+#include "petscdmplex.h"   
+PetscErrorCode DMPlexCopyCoordinates(DM dmA, DM dmB)
+```
+Collective on dmA
+
+
+## Input Parameter
+
+- ***dmA -*** The DMPlex object with initial coordinates
+
+
+
+## Output Parameter
+
+- ***dmB -*** The DMPlex object with copied coordinates
+
+
+
+
+Note: This is typically used when adding pieces other than vertices to a mesh
+
+
+## See Also
+ `DMCopyLabels()`, `DMGetCoordinates()`, `DMGetCoordinatesLocal()`, `DMGetCoordinateDM()`, `DMGetCoordinateSection()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/plexinterpolate.c.html#DMPlexCopyCoordinates">src/dm/impls/plex/plexinterpolate.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/tutorials/ex3f90.F90.html">src/dm/impls/plex/tutorials/ex3f90.F90.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/tutorials/ex3.c.html">src/tao/tutorials/ex3.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/plex/plexinterpolate.c)
+
+
+[Index of all DMPlex routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,48 @@
+# DMSwarmViewXDMF
+Write DMSwarm fields to an XDMF3 file 
+## Synopsis
+```
+PETSC_EXTERN PetscErrorCode DMSwarmViewXDMF(DM dm, const char filename[])
+```
+Collective on dm
+
+
+## Input parameters
+
+- ***dm -*** the DMSwarm
+- ***filename -*** the file name of the XDMF file (must have the extension .xmf)
+
+
+
+
+
+## Notes
+Only fields user registered with data type PETSC_DOUBLE or PETSC_INT will be written into the file
+
+
+## Developer Notes
+This should be removed and replaced with the standard use of PetscViewer
+
+
+## See Also
+ `DMSwarmViewFieldsXDMF()`
+
+## Level
+beginner
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/swarm/swarmpic_view.c.html#DMSwarmViewXDMF">src/dm/impls/swarm/swarmpic_view.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex20.c.html">src/dm/tutorials/ex20.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/tutorials/ex21.c.html">src/dm/tutorials/ex21.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex70.c.html">src/ksp/ksp/tutorials/ex70.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/swarm/swarmpic_view.c)
+
+
+[Index of all DMSwarm routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

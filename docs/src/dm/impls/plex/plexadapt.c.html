@@ -1,0 +1,333 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/plex/plexadapt.c">Actual source code: plexadapt.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:23+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petsc/private/dmpleximpl.h.html">&lt;petsc/private/dmpleximpl.h&gt;</A>
+
+<a name="line3">  3: </a><strong><font color="#4169E1"><a name="DMPlexLabelToVolumeConstraint"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexLabelToVolumeConstraint(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> adaptLabel, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cStart, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cEnd, <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> refRatio, <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> maxVolumes[])</font></strong>
+<a name="line4">  4: </a>{
+<a name="line5">  5: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dim, c;
+
+<a name="line7">  7: </a>  <a href="../../../../docs/manualpages/DM/DMGetDimension.html">DMGetDimension</a>(dm, &amp;dim);
+<a name="line8">  8: </a>  refRatio = refRatio == <a href="../../../../docs/manualpages/Sys/PETSC_DEFAULT.html">PETSC_DEFAULT</a> ? (<a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>)((<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)1 &lt;&lt; dim) : refRatio;
+<a name="line9">  9: </a>  <font color="#4169E1">for</font> (c = cStart; c &lt; cEnd; c++) {
+<a name="line10"> 10: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> vol;
+<a name="line11"> 11: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  closureSize = 0, cl;
+<a name="line12"> 12: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *closure     = NULL;
+<a name="line13"> 13: </a>    <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> anyRefine   = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line14"> 14: </a>    <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> anyCoarsen  = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line15"> 15: </a>    <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> anyKeep     = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line17"> 17: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexComputeCellGeometryFVM.html">DMPlexComputeCellGeometryFVM</a>(dm, c, &amp;vol, NULL, NULL);
+<a name="line18"> 18: </a>    maxVolumes[c - cStart] = vol;
+<a name="line19"> 19: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetTransitiveClosure.html">DMPlexGetTransitiveClosure</a>(dm, c, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, &amp;closureSize, &amp;closure);
+<a name="line20"> 20: </a>    <font color="#4169E1">for</font> (cl = 0; cl &lt; closureSize * 2; cl += 2) {
+<a name="line21"> 21: </a>      const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> point = closure[cl];
+<a name="line22"> 22: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       refFlag;
+
+<a name="line24"> 24: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(adaptLabel, point, &amp;refFlag);
+<a name="line25"> 25: </a>      <font color="#4169E1">switch</font> (refFlag) {
+<a name="line26"> 26: </a>      <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/DM/DMAdaptFlag.html">DM_ADAPT_REFINE</a>:
+<a name="line27"> 27: </a>        anyRefine = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line28"> 28: </a>        <font color="#4169E1">break</font>;
+<a name="line29"> 29: </a>      <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/DM/DMAdaptFlag.html">DM_ADAPT_COARSEN</a>:
+<a name="line30"> 30: </a>        anyCoarsen = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line31"> 31: </a>        <font color="#4169E1">break</font>;
+<a name="line32"> 32: </a>      <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/DM/DMAdaptFlag.html">DM_ADAPT_KEEP</a>:
+<a name="line33"> 33: </a>        anyKeep = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line34"> 34: </a>        <font color="#4169E1">break</font>;
+<a name="line35"> 35: </a>      <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/DM/DMAdaptFlag.html">DM_ADAPT_DETERMINE</a>:
+<a name="line36"> 36: </a>        <font color="#4169E1">break</font>;
+<a name="line37"> 37: </a><strong><font color="#FF0000">      default:</font></strong>
+<a name="line38"> 38: </a>        <a href="../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"DMPlex does not support refinement flag %"</font> PetscInt_FMT, refFlag);
+<a name="line39"> 39: </a>      }
+<a name="line40"> 40: </a>      <font color="#4169E1">if</font> (anyRefine) <font color="#4169E1">break</font>;
+<a name="line41"> 41: </a>    }
+<a name="line42"> 42: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexRestoreTransitiveClosure.html">DMPlexRestoreTransitiveClosure</a>(dm, c, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, &amp;closureSize, &amp;closure);
+<a name="line43"> 43: </a>    <font color="#4169E1">if</font> (anyRefine) {
+<a name="line44"> 44: </a>      maxVolumes[c - cStart] = vol / refRatio;
+<a name="line45"> 45: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (anyKeep) {
+<a name="line46"> 46: </a>      maxVolumes[c - cStart] = vol;
+<a name="line47"> 47: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (anyCoarsen) {
+<a name="line48"> 48: </a>      maxVolumes[c - cStart] = vol * refRatio;
+<a name="line49"> 49: </a>    }
+<a name="line50"> 50: </a>  }
+<a name="line51"> 51: </a>  <font color="#4169E1">return</font> 0;
+<a name="line52"> 52: </a>}
+
+<a name="line54"> 54: </a><strong><font color="#4169E1"><a name="DMPlexLabelToMetricConstraint"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexLabelToMetricConstraint(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> adaptLabel, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cStart, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cEnd, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> vStart, <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> vEnd, <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> refRatio, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *metricVec)</font></strong>
+<a name="line55"> 55: </a>{
+<a name="line56"> 56: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>              udm, coordDM;
+<a name="line57"> 57: </a>  <a href="../../../../docs/manualpages/PetscSection/PetscSection.html">PetscSection</a>    coordSection;
+<a name="line58"> 58: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>             coordinates, mb, mx;
+<a name="line59"> 59: </a>  <a href="../../../../docs/manualpages/Mat/Mat.html">Mat</a>             A;
+<a name="line60"> 60: </a>  <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>    *metric, *eqns;
+<a name="line61"> 61: </a>  const <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> coarseRatio = refRatio == <a href="../../../../docs/manualpages/Sys/PETSC_DEFAULT.html">PETSC_DEFAULT</a> ? <a href="../../../../docs/manualpages/Sys/PetscSqr.html">PetscSqr</a>(0.5) : 1 / refRatio;
+<a name="line62"> 62: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        dim, Nv, Neq, c, v;
+
+<a name="line64"> 64: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexUninterpolate.html">DMPlexUninterpolate</a>(dm, &amp;udm);
+<a name="line65"> 65: </a>  <a href="../../../../docs/manualpages/DM/DMGetDimension.html">DMGetDimension</a>(dm, &amp;dim);
+<a name="line66"> 66: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinateDM.html">DMGetCoordinateDM</a>(dm, &amp;coordDM);
+<a name="line67"> 67: </a>  <a href="../../../../docs/manualpages/DM/DMGetLocalSection.html">DMGetLocalSection</a>(coordDM, &amp;coordSection);
+<a name="line68"> 68: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinatesLocal.html">DMGetCoordinatesLocal</a>(dm, &amp;coordinates);
+<a name="line69"> 69: </a>  Nv = vEnd - vStart;
+<a name="line70"> 70: </a>  <a href="../../../../docs/manualpages/Vec/VecCreateSeq.html">VecCreateSeq</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, Nv * <a href="../../../../docs/manualpages/Sys/PetscSqr.html">PetscSqr</a>(dim), metricVec);
+<a name="line71"> 71: </a>  <a href="../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(*metricVec, &amp;metric);
+<a name="line72"> 72: </a>  Neq = (dim * (dim + 1)) / 2;
+<a name="line73"> 73: </a>  <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(<a href="../../../../docs/manualpages/Sys/PetscSqr.html">PetscSqr</a>(Neq), &amp;eqns);
+<a name="line74"> 74: </a>  <a href="../../../../docs/manualpages/Mat/MatCreateSeqDense.html">MatCreateSeqDense</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, Neq, Neq, eqns, &amp;A);
+<a name="line75"> 75: </a>  <a href="../../../../docs/manualpages/Mat/MatCreateVecs.html">MatCreateVecs</a>(A, &amp;mx, &amp;mb);
+<a name="line76"> 76: </a>  <a href="../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(mb, 1.0);
+<a name="line77"> 77: </a>  <font color="#4169E1">for</font> (c = cStart; c &lt; cEnd; ++c) {
+<a name="line78"> 78: </a>    const <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *sol;
+<a name="line79"> 79: </a>    <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *cellCoords = NULL;
+<a name="line80"> 80: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>          e[3], vol;
+<a name="line81"> 81: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *cone;
+<a name="line82"> 82: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           coneSize, cl, i, j, d, r;
+
+<a name="line84"> 84: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexVecGetClosure.html">DMPlexVecGetClosure</a>(dm, coordSection, coordinates, c, NULL, &amp;cellCoords);
+<a name="line85"> 85: </a>    <font color="#B22222">/* Only works for simplices */</font>
+<a name="line86"> 86: </a>    <font color="#4169E1">for</font> (i = 0, r = 0; i &lt; dim + 1; ++i) {
+<a name="line87"> 87: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; i; ++j, ++r) {
+<a name="line88"> 88: </a>        <font color="#4169E1">for</font> (d = 0; d &lt; dim; ++d) e[d] = <a href="../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(cellCoords[i * dim + d] - cellCoords[j * dim + d]);
+<a name="line89"> 89: </a>        <font color="#B22222">/* FORTRAN ORDERING */</font>
+<a name="line90"> 90: </a>        <font color="#4169E1">switch</font> (dim) {
+<a name="line91"> 91: </a>        <font color="#4169E1">case</font> 2:
+<a name="line92"> 92: </a>          eqns[0 * Neq + r] = <a href="../../../../docs/manualpages/Sys/PetscSqr.html">PetscSqr</a>(e[0]);
+<a name="line93"> 93: </a>          eqns[1 * Neq + r] = 2.0 * e[0] * e[1];
+<a name="line94"> 94: </a>          eqns[2 * Neq + r] = <a href="../../../../docs/manualpages/Sys/PetscSqr.html">PetscSqr</a>(e[1]);
+<a name="line95"> 95: </a>          <font color="#4169E1">break</font>;
+<a name="line96"> 96: </a>        <font color="#4169E1">case</font> 3:
+<a name="line97"> 97: </a>          eqns[0 * Neq + r] = <a href="../../../../docs/manualpages/Sys/PetscSqr.html">PetscSqr</a>(e[0]);
+<a name="line98"> 98: </a>          eqns[1 * Neq + r] = 2.0 * e[0] * e[1];
+<a name="line99"> 99: </a>          eqns[2 * Neq + r] = 2.0 * e[0] * e[2];
+<a name="line100">100: </a>          eqns[3 * Neq + r] = <a href="../../../../docs/manualpages/Sys/PetscSqr.html">PetscSqr</a>(e[1]);
+<a name="line101">101: </a>          eqns[4 * Neq + r] = 2.0 * e[1] * e[2];
+<a name="line102">102: </a>          eqns[5 * Neq + r] = <a href="../../../../docs/manualpages/Sys/PetscSqr.html">PetscSqr</a>(e[2]);
+<a name="line103">103: </a>          <font color="#4169E1">break</font>;
+<a name="line104">104: </a>        }
+<a name="line105">105: </a>      }
+<a name="line106">106: </a>    }
+<a name="line107">107: </a>    <a href="../../../../docs/manualpages/Mat/MatSetUnfactored.html">MatSetUnfactored</a>(A);
+<a name="line108">108: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexVecRestoreClosure.html">DMPlexVecRestoreClosure</a>(dm, coordSection, coordinates, c, NULL, &amp;cellCoords);
+<a name="line109">109: </a>    <a href="../../../../docs/manualpages/Mat/MatLUFactor.html">MatLUFactor</a>(A, NULL, NULL, NULL);
+<a name="line110">110: </a>    <a href="../../../../docs/manualpages/Mat/MatSolve.html">MatSolve</a>(A, mb, mx);
+<a name="line111">111: </a>    <a href="../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(mx, &amp;sol);
+<a name="line112">112: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexComputeCellGeometryFVM.html">DMPlexComputeCellGeometryFVM</a>(dm, c, &amp;vol, NULL, NULL);
+<a name="line113">113: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetCone.html">DMPlexGetCone</a>(udm, c, &amp;cone);
+<a name="line114">114: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetConeSize.html">DMPlexGetConeSize</a>(udm, c, &amp;coneSize);
+<a name="line115">115: </a>    <font color="#4169E1">for</font> (cl = 0; cl &lt; coneSize; ++cl) {
+<a name="line116">116: </a>      const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> v = cone[cl] - vStart;
+
+<a name="line118">118: </a>      <font color="#4169E1">if</font> (dim == 2) {
+<a name="line119">119: </a>        metric[v * 4 + 0] += vol * coarseRatio * sol[0];
+<a name="line120">120: </a>        metric[v * 4 + 1] += vol * coarseRatio * sol[1];
+<a name="line121">121: </a>        metric[v * 4 + 2] += vol * coarseRatio * sol[1];
+<a name="line122">122: </a>        metric[v * 4 + 3] += vol * coarseRatio * sol[2];
+<a name="line123">123: </a>      } <font color="#4169E1">else</font> {
+<a name="line124">124: </a>        metric[v * 9 + 0] += vol * coarseRatio * sol[0];
+<a name="line125">125: </a>        metric[v * 9 + 1] += vol * coarseRatio * sol[1];
+<a name="line126">126: </a>        metric[v * 9 + 3] += vol * coarseRatio * sol[1];
+<a name="line127">127: </a>        metric[v * 9 + 2] += vol * coarseRatio * sol[2];
+<a name="line128">128: </a>        metric[v * 9 + 6] += vol * coarseRatio * sol[2];
+<a name="line129">129: </a>        metric[v * 9 + 4] += vol * coarseRatio * sol[3];
+<a name="line130">130: </a>        metric[v * 9 + 5] += vol * coarseRatio * sol[4];
+<a name="line131">131: </a>        metric[v * 9 + 7] += vol * coarseRatio * sol[4];
+<a name="line132">132: </a>        metric[v * 9 + 8] += vol * coarseRatio * sol[5];
+<a name="line133">133: </a>      }
+<a name="line134">134: </a>    }
+<a name="line135">135: </a>    <a href="../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(mx, &amp;sol);
+<a name="line136">136: </a>  }
+<a name="line137">137: </a>  <font color="#4169E1">for</font> (v = 0; v &lt; Nv; ++v) {
+<a name="line138">138: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *support;
+<a name="line139">139: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        supportSize, s;
+<a name="line140">140: </a>    <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>       vol, totVol = 0.0;
+
+<a name="line142">142: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetSupport.html">DMPlexGetSupport</a>(udm, v + vStart, &amp;support);
+<a name="line143">143: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetSupportSize.html">DMPlexGetSupportSize</a>(udm, v + vStart, &amp;supportSize);
+<a name="line144">144: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; supportSize; ++s) {
+<a name="line145">145: </a>      <a href="../../../../docs/manualpages/DMPlex/DMPlexComputeCellGeometryFVM.html">DMPlexComputeCellGeometryFVM</a>(dm, support[s], &amp;vol, NULL, NULL);
+<a name="line146">146: </a>      totVol += vol;
+<a name="line147">147: </a>    }
+<a name="line148">148: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; <a href="../../../../docs/manualpages/Sys/PetscSqr.html">PetscSqr</a>(dim); ++s) metric[v * <a href="../../../../docs/manualpages/Sys/PetscSqr.html">PetscSqr</a>(dim) + s] /= totVol;
+<a name="line149">149: </a>  }
+<a name="line150">150: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(eqns);
+<a name="line151">151: </a>  <a href="../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(*metricVec, &amp;metric);
+<a name="line152">152: </a>  <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;mx);
+<a name="line153">153: </a>  <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;mb);
+<a name="line154">154: </a>  <a href="../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;A);
+<a name="line155">155: </a>  <a href="../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;udm);
+<a name="line156">156: </a>  <font color="#4169E1">return</font> 0;
+<a name="line157">157: </a>}
+
+<a name="line159">159: </a><font color="#B22222">/*</font>
+<a name="line160">160: </a><font color="#B22222">   Contains the list of registered DMPlexGenerators routines</font>
+<a name="line161">161: </a><font color="#B22222">*/</font>
+<a name="line162">162: </a><strong><font color="#4169E1"><a name="DMPlexRefine_Internal"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexRefine_Internal(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, PETSC_UNUSED <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> metric, <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> adaptLabel, PETSC_UNUSED <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> rgLabel, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *dmRefined)</font></strong>
+<a name="line163">163: </a>{
+<a name="line164">164: </a>  DMGeneratorFunctionList fl;
+<a name="line165">165: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*refine)(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *);
+<a name="line166">166: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*adapt)(<a href="../../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>, <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *);
+<a name="line167">167: </a>  <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*refinementFunc)(const <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>[], <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *);
+<a name="line168">168: </a>  char       genname[PETSC_MAX_PATH_LEN], *name = NULL;
+<a name="line169">169: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>  refinementLimit;
+<a name="line170">170: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *maxVolumes;
+<a name="line171">171: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   dim, cStart, cEnd, c;
+<a name="line172">172: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>  flg, flg2, localized;
+
+<a name="line174">174: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinatesLocalized.html">DMGetCoordinatesLocalized</a>(dm, &amp;localized);
+<a name="line175">175: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetRefinementLimit.html">DMPlexGetRefinementLimit</a>(dm, &amp;refinementLimit);
+<a name="line176">176: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetRefinementFunction.html">DMPlexGetRefinementFunction</a>(dm, &amp;refinementFunc);
+<a name="line177">177: </a>  <font color="#4169E1">if</font> (refinementLimit == 0.0 &amp;&amp; !refinementFunc &amp;&amp; !adaptLabel) <font color="#4169E1">return</font> 0;
+<a name="line178">178: </a>  <a href="../../../../docs/manualpages/DM/DMGetDimension.html">DMGetDimension</a>(dm, &amp;dim);
+<a name="line179">179: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetHeightStratum.html">DMPlexGetHeightStratum</a>(dm, 0, &amp;cStart, &amp;cEnd);
+<a name="line180">180: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm)-&gt;options, ((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm)-&gt;prefix, <font color="#666666">"-dm_adaptor"</font>, genname, <font color="#4169E1">sizeof</font>(genname), &amp;flg);
+<a name="line181">181: </a>  <font color="#4169E1">if</font> (flg) name = genname;
+<a name="line182">182: </a>  <font color="#4169E1">else</font> {
+<a name="line183">183: </a>    <a href="../../../../docs/manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm)-&gt;options, ((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm)-&gt;prefix, <font color="#666666">"-dm_generator"</font>, genname, <font color="#4169E1">sizeof</font>(genname), &amp;flg2);
+<a name="line184">184: </a>    <font color="#4169E1">if</font> (flg2) name = genname;
+<a name="line185">185: </a>  }
+
+<a name="line187">187: </a>  fl = DMGenerateList;
+<a name="line188">188: </a>  <font color="#4169E1">if</font> (name) {
+<a name="line189">189: </a>    <font color="#4169E1">while</font> (fl) {
+<a name="line190">190: </a>      <a href="../../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(fl-&gt;name, name, &amp;flg);
+<a name="line191">191: </a>      <font color="#4169E1">if</font> (flg) {
+<a name="line192">192: </a>        refine = fl-&gt;refine;
+<a name="line193">193: </a>        adapt  = fl-&gt;adapt;
+<a name="line194">194: </a>        <font color="#4169E1">goto</font> gotit;
+<a name="line195">195: </a>      }
+<a name="line196">196: </a>      fl = fl-&gt;next;
+<a name="line197">197: </a>    }
+<a name="line198">198: </a>    <a href="../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"Grid refiner %s not registered"</font>, name);
+<a name="line199">199: </a>  } <font color="#4169E1">else</font> {
+<a name="line200">200: </a>    <font color="#4169E1">while</font> (fl) {
+<a name="line201">201: </a>      <font color="#4169E1">if</font> (fl-&gt;dim &lt; 0 || dim - 1 == fl-&gt;dim) {
+<a name="line202">202: </a>        refine = fl-&gt;refine;
+<a name="line203">203: </a>        adapt  = fl-&gt;adapt;
+<a name="line204">204: </a>        <font color="#4169E1">goto</font> gotit;
+<a name="line205">205: </a>      }
+<a name="line206">206: </a>      fl = fl-&gt;next;
+<a name="line207">207: </a>    }
+<a name="line208">208: </a>    <a href="../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_ARG_OUTOFRANGE, <font color="#666666">"No grid refiner of dimension %"</font> PetscInt_FMT <font color="#666666">" registered"</font>, dim);
+<a name="line209">209: </a>  }
+
+<a name="line211">211: </a><strong><font color="#FF0000">gotit:</font></strong>
+<a name="line212">212: </a>  <font color="#4169E1">switch</font> (dim) {
+<a name="line213">213: </a>  <font color="#4169E1">case</font> 1:
+<a name="line214">214: </a>  <font color="#4169E1">case</font> 2:
+<a name="line215">215: </a>  <font color="#4169E1">case</font> 3:
+<a name="line216">216: </a>    <font color="#4169E1">if</font> (adapt) {
+<a name="line217">217: </a>      (*adapt)(dm, NULL, adaptLabel, NULL, dmRefined);
+<a name="line218">218: </a>    } <font color="#4169E1">else</font> {
+<a name="line219">219: </a>      <a href="../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(cEnd - cStart, &amp;maxVolumes);
+<a name="line220">220: </a>      <font color="#4169E1">if</font> (adaptLabel) {
+<a name="line221">221: </a>        DMPlexLabelToVolumeConstraint(dm, adaptLabel, cStart, cEnd, <a href="../../../../docs/manualpages/Sys/PETSC_DEFAULT.html">PETSC_DEFAULT</a>, maxVolumes);
+<a name="line222">222: </a>      } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (refinementFunc) {
+<a name="line223">223: </a>        <font color="#4169E1">for</font> (c = cStart; c &lt; cEnd; ++c) {
+<a name="line224">224: </a>          <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> vol, centroid[3];
+
+<a name="line226">226: </a>          <a href="../../../../docs/manualpages/DMPlex/DMPlexComputeCellGeometryFVM.html">DMPlexComputeCellGeometryFVM</a>(dm, c, &amp;vol, centroid, NULL);
+<a name="line227">227: </a>          (*refinementFunc)(centroid, &amp;maxVolumes[c - cStart]);
+<a name="line228">228: </a>        }
+<a name="line229">229: </a>      } <font color="#4169E1">else</font> {
+<a name="line230">230: </a>        <font color="#4169E1">for</font> (c = 0; c &lt; cEnd - cStart; ++c) maxVolumes[c] = refinementLimit;
+<a name="line231">231: </a>      }
+<a name="line232">232: </a>      (*refine)(dm, maxVolumes, dmRefined);
+<a name="line233">233: </a>      <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(maxVolumes);
+<a name="line234">234: </a>    }
+<a name="line235">235: </a>    <font color="#4169E1">break</font>;
+<a name="line236">236: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line237">237: </a>    <a href="../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), PETSC_ERR_SUP, <font color="#666666">"Mesh refinement in dimension %"</font> PetscInt_FMT <font color="#666666">" is not supported."</font>, dim);
+<a name="line238">238: </a>  }
+<a name="line239">239: </a>  <a href="../../../../docs/manualpages/DM/DMCopyDisc.html">DMCopyDisc</a>(dm, *dmRefined);
+<a name="line240">240: </a>  DMPlexCopy_Internal(dm, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, *dmRefined);
+<a name="line241">241: </a>  <font color="#4169E1">if</font> (localized) <a href="../../../../docs/manualpages/DM/DMLocalizeCoordinates.html">DMLocalizeCoordinates</a>(*dmRefined);
+<a name="line242">242: </a>  <font color="#4169E1">return</font> 0;
+<a name="line243">243: </a>}
+
+<a name="line245">245: </a><strong><font color="#4169E1"><a name="DMPlexCoarsen_Internal"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMPlexCoarsen_Internal(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, PETSC_UNUSED <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> metric, <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> adaptLabel, PETSC_UNUSED <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> rgLabel, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *dmCoarsened)</font></strong>
+<a name="line246">246: </a>{
+<a name="line247">247: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>       metricVec;
+<a name="line248">248: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  cStart, cEnd, vStart, vEnd;
+<a name="line249">249: </a>  <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>   bdLabel = NULL;
+<a name="line250">250: </a>  char      bdLabelName[PETSC_MAX_PATH_LEN], rgLabelName[PETSC_MAX_PATH_LEN];
+<a name="line251">251: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> localized, flg;
+
+<a name="line253">253: </a>  <a href="../../../../docs/manualpages/DM/DMGetCoordinatesLocalized.html">DMGetCoordinatesLocalized</a>(dm, &amp;localized);
+<a name="line254">254: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetHeightStratum.html">DMPlexGetHeightStratum</a>(dm, 0, &amp;cStart, &amp;cEnd);
+<a name="line255">255: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexGetDepthStratum.html">DMPlexGetDepthStratum</a>(dm, 0, &amp;vStart, &amp;vEnd);
+<a name="line256">256: </a>  DMPlexLabelToMetricConstraint(dm, adaptLabel, cStart, cEnd, vStart, vEnd, <a href="../../../../docs/manualpages/Sys/PETSC_DEFAULT.html">PETSC_DEFAULT</a>, &amp;metricVec);
+<a name="line257">257: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(NULL, dm-&gt;hdr.prefix, <font color="#666666">"-dm_plex_coarsen_bd_label"</font>, bdLabelName, <font color="#4169E1">sizeof</font>(bdLabelName), &amp;flg);
+<a name="line258">258: </a>  <font color="#4169E1">if</font> (flg) <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, bdLabelName, &amp;bdLabel);
+<a name="line259">259: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(NULL, dm-&gt;hdr.prefix, <font color="#666666">"-dm_plex_coarsen_rg_label"</font>, rgLabelName, <font color="#4169E1">sizeof</font>(rgLabelName), &amp;flg);
+<a name="line260">260: </a>  <font color="#4169E1">if</font> (flg) <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, rgLabelName, &amp;rgLabel);
+<a name="line261">261: </a>  <a href="../../../../docs/manualpages/DM/DMAdaptMetric.html">DMAdaptMetric</a>(dm, metricVec, bdLabel, rgLabel, dmCoarsened);
+<a name="line262">262: </a>  <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;metricVec);
+<a name="line263">263: </a>  <a href="../../../../docs/manualpages/DM/DMCopyDisc.html">DMCopyDisc</a>(dm, *dmCoarsened);
+<a name="line264">264: </a>  DMPlexCopy_Internal(dm, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, *dmCoarsened);
+<a name="line265">265: </a>  <font color="#4169E1">if</font> (localized) <a href="../../../../docs/manualpages/DM/DMLocalizeCoordinates.html">DMLocalizeCoordinates</a>(*dmCoarsened);
+<a name="line266">266: </a>  <font color="#4169E1">return</font> 0;
+<a name="line267">267: </a>}
+
+<a name="line269">269: </a><strong><font color="#4169E1"><a name="DMAdaptLabel_Plex"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMAdaptLabel_Plex(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, PETSC_UNUSED <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> metric, <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> adaptLabel, PETSC_UNUSED <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> rgLabel, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *dmAdapted)</font></strong>
+<a name="line270">270: </a>{
+<a name="line271">271: </a>  <a href="../../../../docs/manualpages/IS/IS.html">IS</a>              flagIS;
+<a name="line272">272: </a>  const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *flags;
+<a name="line273">273: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        defFlag, minFlag, maxFlag, numFlags, f;
+
+<a name="line275">275: </a>  <a href="../../../../docs/manualpages/DMLabel/DMLabelGetDefaultValue.html">DMLabelGetDefaultValue</a>(adaptLabel, &amp;defFlag);
+<a name="line276">276: </a>  minFlag = defFlag;
+<a name="line277">277: </a>  maxFlag = defFlag;
+<a name="line278">278: </a>  <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValueIS.html">DMLabelGetValueIS</a>(adaptLabel, &amp;flagIS);
+<a name="line279">279: </a>  <a href="../../../../docs/manualpages/IS/ISGetLocalSize.html">ISGetLocalSize</a>(flagIS, &amp;numFlags);
+<a name="line280">280: </a>  <a href="../../../../docs/manualpages/IS/ISGetIndices.html">ISGetIndices</a>(flagIS, &amp;flags);
+<a name="line281">281: </a>  <font color="#4169E1">for</font> (f = 0; f &lt; numFlags; ++f) {
+<a name="line282">282: </a>    const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> flag = flags[f];
+
+<a name="line284">284: </a>    minFlag = <a href="../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(minFlag, flag);
+<a name="line285">285: </a>    maxFlag = <a href="../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(maxFlag, flag);
+<a name="line286">286: </a>  }
+<a name="line287">287: </a>  <a href="../../../../docs/manualpages/IS/ISRestoreIndices.html">ISRestoreIndices</a>(flagIS, &amp;flags);
+<a name="line288">288: </a>  <a href="../../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;flagIS);
+<a name="line289">289: </a>  {
+<a name="line290">290: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> minMaxFlag[2], minMaxFlagGlobal[2];
+
+<a name="line292">292: </a>    minMaxFlag[0] = minFlag;
+<a name="line293">293: </a>    minMaxFlag[1] = -maxFlag;
+<a name="line294">294: </a>    <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allreduce.html#MPI_Allreduce">MPI_Allreduce</a>(minMaxFlag, minMaxFlagGlobal, 2, <a href="../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_MIN, <a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm));
+<a name="line295">295: </a>    minFlag = minMaxFlagGlobal[0];
+<a name="line296">296: </a>    maxFlag = -minMaxFlagGlobal[1];
+<a name="line297">297: </a>  }
+<a name="line298">298: </a>  <font color="#4169E1">if</font> (minFlag == maxFlag) {
+<a name="line299">299: </a>    <font color="#4169E1">switch</font> (minFlag) {
+<a name="line300">300: </a>    <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/DM/DMAdaptFlag.html">DM_ADAPT_DETERMINE</a>:
+<a name="line301">301: </a>      *dmAdapted = NULL;
+<a name="line302">302: </a>      <font color="#4169E1">break</font>;
+<a name="line303">303: </a>    <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/DM/DMAdaptFlag.html">DM_ADAPT_REFINE</a>:
+<a name="line304">304: </a>      <a href="../../../../docs/manualpages/DMPlex/DMPlexSetRefinementUniform.html">DMPlexSetRefinementUniform</a>(dm, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+<a name="line305">305: </a>      <a href="../../../../docs/manualpages/DM/DMRefine.html">DMRefine</a>(dm, MPI_COMM_NULL, dmAdapted);
+<a name="line306">306: </a>      <font color="#4169E1">break</font>;
+<a name="line307">307: </a>    <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/DM/DMAdaptFlag.html">DM_ADAPT_COARSEN</a>:
+<a name="line308">308: </a>      <a href="../../../../docs/manualpages/DM/DMCoarsen.html">DMCoarsen</a>(dm, MPI_COMM_NULL, dmAdapted);
+<a name="line309">309: </a>      <font color="#4169E1">break</font>;
+<a name="line310">310: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line311">311: </a>      <a href="../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"DMPlex does not support refinement flag %"</font> PetscInt_FMT, minFlag);
+<a name="line312">312: </a>    }
+<a name="line313">313: </a>  } <font color="#4169E1">else</font> {
+<a name="line314">314: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexSetRefinementUniform.html">DMPlexSetRefinementUniform</a>(dm, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+<a name="line315">315: </a>    DMPlexRefine_Internal(dm, NULL, adaptLabel, NULL, dmAdapted);
+<a name="line316">316: </a>  }
+<a name="line317">317: </a>  <font color="#4169E1">return</font> 0;
+<a name="line318">318: </a>}
+</pre>
+</body>
+
+</html>

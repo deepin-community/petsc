@@ -1,0 +1,46 @@
+# MatNormalGetMat
+Gets the `Mat` object stored inside a `MATNORMAL` 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatNormalGetMat(Mat A, Mat *M)
+```
+Logically collective on A
+
+
+## Input Parameter
+
+- ***A  -*** the `MATNORMAL` matrix
+
+
+
+## Output Parameter
+
+- ***M -*** the matrix object stored inside A
+
+
+
+
+
+## See Also
+ `MATNORMAL`, `MATNORMALHERMITIAN`, `MatCreateNormal()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/normal/normm.c.html#MatNormalGetMat">src/mat/impls/normal/normm.c</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/normal/normm.c.html#MatNormalGetMat_Normal">MatNormalGetMat_Normal in src/mat/impls/normal/normm.c</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/normal/normmh.c.html#MatNormalGetMat_NormalHermitian">MatNormalGetMat_NormalHermitian in src/mat/impls/normal/normmh.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/normal/normm.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

@@ -1,0 +1,49 @@
+# PetscArrayzero
+Zeros an array in memory. 
+## Synopsis
+```
+#include <petscsys.h>
+PetscErrorCode PetscArrayzero(anytype *str1,size_t cnt)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***str1 -*** array
+- ***cnt  -*** Count of the array, not in bytes, but number of entries in the array
+
+
+
+
+
+## Note
+This routine is a preferred replacement to `PetscMemzero()`
+
+
+## See Also
+ `PetscMemcpy()`, `PetscMemcmp()`, `PetscMemzero()`, `PetscArraycmp()`, `PetscArraycpy()`, `PetscMemmove()`, `PetscStrallocpy()`, `PetscArraymove()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/include/petscsys.h.html#PetscArrayzero">include/petscsys.h</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/plex/tutorials/ex6.c.html">src/dm/impls/plex/tutorials/ex6.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex28.c.html">src/ksp/ksp/tutorials/ex28.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex35.cxx.html">src/ksp/ksp/tutorials/ex35.cxx.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex36.cxx.html">src/ksp/ksp/tutorials/ex36.cxx.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex14.c.html">src/ts/tutorials/ex14.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/tutorials/ex9.c.html">src/ts/tutorials/ex9.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/leastsquares/tutorials/chwirut2.c.html">src/tao/leastsquares/tutorials/chwirut2.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/include/petscsys.h)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

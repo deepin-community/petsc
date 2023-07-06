@@ -1,0 +1,819 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Star Forest Manual Pages &#8212; PETSc 3.18.6 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../../_static/styles/bootstrap.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+
+  
+  <link href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/katex-math.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/sphinx_highlight.js"></script>
+    <script src="../../../_static/clipboard.min.js"></script>
+    <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script src="../../../_static/katex.min.js"></script>
+    <script src="../../../_static/auto-render.min.js"></script>
+    <script src="../../../_static/katex_autorenderer.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'docs/manualpages/PetscSF/index';</script>
+    <link rel="shortcut icon" href="../../../_static/petsc_favicon.png"/>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="PetscSF" href="PetscSF.html" />
+    <link rel="prev" title="PFViewFromOptions" href="../PF/PFViewFromOptions.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../../../index.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../../../_static/PETSc-TAO_RGB.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../../../_static/PETSc-TAO_RGB_white.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        API-Docs
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+    </ul>
+</nav>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+        <div class="navbar-end-item navbar-persistent--container">
+          
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+        </div>
+      
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+
+
+  
+  
+    <div class="navbar-persistent--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+    </div>
+  
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+  </label>
+  
+
+</div>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        API-Docs
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+                </div>
+            </div>
+            
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+  <div class="sidebar-start-items sidebar-primary__section">
+    <div class="sidebar-start-items__item"><nav class="bd-links" id="bd-docs-nav" aria-label="Section navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">
+    Section Navigation
+  </p>
+  <div class="bd-toc-item navbar-nav">
+    <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../changes/index.html">Changes for each release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+</ul>
+
+  </div>
+</nav>
+    </div>
+  </div>
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+  
+  <div id="rtd-footer-container"></div>
+
+      </div>
+      <main id="main-content" class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+            </div>
+            
+            
+            <article class="bd-article" role="main">
+              
+  <section class="tex2jax_ignore mathjax_ignore" id="star-forest-manual-pages">
+<h1>Star Forest Manual Pages<a class="headerlink" href="#star-forest-manual-pages" title="Permalink to this heading">#</a></h1>
+<p>PetscSF provides a simple interface to “star forest” communication patterns.</p>
+<p><a class="reference internal" href="../index.html"><span class="doc std std-doc">Manual Pages Table of Contents</span></a></p>
+<section id="manual-pages-by-level">
+<h2>Manual Pages by Level<a class="headerlink" href="#manual-pages-by-level" title="Permalink to this heading">#</a></h2>
+<section id="beginner-basic-usage">
+<h3>Beginner - Basic usage<a class="headerlink" href="#beginner-basic-usage" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscSFDuplicate.html"><span class="doc std std-doc">PetscSFDuplicate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFDuplicateOption.html"><span class="doc std std-doc">PetscSFDuplicateOption</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFNode.html"><span class="doc std std-doc">PetscSFNode</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFPattern.html"><span class="doc std std-doc">PetscSFPattern</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscSFSetUp.html"><span class="doc std std-doc">PetscSFSetUp</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFType.html"><span class="doc std std-doc">PetscSFType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFView.html"><span class="doc std std-doc">PetscSFView</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="VecScatter.html"><span class="doc std std-doc">VecScatter</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterSetFromOptions.html"><span class="doc std std-doc">VecScatterSetFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterType.html"><span class="doc std std-doc">VecScatterType</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="intermediate-setting-options-for-algorithms-and-data-structures">
+<h3>Intermediate - Setting options for algorithms and data structures<a class="headerlink" href="#intermediate-setting-options-for-algorithms-and-data-structures" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscSF.html"><span class="doc std std-doc">PetscSF</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFBcastBegin.html"><span class="doc std std-doc">PetscSFBcastBegin</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFBcastEnd.html"><span class="doc std std-doc">PetscSFBcastEnd</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFBcastWithMemTypeBegin.html"><span class="doc std std-doc">PetscSFBcastWithMemTypeBegin</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFCreate.html"><span class="doc std std-doc">PetscSFCreate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFCreateFromLayouts.html"><span class="doc std std-doc">PetscSFCreateFromLayouts</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFDestroy.html"><span class="doc std std-doc">PetscSFDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFGatherBegin.html"><span class="doc std std-doc">PetscSFGatherBegin</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFGatherEnd.html"><span class="doc std std-doc">PetscSFGatherEnd</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFGetGraph.html"><span class="doc std std-doc">PetscSFGetGraph</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFGetGraphLayout.html"><span class="doc std std-doc">PetscSFGetGraphLayout</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFGetType.html"><span class="doc std std-doc">PetscSFGetType</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscSFReduceBegin.html"><span class="doc std std-doc">PetscSFReduceBegin</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFReduceEnd.html"><span class="doc std std-doc">PetscSFReduceEnd</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFReduceWithMemTypeBegin.html"><span class="doc std std-doc">PetscSFReduceWithMemTypeBegin</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFScatterBegin.html"><span class="doc std std-doc">PetscSFScatterBegin</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFScatterEnd.html"><span class="doc std std-doc">PetscSFScatterEnd</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFSetFromOptions.html"><span class="doc std std-doc">PetscSFSetFromOptions</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFSetGraph.html"><span class="doc std std-doc">PetscSFSetGraph</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFSetGraphLayout.html"><span class="doc std std-doc">PetscSFSetGraphLayout</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFSetGraphWithPattern.html"><span class="doc std std-doc">PetscSFSetGraphWithPattern</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFSetType.html"><span class="doc std std-doc">PetscSFSetType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFViewFromOptions.html"><span class="doc std std-doc">PetscSFViewFromOptions</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="VecScatterBegin.html"><span class="doc std std-doc">VecScatterBegin</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterCreate.html"><span class="doc std std-doc">VecScatterCreate</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterCreateToAll.html"><span class="doc std std-doc">VecScatterCreateToAll</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterCreateToZero.html"><span class="doc std std-doc">VecScatterCreateToZero</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterDestroy.html"><span class="doc std std-doc">VecScatterDestroy</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterEnd.html"><span class="doc std std-doc">VecScatterEnd</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterGetType.html"><span class="doc std std-doc">VecScatterGetType</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterSetType.html"><span class="doc std std-doc">VecScatterSetType</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterSetUp.html"><span class="doc std std-doc">VecScatterSetUp</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterView.html"><span class="doc std std-doc">VecScatterView</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterViewFromOptions.html"><span class="doc std std-doc">VecScatterViewFromOptions</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="advanced-setting-more-advanced-options-and-customization">
+<h3>Advanced - Setting more advanced options and customization<a class="headerlink" href="#advanced-setting-more-advanced-options-and-customization" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscSFComputeDegreeBegin.html"><span class="doc std std-doc">PetscSFComputeDegreeBegin</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFCreateByMatchingIndices.html"><span class="doc std std-doc">PetscSFCreateByMatchingIndices</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFCreateEmbeddedLeafSF.html"><span class="doc std std-doc">PetscSFCreateEmbeddedLeafSF</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFCreateEmbeddedRootSF.html"><span class="doc std std-doc">PetscSFCreateEmbeddedRootSF</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFCreateInverseSF.html"><span class="doc std std-doc">PetscSFCreateInverseSF</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFCreateSectionSF.html"><span class="doc std std-doc">PetscSFCreateSectionSF</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFDistributeSection.html"><span class="doc std std-doc">PetscSFDistributeSection</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFFetchAndOpBegin.html"><span class="doc std std-doc">PetscSFFetchAndOpBegin</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscSFFetchAndOpEnd.html"><span class="doc std std-doc">PetscSFFetchAndOpEnd</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFFetchAndOpWithMemTypeBegin.html"><span class="doc std std-doc">PetscSFFetchAndOpWithMemTypeBegin</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFRegister.html"><span class="doc std std-doc">PetscSFRegister</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFRegisterAll.html"><span class="doc std std-doc">PetscSFRegisterAll</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFReset.html"><span class="doc std std-doc">PetscSFReset</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFSetRankOrder.html"><span class="doc std std-doc">PetscSFSetRankOrder</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFWindowFlavorType.html"><span class="doc std std-doc">PetscSFWindowFlavorType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFWindowGetFlavorType.html"><span class="doc std std-doc">PetscSFWindowGetFlavorType</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscSFWindowGetInfo.html"><span class="doc std std-doc">PetscSFWindowGetInfo</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFWindowGetSyncType.html"><span class="doc std std-doc">PetscSFWindowGetSyncType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFWindowSetFlavorType.html"><span class="doc std std-doc">PetscSFWindowSetFlavorType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFWindowSetInfo.html"><span class="doc std std-doc">PetscSFWindowSetInfo</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFWindowSetSyncType.html"><span class="doc std std-doc">PetscSFWindowSetSyncType</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFWindowSyncType.html"><span class="doc std std-doc">PetscSFWindowSyncType</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterCopy.html"><span class="doc std std-doc">VecScatterCopy</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterRegister.html"><span class="doc std std-doc">VecScatterRegister</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="developer-interfaces-intended-primarily-for-library-developers-not-for-typical-applications-programmers">
+<h3>Developer - Interfaces intended primarily for library developers, not for typical applications programmers<a class="headerlink" href="#developer-interfaces-intended-primarily-for-library-developers-not-for-typical-applications-programmers" title="Permalink to this heading">#</a></h3>
+<table class="hlist"><tr><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscSFCompose.html"><span class="doc std std-doc">PetscSFCompose</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFComposeInverse.html"><span class="doc std std-doc">PetscSFComposeInverse</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFComputeDegreeEnd.html"><span class="doc std std-doc">PetscSFComputeDegreeEnd</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFComputeMultiRootOriginalNumbering.html"><span class="doc std std-doc">PetscSFComputeMultiRootOriginalNumbering</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFConcatenate.html"><span class="doc std std-doc">PetscSFConcatenate</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFCreateRemoteOffsets.html"><span class="doc std std-doc">PetscSFCreateRemoteOffsets</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscSFFinalizePackage.html"><span class="doc std std-doc">PetscSFFinalizePackage</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFGetGroups.html"><span class="doc std std-doc">PetscSFGetGroups</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFGetLeafRange.html"><span class="doc std std-doc">PetscSFGetLeafRange</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFGetLeafRanks.html"><span class="doc std std-doc">PetscSFGetLeafRanks</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFGetMultiSF.html"><span class="doc std std-doc">PetscSFGetMultiSF</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFGetRootRanks.html"><span class="doc std std-doc">PetscSFGetRootRanks</span></a></p></li>
+</ul>
+</td><td><ul class="simple">
+<li><p><a class="reference internal" href="PetscSFInitializePackage.html"><span class="doc std std-doc">PetscSFInitializePackage</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFSetGraphSection.html"><span class="doc std std-doc">PetscSFSetGraphSection</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFSetUpRanks.html"><span class="doc std std-doc">PetscSFSetUpRanks</span></a></p></li>
+<li><p><a class="reference internal" href="PetscSFWindowGetDataTypes.html"><span class="doc std std-doc">PetscSFWindowGetDataTypes</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterGetMerged.html"><span class="doc std std-doc">VecScatterGetMerged</span></a></p></li>
+<li><p><a class="reference internal" href="VecScatterRemap.html"><span class="doc std std-doc">VecScatterRemap</span></a></p></li>
+</ul>
+</td></tr></table>
+</section>
+<section id="no-deprecated-routines">
+<h3>No deprecated routines<a class="headerlink" href="#no-deprecated-routines" title="Permalink to this heading">#</a></h3>
+</section>
+</section>
+<section id="single-list-of-manual-pages">
+<h2>Single list of manual pages<a class="headerlink" href="#single-list-of-manual-pages" title="Permalink to this heading">#</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="PetscSF.html">PetscSF</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFBcastBegin.html">PetscSFBcastBegin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFBcastEnd.html">PetscSFBcastEnd</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFBcastWithMemTypeBegin.html">PetscSFBcastWithMemTypeBegin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFCompose.html">PetscSFCompose</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFComposeInverse.html">PetscSFComposeInverse</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFComputeDegreeBegin.html">PetscSFComputeDegreeBegin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFComputeDegreeEnd.html">PetscSFComputeDegreeEnd</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFComputeMultiRootOriginalNumbering.html">PetscSFComputeMultiRootOriginalNumbering</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFConcatenate.html">PetscSFConcatenate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFCreate.html">PetscSFCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFCreateByMatchingIndices.html">PetscSFCreateByMatchingIndices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFCreateEmbeddedLeafSF.html">PetscSFCreateEmbeddedLeafSF</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFCreateEmbeddedRootSF.html">PetscSFCreateEmbeddedRootSF</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFCreateFromLayouts.html">PetscSFCreateFromLayouts</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFCreateInverseSF.html">PetscSFCreateInverseSF</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFCreateRemoteOffsets.html">PetscSFCreateRemoteOffsets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFCreateSectionSF.html">PetscSFCreateSectionSF</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFDestroy.html">PetscSFDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFDistributeSection.html">PetscSFDistributeSection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFDuplicate.html">PetscSFDuplicate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFDuplicateOption.html">PetscSFDuplicateOption</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFFetchAndOpBegin.html">PetscSFFetchAndOpBegin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFFetchAndOpEnd.html">PetscSFFetchAndOpEnd</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFFetchAndOpWithMemTypeBegin.html">PetscSFFetchAndOpWithMemTypeBegin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFFinalizePackage.html">PetscSFFinalizePackage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFGatherBegin.html">PetscSFGatherBegin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFGatherEnd.html">PetscSFGatherEnd</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFGetGraph.html">PetscSFGetGraph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFGetGraphLayout.html">PetscSFGetGraphLayout</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFGetGroups.html">PetscSFGetGroups</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFGetLeafRange.html">PetscSFGetLeafRange</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFGetLeafRanks.html">PetscSFGetLeafRanks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFGetMultiSF.html">PetscSFGetMultiSF</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFGetRootRanks.html">PetscSFGetRootRanks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFGetType.html">PetscSFGetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFInitializePackage.html">PetscSFInitializePackage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFNode.html">PetscSFNode</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFPattern.html">PetscSFPattern</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFReduceBegin.html">PetscSFReduceBegin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFReduceEnd.html">PetscSFReduceEnd</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFReduceWithMemTypeBegin.html">PetscSFReduceWithMemTypeBegin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFRegister.html">PetscSFRegister</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFRegisterAll.html">PetscSFRegisterAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFReset.html">PetscSFReset</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFScatterBegin.html">PetscSFScatterBegin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFScatterEnd.html">PetscSFScatterEnd</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFSetFromOptions.html">PetscSFSetFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFSetGraph.html">PetscSFSetGraph</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFSetGraphLayout.html">PetscSFSetGraphLayout</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFSetGraphSection.html">PetscSFSetGraphSection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFSetGraphWithPattern.html">PetscSFSetGraphWithPattern</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFSetRankOrder.html">PetscSFSetRankOrder</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFSetType.html">PetscSFSetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFSetUp.html">PetscSFSetUp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFSetUpRanks.html">PetscSFSetUpRanks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFType.html">PetscSFType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFView.html">PetscSFView</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFViewFromOptions.html">PetscSFViewFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFWindowFlavorType.html">PetscSFWindowFlavorType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFWindowGetDataTypes.html">PetscSFWindowGetDataTypes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFWindowGetFlavorType.html">PetscSFWindowGetFlavorType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFWindowGetInfo.html">PetscSFWindowGetInfo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFWindowGetSyncType.html">PetscSFWindowGetSyncType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFWindowSetFlavorType.html">PetscSFWindowSetFlavorType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFWindowSetInfo.html">PetscSFWindowSetInfo</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFWindowSetSyncType.html">PetscSFWindowSetSyncType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="PetscSFWindowSyncType.html">PetscSFWindowSyncType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatter.html">VecScatter</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterBegin.html">VecScatterBegin</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterCopy.html">VecScatterCopy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterCreate.html">VecScatterCreate</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterCreateToAll.html">VecScatterCreateToAll</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterCreateToZero.html">VecScatterCreateToZero</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterDestroy.html">VecScatterDestroy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterEnd.html">VecScatterEnd</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterGetMerged.html">VecScatterGetMerged</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterGetType.html">VecScatterGetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterRegister.html">VecScatterRegister</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterRemap.html">VecScatterRemap</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterSetFromOptions.html">VecScatterSetFromOptions</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterSetType.html">VecScatterSetType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterSetUp.html">VecScatterSetUp</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterType.html">VecScatterType</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterView.html">VecScatterView</a></li>
+<li class="toctree-l1"><a class="reference internal" href="VecScatterViewFromOptions.html">VecScatterViewFromOptions</a></li>
+</ul>
+</div>
+</section>
+</section>
+
+
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+  <a class='left-prev' id="prev-link" href="../PF/PFViewFromOptions.html" title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+          <p class="prev-next-subtitle">previous</p>
+          <p class="prev-next-title">PFViewFromOptions</p>
+      </div>
+  </a>
+  <a class='right-next' id="next-link" href="PetscSF.html" title="next page">
+  <div class="prev-next-info">
+      <p class="prev-next-subtitle">next</p>
+      <p class="prev-next-title">PetscSF</p>
+  </div>
+  <i class="fa-solid fa-angle-right"></i>
+  </a>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div class="tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+</div>
+<nav id="bd-toc-nav" class="page-toc">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#manual-pages-by-level">
+   Manual Pages by Level
+  </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#beginner-basic-usage">
+     Beginner - Basic usage
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#intermediate-setting-options-for-algorithms-and-data-structures">
+     Intermediate - Setting options for algorithms and data structures
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#advanced-setting-more-advanced-options-and-customization">
+     Advanced - Setting more advanced options and customization
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#developer-interfaces-intended-primarily-for-library-developers-not-for-typical-applications-programmers">
+     Developer - Interfaces intended primarily for library developers, not for typical applications programmers
+    </a>
+   </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#no-deprecated-routines">
+     No deprecated routines
+    </a>
+   </li>
+  </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#single-list-of-manual-pages">
+   Single list of manual pages
+  </a>
+  <ul class="simple nav section-nav flex-column">
+  </ul>
+ </li>
+</ul>
+
+</nav>
+</div>
+
+<div class="toc-item">
+  
+<div id="searchbox"></div>
+</div>
+
+<div class="toc-item">
+  
+
+<div class="tocsection editthispage">
+    <a href="https://gitlab.com/petsc/petsc/edit/release/doc/docs/manualpages/PetscSF/index.md">
+        <i class="fa-solid fa-pencil"></i> Edit this page
+    </a>
+</div>
+
+</div>
+
+<div class="toc-item">
+  
+<div class="tocsection sourcelink">
+    <a href="../../../_sources/docs/manualpages/PetscSF/index.md.txt">
+        <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+</div>
+
+</div>
+
+            </div>
+          
+          
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94"></script>
+<script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+</p>
+  </div>
+  
+</div>
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,5 @@
+#! /bin/sh
+for modpath in debian/tmp/petsc64-${PETSC_SONAME_VERSION}-complex/${PETSC64_COMPLEX_DIR_PREFIX}/include/*.mod; do
+  modfile=$(basename $modpath)
+  echo ${modpath} ${PETSC64_COMPLEX_DIR_PREFIX}/include
+done

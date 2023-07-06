@@ -1,0 +1,295 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/label/tutorials/ex1.c">Actual source code: ex1.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:51+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>static char help[] = <font color="#666666">"Tests <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> operations.\n\n"</font>;
+
+<a name="line3">  3: </a>#include <A href="../../../../include/petscdm.h.html">&lt;petscdm.h&gt;</A>
+<a name="line4">  4: </a>#include <A href="../../../../include/petscdmplex.h.html">&lt;petscdmplex.h&gt;</A>
+
+<a name="line6">  6: </a><strong><font color="#4169E1"><a name="ViewLabels"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ViewLabels(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line7">  7: </a>{
+<a name="line8">  8: </a>  <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>     label;
+<a name="line9">  9: </a>  const char *labelName;
+<a name="line10"> 10: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    numLabels, l;
+
+<a name="line12"> 12: </a>  <font color="#B22222">/* query the number and name of labels*/</font>
+<a name="line13"> 13: </a>  <a href="../../../../docs/manualpages/DM/DMGetNumLabels.html">DMGetNumLabels</a>(dm, &amp;numLabels);
+<a name="line14"> 14: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Number of labels: %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, numLabels);
+<a name="line15"> 15: </a>  <font color="#4169E1">for</font> (l = 0; l &lt; numLabels; ++l) {
+<a name="line16"> 16: </a>    <a href="../../../../docs/manualpages/IS/IS.html">IS</a> labelIS, tmpIS;
+
+<a name="line18"> 18: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabelName.html">DMGetLabelName</a>(dm, l, &amp;labelName);
+<a name="line19"> 19: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"Label %"</font> PetscInt_FMT <font color="#666666">": name: %s\n"</font>, l, labelName);
+<a name="line20"> 20: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"<a href="../../../../docs/manualpages/IS/IS.html">IS</a> of values\n"</font>);
+<a name="line21"> 21: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, labelName, &amp;label);
+<a name="line22"> 22: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValueIS.html">DMLabelGetValueIS</a>(label, &amp;labelIS);
+<a name="line23"> 23: </a>    <a href="../../../../docs/manualpages/IS/ISOnComm.html">ISOnComm</a>(labelIS, <a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer), <a href="../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_USE_POINTER</a>, &amp;tmpIS);
+<a name="line24"> 24: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(viewer);
+<a name="line25"> 25: </a>    <a href="../../../../docs/manualpages/IS/ISView.html">ISView</a>(tmpIS, viewer);
+<a name="line26"> 26: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(viewer);
+<a name="line27"> 27: </a>    <a href="../../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;tmpIS);
+<a name="line28"> 28: </a>    <a href="../../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;labelIS);
+<a name="line29"> 29: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"\n"</font>);
+<a name="line30"> 30: </a>  }
+<a name="line31"> 31: </a>  <font color="#B22222">/* Making sure that string literals work */</font>
+<a name="line32"> 32: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"\n\nCell Set label <a href="../../../../docs/manualpages/IS/IS.html">IS</a>\n"</font>);
+<a name="line33"> 33: </a>  <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"Cell Sets"</font>, &amp;label);
+<a name="line34"> 34: </a>  <font color="#4169E1">if</font> (label) {
+<a name="line35"> 35: </a>    <a href="../../../../docs/manualpages/IS/IS.html">IS</a> labelIS, tmpIS;
+
+<a name="line37"> 37: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValueIS.html">DMLabelGetValueIS</a>(label, &amp;labelIS);
+<a name="line38"> 38: </a>    <a href="../../../../docs/manualpages/IS/ISOnComm.html">ISOnComm</a>(labelIS, <a href="../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer), <a href="../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_USE_POINTER</a>, &amp;tmpIS);
+<a name="line39"> 39: </a>    <a href="../../../../docs/manualpages/IS/ISView.html">ISView</a>(tmpIS, viewer);
+<a name="line40"> 40: </a>    <a href="../../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;tmpIS);
+<a name="line41"> 41: </a>    <a href="../../../../docs/manualpages/IS/ISDestroy.html">ISDestroy</a>(&amp;labelIS);
+<a name="line42"> 42: </a>  }
+<a name="line43"> 43: </a>  <font color="#4169E1">return</font> 0;
+<a name="line44"> 44: </a>}
+
+<a name="line46"> 46: </a><strong><font color="#4169E1"><a name="CheckLabelsSame"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CheckLabelsSame(<a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> label0, <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> label1)</font></strong>
+<a name="line47"> 47: </a>{
+<a name="line48"> 48: </a>  const char *name0, *name1;
+<a name="line49"> 49: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   same;
+<a name="line50"> 50: </a>  char       *msg;
+
+<a name="line52"> 52: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)label0, &amp;name0);
+<a name="line53"> 53: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)label1, &amp;name1);
+<a name="line54"> 54: </a>  <a href="../../../../docs/manualpages/DMLabel/DMLabelCompare.html">DMLabelCompare</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, label0, label1, &amp;same, &amp;msg);
+<a name="line57"> 57: </a>  <font color="#B22222">/* Test passing NULL, must not fail */</font>
+<a name="line58"> 58: </a>  <a href="../../../../docs/manualpages/DMLabel/DMLabelCompare.html">DMLabelCompare</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, label0, label1, NULL, NULL);
+<a name="line59"> 59: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(msg);
+<a name="line60"> 60: </a>  <font color="#4169E1">return</font> 0;
+<a name="line61"> 61: </a>}
+
+<a name="line63"> 63: </a><strong><font color="#4169E1"><a name="CheckLabelsNotSame"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CheckLabelsNotSame(<a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> label0, <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> label1)</font></strong>
+<a name="line64"> 64: </a>{
+<a name="line65"> 65: </a>  const char *name0, *name1;
+<a name="line66"> 66: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   same;
+<a name="line67"> 67: </a>  char       *msg;
+
+<a name="line69"> 69: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)label0, &amp;name0);
+<a name="line70"> 70: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)label1, &amp;name1);
+<a name="line71"> 71: </a>  <a href="../../../../docs/manualpages/DMLabel/DMLabelCompare.html">DMLabelCompare</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, label0, label1, &amp;same, &amp;msg);
+<a name="line74"> 74: </a>  <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"Compare label \"%s\" with \"%s\": %s\n"</font>, name0, name1, msg);
+<a name="line75"> 75: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(msg);
+<a name="line76"> 76: </a>  <font color="#4169E1">return</font> 0;
+<a name="line77"> 77: </a>}
+
+<a name="line79"> 79: </a><strong><font color="#4169E1"><a name="CheckDMLabelsSame"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CheckDMLabelsSame(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm0, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm1)</font></strong>
+<a name="line80"> 80: </a>{
+<a name="line81"> 81: </a>  const char *name0, *name1;
+<a name="line82"> 82: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   same;
+<a name="line83"> 83: </a>  char       *msg;
+
+<a name="line85"> 85: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm0, &amp;name0);
+<a name="line86"> 86: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm1, &amp;name1);
+<a name="line87"> 87: </a>  <a href="../../../../docs/manualpages/DM/DMCompareLabels.html">DMCompareLabels</a>(dm0, dm1, &amp;same, &amp;msg);
+<a name="line90"> 90: </a>  <font color="#B22222">/* Test passing NULL, must not fail */</font>
+<a name="line91"> 91: </a>  <a href="../../../../docs/manualpages/DM/DMCompareLabels.html">DMCompareLabels</a>(dm0, dm1, NULL, NULL);
+<a name="line92"> 92: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(msg);
+<a name="line93"> 93: </a>  <font color="#4169E1">return</font> 0;
+<a name="line94"> 94: </a>}
+
+<a name="line96"> 96: </a><strong><font color="#4169E1"><a name="CheckDMLabelsNotSame"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CheckDMLabelsNotSame(<a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm0, <a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm1)</font></strong>
+<a name="line97"> 97: </a>{
+<a name="line98"> 98: </a>  const char *name0, *name1;
+<a name="line99"> 99: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   same;
+<a name="line100">100: </a>  char       *msg;
+
+<a name="line102">102: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm0, &amp;name0);
+<a name="line103">103: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm1, &amp;name1);
+<a name="line104">104: </a>  <a href="../../../../docs/manualpages/DM/DMCompareLabels.html">DMCompareLabels</a>(dm0, dm1, &amp;same, &amp;msg);
+<a name="line107">107: </a>  <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"Labels of DMs \"%s\" and \"%s\" differ: %s\n"</font>, name0, name1, msg);
+<a name="line108">108: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(msg);
+<a name="line109">109: </a>  <font color="#4169E1">return</font> 0;
+<a name="line110">110: </a>}
+
+<a name="line112">112: </a><strong><font color="#4169E1"><a name="CreateMesh"></a><a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CreateMesh(const char name[], <a href="../../../../docs/manualpages/DM/DM.html">DM</a> *newdm)</font></strong>
+<a name="line113">113: </a>{
+<a name="line114">114: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a>        dm, dmDist;
+<a name="line115">115: </a>  char      filename[PETSC_MAX_PATH_LEN] = <font color="#666666">""</font>;
+<a name="line116">116: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> interpolate                  = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line118">118: </a>  <font color="#B22222">/* initialize and get options */</font>
+<a name="line119">119: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, NULL, <font color="#666666">"<a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> ex1 Options"</font>, <font color="#666666">"<a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>"</font>);
+<a name="line120">120: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsString.html">PetscOptionsString</a>(<font color="#666666">"-i"</font>, <font color="#666666">"filename to read"</font>, <font color="#666666">"ex1.c"</font>, filename, filename, <font color="#4169E1">sizeof</font>(filename), NULL);
+<a name="line121">121: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-interpolate"</font>, <font color="#666666">"Generate intermediate mesh elements"</font>, <font color="#666666">"ex1.c"</font>, interpolate, &amp;interpolate, NULL);
+<a name="line122">122: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+
+<a name="line124">124: </a>  <font color="#B22222">/* create and distribute <a href="../../../../docs/manualpages/DM/DM.html">DM</a> */</font>
+<a name="line125">125: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexCreateFromFile.html">DMPlexCreateFromFile</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, filename, <font color="#666666">"ex1_plex"</font>, interpolate, &amp;dm);
+<a name="line126">126: </a>  <a href="../../../../docs/manualpages/DMPlex/DMPlexDistribute.html">DMPlexDistribute</a>(dm, 0, NULL, &amp;dmDist);
+<a name="line127">127: </a>  <font color="#4169E1">if</font> (dmDist) {
+<a name="line128">128: </a>    <a href="../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dm);
+<a name="line129">129: </a>    dm = dmDist;
+<a name="line130">130: </a>  }
+<a name="line131">131: </a>  <a href="../../../../docs/manualpages/DM/DMSetFromOptions.html">DMSetFromOptions</a>(dm);
+<a name="line132">132: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm, name);
+<a name="line133">133: </a>  *newdm = dm;
+<a name="line134">134: </a>  <font color="#4169E1">return</font> 0;
+<a name="line135">135: </a>}
+
+<a name="line137">137: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
+<a name="line138">138: </a>{
+<a name="line139">139: </a>  <a href="../../../../docs/manualpages/DM/DM.html">DM</a> dm;
+
+<a name="line142">142: </a>  <a href="../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help);
+<a name="line143">143: </a>  CreateMesh(<font color="#666666">"plex0"</font>, &amp;dm);
+<a name="line144">144: </a>  <font color="#B22222">/* add custom labels to test adding/removal */</font>
+<a name="line145">145: </a>  {
+<a name="line146">146: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>  label0, label1, label2, label3;
+<a name="line147">147: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> p, pStart, pEnd;
+<a name="line148">148: </a>    <a href="../../../../docs/manualpages/DMPlex/DMPlexGetChart.html">DMPlexGetChart</a>(dm, &amp;pStart, &amp;pEnd);
+<a name="line149">149: </a>    <font color="#B22222">/* create label in <a href="../../../../docs/manualpages/DM/DM.html">DM</a> and get from <a href="../../../../docs/manualpages/DM/DM.html">DM</a> */</font>
+<a name="line150">150: </a>    <a href="../../../../docs/manualpages/DM/DMCreateLabel.html">DMCreateLabel</a>(dm, <font color="#666666">"label0"</font>);
+<a name="line151">151: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"label0"</font>, &amp;label0);
+<a name="line152">152: </a>    <font color="#B22222">/* alternative: create standalone label and add to <a href="../../../../docs/manualpages/DM/DM.html">DM</a>; needs to be destroyed */</font>
+<a name="line153">153: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelCreate.html">DMLabelCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"label1"</font>, &amp;label1);
+<a name="line154">154: </a>    <a href="../../../../docs/manualpages/DM/DMAddLabel.html">DMAddLabel</a>(dm, label1);
+
+<a name="line156">156: </a>    pEnd = <a href="../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(pEnd, pStart + 5);
+<a name="line157">157: </a>    <font color="#4169E1">for</font> (p = pStart; p &lt; pEnd; p++) {
+<a name="line158">158: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(label0, p, 1);
+<a name="line159">159: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(label1, p, 2);
+<a name="line160">160: </a>    }
+<a name="line161">161: </a>    <font color="#B22222">/* duplicate label */</font>
+<a name="line162">162: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelDuplicate.html">DMLabelDuplicate</a>(label0, &amp;label2);
+<a name="line163">163: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelDuplicate.html">DMLabelDuplicate</a>(label1, &amp;label3);
+<a name="line164">164: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)label2, <font color="#666666">"label2"</font>);
+<a name="line165">165: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)label3, <font color="#666666">"label3"</font>);
+<a name="line166">166: </a>    <a href="../../../../docs/manualpages/DM/DMAddLabel.html">DMAddLabel</a>(dm, label2);
+<a name="line167">167: </a>    <a href="../../../../docs/manualpages/DM/DMAddLabel.html">DMAddLabel</a>(dm, label3);
+<a name="line168">168: </a>    <font color="#B22222">/* remove the labels in this scope */</font>
+<a name="line169">169: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelDestroy.html">DMLabelDestroy</a>(&amp;label1);
+<a name="line170">170: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelDestroy.html">DMLabelDestroy</a>(&amp;label2);
+<a name="line171">171: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelDestroy.html">DMLabelDestroy</a>(&amp;label3);
+<a name="line172">172: </a>  }
+
+<a name="line174">174: </a>  ViewLabels(dm, <a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>);
+
+<a name="line176">176: </a>  <font color="#B22222">/* do label perturbations and comparisons */</font>
+<a name="line177">177: </a>  {
+<a name="line178">178: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>  label0, label1, label2, label3;
+<a name="line179">179: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> val;
+<a name="line180">180: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> p, pStart, pEnd;
+
+<a name="line182">182: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"label0"</font>, &amp;label0);
+<a name="line183">183: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"label1"</font>, &amp;label1);
+<a name="line184">184: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"label2"</font>, &amp;label2);
+<a name="line185">185: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"label3"</font>, &amp;label3);
+
+<a name="line187">187: </a>    CheckLabelsNotSame(label0, label1);
+<a name="line188">188: </a>    CheckLabelsSame(label0, label2);
+<a name="line189">189: </a>    CheckLabelsSame(label1, label3);
+
+<a name="line191">191: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetDefaultValue.html">DMLabelGetDefaultValue</a>(label1, &amp;val);
+<a name="line192">192: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelSetDefaultValue.html">DMLabelSetDefaultValue</a>(label1, 333);
+<a name="line193">193: </a>    CheckLabelsNotSame(label1, label3);
+<a name="line194">194: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelSetDefaultValue.html">DMLabelSetDefaultValue</a>(label1, val);
+<a name="line195">195: </a>    CheckLabelsSame(label1, label3);
+
+<a name="line197">197: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetBounds.html">DMLabelGetBounds</a>(label1, &amp;pStart, &amp;pEnd);
+
+<a name="line199">199: </a>    <font color="#4169E1">for</font> (p = pStart; p &lt; pEnd; p++) {
+<a name="line200">200: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(label1, p, &amp;val);
+<a name="line201">201: </a>      // This is weird. Perhaps we should not need to call <a href="../../../../docs/manualpages/DMLabel/DMLabelClearValue.html">DMLabelClearValue</a>()
+<a name="line202">202: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelClearValue.html">DMLabelClearValue</a>(label1, p, val);
+<a name="line203">203: </a>      val++;
+<a name="line204">204: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(label1, p, val);
+<a name="line205">205: </a>    }
+<a name="line206">206: </a>    CheckLabelsNotSame(label1, label3);
+<a name="line207">207: </a>    <font color="#4169E1">for</font> (p = pStart; p &lt; pEnd; p++) {
+<a name="line208">208: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(label1, p, &amp;val);
+<a name="line209">209: </a>      // This is weird. Perhaps we should not need to call <a href="../../../../docs/manualpages/DMLabel/DMLabelClearValue.html">DMLabelClearValue</a>()
+<a name="line210">210: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelClearValue.html">DMLabelClearValue</a>(label1, p, val);
+<a name="line211">211: </a>      val--;
+<a name="line212">212: </a>      <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(label1, p, val);
+<a name="line213">213: </a>    }
+<a name="line214">214: </a>    CheckLabelsSame(label1, label3);
+
+<a name="line216">216: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(label3, pEnd - 1, &amp;val);
+<a name="line217">217: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(label3, pEnd, val);
+<a name="line218">218: </a>    CheckLabelsNotSame(label1, label3);
+<a name="line219">219: </a>    // This is weird. Perhaps we should not need to call <a href="../../../../docs/manualpages/DMLabel/DMLabelClearValue.html">DMLabelClearValue</a>()
+<a name="line220">220: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelClearValue.html">DMLabelClearValue</a>(label3, pEnd, val);
+<a name="line221">221: </a>    CheckLabelsSame(label1, label3);
+<a name="line222">222: </a>  }
+
+<a name="line224">224: </a>  {
+<a name="line225">225: </a>    <a href="../../../../docs/manualpages/DM/DM.html">DM</a>       dm1;
+<a name="line226">226: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a>  label02, label12;
+<a name="line227">227: </a>    <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> p = 0, val;
+
+<a name="line229">229: </a>    CreateMesh(<font color="#666666">"plex1"</font>, &amp;dm1);
+<a name="line230">230: </a>    CheckDMLabelsNotSame(dm, dm1);
+
+<a name="line232">232: </a>    <a href="../../../../docs/manualpages/DM/DMCopyLabels.html">DMCopyLabels</a>(dm, dm1, <a href="../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, <a href="../../../../docs/manualpages/DM/DMCopyLabelsMode.html">DM_COPY_LABELS_REPLACE</a>);
+<a name="line233">233: </a>    CheckDMLabelsSame(dm, dm1);
+
+<a name="line235">235: </a>    <a href="../../../../docs/manualpages/DM/DMCopyLabels.html">DMCopyLabels</a>(dm, dm1, <a href="../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_COPY_VALUES</a>, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, <a href="../../../../docs/manualpages/DM/DMCopyLabelsMode.html">DM_COPY_LABELS_REPLACE</a>);
+<a name="line236">236: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"label2"</font>, &amp;label02);
+<a name="line237">237: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm1, <font color="#666666">"label2"</font>, &amp;label12);
+<a name="line238">238: </a>    CheckLabelsSame(label02, label12);
+
+<a name="line240">240: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(label12, p, &amp;val);
+<a name="line241">241: </a>    // This is weird. Perhaps we should not need to call <a href="../../../../docs/manualpages/DMLabel/DMLabelClearValue.html">DMLabelClearValue</a>()
+<a name="line242">242: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelClearValue.html">DMLabelClearValue</a>(label12, p, val);
+<a name="line243">243: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(label12, p, val + 1);
+<a name="line244">244: </a>    CheckLabelsNotSame(label02, label12);
+<a name="line245">245: </a>    CheckDMLabelsNotSame(dm, dm1);
+
+<a name="line247">247: </a>    // This is weird. Perhaps we should not need to call <a href="../../../../docs/manualpages/DMLabel/DMLabelClearValue.html">DMLabelClearValue</a>()
+<a name="line248">248: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelClearValue.html">DMLabelClearValue</a>(label12, p, val + 1);
+<a name="line249">249: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(label12, p, val);
+<a name="line250">250: </a>    CheckLabelsSame(label02, label12);
+<a name="line251">251: </a>    CheckDMLabelsSame(dm, dm1);
+
+<a name="line253">253: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)label12, <font color="#666666">"label12"</font>);
+<a name="line254">254: </a>    CheckDMLabelsNotSame(dm, dm1);
+<a name="line255">255: </a>    <a href="../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)label12, <font color="#666666">"label2"</font>);
+<a name="line256">256: </a>    CheckDMLabelsSame(dm, dm1);
+
+<a name="line258">258: </a>    <a href="../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dm1);
+<a name="line259">259: </a>  }
+
+<a name="line261">261: </a>  <font color="#B22222">/* remove label0 and label1 just to test manual removal; let label3 be removed automatically by <a href="../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>() */</font>
+<a name="line262">262: </a>  {
+<a name="line263">263: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> label0, label1, label2;
+<a name="line264">264: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"label0"</font>, &amp;label0);
+<a name="line265">265: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"label1"</font>, &amp;label1);
+<a name="line268">268: </a>    <a href="../../../../docs/manualpages/DM/DMRemoveLabel.html">DMRemoveLabel</a>(dm, <font color="#666666">"label1"</font>, NULL);
+<a name="line269">269: </a>    <a href="../../../../docs/manualpages/DM/DMRemoveLabel.html">DMRemoveLabel</a>(dm, <font color="#666666">"label2"</font>, &amp;label2);
+<a name="line270">270: </a>    <a href="../../../../docs/manualpages/DM/DMRemoveLabelBySelf.html">DMRemoveLabelBySelf</a>(dm, &amp;label0, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
+<a name="line271">271: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"label0"</font>, &amp;label0);
+<a name="line272">272: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"label1"</font>, &amp;label1);
+<a name="line276">276: </a>    <a href="../../../../docs/manualpages/DM/DMRemoveLabelBySelf.html">DMRemoveLabelBySelf</a>(dm, &amp;label2, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>); <font color="#B22222">/* this should do nothing */</font>
+<a name="line278">278: </a>    <a href="../../../../docs/manualpages/DMLabel/DMLabelDestroy.html">DMLabelDestroy</a>(&amp;label2);
+<a name="line279">279: </a>    <a href="../../../../docs/manualpages/DM/DMGetLabel.html">DMGetLabel</a>(dm, <font color="#666666">"label2"</font>, &amp;label2);
+<a name="line281">281: </a>  }
+
+<a name="line283">283: </a>  <a href="../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dm);
+<a name="line284">284: </a>  <a href="../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line285">285: </a>  <font color="#4169E1">return</font> 0;
+<a name="line286">286: </a>}
+
+<a name="line288">288: </a><font color="#B22222">/*TEST</font>
+
+<a name="line290">290: </a><font color="#B22222">  test:</font>
+<a name="line291">291: </a><font color="#B22222">    suffix: 0</font>
+<a name="line292">292: </a><font color="#B22222">    nsize: {{1 2}separate output}</font>
+<a name="line293">293: </a><font color="#B22222">    args: -i ${wPETSC_DIR}/share/petsc/datafiles/meshes/blockcylinder-50.exo -interpolate</font>
+<a name="line294">294: </a><font color="#B22222">    requires: exodusii</font>
+
+<a name="line296">296: </a><font color="#B22222">TEST*/</font>
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,41 @@
+# MatMPIAIJGetNumberNonzeros
+gets the number of nonzeros in the matrix on this MPI rank 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatMPIAIJGetNumberNonzeros(Mat A, PetscCount *nz)
+```
+Not collective
+
+
+## Input Parameter
+
+- ***A -*** the matrix
+
+
+
+## Output Parameter
+
+- ***nz -*** the number of nonzeros
+
+
+
+
+
+## See Also
+ `MATMPIAIJ`, `Mat`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/impls/aij/mpi/mpiaij.c.html#MatMPIAIJGetNumberNonzeros">src/mat/impls/aij/mpi/mpiaij.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/impls/aij/mpi/mpiaij.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

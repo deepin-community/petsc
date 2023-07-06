@@ -1,0 +1,40 @@
+# MatChop
+Set all values in the matrix less than the tolerance to zero 
+## Synopsis
+```
+#include "petscmat.h"  
+PetscErrorCode MatChop(Mat A, PetscReal tol)
+```
+
+## Input Parameters
+
+- ***A   -*** The matrix
+- ***tol -*** The zero tolerance
+
+
+
+## Output Parameters
+
+- ***A -*** The chopped matrix
+
+
+
+
+
+## See Also
+ `MatCreate()`, `MatZeroEntries()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/utils/axpy.c.html#MatChop">src/mat/utils/axpy.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/utils/axpy.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

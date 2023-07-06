@@ -1,0 +1,500 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/impls/aij/seq/seqcusparse/aijcusparseband.cu">Actual source code: aijcusparseband.cu</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:38+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">  AIJCUSPARSE methods implemented with Cuda kernels. Uses cuSparse/Thrust maps from AIJCUSPARSE</font>
+<a name="line3">  3: </a><font color="#B22222">*/</font>
+<a name="line4">  4: </a><strong><font color="#228B22">#define PETSC_SKIP_SPINLOCK</font></strong>
+<a name="line5">  5: </a><strong><font color="#228B22">#define PETSC_SKIP_IMMINTRIN_H_CUDAWORKAROUND 1</font></strong>
+
+<a name="line7">  7: </a><font color="#A020F0">#include &lt;petscconf.h&gt;</font>
+<a name="line8">  8: </a>#include <A href="../aij.h.html">&lt;../src/mat/impls/aij/seq/aij.h&gt;</A>
+<a name="line9">  9: </a>#include <A href="../../../sbaij/seq/sbaij.h.html">&lt;../src/mat/impls/sbaij/seq/sbaij.h&gt;</A>
+<a name="line10"> 10: </a><strong><font color="#228B22">#undef <a href="../../../../../../docs/manualpages/Vec/VecType.html">VecType</a></font></strong>
+<a name="line11"> 11: </a>#include <A href="cusparsematimpl.h.html">&lt;../src/mat/impls/aij/seq/seqcusparse/cusparsematimpl.h&gt;</A>
+<a name="line12"> 12: </a><font color="#A020F0">#if defined(__CUDA_ARCH__) &amp;&amp; __CUDA_ARCH__ &gt; 600 &amp;&amp; PETSC_PKG_CUDA_VERSION_GE(11, 0, 0)</font>
+<a name="line13"> 13: </a><strong><font color="#228B22">  #define AIJBANDUSEGROUPS 1</font></strong>
+<a name="line14"> 14: </a><font color="#A020F0">#endif</font>
+<a name="line15"> 15: </a><font color="#A020F0">#if defined(AIJBANDUSEGROUPS)</font>
+<a name="line16"> 16: </a><font color="#A020F0">  #include &lt;cooperative_groups.h&gt;</font>
+<a name="line17"> 17: </a><font color="#A020F0">#endif</font>
+
+<a name="line19"> 19: </a><font color="#B22222">/*</font>
+<a name="line20"> 20: </a><font color="#B22222">  LU BAND factorization with optimization for block diagonal (Nf blocks) in natural order (-mat_no_inode -pc_factor_mat_ordering_type rcm with Nf&gt;1 fields)</font>
+
+<a name="line22"> 22: </a><font color="#B22222">  requires:</font>
+<a name="line23"> 23: </a><font color="#B22222">     structurally symmetric: fix with transpose/column meta data</font>
+<a name="line24"> 24: </a><font color="#B22222">*/</font>
+
+<a name="line26"> 26: </a><strong><font color="#4169E1">static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatLUFactorSymbolic_SeqAIJCUSPARSEBAND(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../../docs/manualpages/IS/IS.html">IS</a>, <a href="../../../../../../docs/manualpages/IS/IS.html">IS</a>, const <a href="../../../../../../docs/manualpages/Mat/MatFactorInfo.html">MatFactorInfo</a> *)</font></strong>;
+<a name="line27"> 27: </a><strong><font color="#4169E1">static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatLUFactorNumeric_SeqAIJCUSPARSEBAND(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, const <a href="../../../../../../docs/manualpages/Mat/MatFactorInfo.html">MatFactorInfo</a> *)</font></strong>;
+
+<a name="line29"> 29: </a><font color="#B22222">/*</font>
+<a name="line30"> 30: </a><font color="#B22222">  The GPU LU factor kernel</font>
+<a name="line31"> 31: </a><font color="#B22222">*/</font>
+<a name="line32"> 32: </a>__global__ void __launch_bounds__(1024, 1) mat_lu_factor_band_init_set_i(const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, const int bw, int bi_csr[])
+<a name="line33"> 33: </a>{
+<a name="line34"> 34: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> Nf = gridDim.x, Nblk = gridDim.y, nloc = n / Nf;
+<a name="line35"> 35: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> field = blockIdx.x, blkIdx = blockIdx.y;
+<a name="line36"> 36: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nloc_i = (nloc / Nblk + !!(nloc % Nblk)), start_i = field * nloc + blkIdx * nloc_i, end_i = (start_i + nloc_i) &gt; (field + 1) * nloc ? (field + 1) * nloc : (start_i + nloc_i);
+
+<a name="line38"> 38: </a>  // set i (row+1)
+<a name="line39"> 39: </a>  <font color="#4169E1">if</font> (threadIdx.x + threadIdx.y + blockIdx.x + blockIdx.y == 0) bi_csr[0] = 0; // dummy at zero
+<a name="line40"> 40: </a>  <font color="#4169E1">for</font> (int rowb = start_i + threadIdx.y; rowb &lt; end_i; rowb += blockDim.y) {   // rows in block by thread y
+<a name="line41"> 41: </a>    <font color="#4169E1">if</font> (rowb &lt; end_i &amp;&amp; threadIdx.x == 0) {
+<a name="line42"> 42: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i = rowb + 1, ni = (rowb &gt; bw) ? bw + 1 : i, n1L = ni * (ni - 1) / 2, nug = i * bw, n2L = bw * ((rowb &gt; bw) ? (rowb - bw) : 0), mi = bw + rowb + 1 - n, clip = (mi &gt; 0) ? mi * (mi - 1) / 2 + mi : 0;
+<a name="line43"> 43: </a>      bi_csr[rowb + 1] = n1L + nug - clip + n2L + i;
+<a name="line44"> 44: </a>    }
+<a name="line45"> 45: </a>  }
+<a name="line46"> 46: </a>}
+<a name="line47"> 47: </a>// copy AIJ to AIJ_BAND
+<a name="line48"> 48: </a>__global__ void __launch_bounds__(1024, 1) mat_lu_factor_band_copy_aij_aij(const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, const int bw, const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> r[], const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ic[], const int ai_d[], const int aj_d[], const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> aa_d[], const int bi_csr[], <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> ba_csr[])
+<a name="line49"> 49: </a>{
+<a name="line50"> 50: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> Nf = gridDim.x, Nblk = gridDim.y, nloc = n / Nf;
+<a name="line51"> 51: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> field = blockIdx.x, blkIdx = blockIdx.y;
+<a name="line52"> 52: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nloc_i = (nloc / Nblk + !!(nloc % Nblk)), start_i = field * nloc + blkIdx * nloc_i, end_i = (start_i + nloc_i) &gt; (field + 1) * nloc ? (field + 1) * nloc : (start_i + nloc_i);
+
+<a name="line54"> 54: </a>  // zero B
+<a name="line55"> 55: </a>  <font color="#4169E1">if</font> (threadIdx.x + threadIdx.y + blockIdx.x + blockIdx.y == 0) ba_csr[bi_csr[n]] = 0; // flop count at end
+<a name="line56"> 56: </a>  <font color="#4169E1">for</font> (int rowb = start_i + threadIdx.y; rowb &lt; end_i; rowb += blockDim.y) {           // rows in block by thread y
+<a name="line57"> 57: </a>    <font color="#4169E1">if</font> (rowb &lt; end_i) {
+<a name="line58"> 58: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   *batmp = ba_csr + bi_csr[rowb];
+<a name="line59"> 59: </a>      const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nzb   = bi_csr[rowb + 1] - bi_csr[rowb];
+<a name="line60"> 60: </a>      <font color="#4169E1">for</font> (int j = threadIdx.x; j &lt; nzb; j += blockDim.x) {
+<a name="line61"> 61: </a>        <font color="#4169E1">if</font> (j &lt; nzb) batmp[j] = 0;
+<a name="line62"> 62: </a>      }
+<a name="line63"> 63: </a>    }
+<a name="line64"> 64: </a>  }
+
+<a name="line66"> 66: </a>  // copy A into B with CSR format -- these two loops can be fused
+<a name="line67"> 67: </a>  <font color="#4169E1">for</font> (int rowb = start_i + threadIdx.y; rowb &lt; end_i; rowb += blockDim.y) { // rows in block by thread y
+<a name="line68"> 68: </a>    <font color="#4169E1">if</font> (rowb &lt; end_i) {
+<a name="line69"> 69: </a>      const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     rowa = r[rowb], nza = ai_d[rowa + 1] - ai_d[rowa];
+<a name="line70"> 70: </a>      const int         *ajtmp = aj_d + ai_d[rowa], bjStart = (rowb &gt; bw) ? rowb - bw : 0;
+<a name="line71"> 71: </a>      const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *av    = aa_d + ai_d[rowa];
+<a name="line72"> 72: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *batmp = ba_csr + bi_csr[rowb];
+<a name="line73"> 73: </a>      <font color="#B22222">/* load in initial (unfactored row) */</font>
+<a name="line74"> 74: </a>      <font color="#4169E1">for</font> (int j = threadIdx.x; j &lt; nza; j += blockDim.x) {
+<a name="line75"> 75: </a>        <font color="#4169E1">if</font> (j &lt; nza) {
+<a name="line76"> 76: </a>          <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    colb = ic[ajtmp[j]], idx = colb - bjStart;
+<a name="line77"> 77: </a>          <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> vala = av[j];
+<a name="line78"> 78: </a>          batmp[idx]       = vala;
+<a name="line79"> 79: </a>        }
+<a name="line80"> 80: </a>      }
+<a name="line81"> 81: </a>    }
+<a name="line82"> 82: </a>  }
+<a name="line83"> 83: </a>}
+<a name="line84"> 84: </a>// print AIJ_BAND
+<a name="line85"> 85: </a><strong><font color="#4169E1"><a name="print_mat_aij_band"></a>__global__ void print_mat_aij_band(const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, const int bi_csr[], const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> ba_csr[])</font></strong>
+<a name="line86"> 86: </a>{
+<a name="line87"> 87: </a>  // debug
+<a name="line88"> 88: </a>  <font color="#4169E1">if</font> (threadIdx.x + threadIdx.y + blockIdx.x + blockIdx.y == 0) {
+<a name="line89"> 89: </a>    printf(<font color="#666666">"B (AIJ) n=%d:\n"</font>, (int)n);
+<a name="line90"> 90: </a>    <font color="#4169E1">for</font> (int rowb = 0; rowb &lt; n; rowb++) {
+<a name="line91"> 91: </a>      const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     nz    = bi_csr[rowb + 1] - bi_csr[rowb];
+<a name="line92"> 92: </a>      const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *batmp = ba_csr + bi_csr[rowb];
+<a name="line93"> 93: </a>      <font color="#4169E1">for</font> (int j = 0; j &lt; nz; j++) printf(<font color="#666666">"(%13.6e) "</font>, <a href="../../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(batmp[j]));
+<a name="line94"> 94: </a>      printf(<font color="#666666">" bi=%d\n"</font>, bi_csr[rowb + 1]);
+<a name="line95"> 95: </a>    }
+<a name="line96"> 96: </a>  }
+<a name="line97"> 97: </a>}
+<a name="line98"> 98: </a>// Band LU kernel ---  ba_csr bi_csr
+<a name="line99"> 99: </a>__global__ void __launch_bounds__(1024, 1) mat_lu_factor_band(const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> bw, const int bi_csr[], <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> ba_csr[], int *use_group_sync)
+<a name="line100">100: </a>{
+<a name="line101">101: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> Nf = gridDim.x, Nblk = gridDim.y, nloc = n / Nf;
+<a name="line102">102: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> field = blockIdx.x, blkIdx = blockIdx.y;
+<a name="line103">103: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> start = field * nloc, end = start + nloc;
+<a name="line104">104: </a><font color="#A020F0">#if defined(AIJBANDUSEGROUPS)</font>
+<a name="line105">105: </a>  auto g = cooperative_groups::this_grid();
+<a name="line106">106: </a><font color="#A020F0">#endif</font>
+<a name="line107">107: </a>  // A22 panel update <font color="#4169E1">for</font> each row A(1,:) and col A(:,1)
+<a name="line108">108: </a>  <font color="#4169E1">for</font> (int glbDD = start, locDD = 0; glbDD &lt; end; glbDD++, locDD++) {
+<a name="line109">109: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           tnzUd = bw, maxU = end - 1 - glbDD;                                        // we are chopping off the inter ears
+<a name="line110">110: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     nzUd = (tnzUd &gt; maxU) ? maxU : tnzUd, dOffset = (glbDD &gt; bw) ? bw : glbDD; // global to go past ears after first
+<a name="line111">111: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *pBdd   = ba_csr + bi_csr[glbDD] + dOffset;
+<a name="line112">112: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *baUd   = pBdd + 1; // vector of data  U(i,i+1:end)
+<a name="line113">113: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>  Bdd    = *pBdd;
+<a name="line114">114: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     offset = blkIdx * blockDim.y + threadIdx.y, inc = Nblk * blockDim.y;
+<a name="line115">115: </a>    <font color="#4169E1">if</font> (threadIdx.x == 0) {
+<a name="line116">116: </a>      <font color="#4169E1">for</font> (int idx = offset, myi = glbDD + offset + 1; idx &lt; nzUd; idx += inc, myi += inc) { <font color="#B22222">/* assuming symmetric structure */</font>
+<a name="line117">117: </a>        const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> bwi = myi &gt; bw ? bw : myi, kIdx = bwi - (myi - glbDD);                // cuts off just the first (global) block
+<a name="line118">118: </a>        <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   *Aid = ba_csr + bi_csr[myi] + kIdx;
+<a name="line119">119: </a>        *Aid               = *Aid / Bdd;
+<a name="line120">120: </a>      }
+<a name="line121">121: </a>    }
+<a name="line122">122: </a>    __syncthreads(); // synch on threadIdx.x only
+<a name="line123">123: </a>    <font color="#4169E1">for</font> (int idx = offset, myi = glbDD + offset + 1; idx &lt; nzUd; idx += inc, myi += inc) {
+<a name="line124">124: </a>      const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    bwi = myi &gt; bw ? bw : myi, kIdx = bwi - (myi - glbDD); // cuts off just the first (global) block
+<a name="line125">125: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>      *Aid = ba_csr + bi_csr[myi] + kIdx;
+<a name="line126">126: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>      *Aij = Aid + 1;
+<a name="line127">127: </a>      const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> Lid = *Aid;
+<a name="line128">128: </a>      <font color="#4169E1">for</font> (int jIdx = threadIdx.x; jIdx &lt; nzUd; jIdx += blockDim.x) Aij[jIdx] -= Lid * baUd[jIdx];
+<a name="line129">129: </a>    }
+<a name="line130">130: </a><font color="#A020F0">#if defined(AIJBANDUSEGROUPS)</font>
+<a name="line131">131: </a>    <font color="#4169E1">if</font> (use_group_sync) {
+<a name="line132">132: </a>      g.sync();
+<a name="line133">133: </a>    } <font color="#4169E1">else</font> {
+<a name="line134">134: </a>      __syncthreads();
+<a name="line135">135: </a>    }
+<a name="line136">136: </a><font color="#A020F0">#else</font>
+<a name="line137">137: </a>    __syncthreads();
+<a name="line138">138: </a><font color="#A020F0">#endif</font>
+<a name="line139">139: </a>  } <font color="#B22222">/* endof for (i=0; i&lt;n; i++) { */</font>
+<a name="line140">140: </a>}
+
+<a name="line142">142: </a><strong><font color="#4169E1">static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolve_SeqAIJCUSPARSEBAND(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a>)</font></strong>;
+<a name="line143">143: </a><strong><font color="#4169E1"><a name="MatLUFactorNumeric_SeqAIJCUSPARSEBAND"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatLUFactorNumeric_SeqAIJCUSPARSEBAND(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, const <a href="../../../../../../docs/manualpages/Mat/MatFactorInfo.html">MatFactorInfo</a> *info)</font></strong>
+<a name="line144">144: </a>{
+<a name="line145">145: </a>  Mat_SeqAIJ                   *b                  = (Mat_SeqAIJ *)B-&gt;data;
+<a name="line146">146: </a>  Mat_SeqAIJCUSPARSETriFactors *cusparseTriFactors = (Mat_SeqAIJCUSPARSETriFactors *)B-&gt;spptr;
+<a name="line148">148: </a>  Mat_SeqAIJCUSPARSE           *cusparsestructA = (Mat_SeqAIJCUSPARSE *)A-&gt;spptr;
+<a name="line149">149: </a>  Mat_SeqAIJCUSPARSEMultStruct *matstructA;
+<a name="line150">150: </a>  CsrMatrix                    *matrixA;
+<a name="line151">151: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                n = A-&gt;rmap-&gt;n, *ic, *r;
+<a name="line152">152: </a>  const int                    *ai_d, *aj_d;
+<a name="line153">153: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>            *aa_d;
+<a name="line154">154: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>                  *ba_t = cusparseTriFactors-&gt;a_band_d;
+<a name="line155">155: </a>  int                          *bi_t = cusparseTriFactors-&gt;i_band_d;
+<a name="line156">156: </a>  int                           Ni = 10, team_size = 9, Nf = 1, nVec = 56, nconcurrent = 1, nsm = -1; // Nf is batch size - not used
+
+<a name="line158">158: </a>  <font color="#4169E1">if</font> (A-&gt;rmap-&gt;n == 0) <font color="#4169E1">return</font> 0;
+<a name="line159">159: </a>  // cusparse setup
+<a name="line161">161: </a>  matstructA = (Mat_SeqAIJCUSPARSEMultStruct *)cusparsestructA-&gt;mat; //  matstruct-&gt;cprowIndices
+<a name="line163">163: </a>  matrixA = (CsrMatrix *)matstructA-&gt;mat;
+
+<a name="line166">166: </a>  // get data
+<a name="line167">167: </a>  ic   = thrust::raw_pointer_cast(cusparseTriFactors-&gt;cpermIndices-&gt;data());
+<a name="line168">168: </a>  ai_d = thrust::raw_pointer_cast(matrixA-&gt;row_offsets-&gt;data());
+<a name="line169">169: </a>  aj_d = thrust::raw_pointer_cast(matrixA-&gt;column_indices-&gt;data());
+<a name="line170">170: </a>  aa_d = thrust::raw_pointer_cast(matrixA-&gt;values-&gt;data().get());
+<a name="line171">171: </a>  r    = thrust::raw_pointer_cast(cusparseTriFactors-&gt;rpermIndices-&gt;data());
+
+<a name="line173">173: </a>  WaitForCUDA();
+<a name="line174">174: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line175">175: </a>  {
+<a name="line176">176: </a>    int bw = (int)(2. * (double)n - 1. - (double)(PetscSqrtReal(1. + 4. * ((double)n * (double)n - (double)b-&gt;nz)) + PETSC_MACHINE_EPSILON)) / 2, bm1 = bw - 1, nl = n / Nf;
+<a name="line177">177: </a><font color="#A020F0">#if !defined(AIJBANDUSEGROUPS)</font>
+<a name="line178">178: </a>    Ni = 1 / nconcurrent;
+<a name="line179">179: </a>    Ni = 1;
+<a name="line180">180: </a><font color="#A020F0">#else</font>
+<a name="line181">181: </a>    <font color="#4169E1">if</font> (!cusparseTriFactors-&gt;init_dev_prop) {
+<a name="line182">182: </a>      int gpuid;
+<a name="line183">183: </a>      cusparseTriFactors-&gt;init_dev_prop = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line184">184: </a>      cudaGetDevice(&amp;gpuid);
+<a name="line185">185: </a>      cudaGetDeviceProperties(&amp;cusparseTriFactors-&gt;dev_prop, gpuid);
+<a name="line186">186: </a>    }
+<a name="line187">187: </a>    nsm = cusparseTriFactors-&gt;dev_prop.multiProcessorCount;
+<a name="line188">188: </a>    Ni  = nsm / Nf / nconcurrent;
+<a name="line189">189: </a><font color="#A020F0">#endif</font>
+<a name="line190">190: </a>    team_size = bw / Ni + !!(bw % Ni);
+<a name="line191">191: </a>    nVec      = <a href="../../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(bw, 1024 / team_size);
+<a name="line192">192: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(A, <font color="#666666">"Matrix Bandwidth = %d, number SMs/block = %d, num concurrency = %d, num fields = %d, numSMs/GPU = %d, thread group size = %d,%d\n"</font>, bw, Ni, nconcurrent, Nf, nsm, team_size, nVec);
+<a name="line193">193: </a>    {
+<a name="line194">194: </a>      dim3 dimBlockTeam(nVec, team_size);
+<a name="line195">195: </a>      dim3 dimBlockLeague(Nf, Ni);
+<a name="line196">196: </a>      mat_lu_factor_band_copy_aij_aij&lt;&lt;&lt;dimBlockLeague, dimBlockTeam&gt;&gt;&gt;(n, bw, r, ic, ai_d, aj_d, aa_d, bi_t, ba_t);
+<a name="line197">197: </a>      PetscCUDACheckLaunch; // does a sync
+<a name="line198">198: </a><font color="#A020F0">#if defined(AIJBANDUSEGROUPS)</font>
+<a name="line199">199: </a>      <font color="#4169E1">if</font> (Ni &gt; 1) {
+<a name="line200">200: </a>        void *kernelArgs[] = {(void *)&amp;n, (void *)&amp;bw, (void *)&amp;bi_t, (void *)&amp;ba_t, (void *)&amp;nsm};
+<a name="line201">201: </a>        cudaLaunchCooperativeKernel((void *)mat_lu_factor_band, dimBlockLeague, dimBlockTeam, kernelArgs, 0, NULL);
+<a name="line202">202: </a>      } <font color="#4169E1">else</font> {
+<a name="line203">203: </a>        mat_lu_factor_band&lt;&lt;&lt;dimBlockLeague, dimBlockTeam&gt;&gt;&gt;(n, bw, bi_t, ba_t, NULL);
+<a name="line204">204: </a>      }
+<a name="line205">205: </a><font color="#A020F0">#else</font>
+<a name="line206">206: </a>      mat_lu_factor_band&lt;&lt;&lt;dimBlockLeague, dimBlockTeam&gt;&gt;&gt;(n, bw, bi_t, ba_t, NULL);
+<a name="line207">207: </a><font color="#A020F0">#endif</font>
+<a name="line208">208: </a>      PetscCUDACheckLaunch; // does a sync
+<a name="line209">209: </a><font color="#A020F0">#if defined(PETSC_USE_LOG)</font>
+<a name="line210">210: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>((<a href="../../../../../../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>)Nf * (bm1 * (bm1 + 1) * (<a href="../../../../../../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>)(2 * bm1 + 1) / 3 + (<a href="../../../../../../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>)2 * (nl - bw) * bw * bw + (<a href="../../../../../../docs/manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a>)nl * (nl + 1) / 2));
+<a name="line211">211: </a><font color="#A020F0">#endif</font>
+<a name="line212">212: </a>    }
+<a name="line213">213: </a>  }
+<a name="line214">214: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+<a name="line215">215: </a>  <font color="#B22222">/* determine which version of <a href="../../../../../../docs/manualpages/Mat/MatSolve.html">MatSolve</a> needs to be used. from MatLUFactorNumeric_AIJ_SeqAIJCUSPARSE */</font>
+<a name="line216">216: </a>  B-&gt;ops-&gt;solve             = MatSolve_SeqAIJCUSPARSEBAND;
+<a name="line217">217: </a>  B-&gt;ops-&gt;solvetranspose    = NULL; // need transpose
+<a name="line218">218: </a>  B-&gt;ops-&gt;matsolve          = NULL;
+<a name="line219">219: </a>  B-&gt;ops-&gt;matsolvetranspose = NULL;
+<a name="line220">220: </a>  <font color="#4169E1">return</font> 0;
+<a name="line221">221: </a>}
+
+<a name="line223">223: </a><strong><font color="#4169E1"><a name="MatLUFactorSymbolic_SeqAIJCUSPARSEBAND"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatLUFactorSymbolic_SeqAIJCUSPARSEBAND(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/IS/IS.html">IS</a> isrow, <a href="../../../../../../docs/manualpages/IS/IS.html">IS</a> iscol, const <a href="../../../../../../docs/manualpages/Mat/MatFactorInfo.html">MatFactorInfo</a> *info)</font></strong>
+<a name="line224">224: </a>{
+<a name="line225">225: </a>  Mat_SeqAIJ                   *a = (Mat_SeqAIJ *)A-&gt;data, *b;
+<a name="line226">226: </a>  <a href="../../../../../../docs/manualpages/IS/IS.html">IS</a>                            isicol;
+<a name="line227">227: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>               *ic, *ai = a-&gt;i, *aj = a-&gt;j;
+<a name="line228">228: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>                  *ba_t;
+<a name="line229">229: </a>  int                          *bi_t;
+<a name="line230">230: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                      i, n = A-&gt;rmap-&gt;n, Nf = 1; // Nf batch size - not used
+<a name="line231">231: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                      nzBcsr, bwL, bwU;
+<a name="line232">232: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>                     missing;
+<a name="line233">233: </a>  Mat_SeqAIJCUSPARSETriFactors *cusparseTriFactors = (Mat_SeqAIJCUSPARSETriFactors *)B-&gt;spptr;
+
+<a name="line236">236: </a>  <a href="../../../../../../docs/manualpages/Mat/MatMissingDiagonal.html">MatMissingDiagonal</a>(A, &amp;missing, &amp;i);
+<a name="line239">239: </a>  <a href="../../../../../../docs/manualpages/Mat/MatIsStructurallySymmetric.html">MatIsStructurallySymmetric</a>(A, &amp;missing);
+
+<a name="line242">242: </a>  <a href="../../../../../../docs/manualpages/IS/ISInvertPermutation.html">ISInvertPermutation</a>(iscol, <a href="../../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, &amp;isicol);
+<a name="line243">243: </a>  <a href="../../../../../../docs/manualpages/IS/ISGetIndices.html">ISGetIndices</a>(isicol, &amp;ic);
+
+<a name="line245">245: </a>  MatSeqAIJSetPreallocation_SeqAIJ(B, MAT_SKIP_ALLOCATION, NULL);
+<a name="line246">246: </a>  b = (Mat_SeqAIJ *)(B)-&gt;data;
+
+<a name="line248">248: </a>  <font color="#B22222">/* get band widths, <a href="../../../../../../docs/manualpages/Mat/MatComputeBandwidth.html">MatComputeBandwidth</a> should take a reordering ic and do this */</font>
+<a name="line249">249: </a>  bwL = bwU = 0;
+<a name="line250">250: </a>  <font color="#4169E1">for</font> (int rwb = 0; rwb &lt; n; rwb++) {
+<a name="line251">251: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> rwa = ic[rwb], anz = ai[rwb + 1] - ai[rwb], *ajtmp = aj + ai[rwb];
+<a name="line252">252: </a>    <font color="#4169E1">for</font> (int j = 0; j &lt; anz; j++) {
+<a name="line253">253: </a>      <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> colb = ic[ajtmp[j]];
+<a name="line254">254: </a>      <font color="#4169E1">if</font> (colb &lt; rwa) { // L
+<a name="line255">255: </a>        <font color="#4169E1">if</font> (rwa - colb &gt; bwL) bwL = rwa - colb;
+<a name="line256">256: </a>      } <font color="#4169E1">else</font> {
+<a name="line257">257: </a>        <font color="#4169E1">if</font> (colb - rwa &gt; bwU) bwU = colb - rwa;
+<a name="line258">258: </a>      }
+<a name="line259">259: </a>    }
+<a name="line260">260: </a>  }
+<a name="line261">261: </a>  <a href="../../../../../../docs/manualpages/IS/ISRestoreIndices.html">ISRestoreIndices</a>(isicol, &amp;ic);
+<a name="line262">262: </a>  <font color="#B22222">/* only support structurally symmetric, but it might work */</font>
+<a name="line264">264: </a>  MatSeqAIJCUSPARSETriFactors_Reset(&amp;cusparseTriFactors);
+<a name="line265">265: </a>  nzBcsr   = n + (2 * n - 1) * bwU - bwU * bwU;
+<a name="line266">266: </a>  b-&gt;maxnz = b-&gt;nz        = nzBcsr;
+<a name="line267">267: </a>  cusparseTriFactors-&gt;nnz = b-&gt;nz; // only meta data needed: n &amp; nz
+<a name="line268">268: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(A, <font color="#666666">"Matrix Bandwidth = %"</font> PetscInt_FMT <font color="#666666">", nnz = %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, bwL, b-&gt;nz);
+<a name="line269">269: </a>  <font color="#4169E1">if</font> (!cusparseTriFactors-&gt;workVector) cusparseTriFactors-&gt;workVector = new THRUSTARRAY(n);
+<a name="line270">270: </a>  cudaMalloc(&amp;ba_t, (b-&gt;nz + 1) * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)); // include a place <font color="#4169E1">for</font> flops
+<a name="line271">271: </a>  cudaMalloc(&amp;bi_t, (n + 1) * <font color="#4169E1">sizeof</font>(int));
+<a name="line272">272: </a>  cusparseTriFactors-&gt;a_band_d = ba_t;
+<a name="line273">273: </a>  cusparseTriFactors-&gt;i_band_d = bi_t;
+<a name="line274">274: </a>  <font color="#B22222">/* In b structure:  Free imax, ilen, old a, old j.  Allocate solve_work, new a, new j */</font>
+<a name="line275">275: </a>  {
+<a name="line276">276: </a>    dim3 dimBlockTeam(1, 128);
+<a name="line277">277: </a>    dim3 dimBlockLeague(Nf, 1);
+<a name="line278">278: </a>    mat_lu_factor_band_init_set_i&lt;&lt;&lt;dimBlockLeague, dimBlockTeam&gt;&gt;&gt;(n, bwU, bi_t);
+<a name="line279">279: </a>  }
+<a name="line280">280: </a>  PetscCUDACheckLaunch; // does a sync
+
+<a name="line282">282: </a>  // setup data
+<a name="line283">283: </a>  <font color="#4169E1">if</font> (!cusparseTriFactors-&gt;rpermIndices) {
+<a name="line284">284: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *r;
+
+<a name="line286">286: </a>    <a href="../../../../../../docs/manualpages/IS/ISGetIndices.html">ISGetIndices</a>(isrow, &amp;r);
+<a name="line287">287: </a>    cusparseTriFactors-&gt;rpermIndices = new THRUSTINTARRAY(n);
+<a name="line288">288: </a>    cusparseTriFactors-&gt;rpermIndices-&gt;assign(r, r + n);
+<a name="line289">289: </a>    <a href="../../../../../../docs/manualpages/IS/ISRestoreIndices.html">ISRestoreIndices</a>(isrow, &amp;r);
+<a name="line290">290: </a>    PetscLogCpuToGpu(n * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>));
+<a name="line291">291: </a>  }
+<a name="line292">292: </a>  <font color="#B22222">/* upper triangular indices */</font>
+<a name="line293">293: </a>  <font color="#4169E1">if</font> (!cusparseTriFactors-&gt;cpermIndices) {
+<a name="line294">294: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *c;
+
+<a name="line296">296: </a>    <a href="../../../../../../docs/manualpages/IS/ISGetIndices.html">ISGetIndices</a>(isicol, &amp;c);
+<a name="line297">297: </a>    cusparseTriFactors-&gt;cpermIndices = new THRUSTINTARRAY(n);
+<a name="line298">298: </a>    cusparseTriFactors-&gt;cpermIndices-&gt;assign(c, c + n);
+<a name="line299">299: </a>    <a href="../../../../../../docs/manualpages/IS/ISRestoreIndices.html">ISRestoreIndices</a>(isicol, &amp;c);
+<a name="line300">300: </a>    PetscLogCpuToGpu(n * <font color="#4169E1">sizeof</font>(<a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>));
+<a name="line301">301: </a>  }
+
+<a name="line303">303: </a>  <font color="#B22222">/* put together the new matrix */</font>
+<a name="line304">304: </a>  b-&gt;free_a       = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line305">305: </a>  b-&gt;free_ij      = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line306">306: </a>  b-&gt;singlemalloc = <a href="../../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line307">307: </a>  b-&gt;ilen         = NULL;
+<a name="line308">308: </a>  b-&gt;imax         = NULL;
+<a name="line309">309: </a>  b-&gt;row          = isrow;
+<a name="line310">310: </a>  b-&gt;col          = iscol;
+<a name="line311">311: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)isrow);
+<a name="line312">312: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)iscol);
+<a name="line313">313: </a>  b-&gt;icol = isicol;
+<a name="line314">314: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(n + 1, &amp;b-&gt;solve_work);
+
+<a name="line316">316: </a>  B-&gt;factortype            = <a href="../../../../../../docs/manualpages/Mat/MatFactorType.html">MAT_FACTOR_LU</a>;
+<a name="line317">317: </a>  B-&gt;info.factor_mallocs   = 0;
+<a name="line318">318: </a>  B-&gt;info.fill_ratio_given = 0;
+
+<a name="line320">320: </a>  <font color="#4169E1">if</font> (ai[n]) {
+<a name="line321">321: </a>    B-&gt;info.fill_ratio_needed = ((<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>)(nzBcsr)) / ((<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>)ai[n]);
+<a name="line322">322: </a>  } <font color="#4169E1">else</font> {
+<a name="line323">323: </a>    B-&gt;info.fill_ratio_needed = 0.0;
+<a name="line324">324: </a>  }
+<a name="line325">325: </a><font color="#A020F0">#if defined(PETSC_USE_INFO)</font>
+<a name="line326">326: </a>  <font color="#4169E1">if</font> (ai[n] != 0) {
+<a name="line327">327: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> af = B-&gt;info.fill_ratio_needed;
+<a name="line328">328: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(A, <font color="#666666">"Band fill ratio %g\n"</font>, (double)af);
+<a name="line329">329: </a>  } <font color="#4169E1">else</font> {
+<a name="line330">330: </a>    <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(A, <font color="#666666">"Empty matrix\n"</font>);
+<a name="line331">331: </a>  }
+<a name="line332">332: </a><font color="#A020F0">#endif</font>
+<a name="line333">333: </a>  <font color="#4169E1">if</font> (a-&gt;inode.size) <a href="../../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(A, <font color="#666666">"Warning: using inodes in band solver.\n"</font>);
+<a name="line334">334: </a>  MatSeqAIJCheckInode_FactorLU(B);
+<a name="line335">335: </a>  B-&gt;ops-&gt;lufactornumeric = MatLUFactorNumeric_SeqAIJCUSPARSEBAND;
+<a name="line336">336: </a>  B-&gt;offloadmask          = <a href="../../../../../../docs/manualpages/Sys/PetscOffloadMask.html">PETSC_OFFLOAD_GPU</a>;
+
+<a name="line338">338: </a>  <font color="#4169E1">return</font> 0;
+<a name="line339">339: </a>}
+
+<a name="line341">341: </a><font color="#B22222">/* Use -pc_factor_mat_solver_type cusparseband */</font>
+<a name="line342">342: </a><strong><font color="#4169E1"><a name="MatFactorGetSolverType_seqaij_cusparse_band"></a><a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatFactorGetSolverType_seqaij_cusparse_band(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Mat/MatSolverType.html">MatSolverType</a> *type)</font></strong>
+<a name="line343">343: </a>{
+<a name="line344">344: </a>  *type = MATSOLVERCUSPARSEBAND;
+<a name="line345">345: </a>  <font color="#4169E1">return</font> 0;
+<a name="line346">346: </a>}
+
+<a name="line348">348: </a><strong><font color="#4169E1"><a name="MatGetFactor_seqaijcusparse_cusparse_band"></a>PETSC_EXTERN <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatGetFactor_seqaijcusparse_cusparse_band(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Mat/MatFactorType.html">MatFactorType</a> ftype, <a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *B)</font></strong>
+<a name="line349">349: </a>{
+<a name="line350">350: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n = A-&gt;rmap-&gt;n;
+
+<a name="line352">352: </a>  <a href="../../../../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>(<a href="../../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)A), B);
+<a name="line353">353: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSetSizes.html">MatSetSizes</a>(*B, n, n, n, n);
+<a name="line354">354: </a>  (*B)-&gt;factortype     = ftype;
+<a name="line355">355: </a>  (*B)-&gt;canuseordering = <a href="../../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line356">356: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(*B, <a href="../../../../../../docs/manualpages/Mat/MATSEQAIJCUSPARSE.html">MATSEQAIJCUSPARSE</a>);
+
+<a name="line358">358: </a>  <font color="#4169E1">if</font> (ftype == <a href="../../../../../../docs/manualpages/Mat/MatFactorType.html">MAT_FACTOR_LU</a>) {
+<a name="line359">359: </a>    <a href="../../../../../../docs/manualpages/Mat/MatSetBlockSizesFromMats.html">MatSetBlockSizesFromMats</a>(*B, A, A);
+<a name="line360">360: </a>    (*B)-&gt;ops-&gt;ilufactorsymbolic = NULL; // MatILUFactorSymbolic_SeqAIJCUSPARSE;
+<a name="line361">361: </a>    (*B)-&gt;ops-&gt;lufactorsymbolic  = MatLUFactorSymbolic_SeqAIJCUSPARSEBAND;
+<a name="line362">362: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(MATORDERINGRCM, (char **)&amp;(*B)-&gt;preferredordering[<a href="../../../../../../docs/manualpages/Mat/MatFactorType.html">MAT_FACTOR_LU</a>]);
+<a name="line363">363: </a>  } <font color="#4169E1">else</font> <a href="../../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"Factor type not supported for CUSPARSEBAND Matrix Types"</font>);
+
+<a name="line365">365: </a>  <a href="../../../../../../docs/manualpages/Mat/MatSeqAIJSetPreallocation.html">MatSeqAIJSetPreallocation</a>(*B, MAT_SKIP_ALLOCATION, NULL);
+<a name="line366">366: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)(*B), <font color="#666666">"MatFactorGetSolverType_C"</font>, MatFactorGetSolverType_seqaij_cusparse_band);
+<a name="line367">367: </a>  <font color="#4169E1">return</font> 0;
+<a name="line368">368: </a>}
+
+<a name="line370">370: </a><strong><font color="#228B22">#define WARP_SIZE 32</font></strong>
+<a name="line371">371: </a>template &lt;typename T&gt;
+<a name="line372">372: </a><strong><font color="#4169E1"><a name="wreduce"></a>__forceinline__ __device__ T wreduce(T a)</font></strong>
+<a name="line373">373: </a>{
+<a name="line374">374: </a>  T b;
+<a name="line375">375: </a><font color="#A020F0">#pragma unroll</font>
+<a name="line376">376: </a>  <font color="#4169E1">for</font> (int i = WARP_SIZE / 2; i &gt;= 1; i = i &gt;&gt; 1) {
+<a name="line377">377: </a>    b = __shfl_down_sync(0xffffffff, a, i);
+<a name="line378">378: </a>    a += b;
+<a name="line379">379: </a>  }
+<a name="line380">380: </a>  <font color="#4169E1">return</font> a;
+<a name="line381">381: </a>}
+<a name="line382">382: </a>// reduce in a block, returns result in thread 0
+<a name="line383">383: </a>template &lt;typename T, int BLOCK_SIZE&gt;
+<a name="line384">384: </a><strong><font color="#4169E1"><a name="breduce"></a>__device__ T breduce(T a)</font></strong>
+<a name="line385">385: </a>{
+<a name="line386">386: </a>  constexpr int     NWARP = BLOCK_SIZE / WARP_SIZE;
+<a name="line387">387: </a>  __shared__ double buf[NWARP];
+<a name="line388">388: </a>  int               wid    = threadIdx.x / WARP_SIZE;
+<a name="line389">389: </a>  int               laneid = threadIdx.x % WARP_SIZE;
+<a name="line390">390: </a>  T                 b      = wreduce&lt;T&gt;(a);
+<a name="line391">391: </a>  <font color="#4169E1">if</font> (laneid == 0) buf[wid] = b;
+<a name="line392">392: </a>  __syncthreads();
+<a name="line393">393: </a>  <font color="#4169E1">if</font> (wid == 0) {
+<a name="line394">394: </a>    <font color="#4169E1">if</font> (threadIdx.x &lt; NWARP) a = buf[threadIdx.x];
+<a name="line395">395: </a>    <font color="#4169E1">else</font> a = 0;
+<a name="line396">396: </a>    <font color="#4169E1">for</font> (int i = (NWARP + 1) / 2; i &gt;= 1; i = i &gt;&gt; 1) a += __shfl_down_sync(0xffffffff, a, i);
+<a name="line397">397: </a>  }
+<a name="line398">398: </a>  <font color="#4169E1">return</font> a;
+<a name="line399">399: </a>}
+
+<a name="line401">401: </a>// Band LU kernel ---  ba_csr bi_csr
+<a name="line402">402: </a>template &lt;int BLOCK_SIZE&gt;
+<a name="line403">403: </a>__global__ void __launch_bounds__(256, 1) mat_solve_band(const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> bw, const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> ba_csr[], <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> x[])
+<a name="line404">404: </a>{
+<a name="line405">405: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     Nf = gridDim.x, nloc = n / Nf, field = blockIdx.x, start = field * nloc, end = start + nloc, chopnz = bw * (bw + 1) / 2, blocknz = (2 * bw + 1) * nloc, blocknz_0 = blocknz - chopnz;
+<a name="line406">406: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *pLi;
+<a name="line407">407: </a>  const int          tid = threadIdx.x;
+
+<a name="line409">409: </a>  <font color="#B22222">/* Next, solve L */</font>
+<a name="line410">410: </a>  pLi = ba_csr + (field == 0 ? 0 : blocknz_0 + (field - 1) * blocknz + bw); // diagonal (0,0) in field
+<a name="line411">411: </a>  <font color="#4169E1">for</font> (int glbDD = start, locDD = 0; glbDD &lt; end; glbDD++, locDD++) {
+<a name="line412">412: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> col = locDD &lt; bw ? start : (glbDD - bw);
+<a name="line413">413: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>    t   = 0;
+<a name="line414">414: </a>    <font color="#4169E1">for</font> (int j = col + tid, idx = tid; j &lt; glbDD; j += blockDim.x, idx += blockDim.x) t += pLi[idx] * x[j];
+<a name="line415">415: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line416">416: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>   tr = PetscRealPartComplex(t), ti = PetscImaginaryPartComplex(t);
+<a name="line417">417: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> tt(breduce&lt;<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, BLOCK_SIZE&gt;(tr), breduce&lt;<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, BLOCK_SIZE&gt;(ti));
+<a name="line418">418: </a>    t = tt;
+<a name="line419">419: </a><font color="#A020F0">#else</font>
+<a name="line420">420: </a>    t = breduce&lt;<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, BLOCK_SIZE&gt;(t);
+<a name="line421">421: </a><font color="#A020F0">#endif</font>
+<a name="line422">422: </a>    <font color="#4169E1">if</font> (threadIdx.x == 0) x[glbDD] -= t; // /1.0
+<a name="line423">423: </a>    __syncthreads();
+<a name="line424">424: </a>    // inc
+<a name="line425">425: </a>    pLi += glbDD - col;                           // get to diagonal
+<a name="line426">426: </a>    <font color="#4169E1">if</font> (glbDD &gt; n - 1 - bw) pLi += n - 1 - glbDD; // skip over U, only last block has funny offset
+<a name="line427">427: </a>    <font color="#4169E1">else</font> pLi += bw;
+<a name="line428">428: </a>    pLi += 1;                                                   // skip to next row
+<a name="line429">429: </a>    <font color="#4169E1">if</font> (field &gt; 0 &amp;&amp; (locDD + 1) &lt; bw) pLi += bw - (locDD + 1); // skip padding at beginning (ear)
+<a name="line430">430: </a>  }
+<a name="line431">431: </a>  <font color="#B22222">/* Then, solve U */</font>
+<a name="line432">432: </a>  pLi = ba_csr + Nf * blocknz - 2 * chopnz - 1;                            // end of real data on block (diagonal)
+<a name="line433">433: </a>  <font color="#4169E1">if</font> (field != Nf - 1) pLi -= blocknz_0 + (Nf - 2 - field) * blocknz + bw; // diagonal of last local row
+
+<a name="line435">435: </a>  <font color="#4169E1">for</font> (int glbDD = end - 1, locDD = 0; glbDD &gt;= start; glbDD--, locDD++) {
+<a name="line436">436: </a>    const <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> col = (locDD &lt; bw) ? end - 1 : glbDD + bw; // end of row in U
+<a name="line437">437: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>    t   = 0;
+<a name="line438">438: </a>    <font color="#4169E1">for</font> (int j = col - tid, idx = tid; j &gt; glbDD; j -= blockDim.x, idx += blockDim.x) t += pLi[-idx] * x[j];
+<a name="line439">439: </a><font color="#A020F0">#if defined(PETSC_USE_COMPLEX)</font>
+<a name="line440">440: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>   tr = PetscRealPartComplex(t), ti = PetscImaginaryPartComplex(t);
+<a name="line441">441: </a>    <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> tt(breduce&lt;<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, BLOCK_SIZE&gt;(tr), breduce&lt;<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, BLOCK_SIZE&gt;(ti));
+<a name="line442">442: </a>    t = tt;
+<a name="line443">443: </a><font color="#A020F0">#else</font>
+<a name="line444">444: </a>    t = breduce&lt;<a href="../../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, BLOCK_SIZE&gt;(<a href="../../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(t));
+<a name="line445">445: </a><font color="#A020F0">#endif</font>
+<a name="line446">446: </a>    pLi -= col - glbDD; // diagonal
+<a name="line447">447: </a>    <font color="#4169E1">if</font> (threadIdx.x == 0) {
+<a name="line448">448: </a>      x[glbDD] -= t;
+<a name="line449">449: </a>      x[glbDD] /= pLi[0];
+<a name="line450">450: </a>    }
+<a name="line451">451: </a>    __syncthreads();
+<a name="line452">452: </a>    // inc past L to start of previous U
+<a name="line453">453: </a>    pLi -= bw + 1;
+<a name="line454">454: </a>    <font color="#4169E1">if</font> (glbDD &lt; bw) pLi += bw - glbDD;                                    // overshot in top left corner
+<a name="line455">455: </a>    <font color="#4169E1">if</font> (((locDD + 1) &lt; bw) &amp;&amp; field != Nf - 1) pLi -= (bw - (locDD + 1)); // skip past right corner
+<a name="line456">456: </a>  }
+<a name="line457">457: </a>}
+
+<a name="line459">459: </a><strong><font color="#4169E1"><a name="MatSolve_SeqAIJCUSPARSEBAND"></a>static <a href="../../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolve_SeqAIJCUSPARSEBAND(<a href="../../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> bb, <a href="../../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xx)</font></strong>
+<a name="line460">460: </a>{
+<a name="line461">461: </a>  const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>                    *barray;
+<a name="line462">462: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>                          *xarray;
+<a name="line463">463: </a><strong><font color="#FF0000">  thrust:</font></strong>:device_ptr&lt;const <a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>&gt; bGPU;
+<a name="line464">464: </a><strong><font color="#FF0000">  thrust:</font></strong>:device_ptr&lt;<a href="../../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>&gt;       xGPU;
+<a name="line465">465: </a>  Mat_SeqAIJCUSPARSETriFactors         *cusparseTriFactors = (Mat_SeqAIJCUSPARSETriFactors *)A-&gt;spptr;
+<a name="line466">466: </a>  THRUSTARRAY                          *tempGPU            = (THRUSTARRAY *)cusparseTriFactors-&gt;workVector;
+<a name="line467">467: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                              n = A-&gt;rmap-&gt;n, nz = cusparseTriFactors-&gt;nnz, Nf = 1;                                                                                  // Nf is batch size - not used
+<a name="line468">468: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                              bw = (int)(2. * (double)n - 1. - (double)(PetscSqrtReal(1. + 4. * ((double)n * (double)n - (double)nz)) + PETSC_MACHINE_EPSILON)) / 2; // quadric formula <font color="#4169E1">for</font> bandwidth
+
+<a name="line470">470: </a>  <font color="#4169E1">if</font> (A-&gt;rmap-&gt;n == 0) <font color="#4169E1">return</font> 0;
+
+<a name="line472">472: </a>  <font color="#B22222">/* Get the GPU pointers */</font>
+<a name="line473">473: </a>  <a href="../../../../../../docs/manualpages/Vec/VecCUDAGetArrayWrite.html">VecCUDAGetArrayWrite</a>(xx, &amp;xarray);
+<a name="line474">474: </a>  <a href="../../../../../../docs/manualpages/Vec/VecCUDAGetArrayRead.html">VecCUDAGetArrayRead</a>(bb, &amp;barray);
+<a name="line475">475: </a>  xGPU = thrust::device_pointer_cast(xarray);
+<a name="line476">476: </a>  bGPU = thrust::device_pointer_cast(barray);
+
+<a name="line478">478: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeBegin.html">PetscLogGpuTimeBegin</a>();
+<a name="line479">479: </a>  <font color="#B22222">/* First, reorder with the row permutation */</font>
+<a name="line480">480: </a><strong><font color="#FF0000">  thrust:</font></strong>:copy(thrust::cuda::par.on(PetscDefaultCudaStream), thrust::make_permutation_iterator(bGPU, cusparseTriFactors-&gt;rpermIndices-&gt;begin()), thrust::make_permutation_iterator(bGPU, cusparseTriFactors-&gt;rpermIndices-&gt;end()), tempGPU-&gt;begin());
+<a name="line481">481: </a>  constexpr int block = 128;
+<a name="line482">482: </a>  mat_solve_band&lt;block&gt;&lt;&lt;&lt;Nf, block&gt;&gt;&gt;(n, bw, cusparseTriFactors-&gt;a_band_d, tempGPU-&gt;data().get());
+<a name="line483">483: </a>  PetscCUDACheckLaunch; // does a sync
+
+<a name="line485">485: </a>  <font color="#B22222">/* Last, reorder with the column permutation */</font>
+<a name="line486">486: </a><strong><font color="#FF0000">  thrust:</font></strong>:copy(thrust::cuda::par.on(PetscDefaultCudaStream), thrust::make_permutation_iterator(tempGPU-&gt;begin(), cusparseTriFactors-&gt;cpermIndices-&gt;begin()), thrust::make_permutation_iterator(tempGPU-&gt;begin(), cusparseTriFactors-&gt;cpermIndices-&gt;end()), xGPU);
+
+<a name="line488">488: </a>  <a href="../../../../../../docs/manualpages/Vec/VecCUDARestoreArrayRead.html">VecCUDARestoreArrayRead</a>(bb, &amp;barray);
+<a name="line489">489: </a>  <a href="../../../../../../docs/manualpages/Vec/VecCUDARestoreArrayWrite.html">VecCUDARestoreArrayWrite</a>(xx, &amp;xarray);
+<a name="line490">490: </a>  <a href="../../../../../../docs/manualpages/Sys/PetscLogGpuFlops.html">PetscLogGpuFlops</a>(2.0 * cusparseTriFactors-&gt;nnz - A-&gt;cmap-&gt;n);
+<a name="line491">491: </a>  <a href="../../../../../../docs/manualpages/Profiling/PetscLogGpuTimeEnd.html">PetscLogGpuTimeEnd</a>();
+
+<a name="line493">493: </a>  <font color="#4169E1">return</font> 0;
+<a name="line494">494: </a>}
+</pre>
+</body>
+
+</html>

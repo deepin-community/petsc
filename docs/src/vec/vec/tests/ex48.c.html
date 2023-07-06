@@ -1,0 +1,820 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/vec/vec/tests/ex48.c">Actual source code: ex48.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:47:19+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>static char help[] = <font color="#666666">"Tests HDF5 attribute I/O.\n\n"</font>;
+
+<a name="line4">  4: </a>#include <A href="../../../../include/petscviewerhdf5.h.html">&lt;petscviewerhdf5.h&gt;</A>
+<a name="line5">  5: </a>#include <A href="../../../../include/petscvec.h.html">&lt;petscvec.h&gt;</A>
+
+<a name="line7">  7: </a>static <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  n       = 5; <font color="#B22222">/* testing vector size */</font>
+<a name="line8">  8: </a>static <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> verbose = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line9">  9: </a><strong><font color="#228B22">#define SLEN 128</font></strong>
+
+<a name="line11"> 11: </a><font color="#B22222">/* sequence of unique absolute paths */</font>
+<a name="line12"> 12: </a><strong><font color="#228B22">#define nap 9</font></strong>
+<a name="line13"> 13: </a>static const char *apaths[nap] = {
+<a name="line14"> 14: </a>  <font color="#B22222">/* 0 */</font>
+<a name="line15"> 15: </a>  <font color="#666666">"/"</font>, <font color="#666666">"/g1"</font>, <font color="#666666">"/g1/g2"</font>, <font color="#666666">"/g1/nonExistingGroup1"</font>, <font color="#666666">"/g1/g3"</font>,
+<a name="line16"> 16: </a>  <font color="#B22222">/* 5 */</font>
+<a name="line17"> 17: </a>  <font color="#666666">"/g1/g3/g4"</font>, <font color="#666666">"/g1/nonExistingGroup2"</font>, <font color="#666666">"/g1/nonExistingGroup2/g5"</font>, <font color="#666666">"/g1/g6/g7"</font>};
+
+<a name="line19"> 19: </a><strong><font color="#228B22">#define np 21</font></strong>
+<a name="line20"> 20: </a><font color="#B22222">/* sequence of paths (absolute or relative); "&lt;" encodes Pop */</font>
+<a name="line21"> 21: </a>static const char *paths[np] = {
+<a name="line22"> 22: </a>  <font color="#B22222">/* 0 */</font>
+<a name="line23"> 23: </a>  <font color="#666666">"/"</font>,
+<a name="line24"> 24: </a>  <font color="#666666">"/g1"</font>,
+<a name="line25"> 25: </a>  <font color="#666666">"/g1/g2"</font>,
+<a name="line26"> 26: </a>  <font color="#666666">"/g1/nonExistingGroup1"</font>,
+<a name="line27"> 27: </a>  <font color="#666666">"&lt;"</font>,
+<a name="line28"> 28: </a>  <font color="#B22222">/* 5 */</font>
+<a name="line29"> 29: </a>  <font color="#666666">"."</font>, <font color="#B22222">/* /g1/g2 */</font>
+<a name="line30"> 30: </a>  <font color="#666666">"&lt;"</font>,
+<a name="line31"> 31: </a>  <font color="#666666">"&lt;"</font>,
+<a name="line32"> 32: </a>  <font color="#666666">"g3"</font>, <font color="#B22222">/* /g1/g3 */</font>
+<a name="line33"> 33: </a>  <font color="#666666">"g4"</font>, <font color="#B22222">/* /g1/g3/g4 */</font>
+<a name="line34"> 34: </a>        <font color="#B22222">/* 10 */</font>
+<a name="line35"> 35: </a>  <font color="#666666">"&lt;"</font>,
+<a name="line36"> 36: </a>  <font color="#666666">"&lt;"</font>,
+<a name="line37"> 37: </a>  <font color="#666666">"."</font>, <font color="#B22222">/* /g1 */</font>
+<a name="line38"> 38: </a>  <font color="#666666">"&lt;"</font>,
+<a name="line39"> 39: </a>  <font color="#666666">"nonExistingGroup2"</font>, <font color="#B22222">/* /g1/nonExistingG2 */</font>
+<a name="line40"> 40: </a>                       <font color="#B22222">/* 15 */</font>
+<a name="line41"> 41: </a>  <font color="#666666">"g5"</font>,                <font color="#B22222">/* /g1/nonExistingG2/g5 */</font>
+<a name="line42"> 42: </a>  <font color="#666666">"&lt;"</font>,
+<a name="line43"> 43: </a>  <font color="#666666">"&lt;"</font>,
+<a name="line44"> 44: </a>  <font color="#666666">"g6/g7"</font>, <font color="#B22222">/* /g1/g6/g7 */</font>
+<a name="line45"> 45: </a>  <font color="#666666">"&lt;"</font>,
+<a name="line46"> 46: </a>  <font color="#B22222">/* 20 */</font>
+<a name="line47"> 47: </a>  <font color="#666666">"&lt;"</font>,
+<a name="line48"> 48: </a>};
+<a name="line49"> 49: </a><font color="#B22222">/* corresponding expected absolute paths - positions in abspath */</font>
+<a name="line50"> 50: </a>static const <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> paths2apaths[np] = {
+<a name="line51"> 51: </a>  <font color="#B22222">/* 0 */</font>
+<a name="line52"> 52: </a>  0,
+<a name="line53"> 53: </a>  1,
+<a name="line54"> 54: </a>  2,
+<a name="line55"> 55: </a>  3,
+<a name="line56"> 56: </a>  2,
+<a name="line57"> 57: </a>  <font color="#B22222">/* 5 */</font>
+<a name="line58"> 58: </a>  2,
+<a name="line59"> 59: </a>  2,
+<a name="line60"> 60: </a>  1,
+<a name="line61"> 61: </a>  4,
+<a name="line62"> 62: </a>  5,
+<a name="line63"> 63: </a>  <font color="#B22222">/* 10 */</font>
+<a name="line64"> 64: </a>  4,
+<a name="line65"> 65: </a>  1,
+<a name="line66"> 66: </a>  1,
+<a name="line67"> 67: </a>  1,
+<a name="line68"> 68: </a>  6,
+<a name="line69"> 69: </a>  <font color="#B22222">/* 15 */</font>
+<a name="line70"> 70: </a>  7,
+<a name="line71"> 71: </a>  6,
+<a name="line72"> 72: </a>  1,
+<a name="line73"> 73: </a>  8,
+<a name="line74"> 74: </a>  1,
+<a name="line75"> 75: </a>  <font color="#B22222">/* 20 */</font>
+<a name="line76"> 76: </a>  0,
+<a name="line77"> 77: </a>};
+
+<a name="line79"> 79: </a><strong><font color="#228B22">#define ns 4</font></strong>
+<a name="line80"> 80: </a><font color="#B22222">/* for "" attribute will be stored to group, otherwise to given dataset */</font>
+<a name="line81"> 81: </a>static const char *datasets[ns] = {<font color="#666666">""</font>, <font color="#666666">"x"</font>, <font color="#666666">"nonExistingVec"</font>, <font color="#666666">"y"</font>};
+
+<a name="line83"> 83: </a><font color="#B22222">/* beware this yields <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a> for "" but group "" is interpreted as "/" */</font>
+<a name="line84"> 84: </a><strong><font color="#4169E1"><a name="shouldExist"></a>static inline <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> shouldExist(const char name[], <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> emptyExists, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *has)</font></strong>
+<a name="line85"> 85: </a>{
+<a name="line86"> 86: </a>  size_t len = 0;
+
+<a name="line88"> 88: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrlen.html">PetscStrlen</a>(name, &amp;len);
+<a name="line89"> 89: </a>  *has = emptyExists;
+<a name="line90"> 90: </a>  <font color="#4169E1">if</font> (len) {
+<a name="line91"> 91: </a>    char *loc = NULL;
+<a name="line92"> 92: </a>    <a href="../../../../docs/manualpages/Sys/PetscStrstr.html">PetscStrstr</a>(name, <font color="#666666">"nonExisting"</font>, &amp;loc);
+<a name="line93"> 93: </a>    *has = <a href="../../../../docs/manualpages/Sys/PetscNot.html">PetscNot</a>(loc);
+<a name="line94"> 94: </a>  }
+<a name="line95"> 95: </a>  <font color="#4169E1">return</font> 0;
+<a name="line96"> 96: </a>}
+
+<a name="line98"> 98: </a><strong><font color="#4169E1"><a name="isPop"></a>static inline <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> isPop(const char path[], <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *has)</font></strong>
+<a name="line99"> 99: </a>{
+<a name="line100">100: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(path, <font color="#666666">"&lt;"</font>, has);
+<a name="line101">101: </a>  <font color="#4169E1">return</font> 0;
+<a name="line102">102: </a>}
+
+<a name="line104">104: </a><strong><font color="#4169E1"><a name="isDot"></a>static inline <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> isDot(const char path[], <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *has)</font></strong>
+<a name="line105">105: </a>{
+<a name="line106">106: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(path, <font color="#666666">"."</font>, has);
+<a name="line107">107: </a>  <font color="#4169E1">return</font> 0;
+<a name="line108">108: </a>}
+
+<a name="line110">110: </a><strong><font color="#4169E1"><a name="isRoot"></a>static inline <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> isRoot(const char path[], <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *flg)</font></strong>
+<a name="line111">111: </a>{
+<a name="line112">112: </a>  size_t len;
+
+<a name="line114">114: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrlen.html">PetscStrlen</a>(path, &amp;len);
+<a name="line115">115: </a>  *flg = <a href="../../../../docs/manualpages/Sys/PetscNot.html">PetscNot</a>(len);
+<a name="line116">116: </a>  <font color="#4169E1">if</font> (!*flg) <a href="../../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(path, <font color="#666666">"/"</font>, flg);
+<a name="line117">117: </a>  <font color="#4169E1">return</font> 0;
+<a name="line118">118: </a>}
+
+<a name="line120">120: </a><strong><font color="#4169E1"><a name="compare"></a>static inline <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> compare(<a href="../../../../docs/manualpages/Sys/PetscDataType.html">PetscDataType</a> dt, void *ptr0, void *ptr1, <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *flg)</font></strong>
+<a name="line121">121: </a>{
+<a name="line122">122: </a>  <font color="#4169E1">switch</font> (dt) {
+<a name="line123">123: </a>  <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_INT</a>:
+<a name="line124">124: </a>    *flg = (<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)(*(<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)ptr0 == *(<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)ptr1);
+<a name="line125">125: </a>    <font color="#4169E1">if</font> (verbose) {
+<a name="line126">126: </a>      <font color="#4169E1">if</font> (*flg) {
+<a name="line127">127: </a>        <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"%"</font> PetscInt_FMT, *(<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)ptr0);
+<a name="line128">128: </a>      } <font color="#4169E1">else</font> {
+<a name="line129">129: </a>        <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"%"</font> PetscInt_FMT <font color="#666666">" != %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, *(<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)ptr0, *(<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)ptr1);
+<a name="line130">130: </a>      }
+<a name="line131">131: </a>    }
+<a name="line132">132: </a>    <font color="#4169E1">break</font>;
+<a name="line133">133: </a>  <font color="#4169E1">case</font> PETSC_REAL:
+<a name="line134">134: </a>    *flg = (<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)(*(<a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)ptr0 == *(<a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)ptr1);
+<a name="line135">135: </a>    <font color="#4169E1">if</font> (verbose) {
+<a name="line136">136: </a>      <font color="#4169E1">if</font> (*flg) {
+<a name="line137">137: </a>        <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"%f"</font>, *(<a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)ptr0);
+<a name="line138">138: </a>      } <font color="#4169E1">else</font> {
+<a name="line139">139: </a>        <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"%f != %f\n"</font>, *(<a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)ptr0, *(<a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)ptr1);
+<a name="line140">140: </a>      }
+<a name="line141">141: </a>    }
+<a name="line142">142: </a>    <font color="#4169E1">break</font>;
+<a name="line143">143: </a>  <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_BOOL</a>:
+<a name="line144">144: </a>    *flg = (<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)(*(<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *)ptr0 == *(<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *)ptr1);
+<a name="line145">145: </a>    <font color="#4169E1">if</font> (verbose) {
+<a name="line146">146: </a>      <font color="#4169E1">if</font> (*flg) {
+<a name="line147">147: </a>        <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"%s"</font>, PetscBools[*(<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *)ptr0]);
+<a name="line148">148: </a>      } <font color="#4169E1">else</font> {
+<a name="line149">149: </a>        <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"%s != %s\n"</font>, PetscBools[*(<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *)ptr0], PetscBools[*(<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *)ptr1]);
+<a name="line150">150: </a>      }
+<a name="line151">151: </a>    }
+<a name="line152">152: </a>    <font color="#4169E1">break</font>;
+<a name="line153">153: </a>  <font color="#4169E1">case</font> <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_STRING</a>:
+<a name="line154">154: </a>    <a href="../../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>((const char *)ptr0, (const char *)ptr1, flg);
+<a name="line155">155: </a>    <font color="#4169E1">if</font> (verbose) {
+<a name="line156">156: </a>      <font color="#4169E1">if</font> (*flg) {
+<a name="line157">157: </a>        <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"%s"</font>, (char *)ptr0);
+<a name="line158">158: </a>      } <font color="#4169E1">else</font> {
+<a name="line159">159: </a>        <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"%s != %s\n"</font>, (char *)ptr0, (char *)ptr1);
+<a name="line160">160: </a>      }
+<a name="line161">161: </a>    }
+<a name="line162">162: </a>    <font color="#4169E1">break</font>;
+<a name="line163">163: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line164">164: </a>    <a href="../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_SUP, <font color="#666666">"<a href="../../../../docs/manualpages/Sys/PetscDataType.html">PetscDataType</a> %s not handled here"</font>, PetscDataTypes[dt]);
+<a name="line165">165: </a>  }
+<a name="line166">166: </a>  <font color="#4169E1">return</font> 0;
+<a name="line167">167: </a>}
+
+<a name="line169">169: </a><strong><font color="#4169E1"><a name="alterString"></a>static inline <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> alterString(const char oldstr[], char str[])</font></strong>
+<a name="line170">170: </a>{
+<a name="line171">171: </a>  size_t i, n;
+
+<a name="line173">173: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrcpy.html">PetscStrcpy</a>(str, oldstr);
+<a name="line174">174: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrlen.html">PetscStrlen</a>(oldstr, &amp;n);
+<a name="line175">175: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; n; i++) {
+<a name="line176">176: </a>    <font color="#4169E1">if</font> (('A' &lt;= str[i] &amp;&amp; str[i] &lt; 'Z') || ('a' &lt;= str[i] &amp;&amp; str[i] &lt; 'z')) {
+<a name="line177">177: </a>      str[i]++;
+<a name="line178">178: </a>      <font color="#4169E1">break</font>;
+<a name="line179">179: </a>    }
+<a name="line180">180: </a>  }
+<a name="line181">181: </a>  <font color="#4169E1">return</font> 0;
+<a name="line182">182: </a>}
+
+<a name="line184">184: </a><font color="#B22222">/* if name given, check dataset with this name exists under current group, otherwise just check current group exists */</font>
+<a name="line185">185: </a><font color="#B22222">/* flg: 0 doesn't exist, 1 group, 2 dataset */</font>
+<a name="line186">186: </a><strong><font color="#4169E1"><a name="hasGroupOrDataset"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> hasGroupOrDataset(<a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, const char path[], int *flg)</font></strong>
+<a name="line187">187: </a>{
+<a name="line188">188: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> has;
+
+<a name="line190">190: </a>  *flg = 0;
+<a name="line191">191: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5HasGroup.html">PetscViewerHDF5HasGroup</a>(viewer, path, &amp;has);
+<a name="line192">192: </a>  <font color="#4169E1">if</font> (has) *flg = 1;
+<a name="line193">193: </a>  <font color="#4169E1">else</font> {
+<a name="line194">194: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5HasDataset.html">PetscViewerHDF5HasDataset</a>(viewer, path, &amp;has);
+<a name="line195">195: </a>    <font color="#4169E1">if</font> (has) *flg = 2;
+<a name="line196">196: </a>  }
+<a name="line197">197: </a>  <font color="#4169E1">return</font> 0;
+<a name="line198">198: </a>}
+
+<a name="line200">200: </a><strong><font color="#228B22">#define nt 5 </font><font color="#B22222">/* number of datatypes */</font><font color="#228B22"></font></strong>
+<a name="line201">201: </a><font color="#4169E1">typedef struct _n_Capsule *Capsule;</font>
+<a name="line202">202: </a><font color="#4169E1"><a name="_n_Capsule"></a>struct _n_Capsule </font>{
+<a name="line203">203: </a>  char          names[nt][SLEN];
+<a name="line204">204: </a>  <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PetscDataType</a> types[nt];
+<a name="line205">205: </a>  char          typeNames[nt][SLEN];
+<a name="line206">206: </a>  size_t        sizes[nt];
+<a name="line207">207: </a>  void         *vals[nt];
+<a name="line208">208: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      id, ntypes;
+<a name="line209">209: </a>};
+
+<a name="line211">211: </a><strong><font color="#4169E1"><a name="CapsuleCreate"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CapsuleCreate(Capsule old, Capsule *newcapsule)</font></strong>
+<a name="line212">212: </a>{
+<a name="line213">213: </a>  Capsule       c;
+<a name="line214">214: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>     bool0      = <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line215">215: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      int0       = -1;
+<a name="line216">216: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>     real0      = -1.1;
+<a name="line217">217: </a>  char          str0[]     = <font color="#666666">"Test String"</font>;
+<a name="line218">218: </a>  char          nestr0[]   = <font color="#666666">"NONEXISTING STRING"</font>; <font color="#B22222">/* this attribute shall be skipped for writing */</font>
+<a name="line219">219: </a>  void         *vals[nt]   = {&amp;bool0, &amp;int0, &amp;real0, str0, nestr0};
+<a name="line220">220: </a>  size_t        sizes[nt]  = {<font color="#4169E1">sizeof</font>(bool0), <font color="#4169E1">sizeof</font>(int0), <font color="#4169E1">sizeof</font>(real0), <font color="#4169E1">sizeof</font>(str0), <font color="#4169E1">sizeof</font>(str0)};
+<a name="line221">221: </a>  <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PetscDataType</a> types[nt]  = {<a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_BOOL</a>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_INT</a>, PETSC_REAL, <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_STRING</a>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_STRING</a>};
+<a name="line222">222: </a>  const char   *tNames[nt] = {<font color="#666666">"bool"</font>, <font color="#666666">"int"</font>, <font color="#666666">"real"</font>, <font color="#666666">"str"</font>, <font color="#666666">"nonExisting"</font>};
+<a name="line223">223: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      t;
+
+<a name="line225">225: </a>  <a href="../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;c);
+<a name="line226">226: </a>  c-&gt;id     = 0;
+<a name="line227">227: </a>  c-&gt;ntypes = nt;
+<a name="line228">228: </a>  <font color="#4169E1">if</font> (old) {
+<a name="line229">229: </a>    <font color="#B22222">/* alter values */</font>
+<a name="line230">230: </a>    t     = 0;
+<a name="line231">231: </a>    bool0 = <a href="../../../../docs/manualpages/Sys/PetscNot.html">PetscNot</a>(*((<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *)old-&gt;vals[t]));
+<a name="line232">232: </a>    t++;
+<a name="line233">233: </a>    int0 = *((<a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *)old-&gt;vals[t]) * -2;
+<a name="line234">234: </a>    t++;
+<a name="line235">235: </a>    real0 = *((<a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *)old-&gt;vals[t]) * -2.0;
+<a name="line236">236: </a>    t++;
+<a name="line237">237: </a>    alterString((const char *)old-&gt;vals[t], str0);
+<a name="line238">238: </a>    t++;
+<a name="line239">239: </a>    c-&gt;id = old-&gt;id + 1;
+<a name="line240">240: </a>  }
+<a name="line241">241: </a>  <font color="#4169E1">for</font> (t = 0; t &lt; nt; t++) {
+<a name="line242">242: </a>    c-&gt;sizes[t] = sizes[t];
+<a name="line243">243: </a>    c-&gt;types[t] = types[t];
+<a name="line244">244: </a>    <a href="../../../../docs/manualpages/Sys/PetscStrcpy.html">PetscStrcpy</a>(c-&gt;typeNames[t], tNames[t]);
+<a name="line245">245: </a>    <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(c-&gt;names[t], SLEN, <font color="#666666">"attr_%"</font> PetscInt_FMT <font color="#666666">"_%s"</font>, c-&gt;id, tNames[t]);
+<a name="line246">246: </a>    <a href="../../../../docs/manualpages/Sys/PetscMalloc.html">PetscMalloc</a>(sizes[t], &amp;c-&gt;vals[t]);
+<a name="line247">247: </a>    <a href="../../../../docs/manualpages/Sys/PetscMemcpy.html">PetscMemcpy</a>(c-&gt;vals[t], vals[t], sizes[t]);
+<a name="line248">248: </a>  }
+<a name="line249">249: </a>  *newcapsule = c;
+<a name="line250">250: </a>  <font color="#4169E1">return</font> 0;
+<a name="line251">251: </a>}
+<a name="line252">252: </a><strong><font color="#228B22">#undef nt</font></strong>
+
+<a name="line254">254: </a><strong><font color="#4169E1"><a name="CapsuleWriteAttributes"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CapsuleWriteAttributes(Capsule c, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> v, const char parent[])</font></strong>
+<a name="line255">255: </a>{
+<a name="line256">256: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  t;
+<a name="line257">257: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line259">259: </a>  <font color="#4169E1">for</font> (t = 0; t &lt; c-&gt;ntypes; t++) {
+<a name="line260">260: </a>    shouldExist(c-&gt;names[t], <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, &amp;flg);
+<a name="line261">261: </a>    <font color="#4169E1">if</font> (!flg) <font color="#4169E1">continue</font>;
+<a name="line262">262: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5WriteAttribute.html">PetscViewerHDF5WriteAttribute</a>(v, parent, c-&gt;names[t], c-&gt;types[t], c-&gt;vals[t]);
+<a name="line263">263: </a>  }
+<a name="line264">264: </a>  <font color="#4169E1">return</font> 0;
+<a name="line265">265: </a>}
+
+<a name="line267">267: </a><strong><font color="#4169E1"><a name="CapsuleReadAndCompareAttributes"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CapsuleReadAndCompareAttributes(Capsule c, <a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> v, const char parent[])</font></strong>
+<a name="line268">268: </a>{
+<a name="line269">269: </a>  char     *group;
+<a name="line270">270: </a>  int       gd = 0;
+<a name="line271">271: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  t;
+<a name="line272">272: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, hasAttr = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line273">273: </a>  <a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm;
+
+<a name="line275">275: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, &amp;comm);
+<a name="line276">276: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5GetGroup.html">PetscViewerHDF5GetGroup</a>(v, NULL, &amp;group);
+<a name="line277">277: </a>  hasGroupOrDataset(v, parent, &amp;gd);
+<a name="line278">278: </a>  <font color="#B22222">/* check correct existence of attributes */</font>
+<a name="line279">279: </a>  <font color="#4169E1">for</font> (t = 0; t &lt; c-&gt;ntypes; t++) {
+<a name="line280">280: </a>    const char *attribute = c-&gt;names[t];
+<a name="line281">281: </a>    shouldExist(attribute, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, &amp;flg);
+<a name="line282">282: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5HasAttribute.html">PetscViewerHDF5HasAttribute</a>(v, parent, attribute, &amp;hasAttr);
+<a name="line283">283: </a>    <font color="#4169E1">if</font> (verbose) {
+<a name="line284">284: </a>      <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"    %-24s = "</font>, attribute);
+<a name="line285">285: </a>      <font color="#4169E1">if</font> (!hasAttr) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"---"</font>);
+<a name="line286">286: </a>    }
+
+<a name="line290">290: </a>    <font color="#B22222">/* check loaded attributes are the same as original */</font>
+<a name="line291">291: </a>    <font color="#4169E1">if</font> (hasAttr) {
+<a name="line292">292: </a>      char  buffer[SLEN];
+<a name="line293">293: </a>      char *str;
+<a name="line294">294: </a>      void *ptr0;
+<a name="line295">295: </a>      <font color="#B22222">/* check the stored data is the same as original */</font>
+<a name="line296">296: </a>      //TODO datatype should better be output arg, not input
+<a name="line297">297: </a>      //TODO string attributes should probably have a separate function since the handling is different;
+<a name="line298">298: </a>      //TODO   or maybe it should just accept string buffer rather than pointer to string
+<a name="line299">299: </a>      <font color="#4169E1">if</font> (c-&gt;types[t] == <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_STRING</a>) {
+<a name="line300">300: </a>        <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(v, parent, attribute, c-&gt;types[t], NULL, &amp;str);
+<a name="line301">301: </a>        ptr0 = str;
+<a name="line302">302: </a>      } <font color="#4169E1">else</font> {
+<a name="line303">303: </a>        <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(v, parent, attribute, c-&gt;types[t], NULL, &amp;buffer);
+<a name="line304">304: </a>        ptr0 = &amp;buffer;
+<a name="line305">305: </a>      }
+<a name="line306">306: </a>      compare(c-&gt;types[t], ptr0, c-&gt;vals[t], &amp;flg);
+<a name="line308">308: </a>      <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">" (=)"</font>);
+<a name="line309">309: </a>      <font color="#4169E1">if</font> (c-&gt;types[t] == <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_STRING</a>) <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(str);
+<a name="line310">310: </a>    }
+<a name="line311">311: </a>    <font color="#4169E1">if</font> (verbose &amp;&amp; gd) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"\n"</font>);
+<a name="line312">312: </a>  }
+<a name="line313">313: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(group);
+<a name="line314">314: </a>  <font color="#4169E1">return</font> 0;
+<a name="line315">315: </a>}
+
+<a name="line317">317: </a><strong><font color="#4169E1"><a name="CapsuleDestroy"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CapsuleDestroy(Capsule *c)</font></strong>
+<a name="line318">318: </a>{
+<a name="line319">319: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> t;
+
+<a name="line321">321: </a>  <font color="#4169E1">if</font> (!*c) <font color="#4169E1">return</font> 0;
+<a name="line322">322: </a>  <font color="#4169E1">for</font> (t = 0; t &lt; (*c)-&gt;ntypes; t++) <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>((*c)-&gt;vals[t]);
+<a name="line323">323: </a>  <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(*c);
+<a name="line324">324: </a>  <font color="#4169E1">return</font> 0;
+<a name="line325">325: </a>}
+
+<a name="line327">327: </a><strong><font color="#4169E1"><a name="testGroupsDatasets"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> testGroupsDatasets(<a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line328">328: </a>{
+<a name="line329">329: </a>  char        buf[PETSC_MAX_PATH_LEN];
+<a name="line330">330: </a>  <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>         vecs[nap][ns];
+<a name="line331">331: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    p, s;
+<a name="line332">332: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   flg = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, flg1 = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, flg2 = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line333">333: </a>  <a href="../../../../docs/manualpages/Sys/PetscRandom.html">PetscRandom</a> rand;
+<a name="line334">334: </a>  const char *filename;
+<a name="line335">335: </a>  <a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>    comm;
+
+<a name="line337">337: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, &amp;comm);
+<a name="line338">338: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerFileGetName.html">PetscViewerFileGetName</a>(viewer, &amp;filename);
+<a name="line339">339: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"# TEST testGroupsDatasets\n"</font>);
+<a name="line340">340: </a>  <font color="#B22222">/* store random vectors */</font>
+<a name="line341">341: </a>  <a href="../../../../docs/manualpages/Sys/PetscRandomCreate.html">PetscRandomCreate</a>(comm, &amp;rand);
+<a name="line342">342: </a>  <a href="../../../../docs/manualpages/Sys/PetscRandomSetInterval.html">PetscRandomSetInterval</a>(rand, 0.0, 10.0);
+<a name="line343">343: </a>  <a href="../../../../docs/manualpages/Sys/PetscRandomSetFromOptions.html">PetscRandomSetFromOptions</a>(rand);
+<a name="line344">344: </a>  <a href="../../../../docs/manualpages/Sys/PetscMemzero.html">PetscMemzero</a>(vecs, nap * ns * <font color="#4169E1">sizeof</font>(<a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>));
+
+<a name="line346">346: </a>  <font color="#B22222">/* test dataset writing */</font>
+<a name="line347">347: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"## WRITE PHASE\n"</font>);
+<a name="line348">348: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; np; p++) {
+<a name="line349">349: </a>    isPop(paths[p], &amp;flg);
+<a name="line350">350: </a>    isDot(paths[p], &amp;flg1);
+<a name="line351">351: </a>    shouldExist(apaths[paths2apaths[p]], <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, &amp;flg2);
+<a name="line352">352: </a>    <font color="#4169E1">if</font> (flg) {
+<a name="line353">353: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PopGroup.html">PetscViewerHDF5PopGroup</a>(viewer);
+<a name="line354">354: </a>    } <font color="#4169E1">else</font> {
+<a name="line355">355: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PushGroup.html">PetscViewerHDF5PushGroup</a>(viewer, paths[p]);
+<a name="line356">356: </a>    }
+<a name="line357">357: </a>    <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"%-32s =&gt; %4s =&gt; %-32s  should exist? %s\n"</font>, paths[p], flg ? <font color="#666666">"pop"</font> : <font color="#666666">"push"</font>, apaths[paths2apaths[p]], PetscBools[flg2]);
+<a name="line358">358: </a>    <font color="#4169E1">if</font> (flg || flg1 || !flg2) <font color="#4169E1">continue</font>;
+
+<a name="line360">360: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; ns; s++) {
+<a name="line361">361: </a>      <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> v;
+
+<a name="line363">363: </a>      shouldExist(datasets[s], <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, &amp;flg);
+<a name="line364">364: </a>      <font color="#4169E1">if</font> (!flg) <font color="#4169E1">continue</font>;
+
+<a name="line366">366: </a>      <a href="../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>(comm, &amp;v);
+<a name="line367">367: </a>      <a href="../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, datasets[s]);
+<a name="line368">368: </a>      <a href="../../../../docs/manualpages/Vec/VecSetSizes.html">VecSetSizes</a>(v, n, <a href="../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>);
+<a name="line369">369: </a>      <a href="../../../../docs/manualpages/Vec/VecSetFromOptions.html">VecSetFromOptions</a>(v);
+<a name="line370">370: </a>      <a href="../../../../docs/manualpages/Vec/VecSetRandom.html">VecSetRandom</a>(v, rand);
+<a name="line371">371: </a>      <font color="#4169E1">if</font> (verbose) {
+<a name="line372">372: </a>        <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> min, max;
+<a name="line373">373: </a>        <a href="../../../../docs/manualpages/Vec/VecMin.html">VecMin</a>(v, NULL, &amp;min);
+<a name="line374">374: </a>        <a href="../../../../docs/manualpages/Vec/VecMax.html">VecMax</a>(v, NULL, &amp;max);
+<a name="line375">375: </a>        <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"  Create dataset %s/%s, keep in memory in vecs[%"</font> PetscInt_FMT <font color="#666666">"][%"</font> PetscInt_FMT <font color="#666666">"], min %.3e max %.3e\n"</font>, apaths[paths2apaths[p]], datasets[s], paths2apaths[p], s, min, max);
+<a name="line376">376: </a>      }
+
+<a name="line378">378: </a>      <a href="../../../../docs/manualpages/Vec/VecView.html">VecView</a>(v, viewer);
+<a name="line379">379: </a>      vecs[paths2apaths[p]][s] = v;
+<a name="line380">380: </a>    }
+<a name="line381">381: </a>  }
+<a name="line382">382: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(viewer);
+<a name="line383">383: </a>  <a href="../../../../docs/manualpages/Sys/PetscRandomDestroy.html">PetscRandomDestroy</a>(&amp;rand);
+
+<a name="line385">385: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"\n## READ PHASE\n"</font>);
+<a name="line386">386: </a>  <font color="#B22222">/* check correct existence of groups in file */</font>
+<a name="line387">387: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; np; p++) {
+<a name="line388">388: </a>    char       *group;
+<a name="line389">389: </a>    const char *expected = apaths[paths2apaths[p]];
+
+<a name="line391">391: </a>    <font color="#B22222">/* check Push/Pop is correct */</font>
+<a name="line392">392: </a>    isPop(paths[p], &amp;flg);
+<a name="line393">393: </a>    <font color="#4169E1">if</font> (flg) {
+<a name="line394">394: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PopGroup.html">PetscViewerHDF5PopGroup</a>(viewer);
+<a name="line395">395: </a>    } <font color="#4169E1">else</font> {
+<a name="line396">396: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PushGroup.html">PetscViewerHDF5PushGroup</a>(viewer, paths[p]);
+<a name="line397">397: </a>    }
+<a name="line398">398: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5GetGroup.html">PetscViewerHDF5GetGroup</a>(viewer, NULL, &amp;group);
+<a name="line399">399: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5HasGroup.html">PetscViewerHDF5HasGroup</a>(viewer, NULL, &amp;flg1);
+<a name="line400">400: </a>    <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"%-32s =&gt; %4s =&gt; %-32s  exists? %s\n"</font>, paths[p], flg ? <font color="#666666">"pop"</font> : <font color="#666666">"push"</font>, group, PetscBools[flg1]);
+<a name="line401">401: </a>    <a href="../../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(group, expected, &amp;flg2);
+<a name="line403">403: </a>    shouldExist(group, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, &amp;flg2);
+<a name="line405">405: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(group);
+<a name="line406">406: </a>  }
+
+<a name="line408">408: </a>  <font color="#B22222">/* check existence of datasets; compare loaded vectors with original ones */</font>
+<a name="line409">409: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; np; p++) {
+<a name="line410">410: </a>    char *group;
+
+<a name="line412">412: </a>    <font color="#B22222">/* check Push/Pop is correct */</font>
+<a name="line413">413: </a>    isPop(paths[p], &amp;flg);
+<a name="line414">414: </a>    <font color="#4169E1">if</font> (flg) {
+<a name="line415">415: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PopGroup.html">PetscViewerHDF5PopGroup</a>(viewer);
+<a name="line416">416: </a>    } <font color="#4169E1">else</font> {
+<a name="line417">417: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PushGroup.html">PetscViewerHDF5PushGroup</a>(viewer, paths[p]);
+<a name="line418">418: </a>    }
+<a name="line419">419: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5GetGroup.html">PetscViewerHDF5GetGroup</a>(viewer, NULL, &amp;group);
+<a name="line420">420: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5HasGroup.html">PetscViewerHDF5HasGroup</a>(viewer, NULL, &amp;flg);
+<a name="line421">421: </a>    <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"Has %s group? %s\n"</font>, group, PetscBools[flg]);
+<a name="line422">422: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; ns; s++) {
+<a name="line423">423: </a>      const char *name     = datasets[s];
+<a name="line424">424: </a>      char       *fullname = buf;
+
+<a name="line426">426: </a>      <font color="#B22222">/* check correct existence of datasets in file */</font>
+<a name="line427">427: </a>      <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(fullname, <font color="#4169E1">sizeof</font>(buf), <font color="#666666">"%s/%s"</font>, group, name);
+<a name="line428">428: </a>      shouldExist(name, <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, &amp;flg1);
+<a name="line429">429: </a>      flg1 = (<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>)(flg &amp;&amp; flg1); <font color="#B22222">/* both group and dataset need to exist */</font>
+<a name="line430">430: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5HasDataset.html">PetscViewerHDF5HasDataset</a>(viewer, name, &amp;flg2);
+<a name="line431">431: </a>      <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"    %s dataset? %s"</font>, fullname, PetscBools[flg2]);
+
+<a name="line434">434: </a>      <font color="#4169E1">if</font> (flg2) {
+<a name="line435">435: </a>        <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> v;
+<a name="line436">436: </a>        <font color="#B22222">/* check loaded <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> is the same as original */</font>
+<a name="line437">437: </a>        <a href="../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>(comm, &amp;v);
+<a name="line438">438: </a>        <a href="../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, name);
+<a name="line439">439: </a>        <a href="../../../../docs/manualpages/Vec/VecLoad.html">VecLoad</a>(v, viewer);
+<a name="line440">440: </a>        <a href="../../../../docs/manualpages/Vec/VecEqual.html">VecEqual</a>(v, vecs[paths2apaths[p]][s], &amp;flg1);
+<a name="line442">442: </a>        <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">" (=)"</font>);
+<a name="line443">443: </a>        <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;v);
+<a name="line444">444: </a>      }
+<a name="line445">445: </a>      <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"\n"</font>);
+<a name="line446">446: </a>    }
+<a name="line447">447: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(group);
+<a name="line448">448: </a>  }
+<a name="line449">449: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(viewer);
+<a name="line450">450: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; nap; p++)
+<a name="line451">451: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; ns; s++) <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;vecs[p][s]);
+<a name="line452">452: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"# END  testGroupsDatasets\n\n"</font>);
+<a name="line453">453: </a>  <font color="#4169E1">return</font> 0;
+<a name="line454">454: </a>}
+
+<a name="line456">456: </a><strong><font color="#4169E1"><a name="formPath"></a>static inline <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> formPath(<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> relativize, const char path[], const char dataset[], char buf[], size_t bufsize)</font></strong>
+<a name="line457">457: </a>{
+<a name="line458">458: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> isroot = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+
+<a name="line460">460: </a>  isRoot(path, &amp;isroot);
+<a name="line461">461: </a>  <font color="#4169E1">if</font> (relativize) {
+<a name="line462">462: </a>    <font color="#4169E1">if</font> (isroot) {
+<a name="line463">463: </a>      <a href="../../../../docs/manualpages/Sys/PetscStrncpy.html">PetscStrncpy</a>(buf, dataset, bufsize);
+<a name="line464">464: </a>    } <font color="#4169E1">else</font> {
+<a name="line465">465: </a>      <font color="#B22222">/* skip initial '/' in paths[p] if prefix given */</font>
+<a name="line466">466: </a>      <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(buf, bufsize, <font color="#666666">"%s/%s"</font>, path + 1, dataset);
+<a name="line467">467: </a>    }
+<a name="line468">468: </a>  } <font color="#4169E1">else</font> {
+<a name="line469">469: </a>    <a href="../../../../docs/manualpages/Sys/PetscSNPrintf.html">PetscSNPrintf</a>(buf, bufsize, <font color="#666666">"%s/%s"</font>, isroot ? <font color="#666666">""</font> : path, dataset);
+<a name="line470">470: </a>  }
+<a name="line471">471: </a>  <font color="#4169E1">return</font> 0;
+<a name="line472">472: </a>}
+
+<a name="line474">474: </a><font color="#B22222">/* test attribute writing, existence checking and reading, use absolute paths */</font>
+<a name="line475">475: </a><strong><font color="#4169E1"><a name="testAttributesAbsolutePath"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> testAttributesAbsolutePath(<a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer, const char prefix[])</font></strong>
+<a name="line476">476: </a>{
+<a name="line477">477: </a>  char      buf[PETSC_MAX_PATH_LEN];
+<a name="line478">478: </a>  Capsule   capsules[nap][ns], c = NULL, old = NULL;
+<a name="line479">479: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  p, s;
+<a name="line480">480: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, flg1 = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line481">481: </a>  <a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm;
+
+<a name="line483">483: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, &amp;comm);
+<a name="line484">484: </a>  <font color="#4169E1">if</font> (verbose) {
+<a name="line485">485: </a>    <font color="#4169E1">if</font> (prefix) {
+<a name="line486">486: </a>      <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"# TEST testAttributesAbsolutePath, prefix=\"%s\"\n"</font>, prefix);
+<a name="line487">487: </a>    } <font color="#4169E1">else</font> {
+<a name="line488">488: </a>      <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"# TEST testAttributesAbsolutePath\n"</font>);
+<a name="line489">489: </a>    }
+<a name="line490">490: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"## WRITE PHASE\n"</font>);
+<a name="line491">491: </a>  }
+<a name="line492">492: </a>  <a href="../../../../docs/manualpages/Sys/PetscMemzero.html">PetscMemzero</a>(capsules, nap * ns * <font color="#4169E1">sizeof</font>(Capsule));
+
+<a name="line494">494: </a>  <font color="#B22222">/* test attribute writing */</font>
+<a name="line495">495: </a>  <font color="#4169E1">if</font> (prefix) <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PushGroup.html">PetscViewerHDF5PushGroup</a>(viewer, prefix);
+<a name="line496">496: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; np; p++)
+<a name="line497">497: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; ns; s++) {
+<a name="line498">498: </a>      <font color="#B22222">/* we test only absolute paths here */</font>
+<a name="line499">499: </a>      PetscViewerHDF5PathIsRelative(paths[p], <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, &amp;flg);
+<a name="line500">500: </a>      <font color="#4169E1">if</font> (flg) <font color="#4169E1">continue</font>;
+<a name="line501">501: </a>      {
+<a name="line502">502: </a>        char *group;
+
+<a name="line504">504: </a>        <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5GetGroup.html">PetscViewerHDF5GetGroup</a>(viewer, NULL, &amp;group);
+<a name="line505">505: </a>        <a href="../../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(group, prefix, &amp;flg);
+<a name="line507">507: </a>        <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(group);
+<a name="line508">508: </a>      }
+<a name="line509">509: </a>      formPath((<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>) !!prefix, paths[p], datasets[s], buf, <font color="#4169E1">sizeof</font>(buf));
+<a name="line510">510: </a>      shouldExist(buf, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, &amp;flg);
+<a name="line511">511: </a>      <font color="#4169E1">if</font> (!flg) <font color="#4169E1">continue</font>;
+
+<a name="line513">513: </a>      <font color="#4169E1">if</font> (verbose) {
+<a name="line514">514: </a>        <font color="#4169E1">if</font> (prefix) {
+<a name="line515">515: </a>          <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"Write attributes to %s/%s\n"</font>, prefix, buf);
+<a name="line516">516: </a>        } <font color="#4169E1">else</font> {
+<a name="line517">517: </a>          <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"Write attributes to %s\n"</font>, buf);
+<a name="line518">518: </a>        }
+<a name="line519">519: </a>      }
+
+<a name="line521">521: </a>      CapsuleCreate(old, &amp;c);
+<a name="line522">522: </a>      CapsuleWriteAttributes(c, viewer, buf);
+<a name="line524">524: </a>      capsules[paths2apaths[p]][s] = c;
+<a name="line525">525: </a>      old                          = c;
+<a name="line526">526: </a>    }
+<a name="line527">527: </a>  <font color="#4169E1">if</font> (prefix) <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PopGroup.html">PetscViewerHDF5PopGroup</a>(viewer);
+<a name="line528">528: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(viewer);
+
+<a name="line530">530: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"\n## READ PHASE\n"</font>);
+<a name="line531">531: </a>  <font color="#4169E1">if</font> (prefix) <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PushGroup.html">PetscViewerHDF5PushGroup</a>(viewer, prefix);
+<a name="line532">532: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; np; p++)
+<a name="line533">533: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; ns; s++) {
+<a name="line534">534: </a>      <font color="#B22222">/* we test only absolute paths here */</font>
+<a name="line535">535: </a>      PetscViewerHDF5PathIsRelative(paths[p], <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, &amp;flg);
+<a name="line536">536: </a>      <font color="#4169E1">if</font> (flg) <font color="#4169E1">continue</font>;
+
+<a name="line538">538: </a>      <font color="#B22222">/* check existence of given group/dataset */</font>
+<a name="line539">539: </a>      formPath((<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>) !!prefix, paths[p], datasets[s], buf, <font color="#4169E1">sizeof</font>(buf));
+<a name="line540">540: </a>      shouldExist(buf, <a href="../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, &amp;flg);
+<a name="line541">541: </a>      <font color="#4169E1">if</font> (verbose) {
+<a name="line542">542: </a>        <font color="#4169E1">if</font> (prefix) {
+<a name="line543">543: </a>          <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"Has %s/%s? %s\n"</font>, prefix, buf, PetscBools[flg]);
+<a name="line544">544: </a>        } <font color="#4169E1">else</font> {
+<a name="line545">545: </a>          <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"Has %s? %s\n"</font>, buf, PetscBools[flg]);
+<a name="line546">546: </a>        }
+<a name="line547">547: </a>      }
+
+<a name="line549">549: </a>      <font color="#B22222">/* check attribute capsule has been created for given path */</font>
+<a name="line550">550: </a>      c    = capsules[paths2apaths[p]][s];
+<a name="line551">551: </a>      flg1 = (<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>) !!c;
+<a name="line553">553: </a>      <font color="#4169E1">if</font> (!flg) <font color="#4169E1">continue</font>;
+
+<a name="line555">555: </a>      <font color="#B22222">/* check correct existence and fidelity of attributes in file */</font>
+<a name="line556">556: </a>      CapsuleReadAndCompareAttributes(c, viewer, buf);
+<a name="line557">557: </a>    }
+<a name="line558">558: </a>  <font color="#4169E1">if</font> (prefix) <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PopGroup.html">PetscViewerHDF5PopGroup</a>(viewer);
+<a name="line559">559: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(viewer);
+<a name="line560">560: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; nap; p++)
+<a name="line561">561: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; ns; s++) CapsuleDestroy(&amp;capsules[p][s]);
+<a name="line562">562: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"# END  testAttributesAbsolutePath\n\n"</font>);
+<a name="line563">563: </a>  <font color="#4169E1">return</font> 0;
+<a name="line564">564: </a>}
+
+<a name="line566">566: </a><font color="#B22222">/* test attribute writing, existence checking and reading, use group push/pop */</font>
+<a name="line567">567: </a><strong><font color="#4169E1"><a name="testAttributesPushedPath"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> testAttributesPushedPath(<a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line568">568: </a>{
+<a name="line569">569: </a>  Capsule   capsules[nap][ns], c = NULL, old = NULL;
+<a name="line570">570: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  p, s;
+<a name="line571">571: </a>  int       gd;
+<a name="line572">572: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, flg1 = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line573">573: </a>  <a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm;
+
+<a name="line575">575: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, &amp;comm);
+<a name="line576">576: </a>  <font color="#4169E1">if</font> (verbose) {
+<a name="line577">577: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"# TEST testAttributesPushedPath\n"</font>);
+<a name="line578">578: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"## WRITE PHASE\n"</font>);
+<a name="line579">579: </a>  }
+<a name="line580">580: </a>  <a href="../../../../docs/manualpages/Sys/PetscMemzero.html">PetscMemzero</a>(capsules, nap * ns * <font color="#4169E1">sizeof</font>(Capsule));
+
+<a name="line582">582: </a>  <font color="#B22222">/* test attribute writing */</font>
+<a name="line583">583: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; np; p++) {
+<a name="line584">584: </a>    isPop(paths[p], &amp;flg);
+<a name="line585">585: </a>    isDot(paths[p], &amp;flg1);
+<a name="line586">586: </a>    <font color="#4169E1">if</font> (flg) {
+<a name="line587">587: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PopGroup.html">PetscViewerHDF5PopGroup</a>(viewer);
+<a name="line588">588: </a>    } <font color="#4169E1">else</font> {
+<a name="line589">589: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PushGroup.html">PetscViewerHDF5PushGroup</a>(viewer, paths[p]);
+<a name="line590">590: </a>    }
+<a name="line591">591: </a>    <font color="#B22222">/* &lt; and . have been already visited =&gt; skip */</font>
+<a name="line592">592: </a>    <font color="#4169E1">if</font> (flg || flg1) <font color="#4169E1">continue</font>;
+
+<a name="line594">594: </a>    <font color="#B22222">/* assume here that groups and datasets are already in the file */</font>
+<a name="line595">595: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; ns; s++) {
+<a name="line596">596: </a>      hasGroupOrDataset(viewer, datasets[s], &amp;gd);
+<a name="line597">597: </a>      <font color="#4169E1">if</font> (!gd) <font color="#4169E1">continue</font>;
+<a name="line598">598: </a>      <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"Write attributes to %s/%s\n"</font>, apaths[paths2apaths[p]], datasets[s]);
+<a name="line599">599: </a>      CapsuleCreate(old, &amp;c);
+<a name="line600">600: </a>      CapsuleWriteAttributes(c, viewer, datasets[s]);
+<a name="line602">602: </a>      capsules[paths2apaths[p]][s] = c;
+<a name="line603">603: </a>      old                          = c;
+<a name="line604">604: </a>    }
+<a name="line605">605: </a>  }
+<a name="line606">606: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(viewer);
+
+<a name="line608">608: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"\n## READ PHASE\n"</font>);
+<a name="line609">609: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; np; p++) {
+<a name="line610">610: </a>    char *group;
+
+<a name="line612">612: </a>    isPop(paths[p], &amp;flg1);
+<a name="line613">613: </a>    <font color="#4169E1">if</font> (flg1) {
+<a name="line614">614: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PopGroup.html">PetscViewerHDF5PopGroup</a>(viewer);
+<a name="line615">615: </a>    } <font color="#4169E1">else</font> {
+<a name="line616">616: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PushGroup.html">PetscViewerHDF5PushGroup</a>(viewer, paths[p]);
+<a name="line617">617: </a>    }
+<a name="line618">618: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5GetGroup.html">PetscViewerHDF5GetGroup</a>(viewer, NULL, &amp;group);
+<a name="line619">619: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; ns; s++) {
+<a name="line620">620: </a>      hasGroupOrDataset(viewer, datasets[s], &amp;gd);
+<a name="line621">621: </a>      <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"%s/%s   %s\n"</font>, group, datasets[s], gd ? (gd == 1 ? <font color="#666666">"is group"</font> : <font color="#666666">"is dataset"</font>) : <font color="#666666">"does not exist"</font>);
+
+<a name="line623">623: </a>      <font color="#B22222">/* check attribute capsule has been created for given path */</font>
+<a name="line624">624: </a>      c    = capsules[paths2apaths[p]][s];
+<a name="line625">625: </a>      flg  = (<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>) !!gd;
+<a name="line626">626: </a>      flg1 = (<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>) !!c;
+<a name="line628">628: </a>      <font color="#4169E1">if</font> (!flg) <font color="#4169E1">continue</font>;
+
+<a name="line630">630: </a>      <font color="#B22222">/* check correct existence of attributes in file */</font>
+<a name="line631">631: </a>      CapsuleReadAndCompareAttributes(c, viewer, datasets[s]);
+<a name="line632">632: </a>    }
+<a name="line633">633: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(group);
+<a name="line634">634: </a>  }
+<a name="line635">635: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(viewer);
+<a name="line636">636: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; nap; p++)
+<a name="line637">637: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; ns; s++) CapsuleDestroy(&amp;capsules[p][s]);
+<a name="line638">638: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"# END  testAttributesPushedPath\n\n"</font>);
+<a name="line639">639: </a>  <font color="#4169E1">return</font> 0;
+<a name="line640">640: </a>}
+
+<a name="line642">642: </a><font color="#B22222">/* test attribute writing, existence checking and reading, use group push/pop */</font>
+<a name="line643">643: </a><strong><font color="#4169E1"><a name="testObjectAttributes"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> testObjectAttributes(<a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line644">644: </a>{
+<a name="line645">645: </a>  Capsule   capsules[nap][ns], c = NULL, old = NULL;
+<a name="line646">646: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  p, s;
+<a name="line647">647: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, flg1 = <a href="../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line648">648: </a>  <a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm;
+
+<a name="line650">650: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, &amp;comm);
+<a name="line651">651: </a>  <font color="#4169E1">if</font> (verbose) {
+<a name="line652">652: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"# TEST testObjectAttributes\n"</font>);
+<a name="line653">653: </a>    <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"## WRITE PHASE\n"</font>);
+<a name="line654">654: </a>  }
+<a name="line655">655: </a>  <a href="../../../../docs/manualpages/Sys/PetscMemzero.html">PetscMemzero</a>(capsules, nap * ns * <font color="#4169E1">sizeof</font>(Capsule));
+
+<a name="line657">657: </a>  <font color="#B22222">/* test attribute writing */</font>
+<a name="line658">658: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; np; p++) {
+<a name="line659">659: </a>    isPop(paths[p], &amp;flg);
+<a name="line660">660: </a>    isDot(paths[p], &amp;flg1);
+<a name="line661">661: </a>    <font color="#4169E1">if</font> (flg) {
+<a name="line662">662: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PopGroup.html">PetscViewerHDF5PopGroup</a>(viewer);
+<a name="line663">663: </a>    } <font color="#4169E1">else</font> {
+<a name="line664">664: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PushGroup.html">PetscViewerHDF5PushGroup</a>(viewer, paths[p]);
+<a name="line665">665: </a>    }
+<a name="line666">666: </a>    <font color="#B22222">/* &lt; and . have been already visited =&gt; skip */</font>
+<a name="line667">667: </a>    <font color="#4169E1">if</font> (flg || flg1) <font color="#4169E1">continue</font>;
+
+<a name="line669">669: </a>    <font color="#B22222">/* assume here that groups and datasets are already in the file */</font>
+<a name="line670">670: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; ns; s++) {
+<a name="line671">671: </a>      <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>         v;
+<a name="line672">672: </a>      size_t      len;
+<a name="line673">673: </a>      const char *name = datasets[s];
+
+<a name="line675">675: </a>      <a href="../../../../docs/manualpages/Sys/PetscStrlen.html">PetscStrlen</a>(name, &amp;len);
+<a name="line676">676: </a>      <font color="#4169E1">if</font> (!len) <font color="#4169E1">continue</font>;
+<a name="line677">677: </a>      <a href="../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>(comm, &amp;v);
+<a name="line678">678: </a>      <a href="../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, name);
+<a name="line679">679: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5HasObject.html">PetscViewerHDF5HasObject</a>(viewer, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, &amp;flg);
+<a name="line680">680: </a>      <font color="#4169E1">if</font> (flg) {
+<a name="line681">681: </a>        <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"Write attributes to %s/%s\n"</font>, apaths[paths2apaths[p]], name);
+<a name="line682">682: </a>        CapsuleCreate(old, &amp;c);
+<a name="line683">683: </a>        CapsuleWriteAttributes(c, viewer, name);
+<a name="line685">685: </a>        capsules[paths2apaths[p]][s] = c;
+<a name="line686">686: </a>        old                          = c;
+<a name="line687">687: </a>      }
+<a name="line688">688: </a>      <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;v);
+<a name="line689">689: </a>    }
+<a name="line690">690: </a>  }
+<a name="line691">691: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(viewer);
+
+<a name="line693">693: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"\n## READ PHASE\n"</font>);
+<a name="line694">694: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; np; p++) {
+<a name="line695">695: </a>    char *group;
+
+<a name="line697">697: </a>    isPop(paths[p], &amp;flg);
+<a name="line698">698: </a>    <font color="#4169E1">if</font> (flg) {
+<a name="line699">699: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PopGroup.html">PetscViewerHDF5PopGroup</a>(viewer);
+<a name="line700">700: </a>    } <font color="#4169E1">else</font> {
+<a name="line701">701: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5PushGroup.html">PetscViewerHDF5PushGroup</a>(viewer, paths[p]);
+<a name="line702">702: </a>    }
+<a name="line703">703: </a>    <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5GetGroup.html">PetscViewerHDF5GetGroup</a>(viewer, NULL, &amp;group);
+<a name="line704">704: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; ns; s++) {
+<a name="line705">705: </a>      <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>         v;
+<a name="line706">706: </a>      size_t      len;
+<a name="line707">707: </a>      const char *name = datasets[s];
+
+<a name="line709">709: </a>      <a href="../../../../docs/manualpages/Sys/PetscStrlen.html">PetscStrlen</a>(name, &amp;len);
+<a name="line710">710: </a>      <font color="#4169E1">if</font> (!len) <font color="#4169E1">continue</font>;
+<a name="line711">711: </a>      <a href="../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>(comm, &amp;v);
+<a name="line712">712: </a>      <a href="../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, name);
+<a name="line713">713: </a>      <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5HasObject.html">PetscViewerHDF5HasObject</a>(viewer, (<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)v, &amp;flg);
+<a name="line714">714: </a>      <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"Is %s/%s dataset? %s\n"</font>, group, name, PetscBools[flg]);
+
+<a name="line716">716: </a>      <font color="#B22222">/* check attribute capsule has been created for given path */</font>
+<a name="line717">717: </a>      c    = capsules[paths2apaths[p]][s];
+<a name="line718">718: </a>      flg1 = (<a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>) !!c;
+
+<a name="line721">721: </a>      <font color="#B22222">/* check correct existence of attributes in file */</font>
+<a name="line722">722: </a>      <font color="#4169E1">if</font> (flg) CapsuleReadAndCompareAttributes(c, viewer, name);
+<a name="line723">723: </a>      <a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;v);
+<a name="line724">724: </a>    }
+<a name="line725">725: </a>    <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(group);
+<a name="line726">726: </a>  }
+<a name="line727">727: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(viewer);
+<a name="line728">728: </a>  <font color="#4169E1">for</font> (p = 0; p &lt; nap; p++)
+<a name="line729">729: </a>    <font color="#4169E1">for</font> (s = 0; s &lt; ns; s++) CapsuleDestroy(&amp;capsules[p][s]);
+<a name="line730">730: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"# END  testObjectAttributes\n\n"</font>);
+<a name="line731">731: </a>  <font color="#4169E1">return</font> 0;
+<a name="line732">732: </a>}
+
+<a name="line734">734: </a><strong><font color="#4169E1"><a name="testAttributesDefaultValue"></a>static <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> testAttributesDefaultValue(<a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line735">735: </a>{
+<a name="line736">736: </a><strong><font color="#228B22">#define nv 4</font></strong>
+<a name="line737">737: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> bools[nv];
+<a name="line738">738: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  ints[nv];
+<a name="line739">739: </a>  <a href="../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> reals[nv];
+<a name="line740">740: </a>  char     *strings[nv];
+<a name="line741">741: </a>  <a href="../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg;
+<a name="line742">742: </a>  <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  i;
+<a name="line743">743: </a>  <a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm;
+
+<a name="line745">745: </a>  <a href="../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, &amp;comm);
+<a name="line746">746: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"# TEST testAttributesDefaultValue\n"</font>);
+
+<a name="line748">748: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(viewer, <font color="#666666">"/"</font>, <font color="#666666">"attr_0_bool"</font>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_BOOL</a>, NULL, &amp;bools[0]);
+<a name="line749">749: </a>  bools[1] = <a href="../../../../docs/manualpages/Sys/PetscNot.html">PetscNot</a>(bools[0]);
+<a name="line750">750: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(viewer, <font color="#666666">"/"</font>, <font color="#666666">"attr_0_bool"</font>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_BOOL</a>, &amp;bools[1], &amp;bools[2]);
+<a name="line751">751: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(viewer, <font color="#666666">"/"</font>, <font color="#666666">"attr_nonExisting_bool"</font>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_BOOL</a>, &amp;bools[1], &amp;bools[3]);
+
+<a name="line755">755: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(viewer, <font color="#666666">"/"</font>, <font color="#666666">"attr_0_int"</font>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_INT</a>, NULL, &amp;ints[0]);
+<a name="line756">756: </a>  ints[1] = ints[0] * -333;
+<a name="line757">757: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(viewer, <font color="#666666">"/"</font>, <font color="#666666">"attr_0_int"</font>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_INT</a>, &amp;ints[1], &amp;ints[2]);
+<a name="line758">758: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(viewer, <font color="#666666">"/"</font>, <font color="#666666">"attr_nonExisting_int"</font>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_INT</a>, &amp;ints[1], &amp;ints[3]);
+<a name="line761">761: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscIntView.html">PetscIntView</a>(nv, ints, <a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>);
+
+<a name="line763">763: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(viewer, <font color="#666666">"/"</font>, <font color="#666666">"attr_0_real"</font>, PETSC_REAL, NULL, &amp;reals[0]);
+<a name="line764">764: </a>  reals[1] = reals[0] * -11.1;
+<a name="line765">765: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(viewer, <font color="#666666">"/"</font>, <font color="#666666">"attr_0_real"</font>, PETSC_REAL, &amp;reals[1], &amp;reals[2]);
+<a name="line766">766: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(viewer, <font color="#666666">"/"</font>, <font color="#666666">"attr_nonExisting_real"</font>, PETSC_REAL, &amp;reals[1], &amp;reals[3]);
+<a name="line769">769: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscRealView.html">PetscRealView</a>(nv, reals, <a href="../../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>);
+
+<a name="line771">771: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(viewer, <font color="#666666">"/"</font>, <font color="#666666">"attr_0_str"</font>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_STRING</a>, NULL, &amp;strings[0]);
+<a name="line772">772: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(strings[0], &amp;strings[1]);
+<a name="line773">773: </a>  alterString(strings[0], strings[1]);
+<a name="line774">774: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(viewer, <font color="#666666">"/"</font>, <font color="#666666">"attr_0_str"</font>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_STRING</a>, &amp;strings[1], &amp;strings[2]);
+<a name="line775">775: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5ReadAttribute.html">PetscViewerHDF5ReadAttribute</a>(viewer, <font color="#666666">"/"</font>, <font color="#666666">"attr_nonExisting_str"</font>, <a href="../../../../docs/manualpages/Sys/PetscDataType.html">PETSC_STRING</a>, &amp;strings[1], &amp;strings[3]);
+<a name="line776">776: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(strings[2], strings[0], &amp;flg);
+<a name="line778">778: </a>  <a href="../../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(strings[3], strings[1], &amp;flg);
+<a name="line780">780: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nv; i++) <a href="../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(strings[i]);
+
+<a name="line782">782: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerFlush.html">PetscViewerFlush</a>(viewer);
+<a name="line783">783: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"# END  testAttributesDefaultValue\n"</font>);
+<a name="line784">784: </a><strong><font color="#228B22">#undef nv</font></strong>
+<a name="line785">785: </a>  <font color="#4169E1">return</font> 0;
+<a name="line786">786: </a>}
+
+<a name="line788">788: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
+<a name="line789">789: </a>{
+<a name="line790">790: </a>  static char filename[PETSC_MAX_PATH_LEN] = <font color="#666666">"ex48.h5"</font>;
+<a name="line791">791: </a>  <a href="../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+<a name="line792">792: </a>  <a href="../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>    comm;
+<a name="line793">793: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer;
+
+<a name="line796">796: </a>  <a href="../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, (char *)0, help);
+<a name="line797">797: </a>  comm = <a href="../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>;
+<a name="line798">798: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
+<a name="line799">799: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(NULL, NULL, <font color="#666666">"-n"</font>, &amp;n, NULL);
+<a name="line800">800: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, <font color="#666666">"-verbose"</font>, &amp;verbose, NULL);
+<a name="line801">801: </a>  <a href="../../../../docs/manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(NULL, NULL, <font color="#666666">"-filename"</font>, filename, <font color="#4169E1">sizeof</font>(filename), NULL);
+<a name="line802">802: </a>  <font color="#4169E1">if</font> (verbose) <a href="../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(comm, <font color="#666666">"np ns "</font> <a href="../../../../docs/manualpages/Sys/PetscStringize.html">PetscStringize</a>(np) <font color="#666666">" "</font> <a href="../../../../docs/manualpages/Sys/PetscStringize.html">PetscStringize</a>(ns) <font color="#666666">"\n"</font>);
+
+<a name="line804">804: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5Open.html">PetscViewerHDF5Open</a>(comm, filename, <a href="../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_WRITE</a>, &amp;viewer);
+<a name="line805">805: </a>  testGroupsDatasets(viewer);
+<a name="line806">806: </a>  testAttributesAbsolutePath(viewer, <font color="#666666">"/"</font>);
+<a name="line807">807: </a>  testAttributesAbsolutePath(viewer, <font color="#666666">"/prefix"</font>);
+<a name="line808">808: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;viewer);
+
+<a name="line810">810: </a>  <font color="#B22222">/* test reopening in update mode */</font>
+<a name="line811">811: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerHDF5Open.html">PetscViewerHDF5Open</a>(comm, filename, <a href="../../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_UPDATE</a>, &amp;viewer);
+<a name="line812">812: </a>  testAttributesPushedPath(viewer);
+<a name="line813">813: </a>  testObjectAttributes(viewer);
+<a name="line814">814: </a>  testAttributesDefaultValue(viewer);
+<a name="line815">815: </a>  <a href="../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;viewer);
+<a name="line816">816: </a>  <a href="../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line817">817: </a>  <font color="#4169E1">return</font> 0;
+<a name="line818">818: </a>}
+
+<a name="line820">820: </a><font color="#B22222">/*TEST</font>
+
+<a name="line822">822: </a><font color="#B22222">     build:</font>
+<a name="line823">823: </a><font color="#B22222">       requires: hdf5</font>
+
+<a name="line825">825: </a><font color="#B22222">     test:</font>
+<a name="line826">826: </a><font color="#B22222">       nsize: {{1 4}}</font>
+
+<a name="line828">828: </a><font color="#B22222">TEST*/</font>
+</pre>
+</body>
+
+</html>

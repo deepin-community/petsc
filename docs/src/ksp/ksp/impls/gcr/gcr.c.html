@@ -1,0 +1,407 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ksp/ksp/impls/gcr/gcr.c">Actual source code: gcr.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:49:11+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a>#include <A href="../../../../../include/petsc/private/kspimpl.h.html">&lt;petsc/private/kspimpl.h&gt;</A>
+
+<a name="line4">  4: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line5">  5: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     restart;
+<a name="line6">  6: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     n_restarts;
+<a name="line7">  7: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *val;
+<a name="line8">  8: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>         *VV, *SS;
+<a name="line9">  9: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>          R;
+
+<a name="line11"> 11: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*modifypc)(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, void *); <font color="#B22222">/* function to modify the preconditioner*/</font>
+<a name="line12"> 12: </a>  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*modifypc_destroy)(void *);                   <font color="#B22222">/* function to destroy the user context for the modifypc function */</font>
+
+<a name="line14"> 14: </a>  void *modifypc_ctx; <font color="#B22222">/* user defined data for the modifypc function */</font>
+<a name="line15"> 15: </a>} KSP_GCR;
+
+<a name="line17"> 17: </a><strong><font color="#4169E1"><a name="KSPSolve_GCR_cycle"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPSolve_GCR_cycle(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp)</font></strong>
+<a name="line18"> 18: </a>{
+<a name="line19"> 19: </a>  KSP_GCR    *ctx = (KSP_GCR *)ksp-&gt;data;
+<a name="line20"> 20: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> r_dot_v;
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>         A, B;
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/PC/PC.html">PC</a>          pc;
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>         s, v, r;
+<a name="line24"> 24: </a>  <font color="#B22222">/*</font>
+<a name="line25"> 25: </a><font color="#B22222">     The residual norm will not be computed when ksp-&gt;its &gt; ksp-&gt;chknorm hence need to initialize norm_r with some dummy value</font>
+<a name="line26"> 26: </a><font color="#B22222">  */</font>
+<a name="line27"> 27: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> norm_r = 0.0, nrm;
+<a name="line28"> 28: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  k, i, restart;
+<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>       x;
+
+<a name="line31"> 31: </a>  restart = ctx-&gt;restart;
+<a name="line32"> 32: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetPC.html">KSPGetPC</a>(ksp, &amp;pc);
+<a name="line33"> 33: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetOperators.html">KSPGetOperators</a>(ksp, &amp;A, &amp;B);
+
+<a name="line35"> 35: </a>  x = ksp-&gt;vec_sol;
+<a name="line36"> 36: </a>  r = ctx-&gt;R;
+
+<a name="line38"> 38: </a>  <font color="#4169E1">for</font> (k = 0; k &lt; restart; k++) {
+<a name="line39"> 39: </a>    v = ctx-&gt;VV[k];
+<a name="line40"> 40: </a>    s = ctx-&gt;SS[k];
+<a name="line41"> 41: </a>    <font color="#4169E1">if</font> (ctx-&gt;modifypc) (*ctx-&gt;modifypc)(ksp, ksp-&gt;its, ksp-&gt;rnorm, ctx-&gt;modifypc_ctx);
+
+<a name="line43"> 43: </a>    KSP_PCApply(ksp, r, s);    <font color="#B22222">/* s = B^{-1} r */</font>
+<a name="line44"> 44: </a>    KSP_MatMult(ksp, A, s, v); <font color="#B22222">/* v = A s */</font>
+
+<a name="line46"> 46: </a>    <a href="../../../../../docs/manualpages/Vec/VecMDot.html">VecMDot</a>(v, k, ctx-&gt;VV, ctx-&gt;val);
+<a name="line47"> 47: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; k; i++) ctx-&gt;val[i] = -ctx-&gt;val[i];
+<a name="line48"> 48: </a>    <a href="../../../../../docs/manualpages/Vec/VecMAXPY.html">VecMAXPY</a>(v, k, ctx-&gt;val, ctx-&gt;VV); <font color="#B22222">/* v = v - sum_{i=0}^{k-1} alpha_i v_i */</font>
+<a name="line49"> 49: </a>    <a href="../../../../../docs/manualpages/Vec/VecMAXPY.html">VecMAXPY</a>(s, k, ctx-&gt;val, ctx-&gt;SS); <font color="#B22222">/* s = s - sum_{i=0}^{k-1} alpha_i s_i */</font>
+
+<a name="line51"> 51: </a>    <a href="../../../../../docs/manualpages/Vec/VecDotNorm2.html">VecDotNorm2</a>(r, v, &amp;r_dot_v, &amp;nrm);
+<a name="line52"> 52: </a>    nrm     = PetscSqrtReal(nrm);
+<a name="line53"> 53: </a>    r_dot_v = r_dot_v / nrm;
+<a name="line54"> 54: </a>    <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(v, 1.0 / nrm);
+<a name="line55"> 55: </a>    <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(s, 1.0 / nrm);
+<a name="line56"> 56: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(x, r_dot_v, s);
+<a name="line57"> 57: </a>    <a href="../../../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(r, -r_dot_v, v);
+<a name="line58"> 58: </a>    <font color="#4169E1">if</font> (ksp-&gt;its &gt; ksp-&gt;chknorm &amp;&amp; ksp-&gt;normtype != <a href="../../../../../docs/manualpages/KSP/KSP_NORM_NONE.html">KSP_NORM_NONE</a>) {
+<a name="line59"> 59: </a>      <a href="../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(r, <a href="../../../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;norm_r);
+<a name="line60"> 60: </a>      <a href="../../../../../docs/manualpages/KSP/KSPCheckNorm.html">KSPCheckNorm</a>(ksp, norm_r);
+<a name="line61"> 61: </a>    }
+<a name="line62"> 62: </a>    <font color="#B22222">/* update the local counter and the global counter */</font>
+<a name="line63"> 63: </a>    ksp-&gt;its++;
+<a name="line64"> 64: </a>    ksp-&gt;rnorm = norm_r;
+
+<a name="line66"> 66: </a>    KSPLogResidualHistory(ksp, norm_r);
+<a name="line67"> 67: </a>    <a href="../../../../../docs/manualpages/KSP/KSPMonitor.html">KSPMonitor</a>(ksp, ksp-&gt;its, norm_r);
+
+<a name="line69"> 69: </a>    <font color="#4169E1">if</font> (ksp-&gt;its - 1 &gt; ksp-&gt;chknorm) {
+<a name="line70"> 70: </a>      (*ksp-&gt;converged)(ksp, ksp-&gt;its, norm_r, &amp;ksp-&gt;reason, ksp-&gt;cnvP);
+<a name="line71"> 71: </a>      <font color="#4169E1">if</font> (ksp-&gt;reason) <font color="#4169E1">break</font>;
+<a name="line72"> 72: </a>    }
+
+<a name="line74"> 74: </a>    <font color="#4169E1">if</font> (ksp-&gt;its &gt;= ksp-&gt;max_it) {
+<a name="line75"> 75: </a>      ksp-&gt;reason = <a href="../../../../../docs/manualpages/KSP/KSP_CONVERGED_ITS.html">KSP_CONVERGED_ITS</a>;
+<a name="line76"> 76: </a>      <font color="#4169E1">break</font>;
+<a name="line77"> 77: </a>    }
+<a name="line78"> 78: </a>  }
+<a name="line79"> 79: </a>  ctx-&gt;n_restarts++;
+<a name="line80"> 80: </a>  <font color="#4169E1">return</font> 0;
+<a name="line81"> 81: </a>}
+
+<a name="line83"> 83: </a><strong><font color="#4169E1"><a name="KSPSolve_GCR"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPSolve_GCR(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp)</font></strong>
+<a name="line84"> 84: </a>{
+<a name="line85"> 85: </a>  KSP_GCR  *ctx = (KSP_GCR *)ksp-&gt;data;
+<a name="line86"> 86: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>       A, B;
+<a name="line87"> 87: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>       r, b, x;
+<a name="line88"> 88: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> norm_r = 0.0;
+
+<a name="line90"> 90: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetOperators.html">KSPGetOperators</a>(ksp, &amp;A, &amp;B);
+<a name="line91"> 91: </a>  x = ksp-&gt;vec_sol;
+<a name="line92"> 92: </a>  b = ksp-&gt;vec_rhs;
+<a name="line93"> 93: </a>  r = ctx-&gt;R;
+
+<a name="line95"> 95: </a>  <font color="#B22222">/* compute initial residual */</font>
+<a name="line96"> 96: </a>  KSP_MatMult(ksp, A, x, r);
+<a name="line97"> 97: </a>  <a href="../../../../../docs/manualpages/Vec/VecAYPX.html">VecAYPX</a>(r, -1.0, b); <font color="#B22222">/* r = b - A x  */</font>
+<a name="line98"> 98: </a>  <font color="#4169E1">if</font> (ksp-&gt;normtype != <a href="../../../../../docs/manualpages/KSP/KSP_NORM_NONE.html">KSP_NORM_NONE</a>) {
+<a name="line99"> 99: </a>    <a href="../../../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(r, <a href="../../../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;norm_r);
+<a name="line100">100: </a>    <a href="../../../../../docs/manualpages/KSP/KSPCheckNorm.html">KSPCheckNorm</a>(ksp, norm_r);
+<a name="line101">101: </a>  }
+<a name="line102">102: </a>  ksp-&gt;its    = 0;
+<a name="line103">103: </a>  ksp-&gt;rnorm0 = norm_r;
+
+<a name="line105">105: </a>  KSPLogResidualHistory(ksp, ksp-&gt;rnorm0);
+<a name="line106">106: </a>  <a href="../../../../../docs/manualpages/KSP/KSPMonitor.html">KSPMonitor</a>(ksp, ksp-&gt;its, ksp-&gt;rnorm0);
+<a name="line107">107: </a>  (*ksp-&gt;converged)(ksp, ksp-&gt;its, ksp-&gt;rnorm0, &amp;ksp-&gt;reason, ksp-&gt;cnvP);
+<a name="line108">108: </a>  <font color="#4169E1">if</font> (ksp-&gt;reason) <font color="#4169E1">return</font> 0;
+
+<a name="line110">110: </a>  <font color="#4169E1">do</font> {
+<a name="line111">111: </a>    KSPSolve_GCR_cycle(ksp);
+<a name="line112">112: </a>    <font color="#4169E1">if</font> (ksp-&gt;reason) <font color="#4169E1">return</font> 0; <font color="#B22222">/* catch case when convergence occurs inside the cycle */</font>
+<a name="line113">113: </a>  } <font color="#4169E1">while</font> (ksp-&gt;its &lt; ksp-&gt;max_it);
+
+<a name="line115">115: </a>  <font color="#4169E1">if</font> (ksp-&gt;its &gt;= ksp-&gt;max_it) ksp-&gt;reason = <a href="../../../../../docs/manualpages/KSP/KSP_DIVERGED_ITS.html">KSP_DIVERGED_ITS</a>;
+<a name="line116">116: </a>  <font color="#4169E1">return</font> 0;
+<a name="line117">117: </a>}
+
+<a name="line119">119: </a><strong><font color="#4169E1"><a name="KSPView_GCR"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPView_GCR(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line120">120: </a>{
+<a name="line121">121: </a>  KSP_GCR  *ctx = (KSP_GCR *)ksp-&gt;data;
+<a name="line122">122: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> iascii;
+
+<a name="line124">124: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line125">125: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line126">126: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  restart = %"</font> PetscInt_FMT <font color="#666666">" \n"</font>, ctx-&gt;restart);
+<a name="line127">127: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"  restarts performed = %"</font> PetscInt_FMT <font color="#666666">" \n"</font>, ctx-&gt;n_restarts);
+<a name="line128">128: </a>  }
+<a name="line129">129: </a>  <font color="#4169E1">return</font> 0;
+<a name="line130">130: </a>}
+
+<a name="line132">132: </a><strong><font color="#4169E1"><a name="KSPSetUp_GCR"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPSetUp_GCR(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp)</font></strong>
+<a name="line133">133: </a>{
+<a name="line134">134: </a>  KSP_GCR  *ctx = (KSP_GCR *)ksp-&gt;data;
+<a name="line135">135: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>       A;
+<a name="line136">136: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> diagonalscale;
+
+<a name="line138">138: </a>  <a href="../../../../../docs/manualpages/PC/PCGetDiagonalScale.html">PCGetDiagonalScale</a>(ksp-&gt;pc, &amp;diagonalscale);
+
+<a name="line141">141: </a>  <a href="../../../../../docs/manualpages/KSP/KSPGetOperators.html">KSPGetOperators</a>(ksp, &amp;A, NULL);
+<a name="line142">142: </a>  <a href="../../../../../docs/manualpages/Mat/MatCreateVecs.html">MatCreateVecs</a>(A, &amp;ctx-&gt;R, NULL);
+<a name="line143">143: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicateVecs.html">VecDuplicateVecs</a>(ctx-&gt;R, ctx-&gt;restart, &amp;ctx-&gt;VV);
+<a name="line144">144: </a>  <a href="../../../../../docs/manualpages/Vec/VecDuplicateVecs.html">VecDuplicateVecs</a>(ctx-&gt;R, ctx-&gt;restart, &amp;ctx-&gt;SS);
+
+<a name="line146">146: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(ctx-&gt;restart, &amp;ctx-&gt;val);
+<a name="line147">147: </a>  <font color="#4169E1">return</font> 0;
+<a name="line148">148: </a>}
+
+<a name="line150">150: </a><strong><font color="#4169E1"><a name="KSPReset_GCR"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPReset_GCR(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp)</font></strong>
+<a name="line151">151: </a>{
+<a name="line152">152: </a>  KSP_GCR *ctx = (KSP_GCR *)ksp-&gt;data;
+
+<a name="line154">154: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;ctx-&gt;R);
+<a name="line155">155: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroyVecs.html">VecDestroyVecs</a>(ctx-&gt;restart, &amp;ctx-&gt;VV);
+<a name="line156">156: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroyVecs.html">VecDestroyVecs</a>(ctx-&gt;restart, &amp;ctx-&gt;SS);
+<a name="line157">157: </a>  <font color="#4169E1">if</font> (ctx-&gt;modifypc_destroy) (*ctx-&gt;modifypc_destroy)(ctx-&gt;modifypc_ctx);
+<a name="line158">158: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(ctx-&gt;val);
+<a name="line159">159: </a>  <font color="#4169E1">return</font> 0;
+<a name="line160">160: </a>}
+
+<a name="line162">162: </a><strong><font color="#4169E1"><a name="KSPDestroy_GCR"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPDestroy_GCR(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp)</font></strong>
+<a name="line163">163: </a>{
+<a name="line164">164: </a>  KSPReset_GCR(ksp);
+<a name="line165">165: </a>  KSPDestroyDefault(ksp);
+<a name="line166">166: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ksp, <font color="#666666">"KSPGCRSetRestart_C"</font>, NULL);
+<a name="line167">167: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ksp, <font color="#666666">"KSPGCRGetRestart_C"</font>, NULL);
+<a name="line168">168: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ksp, <font color="#666666">"KSPGCRSetModifyPC_C"</font>, NULL);
+<a name="line169">169: </a>  <font color="#4169E1">return</font> 0;
+<a name="line170">170: </a>}
+
+<a name="line172">172: </a><strong><font color="#4169E1"><a name="KSPSetFromOptions_GCR"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPSetFromOptions_GCR(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line173">173: </a>{
+<a name="line174">174: </a>  KSP_GCR  *ctx = (KSP_GCR *)ksp-&gt;data;
+<a name="line175">175: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  restart;
+<a name="line176">176: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg;
+
+<a name="line178">178: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> GCR options"</font>);
+<a name="line179">179: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsInt.html">PetscOptionsInt</a>(<font color="#666666">"-ksp_gcr_restart"</font>, <font color="#666666">"Number of Krylov search directions"</font>, <font color="#666666">"<a href="../../../../../docs/manualpages/KSP/KSPGCRSetRestart.html">KSPGCRSetRestart</a>"</font>, ctx-&gt;restart, &amp;restart, &amp;flg);
+<a name="line180">180: </a>  <font color="#4169E1">if</font> (flg) <a href="../../../../../docs/manualpages/KSP/KSPGCRSetRestart.html">KSPGCRSetRestart</a>(ksp, restart);
+<a name="line181">181: </a>  PetscOptionsHeadEnd();
+<a name="line182">182: </a>  <font color="#4169E1">return</font> 0;
+<a name="line183">183: </a>}
+
+<a name="line186">186: </a><strong><font color="#4169E1">typedef <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*KSPGCRModifyPCFunction)(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, void *)</font></strong>;
+<a name="line187">187: </a><strong><font color="#4169E1">typedef <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*KSPGCRDestroyFunction)(void *)</font></strong>;
+
+<a name="line189">189: </a><strong><font color="#4169E1"><a name="KSPGCRSetModifyPC_GCR"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPGCRSetModifyPC_GCR(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp, KSPGCRModifyPCFunction function, void *data, KSPGCRDestroyFunction destroy)</font></strong>
+<a name="line190">190: </a>{
+<a name="line191">191: </a>  KSP_GCR *ctx = (KSP_GCR *)ksp-&gt;data;
+
+<a name="line194">194: </a>  ctx-&gt;modifypc         = function;
+<a name="line195">195: </a>  ctx-&gt;modifypc_destroy = destroy;
+<a name="line196">196: </a>  ctx-&gt;modifypc_ctx     = data;
+<a name="line197">197: </a>  <font color="#4169E1">return</font> 0;
+<a name="line198">198: </a>}
+
+<a name="line200">200: </a><font color="#B22222">/*@C</font>
+<a name="line201">201: </a><font color="#B22222"> <a href="../../../../../docs/manualpages/KSP/KSPGCRSetModifyPC.html">KSPGCRSetModifyPC</a> - Sets the routine used by `<a href="../../../../../docs/manualpages/KSP/KSPGCR.html">KSPGCR</a>` to modify the preconditioner for each iteration</font>
+
+<a name="line203">203: </a><font color="#B22222"> Logically Collective</font>
+
+<a name="line205">205: </a><font color="#B22222"> Input Parameters:</font>
+<a name="line206">206: </a><font color="#B22222"> +  ksp      - iterative context obtained from <a href="../../../../../docs/manualpages/KSP/KSPCreate.html">KSPCreate</a>()</font>
+<a name="line207">207: </a><font color="#B22222"> .  function - user defined function to modify the preconditioner</font>
+<a name="line208">208: </a><font color="#B22222"> .  ctx      - user provided context for the modify preconditioner function</font>
+<a name="line209">209: </a><font color="#B22222"> -  destroy  - the function to use to destroy the user provided application context.</font>
+
+<a name="line211">211: </a><font color="#B22222"> Calling Sequence of function:</font>
+<a name="line212">212: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> function (<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> rnorm, void *ctx)</font>
+<a name="line213">213: </a><font color="#B22222">+  ksp   - iterative context</font>
+<a name="line214">214: </a><font color="#B22222">.  n     - the total number of GCR iterations that have occurred</font>
+<a name="line215">215: </a><font color="#B22222">.  rnorm - 2-norm residual value</font>
+<a name="line216">216: </a><font color="#B22222">-  ctx   - the user provided application context</font>
+
+<a name="line218">218: </a><font color="#B22222"> Level: intermediate</font>
+
+<a name="line220">220: </a><font color="#B22222"> Note:</font>
+<a name="line221">221: </a><font color="#B22222"> The default modifypc routine is `KSPGCRModifyPCNoChange()`</font>
+
+<a name="line223">223: </a><font color="#B22222"> Developer Note:</font>
+<a name="line224">224: </a><font color="#B22222"> The API should make uniform for all flexible types, [](sec_flexibleksp), and not have separate function calls for each type.</font>
+
+<a name="line226">226: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>`, `<a href="../../../../../docs/manualpages/KSP/KSPGCR.html">KSPGCR</a>`, `KSPGCRModifyPCNoChange()`, [](sec_flexibleksp)</font>
+<a name="line227">227: </a><font color="#B22222"> @*/</font>
+<a name="line228">228: </a><strong><font color="#4169E1"><a name="KSPGCRSetModifyPC"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/KSPGCRSetModifyPC.html">KSPGCRSetModifyPC</a>(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp, <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*function)(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, void *), void *data, <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*destroy)(void *))</font></strong>
+<a name="line229">229: </a>{
+<a name="line230">230: </a>  <a href="../../../../../docs/manualpages/Sys/PetscUseMethod.html">PetscUseMethod</a>(ksp, <font color="#666666">"KSPGCRSetModifyPC_C"</font>, (<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>, <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>(*)(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>, void *), void *data, <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*)(void *)), (ksp, function, data, destroy));
+<a name="line231">231: </a>  <font color="#4169E1">return</font> 0;
+<a name="line232">232: </a>}
+
+<a name="line234">234: </a><strong><font color="#4169E1"><a name="KSPGCRSetRestart_GCR"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPGCRSetRestart_GCR(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> restart)</font></strong>
+<a name="line235">235: </a>{
+<a name="line236">236: </a>  KSP_GCR *ctx;
+
+<a name="line238">238: </a>  ctx          = (KSP_GCR *)ksp-&gt;data;
+<a name="line239">239: </a>  ctx-&gt;restart = restart;
+<a name="line240">240: </a>  <font color="#4169E1">return</font> 0;
+<a name="line241">241: </a>}
+
+<a name="line243">243: </a><strong><font color="#4169E1"><a name="KSPGCRGetRestart_GCR"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPGCRGetRestart_GCR(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *restart)</font></strong>
+<a name="line244">244: </a>{
+<a name="line245">245: </a>  KSP_GCR *ctx;
+
+<a name="line247">247: </a>  ctx      = (KSP_GCR *)ksp-&gt;data;
+<a name="line248">248: </a>  *restart = ctx-&gt;restart;
+<a name="line249">249: </a>  <font color="#4169E1">return</font> 0;
+<a name="line250">250: </a>}
+
+<a name="line252">252: </a><font color="#B22222">/*@</font>
+<a name="line253">253: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/KSPGCRSetRestart.html">KSPGCRSetRestart</a> - Sets number of iterations at which `<a href="../../../../../docs/manualpages/KSP/KSPGCR.html">KSPGCR</a>` restarts.</font>
+
+<a name="line255">255: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line257">257: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line258">258: </a><font color="#B22222">+  ksp - the Krylov space context</font>
+<a name="line259">259: </a><font color="#B22222">-  restart - integer restart value</font>
+
+<a name="line261">261: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line262">262: </a><font color="#B22222">.   -ksp_gcr_restart &lt;restart&gt; - the number of stored vectors to orthogonalize against</font>
+
+<a name="line264">264: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line266">266: </a><font color="#B22222">   Note:</font>
+<a name="line267">267: </a><font color="#B22222">   The default value is 30.</font>
+
+<a name="line269">269: </a><font color="#B22222">   Developer Note:</font>
+<a name="line270">270: </a><font color="#B22222">   The API could be made uniform for all `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` methods have have a restart.</font>
+
+<a name="line272">272: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../../docs/manualpages/KSP/KSPGCR.html">KSPGCR</a>`, `<a href="../../../../../docs/manualpages/KSP/KSPSetTolerances.html">KSPSetTolerances</a>()`, `<a href="../../../../../docs/manualpages/KSP/KSPGCRGetRestart.html">KSPGCRGetRestart</a>()`, `<a href="../../../../../docs/manualpages/KSP/KSPGMRESSetRestart.html">KSPGMRESSetRestart</a>()`</font>
+<a name="line273">273: </a><font color="#B22222">@*/</font>
+<a name="line274">274: </a><strong><font color="#4169E1"><a name="KSPGCRSetRestart"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/KSPGCRSetRestart.html">KSPGCRSetRestart</a>(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> restart)</font></strong>
+<a name="line275">275: </a>{
+<a name="line276">276: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryMethod.html">PetscTryMethod</a>(ksp, <font color="#666666">"KSPGCRSetRestart_C"</font>, (<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>), (ksp, restart));
+<a name="line277">277: </a>  <font color="#4169E1">return</font> 0;
+<a name="line278">278: </a>}
+
+<a name="line280">280: </a><font color="#B22222">/*@</font>
+<a name="line281">281: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/KSPGCRGetRestart.html">KSPGCRGetRestart</a> - Gets number of iterations at which `<a href="../../../../../docs/manualpages/KSP/KSPGCR.html">KSPGCR</a>` restarts.</font>
+
+<a name="line283">283: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line285">285: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line286">286: </a><font color="#B22222">.  ksp - the Krylov space context</font>
+
+<a name="line288">288: </a><font color="#B22222">   Output Parameter:</font>
+<a name="line289">289: </a><font color="#B22222">.   restart - integer restart value</font>
+
+<a name="line291">291: </a><font color="#B22222">   Level: intermediate</font>
+
+<a name="line293">293: </a><font color="#B22222">.seealso: [](chapter_ksp), `<a href="../../../../../docs/manualpages/KSP/KSPGCR.html">KSPGCR</a>`, `<a href="../../../../../docs/manualpages/KSP/KSPSetTolerances.html">KSPSetTolerances</a>()`, `<a href="../../../../../docs/manualpages/KSP/KSPGCRSetRestart.html">KSPGCRSetRestart</a>()`, `<a href="../../../../../docs/manualpages/KSP/KSPGMRESGetRestart.html">KSPGMRESGetRestart</a>()`</font>
+<a name="line294">294: </a><font color="#B22222">@*/</font>
+<a name="line295">295: </a><strong><font color="#4169E1"><a name="KSPGCRGetRestart"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/KSPGCRGetRestart.html">KSPGCRGetRestart</a>(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *restart)</font></strong>
+<a name="line296">296: </a>{
+<a name="line297">297: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryMethod.html">PetscTryMethod</a>(ksp, <font color="#666666">"KSPGCRGetRestart_C"</font>, (<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *), (ksp, restart));
+<a name="line298">298: </a>  <font color="#4169E1">return</font> 0;
+<a name="line299">299: </a>}
+
+<a name="line301">301: </a><strong><font color="#4169E1"><a name="KSPBuildSolution_GCR"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPBuildSolution_GCR(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *V)</font></strong>
+<a name="line302">302: </a>{
+<a name="line303">303: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> x;
+
+<a name="line305">305: </a>  x = ksp-&gt;vec_sol;
+<a name="line306">306: </a>  <font color="#4169E1">if</font> (v) {
+<a name="line307">307: </a>    <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(x, v);
+<a name="line308">308: </a>    <font color="#4169E1">if</font> (V) *V = v;
+<a name="line309">309: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (V) {
+<a name="line310">310: </a>    *V = ksp-&gt;vec_sol;
+<a name="line311">311: </a>  }
+<a name="line312">312: </a>  <font color="#4169E1">return</font> 0;
+<a name="line313">313: </a>}
+
+<a name="line315">315: </a><strong><font color="#4169E1"><a name="KSPBuildResidual_GCR"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPBuildResidual_GCR(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> t, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> v, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> *V)</font></strong>
+<a name="line316">316: </a>{
+<a name="line317">317: </a>  KSP_GCR *ctx;
+
+<a name="line319">319: </a>  ctx = (KSP_GCR *)ksp-&gt;data;
+<a name="line320">320: </a>  <font color="#4169E1">if</font> (v) {
+<a name="line321">321: </a>    <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(ctx-&gt;R, v);
+<a name="line322">322: </a>    <font color="#4169E1">if</font> (V) *V = v;
+<a name="line323">323: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (V) {
+<a name="line324">324: </a>    *V = ctx-&gt;R;
+<a name="line325">325: </a>  }
+<a name="line326">326: </a>  <font color="#4169E1">return</font> 0;
+<a name="line327">327: </a>}
+
+<a name="line329">329: </a><font color="#B22222">/*MC</font>
+<a name="line330">330: </a><font color="#B22222">     <a href="../../../../../docs/manualpages/KSP/KSPGCR.html">KSPGCR</a> - Implements the preconditioned flexible Generalized Conjugate Residual method. [](sec_flexibleksp),</font>
+
+<a name="line332">332: </a><font color="#B22222">   Options Database Key:</font>
+<a name="line333">333: </a><font color="#B22222">.   -ksp_gcr_restart &lt;restart&gt; - the number of stored vectors to orthogonalize against</font>
+
+<a name="line335">335: </a><font color="#B22222">   Level: beginner</font>
+
+<a name="line337">337: </a><font color="#B22222">    Notes:</font>
+<a name="line338">338: </a><font color="#B22222">    The GCR Krylov method supports non-symmetric matrices and permits the use of a preconditioner</font>
+<a name="line339">339: </a><font color="#B22222">    which may vary from one iteration to the next.</font>
+
+<a name="line341">341: </a><font color="#B22222">    Users can can define a method to vary the</font>
+<a name="line342">342: </a><font color="#B22222">           preconditioner between iterates via `<a href="../../../../../docs/manualpages/KSP/KSPGCRSetModifyPC.html">KSPGCRSetModifyPC</a>()`.</font>
+
+<a name="line344">344: </a><font color="#B22222">           Restarts are solves with x0 not equal to zero. When a restart occurs, the initial starting</font>
+<a name="line345">345: </a><font color="#B22222">           solution is given by the current estimate for x which was obtained by the last restart</font>
+<a name="line346">346: </a><font color="#B22222">           iterations of the GCR algorithm.</font>
+
+<a name="line348">348: </a><font color="#B22222">           Unlike `<a href="../../../../../docs/manualpages/KSP/KSPGMRES.html">KSPGMRES</a>` and `<a href="../../../../../docs/manualpages/KSP/KSPFGMRES.html">KSPFGMRES</a>`, when using GCR, the solution and residual vector can be directly accessed at any iterate,</font>
+<a name="line349">349: </a><font color="#B22222">           with zero computational cost, via a call to `<a href="../../../../../docs/manualpages/KSP/KSPBuildSolution.html">KSPBuildSolution</a>()` and `<a href="../../../../../docs/manualpages/KSP/KSPBuildResidual.html">KSPBuildResidual</a>()` respectively.</font>
+
+<a name="line351">351: </a><font color="#B22222">           This implementation of GCR will only apply the stopping condition test whenever ksp-&gt;its &gt; ksp-&gt;chknorm,</font>
+<a name="line352">352: </a><font color="#B22222">           where ksp-&gt;chknorm is specified via the command line argument -ksp_check_norm_iteration or via</font>
+<a name="line353">353: </a><font color="#B22222">           the function `<a href="../../../../../docs/manualpages/KSP/KSPSetCheckNormIteration.html">KSPSetCheckNormIteration</a>()`. Hence the residual norm reported by the monitor and stored</font>
+<a name="line354">354: </a><font color="#B22222">           in the residual history will be listed as 0.0 before this iteration. It is actually not 0.0; just not calculated.</font>
+
+<a name="line356">356: </a><font color="#B22222">           The method implemented requires the storage of 2 x restart + 1 vectors, twice as much as `<a href="../../../../../docs/manualpages/KSP/KSPGMRES.html">KSPGMRES</a>`.</font>
+<a name="line357">357: </a><font color="#B22222">           Support only for right preconditioning.</font>
+
+<a name="line359">359: </a><font color="#B22222">    Contributed by:</font>
+<a name="line360">360: </a><font color="#B22222">    Dave May</font>
+
+<a name="line362">362: </a><font color="#B22222">    References:</font>
+<a name="line363">363: </a><font color="#B22222">.   * - S. C. Eisenstat, H. C. Elman, and H. C. Schultz. Variational iterative methods for</font>
+<a name="line364">364: </a><font color="#B22222">           nonsymmetric systems of linear equations. SIAM J. Numer. Anal., 20, 1983</font>
+
+<a name="line366">366: </a><font color="#B22222">.seealso: [](chapter_ksp), [](sec_flexibleksp), `<a href="../../../../../docs/manualpages/KSP/KSPCreate.html">KSPCreate</a>()`, `<a href="../../../../../docs/manualpages/KSP/KSPSetType.html">KSPSetType</a>()`, `<a href="../../../../../docs/manualpages/KSP/KSPType.html">KSPType</a>`, `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>`, `<a href="../../../../../docs/manualpages/KSP/KSPGCRSetRestart.html">KSPGCRSetRestart</a>()`, `<a href="../../../../../docs/manualpages/KSP/KSPGCRGetRestart.html">KSPGCRGetRestart</a>()`,</font>
+<a name="line367">367: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/KSP/KSPGCRSetRestart.html">KSPGCRSetRestart</a>()`, `<a href="../../../../../docs/manualpages/KSP/KSPGCRSetModifyPC.html">KSPGCRSetModifyPC</a>()`, `<a href="../../../../../docs/manualpages/KSP/KSPGMRES.html">KSPGMRES</a>`, `<a href="../../../../../docs/manualpages/KSP/KSPFGMRES.html">KSPFGMRES</a>`</font>
+<a name="line368">368: </a><font color="#B22222">M*/</font>
+<a name="line369">369: </a><strong><font color="#4169E1"><a name="KSPCreate_GCR"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> KSPCreate_GCR(<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> ksp)</font></strong>
+<a name="line370">370: </a>{
+<a name="line371">371: </a>  KSP_GCR *ctx;
+
+<a name="line373">373: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;ctx);
+
+<a name="line375">375: </a>  ctx-&gt;restart    = 30;
+<a name="line376">376: </a>  ctx-&gt;n_restarts = 0;
+<a name="line377">377: </a>  ksp-&gt;data       = (void *)ctx;
+
+<a name="line379">379: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetSupportedNorm.html">KSPSetSupportedNorm</a>(ksp, <a href="../../../../../docs/manualpages/KSP/KSP_NORM_NONE.html">KSP_NORM_NONE</a>, <a href="../../../../../docs/manualpages/PC/PCSide.html">PC_RIGHT</a>, 1);
+<a name="line380">380: </a>  <a href="../../../../../docs/manualpages/KSP/KSPSetSupportedNorm.html">KSPSetSupportedNorm</a>(ksp, <a href="../../../../../docs/manualpages/KSP/KSP_NORM_UNPRECONDITIONED.html">KSP_NORM_UNPRECONDITIONED</a>, <a href="../../../../../docs/manualpages/PC/PCSide.html">PC_RIGHT</a>, 3);
+
+<a name="line382">382: </a>  ksp-&gt;ops-&gt;setup          = KSPSetUp_GCR;
+<a name="line383">383: </a>  ksp-&gt;ops-&gt;solve          = KSPSolve_GCR;
+<a name="line384">384: </a>  ksp-&gt;ops-&gt;reset          = KSPReset_GCR;
+<a name="line385">385: </a>  ksp-&gt;ops-&gt;destroy        = KSPDestroy_GCR;
+<a name="line386">386: </a>  ksp-&gt;ops-&gt;view           = KSPView_GCR;
+<a name="line387">387: </a>  ksp-&gt;ops-&gt;setfromoptions = KSPSetFromOptions_GCR;
+<a name="line388">388: </a>  ksp-&gt;ops-&gt;buildsolution  = KSPBuildSolution_GCR;
+<a name="line389">389: </a>  ksp-&gt;ops-&gt;buildresidual  = KSPBuildResidual_GCR;
+
+<a name="line391">391: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ksp, <font color="#666666">"KSPGCRSetRestart_C"</font>, KSPGCRSetRestart_GCR);
+<a name="line392">392: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ksp, <font color="#666666">"KSPGCRGetRestart_C"</font>, KSPGCRGetRestart_GCR);
+<a name="line393">393: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)ksp, <font color="#666666">"KSPGCRSetModifyPC_C"</font>, KSPGCRSetModifyPC_GCR);
+<a name="line394">394: </a>  <font color="#4169E1">return</font> 0;
+<a name="line395">395: </a>}
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,103 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/plex/tests/ex41.c">Actual source code: ex41.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:30+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>static const char help[] = <font color="#666666">"Tests for adaptive refinement"</font>;
+
+<a name="line3">  3: </a>#include <A href="../../../../../include/petscdmplex.h.html">&lt;petscdmplex.h&gt;</A>
+
+<a name="line5">  5: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line6">  6: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> metric;  <font color="#B22222">/* Flag to use metric adaptation, instead of tagging */</font>
+<a name="line7">  7: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *refcell; <font color="#B22222">/* A cell to be refined on each process */</font>
+<a name="line8">  8: </a>} AppCtx;
+
+<a name="line10"> 10: </a><strong><font color="#4169E1"><a name="ProcessOptions"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ProcessOptions(<a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, AppCtx *options)</font></strong>
+<a name="line11"> 11: </a>{
+<a name="line12"> 12: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> size;
+<a name="line13"> 13: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    n;
+
+<a name="line16"> 16: </a>  options-&gt;metric = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line17"> 17: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
+<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(size, &amp;options-&gt;refcell);
+<a name="line19"> 19: </a>  n = size;
+
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(comm, <font color="#666666">""</font>, <font color="#666666">"Parallel Mesh Adaptation Options"</font>, <font color="#666666">"<a href="../../../../../docs/manualpages/DMPlex/DMPLEX.html">DMPLEX</a>"</font>);
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-metric"</font>, <font color="#666666">"Flag for metric refinement"</font>, <font color="#666666">"ex41.c"</font>, options-&gt;metric, &amp;options-&gt;metric, NULL);
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsIntArray.html">PetscOptionsIntArray</a>(<font color="#666666">"-refcell"</font>, <font color="#666666">"The cell to be refined"</font>, <font color="#666666">"ex41.c"</font>, options-&gt;refcell, &amp;n, NULL);
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line26"> 26: </a>  <font color="#4169E1">return</font> 0;
+<a name="line27"> 27: </a>}
+
+<a name="line29"> 29: </a><strong><font color="#4169E1"><a name="CreateMesh"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CreateMesh(<a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, AppCtx *ctx, <a href="../../../../../docs/manualpages/DM/DM.html">DM</a> *dm)</font></strong>
+<a name="line30"> 30: </a>{
+<a name="line31"> 31: </a>  <a href="../../../../../docs/manualpages/DM/DMCreate.html">DMCreate</a>(comm, dm);
+<a name="line32"> 32: </a>  <a href="../../../../../docs/manualpages/DM/DMSetType.html">DMSetType</a>(*dm, <a href="../../../../../docs/manualpages/DMPlex/DMPLEX.html">DMPLEX</a>);
+<a name="line33"> 33: </a>  <a href="../../../../../docs/manualpages/DM/DMSetFromOptions.html">DMSetFromOptions</a>(*dm);
+<a name="line34"> 34: </a>  <a href="../../../../../docs/manualpages/DM/DMViewFromOptions.html">DMViewFromOptions</a>(*dm, NULL, <font color="#666666">"-dm_view"</font>);
+<a name="line35"> 35: </a>  <font color="#4169E1">return</font> 0;
+<a name="line36"> 36: </a>}
+
+<a name="line38"> 38: </a><strong><font color="#4169E1"><a name="CreateAdaptLabel"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CreateAdaptLabel(<a href="../../../../../docs/manualpages/DM/DM.html">DM</a> dm, AppCtx *ctx, <a href="../../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> *adaptLabel)</font></strong>
+<a name="line39"> 39: </a>{
+<a name="line40"> 40: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+
+<a name="line42"> 42: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(<a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dm), &amp;rank);
+<a name="line43"> 43: </a>  <a href="../../../../../docs/manualpages/DMLabel/DMLabelCreate.html">DMLabelCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"Adaptation Label"</font>, adaptLabel);
+<a name="line44"> 44: </a>  <font color="#4169E1">if</font> (ctx-&gt;refcell[rank] &gt;= 0) <a href="../../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(*adaptLabel, ctx-&gt;refcell[rank], <a href="../../../../../docs/manualpages/DM/DMAdaptFlag.html">DM_ADAPT_REFINE</a>);
+<a name="line45"> 45: </a>  <font color="#4169E1">return</font> 0;
+<a name="line46"> 46: </a>}
+
+<a name="line48"> 48: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
+<a name="line49"> 49: </a>{
+<a name="line50"> 50: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>      dm, dma;
+<a name="line51"> 51: </a>  <a href="../../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> adaptLabel;
+<a name="line52"> 52: </a>  AppCtx  ctx;
+
+<a name="line55"> 55: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help);
+<a name="line56"> 56: </a>  ProcessOptions(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;ctx);
+<a name="line57"> 57: </a>  CreateMesh(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;ctx, &amp;dm);
+<a name="line58"> 58: </a>  CreateAdaptLabel(dm, &amp;ctx, &amp;adaptLabel);
+<a name="line59"> 59: </a>  <a href="../../../../../docs/manualpages/DM/DMAdaptLabel.html">DMAdaptLabel</a>(dm, adaptLabel, &amp;dma);
+<a name="line60"> 60: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)dma, <font color="#666666">"Adapted Mesh"</font>);
+<a name="line61"> 61: </a>  <a href="../../../../../docs/manualpages/DMLabel/DMLabelDestroy.html">DMLabelDestroy</a>(&amp;adaptLabel);
+<a name="line62"> 62: </a>  <a href="../../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dm);
+<a name="line63"> 63: </a>  <a href="../../../../../docs/manualpages/DM/DMViewFromOptions.html">DMViewFromOptions</a>(dma, NULL, <font color="#666666">"-adapt_dm_view"</font>);
+<a name="line64"> 64: </a>  <a href="../../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dma);
+<a name="line65"> 65: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(ctx.refcell);
+<a name="line66"> 66: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line67"> 67: </a>  <font color="#4169E1">return</font> 0;
+<a name="line68"> 68: </a>}
+
+<a name="line70"> 70: </a><font color="#B22222">/*TEST</font>
+
+<a name="line72"> 72: </a><font color="#B22222">  testset:</font>
+<a name="line73"> 73: </a><font color="#B22222">    args: -dm_adaptor cellrefiner -dm_plex_transform_type refine_sbr</font>
+
+<a name="line75"> 75: </a><font color="#B22222">    test:</font>
+<a name="line76"> 76: </a><font color="#B22222">      suffix: 0</font>
+<a name="line77"> 77: </a><font color="#B22222">      requires: triangle</font>
+<a name="line78"> 78: </a><font color="#B22222">      args: -dm_view -adapt_dm_view</font>
+
+<a name="line80"> 80: </a><font color="#B22222">    test:</font>
+<a name="line81"> 81: </a><font color="#B22222">      suffix: 1</font>
+<a name="line82"> 82: </a><font color="#B22222">      requires: triangle</font>
+<a name="line83"> 83: </a><font color="#B22222">      args: -dm_coord_space 0 -refcell 2 -dm_view ::ascii_info_detail -adapt_dm_view ::ascii_info_detail</font>
+
+<a name="line85"> 85: </a><font color="#B22222">    test:</font>
+<a name="line86"> 86: </a><font color="#B22222">      suffix: 2</font>
+<a name="line87"> 87: </a><font color="#B22222">      requires: triangle</font>
+<a name="line88"> 88: </a><font color="#B22222">      nsize: 2</font>
+<a name="line89"> 89: </a><font color="#B22222">      args: -refcell 2,-1 -petscpartitioner_type simple -dm_view -adapt_dm_view</font>
+
+<a name="line91"> 91: </a><font color="#B22222">TEST*/</font>
+</pre>
+</body>
+
+</html>

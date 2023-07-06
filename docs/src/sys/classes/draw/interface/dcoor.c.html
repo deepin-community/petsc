@@ -1,0 +1,73 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/classes/draw/interface/dcoor.c">Actual source code: dcoor.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:46:47+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+
+<a name="line2">  2: </a><font color="#B22222">/*</font>
+<a name="line3">  3: </a><font color="#B22222">       Provides the calling sequences for all the basic <a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> routines.</font>
+<a name="line4">  4: </a><font color="#B22222">*/</font>
+<a name="line5">  5: </a>#include <A href="../../../../../include/petsc/private/drawimpl.h.html">&lt;petsc/private/drawimpl.h&gt;</A>
+
+<a name="line7">  7: </a><font color="#B22222">/*@</font>
+<a name="line8">  8: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawSetCoordinates.html">PetscDrawSetCoordinates</a> - Sets the application coordinates of the corners of</font>
+<a name="line9">  9: </a><font color="#B22222">   the window (or page).</font>
+
+<a name="line11"> 11: </a><font color="#B22222">   Not collective</font>
+
+<a name="line13"> 13: </a><font color="#B22222">   Input Parameters:</font>
+<a name="line14"> 14: </a><font color="#B22222">+  draw - the drawing object</font>
+<a name="line15"> 15: </a><font color="#B22222">-  xl,yl,xr,yr - the coordinates of the lower left corner and upper</font>
+<a name="line16"> 16: </a><font color="#B22222">                 right corner of the drawing region.</font>
+
+<a name="line18"> 18: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line20"> 20: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawGetCoordinates.html">PetscDrawGetCoordinates</a>()`</font>
+<a name="line21"> 21: </a><font color="#B22222">@*/</font>
+<a name="line22"> 22: </a><strong><font color="#4169E1"><a name="PetscDrawSetCoordinates"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawSetCoordinates.html">PetscDrawSetCoordinates</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> xl, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> yl, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> xr, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> yr)</font></strong>
+<a name="line23"> 23: </a>{
+<a name="line25"> 25: </a>  draw-&gt;coor_xl = xl;
+<a name="line26"> 26: </a>  draw-&gt;coor_yl = yl;
+<a name="line27"> 27: </a>  draw-&gt;coor_xr = xr;
+<a name="line28"> 28: </a>  draw-&gt;coor_yr = yr;
+<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/Sys/PetscTryTypeMethod.html">PetscTryTypeMethod</a>(draw, setcoordinates, xl, yl, xr, yr);
+<a name="line30"> 30: </a>  <font color="#4169E1">return</font> 0;
+<a name="line31"> 31: </a>}
+
+<a name="line33"> 33: </a><font color="#B22222">/*@</font>
+<a name="line34"> 34: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Draw/PetscDrawGetCoordinates.html">PetscDrawGetCoordinates</a> - Gets the application coordinates of the corners of</font>
+<a name="line35"> 35: </a><font color="#B22222">   the window (or page).</font>
+
+<a name="line37"> 37: </a><font color="#B22222">   Not Collective</font>
+
+<a name="line39"> 39: </a><font color="#B22222">   Input Parameter:</font>
+<a name="line40"> 40: </a><font color="#B22222">.  draw - the drawing object</font>
+
+<a name="line42"> 42: </a><font color="#B22222">   Level: advanced</font>
+
+<a name="line44"> 44: </a><font color="#B22222">   Output Parameters:</font>
+<a name="line45"> 45: </a><font color="#B22222">+  xl - the horizontal coordinate of the lower left corner of the drawing region.</font>
+<a name="line46"> 46: </a><font color="#B22222">.  yl - the vertical coordinate of the lower left corner of the drawing region.</font>
+<a name="line47"> 47: </a><font color="#B22222">.  xr - the horizontal coordinate of the upper right corner of the drawing region.</font>
+<a name="line48"> 48: </a><font color="#B22222">-  yr - the vertical coordinate of the upper right corner of the drawing region.</font>
+
+<a name="line50"> 50: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>`, `<a href="../../../../../docs/manualpages/Draw/PetscDrawSetCoordinates.html">PetscDrawSetCoordinates</a>()`</font>
+<a name="line51"> 51: </a><font color="#B22222">@*/</font>
+<a name="line52"> 52: </a><strong><font color="#4169E1"><a name="PetscDrawGetCoordinates"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Draw/PetscDrawGetCoordinates.html">PetscDrawGetCoordinates</a>(<a href="../../../../../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *xl, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *yl, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *xr, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *yr)</font></strong>
+<a name="line53"> 53: </a>{
+<a name="line59"> 59: </a>  *xl = draw-&gt;coor_xl;
+<a name="line60"> 60: </a>  *yl = draw-&gt;coor_yl;
+<a name="line61"> 61: </a>  *xr = draw-&gt;coor_xr;
+<a name="line62"> 62: </a>  *yr = draw-&gt;coor_yr;
+<a name="line63"> 63: </a>  <font color="#4169E1">return</font> 0;
+<a name="line64"> 64: </a>}
+</pre>
+</body>
+
+</html>

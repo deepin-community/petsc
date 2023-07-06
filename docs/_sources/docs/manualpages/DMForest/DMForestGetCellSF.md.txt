@@ -1,0 +1,43 @@
+# DMForestGetCellSF
+After the setup phase, get the PetscSF for overlapping cells between processes 
+## Synopsis
+```
+#include "petscdmforest.h" 
+#include "petscdm.h" 
+#include "petscdmlabel.h" 
+PetscErrorCode DMForestGetCellSF(DM dm, PetscSF *cellSF)
+```
+Not collective
+
+
+## Input Parameter
+
+- ***dm -*** the forest
+
+
+
+## Output Parameter
+
+- ***cellSF -*** the PetscSF
+
+
+
+
+
+## See Also
+ `DMForestGetCellChart()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/forest/forest.c.html#DMForestGetCellSF">src/dm/impls/forest/forest.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/dm/impls/forest/forest.c)
+
+
+[Index of all DMForest routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

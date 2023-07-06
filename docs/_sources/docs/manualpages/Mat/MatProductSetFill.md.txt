@@ -1,0 +1,39 @@
+# MatProductSetFill
+Set an expected fill of the matrix product. 
+## Synopsis
+```
+#include "petscmat.h" 
+PetscErrorCode MatProductSetFill(Mat mat, PetscReal fill)
+```
+Collective on Mat
+
+
+## Input Parameters
+
+- ***mat -*** the matrix product result matrix
+- ***fill -*** expected fill as ratio of nnz(mat)/(nnz(A) + nnz(B) + nnz(C)); use `PETSC_DEFAULT` if you do not have a good estimate. If the product is a dense matrix, this value is not used.
+
+
+
+
+
+## See Also
+ `Mat`, `MatProductSetFromOptions()`, `MatProductSetType()`, `MatProductSetAlgorithm()`, `MatProductCreate()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/mat/interface/matproduct.c.html#MatProductSetFill">src/mat/interface/matproduct.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/pde_constrained/tutorials/parabolic.c.html">src/tao/pde_constrained/tutorials/parabolic.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/mat/interface/matproduct.c)
+
+
+[Index of all Mat routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

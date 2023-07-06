@@ -1,0 +1,40 @@
+# TSEIMEXSetRowCol
+Set the type index in the T table for the return value for the `TSEIMEX` scheme 
+## Synopsis
+```
+#include "petscts.h"   
+PetscErrorCode TSEIMEXSetRowCol(TS ts, PetscInt row, PetscInt col)
+```
+Logically collective
+
+
+## Input Parameters
+
+- ***ts -*** timestepping context
+- ***tindex -*** index in the T table
+
+
+
+
+
+## See Also
+ [](chapter_ts), `TSEIMEXSetMaxRows()`, `TSEIMEXSetOrdAdapt()`, `TSEIMEX`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/impls/eimex/eimex.c.html#TSEIMEXSetRowCol">src/ts/impls/eimex/eimex.c</A>
+
+## Implementations
+
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ts/impls/eimex/eimex.c.html#TSEIMEXSetRowCol_EIMEX">TSEIMEXSetRowCol_EIMEX in src/ts/impls/eimex/eimex.c</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/ts/impls/eimex/eimex.c)
+
+
+[Index of all TS routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

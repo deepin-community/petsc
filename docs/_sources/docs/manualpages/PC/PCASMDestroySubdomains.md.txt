@@ -1,0 +1,37 @@
+# PCASMDestroySubdomains
+Destroys the index sets created with `PCASMCreateSubdomains()`. Should be called after setting subdomains with `PCASMSetLocalSubdomains()`. 
+## Synopsis
+```
+#include "petscpc.h" 
+PetscErrorCode PCASMDestroySubdomains(PetscInt n, IS is[], IS is_local[])
+```
+Collective
+
+
+## Input Parameters
+
+- ***n -*** the number of index sets
+- ***is -*** the array of index sets
+- ***is_local -*** the array of local index sets, can be NULL
+
+
+
+
+
+## See Also
+ `PCASM`, `PCASMCreateSubdomains()`, `PCASMSetLocalSubdomains()`
+
+## Level
+advanced
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/pc/impls/asm/asm.c.html#PCASMDestroySubdomains">src/ksp/pc/impls/asm/asm.c</A>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/ksp/pc/impls/asm/asm.c)
+
+
+[Index of all PC routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

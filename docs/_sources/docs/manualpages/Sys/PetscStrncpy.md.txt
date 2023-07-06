@@ -1,0 +1,59 @@
+# PetscStrncpy
+Copies a string up to a certain length 
+## Synopsis
+```
+#include "petscsys.h"   
+PetscErrorCode PetscStrncpy(char s[], const char t[], size_t n)
+```
+Not Collective
+
+
+## Input Parameters
+
+- ***t -*** pointer to string
+- ***n -*** the length to copy
+
+
+
+## Output Parameter
+
+- ***s -*** the copied string
+
+
+
+
+
+## Note
+Null string returns a string starting with zero
+
+If the string that is being copied is of length n or larger then the entire string is not
+copied and the final location of s is set to NULL. This is different then the behavior of
+`strncpy()` which leaves s non-terminated if there is not room for the entire string.
+
+
+## Developers Note
+Should this be `PetscStrlcpy()` to reflect its behavior which is like `strlcpy()` not `strncpy()`
+
+
+## See Also
+ `PetscStrcpy()`, `PetscStrcat()`, `PetscStrlcat()`, `PetscStrallocpy()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/sys/utils/str.c.html#PetscStrncpy">src/sys/utils/str.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/forest/tutorials/ex1.c.html">src/dm/impls/forest/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex17.c.html">src/snes/tutorials/ex17.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/tao/constrained/tutorials/maros.c.html">src/tao/constrained/tutorials/maros.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/sys/utils/str.c)
+
+
+[Index of all Sys routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

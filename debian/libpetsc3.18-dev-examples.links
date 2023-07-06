@@ -1,0 +1,5 @@
+#! /bin/sh
+echo usr/share/doc/${PETSC_DOC_PACKAGE}/docs usr/share/doc/${PETSC_DEV_EXAMPLE_PACKAGE}/docs
+echo usr/share/doc/${PETSC_DOC_PACKAGE}/include usr/share/doc/${PETSC_DEV_EXAMPLE_PACKAGE}/include
+echo usr/share/petsc/${PETSC_SONAME_VERSION}/share/petsc/examples usr/share/doc/${PETSC_DEV_EXAMPLE_PACKAGE}/examples
+echo usr/share/petsc/${PETSC_SONAME_VERSION}/share/petsc/datafiles usr/share/doc/${PETSC_DEV_EXAMPLE_PACKAGE}/datafiles

@@ -1,0 +1,82 @@
+# KSPGetConvergedReason
+Gets the reason the `KSP` iteration was stopped. 
+## Synopsis
+```
+#include "petscksp.h" 
+PetscErrorCode KSPGetConvergedReason(KSP ksp, KSPConvergedReason *reason)
+```
+Not Collective
+
+
+## Input Parameter
+
+- ***ksp -*** the `KSP` context
+
+
+
+## Output Parameter
+
+- ***reason -*** negative value indicates diverged, positive value converged, see KSPConvergedReason
+
+
+Possible values for reason: See also manual page for each reason
+```none
+   KSP_CONVERGED_RTOL (residual 2-norm decreased by a factor of rtol, from 2-norm of right hand side)
+   KSP_CONVERGED_ATOL (residual 2-norm less than abstol)
+   KSP_CONVERGED_ITS (used by the preonly preconditioner that always uses ONE iteration, or when the KSPConvergedSkip() convergence test routine is set.
+   KSP_CONVERGED_CG_NEG_CURVE (see note below)
+   KSP_CONVERGED_CG_CONSTRAINED (see note below)
+   KSP_CONVERGED_STEP_LENGTH (see note below)
+   KSP_CONVERGED_ITERATING (returned if the solver is not yet finished)
+   KSP_DIVERGED_ITS  (required more than its to reach convergence)
+   KSP_DIVERGED_DTOL (residual norm increased by a factor of divtol)
+   KSP_DIVERGED_NANORINF (residual norm became Not-a-number or Inf likely due to 0/0)
+   KSP_DIVERGED_BREAKDOWN (generic breakdown in method)
+   KSP_DIVERGED_BREAKDOWN_BICG (Initial residual is orthogonal to preconditioned initial residual. Try a different preconditioner, or a different initial Level.)
+```
+
+
+
+## Options Database Key
+
+- ***-ksp_converged_reason -*** prints the reason to standard out
+
+
+
+
+
+## Notes
+If this routine is called before or doing the `KSPSolve()` the value of `KSP_CONVERGED_ITERATING` is returned
+
+The values  `KSP_CONVERGED_CG_NEG_CURVE`, `KSP_CONVERGED_CG_CONSTRAINED`, and `KSP_CONVERGED_STEP_LENGTH` are returned only by the special `KSPNASH`, `KSPSTCG`, and `KSPGLTR`
+solvers which are used by the `SNESNEWTONTR` (trust region) solver.
+
+
+## See Also
+ [](chapter_ksp), `KSPConvergedReason`, `KSP`, `KSPSetConvergenceTest()`, `KSPConvergedDefault()`, `KSPSetTolerances()`, `KSPConvergedReason`,
+`KSPConvergedReasonView()`
+
+## Level
+intermediate
+
+## Location
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/interface/iterativ.c.html#KSPGetConvergedReason">src/ksp/ksp/interface/iterativ.c</A>
+
+## Examples
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/stag/tutorials/ex4.c.html">src/dm/impls/stag/tutorials/ex4.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/dm/impls/stag/tutorials/ex8.c.html">src/dm/impls/stag/tutorials/ex8.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/pc/tutorials/ex1.c.html">src/ksp/pc/tutorials/ex1.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/pc/tutorials/ex2.c.html">src/ksp/pc/tutorials/ex2.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex59.c.html">src/ksp/ksp/tutorials/ex59.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex72.c.html">src/ksp/ksp/tutorials/ex72.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/ksp/ksp/tutorials/ex77.c.html">src/ksp/ksp/tutorials/ex77.c.html</A><BR>
+<A HREF="PETSC_DOC_OUT_ROOT_PLACEHOLDER/src/snes/tutorials/ex6.c.html">src/snes/tutorials/ex6.c.html</A><BR>
+
+
+---
+[Edit on GitLab](https://gitlab.com/petsc/petsc/-/edit/release/src/ksp/ksp/interface/iterativ.c)
+
+
+[Index of all KSP routines](index.md)  
+[Table of Contents for all manual pages](/docs/manualpages/index.md)  
+[Index of all manual pages](/docs/manualpages/singleindex.md)  

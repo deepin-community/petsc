@@ -1,0 +1,140 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/plex/tests/ex6.c">Actual source code: ex6.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:31+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>static char help[] = <font color="#666666">"Tests for <a href="../../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> lookup\n\n"</font>;
+
+<a name="line3">  3: </a>#include <A href="../../../../../include/petscdmplex.h.html">&lt;petscdmplex.h&gt;</A>
+
+<a name="line5">  5: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line6">  6: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  debug;        <font color="#B22222">/* The debugging level */</font>
+<a name="line7">  7: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  pStart, pEnd; <font color="#B22222">/* The label chart */</font>
+<a name="line8">  8: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  numStrata;    <font color="#B22222">/* The number of label strata */</font>
+<a name="line9">  9: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> fill;         <font color="#B22222">/* Percentage of label to fill */</font>
+<a name="line10"> 10: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  size;         <font color="#B22222">/* The number of set values */</font>
+<a name="line11"> 11: </a>} AppCtx;
+
+<a name="line13"> 13: </a><strong><font color="#4169E1"><a name="ProcessOptions"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ProcessOptions(<a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, AppCtx *options)</font></strong>
+<a name="line14"> 14: </a>{
+<a name="line15"> 15: </a>  options-&gt;debug     = 0;
+<a name="line16"> 16: </a>  options-&gt;pStart    = 0;
+<a name="line17"> 17: </a>  options-&gt;pEnd      = 1000;
+<a name="line18"> 18: </a>  options-&gt;numStrata = 5;
+<a name="line19"> 19: </a>  options-&gt;fill      = 0.10;
+
+<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(comm, <font color="#666666">""</font>, <font color="#666666">"Meshing Problem Options"</font>, <font color="#666666">"<a href="../../../../../docs/manualpages/DMPlex/DMPLEX.html">DMPLEX</a>"</font>);
+<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsBoundedInt.html">PetscOptionsBoundedInt</a>(<font color="#666666">"-debug"</font>, <font color="#666666">"The debugging level"</font>, <font color="#666666">"ex6.c"</font>, options-&gt;debug, &amp;options-&gt;debug, NULL, 0);
+<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsBoundedInt.html">PetscOptionsBoundedInt</a>(<font color="#666666">"-num_strata"</font>, <font color="#666666">"The number of label values"</font>, <font color="#666666">"ex6.c"</font>, options-&gt;numStrata, &amp;options-&gt;numStrata, NULL, 0);
+<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsBoundedInt.html">PetscOptionsBoundedInt</a>(<font color="#666666">"-pend"</font>, <font color="#666666">"The label point limit"</font>, <font color="#666666">"ex6.c"</font>, options-&gt;pEnd, &amp;options-&gt;pEnd, NULL, 0);
+<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsReal.html">PetscOptionsReal</a>(<font color="#666666">"-fill"</font>, <font color="#666666">"The percentage of label chart to set"</font>, <font color="#666666">"ex6.c"</font>, options-&gt;fill, &amp;options-&gt;fill, NULL);
+<a name="line26"> 26: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line27"> 27: </a>  <font color="#4169E1">return</font> 0;
+<a name="line28"> 28: </a>}
+
+<a name="line30"> 30: </a><strong><font color="#4169E1"><a name="TestSetup"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TestSetup(<a href="../../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> label, AppCtx *user)</font></strong>
+<a name="line31"> 31: </a>{
+<a name="line32"> 32: </a>  <a href="../../../../../docs/manualpages/Sys/PetscRandom.html">PetscRandom</a> r;
+<a name="line33"> 33: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    n = (<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)(user-&gt;fill * (user-&gt;pEnd - user-&gt;pStart)), i;
+
+<a name="line35"> 35: </a>  <a href="../../../../../docs/manualpages/Sys/PetscRandomCreate.html">PetscRandomCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;r);
+<a name="line36"> 36: </a>  <a href="../../../../../docs/manualpages/Sys/PetscRandomSetFromOptions.html">PetscRandomSetFromOptions</a>(r); <font color="#B22222">/* -random_type &lt;&gt; */</font>
+<a name="line37"> 37: </a>  <a href="../../../../../docs/manualpages/Sys/PetscRandomSetInterval.html">PetscRandomSetInterval</a>(r, user-&gt;pStart, user-&gt;pEnd);
+<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Sys/PetscRandomSetSeed.html">PetscRandomSetSeed</a>(r, 123456789L);
+<a name="line39"> 39: </a>  <a href="../../../../../docs/manualpages/Sys/PetscRandomSeed.html">PetscRandomSeed</a>(r);
+<a name="line40"> 40: </a>  user-&gt;size = 0;
+<a name="line41"> 41: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; n; ++i) {
+<a name="line42"> 42: </a>    <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> p;
+<a name="line43"> 43: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  val;
+
+<a name="line45"> 45: </a>    <a href="../../../../../docs/manualpages/Sys/PetscRandomGetValueReal.html">PetscRandomGetValueReal</a>(r, &amp;p);
+<a name="line46"> 46: </a>    <a href="../../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(label, (<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)p, &amp;val);
+<a name="line47"> 47: </a>    <font color="#4169E1">if</font> (val &lt; 0) {
+<a name="line48"> 48: </a>      ++user-&gt;size;
+<a name="line49"> 49: </a>      <a href="../../../../../docs/manualpages/DMLabel/DMLabelSetValue.html">DMLabelSetValue</a>(label, (<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>)p, i % user-&gt;numStrata);
+<a name="line50"> 50: </a>    }
+<a name="line51"> 51: </a>  }
+<a name="line52"> 52: </a>  <a href="../../../../../docs/manualpages/Sys/PetscRandomDestroy.html">PetscRandomDestroy</a>(&amp;r);
+<a name="line53"> 53: </a>  <a href="../../../../../docs/manualpages/DMLabel/DMLabelCreateIndex.html">DMLabelCreateIndex</a>(label, user-&gt;pStart, user-&gt;pEnd);
+<a name="line54"> 54: </a>  <a href="../../../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"Created label with chart [%"</font> PetscInt_FMT <font color="#666666">", %"</font> PetscInt_FMT <font color="#666666">") and set %"</font> PetscInt_FMT <font color="#666666">" values\n"</font>, user-&gt;pStart, user-&gt;pEnd, user-&gt;size);
+<a name="line55"> 55: </a>  <font color="#4169E1">return</font> 0;
+<a name="line56"> 56: </a>}
+
+<a name="line58"> 58: </a><strong><font color="#4169E1"><a name="TestLookup"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TestLookup(<a href="../../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> label, AppCtx *user)</font></strong>
+<a name="line59"> 59: </a>{
+<a name="line60"> 60: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> pStart = user-&gt;pStart;
+<a name="line61"> 61: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> pEnd   = user-&gt;pEnd;
+<a name="line62"> 62: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>       p, n = 0;
+
+<a name="line64"> 64: </a>  <font color="#4169E1">for</font> (p = pStart; p &lt; pEnd; ++p) {
+<a name="line65"> 65: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  val;
+<a name="line66"> 66: </a>    <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> has;
+
+<a name="line68"> 68: </a>    <a href="../../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(label, p, &amp;val);
+<a name="line69"> 69: </a>    <a href="../../../../../docs/manualpages/DMLabel/DMLabelHasPoint.html">DMLabelHasPoint</a>(label, p, &amp;has);
+<a name="line71"> 71: </a>    <font color="#4169E1">if</font> (has) ++n;
+<a name="line72"> 72: </a>  }
+<a name="line74"> 74: </a>  <font color="#B22222">/* Also put in timing code */</font>
+<a name="line75"> 75: </a>  <font color="#4169E1">return</font> 0;
+<a name="line76"> 76: </a>}
+
+<a name="line78"> 78: </a><strong><font color="#4169E1"><a name="TestClear"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TestClear(<a href="../../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> label, AppCtx *user)</font></strong>
+<a name="line79"> 79: </a>{
+<a name="line80"> 80: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> pStart = user-&gt;pStart, pEnd = user-&gt;pEnd, p;
+<a name="line81"> 81: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> defaultValue;
+
+<a name="line83"> 83: </a>  <a href="../../../../../docs/manualpages/DMLabel/DMLabelGetDefaultValue.html">DMLabelGetDefaultValue</a>(label, &amp;defaultValue);
+<a name="line84"> 84: </a>  <font color="#4169E1">for</font> (p = pStart; p &lt; pEnd; p++) {
+<a name="line85"> 85: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  val;
+<a name="line86"> 86: </a>    <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> hasPoint;
+
+<a name="line88"> 88: </a>    <a href="../../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(label, p, &amp;val);
+<a name="line89"> 89: </a>    <font color="#4169E1">if</font> (val != defaultValue) <a href="../../../../../docs/manualpages/DMLabel/DMLabelClearValue.html">DMLabelClearValue</a>(label, p, val);
+<a name="line90"> 90: </a>    <a href="../../../../../docs/manualpages/DMLabel/DMLabelGetValue.html">DMLabelGetValue</a>(label, p, &amp;val);
+<a name="line91"> 91: </a>    <a href="../../../../../docs/manualpages/DMLabel/DMLabelHasPoint.html">DMLabelHasPoint</a>(label, p, &amp;hasPoint);
+<a name="line94"> 94: </a>  }
+<a name="line95"> 95: </a>  <font color="#4169E1">return</font> 0;
+<a name="line96"> 96: </a>}
+
+<a name="line98"> 98: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
+<a name="line99"> 99: </a>{
+<a name="line100">100: </a>  <a href="../../../../../docs/manualpages/DMLabel/DMLabel.html">DMLabel</a> label;
+<a name="line101">101: </a>  AppCtx  user; <font color="#B22222">/* user-defined work context */</font>
+
+<a name="line104">104: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help);
+<a name="line105">105: </a>  ProcessOptions(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;user);
+<a name="line106">106: </a>  <a href="../../../../../docs/manualpages/DMLabel/DMLabelCreate.html">DMLabelCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"Test Label"</font>, &amp;label);
+<a name="line107">107: </a>  TestSetup(label, &amp;user);
+<a name="line108">108: </a>  TestLookup(label, &amp;user);
+<a name="line109">109: </a>  TestClear(label, &amp;user);
+<a name="line110">110: </a>  <a href="../../../../../docs/manualpages/DMLabel/DMLabelDestroy.html">DMLabelDestroy</a>(&amp;label);
+<a name="line111">111: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line112">112: </a>  <font color="#4169E1">return</font> 0;
+<a name="line113">113: </a>}
+
+<a name="line115">115: </a><font color="#B22222">/*TEST</font>
+
+<a name="line117">117: </a><font color="#B22222">  test:</font>
+<a name="line118">118: </a><font color="#B22222">    suffix: 0</font>
+<a name="line119">119: </a><font color="#B22222">    args: -malloc_dump</font>
+<a name="line120">120: </a><font color="#B22222">  test:</font>
+<a name="line121">121: </a><font color="#B22222">    suffix: 1</font>
+<a name="line122">122: </a><font color="#B22222">    args: -malloc_dump -pend 10000</font>
+<a name="line123">123: </a><font color="#B22222">  test:</font>
+<a name="line124">124: </a><font color="#B22222">    suffix: 2</font>
+<a name="line125">125: </a><font color="#B22222">    args: -malloc_dump -pend 10000 -fill 0.05</font>
+<a name="line126">126: </a><font color="#B22222">  test:</font>
+<a name="line127">127: </a><font color="#B22222">    suffix: 3</font>
+<a name="line128">128: </a><font color="#B22222">    args: -malloc_dump -pend 10000 -fill 0.25</font>
+
+<a name="line130">130: </a><font color="#B22222">TEST*/</font>
+</pre>
+</body>
+
+</html>

@@ -1,0 +1,16 @@
+A few minor Debian customizations of the HTML PETSc documentation.
+Remove links to non-free PDF files.
+
+Index: petsc/docs/faq/index.html
+===================================================================
+--- petsc.orig/docs/faq/index.html	2023-01-06 23:51:45.112846374 +0100
++++ petsc/docs/faq/index.html	2023-01-06 23:51:45.104846303 +0100
+@@ -845,7 +845,7 @@
+ <ol class="arabic simple">
+ <li><p>The directory <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/docs</span></code> contains a set of HTML manual pages in for use with a
+ browser. You can delete these pages to save some disk space.</p></li>
+-<li><p>The PETSc users manual is provided in PDF format at <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/docs/manual.pdf</span></code>. You
++<li><p>The PETSc users manual is provided in <a class="reference external" href="https://www.mcs.anl.gov/petsc/petsc-current/docs/manual.pdf"><span class="std std-ref">PDF format</span></a>. You
+ can delete this.</p></li>
+ <li><p>The PETSc test suite contains sample output for many of the examples. These are
+ contained in the PETSc directories <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/src/*/tutorials/output</span></code> and

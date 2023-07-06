@@ -1,0 +1,113 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/tests/ex235.c">Actual source code: ex235.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2023-03-30T15:48:07+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>static char help[] = <font color="#666666">"Test combinations of scalings, shifts and get diagonal of <a href="../../../docs/manualpages/Mat/MATSHELL.html">MATSHELL</a>\n\n"</font>;
+
+<a name="line3">  3: </a>#include <A href="../../../include/petscmat.h.html">&lt;petscmat.h&gt;</A>
+
+<a name="line5">  5: </a><strong><font color="#4169E1"><a name="myMult"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> myMult(<a href="../../../docs/manualpages/Mat/Mat.html">Mat</a> S, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> y)</font></strong>
+<a name="line6">  6: </a>{
+<a name="line7">  7: </a>  <a href="../../../docs/manualpages/Mat/Mat.html">Mat</a> A;
+
+<a name="line9">  9: </a>  <a href="../../../docs/manualpages/Mat/MatShellGetContext.html">MatShellGetContext</a>(S, &amp;A);
+<a name="line10"> 10: </a>  <a href="../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(A, x, y);
+<a name="line11"> 11: </a>  <font color="#4169E1">return</font> 0;
+<a name="line12"> 12: </a>}
+
+<a name="line14"> 14: </a><strong><font color="#4169E1"><a name="myGetDiagonal"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> myGetDiagonal(<a href="../../../docs/manualpages/Mat/Mat.html">Mat</a> S, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> d)</font></strong>
+<a name="line15"> 15: </a>{
+<a name="line16"> 16: </a>  <a href="../../../docs/manualpages/Mat/Mat.html">Mat</a> A;
+
+<a name="line18"> 18: </a>  <a href="../../../docs/manualpages/Mat/MatShellGetContext.html">MatShellGetContext</a>(S, &amp;A);
+<a name="line19"> 19: </a>  <a href="../../../docs/manualpages/Mat/MatGetDiagonal.html">MatGetDiagonal</a>(A, d);
+<a name="line20"> 20: </a>  <font color="#4169E1">return</font> 0;
+<a name="line21"> 21: </a>}
+
+<a name="line23"> 23: </a><strong><font color="#4169E1"><a name="shiftandscale"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> shiftandscale(<a href="../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> *D)</font></strong>
+<a name="line24"> 24: </a>{
+<a name="line25"> 25: </a>  <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> ll, d, rr;
+
+<a name="line27"> 27: </a>  <a href="../../../docs/manualpages/Mat/MatCreateVecs.html">MatCreateVecs</a>(A, &amp;ll, &amp;rr);
+<a name="line28"> 28: </a>  <a href="../../../docs/manualpages/Mat/MatCreateVecs.html">MatCreateVecs</a>(A, &amp;d, NULL);
+<a name="line29"> 29: </a>  <a href="../../../docs/manualpages/Vec/VecSetRandom.html">VecSetRandom</a>(ll, NULL);
+<a name="line30"> 30: </a>  <a href="../../../docs/manualpages/Vec/VecSetRandom.html">VecSetRandom</a>(rr, NULL);
+<a name="line31"> 31: </a>  <a href="../../../docs/manualpages/Vec/VecSetRandom.html">VecSetRandom</a>(d, NULL);
+<a name="line32"> 32: </a>  <a href="../../../docs/manualpages/Mat/MatScale.html">MatScale</a>(A, 3.0);
+<a name="line33"> 33: </a>  <a href="../../../docs/manualpages/Mat/MatShift.html">MatShift</a>(A, -4.0);
+<a name="line34"> 34: </a>  <a href="../../../docs/manualpages/Mat/MatScale.html">MatScale</a>(A, 8.0);
+<a name="line35"> 35: </a>  <a href="../../../docs/manualpages/Mat/MatDiagonalSet.html">MatDiagonalSet</a>(A, d, <a href="../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line36"> 36: </a>  <a href="../../../docs/manualpages/Mat/MatShift.html">MatShift</a>(A, 9.0);
+<a name="line37"> 37: </a>  <a href="../../../docs/manualpages/Mat/MatScale.html">MatScale</a>(A, 8.0);
+<a name="line38"> 38: </a>  <a href="../../../docs/manualpages/Vec/VecSetRandom.html">VecSetRandom</a>(ll, NULL);
+<a name="line39"> 39: </a>  <a href="../../../docs/manualpages/Vec/VecSetRandom.html">VecSetRandom</a>(rr, NULL);
+<a name="line40"> 40: </a>  <a href="../../../docs/manualpages/Mat/MatDiagonalScale.html">MatDiagonalScale</a>(A, ll, rr);
+<a name="line41"> 41: </a>  <a href="../../../docs/manualpages/Mat/MatShift.html">MatShift</a>(A, 2.0);
+<a name="line42"> 42: </a>  <a href="../../../docs/manualpages/Mat/MatScale.html">MatScale</a>(A, 11.0);
+<a name="line43"> 43: </a>  <a href="../../../docs/manualpages/Vec/VecSetRandom.html">VecSetRandom</a>(d, NULL);
+<a name="line44"> 44: </a>  <a href="../../../docs/manualpages/Mat/MatDiagonalSet.html">MatDiagonalSet</a>(A, d, <a href="../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>);
+<a name="line45"> 45: </a>  <a href="../../../docs/manualpages/Vec/VecSetRandom.html">VecSetRandom</a>(ll, NULL);
+<a name="line46"> 46: </a>  <a href="../../../docs/manualpages/Vec/VecSetRandom.html">VecSetRandom</a>(rr, NULL);
+<a name="line47"> 47: </a>  <a href="../../../docs/manualpages/Mat/MatDiagonalScale.html">MatDiagonalScale</a>(A, ll, rr);
+<a name="line48"> 48: </a>  <a href="../../../docs/manualpages/Mat/MatShift.html">MatShift</a>(A, 5.0);
+<a name="line49"> 49: </a>  <a href="../../../docs/manualpages/Mat/MatScale.html">MatScale</a>(A, 7.0);
+<a name="line50"> 50: </a>  <a href="../../../docs/manualpages/Mat/MatGetDiagonal.html">MatGetDiagonal</a>(A, d);
+<a name="line51"> 51: </a>  *D = d;
+<a name="line52"> 52: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;ll);
+<a name="line53"> 53: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;rr);
+<a name="line54"> 54: </a>  <font color="#4169E1">return</font> 0;
+<a name="line55"> 55: </a>}
+
+<a name="line57"> 57: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **args)</font></strong>
+<a name="line58"> 58: </a>{
+<a name="line59"> 59: </a>  <a href="../../../docs/manualpages/Mat/Mat.html">Mat</a>       A, Aij, B;
+<a name="line60"> 60: </a>  <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>       Adiag, Aijdiag;
+<a name="line61"> 61: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  m = 3;
+<a name="line62"> 62: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> Aijnorm, Aijdiagnorm, Bnorm, dnorm;
+
+<a name="line65"> 65: </a>  <a href="../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;args, (char *)0, help);
+<a name="line66"> 66: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(NULL, NULL, <font color="#666666">"-m"</font>, &amp;m, NULL);
+
+<a name="line68"> 68: </a>  <a href="../../../docs/manualpages/Mat/MatCreateAIJ.html">MatCreateAIJ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <a href="../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, <a href="../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, m, m, 7, NULL, 6, NULL, &amp;Aij);
+<a name="line69"> 69: </a>  <a href="../../../docs/manualpages/Mat/MatSetRandom.html">MatSetRandom</a>(Aij, NULL);
+<a name="line70"> 70: </a>  <a href="../../../docs/manualpages/Mat/MatSetOption.html">MatSetOption</a>(Aij, <a href="../../../docs/manualpages/Mat/MatOption.html">MAT_NEW_NONZERO_LOCATION_ERR</a>, <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>);
+
+<a name="line72"> 72: </a>  <a href="../../../docs/manualpages/Mat/MatCreateShell.html">MatCreateShell</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <a href="../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, <a href="../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, m, m, Aij, &amp;A);
+<a name="line73"> 73: </a>  <a href="../../../docs/manualpages/Mat/MatShellSetOperation.html">MatShellSetOperation</a>(A, MATOP_MULT, (void (*)(void))myMult);
+<a name="line74"> 74: </a>  <a href="../../../docs/manualpages/Mat/MatShellSetOperation.html">MatShellSetOperation</a>(A, MATOP_GET_DIAGONAL, (void (*)(void))myGetDiagonal);
+
+<a name="line76"> 76: </a>  shiftandscale(A, &amp;Adiag);
+<a name="line77"> 77: </a>  <a href="../../../docs/manualpages/Mat/MatComputeOperator.html">MatComputeOperator</a>(A, NULL, &amp;B);
+<a name="line78"> 78: </a>  shiftandscale(Aij, &amp;Aijdiag);
+<a name="line79"> 79: </a>  <a href="../../../docs/manualpages/Mat/MatAXPY.html">MatAXPY</a>(Aij, -1.0, B, <a href="../../../docs/manualpages/Mat/MatStructure.html">DIFFERENT_NONZERO_PATTERN</a>);
+<a name="line80"> 80: </a>  <a href="../../../docs/manualpages/Mat/MatNorm.html">MatNorm</a>(Aij, <a href="../../../docs/manualpages/Vec/NORM_FROBENIUS.html">NORM_FROBENIUS</a>, &amp;Aijnorm);
+<a name="line81"> 81: </a>  <a href="../../../docs/manualpages/Mat/MatNorm.html">MatNorm</a>(B, <a href="../../../docs/manualpages/Vec/NORM_FROBENIUS.html">NORM_FROBENIUS</a>, &amp;Bnorm);
+<a name="line83"> 83: </a>  <a href="../../../docs/manualpages/Vec/VecAXPY.html">VecAXPY</a>(Aijdiag, -1.0, Adiag);
+<a name="line84"> 84: </a>  <a href="../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(Adiag, <a href="../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;dnorm);
+<a name="line85"> 85: </a>  <a href="../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(Aijdiag, <a href="../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;Aijdiagnorm);
+<a name="line87"> 87: </a>  <a href="../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;A);
+<a name="line88"> 88: </a>  <a href="../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;Aij);
+<a name="line89"> 89: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;Adiag);
+<a name="line90"> 90: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;Aijdiag);
+<a name="line91"> 91: </a>  <a href="../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;B);
+<a name="line92"> 92: </a>  <a href="../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line93"> 93: </a>  <font color="#4169E1">return</font> 0;
+<a name="line94"> 94: </a>}
+
+<a name="line96"> 96: </a><font color="#B22222">/*TEST</font>
+
+<a name="line98"> 98: </a><font color="#B22222">    test:</font>
+<a name="line99"> 99: </a><font color="#B22222">      nsize: {{1 2 3 4}}</font>
+
+<a name="line101">101: </a><font color="#B22222">TEST*/</font>
+</pre>
+</body>
+
+</html>
