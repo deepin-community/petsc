@@ -1,4 +1,3 @@
-
 /*
    Plots vectors obtained with DMDACreate1d()
 */
@@ -6,19 +5,22 @@
 #include <petsc/private/dmdaimpl.h> /*I  "petscdmda.h"   I*/
 
 /*@
-    DMDASetUniformCoordinates - Sets a `DMDA` coordinates to be a uniform grid
+  DMDASetUniformCoordinates - Sets a `DMDA` coordinates to be a uniform grid
 
-  Collective on da
+  Collective
 
   Input Parameters:
-+  da - the distributed array object
-.  xmin,xmax - extremes in the x direction
-.  ymin,ymax - extremes in the y direction (value ignored for 1 dimensional problems)
--  zmin,zmax - extremes in the z direction (value ignored for 1 or 2 dimensional problems)
++ da   - the distributed array object
+. xmin - min extreme in the x direction
+. xmax - max extreme in the x direction
+. ymin - min extreme in the y direction (value ignored for 1 dimensional problems)
+. ymax - max extreme in the y direction (value ignored for 1 dimensional problems)
+. zmin - min extreme in the z direction (value ignored for 1 or 2 dimensional problems)
+- zmax - max extreme in the z direction (value ignored for 1 or 2 dimensional problems)
 
   Level: beginner
 
-.seealso: `DM`, `DMDA`, `DMSetCoordinates()`, `DMGetCoordinates()`, `DMDACreate1d()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMStagSetUniformCoordinates()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMSetCoordinates()`, `DMGetCoordinates()`, `DMDACreate1d()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMStagSetUniformCoordinates()`
 @*/
 PetscErrorCode DMDASetUniformCoordinates(DM da, PetscReal xmin, PetscReal xmax, PetscReal ymin, PetscReal ymax, PetscReal zmin, PetscReal zmax)
 {
@@ -84,7 +86,7 @@ PetscErrorCode DMDASetUniformCoordinates(DM da, PetscReal xmin, PetscReal xmax, 
   } else SETERRQ(PetscObjectComm((PetscObject)da), PETSC_ERR_SUP, "Cannot create uniform coordinates for this dimension %" PetscInt_FMT, dim);
   PetscCall(DMSetCoordinates(da, xcoor));
   PetscCall(VecDestroy(&xcoor));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -126,7 +128,7 @@ PetscErrorCode DMDASelectFields(DM da, PetscInt *outfields, PetscInt **fields)
   }
   *fields    = displayfields;
   *outfields = ndisplayfields;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #include <petscdraw.h>
@@ -156,7 +158,7 @@ PetscErrorCode VecView_MPI_Draw_DA1d(Vec xin, PetscViewer v)
   PetscFunctionBegin;
   PetscCall(PetscViewerDrawGetDraw(v, 0, &draw));
   PetscCall(PetscDrawIsNull(draw, &isnull));
-  if (isnull) PetscFunctionReturn(0);
+  if (isnull) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscViewerDrawGetBounds(v, &nbounds, &bounds));
 
   PetscCall(VecGetDM(xin, &da));
@@ -269,5 +271,5 @@ PetscErrorCode VecView_MPI_Draw_DA1d(Vec xin, PetscViewer v)
   PetscCall(PetscFree(displayfields));
   PetscCall(VecRestoreArrayRead(xcoor, &xg));
   PetscCall(VecRestoreArrayRead(xin, &array));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

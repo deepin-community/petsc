@@ -140,9 +140,9 @@ static inline PetscErrorCode PetscGallopSearchLeft_Private(const char *arr, size
   PetscAssert(r >= l, PETSC_COMM_SELF, PETSC_ERR_PLIB, "r %" PetscInt_FMT " < l %" PetscInt_FMT " in PetscGallopSearchLeft", r, l);
   if ((*cmp)(x, arr + r * size, ctx) >= 0) {
     *m = r;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
-  if ((*cmp)(x, (arr) + l * size, ctx) < 0 || PetscUnlikely(!(r - l))) PetscFunctionReturn(0);
+  if ((*cmp)(x, (arr) + l * size, ctx) < 0 || PetscUnlikely(!(r - l))) PetscFunctionReturn(PETSC_SUCCESS);
   while (PETSC_TRUE) {
     if (PetscUnlikely(cur > r)) {
       cur = r;
@@ -163,7 +163,7 @@ static inline PetscErrorCode PetscGallopSearchLeft_Private(const char *arr, size
     }
   }
   *m = cur;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Start right look left. Looking for e.g. A[-1] in B or mergehi. l inclusive, r inclusive. Returns last m such that arr[m]
@@ -177,9 +177,9 @@ static inline PetscErrorCode PetscGallopSearchRight_Private(const char *arr, siz
   PetscAssert(r >= l, PETSC_COMM_SELF, PETSC_ERR_PLIB, "r %" PetscInt_FMT " < l %" PetscInt_FMT " in PetscGallopSearchRight", r, l);
   if ((*cmp)(x, arr + l * size, ctx) <= 0) {
     *m = l;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
-  if ((*cmp)(x, (arr) + r * size, ctx) > 0 || PetscUnlikely(!(r - l))) PetscFunctionReturn(0);
+  if ((*cmp)(x, (arr) + r * size, ctx) > 0 || PetscUnlikely(!(r - l))) PetscFunctionReturn(PETSC_SUCCESS);
   while (PETSC_TRUE) {
     if (PetscUnlikely(cur < l)) {
       cur = l;
@@ -200,7 +200,7 @@ static inline PetscErrorCode PetscGallopSearchRight_Private(const char *arr, siz
     }
   }
   *m = cur;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Mergesort where size of left half <= size of right half, so mergesort is done left to right. Arr should be pointer to
@@ -265,7 +265,7 @@ static inline PetscErrorCode PetscTimSortMergeLo_Private(char *arr, char *tarr, 
     }
   }
   if (i < llen) Petsc_memcpy(arr + (k * size), tarr + (i * size), (llen - i) * size);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode PetscTimSortMergeLoWithArray_Private(char *arr, char *atarr, size_t asize, char *barr, char *btarr, size_t bsize, CompFunc cmp, void *ctx, PetscInt left, PetscInt mid, PetscInt right)
@@ -327,7 +327,7 @@ static inline PetscErrorCode PetscTimSortMergeLoWithArray_Private(char *arr, cha
     }
   }
   if (i < llen) Petsc_memcpy2(arr + (k * asize), atarr + (i * asize), (llen - i) * asize, barr + (k * bsize), btarr + (i * bsize), (llen - i) * bsize);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Mergesort where size of right half < size of left half, so mergesort is done right to left. Arr should be pointer to
@@ -392,7 +392,7 @@ static inline PetscErrorCode PetscTimSortMergeHi_Private(char *arr, char *tarr, 
     }
   }
   if (i >= 0) Petsc_memcpy((arr) + left * size, tarr, (i + 1) * size);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode PetscTimSortMergeHiWithArray_Private(char *arr, char *atarr, size_t asize, char *barr, char *btarr, size_t bsize, CompFunc cmp, void *ctx, PetscInt left, PetscInt mid, PetscInt right)
@@ -454,7 +454,7 @@ static inline PetscErrorCode PetscTimSortMergeHiWithArray_Private(char *arr, cha
     }
   }
   if (i >= 0) Petsc_memcpy2((arr) + left * asize, atarr, (i + 1) * asize, (barr) + left * bsize, btarr, (i + 1) * bsize);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Left is inclusive lower bound of array slice, start is start location of unsorted section, right is inclusive upper
@@ -473,7 +473,7 @@ static inline PetscErrorCode PetscInsertionSort_Private(char *arr, char *tarr, s
     }
     Petsc_memcpy((arr) + (j + 1) * size, tarr, size);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode PetscInsertionSortWithArray_Private(char *arr, char *atarr, size_t asize, char *barr, char *btarr, size_t bsize, CompFunc cmp, void *ctx, PetscInt left, PetscInt start, PetscInt right)
@@ -490,7 +490,7 @@ static inline PetscErrorCode PetscInsertionSortWithArray_Private(char *arr, char
     }
     Petsc_memcpy2(arr + (j + 1) * asize, atarr, asize, barr + (j + 1) * bsize, btarr, bsize);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* See PetscInsertionSort_Private */
@@ -513,7 +513,7 @@ static inline PetscErrorCode PetscBinaryInsertionSort_Private(char *arr, char *t
     Petsc_memmove(arr + ((l + 1) * size), arr + (l * size), (i - l) * size);
     Petsc_memcpy(arr + (l * size), tarr, size);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode PetscBinaryInsertionSortWithArray_Private(char *arr, char *atarr, size_t asize, char *barr, char *btarr, size_t bsize, CompFunc cmp, void *ctx, PetscInt left, PetscInt start, PetscInt right)
@@ -535,7 +535,7 @@ static inline PetscErrorCode PetscBinaryInsertionSortWithArray_Private(char *arr
     Petsc_memmove2(arr + ((l + 1) * asize), arr + (l * asize), (i - l) * asize, barr + ((l + 1) * bsize), barr + (l * bsize), (i - l) * bsize);
     Petsc_memcpy2(arr + (l * asize), atarr, asize, barr + (l * bsize), btarr, bsize);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 typedef struct {
@@ -556,7 +556,7 @@ typedef struct {
 static inline PetscErrorCode PetscTimSortResizeBuffer_Private(PetscTimSortBuffer *buff, size_t newSize)
 {
   PetscFunctionBegin;
-  if (PetscLikely(newSize <= buff->size)) PetscFunctionReturn(0);
+  if (PetscLikely(newSize <= buff->size)) PetscFunctionReturn(PETSC_SUCCESS);
   {
     /* Can't be larger than n, there is merit to simply allocating buff to n to begin with */
     size_t newMax = PetscMin(newSize * newSize, buff->maxsize);
@@ -564,7 +564,7 @@ static inline PetscErrorCode PetscTimSortResizeBuffer_Private(PetscTimSortBuffer
     PetscCall(PetscMalloc1(newMax, &buff->ptr));
     buff->size = newMax;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode PetscTimSortForceCollapse_Private(char *arr, size_t size, CompFunc cmp, void *ctx, PetscTimSortBuffer *buff, PetscTimSortStack *stack, PetscInt stacksize)
@@ -589,7 +589,7 @@ static inline PetscErrorCode PetscTimSortForceCollapse_Private(char *arr, size_t
     /* Update A with merge */
     stack[stacksize - 1].size += stack[stacksize].size;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode PetscTimSortForceCollapseWithArray_Private(char *arr, size_t asize, char *barr, size_t bsize, CompFunc cmp, void *ctx, PetscTimSortBuffer *abuff, PetscTimSortBuffer *bbuff, PetscTimSortStack *stack, PetscInt stacksize)
@@ -616,7 +616,7 @@ static inline PetscErrorCode PetscTimSortForceCollapseWithArray_Private(char *ar
     /* Update A with merge */
     stack[stacksize - 1].size += stack[stacksize].size;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode PetscTimSortMergeCollapse_Private(char *arr, size_t size, CompFunc cmp, void *ctx, PetscTimSortBuffer *buff, PetscTimSortStack *stack, PetscInt *stacksize)
@@ -704,7 +704,7 @@ static inline PetscErrorCode PetscTimSortMergeCollapse_Private(char *arr, size_t
     if (itemp == i) break;
   }
   *stacksize = i;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode PetscTimSortMergeCollapseWithArray_Private(char *arr, size_t asize, char *barr, size_t bsize, CompFunc cmp, void *ctx, PetscTimSortBuffer *abuff, PetscTimSortBuffer *bbuff, PetscTimSortStack *stack, PetscInt *stacksize)
@@ -798,7 +798,7 @@ static inline PetscErrorCode PetscTimSortMergeCollapseWithArray_Private(char *ar
     if (itemp == i) break;
   }
   *stacksize = i;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* March sequentially through the array building up a "run" of weakly increasing or strictly decreasing contiguous
@@ -812,7 +812,7 @@ static inline PetscErrorCode PetscTimSortBuildRun_Private(char *arr, char *tarr,
   PetscFunctionBegin;
   if (PetscUnlikely(runstart == n - 1)) {
     *runend = runstart;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   /* guess whether run is ascending or descending and tally up the longest consecutive run. essentially a coinflip for random data */
   if ((*cmp)((arr) + (ri + 1) * size, (arr) + ri * size, ctx) < 0) {
@@ -837,13 +837,13 @@ static inline PetscErrorCode PetscTimSortBuildRun_Private(char *arr, char *tarr,
      binary search */
     if (ri - runstart <= minrun >> 1) {
       ++MIN_GALLOP_GLOBAL; /* didn't get close hedge our bets against random data */
-      PetscInsertionSort_Private(arr, tarr, size, cmp, ctx, runstart, ri, re);
+      PetscCall(PetscInsertionSort_Private(arr, tarr, size, cmp, ctx, runstart, ri, re));
     } else {
-      PetscBinaryInsertionSort_Private(arr, tarr, size, cmp, ctx, runstart, ri, re);
+      PetscCall(PetscBinaryInsertionSort_Private(arr, tarr, size, cmp, ctx, runstart, ri, re));
     }
     *runend = re;
   } else *runend = ri;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode PetscTimSortBuildRunWithArray_Private(char *arr, char *atarr, size_t asize, char *barr, char *btarr, size_t bsize, CompFunc cmp, void *ctx, PetscInt n, PetscInt minrun, PetscInt runstart, PetscInt *runend)
@@ -854,7 +854,7 @@ static inline PetscErrorCode PetscTimSortBuildRunWithArray_Private(char *arr, ch
   PetscFunctionBegin;
   if (PetscUnlikely(runstart == n - 1)) {
     *runend = runstart;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   /* guess whether run is ascending or descending and tally up the longest consecutive run. essentially a coinflip for random data */
   if ((*cmp)((arr) + (ri + 1) * asize, arr + (ri * asize), ctx) < 0) {
@@ -879,17 +879,17 @@ static inline PetscErrorCode PetscTimSortBuildRunWithArray_Private(char *arr, ch
      binary search */
     if (ri - runstart <= minrun >> 1) {
       ++MIN_GALLOP_GLOBAL; /* didn't get close hedge our bets against random data */
-      PetscInsertionSortWithArray_Private(arr, atarr, asize, barr, btarr, bsize, cmp, ctx, runstart, ri, re);
+      PetscCall(PetscInsertionSortWithArray_Private(arr, atarr, asize, barr, btarr, bsize, cmp, ctx, runstart, ri, re));
     } else {
-      PetscBinaryInsertionSortWithArray_Private(arr, atarr, asize, barr, btarr, bsize, cmp, ctx, runstart, ri, re);
+      PetscCall(PetscBinaryInsertionSortWithArray_Private(arr, atarr, asize, barr, btarr, bsize, cmp, ctx, runstart, ri, re));
     }
     *runend = re;
   } else *runend = ri;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  PetscTimSort - Sorts an array in place in increasing order using Tim Peters adaptive sorting algorithm.
+  PetscTimSort - Sorts an array in place in increasing order using Tim Peters <https://bugs.python.org/file4451/timsort.txt> adaptive sorting algorithm.
 
   Not Collective
 
@@ -900,14 +900,16 @@ static inline PetscErrorCode PetscTimSortBuildRunWithArray_Private(char *arr, ch
 . cmp  - function pointer to comparison function
 - ctx  - optional context to be passed to comparison function, NULL if not needed
 
-  Output Parameters:
-. arr  - sorted array
+  Output Parameter:
+. arr - sorted array
+
+  Level: developer
 
   Notes:
   Timsort makes the assumption that input data is already likely partially ordered, or that it contains contiguous
- sections (termed 'runs') where the data is locally ordered (but not necessarily globally ordered). It therefore aims to
- select slices of the array in such a way that resulting mergesorts operate on near perfectly length-balanced arrays. To
- do so it repeatedly triggers attempts throughout to merge adjacent runs.
+  sections (termed 'runs') where the data is locally ordered (but not necessarily globally ordered). It therefore aims to
+  select slices of the array in such a way that resulting mergesorts operate on near perfectly length-balanced arrays. To
+  do so it repeatedly triggers attempts throughout to merge adjacent runs.
 
   Should one run continuously "win" a comparison the algorithm begins the "gallop" phase. It will aggressively search
   the "winner" for the location of the "losers" next entry (and vice versa) to copy all preceding elements into place in
@@ -915,29 +917,30 @@ static inline PetscErrorCode PetscTimSortBuildRunWithArray_Private(char *arr, ch
   searches are expected __not__ to repay their costs. While adjacent arrays are almost all nearly the same size, they
   likely all contain similar data.
 
-  Sample usage:
+  Example Usage:
   The comparison function must follow the `qsort()` comparison function paradigm, returning the sign of the difference
   between its arguments. If left < right : return -1, if left == right : return 0, if left > right : return 1. The user
   may also
- change or reverse the order of the sort by flipping the above. Note that stability of the sort is only guaranteed if
- the comparison function forms a valid trigraph. For example when sorting an array of type "my_type" in increasing
+  change or reverse the order of the sort by flipping the above. Note that stability of the sort is only guaranteed if
+  the comparison function forms a valid trigraph. For example when sorting an array of type "my_type" in increasing
   order
 
 .vb
-  int my_increasing_comparison_function(const void *left, const void *right, void *ctx) {
+  int increasing_comparison_function(const void *left, const void *right, void *ctx) {
     my_type l = *(my_type *) left, r = *(my_type *) right;
     return (l < r) ? -1 : (l > r);
   }
 .ve
+
   Note the context is unused here but you may use it to pass and subsequently access whatever information required
   inside the comparison function. The context pointer will unaltered except for any changes made inside the comparison function.
   Then pass the function
 .vb
-  PetscTimSort(n, arr, sizeof(arr[0]), my_increasing_comparison_function, ctx)
+  PetscTimSort(n, arr, sizeof(arr[0]), increasing_comparison_function, ctx)
 .ve
 
   Fortran Notes:
-  To use this from fortran you must write a comparison subroutine with 4 arguments which accepts left, right, ctx and
+  To use this from Fortran you must write a comparison subroutine with 4 arguments which accepts left, right, ctx and
   returns result. For example
 .vb
  subroutine CompareIntegers(left,right,ctx,result)
@@ -957,11 +960,6 @@ static inline PetscErrorCode PetscTimSortBuildRunWithArray_Private(char *arr, ch
    return
  end subroutine CompareIntegers
 .ve
-
-  References:
-. * - Tim Peters. https://bugs.python.org/file4451/timsort.txt
-
-  Level: developer
 
 .seealso: `PetscTimSortWithArray()`, `PetscIntSortSemiOrdered()`, `PetscRealSortSemiOrdered()`, `PetscMPIIntSortSemiOrdered()`
 @*/
@@ -1009,11 +1007,11 @@ PetscErrorCode PetscTimSort(PetscInt n, void *arr, size_t size, int (*cmp)(const
   PetscCall(PetscTimSortForceCollapse_Private((char *)arr, size, cmp, ctx, &buff, runstack, stacksize));
   PetscCall(PetscFree(buff.ptr));
   MIN_GALLOP_GLOBAL = MIN_GALLOP_CONST_GLOBAL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  PetscTimSortWithArray - Sorts an array in place in increasing order using Tim Peters adaptive sorting algorithm and
+  PetscTimSortWithArray - Sorts an array in place in increasing order using Tim Peters <https://bugs.python.org/file4451/timsort.txt> adaptive sorting algorithm and
   reorders a second array to match the first. The arrays need not be the same type.
 
   Not Collective
@@ -1029,14 +1027,16 @@ PetscErrorCode PetscTimSort(PetscInt n, void *arr, size_t size, int (*cmp)(const
 + arr  - array to be sorted, on output it is sorted
 - barr - array to be reordered, on output it is reordered
 
+  Level: developer
+
   Notes:
   The arrays need not be of the same type, however barr MUST contain at least as many elements as arr and the two CANNOT
   overlap.
 
   Timsort makes the assumption that input data is already likely partially ordered, or that it contains contiguous
   sections (termed 'runs') where the data is locally ordered (but not necessarily globally ordered). It therefore aims
- to select slices of the array in such a way that resulting mergesorts operate on near perfectly length-balanced
- arrays. To do so it repeatedly triggers attempts throughout to merge adjacent runs.
+  to select slices of the array in such a way that resulting mergesorts operate on near perfectly length-balanced
+  arrays. To do so it repeatedly triggers attempts throughout to merge adjacent runs.
 
   Should one run continuously "win" a comparison the algorithm begins the "gallop" phase. It will aggressively search
   the "winner" for the location of the "losers" next entry (and vice versa) to copy all preceding elements into place in
@@ -1044,28 +1044,29 @@ PetscErrorCode PetscTimSort(PetscInt n, void *arr, size_t size, int (*cmp)(const
   searches are expected __not__ to repay their costs. While adjacent arrays are almost all nearly the same size, they
   likely all contain similar data.
 
-  Sample usage:
+  Example Usage:
   The comparison function must follow the `qsort()` comparison function paradigm, returning the sign of the difference
-  between its arguments. If left < right : return -1, if left == right : return 0, if left > right : return 1. The user
+  between its arguments. If left < right \: return -1, if left == right \: return 0, if left > right \: return 1. The user
   may also change or reverse the order of the sort by flipping the above. Note that stability of the sort is only
   guaranteed if the comparison function forms a valid trigraph. For example when sorting an array of type "my_type" in
   increasing order
 
 .vb
-  int my_increasing_comparison_function(const void *left, const void *right, void *ctx) {
+  int increasing_comparison_function(const void *left, const void *right, void *ctx) {
     my_type l = *(my_type *) left, r = *(my_type *) right;
     return (l < r) ? -1 : (l > r);
   }
 .ve
+
   Note the context is unused here but you may use it to pass and subsequently access whatever information required
   inside the comparison function. The context pointer will unaltered except for any changes made inside the comparison function.
   Then pass the function
 .vb
-  PetscTimSortWithArray(n, arr, sizeof(arr[0]), barr, sizeof(barr[0]), my_increasing_comparison_function, ctx)
+  PetscTimSortWithArray(n, arr, sizeof(arr[0]), barr, sizeof(barr[0]), increasing_comparison_function, ctx)
 .ve
 
   Fortran Notes:
-  To use this from fortran you must write a comparison subroutine with 4 arguments which accepts left, right, ctx and
+  To use this from Fortran you must write a comparison subroutine with 4 arguments which accepts left, right, ctx and
   returns result. For example
 .vb
  subroutine CompareIntegers(left,right,ctx,result)
@@ -1085,11 +1086,6 @@ PetscErrorCode PetscTimSort(PetscInt n, void *arr, size_t size, int (*cmp)(const
    return
  end subroutine CompareIntegers
 .ve
-
-  References:
-. * - Tim Peters. https://bugs.python.org/file4451/timsort.txt
-
-  Level: developer
 
 .seealso: `PetscTimSort()`, `PetscIntSortSemiOrderedWithArray()`, `PetscRealSortSemiOrderedWithArrayInt()`, `PetscMPIIntSortSemiOrderedWithArray()`
 @*/
@@ -1139,216 +1135,216 @@ PetscErrorCode PetscTimSortWithArray(PetscInt n, void *arr, size_t asize, void *
   PetscCall(PetscFree(abuff.ptr));
   PetscCall(PetscFree(bbuff.ptr));
   MIN_GALLOP_GLOBAL = MIN_GALLOP_CONST_GLOBAL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscIntSortSemiOrdered - Sorts an array of `PetscInt` in place in increasing order.
+  PetscIntSortSemiOrdered - Sorts an array of `PetscInt` in place in increasing order.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  n   - number of values
--  arr - array of integers
+  Input Parameters:
++ n   - number of values
+- arr - array of integers
 
-   Output Parameters:
-.  arr - sorted array of integers
+  Output Parameter:
+. arr - sorted array of integers
 
-   Notes:
-   If the array is less than 64 entries long `PetscSortInt()` is automatically used.
+  Level: intermediate
 
-   This function serves as an alternative to `PetscSortInt()`. While this function works for any array of integers it is
-   significantly faster if the array is not totally random. There are exceptions to this and so it is __highly__
-   recommended that the user benchmark their code to see which routine is fastest.
+  Notes:
+  If the array is less than 64 entries long `PetscSortInt()` is automatically used.
 
-   Level: intermediate
+  This function serves as an alternative to `PetscSortInt()`. While this function works for any array of integers it is
+  significantly faster if the array is not totally random. There are exceptions to this and so it is __highly__
+  recommended that the user benchmark their code to see which routine is fastest.
 
 .seealso: `PetscTimSort()`, `PetscSortInt()`, `PetscSortIntWithPermutation()`
 @*/
 PetscErrorCode PetscIntSortSemiOrdered(PetscInt n, PetscInt arr[])
 {
   PetscFunctionBegin;
-  if (n <= 1) PetscFunctionReturn(0);
-  PetscValidIntPointer(arr, 2);
+  if (n <= 1) PetscFunctionReturn(PETSC_SUCCESS);
+  PetscAssertPointer(arr, 2);
   if (n < 64) {
     PetscCall(PetscSortInt(n, arr));
   } else {
     PetscCall(PetscTimSort(n, arr, sizeof(PetscInt), Compare_PetscInt_Private, NULL));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscIntSortSemiOrderedWithArray - Sorts an array of `PetscInt` in place in increasing order and reorders a second
-   `PetscInt` array to match the first.
+  PetscIntSortSemiOrderedWithArray - Sorts an array of `PetscInt` in place in increasing order and reorders a second
+  `PetscInt` array to match the first.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  n   - number of values
+  Input Parameter:
+. n - number of values
 
-   Input/Output Parameters:
-+  arr1 - array of integers to be sorted, modified on output
--  arr2 - array of integers to be reordered, modified on output
+  Input/Output Parameters:
++ arr1 - array of integers to be sorted, modified on output
+- arr2 - array of integers to be reordered, modified on output
 
-   Notes:
-   The arrays CANNOT overlap.
+  Level: intermediate
 
-   This function serves as an alternative to PetscSortIntWithArray(). While this function works for any array of integers it is
-   significantly faster if the array is not totally random. There are exceptions to this and so it is __highly__
-   recommended that the user benchmark their code to see which routine is fastest.
+  Notes:
+  The arrays CANNOT overlap.
 
-   Level: intermediate
+  This function serves as an alternative to `PetscSortIntWithArray()`. While this function works for any array of integers it is
+  significantly faster if the array is not totally random. There are exceptions to this and so it is __highly__
+  recommended that the user benchmark their code to see which routine is fastest.
 
 .seealso: `PetscTimSortWithArray()`, `PetscSortIntWithArray()`, `PetscSortIntWithPermutation()`
 @*/
 PetscErrorCode PetscIntSortSemiOrderedWithArray(PetscInt n, PetscInt arr1[], PetscInt arr2[])
 {
   PetscFunctionBegin;
-  if (n <= 1) PetscFunctionReturn(0);
-  PetscValidIntPointer(arr1, 2);
-  PetscValidIntPointer(arr2, 3);
+  if (n <= 1) PetscFunctionReturn(PETSC_SUCCESS);
+  PetscAssertPointer(arr1, 2);
+  PetscAssertPointer(arr2, 3);
   /* cannot export out to PetscIntSortWithArray here since it isn't stable */
   PetscCall(PetscTimSortWithArray(n, arr1, sizeof(PetscInt), arr2, sizeof(PetscInt), Compare_PetscInt_Private, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscMPIIntSortSemiOrdered - Sorts an array of `PetscMPIInt` in place in increasing order.
+  PetscMPIIntSortSemiOrdered - Sorts an array of `PetscMPIInt` in place in increasing order.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  n   - number of values
--  arr - array of `PetscMPIInt`
+  Input Parameters:
++ n   - number of values
+- arr - array of `PetscMPIInt`
 
-   Output Parameters:
-.  arr - sorted array of integers
+  Output Parameter:
+. arr - sorted array of integers
 
-   Notes:
-   If the array is less than 64 entries long `PetscSortMPIInt()` is automatically used.
+  Level: intermediate
 
-   This function serves as an alternative to `PetscSortMPIInt()`. While this function works for any array of `PetscMPIInt` it is
-   significantly faster if the array is not totally random. There are exceptions to this and so it is __highly__
-   recommended that the user benchmark their code to see which routine is fastest.
+  Notes:
+  If the array is less than 64 entries long `PetscSortMPIInt()` is automatically used.
 
-   Level: intermediate
+  This function serves as an alternative to `PetscSortMPIInt()`. While this function works for any array of `PetscMPIInt` it is
+  significantly faster if the array is not totally random. There are exceptions to this and so it is __highly__
+  recommended that the user benchmark their code to see which routine is fastest.
 
 .seealso: `PetscTimSort()`, `PetscSortMPIInt()`
 @*/
 PetscErrorCode PetscMPIIntSortSemiOrdered(PetscInt n, PetscMPIInt arr[])
 {
   PetscFunctionBegin;
-  if (n <= 1) PetscFunctionReturn(0);
-  PetscValidIntPointer(arr, 2);
+  if (n <= 1) PetscFunctionReturn(PETSC_SUCCESS);
+  PetscAssertPointer(arr, 2);
   if (n < 64) {
     PetscCall(PetscSortMPIInt(n, arr));
   } else {
     PetscCall(PetscTimSort(n, arr, sizeof(PetscMPIInt), Compare_PetscMPIInt_Private, NULL));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscMPIIntSortSemiOrderedWithArray - Sorts an array of `PetscMPIInt` in place in increasing order and reorders a second `PetscMPIInt`
-   array to match the first.
+  PetscMPIIntSortSemiOrderedWithArray - Sorts an array of `PetscMPIInt` in place in increasing order and reorders a second `PetscMPIInt`
+  array to match the first.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  n   - number of values
+  Input Parameter:
+. n - number of values
 
-   Input/Output Parameters:
-.  arr1 - array of integers to be sorted, modified on output
--  arr2 - array of integers to be reordered, modified on output
+  Input/Output Parameters:
++ arr1 - array of integers to be sorted, modified on output
+- arr2 - array of integers to be reordered, modified on output
 
-   Notes:
-   The arrays CANNOT overlap.
+  Level: intermediate
 
-   This function serves as an alternative to `PetscSortMPIIntWithArray()`. While this function works for any array of integers it is
-   significantly faster if the array is not totally random. There are exceptions to this and so it is __highly__
-   recommended that the user benchmark their code to see which routine is fastest.
+  Notes:
+  The arrays CANNOT overlap.
 
-   Level: intermediate
+  This function serves as an alternative to `PetscSortMPIIntWithArray()`. While this function works for any array of integers it is
+  significantly faster if the array is not totally random. There are exceptions to this and so it is __highly__
+  recommended that the user benchmark their code to see which routine is fastest.
 
 .seealso: `PetscTimSortWithArray()`, `PetscSortMPIIntWithArray()`, `PetscSortMPIIntWithPermutation()`
 @*/
 PetscErrorCode PetscMPIIntSortSemiOrderedWithArray(PetscInt n, PetscMPIInt arr1[], PetscMPIInt arr2[])
 {
   PetscFunctionBegin;
-  if (n <= 1) PetscFunctionReturn(0);
-  PetscValidIntPointer(arr1, 2);
-  PetscValidIntPointer(arr2, 3);
+  if (n <= 1) PetscFunctionReturn(PETSC_SUCCESS);
+  PetscAssertPointer(arr1, 2);
+  PetscAssertPointer(arr2, 3);
   /* cannot export out to PetscMPIIntSortWithArray here since it isn't stable */
   PetscCall(PetscTimSortWithArray(n, arr1, sizeof(PetscMPIInt), arr2, sizeof(PetscMPIInt), Compare_PetscMPIInt_Private, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscRealSortSemiOrdered - Sorts an array of `PetscReal` in place in increasing order.
+  PetscRealSortSemiOrdered - Sorts an array of `PetscReal` in place in increasing order.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  n   - number of values
--  arr - array of `PetscReal`
+  Input Parameters:
++ n   - number of values
+- arr - array of `PetscReal`
 
-   Output Parameters:
-.  arr - sorted array of integers
+  Output Parameter:
+. arr - sorted array of integers
 
-   Notes:
-   If the array is less than 64 entries long `PetscSortReal()` is automatically used.
+  Level: intermediate
 
-   This function serves as an alternative to `PetscSortReal()`. While this function works for any array of `PetscReal` it is
-   significantly faster if the array is not totally random. There are exceptions to this and so it is __highly__
-   recommended that the user benchmark their code to see which routine is fastest.
+  Notes:
+  If the array is less than 64 entries long `PetscSortReal()` is automatically used.
 
-   Level: intermediate
+  This function serves as an alternative to `PetscSortReal()`. While this function works for any array of `PetscReal` it is
+  significantly faster if the array is not totally random. There are exceptions to this and so it is __highly__
+  recommended that the user benchmark their code to see which routine is fastest.
 
 .seealso: `PetscTimSort()`, `PetscSortReal()`, `PetscSortRealWithPermutation()`
 @*/
 PetscErrorCode PetscRealSortSemiOrdered(PetscInt n, PetscReal arr[])
 {
   PetscFunctionBegin;
-  if (n <= 1) PetscFunctionReturn(0);
-  PetscValidRealPointer(arr, 2);
+  if (n <= 1) PetscFunctionReturn(PETSC_SUCCESS);
+  PetscAssertPointer(arr, 2);
   if (n < 64) {
     PetscCall(PetscSortReal(n, arr));
   } else {
     PetscCall(PetscTimSort(n, arr, sizeof(PetscReal), Compare_PetscReal_Private, NULL));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscRealSortSemiOrderedWithArrayInt - Sorts an array of `PetscReal` in place in increasing order and reorders a second
-   array of `PetscInt` to match the first.
+  PetscRealSortSemiOrderedWithArrayInt - Sorts an array of `PetscReal` in place in increasing order and reorders a second
+  array of `PetscInt` to match the first.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  n   - number of values
+  Input Parameter:
+. n - number of values
 
-   Input/Output Parameters:
-.  arr1 - array of `PetscReal` to be sorted, modified on output
--  arr2 - array of `PetscInt` to be reordered, modified on output
+  Input/Output Parameters:
++ arr1 - array of `PetscReal` to be sorted, modified on output
+- arr2 - array of `PetscInt` to be reordered, modified on output
 
-   Notes:
-   This function serves as an alternative to `PetscSortRealWithArray()`. While this function works for any array of `PetscReal` it is
-   significantly faster if the array is not totally random. There are exceptions to this and so it is __highly__
-   recommended that the user benchmark their code to see which routine is fastest.
+  Level: intermediate
 
-   Level: intermediate
+  Notes:
+  This function serves as an alternative to `PetscSortRealWithArray()`. While this function works for any array of `PetscReal` it is
+  significantly faster if the array is not totally random. There are exceptions to this and so it is __highly__
+  recommended that the user benchmark their code to see which routine is fastest.
 
 .seealso: `PetscTimSortWithArray()`, `PetscSortRealWithArrayInt()`, `PetscSortRealWithPermutation()`
 @*/
 PetscErrorCode PetscRealSortSemiOrderedWithArrayInt(PetscInt n, PetscReal arr1[], PetscInt arr2[])
 {
   PetscFunctionBegin;
-  if (n <= 1) PetscFunctionReturn(0);
-  PetscValidRealPointer(arr1, 2);
-  PetscValidIntPointer(arr2, 3);
+  if (n <= 1) PetscFunctionReturn(PETSC_SUCCESS);
+  PetscAssertPointer(arr1, 2);
+  PetscAssertPointer(arr2, 3);
   /* cannot export out to PetscRealSortWithArrayInt here since it isn't stable */
   PetscCall(PetscTimSortWithArray(n, arr1, sizeof(PetscReal), arr2, sizeof(PetscInt), Compare_PetscReal_Private, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -4,33 +4,23 @@
 
 const char *const DMPlexInterpolatedFlags[] = {"none", "partial", "mixed", "full", "DMPlexInterpolatedFlag", "DMPLEX_INTERPOLATED_", NULL};
 
-/* HashIJKL */
+/* HMapIJKL */
 
-#include <petsc/private/hashmap.h>
+#include <petsc/private/hashmapijkl.h>
 
-typedef struct _PetscHashIJKLKey {
-  PetscInt i, j, k, l;
-} PetscHashIJKLKey;
+static PetscSFNode _PetscInvalidSFNode = {-1, -1};
 
-#define PetscHashIJKLKeyHash(key) PetscHashCombine(PetscHashCombine(PetscHashInt((key).i), PetscHashInt((key).j)), PetscHashCombine(PetscHashInt((key).k), PetscHashInt((key).l)))
-
-#define PetscHashIJKLKeyEqual(k1, k2) (((k1).i == (k2).i) ? ((k1).j == (k2).j) ? ((k1).k == (k2).k) ? ((k1).l == (k2).l) : 0 : 0 : 0)
-
-PetscDisableStaticAnalyzerForExpressionUnderstandingThatThisIsDangerousAndBugprone(PETSC_HASH_MAP(HashIJKL, PetscHashIJKLKey, PetscInt, PetscHashIJKLKeyHash, PetscHashIJKLKeyEqual, -1))
-
-  static PetscSFNode _PetscInvalidSFNode = {-1, -1};
-
-typedef struct _PetscHashIJKLRemoteKey {
+typedef struct _PetscHMapIJKLRemoteKey {
   PetscSFNode i, j, k, l;
-} PetscHashIJKLRemoteKey;
+} PetscHMapIJKLRemoteKey;
 
-#define PetscHashIJKLRemoteKeyHash(key) \
+#define PetscHMapIJKLRemoteKeyHash(key) \
   PetscHashCombine(PetscHashCombine(PetscHashInt((key).i.rank + (key).i.index), PetscHashInt((key).j.rank + (key).j.index)), PetscHashCombine(PetscHashInt((key).k.rank + (key).k.index), PetscHashInt((key).l.rank + (key).l.index)))
 
-#define PetscHashIJKLRemoteKeyEqual(k1, k2) \
+#define PetscHMapIJKLRemoteKeyEqual(k1, k2) \
   (((k1).i.rank == (k2).i.rank) ? ((k1).i.index == (k2).i.index) ? ((k1).j.rank == (k2).j.rank) ? ((k1).j.index == (k2).j.index) ? ((k1).k.rank == (k2).k.rank) ? ((k1).k.index == (k2).k.index) ? ((k1).l.rank == (k2).l.rank) ? ((k1).l.index == (k2).l.index) : 0 : 0 : 0 : 0 : 0 : 0 : 0)
 
-PetscDisableStaticAnalyzerForExpressionUnderstandingThatThisIsDangerousAndBugprone(PETSC_HASH_MAP(HashIJKLRemote, PetscHashIJKLRemoteKey, PetscSFNode, PetscHashIJKLRemoteKeyHash, PetscHashIJKLRemoteKeyEqual, _PetscInvalidSFNode))
+PetscDisableStaticAnalyzerForExpressionUnderstandingThatThisIsDangerousAndBugprone(PETSC_HASH_MAP(HMapIJKLRemote, PetscHMapIJKLRemoteKey, PetscSFNode, PetscHMapIJKLRemoteKeyHash, PetscHMapIJKLRemoteKeyEqual, _PetscInvalidSFNode))
 
   static PetscErrorCode PetscSortSFNode(PetscInt n, PetscSFNode A[])
 {
@@ -47,7 +37,7 @@ PetscDisableStaticAnalyzerForExpressionUnderstandingThatThisIsDangerousAndBugpro
     }
     A[j + 1] = x;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -55,17 +45,30 @@ PetscDisableStaticAnalyzerForExpressionUnderstandingThatThisIsDangerousAndBugpro
 */
 PetscErrorCode DMPlexGetRawFaces_Internal(DM dm, DMPolytopeType ct, const PetscInt cone[], PetscInt *numFaces, const DMPolytopeType *faceTypes[], const PetscInt *faceSizes[], const PetscInt *faces[])
 {
-  DMPolytopeType *typesTmp;
-  PetscInt       *sizesTmp, *facesTmp;
-  PetscInt        maxConeSize, maxSupportSize;
+  DMPolytopeType *typesTmp = NULL;
+  PetscInt       *sizesTmp = NULL, *facesTmp = NULL;
+  PetscInt       *tmp;
+  PetscInt        maxConeSize, maxSupportSize, maxSize;
+  PetscInt        getSize = 0;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  if (cone) PetscValidIntPointer(cone, 3);
+  if (cone) PetscAssertPointer(cone, 3);
   PetscCall(DMPlexGetMaxSizes(dm, &maxConeSize, &maxSupportSize));
-  if (faceTypes) PetscCall(DMGetWorkArray(dm, PetscMax(maxConeSize, maxSupportSize), MPIU_INT, &typesTmp));
-  if (faceSizes) PetscCall(DMGetWorkArray(dm, PetscMax(maxConeSize, maxSupportSize), MPIU_INT, &sizesTmp));
-  if (faces) PetscCall(DMGetWorkArray(dm, PetscSqr(PetscMax(maxConeSize, maxSupportSize)), MPIU_INT, &facesTmp));
+  maxSize = PetscMax(maxConeSize, maxSupportSize);
+  if (faceTypes) getSize += maxSize;
+  if (faceSizes) getSize += maxSize;
+  if (faces) getSize += PetscSqr(maxSize);
+  PetscCall(DMGetWorkArray(dm, getSize, MPIU_INT, &tmp));
+  if (faceTypes) {
+    typesTmp = (DMPolytopeType *)tmp;
+    tmp += maxSize;
+  }
+  if (faceSizes) {
+    sizesTmp = tmp;
+    tmp += maxSize;
+  }
+  if (faces) facesTmp = tmp;
   switch (ct) {
   case DM_POLYTOPE_POINT:
     if (numFaces) *numFaces = 0;
@@ -468,35 +471,58 @@ PetscErrorCode DMPlexGetRawFaces_Internal(DM dm, DMPolytopeType ct, const PetscI
   default:
     SETERRQ(PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_OUTOFRANGE, "No face description for cell type %s", DMPolytopeTypes[ct]);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMPlexRestoreRawFaces_Internal(DM dm, DMPolytopeType ct, const PetscInt cone[], PetscInt *numFaces, const DMPolytopeType *faceTypes[], const PetscInt *faceSizes[], const PetscInt *faces[])
 {
   PetscFunctionBegin;
   if (faceTypes) PetscCall(DMRestoreWorkArray(dm, 0, MPIU_INT, (void *)faceTypes));
-  if (faceSizes) PetscCall(DMRestoreWorkArray(dm, 0, MPIU_INT, (void *)faceSizes));
-  if (faces) PetscCall(DMRestoreWorkArray(dm, 0, MPIU_INT, (void *)faces));
-  PetscFunctionReturn(0);
+  else if (faceSizes) PetscCall(DMRestoreWorkArray(dm, 0, MPIU_INT, (void *)faceSizes));
+  else if (faces) PetscCall(DMRestoreWorkArray(dm, 0, MPIU_INT, (void *)faces));
+  if (faceTypes) *faceTypes = NULL;
+  if (faceSizes) *faceSizes = NULL;
+  if (faces) *faces = NULL;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* This interpolates faces for cells at some stratum */
 static PetscErrorCode DMPlexInterpolateFaces_Internal(DM dm, PetscInt cellDepth, DM idm)
 {
   DMLabel       ctLabel;
-  PetscHashIJKL faceTable;
+  PetscHMapIJKL faceTable;
   PetscInt      faceTypeNum[DM_NUM_POLYTOPES];
   PetscInt      depth, d, pStart, Np, cStart, cEnd, c, fStart, fEnd;
+  PetscInt      cntFaces, *facesId, minCone;
 
   PetscFunctionBegin;
   PetscCall(DMPlexGetDepth(dm, &depth));
-  PetscCall(PetscHashIJKLCreate(&faceTable));
+  PetscCall(PetscHMapIJKLCreate(&faceTable));
   PetscCall(PetscArrayzero(faceTypeNum, DM_NUM_POLYTOPES));
   PetscCall(DMPlexGetDepthStratum(dm, cellDepth, &cStart, &cEnd));
   /* Number new faces and save face vertices in hash table */
   PetscCall(DMPlexGetDepthStratum(dm, depth > cellDepth ? cellDepth : 0, NULL, &fStart));
   fEnd = fStart;
-  for (c = cStart; c < cEnd; ++c) {
+
+  minCone = PETSC_MAX_INT;
+  for (c = cStart, cntFaces = 0; c < cEnd; ++c) {
+    const PetscInt *cone;
+    DMPolytopeType  ct;
+    PetscInt        numFaces = 0, coneSize;
+
+    PetscCall(DMPlexGetCellType(dm, c, &ct));
+    PetscCall(DMPlexGetCone(dm, c, &cone));
+    PetscCall(DMPlexGetConeSize(dm, c, &coneSize));
+    for (PetscInt j = 0; j < coneSize; j++) minCone = PetscMin(cone[j], minCone);
+    PetscCall(DMPlexGetRawFaces_Internal(dm, ct, cone, &numFaces, NULL, NULL, NULL));
+    cntFaces += numFaces;
+  }
+  // Encode so that we can use 0 as an excluded value, instead of PETSC_MAX_INT
+  minCone = -(minCone - 1);
+
+  PetscCall(PetscMalloc1(cntFaces, &facesId));
+
+  for (c = cStart, cntFaces = 0; c < cEnd; ++c) {
     const PetscInt       *cone, *faceSizes, *faces;
     const DMPolytopeType *faceTypes;
     DMPolytopeType        ct;
@@ -514,16 +540,18 @@ static PetscErrorCode DMPlexInterpolateFaces_Internal(DM dm, PetscInt cellDepth,
       PetscBool            missing;
 
       PetscCheck(faceSize <= 4, PETSC_COMM_SELF, PETSC_ERR_SUP, "Do not support faces of size %" PetscInt_FMT " > 4", faceSize);
-      key.i = face[0];
-      key.j = faceSize > 1 ? face[1] : PETSC_MAX_INT;
-      key.k = faceSize > 2 ? face[2] : PETSC_MAX_INT;
-      key.l = faceSize > 3 ? face[3] : PETSC_MAX_INT;
+      key.i = face[0] + minCone;
+      key.j = faceSize > 1 ? face[1] + minCone : 0;
+      key.k = faceSize > 2 ? face[2] + minCone : 0;
+      key.l = faceSize > 3 ? face[3] + minCone : 0;
       PetscCall(PetscSortInt(faceSize, (PetscInt *)&key));
-      PetscCall(PetscHashIJKLPut(faceTable, key, &iter, &missing));
+      PetscCall(PetscHMapIJKLPut(faceTable, key, &iter, &missing));
       if (missing) {
-        PetscCall(PetscHashIJKLIterSet(faceTable, iter, fEnd++));
+        facesId[cntFaces] = fEnd;
+        PetscCall(PetscHMapIJKLIterSet(faceTable, iter, fEnd++));
         ++faceTypeNum[faceType];
-      }
+      } else PetscCall(PetscHMapIJKLIterGet(faceTable, iter, &facesId[cntFaces]));
+      cntFaces++;
     }
     PetscCall(DMPlexRestoreRawFaces_Internal(dm, ct, cone, &numFaces, &faceTypes, &faceSizes, &faces));
   }
@@ -536,10 +564,10 @@ static PetscErrorCode DMPlexInterpolateFaces_Internal(DM dm, PetscInt cellDepth,
       faceTypeStart[ct] = 0;
     }
     if (numFT > 1) {
-      PetscCall(PetscHashIJKLClear(faceTable));
+      PetscCall(PetscHMapIJKLClear(faceTable));
       faceTypeStart[0] = fStart;
       for (ct = 1; ct < DM_NUM_POLYTOPES; ++ct) faceTypeStart[ct] = faceTypeStart[ct - 1] + faceTypeNum[ct - 1];
-      for (c = cStart; c < cEnd; ++c) {
+      for (c = cStart, cntFaces = 0; c < cEnd; ++c) {
         const PetscInt       *cone, *faceSizes, *faces;
         const DMPolytopeType *faceTypes;
         DMPolytopeType        ct;
@@ -556,14 +584,17 @@ static PetscErrorCode DMPlexInterpolateFaces_Internal(DM dm, PetscInt cellDepth,
           PetscHashIter        iter;
           PetscBool            missing;
 
-          PetscCheck(faceSize <= 4, PETSC_COMM_SELF, PETSC_ERR_SUP, "Do not support faces of size %" PetscInt_FMT " > 4", faceSize);
-          key.i = face[0];
-          key.j = faceSize > 1 ? face[1] : PETSC_MAX_INT;
-          key.k = faceSize > 2 ? face[2] : PETSC_MAX_INT;
-          key.l = faceSize > 3 ? face[3] : PETSC_MAX_INT;
+          key.i = face[0] + minCone;
+          key.j = faceSize > 1 ? face[1] + minCone : 0;
+          key.k = faceSize > 2 ? face[2] + minCone : 0;
+          key.l = faceSize > 3 ? face[3] + minCone : 0;
           PetscCall(PetscSortInt(faceSize, (PetscInt *)&key));
-          PetscCall(PetscHashIJKLPut(faceTable, key, &iter, &missing));
-          if (missing) PetscCall(PetscHashIJKLIterSet(faceTable, iter, faceTypeStart[faceType]++));
+          PetscCall(PetscHMapIJKLPut(faceTable, key, &iter, &missing));
+          if (missing) {
+            facesId[cntFaces] = faceTypeStart[faceType];
+            PetscCall(PetscHMapIJKLIterSet(faceTable, iter, faceTypeStart[faceType]++));
+          } else PetscCall(PetscHMapIJKLIterGet(faceTable, iter, &facesId[cntFaces]));
+          cntFaces++;
         }
         PetscCall(DMPlexRestoreRawFaces_Internal(dm, ct, cone, &numFaces, &faceTypes, &faceSizes, &faces));
       }
@@ -572,6 +603,8 @@ static PetscErrorCode DMPlexInterpolateFaces_Internal(DM dm, PetscInt cellDepth,
       }
     }
   }
+  PetscCall(PetscHMapIJKLDestroy(&faceTable));
+
   /* Add new points, always at the end of the numbering */
   PetscCall(DMPlexGetChart(dm, &pStart, &Np));
   PetscCall(DMPlexSetChart(idm, pStart, Np + (fEnd - fStart)));
@@ -592,39 +625,26 @@ static PetscErrorCode DMPlexInterpolateFaces_Internal(DM dm, PetscInt cellDepth,
       PetscCall(DMPlexSetCellType(idm, p, ct));
     }
   }
-  for (c = cStart; c < cEnd; ++c) {
-    const PetscInt       *cone, *faceSizes, *faces;
+  for (c = cStart, cntFaces = 0; c < cEnd; ++c) {
+    const PetscInt       *cone, *faceSizes;
     const DMPolytopeType *faceTypes;
     DMPolytopeType        ct;
-    PetscInt              numFaces, cf, foff = 0;
+    PetscInt              numFaces, cf;
 
     PetscCall(DMPlexGetCellType(dm, c, &ct));
     PetscCall(DMPlexGetCone(dm, c, &cone));
-    PetscCall(DMPlexGetRawFaces_Internal(dm, ct, cone, &numFaces, &faceTypes, &faceSizes, &faces));
+    PetscCall(DMPlexGetRawFaces_Internal(dm, ct, cone, &numFaces, &faceTypes, &faceSizes, NULL));
     PetscCall(DMPlexSetCellType(idm, c, ct));
     PetscCall(DMPlexSetConeSize(idm, c, numFaces));
-    for (cf = 0; cf < numFaces; foff += faceSizes[cf], ++cf) {
-      const PetscInt       faceSize = faceSizes[cf];
-      const DMPolytopeType faceType = faceTypes[cf];
-      const PetscInt      *face     = &faces[foff];
-      PetscHashIJKLKey     key;
-      PetscHashIter        iter;
-      PetscBool            missing;
-      PetscInt             f;
-
-      PetscCheck(faceSize <= 4, PETSC_COMM_SELF, PETSC_ERR_SUP, "Do not support faces of size %" PetscInt_FMT " > 4", faceSize);
-      key.i = face[0];
-      key.j = faceSize > 1 ? face[1] : PETSC_MAX_INT;
-      key.k = faceSize > 2 ? face[2] : PETSC_MAX_INT;
-      key.l = faceSize > 3 ? face[3] : PETSC_MAX_INT;
-      PetscCall(PetscSortInt(faceSize, (PetscInt *)&key));
-      PetscCall(PetscHashIJKLPut(faceTable, key, &iter, &missing));
-      PetscCheck(!missing, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Missing face (cell %" PetscInt_FMT ", lf %" PetscInt_FMT ")", c, cf);
-      PetscCall(PetscHashIJKLIterGet(faceTable, iter, &f));
+    for (cf = 0; cf < numFaces; ++cf) {
+      const PetscInt f        = facesId[cntFaces];
+      DMPolytopeType faceType = faceTypes[cf];
+      const PetscInt faceSize = faceSizes[cf];
       PetscCall(DMPlexSetConeSize(idm, f, faceSize));
       PetscCall(DMPlexSetCellType(idm, f, faceType));
+      cntFaces++;
     }
-    PetscCall(DMPlexRestoreRawFaces_Internal(dm, ct, cone, &numFaces, &faceTypes, &faceSizes, &faces));
+    PetscCall(DMPlexRestoreRawFaces_Internal(dm, ct, cone, &numFaces, &faceTypes, &faceSizes, NULL));
   }
   PetscCall(DMSetUp(idm));
   /* Initialize cones so we do not need the bash table to tell us that a cone has been set */
@@ -651,7 +671,7 @@ static PetscErrorCode DMPlexInterpolateFaces_Internal(DM dm, PetscInt cellDepth,
       PetscCall(DMPlexSetConeOrientation(idm, p, cone));
     }
   }
-  for (c = cStart; c < cEnd; ++c) {
+  for (c = cStart, cntFaces = 0; c < cEnd; ++c) {
     const PetscInt       *cone, *faceSizes, *faces;
     const DMPolytopeType *faceTypes;
     DMPolytopeType        ct;
@@ -661,23 +681,12 @@ static PetscErrorCode DMPlexInterpolateFaces_Internal(DM dm, PetscInt cellDepth,
     PetscCall(DMPlexGetCone(dm, c, &cone));
     PetscCall(DMPlexGetRawFaces_Internal(dm, ct, cone, &numFaces, &faceTypes, &faceSizes, &faces));
     for (cf = 0; cf < numFaces; foff += faceSizes[cf], ++cf) {
-      DMPolytopeType   faceType = faceTypes[cf];
-      const PetscInt   faceSize = faceSizes[cf];
-      const PetscInt  *face     = &faces[foff];
-      const PetscInt  *fcone;
-      PetscHashIJKLKey key;
-      PetscHashIter    iter;
-      PetscBool        missing;
-      PetscInt         f;
+      DMPolytopeType  faceType = faceTypes[cf];
+      const PetscInt  faceSize = faceSizes[cf];
+      const PetscInt  f        = facesId[cntFaces];
+      const PetscInt *face     = &faces[foff];
+      const PetscInt *fcone;
 
-      PetscCheck(faceSize <= 4, PETSC_COMM_SELF, PETSC_ERR_SUP, "Do not support faces of size %" PetscInt_FMT " > 4", faceSize);
-      key.i = face[0];
-      key.j = faceSize > 1 ? face[1] : PETSC_MAX_INT;
-      key.k = faceSize > 2 ? face[2] : PETSC_MAX_INT;
-      key.l = faceSize > 3 ? face[3] : PETSC_MAX_INT;
-      PetscCall(PetscSortInt(faceSize, (PetscInt *)&key));
-      PetscCall(PetscHashIJKLPut(faceTable, key, &iter, &missing));
-      PetscCall(PetscHashIJKLIterGet(faceTable, iter, &f));
       PetscCall(DMPlexInsertCone(idm, c, cf, f));
       PetscCall(DMPlexGetCone(idm, f, &fcone));
       if (fcone[0] < 0) PetscCall(DMPlexSetCone(idm, f, face));
@@ -692,13 +701,14 @@ static PetscErrorCode DMPlexInterpolateFaces_Internal(DM dm, PetscInt cellDepth,
         PetscCall(DMPolytopeGetVertexOrientation(faceType, cone, face, &ornt));
         PetscCall(DMPlexInsertConeOrientation(idm, c, cf, ornt));
       }
+      cntFaces++;
     }
     PetscCall(DMPlexRestoreRawFaces_Internal(dm, ct, cone, &numFaces, &faceTypes, &faceSizes, &faces));
   }
-  PetscCall(PetscHashIJKLDestroy(&faceTable));
+  PetscCall(PetscFree(facesId));
   PetscCall(DMPlexSymmetrize(idm));
   PetscCall(DMPlexStratify(idm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SortRmineRremoteByRemote_Private(PetscSF sf, PetscInt *rmine1[], PetscInt *rremote1[])
@@ -722,7 +732,7 @@ static PetscErrorCode SortRmineRremoteByRemote_Private(PetscSF sf, PetscInt *rmi
     PetscCall(PetscArraycpy(&(*rremote1)[o], &rremote[o], n));
     PetscCall(PetscSortIntWithArray(n, &(*rremote1)[o], &(*rmine1)[o]));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMPlexOrientInterface_Internal(DM dm)
@@ -748,7 +758,7 @@ PetscErrorCode DMPlexOrientInterface_Internal(DM dm)
   PetscCall(DMViewFromOptions(dm, NULL, "-before_orient_interface_dm_view"));
   if (PetscDefined(USE_DEBUG)) PetscCall(DMPlexCheckPointSF(dm, sf, PETSC_FALSE));
   PetscCall(PetscSFGetGraph(sf, &nroots, &nleaves, &locals, &remotes));
-  if (nroots < 0) PetscFunctionReturn(0);
+  if (nroots < 0) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscSFSetUp(sf));
   PetscCall(SortRmineRremoteByRemote_Private(sf, &rmine1, &rremote1));
   for (p = 0; p < nleaves; ++p) {
@@ -852,7 +862,7 @@ PetscErrorCode DMPlexOrientInterface_Internal(DM dm)
   PetscCall(DMViewFromOptions(dm, NULL, "-after_orient_interface_dm_view"));
   PetscCall(PetscFree4(roots, leaves, rootsRanks, leavesRanks));
   PetscCall(PetscFree2(rmine1, rremote1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode IntArrayViewFromOptions(MPI_Comm comm, const char opt[], const char name[], const char idxname[], const char valname[], PetscInt n, const PetscInt a[])
@@ -863,12 +873,12 @@ static PetscErrorCode IntArrayViewFromOptions(MPI_Comm comm, const char opt[], c
 
   PetscFunctionBegin;
   PetscCall(PetscOptionsHasName(NULL, NULL, opt, &flg));
-  if (!flg) PetscFunctionReturn(0);
+  if (!flg) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCallMPI(MPI_Comm_rank(comm, &rank));
   PetscCall(PetscSynchronizedPrintf(comm, "[%d]%s:\n", rank, name));
   for (idx = 0; idx < n; ++idx) PetscCall(PetscSynchronizedPrintf(comm, "[%d]%s %" PetscInt_FMT " %s %" PetscInt_FMT "\n", rank, idxname, idx, valname, a[idx]));
   PetscCall(PetscSynchronizedFlush(comm, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SFNodeArrayViewFromOptions(MPI_Comm comm, const char opt[], const char name[], const char idxname[], PetscInt n, const PetscSFNode a[])
@@ -879,7 +889,7 @@ static PetscErrorCode SFNodeArrayViewFromOptions(MPI_Comm comm, const char opt[]
 
   PetscFunctionBegin;
   PetscCall(PetscOptionsHasName(NULL, NULL, opt, &flg));
-  if (!flg) PetscFunctionReturn(0);
+  if (!flg) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCallMPI(MPI_Comm_rank(comm, &rank));
   PetscCall(PetscSynchronizedPrintf(comm, "[%d]%s:\n", rank, name));
   if (idxname) {
@@ -888,7 +898,7 @@ static PetscErrorCode SFNodeArrayViewFromOptions(MPI_Comm comm, const char opt[]
     for (idx = 0; idx < n; ++idx) PetscCall(PetscSynchronizedPrintf(comm, "[%d]rank %" PetscInt_FMT " index %" PetscInt_FMT "\n", rank, a[idx].rank, a[idx].index));
   }
   PetscCall(PetscSynchronizedFlush(comm, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexMapToLocalPoint(DM dm, PetscHMapIJ remotehash, PetscSFNode remotePoint, PetscInt *localPoint, PetscBool *mapFailed)
@@ -915,7 +925,7 @@ static PetscErrorCode DMPlexMapToLocalPoint(DM dm, PetscHMapIJ remotehash, Petsc
       *localPoint = locals[l];
     } else if (mapFailed) *mapFailed = PETSC_TRUE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexMapToGlobalPoint(DM dm, PetscInt localPoint, PetscSFNode *remotePoint, PetscBool *mapFailed)
@@ -939,11 +949,11 @@ static PetscErrorCode DMPlexMapToGlobalPoint(DM dm, PetscInt localPoint, PetscSF
   if (l < 0) {
     if (mapFailed) *mapFailed = PETSC_TRUE;
   } else *remotePoint = remotes[l];
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 owned:
   remotePoint->rank  = rank;
   remotePoint->index = localPoint;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexPointIsShared(DM dm, PetscInt p, PetscBool *isShared)
@@ -956,16 +966,16 @@ static PetscErrorCode DMPlexPointIsShared(DM dm, PetscInt p, PetscBool *isShared
   *isShared = PETSC_FALSE;
   PetscCall(DMGetPointSF(dm, &sf));
   PetscCall(PetscSFGetGraph(sf, NULL, &Nl, &locals, NULL));
-  if (Nl < 0) PetscFunctionReturn(0);
+  if (Nl < 0) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscFindInt(p, Nl, locals, &idx));
   if (idx >= 0) {
     *isShared = PETSC_TRUE;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(PetscSFComputeDegreeBegin(sf, &rootdegree));
   PetscCall(PetscSFComputeDegreeEnd(sf, &rootdegree));
   if (rootdegree[p] > 0) *isShared = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexConeIsShared(DM dm, PetscInt p, PetscBool *isShared)
@@ -984,7 +994,7 @@ static PetscErrorCode DMPlexConeIsShared(DM dm, PetscInt p, PetscBool *isShared)
     cShared = (PetscBool)(cShared && pointShared);
   }
   *isShared = coneSize ? cShared : PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexGetConeMinimum(DM dm, PetscInt p, PetscSFNode *cpmin)
@@ -1008,7 +1018,7 @@ static PetscErrorCode DMPlexGetConeMinimum(DM dm, PetscInt p, PetscSFNode *cpmin
     }
   }
   *cpmin = coneSize ? cmin : missing;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1032,7 +1042,7 @@ static PetscErrorCode DMPlexAddSharedFace_Private(DM dm, PetscSection candidateS
   if (!overlap && height <= cellHeight + 1) {
     /* cells can't be shared for non-overlapping meshes */
     if (debug) PetscCall(PetscSynchronizedPrintf(comm, "[%d]    Skipping face %" PetscInt_FMT " to avoid adding cell to hashmap since this is nonoverlapping mesh\n", rank, p));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(DMPlexGetSupportSize(dm, p, &supportSize));
   PetscCall(DMPlexGetSupport(dm, p, &support));
@@ -1086,26 +1096,24 @@ static PetscErrorCode DMPlexAddSharedFace_Private(DM dm, PetscSection candidateS
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexInterpolatePointSF - Insert interpolated points in the overlap into the PointSF in parallel, following local interpolation
+  DMPlexInterpolatePointSF - Insert interpolated points in the overlap into the `PointSF` in parallel, following local interpolation
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm      - The interpolated DM
-- pointSF - The initial SF without interpolated points
-
-  Output Parameter:
-. pointSF - The SF including interpolated points
++ dm      - The interpolated `DMPLEX`
+- pointSF - The initial `PetscSF` without interpolated points
 
   Level: developer
 
-   Note: All debugging for this process can be turned on with the options: -dm_interp_pre_view -petscsf_interp_pre_view -petscsection_interp_candidate_view -petscsection_interp_candidate_remote_view -petscsection_interp_claim_view -petscsf_interp_pre_view -dmplex_interp_debug
+  Note:
+  Debugging for this process can be turned on with the options: `-dm_interp_pre_view` `-petscsf_interp_pre_view` `-petscsection_interp_candidate_view` `-petscsection_interp_candidate_remote_view` `-petscsection_interp_claim_view` `-petscsf_interp_pre_view` `-dmplex_interp_debug`
 
-.seealso: `DMPlexInterpolate()`, `DMPlexUninterpolate()`
+.seealso: `DMPLEX`, `DMPlexInterpolate()`, `DMPlexUninterpolate()`
 @*/
 PetscErrorCode DMPlexInterpolatePointSF(DM dm, PetscSF pointSF)
 {
@@ -1125,7 +1133,7 @@ PetscErrorCode DMPlexInterpolatePointSF(DM dm, PetscSF pointSF)
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscValidHeaderSpecific(pointSF, PETSCSF_CLASSID, 2);
   PetscCall(DMPlexIsDistributed(dm, &flg));
-  if (!flg) PetscFunctionReturn(0);
+  if (!flg) PetscFunctionReturn(PETSC_SUCCESS);
   /* Set initial SF so that lower level queries work */
   PetscCall(DMSetPointSF(dm, pointSF));
   PetscCall(PetscObjectGetComm((PetscObject)dm, &comm));
@@ -1218,10 +1226,10 @@ PetscErrorCode DMPlexInterpolatePointSF(DM dm, PetscSF pointSF)
   }
   /* Step 3: At the root, if at least two faces with a given cone are present, including a local face, mark the face as shared and choose the root face */
   {
-    PetscHashIJKLRemote faceTable;
+    PetscHMapIJKLRemote faceTable;
     PetscInt            idx, idx2;
 
-    PetscCall(PetscHashIJKLRemoteCreate(&faceTable));
+    PetscCall(PetscHMapIJKLRemoteCreate(&faceTable));
     /* There is a section point for every leaf attached to a given root point */
     for (r = 0, idx = 0, idx2 = 0; r < Nr; ++r) {
       PetscInt deg;
@@ -1240,7 +1248,7 @@ PetscErrorCode DMPlexInterpolatePointSF(DM dm, PetscSF pointSF)
           PetscSFNode            fcp0;
           const PetscSFNode      pmax = {PETSC_MAX_INT, PETSC_MAX_INT};
           const PetscInt        *join = NULL;
-          PetscHashIJKLRemoteKey key;
+          PetscHMapIJKLRemoteKey key;
           PetscHashIter          iter;
           PetscBool              missing, mapToLocalPointFailed = PETSC_FALSE;
           PetscInt               points[1024], p, joinSize;
@@ -1258,17 +1266,17 @@ PetscErrorCode DMPlexInterpolatePointSF(DM dm, PetscSF pointSF)
           key.k = Np > 2 ? fcone[1] : pmax;
           key.l = Np > 3 ? fcone[2] : pmax;
           PetscCall(PetscSortSFNode(Np, (PetscSFNode *)&key));
-          PetscCall(PetscHashIJKLRemotePut(faceTable, key, &iter, &missing));
+          PetscCall(PetscHMapIJKLRemotePut(faceTable, key, &iter, &missing));
           if (missing) {
             if (debug) PetscCall(PetscSynchronizedPrintf(PetscObjectComm((PetscObject)dm), "[%d]  Setting remote face (%" PetscInt_FMT ", %" PetscInt_FMT ")\n", rank, rface.index, rface.rank));
-            PetscCall(PetscHashIJKLRemoteIterSet(faceTable, iter, rface));
+            PetscCall(PetscHMapIJKLRemoteIterSet(faceTable, iter, rface));
           } else {
             PetscSFNode oface;
 
-            PetscCall(PetscHashIJKLRemoteIterGet(faceTable, iter, &oface));
+            PetscCall(PetscHMapIJKLRemoteIterGet(faceTable, iter, &oface));
             if ((rface.rank < oface.rank) || (rface.rank == oface.rank && rface.index < oface.index)) {
               if (debug) PetscCall(PetscSynchronizedPrintf(PetscObjectComm((PetscObject)dm), "[%d]  Replacing with remote face (%" PetscInt_FMT ", %" PetscInt_FMT ")\n", rank, rface.index, rface.rank));
-              PetscCall(PetscHashIJKLRemoteIterSet(faceTable, iter, rface));
+              PetscCall(PetscHMapIJKLRemoteIterSet(faceTable, iter, rface));
             }
           }
           /* Check for local face */
@@ -1287,10 +1295,10 @@ PetscErrorCode DMPlexInterpolatePointSF(DM dm, PetscSF pointSF)
             /* Always replace with local face */
             lface.rank  = rank;
             lface.index = join[0];
-            PetscCall(PetscHashIJKLRemoteIterGet(faceTable, iter, &oface));
+            PetscCall(PetscHMapIJKLRemoteIterGet(faceTable, iter, &oface));
             if (debug)
               PetscCall(PetscSynchronizedPrintf(PetscObjectComm((PetscObject)dm), "[%d]  Replacing (%" PetscInt_FMT ", %" PetscInt_FMT ") with local face (%" PetscInt_FMT ", %" PetscInt_FMT ")\n", rank, oface.index, oface.rank, lface.index, lface.rank));
-            PetscCall(PetscHashIJKLRemoteIterSet(faceTable, iter, lface));
+            PetscCall(PetscHMapIJKLRemoteIterSet(faceTable, iter, lface));
           }
           PetscCall(DMPlexRestoreJoin(dm, Np, points, &joinSize, &join));
         }
@@ -1308,7 +1316,7 @@ PetscErrorCode DMPlexInterpolatePointSF(DM dm, PetscSF pointSF)
           const PetscSFNode     *fcone = &candidatesRemote[hidx + 2];
           PetscSFNode            fcp0;
           const PetscSFNode      pmax = {PETSC_MAX_INT, PETSC_MAX_INT};
-          PetscHashIJKLRemoteKey key;
+          PetscHMapIJKLRemoteKey key;
           PetscHashIter          iter;
           PetscBool              missing;
 
@@ -1326,14 +1334,14 @@ PetscErrorCode DMPlexInterpolatePointSF(DM dm, PetscSF pointSF)
           if (debug)
             PetscCall(PetscSynchronizedPrintf(PetscObjectComm((PetscObject)dm), "[%d]    key (%" PetscInt_FMT ", %" PetscInt_FMT ") (%" PetscInt_FMT ", %" PetscInt_FMT ") (%" PetscInt_FMT ", %" PetscInt_FMT ") (%" PetscInt_FMT ", %" PetscInt_FMT ")\n", rank,
                                               key.i.rank, key.i.index, key.j.rank, key.j.index, key.k.rank, key.k.index, key.l.rank, key.l.index));
-          PetscCall(PetscHashIJKLRemotePut(faceTable, key, &iter, &missing));
+          PetscCall(PetscHMapIJKLRemotePut(faceTable, key, &iter, &missing));
           PetscCheck(!missing, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Root %" PetscInt_FMT " Idx %" PetscInt_FMT " ought to have an associated face", r, idx2);
-          PetscCall(PetscHashIJKLRemoteIterGet(faceTable, iter, &candidatesRemote[hidx]));
+          PetscCall(PetscHMapIJKLRemoteIterGet(faceTable, iter, &candidatesRemote[hidx]));
         }
       }
     }
     if (debug) PetscCall(PetscSynchronizedFlush(PetscObjectComm((PetscObject)dm), NULL));
-    PetscCall(PetscHashIJKLRemoteDestroy(&faceTable));
+    PetscCall(PetscHMapIJKLRemoteDestroy(&faceTable));
   }
   /* Step 4: Push back owned faces */
   {
@@ -1436,30 +1444,29 @@ PetscErrorCode DMPlexInterpolatePointSF(DM dm, PetscSF pointSF)
   PetscCall(PetscFree(candidatesRemote));
   PetscCall(PetscFree(claims));
   PetscCall(PetscLogEventEnd(DMPLEX_InterpolateSF, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexInterpolate - Take in a cell-vertex mesh and return one with all intermediate faces, edges, etc.
 
-  Collective on dm
+  Collective
 
-  Input Parameters:
-+ dm - The DMPlex object with only cells and vertices
-- dmInt - The interpolated DM
+  Input Parameter:
+. dm - The `DMPLEX` object with only cells and vertices
 
   Output Parameter:
-. dmInt - The complete DMPlex object
+. dmInt - The complete `DMPLEX` object
 
   Level: intermediate
 
-  Notes:
-    Labels and coordinates are copied.
+  Note:
+  Labels and coordinates are copied.
 
   Developer Notes:
-    It sets plex->interpolated = DMPLEX_INTERPOLATED_FULL.
+  It sets plex->interpolated = `DMPLEX_INTERPOLATED_FULL`.
 
-.seealso: `DMPlexUninterpolate()`, `DMPlexCreateFromCellListPetsc()`, `DMPlexCopyCoordinates()`
+.seealso: `DMPLEX`, `DMPlexUninterpolate()`, `DMPlexCreateFromCellListPetsc()`, `DMPlexCopyCoordinates()`
 @*/
 PetscErrorCode DMPlexInterpolate(DM dm, DM *dmInt)
 {
@@ -1472,7 +1479,7 @@ PetscErrorCode DMPlexInterpolate(DM dm, DM *dmInt)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(dmInt, 2);
+  PetscAssertPointer(dmInt, 2);
   PetscCall(PetscLogEventBegin(DMPLEX_Interpolate, dm, 0, 0, 0));
   PetscCall(DMPlexGetDepth(dm, &depth));
   PetscCall(DMGetDimension(dm, &dim));
@@ -1516,25 +1523,26 @@ PetscErrorCode DMPlexInterpolate(DM dm, DM *dmInt)
   PetscCall(DMPlexCopy_Internal(dm, PETSC_TRUE, PETSC_TRUE, idm));
   *dmInt = idm;
   PetscCall(PetscLogEventEnd(DMPLEX_Interpolate, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexCopyCoordinates - Copy coordinates from one mesh to another with the same vertices
 
-  Collective on dmA
+  Collective
 
   Input Parameter:
-. dmA - The DMPlex object with initial coordinates
+. dmA - The `DMPLEX` object with initial coordinates
 
   Output Parameter:
-. dmB - The DMPlex object with copied coordinates
+. dmB - The `DMPLEX` object with copied coordinates
 
   Level: intermediate
 
-  Note: This is typically used when adding pieces other than vertices to a mesh
+  Note:
+  This is typically used when adding pieces other than vertices to a mesh
 
-.seealso: `DMCopyLabels()`, `DMGetCoordinates()`, `DMGetCoordinatesLocal()`, `DMGetCoordinateDM()`, `DMGetCoordinateSection()`
+.seealso: `DMPLEX`, `DMCopyLabels()`, `DMGetCoordinates()`, `DMGetCoordinatesLocal()`, `DMGetCoordinateDM()`, `DMGetCoordinateSection()`
 @*/
 PetscErrorCode DMPlexCopyCoordinates(DM dmA, DM dmB)
 {
@@ -1549,7 +1557,7 @@ PetscErrorCode DMPlexCopyCoordinates(DM dmA, DM dmB)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dmA, DM_CLASSID, 1);
   PetscValidHeaderSpecific(dmB, DM_CLASSID, 2);
-  if (dmA == dmB) PetscFunctionReturn(0);
+  if (dmA == dmB) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(DMGetCoordinateDim(dmA, &cdim));
   PetscCall(DMSetCoordinateDim(dmB, cdim));
   PetscCall(DMPlexGetDepthStratum(dmA, 0, &vStartA, &vEndA));
@@ -1585,9 +1593,9 @@ PetscErrorCode DMPlexCopyCoordinates(DM dmA, DM dmB)
   PetscCall(DMPlexGetHeightStratum(dmB, 0, &cStartB, &cEndB));
   PetscCall(DMGetCoordinateSection(dmA, &coordSectionA));
   PetscCall(DMGetCoordinateSection(dmB, &coordSectionB));
-  if (coordSectionA == coordSectionB) PetscFunctionReturn(0);
+  if (coordSectionA == coordSectionB) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscSectionGetNumFields(coordSectionA, &Nf));
-  if (!Nf) PetscFunctionReturn(0);
+  if (!Nf) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCheck(Nf <= 1, PETSC_COMM_SELF, PETSC_ERR_ARG_SIZ, "The number of coordinate fields must be 1, not %" PetscInt_FMT, Nf);
   if (!coordSectionB) {
     PetscInt dim;
@@ -1661,29 +1669,29 @@ PetscErrorCode DMPlexCopyCoordinates(DM dmA, DM dmB)
   PetscCall(VecRestoreArray(coordinatesB, &coordsB));
   PetscCall(DMSetCoordinatesLocal(dmB, coordinatesB));
   PetscCall(VecDestroy(&coordinatesB));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexUninterpolate - Take in a mesh with all intermediate faces, edges, etc. and return a cell-vertex mesh
 
-  Collective on dm
+  Collective
 
   Input Parameter:
-. dm - The complete DMPlex object
+. dm - The complete `DMPLEX` object
 
   Output Parameter:
-. dmUnint - The DMPlex object with only cells and vertices
+. dmUnint - The `DMPLEX` object with only cells and vertices
 
   Level: intermediate
 
-  Notes:
-    It does not copy over the coordinates.
+  Note:
+  It does not copy over the coordinates.
 
   Developer Notes:
-    It sets plex->interpolated = DMPLEX_INTERPOLATED_NONE.
+  Sets plex->interpolated = `DMPLEX_INTERPOLATED_NONE`.
 
-.seealso: `DMPlexInterpolate()`, `DMPlexCreateFromCellListPetsc()`, `DMPlexCopyCoordinates()`
+.seealso: `DMPLEX`, `DMPlexInterpolate()`, `DMPlexCreateFromCellListPetsc()`, `DMPlexCopyCoordinates()`
 @*/
 PetscErrorCode DMPlexUninterpolate(DM dm, DM *dmUnint)
 {
@@ -1693,7 +1701,8 @@ PetscErrorCode DMPlexUninterpolate(DM dm, DM *dmUnint)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(dmUnint, 2);
+  PetscAssertPointer(dmUnint, 2);
+  PetscCall(PetscLogEventBegin(DMPLEX_Uninterpolate, dm, 0, 0, 0));
   PetscCall(DMGetDimension(dm, &dim));
   PetscCall(DMPlexIsInterpolated(dm, &interpolated));
   PetscCheck(interpolated != DMPLEX_INTERPOLATED_PARTIAL, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "Not for partially interpolated meshes");
@@ -1701,7 +1710,7 @@ PetscErrorCode DMPlexUninterpolate(DM dm, DM *dmUnint)
     /* in case dim <= 1 just keep the DMPLEX_INTERPOLATED_FULL flag */
     PetscCall(PetscObjectReference((PetscObject)dm));
     *dmUnint = dm;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(DMPlexGetDepthStratum(dm, 0, &vStart, &vEnd));
   PetscCall(DMPlexGetHeightStratum(dm, 0, &cStart, &cEnd));
@@ -1786,7 +1795,8 @@ PetscErrorCode DMPlexUninterpolate(DM dm, DM *dmUnint)
   PetscCall(DMPlexCopy_Internal(dm, PETSC_TRUE, PETSC_TRUE, udm));
   if (PetscDefined(USE_DEBUG)) PetscCall(DMPlexCheckPointSF(udm, NULL, PETSC_FALSE));
   *dmUnint = udm;
-  PetscFunctionReturn(0);
+  PetscCall(PetscLogEventEnd(DMPLEX_Uninterpolate, dm, 0, 0, 0));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexIsInterpolated_Internal(DM dm, DMPlexInterpolatedFlag *interpolated)
@@ -1830,42 +1840,42 @@ static PetscErrorCode DMPlexIsInterpolated_Internal(DM dm, DMPlexInterpolatedFla
     *interpolated = DMPLEX_INTERPOLATED_PARTIAL;
   }
 finish:
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexIsInterpolated - Find out to what extent the DMPlex is topologically interpolated.
+  DMPlexIsInterpolated - Find out to what extent the `DMPLEX` is topologically interpolated.
 
   Not Collective
 
   Input Parameter:
-. dm      - The DM object
+. dm - The `DMPLEX` object
 
   Output Parameter:
-. interpolated - Flag whether the DM is interpolated
+. interpolated - Flag whether the `DM` is interpolated
 
   Level: intermediate
 
   Notes:
-  Unlike DMPlexIsInterpolatedCollective(), this is NOT collective
+  Unlike `DMPlexIsInterpolatedCollective()`, this is NOT collective
   so the results can be different on different ranks in special cases.
-  However, DMPlexInterpolate() guarantees the result is the same on all.
+  However, `DMPlexInterpolate()` guarantees the result is the same on all.
 
-  Unlike DMPlexIsInterpolatedCollective(), this cannot return DMPLEX_INTERPOLATED_MIXED.
+  Unlike `DMPlexIsInterpolatedCollective()`, this cannot return `DMPLEX_INTERPOLATED_MIXED`.
 
   Developer Notes:
-  Initially, plex->interpolated = DMPLEX_INTERPOLATED_INVALID.
+  Initially, plex->interpolated = `DMPLEX_INTERPOLATED_INVALID`.
 
-  If plex->interpolated == DMPLEX_INTERPOLATED_INVALID, DMPlexIsInterpolated_Internal() is called.
+  If plex->interpolated == `DMPLEX_INTERPOLATED_INVALID`, `DMPlexIsInterpolated_Internal()` is called.
   It checks the actual topology and sets plex->interpolated on each rank separately to one of
-  DMPLEX_INTERPOLATED_NONE, DMPLEX_INTERPOLATED_PARTIAL or DMPLEX_INTERPOLATED_FULL.
+  `DMPLEX_INTERPOLATED_NONE`, `DMPLEX_INTERPOLATED_PARTIAL` or `DMPLEX_INTERPOLATED_FULL`.
 
-  If plex->interpolated != DMPLEX_INTERPOLATED_INVALID, this function just returns plex->interpolated.
+  If plex->interpolated != `DMPLEX_INTERPOLATED_INVALID`, this function just returns plex->interpolated.
 
-  DMPlexInterpolate() sets plex->interpolated = DMPLEX_INTERPOLATED_FULL,
-  and DMPlexUninterpolate() sets plex->interpolated = DMPLEX_INTERPOLATED_NONE.
+  `DMPlexInterpolate()` sets plex->interpolated = `DMPLEX_INTERPOLATED_FULL`,
+  and DMPlexUninterpolate() sets plex->interpolated = `DMPLEX_INTERPOLATED_NONE`.
 
-.seealso: `DMPlexInterpolate()`, `DMPlexIsInterpolatedCollective()`
+.seealso: `DMPLEX`, `DMPlexInterpolate()`, `DMPlexIsInterpolatedCollective()`
 @*/
 PetscErrorCode DMPlexIsInterpolated(DM dm, DMPlexInterpolatedFlag *interpolated)
 {
@@ -1873,48 +1883,48 @@ PetscErrorCode DMPlexIsInterpolated(DM dm, DMPlexInterpolatedFlag *interpolated)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(interpolated, 2);
+  PetscAssertPointer(interpolated, 2);
   if (plex->interpolated < 0) {
     PetscCall(DMPlexIsInterpolated_Internal(dm, &plex->interpolated));
   } else if (PetscDefined(USE_DEBUG)) {
     DMPlexInterpolatedFlag flg;
 
     PetscCall(DMPlexIsInterpolated_Internal(dm, &flg));
-    PetscCheck(flg == plex->interpolated, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Stashed DMPlexInterpolatedFlag %s is inconsistent with current %s", DMPlexInterpolatedFlags[plex->interpolated], DMPlexInterpolatedFlags[flg]);
+    PetscCheck(plex->tr || flg == plex->interpolated, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Stashed DMPlexInterpolatedFlag %s is inconsistent with current %s", DMPlexInterpolatedFlags[plex->interpolated], DMPlexInterpolatedFlags[flg]);
   }
   *interpolated = plex->interpolated;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexIsInterpolatedCollective - Find out to what extent the DMPlex is topologically interpolated (in collective manner).
+  DMPlexIsInterpolatedCollective - Find out to what extent the `DMPLEX` is topologically interpolated (in collective manner).
 
   Collective
 
   Input Parameter:
-. dm      - The DM object
+. dm - The `DMPLEX` object
 
   Output Parameter:
-. interpolated - Flag whether the DM is interpolated
+. interpolated - Flag whether the `DM` is interpolated
 
   Level: intermediate
 
   Notes:
-  Unlike DMPlexIsInterpolated(), this is collective so the results are guaranteed to be the same on all ranks.
+  Unlike `DMPlexIsInterpolated()`, this is collective so the results are guaranteed to be the same on all ranks.
 
-  This function will return DMPLEX_INTERPOLATED_MIXED if the results of DMPlexIsInterpolated() are different on different ranks.
+  This function will return `DMPLEX_INTERPOLATED_MIXED` if the results of `DMPlexIsInterpolated()` are different on different ranks.
 
   Developer Notes:
-  Initially, plex->interpolatedCollective = DMPLEX_INTERPOLATED_INVALID.
+  Initially, plex->interpolatedCollective = `DMPLEX_INTERPOLATED_INVALID`.
 
-  If plex->interpolatedCollective == DMPLEX_INTERPOLATED_INVALID, this function calls DMPlexIsInterpolated() which sets plex->interpolated.
-  MPI_Allreduce() is then called and collectively consistent flag plex->interpolatedCollective is set and returned;
-  if plex->interpolated varies on different ranks, plex->interpolatedCollective = DMPLEX_INTERPOLATED_MIXED,
+  If plex->interpolatedCollective == `DMPLEX_INTERPOLATED_INVALID`, this function calls `DMPlexIsInterpolated()` which sets plex->interpolated.
+  `MPI_Allreduce()` is then called and collectively consistent flag plex->interpolatedCollective is set and returned;
+  if plex->interpolated varies on different ranks, plex->interpolatedCollective = `DMPLEX_INTERPOLATED_MIXED`,
   otherwise sets plex->interpolatedCollective = plex->interpolated.
 
-  If plex->interpolatedCollective != DMPLEX_INTERPOLATED_INVALID, this function just returns plex->interpolatedCollective.
+  If plex->interpolatedCollective != `DMPLEX_INTERPOLATED_INVALID`, this function just returns plex->interpolatedCollective.
 
-.seealso: `DMPlexInterpolate()`, `DMPlexIsInterpolated()`
+.seealso: `DMPLEX`, `DMPlexInterpolate()`, `DMPlexIsInterpolated()`
 @*/
 PetscErrorCode DMPlexIsInterpolatedCollective(DM dm, DMPlexInterpolatedFlag *interpolated)
 {
@@ -1923,7 +1933,7 @@ PetscErrorCode DMPlexIsInterpolatedCollective(DM dm, DMPlexInterpolatedFlag *int
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(interpolated, 2);
+  PetscAssertPointer(interpolated, 2);
   PetscCall(PetscOptionsGetBool(((PetscObject)dm)->options, ((PetscObject)dm)->prefix, "-dm_plex_is_interpolated_collective_debug", &debug, NULL));
   if (plex->interpolatedCollective < 0) {
     DMPlexInterpolatedFlag min, max;
@@ -1931,8 +1941,8 @@ PetscErrorCode DMPlexIsInterpolatedCollective(DM dm, DMPlexInterpolatedFlag *int
 
     PetscCall(PetscObjectGetComm((PetscObject)dm, &comm));
     PetscCall(DMPlexIsInterpolated(dm, &plex->interpolatedCollective));
-    PetscCallMPI(MPI_Allreduce(&plex->interpolatedCollective, &min, 1, MPIU_ENUM, MPI_MIN, comm));
-    PetscCallMPI(MPI_Allreduce(&plex->interpolatedCollective, &max, 1, MPIU_ENUM, MPI_MAX, comm));
+    PetscCall(MPIU_Allreduce(&plex->interpolatedCollective, &min, 1, MPIU_ENUM, MPI_MIN, comm));
+    PetscCall(MPIU_Allreduce(&plex->interpolatedCollective, &max, 1, MPIU_ENUM, MPI_MAX, comm));
     if (min != max) plex->interpolatedCollective = DMPLEX_INTERPOLATED_MIXED;
     if (debug) {
       PetscMPIInt rank;
@@ -1943,5 +1953,5 @@ PetscErrorCode DMPlexIsInterpolatedCollective(DM dm, DMPlexInterpolatedFlag *int
     }
   }
   *interpolated = plex->interpolatedCollective;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

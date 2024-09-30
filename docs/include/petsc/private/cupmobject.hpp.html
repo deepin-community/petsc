@@ -1,0 +1,416 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/include/petsc/private/cupmobject.hpp">Actual source code: cupmobject.hpp</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2024-03-29T14:12:32+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#pragma once</font>
+
+<a name="line3">  3: </a>#include <A href="deviceimpl.h.html">&lt;petsc/private/deviceimpl.h&gt;</A>
+<a name="line4">  4: </a>#include <A href="cupmsolverinterface.hpp.html">&lt;petsc/private/cupmsolverinterface.hpp&gt;</A>
+
+<a name="line6">  6: </a><font color="#A020F0">#include &lt;cstring&gt; // std::memset</font>
+
+<a name="line8">  8: </a><strong><font color="#4169E1"><a name="PetscStrFreeAllocpy"></a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscStrFreeAllocpy(const char target[], char **dest)</font></strong> noexcept
+<a name="line9">  9: </a>{
+<a name="line10"> 10: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line11"> 11: </a>  PetscAssertPointer(dest, 2);
+<a name="line12"> 12: </a>  <font color="#4169E1">if</font> (*dest) {
+<a name="line13"> 13: </a>    PetscAssertPointer(*dest, 2);
+<a name="line14"> 14: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscFree.html">PetscFree</a>(*dest));
+<a name="line15"> 15: </a>  }
+<a name="line16"> 16: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(target, dest));
+<a name="line17"> 17: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line18"> 18: </a>}
+
+<a name="line20"> 20: </a>namespace Petsc
+<a name="line21"> 21: </a>{
+
+<a name="line23"> 23: </a>namespace device
+<a name="line24"> 24: </a>{
+
+<a name="line26"> 26: </a>namespace cupm
+<a name="line27"> 27: </a>{
+
+<a name="line29"> 29: </a>namespace impl
+<a name="line30"> 30: </a>{
+
+<a name="line32"> 32: </a>namespace
+<a name="line33"> 33: </a>{
+
+<a name="line35"> 35: </a>// ==========================================================================================
+<a name="line36"> 36: </a>// UseCUPMHostAllocGuard
+<a name="line37"> 37: </a>//
+<a name="line38"> 38: </a>// A simple RAII helper <font color="#4169E1">for</font> <a href="../../../manualpages/Sys/PetscMallocSet.html">PetscMallocSet</a>[CUDA|HIP]Host(). it exists because integrating the
+<a name="line39"> 39: </a>// regular versions would be an enormous pain to square with the templated types...
+<a name="line40"> 40: </a>// ==========================================================================================
+<a name="line41"> 41: </a>template &lt;DeviceType T&gt;
+<a name="line42"> 42: </a>class UseCUPMHostAllocGuard : Interface&lt;T&gt; {
+<a name="line43"> 43: </a><strong><font color="#FF0000">public:</font></strong>
+<a name="line44"> 44: </a>  PETSC_CUPM_INHERIT_INTERFACE_TYPEDEFS_USING(T);
+
+<a name="line46"> 46: </a>  UseCUPMHostAllocGuard(bool) noexcept;
+<a name="line47"> 47: </a>  ~UseCUPMHostAllocGuard() noexcept;
+
+<a name="line49"> 49: </a>  <a href="../../../manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> bool value() const noexcept;
+
+<a name="line51"> 51: </a><strong><font color="#FF0000">private:</font></strong>
+<a name="line52"> 52: </a>  // would have loved to just <font color="#4169E1">do</font>
+<a name="line53"> 53: </a>  //
+<a name="line54"> 54: </a>  // const auto oldmalloc = PetscTrMalloc;
+<a name="line55"> 55: </a>  //
+<a name="line56"> 56: </a>  // but in order to use auto the member needs to be static; in order to be static it must
+<a name="line57"> 57: </a>  // also be constexpr -- which in turn requires an initializer (also implicitly required by
+<a name="line58"> 58: </a>  // auto). But constexpr needs a constant expression initializer, so we can't initialize it
+<a name="line59"> 59: </a>  // with global (mutable) variables...
+<a name="line60"> 60: </a><strong><font color="#228B22">#define DECLTYPE_AUTO(left, right) decltype(right) left = right</font></strong>
+<a name="line61"> 61: </a>  const DECLTYPE_AUTO(oldmalloc_, PetscTrMalloc);
+<a name="line62"> 62: </a>  const DECLTYPE_AUTO(oldfree_, PetscTrFree);
+<a name="line63"> 63: </a>  const DECLTYPE_AUTO(oldrealloc_, PetscTrRealloc);
+<a name="line64"> 64: </a><strong><font color="#228B22">#undef DECLTYPE_AUTO</font></strong>
+<a name="line65"> 65: </a>  bool v_;
+<a name="line66"> 66: </a>};
+
+<a name="line68"> 68: </a>// ==========================================================================================
+<a name="line69"> 69: </a>// UseCUPMHostAllocGuard -- Public API
+<a name="line70"> 70: </a>// ==========================================================================================
+
+<a name="line72"> 72: </a>template &lt;DeviceType T&gt;
+<a name="line73"> 73: </a>inline UseCUPMHostAllocGuard&lt;T&gt;::UseCUPMHostAllocGuard(bool useit) noexcept : v_(useit)
+<a name="line74"> 74: </a>{
+<a name="line75"> 75: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line76"> 76: </a>  <font color="#4169E1">if</font> (useit) {
+<a name="line77"> 77: </a>    // all unused arguments are un-named, this saves having to add PETSC_UNUSED to them all
+<a name="line78"> 78: </a>    PetscTrMalloc = [](std::size_t sz, <a href="../../../manualpages/Sys/PetscBool.html">PetscBool</a> clear, int, const char *, const char *, void **ptr) {
+<a name="line79"> 79: </a>      <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line80"> 80: </a>      PetscCallCUPM(cupmMallocHost(ptr, sz));
+<a name="line81"> 81: </a>      <font color="#4169E1">if</font> (clear) std::memset(*ptr, 0, sz);
+<a name="line82"> 82: </a>      <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line83"> 83: </a>    };
+<a name="line84"> 84: </a>    PetscTrFree = [](void *ptr, int, const char *, const char *) {
+<a name="line85"> 85: </a>      <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line86"> 86: </a>      PetscCallCUPM(cupmFreeHost(ptr));
+<a name="line87"> 87: </a>      <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line88"> 88: </a>    };
+<a name="line89"> 89: </a>    PetscTrRealloc = [](std::size_t, int, const char *, const char *, void **) {
+<a name="line90"> 90: </a>      // REVIEW ME: can be implemented by malloc-&gt;copy-&gt;free?
+<a name="line91"> 91: </a>      <a href="../../../manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_SUP</a>, <font color="#666666">"%s has no realloc()"</font>, cupmName());
+<a name="line92"> 92: </a>    };
+<a name="line93"> 93: </a>  }
+<a name="line94"> 94: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturnVoid.html">PetscFunctionReturnVoid</a>();
+<a name="line95"> 95: </a>}
+
+<a name="line97"> 97: </a>template &lt;DeviceType T&gt;
+<a name="line98"> 98: </a>inline UseCUPMHostAllocGuard&lt;T&gt;::~UseCUPMHostAllocGuard() noexcept
+<a name="line99"> 99: </a>{
+<a name="line100">100: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line101">101: </a>  <font color="#4169E1">if</font> (value()) {
+<a name="line102">102: </a>    PetscTrMalloc  = oldmalloc_;
+<a name="line103">103: </a>    PetscTrFree    = oldfree_;
+<a name="line104">104: </a>    PetscTrRealloc = oldrealloc_;
+<a name="line105">105: </a>  }
+<a name="line106">106: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturnVoid.html">PetscFunctionReturnVoid</a>();
+<a name="line107">107: </a>}
+
+<a name="line109">109: </a>template &lt;DeviceType T&gt;
+<a name="line110">110: </a>inline bool UseCUPMHostAllocGuard&lt;T&gt;::value() const noexcept
+<a name="line111">111: </a>{
+<a name="line112">112: </a>  <font color="#4169E1">return</font> v_;
+<a name="line113">113: </a>}
+
+<a name="line115">115: </a>} // anonymous namespace
+
+<a name="line117">117: </a>template &lt;DeviceType T, <a href="../../../manualpages/Sys/PetscMemType.html">PetscMemType</a> MemoryType, <a href="../../../manualpages/Sys/PetscMemoryAccessMode.html">PetscMemoryAccessMode</a> AccessMode&gt;
+<a name="line118">118: </a>class RestoreableArray : Interface&lt;T&gt; {
+<a name="line119">119: </a><strong><font color="#FF0000">public:</font></strong>
+<a name="line120">120: </a>  PETSC_CUPM_INHERIT_INTERFACE_TYPEDEFS_USING(T);
+
+<a name="line122">122: </a>  static constexpr auto memory_type = MemoryType;
+<a name="line123">123: </a>  static constexpr auto access_type = AccessMode;
+
+<a name="line125">125: </a>  using value_type        = <a href="../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>;
+<a name="line126">126: </a>  using pointer_type      = value_type *;
+<a name="line127">127: </a>  using cupm_pointer_type = cupmScalar_t *;
+
+<a name="line129">129: </a>  <a href="../../../manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> pointer_type      data() const noexcept;
+<a name="line130">130: </a>  <a href="../../../manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> cupm_pointer_type cupmdata() const noexcept;
+
+<a name="line132">132: </a>  operator pointer_type() const noexcept;
+<a name="line133">133: </a>  // in <font color="#4169E1">case</font> pointer_type == cupmscalar_pointer_type we don't want this overload to exist, so
+<a name="line134">134: </a>  // we make a dummy template parameter to allow SFINAE to nix it <font color="#4169E1">for</font> us
+<a name="line135">135: </a>  template &lt;typename U = pointer_type, typename = util::enable_if_t&lt;!std::is_same&lt;U, cupm_pointer_type&gt;::value&gt;&gt;
+<a name="line136">136: </a>  operator cupm_pointer_type() const noexcept;
+
+<a name="line138">138: </a><strong><font color="#FF0000">protected:</font></strong>
+<a name="line139">139: </a>  constexpr explicit RestoreableArray(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>) noexcept;
+
+<a name="line141">141: </a>  value_type        *ptr_  = nullptr;
+<a name="line142">142: </a>  <a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx_ = nullptr;
+<a name="line143">143: </a>};
+
+<a name="line145">145: </a>// ==========================================================================================
+<a name="line146">146: </a>// RestoreableArray - Static Variables
+<a name="line147">147: </a>// ==========================================================================================
+
+<a name="line149">149: </a>template &lt;DeviceType T, <a href="../../../manualpages/Sys/PetscMemType.html">PetscMemType</a> MT, <a href="../../../manualpages/Sys/PetscMemoryAccessMode.html">PetscMemoryAccessMode</a> MA&gt;
+<a name="line150">150: </a>const <a href="../../../manualpages/Sys/PetscMemType.html">PetscMemType</a> RestoreableArray&lt;T, MT, MA&gt;::memory_type;
+
+<a name="line152">152: </a>template &lt;DeviceType T, <a href="../../../manualpages/Sys/PetscMemType.html">PetscMemType</a> MT, <a href="../../../manualpages/Sys/PetscMemoryAccessMode.html">PetscMemoryAccessMode</a> MA&gt;
+<a name="line153">153: </a>const <a href="../../../manualpages/Sys/PetscMemoryAccessMode.html">PetscMemoryAccessMode</a> RestoreableArray&lt;T, MT, MA&gt;::access_type;
+
+<a name="line155">155: </a>// ==========================================================================================
+<a name="line156">156: </a>// RestoreableArray - Public API
+<a name="line157">157: </a>// ==========================================================================================
+
+<a name="line159">159: </a>template &lt;DeviceType T, <a href="../../../manualpages/Sys/PetscMemType.html">PetscMemType</a> MT, <a href="../../../manualpages/Sys/PetscMemoryAccessMode.html">PetscMemoryAccessMode</a> MA&gt;
+<a name="line160">160: </a>constexpr inline RestoreableArray&lt;T, MT, MA&gt;::RestoreableArray(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx) noexcept : dctx_{dctx}
+<a name="line161">161: </a>{
+<a name="line162">162: </a>}
+
+<a name="line164">164: </a>template &lt;DeviceType T, <a href="../../../manualpages/Sys/PetscMemType.html">PetscMemType</a> MT, <a href="../../../manualpages/Sys/PetscMemoryAccessMode.html">PetscMemoryAccessMode</a> MA&gt;
+<a name="line165">165: </a>inline typename RestoreableArray&lt;T, MT, MA&gt;::pointer_type RestoreableArray&lt;T, MT, MA&gt;::data() const noexcept
+<a name="line166">166: </a>{
+<a name="line167">167: </a>  <font color="#4169E1">return</font> ptr_;
+<a name="line168">168: </a>}
+
+<a name="line170">170: </a>template &lt;DeviceType T, <a href="../../../manualpages/Sys/PetscMemType.html">PetscMemType</a> MT, <a href="../../../manualpages/Sys/PetscMemoryAccessMode.html">PetscMemoryAccessMode</a> MA&gt;
+<a name="line171">171: </a>inline typename RestoreableArray&lt;T, MT, MA&gt;::cupm_pointer_type RestoreableArray&lt;T, MT, MA&gt;::cupmdata() const noexcept
+<a name="line172">172: </a>{
+<a name="line173">173: </a>  <font color="#4169E1">return</font> cupmScalarPtrCast(data());
+<a name="line174">174: </a>}
+
+<a name="line176">176: </a>template &lt;DeviceType T, <a href="../../../manualpages/Sys/PetscMemType.html">PetscMemType</a> MT, <a href="../../../manualpages/Sys/PetscMemoryAccessMode.html">PetscMemoryAccessMode</a> MA&gt;
+<a name="line177">177: </a>inline RestoreableArray&lt;T, MT, MA&gt;::operator pointer_type() const noexcept
+<a name="line178">178: </a>{
+<a name="line179">179: </a>  <font color="#4169E1">return</font> data();
+<a name="line180">180: </a>}
+
+<a name="line182">182: </a>// in <font color="#4169E1">case</font> pointer_type == cupmscalar_pointer_type we don't want this overload to exist, so
+<a name="line183">183: </a>// we make a dummy template parameter to allow SFINAE to nix it <font color="#4169E1">for</font> us
+<a name="line184">184: </a>template &lt;DeviceType T, <a href="../../../manualpages/Sys/PetscMemType.html">PetscMemType</a> MT, <a href="../../../manualpages/Sys/PetscMemoryAccessMode.html">PetscMemoryAccessMode</a> MA&gt;
+<a name="line185">185: </a>template &lt;typename U, typename&gt;
+<a name="line186">186: </a>inline RestoreableArray&lt;T, MT, MA&gt;::operator cupm_pointer_type() const noexcept
+<a name="line187">187: </a>{
+<a name="line188">188: </a>  <font color="#4169E1">return</font> cupmdata();
+<a name="line189">189: </a>}
+
+<a name="line191">191: </a>template &lt;DeviceType T&gt;
+<a name="line192">192: </a>class CUPMObject : SolverInterface&lt;T&gt; {
+<a name="line193">193: </a><strong><font color="#FF0000">protected:</font></strong>
+<a name="line194">194: </a>  PETSC_CUPMSOLVER_INHERIT_INTERFACE_TYPEDEFS_USING(T);
+
+<a name="line196">196: </a><strong><font color="#FF0000">private:</font></strong>
+<a name="line197">197: </a>  // The final stop in the GetHandles_/GetFromHandles_ chain. This retrieves the various
+<a name="line198">198: </a>  // compute handles and ensure the given <a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> is of the right type
+<a name="line199">199: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetFromHandleDispatch_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, cupmBlasHandle_t *, cupmSolverHandle_t *, cupmStream_t *) noexcept;
+<a name="line200">200: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetHandleDispatch_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *, cupmBlasHandle_t *, cupmSolverHandle_t *, cupmStream_t *) noexcept;
+
+<a name="line202">202: </a><strong><font color="#FF0000">protected:</font></strong>
+<a name="line203">203: </a>  <a href="../../../manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static constexpr <a href="../../../manualpages/Sys/PetscRandomType.html">PetscRandomType</a> PETSCDEVICERAND() noexcept;
+
+<a name="line205">205: </a>  // Helper routines to retrieve various combinations of handles. The first set (GetHandles_)
+<a name="line206">206: </a>  // gets a <a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> along with it, <font color="#4169E1">while</font> the second set (GetHandlesFrom_) assumes
+<a name="line207">207: </a>  // you've gotten the <a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> already, and retrieves the handles from it. All of
+<a name="line208">208: </a>  // them check that the <a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> is of the appropriate type
+<a name="line209">209: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetHandles_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *, cupmBlasHandle_t * = nullptr, cupmSolverHandle_t * = nullptr, cupmStream_t * = nullptr) noexcept;
+
+<a name="line211">211: </a>  // triple
+<a name="line212">212: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetHandles_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *, cupmBlasHandle_t *, cupmStream_t *) noexcept;
+<a name="line213">213: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetHandles_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *, cupmSolverHandle_t *, cupmStream_t *) noexcept;
+
+<a name="line215">215: </a>  // double
+<a name="line216">216: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetHandles_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *, cupmSolverHandle_t *) noexcept;
+<a name="line217">217: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetHandles_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *, cupmStream_t *) noexcept;
+
+<a name="line219">219: </a>  // single
+<a name="line220">220: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetHandles_(cupmBlasHandle_t *) noexcept;
+<a name="line221">221: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetHandles_(cupmSolverHandle_t *) noexcept;
+<a name="line222">222: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetHandles_(cupmStream_t *) noexcept;
+
+<a name="line224">224: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetHandlesFrom_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, cupmBlasHandle_t *, cupmSolverHandle_t * = nullptr, cupmStream_t * = nullptr) noexcept;
+<a name="line225">225: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetHandlesFrom_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, cupmSolverHandle_t *, cupmStream_t * = nullptr) noexcept;
+<a name="line226">226: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> GetHandlesFrom_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a>, cupmStream_t *) noexcept;
+
+<a name="line228">228: </a>  // disallow implicit conversion
+<a name="line229">229: </a>  template &lt;typename U&gt;
+<a name="line230">230: </a>  <a href="../../../manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static UseCUPMHostAllocGuard&lt;T&gt; UseCUPMHostAlloc(U) noexcept = delete;
+<a name="line231">231: </a>  // utility <font color="#4169E1">for</font> using cupmHostAlloc()
+<a name="line232">232: </a>  <a href="../../../manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static UseCUPMHostAllocGuard&lt;T&gt; UseCUPMHostAlloc(bool) noexcept;
+<a name="line233">233: </a>  <a href="../../../manualpages/Sys/PETSC_NODISCARD.html">PETSC_NODISCARD</a> static UseCUPMHostAllocGuard&lt;T&gt; UseCUPMHostAlloc(<a href="../../../manualpages/Sys/PetscBool.html">PetscBool</a>) noexcept;
+
+<a name="line235">235: </a>  // A debug check to ensure that a given pointer-memtype pairing taken from user-land is
+<a name="line236">236: </a>  // actually correct. Errors on mismatch
+<a name="line237">237: </a>  static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CheckPointerMatchesMemType_(const void *, <a href="../../../manualpages/Sys/PetscMemType.html">PetscMemType</a>) noexcept;
+<a name="line238">238: </a>};
+
+<a name="line240">240: </a>template &lt;DeviceType T&gt;
+<a name="line241">241: </a>inline constexpr <a href="../../../manualpages/Sys/PetscRandomType.html">PetscRandomType</a> CUPMObject&lt;T&gt;::PETSCDEVICERAND() noexcept
+<a name="line242">242: </a>{
+<a name="line243">243: </a>  // REVIEW ME: HIP <font color="#4169E1">default</font> rng?
+<a name="line244">244: </a>  <font color="#4169E1">return</font> T == DeviceType::CUDA ? <a href="../../../manualpages/Sys/PETSCCURAND.html">PETSCCURAND</a> : <a href="../../../manualpages/Sys/PETSCRANDER48.html">PETSCRANDER48</a>;
+<a name="line245">245: </a>}
+
+<a name="line247">247: </a>template &lt;DeviceType T&gt;
+<a name="line248">248: </a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMObject&lt;T&gt;::GetFromHandleDispatch_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx, cupmBlasHandle_t *blas_handle, cupmSolverHandle_t *solver_handle, cupmStream_t *stream_handle) noexcept
+<a name="line249">249: </a>{
+<a name="line250">250: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line252">252: </a>  <font color="#4169E1">if</font> (blas_handle) {
+<a name="line253">253: </a>    PetscAssertPointer(blas_handle, 2);
+<a name="line254">254: </a>    *blas_handle = nullptr;
+<a name="line255">255: </a>  }
+<a name="line256">256: </a>  <font color="#4169E1">if</font> (solver_handle) {
+<a name="line257">257: </a>    PetscAssertPointer(solver_handle, 3);
+<a name="line258">258: </a>    *solver_handle = nullptr;
+<a name="line259">259: </a>  }
+<a name="line260">260: </a>  <font color="#4169E1">if</font> (stream_handle) {
+<a name="line261">261: </a>    PetscAssertPointer(stream_handle, 4);
+<a name="line262">262: </a>    *stream_handle = nullptr;
+<a name="line263">263: </a>  }
+<a name="line264">264: </a>  <font color="#4169E1">if</font> (<a href="../../../manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG)) {
+<a name="line265">265: </a>    <a href="../../../manualpages/Sys/PetscDeviceType.html">PetscDeviceType</a> dtype;
+
+<a name="line267">267: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscDeviceContextGetDeviceType.html">PetscDeviceContextGetDeviceType</a>(dctx, &amp;dtype));
+<a name="line268">268: </a>    PetscCheckCompatibleDeviceTypes(PETSC_DEVICE_CUPM(), -1, dtype, 1);
+<a name="line269">269: </a>  }
+<a name="line270">270: </a>  <font color="#4169E1">if</font> (blas_handle) <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscDeviceContextGetBLASHandle_Internal(dctx, blas_handle));
+<a name="line271">271: </a>  <font color="#4169E1">if</font> (solver_handle) <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscDeviceContextGetSOLVERHandle_Internal(dctx, solver_handle));
+<a name="line272">272: </a>  <font color="#4169E1">if</font> (stream_handle) {
+<a name="line273">273: </a>    cupmStream_t *stream = nullptr;
+
+<a name="line275">275: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscDeviceContextGetStreamHandle_Internal(dctx, (void **)&amp;stream));
+<a name="line276">276: </a>    *stream_handle = *stream;
+<a name="line277">277: </a>  }
+<a name="line278">278: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line279">279: </a>}
+
+<a name="line281">281: </a>template &lt;DeviceType T&gt;
+<a name="line282">282: </a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMObject&lt;T&gt;::GetHandleDispatch_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *dctx, cupmBlasHandle_t *blas_handle, cupmSolverHandle_t *solver_handle, cupmStream_t *stream) noexcept
+<a name="line283">283: </a>{
+<a name="line284">284: </a>  <a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx_loc = nullptr;
+
+<a name="line286">286: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line287">287: </a>  // silence uninitialized variable warnings
+<a name="line288">288: </a>  <font color="#4169E1">if</font> (dctx) *dctx = nullptr;
+<a name="line289">289: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscDeviceContextGetCurrentContext.html">PetscDeviceContextGetCurrentContext</a>(&amp;dctx_loc));
+<a name="line290">290: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(GetFromHandleDispatch_(dctx_loc, blas_handle, solver_handle, stream));
+<a name="line291">291: </a>  <font color="#4169E1">if</font> (dctx) *dctx = dctx_loc;
+<a name="line292">292: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line293">293: </a>}
+
+<a name="line295">295: </a>template &lt;DeviceType T&gt;
+<a name="line296">296: </a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMObject&lt;T&gt;::GetHandles_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *dctx, cupmBlasHandle_t *blas_handle, cupmSolverHandle_t *solver_handle, cupmStream_t *stream) noexcept
+<a name="line297">297: </a>{
+<a name="line298">298: </a>  <font color="#4169E1">return</font> GetHandleDispatch_(dctx, blas_handle, solver_handle, stream);
+<a name="line299">299: </a>}
+
+<a name="line301">301: </a>template &lt;DeviceType T&gt;
+<a name="line302">302: </a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMObject&lt;T&gt;::GetHandles_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *dctx, cupmBlasHandle_t *blas_handle, cupmStream_t *stream) noexcept
+<a name="line303">303: </a>{
+<a name="line304">304: </a>  <font color="#4169E1">return</font> GetHandleDispatch_(dctx, blas_handle, nullptr, stream);
+<a name="line305">305: </a>}
+
+<a name="line307">307: </a>template &lt;DeviceType T&gt;
+<a name="line308">308: </a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMObject&lt;T&gt;::GetHandles_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *dctx, cupmSolverHandle_t *solver_handle, cupmStream_t *stream) noexcept
+<a name="line309">309: </a>{
+<a name="line310">310: </a>  <font color="#4169E1">return</font> GetHandleDispatch_(dctx, nullptr, solver_handle, stream);
+<a name="line311">311: </a>}
+
+<a name="line313">313: </a>template &lt;DeviceType T&gt;
+<a name="line314">314: </a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMObject&lt;T&gt;::GetHandles_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> *dctx, cupmStream_t *stream) noexcept
+<a name="line315">315: </a>{
+<a name="line316">316: </a>  <font color="#4169E1">return</font> GetHandleDispatch_(dctx, nullptr, nullptr, stream);
+<a name="line317">317: </a>}
+
+<a name="line319">319: </a>template &lt;DeviceType T&gt;
+<a name="line320">320: </a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMObject&lt;T&gt;::GetHandles_(cupmBlasHandle_t *handle) noexcept
+<a name="line321">321: </a>{
+<a name="line322">322: </a>  <font color="#4169E1">return</font> GetHandleDispatch_(nullptr, handle, nullptr, nullptr);
+<a name="line323">323: </a>}
+
+<a name="line325">325: </a>template &lt;DeviceType T&gt;
+<a name="line326">326: </a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMObject&lt;T&gt;::GetHandles_(cupmSolverHandle_t *handle) noexcept
+<a name="line327">327: </a>{
+<a name="line328">328: </a>  <font color="#4169E1">return</font> GetHandleDispatch_(nullptr, nullptr, handle, nullptr);
+<a name="line329">329: </a>}
+
+<a name="line331">331: </a>template &lt;DeviceType T&gt;
+<a name="line332">332: </a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMObject&lt;T&gt;::GetHandles_(cupmStream_t *stream) noexcept
+<a name="line333">333: </a>{
+<a name="line334">334: </a>  <font color="#4169E1">return</font> GetHandleDispatch_(nullptr, nullptr, nullptr, stream);
+<a name="line335">335: </a>}
+
+<a name="line337">337: </a>template &lt;DeviceType T&gt;
+<a name="line338">338: </a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMObject&lt;T&gt;::GetHandlesFrom_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx, cupmBlasHandle_t *blas_handle, cupmSolverHandle_t *solver_handle, cupmStream_t *stream) noexcept
+<a name="line339">339: </a>{
+<a name="line340">340: </a>  <font color="#4169E1">return</font> GetFromHandleDispatch_(dctx, blas_handle, solver_handle, stream);
+<a name="line341">341: </a>}
+
+<a name="line343">343: </a>template &lt;DeviceType T&gt;
+<a name="line344">344: </a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMObject&lt;T&gt;::GetHandlesFrom_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx, cupmSolverHandle_t *solver_handle, cupmStream_t *stream) noexcept
+<a name="line345">345: </a>{
+<a name="line346">346: </a>  <font color="#4169E1">return</font> GetFromHandleDispatch_(dctx, nullptr, solver_handle, stream);
+<a name="line347">347: </a>}
+
+<a name="line349">349: </a>template &lt;DeviceType T&gt;
+<a name="line350">350: </a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMObject&lt;T&gt;::GetHandlesFrom_(<a href="../../../manualpages/Sys/PetscDeviceContext.html">PetscDeviceContext</a> dctx, cupmStream_t *stream) noexcept
+<a name="line351">351: </a>{
+<a name="line352">352: </a>  <font color="#4169E1">return</font> GetFromHandleDispatch_(dctx, nullptr, nullptr, stream);
+<a name="line353">353: </a>}
+
+<a name="line355">355: </a>template &lt;DeviceType T&gt;
+<a name="line356">356: </a>inline UseCUPMHostAllocGuard&lt;T&gt; CUPMObject&lt;T&gt;::UseCUPMHostAlloc(bool b) noexcept
+<a name="line357">357: </a>{
+<a name="line358">358: </a>  <font color="#4169E1">return</font> {b};
+<a name="line359">359: </a>}
+
+<a name="line361">361: </a>template &lt;DeviceType T&gt;
+<a name="line362">362: </a>inline UseCUPMHostAllocGuard&lt;T&gt; CUPMObject&lt;T&gt;::UseCUPMHostAlloc(<a href="../../../manualpages/Sys/PetscBool.html">PetscBool</a> b) noexcept
+<a name="line363">363: </a>{
+<a name="line364">364: </a>  <font color="#4169E1">return</font> UseCUPMHostAlloc(static_cast&lt;bool&gt;(b));
+<a name="line365">365: </a>}
+
+<a name="line367">367: </a>template &lt;DeviceType T&gt;
+<a name="line368">368: </a>inline <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CUPMObject&lt;T&gt;::CheckPointerMatchesMemType_(const void *ptr, <a href="../../../manualpages/Sys/PetscMemType.html">PetscMemType</a> mtype) noexcept
+<a name="line369">369: </a>{
+<a name="line370">370: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line371">371: </a>  <font color="#4169E1">if</font> (<a href="../../../manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG) &amp;&amp; ptr) {
+<a name="line372">372: </a>    <a href="../../../manualpages/Sys/PetscMemType.html">PetscMemType</a> ptr_mtype;
+
+<a name="line374">374: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscCUPMGetMemType(ptr, &amp;ptr_mtype));
+<a name="line375">375: </a>    <font color="#4169E1">if</font> (mtype == <a href="../../../manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_HOST</a>) {
+<a name="line376">376: </a>      <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(PetscMemTypeHost(ptr_mtype), <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_POINTER</a>, <font color="#666666">"Pointer %p declared as %s does not match actual memtype %s"</font>, ptr, PetscMemTypeToString(mtype), PetscMemTypeToString(ptr_mtype));
+<a name="line377">377: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (mtype == <a href="../../../manualpages/Sys/PetscMemType.html">PETSC_MEMTYPE_DEVICE</a>) {
+<a name="line378">378: </a>      // generic <font color="#666666">"device"</font> memory should only care <font color="#4169E1">if</font> the actual memtype is also generically
+<a name="line379">379: </a>      // <font color="#666666">"device"</font>
+<a name="line380">380: </a>      <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(PetscMemTypeDevice(ptr_mtype), <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_POINTER</a>, <font color="#666666">"Pointer %p declared as %s does not match actual memtype %s"</font>, ptr, PetscMemTypeToString(mtype), PetscMemTypeToString(ptr_mtype));
+<a name="line381">381: </a>    } <font color="#4169E1">else</font> {
+<a name="line382">382: </a>      <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(mtype == ptr_mtype, <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_POINTER</a>, <font color="#666666">"Pointer %p declared as %s does not match actual memtype %s"</font>, ptr, PetscMemTypeToString(mtype), PetscMemTypeToString(ptr_mtype));
+<a name="line383">383: </a>    }
+<a name="line384">384: </a>  }
+<a name="line385">385: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line386">386: </a>}
+
+<a name="line388">388: </a><strong><font color="#228B22">#define PETSC_CUPMOBJECT_HEADER(T) \</font></strong>
+<a name="line389">389: </a><strong><font color="#228B22">  PETSC_CUPMSOLVER_INHERIT_INTERFACE_TYPEDEFS_USING(T); \</font></strong>
+<a name="line390">390: </a><strong><font color="#228B22">  using ::Petsc::device::cupm::impl::CUPMObject&lt;T&gt;::UseCUPMHostAlloc; \</font></strong>
+<a name="line391">391: </a><strong><font color="#228B22">  using ::Petsc::device::cupm::impl::CUPMObject&lt;T&gt;::GetHandles_; \</font></strong>
+<a name="line392">392: </a><strong><font color="#228B22">  using ::Petsc::device::cupm::impl::CUPMObject&lt;T&gt;::GetHandlesFrom_; \</font></strong>
+<a name="line393">393: </a><strong><font color="#228B22">  using ::Petsc::device::cupm::impl::CUPMObject&lt;T&gt;::PETSCDEVICERAND; \</font></strong>
+<a name="line394">394: </a><strong><font color="#228B22">  using ::Petsc::device::cupm::impl::CUPMObject&lt;T&gt;::CheckPointerMatchesMemType_</font></strong>
+
+<a name="line396">396: </a>} // namespace impl
+
+<a name="line398">398: </a>} // namespace cupm
+
+<a name="line400">400: </a>} // namespace device
+
+<a name="line402">402: </a>} // namespace Petsc
+</pre>
+</body>
+
+</html>

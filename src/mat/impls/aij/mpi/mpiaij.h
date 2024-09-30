@@ -1,5 +1,4 @@
-#ifndef __MPIAIJ_H
-#define __MPIAIJ_H
+#pragma once
 
 #include <../src/mat/impls/aij/seq/aij.h>
 
@@ -45,7 +44,7 @@ typedef struct {
   PetscScalar *svalues, *rvalues; /* sending and receiving data */
   PetscInt     rmax;              /* maximum message length */
 #if defined(PETSC_USE_CTABLE)
-  PetscTable colmap;
+  PetscHMapI colmap;
 #else
   PetscInt *colmap; /* local col number of off-diag col */
 #endif
@@ -67,9 +66,12 @@ typedef struct {
   /* Used by device classes */
   void *spptr;
 
-  /* MatSetValuesCOO() related stuff */
-  PetscCount   coo_n;                      /* Number of COOs passed to MatSetPreallocationCOO)() */
-  PetscSF      coo_sf;                     /* SF to send/recv remote values in MatSetValuesCOO() */
+  struct _MatOps cops;
+} Mat_MPIAIJ;
+
+typedef struct {
+  PetscCount   n;                          /* Number of COOs passed to MatSetPreallocationCOO)() */
+  PetscSF      sf;                         /* SF to send/recv remote values in MatSetValuesCOO() */
   PetscCount   Annz, Bnnz;                 /* Number of entries in diagonal A and off-diagonal B */
   PetscCount   Annz2, Bnnz2;               /* Number of unique remote entries belonging to A and B */
   PetscCount   Atot1, Atot2, Btot1, Btot2; /* Total local (tot1) and remote (tot2) entries (which might contain repeats) belonging to A and B */
@@ -80,7 +82,7 @@ typedef struct {
   PetscCount  *Cperm1;                     /* [sendlen] Permutation to fill MPI send buffer. 'C' for communication */
   PetscScalar *sendbuf, *recvbuf;          /* Buffers for remote values in MatSetValuesCOO() */
   PetscInt     sendlen, recvlen;           /* Lengths (in unit of PetscScalar) of send/recvbuf */
-} Mat_MPIAIJ;
+} MatCOOStruct_MPIAIJ;
 
 PETSC_EXTERN PetscErrorCode MatCreate_MPIAIJ(Mat);
 
@@ -185,7 +187,7 @@ PETSC_INTERN PetscErrorCode MatResetPreallocationCOO_MPIAIJ(Mat);
 
 /* compute apa = A[i,:]*P = Ad[i,:]*P_loc + Ao*[i,:]*P_oth using sparse axpy */
 #define AProw_scalable(i, ad, ao, p_loc, p_oth, api, apj, apa) \
-  { \
+  do { \
     PetscInt     _anz, _pnz, _j, _k, *_ai, *_aj, _row, *_pi, *_pj, _nextp, *_apJ; \
     PetscScalar *_aa, _valtmp, *_pa; \
     _apJ = apj + api[i]; \
@@ -233,10 +235,10 @@ PETSC_INTERN PetscErrorCode MatResetPreallocationCOO_MPIAIJ(Mat);
         (void)PetscLogFlops(2.0 * _pnz); \
       } \
     } \
-  }
+  } while (0)
 
 #define AProw_nonscalable(i, ad, ao, p_loc, p_oth, apa) \
-  { \
+  do { \
     PetscInt     _anz, _pnz, _j, _k, *_ai, *_aj, _row, *_pi, *_pj; \
     PetscScalar *_aa, _valtmp, *_pa; \
     /* diagonal portion of A */ \
@@ -273,6 +275,4 @@ PETSC_INTERN PetscErrorCode MatResetPreallocationCOO_MPIAIJ(Mat);
         (void)PetscLogFlops(2.0 * _pnz); \
       } \
     } \
-  }
-
-#endif
+  } while (0)

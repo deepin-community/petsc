@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ksp/ksp/tutorials/ex61f.F90">Actual source code: ex61f.F90</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/ksp/ksp/tutorials/ex61f.F90">Actual source code: ex61f.F90</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:49:20+00:00">
+<meta name="date" content="2024-03-29T14:12:56+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -17,7 +17,7 @@
 <a name="line6">  6: </a>!        Run with <font color="#666666">"export OMP_NUM_THREADS=16 ./ex61f"</font>
 <a name="line7">  7: </a>!           to use 16 independent threads
 <a name="line8">  8: </a>!
-<a name="line9">  9: </a>!        ./configure --with-threadsafety --with-log=0 --with-openmp
+<a name="line9">  9: </a>!        ./configure --with-threadsafety --with-openmp
 <a name="line10"> 10: </a>!
 <a name="line11"> 11: </a>         module ex61fmodule
 <a name="line12"> 12: </a>         implicit none
@@ -69,38 +69,38 @@
 
 <a name="line59"> 59: </a>!$   integer, external :: omp_get_num_threads
 
-<a name="line61"> 61: </a>      <a href="../../../../docs/manualpages/Mat/Mat.html">Mat</a>, target :: Mcol_f_mat(MAXTHREADS)
-<a name="line62"> 62: </a>      <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>, target :: Mcol_f_vecb(MAXTHREADS)
-<a name="line63"> 63: </a>      <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>, target :: Mcol_f_vecx(MAXTHREADS)
-<a name="line64"> 64: </a>      <a href="../../../../docs/manualpages/KSP/KSP.html">KSP</a>, target :: Mcol_f_ksp(MAXTHREADS)
-<a name="line65"> 65: </a>      <a href="../../../../docs/manualpages/PC/PC.html">PC</a>,  target :: MPC(MAXTHREADS)
+<a name="line61"> 61: </a>      <a href="../../../../manualpages/Mat/Mat.html">Mat</a>, target :: Mcol_f_mat(MAXTHREADS)
+<a name="line62"> 62: </a>      <a href="../../../../manualpages/Vec/Vec.html">Vec</a>, target :: Mcol_f_vecb(MAXTHREADS)
+<a name="line63"> 63: </a>      <a href="../../../../manualpages/Vec/Vec.html">Vec</a>, target :: Mcol_f_vecx(MAXTHREADS)
+<a name="line64"> 64: </a>      <a href="../../../../manualpages/KSP/KSP.html">KSP</a>, target :: Mcol_f_ksp(MAXTHREADS)
+<a name="line65"> 65: </a>      <a href="../../../../manualpages/PC/PC.html">PC</a>,  target :: MPC(MAXTHREADS)
 
-<a name="line67"> 67: </a>      <a href="../../../../docs/manualpages/Mat/Mat.html">Mat</a>, pointer :: col_f_mat
-<a name="line68"> 68: </a>      <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>, pointer :: col_f_vecb
-<a name="line69"> 69: </a>      <a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a>, pointer :: col_f_vecx
-<a name="line70"> 70: </a>      <a href="../../../../docs/manualpages/KSP/KSP.html">KSP</a>, pointer :: col_f_ksp
-<a name="line71"> 71: </a>      <a href="../../../../docs/manualpages/PC/PC.html">PC</a>, pointer :: pc
+<a name="line67"> 67: </a>      <a href="../../../../manualpages/Mat/Mat.html">Mat</a>, pointer :: col_f_mat
+<a name="line68"> 68: </a>      <a href="../../../../manualpages/Vec/Vec.html">Vec</a>, pointer :: col_f_vecb
+<a name="line69"> 69: </a>      <a href="../../../../manualpages/Vec/Vec.html">Vec</a>, pointer :: col_f_vecx
+<a name="line70"> 70: </a>      <a href="../../../../manualpages/KSP/KSP.html">KSP</a>, pointer :: col_f_ksp
+<a name="line71"> 71: </a>      <a href="../../../../manualpages/PC/PC.html">PC</a>, pointer :: pc
 
-<a name="line73"> 73: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> :: ith, nthreads
-<a name="line74"> 74: </a>      <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ierr
+<a name="line73"> 73: </a>      <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> :: ith, nthreads
+<a name="line74"> 74: </a>      <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ierr
 
 <a name="line76"> 76: </a>      integer, parameter :: nz_per_row = 9
 <a name="line77"> 77: </a>      integer, parameter :: n =100
 <a name="line78"> 78: </a>      integer :: i,j,ij,ij2,ii,jj,nz,ip, dx,dy,icase
 <a name="line79"> 79: </a>      integer, allocatable :: ilist(:),jlist(:)
-<a name="line80"> 80: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> :: aij
-<a name="line81"> 81: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>, allocatable :: alist(:)
+<a name="line80"> 80: </a>      <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> :: aij
+<a name="line81"> 81: </a>      <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>, allocatable :: alist(:)
 <a name="line82"> 82: </a>      logical :: isvalid_ii, isvalid_jj, is_diag
 
-<a name="line84"> 84: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nrow
-<a name="line85"> 85: </a>      <a href="../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ncol
-<a name="line86"> 86: </a>      <a href="../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>, allocatable :: x(:), b(:)
+<a name="line84"> 84: </a>      <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> nrow
+<a name="line85"> 85: </a>      <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> ncol
+<a name="line86"> 86: </a>      <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>, allocatable :: x(:), b(:)
 <a name="line87"> 87: </a>      real(8) :: err(NCASES)
 
 <a name="line89"> 89: </a>      integer :: t1,t2,count_rate
 <a name="line90"> 90: </a>      real :: ttime
 
-<a name="line92"> 92: </a>      PetscCallA(<a href="../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(ierr))
+<a name="line92"> 92: </a>      <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(ierr))
 
 <a name="line94"> 94: </a>      allocate(ilist(n*n*nz_per_row),jlist(n*n*nz_per_row),alist(n*n*nz_per_row))
 <a name="line95"> 95: </a>      allocate(x(0:(n*n-1)),b(0:(n*n-1)))
@@ -126,10 +126,10 @@
 <a name="line115">115: </a>         col_f_vecx =&gt; Mcol_f_vecx(ith)
 <a name="line116">116: </a>         col_f_ksp =&gt; Mcol_f_ksp(ith)
 
-<a name="line118">118: </a>         PetscCallA(<a href="../../../../docs/manualpages/Mat/MatCreateSeqAIJ.html">MatCreateSeqAIJ</a>( <a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, nrow,ncol, nz_per_row,PETSC_NULL_INTEGER, col_f_mat, ierr))
-<a name="line119">119: </a>         PetscCallA(<a href="../../../../docs/manualpages/Vec/VecCreateSeqWithArray.html">VecCreateSeqWithArray</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>,1,nrow,PETSC_NULL_SCALAR, col_f_vecb, ierr))
-<a name="line120">120: </a>         PetscCallA(<a href="../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(col_f_vecb, col_f_vecx,ierr))
-<a name="line121">121: </a>         PetscCallA(<a href="../../../../docs/manualpages/KSP/KSPCreate.html">KSPCreate</a>(<a href="../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, col_f_ksp,ierr))
+<a name="line118">118: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Mat/MatCreateSeqAIJ.html">MatCreateSeqAIJ</a>( <a href="../../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, nrow,ncol, nz_per_row,PETSC_NULL_INTEGER, col_f_mat, ierr))
+<a name="line119">119: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Vec/VecCreateSeqWithArray.html">VecCreateSeqWithArray</a>(<a href="../../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>,1,nrow,PETSC_NULL_SCALAR, col_f_vecb, ierr))
+<a name="line120">120: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(col_f_vecb, col_f_vecx,ierr))
+<a name="line121">121: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/KSP/KSPCreate.html">KSPCreate</a>(<a href="../../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, col_f_ksp,ierr))
 <a name="line122">122: </a>       enddo
 
 <a name="line124">124: </a>!      -----------------------
@@ -167,7 +167,7 @@
 <a name="line156">156: </a>       print*,'nz = ', nz
 
 <a name="line158">158: </a>!      ----------------------------------
-<a name="line159">159: </a>!      convert from fortran to c indexing
+<a name="line159">159: </a>!      convert from Fortran to C indexing
 <a name="line160">160: </a>!      ----------------------------------
 <a name="line161">161: </a>       ilist(1:nz) = ilist(1:nz) - 1
 <a name="line162">162: </a>       jlist(1:nz) = jlist(1:nz) - 1
@@ -193,20 +193,20 @@
 <a name="line182">182: </a>           ii = ilist(ip)
 <a name="line183">183: </a>           jj = jlist(ip)
 <a name="line184">184: </a>           aij = alist(ip)
-<a name="line185">185: </a>           PetscCallA(<a href="../../../../docs/manualpages/Mat/MatSetValue.html">MatSetValue</a>(col_f_mat,ii,jj,aij,<a href="../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>,ierr))
+<a name="line185">185: </a>           <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Mat/MatSetValue.html">MatSetValue</a>(col_f_mat,ii,jj,aij,<a href="../../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>,ierr))
 <a name="line186">186: </a>         enddo
-<a name="line187">187: </a>         PetscCallA(<a href="../../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(col_f_mat,<a href="../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>,ierr))
-<a name="line188">188: </a>         PetscCallA(<a href="../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(col_f_mat,<a href="../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>,ierr))
-<a name="line189">189: </a>         PetscCallA(<a href="../../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>(col_f_ksp,col_f_mat,col_f_mat,ierr))
+<a name="line187">187: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(col_f_mat,<a href="../../../../manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>,ierr))
+<a name="line188">188: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(col_f_mat,<a href="../../../../manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>,ierr))
+<a name="line189">189: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>(col_f_ksp,col_f_mat,col_f_mat,ierr))
 
 <a name="line191">191: </a>         ! set linear solver
-<a name="line192">192: </a>         PetscCallA(<a href="../../../../docs/manualpages/KSP/KSPGetPC.html">KSPGetPC</a>(col_f_ksp,pc,ierr))
-<a name="line193">193: </a>         PetscCallA(<a href="../../../../docs/manualpages/PC/PCSetType.html">PCSetType</a>(pc,<a href="../../../../docs/manualpages/PC/PCLU.html">PCLU</a>,ierr))
+<a name="line192">192: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/KSP/KSPGetPC.html">KSPGetPC</a>(col_f_ksp,pc,ierr))
+<a name="line193">193: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/PC/PCSetType.html">PCSetType</a>(pc,<a href="../../../../manualpages/PC/PCLU.html">PCLU</a>,ierr))
 
 <a name="line195">195: </a>         ! associate petsc vector with allocated array
 <a name="line196">196: </a>         x(:) = 1
 <a name="line197">197: </a>!$omp    critical
-<a name="line198">198: </a>         PetscCallA(<a href="../../../../docs/manualpages/Vec/VecPlaceArray.html">VecPlaceArray</a>(col_f_vecx,x,ierr))
+<a name="line198">198: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Vec/VecPlaceArray.html">VecPlaceArray</a>(col_f_vecx,x,ierr))
 <a name="line199">199: </a>!$omp    end critical
 
 <a name="line201">201: </a>         b(:) = 0
@@ -218,16 +218,16 @@
 <a name="line207">207: </a>         enddo
 <a name="line208">208: </a>         x = 0
 <a name="line209">209: </a>!$omp    critical
-<a name="line210">210: </a>         PetscCallA(<a href="../../../../docs/manualpages/Vec/VecPlaceArray.html">VecPlaceArray</a>(col_f_vecb,b,ierr))
+<a name="line210">210: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Vec/VecPlaceArray.html">VecPlaceArray</a>(col_f_vecb,b,ierr))
 <a name="line211">211: </a>!$omp    end critical
 
 <a name="line213">213: </a>!  -----------------------------------------------------------
 <a name="line214">214: </a>!  key test, need to solve multiple linear systems in parallel
 <a name="line215">215: </a>!  -----------------------------------------------------------
-<a name="line216">216: </a>         PetscCallA(<a href="../../../../docs/manualpages/KSP/KSPSetFromOptions.html">KSPSetFromOptions</a>(col_f_ksp,ierr))
+<a name="line216">216: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/KSP/KSPSetFromOptions.html">KSPSetFromOptions</a>(col_f_ksp,ierr))
 
-<a name="line218">218: </a>         PetscCallA(<a href="../../../../docs/manualpages/KSP/KSPSetUp.html">KSPSetUp</a>(col_f_ksp,ierr))
-<a name="line219">219: </a>         PetscCallA(<a href="../../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>(col_f_ksp,col_f_vecb,col_f_vecx,ierr))
+<a name="line218">218: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/KSP/KSPSetUp.html">KSPSetUp</a>(col_f_ksp,ierr))
+<a name="line219">219: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/KSP/KSPSolve.html">KSPSolve</a>(col_f_ksp,col_f_vecb,col_f_vecx,ierr))
 
 <a name="line221">221: </a>!        ------------
 <a name="line222">222: </a>!        check answer
@@ -235,11 +235,11 @@
 <a name="line224">224: </a>         err(icase) = maxval(abs(x(:)-1))
 
 <a name="line226">226: </a>!$omp    critical
-<a name="line227">227: </a>         PetscCallA(<a href="../../../../docs/manualpages/Vec/VecResetArray.html">VecResetArray</a>(col_f_vecx,ierr))
+<a name="line227">227: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Vec/VecResetArray.html">VecResetArray</a>(col_f_vecx,ierr))
 <a name="line228">228: </a>!$omp    end critical
 
 <a name="line230">230: </a>!$omp    critical
-<a name="line231">231: </a>         PetscCallA(<a href="../../../../docs/manualpages/Vec/VecResetArray.html">VecResetArray</a>(col_f_vecb,ierr))
+<a name="line231">231: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Vec/VecResetArray.html">VecResetArray</a>(col_f_vecb,ierr))
 <a name="line232">232: </a>!$omp    end critical
 
 <a name="line234">234: </a>       enddo
@@ -254,11 +254,11 @@
 <a name="line243">243: </a>         col_f_vecx =&gt; Mcol_f_vecx(ith)
 <a name="line244">244: </a>         col_f_ksp =&gt; Mcol_f_ksp(ith)
 
-<a name="line246">246: </a>         PetscCallA(<a href="../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(col_f_mat, ierr))
-<a name="line247">247: </a>         PetscCallA(<a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(col_f_vecb, ierr))
-<a name="line248">248: </a>         PetscCallA(<a href="../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(col_f_vecx,ierr))
+<a name="line246">246: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Mat/MatDestroy.html">MatDestroy</a>(col_f_mat, ierr))
+<a name="line247">247: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(col_f_vecb, ierr))
+<a name="line248">248: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(col_f_vecx,ierr))
 
-<a name="line250">250: </a>         PetscCallA(<a href="../../../../docs/manualpages/KSP/KSPDestroy.html">KSPDestroy</a>(col_f_ksp,ierr))
+<a name="line250">250: </a>         <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/KSP/KSPDestroy.html">KSPDestroy</a>(col_f_ksp,ierr))
 
 <a name="line252">252: </a>       enddo
 
@@ -275,7 +275,7 @@
 
 <a name="line265">265: </a>       deallocate(ilist,jlist,alist)
 <a name="line266">266: </a>       deallocate(x,b)
-<a name="line267">267: </a>       PetscCallA(<a href="../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>(ierr))
+<a name="line267">267: </a>       <a href="../../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../../manualpages/Sys/PetscFinalize.html">PetscFinalize</a>(ierr))
 <a name="line268">268: </a>       end program tpetsc
 
 <a name="line270">270: </a>!<font color="#B22222">/*TEST</font>

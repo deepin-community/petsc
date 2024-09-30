@@ -1,33 +1,30 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/fileio/mprint.h">Actual source code: mprint.h</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/sys/fileio/mprint.h">Actual source code: mprint.h</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:46:54+00:00">
+<meta name="date" content="2024-03-29T14:12:47+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
 <pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#pragma once</font>
 
-<a name="line2">  2: </a><font color="#A020F0">#ifndef __MPRINT_H</font>
+<a name="line3">  3: </a>#include <A href="../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+<a name="line4">  4: </a>#include <A href="../../../include/petsc/private/petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
 
-<a name="line5">  5: </a>#include <A href="../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
-<a name="line6">  6: </a>#include <A href="../../../include/petsc/private/petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
+<a name="line6">  6: </a><font color="#B22222">/* ----------------------------------------------------------------------- */</font>
+<a name="line7">  7: </a><font color="#4169E1">typedef struct _PrintfQueue *PrintfQueue;</font>
+<a name="line8">  8: </a><font color="#4169E1"><a name="_PrintfQueue"></a>struct _PrintfQueue </font>{
+<a name="line9">  9: </a>  char       *string;
+<a name="line10"> 10: </a>  size_t      size;
+<a name="line11"> 11: </a>  PrintfQueue next;
+<a name="line12"> 12: </a>};
 
-<a name="line8">  8: </a><font color="#B22222">/* ----------------------------------------------------------------------- */</font>
-<a name="line9">  9: </a><font color="#4169E1">typedef struct _PrintfQueue *PrintfQueue;</font>
-<a name="line10"> 10: </a><font color="#4169E1"><a name="_PrintfQueue"></a>struct _PrintfQueue </font>{
-<a name="line11"> 11: </a>  char       *string;
-<a name="line12"> 12: </a>  size_t      size;
-<a name="line13"> 13: </a>  PrintfQueue next;
-<a name="line14"> 14: </a>};
-
-<a name="line16"> 16: </a>PETSC_INTERN PrintfQueue petsc_printfqueue;
-<a name="line17"> 17: </a>PETSC_INTERN PrintfQueue petsc_printfqueuebase;
-<a name="line18"> 18: </a>PETSC_INTERN int         petsc_printfqueuelength;
-
-<a name="line20"> 20: </a><font color="#A020F0">#endif</font>
+<a name="line14"> 14: </a>PETSC_INTERN PrintfQueue petsc_printfqueue;
+<a name="line15"> 15: </a>PETSC_INTERN PrintfQueue petsc_printfqueuebase;
+<a name="line16"> 16: </a>PETSC_INTERN int         petsc_printfqueuelength;
 </pre>
 </body>
 

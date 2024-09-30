@@ -41,7 +41,7 @@ static const char help[] = "Integrate chemistry using TChem.\n";
         Save the images in a .gif (movie) file
         -draw_save -draw_save_single_file
 
-        Compute the sensitivies of the solution of the first temperature on the initial conditions
+        Compute the sensitivities of the solution of the first temperature on the initial conditions
         -ts_adjoint_solve  -ts_dt 1.e-5 -ts_type cn -ts_adjoint_view_solution draw
 
         Turn off diffusion
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 
   /* set the names of each field in the DMDA based on the species name */
   PetscCall(PetscMalloc1((user.Nspec + 1) * LENGTHOFSPECNAME, &names));
-  PetscCall(PetscStrcpy(names, "Temp"));
+  PetscCall(PetscStrncpy(names, "Temp", (user.Nspec + 1) * LENGTHOFSPECNAME);
   TC_getSnames(user.Nspec, names + LENGTHOFSPECNAME);
   PetscCall(PetscMalloc1((user.Nspec + 2), &snames));
   for (i = 0; i < user.Nspec + 1; i++) snames[i] = names + i * LENGTHOFSPECNAME;
@@ -266,7 +266,7 @@ static PetscErrorCode FormDiffusionFunction(TS ts, PetscReal t, Vec X, Vec F, vo
   PetscCall(DMDAVecRestoreArrayDOFRead(dm, Xlocal, &x));
   PetscCall(DMDAVecRestoreArrayDOF(dm, F, &f));
   PetscCall(DMRestoreLocalVector(dm, &Xlocal));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -304,7 +304,7 @@ static PetscErrorCode FormDiffusionJacobian(TS ts, PetscReal t, Vec X, Mat Amat,
   }
   PetscCall(MatAssemblyBegin(Pmat, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(Pmat, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode FormRHSFunction(TS ts, PetscReal t, Vec X, Vec F, void *ptr)
@@ -335,7 +335,7 @@ static PetscErrorCode FormRHSFunction(TS ts, PetscReal t, Vec X, Vec F, void *pt
     PetscCall(VecZeroEntries(F));
   }
   if (user->diffusion) PetscCall(FormDiffusionFunction(ts, t, X, F, ptr));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode FormRHSJacobian(TS ts, PetscReal t, Vec X, Mat Amat, Mat Pmat, void *ptr)
@@ -375,7 +375,7 @@ static PetscErrorCode FormRHSJacobian(TS ts, PetscReal t, Vec X, Mat Amat, Mat P
     PetscCall(MatAssemblyBegin(Amat, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(Amat, MAT_FINAL_ASSEMBLY));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode FormInitialSolution(TS ts, Vec X, void *ctx)
@@ -411,7 +411,7 @@ PetscErrorCode FormInitialSolution(TS ts, Vec X, void *ctx)
   }
   PetscCall(DMDAVecRestoreArrayDOF(dm, X, &x));
   PetscCall(DMDARestoreCoordinateArray(dm, &xc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -442,14 +442,14 @@ static PetscErrorCode FormMoleFraction(UserLGCtx *ctx, Vec massf, Vec *molef)
   PetscCall(DMDAVecRestoreArrayDOFRead(user->dm, massf, &maf));
   PetscCall(VecRestoreArray(*molef, &mof));
   PetscCall(PetscFree(M));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MonitorCellDestroy(UserLGCtx *uctx)
 {
   PetscFunctionBeginUser;
   PetscCall(PetscFree(uctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -478,5 +478,5 @@ static PetscErrorCode MonitorCell(TS ts, User user, PetscInt cell)
   uctx->user = user;
   PetscCall(TSMonitorLGCtxSetTransform(ctx, (PetscErrorCode(*)(void *, Vec, Vec *))FormMoleFraction, (PetscErrorCode(*)(void *))MonitorCellDestroy, uctx));
   PetscCall(TSMonitorSet(ts, TSMonitorLGSolution, ctx, (PetscErrorCode(*)(void **))TSMonitorLGCtxDestroy));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

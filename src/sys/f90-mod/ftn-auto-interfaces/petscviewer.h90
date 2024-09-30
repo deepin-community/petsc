@@ -1,15 +1,3 @@
-      subroutine PetscViewerASCIIGetStdout(a,b,z)
-       import tPetscViewer
-       MPI_Comm a ! MPI_Comm
-       PetscViewer b ! PetscViewer
-       PetscErrorCode z
-       end subroutine PetscViewerASCIIGetStdout
-      subroutine PetscViewerASCIIGetStderr(a,b,z)
-       import tPetscViewer
-       MPI_Comm a ! MPI_Comm
-       PetscViewer b ! PetscViewer
-       PetscErrorCode z
-       end subroutine PetscViewerASCIIGetStderr
       subroutine PetscViewerASCIISetTab(a,b,z)
        import tPetscViewer
        PetscViewer a ! PetscViewer
@@ -40,6 +28,18 @@
        PetscBool b ! PetscBool
        PetscErrorCode z
        end subroutine PetscViewerASCIIUseTabs
+      subroutine PetscViewerASCIIGetStdout(a,b,z)
+       import tPetscViewer
+       MPI_Comm a ! MPI_Comm
+       PetscViewer b ! PetscViewer
+       PetscErrorCode z
+       end subroutine PetscViewerASCIIGetStdout
+      subroutine PetscViewerASCIIGetStderr(a,b,z)
+       import tPetscViewer
+       MPI_Comm a ! MPI_Comm
+       PetscViewer b ! PetscViewer
+       PetscErrorCode z
+       end subroutine PetscViewerASCIIGetStderr
       subroutine PetscViewerBinarySetUseMPIIO(a,b,z)
        import tPetscViewer
        PetscViewer a ! PetscViewer
@@ -252,22 +252,17 @@
        PetscErrorCode z
        end subroutine PetscViewerMathematicaClearName
       subroutine PetscViewerMathematicaGetVector(a,b,z)
-       import tVec,tPetscViewer
+       import tPetscViewer,tVec
        PetscViewer a ! PetscViewer
        Vec b ! Vec
        PetscErrorCode z
        end subroutine PetscViewerMathematicaGetVector
       subroutine PetscViewerMathematicaPutVector(a,b,z)
-       import tVec,tPetscViewer
+       import tPetscViewer,tVec
        PetscViewer a ! PetscViewer
        Vec b ! Vec
        PetscErrorCode z
        end subroutine PetscViewerMathematicaPutVector
-      subroutine PetscViewerFlush(a,z)
-       import tPetscViewer
-       PetscViewer a ! PetscViewer
-       PetscErrorCode z
-       end subroutine PetscViewerFlush
       subroutine PetscViewerDestroy(a,z)
        import tPetscViewer
        PetscViewer a ! PetscViewer

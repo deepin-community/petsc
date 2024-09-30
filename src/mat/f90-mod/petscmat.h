@@ -312,6 +312,14 @@
       PetscEnum, parameter :: MATOP_TRANSPOSE_SOLVE=146
       PetscEnum, parameter :: MATOP_GET_VALUES_LOCAL=147
 !
+! MatProduct
+      PetscEnum, parameter :: MATPRODUCT_UNSPECIFIED=0
+      PetscEnum, parameter :: MATPRODUCT_AB=1
+      PetscEnum, parameter :: MATPRODUCT_AtB=2
+      PetscEnum, parameter :: MATPRODUCT_ABt=3
+      PetscEnum, parameter :: MATPRODUCT_PtAP=4
+      PetscEnum, parameter :: MATPRODUCT_RARt=5
+      PetscEnum, parameter :: MATPRODUCT_ABC=6
 !
 !
       PetscEnum, parameter :: MATRIX_BINARY_FORMAT_DENSE=-1
@@ -337,6 +345,32 @@
       PetscEnum, parameter :: MP_PTSCOTCH_BALANCE = 2
       PetscEnum, parameter :: MP_PTSCOTCH_SAFETY = 3
       PetscEnum, parameter :: MP_PTSCOTCH_SCALABILITY = 4
+!
+! MatSTRUMPACKReordering
+#if defined(PETSC_HAVE_STRUMPACK)
+      PetscEnum, parameter :: MAT_STRUMPACK_NATURAL = 0
+      PetscEnum, parameter :: MAT_STRUMPACK_METIS = 1
+      PetscEnum, parameter :: MAT_STRUMPACK_PARMETIS = 2
+      PetscEnum, parameter :: MAT_STRUMPACK_SCOTCH = 3
+      PetscEnum, parameter :: MAT_STRUMPACK_PTSCOTCH = 4
+      PetscEnum, parameter :: MAT_STRUMPACK_RCM = 5
+      PetscEnum, parameter :: MAT_STRUMPACK_GEOMETRIC = 6
+      PetscEnum, parameter :: MAT_STRUMPACK_AMD = 7
+      PetscEnum, parameter :: MAT_STRUMPACK_MMD = 8
+      PetscEnum, parameter :: MAT_STRUMPACK_AND = 9
+      PetscEnum, parameter :: MAT_STRUMPACK_MLF = 10
+      PetscEnum, parameter :: MAT_STRUMPACK_SPECTRAL = 11
+!
+! MatSTRUMPACKCompressionType
+      PetscEnum, parameter :: MAT_STRUMPACK_COMPRESSION_TYPE_NONE = 0
+      PetscEnum, parameter :: MAT_STRUMPACK_COMPRESSION_TYPE_HSS = 1
+      PetscEnum, parameter :: MAT_STRUMPACK_COMPRESSION_TYPE_BLR = 2
+      PetscEnum, parameter :: MAT_STRUMPACK_COMPRESSION_TYPE_HODLR = 3
+      PetscEnum, parameter :: MAT_STRUMPACK_COMPRESSION_TYPE_BLR_HODLR = 4
+      PetscEnum, parameter :: MAT_STRUMPACK_COMPRESSION_TYPE_ZFP_BLR_HODLR = 5
+      PetscEnum, parameter :: MAT_STRUMPACK_COMPRESSION_TYPE_LOSSLESS = 6
+      PetscEnum, parameter :: MAT_STRUMPACK_COMPRESSION_TYPE_LOSSY = 7
+#endif
 
 ! PetscScalarPrecision
       PetscEnum, parameter :: PETSC_SCALAR_DOUBLE=0
@@ -589,6 +623,13 @@
 !DEC$ ATTRIBUTES DLLEXPORT::MATOP_DESTROYSUBMATRICES
 !DEC$ ATTRIBUTES DLLEXPORT::MATOP_TRANSPOSE_SOLVE
 !DEC$ ATTRIBUTES DLLEXPORT::MATOP_GET_VALUES_LOCAL
+!DEC$ ATTRIBUTES DLLEXPORT::MATPRODUCT_UNSPECIFIED
+!DEC$ ATTRIBUTES DLLEXPORT::MATPRODUCT_AB
+!DEC$ ATTRIBUTES DLLEXPORT::MATPRODUCT_AtB
+!DEC$ ATTRIBUTES DLLEXPORT::MATPRODUCT_ABt
+!DEC$ ATTRIBUTES DLLEXPORT::MATPRODUCT_PtAP
+!DEC$ ATTRIBUTES DLLEXPORT::MATPRODUCT_RARt
+!DEC$ ATTRIBUTES DLLEXPORT::MATPRODUCT_ABC
 !DEC$ ATTRIBUTES DLLEXPORT::MP_CHACO_MULTILEVEL_KL
 !DEC$ ATTRIBUTES DLLEXPORT::MP_CHACO_SPECTRAL
 !DEC$ ATTRIBUTES DLLEXPORT::MP_CHACO_LINEAR

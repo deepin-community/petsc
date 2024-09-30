@@ -1,4 +1,3 @@
-
 /*
      Provides the code that allows PETSc users to register their own
   sequential matrix Ordering routines.
@@ -8,14 +7,6 @@
 
 PetscFunctionList MatOrderingList              = NULL;
 PetscBool         MatOrderingRegisterAllCalled = PETSC_FALSE;
-
-extern PetscErrorCode MatGetOrdering_Flow_SeqAIJ(Mat, MatOrderingType, IS *, IS *);
-
-PetscErrorCode MatGetOrdering_Flow(Mat mat, MatOrderingType type, IS *irow, IS *icol)
-{
-  PetscFunctionBegin;
-  SETERRQ(PetscObjectComm((PetscObject)mat), PETSC_ERR_SUP, "Cannot do default flow ordering for matrix type");
-}
 
 PETSC_INTERN PetscErrorCode MatGetOrdering_Natural(Mat mat, MatOrderingType type, IS *irow, IS *icol)
 {
@@ -47,7 +38,7 @@ PETSC_INTERN PetscErrorCode MatGetOrdering_Natural(Mat mat, MatOrderingType type
   }
   PetscCall(ISSetIdentity(*irow));
   PetscCall(ISSetIdentity(*icol));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -77,28 +68,28 @@ PETSC_INTERN PetscErrorCode MatGetOrdering_RowLength(Mat mat, MatOrderingType ty
   PetscCall(ISCreateGeneral(PETSC_COMM_SELF, n, permr, PETSC_COPY_VALUES, irow));
   PetscCall(ISCreateGeneral(PETSC_COMM_SELF, n, permr, PETSC_COPY_VALUES, icol));
   PetscCall(PetscFree2(lens, permr));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   MatOrderingRegister - Adds a new sparse matrix ordering to the matrix package.
+  MatOrderingRegister - Adds a new sparse matrix ordering to the matrix package.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  sname - name of ordering (for example `MATORDERINGND`)
--  function - function pointer that creates the ordering
+  Input Parameters:
++ sname    - name of ordering (for example `MATORDERINGND`)
+- function - function pointer that creates the ordering
 
-   Level: developer
+  Level: developer
 
-   Sample usage:
+  Example Usage:
 .vb
    MatOrderingRegister("my_order", MyOrder);
 .ve
 
-   Then, your partitioner can be chosen with the procedural interface via
-$     MatOrderingSetType(part,"my_order)
-   or at runtime via the option
+  Then, your partitioner can be chosen with the procedural interface via
+$     MatOrderingSetType(part, "my_order)
+  or at runtime via the option
 $     -pc_factor_mat_ordering_type my_order
 
 .seealso: `MatOrderingRegisterAll()`, `MatGetOrdering()`
@@ -108,20 +99,19 @@ PetscErrorCode MatOrderingRegister(const char sname[], PetscErrorCode (*function
   PetscFunctionBegin;
   PetscCall(MatInitializePackage());
   PetscCall(PetscFunctionListAdd(&MatOrderingList, sname, function));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #include <../src/mat/impls/aij/mpi/mpiaij.h>
 /*@C
-   MatGetOrdering - Gets a reordering for a matrix to reduce fill or to
-   improve numerical stability of LU factorization.
+  MatGetOrdering - Gets a reordering for a matrix to reduce fill or to
+  improve numerical stability of LU factorization.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  mat - the matrix
--  type - type of reordering, one of the following
-
+  Input Parameters:
++ mat  - the matrix
+- type - type of reordering, one of the following
 .vb
       MATORDERINGNATURAL_OR_ND - Nested dissection unless matrix is SBAIJ then it is natural
       MATORDERINGNATURAL - Natural
@@ -132,29 +122,29 @@ PetscErrorCode MatOrderingRegister(const char sname[], PetscErrorCode (*function
       MATORDERINGEXTERNAL - Use an ordering internal to the factorzation package and do not compute or use PETSc's
 .ve
 
-   Output Parameters:
-+  rperm - row permutation indices
--  cperm - column permutation indices
+  Output Parameters:
++ rperm - row permutation indices
+- cperm - column permutation indices
 
-   Options Database Key:
-+ -mat_view_ordering draw - plots matrix nonzero structure in new ordering
+  Options Database Key:
++ -mat_view_ordering draw                      - plots matrix nonzero structure in new ordering
 - -pc_factor_mat_ordering_type <nd,natural,..> - ordering to use with `PC`s based on factorization, `MATLU`, `MATILU`, MATCHOLESKY`, `MATICC`
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-      This DOES NOT actually reorder the matrix; it merely returns two index sets
-   that define a reordering. This is usually not used directly, rather use the
-   options `PCFactorSetMatOrderingType()`
+  Notes:
+  This DOES NOT actually reorder the matrix; it merely returns two index sets
+  that define a reordering. This is usually not used directly, rather use the
+  options `PCFactorSetMatOrderingType()`
 
-   The user can define additional orderings; see MatOrderingRegister().
+  The user can define additional orderings; see `MatOrderingRegister()`.
 
-   These are generally only implemented for sequential sparse matrices.
+  These are generally only implemented for sequential sparse matrices.
 
-   Some external packages that PETSc can use for direct factorization such as SuperLU do not accept orderings provided by
-   this call.
+  Some external packages that PETSc can use for direct factorization such as SuperLU_DIST do not accept orderings provided by
+  this call.
 
-   If `MATORDERINGEXTERNAL` is used then PETSc does not compute an ordering and utilizes one built into the factorization package
+  If `MATORDERINGEXTERNAL` is used then PETSc does not compute an ordering and utilizes one built into the factorization package
 
 .seealso: `MatOrderingRegister()`, `PCFactorSetMatOrderingType()`, `MatColoring`, `MatColoringCreate()`, `MatOrderingType`, `Mat`
 @*/
@@ -166,8 +156,8 @@ PetscErrorCode MatGetOrdering(Mat mat, MatOrderingType type, IS *rperm, IS *cper
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(mat, MAT_CLASSID, 1);
-  PetscValidPointer(rperm, 3);
-  PetscValidPointer(cperm, 4);
+  PetscAssertPointer(rperm, 3);
+  PetscAssertPointer(cperm, 4);
   PetscCheck(mat->assembled, PetscObjectComm((PetscObject)mat), PETSC_ERR_ARG_WRONGSTATE, "Not for unassembled matrix");
   PetscCheck(!mat->factortype, PetscObjectComm((PetscObject)mat), PETSC_ERR_ARG_WRONGSTATE, "Not for factored matrix");
   PetscCheck(type, PETSC_COMM_SELF, PETSC_ERR_ARG_NULL, "Ordering type cannot be null");
@@ -176,7 +166,7 @@ PetscErrorCode MatGetOrdering(Mat mat, MatOrderingType type, IS *rperm, IS *cper
   if (flg) {
     *rperm = NULL;
     *cperm = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /* This code is terrible. MatGetOrdering() multiple dispatch should use matrix and this code should move to impls/aij/mpi. */
@@ -207,7 +197,7 @@ PetscErrorCode MatGetOrdering(Mat mat, MatOrderingType type, IS *rperm, IS *cper
     PetscCall(ISDestroy(&lcolperm));
     PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)mat), rend - rstart, idx, PETSC_OWN_POINTER, cperm));
     PetscCall(ISSetPermutation(*cperm));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   if (!mat->rmap->N) { /* matrix has zero rows */
@@ -215,7 +205,7 @@ PetscErrorCode MatGetOrdering(Mat mat, MatOrderingType type, IS *rperm, IS *cper
     PetscCall(ISCreateStride(PETSC_COMM_SELF, 0, 0, 1, rperm));
     PetscCall(ISSetIdentity(*cperm));
     PetscCall(ISSetIdentity(*rperm));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   PetscCall(MatGetLocalSize(mat, &mmat, &nmat));
@@ -241,12 +231,12 @@ PetscErrorCode MatGetOrdering(Mat mat, MatOrderingType type, IS *rperm, IS *cper
     PetscCall(MatViewFromOptions(tmat, (PetscObject)mat, "-mat_view_ordering"));
     PetscCall(MatDestroy(&tmat));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatGetOrderingList(PetscFunctionList *list)
 {
   PetscFunctionBegin;
   *list = MatOrderingList;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,4 +1,3 @@
-
 static char help[] = "Demonstrates using the PetscBag Object\n\n";
 
 #include <petscsys.h>
@@ -133,7 +132,7 @@ int main(int argc, char **argv)
       suffix: yaml
       requires: !complex
       args: -options_file bag.yml -options_view
-      filter: grep -E -v "(options_left|options_view)"
+      filter: grep -E -v "(options_view)"
       localrunfiles: bag.yml
 
 TEST*/

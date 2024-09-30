@@ -1,4 +1,3 @@
-
 static char help[] = "Tests MatShift(), MatScale(), and MatDiagonalScale() for SHELL and NEST matrices\n\n";
 
 #include <petscmat.h>
@@ -15,7 +14,7 @@ static PetscErrorCode MatView_User(Mat A, PetscViewer viewer)
   PetscFunctionBegin;
   PetscCall(MatShellGetContext(A, &user));
   PetscCall(MatView(user->B, viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatMult_User(Mat A, Vec X, Vec Y)
@@ -25,7 +24,7 @@ static PetscErrorCode MatMult_User(Mat A, Vec X, Vec Y)
   PetscFunctionBegin;
   PetscCall(MatShellGetContext(A, &user));
   PetscCall(MatMult(user->B, X, Y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatMultTranspose_User(Mat A, Vec X, Vec Y)
@@ -35,7 +34,7 @@ static PetscErrorCode MatMultTranspose_User(Mat A, Vec X, Vec Y)
   PetscFunctionBegin;
   PetscCall(MatShellGetContext(A, &user));
   PetscCall(MatMultTranspose(user->B, X, Y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatGetDiagonal_User(Mat A, Vec X)
@@ -45,7 +44,7 @@ static PetscErrorCode MatGetDiagonal_User(Mat A, Vec X)
   PetscFunctionBegin;
   PetscCall(MatShellGetContext(A, &user));
   PetscCall(MatGetDiagonal(user->B, X));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TestMatrix(Mat A, Vec X, Vec Y, Vec Z)
@@ -141,7 +140,7 @@ static PetscErrorCode TestMatrix(Mat A, Vec X, Vec Y, Vec Z)
   PetscCall(MatDestroy(&E));
   PetscCall(VecDestroy(&W1));
   PetscCall(VecDestroy(&W2));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **args)

@@ -12,10 +12,10 @@ PetscBool         PetscSpaceRegisterAllCalled = PETSC_FALSE;
   Not Collective
 
   Input Parameters:
-+ name        - The name of a new user-defined creation routine
-- create_func - The creation routine for the implementation type
++ sname    - The name of a new user-defined creation routine
+- function - The creation routine for the implementation type
 
-  Sample usage:
+  Example Usage:
 .vb
     PetscSpaceRegister("my_space", MyPetscSpaceCreate);
 .ve
@@ -25,7 +25,7 @@ PetscBool         PetscSpaceRegisterAllCalled = PETSC_FALSE;
     PetscSpaceCreate(MPI_Comm, PetscSpace *);
     PetscSpaceSetType(PetscSpace, "my_space");
 .ve
-   or at runtime via the option
+  or at runtime via the option
 .vb
     -petscspace_type my_space
 .ve
@@ -42,13 +42,13 @@ PetscErrorCode PetscSpaceRegister(const char sname[], PetscErrorCode (*function)
 {
   PetscFunctionBegin;
   PetscCall(PetscFunctionListAdd(&PetscSpaceList, sname, function));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   PetscSpaceSetType - Builds a particular `PetscSpace`
 
-  Collective on sp
+  Collective
 
   Input Parameters:
 + sp   - The `PetscSpace` object
@@ -69,7 +69,7 @@ PetscErrorCode PetscSpaceSetType(PetscSpace sp, PetscSpaceType name)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCSPACE_CLASSID, 1);
   PetscCall(PetscObjectTypeCompare((PetscObject)sp, name, &match));
-  if (match) PetscFunctionReturn(0);
+  if (match) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(PetscSpaceRegisterAll());
   PetscCall(PetscFunctionListFind(PetscSpaceList, name, &r));
@@ -81,7 +81,7 @@ PetscErrorCode PetscSpaceSetType(PetscSpace sp, PetscSpaceType name)
   sp->dim = PETSC_DETERMINE;
   PetscCall((*r)(sp));
   PetscCall(PetscObjectChangeTypeName((PetscObject)sp, name));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -90,7 +90,7 @@ PetscErrorCode PetscSpaceSetType(PetscSpace sp, PetscSpaceType name)
   Not Collective
 
   Input Parameter:
-. sp  - The `PetscSpace`
+. sp - The `PetscSpace`
 
   Output Parameter:
 . name - The `PetscSpace` type name
@@ -103,23 +103,24 @@ PetscErrorCode PetscSpaceGetType(PetscSpace sp, PetscSpaceType *name)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCSPACE_CLASSID, 1);
-  PetscValidPointer(name, 2);
+  PetscAssertPointer(name, 2);
   if (!PetscSpaceRegisterAllCalled) PetscCall(PetscSpaceRegisterAll());
   *name = ((PetscObject)sp)->type_name;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscSpaceViewFromOptions - View a `PetscSpace` based on values in the options database
+  PetscSpaceViewFromOptions - View a `PetscSpace` based on values in the options database
 
-   Collective on PetscSpace
+  Collective
 
-   Input Parameters:
-+  A - the PetscSpace object
-.  obj - Optional object that provides the options name prefix
--  name - command line option name
+  Input Parameters:
++ A    - the `PetscSpace` object
+. obj  - Optional object that provides the options name prefix
+- name - command line option name
 
-   Level: intermediate
+  Level: intermediate
+
 .seealso: `PetscSpace`, `PetscSpaceView()`, `PetscObjectViewFromOptions()`, `PetscSpaceCreate()`
 @*/
 PetscErrorCode PetscSpaceViewFromOptions(PetscSpace A, PetscObject obj, const char name[])
@@ -127,13 +128,13 @@ PetscErrorCode PetscSpaceViewFromOptions(PetscSpace A, PetscObject obj, const ch
   PetscFunctionBegin;
   PetscValidHeaderSpecific(A, PETSCSPACE_CLASSID, 1);
   PetscCall(PetscObjectViewFromOptions((PetscObject)A, obj, name));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   PetscSpaceView - Views a `PetscSpace`
 
-  Collective on sp
+  Collective
 
   Input Parameters:
 + sp - the `PetscSpace` object to view
@@ -159,20 +160,20 @@ PetscErrorCode PetscSpaceView(PetscSpace sp, PetscViewer v)
   if (iascii) PetscCall(PetscViewerASCIIPrintf(v, "Space in %" PetscInt_FMT " variables with %" PetscInt_FMT " components, size %" PetscInt_FMT "\n", sp->Nv, sp->Nc, pdim));
   PetscTryTypeMethod(sp, view, v);
   PetscCall(PetscViewerASCIIPopTab(v));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscSpaceSetFromOptions - sets parameters in a `PetscSpace` from the options database
 
-  Collective on sp
+  Collective
 
   Input Parameter:
 . sp - the `PetscSpace` object to set options for
 
   Options Database Keys:
-+ -petscspace_degree <deg> - the approximation order of the space
-. -petscspace_variables <n> - the number of different variables, e.g. x and y
++ -petscspace_degree <deg>   - the approximation order of the space
+. -petscspace_variables <n>  - the number of different variables, e.g. x and y
 - -petscspace_components <c> - the number of components, say d for a vector field
 
   Level: intermediate
@@ -203,7 +204,6 @@ PetscErrorCode PetscSpaceSetFromOptions(PetscSpace sp)
   }
   {
     PetscCall(PetscOptionsDeprecated("-petscspace_order", "-petscspace_degree", "3.11", NULL));
-    PetscCall(PetscOptionsBoundedInt("-petscspace_order", "DEPRECATED: The approximation order", "PetscSpaceSetDegree", sp->degree, &sp->degree, NULL, 0));
   }
   PetscCall(PetscOptionsBoundedInt("-petscspace_degree", "The (maximally included) polynomial degree", "PetscSpaceSetDegree", sp->degree, &sp->degree, NULL, 0));
   PetscCall(PetscOptionsBoundedInt("-petscspace_variables", "The number of different variables, e.g. x and y", "PetscSpaceSetNumVariables", sp->Nv, &sp->Nv, NULL, 0));
@@ -213,13 +213,13 @@ PetscErrorCode PetscSpaceSetFromOptions(PetscSpace sp)
   PetscCall(PetscObjectProcessOptionsHandlers((PetscObject)sp, PetscOptionsObject));
   PetscOptionsEnd();
   PetscCall(PetscSpaceViewFromOptions(sp, NULL, "-petscspace_view"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   PetscSpaceSetUp - Construct data structures for the `PetscSpace`
 
-  Collective on sp
+  Collective
 
   Input Parameter:
 . sp - the `PetscSpace` object to setup
@@ -233,16 +233,16 @@ PetscErrorCode PetscSpaceSetUp(PetscSpace sp)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCSPACE_CLASSID, 1);
   PetscTryTypeMethod(sp, setup);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscSpaceDestroy - Destroys a `PetscSpace` object
 
-  Collective on sp
+  Collective
 
   Input Parameter:
-. sp - the PetscSpace object to destroy
+. sp - the `PetscSpace` object to destroy
 
   Level: beginner
 
@@ -251,19 +251,19 @@ PetscErrorCode PetscSpaceSetUp(PetscSpace sp)
 PetscErrorCode PetscSpaceDestroy(PetscSpace *sp)
 {
   PetscFunctionBegin;
-  if (!*sp) PetscFunctionReturn(0);
+  if (!*sp) PetscFunctionReturn(PETSC_SUCCESS);
   PetscValidHeaderSpecific((*sp), PETSCSPACE_CLASSID, 1);
 
   if (--((PetscObject)(*sp))->refct > 0) {
     *sp = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   ((PetscObject)(*sp))->refct = 0;
   PetscCall(DMDestroy(&(*sp)->dm));
 
   PetscCall((*(*sp)->ops->destroy)(*sp));
   PetscCall(PetscHeaderDestroy(sp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -286,7 +286,7 @@ PetscErrorCode PetscSpaceCreate(MPI_Comm comm, PetscSpace *sp)
   PetscSpace s;
 
   PetscFunctionBegin;
-  PetscValidPointer(sp, 2);
+  PetscAssertPointer(sp, 2);
   PetscCall(PetscCitationsRegister(FECitation, &FEcite));
   *sp = NULL;
   PetscCall(PetscFEInitializePackage());
@@ -302,7 +302,7 @@ PetscErrorCode PetscSpaceCreate(MPI_Comm comm, PetscSpace *sp)
   PetscCall(PetscSpaceSetType(s, PETSCSPACEPOLYNOMIAL));
 
   *sp = s;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -316,16 +316,16 @@ PetscErrorCode PetscSpaceCreate(MPI_Comm comm, PetscSpace *sp)
 
   Level: intermediate
 
-.seealso: `PetscSpace`, `PetscSpaceGetDegree()`, `PetscSpaceCreate()`, `PetscSpace`
+.seealso: `PetscSpace`, `PetscSpaceGetDegree()`, `PetscSpaceCreate()`
 @*/
 PetscErrorCode PetscSpaceGetDimension(PetscSpace sp, PetscInt *dim)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCSPACE_CLASSID, 1);
-  PetscValidIntPointer(dim, 2);
+  PetscAssertPointer(dim, 2);
   if (sp->dim == PETSC_DETERMINE) PetscTryTypeMethod(sp, getdimension, &sp->dim);
   *dim = sp->dim;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -340,30 +340,30 @@ PetscErrorCode PetscSpaceGetDimension(PetscSpace sp, PetscInt *dim)
 
   Level: intermediate
 
-.seealso: `PetscSpace`, `PetscSpaceSetDegree()`, `PetscSpaceGetDimension()`, `PetscSpaceCreate()`, `PetscSpace`
+.seealso: `PetscSpace`, `PetscSpaceSetDegree()`, `PetscSpaceGetDimension()`, `PetscSpaceCreate()`
 @*/
 PetscErrorCode PetscSpaceGetDegree(PetscSpace sp, PetscInt *minDegree, PetscInt *maxDegree)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCSPACE_CLASSID, 1);
-  if (minDegree) PetscValidIntPointer(minDegree, 2);
-  if (maxDegree) PetscValidIntPointer(maxDegree, 3);
+  if (minDegree) PetscAssertPointer(minDegree, 2);
+  if (maxDegree) PetscAssertPointer(maxDegree, 3);
   if (minDegree) *minDegree = sp->degree;
   if (maxDegree) *maxDegree = sp->maxDegree;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscSpaceSetDegree - Set the degree of approximation for this space.
 
   Input Parameters:
-+ sp - The `PetscSpace`
-. degree - The degree of the largest polynomial space contained in the space
++ sp        - The `PetscSpace`
+. degree    - The degree of the largest polynomial space contained in the space
 - maxDegree - The degree of the largest polynomial space containing the space.  One of degree and maxDegree can be `PETSC_DETERMINE`.
 
   Level: intermediate
 
-.seealso: `PetscSpace`, `PetscSpaceGetDegree()`, `PetscSpaceCreate()`, `PetscSpace`
+.seealso: `PetscSpace`, `PetscSpaceGetDegree()`, `PetscSpaceCreate()`
 @*/
 PetscErrorCode PetscSpaceSetDegree(PetscSpace sp, PetscInt degree, PetscInt maxDegree)
 {
@@ -371,7 +371,7 @@ PetscErrorCode PetscSpaceSetDegree(PetscSpace sp, PetscInt degree, PetscInt maxD
   PetscValidHeaderSpecific(sp, PETSCSPACE_CLASSID, 1);
   sp->degree    = degree;
   sp->maxDegree = maxDegree;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -388,15 +388,15 @@ PetscErrorCode PetscSpaceSetDegree(PetscSpace sp, PetscInt degree, PetscInt maxD
   Note:
   A vector space, for example, will have d components, where d is the spatial dimension
 
-.seealso: `PetscSpace`, `PetscSpaceSetNumComponents()`, `PetscSpaceGetNumVariables()`, `PetscSpaceGetDimension()`, `PetscSpaceCreate()`, `PetscSpace`
+.seealso: `PetscSpace`, `PetscSpaceSetNumComponents()`, `PetscSpaceGetNumVariables()`, `PetscSpaceGetDimension()`, `PetscSpaceCreate()`
 @*/
 PetscErrorCode PetscSpaceGetNumComponents(PetscSpace sp, PetscInt *Nc)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCSPACE_CLASSID, 1);
-  PetscValidIntPointer(Nc, 2);
+  PetscAssertPointer(Nc, 2);
   *Nc = sp->Nc;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -404,18 +404,18 @@ PetscErrorCode PetscSpaceGetNumComponents(PetscSpace sp, PetscInt *Nc)
 
   Input Parameters:
 + sp - The `PetscSpace`
-- order - The number of components
+- Nc - The number of components
 
   Level: intermediate
 
-.seealso: `PetscSpace`, `PetscSpaceGetNumComponents()`, `PetscSpaceSetNumVariables()`, `PetscSpaceCreate()`, `PetscSpace`
+.seealso: `PetscSpace`, `PetscSpaceGetNumComponents()`, `PetscSpaceSetNumVariables()`, `PetscSpaceCreate()`
 @*/
 PetscErrorCode PetscSpaceSetNumComponents(PetscSpace sp, PetscInt Nc)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCSPACE_CLASSID, 1);
   sp->Nc = Nc;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -423,18 +423,18 @@ PetscErrorCode PetscSpaceSetNumComponents(PetscSpace sp, PetscInt Nc)
 
   Input Parameters:
 + sp - The `PetscSpace`
-- n - The number of variables, e.g. x, y, z...
+- n  - The number of variables, e.g. x, y, z...
 
   Level: intermediate
 
-.seealso: `PetscSpace`, `PetscSpaceGetNumVariables()`, `PetscSpaceSetNumComponents()`, `PetscSpaceCreate()`, `PetscSpace`
+.seealso: `PetscSpace`, `PetscSpaceGetNumVariables()`, `PetscSpaceSetNumComponents()`, `PetscSpaceCreate()`
 @*/
 PetscErrorCode PetscSpaceSetNumVariables(PetscSpace sp, PetscInt n)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCSPACE_CLASSID, 1);
   sp->Nv = n;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -444,19 +444,19 @@ PetscErrorCode PetscSpaceSetNumVariables(PetscSpace sp, PetscInt n)
 . sp - The `PetscSpace`
 
   Output Parameter:
-. Nc - The number of variables, e.g. x, y, z...
+. n - The number of variables, e.g. x, y, z...
 
   Level: intermediate
 
-.seealso: `PetscSpace`, `PetscSpaceSetNumVariables()`, `PetscSpaceGetNumComponents()`, `PetscSpaceGetDimension()`, `PetscSpaceCreate()`, `PetscSpace`
+.seealso: `PetscSpace`, `PetscSpaceSetNumVariables()`, `PetscSpaceGetNumComponents()`, `PetscSpaceGetDimension()`, `PetscSpaceCreate()`
 @*/
 PetscErrorCode PetscSpaceGetNumVariables(PetscSpace sp, PetscInt *n)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCSPACE_CLASSID, 1);
-  PetscValidIntPointer(n, 2);
+  PetscAssertPointer(n, 2);
   *n = sp->Nv;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -483,23 +483,23 @@ PetscErrorCode PetscSpaceGetNumVariables(PetscSpace sp, PetscInt *n)
 PetscErrorCode PetscSpaceEvaluate(PetscSpace sp, PetscInt npoints, const PetscReal points[], PetscReal B[], PetscReal D[], PetscReal H[])
 {
   PetscFunctionBegin;
-  if (!npoints) PetscFunctionReturn(0);
+  if (!npoints) PetscFunctionReturn(PETSC_SUCCESS);
   PetscValidHeaderSpecific(sp, PETSCSPACE_CLASSID, 1);
-  if (sp->Nv) PetscValidRealPointer(points, 3);
-  if (B) PetscValidRealPointer(B, 4);
-  if (D) PetscValidRealPointer(D, 5);
-  if (H) PetscValidRealPointer(H, 6);
+  if (sp->Nv) PetscAssertPointer(points, 3);
+  if (B) PetscAssertPointer(B, 4);
+  if (D) PetscAssertPointer(D, 5);
+  if (H) PetscAssertPointer(H, 6);
   PetscTryTypeMethod(sp, evaluate, npoints, points, B, D, H);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscSpaceGetHeightSubspace - Get the subset of the primal space basis that is supported on a mesh point of a given height.
 
-  Not collective
+  Not Collective
 
   Input Parameters:
-+ sp - the PetscSpace object
++ sp     - the `PetscSpace` object
 - height - the height of the mesh point for which the subspace is desired
 
   Output Parameter:
@@ -520,8 +520,8 @@ PetscErrorCode PetscSpaceGetHeightSubspace(PetscSpace sp, PetscInt height, Petsc
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCSPACE_CLASSID, 1);
-  PetscValidPointer(subsp, 3);
+  PetscAssertPointer(subsp, 3);
   *subsp = NULL;
   PetscTryTypeMethod(sp, getheightsubspace, height, subsp);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

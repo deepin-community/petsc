@@ -1,13 +1,7 @@
 -include ../../../../../petscdir.mk
-#requiresdefine   'PETSC_HAVE_FORTRAN'
+#requiresdefine   'PETSC_USE_FORTRAN_BINDINGS'
 
-SOURCEC  = zarkimexf.c
-SOURCEF  =
-SOURCEH  =
-DIRS     =
 LIBBASE  = libpetscts
-LOCDIR   = src/ts/impls/arkimex/ftn-custom/
 
 include ${PETSC_DIR}/lib/petsc/conf/variables
-include ${PETSC_DIR}/lib/petsc/conf/rules
-include ${PETSC_DIR}/lib/petsc/conf/test
+include ${PETSC_DIR}/lib/petsc/conf/rules.doc

@@ -1,15 +1,3 @@
 
-#requiresdefine   'PETSC_HAVE_FORTRAN'
-ALL: lib
-
-CFLAGS   =
-FFLAGS   =
-SOURCEC  = gcookief.c statef.c subcommf.c tagmf.c gcommf.c optionsf.c destroyf.c inheritf.c pinitf.c
-SOURCEF  =
-SOURCEH  = 
-DIRS     =
+#requiresdefine   'PETSC_USE_FORTRAN_BINDINGS'
 LIBBASE	  = libpetscsys
-LOCDIR	  = src/sys/objects/ftn-auto/
-include ${PETSC_DIR}/lib/petsc/conf/variables
-include ${PETSC_DIR}/lib/petsc/conf/rules
-include ${PETSC_DIR}/lib/petsc/conf/test

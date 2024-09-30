@@ -1,10 +1,10 @@
-#ifndef _NETWORKIMPL_H
-#define _NETWORKIMPL_H
+#pragma once
 
+#include "petscistypes.h"
 #include <petscmat.h>                 /*I      "petscmat.h"          I*/
 #include <petscdmnetwork.h>           /*I      "petscdmnetwork.h"    I*/
 #include <petsc/private/dmpleximpl.h> /*I  "petscdmplex.h"  I*/
-#include <petscctable.h>
+#include <petsc/private/hashmapi.h>
 
 PETSC_EXTERN PetscLogEvent DMNetwork_LayoutSetUp;
 PETSC_EXTERN PetscLogEvent DMNetwork_SetUpNetwork;
@@ -90,6 +90,17 @@ typedef struct {
   char      name[32 - sizeof(PetscInt)];
 } DMSubnetwork;
 
+/*
+  Structure storing default viewing options for the DMNetwork
+*/
+typedef struct {
+  PetscBool showallranks;   /* Shows each rank individually as well */
+  PetscBool dontshowglobal; /* Don't show combined network */
+  IS        viewranks;      /* IS containing the ranks to view the DMNetwork on */
+  PetscBool shownovertices;
+  PetscBool shownonumbering;
+} DMNetworkViewerOptions;
+
 /* The data structure for DMNetwork is split into two parts:
    1. DMNetworkCloneShared : The part of the Network that holds information that is shared between
       clones. Mostly topological data/reference counting information
@@ -115,7 +126,7 @@ struct _p_DMNetworkCloneShared {
   PetscInt      nsvtx, Nsvtx;           /* Local and global num of entries in svtx */
   PetscInt     *svertices;              /* Array of local subnetwork vertices that are merged/shared */
   PetscInt     *sedgelist;              /* Edge list of shared vertices */
-  PetscTable    svtable;                /* hash table for finding shared vertex info */
+  PetscHMapI    svtable;                /* hash table for finding shared vertex info */
 } PETSC_ATTRIBUTEALIGNED(PetscMax(sizeof(double), sizeof(PetscScalar)));
 
 typedef struct {
@@ -137,14 +148,15 @@ typedef struct {
   PetscBool                          componentsetup;       /* Flag for the setup of the component. Might differ from dmsetup information */
   PetscInt                           max_comps_registered; /* Max. number of components that can be registered */
 
-  PetscBool userEdgeJacobian, userVertexJacobian; /* Global flag for using user's sub Jacobians */
-  Mat      *Je;                                   /* Pointer array to hold local sub Jacobians for edges, 3 elements for an edge */
-  Mat      *Jv;                                   /* Pointer array to hold local sub Jacobians for vertices, 1+2*nsupportedges for a vertex */
-  PetscInt *Jvptr;                                /* index of Jv for v-th vertex
+  PetscBool              userEdgeJacobian, userVertexJacobian; /* Global flag for using user's sub Jacobians */
+  Mat                   *Je;                                   /* Pointer array to hold local sub Jacobians for edges, 3 elements for an edge */
+  Mat                   *Jv;                                   /* Pointer array to hold local sub Jacobians for vertices, 1+2*nsupportedges for a vertex */
+  PetscInt              *Jvptr;                                /* index of Jv for v-th vertex
                                               Jvpt[v-vStart]:    Jacobian(v,v)
                                               Jvpt[v-vStart]+2i+1: Jacobian(v,e[i]),   e[i]: i-th supporting edge
                                               Jvpt[v-vStart]+2i+2: Jacobian(v,vc[i]), vc[i]: i-th connected vertex
                                               */
+  DMNetworkViewerOptions vieweroptions;
 } DM_Network;
 
 PETSC_INTERN PetscErrorCode DMNetworkGetIndex(DM, PetscInt, PetscInt *);
@@ -160,4 +172,4 @@ PETSC_INTERN PetscErrorCode DMNetworkInitializeNonTopological(DM);
 PETSC_INTERN PetscErrorCode DMNetworkInitializeToDefault(DM);
 PETSC_INTERN PetscErrorCode DMNetworkInitializeToDefault_NonShared(DM);
 
-#endif /* _NETWORKIMPL_H */
+PETSC_INTERN PetscErrorCode DMCreateCoordinateDM_Network(DM, DM *);

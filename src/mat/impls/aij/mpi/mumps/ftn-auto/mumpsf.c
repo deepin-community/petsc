@@ -78,6 +78,11 @@ extern void PetscRmPointer(void*);
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define matmumpsgetrinfog_ matmumpsgetrinfog
 #endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define matmumpsgetnullpivots_ MATMUMPSGETNULLPIVOTS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define matmumpsgetnullpivots_ matmumpsgetnullpivots
+#endif
 
 
 /* Definitions of Fortran Wrapper routines */
@@ -135,6 +140,11 @@ PETSC_EXTERN void  matmumpsgetrinfog_(Mat F,PetscInt *icntl,PetscReal *val, int 
 {
 *__ierr = MatMumpsGetRinfog(
 	(Mat)PetscToPointer((F) ),*icntl,val);
+}
+PETSC_EXTERN void  matmumpsgetnullpivots_(Mat F,PetscInt *size,PetscInt **array, int *__ierr)
+{
+*__ierr = MatMumpsGetNullPivots(
+	(Mat)PetscToPointer((F) ),size,array);
 }
 #if defined(__cplusplus)
 }

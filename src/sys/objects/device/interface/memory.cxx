@@ -2,17 +2,31 @@
 
 #include <petsc/private/cpp/register_finalize.hpp>
 #include <petsc/private/cpp/type_traits.hpp> // integral_value
+#include <petsc/private/cpp/unordered_map.hpp>
 
-#include <unordered_map>
 #include <algorithm> // std::find_if
 #include <cstring>   // std::memset
 
+#include <petsc/private/cpp/object_pool.hpp>
+
+namespace Petsc
+{
+
+namespace memory
+{
+
+typename PoolAllocated::allocator_type PoolAllocated::pool_{};
+
+} // namespace memory
+
+} // namespace Petsc
+
 const char *const PetscDeviceCopyModes[] = {"host_to_host", "device_to_host", "host_to_device", "device_to_device", "auto", "PetscDeviceCopyMode", "PETSC_DEVICE_COPY_", nullptr};
-static_assert(Petsc::util::integral_value(PETSC_DEVICE_COPY_HTOH) == 0, "");
-static_assert(Petsc::util::integral_value(PETSC_DEVICE_COPY_DTOH) == 1, "");
-static_assert(Petsc::util::integral_value(PETSC_DEVICE_COPY_HTOD) == 2, "");
-static_assert(Petsc::util::integral_value(PETSC_DEVICE_COPY_DTOD) == 3, "");
-static_assert(Petsc::util::integral_value(PETSC_DEVICE_COPY_AUTO) == 4, "");
+static_assert(Petsc::util::to_underlying(PETSC_DEVICE_COPY_HTOH) == 0, "");
+static_assert(Petsc::util::to_underlying(PETSC_DEVICE_COPY_DTOH) == 1, "");
+static_assert(Petsc::util::to_underlying(PETSC_DEVICE_COPY_HTOD) == 2, "");
+static_assert(Petsc::util::to_underlying(PETSC_DEVICE_COPY_DTOD) == 3, "");
+static_assert(Petsc::util::to_underlying(PETSC_DEVICE_COPY_AUTO) == 4, "");
 
 // GCC implementation for std::hash<T*>. LLVM's libc++ is almost 2x slower because they do all
 // kinds of complicated murmur hashing, so we make sure to enforce GCC's version.
@@ -26,6 +40,8 @@ struct PointerHash {
 
 // ==========================================================================================
 // PointerAttributes
+//
+// A set of attributes for a pointer
 // ==========================================================================================
 
 struct PointerAttributes {
@@ -35,6 +51,7 @@ struct PointerAttributes {
 
   // even though this is a POD and can be aggregate initialized, the STL uses () constructors
   // in unordered_map and so we need to provide a trivial constructor...
+  constexpr PointerAttributes() = default;
   constexpr PointerAttributes(PetscMemType, PetscObjectId, std::size_t) noexcept;
 
   bool operator==(const PointerAttributes &) const noexcept;
@@ -77,7 +94,7 @@ inline bool PointerAttributes::contains(const void *ptr_begin, const void *ptr) 
 //
 // Each entry maps pointer -> {
 //   PetscMemType  - The memtype of the pointer
-//   PetscObjectId - A unique ID assigned at allocation or registratrion so auto-dep can
+//   PetscObjectId - A unique ID assigned at allocation or registration so auto-dep can
 //                   identify the pointer
 //   size          - The size (in bytes) of the allocation
 // }
@@ -85,7 +102,7 @@ inline bool PointerAttributes::contains(const void *ptr_begin, const void *ptr) 
 
 class MemoryMap : public Petsc::RegisterFinalizeable<MemoryMap> {
 public:
-  using map_type = std::unordered_map<void *, PointerAttributes, PointerHash>;
+  using map_type = Petsc::UnorderedMap<void *, PointerAttributes, PointerHash>;
 
   map_type map{};
 
@@ -93,8 +110,8 @@ public:
 
 private:
   friend class Petsc::RegisterFinalizeable<MemoryMap>;
-  PETSC_NODISCARD PetscErrorCode register_finalize_() noexcept;
-  PETSC_NODISCARD PetscErrorCode finalize_() noexcept;
+  PetscErrorCode register_finalize_() noexcept;
+  PetscErrorCode finalize_() noexcept;
 };
 
 // ==========================================================================================
@@ -107,8 +124,8 @@ PetscErrorCode MemoryMap::register_finalize_() noexcept
   // Preallocate, this does give a modest performance bump since unordered_map is so __dog__
   // slow if it needs to rehash. Experiments show that users tend not to have more than 5 or
   // so concurrently live pointers lying around. 10 at most.
-  PetscCallCXX(map.reserve(16));
-  PetscFunctionReturn(0);
+  PetscCall(map.reserve(16));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MemoryMap::finalize_() noexcept
@@ -116,7 +133,7 @@ PetscErrorCode MemoryMap::finalize_() noexcept
   PetscFunctionBegin;
   PetscCall(PetscInfo(nullptr, "Finalizing memory map\n"));
   PetscCallCXX(map = map_type{});
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 // ==========================================================================================
@@ -138,20 +155,20 @@ PetscErrorCode MemoryMap::finalize_() noexcept
 */
 MemoryMap::map_type::const_iterator MemoryMap::search_for(const void *ptr, bool must_find) const noexcept
 {
-  const auto end = map.end();
-  auto       it  = map.find(const_cast<map_type::key_type>(ptr));
+  const auto end_it = map.end();
+  auto       it     = map.find(const_cast<map_type::key_type>(ptr));
 
   // ptr was found, and points to an entire block
   PetscFunctionBegin;
-  if (it != end) PetscFunctionReturn(it);
+  if (it != end_it) PetscFunctionReturn(it);
   // wasn't found, but maybe its part of a block. have to search every block for it
   // clang-format off
-  it = std::find_if(map.begin(), end, [ptr](const map_type::const_iterator::value_type &map_it) {
+  it = std::find_if(map.begin(), end_it, [ptr](map_type::const_iterator::reference map_it) {
     return map_it.second.contains(map_it.first, ptr);
   });
-  PetscCheckAbort(!must_find || it != end, PETSC_COMM_SELF, PETSC_ERR_POINTER, "Pointer %p was not registered with the memory tracker, call PetscDeviceRegisterMemory() on it", ptr);
-  PetscFunctionReturn(it);
   // clang-format on
+  PetscCheckAbort(!must_find || it != end_it, PETSC_COMM_SELF, PETSC_ERR_POINTER, "Pointer %p was not registered with the memory tracker, call PetscDeviceRegisterMemory() on it", ptr);
+  PetscFunctionReturn(it);
 }
 
 static MemoryMap memory_map;
@@ -164,7 +181,7 @@ static PetscErrorCode PetscDeviceCheckCapable_Private(PetscDeviceContext dctx, b
 {
   PetscFunctionBegin;
   PetscCheck(cond, PETSC_COMM_SELF, PETSC_ERR_SUP, "Device context (id: %" PetscInt64_FMT ", name: %s, type: %s) can only handle %s host memory", PetscObjectCast(dctx)->id, PetscObjectCast(dctx)->name, dctx->device ? PetscDeviceTypes[dctx->device->type] : "unknown", descr);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 // A helper utility, since register is called from PetscDeviceRegisterMemory() and
@@ -184,9 +201,11 @@ static PetscErrorCode PetscDeviceRegisterMemory_Private(const void *PETSC_RESTRI
       const auto tmp = PointerAttributes(mtype, newid, size);
 
       for (const auto &entry : map) {
+        auto &&attr = entry.second;
+
         // REVIEW ME: maybe this should just be handled...
         PetscCheck(!tmp.contains(ptr, entry.first), PETSC_COMM_SELF, PETSC_ERR_ORDER, "Trying to register pointer %p (memtype %s, size %zu) but it appears you have already registered a sub-region of it (pointer %p, memtype %s, size %zu). Must register the larger region first", ptr, PetscMemTypeToString(mtype), size,
-                   entry.first, PetscMemTypeToString(entry.second.mtype), entry.second.size);
+                   entry.first, PetscMemTypeToString(attr.mtype), attr.size);
       }
     }
     // clang-format off
@@ -197,7 +216,7 @@ static PetscErrorCode PetscDeviceRegisterMemory_Private(const void *PETSC_RESTRI
       std::forward_as_tuple(mtype, newid, size)
     ));
     // clang-format on
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (PetscDefined(USE_DEBUG)) {
     const auto &old = it->second;
@@ -206,7 +225,7 @@ static PetscErrorCode PetscDeviceRegisterMemory_Private(const void *PETSC_RESTRI
                PetscMemTypeToString(old.mtype), old.size, old.id, PetscMemTypeToString(mtype), size, old.id);
   }
   if (id) *id = it->second.id;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -236,10 +255,10 @@ static PetscErrorCode PetscDeviceRegisterMemory_Private(const void *PETSC_RESTRI
 PetscErrorCode PetscDeviceRegisterMemory(const void *PETSC_RESTRICT ptr, PetscMemType mtype, std::size_t size)
 {
   PetscFunctionBegin;
-  if (PetscMemTypeHost(mtype)) PetscValidPointer(ptr, 1);
-  if (PetscUnlikely(!size)) PetscFunctionReturn(0); // there is no point registering empty range
+  if (PetscMemTypeHost(mtype)) PetscAssertPointer(ptr, 1);
+  if (PetscUnlikely(!size)) PetscFunctionReturn(PETSC_SUCCESS); // there is no point registering empty range
   PetscCall(PetscDeviceRegisterMemory_Private(ptr, mtype, size));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -314,9 +333,9 @@ PetscErrorCode PetscDeviceAllocate_Private(PetscDeviceContext dctx, PetscBool cl
     PetscCheck(alignment != 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Requested alignment %zu cannot be 0", alignment);
     PetscCheck(is_power_of_2(alignment), PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Requested alignment %zu must be a power of 2", alignment);
   }
-  PetscValidPointer(ptr, 6);
+  PetscAssertPointer(ptr, 6);
   *ptr = nullptr;
-  if (PetscUnlikely(!n)) PetscFunctionReturn(0);
+  if (PetscUnlikely(!n)) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(memory_map.register_finalize());
   PetscCall(PetscDeviceContextGetOptionalNullContext_Internal(&dctx));
 
@@ -331,7 +350,7 @@ PetscErrorCode PetscDeviceAllocate_Private(PetscDeviceContext dctx, PetscBool cl
   // Note this is a "write" so that the next dctx to try and read from the pointer has to wait
   // for the allocation to be ready
   PetscCall(PetscDeviceContextMarkIntentFromID(dctx, id, PETSC_MEMORY_ACCESS_WRITE, "memory allocation"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -342,6 +361,8 @@ PetscErrorCode PetscDeviceAllocate_Private(PetscDeviceContext dctx, PetscBool cl
   Input Parameters:
 + dctx  - The `PetscDeviceContext` used to free the memory
 - ptr   - The pointer to free
+
+  Level: intermediate
 
   Notes:
   `ptr` must have been allocated using any of `PetscDeviceMalloc()`, `PetscDeviceCalloc()` or
@@ -362,8 +383,6 @@ PetscErrorCode PetscDeviceAllocate_Private(PetscDeviceContext dctx, PetscBool cl
   -> dctx -/- |= CALL =| - dctx ->
   -> ptr -/
 .ve
-
-  Level: intermediate
 
 .N ASYNC_API
 
@@ -388,27 +407,28 @@ PetscErrorCode PetscDeviceDeallocate_Private(PetscDeviceContext dctx, void *PETS
       // allocate(&ptr, size);
       // deallocate(ptr+5);
       //
-      SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "Attempting to deallocate pointer %p which is a suballocation of %p (memtype %s, id %" PetscInt64_FMT ", size %zu bytes)", ptr, it->first, PetscMemTypeToString(it->second.mtype), it->second.id,
-              it->second.size);
+      auto &&attr = it->second;
+      SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "Attempting to deallocate pointer %p which is a suballocation of %p (memtype %s, id %" PetscInt64_FMT ", size %zu bytes)", ptr, it->first, PetscMemTypeToString(attr.mtype), attr.id, attr.size);
     }
-
+    auto &&attr = found_it->second;
     PetscCall(PetscDeviceContextGetOptionalNullContext_Internal(&dctx));
     // mark intent BEFORE we free, note we mark as write so that we are made to wait on any
     // outstanding reads (don't want to kill the pointer before they are done)
-    PetscCall(PetscDeviceContextMarkIntentFromID(dctx, found_it->second.id, PETSC_MEMORY_ACCESS_WRITE, "memory deallocation"));
+    PetscCall(PetscDeviceContextMarkIntentFromID(dctx, attr.id, PETSC_MEMORY_ACCESS_WRITE, "memory deallocation"));
     // do free
     if (dctx->ops->memfree) {
-      PetscUseTypeMethod(dctx, memfree, found_it->second.mtype, (void **)&ptr);
+      PetscUseTypeMethod(dctx, memfree, attr.mtype, (void **)&ptr);
     } else {
-      PetscCall(PetscDeviceCheckCapable_Private(dctx, PetscMemTypeHost(found_it->second.mtype), "freeing"));
+      PetscCall(PetscDeviceCheckCapable_Private(dctx, PetscMemTypeHost(attr.mtype), "freeing"));
     }
     // if ptr still exists, then the device context could not handle it
     if (ptr) PetscCall(PetscFree(ptr));
     PetscCallCXX(map.erase(found_it));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+// PetscClangLinter pragma disable: -fdoc-section-header-unknown
 /*@C
   PetscDeviceMemcpy - Copy memory in a device-aware manner
 
@@ -419,6 +439,8 @@ PetscErrorCode PetscDeviceDeallocate_Private(PetscDeviceContext dctx, void *PETS
 . dest - The pointer to copy to
 . src  - The pointer to copy from
 - n    - The amount (in bytes) to copy
+
+  Level: intermediate
 
   Notes:
   Both `dest` and `src` must have been allocated by `PetscDeviceMalloc()` or
@@ -440,8 +462,6 @@ PetscErrorCode PetscDeviceDeallocate_Private(PetscDeviceContext dctx, void *PETS
   -> src ---------------------->
 .ve
 
-  Level: intermediate
-
 .N ASYNC_API
 
 .seealso: `PetscDeviceArrayCopy()`, `PetscDeviceMalloc()`, `PetscDeviceCalloc()`,
@@ -450,18 +470,18 @@ PetscErrorCode PetscDeviceDeallocate_Private(PetscDeviceContext dctx, void *PETS
 PetscErrorCode PetscDeviceMemcpy(PetscDeviceContext dctx, void *PETSC_RESTRICT dest, const void *PETSC_RESTRICT src, std::size_t n)
 {
   PetscFunctionBegin;
-  if (!n) PetscFunctionReturn(0);
+  if (!n) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCheck(dest, PETSC_COMM_SELF, PETSC_ERR_POINTER, "Trying to copy to a NULL pointer");
   PetscCheck(src, PETSC_COMM_SELF, PETSC_ERR_POINTER, "Trying to copy from a NULL pointer");
-  if (dest == src) PetscFunctionReturn(0);
+  if (dest == src) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscDeviceContextGetOptionalNullContext_Internal(&dctx));
   {
-    const auto dest_it = memory_map.search_for(dest, true);
-    const auto src_it  = memory_map.search_for(src, true);
-    const auto mode    = PetscMemTypeToDeviceCopyMode(dest_it->second.mtype, src_it->second.mtype);
+    const auto &dest_attr = memory_map.search_for(dest, true)->second;
+    const auto &src_attr  = memory_map.search_for(src, true)->second;
+    const auto  mode      = PetscMemTypeToDeviceCopyMode(dest_attr.mtype, src_attr.mtype);
 
-    PetscCall(PetscDeviceContextMarkIntentFromID(dctx, src_it->second.id, PETSC_MEMORY_ACCESS_READ, "memory copy (src)"));
-    PetscCall(PetscDeviceContextMarkIntentFromID(dctx, dest_it->second.id, PETSC_MEMORY_ACCESS_WRITE, "memory copy (dest)"));
+    PetscCall(PetscDeviceContextMarkIntentFromID(dctx, src_attr.id, PETSC_MEMORY_ACCESS_READ, "memory copy (src)"));
+    PetscCall(PetscDeviceContextMarkIntentFromID(dctx, dest_attr.id, PETSC_MEMORY_ACCESS_WRITE, "memory copy (dest)"));
     // perform the copy
     if (dctx->ops->memcopy) {
       PetscUseTypeMethod(dctx, memcopy, dest, src, n, mode);
@@ -477,19 +497,22 @@ PetscErrorCode PetscDeviceMemcpy(PetscDeviceContext dctx, void *PETSC_RESTRICT d
       PetscCall(PetscMemcpy(dest, src, n));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+// PetscClangLinter pragma disable: -fdoc-section-header-unknown
 /*@C
   PetscDeviceMemset - Memset device-aware memory
 
   Not Collective, Asynchronous, Auto-dependency aware
 
   Input Parameters:
-+ dctx  - The `PetscDeviceContext` used to memset the memory
-. ptr   - The pointer to the memory
-. v     - The value to set
-- n     - The amount (in bytes) to set
++ dctx - The `PetscDeviceContext` used to memset the memory
+. ptr  - The pointer to the memory
+. v    - The value to set
+- n    - The amount (in bytes) to set
+
+  Level: intermediate
 
   Notes:
   `ptr` must have been allocated by `PetscDeviceMalloc()` or `PetscDeviceCalloc()`.
@@ -512,8 +535,6 @@ PetscErrorCode PetscDeviceMemcpy(PetscDeviceContext dctx, void *PETSC_RESTRICT d
   -> dest --------------------->
 .ve
 
-  Level: intermediate
-
 .N ASYNC_API
 
 .seealso: `PetscDeviceArrayZero()`, `PetscDeviceMalloc()`, `PetscDeviceCalloc()`,
@@ -522,22 +543,21 @@ PetscErrorCode PetscDeviceMemcpy(PetscDeviceContext dctx, void *PETSC_RESTRICT d
 PetscErrorCode PetscDeviceMemset(PetscDeviceContext dctx, void *ptr, PetscInt v, std::size_t n)
 {
   PetscFunctionBegin;
-  if (PetscUnlikely(!n)) PetscFunctionReturn(0);
+  if (PetscUnlikely(!n)) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCheck(ptr, PETSC_COMM_SELF, PETSC_ERR_POINTER, "Trying to memset a NULL pointer");
   PetscCall(PetscDeviceContextGetOptionalNullContext_Internal(&dctx));
   {
-    const auto ptr_it = memory_map.search_for(ptr, true);
-    const auto mtype  = ptr_it->second.mtype;
+    const auto &attr = memory_map.search_for(ptr, true)->second;
 
-    PetscCall(PetscDeviceContextMarkIntentFromID(dctx, ptr_it->second.id, PETSC_MEMORY_ACCESS_WRITE, "memory set"));
+    PetscCall(PetscDeviceContextMarkIntentFromID(dctx, attr.id, PETSC_MEMORY_ACCESS_WRITE, "memory set"));
     if (dctx->ops->memset) {
-      PetscUseTypeMethod(dctx, memset, mtype, ptr, v, n);
+      PetscUseTypeMethod(dctx, memset, attr.mtype, ptr, v, n);
     } else {
       // REVIEW ME: we might potentially need to sync here if the memory is device-allocated
       // (pinned) but being memset by a host dctx
-      PetscCall(PetscDeviceCheckCapable_Private(dctx, PetscMemTypeHost(mtype), "memsetting"));
+      PetscCall(PetscDeviceCheckCapable_Private(dctx, PetscMemTypeHost(attr.mtype), "memsetting"));
       std::memset(ptr, static_cast<int>(v), n);
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

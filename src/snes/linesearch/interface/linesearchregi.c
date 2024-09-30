@@ -9,18 +9,18 @@ PETSC_EXTERN PetscErrorCode SNESLineSearchCreate_Shell(SNESLineSearch);
 PETSC_EXTERN PetscErrorCode SNESLineSearchCreate_NCGLinear(SNESLineSearch);
 
 /*@C
-   SNESLineSearchRegisterAll - Registers all of the nonlinear solver methods in the `SNESLineSearch` package.
+  SNESLineSearchRegisterAll - Registers all of the nonlinear solver methods in the `SNESLineSearch` package.
 
-   Not Collective
+  Not Collective
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `SNESLineSearchRegister()`, `SNESLineSearchRegisterDestroy()`
+.seealso: [](ch_snes), `SNES`, `SNESLineSearch`, `SNESLineSearchRegister()`, `SNESLineSearchRegisterDestroy()`
 @*/
 PetscErrorCode SNESLineSearchRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (SNESLineSearchRegisterAllCalled) PetscFunctionReturn(0);
+  if (SNESLineSearchRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   SNESLineSearchRegisterAllCalled = PETSC_TRUE;
   PetscCall(SNESLineSearchRegister(SNESLINESEARCHSHELL, SNESLineSearchCreate_Shell));
   PetscCall(SNESLineSearchRegister(SNESLINESEARCHBASIC, SNESLineSearchCreate_Basic));
@@ -30,5 +30,5 @@ PetscErrorCode SNESLineSearchRegisterAll(void)
   PetscCall(SNESLineSearchRegister(SNESLINESEARCHNLEQERR, SNESLineSearchCreate_NLEQERR));
   PetscCall(SNESLineSearchRegister(SNESLINESEARCHCP, SNESLineSearchCreate_CP));
   PetscCall(SNESLineSearchRegister(SNESLINESEARCHNCGLINEAR, SNESLineSearchCreate_NCGLinear));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

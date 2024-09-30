@@ -59,11 +59,6 @@ extern void PetscRmPointer(void*);
 #define dmlocaltolocalenddefaultshell_ dmlocaltolocalenddefaultshell
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define dmshellsetdestroycontext_ DMSHELLSETDESTROYCONTEXT
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define dmshellsetdestroycontext_ dmshellsetdestroycontext
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmshellsetcontext_ DMSHELLSETCONTEXT
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmshellsetcontext_ dmshellsetcontext
@@ -160,11 +155,6 @@ PETSC_EXTERN void  dmlocaltolocalenddefaultshell_(DM dm,Vec g,InsertMode *mode,V
 	(DM)PetscToPointer((dm) ),
 	(Vec)PetscToPointer((g) ),*mode,
 	(Vec)PetscToPointer((l) ));
-}
-PETSC_EXTERN void  dmshellsetdestroycontext_(DM dm,PetscErrorCode (*destroyctx)(void *), int *__ierr)
-{
-*__ierr = DMShellSetDestroyContext(
-	(DM)PetscToPointer((dm) ),destroyctx);
 }
 PETSC_EXTERN void  dmshellsetcontext_(DM dm,void*ctx, int *__ierr)
 {

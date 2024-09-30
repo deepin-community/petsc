@@ -13,11 +13,11 @@
 - interpolate - Create faces and edges in the mesh
 
   Output Parameter:
-. dm  - The `DM` object representing the mesh
+. dm - The `DM` object representing the mesh
 
   Level: beginner
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexCreateFromFile()`, `DMPlexCreateFluent()`, `DMPlexCreate()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexCreateFromFile()`, `DMPlexCreateFluent()`, `DMPlexCreate()`
 @*/
 PetscErrorCode DMPlexCreateFluentFromFile(MPI_Comm comm, const char filename[], PetscBool interpolate, DM *dm)
 {
@@ -31,7 +31,7 @@ PetscErrorCode DMPlexCreateFluentFromFile(MPI_Comm comm, const char filename[], 
   PetscCall(PetscViewerFileSetName(viewer, filename));
   PetscCall(DMPlexCreateFluent(comm, viewer, interpolate, dm));
   PetscCall(PetscViewerDestroy(&viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCreateFluent_ReadString(PetscViewer viewer, char *buffer, char delim)
@@ -43,7 +43,7 @@ static PetscErrorCode DMPlexCreateFluent_ReadString(PetscViewer viewer, char *bu
   while (ret > 0 && buffer[i - 1] != '\0' && buffer[i - 1] != delim);
   if (!ret) buffer[i - 1] = '\0';
   else buffer[i] = '\0';
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCreateFluent_ReadValues(PetscViewer viewer, void *data, PetscInt count, PetscDataType dtype, PetscBool binary)
@@ -56,7 +56,7 @@ static PetscErrorCode DMPlexCreateFluent_ReadValues(PetscViewer viewer, void *da
   if (binary) {
     /* Extract raw file descriptor to read binary block */
     PetscCall(PetscViewerASCIIGetPointer(viewer, &file));
-    fflush(file);
+    PetscCall(PetscFFlush(file));
     fdes = fileno(file);
   }
 
@@ -91,7 +91,7 @@ static PetscErrorCode DMPlexCreateFluent_ReadValues(PetscViewer viewer, void *da
   } else {
     PetscCall(PetscViewerASCIIRead(viewer, data, count, NULL, dtype));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCreateFluent_ReadSection(PetscViewer viewer, FluentSection *s)
@@ -107,7 +107,7 @@ static PetscErrorCode DMPlexCreateFluent_ReadSection(PetscViewer viewer, FluentS
   /* If we can't match an index return -1 to signal end-of-file */
   if (snum < 1) {
     s->index = -1;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   if (s->index == 0) { /* Comment */
@@ -216,28 +216,25 @@ static PetscErrorCode DMPlexCreateFluent_ReadSection(PetscViewer viewer, FluentS
     } while (depth > 0);
     PetscCall(DMPlexCreateFluent_ReadString(viewer, buffer, '\n'));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  DMPlexCreateFluent - Create a `DMPLEX` mesh from a Fluent mesh file.
+  DMPlexCreateFluent - Create a `DMPLEX` mesh from a Fluent mesh file <http://aerojet.engr.ucdavis.edu/fluenthelp/html/ug/node1490.htm>.
 
   Collective
 
   Input Parameters:
-+ comm  - The MPI communicator
-. viewer - The `PetscViewer` associated with a Fluent mesh file
++ comm        - The MPI communicator
+. viewer      - The `PetscViewer` associated with a Fluent mesh file
 - interpolate - Create faces and edges in the mesh
 
   Output Parameter:
-. dm  - The `DM` object representing the mesh
-
-  Note:
-  http://aerojet.engr.ucdavis.edu/fluenthelp/html/ug/node1490.htm
+. dm - The `DM` object representing the mesh
 
   Level: beginner
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMCreate()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMCreate()`
 @*/
 PetscErrorCode DMPlexCreateFluent(MPI_Comm comm, PetscViewer viewer, PetscBool interpolate, DM *dm)
 {
@@ -456,5 +453,5 @@ PetscErrorCode DMPlexCreateFluent(MPI_Comm comm, PetscViewer viewer, PetscBool i
     PetscCall(PetscFree(faceZoneIDs));
     PetscCall(PetscFree(coordsIn));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

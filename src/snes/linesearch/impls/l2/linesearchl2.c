@@ -55,7 +55,7 @@ static PetscErrorCode SNESLineSearchApply_L2(SNESLineSearch linesearch)
           PetscCall(VecNorm(F, NORM_2, &fnrm_mid));
         }
 
-        /* compute the norm at the new endpoit */
+        /* compute the norm at the new endpoint */
         PetscCall(VecWAXPY(W, -lambda, Y, X));
         if (linesearch->ops->viproject) PetscCall((*linesearch->ops->viproject)(snes, W));
         PetscCall((*linesearch->ops->snesfunc)(snes, W, F));
@@ -69,7 +69,6 @@ static PetscErrorCode SNESLineSearchApply_L2(SNESLineSearch linesearch)
         fnrm     = fnrm * fnrm;
       } else {
         /* compute the objective at the midpoint */
-        PetscCall(VecWAXPY(W, -lambda_mid, Y, X));
         PetscCall(SNESComputeObjective(snes, W, &fnrm_mid));
 
         /* compute the objective at the new endpoint */
@@ -84,7 +83,7 @@ static PetscErrorCode SNESLineSearchApply_L2(SNESLineSearch linesearch)
       }
       if (lambda <= steptol) {
         PetscCall(SNESLineSearchSetReason(linesearch, SNES_LINESEARCH_FAILED_REDUCT));
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
       maxstep    = .95 * lambda; /* forbid the search from ever going back to the "failed" length that generates Nan or Inf */
       lambda     = .5 * (lambda + lambda_old);
@@ -131,7 +130,7 @@ static PetscErrorCode SNESLineSearchApply_L2(SNESLineSearch linesearch)
 
   /* postcheck */
   PetscCall(SNESLineSearchPostCheck(linesearch, X, Y, W, &changed_y, &changed_w));
-  if (changed_y) {
+  if (changed_y && !changed_w) {
     PetscCall(VecAXPY(X, -lambda, Y));
     if (linesearch->ops->viproject) PetscCall((*linesearch->ops->viproject)(snes, X));
   } else {
@@ -149,7 +148,7 @@ static PetscErrorCode SNESLineSearchApply_L2(SNESLineSearch linesearch)
     PetscCall(PetscViewerASCIISubtractTab(monitor, ((PetscObject)linesearch)->tablevel));
   }
   if (lambda <= steptol) PetscCall(SNESLineSearchSetReason(linesearch, SNES_LINESEARCH_FAILED_REDUCT));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -173,7 +172,7 @@ static PetscErrorCode SNESLineSearchApply_L2(SNESLineSearch linesearch)
    Developer Note:
     A better name for this method might be `SNESLINESEARCHSECANT`, L2 is not descriptive
 
-.seealso: `SNESLINESEARCHBT`, `SNESLINESEARCHCP`, `SNESLineSearch`, `SNESLineSearchType`, `SNESLineSearchCreate()`, `SNESLineSearchSetType()`
+.seealso: [](ch_snes), `SNESLINESEARCHBT`, `SNESLINESEARCHCP`, `SNESLineSearch`, `SNESLineSearchType`, `SNESLineSearchCreate()`, `SNESLineSearchSetType()`
 M*/
 PETSC_EXTERN PetscErrorCode SNESLineSearchCreate_L2(SNESLineSearch linesearch)
 {
@@ -186,5 +185,5 @@ PETSC_EXTERN PetscErrorCode SNESLineSearchCreate_L2(SNESLineSearch linesearch)
   linesearch->ops->setup          = NULL;
 
   linesearch->max_its = 1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

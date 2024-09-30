@@ -10,7 +10,7 @@ PETSC_EXTERN PetscErrorCode MatMultAddMax_SeqAIJ(Mat, Vec, Vec, Vec);
 /*
   Paper with Ananth: Frbenius norm of band was good proxy, but really want to know the rank outside
 
-  LU for diagonal blocks must do shifting instead of pivoting, preferably shifting individual rows (like Pardiso)
+  LU for diagonal blocks must do shifting instead of pivoting, preferably shifting individual rows (like PARDISO)
 
   Draw picture of flow of reordering
 
@@ -127,7 +127,7 @@ PetscErrorCode CreateGraph(MPI_Comm comm, PetscInt testnum, Mat *A)
     SETERRQ(comm, PETSC_ERR_PLIB, "Unknown test %d", testnum);
   }
   *A = G;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

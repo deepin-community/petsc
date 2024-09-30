@@ -1,8 +1,7 @@
 /* Portions of this code are under:
    Copyright (c) 2022 Advanced Micro Devices, Inc. All rights reserved.
 */
-#ifndef __DENSE_H
-#define __DENSE_H
+#pragma once
 #include <petsc/private/matimpl.h>
 /* TODO REMOVE */
 #include <../src/mat/impls/aij/seq/aij.h> /* Mat_MatTransMatMult is defined here */
@@ -25,7 +24,6 @@ typedef struct {
   PetscBLASInt  rank;          /* numerical rank (of a QR factorized matrix) */
   PetscBool     user_alloc;    /* true if the user provided the dense data */
   PetscBool     unplaced_user_alloc;
-  Mat           ptapwork; /* workspace (SeqDense matrix) for PtAP */
 
   /* Support for MatDenseGetColumnVec and MatDenseGetSubMatrix */
   Mat                cmat;     /* matrix representation of a given subset of columns */
@@ -55,7 +53,7 @@ PETSC_INTERN PetscErrorCode MatProductSetFromOptions_SeqAIJ_SeqDense(Mat);
 PETSC_INTERN PetscErrorCode MatProductSetFromOptions_SeqXBAIJ_SeqDense(Mat);
 PETSC_INTERN PetscErrorCode MatProductSetFromOptions_SeqDense_SeqAIJ(Mat);
 
-PETSC_EXTERN PetscErrorCode MatCreate_SeqDense(Mat);
+PETSC_INTERN PetscErrorCode MatCreate_SeqDense(Mat);
 
 /* Used by SeqDenseCUDA and seqDenseHIP */
 PETSC_INTERN PetscErrorCode MatDuplicateNoCreate_SeqDense(Mat, Mat, MatDuplicateOption);
@@ -94,19 +92,18 @@ PETSC_INTERN PetscErrorCode MatCopy_SeqDense(Mat, Mat, MatStructure);
 PETSC_INTERN PetscErrorCode MatZeroEntries_SeqDense(Mat);
 PETSC_INTERN PetscErrorCode MatSetUp_SeqDense(Mat);
 PETSC_INTERN PetscErrorCode MatSetRandom_SeqDense(Mat, PetscRandom);
+PETSC_INTERN PetscErrorCode MatGetDiagonal_SeqDense(Mat, Vec);
 
 #if defined(PETSC_HAVE_CUDA)
-PETSC_INTERN PetscErrorCode MatShift_DenseCUDA_Private(PetscScalar *, PetscScalar, PetscInt, PetscInt, PetscInt, PetscInt);
-PETSC_EXTERN PetscErrorCode MatSeqDenseCUDAInvertFactors_Private(Mat);
-PETSC_INTERN PetscErrorCode MatConvert_SeqDenseCUDA_SeqDense(Mat, MatType, MatReuse, Mat *);
-PETSC_INTERN PetscErrorCode MatConvert_SeqDense_SeqDenseCUDA(Mat, MatType, MatReuse, Mat *);
+PETSC_SINGLE_LIBRARY_INTERN PetscErrorCode MatSeqDenseCUDAInvertFactors_Internal(Mat);
+PETSC_INTERN PetscErrorCode                MatMatMultNumeric_SeqDenseCUDA_SeqDenseCUDA_Internal(Mat, Mat, Mat, PetscBool, PetscBool);
+PETSC_INTERN PetscErrorCode                MatConvert_SeqDense_SeqDenseCUDA(Mat, MatType, MatReuse, Mat *);
 #endif
 
 #if defined(PETSC_HAVE_HIP)
-PETSC_INTERN PetscErrorCode MatShift_DenseHIP_Private(PetscScalar *, PetscScalar, PetscInt, PetscInt, PetscInt, PetscInt);
-PETSC_EXTERN PetscErrorCode MatSeqDenseHIPInvertFactors_Private(Mat);
-PETSC_INTERN PetscErrorCode MatConvert_SeqDenseHIP_SeqDense(Mat, MatType, MatReuse, Mat *);
-PETSC_INTERN PetscErrorCode MatConvert_SeqDense_SeqDenseHIP(Mat, MatType, MatReuse, Mat *);
+PETSC_SINGLE_LIBRARY_INTERN PetscErrorCode MatSeqDenseHIPInvertFactors_Internal(Mat);
+PETSC_INTERN PetscErrorCode                MatMatMultNumeric_SeqDenseHIP_SeqDenseHIP_Internal(Mat, Mat, Mat, PetscBool, PetscBool);
+PETSC_INTERN PetscErrorCode                MatConvert_SeqDense_SeqDenseHIP(Mat, MatType, MatReuse, Mat *);
 #endif
 
 PETSC_EXTERN PetscErrorCode MatSeqDenseInvertFactors_Private(Mat);
@@ -117,4 +114,5 @@ PETSC_INTERN PetscErrorCode MatCreateMPIMatConcatenateSeqMat_MPIDense(MPI_Comm, 
 PETSC_INTERN PetscErrorCode MatView_Dense_Binary(Mat, PetscViewer);
 PETSC_INTERN PetscErrorCode MatLoad_Dense_Binary(Mat, PetscViewer);
 PETSC_INTERN PetscErrorCode MatLoad_Dense_HDF5(Mat, PetscViewer);
-#endif
+
+PETSC_INTERN PetscErrorCode MatDenseCreateColumnVec_Private(Mat, Vec *);

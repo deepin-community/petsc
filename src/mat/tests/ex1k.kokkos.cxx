@@ -59,7 +59,8 @@ int main(int argc, char **args)
   PetscReal      norm;
   PetscMPIInt    size;
 
-  PetscInitialize(&argc, &args, (char *)0, help);
+  PetscFunctionBeginUser;
+  PetscCall(PetscInitialize(&argc, &args, (char *)0, help));
   PetscCallMPI(MPI_Comm_size(PETSC_COMM_WORLD, &size));
 
   /* Read options -n */
@@ -137,7 +138,7 @@ int main(int argc, char **args)
     nsize: 1
     filter: grep "DOES_NOT_EXIST"
     output_file: output/empty.out
-    requires: !complex double !single kokkos_kernels
+    requires: datafilespath !complex double !single kokkos_kernels
 
     test:
       suffix: 1

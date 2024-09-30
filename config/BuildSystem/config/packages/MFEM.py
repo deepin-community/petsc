@@ -4,15 +4,16 @@ class Configure(config.package.Package):
   def __init__(self, framework):
     config.package.Package.__init__(self, framework)
     #disable version checking
-    #self.minversion             = '4'
-    #self.version                = '4.0.0'
+    #self.minversion             = '4.6'
+    #self.version                = '4.6'
     #self.versionname            = 'MFEM_VERSION_STRING'
     #self.versioninclude         = 'mfem/config.hpp'
-    self.gitcommit              = 'v4.4' # tags do not include subminor
-    self.download               = ['git://https://github.com/mfem/mfem.git']
+    self.gitcommit              = 'v4.6'
+    self.download               = ['git://https://github.com/mfem/mfem.git','https://github.com/mfem/mfem/archive/'+self.gitcommit+'.tar.gz']
     self.linkedbypetsc          = 0
     self.downloadonWindows      = 1
     self.buildLanguages         = ['Cxx']
+    self.maxCxxVersion          = 'c++17'
     self.skippackagewithoptions = 1
     self.builtafterpetsc        = 1
     self.noMPIUni               = 1
@@ -32,6 +33,7 @@ class Configure(config.package.Package):
     self.slepc  = framework.require('config.packages.slepc',self)
     self.ceed   = framework.require('config.packages.libceed',self)
     self.cuda   = framework.require('config.packages.cuda',self)
+    self.hip    = framework.require('config.packages.hip',self)
     self.openmp = framework.require('config.packages.openmp',self)
     self.deps   = [self.mpi,self.hypre,self.metis]
     self.odeps  = [self.slepc,self.ceed,self.cuda,self.openmp]
@@ -49,13 +51,14 @@ class Configure(config.package.Package):
 
 #  def postProcess(self):
     import os
+    import re
 
     buildDir = os.path.join(self.packageDir,'petsc-build')
     configDir = os.path.join(buildDir,'config')
     if not os.path.exists(configDir):
       os.makedirs(configDir)
 
-    if self.framework.argDB['prefix']:
+    if self.framework.argDB['prefix'] and not 'package-prefix-hash' in self.argDB:
       PETSC_DIR  = os.path.abspath(os.path.expanduser(self.argDB['prefix']))
       PETSC_ARCH = ''
       prefix     = os.path.abspath(os.path.expanduser(self.argDB['prefix']))
@@ -68,13 +71,7 @@ class Configure(config.package.Package):
 
     self.pushLanguage('Cxx')
     cxx = self.getCompiler()
-    cxxflags = self.getCompilerFlags()
-    cxxflags = cxxflags.replace('-fvisibility=hidden','') # MFEM is currently broken with -fvisibility=hidden
-    # MFEM uses the macro MFEM_BUILD_DIR that builds a path by combining the directory plus other stuff but if the
-    # directory name contains  "-linux" this is converted by CPP to the value 1 since that is defined in Linux header files
-    # unless the -std=C++11 or -std=C++14 flag is used; we want to support MFEM without this flag
-    if '-linux' in self.packageDir:
-      cxxflags += ' -Dlinux=linux'
+    cxxflags = self.updatePackageCxxFlags(self.getCompilerFlags())
     self.popLanguage()
     if 'download-mfem-ghv-cxx' in self.argDB and self.argDB['download-mfem-ghv-cxx']:
       ghv = self.argDB['download-mfem-ghv-cxx']
@@ -97,7 +94,8 @@ class Configure(config.package.Package):
       g.write('PREFIX = '+prefix+'\n')
       g.write('MPICXX = '+cxx+'\n')
       g.write('export GHV_CXX = '+ghv+'\n')
-      g.write('CXXFLAGS = '+cxxflags+'\n')
+      if not self.hip.found: #MFEM uses hipcc as compiler for everything
+        g.write('CXXFLAGS = '+cxxflags+'\n')
       if self.argDB['with-shared-libraries']:
         g.write('SHARED = YES\n')
         g.write('STATIC = NO\n')
@@ -153,7 +151,7 @@ class Configure(config.package.Package):
         slepclib = '-L'+prefix+'/lib -lslepc'
         slepcext = ''
         g.write('SLEPC_LIB = '+petscrpt+' '+slepclib+' '+slepcext+' $(PETSC_LIB)\n')
-        if self.argDB['prefix']:
+        if self.argDB['prefix'] and not 'package-prefix-hash' in self.argDB:
           makedepend = 'slepc-install'
         else:
           makedepend = 'slepc-build'
@@ -168,14 +166,35 @@ class Configure(config.package.Package):
       if self.cuda.found:
         self.pushLanguage('CUDA')
         petscNvcc = self.getCompiler()
-        cudaFlags = self.getCompilerFlags()
+        cudaFlags = self.updatePackageCUDAFlags(self.getCompilerFlags())
         self.popLanguage()
+        cudaFlags = re.sub(r'-std=([^\s]+) ','',cudaFlags)
         g.write('MFEM_USE_CUDA = YES\n')
         g.write('CUDA_CXX = '+petscNvcc+'\n')
-        if hasattr(self.cuda,'cudaArch') and self.cuda.cudaArch:
-          g.write('CUDA_ARCH = sm_'+self.cuda.cudaArch+'\n')
         g.write('CXXFLAGS := '+cudaFlags+' $(addprefix -Xcompiler ,$(CXXFLAGS))\n')
+        g.write('CUDA_ARCH = sm_' + self.cuda.cudaArchSingle() + '\n')
+      if self.hip.found:
+        self.pushLanguage('HIP')
+        hipcc = self.getCompiler()
+        hipFlags = self.updatePackageCxxFlags(self.getCompilerFlags())
+        self.popLanguage()
+        hipFlags = re.sub(r'-std=([^\s]+) ','',hipFlags)
+        g.write('MFEM_USE_HIP = YES\n')
+        g.write('HIP_CXX = '+hipcc+'\n')
+        hipFlags = hipFlags.replace('-fvisibility=hidden','')
+        g.write('HIP_FLAGS = '+hipFlags+'\n')
+        g.write('MPI_OPT = '+self.mpi.includepaths+'\n')
+        g.write('MPI_LIB = '+self.mpi.libpaths+' '+self.mpi.mpilibs+'\n')
       g.close()
+
+    with open(os.path.join(configDir,'petsc.mk'),'w') as f:
+      f.write('''
+MAKEOVERRIDES := $(filter-out CXXFLAGS=%,$(MAKEOVERRIDES))
+unexport CXXFLAGS
+.PHONY: run-config
+run-config:
+\t$(MAKE) -f {mfile} config MFEM_DIR={mfemdir}
+'''.format(mfile=os.path.join(self.packageDir,'makefile'), mfemdir=self.packageDir))
 
     self.addDefine('HAVE_MFEM',1)
     self.addMakeMacro('MFEM','yes')
@@ -183,7 +202,7 @@ class Configure(config.package.Package):
                        ['@echo "*** Building MFEM ***"',\
                           '@${RM} ${PETSC_ARCH}/lib/petsc/conf/mfem.errorflg',\
                           '@(cd '+buildDir+' && \\\n\
-           ${OMAKE} -f '+self.packageDir+'/makefile config MFEM_DIR='+self.packageDir+' && \\\n\
+           ${OMAKE} -f '+configDir+'/petsc.mk run-config && \\\n\
            ${OMAKE} clean && \\\n\
            '+self.make.make_jnp+') > ${PETSC_ARCH}/lib/petsc/conf/mfem.log 2>&1 || \\\n\
              (echo "**************************ERROR*************************************" && \\\n\
@@ -200,7 +219,7 @@ class Configure(config.package.Package):
              echo "********************************************************************" && \\\n\
              exit 1)'])
 
-    if self.argDB['prefix']:
+    if self.argDB['prefix'] and not 'package-prefix-hash' in self.argDB:
       self.addMakeRule('mfem-build','')
       self.addMakeRule('mfem-install','mfembuild mfeminstall')
     else:

@@ -1,4 +1,3 @@
-
 static char help[] = "Bilinear elements on the unit square for Laplacian.  To test the parallel\n\
 matrix assembly, the matrix is intentionally laid out across processors\n\
 differently from the way it is assembled.  Input arguments are:\n\
@@ -203,7 +202,7 @@ PetscErrorCode FormElementStiffness(PetscReal H, PetscScalar *Ke)
   Ke[13] = H / 12.0;
   Ke[14] = -.125 * H;
   Ke[15] = H / 6.0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------------------------------------------------------- */
 PetscErrorCode FormElementRhs(PetscScalar x, PetscScalar y, PetscReal H, PetscScalar *r)
@@ -213,7 +212,7 @@ PetscErrorCode FormElementRhs(PetscScalar x, PetscScalar y, PetscReal H, PetscSc
   r[1] = 0.;
   r[2] = 0.;
   r[3] = 0.0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

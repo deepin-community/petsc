@@ -8,10 +8,14 @@
        PetscDataType b ! PetscDataType
        PetscErrorCode z
        end subroutine PetscFEOpenCLGetRealType
-      subroutine PetscFEGeomComplete(a,z)
-       PetscFEGeom a ! PetscFEGeom
+      subroutine PetscFECreateVector(a,b,c,d,e,z)
+       PetscFE a ! PetscFE
+       PetscInt b ! PetscInt
+       PetscBool c ! PetscBool
+       PetscBool d ! PetscBool
+       PetscFE e ! PetscFE
        PetscErrorCode z
-       end subroutine PetscFEGeomComplete
+       end subroutine PetscFECreateVector
       subroutine PetscFESetFromOptions(a,z)
        PetscFE a ! PetscFE
        PetscErrorCode z
@@ -145,3 +149,7 @@
        PetscFE g ! PetscFE
        PetscErrorCode z
        end subroutine PetscFECreateLagrangeByCell
+      subroutine PetscFEGeomComplete(a,z)
+       PetscFEGeom a ! PetscFEGeom
+       PetscErrorCode z
+       end subroutine PetscFEGeomComplete

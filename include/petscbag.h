@@ -1,18 +1,16 @@
-
-#ifndef PETSCBAG_H
-#define PETSCBAG_H
+#pragma once
 
 #include <petscsys.h>
 
 /* SUBMANSEC = Sys */
 
 /*S
-     PetscBag - PETSc object that manages a collection of user data including parameters.
-           A bag is essentially a C struct with serialization (you can save it and load it from files).
+   PetscBag - PETSc object that manages a collection of user data including parameters.
+              A bag is essentially a C struct with serialization (you can save it and load it from files).
 
    Level: beginner
 
-    Sample Usage:
+   Sample Usage:
 .vb
       typedef struct {
          PetscInt     height;
@@ -60,10 +58,4 @@ PETSC_EXTERN PetscErrorCode PetscBagView(PetscBag, PetscViewer);
 PETSC_EXTERN PetscErrorCode PetscBagLoad(PetscViewer, PetscBag);
 PETSC_EXTERN PetscErrorCode PetscBagViewFromOptions(PetscBag, PetscObject, const char[]);
 
-PETSC_EXTERN PetscErrorCode PetscBagSetViewer(PetscBag, PetscErrorCode (*)(PetscBag, PetscViewer));
-PETSC_EXTERN PetscErrorCode PetscBagSetLoader(PetscBag, PetscErrorCode (*)(PetscBag, PetscViewer));
-PETSC_EXTERN PetscErrorCode PetscBagSetDestroy(PetscBag, PetscErrorCode (*)(PetscBag));
-
 #define PETSC_BAG_FILE_CLASSID 1211219
-
-#endif

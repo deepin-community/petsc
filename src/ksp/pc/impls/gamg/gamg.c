@@ -24,7 +24,7 @@ static PetscLogStage gamg_stages[PETSC_MG_MAXLEVELS];
 static PetscFunctionList GAMGList = NULL;
 static PetscBool         PCGAMGPackageInitialized;
 
-PetscErrorCode PCReset_GAMG(PC pc)
+static PetscErrorCode PCReset_GAMG(PC pc)
 {
   PC_MG   *mg      = (PC_MG *)pc->data;
   PC_GAMG *pc_gamg = (PC_GAMG *)mg->innerctx;
@@ -39,7 +39,8 @@ PetscErrorCode PCReset_GAMG(PC pc)
   }
   pc_gamg->emin = 0;
   pc_gamg->emax = 0;
-  PetscFunctionReturn(0);
+  PetscCall(PCReset_MG(pc));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -101,7 +102,7 @@ static PetscErrorCode PCGAMGCreateLevel_GAMG(PC pc, Mat Amat_fine, PetscInt cr_b
     PetscCall(PetscShmCommGetMpiShmComm(pshmcomm, &loccomm));
     PetscCallMPI(MPI_Comm_rank(loccomm, &locrank));
     s_nnodes = !locrank;
-    PetscCallMPI(MPI_Allreduce(&s_nnodes, &r_nnodes, 1, MPIU_INT, MPI_SUM, comm));
+    PetscCall(MPIU_Allreduce(&s_nnodes, &r_nnodes, 1, MPIU_INT, MPI_SUM, comm));
     PetscCheck((size % r_nnodes) == 0, PETSC_COMM_SELF, PETSC_ERR_PLIB, "odd number of nodes np=%d nnodes%" PetscInt_FMT, size, r_nnodes);
     devCount = 0;
     cerr     = cudaGetDeviceCount(&devCount);
@@ -111,16 +112,21 @@ static PetscErrorCode PCGAMGCreateLevel_GAMG(PC pc, Mat Amat_fine, PetscInt cr_b
       new_size     = new_new_size;
       PetscCall(PetscInfo(pc, "%s: Fine grid with Cuda. %" PetscInt_FMT " nodes. Change new active set size %d --> %d (devCount=%d #nodes=%" PetscInt_FMT ")\n", ((PetscObject)pc)->prefix, r_nnodes, nactive, new_size, devCount, r_nnodes));
     } else {
-      PetscCall(PetscInfo(pc, "%s: With Cuda but no device. Use heuristics.", ((PetscObject)pc)->prefix));
+      PetscCall(PetscInfo(pc, "%s: With Cuda but no device. Use heuristics.\n", ((PetscObject)pc)->prefix));
       goto HEURISTIC;
     }
 #else
     SETERRQ(PETSC_COMM_SELF, PETSC_ERR_PLIB, "should not be here");
 #endif
   } else if (pc_gamg->level_reduction_factors[pc_gamg->current_level] > 0) {
-    PetscCheck(nactive % pc_gamg->level_reduction_factors[pc_gamg->current_level] == 0, PETSC_COMM_SELF, PETSC_ERR_PLIB, "odd number of active process %d wrt reduction factor %" PetscInt_FMT, nactive, pc_gamg->level_reduction_factors[pc_gamg->current_level]);
-    new_size = nactive / pc_gamg->level_reduction_factors[pc_gamg->current_level];
-    PetscCall(PetscInfo(pc, "%s: Manually setting reduction to %d active processes (%d/%" PetscInt_FMT ")\n", ((PetscObject)pc)->prefix, new_size, nactive, pc_gamg->level_reduction_factors[pc_gamg->current_level]));
+    if (nactive < pc_gamg->level_reduction_factors[pc_gamg->current_level]) {
+      new_size = 1;
+      PetscCall(PetscInfo(pc, "%s: reduction factor too small for %d active processes: reduce to one process\n", ((PetscObject)pc)->prefix, new_size));
+    } else {
+      PetscCheck(nactive % pc_gamg->level_reduction_factors[pc_gamg->current_level] == 0, PETSC_COMM_SELF, PETSC_ERR_PLIB, "odd number of active process %d wrt reduction factor %" PetscInt_FMT, nactive, pc_gamg->level_reduction_factors[pc_gamg->current_level]);
+      new_size = nactive / pc_gamg->level_reduction_factors[pc_gamg->current_level];
+      PetscCall(PetscInfo(pc, "%s: Manually setting reduction to %d active processes (%d/%" PetscInt_FMT ")\n", ((PetscObject)pc)->prefix, new_size, nactive, pc_gamg->level_reduction_factors[pc_gamg->current_level]));
+    }
   } else if (is_last && !pc_gamg->use_parallel_coarse_grid_solver) {
     new_size = 1;
     PetscCall(PetscInfo(pc, "%s: Force coarsest grid reduction to %d active processes\n", ((PetscObject)pc)->prefix, new_size));
@@ -179,7 +185,7 @@ static PetscErrorCode PCGAMGCreateLevel_GAMG(PC pc, Mat Amat_fine, PetscInt cr_b
         *a_Amat_crs = Cmat;
         PetscCall(PetscInfo(pc, "%s: Finding factorable processor set stopped reduction: new_size=%d, neq(loc)=%" PetscInt_FMT "\n", ((PetscObject)pc)->prefix, new_size, ncrs_eq));
         PetscCall(PetscLogEventEnd(petsc_gamg_setup_events[GAMG_REDUCE], 0, 0, 0, 0));
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
     }
     /* make 'is_eq_newproc' */
@@ -238,7 +244,7 @@ static PetscErrorCode PCGAMGCreateLevel_GAMG(PC pc, Mat Amat_fine, PetscInt cr_b
           PetscViewer viewer;
           char        fname[32];
           PetscCall(PetscSNPrintf(fname, sizeof(fname), "part_mat_%" PetscInt_FMT ".mat", llev));
-          PetscViewerBinaryOpen(comm, fname, FILE_MODE_WRITE, &viewer);
+          PetscCall(PetscViewerBinaryOpen(comm, fname, FILE_MODE_WRITE, &viewer));
           PetscCall(MatView(tMat, viewer));
           PetscCall(PetscViewerDestroy(&viewer));
         }
@@ -372,7 +378,6 @@ static PetscErrorCode PCGAMGCreateLevel_GAMG(PC pc, Mat Amat_fine, PetscInt cr_b
       PetscCall(VecDestroy(&dest_crd));
     }
     /* move A and P (columns) with new layout */
-    /* PetscCall(PetscLogEventBegin(petsc_gamg_setup_events[SET13],0,0,0,0)); */
     /*
       Invert for MatCreateSubMatrix
     */
@@ -385,8 +390,6 @@ static PetscErrorCode PCGAMGCreateLevel_GAMG(PC pc, Mat Amat_fine, PetscInt cr_b
       *Pcolumnperm = new_eq_indices;
     }
     PetscCall(ISDestroy(&is_eq_num));
-    /* PetscCall(PetscLogEventEnd(petsc_gamg_setup_events[SET13],0,0,0,0)); */
-    /* PetscCall(PetscLogEventBegin(petsc_gamg_setup_events[SET14],0,0,0,0)); */
 
     /* 'a_Amat_crs' output */
     {
@@ -413,7 +416,6 @@ static PetscErrorCode PCGAMGCreateLevel_GAMG(PC pc, Mat Amat_fine, PetscInt cr_b
     }
     PetscCall(MatDestroy(&Cmat));
 
-    /* PetscCall(PetscLogEventEnd(petsc_gamg_setup_events[SET14],0,0,0,0)); */
     /* prolongator */
     {
       IS       findices;
@@ -421,14 +423,12 @@ static PetscErrorCode PCGAMGCreateLevel_GAMG(PC pc, Mat Amat_fine, PetscInt cr_b
       Mat      Pnew;
 
       PetscCall(MatGetOwnershipRange(Pold, &Istart, &Iend));
-      /* PetscCall(PetscLogEventBegin(petsc_gamg_setup_events[SET15],0,0,0,0)); */
       PetscCall(ISCreateStride(comm, Iend - Istart, Istart, 1, &findices));
       PetscCall(ISSetBlockSize(findices, f_bs));
       PetscCall(MatCreateSubMatrix(Pold, findices, new_eq_indices, MAT_INITIAL_MATRIX, &Pnew));
       PetscCall(ISDestroy(&findices));
       PetscCall(MatSetOption(Pnew, MAT_FORM_EXPLICIT_TRANSPOSE, PETSC_TRUE));
 
-      /* PetscCall(PetscLogEventEnd(petsc_gamg_setup_events[SET15],0,0,0,0)); */
       PetscCall(MatDestroy(a_P_inout));
 
       /* output - repartitioned */
@@ -459,7 +459,7 @@ static PetscErrorCode PCGAMGCreateLevel_GAMG(PC pc, Mat Amat_fine, PetscInt cr_b
     }
     PetscCall(PetscLogEventEnd(petsc_gamg_setup_events[GAMG_REDUCE], 0, 0, 0, 0));
   } // processor reduce
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 // used in GEO
@@ -490,7 +490,7 @@ PetscErrorCode PCGAMGSquareGraph_GAMG(PC a_pc, Mat Gmat1, Mat *Gmat2)
   PetscCall(MatProductClear(*Gmat2));
   /* we only need the sparsity, cheat and tell PETSc the matrix has been assembled */
   (*Gmat2)->assembled = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -501,19 +501,21 @@ PetscErrorCode PCGAMGSquareGraph_GAMG(PC a_pc, Mat Gmat1, Mat *Gmat2)
 .  pc - the preconditioner context
 
 */
-PetscErrorCode PCSetUp_GAMG(PC pc)
+static PetscErrorCode PCSetUp_GAMG(PC pc)
 {
-  PC_MG         *mg      = (PC_MG *)pc->data;
-  PC_GAMG       *pc_gamg = (PC_GAMG *)mg->innerctx;
-  Mat            Pmat    = pc->pmat;
-  PetscInt       fine_level, level, level1, bs, M, N, qq, lidx, nASMBlocksArr[PETSC_MG_MAXLEVELS];
-  MPI_Comm       comm;
-  PetscMPIInt    rank, size, nactivepe;
-  Mat            Aarr[PETSC_MG_MAXLEVELS], Parr[PETSC_MG_MAXLEVELS];
-  IS            *ASMLocalIDsArr[PETSC_MG_MAXLEVELS];
+  PC_MG      *mg      = (PC_MG *)pc->data;
+  PC_GAMG    *pc_gamg = (PC_GAMG *)mg->innerctx;
+  Mat         Pmat    = pc->pmat;
+  PetscInt    fine_level, level, level1, bs, M, N, qq, lidx, nASMBlocksArr[PETSC_MG_MAXLEVELS];
+  MPI_Comm    comm;
+  PetscMPIInt rank, size, nactivepe;
+  Mat         Aarr[PETSC_MG_MAXLEVELS], Parr[PETSC_MG_MAXLEVELS];
+  IS         *ASMLocalIDsArr[PETSC_MG_MAXLEVELS];
+  PetscBool   is_last = PETSC_FALSE;
+#if defined(PETSC_USE_INFO)
   PetscLogDouble nnz0 = 0., nnztot = 0.;
   MatInfo        info;
-  PetscBool      is_last = PETSC_FALSE;
+#endif
 
   PetscFunctionBegin;
   PetscCall(PetscObjectGetComm((PetscObject)pc, &comm));
@@ -557,6 +559,20 @@ PetscErrorCode PCSetUp_GAMG(PC pc)
           PetscCall(PetscLogEventEnd(petsc_gamg_setup_matmat_events[gl][1], 0, 0, 0, 0));
           if (reuse == MAT_INITIAL_MATRIX) mglevels[level]->A = B;
           PetscCall(KSPSetOperators(mglevels[level]->smoothd, B, B));
+          // check for redoing eigen estimates
+          if (pc_gamg->recompute_esteig) {
+            PetscBool ischeb;
+            KSP       smoother;
+            PetscCall(PCMGGetSmoother(pc, level + 1, &smoother));
+            PetscCall(PetscObjectTypeCompare((PetscObject)smoother, KSPCHEBYSHEV, &ischeb));
+            if (ischeb) {
+              KSP_Chebyshev *cheb = (KSP_Chebyshev *)smoother->data;
+              cheb->emin_provided = 0;
+              cheb->emax_provided = 0;
+            }
+            /* we could call PetscCall(KSPChebyshevSetEigenvalues(smoother, 0, 0)); but the logic does not work properly */
+          }
+          // inc
           dB = B;
 #if defined(GAMG_STAGES)
           PetscCall(PetscLogStagePop());
@@ -566,7 +582,7 @@ PetscErrorCode PCSetUp_GAMG(PC pc)
 
       PetscCall(PCSetUp_MG(pc));
       PetscCall(PetscLogEventEnd(petsc_gamg_setup_events[GAMG_SETUP], 0, 0, 0, 0));
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
   }
 
@@ -599,9 +615,11 @@ PetscErrorCode PCSetUp_GAMG(PC pc)
   PetscCall(MatGetBlockSize(Pmat, &bs));
   PetscCall(MatGetSize(Pmat, &M, &N));
 
+#if defined(PETSC_USE_INFO)
   PetscCall(MatGetInfo(Pmat, MAT_GLOBAL_SUM, &info)); /* global reduction */
   nnz0   = info.nz_used;
   nnztot = info.nz_used;
+#endif
   PetscCall(PetscInfo(pc, "%s: level %d) N=%" PetscInt_FMT ", n data rows=%" PetscInt_FMT ", n data cols=%" PetscInt_FMT ", nnz/row (ave)=%" PetscInt_FMT ", np=%d\n", ((PetscObject)pc)->prefix, 0, M, pc_gamg->data_cell_rows, pc_gamg->data_cell_cols, (PetscInt)(nnz0 / (PetscReal)M + 0.5), size));
 
   /* Get A_i and R_i */
@@ -612,7 +630,7 @@ PetscErrorCode PCSetUp_GAMG(PC pc)
 #if defined(GAMG_STAGES)
     if (!gamg_stages[level]) {
       char str[32];
-      sprintf(str, "GAMG Level %d", (int)level);
+      PetscCall(PetscSNPrintf(str, PETSC_STATIC_ARRAY_LENGTH(str), "GAMG Level %d", (int)level));
       PetscCall(PetscLogStageRegister(str, &gamg_stages[level]));
     }
     PetscCall(PetscLogStagePush(gamg_stages[level]));
@@ -676,8 +694,10 @@ PetscErrorCode PCSetUp_GAMG(PC pc)
     PetscCall(PetscLogEventEnd(petsc_gamg_setup_events[GAMG_LEVEL], 0, 0, 0, 0));
 
     PetscCall(MatGetSize(Aarr[level1], &M, &N)); /* M is loop test variables */
+#if defined(PETSC_USE_INFO)
     PetscCall(MatGetInfo(Aarr[level1], MAT_GLOBAL_SUM, &info));
     nnztot += info.nz_used;
+#endif
     PetscCall(PetscInfo(pc, "%s: %d) N=%" PetscInt_FMT ", n data cols=%" PetscInt_FMT ", nnz/row (ave)=%" PetscInt_FMT ", %d active pes\n", ((PetscObject)pc)->prefix, (int)level1, M, pc_gamg->data_cell_cols, (PetscInt)(info.nz_used / (PetscReal)M), nactivepe));
 
 #if defined(GAMG_STAGES)
@@ -732,7 +752,7 @@ PetscErrorCode PCSetUp_GAMG(PC pc)
           PetscCall(ISDestroy(&is));
         } else {
           PetscInt kk;
-          PetscCall(PCASMSetLocalSubdomains(subpc, sz, NULL, iss));
+          PetscCall(PCASMSetLocalSubdomains(subpc, sz, iss, NULL));
           for (kk = 0; kk < sz; kk++) PetscCall(ISDestroy(&iss[kk]));
           PetscCall(PetscFree(iss));
         }
@@ -817,7 +837,7 @@ PetscErrorCode PCSetUp_GAMG(PC pc)
     PetscCall(PCSetUp_MG(pc));
   }
   PetscCall(PetscLogEventEnd(petsc_gamg_setup_events[GAMG_SETUP], 0, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -845,9 +865,10 @@ PetscErrorCode PCDestroy_GAMG(PC pc)
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetRepartition_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetEigenvalues_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetUseSAEstEig_C", NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetRecomputeEstEig_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetReuseInterpolation_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGASMSetUseAggs_C", NULL));
-  PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetUseParallelCoarseGridSolve_C", NULL));
+  PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetParallelCoarseGridSolve_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetCpuPinCoarseGrids_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetCoarseGridLayoutType_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetThreshold_C", NULL));
@@ -857,35 +878,35 @@ PetscErrorCode PCDestroy_GAMG(PC pc)
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGGetType_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetNlevels_C", NULL));
   PetscCall(PCDestroy_MG(pc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGSetProcEqLim - Set number of equations to aim for per process on the coarse grids via processor reduction in `PCGAMG`
+  PCGAMGSetProcEqLim - Set number of equations to aim for per process on the coarse grids via processor reduction in `PCGAMG`
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  n - the number of equations
+  Input Parameters:
++ pc - the preconditioner context
+- n  - the number of equations
 
-   Options Database Key:
-.  -pc_gamg_process_eq_limit <limit> - set the limit
+  Options Database Key:
+. -pc_gamg_process_eq_limit <limit> - set the limit
 
-   Note:
-   `PCGAMG` will reduce the number of MPI processes used directly on the coarse grids so that there are around <limit> equations on each process
-   that has degrees of freedom
+  Level: intermediate
 
-   Level: intermediate
+  Note:
+  `PCGAMG` will reduce the number of MPI processes used directly on the coarse grids so that there are around <limit> equations on each process
+  that has degrees of freedom
 
-.seealso: `PCGAMG`, `PCGAMGSetCoarseEqLim()`, `PCGAMGSetRankReductionFactors()`, `PCGAMGSetRepartition()`
+.seealso: [](ch_ksp), `PCGAMG`, `PCGAMGSetCoarseEqLim()`, `PCGAMGSetRankReductionFactors()`, `PCGAMGSetRepartition()`
 @*/
 PetscErrorCode PCGAMGSetProcEqLim(PC pc, PetscInt n)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscTryMethod(pc, "PCGAMGSetProcEqLim_C", (PC, PetscInt), (pc, n));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGSetProcEqLim_GAMG(PC pc, PetscInt n)
@@ -895,35 +916,35 @@ static PetscErrorCode PCGAMGSetProcEqLim_GAMG(PC pc, PetscInt n)
 
   PetscFunctionBegin;
   if (n > 0) pc_gamg->min_eq_proc = n;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGSetCoarseEqLim - Set maximum number of equations on the coarsest grid of `PCGAMG`
+  PCGAMGSetCoarseEqLim - Set maximum number of equations on the coarsest grid of `PCGAMG`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  n - maximum number of equations to aim for
+  Input Parameters:
++ pc - the preconditioner context
+- n  - maximum number of equations to aim for
 
-   Options Database Key:
-.  -pc_gamg_coarse_eq_limit <limit> - set the limit
+  Options Database Key:
+. -pc_gamg_coarse_eq_limit <limit> - set the limit
 
-   Note:
-   For example -pc_gamg_coarse_eq_limit 1000 will stop coarsening once the coarse grid
-   has less than 1000 unknowns.
+  Level: intermediate
 
-   Level: intermediate
+  Note:
+  For example -pc_gamg_coarse_eq_limit 1000 will stop coarsening once the coarse grid
+  has less than 1000 unknowns.
 
-.seealso: `PCGAMG`, `PCGAMGSetProcEqLim()`, `PCGAMGSetRankReductionFactors()`, `PCGAMGSetRepartition()`
+.seealso: [](ch_ksp), `PCGAMG`, `PCGAMGSetProcEqLim()`, `PCGAMGSetRankReductionFactors()`, `PCGAMGSetRepartition()`
 @*/
 PetscErrorCode PCGAMGSetCoarseEqLim(PC pc, PetscInt n)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscTryMethod(pc, "PCGAMGSetCoarseEqLim_C", (PC, PetscInt), (pc, n));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGSetCoarseEqLim_GAMG(PC pc, PetscInt n)
@@ -933,34 +954,34 @@ static PetscErrorCode PCGAMGSetCoarseEqLim_GAMG(PC pc, PetscInt n)
 
   PetscFunctionBegin;
   if (n > 0) pc_gamg->coarse_eq_limit = n;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGSetRepartition - Repartition the degrees of freedom across the processors on the coarser grids when reducing the number of MPI ranks to use
+  PCGAMGSetRepartition - Repartition the degrees of freedom across the processors on the coarser grids when reducing the number of MPI ranks to use
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  n - `PETSC_TRUE` or `PETSC_FALSE`
+  Input Parameters:
++ pc - the preconditioner context
+- n  - `PETSC_TRUE` or `PETSC_FALSE`
 
-   Options Database Key:
-.  -pc_gamg_repartition <true,false> - turn on the repartitioning
+  Options Database Key:
+. -pc_gamg_repartition <true,false> - turn on the repartitioning
 
-   Note:
-   This will generally improve the loading balancing of the work on each level
+  Level: intermediate
 
-   Level: intermediate
+  Note:
+  This will generally improve the loading balancing of the work on each level
 
-.seealso: `PCGAMG`, `PCGAMGSetProcEqLim()`, `PCGAMGSetRankReductionFactors()`
+.seealso: [](ch_ksp), `PCGAMG`, `PCGAMGSetProcEqLim()`, `PCGAMGSetRankReductionFactors()`
 @*/
 PetscErrorCode PCGAMGSetRepartition(PC pc, PetscBool n)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscTryMethod(pc, "PCGAMGSetRepartition_C", (PC, PetscBool), (pc, n));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGSetRepartition_GAMG(PC pc, PetscBool n)
@@ -970,73 +991,107 @@ static PetscErrorCode PCGAMGSetRepartition_GAMG(PC pc, PetscBool n)
 
   PetscFunctionBegin;
   pc_gamg->repart = n;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGSetUseSAEstEig - Use the eigen estimate from smoothed aggregation for the Chebyshev smoother during the solution process
+  PCGAMGSetUseSAEstEig - Use the eigen estimate from smoothed aggregation for the Chebyshev smoother during the solution process
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  n - number of its
+  Input Parameters:
++ pc - the preconditioner context
+- b  - flag
 
-   Options Database Key:
-.  -pc_gamg_use_sa_esteig <true,false> - use the eigen estimate
+  Options Database Key:
+. -pc_gamg_use_sa_esteig <true,false> - use the eigen estimate
 
-   Notes:
-   Smoothed aggregation constructs the smoothed prolongator $P = (I - \omega D^{-1} A) T$ where $T$ is the tentative prolongator and $D$ is the diagonal of $A$.
-   Eigenvalue estimates (based on a few `PCCG` or `PCGMRES` iterations) are computed to choose $\omega$ so that this is a stable smoothing operation.
-   If Chebyshev with Jacobi (diagonal) preconditioning is used for smoothing, then the eigenvalue estimates can be reused during the solution process
-   This option is only used when the smoother uses Jacobi, and should be turned off if a different `PCJacobiType` is used.
-   It became default in PETSc 3.17.
+  Level: advanced
 
-   Level: advanced
+  Notes:
+  Smoothed aggregation constructs the smoothed prolongator $P = (I - \omega D^{-1} A) T$ where $T$ is the tentative prolongator and $D$ is the diagonal of $A$.
+  Eigenvalue estimates (based on a few `PCCG` or `PCGMRES` iterations) are computed to choose $\omega$ so that this is a stable smoothing operation.
+  If Chebyshev with Jacobi (diagonal) preconditioning is used for smoothing, then the eigenvalue estimates can be reused during the solution process
+  This option is only used when the smoother uses Jacobi, and should be turned off if a different `PCJacobiType` is used.
+  It became default in PETSc 3.17.
 
-.seealso: `PCGAMG`, `KSPChebyshevSetEigenvalues()`, `KSPChebyshevEstEigSet()`
+.seealso: [](ch_ksp), `PCGAMG`, `KSPChebyshevSetEigenvalues()`, `KSPChebyshevEstEigSet()`, `PCGAMGSetRecomputeEstEig()`
 @*/
-PetscErrorCode PCGAMGSetUseSAEstEig(PC pc, PetscBool n)
+PetscErrorCode PCGAMGSetUseSAEstEig(PC pc, PetscBool b)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
-  PetscTryMethod(pc, "PCGAMGSetUseSAEstEig_C", (PC, PetscBool), (pc, n));
-  PetscFunctionReturn(0);
+  PetscTryMethod(pc, "PCGAMGSetUseSAEstEig_C", (PC, PetscBool), (pc, b));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-static PetscErrorCode PCGAMGSetUseSAEstEig_GAMG(PC pc, PetscBool n)
+static PetscErrorCode PCGAMGSetUseSAEstEig_GAMG(PC pc, PetscBool b)
 {
   PC_MG   *mg      = (PC_MG *)pc->data;
   PC_GAMG *pc_gamg = (PC_GAMG *)mg->innerctx;
 
   PetscFunctionBegin;
-  pc_gamg->use_sa_esteig = n;
-  PetscFunctionReturn(0);
+  pc_gamg->use_sa_esteig = b;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGSetEigenvalues - Set WHAT eigenvalues WHY?
+  PCGAMGSetRecomputeEstEig - Set flag for Chebyshev smoothers to recompute the eigen estimates
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  emax - max eigenvalue
-.  emin - min eigenvalue
+  Input Parameters:
++ pc - the preconditioner context
+- b  - flag
 
-   Options Database Key:
-.  -pc_gamg_eigenvalues <emin,emax> - estimates of the eigenvalues
+  Options Database Key:
+. -pc_gamg_recompute_esteig <true> - use the eigen estimate
 
-   Level: intermediate
+  Level: advanced
 
-.seealso: `PCGAMG`, `PCGAMGSetUseSAEstEig()`
+.seealso: [](ch_ksp), `PCGAMG`, `KSPChebyshevSetEigenvalues()`, `KSPChebyshevEstEigSet()`
+@*/
+PetscErrorCode PCGAMGSetRecomputeEstEig(PC pc, PetscBool b)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
+  PetscTryMethod(pc, "PCGAMGSetRecomputeEstEig_C", (PC, PetscBool), (pc, b));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+static PetscErrorCode PCGAMGSetRecomputeEstEig_GAMG(PC pc, PetscBool b)
+{
+  PC_MG   *mg      = (PC_MG *)pc->data;
+  PC_GAMG *pc_gamg = (PC_GAMG *)mg->innerctx;
+
+  PetscFunctionBegin;
+  pc_gamg->recompute_esteig = b;
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/*@
+  PCGAMGSetEigenvalues - Set WHAT eigenvalues WHY?
+
+  Collective
+
+  Input Parameters:
++ pc   - the preconditioner context
+. emax - max eigenvalue
+- emin - min eigenvalue
+
+  Options Database Key:
+. -pc_gamg_eigenvalues <emin,emax> - estimates of the eigenvalues
+
+  Level: intermediate
+
+.seealso: [](ch_ksp), `PCGAMG`, `PCGAMGSetUseSAEstEig()`
 @*/
 PetscErrorCode PCGAMGSetEigenvalues(PC pc, PetscReal emax, PetscReal emin)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscTryMethod(pc, "PCGAMGSetEigenvalues_C", (PC, PetscReal, PetscReal), (pc, emax, emin));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGSetEigenvalues_GAMG(PC pc, PetscReal emax, PetscReal emin)
@@ -1049,35 +1104,35 @@ static PetscErrorCode PCGAMGSetEigenvalues_GAMG(PC pc, PetscReal emax, PetscReal
   PetscCheck(emax * emin > 0.0, PetscObjectComm((PetscObject)pc), PETSC_ERR_ARG_INCOMP, "Both eigenvalues must be of the same sign: max %g min %g", (double)emax, (double)emin);
   pc_gamg->emax = emax;
   pc_gamg->emin = emin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGSetReuseInterpolation - Reuse prolongation when rebuilding a `PCGAMG` algebraic multigrid preconditioner
+  PCGAMGSetReuseInterpolation - Reuse prolongation when rebuilding a `PCGAMG` algebraic multigrid preconditioner
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  n - `PETSC_TRUE` or `PETSC_FALSE`
+  Input Parameters:
++ pc - the preconditioner context
+- n  - `PETSC_TRUE` or `PETSC_FALSE`
 
-   Options Database Key:
-.  -pc_gamg_reuse_interpolation <true,false> - reuse the previous interpolation
+  Options Database Key:
+. -pc_gamg_reuse_interpolation <true,false> - reuse the previous interpolation
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   May negatively affect the convergence rate of the method on new matrices if the matrix entries change a great deal, but allows
-   rebuilding the preconditioner quicker.
+  Note:
+  May negatively affect the convergence rate of the method on new matrices if the matrix entries change a great deal, but allows
+  rebuilding the preconditioner quicker.
 
-.seealso: `PCGAMG`
+.seealso: [](ch_ksp), `PCGAMG`
 @*/
 PetscErrorCode PCGAMGSetReuseInterpolation(PC pc, PetscBool n)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscTryMethod(pc, "PCGAMGSetReuseInterpolation_C", (PC, PetscBool), (pc, n));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGSetReuseInterpolation_GAMG(PC pc, PetscBool n)
@@ -1087,32 +1142,32 @@ static PetscErrorCode PCGAMGSetReuseInterpolation_GAMG(PC pc, PetscBool n)
 
   PetscFunctionBegin;
   pc_gamg->reuse_prol = n;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGASMSetUseAggs - Have the `PCGAMG` smoother on each level use the aggregates defined by the coarsening process as the subdomains for the additive Schwarz preconditioner
-   used as the smoother
+  PCGAMGASMSetUseAggs - Have the `PCGAMG` smoother on each level use the aggregates defined by the coarsening process as the subdomains for the additive Schwarz preconditioner
+  used as the smoother
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  flg - `PETSC_TRUE` to use aggregates, `PETSC_FALSE` to not
+  Input Parameters:
++ pc  - the preconditioner context
+- flg - `PETSC_TRUE` to use aggregates, `PETSC_FALSE` to not
 
-   Options Database Key:
-.  -pc_gamg_asm_use_agg <true,false> - use aggregates to define the additive Schwarz subdomains
+  Options Database Key:
+. -pc_gamg_asm_use_agg <true,false> - use aggregates to define the additive Schwarz subdomains
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCGAMG`, `PCASM`, `PCSetType`
+.seealso: [](ch_ksp), `PCGAMG`, `PCASM`, `PCSetType`
 @*/
 PetscErrorCode PCGAMGASMSetUseAggs(PC pc, PetscBool flg)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscTryMethod(pc, "PCGAMGASMSetUseAggs_C", (PC, PetscBool), (pc, flg));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGASMSetUseAggs_GAMG(PC pc, PetscBool flg)
@@ -1122,65 +1177,65 @@ static PetscErrorCode PCGAMGASMSetUseAggs_GAMG(PC pc, PetscBool flg)
 
   PetscFunctionBegin;
   pc_gamg->use_aggs_in_asm = flg;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGSetUseParallelCoarseGridSolve - allow a parallel coarse grid solver
+  PCGAMGSetParallelCoarseGridSolve - allow a parallel coarse grid solver
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  flg - `PETSC_TRUE` to not force coarse grid onto one processor
+  Input Parameters:
++ pc  - the preconditioner context
+- flg - `PETSC_TRUE` to not force coarse grid onto one processor
 
-   Options Database Key:
-.  -pc_gamg_use_parallel_coarse_grid_solver - use a parallel coarse grid direct solver
+  Options Database Key:
+. -pc_gamg_parallel_coarse_grid_solver - use a parallel coarse grid direct solver
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCGAMG`, `PCGAMGSetCoarseGridLayoutType()`, `PCGAMGSetCpuPinCoarseGrids()`
+.seealso: [](ch_ksp), `PCGAMG`, `PCGAMGSetCoarseGridLayoutType()`, `PCGAMGSetCpuPinCoarseGrids()`
 @*/
-PetscErrorCode PCGAMGSetUseParallelCoarseGridSolve(PC pc, PetscBool flg)
+PetscErrorCode PCGAMGSetParallelCoarseGridSolve(PC pc, PetscBool flg)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
-  PetscTryMethod(pc, "PCGAMGSetUseParallelCoarseGridSolve_C", (PC, PetscBool), (pc, flg));
-  PetscFunctionReturn(0);
+  PetscTryMethod(pc, "PCGAMGSetParallelCoarseGridSolve_C", (PC, PetscBool), (pc, flg));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-static PetscErrorCode PCGAMGSetUseParallelCoarseGridSolve_GAMG(PC pc, PetscBool flg)
+static PetscErrorCode PCGAMGSetParallelCoarseGridSolve_GAMG(PC pc, PetscBool flg)
 {
   PC_MG   *mg      = (PC_MG *)pc->data;
   PC_GAMG *pc_gamg = (PC_GAMG *)mg->innerctx;
 
   PetscFunctionBegin;
   pc_gamg->use_parallel_coarse_grid_solver = flg;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGSetCpuPinCoarseGrids - pin the coarse grids created in `PCGAMG` to run only on the CPU since the problems may be too small to run efficiently on the GPUs
+  PCGAMGSetCpuPinCoarseGrids - pin the coarse grids created in `PCGAMG` to run only on the CPU since the problems may be too small to run efficiently on the GPUs
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  flg - `PETSC_TRUE` to pin coarse grids to the CPU
+  Input Parameters:
++ pc  - the preconditioner context
+- flg - `PETSC_TRUE` to pin coarse grids to the CPU
 
-   Options Database Key:
-.  -pc_gamg_cpu_pin_coarse_grids - pin the coarse grids to the CPU
+  Options Database Key:
+. -pc_gamg_cpu_pin_coarse_grids - pin the coarse grids to the CPU
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCGAMG`, `PCGAMGSetCoarseGridLayoutType()`, `PCGAMGSetUseParallelCoarseGridSolve()`
+.seealso: [](ch_ksp), `PCGAMG`, `PCGAMGSetCoarseGridLayoutType()`, `PCGAMGSetParallelCoarseGridSolve()`
 @*/
 PetscErrorCode PCGAMGSetCpuPinCoarseGrids(PC pc, PetscBool flg)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscTryMethod(pc, "PCGAMGSetCpuPinCoarseGrids_C", (PC, PetscBool), (pc, flg));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGSetCpuPinCoarseGrids_GAMG(PC pc, PetscBool flg)
@@ -1190,31 +1245,31 @@ static PetscErrorCode PCGAMGSetCpuPinCoarseGrids_GAMG(PC pc, PetscBool flg)
 
   PetscFunctionBegin;
   pc_gamg->cpu_pin_coarse_grids = flg;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGSetCoarseGridLayoutType - place coarse grids on processors with natural order (compact type)
+  PCGAMGSetCoarseGridLayoutType - place coarse grids on processors with natural order (compact type)
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  flg - `PCGAMGLayoutType` type, either `PCGAMG_LAYOUT_COMPACT` or `PCGAMG_LAYOUT_SPREAD`
+  Input Parameters:
++ pc  - the preconditioner context
+- flg - `PCGAMGLayoutType` type, either `PCGAMG_LAYOUT_COMPACT` or `PCGAMG_LAYOUT_SPREAD`
 
-   Options Database Key:
-.  -pc_gamg_coarse_grid_layout_type - place the coarse grids with natural ordering
+  Options Database Key:
+. -pc_gamg_coarse_grid_layout_type - place the coarse grids with natural ordering
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCGAMG`, `PCGAMGSetUseParallelCoarseGridSolve()`, `PCGAMGSetCpuPinCoarseGrids()`, `PCGAMGLayoutType`, `PCGAMG_LAYOUT_COMPACT`, `PCGAMG_LAYOUT_SPREAD`
+.seealso: [](ch_ksp), `PCGAMG`, `PCGAMGSetParallelCoarseGridSolve()`, `PCGAMGSetCpuPinCoarseGrids()`, `PCGAMGLayoutType`, `PCGAMG_LAYOUT_COMPACT`, `PCGAMG_LAYOUT_SPREAD`
 @*/
 PetscErrorCode PCGAMGSetCoarseGridLayoutType(PC pc, PCGAMGLayoutType flg)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscTryMethod(pc, "PCGAMGSetCoarseGridLayoutType_C", (PC, PCGAMGLayoutType), (pc, flg));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGSetCoarseGridLayoutType_GAMG(PC pc, PCGAMGLayoutType flg)
@@ -1224,34 +1279,34 @@ static PetscErrorCode PCGAMGSetCoarseGridLayoutType_GAMG(PC pc, PCGAMGLayoutType
 
   PetscFunctionBegin;
   pc_gamg->layout_type = flg;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGSetNlevels -  Sets the maximum number of levels `PCGAMG` will use
+  PCGAMGSetNlevels -  Sets the maximum number of levels `PCGAMG` will use
 
-   Not collective
+  Not Collective
 
-   Input Parameters:
-+  pc - the preconditioner
--  n - the maximum number of levels to use
+  Input Parameters:
++ pc - the preconditioner
+- n  - the maximum number of levels to use
 
-   Options Database Key:
-.  -pc_mg_levels <n> - set the maximum number of levels to allow
+  Options Database Key:
+. -pc_mg_levels <n> - set the maximum number of levels to allow
 
-   Level: intermediate
+  Level: intermediate
 
-   Developer Note:
-   Should be called `PCGAMGSetMaximumNumberlevels()` and possible be shared with `PCMG`
+  Developer Notes:
+  Should be called `PCGAMGSetMaximumNumberlevels()` and possible be shared with `PCMG`
 
-.seealso: `PCGAMG`
+.seealso: [](ch_ksp), `PCGAMG`
 @*/
 PetscErrorCode PCGAMGSetNlevels(PC pc, PetscInt n)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscTryMethod(pc, "PCGAMGSetNlevels_C", (PC, PetscInt), (pc, n));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGSetNlevels_GAMG(PC pc, PetscInt n)
@@ -1261,41 +1316,41 @@ static PetscErrorCode PCGAMGSetNlevels_GAMG(PC pc, PetscInt n)
 
   PetscFunctionBegin;
   pc_gamg->Nlevels = n;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGSetThreshold - Relative threshold to use for dropping edges in aggregation graph
+  PCGAMGSetThreshold - Relative threshold to use for dropping edges in aggregation graph
 
-   Not collective
+  Not Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
-.  v - array of threshold values for finest n levels; 0.0 means keep all nonzero entries in the graph; negative means keep even zero entries in the graph
--  n - number of threshold values provided in array
+  Input Parameters:
++ pc - the preconditioner context
+. v  - array of threshold values for finest n levels; 0.0 means keep all nonzero entries in the graph; negative means keep even zero entries in the graph
+- n  - number of threshold values provided in array
 
-   Options Database Key:
-.  -pc_gamg_threshold <threshold> - the threshold to drop edges
+  Options Database Key:
+. -pc_gamg_threshold <threshold> - the threshold to drop edges
 
-   Notes:
-    Increasing the threshold decreases the rate of coarsening. Conversely reducing the threshold increases the rate of coarsening (aggressive coarsening) and thereby reduces the complexity of the coarse grids, and generally results in slower solver converge rates. Reducing coarse grid complexity reduced the complexity of Galerkin coarse grid construction considerably.
-    Before coarsening or aggregating the graph, `PCGAMG` removes small values from the graph with this threshold, and thus reducing the coupling in the graph and a different (perhaps better) coarser set of points.
+  Level: intermediate
 
-    If n is less than the total number of coarsenings (see `PCGAMGSetNlevels()`), then threshold scaling (see `PCGAMGSetThresholdScale()`) is used for each successive coarsening.
-    In this case, `PCGAMGSetThresholdScale()` must be called before `PCGAMGSetThreshold()`.
-    If n is greater than the total number of levels, the excess entries in threshold will not be used.
+  Notes:
+  Increasing the threshold decreases the rate of coarsening. Conversely reducing the threshold increases the rate of coarsening (aggressive coarsening) and thereby reduces the complexity of the coarse grids, and generally results in slower solver converge rates. Reducing coarse grid complexity reduced the complexity of Galerkin coarse grid construction considerably.
+  Before coarsening or aggregating the graph, `PCGAMG` removes small values from the graph with this threshold, and thus reducing the coupling in the graph and a different (perhaps better) coarser set of points.
 
-   Level: intermediate
+  If `n` is less than the total number of coarsenings (see `PCGAMGSetNlevels()`), then threshold scaling (see `PCGAMGSetThresholdScale()`) is used for each successive coarsening.
+  In this case, `PCGAMGSetThresholdScale()` must be called before `PCGAMGSetThreshold()`.
+  If `n` is greater than the total number of levels, the excess entries in threshold will not be used.
 
-.seealso: `PCGAMG`, `PCGAMGFilterGraph()`, `PCGAMGSetAggressiveLevels()`, `PCGAMGSetThresholdScale()`
+.seealso: [](ch_ksp), `PCGAMG`, `PCGAMGSetAggressiveLevels()`, `PCGAMGMISkSetAggressive()`, `PCGAMGSetMinDegreeOrderingMISk()`, `PCGAMGSetThresholdScale()`
 @*/
 PetscErrorCode PCGAMGSetThreshold(PC pc, PetscReal v[], PetscInt n)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
-  if (n) PetscValidRealPointer(v, 2);
+  if (n) PetscAssertPointer(v, 2);
   PetscTryMethod(pc, "PCGAMGSetThreshold_C", (PC, PetscReal[], PetscInt), (pc, v, n));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGSetThreshold_GAMG(PC pc, PetscReal v[], PetscInt n)
@@ -1306,33 +1361,33 @@ static PetscErrorCode PCGAMGSetThreshold_GAMG(PC pc, PetscReal v[], PetscInt n)
   PetscFunctionBegin;
   for (i = 0; i < PetscMin(n, PETSC_MG_MAXLEVELS); i++) pc_gamg->threshold[i] = v[i];
   for (; i < PETSC_MG_MAXLEVELS; i++) pc_gamg->threshold[i] = pc_gamg->threshold[i - 1] * pc_gamg->threshold_scale;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGSetRankReductionFactors - Set a manual schedule for MPI rank reduction on coarse grids
+  PCGAMGSetRankReductionFactors - Set a manual schedule for MPI rank reduction on coarse grids
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
-.  v - array of reduction factors. 0 for first value forces a reduction to one process/device on first level in CUDA
--  n - number of values provided in array
+  Input Parameters:
++ pc - the preconditioner context
+. v  - array of reduction factors. 0 for first value forces a reduction to one process/device on first level in CUDA
+- n  - number of values provided in array
 
-   Options Database Key:
-.  -pc_gamg_rank_reduction_factors <factors> - provide the schedule
+  Options Database Key:
+. -pc_gamg_rank_reduction_factors <factors> - provide the schedule
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCGAMG`, `PCGAMGSetProcEqLim()`, `PCGAMGSetCoarseEqLim()`
+.seealso: [](ch_ksp), `PCGAMG`, `PCGAMGSetProcEqLim()`, `PCGAMGSetCoarseEqLim()`
 @*/
 PetscErrorCode PCGAMGSetRankReductionFactors(PC pc, PetscInt v[], PetscInt n)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
-  if (n) PetscValidIntPointer(v, 2);
+  if (n) PetscAssertPointer(v, 2);
   PetscTryMethod(pc, "PCGAMGSetRankReductionFactors_C", (PC, PetscInt[], PetscInt), (pc, v, n));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGSetRankReductionFactors_GAMG(PC pc, PetscInt v[], PetscInt n)
@@ -1343,35 +1398,35 @@ static PetscErrorCode PCGAMGSetRankReductionFactors_GAMG(PC pc, PetscInt v[], Pe
   PetscFunctionBegin;
   for (i = 0; i < PetscMin(n, PETSC_MG_MAXLEVELS); i++) pc_gamg->level_reduction_factors[i] = v[i];
   for (; i < PETSC_MG_MAXLEVELS; i++) pc_gamg->level_reduction_factors[i] = -1; /* 0 stop putting one process/device on first level */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCGAMGSetThresholdScale - Relative threshold reduction at each level
+  PCGAMGSetThresholdScale - Relative threshold reduction at each level
 
-   Not collective
+  Not Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  scale - the threshold value reduction, usually < 1.0
+  Input Parameters:
++ pc - the preconditioner context
+- v  - the threshold value reduction, usually < 1.0
 
-   Options Database Key:
-.  -pc_gamg_threshold_scale <v> - set the relative threshold reduction on each level
+  Options Database Key:
+. -pc_gamg_threshold_scale <v> - set the relative threshold reduction on each level
 
-   Note:
-   The initial threshold (for an arbitrary number of levels starting from the finest) can be set with `PCGAMGSetThreshold()`.
-   This scaling is used for each subsequent coarsening, but must be called before `PCGAMGSetThreshold()`.
+  Level: advanced
 
-   Level: advanced
+  Note:
+  The initial threshold (for an arbitrary number of levels starting from the finest) can be set with `PCGAMGSetThreshold()`.
+  This scaling is used for each subsequent coarsening, but must be called before `PCGAMGSetThreshold()`.
 
-.seealso: `PCGAMG`, `PCGAMGSetThreshold()`
+.seealso: [](ch_ksp), `PCGAMG`, `PCGAMGSetThreshold()`
 @*/
 PetscErrorCode PCGAMGSetThresholdScale(PC pc, PetscReal v)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscTryMethod(pc, "PCGAMGSetThresholdScale_C", (PC, PetscReal), (pc, v));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGSetThresholdScale_GAMG(PC pc, PetscReal v)
@@ -1380,54 +1435,54 @@ static PetscErrorCode PCGAMGSetThresholdScale_GAMG(PC pc, PetscReal v)
   PC_GAMG *pc_gamg = (PC_GAMG *)mg->innerctx;
   PetscFunctionBegin;
   pc_gamg->threshold_scale = v;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PCGAMGSetType - Set the type of algorithm `PCGAMG` should use
+  PCGAMGSetType - Set the type of algorithm `PCGAMG` should use
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  type - `PCGAMGAGG`, `PCGAMGGEO`, or `PCGAMGCLASSICAL`
+  Input Parameters:
++ pc   - the preconditioner context
+- type - `PCGAMGAGG`, `PCGAMGGEO`, or `PCGAMGCLASSICAL`
 
-   Options Database Key:
-.  -pc_gamg_type <agg,geo,classical> - type of algebraic multigrid to apply
+  Options Database Key:
+. -pc_gamg_type <agg,geo,classical> - type of algebraic multigrid to apply - only agg supported
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCGAMGGetType()`, `PCGAMG`, `PCGAMGType`
+.seealso: [](ch_ksp), `PCGAMGGetType()`, `PCGAMG`, `PCGAMGType`
 @*/
 PetscErrorCode PCGAMGSetType(PC pc, PCGAMGType type)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscTryMethod(pc, "PCGAMGSetType_C", (PC, PCGAMGType), (pc, type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PCGAMGGetType - Get the type of algorithm `PCGAMG` will use
+  PCGAMGGetType - Get the type of algorithm `PCGAMG` will use
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  pc - the preconditioner context
+  Input Parameter:
+. pc - the preconditioner context
 
-   Output Parameter:
-.  type - the type of algorithm used
+  Output Parameter:
+. type - the type of algorithm used
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCGAMG`, `PCGAMGSetType()`, `PCGAMGType`
+.seealso: [](ch_ksp), `PCGAMG`, `PCGAMGSetType()`, `PCGAMGType`
 @*/
 PetscErrorCode PCGAMGGetType(PC pc, PCGAMGType *type)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscUseMethod(pc, "PCGAMGGetType_C", (PC, PCGAMGType *), (pc, type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGGetType_GAMG(PC pc, PCGAMGType *type)
@@ -1437,7 +1492,7 @@ static PetscErrorCode PCGAMGGetType_GAMG(PC pc, PCGAMGType *type)
 
   PetscFunctionBegin;
   *type = pc_gamg->type;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCGAMGSetType_GAMG(PC pc, PCGAMGType type)
@@ -1449,7 +1504,7 @@ static PetscErrorCode PCGAMGSetType_GAMG(PC pc, PCGAMGType type)
   PetscFunctionBegin;
   pc_gamg->type = type;
   PetscCall(PetscFunctionListFind(GAMGList, type, &r));
-  PetscCheck(r, PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown GAMG type %s given", type);
+  PetscCheck(r, PetscObjectComm((PetscObject)pc), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown GAMG type %s given", type);
   if (pc_gamg->ops->destroy) {
     PetscCall((*pc_gamg->ops->destroy)(pc));
     PetscCall(PetscMemzero(pc_gamg->ops, sizeof(struct _PCGAMGOps)));
@@ -1465,7 +1520,7 @@ static PetscErrorCode PCGAMGSetType_GAMG(PC pc, PCGAMGType type)
   PetscCall(PetscFree(pc_gamg->gamg_type_name));
   PetscCall(PetscStrallocpy(type, &pc_gamg->gamg_type_name));
   PetscCall((*r)(pc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCView_GAMG(PC pc, PetscViewer viewer)
@@ -1485,10 +1540,10 @@ static PetscErrorCode PCView_GAMG(PC pc, PetscViewer viewer)
   if (pc_gamg->ops->view) PetscCall((*pc_gamg->ops->view)(pc, viewer));
   PetscCall(PCMGGetGridComplexity(pc, &gc, &oc));
   PetscCall(PetscViewerASCIIPrintf(viewer, "      Complexity:    grid = %g    operator = %g\n", (double)gc, (double)oc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCSetFromOptions_GAMG(PC pc, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode PCSetFromOptions_GAMG(PC pc, PetscOptionItems *PetscOptionsObject)
 {
   PC_MG             *mg      = (PC_MG *)pc->data;
   PC_GAMG           *pc_gamg = (PC_GAMG *)mg->innerctx;
@@ -1501,13 +1556,14 @@ PetscErrorCode PCSetFromOptions_GAMG(PC pc, PetscOptionItems *PetscOptionsObject
   PetscFunctionBegin;
   PetscCall(PetscObjectGetComm((PetscObject)pc, &comm));
   PetscOptionsHeadBegin(PetscOptionsObject, "GAMG options");
-  PetscCall(PetscOptionsFList("-pc_gamg_type", "Type of AMG method", "PCGAMGSetType", GAMGList, pc_gamg->gamg_type_name, tname, sizeof(tname), &flag));
+  PetscCall(PetscOptionsFList("-pc_gamg_type", "Type of AMG method (only 'agg' supported and useful)", "PCGAMGSetType", GAMGList, pc_gamg->gamg_type_name, tname, sizeof(tname), &flag));
   if (flag) PetscCall(PCGAMGSetType(pc, tname));
   PetscCall(PetscOptionsBool("-pc_gamg_repartition", "Repartion coarse grids", "PCGAMGSetRepartition", pc_gamg->repart, &pc_gamg->repart, NULL));
   PetscCall(PetscOptionsBool("-pc_gamg_use_sa_esteig", "Use eigen estimate from smoothed aggregation for smoother", "PCGAMGSetUseSAEstEig", pc_gamg->use_sa_esteig, &pc_gamg->use_sa_esteig, NULL));
+  PetscCall(PetscOptionsBool("-pc_gamg_recompute_esteig", "Set flag to recompute eigen estimates for Chebyshev when matrix changes", "PCGAMGSetRecomputeEstEig", pc_gamg->recompute_esteig, &pc_gamg->recompute_esteig, NULL));
   PetscCall(PetscOptionsBool("-pc_gamg_reuse_interpolation", "Reuse prolongation operator", "PCGAMGReuseInterpolation", pc_gamg->reuse_prol, &pc_gamg->reuse_prol, NULL));
   PetscCall(PetscOptionsBool("-pc_gamg_asm_use_agg", "Use aggregation aggregates for ASM smoother", "PCGAMGASMSetUseAggs", pc_gamg->use_aggs_in_asm, &pc_gamg->use_aggs_in_asm, NULL));
-  PetscCall(PetscOptionsBool("-pc_gamg_use_parallel_coarse_grid_solver", "Use parallel coarse grid solver (otherwise put last grid on one process)", "PCGAMGSetUseParallelCoarseGridSolve", pc_gamg->use_parallel_coarse_grid_solver, &pc_gamg->use_parallel_coarse_grid_solver, NULL));
+  PetscCall(PetscOptionsBool("-pc_gamg_parallel_coarse_grid_solver", "Use parallel coarse grid solver (otherwise put last grid on one process)", "PCGAMGSetParallelCoarseGridSolve", pc_gamg->use_parallel_coarse_grid_solver, &pc_gamg->use_parallel_coarse_grid_solver, NULL));
   PetscCall(PetscOptionsBool("-pc_gamg_cpu_pin_coarse_grids", "Pin coarse grids to the CPU", "PCGAMGSetCpuPinCoarseGrids", pc_gamg->cpu_pin_coarse_grids, &pc_gamg->cpu_pin_coarse_grids, NULL));
   PetscCall(PetscOptionsEnum("-pc_gamg_coarse_grid_layout_type", "compact: place reduced grids on processes in natural order; spread: distribute to whole machine for more memory bandwidth", "PCGAMGSetCoarseGridLayoutType", LayoutTypes,
                              (PetscEnum)pc_gamg->layout_type, (PetscEnum *)&pc_gamg->layout_type, NULL));
@@ -1546,47 +1602,50 @@ PetscErrorCode PCSetFromOptions_GAMG(PC pc, PetscOptionItems *PetscOptionsObject
   PetscCall(PCGetOptionsPrefix(pc, &pcpre));
   PetscCall(PetscSNPrintf(prefix, sizeof(prefix), "%spc_gamg_", pcpre ? pcpre : ""));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     PCGAMG - Geometric algebraic multigrid (AMG) preconditioner
+  PCGAMG - Geometric algebraic multigrid (AMG) preconditioner
 
-   Options Database Keys:
-+   -pc_gamg_type <type,default=agg> - one of agg, geo, or classical
-.   -pc_gamg_repartition  <bool,default=false> - repartition the degrees of freedom across the coarse grids as they are determined
-.   -pc_gamg_asm_use_agg <bool,default=false> - use the aggregates from the coasening process to defined the subdomains on each level for the PCASM smoother
-.   -pc_gamg_process_eq_limit <limit, default=50> - `PCGAMG` will reduce the number of MPI ranks used directly on the coarse grids so that there are around <limit>
+  Options Database Keys:
++ -pc_gamg_type <type,default=agg> - one of agg, geo, or classical (only smoothed aggregation, agg, supported)
+. -pc_gamg_repartition  <bool,default=false> - repartition the degrees of freedom across the coarse grids as they are determined
+. -pc_gamg_asm_use_agg <bool,default=false> - use the aggregates from the coasening process to defined the subdomains on each level for the PCASM smoother
+. -pc_gamg_process_eq_limit <limit, default=50> - `PCGAMG` will reduce the number of MPI ranks used directly on the coarse grids so that there are around <limit>
                                         equations on each process that has degrees of freedom
-.   -pc_gamg_coarse_eq_limit <limit, default=50> - Set maximum number of equations on coarsest grid to aim for.
-.   -pc_gamg_reuse_interpolation <bool,default=true> - when rebuilding the algebraic multigrid preconditioner reuse the previously computed interpolations (should always be true)
-.   -pc_gamg_threshold[] <thresh,default=[-1,...]> - Before aggregating the graph `PCGAMG` will remove small values from the graph on each level (< 0 does no filtering)
--   -pc_gamg_threshold_scale <scale,default=1> - Scaling of threshold on each coarser grid if not specified
+. -pc_gamg_coarse_eq_limit <limit, default=50> - Set maximum number of equations on coarsest grid to aim for.
+. -pc_gamg_reuse_interpolation <bool,default=true> - when rebuilding the algebraic multigrid preconditioner reuse the previously computed interpolations (should always be true)
+. -pc_gamg_threshold[] <thresh,default=[-1,...]> - Before aggregating the graph `PCGAMG` will remove small values from the graph on each level (< 0 does no filtering)
+- -pc_gamg_threshold_scale <scale,default=1> - Scaling of threshold on each coarser grid if not specified
 
-   Options Database Keys for Aggregation:
-+  -pc_gamg_agg_nsmooths <nsmooth, default=1> - number of smoothing steps to use with smooth aggregation
-.  -pc_gamg_square_graph <n,default=1> - alias for pc_gamg_aggressive_coarsening (deprecated)
--  -pc_gamg_aggressive_coarsening <n,default=1> - number of aggressive coarsening (MIS-2) levels from finest.
+  Options Database Keys for Aggregation:
++ -pc_gamg_agg_nsmooths <nsmooth, default=1> - number of smoothing steps to use with smooth aggregation
+. -pc_gamg_aggressive_coarsening <n,default=1> - number of aggressive coarsening (MIS-2) levels from finest.
+. -pc_gamg_aggressive_square_graph <bool,default=false> - Use square graph (A'A) or MIS-k (k=2) for aggressive coarsening
+. -pc_gamg_mis_k_minimum_degree_ordering <bool,default=true> - Use minimum degree ordering in greedy MIS algorithm
+- -pc_gamg_aggressive_mis_k <n,default=2> - Number (k) distance in MIS coarsening (>2 is 'aggressive')
 
-   Options Database Keys for Multigrid:
-+  -pc_mg_cycles <v> - v or w, see `PCMGSetCycleType()`
-.  -pc_mg_distinct_smoothup - configure the up and down (pre and post) smoothers separately, see PCMGSetDistinctSmoothUp()
-.  -pc_mg_type <multiplicative> - (one of) additive multiplicative full kascade
--  -pc_mg_levels <levels> - Number of levels of multigrid to use. GAMG has a heuristic so pc_mg_levels is not usually used with GAMG
+  Options Database Keys for Multigrid:
++ -pc_mg_cycle_type <v> - v or w, see `PCMGSetCycleType()`
+. -pc_mg_distinct_smoothup - configure the up and down (pre and post) smoothers separately, see PCMGSetDistinctSmoothUp()
+. -pc_mg_type <multiplicative> - (one of) additive multiplicative full kascade
+- -pc_mg_levels <levels> - Number of levels of multigrid to use. GAMG has a heuristic so pc_mg_levels is not usually used with GAMG
+
+  Level: intermediate
 
   Notes:
   To obtain good performance for `PCGAMG` for vector valued problems you must
   call `MatSetBlockSize()` to indicate the number of degrees of freedom per grid point
   call `MatSetNearNullSpace()` (or `PCSetCoordinates()` if solving the equations of elasticity) to indicate the near null space of the operator
 
-  See [the Users Manual section on PCGAMG](sec_amg) for more details.
+  The many options for `PCMG` also work directly for `PCGAMG` such as controlling the smoothers on each level etc.
 
-  Level: intermediate
+  See [the Users Manual section on PCGAMG](sec_amg) and [the Users Manual section on PCMG](sec_mg)for more details.
 
-.seealso: `PCCreate()`, `PCSetType()`, `MatSetBlockSize()`, `PCMGType`, `PCSetCoordinates()`, `MatSetNearNullSpace()`, `PCGAMGSetType()`, `PCGAMGAGG`, `PCGAMGGEO`, `PCGAMGCLASSICAL`, `PCGAMGSetProcEqLim()`,
-          `PCGAMGSetCoarseEqLim()`, `PCGAMGSetRepartition()`, `PCGAMGRegister()`, `PCGAMGSetReuseInterpolation()`, `PCGAMGASMSetUseAggs()`, `PCGAMGSetUseParallelCoarseGridSolve()`, `PCGAMGSetNlevels()`, `PCGAMGSetThreshold()`, `PCGAMGGetType()`, `PCGAMGSetReuseInterpolation()`, `PCGAMGSetUseSAEstEig()`
+.seealso: [](ch_ksp), `PCCreate()`, `PCSetType()`, `MatSetBlockSize()`, `PCMGType`, `PCSetCoordinates()`, `MatSetNearNullSpace()`, `PCGAMGSetType()`, `PCGAMGAGG`, `PCGAMGGEO`, `PCGAMGCLASSICAL`, `PCGAMGSetProcEqLim()`,
+          `PCGAMGSetCoarseEqLim()`, `PCGAMGSetRepartition()`, `PCGAMGRegister()`, `PCGAMGSetReuseInterpolation()`, `PCGAMGASMSetUseAggs()`, `PCGAMGSetParallelCoarseGridSolve()`, `PCGAMGSetNlevels()`, `PCGAMGSetThreshold()`, `PCGAMGGetType()`, `PCGAMGSetUseSAEstEig()`
 M*/
-
 PETSC_EXTERN PetscErrorCode PCCreate_GAMG(PC pc)
 {
   PC_GAMG *pc_gamg;
@@ -1624,9 +1683,10 @@ PETSC_EXTERN PetscErrorCode PCCreate_GAMG(PC pc)
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetRepartition_C", PCGAMGSetRepartition_GAMG));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetEigenvalues_C", PCGAMGSetEigenvalues_GAMG));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetUseSAEstEig_C", PCGAMGSetUseSAEstEig_GAMG));
+  PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetRecomputeEstEig_C", PCGAMGSetRecomputeEstEig_GAMG));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetReuseInterpolation_C", PCGAMGSetReuseInterpolation_GAMG));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGASMSetUseAggs_C", PCGAMGASMSetUseAggs_GAMG));
-  PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetUseParallelCoarseGridSolve_C", PCGAMGSetUseParallelCoarseGridSolve_GAMG));
+  PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetParallelCoarseGridSolve_C", PCGAMGSetParallelCoarseGridSolve_GAMG));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetCpuPinCoarseGrids_C", PCGAMGSetCpuPinCoarseGrids_GAMG));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetCoarseGridLayoutType_C", PCGAMGSetCoarseGridLayoutType_GAMG));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCGAMGSetThreshold_C", PCGAMGSetThreshold_GAMG));
@@ -1644,34 +1704,35 @@ PETSC_EXTERN PetscErrorCode PCCreate_GAMG(PC pc)
   pc_gamg->min_eq_proc                     = 50;
   pc_gamg->coarse_eq_limit                 = 50;
   for (int i = 0; i < PETSC_MG_MAXLEVELS; i++) pc_gamg->threshold[i] = -1;
-  pc_gamg->threshold_scale = 1.;
-  pc_gamg->Nlevels         = PETSC_MG_MAXLEVELS;
-  pc_gamg->current_level   = 0; /* don't need to init really */
-  pc_gamg->use_sa_esteig   = PETSC_TRUE;
-  pc_gamg->emin            = 0;
-  pc_gamg->emax            = 0;
+  pc_gamg->threshold_scale  = 1.;
+  pc_gamg->Nlevels          = PETSC_MG_MAXLEVELS;
+  pc_gamg->current_level    = 0; /* don't need to init really */
+  pc_gamg->use_sa_esteig    = PETSC_TRUE;
+  pc_gamg->recompute_esteig = PETSC_TRUE;
+  pc_gamg->emin             = 0;
+  pc_gamg->emax             = 0;
 
   pc_gamg->ops->createlevel = PCGAMGCreateLevel_GAMG;
 
   /* PCSetUp_GAMG assumes that the type has been set, so set it to the default now */
   PetscCall(PCGAMGSetType(pc, PCGAMGAGG));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
- PCGAMGInitializePackage - This function initializes everything in the `PCGAMG` package. It is called
-    from `PCInitializePackage()`.
+  PCGAMGInitializePackage - This function initializes everything in the `PCGAMG` package. It is called
+  from `PCInitializePackage()`.
 
- Level: developer
+  Level: developer
 
- .seealso: `PetscInitialize()`
+.seealso: [](ch_ksp), `PetscInitialize()`
 @*/
 PetscErrorCode PCGAMGInitializePackage(void)
 {
   PetscInt l;
 
   PetscFunctionBegin;
-  if (PCGAMGPackageInitialized) PetscFunctionReturn(0);
+  if (PCGAMGPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   PCGAMGPackageInitialized = PETSC_TRUE;
   PetscCall(PetscFunctionListAdd(&GAMGList, PCGAMGGEO, PCCreateGAMG_GEO));
   PetscCall(PetscFunctionListAdd(&GAMGList, PCGAMGAGG, PCCreateGAMG_AGG));
@@ -1708,61 +1769,61 @@ PetscErrorCode PCGAMGInitializePackage(void)
 #if defined(GAMG_STAGES)
   { /* create timer stages */
     char str[32];
-    sprintf(str, "GAMG Level %d", 0);
+    PetscCall(PetscSNPrintf(str, PETSC_STATIC_ARRAY_LENGTH(str), "GAMG Level %d", 0));
     PetscCall(PetscLogStageRegister(str, &gamg_stages[0]));
   }
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
- PCGAMGFinalizePackage - This function frees everything from the `PCGAMG` package. It is
-    called from `PetscFinalize()` automatically.
+  PCGAMGFinalizePackage - This function frees everything from the `PCGAMG` package. It is
+  called from `PetscFinalize()` automatically.
 
- Level: developer
+  Level: developer
 
- .seealso: `PetscFinalize()`
+.seealso: [](ch_ksp), `PetscFinalize()`
 @*/
 PetscErrorCode PCGAMGFinalizePackage(void)
 {
   PetscFunctionBegin;
   PCGAMGPackageInitialized = PETSC_FALSE;
   PetscCall(PetscFunctionListDestroy(&GAMGList));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
- PCGAMGRegister - Register a `PCGAMG` implementation.
+  PCGAMGRegister - Register a `PCGAMG` implementation.
 
- Input Parameters:
- + type - string that will be used as the name of the `PCGAMG` type.
- - create - function for creating the gamg context.
+  Input Parameters:
++ type   - string that will be used as the name of the `PCGAMG` type.
+- create - function for creating the gamg context.
 
   Level: developer
 
- .seealso: `PCGAMGType`, `PCGAMG`, `PCGAMGSetType()`
+.seealso: [](ch_ksp), `PCGAMGType`, `PCGAMG`, `PCGAMGSetType()`
 @*/
 PetscErrorCode PCGAMGRegister(PCGAMGType type, PetscErrorCode (*create)(PC))
 {
   PetscFunctionBegin;
   PetscCall(PCGAMGInitializePackage());
   PetscCall(PetscFunctionListAdd(&GAMGList, type, create));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-    PCGAMGCreateGraph - Creates a graph that is used by the ``PCGAMGType`` in the coarsening process
+  PCGAMGCreateGraph - Creates a graph that is used by the ``PCGAMGType`` in the coarsening process
 
-   Input Parameters:
-+  pc - the `PCGAMG`
--  A - the matrix, for any level
+  Input Parameters:
++ pc - the `PCGAMG`
+- A  - the matrix, for any level
 
-   Output Parameter:
-.  G - the graph
+  Output Parameter:
+. G - the graph
 
   Level: advanced
 
- .seealso: `PCGAMGType`, `PCGAMG`, `PCGAMGSetType()`
+.seealso: [](ch_ksp), `PCGAMGType`, `PCGAMG`, `PCGAMGSetType()`
 @*/
 PetscErrorCode PCGAMGCreateGraph(PC pc, Mat A, Mat *G)
 {
@@ -1771,5 +1832,5 @@ PetscErrorCode PCGAMGCreateGraph(PC pc, Mat A, Mat *G)
 
   PetscFunctionBegin;
   PetscCall(pc_gamg->ops->creategraph(pc, A, G));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

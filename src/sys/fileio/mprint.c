@@ -22,17 +22,17 @@ FILE *PETSC_STDOUT = NULL;
 FILE *PETSC_STDERR = NULL;
 
 /*@C
-     PetscFormatConvertGetSize - Gets the length of a string needed to hold format converted with `PetscFormatConvert()`
+  PetscFormatConvertGetSize - Gets the length of a string needed to hold data converted with `PetscFormatConvert()` based on the format
 
-   Deprecated
+  No Fortran Support
 
-   Input Parameter:
-.   format - the PETSc format string
+  Input Parameter:
+. format - the PETSc format string
 
-   Output Parameter:
-.   size - the needed length of the new format
+  Output Parameter:
+. size - the needed length of the new format
 
- Level: developer
+  Level: developer
 
 .seealso: `PetscFormatConvert()`, `PetscVSNPrintf()`, `PetscVFPrintf()`
 @*/
@@ -42,8 +42,8 @@ PetscErrorCode PetscFormatConvertGetSize(const char *format, size_t *size)
   PetscInt i  = 0;
 
   PetscFunctionBegin;
-  PetscValidCharPointer(format, 1);
-  PetscValidPointer(size, 2);
+  PetscAssertPointer(format, 1);
+  PetscAssertPointer(size, 2);
   while (format[i]) {
     if (format[i] == '%') {
       if (format[i + 1] == '%') {
@@ -72,23 +72,29 @@ PetscErrorCode PetscFormatConvertGetSize(const char *format, size_t *size)
     ++sz;
   }
   *size = sz + 1; /* space for NULL character */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-     PetscFormatConvert - Takes a PETSc format string and converts the %D to %d for 32 bit PETSc indices and %lld for 64 bit PETSc indices. Also
-                        converts %g to [|%g|] so that PetscVSNPrintf() can easily insure all %g formatted numbers have a decimal point when printed.
+  PetscFormatConvert - converts %g to [|%g|] so that `PetscVSNPrintf()` can ensure all %g formatted numbers have a decimal point when printed.
 
-   Deprecated
+  No Fortran Support
 
-   Input Parameters:
-+   format - the PETSc format string
-.   newformat - the location to put the new format
--   size - the length of newformat, you can use `PetscFormatConvertGetSize()` to compute the needed size
+  Input Parameter:
+. format - the PETSc format string
 
-    Note: this exists so we can have the same code when `PetscInt` is either int or long long int
+  Output Parameter:
+. newformat - the formatted string
 
- Level: developer
+  Level: developer
+
+  Note:
+  The decimal point is then used by the `petscdiff` script so that differences in floating
+  point number output is ignored in the test harness.
+
+  Deprecated usage also converts the `%D` to `%d` for 32-bit PETSc indices and to `%lld` for
+  64-bit PETSc indices. This feature is no longer used in PETSc code instead use %"
+  PetscInt_FMT " in the format string.
 
 .seealso: `PetscFormatConvertGetSize()`, `PetscVSNPrintf()`, `PetscVFPrintf()`
 @*/
@@ -137,28 +143,33 @@ PetscErrorCode PetscFormatConvert(const char *format, char *newformat)
     } else newformat[j++] = format[i++];
   }
   newformat[j] = 0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #define PETSCDEFAULTBUFFERSIZE 8 * 1024
 
 /*@C
-     PetscVSNPrintf - The PETSc version of vsnprintf(). Converts a PETSc format string into a standard C format string and then puts all the
-       function arguments into a string using the format statement.
+  PetscVSNPrintf - The PETSc version of `vsnprintf()`. Ensures that all `%g` formatted arguments' output contains the decimal point (which
+  is used by the test harness)
 
-   Input Parameters:
-+   str - location to put result
-.   len - the amount of space in str
-+   format - the PETSc format string
--   fullLength - the amount of space in str actually used.
+  Input Parameters:
++ str    - location to put result
+. len    - the length of `str`
+. format - the PETSc format string
+- Argp   - the variable argument list to format
 
-    Developer Note:
-    this function may be called from an error handler, if an error occurs when it is called by the error handler than likely
-      a recursion will occur and possible crash.
+  Output Parameter:
+. fullLength - the amount of space in `str` actually used.
 
- Level: developer
+  Level: developer
 
-.seealso: `PetscVSNPrintf()`, `PetscErrorPrintf()`, `PetscVPrintf()`
+  Developer Notes:
+  This function may be called from an error handler, if an error occurs when it is called by the error handler than likely
+  a recursion will occur resulting in a crash of the program.
+
+  If the length of the format string `format` is on the order of `PETSCDEFAULTBUFFERSIZE` (8 * 1024 bytes) or larger, this function will call `PetscMalloc()`
+
+.seealso: `PetscFormatConvert()`, `PetscFormatConvertGetSize()`, `PetscErrorPrintf()`, `PetscVPrintf()`
 @*/
 PetscErrorCode PetscVSNPrintf(char *str, size_t len, const char *format, size_t *fullLength, va_list Argp)
 {
@@ -248,43 +259,80 @@ PetscErrorCode PetscVSNPrintf(char *str, size_t len, const char *format, size_t 
   }
 #endif
   if (fullLength) *fullLength = 1 + (size_t)flen;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-     PetscVFPrintf -  All PETSc standard out and error messages are sent through this function; so, in theory, this can
-        can be replaced with something that does not simply write to a file.
+  PetscFFlush - Flush a file stream
 
-      To use, write your own function for example,
-$PetscErrorCode mypetscvfprintf(FILE *fd,const char format[],va_list Argp)
-${
-$  PetscErrorCode ierr;
-$
-$  PetscFunctionBegin;
-$   if (fd != stdout && fd != stderr) {  handle regular files
-$      CHKERR(PetscVFPrintfDefault(fd,format,Argp));
-$  } else {
-$     char   buff[BIG];
-$     size_t length;
-$     PetscCall(PetscVSNPrintf(buff,BIG,format,&length,Argp));
-$     now send buff to whatever stream or whatever you want
-$ }
-$ PetscFunctionReturn(0);
-$}
-then before the call to PetscInitialize() do the assignment
-$    PetscVFPrintf = mypetscvfprintf;
+  Input Parameter:
+. fd - The file stream handle
 
-      Note:
-    For error messages this may be called by any process, for regular standard out it is
-          called only by process 0 of a given communicator
+  Level: intermediate
 
-      Developer Note:
-    this could be called by an error handler, if that happens then a recursion of the error handler may occur
-                       and a crash
+  Notes:
+  For output streams (and for update streams on which the last operation was output), writes
+  any unwritten data from the stream's buffer to the associated output device.
 
-  Level:  developer
+  For input streams (and for update streams on which the last operation was input), the
+  behavior is undefined.
 
-.seealso: `PetscVSNPrintf()`, `PetscErrorPrintf()`
+  If `fd` is `NULL`, all open output streams are flushed, including ones not directly
+  accessible to the program.
+
+.seealso: `PetscPrintf()`, `PetscFPrintf()`, `PetscVFPrintf()`, `PetscVSNPrintf()`
+@*/
+PetscErrorCode PetscFFlush(FILE *fd)
+{
+  PetscFunctionBegin;
+  if (fd) PetscAssertPointer(fd, 1);
+  // could also use PetscCallExternal() here, but since we can get additional error explanation
+  // from strerror() we opted for a manual check
+  PetscCheck(0 == fflush(fd), PETSC_COMM_SELF, PETSC_ERR_FILE_WRITE, "Error in fflush() due to \"%s\"", strerror(errno));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/*@C
+  PetscVFPrintfDefault -  All PETSc standard out and error messages are sent through this function; so, in theory, this can
+  can be replaced with something that does not simply write to a file.
+
+  Input Parameters:
++ fd     - the file descriptor to write to
+. format - the format string to write with
+- Argp   - the variable argument list of items to format and write
+
+  Level: developer
+
+  Note:
+  For error messages this may be called by any MPI process, for regular standard out it is
+  called only by MPI rank 0 of a given communicator
+
+  Example Usage:
+  To use, write your own function for example,
+.vb
+   PetscErrorCode mypetscvfprintf(FILE *fd, const char format[], va_list Argp)
+   {
+     PetscErrorCode ierr;
+
+     PetscFunctionBegin;
+      if (fd != stdout && fd != stderr) {  handle regular files
+         CHKERR(PetscVFPrintfDefault(fd,format,Argp));
+     } else {
+        char   buff[BIG];
+        size_t length;
+        PetscCall(PetscVSNPrintf(buff,BIG,format,&length,Argp));
+        now send buff to whatever stream or whatever you want
+    }
+    PetscFunctionReturn(PETSC_SUCCESS);
+   }
+.ve
+  then before the call to `PetscInitialize()` do the assignment `PetscVFPrintf = mypetscvfprintf`;
+
+  Developer Notes:
+  This could be called by an error handler, if that happens then a recursion of the error handler may occur
+  and a resulting crash
+
+.seealso: `PetscVSNPrintf()`, `PetscErrorPrintf()`, `PetscFFlush()`
 @*/
 PetscErrorCode PetscVFPrintfDefault(FILE *fd, const char *format, va_list Argp)
 {
@@ -308,27 +356,37 @@ PetscErrorCode PetscVFPrintfDefault(FILE *fd, const char *format, va_list Argp)
     SETERRQ(PETSC_COMM_SELF, PETSC_ERR_LIB, "C89 does not support va_copy() hence cannot print long strings with PETSc printing routines");
 #endif
   }
-  fprintf(fd, "%s", buff);
-  fflush(fd);
+#if defined(PETSC_HAVE_VA_COPY)
+  va_end(Argpcopy);
+#endif
+  {
+    const int err = fprintf(fd, "%s", buff);
+    // cannot use PetscCallExternal() for fprintf since the return value is "number of
+    // characters transmitted to the output stream" on success
+    PetscCheck(err >= 0, PETSC_COMM_SELF, PETSC_ERR_FILE_WRITE, "fprintf() returned error code %d", err);
+  }
+  PetscCall(PetscFFlush(fd));
   if (buff != str) PetscCall(PetscFree(buff));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-    PetscSNPrintf - Prints to a string of given length
+  PetscSNPrintf - Prints to a string of given length
 
-    Not Collective
+  Not Collective
 
-    Input Parameters:
-+   str - the string to print to
-.   len - the length of str
-.   format - the usual printf() format string
--   ... - any arguments that are to be printed, each much have an appropriate symbol in the format argument
+  Input Parameters:
++ len    - the length of `str`
+- format - the usual `printf()` format string
 
-   Level: intermediate
+  Output Parameter:
+. str - the resulting string
+
+  Level: intermediate
 
 .seealso: `PetscSynchronizedFlush()`, `PetscSynchronizedFPrintf()`, `PetscFPrintf()`, `PetscVSNPrintf()`,
-          `PetscPrintf()`, `PetscViewerASCIIPrintf()`, `PetscViewerASCIISynchronizedPrintf()`, `PetscVFPrintf()`
+          `PetscPrintf()`, `PetscViewerASCIIPrintf()`, `PetscViewerASCIISynchronizedPrintf()`,
+          `PetscVFPrintf()`, `PetscFFlush()`
 @*/
 PetscErrorCode PetscSNPrintf(char *str, size_t len, const char format[], ...)
 {
@@ -338,24 +396,25 @@ PetscErrorCode PetscSNPrintf(char *str, size_t len, const char format[], ...)
   PetscFunctionBegin;
   va_start(Argp, format);
   PetscCall(PetscVSNPrintf(str, len, format, &fullLength, Argp));
-  PetscFunctionReturn(0);
+  va_end(Argp);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-    PetscSNPrintfCount - Prints to a string of given length, returns count
+  PetscSNPrintfCount - Prints to a string of given length, returns count of characters printed
 
-    Not Collective
+  Not Collective
 
-    Input Parameters:
-+   str - the string to print to
-.   len - the length of str
-.   format - the usual printf() format string
--   ... - any arguments that are to be printed, each much have an appropriate symbol in the format argument
+  Input Parameters:
++ len    - the length of `str`
+. format - the usual `printf()` format string
+- ...    - args to format
 
-    Output Parameter:
-.   countused - number of characters used
+  Output Parameters:
++ str       - the resulting string
+- countused - number of characters printed
 
-   Level: intermediate
+  Level: intermediate
 
 .seealso: `PetscSynchronizedFlush()`, `PetscSynchronizedFPrintf()`, `PetscFPrintf()`, `PetscVSNPrintf()`,
           `PetscPrintf()`, `PetscViewerASCIIPrintf()`, `PetscViewerASCIISynchronizedPrintf()`, `PetscSNPrintf()`, `PetscVFPrintf()`
@@ -367,166 +426,158 @@ PetscErrorCode PetscSNPrintfCount(char *str, size_t len, const char format[], si
   PetscFunctionBegin;
   va_start(Argp, countused);
   PetscCall(PetscVSNPrintf(str, len, format, countused, Argp));
-  PetscFunctionReturn(0);
+  va_end(Argp);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/* ----------------------------------------------------------------------- */
 
 PrintfQueue petsc_printfqueue = NULL, petsc_printfqueuebase = NULL;
 int         petsc_printfqueuelength = 0;
 
+static inline PetscErrorCode PetscVFPrintf_Private(MPI_Comm comm, FILE *fd, const char format[], va_list Argp)
+{
+  const PetscBool tee = (PetscBool)(petsc_history && (fd != petsc_history));
+  PetscMPIInt     rank;
+  va_list         cpy;
+
+  PetscFunctionBegin;
+  PetscCheck(comm != MPI_COMM_NULL, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Called with MPI_COMM_NULL, likely PetscObjectComm() failed");
+  PetscCallMPI(MPI_Comm_rank(comm, &rank));
+  if (PetscLikely(rank != 0)) PetscFunctionReturn(PETSC_SUCCESS);
+  // must do this before we possibly consume Argp
+  if (tee) va_copy(cpy, Argp);
+  PetscCall((*PetscVFPrintf)(fd, format, Argp));
+  if (tee) {
+    PetscCall((*PetscVFPrintf)(petsc_history, format, cpy));
+    va_end(cpy);
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+static inline PetscErrorCode PetscSynchronizedFPrintf_Private(MPI_Comm comm, FILE *fp, const char format[], va_list Argp)
+{
+  PetscMPIInt rank;
+  va_list     cpy;
+
+  PetscFunctionBegin;
+  PetscCheck(comm != MPI_COMM_NULL, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Called with MPI_COMM_NULL, likely PetscObjectComm() failed");
+  PetscCallMPI(MPI_Comm_rank(comm, &rank));
+  /* First processor prints immediately to fp */
+  if (rank == 0) {
+    va_copy(cpy, Argp);
+    PetscCall(PetscVFPrintf_Private(comm, fp, format, cpy));
+    va_end(cpy);
+  } else { /* other processors add to local queue */
+    PrintfQueue next;
+    size_t      fullLength = PETSCDEFAULTBUFFERSIZE;
+
+    PetscCall(PetscNew(&next));
+    if (petsc_printfqueue) {
+      petsc_printfqueue->next = next;
+      petsc_printfqueue       = next;
+      petsc_printfqueue->next = NULL;
+    } else petsc_printfqueuebase = petsc_printfqueue = next;
+    petsc_printfqueuelength++;
+    next->size   = 0;
+    next->string = NULL;
+    while (fullLength >= next->size) {
+      next->size = fullLength + 1;
+      PetscCall(PetscFree(next->string));
+      PetscCall(PetscMalloc1(next->size, &next->string));
+      PetscCall(PetscArrayzero(next->string, next->size));
+      va_copy(cpy, Argp);
+      PetscCall(PetscVSNPrintf(next->string, next->size, format, &fullLength, cpy));
+      va_end(cpy);
+    }
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 /*@C
-    PetscSynchronizedPrintf - Prints synchronized output from several processors.
-    Output of the first processor is followed by that of the second, etc.
+  PetscSynchronizedPrintf - Prints synchronized output from multiple MPI processes.
+  Output of the first processor is followed by that of the second, etc.
 
-    Not Collective
+  Not Collective
 
-    Input Parameters:
-+   comm - the communicator
--   format - the usual printf() format string
+  Input Parameters:
++ comm   - the MPI communicator
+- format - the usual `printf()` format string
 
-   Level: intermediate
+  Level: intermediate
 
-    Note:
-    REQUIRES a call to `PetscSynchronizedFlush()` by all the processes after the completion of the calls to `PetscSynchronizedPrintf()` for the information
-    from all the processors to be printed.
+  Note:
+  REQUIRES a call to `PetscSynchronizedFlush()` by all the processes after the completion of the calls to `PetscSynchronizedPrintf()` for the information
+  from all the processors to be printed.
 
-    Fortran Note:
-    The call sequence is `PetscSynchronizedPrintf`(MPI_Comm, character(*), PetscErrorCode ierr) from Fortran.
-    That is, you can only pass a single character string from Fortran.
+  Fortran Notes:
+  The call sequence is `PetscSynchronizedPrintf`(`MPI_Comm`, `character`(*), `PetscErrorCode` ierr).
+  That is, you can only pass a single character string from Fortran.
 
 .seealso: `PetscSynchronizedFlush()`, `PetscSynchronizedFPrintf()`, `PetscFPrintf()`,
-          `PetscPrintf()`, `PetscViewerASCIIPrintf()`, `PetscViewerASCIISynchronizedPrintf()`
+          `PetscPrintf()`, `PetscViewerASCIIPrintf()`, `PetscViewerASCIISynchronizedPrintf()`,
+          `PetscFFlush()`
 @*/
 PetscErrorCode PetscSynchronizedPrintf(MPI_Comm comm, const char format[], ...)
 {
-  PetscMPIInt rank;
+  va_list Argp;
 
   PetscFunctionBegin;
-  PetscCheck(comm != MPI_COMM_NULL, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Called with MPI_COMM_NULL, likely PetscObjectComm() failed");
-  PetscCallMPI(MPI_Comm_rank(comm, &rank));
-
-  /* First processor prints immediately to stdout */
-  if (rank == 0) {
-    va_list Argp;
-    va_start(Argp, format);
-    PetscCall((*PetscVFPrintf)(PETSC_STDOUT, format, Argp));
-    if (petsc_history) {
-      va_start(Argp, format);
-      PetscCall((*PetscVFPrintf)(petsc_history, format, Argp));
-    }
-    va_end(Argp);
-  } else { /* other processors add to local queue */
-    va_list     Argp;
-    PrintfQueue next;
-    size_t      fullLength = PETSCDEFAULTBUFFERSIZE;
-
-    PetscCall(PetscNew(&next));
-    if (petsc_printfqueue) {
-      petsc_printfqueue->next = next;
-      petsc_printfqueue       = next;
-      petsc_printfqueue->next = NULL;
-    } else petsc_printfqueuebase = petsc_printfqueue = next;
-    petsc_printfqueuelength++;
-    next->size   = 0;
-    next->string = NULL;
-    while (fullLength >= next->size) {
-      next->size = fullLength + 1;
-      PetscCall(PetscFree(next->string));
-      PetscCall(PetscMalloc1(next->size, &next->string));
-      va_start(Argp, format);
-      PetscCall(PetscArrayzero(next->string, next->size));
-      PetscCall(PetscVSNPrintf(next->string, next->size, format, &fullLength, Argp));
-      va_end(Argp);
-    }
-  }
-  PetscFunctionReturn(0);
+  va_start(Argp, format);
+  PetscCall(PetscSynchronizedFPrintf_Private(comm, PETSC_STDOUT, format, Argp));
+  va_end(Argp);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-    PetscSynchronizedFPrintf - Prints synchronized output to the specified file from
-    several processors.  Output of the first processor is followed by that of the
-    second, etc.
+  PetscSynchronizedFPrintf - Prints synchronized output to the specified file from
+  several MPI processes.  Output of the first process is followed by that of the
+  second, etc.
 
-    Not Collective
+  Not Collective
 
-    Input Parameters:
-+   comm - the communicator
-.   fd - the file pointer
--   format - the usual printf() format string
+  Input Parameters:
++ comm   - the MPI communicator
+. fp     - the file pointer
+- format - the usual `printf()` format string
 
-    Level: intermediate
+  Level: intermediate
 
-    Note:
-    REQUIRES a intervening call to `PetscSynchronizedFlush()` for the information
-    from all the processors to be printed.
+  Note:
+  REQUIRES a intervening call to `PetscSynchronizedFlush()` for the information
+  from all the processors to be printed.
 
 .seealso: `PetscSynchronizedPrintf()`, `PetscSynchronizedFlush()`, `PetscFPrintf()`,
-          `PetscFOpen()`, `PetscViewerASCIISynchronizedPrintf()`, `PetscViewerASCIIPrintf()`
+          `PetscFOpen()`, `PetscViewerASCIISynchronizedPrintf()`, `PetscViewerASCIIPrintf()`,
+          `PetscFFlush()`
 @*/
 PetscErrorCode PetscSynchronizedFPrintf(MPI_Comm comm, FILE *fp, const char format[], ...)
 {
-  PetscMPIInt rank;
+  va_list Argp;
 
   PetscFunctionBegin;
-  PetscCheck(comm != MPI_COMM_NULL, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Called with MPI_COMM_NULL, likely PetscObjectComm() failed");
-  PetscCallMPI(MPI_Comm_rank(comm, &rank));
-
-  /* First processor prints immediately to fp */
-  if (rank == 0) {
-    va_list Argp;
-    va_start(Argp, format);
-    PetscCall((*PetscVFPrintf)(fp, format, Argp));
-    if (petsc_history && (fp != petsc_history)) {
-      va_start(Argp, format);
-      PetscCall((*PetscVFPrintf)(petsc_history, format, Argp));
-    }
-    va_end(Argp);
-  } else { /* other processors add to local queue */
-    va_list     Argp;
-    PrintfQueue next;
-    size_t      fullLength = PETSCDEFAULTBUFFERSIZE;
-
-    PetscCall(PetscNew(&next));
-    if (petsc_printfqueue) {
-      petsc_printfqueue->next = next;
-      petsc_printfqueue       = next;
-      petsc_printfqueue->next = NULL;
-    } else petsc_printfqueuebase = petsc_printfqueue = next;
-    petsc_printfqueuelength++;
-    next->size   = 0;
-    next->string = NULL;
-    while (fullLength >= next->size) {
-      next->size = fullLength + 1;
-      PetscCall(PetscFree(next->string));
-      PetscCall(PetscMalloc1(next->size, &next->string));
-      va_start(Argp, format);
-      PetscCall(PetscArrayzero(next->string, next->size));
-      PetscCall(PetscVSNPrintf(next->string, next->size, format, &fullLength, Argp));
-      va_end(Argp);
-    }
-  }
-  PetscFunctionReturn(0);
+  va_start(Argp, format);
+  PetscCall(PetscSynchronizedFPrintf_Private(comm, fp, format, Argp));
+  va_end(Argp);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-    PetscSynchronizedFlush - Flushes to the screen output from all processors
-    involved in previous `PetscSynchronizedPrintf()`/`PetscSynchronizedFPrintf()` calls.
+  PetscSynchronizedFlush - Flushes to the screen output from all processors
+  involved in previous `PetscSynchronizedPrintf()`/`PetscSynchronizedFPrintf()` calls.
 
-    Collective
+  Collective
 
-    Input Parameters:
-+   comm - the communicator
--   fd - the file pointer (valid on process 0 of the communicator)
+  Input Parameters:
++ comm - the MPI communicator
+- fd   - the file pointer (valid on MPI rank 0 of the communicator)
 
-    Level: intermediate
+  Level: intermediate
 
-    Note:
-    If `PetscSynchronizedPrintf()` and/or `PetscSynchronizedFPrintf()` are called with
-    different MPI communicators there must be an intervening call to `PetscSynchronizedFlush()` between the calls with different MPI communicators.
+  Note:
+  If `PetscSynchronizedPrintf()` and/or `PetscSynchronizedFPrintf()` are called with
+  different MPI communicators there must be an intervening call to `PetscSynchronizedFlush()` between the calls with different MPI communicators.
 
-    Fortran Note:
-    Pass `PETSC_STDOUT` if the flush is for standard out; otherwise pass a value obtained from `PetscFOpen()`
+  Fortran Notes:
+  Pass `PETSC_STDOUT` if the flush is for standard out; otherwise pass a value obtained from `PetscFOpen()`
 
 .seealso: `PetscSynchronizedPrintf()`, `PetscFPrintf()`, `PetscPrintf()`, `PetscViewerASCIIPrintf()`,
           `PetscViewerASCIISynchronizedPrintf()`
@@ -576,125 +627,98 @@ PetscErrorCode PetscSynchronizedFlush(MPI_Comm comm, FILE *fd)
     petsc_printfqueuelength = 0;
   }
   PetscCall(PetscCommDestroy(&comm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/* ---------------------------------------------------------------------------------------*/
-
 /*@C
-    PetscFPrintf - Prints to a file, only from the first
-    processor in the communicator.
+  PetscFPrintf - Prints to a file, only from the first
+  MPI process in the communicator.
 
-    Not Collective; No Fortran Support
+  Not Collective; No Fortran Support
 
-    Input Parameters:
-+   comm - the communicator
-.   fd - the file pointer
--   format - the usual printf() format string
+  Input Parameters:
++ comm   - the MPI communicator
+. fd     - the file pointer
+- format - the usual `printf()` format string
 
-    Level: intermediate
+  Level: intermediate
+
+  Developer Notes:
+  This maybe, and is, called from PETSc error handlers and `PetscMallocValidate()` hence it does not use `PetscCallMPI()` which
+  could recursively restart the malloc validation.
 
 .seealso: `PetscPrintf()`, `PetscSynchronizedPrintf()`, `PetscViewerASCIIPrintf()`,
-          `PetscViewerASCIISynchronizedPrintf()`, `PetscSynchronizedFlush()`
+          `PetscViewerASCIISynchronizedPrintf()`, `PetscSynchronizedFlush()`, `PetscFFlush()`
 @*/
 PetscErrorCode PetscFPrintf(MPI_Comm comm, FILE *fd, const char format[], ...)
 {
-  PetscMPIInt rank;
+  va_list Argp;
 
   PetscFunctionBegin;
-  PetscCheck(comm != MPI_COMM_NULL, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Called with MPI_COMM_NULL, likely PetscObjectComm() failed");
-  PetscCallMPI(MPI_Comm_rank(comm, &rank));
-  if (rank == 0) {
-    va_list Argp;
-    va_start(Argp, format);
-    PetscCall((*PetscVFPrintf)(fd, format, Argp));
-    if (petsc_history && (fd != petsc_history)) {
-      va_start(Argp, format);
-      PetscCall((*PetscVFPrintf)(petsc_history, format, Argp));
-    }
-    va_end(Argp);
-  }
-  PetscFunctionReturn(0);
+  va_start(Argp, format);
+  PetscCall(PetscVFPrintf_Private(comm, fd, format, Argp));
+  va_end(Argp);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-    PetscPrintf - Prints to standard out, only from the first
-    processor in the communicator. Calls from other processes are ignored.
+  PetscPrintf - Prints to standard out, only from the first
+  MPI process in the communicator. Calls from other processes are ignored.
 
-    Not Collective
+  Not Collective
 
-    Input Parameters:
-+   comm - the communicator
--   format - the usual printf() format string
+  Input Parameters:
++ comm   - the communicator
+- format - the usual `printf()` format string
 
-    Level: intermediate
+  Level: intermediate
 
-    Note:
-    Deprecated information: `PetscPrintf()` supports some format specifiers that are unique to PETSc.
-    See the manual page for `PetscFormatConvert()` for details.
+  Note:
+  Deprecated information: `PetscPrintf()` supports some format specifiers that are unique to PETSc.
+  See the manual page for `PetscFormatConvert()` for details.
 
-    Fortran Note:
-    The call sequence is `PetscPrintf`(MPI_Comm, character(*), `PetscErrorCode` ierr) from Fortran.
-    That is, you can only pass a single character string from Fortran.
+  Fortran Notes:
+  The call sequence is `PetscPrintf`(MPI_Comm, character(*), `PetscErrorCode` ierr) from Fortran.
+  That is, you can only pass a single character string from Fortran.
 
-.seealso: `PetscFPrintf()`, `PetscSynchronizedPrintf()`, `PetscFormatConvert()`
+.seealso: `PetscFPrintf()`, `PetscSynchronizedPrintf()`, `PetscFormatConvert()`, `PetscFFlush()`
 @*/
 PetscErrorCode PetscPrintf(MPI_Comm comm, const char format[], ...)
 {
-  PetscMPIInt rank;
+  va_list Argp;
 
   PetscFunctionBegin;
-  PetscCheck(comm != MPI_COMM_NULL, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Called with MPI_COMM_NULL, likely PetscObjectComm() failed");
-  PetscCallMPI(MPI_Comm_rank(comm, &rank));
-  if (rank == 0) {
-    va_list Argp;
-    va_start(Argp, format);
-    PetscCall((*PetscVFPrintf)(PETSC_STDOUT, format, Argp));
-    if (petsc_history) {
-      va_start(Argp, format);
-      PetscCall((*PetscVFPrintf)(petsc_history, format, Argp));
-    }
-    va_end(Argp);
-  }
-  PetscFunctionReturn(0);
+  va_start(Argp, format);
+  PetscCall(PetscVFPrintf_Private(comm, PETSC_STDOUT, format, Argp));
+  va_end(Argp);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PetscHelpPrintfDefault(MPI_Comm comm, const char format[], ...)
 {
-  PetscMPIInt rank;
+  va_list Argp;
 
   PetscFunctionBegin;
-  PetscCheck(comm != MPI_COMM_NULL, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Called with MPI_COMM_NULL, likely PetscObjectComm() failed");
-  PetscCallMPI(MPI_Comm_rank(comm, &rank));
-  if (rank == 0) {
-    va_list Argp;
-    va_start(Argp, format);
-    PetscCall((*PetscVFPrintf)(PETSC_STDOUT, format, Argp));
-    if (petsc_history) {
-      va_start(Argp, format);
-      PetscCall((*PetscVFPrintf)(petsc_history, format, Argp));
-    }
-    va_end(Argp);
-  }
-  PetscFunctionReturn(0);
+  va_start(Argp, format);
+  PetscCall(PetscVFPrintf_Private(comm, PETSC_STDOUT, format, Argp));
+  va_end(Argp);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/* ---------------------------------------------------------------------------------------*/
-
 /*@C
-    PetscSynchronizedFGets - Several processors all get the same line from a file.
+  PetscSynchronizedFGets - Multiple MPI processes all get the same line from a file.
 
-    Collective
+  Collective
 
-    Input Parameters:
-+   comm - the communicator
-.   fd - the file pointer
--   len - the length of the output buffer
+  Input Parameters:
++ comm - the MPI communicator
+. fp   - the file pointer
+- len  - the length of `string`
 
-    Output Parameter:
-.   string - the line read from the file, at end of file string[0] == 0
+  Output Parameter:
+. string - the line read from the file, at end of file `string`[0] == 0
 
-    Level: intermediate
+  Level: intermediate
 
 .seealso: `PetscSynchronizedPrintf()`, `PetscSynchronizedFlush()`,
           `PetscFOpen()`, `PetscViewerASCIISynchronizedPrintf()`, `PetscViewerASCIIPrintf()`
@@ -705,41 +729,14 @@ PetscErrorCode PetscSynchronizedFGets(MPI_Comm comm, FILE *fp, size_t len, char 
 
   PetscFunctionBegin;
   PetscCallMPI(MPI_Comm_rank(comm, &rank));
-
   if (rank == 0) {
-    char *ptr = fgets(string, len, fp);
-
-    if (!ptr) {
+    if (!fgets(string, len, fp)) {
       string[0] = 0;
-      PetscCheck(feof(fp), PETSC_COMM_SELF, PETSC_ERR_FILE_READ, "Error reading from file: %d", errno);
+      PetscCheck(feof(fp), PETSC_COMM_SELF, PETSC_ERR_FILE_READ, "Error reading from file due to \"%s\"", strerror(errno));
     }
   }
   PetscCallMPI(MPI_Bcast(string, len, MPI_BYTE, 0, comm));
-  PetscFunctionReturn(0);
-}
-
-/*@C
-     PetscFormatStrip - Takes a PETSc format string and removes all numerical modifiers to % operations
-
-   Input Parameters:
-.   format - the PETSc format string
-
- Level: developer
-
-@*/
-PetscErrorCode PetscFormatStrip(char *format)
-{
-  size_t loc1 = 0, loc2 = 0;
-
-  PetscFunctionBegin;
-  while (format[loc2]) {
-    if (format[loc2] == '%') {
-      format[loc1++] = format[loc2++];
-      while (format[loc2] && ((format[loc2] >= '0' && format[loc2] <= '9') || format[loc2] == '.')) loc2++;
-    }
-    format[loc1++] = format[loc2++];
-  }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PetscFormatRealArray(char buf[], size_t len, const char *fmt, PetscInt n, const PetscReal x[])
@@ -757,5 +754,5 @@ PetscErrorCode PetscFormatRealArray(char buf[], size_t len, const char *fmt, Pet
     *p++ = ' ';
   }
   p[i ? 0 : -1] = 0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

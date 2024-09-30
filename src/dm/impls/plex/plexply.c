@@ -2,16 +2,15 @@
 #include <petsc/private/dmpleximpl.h> /*I   "petscdmplex.h"   I*/
 
 /*@C
-  DMPlexCreatePLYFromFile - Create a DMPlex mesh from a PLY file.
+  DMPlexCreatePLYFromFile - Create a `DMPLEX` mesh from a PLY <https://en.wikipedia.org/wiki/PLY_(file_format)> file.
 
+  Input Parameters:
 + comm        - The MPI communicator
 . filename    - Name of the .med file
 - interpolate - Create faces and edges in the mesh
 
   Output Parameter:
-. dm  - The DM object representing the mesh
-
-  Note: https://en.wikipedia.org/wiki/PLY_(file_format)
+. dm - The `DMPLEX` object representing the mesh
 
   Level: beginner
 
@@ -205,5 +204,5 @@ PetscErrorCode DMPlexCreatePLYFromFile(MPI_Comm comm, const char filename[], Pet
     PetscCall(DMDestroy(dm));
     *dm = idm;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

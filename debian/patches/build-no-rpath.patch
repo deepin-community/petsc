@@ -1,10 +1,8 @@
 This gets rid of rpath in the build system.
 
-Index: petsc/config/BuildSystem/config/setCompilers.py
-===================================================================
---- petsc.orig/config/BuildSystem/config/setCompilers.py	2022-12-07 18:29:27.465424795 +0100
-+++ petsc/config/BuildSystem/config/setCompilers.py	2022-12-07 18:29:27.461424745 +0100
-@@ -2416,11 +2416,7 @@
+--- a/config/BuildSystem/config/setCompilers.py
++++ b/config/BuildSystem/config/setCompilers.py
+@@ -2471,11 +2471,7 @@
      return
  
    def checkSharedLinkerPaths(self):
@@ -17,7 +15,7 @@ Index: petsc/config/BuildSystem/config/setCompilers.py
      languages = ['C']
      if hasattr(self, 'CXX'):
        languages.append('Cxx')
-@@ -2434,23 +2430,6 @@
+@@ -2489,23 +2485,6 @@
        languages.append('SYCL')
      for language in languages:
        flag = '-L'

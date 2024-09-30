@@ -30,7 +30,7 @@ PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   options->simplex       = PETSC_FALSE;
   options->write_output  = PETSC_FALSE;
   options->input_file[0] = '\0';
-  PetscCall(PetscStrcpy(options->output_file, "ex3.h5m"));
+  PetscCall(PetscStrncpy(options->output_file, "ex3.h5m", sizeof(options->output_file)));
 
   PetscOptionsBegin(comm, "", "Uniform Mesh Refinement Options", "DMMOAB");
   PetscCall(PetscOptionsBool("-debug", "Enable debug messages", "ex2.cxx", options->debug, &options->debug, NULL));
@@ -45,7 +45,7 @@ PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   PetscOptionsEnd();
 
   PetscCall(PetscLogEventRegister("CreateMesh", DM_CLASSID, &options->createMeshEvent));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 };
 
 PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *user)
@@ -68,7 +68,7 @@ PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *user)
   }
   PetscCall(PetscObjectSetName((PetscObject)user->dm, "Coarse Mesh"));
   PetscCall(PetscLogEventEnd(user->createMeshEvent, 0, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -99,7 +99,7 @@ int main(int argc, char **argv)
   // coarsest grid = 0
   // finest grid = nlevels
   dmhierarchy[0] = user.dm;
-  PetscObjectReference((PetscObject)user.dm);
+  PetscCall(PetscObjectReference((PetscObject)user.dm));
 
   if (user.nlevels) {
     PetscCall(PetscMalloc1(user.nlevels, &degrees));

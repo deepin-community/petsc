@@ -5,43 +5,43 @@
 /*@
   DMPlexGetActivePoint - Get the point on which projection is currently working
 
-  Not collective
+  Not Collective
 
   Input Parameter:
-. dm   - the `DM`
+. dm - the `DM`
 
   Output Parameter:
 . point - The mesh point involved in the current projection
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexSetActivePoint()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexSetActivePoint()`
 @*/
 PetscErrorCode DMPlexGetActivePoint(DM dm, PetscInt *point)
 {
   PetscFunctionBeginHot;
   *point = ((DM_Plex *)dm->data)->activePoint;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexSetActivePoint - Set the point on which projection is currently working
 
-  Not collective
+  Not Collective
 
   Input Parameters:
-+ dm   - the `DM`
++ dm    - the `DM`
 - point - The mesh point involved in the current projection
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexGetActivePoint()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexGetActivePoint()`
 @*/
 PetscErrorCode DMPlexSetActivePoint(DM dm, PetscInt point)
 {
   PetscFunctionBeginHot;
   ((DM_Plex *)dm->data)->activePoint = point;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -65,7 +65,7 @@ PetscErrorCode DMPlexSetActivePoint(DM dm, PetscInt point)
 
   Level: developer
 
-.seealso:[](chapter_unstructured), `DM`, `DMPLEX`, `PetscDS`, `PetscFEGeom`, `PetscFVCellGeom`, `PetscDualSpace`
+.seealso:[](ch_unstructured), `DM`, `DMPLEX`, `PetscDS`, `PetscFEGeom`, `PetscFVCellGeom`, `PetscDualSpace`
 */
 static PetscErrorCode DMProjectPoint_Func_Private(DM dm, PetscDS ds, DM dmIn, PetscDS dsIn, PetscReal time, PetscFEGeom *fegeom, PetscFVCellGeom *fvgeom, PetscBool isFE[], PetscDualSpace sp[], PetscErrorCode (**funcs)(PetscInt, PetscReal, const PetscReal[], PetscInt, PetscScalar *, void *), void **ctxs, PetscScalar values[])
 {
@@ -146,7 +146,7 @@ static PetscErrorCode DMProjectPoint_Func_Private(DM dm, PetscDS ds, DM dmIn, Pe
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -188,17 +188,19 @@ static PetscErrorCode DMProjectPoint_Field_Private(DM dm, PetscDS ds, DM dmIn, D
   PetscScalar       *coefficients_t = NULL, *coefficientsAux_t = NULL;
   const PetscScalar *constants;
   PetscReal         *x;
-  PetscInt          *uOff, *uOff_x, *aOff = NULL, *aOff_x = NULL, *Nc;
+  PetscInt          *uOff, *uOff_x, *aOff = NULL, *aOff_x = NULL, *Nc, face[2];
   PetscFEGeom        fegeom;
-  const PetscInt     dE = cgeom->dimEmbed;
+  const PetscInt     dE = cgeom->dimEmbed, *cone, *ornt;
   PetscInt           numConstants, Nf, NfIn, NfAux = 0, f, spDim, d, v, inp, tp = 0;
-  PetscBool          isAffine, isCohesive, transform;
+  PetscBool          isAffine, isCohesive, isCohesiveIn, transform;
+  DMPolytopeType     qct;
 
   PetscFunctionBeginHot;
   PetscCall(PetscDSGetNumFields(ds, &Nf));
   PetscCall(PetscDSGetComponents(ds, &Nc));
   PetscCall(PetscDSIsCohesive(ds, &isCohesive));
   PetscCall(PetscDSGetNumFields(dsIn, &NfIn));
+  PetscCall(PetscDSIsCohesive(dsIn, &isCohesiveIn));
   PetscCall(PetscDSGetComponentOffsets(dsIn, &uOff));
   PetscCall(PetscDSGetComponentDerivativeOffsets(dsIn, &uOff_x));
   PetscCall(PetscDSGetEvaluationArrays(dsIn, &u, &bc /*&u_t*/, &u_x));
@@ -207,7 +209,31 @@ static PetscErrorCode DMProjectPoint_Field_Private(DM dm, PetscDS ds, DM dmIn, D
   PetscCall(DMHasBasisTransform(dmIn, &transform));
   PetscCall(DMGetLocalSection(dmIn, &section));
   PetscCall(DMGetEnclosurePoint(dmIn, dm, encIn, p, &inp));
-  PetscCall(DMPlexVecGetClosure(dmIn, section, localU, inp, NULL, &coefficients));
+  // Get cohesive cell hanging off face
+  if (isCohesiveIn) {
+    PetscCall(DMPlexGetCellType(dmIn, inp, &qct));
+    if ((qct != DM_POLYTOPE_POINT_PRISM_TENSOR) && (qct != DM_POLYTOPE_SEG_PRISM_TENSOR) && (qct != DM_POLYTOPE_TRI_PRISM_TENSOR) && (qct != DM_POLYTOPE_QUAD_PRISM_TENSOR)) {
+      DMPolytopeType  ct;
+      const PetscInt *support;
+      PetscInt        Ns, s;
+
+      PetscCall(DMPlexGetSupport(dmIn, inp, &support));
+      PetscCall(DMPlexGetSupportSize(dmIn, inp, &Ns));
+      for (s = 0; s < Ns; ++s) {
+        PetscCall(DMPlexGetCellType(dmIn, support[s], &ct));
+        if ((ct == DM_POLYTOPE_POINT_PRISM_TENSOR) || (ct == DM_POLYTOPE_SEG_PRISM_TENSOR) || (ct == DM_POLYTOPE_TRI_PRISM_TENSOR) || (ct == DM_POLYTOPE_QUAD_PRISM_TENSOR)) {
+          inp = support[s];
+          break;
+        }
+      }
+      PetscCheck(s < Ns, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "Cohesive cell not found from face %" PetscInt_FMT, inp);
+      PetscCall(PetscDSGetComponentOffsetsCohesive(dsIn, 2, &uOff));
+      PetscCall(DMPlexGetOrientedCone(dmIn, inp, &cone, &ornt));
+      face[0] = 0;
+      face[1] = 0;
+    }
+  }
+  if (localU) PetscCall(DMPlexVecGetClosure(dmIn, section, localU, inp, NULL, &coefficients));
   if (dmAux) {
     PetscInt subp;
 
@@ -253,6 +279,12 @@ static PetscErrorCode DMProjectPoint_Field_Private(DM dm, PetscDS ds, DM dmIn, D
     PetscCall(PetscQuadratureGetData(allPoints, &dim, NULL, &numPoints, &points, NULL));
     PetscCall(DMGetWorkArray(dm, numPoints * Nc[f], MPIU_SCALAR, &pointEval));
     for (q = 0; q < numPoints; ++q, ++tp) {
+      PetscInt qpt[2];
+
+      if (isCohesiveIn) {
+        PetscCall(PetscDSPermuteQuadPoint(dsIn, ornt[0], f, q, &qpt[0]));
+        PetscCall(PetscDSPermuteQuadPoint(dsIn, DMPolytopeTypeComposeOrientationInv(qct, ornt[1], 0), f, q, &qpt[1]));
+      }
       if (isAffine) {
         CoordinatesRefToReal(dE, cgeom->dim, fegeom.xi, cgeom->v, fegeom.J, &points[q * dim], x);
       } else {
@@ -261,7 +293,10 @@ static PetscErrorCode DMProjectPoint_Field_Private(DM dm, PetscDS ds, DM dmIn, D
         fegeom.invJ = &cgeom->invJ[tp * dE * dE];
         fegeom.detJ = &cgeom->detJ[tp];
       }
-      PetscCall(PetscFEEvaluateFieldJets_Internal(dsIn, NfIn, 0, tp, T, &fegeom, coefficients, coefficients_t, u, u_x, u_t));
+      if (coefficients) {
+        if (isCohesiveIn) PetscCall(PetscFEEvaluateFieldJets_Hybrid_Internal(dsIn, NfIn, 0, tp, T, face, qpt, T, &fegeom, coefficients, coefficients_t, u, u_x, u_t));
+        else PetscCall(PetscFEEvaluateFieldJets_Internal(dsIn, NfIn, 0, tp, T, &fegeom, coefficients, coefficients_t, u, u_x, u_t));
+      }
       if (dsAux) PetscCall(PetscFEEvaluateFieldJets_Internal(dsAux, NfAux, 0, tp, TAux, &fegeom, coefficientsAux, coefficientsAux_t, a, a_x, a_t));
       if (transform) PetscCall(DMPlexBasisTransformApplyReal_Internal(dmIn, fegeom.v, PETSC_TRUE, dE, fegeom.v, fegeom.v, dm->transformCtx));
       (*funcs[f])(dE, NfIn, NfAux, uOff, uOff_x, u, u_t, u_x, aOff, aOff_x, a, a_t, a_x, time, fegeom.v, numConstants, constants, &pointEval[Nc[f] * q]);
@@ -274,9 +309,10 @@ static PetscErrorCode DMProjectPoint_Field_Private(DM dm, PetscDS ds, DM dmIn, D
       for (d = 0; d < spDim; d++, v++) values[v] = values[v - spDim];
     }
   }
-  PetscCall(DMPlexVecRestoreClosure(dmIn, section, localU, inp, NULL, &coefficients));
+  if (localU) PetscCall(DMPlexVecRestoreClosure(dmIn, section, localU, inp, NULL, &coefficients));
   if (dmAux) PetscCall(DMPlexVecRestoreClosure(dmAux, sectionAux, localA, p, NULL, &coefficientsAux));
-  PetscFunctionReturn(0);
+  if (isCohesiveIn) PetscCall(DMPlexRestoreOrientedCone(dmIn, inp, &cone, &ornt));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMProjectPoint_BdField_Private(DM dm, PetscDS ds, DM dmIn, PetscDS dsIn, DM dmAux, DMEnclosureType encAux, PetscDS dsAux, PetscReal time, Vec localU, Vec localA, PetscFEGeom *fgeom, PetscDualSpace sp[], PetscInt p, PetscTabulation *T, PetscTabulation *TAux, void (**funcs)(PetscInt, PetscInt, PetscInt, const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], PetscReal, const PetscReal[], const PetscReal[], PetscInt, const PetscScalar[], PetscScalar[]), void **ctxs, PetscScalar values[])
@@ -377,7 +413,7 @@ static PetscErrorCode DMProjectPoint_BdField_Private(DM dm, PetscDS ds, DM dmIn,
   }
   PetscCall(DMPlexVecRestoreClosure(dmIn, section, localU, p, NULL, &coefficients));
   if (dmAux) PetscCall(DMPlexVecRestoreClosure(dmAux, sectionAux, localA, p, NULL, &coefficientsAux));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMProjectPoint_Private(DM dm, PetscDS ds, DM dmIn, DMEnclosureType encIn, PetscDS dsIn, DM dmAux, DMEnclosureType encAux, PetscDS dsAux, PetscFEGeom *fegeom, PetscInt effectiveHeight, PetscReal time, Vec localU, Vec localA, PetscBool hasFE, PetscBool hasFV, PetscBool isFE[], PetscDualSpace sp[], PetscInt p, PetscTabulation *T, PetscTabulation *TAux, DMBoundaryConditionType type, void (**funcs)(void), void **ctxs, PetscBool fieldActive[], PetscScalar values[])
@@ -404,7 +440,7 @@ static PetscErrorCode DMProjectPoint_Private(DM dm, PetscDS ds, DM dmIn, DMEnclo
   default:
     SETERRQ(PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_WRONG, "Unknown boundary condition type: %d", (int)type);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceGetAllPointsUnion(PetscInt Nf, PetscDualSpace *sp, PetscInt dim, void (**funcs)(void), PetscQuadrature *allPoints)
@@ -415,7 +451,7 @@ static PetscErrorCode PetscDualSpaceGetAllPointsUnion(PetscInt Nf, PetscDualSpac
   PetscFunctionBegin;
   if (!dim) {
     PetscCall(PetscQuadratureCreate(PETSC_COMM_SELF, allPoints));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   numPoints = 0;
   for (f = 0; f < Nf; ++f) {
@@ -445,27 +481,27 @@ static PetscErrorCode PetscDualSpaceGetAllPointsUnion(PetscInt Nf, PetscDualSpac
   }
   PetscCall(PetscQuadratureCreate(PETSC_COMM_SELF, allPoints));
   PetscCall(PetscQuadratureSetData(*allPoints, dim, 0, numPoints, points, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  DMGetFirstLabeledPoint - Find first labeled point p_o in odm such that the corresponding point p in dm has the specified height. Return p and the corresponding ds.
+  DMGetFirstLabeledPoint - Find first labeled `point` in `odm` such that the corresponding point in `dm` has the specified `height`. Return `point` and the corresponding `ds`.
 
   Input Parameters:
-  dm - the `DM`
-  odm - the enclosing `DM`
-  label - label for `DM` domain, or NULL for whole domain
-  numIds - the number of ids
-  ids - An array of the label ids in sequence for the domain
-  height - Height of target cells in `DMPLEX` topology
++ dm     - the `DM`
+. odm    - the enclosing `DM`
+. label  - label for `DM` domain, or `NULL` for whole domain
+. numIds - the number of `ids`
+. ids    - An array of the label ids in sequence for the domain
+- height - Height of target cells in `DMPLEX` topology
 
   Output Parameters:
-  point - the first labeled point
-  ds - the ds corresponding to the first labeled point
++ point - the first labeled point
+- ds    - the ds corresponding to the first labeled point
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexSetActivePoint()`, `DMLabel`, `PetscDS`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexSetActivePoint()`, `DMLabel`, `PetscDS`
 @*/
 PetscErrorCode DMGetFirstLabeledPoint(DM dm, DM odm, DMLabel label, PetscInt numIds, const PetscInt ids[], PetscInt height, PetscInt *point, PetscDS *ds)
 {
@@ -475,7 +511,7 @@ PetscErrorCode DMGetFirstLabeledPoint(DM dm, DM odm, DMLabel label, PetscInt num
 
   PetscFunctionBegin;
   if (point) *point = -1;
-  if (!label) PetscFunctionReturn(0);
+  if (!label) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(DMGetEnclosureRelation(dm, odm, &enc));
   PetscCall(DMConvert(dm, DMPLEX, &plex));
   for (PetscInt i = 0; i < numIds; ++i) {
@@ -493,7 +529,8 @@ PetscErrorCode DMGetFirstLabeledPoint(DM dm, DM odm, DMLabel label, PetscInt num
         PetscCall(DMGetEnclosurePoint(dm, odm, enc, points[i], &point));
         if (pStart <= point && point < pEnd) {
           ls = point;
-          if (ds) PetscCall(DMGetCellDS(dm, ls, ds));
+          if (ds) PetscCall(DMGetCellDS(dm, ls, ds, NULL));
+          if (ls >= 0) break;
         }
       }
       PetscCall(ISRestoreIndices(labelIS, &points));
@@ -503,7 +540,7 @@ PetscErrorCode DMGetFirstLabeledPoint(DM dm, DM odm, DMLabel label, PetscInt num
   }
   if (point) *point = ls;
   PetscCall(DMDestroy(&plex));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -553,7 +590,7 @@ static PetscErrorCode DMProjectLocal_Generic_Plex(DM dm, PetscReal time, Vec loc
   PetscTabulation *T = NULL, *TAux = NULL;
   PetscInt        *Nc;
   PetscInt         dim, dimEmbed, depth, htInc = 0, htIncIn = 0, htIncAux = 0, minHeight, maxHeight, h, regionNum, Nf, NfIn, NfAux = 0, NfTot, f;
-  PetscBool       *isFE, hasFE = PETSC_FALSE, hasFV = PETSC_FALSE, isCohesive = PETSC_FALSE, transform;
+  PetscBool       *isFE, hasFE = PETSC_FALSE, hasFV = PETSC_FALSE, isCohesive = PETSC_FALSE, isCohesiveIn = PETSC_FALSE, transform;
   DMField          coordField;
   DMLabel          depthLabel;
   PetscQuadrature  allPoints = NULL;
@@ -609,7 +646,7 @@ static PetscErrorCode DMProjectLocal_Generic_Plex(DM dm, PetscReal time, Vec loc
       PetscCall(DMDestroy(&plex));
       PetscCall(DMDestroy(&plexIn));
       if (dmAux) PetscCall(DMDestroy(&plexAux));
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
     if (dim < 0) {
       DMLabel spmap = NULL, spmapIn = NULL, spmapAux = NULL;
@@ -644,9 +681,11 @@ static PetscErrorCode DMProjectLocal_Generic_Plex(DM dm, PetscReal time, Vec loc
   if (!dsIn) PetscCall(DMGetDS(dmIn, &dsIn));
   PetscCall(PetscDSGetNumFields(ds, &Nf));
   PetscCall(PetscDSGetNumFields(dsIn, &NfIn));
+  PetscCall(PetscDSIsCohesive(dsIn, &isCohesiveIn));
+  if (isCohesiveIn) --htIncIn; // Should be rearranged
   PetscCall(DMGetNumFields(dm, &NfTot));
   PetscCall(DMFindRegionNum(dm, ds, &regionNum));
-  PetscCall(DMGetRegionNumDS(dm, regionNum, NULL, &fieldIS, NULL));
+  PetscCall(DMGetRegionNumDS(dm, regionNum, NULL, &fieldIS, NULL, NULL));
   PetscCall(PetscDSIsCohesive(ds, &isCohesive));
   PetscCall(DMGetCoordinateDim(dm, &dimEmbed));
   PetscCall(DMGetLocalSection(dm, &section));
@@ -796,11 +835,12 @@ static PetscErrorCode DMProjectLocal_Generic_Plex(DM dm, PetscReal time, Vec loc
         PetscCall(PetscDSGetCohesive(dsIn, f, &cohesive));
         PetscCall(PetscDualSpaceGetDimension(spIn[f], &spDim));
         totDimIn += spDim;
-        if (isCohesive && !cohesive) totDimIn += spDim;
+        if (isCohesiveIn && !cohesive) totDimIn += spDim;
       }
       PetscCall(DMGetEnclosurePoint(dmIn, dm, encIn, lStart < 0 ? pStart : lStart, &pIn));
       PetscCall(DMPlexVecGetClosure(plexIn, NULL, localU, pIn, &numValuesIn, NULL));
-      PetscCheck(numValuesIn == totDimIn, PETSC_COMM_SELF, PETSC_ERR_ARG_SIZ, "The input section point (%" PetscInt_FMT ") closure size %" PetscInt_FMT " != dual space dimension %" PetscInt_FMT " at height %" PetscInt_FMT, pIn, numValuesIn, totDimIn, htIncIn);
+      // TODO We could check that pIn is a cohesive cell for this check
+      PetscCheck(isCohesiveIn || (numValuesIn == totDimIn), PETSC_COMM_SELF, PETSC_ERR_ARG_SIZ, "The input section point (%" PetscInt_FMT ") closure size %" PetscInt_FMT " != dual space dimension %" PetscInt_FMT " at height %" PetscInt_FMT, pIn, numValuesIn, totDimIn, htIncIn);
       if (htIncIn) PetscCall(PetscDSGetHeightSubspace(dsIn, hEffIn, &dsEffIn));
     }
     if (htIncAux) PetscCall(PetscDSGetHeightSubspace(dsAux, hEffAux, &dsEffAux));
@@ -905,40 +945,40 @@ static PetscErrorCode DMProjectLocal_Generic_Plex(DM dm, PetscReal time, Vec loc
   PetscCall(DMDestroy(&plex));
   PetscCall(DMDestroy(&plexIn));
   if (dmAux) PetscCall(DMDestroy(&plexAux));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMProjectFunctionLocal_Plex(DM dm, PetscReal time, PetscErrorCode (**funcs)(PetscInt, PetscReal, const PetscReal[], PetscInt, PetscScalar *, void *), void **ctxs, InsertMode mode, Vec localX)
 {
   PetscFunctionBegin;
   PetscCall(DMProjectLocal_Generic_Plex(dm, time, NULL, 0, NULL, NULL, 0, NULL, DM_BC_ESSENTIAL, (void (**)(void))funcs, ctxs, mode, localX));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMProjectFunctionLabelLocal_Plex(DM dm, PetscReal time, DMLabel label, PetscInt numIds, const PetscInt ids[], PetscInt Ncc, const PetscInt comps[], PetscErrorCode (**funcs)(PetscInt, PetscReal, const PetscReal[], PetscInt, PetscScalar *, void *), void **ctxs, InsertMode mode, Vec localX)
 {
   PetscFunctionBegin;
   PetscCall(DMProjectLocal_Generic_Plex(dm, time, NULL, Ncc, comps, label, numIds, ids, DM_BC_ESSENTIAL, (void (**)(void))funcs, ctxs, mode, localX));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMProjectFieldLocal_Plex(DM dm, PetscReal time, Vec localU, void (**funcs)(PetscInt, PetscInt, PetscInt, const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], PetscReal, const PetscReal[], PetscInt, const PetscScalar[], PetscScalar[]), InsertMode mode, Vec localX)
 {
   PetscFunctionBegin;
   PetscCall(DMProjectLocal_Generic_Plex(dm, time, localU, 0, NULL, NULL, 0, NULL, DM_BC_ESSENTIAL_FIELD, (void (**)(void))funcs, NULL, mode, localX));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMProjectFieldLabelLocal_Plex(DM dm, PetscReal time, DMLabel label, PetscInt numIds, const PetscInt ids[], PetscInt Ncc, const PetscInt comps[], Vec localU, void (**funcs)(PetscInt, PetscInt, PetscInt, const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], PetscReal, const PetscReal[], PetscInt, const PetscScalar[], PetscScalar[]), InsertMode mode, Vec localX)
 {
   PetscFunctionBegin;
   PetscCall(DMProjectLocal_Generic_Plex(dm, time, localU, Ncc, comps, label, numIds, ids, DM_BC_ESSENTIAL_FIELD, (void (**)(void))funcs, NULL, mode, localX));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMProjectBdFieldLabelLocal_Plex(DM dm, PetscReal time, DMLabel label, PetscInt numIds, const PetscInt ids[], PetscInt Ncc, const PetscInt comps[], Vec localU, void (**funcs)(PetscInt, PetscInt, PetscInt, const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], PetscReal, const PetscReal[], const PetscReal[], PetscInt, const PetscScalar[], PetscScalar[]), InsertMode mode, Vec localX)
 {
   PetscFunctionBegin;
   PetscCall(DMProjectLocal_Generic_Plex(dm, time, localU, Ncc, comps, label, numIds, ids, DM_BC_ESSENTIAL_BD_FIELD, (void (**)(void))funcs, NULL, mode, localX));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

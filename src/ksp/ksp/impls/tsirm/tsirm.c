@@ -1,4 +1,3 @@
-
 #include <petsc/private/kspimpl.h> /*I "petscksp.h" I*/
 
 typedef struct {
@@ -36,10 +35,10 @@ static PetscErrorCode KSPSetUp_TSIRM(KSP ksp)
 
   /* Residual and vector Alpha computed in the minimization step */
   PetscCall(MatCreateVecs(tsirm->S, &tsirm->Alpha, &tsirm->r));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPSolve_TSIRM(KSP ksp)
+static PetscErrorCode KSPSolve_TSIRM(KSP ksp)
 {
   KSP_TSIRM   *tsirm = (KSP_TSIRM *)ksp->data;
   KSP          sub_ksp;
@@ -127,10 +126,10 @@ PetscErrorCode KSPSolve_TSIRM(KSP ksp)
   PetscCall(MatDestroy(&AS));
   PetscCall(PetscFree(ind_row));
   ksp->its = total;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPSetFromOptions_TSIRM(KSP ksp, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode KSPSetFromOptions_TSIRM(KSP ksp, PetscOptionItems *PetscOptionsObject)
 {
   KSP_TSIRM *tsirm = (KSP_TSIRM *)ksp->data;
 
@@ -141,10 +140,10 @@ PetscErrorCode KSPSetFromOptions_TSIRM(KSP ksp, PetscOptionItems *PetscOptionsOb
   PetscCall(PetscOptionsInt("-ksp_tsirm_max_it_ls", "Maximum number of iterations for the minimization step", "", tsirm->maxiter_ls, &tsirm->maxiter_ls, NULL));
   PetscCall(PetscOptionsInt("-ksp_tsirm_size_ls", "Number of residuals for minimization", "", tsirm->size_ls, &tsirm->size_ls, NULL));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPDestroy_TSIRM(KSP ksp)
+static PetscErrorCode KSPDestroy_TSIRM(KSP ksp)
 {
   KSP_TSIRM *tsirm = (KSP_TSIRM *)ksp->data;
 
@@ -153,42 +152,38 @@ PetscErrorCode KSPDestroy_TSIRM(KSP ksp)
   PetscCall(VecDestroy(&tsirm->Alpha));
   PetscCall(VecDestroy(&tsirm->r));
   PetscCall(PetscFree(ksp->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPTSIRM - Implements the two-stage iteration with least-squares residual minimization method.
+   KSPTSIRM - Implements the two-stage iteration with least-squares residual minimization method {cite}`couturier2016tsirm`
 
    Options Database Keys:
-+  -ksp_ksp_type <solver> -         the type of the inner solver (GMRES or any of its variants for instance)
++  -ksp_ksp_type <solver>        - the type of the inner solver (GMRES or any of its variants for instance)
 .  -ksp_pc_type <preconditioner> - the type of the preconditioner applied to the inner solver
-.  -ksp_ksp_max_it <maxits> -      the maximum number of inner iterations (iterations of the inner solver)
-.  -ksp_ksp_rtol <tol> -           sets the relative convergence tolerance of the inner solver
-.  -ksp_tsirm_cgls <number> -      if 1 use CGLS solver in the minimization step, otherwise use LSQR solver
+.  -ksp_ksp_max_it <maxits>      - the maximum number of inner iterations (iterations of the inner solver)
+.  -ksp_ksp_rtol <tol>           - sets the relative convergence tolerance of the inner solver
+.  -ksp_tsirm_cgls <number>      - if 1 use CGLS solver in the minimization step, otherwise use LSQR solver
 .  -ksp_tsirm_max_it_ls <maxits> - the maximum number of iterations for the least-squares minimization solver
-.  -ksp_tsirm_tol_ls <tol> -       sets the convergence tolerance of the least-squares minimization solver
--  -ksp_tsirm_size_ls <size> -     the number of residuals for the least-squares minimization step
+.  -ksp_tsirm_tol_ls <tol>       - sets the convergence tolerance of the least-squares minimization solver
+-  -ksp_tsirm_size_ls <size>     - the number of residuals for the least-squares minimization step
 
    Level: advanced
 
    Notes:
-    `KSPTSIRM` is a two-stage iteration method for solving large sparse linear systems of the form Ax=b. The main idea behind this new
-          method is the use a least-squares residual minimization to improve the convergence of Krylov based iterative methods, typically those of GMRES variants.
-          The principle of TSIRM algorithm  is to build an outer iteration over a Krylov method, called the inner solver, and to frequently store the current residual
-          computed by the given Krylov method in a matrix of residuals S. After a few outer iterations, a least-squares minimization step is applied on the matrix
-          composed by the saved residuals, in order to compute a better solution and to make new iterations if required.
-          The minimization step consists in solving the least-squares problem min||b-ASa|| to find 'a' which minimizes the
-          residuals (b-AS). The minimization step is performed using two solvers of linear least-squares problems: `KSPCGLS`  or `KSPLSQR`. A new solution x with
-          a minimal residual is computed with x=Sa.
-
-   References:
-.  * - R. Couturier, L. Ziane Khodja, and C. Guyeux. TSIRM: A Two-Stage Iteration with least-squares Residual Minimization algorithm to solve large sparse linear systems.
-   In PDSEC 2015, 16th IEEE Int. Workshop on Parallel and Distributed Scientific and Engineering Computing (in conjunction with IPDPS 2015), Hyderabad, India, 2015.
+   `KSPTSIRM` is a two-stage iteration method for solving large sparse linear systems of the form $Ax=b$. The main idea behind this new
+   method is the use a least-squares residual minimization to improve the convergence of Krylov based iterative methods, typically those of GMRES variants.
+   The principle of TSIRM algorithm  is to build an outer iteration over a Krylov method, called the inner solver, and to frequently store the current residual
+   computed by the given Krylov method in a matrix of residuals S. After a few outer iterations, a least-squares minimization step is applied on the matrix
+   composed by the saved residuals, in order to compute a better solution and to make new iterations if required.
+   The minimization step consists in solving the least-squares problem $\min||b-ASa||$ to find 'a' which minimizes the
+   residuals $(b-AS)$. The minimization step is performed using two solvers of linear least-squares problems: `KSPCGLS` or `KSPLSQR`. A new solution x with
+   a minimal residual is computed with $x=Sa$.
 
    Contributed by:
    Lilia Ziane Khodja
 
-.seealso: [](chapter_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPFGMRES`, `KSPLGMRES`,
+.seealso: [](ch_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPFGMRES`, `KSPLGMRES`,
           `KSPGMRESSetRestart()`, `KSPGMRESSetHapTol()`, `KSPGMRESSetPreAllocateVectors()`, `KSPGMRESSetOrthogonalization()`, `KSPGMRESGetOrthogonalization()`,
           `KSPGMRESClassicalGramSchmidtOrthogonalization()`, `KSPGMRESModifiedGramSchmidtOrthogonalization()`,
           `KSPGMRESCGSRefinementType`, `KSPGMRESSetCGSRefinementType()`, `KSPGMRESGetCGSRefinementType()`, `KSPGMRESMonitorKrylov()`, `KSPSetPCSide()`
@@ -212,6 +207,6 @@ PETSC_EXTERN PetscErrorCode KSPCreate_TSIRM(KSP ksp)
 #if defined(PETSC_USE_COMPLEX)
   SETERRQ(PetscObjectComm((PetscObject)ksp), PETSC_ERR_SUP, "This is not supported for complex numbers");
 #else
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 #endif
 }

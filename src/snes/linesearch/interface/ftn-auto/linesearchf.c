@@ -204,13 +204,11 @@ PETSC_EXTERN void  sneslinesearchcreate_(MPI_Fint * comm,SNESLineSearch *outline
 *__ierr = SNESLineSearchCreate(
 	MPI_Comm_f2c(*(comm)),outlinesearch);
 }
-
 PETSC_EXTERN void  sneslinesearchsetup_(SNESLineSearch linesearch, int *__ierr)
 {
 *__ierr = SNESLineSearchSetUp(
 	(SNESLineSearch)PetscToPointer((linesearch) ));
 }
-
 PETSC_EXTERN void  sneslinesearchreset_(SNESLineSearch linesearch, int *__ierr)
 {
 *__ierr = SNESLineSearchReset(
@@ -291,12 +289,11 @@ PETSC_EXTERN void  sneslinesearchgettolerances_(SNESLineSearch linesearch,PetscR
 *__ierr = SNESLineSearchGetTolerances(
 	(SNESLineSearch)PetscToPointer((linesearch) ),steptol,maxstep,rtol,atol,ltol,max_its);
 }
-PETSC_EXTERN void  sneslinesearchsettolerances_(SNESLineSearch linesearch,PetscReal *steptol,PetscReal *maxstep,PetscReal *rtol,PetscReal *atol,PetscReal *ltol,PetscInt *max_its, int *__ierr)
+PETSC_EXTERN void  sneslinesearchsettolerances_(SNESLineSearch linesearch,PetscReal *steptol,PetscReal *maxstep,PetscReal *rtol,PetscReal *atol,PetscReal *ltol,PetscInt *max_it, int *__ierr)
 {
 *__ierr = SNESLineSearchSetTolerances(
-	(SNESLineSearch)PetscToPointer((linesearch) ),*steptol,*maxstep,*rtol,*atol,*ltol,*max_its);
+	(SNESLineSearch)PetscToPointer((linesearch) ),*steptol,*maxstep,*rtol,*atol,*ltol,*max_it);
 }
-
 PETSC_EXTERN void  sneslinesearchgetdamping_(SNESLineSearch linesearch,PetscReal *damping, int *__ierr)
 {
 *__ierr = SNESLineSearchGetDamping(
@@ -307,7 +304,6 @@ PETSC_EXTERN void  sneslinesearchsetdamping_(SNESLineSearch linesearch,PetscReal
 *__ierr = SNESLineSearchSetDamping(
 	(SNESLineSearch)PetscToPointer((linesearch) ),*damping);
 }
-
 PETSC_EXTERN void  sneslinesearchgetorder_(SNESLineSearch linesearch,PetscInt *order, int *__ierr)
 {
 *__ierr = SNESLineSearchGetOrder(

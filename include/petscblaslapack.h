@@ -12,16 +12,15 @@
   PETSC_BLASLAPACK_CAPS BLAS/LAPACK function names are all in capital letters
   PETSC_BLASLAPACK_C BLAS/LAPACK function names have no mangling
 
-  PETSC_BLASLAPACK_SINGLEISDOUBLE - for Cray systems where the BLAS/LAPACK single precision (i.e. Fortran single precision is actually 64 bits)
+  PETSC_BLASLAPACK_SINGLEISDOUBLE - for Cray systems where the BLAS/LAPACK single precision (i.e. Fortran single precision is actually 64-bits)
                                     old Cray vector machines used to be this way, it is is not clear if any exist now.
 
-  PetscBLASInt is almost always 32 bit integers but can be 64 bit integers for certain usages of MKL and OpenBLAS BLAS/LAPACK libraries
+  PetscBLASInt is almost always 32-bit integers but can be 64-bit integers for certain usages of MKL and OpenBLAS BLAS/LAPACK libraries
 
 */
-#ifndef _BLASLAPACK_H
-#define _BLASLAPACK_H
+#pragma once
 
-#include <petscconf.h>
+#include <petscsys.h>
 #if defined(__cplusplus)
   #define BLAS_EXTERN extern "C"
 #else
@@ -31,22 +30,31 @@
 /* SUBMANSEC = Sys */
 
 /*MC
-    PetscCallBLAS - Calls a BLAS or LAPACK routine with error check handling
+   PetscCallBLAS - Calls a BLAS or LAPACK routine so that the stack trace returned from any signal received inside the function call
+   includes the name of the BLAS/LAPACK routine
 
-    Not collective
-
-    Synopsis:
+   Synopsis:
    #include <petscsys.h>
    void PetscCallBLAS(char *name,routine)
 
-  Input Parameters:
-+   name - string that gives the name of the function being called
+   Not Collective
+
+   Input Parameters:
++   name    - string that gives the name of the function being called
 -   routine - actual call to the routine including its arguments
 
    Level: developer
 
-   Developer Note:
-   This is so that when a user or external library routine results in a crash or corrupts memory, they get blamed instead of PETSc.
+   Developer Notes:
+   This does not check error codes returned from the BLAS/LAPACK routine or ever return from the current subroutine. It merely pushes onto the PETSc
+   stack the name of the BLAS/LAPACK routine before calling the routine and removes it after a successful call.
+
+   LAPACK routines that return info codes should be followed by
+.vb
+   PetscCheck(!info, PETSC_COMM_SELF, PETSC_ERR_LIB, ...)
+.ve
+
+   This macro exists so that when a BLAS/LAPACK routine results in a crash or corrupts memory, they get blamed instead of PETSc.
 
 .seealso: `PetscCall()`, `PetscStackPushNoCheck()`, `PetscStackPush()`, `PetscCallExternal()`, `PetscStackCallExternalVoid()`
 M*/
@@ -59,8 +67,7 @@ M*/
 
 static inline void PetscMissingLapack(const char *fname, ...)
 {
-  PetscError(PETSC_COMM_SELF, __LINE__, PETSC_FUNCTION_NAME, __FILE__, PETSC_ERR_SUP, PETSC_ERROR_INITIAL, "%s - Lapack routine is unavailable.", fname);
-  MPI_Abort(PETSC_COMM_SELF, PETSC_ERR_SUP);
+  SETERRABORT(PETSC_COMM_SELF, PETSC_ERR_SUP, "%s - Lapack routine is unavailable.", fname);
 }
 
 #include <petscblaslapack_mangle.h>
@@ -97,6 +104,7 @@ BLAS_EXTERN void LAPACKstein_(const PetscBLASInt *, const PetscReal *, const Pet
 #endif
 BLAS_EXTERN void LAPACKgesv_(const PetscBLASInt *, const PetscBLASInt *, PetscScalar *, const PetscBLASInt *, PetscBLASInt *, PetscScalar *, const PetscBLASInt *, PetscBLASInt *);
 
+BLAS_EXTERN void LAPACKtrtri_(const char *, const char *, const PetscBLASInt *, PetscScalar *, const PetscBLASInt *, PetscBLASInt *);
 BLAS_EXTERN void LAPACKpotrf_(const char *, const PetscBLASInt *, PetscScalar *, const PetscBLASInt *, PetscBLASInt *);
 BLAS_EXTERN void LAPACKpotri_(const char *, const PetscBLASInt *, PetscScalar *, const PetscBLASInt *, PetscBLASInt *);
 BLAS_EXTERN void LAPACKpotrs_(const char *, const PetscBLASInt *, const PetscBLASInt *, const PetscScalar *, const PetscBLASInt *, PetscScalar *, const PetscBLASInt *, PetscBLASInt *);
@@ -132,6 +140,13 @@ BLAS_EXTERN void LAPACKREALsteqr_(const char *, const PetscBLASInt *, PetscReal 
 #else
   #define LAPACKsteqr_(a, b, c, d, e, f, g, h)     PetscMissingLapack("STEQR", a, b, c, d, e, f, g, h)
   #define LAPACKREALsteqr_(a, b, c, d, e, f, g, h) PetscMissingLapack("STEQR", a, b, c, d, e, f, g, h)
+#endif
+#if !defined(PETSC_MISSING_LAPACK_STEV)
+BLAS_EXTERN void LAPACKstev_(const char *, const PetscBLASInt *, PetscReal *, PetscReal *, PetscScalar *, const PetscBLASInt *, PetscReal *, PetscBLASInt *);
+BLAS_EXTERN void LAPACKREALstev_(const char *, const PetscBLASInt *, PetscReal *, PetscReal *, PetscReal *, const PetscBLASInt *, PetscReal *, PetscBLASInt *);
+#else
+  #define LAPACKstev_(a, b, c, d, e, f, g, h)     PetscMissingLapack("STEV", a, b, c, d, e, f, g, h)
+  #define LAPACKREALstev_(a, b, c, d, e, f, g, h) PetscMissingLapack("STEV", a, b, c, d, e, f, g, h)
 #endif
 #if !defined(PETSC_MISSING_LAPACK_HGEQZ)
 BLAS_EXTERN void LAPACKhgeqz_(const char *, const char *, const char *, PetscBLASInt *, PetscBLASInt *, PetscBLASInt *, PetscScalar *, PetscBLASInt *, PetscScalar *, PetscBLASInt *, PetscScalar *, PetscScalar *, PetscScalar *, PetscScalar *, PetscBLASInt *, PetscScalar *, PetscBLASInt *, PetscScalar *, PetscBLASInt *, PetscBLASInt *);
@@ -271,6 +286,4 @@ BLAS_EXTERN void LAPACKgesvd_(const char *, const char *, const PetscBLASInt *, 
 #else
 BLAS_EXTERN void LAPACKgeev_(const char *, const char *, const PetscBLASInt *, PetscScalar *, const PetscBLASInt *, PetscReal *, PetscReal *, PetscScalar *, const PetscBLASInt *, PetscScalar *, const PetscBLASInt *, PetscScalar *, const PetscBLASInt *, PetscBLASInt *);
 BLAS_EXTERN void LAPACKgesvd_(const char *, const char *, const PetscBLASInt *, const PetscBLASInt *, PetscScalar *, const PetscBLASInt *, PetscReal *, PetscScalar *, const PetscBLASInt *, PetscScalar *, const PetscBLASInt *, PetscScalar *, const PetscBLASInt *, PetscBLASInt *);
-#endif
-
 #endif

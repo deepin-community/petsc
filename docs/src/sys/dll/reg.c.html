@@ -1,550 +1,596 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/dll/reg.c">Actual source code: reg.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/sys/dll/reg.c">Actual source code: reg.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:46:54+00:00">
+<meta name="date" content="2024-03-29T14:12:44+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
 <pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">    Provides a general mechanism to allow one to register new routines in</font>
+<a name="line3">  3: </a><font color="#B22222">    dynamic libraries for many of the PETSc objects (including, e.g., <a href="../../../manualpages/KSP/KSP.html">KSP</a> and <a href="../../../manualpages/PC/PC.html">PC</a>).</font>
+<a name="line4">  4: </a><font color="#B22222">*/</font>
+<a name="line5">  5: </a>#include <A href="../../../include/petsc/private/petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
+<a name="line6">  6: </a>#include <A href="../../../include/petscviewer.h.html">&lt;petscviewer.h&gt;</A>
 
-<a name="line2">  2: </a><font color="#B22222">/*</font>
-<a name="line3">  3: </a><font color="#B22222">    Provides a general mechanism to allow one to register new routines in</font>
-<a name="line4">  4: </a><font color="#B22222">    dynamic libraries for many of the PETSc objects (including, e.g., <a href="../../../docs/manualpages/KSP/KSP.html">KSP</a> and <a href="../../../docs/manualpages/PC/PC.html">PC</a>).</font>
-<a name="line5">  5: </a><font color="#B22222">*/</font>
-<a name="line6">  6: </a>#include <A href="../../../include/petsc/private/petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
-<a name="line7">  7: </a>#include <A href="../../../include/petscviewer.h.html">&lt;petscviewer.h&gt;</A>
-
+<a name="line8">  8: </a>#include <A href="../../../include/petsc/private/hashmap.h.html">&lt;petsc/private/hashmap.h&gt;</A>
 <a name="line9">  9: </a><font color="#B22222">/*</font>
-<a name="line10"> 10: </a><font color="#B22222">    This is the default list used by PETSc with the <a href="../../../docs/manualpages/Sys/PetscDLLibrary.html">PetscDLLibrary</a> register routines</font>
+<a name="line10"> 10: </a><font color="#B22222">    This is the default list used by PETSc with the <a href="../../../manualpages/Sys/PetscDLLibrary.html">PetscDLLibrary</a> register routines</font>
 <a name="line11"> 11: </a><font color="#B22222">*/</font>
-<a name="line12"> 12: </a><a href="../../../docs/manualpages/Sys/PetscDLLibrary.html">PetscDLLibrary</a> PetscDLLibrariesLoaded = NULL;
+<a name="line12"> 12: </a><a href="../../../manualpages/Sys/PetscDLLibrary.html">PetscDLLibrary</a> PetscDLLibrariesLoaded = NULL;
 
 <a name="line14"> 14: </a><font color="#A020F0">#if defined(PETSC_HAVE_DYNAMIC_LIBRARIES) &amp;&amp; defined(PETSC_USE_SHARED_LIBRARIES)</font>
 
-<a name="line16"> 16: </a><strong><font color="#4169E1"><a name="PetscLoadDynamicLibrary"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLoadDynamicLibrary(const char *name, <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *found)</font></strong>
+<a name="line16"> 16: </a><strong><font color="#4169E1"><a name="PetscLoadDynamicLibrary"></a>static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLoadDynamicLibrary(const char *name, <a href="../../../manualpages/Sys/PetscBool.html">PetscBool</a> *found)</font></strong>
 <a name="line17"> 17: </a>{
 <a name="line18"> 18: </a>  char libs[PETSC_MAX_PATH_LEN], dlib[PETSC_MAX_PATH_LEN];
 
-<a name="line20"> 20: </a>  <a href="../../../docs/manualpages/Sys/PetscStrncpy.html">PetscStrncpy</a>(libs, <font color="#666666">"${PETSC_LIB_DIR}/libpetsc"</font>, <font color="#4169E1">sizeof</font>(libs));
-<a name="line21"> 21: </a>  <a href="../../../docs/manualpages/Sys/PetscStrlcat.html">PetscStrlcat</a>(libs, name, <font color="#4169E1">sizeof</font>(libs));
-<a name="line22"> 22: </a>  <a href="../../../docs/manualpages/Sys/PetscDLLibraryRetrieve.html">PetscDLLibraryRetrieve</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, libs, dlib, 1024, found);
-<a name="line23"> 23: </a>  <font color="#4169E1">if</font> (*found) {
-<a name="line24"> 24: </a>    <a href="../../../docs/manualpages/Sys/PetscDLLibraryAppend.html">PetscDLLibraryAppend</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;PetscDLLibrariesLoaded, dlib);
-<a name="line25"> 25: </a>  } <font color="#4169E1">else</font> {
-<a name="line26"> 26: </a>    <a href="../../../docs/manualpages/Sys/PetscStrncpy.html">PetscStrncpy</a>(libs, <font color="#666666">"${PETSC_DIR}/${PETSC_ARCH}/lib/libpetsc"</font>, <font color="#4169E1">sizeof</font>(libs));
-<a name="line27"> 27: </a>    <a href="../../../docs/manualpages/Sys/PetscStrlcat.html">PetscStrlcat</a>(libs, name, <font color="#4169E1">sizeof</font>(libs));
-<a name="line28"> 28: </a>    <a href="../../../docs/manualpages/Sys/PetscDLLibraryRetrieve.html">PetscDLLibraryRetrieve</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, libs, dlib, 1024, found);
-<a name="line29"> 29: </a>    <font color="#4169E1">if</font> (*found) <a href="../../../docs/manualpages/Sys/PetscDLLibraryAppend.html">PetscDLLibraryAppend</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;PetscDLLibrariesLoaded, dlib);
-<a name="line30"> 30: </a>  }
-<a name="line31"> 31: </a>  <font color="#4169E1">return</font> 0;
-<a name="line32"> 32: </a>}
-<a name="line33"> 33: </a><font color="#A020F0">#endif</font>
+<a name="line20"> 20: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line21"> 21: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscStrncpy.html">PetscStrncpy</a>(libs, <font color="#666666">"${PETSC_LIB_DIR}/libpetsc"</font>, <font color="#4169E1">sizeof</font>(libs)));
+<a name="line22"> 22: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscStrlcat.html">PetscStrlcat</a>(libs, name, <font color="#4169E1">sizeof</font>(libs)));
+<a name="line23"> 23: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscDLLibraryRetrieve.html">PetscDLLibraryRetrieve</a>(<a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, libs, dlib, 1024, found));
+<a name="line24"> 24: </a>  <font color="#4169E1">if</font> (*found) {
+<a name="line25"> 25: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscDLLibraryAppend.html">PetscDLLibraryAppend</a>(<a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;PetscDLLibrariesLoaded, dlib));
+<a name="line26"> 26: </a>  } <font color="#4169E1">else</font> {
+<a name="line27"> 27: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscStrncpy.html">PetscStrncpy</a>(libs, <font color="#666666">"${PETSC_DIR}/${PETSC_ARCH}/lib/libpetsc"</font>, <font color="#4169E1">sizeof</font>(libs)));
+<a name="line28"> 28: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscStrlcat.html">PetscStrlcat</a>(libs, name, <font color="#4169E1">sizeof</font>(libs)));
+<a name="line29"> 29: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscDLLibraryRetrieve.html">PetscDLLibraryRetrieve</a>(<a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, libs, dlib, 1024, found));
+<a name="line30"> 30: </a>    <font color="#4169E1">if</font> (*found) <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscDLLibraryAppend.html">PetscDLLibraryAppend</a>(<a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;PetscDLLibrariesLoaded, dlib));
+<a name="line31"> 31: </a>  }
+<a name="line32"> 32: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line33"> 33: </a>}
+<a name="line34"> 34: </a><font color="#A020F0">#endif</font>
 
-<a name="line35"> 35: </a><font color="#A020F0">#if defined(PETSC_USE_SINGLE_LIBRARY) &amp;&amp; !(defined(PETSC_HAVE_DYNAMIC_LIBRARIES) &amp;&amp; defined(PETSC_USE_SHARED_LIBRARIES))</font>
-<a name="line36"> 36: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/AO/AOInitializePackage.html">AOInitializePackage</a>(void)</font></strong>;
-<a name="line37"> 37: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/PetscSF/PetscSFInitializePackage.html">PetscSFInitializePackage</a>(void)</font></strong>;
-<a name="line38"> 38: </a><font color="#A020F0">  #if !defined(PETSC_USE_COMPLEX)</font>
-<a name="line39"> 39: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Characteristic/CharacteristicInitializePackage.html">CharacteristicInitializePackage</a>(void)</font></strong>;
-<a name="line40"> 40: </a><font color="#A020F0">  #endif</font>
-<a name="line41"> 41: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Vec/ISInitializePackage.html">ISInitializePackage</a>(void)</font></strong>;
-<a name="line42"> 42: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Vec/VecInitializePackage.html">VecInitializePackage</a>(void)</font></strong>;
-<a name="line43"> 43: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Mat/MatInitializePackage.html">MatInitializePackage</a>(void)</font></strong>;
-<a name="line44"> 44: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/DM/DMInitializePackage.html">DMInitializePackage</a>(void)</font></strong>;
-<a name="line45"> 45: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/KSP/PCInitializePackage.html">PCInitializePackage</a>(void)</font></strong>;
-<a name="line46"> 46: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/KSP/KSPInitializePackage.html">KSPInitializePackage</a>(void)</font></strong>;
-<a name="line47"> 47: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/SNES/SNESInitializePackage.html">SNESInitializePackage</a>(void)</font></strong>;
-<a name="line48"> 48: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/TS/TSInitializePackage.html">TSInitializePackage</a>(void)</font></strong>;
-<a name="line49"> 49: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Tao/TaoInitializePackage.html">TaoInitializePackage</a>(void)</font></strong>;
-<a name="line50"> 50: </a><font color="#A020F0">#endif</font>
-<a name="line51"> 51: </a><font color="#A020F0">#if defined(PETSC_HAVE_THREADSAFETY)</font>
-<a name="line52"> 52: </a>static <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> PETSC_COMM_WORLD_INNER = 0, PETSC_COMM_SELF_INNER = 0;
-<a name="line53"> 53: </a><font color="#A020F0">#endif</font>
+<a name="line36"> 36: </a><font color="#A020F0">#if defined(PETSC_USE_SINGLE_LIBRARY) &amp;&amp; !(defined(PETSC_HAVE_DYNAMIC_LIBRARIES) &amp;&amp; defined(PETSC_USE_SHARED_LIBRARIES))</font>
+<a name="line37"> 37: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/AO/AOInitializePackage.html">AOInitializePackage</a>(void)</font></strong>;
+<a name="line38"> 38: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/PetscSF/PetscSFInitializePackage.html">PetscSFInitializePackage</a>(void)</font></strong>;
+<a name="line39"> 39: </a><font color="#A020F0">  #if !defined(PETSC_USE_COMPLEX)</font>
+<a name="line40"> 40: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Characteristic/CharacteristicInitializePackage.html">CharacteristicInitializePackage</a>(void)</font></strong>;
+<a name="line41"> 41: </a><font color="#A020F0">  #endif</font>
+<a name="line42"> 42: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Vec/ISInitializePackage.html">ISInitializePackage</a>(void)</font></strong>;
+<a name="line43"> 43: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Vec/VecInitializePackage.html">VecInitializePackage</a>(void)</font></strong>;
+<a name="line44"> 44: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Mat/MatInitializePackage.html">MatInitializePackage</a>(void)</font></strong>;
+<a name="line45"> 45: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/DM/DMInitializePackage.html">DMInitializePackage</a>(void)</font></strong>;
+<a name="line46"> 46: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/KSP/PCInitializePackage.html">PCInitializePackage</a>(void)</font></strong>;
+<a name="line47"> 47: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/KSP/KSPInitializePackage.html">KSPInitializePackage</a>(void)</font></strong>;
+<a name="line48"> 48: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/SNES/SNESInitializePackage.html">SNESInitializePackage</a>(void)</font></strong>;
+<a name="line49"> 49: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/TS/TSInitializePackage.html">TSInitializePackage</a>(void)</font></strong>;
+<a name="line50"> 50: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Tao/TaoInitializePackage.html">TaoInitializePackage</a>(void)</font></strong>;
+<a name="line51"> 51: </a><font color="#A020F0">#endif</font>
 
-<a name="line55"> 55: </a><font color="#B22222">/*</font>
-<a name="line56"> 56: </a><font color="#B22222">    PetscInitialize_DynamicLibraries - Adds the default dynamic link libraries to the</font>
-<a name="line57"> 57: </a><font color="#B22222">    search path.</font>
-<a name="line58"> 58: </a><font color="#B22222">*/</font>
-<a name="line59"> 59: </a><strong><font color="#4169E1"><a name="PetscInitialize_DynamicLibraries"></a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscInitialize_DynamicLibraries(void)</font></strong>
-<a name="line60"> 60: </a>{
-<a name="line61"> 61: </a>  char     *libname[32];
-<a name="line62"> 62: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  nmax, i;
-<a name="line63"> 63: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> preload = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
-<a name="line64"> 64: </a><font color="#A020F0">#if defined(PETSC_HAVE_ELEMENTAL)</font>
-<a name="line65"> 65: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> <a href="../../../docs/manualpages/Sys/PetscInitialized.html">PetscInitialized</a> = PetscInitializeCalled;
-<a name="line66"> 66: </a><font color="#A020F0">#endif</font>
+<a name="line53"> 53: </a><font color="#B22222">/*</font>
+<a name="line54"> 54: </a><font color="#B22222">    PetscInitialize_DynamicLibraries - Adds the default dynamic link libraries to the</font>
+<a name="line55"> 55: </a><font color="#B22222">    search path.</font>
+<a name="line56"> 56: </a><font color="#B22222">*/</font>
+<a name="line57"> 57: </a><strong><font color="#4169E1"><a name="PetscInitialize_DynamicLibraries"></a>PETSC_INTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscInitialize_DynamicLibraries(void)</font></strong>
+<a name="line58"> 58: </a>{
+<a name="line59"> 59: </a>  char     *libname[32];
+<a name="line60"> 60: </a>  <a href="../../../manualpages/Sys/PetscInt.html">PetscInt</a>  nmax, i;
+<a name="line61"> 61: </a>  <a href="../../../manualpages/Sys/PetscBool.html">PetscBool</a> preload = <a href="../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line62"> 62: </a><font color="#A020F0">#if defined(PETSC_HAVE_ELEMENTAL)</font>
+<a name="line63"> 63: </a>  <a href="../../../manualpages/Sys/PetscBool.html">PetscBool</a> <a href="../../../manualpages/Sys/PetscInitialized.html">PetscInitialized</a> = PetscInitializeCalled;
+<a name="line64"> 64: </a><font color="#A020F0">#endif</font>
 
-<a name="line68"> 68: </a><font color="#A020F0">#if defined(PETSC_HAVE_THREADSAFETY)</font>
-<a name="line69"> 69: </a>  <font color="#B22222">/* These must be all initialized here because it is not safe for individual threads to call these initialize routines */</font>
-<a name="line70"> 70: </a>  preload = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line71"> 71: </a><font color="#A020F0">#endif</font>
+<a name="line66"> 66: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line67"> 67: </a><font color="#A020F0">#if defined(PETSC_HAVE_THREADSAFETY)</font>
+<a name="line68"> 68: </a>  <font color="#B22222">/* These must be all initialized here because it is not safe for individual threads to call these initialize routines */</font>
+<a name="line69"> 69: </a>  preload = <a href="../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line70"> 70: </a><font color="#A020F0">#endif</font>
 
-<a name="line73"> 73: </a>  nmax = 32;
-<a name="line74"> 74: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetStringArray.html">PetscOptionsGetStringArray</a>(NULL, NULL, <font color="#666666">"-dll_prepend"</font>, libname, &amp;nmax, NULL);
-<a name="line75"> 75: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nmax; i++) {
-<a name="line76"> 76: </a>    <a href="../../../docs/manualpages/Sys/PetscDLLibraryPrepend.html">PetscDLLibraryPrepend</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;PetscDLLibrariesLoaded, libname[i]);
-<a name="line77"> 77: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(libname[i]);
-<a name="line78"> 78: </a>  }
+<a name="line72"> 72: </a>  nmax = 32;
+<a name="line73"> 73: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscOptionsGetStringArray.html">PetscOptionsGetStringArray</a>(NULL, NULL, <font color="#666666">"-dll_prepend"</font>, libname, &amp;nmax, NULL));
+<a name="line74"> 74: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nmax; i++) {
+<a name="line75"> 75: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscDLLibraryPrepend.html">PetscDLLibraryPrepend</a>(<a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;PetscDLLibrariesLoaded, libname[i]));
+<a name="line76"> 76: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscFree.html">PetscFree</a>(libname[i]));
+<a name="line77"> 77: </a>  }
 
-<a name="line80"> 80: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, <font color="#666666">"-library_preload"</font>, &amp;preload, NULL);
-<a name="line81"> 81: </a>  <font color="#4169E1">if</font> (!preload) {
-<a name="line82"> 82: </a>    <a href="../../../docs/manualpages/Viewer/PetscSysInitializePackage.html">PetscSysInitializePackage</a>();
-<a name="line83"> 83: </a>  } <font color="#4169E1">else</font> {
-<a name="line84"> 84: </a><font color="#A020F0">#if defined(PETSC_HAVE_DYNAMIC_LIBRARIES) &amp;&amp; defined(PETSC_USE_SHARED_LIBRARIES)</font>
-<a name="line85"> 85: </a>    <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> found;
-<a name="line86"> 86: </a><font color="#A020F0">  #if defined(PETSC_USE_SINGLE_LIBRARY)</font>
-<a name="line87"> 87: </a>    PetscLoadDynamicLibrary(<font color="#666666">""</font>, &amp;found);
-<a name="line89"> 89: </a><font color="#A020F0">  #else</font>
-<a name="line90"> 90: </a>    PetscLoadDynamicLibrary(<font color="#666666">"sys"</font>, &amp;found);
-<a name="line92"> 92: </a>    PetscLoadDynamicLibrary(<font color="#666666">"vec"</font>, &amp;found);
-<a name="line94"> 94: </a>    PetscLoadDynamicLibrary(<font color="#666666">"mat"</font>, &amp;found);
-<a name="line96"> 96: </a>    PetscLoadDynamicLibrary(<font color="#666666">"dm"</font>, &amp;found);
-<a name="line98"> 98: </a>    PetscLoadDynamicLibrary(<font color="#666666">"ksp"</font>, &amp;found);
-<a name="line100">100: </a>    PetscLoadDynamicLibrary(<font color="#666666">"snes"</font>, &amp;found);
-<a name="line102">102: </a>    PetscLoadDynamicLibrary(<font color="#666666">"ts"</font>, &amp;found);
-<a name="line104">104: </a>    PetscLoadDynamicLibrary(<font color="#666666">"tao"</font>, &amp;found);
-<a name="line106">106: </a><font color="#A020F0">  #endif</font>
-<a name="line107">107: </a><font color="#A020F0">#else </font><font color="#B22222">/* defined(PETSC_HAVE_DYNAMIC_LIBRARIES) &amp;&amp; defined(PETSC_USE_SHARED_LIBRARIES) */</font><font color="#A020F0"></font>
-<a name="line108">108: </a><font color="#A020F0">  #if defined(PETSC_USE_SINGLE_LIBRARY)</font>
-<a name="line109">109: </a>    <a href="../../../docs/manualpages/AO/AOInitializePackage.html">AOInitializePackage</a>();
-<a name="line110">110: </a>    <a href="../../../docs/manualpages/PetscSF/PetscSFInitializePackage.html">PetscSFInitializePackage</a>();
-<a name="line111">111: </a><font color="#A020F0">    #if !defined(PETSC_USE_COMPLEX)</font>
-<a name="line112">112: </a>    <a href="../../../docs/manualpages/Characteristic/CharacteristicInitializePackage.html">CharacteristicInitializePackage</a>();
-<a name="line113">113: </a><font color="#A020F0">    #endif</font>
-<a name="line114">114: </a>    <a href="../../../docs/manualpages/Vec/ISInitializePackage.html">ISInitializePackage</a>();
-<a name="line115">115: </a>    <a href="../../../docs/manualpages/Vec/VecInitializePackage.html">VecInitializePackage</a>();
-<a name="line116">116: </a>    <a href="../../../docs/manualpages/Mat/MatInitializePackage.html">MatInitializePackage</a>();
-<a name="line117">117: </a>    <a href="../../../docs/manualpages/DM/DMInitializePackage.html">DMInitializePackage</a>();
-<a name="line118">118: </a>    <a href="../../../docs/manualpages/KSP/PCInitializePackage.html">PCInitializePackage</a>();
-<a name="line119">119: </a>    <a href="../../../docs/manualpages/KSP/KSPInitializePackage.html">KSPInitializePackage</a>();
-<a name="line120">120: </a>    <a href="../../../docs/manualpages/SNES/SNESInitializePackage.html">SNESInitializePackage</a>();
-<a name="line121">121: </a>    <a href="../../../docs/manualpages/TS/TSInitializePackage.html">TSInitializePackage</a>();
-<a name="line122">122: </a>    <a href="../../../docs/manualpages/Tao/TaoInitializePackage.html">TaoInitializePackage</a>();
-<a name="line123">123: </a><font color="#A020F0">  #else</font>
-<a name="line124">124: </a>    <a href="../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, PETSC_ERR_SUP, <font color="#666666">"Cannot use -library_preload with multiple static PETSc libraries"</font>);
-<a name="line125">125: </a><font color="#A020F0">  #endif</font>
-<a name="line126">126: </a><font color="#A020F0">#endif </font><font color="#B22222">/* defined(PETSC_HAVE_DYNAMIC_LIBRARIES) &amp;&amp; defined(PETSC_USE_SHARED_LIBRARIES) */</font><font color="#A020F0"></font>
-<a name="line127">127: </a>  }
+<a name="line79"> 79: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, <font color="#666666">"-library_preload"</font>, &amp;preload, NULL));
+<a name="line80"> 80: </a>  <font color="#4169E1">if</font> (!preload) {
+<a name="line81"> 81: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscSysInitializePackage.html">PetscSysInitializePackage</a>());
+<a name="line82"> 82: </a>  } <font color="#4169E1">else</font> {
+<a name="line83"> 83: </a><font color="#A020F0">#if defined(PETSC_HAVE_DYNAMIC_LIBRARIES) &amp;&amp; defined(PETSC_USE_SHARED_LIBRARIES)</font>
+<a name="line84"> 84: </a>    <a href="../../../manualpages/Sys/PetscBool.html">PetscBool</a> found;
+<a name="line85"> 85: </a><font color="#A020F0">  #if defined(PETSC_USE_SINGLE_LIBRARY)</font>
+<a name="line86"> 86: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscLoadDynamicLibrary(<font color="#666666">""</font>, &amp;found));
+<a name="line87"> 87: </a>    <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(found, <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_FILE_OPEN</a>, <font color="#666666">"Unable to locate PETSc dynamic library \n You cannot move the dynamic libraries!"</font>);
+<a name="line88"> 88: </a><font color="#A020F0">  #else</font>
+<a name="line89"> 89: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscLoadDynamicLibrary(<font color="#666666">"sys"</font>, &amp;found));
+<a name="line90"> 90: </a>    <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(found, <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_FILE_OPEN</a>, <font color="#666666">"Unable to locate PETSc Sys dynamic library \n You cannot move the dynamic libraries!"</font>);
+<a name="line91"> 91: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscLoadDynamicLibrary(<font color="#666666">"vec"</font>, &amp;found));
+<a name="line92"> 92: </a>    <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(found, <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_FILE_OPEN</a>, <font color="#666666">"Unable to locate PETSc <a href="../../../manualpages/Vec/Vec.html">Vec</a> dynamic library \n You cannot move the dynamic libraries!"</font>);
+<a name="line93"> 93: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscLoadDynamicLibrary(<font color="#666666">"mat"</font>, &amp;found));
+<a name="line94"> 94: </a>    <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(found, <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_FILE_OPEN</a>, <font color="#666666">"Unable to locate PETSc <a href="../../../manualpages/Mat/Mat.html">Mat</a> dynamic library \n You cannot move the dynamic libraries!"</font>);
+<a name="line95"> 95: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscLoadDynamicLibrary(<font color="#666666">"dm"</font>, &amp;found));
+<a name="line96"> 96: </a>    <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(found, <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_FILE_OPEN</a>, <font color="#666666">"Unable to locate PETSc <a href="../../../manualpages/DM/DM.html">DM</a> dynamic library \n You cannot move the dynamic libraries!"</font>);
+<a name="line97"> 97: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscLoadDynamicLibrary(<font color="#666666">"ksp"</font>, &amp;found));
+<a name="line98"> 98: </a>    <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(found, <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_FILE_OPEN</a>, <font color="#666666">"Unable to locate PETSc <a href="../../../manualpages/KSP/KSP.html">KSP</a> dynamic library \n You cannot move the dynamic libraries!"</font>);
+<a name="line99"> 99: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscLoadDynamicLibrary(<font color="#666666">"snes"</font>, &amp;found));
+<a name="line100">100: </a>    <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(found, <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_FILE_OPEN</a>, <font color="#666666">"Unable to locate PETSc <a href="../../../manualpages/SNES/SNES.html">SNES</a> dynamic library \n You cannot move the dynamic libraries!"</font>);
+<a name="line101">101: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscLoadDynamicLibrary(<font color="#666666">"ts"</font>, &amp;found));
+<a name="line102">102: </a>    <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(found, <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_FILE_OPEN</a>, <font color="#666666">"Unable to locate PETSc <a href="../../../manualpages/TS/TS.html">TS</a> dynamic library \n You cannot move the dynamic libraries!"</font>);
+<a name="line103">103: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscLoadDynamicLibrary(<font color="#666666">"tao"</font>, &amp;found));
+<a name="line104">104: </a>    <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(found, <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_FILE_OPEN</a>, <font color="#666666">"Unable to locate <a href="../../../manualpages/Tao/Tao.html">Tao</a> dynamic library \n You cannot move the dynamic libraries!"</font>);
+<a name="line105">105: </a><font color="#A020F0">  #endif</font>
+<a name="line106">106: </a><font color="#A020F0">#else </font><font color="#B22222">/* defined(PETSC_HAVE_DYNAMIC_LIBRARIES) &amp;&amp; defined(PETSC_USE_SHARED_LIBRARIES) */</font><font color="#A020F0"></font>
+<a name="line107">107: </a><font color="#A020F0">  #if defined(PETSC_USE_SINGLE_LIBRARY)</font>
+<a name="line108">108: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/AO/AOInitializePackage.html">AOInitializePackage</a>());
+<a name="line109">109: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/PetscSF/PetscSFInitializePackage.html">PetscSFInitializePackage</a>());
+<a name="line110">110: </a><font color="#A020F0">    #if !defined(PETSC_USE_COMPLEX)</font>
+<a name="line111">111: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Characteristic/CharacteristicInitializePackage.html">CharacteristicInitializePackage</a>());
+<a name="line112">112: </a><font color="#A020F0">    #endif</font>
+<a name="line113">113: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/ISInitializePackage.html">ISInitializePackage</a>());
+<a name="line114">114: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecInitializePackage.html">VecInitializePackage</a>());
+<a name="line115">115: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Mat/MatInitializePackage.html">MatInitializePackage</a>());
+<a name="line116">116: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/DM/DMInitializePackage.html">DMInitializePackage</a>());
+<a name="line117">117: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/KSP/PCInitializePackage.html">PCInitializePackage</a>());
+<a name="line118">118: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/KSP/KSPInitializePackage.html">KSPInitializePackage</a>());
+<a name="line119">119: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/SNES/SNESInitializePackage.html">SNESInitializePackage</a>());
+<a name="line120">120: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/TS/TSInitializePackage.html">TSInitializePackage</a>());
+<a name="line121">121: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Tao/TaoInitializePackage.html">TaoInitializePackage</a>());
+<a name="line122">122: </a><font color="#A020F0">  #else</font>
+<a name="line123">123: </a>    <a href="../../../manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_SUP</a>, <font color="#666666">"Cannot use -library_preload with multiple static PETSc libraries"</font>);
+<a name="line124">124: </a><font color="#A020F0">  #endif</font>
+<a name="line125">125: </a><font color="#A020F0">#endif </font><font color="#B22222">/* defined(PETSC_HAVE_DYNAMIC_LIBRARIES) &amp;&amp; defined(PETSC_USE_SHARED_LIBRARIES) */</font><font color="#A020F0"></font>
+<a name="line126">126: </a>  }
 
-<a name="line129">129: </a><font color="#A020F0">#if defined(PETSC_HAVE_DYNAMIC_LIBRARIES) &amp;&amp; defined(PETSC_USE_SHARED_LIBRARIES) &amp;&amp; defined(PETSC_HAVE_BAMG)</font>
-<a name="line130">130: </a>  {
-<a name="line131">131: </a>    <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> found;
-<a name="line132">132: </a>    PetscLoadDynamicLibrary(<font color="#666666">"bamg"</font>, &amp;found);
-<a name="line134">134: </a>  }
-<a name="line135">135: </a><font color="#A020F0">#endif</font>
+<a name="line128">128: </a><font color="#A020F0">#if defined(PETSC_HAVE_DYNAMIC_LIBRARIES) &amp;&amp; defined(PETSC_USE_SHARED_LIBRARIES) &amp;&amp; defined(PETSC_HAVE_BAMG)</font>
+<a name="line129">129: </a>  {
+<a name="line130">130: </a>    <a href="../../../manualpages/Sys/PetscBool.html">PetscBool</a> found;
+<a name="line131">131: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscLoadDynamicLibrary(<font color="#666666">"bamg"</font>, &amp;found));
+<a name="line132">132: </a>    <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(found, <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_FILE_OPEN</a>, <font color="#666666">"Unable to locate PETSc BAMG dynamic library \n You cannot move the dynamic libraries!"</font>);
+<a name="line133">133: </a>  }
+<a name="line134">134: </a><font color="#A020F0">#endif</font>
 
-<a name="line137">137: </a>  nmax = 32;
-<a name="line138">138: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetStringArray.html">PetscOptionsGetStringArray</a>(NULL, NULL, <font color="#666666">"-dll_append"</font>, libname, &amp;nmax, NULL);
-<a name="line139">139: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nmax; i++) {
-<a name="line140">140: </a>    <a href="../../../docs/manualpages/Sys/PetscDLLibraryAppend.html">PetscDLLibraryAppend</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;PetscDLLibrariesLoaded, libname[i]);
-<a name="line141">141: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(libname[i]);
-<a name="line142">142: </a>  }
+<a name="line136">136: </a>  nmax = 32;
+<a name="line137">137: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscOptionsGetStringArray.html">PetscOptionsGetStringArray</a>(NULL, NULL, <font color="#666666">"-dll_append"</font>, libname, &amp;nmax, NULL));
+<a name="line138">138: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; nmax; i++) {
+<a name="line139">139: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscDLLibraryAppend.html">PetscDLLibraryAppend</a>(<a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;PetscDLLibrariesLoaded, libname[i]));
+<a name="line140">140: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscFree.html">PetscFree</a>(libname[i]));
+<a name="line141">141: </a>  }
 
-<a name="line144">144: </a><font color="#A020F0">#if defined(PETSC_HAVE_THREADSAFETY)</font>
-<a name="line145">145: </a>  <a href="../../../docs/manualpages/Sys/PetscCommDuplicate.html">PetscCommDuplicate</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;PETSC_COMM_SELF_INNER, NULL);
-<a name="line146">146: </a>  <a href="../../../docs/manualpages/Sys/PetscCommDuplicate.html">PetscCommDuplicate</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;PETSC_COMM_WORLD_INNER, NULL);
-<a name="line147">147: </a><font color="#A020F0">#endif</font>
-<a name="line148">148: </a><font color="#A020F0">#if defined(PETSC_HAVE_ELEMENTAL)</font>
-<a name="line149">149: </a>  <font color="#B22222">/* in Fortran, PetscInitializeCalled is set to <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> before PetscInitialize_DynamicLibraries() */</font>
-<a name="line150">150: </a>  <font color="#B22222">/* in C, it is not the case, but the value is forced to <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> so that <a href="../../../docs/manualpages/Sys/PetscRegisterFinalize.html">PetscRegisterFinalize</a>() is called */</font>
-<a name="line151">151: </a>  PetscInitializeCalled = <a href="../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line152">152: </a>  <a href="../../../docs/manualpages/Sys/PetscElementalInitializePackage.html">PetscElementalInitializePackage</a>();
-<a name="line153">153: </a>  PetscInitializeCalled = <a href="../../../docs/manualpages/Sys/PetscInitialized.html">PetscInitialized</a>;
-<a name="line154">154: </a><font color="#A020F0">#endif</font>
-<a name="line155">155: </a>  <font color="#4169E1">return</font> 0;
-<a name="line156">156: </a>}
+<a name="line143">143: </a><font color="#A020F0">#if defined(PETSC_HAVE_ELEMENTAL)</font>
+<a name="line144">144: </a>  <font color="#B22222">/* in Fortran, PetscInitializeCalled is set to <a href="../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> before PetscInitialize_DynamicLibraries() */</font>
+<a name="line145">145: </a>  <font color="#B22222">/* in C, it is not the case, but the value is forced to <a href="../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a> so that <a href="../../../manualpages/Sys/PetscRegisterFinalize.html">PetscRegisterFinalize</a>() is called */</font>
+<a name="line146">146: </a>  PetscInitializeCalled = <a href="../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line147">147: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscElementalInitializePackage.html">PetscElementalInitializePackage</a>());
+<a name="line148">148: </a>  PetscInitializeCalled = <a href="../../../manualpages/Sys/PetscInitialized.html">PetscInitialized</a>;
+<a name="line149">149: </a><font color="#A020F0">#endif</font>
+<a name="line150">150: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line151">151: </a>}
 
-<a name="line158">158: </a><font color="#B22222">/*</font>
-<a name="line159">159: </a><font color="#B22222">     PetscFinalize_DynamicLibraries - Closes the opened dynamic libraries.</font>
-<a name="line160">160: </a><font color="#B22222">*/</font>
-<a name="line161">161: </a><strong><font color="#4169E1"><a name="PetscFinalize_DynamicLibraries"></a>PETSC_INTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFinalize_DynamicLibraries(void)</font></strong>
-<a name="line162">162: </a>{
-<a name="line163">163: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg = <a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line153">153: </a><font color="#B22222">/*</font>
+<a name="line154">154: </a><font color="#B22222">     PetscFinalize_DynamicLibraries - Closes the opened dynamic libraries.</font>
+<a name="line155">155: </a><font color="#B22222">*/</font>
+<a name="line156">156: </a><strong><font color="#4169E1"><a name="PetscFinalize_DynamicLibraries"></a>PETSC_INTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFinalize_DynamicLibraries(void)</font></strong>
+<a name="line157">157: </a>{
+<a name="line158">158: </a>  <a href="../../../manualpages/Sys/PetscBool.html">PetscBool</a> flg = <a href="../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
 
-<a name="line165">165: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, <font color="#666666">"-dll_view"</font>, &amp;flg, NULL);
-<a name="line166">166: </a>  <font color="#4169E1">if</font> (flg) PetscDLLibraryPrintPath(PetscDLLibrariesLoaded);
-<a name="line167">167: </a>  <a href="../../../docs/manualpages/Sys/PetscDLLibraryClose.html">PetscDLLibraryClose</a>(PetscDLLibrariesLoaded);
+<a name="line160">160: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line161">161: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(NULL, NULL, <font color="#666666">"-dll_view"</font>, &amp;flg, NULL));
+<a name="line162">162: </a>  <font color="#4169E1">if</font> (flg) <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscDLLibraryPrintPath(PetscDLLibrariesLoaded));
+<a name="line163">163: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscDLLibraryClose.html">PetscDLLibraryClose</a>(PetscDLLibrariesLoaded));
+<a name="line164">164: </a>  PetscDLLibrariesLoaded = NULL;
+<a name="line165">165: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line166">166: </a>}
 
-<a name="line169">169: </a><font color="#A020F0">#if defined(PETSC_HAVE_THREADSAFETY)</font>
-<a name="line170">170: </a>  <a href="../../../docs/manualpages/Sys/PetscCommDestroy.html">PetscCommDestroy</a>(&amp;PETSC_COMM_SELF_INNER);
-<a name="line171">171: </a>  <a href="../../../docs/manualpages/Sys/PetscCommDestroy.html">PetscCommDestroy</a>(&amp;PETSC_COMM_WORLD_INNER);
-<a name="line172">172: </a><font color="#A020F0">#endif</font>
+<a name="line168">168: </a><strong><font color="#4169E1"><a name="ETSC_HASH_MAP"></a><a href="../../../manualpages/PetscH/PETSC_HASH_MAP.html">PETSC_HASH_MAP</a>(HMapFunc, const char *, PetscVoidFunction, kh_str_hash_func, kh_str_hash_equal, NULL)</font></strong>
 
-<a name="line174">174: </a>  PetscDLLibrariesLoaded = NULL;
-<a name="line175">175: </a>  <font color="#4169E1">return</font> 0;
-<a name="line176">176: </a>}
+<a name="line170">170: </a><font color="#4169E1"><a name="_n_PetscFunctionList"></a>struct _n_PetscFunctionList </font>{
+<a name="line171">171: </a>  PetscHMapFunc map;
+<a name="line172">172: </a>};
 
-<a name="line178">178: </a><font color="#B22222">/* ------------------------------------------------------------------------------*/</font>
-<a name="line179">179: </a><font color="#4169E1"><a name="_n_PetscFunctionList"></a>struct _n_PetscFunctionList </font>{
-<a name="line180">180: </a>  void (*routine)(void);       <font color="#B22222">/* the routine */</font>
-<a name="line181">181: </a>  char             *name;      <font color="#B22222">/* string to identify routine */</font>
-<a name="line182">182: </a>  <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> next;      <font color="#B22222">/* next pointer */</font>
-<a name="line183">183: </a>  <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> next_list; <font color="#B22222">/* used to maintain list of all lists for freeing */</font>
-<a name="line184">184: </a>};
+<a name="line174">174: </a><font color="#B22222">/* Keep a linked list of PetscFunctionLists so that we can destroy all the left-over ones. */</font>
+<a name="line175">175: </a><font color="#4169E1">typedef struct n_PetscFunctionListDLAll *PetscFunctionListDLAll;</font>
+<a name="line176">176: </a><font color="#4169E1"><a name="n_PetscFunctionListDLAll"></a>struct n_PetscFunctionListDLAll </font>{
+<a name="line177">177: </a>  <a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>      data;
+<a name="line178">178: </a>  PetscFunctionListDLAll next;
+<a name="line179">179: </a>};
 
-<a name="line186">186: </a><font color="#B22222">/*</font>
-<a name="line187">187: </a><font color="#B22222">     Keep a linked list of PetscFunctionLists so that we can destroy all the left-over ones.</font>
-<a name="line188">188: </a><font color="#B22222">*/</font>
-<a name="line189">189: </a>static <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> dlallhead = NULL;
+<a name="line181">181: </a>static PetscFunctionListDLAll dlallhead = NULL;
 
-<a name="line191">191: </a><strong><font color="#4169E1"><a name="PetscFunctionListCreateNode_Private"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFunctionListCreateNode_Private(<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> *entry, const char name[], void (*func)(void))</font></strong>
-<a name="line192">192: </a>{
-<a name="line193">193: </a>  <a href="../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(entry);
-<a name="line194">194: </a>  <a href="../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(name, &amp;(*entry)-&gt;name);
-<a name="line195">195: </a>  (*entry)-&gt;routine = func;
-<a name="line196">196: </a>  (*entry)-&gt;next    = NULL;
-<a name="line197">197: </a>  <font color="#4169E1">return</font> 0;
-<a name="line198">198: </a>}
+<a name="line183">183: </a><strong><font color="#4169E1"><a name="PetscFunctionListDLAllPush_Private"></a>static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFunctionListDLAllPush_Private(<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> fl)</font></strong>
+<a name="line184">184: </a>{
+<a name="line185">185: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line186">186: </a>  <font color="#4169E1">if</font> (<a href="../../../manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG) &amp;&amp; !<a href="../../../manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_THREADSAFETY)) {
+<a name="line187">187: </a>    PetscFunctionListDLAll head;
 
-<a name="line200">200: </a><font color="#B22222">/*MC</font>
-<a name="line201">201: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a> - Given a routine and a string id, saves that routine in the</font>
-<a name="line202">202: </a><font color="#B22222">   specified registry.</font>
+<a name="line189">189: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;head));
+<a name="line190">190: </a>    head-&gt;data = fl;
+<a name="line191">191: </a>    head-&gt;next = dlallhead;
+<a name="line192">192: </a>    dlallhead  = head;
+<a name="line193">193: </a>  }
+<a name="line194">194: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line195">195: </a>}
 
-<a name="line204">204: </a><font color="#B22222">   Synopsis:</font>
-<a name="line205">205: </a>#include <A href="../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
-<a name="line206">206: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>(<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> *flist,const char name[],void (*fptr)(void))</font>
+<a name="line197">197: </a><strong><font color="#4169E1"><a name="PetscFunctionListDLAllPop_Private"></a>static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFunctionListDLAllPop_Private(<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> fl)</font></strong>
+<a name="line198">198: </a>{
+<a name="line199">199: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line200">200: </a>  <font color="#4169E1">if</font> (<a href="../../../manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG) &amp;&amp; !<a href="../../../manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_THREADSAFETY)) {
+<a name="line201">201: </a>    PetscFunctionListDLAll current = dlallhead, prev = NULL;
 
-<a name="line208">208: </a><font color="#B22222">   Not Collective</font>
+<a name="line203">203: </a>    <font color="#B22222">/* Remove this entry from the main DL list (if it is in it) */</font>
+<a name="line204">204: </a>    <font color="#4169E1">while</font> (current) {
+<a name="line205">205: </a>      const PetscFunctionListDLAll next = current-&gt;next;
 
-<a name="line210">210: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line211">211: </a><font color="#B22222">+  flist - pointer to function list object</font>
-<a name="line212">212: </a><font color="#B22222">.  name - string to identify routine</font>
-<a name="line213">213: </a><font color="#B22222">-  fptr - function pointer</font>
+<a name="line207">207: </a>      <font color="#4169E1">if</font> (current-&gt;data == fl) {
+<a name="line208">208: </a>        <font color="#4169E1">if</font> (prev) {
+<a name="line209">209: </a>          // somewhere in the middle (or end) of the list
+<a name="line210">210: </a>          prev-&gt;next = next;
+<a name="line211">211: </a>        } <font color="#4169E1">else</font> {
+<a name="line212">212: </a>          // prev = NULL implies current = dlallhead, so front of list
+<a name="line213">213: </a>          dlallhead = next;
+<a name="line214">214: </a>        }
+<a name="line215">215: </a>        <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscFree.html">PetscFree</a>(current));
+<a name="line216">216: </a>        <font color="#4169E1">break</font>;
+<a name="line217">217: </a>      }
+<a name="line218">218: </a>      prev    = current;
+<a name="line219">219: </a>      current = next;
+<a name="line220">220: </a>    }
+<a name="line221">221: </a>  }
+<a name="line222">222: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line223">223: </a>}
 
-<a name="line215">215: </a><font color="#B22222">   Notes:</font>
-<a name="line216">216: </a><font color="#B22222">   To remove a registered routine, pass in a NULL fptr.</font>
+<a name="line225">225: </a><strong><font color="#4169E1"><a name="PetscHMapFuncInsert_Private"></a>static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscHMapFuncInsert_Private(PetscHMapFunc map, const char name[], PetscVoidFunction fnc)</font></strong>
+<a name="line226">226: </a>{
+<a name="line227">227: </a>  PetscHashIter it;
+<a name="line228">228: </a>  <a href="../../../manualpages/Sys/PetscBool.html">PetscBool</a>     found;
 
-<a name="line218">218: </a><font color="#B22222">   Users who wish to register new classes for use by a particular PETSc</font>
-<a name="line219">219: </a><font color="#B22222">   component (e.g., `<a href="../../../docs/manualpages/SNES/SNES.html">SNES</a>`) should generally call the registration routine</font>
-<a name="line220">220: </a><font color="#B22222">   for that particular component (e.g., `<a href="../../../docs/manualpages/SNES/SNESRegister.html">SNESRegister</a>()`) instead of</font>
-<a name="line221">221: </a><font color="#B22222">   calling `<a href="../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()` directly.</font>
+<a name="line230">230: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line231">231: </a>  PetscAssertPointer(name, 2);
+<a name="line233">233: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncFind(map, name, &amp;it, &amp;found));
+<a name="line234">234: </a>  <font color="#4169E1">if</font> (fnc) {
+<a name="line235">235: </a>    <font color="#4169E1">if</font> (found) {
+<a name="line236">236: </a>      <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncIterSet(map, it, fnc));
+<a name="line237">237: </a>    } <font color="#4169E1">else</font> {
+<a name="line238">238: </a>      char *tmp_name;
 
-<a name="line223">223: </a><font color="#B22222">    Level: developer</font>
+<a name="line240">240: </a>      <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(name, &amp;tmp_name));
+<a name="line241">241: </a>      <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncSet(map, tmp_name, fnc));
+<a name="line242">242: </a>    }
+<a name="line243">243: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (found) {
+<a name="line244">244: </a>    const char *tmp_name;
 
-<a name="line225">225: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscFunctionListDestroy.html">PetscFunctionListDestroy</a>()`, `<a href="../../../docs/manualpages/SNES/SNESRegister.html">SNESRegister</a>()`, `<a href="../../../docs/manualpages/KSP/KSPRegister.html">KSPRegister</a>()`,</font>
-<a name="line226">226: </a><font color="#B22222">          `<a href="../../../docs/manualpages/PC/PCRegister.html">PCRegister</a>()`, `<a href="../../../docs/manualpages/TS/TSRegister.html">TSRegister</a>()`, `<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, `<a href="../../../docs/manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>()`</font>
-<a name="line227">227: </a><font color="#B22222">M*/</font>
-<a name="line228">228: </a><strong><font color="#4169E1"><a name="PetscFunctionListAdd_Private"></a>PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFunctionListAdd_Private(<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> *fl, const char name[], void (*fnc)(void))</font></strong>
-<a name="line229">229: </a>{
-<a name="line233">233: </a>  <font color="#4169E1">if</font> (*fl) {
-<a name="line234">234: </a>    <font color="#B22222">/* search list to see if it is already there */</font>
-<a name="line235">235: </a>    <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> empty_node = NULL;
-<a name="line236">236: </a>    <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> ne         = *fl;
+<a name="line246">246: </a>    PetscHashIterGetKey(map, it, tmp_name);
+<a name="line247">247: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscFree.html">PetscFree</a>(tmp_name));
+<a name="line248">248: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncIterDel(map, it));
+<a name="line249">249: </a>  }
+<a name="line250">250: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line251">251: </a>}
 
-<a name="line238">238: </a>    <font color="#4169E1">while</font> (1) {
-<a name="line239">239: </a>      <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> founddup;
+<a name="line253">253: </a><strong><font color="#4169E1"><a name="PetscFunctionListCreate_Private"></a>static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFunctionListCreate_Private(<a href="../../../manualpages/Sys/PetscInt.html">PetscInt</a> size, <a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> *fl)</font></strong>
+<a name="line254">254: </a>{
+<a name="line255">255: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line256">256: </a>  <font color="#4169E1">if</font> (*fl) <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line257">257: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscNew.html">PetscNew</a>(fl));
+<a name="line258">258: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncCreateWithSize(size, &amp;(*fl)-&gt;map));
+<a name="line259">259: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscFunctionListDLAllPush_Private(*fl));
+<a name="line260">260: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line261">261: </a>}
 
-<a name="line241">241: </a>      <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(ne-&gt;name, name, &amp;founddup);
-<a name="line242">242: </a>      <font color="#4169E1">if</font> (founddup) {
-<a name="line243">243: </a>        <font color="#B22222">/* found duplicate, clear it */</font>
-<a name="line244">244: </a>        ne-&gt;routine = fnc;
-<a name="line245">245: </a>        <font color="#4169E1">if</font> (!fnc) <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(ne-&gt;name);
-<a name="line246">246: </a>        <font color="#4169E1">return</font> 0;
-<a name="line247">247: </a>      }
+<a name="line263">263: </a><font color="#B22222">/*MC</font>
+<a name="line264">264: </a><font color="#B22222">  <a href="../../../manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a> - Given a routine and a string id, saves that routine in the</font>
+<a name="line265">265: </a><font color="#B22222">  specified registry.</font>
 
-<a name="line249">249: </a>      <font color="#4169E1">if</font> (!empty_node &amp;&amp; !ne-&gt;routine &amp;&amp; !ne-&gt;name) {
-<a name="line250">250: </a>        <font color="#B22222">/* save the empty node for later */</font>
-<a name="line251">251: </a>        empty_node = ne;
-<a name="line252">252: </a>      }
+<a name="line267">267: </a><font color="#B22222">  Synopsis:</font>
+<a name="line268">268: </a>#include <A href="../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+<a name="line269">269: </a><font color="#B22222">  <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>(<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> *flist,const char name[],void (*fptr)(void))</font>
 
-<a name="line254">254: </a>      <font color="#4169E1">if</font> (!ne-&gt;next) <font color="#4169E1">break</font>; <font color="#B22222">/* end of list */</font>
-<a name="line255">255: </a>      ne = ne-&gt;next;
-<a name="line256">256: </a>    }
+<a name="line271">271: </a><font color="#B22222">  Not Collective</font>
 
-<a name="line258">258: </a>    <font color="#B22222">/* there was an empty entry we could grab, fill it and bail */</font>
-<a name="line259">259: </a>    <font color="#4169E1">if</font> (empty_node) {
-<a name="line260">260: </a>      empty_node-&gt;routine = fnc;
-<a name="line261">261: </a>      <a href="../../../docs/manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(name, &amp;empty_node-&gt;name);
-<a name="line262">262: </a>    } <font color="#4169E1">else</font> {
-<a name="line263">263: </a>      <font color="#B22222">/* create new entry at the end of list */</font>
-<a name="line264">264: </a>      PetscFunctionListCreateNode_Private(&amp;ne-&gt;next, name, fnc);
-<a name="line265">265: </a>    }
-<a name="line266">266: </a>    <font color="#4169E1">return</font> 0;
-<a name="line267">267: </a>  }
+<a name="line273">273: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line274">274: </a><font color="#B22222">+ fl   - pointer to function list object</font>
+<a name="line275">275: </a><font color="#B22222">. name - string to identify routine</font>
+<a name="line276">276: </a><font color="#B22222">- fptr - function pointer</font>
 
-<a name="line269">269: </a>  <font color="#B22222">/* we didn't have a list */</font>
-<a name="line270">270: </a>  PetscFunctionListCreateNode_Private(fl, name, fnc);
-<a name="line271">271: </a>  <font color="#4169E1">if</font> (<a href="../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_DEBUG)) {
-<a name="line272">272: </a>    const <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> head = dlallhead;
+<a name="line278">278: </a><font color="#B22222">  Level: developer</font>
 
-<a name="line274">274: </a>    <font color="#B22222">/* add this new list to list of all lists */</font>
-<a name="line275">275: </a>    dlallhead        = *fl;
-<a name="line276">276: </a>    (*fl)-&gt;next_list = head;
-<a name="line277">277: </a>  }
-<a name="line278">278: </a>  <font color="#4169E1">return</font> 0;
-<a name="line279">279: </a>}
+<a name="line280">280: </a><font color="#B22222">  Notes:</font>
+<a name="line281">281: </a><font color="#B22222">  To remove a registered routine, pass in a `NULL` `fptr`.</font>
 
-<a name="line281">281: </a><font color="#B22222">/*@</font>
-<a name="line282">282: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscFunctionListDestroy.html">PetscFunctionListDestroy</a> - Destroys a list of registered routines.</font>
+<a name="line283">283: </a><font color="#B22222">  Users who wish to register new classes for use by a particular PETSc</font>
+<a name="line284">284: </a><font color="#B22222">  component (e.g., `<a href="../../../manualpages/SNES/SNES.html">SNES</a>`) should generally call the registration routine</font>
+<a name="line285">285: </a><font color="#B22222">  for that particular component (e.g., `<a href="../../../manualpages/SNES/SNESRegister.html">SNESRegister</a>()`) instead of</font>
+<a name="line286">286: </a><font color="#B22222">  calling `<a href="../../../manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()` directly.</font>
 
-<a name="line284">284: </a><font color="#B22222">    Input Parameter:</font>
-<a name="line285">285: </a><font color="#B22222">.   fl  - pointer to list</font>
-
-<a name="line287">287: </a><font color="#B22222">    Level: developer</font>
-
-<a name="line289">289: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, `<a href="../../../docs/manualpages/Sys/PetscFunctionListClear.html">PetscFunctionListClear</a>()`</font>
-<a name="line290">290: </a><font color="#B22222">@*/</font>
-<a name="line291">291: </a><strong><font color="#4169E1"><a name="PetscFunctionListDestroy"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscFunctionListDestroy.html">PetscFunctionListDestroy</a>(<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> *fl)</font></strong>
+<a name="line288">288: </a><font color="#B22222">.seealso: `<a href="../../../manualpages/Sys/PetscFunctionListDestroy.html">PetscFunctionListDestroy</a>()`, `<a href="../../../manualpages/SNES/SNESRegister.html">SNESRegister</a>()`, `<a href="../../../manualpages/KSP/KSPRegister.html">KSPRegister</a>()`,`<a href="../../../manualpages/Sys/PetscFunctionListDuplicate.html">PetscFunctionListDuplicate</a>()`</font>
+<a name="line289">289: </a><font color="#B22222">          `<a href="../../../manualpages/PC/PCRegister.html">PCRegister</a>()`, `<a href="../../../manualpages/TS/TSRegister.html">TSRegister</a>()`, `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, `<a href="../../../manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>()`</font>
+<a name="line290">290: </a><font color="#B22222">M*/</font>
+<a name="line291">291: </a><strong><font color="#4169E1"><a name="PetscFunctionListAdd_Private"></a><a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFunctionListAdd_Private(<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> *fl, const char name[], PetscVoidFunction fptr)</font></strong>
 <a name="line292">292: </a>{
-<a name="line293">293: </a>  <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> next, entry, tmp = dlallhead;
+<a name="line293">293: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line294">294: </a>  PetscAssertPointer(fl, 1);
+<a name="line295">295: </a>  <font color="#4169E1">if</font> (name) PetscAssertPointer(name, 2);
+<a name="line297">297: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscFunctionListCreate_Private(0, fl));
+<a name="line298">298: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncInsert_Private((*fl)-&gt;map, name, fptr));
+<a name="line299">299: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line300">300: </a>}
 
-<a name="line295">295: </a>  <font color="#4169E1">if</font> (!*fl) <font color="#4169E1">return</font> 0;
+<a name="line302">302: </a><font color="#B22222">/*@</font>
+<a name="line303">303: </a><font color="#B22222">  <a href="../../../manualpages/Sys/PetscFunctionListDestroy.html">PetscFunctionListDestroy</a> - Destroys a list of registered routines.</font>
 
-<a name="line297">297: </a>  <font color="#B22222">/*</font>
-<a name="line298">298: </a><font color="#B22222">       Remove this entry from the main DL list (if it is in it)</font>
-<a name="line299">299: </a><font color="#B22222">  */</font>
-<a name="line300">300: </a>  <font color="#4169E1">if</font> (dlallhead == *fl) {
-<a name="line301">301: </a>    <font color="#4169E1">if</font> (dlallhead-&gt;next_list) dlallhead = dlallhead-&gt;next_list;
-<a name="line302">302: </a>    <font color="#4169E1">else</font> dlallhead = NULL;
-<a name="line303">303: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (tmp) {
-<a name="line304">304: </a>    <font color="#4169E1">while</font> (tmp-&gt;next_list != *fl) {
-<a name="line305">305: </a>      tmp = tmp-&gt;next_list;
-<a name="line306">306: </a>      <font color="#4169E1">if</font> (!tmp-&gt;next_list) <font color="#4169E1">break</font>;
-<a name="line307">307: </a>    }
-<a name="line308">308: </a>    <font color="#4169E1">if</font> (tmp-&gt;next_list) tmp-&gt;next_list = tmp-&gt;next_list-&gt;next_list;
-<a name="line309">309: </a>  }
+<a name="line305">305: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line306">306: </a><font color="#B22222">. fl - pointer to list</font>
 
-<a name="line311">311: </a>  <font color="#B22222">/* free this list */</font>
-<a name="line312">312: </a>  entry = *fl;
-<a name="line313">313: </a>  <font color="#4169E1">while</font> (entry) {
-<a name="line314">314: </a>    next = entry-&gt;next;
-<a name="line315">315: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(entry-&gt;name);
-<a name="line316">316: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(entry);
-<a name="line317">317: </a>    entry = next;
-<a name="line318">318: </a>  }
-<a name="line319">319: </a>  *fl = NULL;
-<a name="line320">320: </a>  <font color="#4169E1">return</font> 0;
-<a name="line321">321: </a>}
+<a name="line308">308: </a><font color="#B22222">  Level: developer</font>
 
-<a name="line323">323: </a><font color="#B22222">/*@</font>
-<a name="line324">324: </a><font color="#B22222">  <a href="../../../docs/manualpages/Sys/PetscFunctionListClear.html">PetscFunctionListClear</a> - Clear a `<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`</font>
+<a name="line310">310: </a><font color="#B22222">.seealso: `<a href="../../../manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, `<a href="../../../manualpages/Sys/PetscFunctionListClear.html">PetscFunctionListClear</a>()`</font>
+<a name="line311">311: </a><font color="#B22222">@*/</font>
+<a name="line312">312: </a><strong><font color="#4169E1"><a name="PetscFunctionListDestroy"></a><a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Sys/PetscFunctionListDestroy.html">PetscFunctionListDestroy</a>(<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> *fl)</font></strong>
+<a name="line313">313: </a>{
+<a name="line314">314: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line315">315: </a>  <font color="#4169E1">if</font> (!*fl) <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line316">316: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscFunctionListDLAllPop_Private(*fl));
+<a name="line317">317: </a>  <font color="#B22222">/* free this list */</font>
+<a name="line318">318: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscFunctionListClear.html">PetscFunctionListClear</a>(*fl));
+<a name="line319">319: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncDestroy(&amp;(*fl)-&gt;map));
+<a name="line320">320: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscFree.html">PetscFree</a>(*fl));
+<a name="line321">321: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line322">322: </a>}
 
-<a name="line326">326: </a><font color="#B22222">  Not Collective</font>
+<a name="line324">324: </a><strong><font color="#228B22">#define PetscHMapFuncForEach(__func_list__, __key_name__, __val_name__, ...) \</font></strong>
+<a name="line325">325: </a><strong><font color="#228B22">  do { \</font></strong>
+<a name="line326">326: </a><strong><font color="#228B22">    const PetscHMapFunc phmfi_map_ = (__func_list__)-&gt;map; \</font></strong>
+<a name="line327">327: </a><strong><font color="#228B22">    PetscHashIter       phmfi_iter_; \</font></strong>
+<a name="line328">328: </a><strong><font color="#228B22">\</font></strong>
+<a name="line329">329: </a><strong><font color="#228B22">    PetscHashIterBegin(phmfi_map_, phmfi_iter_); \</font></strong>
+<a name="line330">330: </a><strong><font color="#228B22">    while (!PetscHashIterAtEnd(phmfi_map_, phmfi_iter_)) { \</font></strong>
+<a name="line331">331: </a><strong><font color="#228B22">      const char *PETSC_UNUSED       __key_name__; \</font></strong>
+<a name="line332">332: </a><strong><font color="#228B22">      PetscVoidFunction PETSC_UNUSED __val_name__; \</font></strong>
+<a name="line333">333: </a><strong><font color="#228B22">\</font></strong>
+<a name="line334">334: </a><strong><font color="#228B22">      PetscHashIterGetKey(phmfi_map_, phmfi_iter_, __key_name__); \</font></strong>
+<a name="line335">335: </a><strong><font color="#228B22">      PetscHashIterGetVal(phmfi_map_, phmfi_iter_, __val_name__); \</font></strong>
+<a name="line336">336: </a><strong><font color="#228B22">      { \</font></strong>
+<a name="line337">337: </a><strong><font color="#228B22">        __VA_ARGS__; \</font></strong>
+<a name="line338">338: </a><strong><font color="#228B22">      } \</font></strong>
+<a name="line339">339: </a><strong><font color="#228B22">      PetscHashIterNext(phmfi_map_, phmfi_iter_); \</font></strong>
+<a name="line340">340: </a><strong><font color="#228B22">    } </font><font color="#B22222">/* end while */</font><font color="#228B22"> \</font></strong>
+<a name="line341">341: </a><strong><font color="#228B22">  } while (0)</font></strong>
 
-<a name="line328">328: </a><font color="#B22222">  Input Parameter:</font>
-<a name="line329">329: </a><font color="#B22222">. fl - The `<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>` to clear</font>
+<a name="line343">343: </a><font color="#B22222">/*@</font>
+<a name="line344">344: </a><font color="#B22222">  <a href="../../../manualpages/Sys/PetscFunctionListClear.html">PetscFunctionListClear</a> - Clear a `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`</font>
 
-<a name="line331">331: </a><font color="#B22222">  Notes:</font>
-<a name="line332">332: </a><font color="#B22222">  This clears the contents of `fl` but does not deallocate the entries themselves.</font>
+<a name="line346">346: </a><font color="#B22222">  Not Collective</font>
 
-<a name="line334">334: </a><font color="#B22222">  Level: developer</font>
+<a name="line348">348: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line349">349: </a><font color="#B22222">. fl - The `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>` to clear</font>
 
-<a name="line336">336: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, `<a href="../../../docs/manualpages/Sys/PetscFunctionListDestroy.html">PetscFunctionListDestroy</a>()`, `<a href="../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`</font>
-<a name="line337">337: </a><font color="#B22222">@*/</font>
-<a name="line338">338: </a><strong><font color="#4169E1"><a name="PetscFunctionListClear"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscFunctionListClear.html">PetscFunctionListClear</a>(<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> fl)</font></strong>
-<a name="line339">339: </a>{
-<a name="line340">340: </a>  <font color="#B22222">/* free the names and clear the routine but don't deallocate the node */</font>
-<a name="line341">341: </a>  <font color="#4169E1">while</font> (fl) {
-<a name="line342">342: </a>    <a href="../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(fl-&gt;name);
-<a name="line343">343: </a>    fl-&gt;routine = NULL;
-<a name="line344">344: </a>    fl          = fl-&gt;next;
-<a name="line345">345: </a>  }
-<a name="line346">346: </a>  <font color="#4169E1">return</font> 0;
-<a name="line347">347: </a>}
+<a name="line351">351: </a><font color="#B22222">  Level: developer</font>
 
-<a name="line349">349: </a><font color="#B22222">/*</font>
-<a name="line350">350: </a><font color="#B22222">   Print registered PetscFunctionLists</font>
-<a name="line351">351: </a><font color="#B22222">*/</font>
-<a name="line352">352: </a><strong><font color="#4169E1"><a name="PetscFunctionListPrintAll"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFunctionListPrintAll(void)</font></strong>
-<a name="line353">353: </a>{
-<a name="line354">354: </a>  <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> tmp = dlallhead;
+<a name="line353">353: </a><font color="#B22222">  Notes:</font>
+<a name="line354">354: </a><font color="#B22222">  This clears the contents of `fl` but does not deallocate the entries themselves.</font>
 
-<a name="line356">356: </a>  <font color="#4169E1">if</font> (tmp) <a href="../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"[%d] Registered PetscFunctionLists\n"</font>, PetscGlobalRank);
-<a name="line357">357: </a>  <font color="#4169E1">while</font> (tmp) {
-<a name="line358">358: </a>    <a href="../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"[%d]   %s\n"</font>, PetscGlobalRank, tmp-&gt;name);
-<a name="line359">359: </a>    tmp = tmp-&gt;next_list;
-<a name="line360">360: </a>  }
-<a name="line361">361: </a>  <font color="#4169E1">return</font> 0;
-<a name="line362">362: </a>}
+<a name="line356">356: </a><font color="#B22222">.seealso: `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, `<a href="../../../manualpages/Sys/PetscFunctionListDestroy.html">PetscFunctionListDestroy</a>()`, `<a href="../../../manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`</font>
+<a name="line357">357: </a><font color="#B22222">@*/</font>
+<a name="line358">358: </a><strong><font color="#4169E1"><a name="PetscFunctionListClear"></a><a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Sys/PetscFunctionListClear.html">PetscFunctionListClear</a>(<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> fl)</font></strong>
+<a name="line359">359: </a>{
+<a name="line360">360: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line361">361: </a>  <font color="#4169E1">if</font> (fl) {
+<a name="line362">362: </a>    PetscHMapFuncForEach(fl, name, func, <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscFree.html">PetscFree</a>(name)));
+<a name="line363">363: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncClear(fl-&gt;map));
+<a name="line364">364: </a>  }
+<a name="line365">365: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line366">366: </a>}
 
-<a name="line364">364: </a><font color="#B22222">/*MC</font>
-<a name="line365">365: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscFunctionListNonEmpty.html">PetscFunctionListNonEmpty</a> - Print composed names for non null function pointers</font>
+<a name="line368">368: </a><font color="#B22222">/*</font>
+<a name="line369">369: </a><font color="#B22222">   Print registered PetscFunctionLists</font>
+<a name="line370">370: </a><font color="#B22222">*/</font>
+<a name="line371">371: </a><strong><font color="#4169E1"><a name="PetscFunctionListPrintAll"></a><a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFunctionListPrintAll(void)</font></strong>
+<a name="line372">372: </a>{
+<a name="line373">373: </a>  PetscFunctionListDLAll current = dlallhead;
 
-<a name="line367">367: </a><font color="#B22222">    Input Parameter:</font>
-<a name="line368">368: </a><font color="#B22222">.   flist   - pointer to list</font>
-
-<a name="line370">370: </a><font color="#B22222">    Level: developer</font>
-
-<a name="line372">372: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, `<a href="../../../docs/manualpages/Sys/PetscObjectQueryFunction.html">PetscObjectQueryFunction</a>()`</font>
-<a name="line373">373: </a><font color="#B22222">M*/</font>
-<a name="line374">374: </a><strong><font color="#4169E1"><a name="PetscFunctionListPrintNonEmpty"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFunctionListPrintNonEmpty(<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> fl)</font></strong>
-<a name="line375">375: </a>{
-<a name="line376">376: </a>  <font color="#4169E1">while</font> (fl) {
-<a name="line377">377: </a>    <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> next = fl-&gt;next;
-<a name="line378">378: </a>    <font color="#4169E1">if</font> (fl-&gt;routine) <a href="../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"[%d] function name: %s\n"</font>, PetscGlobalRank, fl-&gt;name);
-<a name="line379">379: </a>    fl = next;
+<a name="line375">375: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line376">376: </a>  <font color="#4169E1">if</font> (current) <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <font color="#666666">"[%d] Registered PetscFunctionLists\n"</font>, PetscGlobalRank));
+<a name="line377">377: </a>  <font color="#4169E1">while</font> (current) {
+<a name="line378">378: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscFunctionListPrintNonEmpty.html">PetscFunctionListPrintNonEmpty</a>(current-&gt;data));
+<a name="line379">379: </a>    current = current-&gt;next;
 <a name="line380">380: </a>  }
-<a name="line381">381: </a>  <font color="#4169E1">return</font> 0;
+<a name="line381">381: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line382">382: </a>}
 
-<a name="line384">384: </a><font color="#B22222">/*MC</font>
-<a name="line385">385: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscFunctionListFind.html">PetscFunctionListFind</a> - Find function registered under given name</font>
+<a name="line384">384: </a><font color="#B22222">/*@C</font>
+<a name="line385">385: </a><font color="#B22222">  <a href="../../../manualpages/Sys/PetscFunctionListPrintNonEmpty.html">PetscFunctionListPrintNonEmpty</a> - Print composed names for non `NULL` function pointers</font>
 
-<a name="line387">387: </a><font color="#B22222">    Synopsis:</font>
-<a name="line388">388: </a>#include <A href="../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
-<a name="line389">389: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscFunctionListFind.html">PetscFunctionListFind</a>(<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> flist,const char name[],void (**fptr)(void))</font>
+<a name="line387">387: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line388">388: </a><font color="#B22222">. fl - the function list</font>
 
-<a name="line391">391: </a><font color="#B22222">    Input Parameters:</font>
-<a name="line392">392: </a><font color="#B22222">+   flist   - pointer to list</font>
-<a name="line393">393: </a><font color="#B22222">-   name - name registered for the function</font>
+<a name="line390">390: </a><font color="#B22222">  Level: developer</font>
 
-<a name="line395">395: </a><font color="#B22222">    Output Parameters:</font>
-<a name="line396">396: </a><font color="#B22222">.   fptr - the function pointer if name was found, else NULL</font>
+<a name="line392">392: </a><font color="#B22222">.seealso: `<a href="../../../manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, `<a href="../../../manualpages/Sys/PetscObjectQueryFunction.html">PetscObjectQueryFunction</a>()`</font>
+<a name="line393">393: </a><font color="#B22222">@*/</font>
+<a name="line394">394: </a><strong><font color="#4169E1"><a name="PetscFunctionListPrintNonEmpty"></a><a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Sys/PetscFunctionListPrintNonEmpty.html">PetscFunctionListPrintNonEmpty</a>(<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> fl)</font></strong>
+<a name="line395">395: </a>{
+<a name="line396">396: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line397">397: </a>  <font color="#4169E1">if</font> (fl) {
+<a name="line398">398: </a>    // clang-format off
+<a name="line399">399: </a>    PetscHMapFuncForEach(
+<a name="line400">400: </a>      fl,
+<a name="line401">401: </a>      name, func,
+<a name="line402">402: </a>      <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscFPrintf.html">PetscFPrintf</a>(<a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_STDOUT, <font color="#666666">"[%d] function name: %s\n"</font>, PetscGlobalRank, name));
+<a name="line403">403: </a>    );
+<a name="line404">404: </a>    // clang-format on
+<a name="line405">405: </a>  }
+<a name="line406">406: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line407">407: </a>}
 
-<a name="line398">398: </a><font color="#B22222">    Level: developer</font>
+<a name="line409">409: </a><font color="#B22222">/*MC</font>
+<a name="line410">410: </a><font color="#B22222">  <a href="../../../manualpages/Sys/PetscFunctionListFind.html">PetscFunctionListFind</a> - Find function registered under given name</font>
 
-<a name="line400">400: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, `<a href="../../../docs/manualpages/Sys/PetscObjectQueryFunction.html">PetscObjectQueryFunction</a>()`</font>
-<a name="line401">401: </a><font color="#B22222">M*/</font>
-<a name="line402">402: </a><strong><font color="#4169E1"><a name="PetscFunctionListFind_Private"></a>PETSC_EXTERN <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFunctionListFind_Private(<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> fl, const char name[], void (**r)(void))</font></strong>
-<a name="line403">403: </a>{
-<a name="line404">404: </a>  <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> entry = fl;
+<a name="line412">412: </a><font color="#B22222">  Synopsis:</font>
+<a name="line413">413: </a>#include <A href="../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+<a name="line414">414: </a><font color="#B22222">  <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Sys/PetscFunctionListFind.html">PetscFunctionListFind</a>(<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> flist,const char name[],void (**fptr)(void))</font>
 
-<a name="line408">408: </a>  <font color="#4169E1">while</font> (entry) {
-<a name="line409">409: </a>    <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> flg;
+<a name="line416">416: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line417">417: </a><font color="#B22222">+ fl   - the function list</font>
+<a name="line418">418: </a><font color="#B22222">- name - name registered for the function</font>
 
-<a name="line411">411: </a>    <a href="../../../docs/manualpages/Sys/PetscStrcmp.html">PetscStrcmp</a>(name, entry-&gt;name, &amp;flg);
-<a name="line412">412: </a>    <font color="#4169E1">if</font> (flg) {
-<a name="line413">413: </a>      *r = entry-&gt;routine;
-<a name="line414">414: </a>      <font color="#4169E1">return</font> 0;
-<a name="line415">415: </a>    }
-<a name="line416">416: </a>    entry = entry-&gt;next;
-<a name="line417">417: </a>  }
-<a name="line418">418: </a>  *r = NULL;
-<a name="line419">419: </a>  <font color="#4169E1">return</font> 0;
-<a name="line420">420: </a>}
+<a name="line420">420: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line421">421: </a><font color="#B22222">. fptr - the function pointer if name was found, else `NULL`</font>
 
-<a name="line422">422: </a><font color="#B22222">/*@</font>
-<a name="line423">423: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscFunctionListView.html">PetscFunctionListView</a> - prints out contents of an <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a></font>
+<a name="line423">423: </a><font color="#B22222">  Level: developer</font>
 
-<a name="line425">425: </a><font color="#B22222">   Collective over viewer</font>
+<a name="line425">425: </a><font color="#B22222">.seealso: `<a href="../../../manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, `<a href="../../../manualpages/Sys/PetscObjectQueryFunction.html">PetscObjectQueryFunction</a>()`, `<a href="../../../manualpages/Sys/PetscFunctionListDuplicate.html">PetscFunctionListDuplicate</a>()`</font>
+<a name="line426">426: </a><font color="#B22222">M*/</font>
+<a name="line427">427: </a><strong><font color="#4169E1"><a name="PetscFunctionListFind_Private"></a><a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscFunctionListFind_Private(<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> fl, const char name[], PetscVoidFunction *fptr)</font></strong>
+<a name="line428">428: </a>{
+<a name="line429">429: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line430">430: </a>  PetscAssertPointer(name, 2);
+<a name="line431">431: </a>  PetscAssertPointer(fptr, 3);
+<a name="line432">432: </a>  *fptr = NULL;
+<a name="line433">433: </a>  <font color="#4169E1">if</font> (fl) <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncGet(fl-&gt;map, name, fptr));
+<a name="line434">434: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line435">435: </a>}
 
-<a name="line427">427: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line428">428: </a><font color="#B22222">+  list - the list of functions</font>
-<a name="line429">429: </a><font color="#B22222">-  viewer - currently ignored</font>
+<a name="line437">437: </a><font color="#B22222">/*@</font>
+<a name="line438">438: </a><font color="#B22222">  <a href="../../../manualpages/Sys/PetscFunctionListView.html">PetscFunctionListView</a> - prints out contents of a `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`</font>
 
-<a name="line431">431: </a><font color="#B22222">   Level: developer</font>
+<a name="line440">440: </a><font color="#B22222">  Collective</font>
 
-<a name="line433">433: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `<a href="../../../docs/manualpages/Sys/PetscFunctionListPrintTypes.html">PetscFunctionListPrintTypes</a>()`, `<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`</font>
-<a name="line434">434: </a><font color="#B22222">@*/</font>
-<a name="line435">435: </a><strong><font color="#4169E1"><a name="PetscFunctionListView"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscFunctionListView.html">PetscFunctionListView</a>(<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> list, <a href="../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
-<a name="line436">436: </a>{
-<a name="line437">437: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> iascii;
+<a name="line442">442: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line443">443: </a><font color="#B22222">+ list   - the list of functions</font>
+<a name="line444">444: </a><font color="#B22222">- viewer - the `<a href="../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a>` used to view the `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`</font>
 
-<a name="line439">439: </a>  <font color="#4169E1">if</font> (!viewer) viewer = <a href="../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_SELF.html">PETSC_VIEWER_STDOUT_SELF</a>;
+<a name="line446">446: </a><font color="#B22222">  Level: developer</font>
 
-<a name="line443">443: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
+<a name="line448">448: </a><font color="#B22222">.seealso: `<a href="../../../manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `<a href="../../../manualpages/Sys/PetscFunctionListPrintTypes.html">PetscFunctionListPrintTypes</a>()`, `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`</font>
+<a name="line449">449: </a><font color="#B22222">@*/</font>
+<a name="line450">450: </a><strong><font color="#4169E1"><a name="PetscFunctionListView"></a><a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Sys/PetscFunctionListView.html">PetscFunctionListView</a>(<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> list, <a href="../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line451">451: </a>{
+<a name="line452">452: </a>  <a href="../../../manualpages/Sys/PetscBool.html">PetscBool</a> iascii;
 
-<a name="line446">446: </a>  <font color="#4169E1">while</font> (list) {
-<a name="line447">447: </a>    <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">" %s\n"</font>, list-&gt;name);
-<a name="line448">448: </a>    list = list-&gt;next;
-<a name="line449">449: </a>  }
-<a name="line450">450: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"\n"</font>);
-<a name="line451">451: </a>  <font color="#4169E1">return</font> 0;
-<a name="line452">452: </a>}
+<a name="line454">454: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line455">455: </a>  PetscAssertPointer(list, 1);
+<a name="line456">456: </a>  <font color="#4169E1">if</font> (!viewer) <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscViewerASCIIGetStdout.html">PetscViewerASCIIGetStdout</a>(<a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, &amp;viewer));
 
-<a name="line454">454: </a><font color="#B22222">/*@C</font>
-<a name="line455">455: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscFunctionListGet.html">PetscFunctionListGet</a> - Gets an array the contains the entries in `<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, this is used</font>
-<a name="line456">456: </a><font color="#B22222">         by help etc.</font>
+<a name="line459">459: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii));
+<a name="line460">460: </a>  <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(iascii, <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_SUP</a>, <font color="#666666">"Only ASCII viewer supported"</font>);
+<a name="line461">461: </a>  {
+<a name="line462">462: </a>    <a href="../../../manualpages/Sys/PetscInt.html">PetscInt</a> size;
 
-<a name="line458">458: </a><font color="#B22222">   Not Collective</font>
+<a name="line464">464: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncGetSize(list-&gt;map, &amp;size));
+<a name="line465">465: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> Object:\n"</font>));
+<a name="line466">466: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(viewer));
+<a name="line467">467: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"size: %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, size));
+<a name="line468">468: </a>    <font color="#4169E1">if</font> (size) {
+<a name="line469">469: </a>      <a href="../../../manualpages/Sys/PetscInt.html">PetscInt</a> count = 0;
 
-<a name="line460">460: </a><font color="#B22222">   Input Parameter:</font>
-<a name="line461">461: </a><font color="#B22222">.  list   - list of types</font>
+<a name="line471">471: </a>      <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"functions:\n"</font>));
+<a name="line472">472: </a>      <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscViewerASCIIPushTab.html">PetscViewerASCIIPushTab</a>(viewer));
+<a name="line473">473: </a>      PetscHMapFuncForEach(list, name, func, <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscViewerASCIIPrintf.html">PetscViewerASCIIPrintf</a>(viewer, <font color="#666666">"%"</font> PetscInt_FMT <font color="#666666">": %s\n"</font>, ++count, name)));
+<a name="line474">474: </a>      <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(viewer));
+<a name="line475">475: </a>    }
+<a name="line476">476: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscViewerASCIIPopTab.html">PetscViewerASCIIPopTab</a>(viewer));
+<a name="line477">477: </a>  }
+<a name="line478">478: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line479">479: </a>}
 
-<a name="line463">463: </a><font color="#B22222">   Output Parameters:</font>
-<a name="line464">464: </a><font color="#B22222">+  array - array of names</font>
-<a name="line465">465: </a><font color="#B22222">-  n - length of array</font>
+<a name="line481">481: </a><font color="#B22222">/*@C</font>
+<a name="line482">482: </a><font color="#B22222">  <a href="../../../manualpages/Sys/PetscFunctionListGet.html">PetscFunctionListGet</a> - Gets an array the contains the entries in `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, this is used</font>
+<a name="line483">483: </a><font color="#B22222">  by help etc.</font>
 
-<a name="line467">467: </a><font color="#B22222">   Note:</font>
-<a name="line468">468: </a><font color="#B22222">       This allocates the array so that must be freed. BUT the individual entries are</font>
-<a name="line469">469: </a><font color="#B22222">    not copied so should not be freed.</font>
+<a name="line485">485: </a><font color="#B22222">  Not Collective</font>
 
-<a name="line471">471: </a><font color="#B22222">   Level: developer</font>
+<a name="line487">487: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line488">488: </a><font color="#B22222">. list - list of types</font>
 
-<a name="line473">473: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`</font>
-<a name="line474">474: </a><font color="#B22222">@*/</font>
-<a name="line475">475: </a><strong><font color="#4169E1"><a name="PetscFunctionListGet"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscFunctionListGet.html">PetscFunctionListGet</a>(<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> list, const char ***array, int *n)</font></strong>
-<a name="line476">476: </a>{
-<a name="line477">477: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          count = 0;
-<a name="line478">478: </a>  <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> klist = list;
+<a name="line490">490: </a><font color="#B22222">  Output Parameters:</font>
+<a name="line491">491: </a><font color="#B22222">+ array - array of names</font>
+<a name="line492">492: </a><font color="#B22222">- n     - length of `array`</font>
 
-<a name="line480">480: </a>  <font color="#4169E1">while</font> (list) {
-<a name="line481">481: </a>    list = list-&gt;next;
-<a name="line482">482: </a>    count++;
-<a name="line483">483: </a>  }
-<a name="line484">484: </a>  <a href="../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(count + 1, (char ***)array);
-<a name="line485">485: </a>  count = 0;
-<a name="line486">486: </a>  <font color="#4169E1">while</font> (klist) {
-<a name="line487">487: </a>    (*array)[count] = klist-&gt;name;
-<a name="line488">488: </a>    klist           = klist-&gt;next;
-<a name="line489">489: </a>    count++;
-<a name="line490">490: </a>  }
-<a name="line491">491: </a>  (*array)[count] = NULL;
-<a name="line492">492: </a>  *n              = count + 1;
-<a name="line493">493: </a>  <font color="#4169E1">return</font> 0;
-<a name="line494">494: </a>}
+<a name="line494">494: </a><font color="#B22222">  Level: developer</font>
 
-<a name="line496">496: </a><font color="#B22222">/*@C</font>
-<a name="line497">497: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscFunctionListPrintTypes.html">PetscFunctionListPrintTypes</a> - Prints the methods available in a list of functions</font>
+<a name="line496">496: </a><font color="#B22222">  Note:</font>
+<a name="line497">497: </a><font color="#B22222">  This allocates the array so that must be freed. BUT the individual entries are</font>
+<a name="line498">498: </a><font color="#B22222">  not copied so should not be freed.</font>
 
-<a name="line499">499: </a><font color="#B22222">   Collective over <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a></font>
+<a name="line500">500: </a><font color="#B22222">.seealso: `<a href="../../../manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`</font>
+<a name="line501">501: </a><font color="#B22222">@*/</font>
+<a name="line502">502: </a><strong><font color="#4169E1"><a name="PetscFunctionListGet"></a><a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Sys/PetscFunctionListGet.html">PetscFunctionListGet</a>(<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> list, const char ***array, int *n)</font></strong>
+<a name="line503">503: </a>{
+<a name="line504">504: </a>  <a href="../../../manualpages/Sys/PetscInt.html">PetscInt</a> size = 0;
 
-<a name="line501">501: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line502">502: </a><font color="#B22222">+  comm   - the communicator (usually `MPI_COMM_WORLD`)</font>
-<a name="line503">503: </a><font color="#B22222">.  fd     - file to print to, usually stdout</font>
-<a name="line504">504: </a><font color="#B22222">.  prefix - prefix to prepend to name (optional)</font>
-<a name="line505">505: </a><font color="#B22222">.  name   - option string (for example, "-ksp_type")</font>
-<a name="line506">506: </a><font color="#B22222">.  text - short description of the object (for example, "Krylov solvers")</font>
-<a name="line507">507: </a><font color="#B22222">.  man - name of manual page that discusses the object (for example, "<a href="../../../docs/manualpages/KSP/KSPCreate.html">KSPCreate</a>")</font>
-<a name="line508">508: </a><font color="#B22222">.  list   - list of types</font>
-<a name="line509">509: </a><font color="#B22222">.  def - default (current) value</font>
-<a name="line510">510: </a><font color="#B22222">-  newv - new value</font>
+<a name="line506">506: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line507">507: </a>  PetscAssertPointer(array, 2);
+<a name="line508">508: </a>  *array = NULL;
+<a name="line509">509: </a>  <font color="#4169E1">if</font> (list) {
+<a name="line510">510: </a>    const PetscHMapFunc map = list-&gt;map;
+<a name="line511">511: </a>    <a href="../../../manualpages/Sys/PetscInt.html">PetscInt</a>            off = 0;
 
-<a name="line512">512: </a><font color="#B22222">   Level: developer</font>
+<a name="line513">513: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncGetSize(map, &amp;size));
+<a name="line514">514: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(size, (char ***)array));
+<a name="line515">515: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncGetKeys(map, &amp;off, *array));
+<a name="line516">516: </a>  }
+<a name="line517">517: </a>  *n = (int)size;
+<a name="line518">518: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line519">519: </a>}
 
-<a name="line514">514: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`</font>
-<a name="line515">515: </a><font color="#B22222">@*/</font>
-<a name="line516">516: </a><strong><font color="#4169E1"><a name="PetscFunctionListPrintTypes"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscFunctionListPrintTypes.html">PetscFunctionListPrintTypes</a>(<a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, FILE *fd, const char prefix[], const char name[], const char text[], const char man[], <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> list, const char def[], const char newv[])</font></strong>
-<a name="line517">517: </a>{
-<a name="line518">518: </a>  char p[64];
+<a name="line521">521: </a><font color="#B22222">/*@C</font>
+<a name="line522">522: </a><font color="#B22222">  <a href="../../../manualpages/Sys/PetscFunctionListPrintTypes.html">PetscFunctionListPrintTypes</a> - Prints the methods available in a list of functions</font>
 
-<a name="line520">520: </a>  <font color="#4169E1">if</font> (!fd) fd = PETSC_STDOUT;
+<a name="line524">524: </a><font color="#B22222">  Collective</font>
 
-<a name="line522">522: </a>  <a href="../../../docs/manualpages/Sys/PetscStrncpy.html">PetscStrncpy</a>(p, <font color="#666666">"-"</font>, <font color="#4169E1">sizeof</font>(p));
-<a name="line523">523: </a>  <font color="#4169E1">if</font> (prefix) <a href="../../../docs/manualpages/Sys/PetscStrlcat.html">PetscStrlcat</a>(p, prefix, <font color="#4169E1">sizeof</font>(p));
-<a name="line524">524: </a>  <a href="../../../docs/manualpages/Sys/PetscFPrintf.html">PetscFPrintf</a>(comm, fd, <font color="#666666">"  %s%s &lt;now %s : formerly %s&gt;: %s (one of)"</font>, p, name + 1, newv, def, text);
+<a name="line526">526: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line527">527: </a><font color="#B22222">+ comm   - the communicator (usually `MPI_COMM_WORLD`)</font>
+<a name="line528">528: </a><font color="#B22222">. fd     - file to print to, usually `stdout`</font>
+<a name="line529">529: </a><font color="#B22222">. prefix - prefix to prepend to name (optional)</font>
+<a name="line530">530: </a><font color="#B22222">. name   - option string (for example, `-ksp_type`)</font>
+<a name="line531">531: </a><font color="#B22222">. text   - short description of the object (for example, "Krylov solvers")</font>
+<a name="line532">532: </a><font color="#B22222">. man    - name of manual page that discusses the object (for example, `<a href="../../../manualpages/KSP/KSPCreate.html">KSPCreate</a>`)</font>
+<a name="line533">533: </a><font color="#B22222">. list   - list of types</font>
+<a name="line534">534: </a><font color="#B22222">. def    - default (current) value</font>
+<a name="line535">535: </a><font color="#B22222">- newv   - new value</font>
 
-<a name="line526">526: </a>  <font color="#4169E1">while</font> (list) {
-<a name="line527">527: </a>    <a href="../../../docs/manualpages/Sys/PetscFPrintf.html">PetscFPrintf</a>(comm, fd, <font color="#666666">" %s"</font>, list-&gt;name);
-<a name="line528">528: </a>    list = list-&gt;next;
-<a name="line529">529: </a>  }
-<a name="line530">530: </a>  <a href="../../../docs/manualpages/Sys/PetscFPrintf.html">PetscFPrintf</a>(comm, fd, <font color="#666666">" (%s)\n"</font>, man);
-<a name="line531">531: </a>  <font color="#4169E1">return</font> 0;
-<a name="line532">532: </a>}
+<a name="line537">537: </a><font color="#B22222">  Level: developer</font>
 
-<a name="line534">534: </a><font color="#B22222">/*@</font>
-<a name="line535">535: </a><font color="#B22222">    <a href="../../../docs/manualpages/Sys/PetscFunctionListDuplicate.html">PetscFunctionListDuplicate</a> - Creates a new list from a given object list.</font>
+<a name="line539">539: </a><font color="#B22222">.seealso: `<a href="../../../manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`</font>
+<a name="line540">540: </a><font color="#B22222">@*/</font>
+<a name="line541">541: </a><strong><font color="#4169E1"><a name="PetscFunctionListPrintTypes"></a><a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Sys/PetscFunctionListPrintTypes.html">PetscFunctionListPrintTypes</a>(<a href="../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, FILE *fd, const char prefix[], const char name[], const char text[], const char man[], <a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> list, const char def[], const char newv[])</font></strong>
+<a name="line542">542: </a>{
+<a name="line543">543: </a>  char p[64];
 
-<a name="line537">537: </a><font color="#B22222">    Input Parameters:</font>
-<a name="line538">538: </a><font color="#B22222">.   fl   - pointer to list</font>
+<a name="line545">545: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line546">546: </a>  (void)fd;
+<a name="line547">547: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscStrncpy.html">PetscStrncpy</a>(p, <font color="#666666">"-"</font>, <font color="#4169E1">sizeof</font>(p)));
+<a name="line548">548: </a>  <font color="#4169E1">if</font> (prefix) <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscStrlcat.html">PetscStrlcat</a>(p, prefix, <font color="#4169E1">sizeof</font>(p)));
+<a name="line549">549: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>((*<a href="../../../manualpages/Sys/PetscHelpPrintf.html">PetscHelpPrintf</a>)(comm, <font color="#666666">"  %s%s &lt;now %s : formerly %s&gt;: %s (one of)"</font>, p, name + 1, newv, def, text));
 
-<a name="line540">540: </a><font color="#B22222">    Output Parameters:</font>
-<a name="line541">541: </a><font color="#B22222">.   nl - the new list (should point to 0 to start, otherwise appends)</font>
-
-<a name="line543">543: </a><font color="#B22222">    Level: developer</font>
-
-<a name="line545">545: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, `<a href="../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `PetscFlistDestroy()`</font>
-<a name="line546">546: </a><font color="#B22222">@*/</font>
-<a name="line547">547: </a><strong><font color="#4169E1"><a name="PetscFunctionListDuplicate"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscFunctionListDuplicate.html">PetscFunctionListDuplicate</a>(<a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> fl, <a href="../../../docs/manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> *nl)</font></strong>
-<a name="line548">548: </a>{
-<a name="line549">549: </a>  <font color="#4169E1">while</font> (fl) {
-<a name="line550">550: </a>    <a href="../../../docs/manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>(nl, fl-&gt;name, fl-&gt;routine);
-<a name="line551">551: </a>    fl = fl-&gt;next;
-<a name="line552">552: </a>  }
-<a name="line553">553: </a>  <font color="#4169E1">return</font> 0;
+<a name="line551">551: </a>  <font color="#4169E1">if</font> (list) PetscHMapFuncForEach(list, name, func, <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>((*<a href="../../../manualpages/Sys/PetscHelpPrintf.html">PetscHelpPrintf</a>)(comm, <font color="#666666">" %s"</font>, name)));
+<a name="line552">552: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>((*<a href="../../../manualpages/Sys/PetscHelpPrintf.html">PetscHelpPrintf</a>)(comm, <font color="#666666">" (%s)\n"</font>, man));
+<a name="line553">553: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line554">554: </a>}
+
+<a name="line556">556: </a><font color="#B22222">/*@</font>
+<a name="line557">557: </a><font color="#B22222">  <a href="../../../manualpages/Sys/PetscFunctionListDuplicate.html">PetscFunctionListDuplicate</a> - Creates a new list from a given function list `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`.</font>
+
+<a name="line559">559: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line560">560: </a><font color="#B22222">. fl - pointer to list</font>
+
+<a name="line562">562: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line563">563: </a><font color="#B22222">. nl - the new list (should point to `NULL` to start, otherwise appends)</font>
+
+<a name="line565">565: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line567">567: </a><font color="#B22222">.seealso: `<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a>`, `<a href="../../../manualpages/Sys/PetscFunctionListAdd.html">PetscFunctionListAdd</a>()`, `PetscFlistDestroy()`</font>
+<a name="line568">568: </a><font color="#B22222">@*/</font>
+<a name="line569">569: </a><strong><font color="#4169E1"><a name="PetscFunctionListDuplicate"></a><a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Sys/PetscFunctionListDuplicate.html">PetscFunctionListDuplicate</a>(<a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> fl, <a href="../../../manualpages/Sys/PetscFunctionList.html">PetscFunctionList</a> *nl)</font></strong>
+<a name="line570">570: </a>{
+<a name="line571">571: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line572">572: </a>  <font color="#4169E1">if</font> (fl) {
+<a name="line573">573: </a>    PetscHMapFunc dup_map;
+
+<a name="line575">575: </a>    <font color="#4169E1">if</font> (!*nl) {
+<a name="line576">576: </a>      <a href="../../../manualpages/Sys/PetscInt.html">PetscInt</a> n;
+
+<a name="line578">578: </a>      <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncGetSize(fl-&gt;map, &amp;n));
+<a name="line579">579: </a>      <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscFunctionListCreate_Private(n, nl));
+<a name="line580">580: </a>    }
+<a name="line581">581: </a>    dup_map = (*nl)-&gt;map;
+<a name="line582">582: </a>    PetscHMapFuncForEach(fl, name, func, <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscHMapFuncInsert_Private(dup_map, name, func)));
+<a name="line583">583: </a>  }
+<a name="line584">584: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line585">585: </a>}
 </pre>
 </body>
 

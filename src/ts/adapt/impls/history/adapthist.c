@@ -19,7 +19,7 @@ static PetscErrorCode TSAdaptChoose_History(TSAdapt adapt, TS ts, PetscReal h, P
   *wlte    = -1;
   *wltea   = -1;
   *wlter   = -1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSAdaptReset_History(TSAdapt adapt)
@@ -28,7 +28,7 @@ static PetscErrorCode TSAdaptReset_History(TSAdapt adapt)
 
   PetscFunctionBegin;
   PetscCall(TSHistoryDestroy(&thadapt->hist));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSAdaptDestroy_History(TSAdapt adapt)
@@ -36,7 +36,7 @@ static PetscErrorCode TSAdaptDestroy_History(TSAdapt adapt)
   PetscFunctionBegin;
   PetscCall(TSAdaptReset_History(adapt));
   PetscCall(PetscFree(adapt->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* this is not public, as TSHistory is not a public object */
@@ -50,31 +50,31 @@ PetscErrorCode TSAdaptHistorySetTSHistory(TSAdapt adapt, TSHistory hist, PetscBo
   PetscValidHeaderSpecific(adapt, TSADAPT_CLASSID, 1);
   PetscValidLogicalCollectiveBool(adapt, backward, 3);
   PetscCall(PetscObjectTypeCompare((PetscObject)adapt, TSADAPTHISTORY, &flg));
-  if (!flg) PetscFunctionReturn(0);
+  if (!flg) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(TSHistoryGetHistory(hist, &n, (const PetscReal **)&hist_t, NULL, NULL));
   PetscCall(TSAdaptHistorySetHistory(adapt, n, hist_t, backward));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TSAdaptHistoryGetStep - Gets time and time step for a given step number in the history
+  TSAdaptHistoryGetStep - Gets time and time step for a given step number in the history
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  adapt    - the TSAdapt context
--  step     - the step number
+  Input Parameters:
++ adapt - the TSAdapt context
+- step  - the step number
 
-   Output Parameters:
-+  t  - the time corresponding to the requested step (can be NULL)
--  dt - the time step to be taken at the requested step (can be NULL)
+  Output Parameters:
++ t  - the time corresponding to the requested step (can be NULL)
+- dt - the time step to be taken at the requested step (can be NULL)
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   The time history is internally copied, and the user can free the hist array. The user still needs to specify the termination of the solve via `TSSetMaxSteps()`.
+  Note:
+  The time history is internally copied, and the user can free the hist array. The user still needs to specify the termination of the solve via `TSSetMaxSteps()`.
 
-.seealso: [](chapter_ts), `TS`, `TSGetAdapt()`, `TSAdaptSetType()`, `TSAdaptHistorySetTrajectory()`, `TSADAPTHISTORY`
+.seealso: [](ch_ts), `TS`, `TSGetAdapt()`, `TSAdaptSetType()`, `TSAdaptHistorySetTrajectory()`, `TSADAPTHISTORY`
 @*/
 PetscErrorCode TSAdaptHistoryGetStep(TSAdapt adapt, PetscInt step, PetscReal *t, PetscReal *dt)
 {
@@ -89,26 +89,26 @@ PetscErrorCode TSAdaptHistoryGetStep(TSAdapt adapt, PetscInt step, PetscReal *t,
   thadapt = (TSAdapt_History *)adapt->data;
   PetscCall(TSHistoryGetTimeStep(thadapt->hist, thadapt->bw, step, dt));
   PetscCall(TSHistoryGetTime(thadapt->hist, thadapt->bw, step, t));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TSAdaptHistorySetHistory - Sets the time history in the adaptor
+  TSAdaptHistorySetHistory - Sets the time history in the adaptor
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  adapt    - the `TSAdapt` context
-.  n        - size of the time history
-.  hist     - the time history
--  backward - if the time history has to be followed backward
+  Input Parameters:
++ adapt    - the `TSAdapt` context
+. n        - size of the time history
+. hist     - the time history
+- backward - if the time history has to be followed backward
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   The time history is internally copied, and the user can free the hist array. The user still needs to specify the termination of the solve via `TSSetMaxSteps()`.
+  Note:
+  The time history is internally copied, and the user can free the hist array. The user still needs to specify the termination of the solve via `TSSetMaxSteps()`.
 
-.seealso: [](chapter_ts), `TSGetAdapt()`, `TSAdaptSetType()`, `TSAdaptHistorySetTrajectory()`, `TSADAPTHISTORY`
+.seealso: [](ch_ts), `TSGetAdapt()`, `TSAdaptSetType()`, `TSAdaptHistorySetTrajectory()`, `TSADAPTHISTORY`
 @*/
 PetscErrorCode TSAdaptHistorySetHistory(TSAdapt adapt, PetscInt n, PetscReal hist[], PetscBool backward)
 {
@@ -118,36 +118,36 @@ PetscErrorCode TSAdaptHistorySetHistory(TSAdapt adapt, PetscInt n, PetscReal his
   PetscFunctionBegin;
   PetscValidHeaderSpecific(adapt, TSADAPT_CLASSID, 1);
   PetscValidLogicalCollectiveInt(adapt, n, 2);
-  PetscValidRealPointer(hist, 3);
+  PetscAssertPointer(hist, 3);
   PetscValidLogicalCollectiveBool(adapt, backward, 4);
   PetscCall(PetscObjectTypeCompare((PetscObject)adapt, TSADAPTHISTORY, &flg));
-  if (!flg) PetscFunctionReturn(0);
+  if (!flg) PetscFunctionReturn(PETSC_SUCCESS);
   thadapt = (TSAdapt_History *)adapt->data;
   PetscCall(TSHistoryDestroy(&thadapt->hist));
   PetscCall(TSHistoryCreate(PetscObjectComm((PetscObject)adapt), &thadapt->hist));
   PetscCall(TSHistorySetHistory(thadapt->hist, n, hist, NULL, PETSC_FALSE));
   thadapt->bw = backward;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TSAdaptHistorySetTrajectory - Sets a time history in the adaptor from a given `TSTrajectory`
+  TSAdaptHistorySetTrajectory - Sets a time history in the adaptor from a given `TSTrajectory`
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  adapt    - the `TSAdapt` context
-.  tj       - the `TSTrajectory` context
--  backward - if the time history has to be followed backward
+  Input Parameters:
++ adapt    - the `TSAdapt` context
+. tj       - the `TSTrajectory` context
+- backward - if the time history has to be followed backward
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   The time history is internally copied, and the user can destroy the `TSTrajectory` if not needed.
+  Notes:
+  The time history is internally copied, and the user can destroy the `TSTrajectory` if not needed.
 
-   The user still needs to specify the termination of the solve via `TSSetMaxSteps()`.
+  The user still needs to specify the termination of the solve via `TSSetMaxSteps()`.
 
-.seealso: [](chapter_ts), `TSGetAdapt()`, `TSAdaptSetType()`, `TSAdaptHistorySetHistory()`, `TSADAPTHISTORY`, `TSAdapt`
+.seealso: [](ch_ts), `TSGetAdapt()`, `TSAdaptSetType()`, `TSAdaptHistorySetHistory()`, `TSADAPTHISTORY`, `TSAdapt`
 @*/
 PetscErrorCode TSAdaptHistorySetTrajectory(TSAdapt adapt, TSTrajectory tj, PetscBool backward)
 {
@@ -158,9 +158,9 @@ PetscErrorCode TSAdaptHistorySetTrajectory(TSAdapt adapt, TSTrajectory tj, Petsc
   PetscValidHeaderSpecific(tj, TSTRAJECTORY_CLASSID, 2);
   PetscValidLogicalCollectiveBool(adapt, backward, 3);
   PetscCall(PetscObjectTypeCompare((PetscObject)adapt, TSADAPTHISTORY, &flg));
-  if (!flg) PetscFunctionReturn(0);
+  if (!flg) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(TSAdaptHistorySetTSHistory(adapt, tj->tsh, backward));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -168,7 +168,7 @@ PetscErrorCode TSAdaptHistorySetTrajectory(TSAdapt adapt, TSTrajectory tj, Petsc
 
    Level: developer
 
-.seealso: [](chapter_ts), `TS`, `TSAdapt`, `TSGetAdapt()`, `TSAdaptHistorySetHistory()`, `TSAdaptType`
+.seealso: [](ch_ts), `TS`, `TSAdapt`, `TSGetAdapt()`, `TSAdaptHistorySetHistory()`, `TSAdaptType`
 M*/
 PETSC_EXTERN PetscErrorCode TSAdaptCreate_History(TSAdapt adapt)
 {
@@ -183,5 +183,5 @@ PETSC_EXTERN PetscErrorCode TSAdaptCreate_History(TSAdapt adapt)
   adapt->ops->choose  = TSAdaptChoose_History;
   adapt->ops->reset   = TSAdaptReset_History;
   adapt->ops->destroy = TSAdaptDestroy_History;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

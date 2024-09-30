@@ -59,11 +59,6 @@ extern void PetscRmPointer(void*);
 #define matisrestorelocalmat_ matisrestorelocalmat
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define matissetlocalmattype_ MATISSETLOCALMATTYPE
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define matissetlocalmattype_ matissetlocalmattype
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define matissetlocalmat_ MATISSETLOCALMAT
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define matissetlocalmat_ matissetlocalmat
@@ -113,11 +108,6 @@ PETSC_EXTERN void  matisrestorelocalmat_(Mat mat,Mat *local, int *__ierr)
 {
 *__ierr = MatISRestoreLocalMat(
 	(Mat)PetscToPointer((mat) ),local);
-}
-PETSC_EXTERN void  matissetlocalmattype_(Mat mat,MatType *mtype, int *__ierr)
-{
-*__ierr = MatISSetLocalMatType(
-	(Mat)PetscToPointer((mat) ),*mtype);
 }
 PETSC_EXTERN void  matissetlocalmat_(Mat mat,Mat local, int *__ierr)
 {

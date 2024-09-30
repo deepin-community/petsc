@@ -1,4 +1,3 @@
-
 /*
     Creates hypre ijvector from PETSc vector
 */
@@ -14,26 +13,26 @@ PetscErrorCode VecHYPRE_IJVectorCreate(PetscLayout map, VecHYPRE_IJVector *ij)
   PetscFunctionBegin;
   PetscCall(PetscNew(&nij));
   PetscCall(PetscLayoutSetUp(map));
-  PetscCall(HYPRE_IJVectorCreate(map->comm, map->rstart, map->rend - 1, &nij->ij));
-  PetscCall(HYPRE_IJVectorSetObjectType(nij->ij, HYPRE_PARCSR));
+  PetscCallExternal(HYPRE_IJVectorCreate, map->comm, map->rstart, map->rend - 1, &nij->ij);
+  PetscCallExternal(HYPRE_IJVectorSetObjectType, nij->ij, HYPRE_PARCSR);
 #if defined(PETSC_HAVE_HYPRE_DEVICE)
-  PetscCall(HYPRE_IJVectorInitialize_v2(nij->ij, HYPRE_MEMORY_DEVICE));
+  PetscCallExternal(HYPRE_IJVectorInitialize_v2, nij->ij, HYPRE_MEMORY_DEVICE);
 #else
-  PetscCall(HYPRE_IJVectorInitialize(nij->ij));
+  PetscCallExternal(HYPRE_IJVectorInitialize, nij->ij);
 #endif
-  PetscCall(HYPRE_IJVectorAssemble(nij->ij));
+  PetscCallExternal(HYPRE_IJVectorAssemble, nij->ij);
   *ij = nij;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecHYPRE_IJVectorDestroy(VecHYPRE_IJVector *ij)
 {
   PetscFunctionBegin;
-  if (!*ij) PetscFunctionReturn(0);
+  if (!*ij) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCheck(!(*ij)->pvec, PetscObjectComm((PetscObject)((*ij)->pvec)), PETSC_ERR_ORDER, "Forgot to call VecHYPRE_IJVectorPopVec()");
   PetscCallExternal(HYPRE_IJVectorDestroy, (*ij)->ij);
   PetscCall(PetscFree(*ij));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecHYPRE_IJVectorCopy(Vec v, VecHYPRE_IJVector ij)
@@ -42,15 +41,15 @@ PetscErrorCode VecHYPRE_IJVectorCopy(Vec v, VecHYPRE_IJVector ij)
 
   PetscFunctionBegin;
 #if defined(PETSC_HAVE_HYPRE_DEVICE)
-  PetscCall(HYPRE_IJVectorInitialize_v2(ij->ij, HYPRE_MEMORY_DEVICE));
+  PetscCallExternal(HYPRE_IJVectorInitialize_v2, ij->ij, HYPRE_MEMORY_DEVICE);
 #else
-  PetscCall(HYPRE_IJVectorInitialize(ij->ij));
+  PetscCallExternal(HYPRE_IJVectorInitialize, ij->ij);
 #endif
   PetscCall(VecGetArrayRead(v, &array));
-  PetscCall(HYPRE_IJVectorSetValues(ij->ij, v->map->n, NULL, (HYPRE_Complex *)array));
+  PetscCallExternal(HYPRE_IJVectorSetValues, ij->ij, v->map->n, NULL, (HYPRE_Complex *)array);
   PetscCall(VecRestoreArrayRead(v, &array));
-  PetscCall(HYPRE_IJVectorAssemble(ij->ij));
-  PetscFunctionReturn(0);
+  PetscCallExternal(HYPRE_IJVectorAssemble, ij->ij);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -59,12 +58,12 @@ PetscErrorCode VecHYPRE_IJVectorCopy(Vec v, VecHYPRE_IJVector ij)
   Allows use to get the data into a HYPRE vector without the cost of memcopies
 */
 #define VecHYPRE_ParVectorReplacePointer(b, newvalue, savedvalue) \
-  { \
+  do { \
     hypre_ParVector *par_vector   = (hypre_ParVector *)hypre_IJVectorObject(((hypre_IJVector *)b)); \
     hypre_Vector    *local_vector = hypre_ParVectorLocalVector(par_vector); \
     savedvalue                    = local_vector->data; \
     local_vector->data            = newvalue; \
-  }
+  } while (0)
 
 /*
   This routine access the pointer to the raw data of the "v" to be passed to HYPRE
@@ -73,7 +72,7 @@ PetscErrorCode VecHYPRE_IJVectorCopy(Vec v, VecHYPRE_IJVector ij)
    - the function returns a pointer to the data (ptr) and the corresponding restore
   Could be extended to VECKOKKOS if we had a way to access the raw pointer to device data.
 */
-static inline PetscErrorCode VecGetArrayForHYPRE(Vec v, int rw, HYPRE_MemoryLocation hmem, PetscScalar **ptr, PetscErrorCode (**res)(Vec, PetscScalar **))
+static PetscErrorCode VecGetArrayForHYPRE(Vec v, int rw, HYPRE_MemoryLocation hmem, PetscScalar **ptr, PetscErrorCode (**res)(Vec, PetscScalar **))
 {
   PetscMemType mtype;
   MPI_Comm     comm;
@@ -119,7 +118,7 @@ static inline PetscErrorCode VecGetArrayForHYPRE(Vec v, int rw, HYPRE_MemoryLoca
   default:
     SETERRQ(comm, PETSC_ERR_SUP, "Unhandled case %d", rw);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #define VecHYPRE_IJVectorMemoryLocation(v) hypre_IJVectorMemoryLocation((hypre_IJVector *)(v))
@@ -138,7 +137,7 @@ PetscErrorCode VecHYPRE_IJVectorPushVecRead(VecHYPRE_IJVector ij, Vec v)
   PetscCall(VecGetArrayForHYPRE(v, 0, VecHYPRE_IJVectorMemoryLocation(ij->ij), (PetscScalar **)&pv, &ij->restore));
   VecHYPRE_ParVectorReplacePointer(ij->ij, pv, ij->hv);
   ij->pvec = v;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Temporarily pushes the array of the data in v to ij (write access)
@@ -155,7 +154,7 @@ PetscErrorCode VecHYPRE_IJVectorPushVecWrite(VecHYPRE_IJVector ij, Vec v)
   PetscCall(VecGetArrayForHYPRE(v, 1, VecHYPRE_IJVectorMemoryLocation(ij->ij), (PetscScalar **)&pv, &ij->restore));
   VecHYPRE_ParVectorReplacePointer(ij->ij, pv, ij->hv);
   ij->pvec = v;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Temporarily pushes the array of the data in v to ij (read/write access)
@@ -172,7 +171,7 @@ PetscErrorCode VecHYPRE_IJVectorPushVec(VecHYPRE_IJVector ij, Vec v)
   PetscCall(VecGetArrayForHYPRE(v, 2, VecHYPRE_IJVectorMemoryLocation(ij->ij), (PetscScalar **)&pv, &ij->restore));
   VecHYPRE_ParVectorReplacePointer(ij->ij, pv, ij->hv);
   ij->pvec = v;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Restores the pointer data to v */
@@ -188,7 +187,7 @@ PetscErrorCode VecHYPRE_IJVectorPopVec(VecHYPRE_IJVector ij)
   ij->hv      = NULL;
   ij->pvec    = NULL;
   ij->restore = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecHYPRE_IJBindToCPU(VecHYPRE_IJVector ij, PetscBool bind)
@@ -208,5 +207,5 @@ PetscErrorCode VecHYPRE_IJBindToCPU(VecHYPRE_IJVector ij, PetscBool bind)
     PetscCallExternal(hypre_ParVectorMigrate, hij, hmem);
   }
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

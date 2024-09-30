@@ -124,7 +124,6 @@ extern void PetscRmPointer(void*);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
 PETSC_EXTERN void  taolinesearchsetup_(TaoLineSearch ls, int *__ierr)
 {
 *__ierr = TaoLineSearchSetUp(
@@ -139,7 +138,6 @@ PETSC_EXTERN void  taolinesearchdestroy_(TaoLineSearch *ls, int *__ierr)
 {
 *__ierr = TaoLineSearchDestroy(ls);
 }
-
 PETSC_EXTERN void  taolinesearchapply_(TaoLineSearch ls,Vec x,PetscReal *f,Vec g,Vec s,PetscReal *steplength,TaoLineSearchConvergedReason *reason, int *__ierr)
 {
 *__ierr = TaoLineSearchApply(
@@ -208,7 +206,6 @@ PETSC_EXTERN void  taolinesearchgetstepdirection_(TaoLineSearch ls,Vec *s, int *
 *__ierr = TaoLineSearchGetStepDirection(
 	(TaoLineSearch)PetscToPointer((ls) ),s);
 }
-
 PETSC_EXTERN void  taolinesearchgetfullstepobjective_(TaoLineSearch ls,PetscReal *f_fullstep, int *__ierr)
 {
 *__ierr = TaoLineSearchGetFullStepObjective(

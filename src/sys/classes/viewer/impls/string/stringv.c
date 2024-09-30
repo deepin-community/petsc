@@ -1,4 +1,3 @@
-
 #include <petsc/private/viewerimpl.h> /*I  "petscsys.h"  I*/
 
 typedef struct {
@@ -15,22 +14,22 @@ static PetscErrorCode PetscViewerDestroy_String(PetscViewer viewer)
   PetscFunctionBegin;
   if (vstr->ownstring) PetscCall(PetscFree(vstr->string));
   PetscCall(PetscFree(vstr));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-    PetscViewerStringSPrintf - Prints information to a `PETSCVIEWERSTRING` `PetscViewer` object
+  PetscViewerStringSPrintf - Prints information to a `PETSCVIEWERSTRING` `PetscViewer` object
 
-    Logically Collective; No Fortran Support
+  Logically Collective; No Fortran Support
 
-    Input Parameters:
-+   v - a string `PetscViewer`, formed by `PetscViewerStringOpen()`
--   format - the format of the input
+  Input Parameters:
++ viewer - a string `PetscViewer`, formed by `PetscViewerStringOpen()`
+- format - the format of the input
 
-    Level: developer
+  Level: developer
 
-    Note:
-    Though this is collective each MPI rank maintains a separate string
+  Note:
+  Though this is collective each MPI process maintains a separate string
 
 .seealso: [](sec_viewers), `PETSCVIEWERSTRING`, `PetscViewerStringOpen()`, `PetscViewerStringGetStringRead()`, `PetscViewerStringSetString()`
 @*/
@@ -45,39 +44,40 @@ PetscErrorCode PetscViewerStringSPrintf(PetscViewer viewer, const char format[],
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 1);
-  PetscValidCharPointer(format, 2);
+  PetscAssertPointer(format, 2);
   PetscCall(PetscObjectTypeCompare((PetscObject)viewer, PETSCVIEWERSTRING, &isstring));
-  if (!isstring) PetscFunctionReturn(0);
+  if (!isstring) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCheck(vstr->string, PETSC_COMM_SELF, PETSC_ERR_ORDER, "Must call PetscViewerStringSetString() before using");
 
   va_start(Argp, format);
-  PetscCall(PetscVSNPrintf(tmp, 4096, format, &fullLength, Argp));
+  PetscCall(PetscVSNPrintf(tmp, sizeof(tmp), format, &fullLength, Argp));
   va_end(Argp);
   PetscCall(PetscStrlen(tmp, &shift));
   cshift = shift + 1;
   if (cshift >= vstr->maxlen - vstr->curlen - 1) cshift = vstr->maxlen - vstr->curlen - 1;
-  PetscCall(PetscStrncpy(vstr->head, tmp, cshift));
+  PetscCall(PetscMemcpy(vstr->head, tmp, cshift));
+  vstr->head[cshift - 1] = '\0';
   vstr->head += shift;
   vstr->curlen += shift;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-    PetscViewerStringOpen - Opens a string as a `PETSCVIEWERSTRING` `PetscViewer`. This is a very
-    simple `PetscViewer`; information on the object is simply stored into
-    the string in a fairly nice way.
+  PetscViewerStringOpen - Opens a string as a `PETSCVIEWERSTRING` `PetscViewer`. This is a very
+  simple `PetscViewer`; information on the object is simply stored into
+  the string in a fairly nice way.
 
-    Collective; No Fortran Support
+  Collective; No Fortran Support
 
-    Input Parameters:
-+   comm - the communicator
-.   string - the string to use
--   len    - the string length
+  Input Parameters:
++ comm   - the communicator
+. string - the string to use
+- len    - the string length
 
-    Output Parameter:
-.   lab - the `PetscViewer`
+  Output Parameter:
+. lab - the `PetscViewer`
 
-    Level: advanced
+  Level: advanced
 
 .seealso: [](sec_viewers), `PETSCVIEWERSTRING`, `PetscViewerDestroy()`, `PetscViewerStringSPrintf()`, `PetscViewerStringGetStringRead()`, `PetscViewerStringSetString()`
 @*/
@@ -87,19 +87,19 @@ PetscErrorCode PetscViewerStringOpen(MPI_Comm comm, char string[], size_t len, P
   PetscCall(PetscViewerCreate(comm, lab));
   PetscCall(PetscViewerSetType(*lab, PETSCVIEWERSTRING));
   PetscCall(PetscViewerStringSetString(*lab, string, len));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PetscViewerGetSubViewer_String(PetscViewer viewer, MPI_Comm comm, PetscViewer *sviewer)
+static PetscErrorCode PetscViewerGetSubViewer_String(PetscViewer viewer, MPI_Comm comm, PetscViewer *sviewer)
 {
   PetscViewer_String *vstr = (PetscViewer_String *)viewer->data;
 
   PetscFunctionBegin;
   PetscCall(PetscViewerStringOpen(PETSC_COMM_SELF, vstr->head, vstr->maxlen - vstr->curlen, sviewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PetscViewerRestoreSubViewer_String(PetscViewer viewer, MPI_Comm comm, PetscViewer *sviewer)
+static PetscErrorCode PetscViewerRestoreSubViewer_String(PetscViewer viewer, MPI_Comm comm, PetscViewer *sviewer)
 {
   PetscViewer_String *iviewer = (PetscViewer_String *)(*sviewer)->data;
   PetscViewer_String *vstr    = (PetscViewer_String *)viewer->data;
@@ -108,7 +108,7 @@ PetscErrorCode PetscViewerRestoreSubViewer_String(PetscViewer viewer, MPI_Comm c
   vstr->head = iviewer->head;
   vstr->curlen += iviewer->curlen;
   PetscCall(PetscViewerDestroy(sviewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -135,21 +135,21 @@ PETSC_EXTERN PetscErrorCode PetscViewerCreate_String(PetscViewer v)
   PetscCall(PetscNew(&vstr));
   v->data      = (void *)vstr;
   vstr->string = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
 
-   PetscViewerStringGetStringRead - Returns the string that a `PETSCVIEWERSTRING` uses
+  PetscViewerStringGetStringRead - Returns the string that a `PETSCVIEWERSTRING` uses
 
-   Logically Collective
+  Logically Collective
 
   Input Parameter:
-.   viewer -  `PETSCVIEWERSTRING` viewer
+. viewer - `PETSCVIEWERSTRING` viewer
 
   Output Parameters:
-+    string - the string, optional use NULL if you do not need
--   len - the length of the string, optional use NULL if you do
++ string - the string, optional use NULL if you do not need
+- len    - the length of the string, optional use NULL if you do
 
   Level: advanced
 
@@ -170,19 +170,19 @@ PetscErrorCode PetscViewerStringGetStringRead(PetscViewer viewer, const char *st
   PetscCheck(isstring, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "Only for PETSCVIEWERSTRING");
   if (string) *string = vstr->string;
   if (len) *len = vstr->maxlen;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
 
-   PetscViewerStringSetString - sets the string that a string viewer will print to
+  PetscViewerStringSetString - sets the string that a string viewer will print to
 
-   Logically Collective
+  Logically Collective
 
   Input Parameters:
-+   viewer - string viewer you wish to attach string to
-.   string - the string to print data into
--   len - the length of the string
++ viewer - string viewer you wish to attach string to
+. string - the string to print data into
+- len    - the length of the string
 
   Level: advanced
 
@@ -202,9 +202,9 @@ PetscErrorCode PetscViewerStringSetString(PetscViewer viewer, char string[], siz
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 1);
-  PetscValidCharPointer(string, 2);
+  PetscAssertPointer(string, 2);
   PetscCall(PetscObjectTypeCompare((PetscObject)viewer, PETSCVIEWERSTRING, &isstring));
-  if (!isstring) PetscFunctionReturn(0);
+  if (!isstring) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCheck(len > 2, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "String must have length at least 2");
 
   PetscCall(PetscArrayzero(string, len));
@@ -212,17 +212,17 @@ PetscErrorCode PetscViewerStringSetString(PetscViewer viewer, char string[], siz
   vstr->head   = string;
   vstr->curlen = 0;
   vstr->maxlen = len;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
 
-   PetscViewerStringSetOwnString - tells the viewer that it now owns the string and is responsible for freeing it
+  PetscViewerStringSetOwnString - tells the viewer that it now owns the string and is responsible for freeing it
 
-   Logically Collective
+  Logically Collective
 
-  Input Parameters:
-.   viewer - string viewer
+  Input Parameter:
+. viewer - string viewer
 
   Level: advanced
 
@@ -240,8 +240,8 @@ PetscErrorCode PetscViewerStringSetOwnString(PetscViewer viewer)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 1);
   PetscCall(PetscObjectTypeCompare((PetscObject)viewer, PETSCVIEWERSTRING, &isstring));
-  if (!isstring) PetscFunctionReturn(0);
+  if (!isstring) PetscFunctionReturn(PETSC_SUCCESS);
 
   vstr->ownstring = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

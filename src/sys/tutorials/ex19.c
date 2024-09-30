@@ -1,4 +1,3 @@
-
 static char help[] = "Illustrates creating an options database.\n\n";
 
 #include <petscsys.h>
@@ -22,6 +21,5 @@ int main(int argc, char **argv)
 
    test:
      localrunfiles: optionsfile
-     filter: grep -E -v "(options_left)"
 
 TEST*/

@@ -1,4 +1,3 @@
-
 static char help[] = "Nonlinear Radiative Transport PDE with multigrid in 3d.\n\
 Uses 3-dimensional distributed arrays.\n\
 A 3-dim simplified Radiative Transport test problem is used, with analytic Jacobian. \n\
@@ -121,7 +120,7 @@ PetscErrorCode FormInitialGuess(SNES snes, Vec X, void *ctx)
     }
   }
   PetscCall(DMDAVecRestoreArray(da, X, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------  Evaluate Function F(x) --------------------- */
 PetscErrorCode FormFunction(SNES snes, Vec X, Vec F, void *ptr)
@@ -433,7 +432,7 @@ PetscErrorCode FormFunction(SNES snes, Vec X, Vec F, void *ptr)
   PetscCall(DMDAVecRestoreArray(da, F, &f));
   PetscCall(DMRestoreLocalVector(da, &localX));
   PetscCall(PetscLogFlops((22.0 + 4.0 * POWFLOP) * ym * xm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------  Evaluate Jacobian F(x) --------------------- */
 PetscErrorCode FormJacobian(SNES snes, Vec X, Mat J, Mat jac, void *ptr)
@@ -1630,7 +1629,7 @@ PetscErrorCode FormJacobian(SNES snes, Vec X, Mat J, Mat jac, void *ptr)
   PetscCall(DMRestoreLocalVector(da, &localX));
 
   PetscCall(PetscLogFlops((41.0 + 8.0 * POWFLOP) * xm * ym));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

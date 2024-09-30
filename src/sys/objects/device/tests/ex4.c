@@ -8,7 +8,6 @@ static PetscErrorCode DoFork(PetscDeviceContext parent, PetscInt n, PetscDeviceC
   PetscStreamType stype;
 
   PetscFunctionBegin;
-  PetscCall(AssertDeviceContextExists(parent));
   PetscCall(PetscDeviceContextGetDeviceType(parent, &dtype));
   PetscCall(PetscDeviceContextGetStreamType(parent, &stype));
   PetscCall(PetscDeviceContextFork(parent, n, sub));
@@ -23,7 +22,7 @@ static PetscErrorCode DoFork(PetscDeviceContext parent, PetscInt n, PetscDeviceC
     PetscCall(PetscDeviceContextGetDeviceType((*sub)[i], &sub_dtype));
     PetscCall(AssertPetscDeviceTypesValidAndEqual(sub_dtype, dtype, "Child device type %s != parent device type %s"));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TestNestedPetscDeviceContextForkJoin(PetscDeviceContext parCtx, PetscDeviceContext *sub)
@@ -32,8 +31,7 @@ static PetscErrorCode TestNestedPetscDeviceContextForkJoin(PetscDeviceContext pa
   PetscDeviceContext *subsub;
 
   PetscFunctionBegin;
-  PetscValidDeviceContext(parCtx, 1);
-  PetscValidPointer(sub, 2);
+  PetscAssertPointer(sub, 2);
   PetscCall(AssertPetscDeviceContextsValidAndEqual(parCtx, sub[0], "Current global context does not match expected global context"));
   /* create some children from an active child */
   PetscCall(DoFork(sub[1], nsub, &subsub));
@@ -42,7 +40,7 @@ static PetscErrorCode TestNestedPetscDeviceContextForkJoin(PetscDeviceContext pa
   /* join on the grandparent */
   PetscCall(PetscDeviceContextJoin(parCtx, nsub - 2, PETSC_DEVICE_CONTEXT_JOIN_NO_SYNC, &subsub));
   PetscCall(PetscDeviceContextJoin(sub[1], nsub, PETSC_DEVICE_CONTEXT_JOIN_DESTROY, &subsub));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* test fork-join */
@@ -52,7 +50,6 @@ static PetscErrorCode TestPetscDeviceContextForkJoin(PetscDeviceContext dctx)
   const PetscInt      n = 10;
 
   PetscFunctionBegin;
-  PetscValidDeviceContext(dctx, 1);
   /* mostly for valgrind to catch errors */
   PetscCall(DoFork(dctx, n, &sub));
   PetscCall(PetscDeviceContextJoin(dctx, n, PETSC_DEVICE_CONTEXT_JOIN_DESTROY, &sub));
@@ -68,7 +65,7 @@ static PetscErrorCode TestPetscDeviceContextForkJoin(PetscDeviceContext dctx)
   PetscCall(PetscDeviceContextJoin(dctx, n - 1, PETSC_DEVICE_CONTEXT_JOIN_NO_SYNC, &sub));
   /* back to the ether from whence they came */
   PetscCall(PetscDeviceContextJoin(dctx, n + 1, PETSC_DEVICE_CONTEXT_JOIN_DESTROY, &sub));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char *argv[])
@@ -89,6 +86,8 @@ int main(int argc, char *argv[])
   PetscCall(PetscDeviceContextGetCurrentContext(&dctx));
   PetscCall(TestPetscDeviceContextForkJoin(dctx));
 
+  PetscCall(TestPetscDeviceContextForkJoin(NULL));
+
   PetscCall(PetscPrintf(comm, "EXIT_SUCCESS\n"));
   PetscCall(PetscFinalize());
   return 0;
@@ -96,28 +95,26 @@ int main(int argc, char *argv[])
 
 /*TEST
 
- build:
-   requires: defined(PETSC_HAVE_CXX)
-
- testset:
-   output_file: ./output/ExitSuccess.out
-   nsize: {{1 3}}
-   args: -device_enable {{lazy eager}}
-   args: -local_device_context_stream_type {{global_blocking default_blocking global_nonblocking}}
-   test:
-     requires: !device
-     suffix: host_no_device
-   test:
-     requires: device
-     args: -root_device_context_device_type host
-     suffix: host_with_device
-   test:
-     requires: cuda
-     args: -root_device_context_device_type cuda
-     suffix: cuda
-   test:
-     requires: hip
-     args: -root_device_context_device_type hip
-     suffix: hip
+  testset:
+    requires: cxx
+    output_file: ./output/ExitSuccess.out
+    nsize: {{1 3}}
+    args: -device_enable {{lazy eager}}
+    args: -local_device_context_stream_type {{global_blocking default_blocking global_nonblocking}}
+    test:
+      requires: !device
+      suffix: host_no_device
+    test:
+      requires: device
+      args: -root_device_context_device_type host
+      suffix: host_with_device
+    test:
+      requires: cuda
+      args: -root_device_context_device_type cuda
+      suffix: cuda
+    test:
+      requires: hip
+      args: -root_device_context_device_type hip
+      suffix: hip
 
 TEST*/

@@ -129,11 +129,6 @@ extern void PetscRmPointer(void*);
 #define vecstashsetinitialsize_ vecstashsetinitialsize
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define vecconjugate_ VECCONJUGATE
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define vecconjugate_ vecconjugate
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define vecsetrandom_ VECSETRANDOM
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define vecsetrandom_ vecsetrandom
@@ -217,6 +212,11 @@ extern void PetscRmPointer(void*);
 #define vecgetoffloadmask_ VECGETOFFLOADMASK
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define vecgetoffloadmask_ vecgetoffloadmask
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define vecerrorweightednorms_ VECERRORWEIGHTEDNORMS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define vecerrorweightednorms_ vecerrorweightednorms
 #endif
 
 
@@ -335,11 +335,6 @@ PETSC_EXTERN void  vecstashsetinitialsize_(Vec vec,PetscInt *size,PetscInt *bsiz
 *__ierr = VecStashSetInitialSize(
 	(Vec)PetscToPointer((vec) ),*size,*bsize);
 }
-PETSC_EXTERN void  vecconjugate_(Vec x, int *__ierr)
-{
-*__ierr = VecConjugate(
-	(Vec)PetscToPointer((x) ));
-}
 PETSC_EXTERN void  vecsetrandom_(Vec x,PetscRandom rctx, int *__ierr)
 {
 *__ierr = VecSetRandom(
@@ -429,6 +424,15 @@ PETSC_EXTERN void  vecgetoffloadmask_(Vec v,PetscOffloadMask *mask, int *__ierr)
 {
 *__ierr = VecGetOffloadMask(
 	(Vec)PetscToPointer((v) ),mask);
+}
+PETSC_EXTERN void  vecerrorweightednorms_(Vec U,Vec Y,Vec E,NormType *wnormtype,PetscReal *atol,Vec vatol,PetscReal *rtol,Vec vrtol,PetscReal *ignore_max,PetscReal *norm,PetscInt *norm_loc,PetscReal *norma,PetscInt *norma_loc,PetscReal *normr,PetscInt *normr_loc, int *__ierr)
+{
+*__ierr = VecErrorWeightedNorms(
+	(Vec)PetscToPointer((U) ),
+	(Vec)PetscToPointer((Y) ),
+	(Vec)PetscToPointer((E) ),*wnormtype,*atol,
+	(Vec)PetscToPointer((vatol) ),*rtol,
+	(Vec)PetscToPointer((vrtol) ),*ignore_max,norm,norm_loc,norma,norma_loc,normr,normr_loc);
 }
 #if defined(__cplusplus)
 }

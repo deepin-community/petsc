@@ -1,4 +1,3 @@
-
 /*
   Laplacian in 3D. Use for testing MatSolve routines.
   Modeled by the partial differential equation
@@ -145,7 +144,7 @@ PetscErrorCode ComputeRHS(DM da, Vec b)
   PetscCall(DMDAGetInfo(da, 0, &mx, &my, &mz, 0, 0, 0, 0, 0, 0, 0, 0, 0));
   h = 1.0 / ((mx - 1) * (my - 1) * (mz - 1));
   PetscCall(VecSet(b, h));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ComputeRHSMatrix(PetscInt m, PetscInt nrhs, Mat *C)
@@ -178,7 +177,7 @@ PetscErrorCode ComputeRHSMatrix(PetscInt m, PetscInt nrhs, Mat *C)
   PetscCall(MatAssemblyEnd(RHS, MAT_FINAL_ASSEMBLY));
   *C = RHS;
   PetscCall(PetscRandomDestroy(&rand));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ComputeMatrix(DM da, Mat B)
@@ -278,7 +277,7 @@ PetscErrorCode ComputeMatrix(DM da, Mat B)
   PetscCall(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
   PetscCall(PetscFree(v));
   PetscCall(PetscRandomDestroy(&rand));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

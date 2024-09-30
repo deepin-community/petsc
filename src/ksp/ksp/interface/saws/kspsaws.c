@@ -9,19 +9,19 @@ typedef struct {
 } KSPMonitor_SAWs;
 
 /*@C
-   KSPMonitorSAWsCreate - create an SAWs monitor context for `KSP`
+  KSPMonitorSAWsCreate - create an SAWs monitor context for `KSP`
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  ksp - `KSP` to monitor
+  Input Parameter:
+. ksp - `KSP` to monitor
 
-   Output Parameter:
-.  ctx - context for monitor
+  Output Parameter:
+. ctx - context for monitor
 
-   Level: developer
+  Level: developer
 
-.seealso: [](chapter_ksp), `KSP`, `KSPMonitorSet()`, `KSPMonitorSAWs()`, `KSPMonitorSAWsDestroy()`
+.seealso: [](ch_ksp), `KSP`, `KSPMonitorSet()`, `KSPMonitorSAWs()`, `KSPMonitorSAWsDestroy()`
 @*/
 PetscErrorCode KSPMonitorSAWsCreate(KSP ksp, void **ctx)
 {
@@ -32,20 +32,20 @@ PetscErrorCode KSPMonitorSAWsCreate(KSP ksp, void **ctx)
   mon->viewer = PETSC_VIEWER_SAWS_(PetscObjectComm((PetscObject)ksp));
   PetscCheck(mon->viewer, PetscObjectComm((PetscObject)ksp), PETSC_ERR_PLIB, "Cannot create SAWs default viewer");
   *ctx = (void *)mon;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   KSPMonitorSAWsDestroy - destroy a monitor context created with `KSPMonitorSAWsCreate()`
+  KSPMonitorSAWsDestroy - destroy a monitor context created with `KSPMonitorSAWsCreate()`
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  ctx - monitor context
+  Input Parameter:
+. ctx - monitor context
 
-   Level: developer
+  Level: developer
 
-.seealso: [](chapter_ksp), `KSP`, `KSPMonitorSet()`, `KSPMonitorSAWsCreate()`
+.seealso: [](ch_ksp), `KSP`, `KSPMonitorSet()`, `KSPMonitorSAWsCreate()`
 @*/
 PetscErrorCode KSPMonitorSAWsDestroy(void **ctx)
 {
@@ -54,26 +54,26 @@ PetscErrorCode KSPMonitorSAWsDestroy(void **ctx)
   PetscFunctionBegin;
   PetscCall(PetscFree2(mon->eigr, mon->eigi));
   PetscCall(PetscFree(*ctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   KSPMonitorSAWs - monitor `KSP` solution using SAWs
+  KSPMonitorSAWs - monitor `KSP` solution using SAWs
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  ksp   - iterative context
-.  n     - iteration number
-.  rnorm - 2-norm (preconditioned) residual value (may be estimated).
--  ctx -  created with `KSPMonitorSAWsCreate()`
+  Input Parameters:
++ ksp   - iterative context
+. n     - iteration number
+. rnorm - 2-norm (preconditioned) residual value (may be estimated).
+- ctx   - created with `KSPMonitorSAWsCreate()`
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   Create the ctx with `KSPMonitorSAWsCreate()` then call `KSPMonitorSet()` with the context, this function, and `KSPMonitorSAWsDestroy()`
+  Note:
+  Create the ctx with `KSPMonitorSAWsCreate()` then call `KSPMonitorSet()` with the context, this function, and `KSPMonitorSAWsDestroy()`
 
-.seealso: [](chapter_ksp), `KSP`, `KSPMonitorSet()`, `KSPMonitorSAWsCreate()`, `KSPMonitorSAWsDestroy()`, `KSPMonitorSingularValue()`, `KSPComputeExtremeSingularValues()`, `PetscViewerSAWsOpen()`
+.seealso: [](ch_ksp), `KSP`, `KSPMonitorSet()`, `KSPMonitorSAWsCreate()`, `KSPMonitorSAWsDestroy()`, `KSPMonitorSingularValue()`, `KSPComputeExtremeSingularValues()`, `PetscViewerSAWsOpen()`
 @*/
 PetscErrorCode KSPMonitorSAWs(KSP ksp, PetscInt n, PetscReal rnorm, void *ctx)
 {
@@ -105,5 +105,5 @@ PetscErrorCode KSPMonitorSAWs(KSP ksp, PetscInt n, PetscReal rnorm, void *ctx)
       PetscCall(PetscSAWsBlock());
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

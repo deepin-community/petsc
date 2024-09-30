@@ -3,16 +3,16 @@
 /*@
   TaoSetVariableBounds - Sets the upper and lower bounds for the optimization problem
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+ tao - the Tao context
++ tao - the `Tao` context
 . XL  - vector of lower bounds
 - XU  - vector of upper bounds
 
   Level: beginner
 
-.seealso: `Tao`, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoGetVariableBounds()`
+.seealso: [](ch_tao), `Tao`, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoGetVariableBounds()`
 @*/
 PetscErrorCode TaoSetVariableBounds(Tao tao, Vec XL, Vec XU)
 {
@@ -27,23 +27,21 @@ PetscErrorCode TaoSetVariableBounds(Tao tao, Vec XL, Vec XU)
   tao->XL      = XL;
   tao->XU      = XU;
   tao->bounded = (PetscBool)(XL || XU);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   TaoSetVariableBoundsRoutine - Sets a function to be used to compute lower and upper variable bounds for the optimization
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+ tao - the Tao context
++ tao  - the `Tao` context
 . func - the bounds computation routine
-- ctx - [optional] user-defined context for private data for the bounds computation (may be NULL)
+- ctx  - [optional] user-defined context for private data for the bounds computation (may be `NULL`)
 
-  Calling sequence of func:
-$      func (Tao tao, Vec xl, Vec xu);
-
-+ tao - the Tao
+  Calling sequence of `func`:
++ tao - the `Tao` solver
 . xl  - vector of lower bounds
 . xu  - vector of upper bounds
 - ctx - the (optional) user-defined function context
@@ -53,34 +51,33 @@ $      func (Tao tao, Vec xl, Vec xu);
   Note:
   The func passed to `TaoSetVariableBoundsRoutine()` takes precedence over any values set in `TaoSetVariableBounds()`.
 
-.seealso: `Tao`, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoSetVariableBounds()`
-
+.seealso: [](ch_tao), `Tao`, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoSetVariableBounds()`
 @*/
-PetscErrorCode TaoSetVariableBoundsRoutine(Tao tao, PetscErrorCode (*func)(Tao, Vec, Vec, void *), void *ctx)
+PetscErrorCode TaoSetVariableBoundsRoutine(Tao tao, PetscErrorCode (*func)(Tao tao, Vec xl, Vec xu, void *ctx), void *ctx)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   tao->user_boundsP       = ctx;
   tao->ops->computebounds = func;
   tao->bounded            = func ? PETSC_TRUE : PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   TaoGetVariableBounds - Gets the upper and lower bounds vectors set with `TaoSetVariableBounds()`
 
-  Not collective
+  Not Collective
 
   Input Parameter:
-. tao - the Tao context
+. tao - the `Tao` context
 
   Output Parameters:
-+ XL  - vector of lower bounds
-- XU  - vector of upper bounds
++ XL - vector of lower bounds
+- XU - vector of upper bounds
 
   Level: beginner
 
-.seealso: `Tao`, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoSetVariableBounds()`
+.seealso: [](ch_tao), `Tao`, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoSetVariableBounds()`
 @*/
 PetscErrorCode TaoGetVariableBounds(Tao tao, Vec *XL, Vec *XU)
 {
@@ -88,23 +85,22 @@ PetscErrorCode TaoGetVariableBounds(Tao tao, Vec *XL, Vec *XU)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   if (XL) *XL = tao->XL;
   if (XU) *XU = tao->XU;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoComputeVariableBounds - Compute the variable bounds using the
-   routine set by `TaoSetVariableBoundsRoutine()`.
+  TaoComputeVariableBounds - Compute the variable bounds using the
+  routine set by `TaoSetVariableBoundsRoutine()`.
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  tao - the Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-   Level: developer
+  Level: developer
 
-.seealso: `Tao`, `TaoSetVariableBoundsRoutine()`, `TaoSetVariableBounds()`
+.seealso: [](ch_tao), `Tao`, `TaoSetVariableBoundsRoutine()`, `TaoSetVariableBounds()`
 @*/
-
 PetscErrorCode TaoComputeVariableBounds(Tao tao)
 {
   PetscFunctionBegin;
@@ -120,22 +116,22 @@ PetscErrorCode TaoComputeVariableBounds(Tao tao)
     }
     PetscCallBack("Tao callback variable bounds", (*tao->ops->computebounds)(tao, tao->XL, tao->XU, tao->user_boundsP));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   TaoSetInequalityBounds - Sets the upper and lower bounds
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+ tao - the Tao context
++ tao - the `Tao` context
 . IL  - vector of lower bounds
 - IU  - vector of upper bounds
 
   Level: beginner
 
-.seealso: `Tao`, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoGetInequalityBounds()`
+.seealso: [](ch_tao), `Tao`, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoGetInequalityBounds()`
 @*/
 PetscErrorCode TaoSetInequalityBounds(Tao tao, Vec IL, Vec IU)
 {
@@ -150,24 +146,24 @@ PetscErrorCode TaoSetInequalityBounds(Tao tao, Vec IL, Vec IU)
   tao->IL               = IL;
   tao->IU               = IU;
   tao->ineq_doublesided = (PetscBool)(IL || IU);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   TaoGetInequalityBounds - Gets the upper and lower bounds set via `TaoSetInequalityBounds()`
 
-  Logically collective
+  Logically Collective
 
   Input Parameter:
-. tao - the Tao context
+. tao - the `Tao` context
 
   Output Parameters:
-+ IL  - vector of lower bounds
-- IU  - vector of upper bounds
++ IL - vector of lower bounds
+- IU - vector of upper bounds
 
   Level: beginner
 
-.seealso: `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoSetInequalityBounds()`
+.seealso: [](ch_tao), `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoSetInequalityBounds()`
 @*/
 PetscErrorCode TaoGetInequalityBounds(Tao tao, Vec *IL, Vec *IU)
 {
@@ -175,23 +171,26 @@ PetscErrorCode TaoGetInequalityBounds(Tao tao, Vec *IL, Vec *IU)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   if (IL) *IL = tao->IL;
   if (IU) *IU = tao->IU;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoComputeConstraints - Compute the variable bounds using the
-   routine set by `TaoSetConstraintsRoutine()`.
+  TaoComputeConstraints - Compute the variable bounds using the
+  routine set by `TaoSetConstraintsRoutine()`.
 
-   Collective
+  Collective
 
-   Input Parameters:
-.  tao - the Tao context
+  Input Parameters:
++ tao - the `Tao` context
+- X   - location to evaluate the constraints
 
-   Level: developer
+  Output Parameter:
+. C - the constraints
 
-.seealso: `Tao`, `TaoSetConstraintsRoutine()`, `TaoComputeJacobian()`
+  Level: developer
+
+.seealso: [](ch_tao), `Tao`, `TaoSetConstraintsRoutine()`, `TaoComputeJacobian()`
 @*/
-
 PetscErrorCode TaoComputeConstraints(Tao tao, Vec X, Vec C)
 {
   PetscFunctionBegin;
@@ -204,34 +203,31 @@ PetscErrorCode TaoComputeConstraints(Tao tao, Vec X, Vec C)
   PetscCallBack("Tao callback constraints", (*tao->ops->computeconstraints)(tao, X, C, tao->user_conP));
   PetscCall(PetscLogEventEnd(TAO_ConstraintsEval, tao, X, C, NULL));
   tao->nconstraints++;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  TaoSetConstraintsRoutine - Sets a function to be used to compute constraints.  Tao only handles constraints under certain conditions, see manual for details
+  TaoSetConstraintsRoutine - Sets a function to be used to compute constraints.  Tao only handles constraints under certain conditions, see [](ch_tao) for details
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+ tao - the Tao context
-. c   - A vector that will be used to store constraint evaluation
++ tao  - the `Tao` context
+. c    - A vector that will be used to store constraint evaluation
 . func - the bounds computation routine
-- ctx - [optional] user-defined context for private data for the constraints computation (may be NULL)
+- ctx  - [optional] user-defined context for private data for the constraints computation (may be `NULL`)
 
-  Calling sequence of func:
-$      func (Tao tao, Vec x, Vec c, void *ctx);
-
-+ tao - the Tao
+  Calling sequence of `func`:
++ tao - the `Tao` solver
 . x   - point to evaluate constraints
-. c   - vector constraints evaluated at x
+. c   - vector constraints evaluated at `x`
 - ctx - the (optional) user-defined function context
 
   Level: intermediate
 
-.seealso: `Tao`, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoSetVariablevBounds()`
-
+.seealso: [](ch_tao), `Tao`, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoSetVariablevBounds()`
 @*/
-PetscErrorCode TaoSetConstraintsRoutine(Tao tao, Vec c, PetscErrorCode (*func)(Tao, Vec, Vec, void *), void *ctx)
+PetscErrorCode TaoSetConstraintsRoutine(Tao tao, Vec c, PetscErrorCode (*func)(Tao tao, Vec x, Vec c, void *ctx), void *ctx)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
@@ -242,7 +238,7 @@ PetscErrorCode TaoSetConstraintsRoutine(Tao tao, Vec c, PetscErrorCode (*func)(T
   tao->constraints             = c;
   tao->user_conP               = ctx;
   tao->ops->computeconstraints = func;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -252,7 +248,7 @@ PetscErrorCode TaoSetConstraintsRoutine(Tao tao, Vec c, PetscErrorCode (*func)(T
   Collective
 
   Input Parameter:
-. tao - the Tao context
+. tao - the `Tao` context
 
   Output Parameters:
 + DL - dual variable vector for the lower bounds
@@ -262,12 +258,10 @@ PetscErrorCode TaoSetConstraintsRoutine(Tao tao, Vec c, PetscErrorCode (*func)(T
 
   Note:
   DL and DU should be created before calling this routine.  If calling
-  this routine after using an unconstrained solver, DL and DU are set to all
+  this routine after using an unconstrained solver, `DL` and `DU` are set to all
   zeros.
 
-  Level: advanced
-
- .seealso: `Tao`, `TaoComputeObjective()`, `TaoSetVariableBounds()`
+.seealso: [](ch_tao), `Tao`, `TaoComputeObjective()`, `TaoSetVariableBounds()`
 @*/
 PetscErrorCode TaoComputeDualVariables(Tao tao, Vec DL, Vec DU)
 {
@@ -283,7 +277,7 @@ PetscErrorCode TaoComputeDualVariables(Tao tao, Vec DL, Vec DU)
     PetscCall(VecSet(DL, 0.0));
     PetscCall(VecSet(DU, 0.0));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -292,7 +286,7 @@ PetscErrorCode TaoComputeDualVariables(Tao tao, Vec DL, Vec DU)
   Collective
 
   Input Parameter:
-. tao - the Tao context
+. tao - the `Tao` context
 
   Output Parameters:
 + DE - dual variable vector for the lower bounds
@@ -300,7 +294,7 @@ PetscErrorCode TaoComputeDualVariables(Tao tao, Vec DL, Vec DU)
 
   Level: advanced
 
-.seealso: `Tao`, `TaoComputeDualVariables()`
+.seealso: [](ch_tao), `Tao`, `TaoComputeDualVariables()`
 @*/
 PetscErrorCode TaoGetDualVariables(Tao tao, Vec *DE, Vec *DI)
 {
@@ -308,34 +302,31 @@ PetscErrorCode TaoGetDualVariables(Tao tao, Vec *DE, Vec *DI)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   if (DE) *DE = tao->DE;
   if (DI) *DI = tao->DI;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  TaoSetEqualityConstraintsRoutine - Sets a function to be used to compute constraints.  Tao only handles constraints under certain conditions, see manual for details
+  TaoSetEqualityConstraintsRoutine - Sets a function to be used to compute constraints.  Tao only handles constraints under certain conditions, see [](ch_tao) for details
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+ tao - the Tao context
++ tao  - the `Tao` context
 . ce   - A vector that will be used to store equality constraint evaluation
 . func - the bounds computation routine
-- ctx - [optional] user-defined context for private data for the equality constraints computation (may be NULL)
+- ctx  - [optional] user-defined context for private data for the equality constraints computation (may be `NULL`)
 
-  Calling sequence of func:
-$      func (Tao tao, Vec x, Vec ce, void *ctx);
-
-+ tao - the Tao
+  Calling sequence of `func`:
++ tao - the `Tao` solver
 . x   - point to evaluate equality constraints
-. ce   - vector of equality constraints evaluated at x
+. ce  - vector of equality constraints evaluated at x
 - ctx - the (optional) user-defined function context
 
   Level: intermediate
 
-.seealso: `Tao`, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoSetVariableBounds()`
-
+.seealso: [](ch_tao), `Tao`, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoSetVariableBounds()`
 @*/
-PetscErrorCode TaoSetEqualityConstraintsRoutine(Tao tao, Vec ce, PetscErrorCode (*func)(Tao, Vec, Vec, void *), void *ctx)
+PetscErrorCode TaoSetEqualityConstraintsRoutine(Tao tao, Vec ce, PetscErrorCode (*func)(Tao tao, Vec x, Vec ce, void *ctx), void *ctx)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
@@ -346,34 +337,31 @@ PetscErrorCode TaoSetEqualityConstraintsRoutine(Tao tao, Vec ce, PetscErrorCode 
   tao->constraints_equality            = ce;
   tao->user_con_equalityP              = ctx;
   tao->ops->computeequalityconstraints = func;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  TaoSetInequalityConstraintsRoutine - Sets a function to be used to compute constraints.  Tao only handles constraints under certain conditions, see manual for details
+  TaoSetInequalityConstraintsRoutine - Sets a function to be used to compute constraints.  Tao only handles constraints under certain conditions, see [](ch_tao) for details
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+ tao - the Tao context
++ tao  - the `Tao` context
 . ci   - A vector that will be used to store inequality constraint evaluation
 . func - the bounds computation routine
-- ctx - [optional] user-defined context for private data for the inequality constraints computation (may be NULL)
+- ctx  - [optional] user-defined context for private data for the inequality constraints computation (may be `NULL`)
 
-  Calling sequence of func:
-$      func (Tao tao, Vec x, Vec ci, void *ctx);
-
-+ tao - the Tao
+  Calling sequence of `func`:
++ tao - the `Tao` solver
 . x   - point to evaluate inequality constraints
-. ci   - vector of inequality constraints evaluated at x
+. ci  - vector of inequality constraints evaluated at x
 - ctx - the (optional) user-defined function context
 
   Level: intermediate
 
- .seealso: `Tao, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoSetVariableBounds()`
-
+.seealso: [](ch_tao), `Tao`, `TaoSetObjective()`, `TaoSetHessian()`, `TaoSetObjectiveAndGradient()`, `TaoSetVariableBounds()`
 @*/
-PetscErrorCode TaoSetInequalityConstraintsRoutine(Tao tao, Vec ci, PetscErrorCode (*func)(Tao, Vec, Vec, void *), void *ctx)
+PetscErrorCode TaoSetInequalityConstraintsRoutine(Tao tao, Vec ci, PetscErrorCode (*func)(Tao tao, Vec x, Vec ci, void *ctx), void *ctx)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
@@ -384,27 +372,26 @@ PetscErrorCode TaoSetInequalityConstraintsRoutine(Tao tao, Vec ci, PetscErrorCod
   tao->ineq_constrained                  = func ? PETSC_TRUE : PETSC_FALSE;
   tao->user_con_inequalityP              = ctx;
   tao->ops->computeinequalityconstraints = func;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoComputeEqualityConstraints - Compute the variable bounds using the
-   routine set by `TaoSetEqualityConstraintsRoutine()`.
+  TaoComputeEqualityConstraints - Compute the variable bounds using the
+  routine set by `TaoSetEqualityConstraintsRoutine()`.
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  tao - the Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-   Output Parameters:
-+  X - point the equality constraints were evaluated on
--  CE   - vector of equality constraints evaluated at X
+  Output Parameters:
++ X  - point the equality constraints were evaluated on
+- CE - vector of equality constraints evaluated at X
 
-   Level: developer
+  Level: developer
 
-.seealso: `Tao`, `TaoSetEqualityConstraintsRoutine()`, `TaoComputeJacobianEquality()`, `TaoComputeInequalityConstraints()`
+.seealso: [](ch_tao), `Tao`, `TaoSetEqualityConstraintsRoutine()`, `TaoComputeJacobianEquality()`, `TaoComputeInequalityConstraints()`
 @*/
-
 PetscErrorCode TaoComputeEqualityConstraints(Tao tao, Vec X, Vec CE)
 {
   PetscFunctionBegin;
@@ -417,27 +404,26 @@ PetscErrorCode TaoComputeEqualityConstraints(Tao tao, Vec X, Vec CE)
   PetscCallBack("Tao callback equality constraints", (*tao->ops->computeequalityconstraints)(tao, X, CE, tao->user_con_equalityP));
   PetscCall(PetscLogEventEnd(TAO_ConstraintsEval, tao, X, CE, NULL));
   tao->nconstraints++;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoComputeInequalityConstraints - Compute the variable bounds using the
-   routine set by `TaoSetInequalityConstraintsRoutine()`.
+  TaoComputeInequalityConstraints - Compute the variable bounds using the
+  routine set by `TaoSetInequalityConstraintsRoutine()`.
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  tao - the Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-   Output Parameters:
-+  X - point the inequality constraints were evaluated on
--  CE   - vector of inequality constraints evaluated at X
+  Output Parameters:
++ X  - point the inequality constraints were evaluated on
+- CI - vector of inequality constraints evaluated at X
 
-   Level: developer
+  Level: developer
 
-.seealso: `Tao`, `TaoSetInequalityConstraintsRoutine()`, `TaoComputeJacobianInequality()`, `TaoComputeEqualityConstraints()`
+.seealso: [](ch_tao), `Tao`, `TaoSetInequalityConstraintsRoutine()`, `TaoComputeJacobianInequality()`, `TaoComputeEqualityConstraints()`
 @*/
-
 PetscErrorCode TaoComputeInequalityConstraints(Tao tao, Vec X, Vec CI)
 {
   PetscFunctionBegin;
@@ -450,5 +436,5 @@ PetscErrorCode TaoComputeInequalityConstraints(Tao tao, Vec X, Vec CI)
   PetscCallBack("Tao callback inequality constraints", (*tao->ops->computeinequalityconstraints)(tao, X, CI, tao->user_con_inequalityP));
   PetscCall(PetscLogEventEnd(TAO_ConstraintsEval, tao, X, CI, NULL));
   tao->nconstraints++;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,11 +1,9 @@
-
 /*
     Factorization code for BAIJ format.
 */
 #include <../src/mat/impls/baij/seq/baij.h>
 #include <petsc/private/kernels/blockinvert.h>
 
-/* ----------------------------------------------------------- */
 PetscErrorCode MatLUFactorNumeric_SeqBAIJ_N_inplace(Mat C, Mat A, const MatFactorInfo *info)
 {
   Mat_SeqBAIJ    *a = (Mat_SeqBAIJ *)A->data, *b = (Mat_SeqBAIJ *)C->data;
@@ -79,5 +77,5 @@ PetscErrorCode MatLUFactorNumeric_SeqBAIJ_N_inplace(Mat C, Mat A, const MatFacto
   C->assembled           = PETSC_TRUE;
 
   PetscCall(PetscLogFlops(1.333333333333 * bs * bs2 * b->mbs)); /* from inverting diagonal blocks */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

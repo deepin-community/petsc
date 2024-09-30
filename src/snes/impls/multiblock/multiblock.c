@@ -23,7 +23,7 @@ typedef struct {
   BlockDesc       blocks;        /* Linked list of block descriptors */
 } SNES_Multiblock;
 
-PetscErrorCode SNESReset_Multiblock(SNES snes)
+static PetscErrorCode SNESReset_Multiblock(SNES snes)
 {
   SNES_Multiblock *mb     = (SNES_Multiblock *)snes->data;
   BlockDesc        blocks = mb->blocks, next;
@@ -39,7 +39,7 @@ PetscErrorCode SNESReset_Multiblock(SNES snes)
     next   = blocks->next;
     blocks = next;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -50,7 +50,7 @@ PetscErrorCode SNESReset_Multiblock(SNES snes)
 
   Application Interface Routine: SNESDestroy()
 */
-PetscErrorCode SNESDestroy_Multiblock(SNES snes)
+static PetscErrorCode SNESDestroy_Multiblock(SNES snes)
 {
   SNES_Multiblock *mb     = (SNES_Multiblock *)snes->data;
   BlockDesc        blocks = mb->blocks, next;
@@ -66,7 +66,7 @@ PetscErrorCode SNESDestroy_Multiblock(SNES snes)
     blocks = next;
   }
   PetscCall(PetscFree(snes->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Precondition: blocksize is set to a meaningful value */
@@ -96,7 +96,7 @@ static PetscErrorCode SNESMultiblockSetFieldsRuntime_Private(SNES snes)
     mb->defined = PETSC_TRUE;
   }
   PetscCall(PetscFree(ifields));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESMultiblockSetDefaults(SNES snes)
@@ -181,20 +181,10 @@ static PetscErrorCode SNESMultiblockSetDefaults(SNES snes)
     } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Must provide at least two sets of fields to SNES multiblock");
   }
   PetscCheck(mb->numBlocks >= 2, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Unhandled case, must have at least two blocks");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-   SNESSetUp_Multiblock - Sets up the internal data structures for the later use
-   of the SNESMULTIBLOCK nonlinear solver.
-
-   Input Parameters:
-+  snes - the SNES context
--  x - the solution vector
-
-   Application Interface Routine: SNESSetUp()
-*/
-PetscErrorCode SNESSetUp_Multiblock(SNES snes)
+static PetscErrorCode SNESSetUp_Multiblock(SNES snes)
 {
   SNES_Multiblock *mb = (SNES_Multiblock *)snes->data;
   BlockDesc        blocks;
@@ -384,7 +374,7 @@ PetscErrorCode SNESSetUp_Multiblock(SNES snes)
     }
     PetscCall(VecDestroy(&xtmp));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -415,18 +405,9 @@ static PetscErrorCode SNESSetFromOptions_Multiblock(SNES snes, PetscOptionItems 
     if (mb->defined) PetscCall(PetscInfo(snes, "Blocks defined using the options database\n"));
   }
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-  SNESView_Multiblock - Prints info from the SNESMULTIBLOCK data structure.
-
-  Input Parameters:
-+ SNES - the SNES context
-- viewer - visualization context
-
-  Application Interface Routine: SNESView()
-*/
 static PetscErrorCode SNESView_Multiblock(SNES snes, PetscViewer viewer)
 {
   SNES_Multiblock *mb     = (SNES_Multiblock *)snes->data;
@@ -459,21 +440,10 @@ static PetscErrorCode SNESView_Multiblock(SNES snes, PetscViewer viewer)
     }
     PetscCall(PetscViewerASCIIPopTab(viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-  SNESSolve_Multiblock - Solves a nonlinear system with the Multiblock method.
-
-  Input Parameters:
-. snes - the SNES context
-
-  Output Parameter:
-. outits - number of iterations until termination
-
-  Application Interface Routine: SNESSolve()
-*/
-PetscErrorCode SNESSolve_Multiblock(SNES snes)
+static PetscErrorCode SNESSolve_Multiblock(SNES snes)
 {
   SNES_Multiblock *mb = (SNES_Multiblock *)snes->data;
   Vec              X, Y, F;
@@ -508,11 +478,11 @@ PetscErrorCode SNESSolve_Multiblock(SNES snes)
   snes->norm = fnorm;
   PetscCall(PetscObjectSAWsGrantAccess((PetscObject)snes));
   PetscCall(SNESLogConvergenceHistory(snes, fnorm, 0));
-  PetscCall(SNESMonitor(snes, 0, fnorm));
 
   /* test convergence */
-  PetscUseTypeMethod(snes, converged, 0, 0.0, 0.0, fnorm, &snes->reason, snes->cnvP);
-  if (snes->reason) PetscFunctionReturn(0);
+  PetscCall(SNESConverged(snes, 0, 0.0, 0.0, fnorm));
+  PetscCall(SNESMonitor(snes, 0, fnorm));
+  if (snes->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   for (i = 0; i < maxits; i++) {
     /* Call general purpose update function */
@@ -556,19 +526,15 @@ PetscErrorCode SNESSolve_Multiblock(SNES snes)
     snes->norm = fnorm;
     PetscCall(PetscObjectSAWsGrantAccess((PetscObject)snes));
     PetscCall(SNESLogConvergenceHistory(snes, snes->norm, 0));
-    PetscCall(SNESMonitor(snes, snes->iter, snes->norm));
     /* Test for convergence */
-    PetscUseTypeMethod(snes, converged, snes->iter, 0.0, 0.0, fnorm, &snes->reason, snes->cnvP);
+    PetscCall(SNESConverged(snes, snes->iter, 0.0, 0.0, fnorm));
+    PetscCall(SNESMonitor(snes, snes->iter, snes->norm));
     if (snes->reason) break;
   }
-  if (i == maxits) {
-    PetscCall(PetscInfo(snes, "Maximum number of iterations has been reached: %" PetscInt_FMT "\n", maxits));
-    if (!snes->reason) snes->reason = SNES_DIVERGED_MAX_IT;
-  }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SNESMultiblockSetFields_Default(SNES snes, const char name[], PetscInt n, const PetscInt fields[])
+static PetscErrorCode SNESMultiblockSetFields_Default(SNES snes, const char name[], PetscInt n, const PetscInt fields[])
 {
   SNES_Multiblock *mb = (SNES_Multiblock *)snes->data;
   BlockDesc        newblock, next = mb->blocks;
@@ -578,7 +544,7 @@ PetscErrorCode SNESMultiblockSetFields_Default(SNES snes, const char name[], Pet
   PetscFunctionBegin;
   if (mb->defined) {
     PetscCall(PetscInfo(snes, "Ignoring new block \"%s\" because the blocks have already been defined\n", name));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   for (i = 0; i < n; ++i) {
     PetscCheck(fields[i] < mb->bs, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Field %" PetscInt_FMT " requested but only %" PetscInt_FMT " exist", fields[i], mb->bs);
@@ -615,10 +581,10 @@ PetscErrorCode SNESMultiblockSetFields_Default(SNES snes, const char name[], Pet
     newblock->previous = next;
   }
   mb->numBlocks++;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SNESMultiblockSetIS_Default(SNES snes, const char name[], IS is)
+static PetscErrorCode SNESMultiblockSetIS_Default(SNES snes, const char name[], IS is)
 {
   SNES_Multiblock *mb = (SNES_Multiblock *)snes->data;
   BlockDesc        newblock, next = mb->blocks;
@@ -627,7 +593,7 @@ PetscErrorCode SNESMultiblockSetIS_Default(SNES snes, const char name[], IS is)
   PetscFunctionBegin;
   if (mb->defined) {
     PetscCall(PetscInfo(snes, "Ignoring new block \"%s\" because the blocks have already been defined\n", name));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(PetscNew(&newblock));
   if (name) {
@@ -659,10 +625,10 @@ PetscErrorCode SNESMultiblockSetIS_Default(SNES snes, const char name[], IS is)
     newblock->previous = next;
   }
   mb->numBlocks++;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SNESMultiblockSetBlockSize_Default(SNES snes, PetscInt bs)
+static PetscErrorCode SNESMultiblockSetBlockSize_Default(SNES snes, PetscInt bs)
 {
   SNES_Multiblock *mb = (SNES_Multiblock *)snes->data;
 
@@ -670,10 +636,10 @@ PetscErrorCode SNESMultiblockSetBlockSize_Default(SNES snes, PetscInt bs)
   PetscCheck(bs >= 1, PetscObjectComm((PetscObject)snes), PETSC_ERR_ARG_OUTOFRANGE, "Blocksize must be positive, you gave %" PetscInt_FMT, bs);
   PetscCheck(mb->bs <= 0 || mb->bs == bs, PetscObjectComm((PetscObject)snes), PETSC_ERR_ARG_WRONGSTATE, "Cannot change blocksize from %" PetscInt_FMT " to %" PetscInt_FMT " after it has been set", mb->bs, bs);
   mb->bs = bs;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SNESMultiblockGetSubSNES_Default(SNES snes, PetscInt *n, SNES **subsnes)
+static PetscErrorCode SNESMultiblockGetSubSNES_Default(SNES snes, PetscInt *n, SNES **subsnes)
 {
   SNES_Multiblock *mb     = (SNES_Multiblock *)snes->data;
   BlockDesc        blocks = mb->blocks;
@@ -688,10 +654,10 @@ PetscErrorCode SNESMultiblockGetSubSNES_Default(SNES snes, PetscInt *n, SNES **s
   PetscCheck(cnt == mb->numBlocks, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Corrupt SNESMULTIBLOCK object: number of blocks in linked list %" PetscInt_FMT " does not match number in object %" PetscInt_FMT, cnt, mb->numBlocks);
 
   if (n) *n = mb->numBlocks;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SNESMultiblockSetType_Default(SNES snes, PCCompositeType type)
+static PetscErrorCode SNESMultiblockSetType_Default(SNES snes, PCCompositeType type)
 {
   SNES_Multiblock *mb = (SNES_Multiblock *)snes->data;
 
@@ -712,58 +678,60 @@ PetscErrorCode SNESMultiblockSetType_Default(SNES snes, PCCompositeType type)
     snes->ops->view  = SNESView_Multiblock;
 
     PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESMultiblockGetSubSNES_C", SNESMultiblockGetSubSNES_Default));
-    PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESMultiblockSchurPrecondition_C", 0));
+    PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESMultiblockSchurPrecondition_C", NULL));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  SNESMultiblockSetFields - Sets the fields for one particular block in a `SNESMULTBLOCK` solver
+  SNESMultiblockSetFields - Sets the fields for one particular block in a `SNESMULTIBLOCK` solver
 
   Logically Collective
 
   Input Parameters:
 + snes   - the solver
-. name   - name of this block, if NULL the number of the block is used
+. name   - name of this block, if `NULL` the number of the block is used
 . n      - the number of fields in this block
 - fields - the fields in this block
 
   Level: intermediate
 
   Notes:
-    Use `SNESMultiblockSetIS()` to set a completely general set of row indices as a block.
+  Use `SNESMultiblockSetIS()` to set a completely general set of row indices as a block.
 
   The `SNESMultiblockSetFields()` is for defining blocks as a group of strided indices, or fields.
   For example, if the vector block size is three then one can define a block as field 0, or
   1 or 2, or field 0,1 or 0,2 or 1,2 which means
-    0xx3xx6xx9xx12 ... x1xx4xx7xx ... xx2xx5xx8xx.. 01x34x67x... 0x1x3x5x7.. x12x45x78x....
+  0xx3xx6xx9xx12 ... x1xx4xx7xx ... xx2xx5xx8xx.. 01x34x67x... 0x1x3x5x7.. x12x45x78x....
   where the numbered entries indicate what is in the block.
 
   This function is called once per block (it creates a new block each time). Solve options
   for this block will be available under the prefix -multiblock_BLOCKNAME_.
 
-.seealso: `SNESMULTBLOCK`, `SNESMultiblockGetSubSNES()`, `SNESMULTIBLOCK`, `SNESMultiblockSetBlockSize()`, `SNESMultiblockSetIS()`
+.seealso: [](ch_snes), `SNES`, `SNESMULTIBLOCK`, `SNESMultiblockGetSubSNES()`, `SNESMultiblockSetBlockSize()`, `SNESMultiblockSetIS()`
 @*/
 PetscErrorCode SNESMultiblockSetFields(SNES snes, const char name[], PetscInt n, const PetscInt *fields)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
-  PetscValidCharPointer(name, 2);
+  PetscAssertPointer(name, 2);
   PetscCheck(n >= 1, PetscObjectComm((PetscObject)snes), PETSC_ERR_ARG_OUTOFRANGE, "Provided number of fields %" PetscInt_FMT " in split \"%s\" not positive", n, name);
-  PetscValidIntPointer(fields, 4);
+  PetscAssertPointer(fields, 4);
   PetscTryMethod(snes, "SNESMultiblockSetFields_C", (SNES, const char[], PetscInt, const PetscInt *), (snes, name, n, fields));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  SNESMultiblockSetIS - Sets the global row indices for one particular block in a `SNESMULTBLOCK` solver
+  SNESMultiblockSetIS - Sets the global row indices for one particular block in a `SNESMULTIBLOCK` solver
 
   Logically Collective
 
   Input Parameters:
 + snes - the solver context
-. name - name of this block, if NULL the number of the block is used
+. name - name of this block, if `NULL` the number of the block is used
 - is   - the index set that defines the global row indices in this block
+
+  Level: intermediate
 
   Notes:
   Use `SNESMultiblockSetFields()`, for blocks defined by strides.
@@ -771,22 +739,20 @@ PetscErrorCode SNESMultiblockSetFields(SNES snes, const char name[], PetscInt n,
   This function is called once per block (it creates a new block each time). Solve options
   for this block will be available under the prefix -multiblock_BLOCKNAME_.
 
-  Level: intermediate
-
-.seealso: `SNESMULTBLOCK`, `SNESMultiblockGetSubSNES()`, `SNESMULTIBLOCK`, `SNESMultiblockSetBlockSize()`
+.seealso: [](ch_snes), `SNES`, `SNESMULTIBLOCK`, `SNESMultiblockGetSubSNES()`, `SNESMultiblockSetBlockSize()`, `SNESMultiblockSetFields()`
 @*/
 PetscErrorCode SNESMultiblockSetIS(SNES snes, const char name[], IS is)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
-  PetscValidCharPointer(name, 2);
+  PetscAssertPointer(name, 2);
   PetscValidHeaderSpecific(is, IS_CLASSID, 3);
   PetscTryMethod(snes, "SNESMultiblockSetIS_C", (SNES, const char[], IS), (snes, name, is));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  SNESMultiblockSetType - Sets the type of block combination used for a `SNESMULTBLOCK` solver
+  SNESMultiblockSetType - Sets the type of block combination used for a `SNESMULTIBLOCK` solver
 
   Logically Collective
 
@@ -799,18 +765,22 @@ PetscErrorCode SNESMultiblockSetIS(SNES snes, const char name[], IS is)
 
   Level: advanced
 
-.seealso: `SNESMULTBLOCK`, `PCCompositeSetType()`, `PC_COMPOSITE_ADDITIVE`, `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SYMMETRIC_MULTIPLICATIVE`
+  Developer Note:
+  This `SNESType` uses `PCCompositeType`, while `SNESCompositeSetType()` uses `SNESCOMPOSITE`, perhaps they should be unified in the future
+
+.seealso: [](ch_snes), `SNES`, `SNESMULTIBLOCK`, `PCCompositeSetType()`, `PC_COMPOSITE_ADDITIVE`, `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SYMMETRIC_MULTIPLICATIVE`,
+          `PCCompositeType`, `SNESCOMPOSITE`, `SNESCompositeSetType()`
 @*/
 PetscErrorCode SNESMultiblockSetType(SNES snes, PCCompositeType type)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   PetscTryMethod(snes, "SNESMultiblockSetType_C", (SNES, PCCompositeType), (snes, type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  SNESMultiblockSetBlockSize - Sets the block size for structured block division in a `SNESMULTBLOCK` solver. If not set the matrix block size is used.
+  SNESMultiblockSetBlockSize - Sets the block size for structured block division in a `SNESMULTIBLOCK` solver. If not set the matrix block size is used.
 
   Logically Collective
 
@@ -820,7 +790,7 @@ PetscErrorCode SNESMultiblockSetType(SNES snes, PCCompositeType type)
 
   Level: intermediate
 
-.seealso: `SNESMULTBLOCK`, `SNESMultiblockGetSubSNES()`, `SNESMULTIBLOCK`, `SNESMultiblockSetFields()`
+.seealso: [](ch_snes), `SNES`, `SNESMULTIBLOCK`, `SNESMultiblockGetSubSNES()`, `SNESMultiblockSetFields()`
 @*/
 PetscErrorCode SNESMultiblockSetBlockSize(SNES snes, PetscInt bs)
 {
@@ -828,11 +798,11 @@ PetscErrorCode SNESMultiblockSetBlockSize(SNES snes, PetscInt bs)
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   PetscValidLogicalCollectiveInt(snes, bs, 2);
   PetscTryMethod(snes, "SNESMultiblockSetBlockSize_C", (SNES, PetscInt), (snes, bs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  SNESMultiblockGetSubSNES - Gets the `SNES` contexts for all blocks in a `SNESMULTBLOCK` solver.
+  SNESMultiblockGetSubSNES - Gets the `SNES` contexts for all blocks in a `SNESMULTIBLOCK` solver.
 
   Not Collective but each `SNES` obtained is parallel
 
@@ -843,23 +813,23 @@ PetscErrorCode SNESMultiblockSetBlockSize(SNES snes, PetscInt bs)
 + n       - the number of blocks
 - subsnes - the array of `SNES` contexts
 
-  Note:
+  Level: advanced
+
+  Notes:
   After `SNESMultiblockGetSubSNES()` the array of `SNES`s MUST be freed by the user
   (not each `SNES`, just the array that contains them).
 
   You must call `SNESSetUp()` before calling `SNESMultiblockGetSubSNES()`.
 
-  Level: advanced
-
-.seealso: `SNESMULTBLOCK`, `SNESMultiblockSetIS()`, `SNESMultiblockSetFields()`
+.seealso: [](ch_snes), `SNES`, `SNESMULTIBLOCK`, `SNESMultiblockSetIS()`, `SNESMultiblockSetFields()`
 @*/
 PetscErrorCode SNESMultiblockGetSubSNES(SNES snes, PetscInt *n, SNES *subsnes[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
-  if (n) PetscValidIntPointer(n, 2);
+  if (n) PetscAssertPointer(n, 2);
   PetscUseMethod(snes, "SNESMultiblockGetSubSNES_C", (SNES, PetscInt *, SNES **), (snes, n, subsnes));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -868,8 +838,12 @@ PetscErrorCode SNESMultiblockGetSubSNES(SNES snes, PetscInt *n, SNES *subsnes[])
 
   Level: beginner
 
-.seealso: `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESNEWTONLS`, `SNESNEWTONTR`, `SNESNRICHARDSON`, `SNESMultiblockSetType()`,
-          `PC_COMPOSITE_ADDITIVE`, `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SYMMETRIC_MULTIPLICATIVE`
+  Note:
+  This is much like  `PCASM`, `PCBJACOBI`, and `PCFIELDSPLIT` are for linear problems.
+
+.seealso: [](ch_snes), `SNES`, `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESNEWTONLS`, `SNESNEWTONTR`, `SNESNRICHARDSON`, `SNESMultiblockSetType()`,
+          `PC_COMPOSITE_ADDITIVE`, `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SYMMETRIC_MULTIPLICATIVE`, `SNESMultiblockSetBlockSize()`,
+          `SNESMultiblockGetBlockSize()`, `SNESMultiblockSetFields()`, `SNESMultiblockSetIS()`, `SNESMultiblockGetSubSNES()`, `PCASM`, `PCBJACOBI`
 M*/
 PETSC_EXTERN PetscErrorCode SNESCreate_Multiblock(SNES snes)
 {
@@ -901,5 +875,5 @@ PETSC_EXTERN PetscErrorCode SNESCreate_Multiblock(SNES snes)
   PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESMultiblockSetType_C", SNESMultiblockSetType_Default));
   PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESMultiblockSetBlockSize_C", SNESMultiblockSetBlockSize_Default));
   PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESMultiblockGetSubSNES_C", SNESMultiblockGetSubSNES_Default));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

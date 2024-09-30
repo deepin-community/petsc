@@ -58,12 +58,12 @@ PETSC_EXTERN PetscErrorCode KSPCreate_HPDDM(KSP);
 
   Level: advanced
 
-.seealso: [](chapter_ksp), `KSP`, `KSPRegister()`, `KSPType`
+.seealso: [](ch_ksp), `KSP`, `KSPRegister()`, `KSPType`
 @*/
 PetscErrorCode KSPRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (KSPRegisterAllCalled) PetscFunctionReturn(0);
+  if (KSPRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   KSPRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(KSPRegister(KSPCG, KSPCreate_CG));
@@ -117,22 +117,22 @@ PetscErrorCode KSPRegisterAll(void)
 #if defined(PETSC_HAVE_HPDDM)
   PetscCall(KSPRegister(KSPHPDDM, KSPCreate_HPDDM));
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  KSPMonitoRegisterAll - Registers all of the Krylov subspace monitors in the `KSP` package.
+  KSPMonitorRegisterAll - Registers all of the Krylov subspace monitors in the `KSP` package.
 
   Not Collective
 
   Level: advanced
 
-.seealso: [](chapter_ksp), `KSP`, `KSPMonitorRegister()`, `KSPRegister()`
+.seealso: [](ch_ksp), `KSP`, `KSPMonitorRegister()`, `KSPRegister()`
 @*/
 PetscErrorCode KSPMonitorRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (KSPMonitorRegisterAllCalled) PetscFunctionReturn(0);
+  if (KSPMonitorRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   KSPMonitorRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(KSPMonitorRegister("preconditioned_residual", PETSCVIEWERASCII, PETSC_VIEWER_DEFAULT, KSPMonitorResidual, NULL, NULL));
@@ -153,5 +153,5 @@ PetscErrorCode KSPMonitorRegisterAll(void)
   PetscCall(KSPMonitorRegister("singular_value", PETSCVIEWERASCII, PETSC_VIEWER_DEFAULT, KSPMonitorSingularValue, KSPMonitorSingularValueCreate, NULL));
   PetscCall(KSPMonitorRegister("lsqr_residual", PETSCVIEWERASCII, PETSC_VIEWER_DEFAULT, KSPLSQRMonitorResidual, NULL, NULL));
   PetscCall(KSPMonitorRegister("lsqr_residual", PETSCVIEWERDRAW, PETSC_VIEWER_DRAW_LG, KSPLSQRMonitorResidualDrawLG, KSPLSQRMonitorResidualDrawLGCreate, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

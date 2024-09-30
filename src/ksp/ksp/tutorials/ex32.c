@@ -1,4 +1,3 @@
-
 /*
 Laplacian in 2D. Modeled by the partial differential equation
 
@@ -111,7 +110,7 @@ PetscErrorCode ComputeRHS(KSP ksp, Vec b, void *ctx)
     PetscCall(MatNullSpaceRemove(nullspace, b));
     PetscCall(MatNullSpaceDestroy(&nullspace));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ComputeMatrix(KSP ksp, Mat J, Mat jac, void *ctx)
@@ -206,7 +205,7 @@ PetscErrorCode ComputeMatrix(KSP ksp, Mat J, Mat jac, void *ctx)
     PetscCall(MatSetNullSpace(J, nullspace));
     PetscCall(MatNullSpaceDestroy(&nullspace));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

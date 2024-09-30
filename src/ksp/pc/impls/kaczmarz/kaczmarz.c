@@ -9,7 +9,7 @@ static PetscErrorCode PCDestroy_Kaczmarz(PC pc)
 {
   PetscFunctionBegin;
   PetscCall(PetscFree(pc->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApply_Kaczmarz(PC pc, Vec x, Vec y)
@@ -64,10 +64,10 @@ static PetscErrorCode PCApply_Kaczmarz(PC pc, Vec x, Vec y)
   }
   PetscCall(VecRestoreArray(y, &yarray));
   PetscCall(VecRestoreArrayRead(x, &xarray));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCSetFromOptions_Kaczmarz(PC pc, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode PCSetFromOptions_Kaczmarz(PC pc, PetscOptionItems *PetscOptionsObject)
 {
   PC_Kaczmarz *jac = (PC_Kaczmarz *)pc->data;
 
@@ -76,10 +76,10 @@ PetscErrorCode PCSetFromOptions_Kaczmarz(PC pc, PetscOptionItems *PetscOptionsOb
   PetscCall(PetscOptionsReal("-pc_kaczmarz_lambda", "relaxation factor (0 < lambda)", "", jac->lambda, &jac->lambda, NULL));
   PetscCall(PetscOptionsBool("-pc_kaczmarz_symmetric", "apply row projections symmetrically", "", jac->symmetric, &jac->symmetric, NULL));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCView_Kaczmarz(PC pc, PetscViewer viewer)
+static PetscErrorCode PCView_Kaczmarz(PC pc, PetscViewer viewer)
 {
   PC_Kaczmarz *jac = (PC_Kaczmarz *)pc->data;
   PetscBool    iascii;
@@ -87,25 +87,22 @@ PetscErrorCode PCView_Kaczmarz(PC pc, PetscViewer viewer)
   PetscFunctionBegin;
   PetscCall(PetscObjectTypeCompare((PetscObject)viewer, PETSCVIEWERASCII, &iascii));
   if (iascii) PetscCall(PetscViewerASCIIPrintf(viewer, "  lambda = %g\n", (double)jac->lambda));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     PCKaczmarz - Kaczmarz iteration
+     PCKACZMARZ - Kaczmarz iteration {cite}`kaczmarz1937angenaherte`
 
-   Options Database Key:
-.  -pc_sor_lambda <1.0> - Sets damping parameter lambda
+   Options Database Keys:
++  -pc_kaczmarz_lambda <lambda> - Sets damping parameter defaults to 1.0
+-  -pc_kaczmarz_symmetric       - Apply the row projections symmetrically
 
    Level: beginner
 
    Note:
-    In parallel this is block-Jacobi with Kaczmarz inner solve.
+   In parallel this is block-Jacobi with Kaczmarz inner solve on each processor.
 
-   References:
-.  * - S. Kaczmarz, "Angenaherte Auflosing von Systemen Linearer Gleichungen",
-   Bull. Internat. Acad. Polon. Sci. C1. A, 1937.
-
-.seealso: `PCCreate()`, `PCSetType()`, `PCType`, `PC`, `PCJACOBI`, `PCBJACOBI`
+.seealso: [](ch_ksp), `PCCreate()`, `PCSetType()`, `PCType`, `PC`, `PCJACOBI`, `PCBJACOBI`
 M*/
 
 PETSC_EXTERN PetscErrorCode PCCreate_Kaczmarz(PC pc)
@@ -123,5 +120,5 @@ PETSC_EXTERN PetscErrorCode PCCreate_Kaczmarz(PC pc)
   pc->data                = (void *)jac;
   jac->lambda             = 1.0;
   jac->symmetric          = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,4 +1,3 @@
-
 /*
     Routines used for the orthogonalization of the Hessenberg matrix.
 
@@ -9,24 +8,24 @@
 #include <../src/ksp/ksp/impls/gmres/gmresimpl.h>
 
 /*@C
-     KSPGMRESModifiedGramSchmidtOrthogonalization -  This is the basic orthogonalization routine
-                using modified Gram-Schmidt.
+  KSPGMRESModifiedGramSchmidtOrthogonalization -  This is the basic orthogonalization routine
+  using modified Gram-Schmidt.
 
-     Collective
+  Collective
 
   Input Parameters:
-+   ksp - KSP object, must be associated with `KSPGMRES`, `KSPFGMRES`, or `KSPLGMRES` Krylov method
--   its - one less then the current GMRES restart iteration, i.e. the size of the Krylov space
++ ksp - `KSP` object, must be associated with `KSPGMRES`, `KSPFGMRES`, or `KSPLGMRES` Krylov method
+- it  - one less than the current GMRES restart iteration, i.e. the size of the Krylov space
 
-   Options Database Keys:
-.  -ksp_gmres_modifiedgramschmidt - Activates `KSPGMRESModifiedGramSchmidtOrthogonalization()`
+  Options Database Key:
+. -ksp_gmres_modifiedgramschmidt - Activates `KSPGMRESModifiedGramSchmidtOrthogonalization()`
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-     In general this is much slower than `KSPGMRESClassicalGramSchmidtOrthogonalization()` but has better stability properties.
+  Note:
+  In general this is much slower than `KSPGMRESClassicalGramSchmidtOrthogonalization()` but has better stability properties.
 
-.seealso: [](chapter_ksp), `KSPGMRESSetOrthogonalization()`, `KSPGMRESClassicalGramSchmidtOrthogonalization()`, `KSPGMRESGetOrthogonalization()`
+.seealso: [](ch_ksp), `KSPGMRESSetOrthogonalization()`, `KSPGMRESClassicalGramSchmidtOrthogonalization()`, `KSPGMRESGetOrthogonalization()`
 @*/
 PetscErrorCode KSPGMRESModifiedGramSchmidtOrthogonalization(KSP ksp, PetscInt it)
 {
@@ -49,5 +48,5 @@ PetscErrorCode KSPGMRESModifiedGramSchmidtOrthogonalization(KSP ksp, PetscInt it
     PetscCall(VecAXPY(VEC_VV(it + 1), -(*hh++), VEC_VV(j)));
   }
   PetscCall(PetscLogEventEnd(KSP_GMRESOrthogonalization, ksp, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>How the Solvers Handle User Provided Callbacks &#8212; PETSc 3.18.6 documentation</title>
+    <title>How the Solvers Handle User Provided Callbacks &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -142,31 +143,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -293,31 +293,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -395,15 +394,20 @@
   </p>
   <div class="bd-toc-item navbar-nav">
     <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="communication.html">Communication Channels for PETSc Developers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to PETSc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="communication.html">PETSc Developers Communication Channels</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="contributing/index.html">Contributing to PETSc</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing/developingmr.html">Developing a Merge Request</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/submittingmr.html">Submitting a Merge Request</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/pipelines.html">GitLab CI Pipelines</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mrmanagement.html">Merge request management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">PETSc Development Environment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="style.html">PETSc Style and Usage Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="integration.html">Getting your code and documentation into PETSc</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pipelines.html">Working with Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="buildsystem.html">BuildSystem</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">PETSc Testing System</a></li>
 <li class="toctree-l1"><a class="reference internal" href="documentation.html">Developing PETSc Documentation</a></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="design.html">The Design of PETSc</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="design.html">The Design of PETSc</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="kernel.html">The PETSc Kernel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="objects.html">Basic Object Design and Implementation</a></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">How the Solvers Handle User Provided Callbacks</a></li>
@@ -444,61 +448,61 @@
               
   <section id="how-the-solvers-handle-user-provided-callbacks">
 <h1>How the Solvers Handle User Provided Callbacks<a class="headerlink" href="#how-the-solvers-handle-user-provided-callbacks" title="Permalink to this heading">#</a></h1>
-<p>The solver objects in PETSc, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSP.html">KSP</a></span></code> (optionally), <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/SNES/SNES.html">SNES</a></span></code>, and <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/TS/TS.html">TS</a></span></code>
+<p>The solver objects in PETSc, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSP.html">KSP</a></span></code> (optionally), <code class="docutils notranslate"><span class="pre"><a href="../manualpages/SNES/SNES.html">SNES</a></span></code>, and <code class="docutils notranslate"><span class="pre"><a href="../manualpages/TS/TS.html">TS</a></span></code>
 require user provided callback functions (and contexts for the
 functions) that define the problem to be solved. These functions are
-supplied by the user with calls such as <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/SNES/SNESSetFunction.html">SNESSetFunction</a>(<a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/SNES/SNES.html">SNES</a>,...)</span></code>
-and <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/TS/TSSetRHSFunction.html">TSSetRHSFunction</a>(<a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/TS/TS.html">TS</a>,...)</span></code>. One would naturally think that the
+supplied by the user with calls such as <code class="docutils notranslate"><span class="pre"><a href="../manualpages/SNES/SNESSetFunction.html">SNESSetFunction</a>(<a href="../manualpages/SNES/SNES.html">SNES</a>,...)</span></code>
+and <code class="docutils notranslate"><span class="pre"><a href="../manualpages/TS/TSSetRHSFunction.html">TSSetRHSFunction</a>(<a href="../manualpages/TS/TS.html">TS</a>,...)</span></code>. One would naturally think that the
 functions provided would be attached to the appropriate solver object,
-that is, that the SNES callbacks would be attached to the <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/SNES/SNES.html">SNES</a></span></code>
-object and <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/TS/TS.html">TS</a></span></code> callbacks to the <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/TS/TS.html">TS</a></span></code> object. This is not the case.
+that is, that the SNES callbacks would be attached to the <code class="docutils notranslate"><span class="pre"><a href="../manualpages/SNES/SNES.html">SNES</a></span></code>
+object and <code class="docutils notranslate"><span class="pre"><a href="../manualpages/TS/TS.html">TS</a></span></code> callbacks to the <code class="docutils notranslate"><span class="pre"><a href="../manualpages/TS/TS.html">TS</a></span></code> object. This is not the case.
 Or possibly one might think the callbacks would be attached to the
-<code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span></code> object associated with the solver object. This is also not the
+<code class="docutils notranslate"><span class="pre"><a href="../manualpages/DM/DM.html">DM</a></span></code> object associated with the solver object. This is also not the
 case. Rather, the callback functions are attached to an inner nonpublic
-<code class="docutils literal notranslate"><span class="pre">DMXXX</span></code> object (<code class="docutils literal notranslate"><span class="pre">XXX</span></code> is <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSP.html">KSP</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/SNES/SNES.html">SNES</a></span></code>, or <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/TS/TS.html">TS</a></span></code>) that is
-attached to the <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span></code> that is attached to the <code class="docutils literal notranslate"><span class="pre">XXX</span></code> solver object.
+<code class="docutils notranslate"><span class="pre">DMXXX</span></code> object (<code class="docutils notranslate"><span class="pre">XXX</span></code> is <code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSP.html">KSP</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/SNES/SNES.html">SNES</a></span></code>, or <code class="docutils notranslate"><span class="pre"><a href="../manualpages/TS/TS.html">TS</a></span></code>) that is
+attached to the <code class="docutils notranslate"><span class="pre"><a href="../manualpages/DM/DM.html">DM</a></span></code> that is attached to the <code class="docutils notranslate"><span class="pre">XXX</span></code> solver object.
 This convoluted design is to support multilevel and multidomain solvers
 where different levels and different domains may (or may not) share the
 same callback function or callback context. You can control exactly what
-<code class="docutils literal notranslate"><span class="pre">XXX</span></code>/<code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span></code> objects share a common <code class="docutils literal notranslate"><span class="pre">DMXXX</span></code> object.</p>
+<code class="docutils notranslate"><span class="pre">XXX</span></code>/<code class="docutils notranslate"><span class="pre"><a href="../manualpages/DM/DM.html">DM</a></span></code> objects share a common <code class="docutils notranslate"><span class="pre">DMXXX</span></code> object.</p>
 <figure class="align-default" id="fig-callbacks1">
 <img alt="../_images/callbacks1.svg" src="../_images/callbacks1.svg" /><figcaption>
-<p><span class="caption-number">Fig. 42 </span><span class="caption-text">Three levels of KSP/DM share the same DMKSP</span><a class="headerlink" href="#fig-callbacks1" title="Permalink to this image">#</a></p>
+<p><span class="caption-number">Fig. 32 </span><span class="caption-text">Three levels of KSP/DM share the same DMKSP</span><a class="headerlink" href="#fig-callbacks1" title="Permalink to this image">#</a></p>
 </figcaption>
 </figure>
-<p>In the preceding figure, we depict how three levels of <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSP.html">KSP</a></span></code>
-objects share a common <code class="docutils literal notranslate"><span class="pre">DMKSP</span></code> object. The code to access the inner
-<code class="docutils literal notranslate"><span class="pre">DMKSP</span></code> object is</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span><span class="w">    </span><span class="n">dm_2</span><span class="p">;</span>
+<p>In the preceding figure, we depict how three levels of <code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSP.html">KSP</a></span></code>
+objects share a common <code class="docutils notranslate"><span class="pre">DMKSP</span></code> object. The code to access the inner
+<code class="docutils notranslate"><span class="pre">DMKSP</span></code> object is</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="../manualpages/DM/DM.html">DM</a></span><span class="w">    </span><span class="n">dm_2</span><span class="p">;</span>
 <span class="n">DMKSP</span><span class="w"> </span><span class="n">dmksp</span><span class="p">;</span>
-<span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPGetDM.html">KSPGetDM</a></span><span class="p">(</span><span class="n">ksp_2</span><span class="p">,</span><span class="o">&amp;</span><span class="n">dm_2</span><span class="p">);</span>
-<span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/DMGetDMKSP.html">DMGetDMKSP</a></span><span class="p">(</span><span class="n">dm_2</span><span class="p">,</span><span class="o">&amp;</span><span class="n">dmksp</span><span class="p">);</span>
+<span class="n"><a href="../manualpages/KSP/KSPGetDM.html">KSPGetDM</a></span><span class="p">(</span><span class="n">ksp_2</span><span class="p">,</span><span class="o">&amp;</span><span class="n">dm_2</span><span class="p">);</span>
+<span class="n"><a href="../manualpages/KSP/DMGetDMKSP.html">DMGetDMKSP</a></span><span class="p">(</span><span class="n">dm_2</span><span class="p">,</span><span class="o">&amp;</span><span class="n">dmksp</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>To obtain a new DMKSP object for which you can change the callback
 functions (or their contexts) without affecting the original DMKSP, call</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span><span class="w">    </span><span class="n">dm_2</span><span class="p">;</span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="../manualpages/DM/DM.html">DM</a></span><span class="w">    </span><span class="n">dm_2</span><span class="p">;</span>
 <span class="n">DMKSP</span><span class="w"> </span><span class="n">dmksp</span><span class="p">;</span>
-<span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPGetDM.html">KSPGetDM</a></span><span class="p">(</span><span class="n">ksp_2</span><span class="p">,</span><span class="o">&amp;</span><span class="n">dm_2</span><span class="p">);</span>
-<span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/DMGetDMKSPWrite.html">DMGetDMKSPWrite</a></span><span class="p">(</span><span class="n">dm_2</span><span class="p">,</span><span class="o">&amp;</span><span class="n">dmksp_2</span><span class="p">);</span>
+<span class="n"><a href="../manualpages/KSP/KSPGetDM.html">KSPGetDM</a></span><span class="p">(</span><span class="n">ksp_2</span><span class="p">,</span><span class="o">&amp;</span><span class="n">dm_2</span><span class="p">);</span>
+<span class="n"><a href="../manualpages/KSP/DMGetDMKSPWrite.html">DMGetDMKSPWrite</a></span><span class="p">(</span><span class="n">dm_2</span><span class="p">,</span><span class="o">&amp;</span><span class="n">dmksp_2</span><span class="p">);</span>
 </pre></div>
 </div>
 <p>This results in the object organization as indicated in the following figure</p>
 <figure class="align-default" id="fig-callbacks2">
 <img alt="../_images/callbacks2.svg" src="../_images/callbacks2.svg" /><figcaption>
-<p><span class="caption-number">Fig. 43 </span><span class="caption-text">Two levels of KSP/DM share the same DMKSP; one has its own private copy</span><a class="headerlink" href="#fig-callbacks2" title="Permalink to this image">#</a></p>
+<p><span class="caption-number">Fig. 33 </span><span class="caption-text">Two levels of KSP/DM share the same DMKSP; one has its own private copy</span><a class="headerlink" href="#fig-callbacks2" title="Permalink to this image">#</a></p>
 </figcaption>
 </figure>
-<p>The <code class="docutils literal notranslate"><span class="pre">DMKSP</span></code> object is essentially the list of callback functions and
+<p>The <code class="docutils notranslate"><span class="pre">DMKSP</span></code> object is essentially the list of callback functions and
 their contexts, for example,</p>
 <div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">_p_DMKSP</span><span class="w"> </span><span class="o">*</span><span class="n">DMKSP</span><span class="p">;</span>
 <span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">_DMKSPOps</span><span class="w"> </span><span class="o">*</span><span class="n">DMKSPOps</span><span class="p">;</span>
 <span class="k">struct</span><span class="w"> </span><span class="nc">_DMKSPOps</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">computeoperators</span><span class="p">)(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSP.html">KSP</a></span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/Mat.html">Mat</a></span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/Mat.html">Mat</a></span><span class="p">,</span><span class="kt">void</span><span class="o">*</span><span class="p">);</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">computerhs</span><span class="p">)(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSP.html">KSP</a></span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Vec/Vec.html">Vec</a></span><span class="p">,</span><span class="kt">void</span><span class="o">*</span><span class="p">);</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">computeinitialguess</span><span class="p">)(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSP.html">KSP</a></span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Vec/Vec.html">Vec</a></span><span class="p">,</span><span class="kt">void</span><span class="o">*</span><span class="p">);</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">destroy</span><span class="p">)(</span><span class="n">DMKSP</span><span class="o">*</span><span class="p">);</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">duplicate</span><span class="p">)(</span><span class="n">DMKSP</span><span class="p">,</span><span class="n">DMKSP</span><span class="p">);</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">computeoperators</span><span class="p">)(</span><span class="n"><a href="../manualpages/KSP/KSP.html">KSP</a></span><span class="p">,</span><span class="n"><a href="../manualpages/Mat/Mat.html">Mat</a></span><span class="p">,</span><span class="n"><a href="../manualpages/Mat/Mat.html">Mat</a></span><span class="p">,</span><span class="kt">void</span><span class="o">*</span><span class="p">);</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">computerhs</span><span class="p">)(</span><span class="n"><a href="../manualpages/KSP/KSP.html">KSP</a></span><span class="p">,</span><span class="n"><a href="../manualpages/Vec/Vec.html">Vec</a></span><span class="p">,</span><span class="kt">void</span><span class="o">*</span><span class="p">);</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">computeinitialguess</span><span class="p">)(</span><span class="n"><a href="../manualpages/KSP/KSP.html">KSP</a></span><span class="p">,</span><span class="n"><a href="../manualpages/Vec/Vec.html">Vec</a></span><span class="p">,</span><span class="kt">void</span><span class="o">*</span><span class="p">);</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">destroy</span><span class="p">)(</span><span class="n">DMKSP</span><span class="o">*</span><span class="p">);</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">duplicate</span><span class="p">)(</span><span class="n">DMKSP</span><span class="p">,</span><span class="n">DMKSP</span><span class="p">);</span>
 <span class="p">};</span>
 
 <span class="k">struct</span><span class="w"> </span><span class="nc">_p_DMKSP</span><span class="w"> </span><span class="p">{</span>
@@ -507,125 +511,125 @@ their contexts, for example,</p>
 <span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">rhsctx</span><span class="p">;</span>
 <span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">initialguessctx</span><span class="p">;</span>
 <span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">data</span><span class="p">;</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">originaldm</span><span class="p">;</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">originaldm</span><span class="p">;</span>
 
-<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">fortran_func_pointers</span><span class="p">[</span><span class="mi">3</span><span class="p">])(</span><span class="kt">void</span><span class="p">);</span><span class="w"> </span><span class="cm">/* Store our own function pointers so they are associated with the DMKSP instead of the <a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a> */</span>
+<span class="w">  </span><span class="kt">void</span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">fortran_func_pointers</span><span class="p">[</span><span class="mi">3</span><span class="p">])(</span><span class="kt">void</span><span class="p">);</span><span class="w"> </span><span class="cm">/* Store our own function pointers so they are associated with the DMKSP instead of the <a href="../manualpages/DM/DM.html">DM</a> */</span>
 <span class="p">};</span>
 </pre></div>
 </div>
 <p>We now explore in more detail exactly how the solver calls set by the
-user are passed down to the inner <code class="docutils literal notranslate"><span class="pre">DMKSP</span></code> object. For each user level
+user are passed down to the inner <code class="docutils notranslate"><span class="pre">DMKSP</span></code> object. For each user level
 solver routine for setting a callback a similar routine exists at the
-<code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span></code> level. Thus, <code class="docutils literal notranslate"><span class="pre">XXXSetY(XXX,...)</span></code> has a routine
-<code class="docutils literal notranslate"><span class="pre">DMXXXSetY(<a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a>,...)</span></code>.</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="nf"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPSetComputeOperators.html">KSPSetComputeOperators</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSP.html">KSP</a></span><span class="w"> </span><span class="n">ksp</span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">func</span><span class="p">)(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSP.html">KSP</a></span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/Mat.html">Mat</a></span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/Mat.html">Mat</a></span><span class="p">,</span><span class="kt">void</span><span class="o">*</span><span class="p">),</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
+<code class="docutils notranslate"><span class="pre"><a href="../manualpages/DM/DM.html">DM</a></span></code> level. Thus, <code class="docutils notranslate"><span class="pre">XXXSetY(XXX,...)</span></code> has a routine
+<code class="docutils notranslate"><span class="pre">DMXXXSetY(<a href="../manualpages/DM/DM.html">DM</a>,...)</span></code>.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="nf"><a href="../manualpages/KSP/KSPSetComputeOperators.html">KSPSetComputeOperators</a></span><span class="p">(</span><span class="n"><a href="../manualpages/KSP/KSP.html">KSP</a></span><span class="w"> </span><span class="n">ksp</span><span class="p">,</span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">func</span><span class="p">)(</span><span class="n"><a href="../manualpages/KSP/KSP.html">KSP</a></span><span class="p">,</span><span class="n"><a href="../manualpages/Mat/Mat.html">Mat</a></span><span class="p">,</span><span class="n"><a href="../manualpages/Mat/Mat.html">Mat</a></span><span class="p">,</span><span class="kt">void</span><span class="o">*</span><span class="p">),</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
 <span class="p">{</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dm</span><span class="p">;</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dm</span><span class="p">;</span>
 
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a></span><span class="p">;</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a></span><span class="p">;</span>
 <span class="w">  </span><span class="n">PetscValidHeaderSpecific</span><span class="p">(</span><span class="n">ksp</span><span class="p">,</span><span class="n">KSP_CLASSID</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPGetDM.html">KSPGetDM</a></span><span class="p">(</span><span class="n">ksp</span><span class="p">,</span><span class="o">&amp;</span><span class="n">dm</span><span class="p">));</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/DMKSPSetComputeOperators.html">DMKSPSetComputeOperators</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="n">func</span><span class="p">,</span><span class="n">ctx</span><span class="p">));</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="../manualpages/KSP/KSPGetDM.html">KSPGetDM</a></span><span class="p">(</span><span class="n">ksp</span><span class="p">,</span><span class="o">&amp;</span><span class="n">dm</span><span class="p">));</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="../manualpages/KSP/DMKSPSetComputeOperators.html">DMKSPSetComputeOperators</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="n">func</span><span class="p">,</span><span class="n">ctx</span><span class="p">));</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ksp</span><span class="o">-&gt;</span><span class="n">setupstage</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">KSP_SETUP_NEWRHS</span><span class="p">)</span><span class="w"> </span><span class="n">ksp</span><span class="o">-&gt;</span><span class="n">setupstage</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">KSP_SETUP_NEWMATRIX</span><span class="p">;</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a></span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a></span><span class="p">(</span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a></span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>The implementation of <code class="docutils literal notranslate"><span class="pre">DMXXXSetY(<a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a>,...)</span></code> gets a “writable” version of
-the <code class="docutils literal notranslate"><span class="pre">DMXXX</span></code> object via <code class="docutils literal notranslate"><span class="pre">DMGetDMXXXWrite(<a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a>,DMXXX*)</span></code> and sets the
-function callback and its context into the <code class="docutils literal notranslate"><span class="pre">DMXXX</span></code> object.</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="nf"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/DMKSPSetComputeOperators.html">DMKSPSetComputeOperators</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dm</span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">func</span><span class="p">)(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSP.html">KSP</a></span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/Mat.html">Mat</a></span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/Mat.html">Mat</a></span><span class="p">,</span><span class="kt">void</span><span class="o">*</span><span class="p">),</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
+<p>The implementation of <code class="docutils notranslate"><span class="pre">DMXXXSetY(<a href="../manualpages/DM/DM.html">DM</a>,...)</span></code> gets a “writable” version of
+the <code class="docutils notranslate"><span class="pre">DMXXX</span></code> object via <code class="docutils notranslate"><span class="pre">DMGetDMXXXWrite(<a href="../manualpages/DM/DM.html">DM</a>,DMXXX*)</span></code> and sets the
+function callback and its context into the <code class="docutils notranslate"><span class="pre">DMXXX</span></code> object.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="nf"><a href="../manualpages/KSP/DMKSPSetComputeOperators.html">DMKSPSetComputeOperators</a></span><span class="p">(</span><span class="n"><a href="../manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dm</span><span class="p">,</span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="p">(</span><span class="o">*</span><span class="n">func</span><span class="p">)(</span><span class="n"><a href="../manualpages/KSP/KSP.html">KSP</a></span><span class="p">,</span><span class="n"><a href="../manualpages/Mat/Mat.html">Mat</a></span><span class="p">,</span><span class="n"><a href="../manualpages/Mat/Mat.html">Mat</a></span><span class="p">,</span><span class="kt">void</span><span class="o">*</span><span class="p">),</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
 <span class="p">{</span>
 <span class="w">  </span><span class="n">DMKSP</span><span class="w"> </span><span class="n">kdm</span><span class="p">;</span>
 
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a></span><span class="p">;</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a></span><span class="p">;</span>
 <span class="w">  </span><span class="n">PetscValidHeaderSpecific</span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="n">DM_CLASSID</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/DMGetDMKSPWrite.html">DMGetDMKSPWrite</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="o">&amp;</span><span class="n">kdm</span><span class="p">));</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="../manualpages/KSP/DMGetDMKSPWrite.html">DMGetDMKSPWrite</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="o">&amp;</span><span class="n">kdm</span><span class="p">));</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">func</span><span class="p">)</span><span class="w"> </span><span class="n">kdm</span><span class="o">-&gt;</span><span class="n">ops</span><span class="o">-&gt;</span><span class="n">computeoperators</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">func</span><span class="p">;</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span><span class="w"> </span><span class="n">kdm</span><span class="o">-&gt;</span><span class="n">operatorsctx</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">ctx</span><span class="p">;</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a></span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a></span><span class="p">(</span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a></span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>The routine for <code class="docutils literal notranslate"><span class="pre">DMGetDMXXXWrite(<a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a>,DMXXX*)</span></code> entails a duplication of
-the object unless the <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span></code> associated with the <code class="docutils literal notranslate"><span class="pre">DMXXX</span></code> object is the
-original <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span></code> that the <code class="docutils literal notranslate"><span class="pre">DMXXX</span></code> object was created with. This can be
+<p>The routine for <code class="docutils notranslate"><span class="pre">DMGetDMXXXWrite(<a href="../manualpages/DM/DM.html">DM</a>,DMXXX*)</span></code> entails a duplication of
+the object unless the <code class="docutils notranslate"><span class="pre"><a href="../manualpages/DM/DM.html">DM</a></span></code> associated with the <code class="docutils notranslate"><span class="pre">DMXXX</span></code> object is the
+original <code class="docutils notranslate"><span class="pre"><a href="../manualpages/DM/DM.html">DM</a></span></code> that the <code class="docutils notranslate"><span class="pre">DMXXX</span></code> object was created with. This can be
 seen in the following code.</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="nf"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/DMGetDMKSPWrite.html">DMGetDMKSPWrite</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dm</span><span class="p">,</span><span class="n">DMKSP</span><span class="w"> </span><span class="o">*</span><span class="n">kspdm</span><span class="p">)</span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="nf"><a href="../manualpages/KSP/DMGetDMKSPWrite.html">DMGetDMKSPWrite</a></span><span class="p">(</span><span class="n"><a href="../manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dm</span><span class="p">,</span><span class="n">DMKSP</span><span class="w"> </span><span class="o">*</span><span class="n">kspdm</span><span class="p">)</span>
 <span class="p">{</span>
 <span class="w">  </span><span class="n">DMKSP</span><span class="w"> </span><span class="n">kdm</span><span class="p">;</span>
 
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a></span><span class="p">;</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a></span><span class="p">;</span>
 <span class="w">  </span><span class="n">PetscValidHeaderSpecific</span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="n">DM_CLASSID</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/DMGetDMKSP.html">DMGetDMKSP</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="o">&amp;</span><span class="n">kdm</span><span class="p">));</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="../manualpages/KSP/DMGetDMKSP.html">DMGetDMKSP</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="o">&amp;</span><span class="n">kdm</span><span class="p">));</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">kdm</span><span class="o">-&gt;</span><span class="n">originaldm</span><span class="p">)</span><span class="w"> </span><span class="n">kdm</span><span class="o">-&gt;</span><span class="n">originaldm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dm</span><span class="p">;</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">kdm</span><span class="o">-&gt;</span><span class="n">originaldm</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">dm</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w">  </span><span class="cm">/* Copy on write */</span>
 <span class="w">    </span><span class="n">DMKSP</span><span class="w"> </span><span class="n">oldkdm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">kdm</span><span class="p">;</span>
-<span class="w">    </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="s">&quot;Copying DMKSP due to write</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">));</span>
-<span class="w">    </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n">DMKSPCreate</span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a></span><span class="p">((</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscObject.html">PetscObject</a></span><span class="p">)</span><span class="n">dm</span><span class="p">),</span><span class="o">&amp;</span><span class="n">kdm</span><span class="p">));</span>
-<span class="w">    </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/DMKSPCopy.html">DMKSPCopy</a></span><span class="p">(</span><span class="n">oldkdm</span><span class="p">,</span><span class="n">kdm</span><span class="p">));</span>
-<span class="w">    </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n">DMKSPDestroy</span><span class="p">((</span><span class="n">DMKSP</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">dm</span><span class="o">-&gt;</span><span class="n">dmksp</span><span class="p">));</span>
-<span class="w">    </span><span class="n">dm</span><span class="o">-&gt;</span><span class="n">dmksp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscObject.html">PetscObject</a></span><span class="p">)</span><span class="n">kdm</span><span class="p">;</span>
+<span class="w">    </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="../manualpages/Profiling/PetscInfo.html">PetscInfo</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="s">&quot;Copying DMKSP due to write</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">));</span>
+<span class="w">    </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n">DMKSPCreate</span><span class="p">(</span><span class="n"><a href="../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a></span><span class="p">((</span><span class="n"><a href="../manualpages/Sys/PetscObject.html">PetscObject</a></span><span class="p">)</span><span class="n">dm</span><span class="p">),</span><span class="o">&amp;</span><span class="n">kdm</span><span class="p">));</span>
+<span class="w">    </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n">DMKSPCopy</span><span class="p">(</span><span class="n">oldkdm</span><span class="p">,</span><span class="n">kdm</span><span class="p">));</span>
+<span class="w">    </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n">DMKSPDestroy</span><span class="p">((</span><span class="n">DMKSP</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">dm</span><span class="o">-&gt;</span><span class="n">dmksp</span><span class="p">));</span>
+<span class="w">    </span><span class="n">dm</span><span class="o">-&gt;</span><span class="n">dmksp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n"><a href="../manualpages/Sys/PetscObject.html">PetscObject</a></span><span class="p">)</span><span class="n">kdm</span><span class="p">;</span>
 <span class="w">    </span><span class="n">kdm</span><span class="o">-&gt;</span><span class="n">originaldm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dm</span><span class="p">;</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="w">  </span><span class="o">*</span><span class="n">kspdm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">kdm</span><span class="p">;</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a></span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a></span><span class="p">(</span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a></span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>The routine <code class="docutils literal notranslate"><span class="pre">DMGetDMXXX(<a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a>,DMXXX*)</span></code> has the following form.</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="nf"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/DMGetDMKSP.html">DMGetDMKSP</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dm</span><span class="p">,</span><span class="n">DMKSP</span><span class="w"> </span><span class="o">*</span><span class="n">kspdm</span><span class="p">)</span>
+<p>The routine <code class="docutils notranslate"><span class="pre">DMGetDMXXX(<a href="../manualpages/DM/DM.html">DM</a>,DMXXX*)</span></code> has the following form.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="nf"><a href="../manualpages/KSP/DMGetDMKSP.html">DMGetDMKSP</a></span><span class="p">(</span><span class="n"><a href="../manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dm</span><span class="p">,</span><span class="n">DMKSP</span><span class="w"> </span><span class="o">*</span><span class="n">kspdm</span><span class="p">)</span>
 <span class="p">{</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a></span><span class="p">;</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a></span><span class="p">;</span>
 <span class="w">  </span><span class="n">PetscValidHeaderSpecific</span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="n">DM_CLASSID</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>
 <span class="w">  </span><span class="o">*</span><span class="n">kspdm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n">DMKSP</span><span class="p">)</span><span class="w"> </span><span class="n">dm</span><span class="o">-&gt;</span><span class="n">dmksp</span><span class="p">;</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!*</span><span class="n">kspdm</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="s">&quot;Creating new DMKSP</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">));</span>
-<span class="w">    </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n">DMKSPCreate</span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a></span><span class="p">((</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscObject.html">PetscObject</a></span><span class="p">)</span><span class="n">dm</span><span class="p">),</span><span class="n">kspdm</span><span class="p">));</span>
-<span class="w">    </span><span class="n">dm</span><span class="o">-&gt;</span><span class="n">dmksp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscObject.html">PetscObject</a></span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="n">kspdm</span><span class="p">;</span>
+<span class="w">    </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="../manualpages/Profiling/PetscInfo.html">PetscInfo</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="s">&quot;Creating new DMKSP</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">));</span>
+<span class="w">    </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n">DMKSPCreate</span><span class="p">(</span><span class="n"><a href="../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a></span><span class="p">((</span><span class="n"><a href="../manualpages/Sys/PetscObject.html">PetscObject</a></span><span class="p">)</span><span class="n">dm</span><span class="p">),</span><span class="n">kspdm</span><span class="p">));</span>
+<span class="w">    </span><span class="n">dm</span><span class="o">-&gt;</span><span class="n">dmksp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="n"><a href="../manualpages/Sys/PetscObject.html">PetscObject</a></span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="n">kspdm</span><span class="p">;</span>
 <span class="w">    </span><span class="p">(</span><span class="o">*</span><span class="n">kspdm</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">originaldm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dm</span><span class="p">;</span>
-<span class="w">    </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DMCoarsenHookAdd.html">DMCoarsenHookAdd</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="n">DMCoarsenHook_DMKSP</span><span class="p">,</span><span class="nb">NULL</span><span class="p">,</span><span class="nb">NULL</span><span class="p">));</span>
-<span class="w">    </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DMRefineHookAdd.html">DMRefineHookAdd</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="n">DMRefineHook_DMKSP</span><span class="p">,</span><span class="nb">NULL</span><span class="p">,</span><span class="nb">NULL</span><span class="p">));</span>
+<span class="w">    </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="../manualpages/DM/DMCoarsenHookAdd.html">DMCoarsenHookAdd</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="n">DMCoarsenHook_DMKSP</span><span class="p">,</span><span class="nb">NULL</span><span class="p">,</span><span class="nb">NULL</span><span class="p">));</span>
+<span class="w">    </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="../manualpages/DM/DMRefineHookAdd.html">DMRefineHookAdd</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="n">DMRefineHook_DMKSP</span><span class="p">,</span><span class="nb">NULL</span><span class="p">,</span><span class="nb">NULL</span><span class="p">));</span>
 <span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a></span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a></span><span class="p">(</span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a></span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>This routine uses <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DMCoarsenHookAdd.html">DMCoarsenHookAdd</a>()</span></code> and <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DMRefineHookAdd.html">DMRefineHookAdd</a>()</span></code> to
-attach to the <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span></code> object two functions that are automatically called
+<p>This routine uses <code class="docutils notranslate"><span class="pre"><a href="../manualpages/DM/DMCoarsenHookAdd.html">DMCoarsenHookAdd</a>()</span></code> and <code class="docutils notranslate"><span class="pre"><a href="../manualpages/DM/DMRefineHookAdd.html">DMRefineHookAdd</a>()</span></code> to
+attach to the <code class="docutils notranslate"><span class="pre"><a href="../manualpages/DM/DM.html">DM</a></span></code> object two functions that are automatically called
 when the object is coarsened or refined. The hooks
-<code class="docutils literal notranslate"><span class="pre">DMCoarsenHook_DMXXX()</span></code> and <code class="docutils literal notranslate"><span class="pre">DMRefineHook_DMXXX()</span></code> have the same form:</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="nf">DMCoarsenHook_DMKSP</span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dm</span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dmc</span><span class="p">,</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
+<code class="docutils notranslate"><span class="pre">DMCoarsenHook_DMXXX()</span></code> and <code class="docutils notranslate"><span class="pre">DMRefineHook_DMXXX()</span></code> have the same form:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span><span class="w"> </span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="nf">DMCoarsenHook_DMKSP</span><span class="p">(</span><span class="n"><a href="../manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dm</span><span class="p">,</span><span class="n"><a href="../manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dmc</span><span class="p">,</span><span class="kt">void</span><span class="w"> </span><span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
 <span class="p">{</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a></span><span class="p">;</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/DMCopyDMKSP.html">DMCopyDMKSP</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="n">dmc</span><span class="p">));</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a></span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a></span><span class="p">;</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="../manualpages/KSP/DMCopyDMKSP.html">DMCopyDMKSP</a></span><span class="p">(</span><span class="n">dm</span><span class="p">,</span><span class="n">dmc</span><span class="p">));</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a></span><span class="p">(</span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a></span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 </div>
 <p>where</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="nf"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/DMCopyDMKSP.html">DMCopyDMKSP</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dmsrc</span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dmdest</span><span class="p">)</span>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a></span><span class="w"> </span><span class="nf"><a href="../manualpages/KSP/DMCopyDMKSP.html">DMCopyDMKSP</a></span><span class="p">(</span><span class="n"><a href="../manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dmsrc</span><span class="p">,</span><span class="n"><a href="../manualpages/DM/DM.html">DM</a></span><span class="w"> </span><span class="n">dmdest</span><span class="p">)</span>
 <span class="p">{</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a></span><span class="p">;</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a></span><span class="p">;</span>
 <span class="w">  </span><span class="n">PetscValidHeaderSpecific</span><span class="p">(</span><span class="n">dmsrc</span><span class="p">,</span><span class="n">DM_CLASSID</span><span class="p">,</span><span class="mi">1</span><span class="p">);</span>
 <span class="w">  </span><span class="n">PetscValidHeaderSpecific</span><span class="p">(</span><span class="n">dmdest</span><span class="p">,</span><span class="n">DM_CLASSID</span><span class="p">,</span><span class="mi">2</span><span class="p">);</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n">DMKSPDestroy</span><span class="p">((</span><span class="n">DMKSP</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">dmdest</span><span class="o">-&gt;</span><span class="n">dmksp</span><span class="p">));</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n">DMKSPDestroy</span><span class="p">((</span><span class="n">DMKSP</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">dmdest</span><span class="o">-&gt;</span><span class="n">dmksp</span><span class="p">));</span>
 <span class="w">  </span><span class="n">dmdest</span><span class="o">-&gt;</span><span class="n">dmksp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">dmsrc</span><span class="o">-&gt;</span><span class="n">dmksp</span><span class="p">;</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a></span><span class="p">(</span><span class="n">dmdest</span><span class="o">-&gt;</span><span class="n">dmksp</span><span class="p">));</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DMCoarsenHookAdd.html">DMCoarsenHookAdd</a></span><span class="p">(</span><span class="n">dmdest</span><span class="p">,</span><span class="n">DMCoarsenHook_DMKSP</span><span class="p">,</span><span class="nb">NULL</span><span class="p">,</span><span class="nb">NULL</span><span class="p">));</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DMRefineHookAdd.html">DMRefineHookAdd</a></span><span class="p">(</span><span class="n">dmdest</span><span class="p">,</span><span class="n">DMRefineHook_DMKSP</span><span class="p">,</span><span class="nb">NULL</span><span class="p">,</span><span class="nb">NULL</span><span class="p">));</span>
-<span class="w">  </span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a></span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="../manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a></span><span class="p">(</span><span class="n">dmdest</span><span class="o">-&gt;</span><span class="n">dmksp</span><span class="p">));</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="../manualpages/DM/DMCoarsenHookAdd.html">DMCoarsenHookAdd</a></span><span class="p">(</span><span class="n">dmdest</span><span class="p">,</span><span class="n">DMCoarsenHook_DMKSP</span><span class="p">,</span><span class="nb">NULL</span><span class="p">,</span><span class="nb">NULL</span><span class="p">));</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscCall.html">PetscCall</a></span><span class="p">(</span><span class="n"><a href="../manualpages/DM/DMRefineHookAdd.html">DMRefineHookAdd</a></span><span class="p">(</span><span class="n">dmdest</span><span class="p">,</span><span class="n">DMRefineHook_DMKSP</span><span class="p">,</span><span class="nb">NULL</span><span class="p">,</span><span class="nb">NULL</span><span class="p">));</span>
+<span class="w">  </span><span class="n"><a href="../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a></span><span class="p">(</span><span class="n"><a href="../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a></span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>ensures that the new <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span></code> shares the same <code class="docutils literal notranslate"><span class="pre">DMXXX</span></code> as the parent
-<code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span></code> and also inherits the hooks if it is refined or coarsened.</p>
-<p>If you provide callbacks to a solver <em>after</em> the <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span></code> associated with
-a solver has been refined or coarsened, those child <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DM/DM.html">DM</a></span></code>s will not
-share a common <code class="docutils literal notranslate"><span class="pre">DMXXX</span></code>.</p>
-<p>The <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/TS/TS.html">TS</a></span></code> object manages its callback functions in a way similar to
-<code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSP.html">KSP</a></span></code> and <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/SNES/SNES.html">SNES</a></span></code>, although there are no multilevel <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/TS/TS.html">TS</a></span></code>
-implementations so in theory the <code class="docutils literal notranslate"><span class="pre">DMTS</span></code> object is currently unneeded.</p>
+<p>ensures that the new <code class="docutils notranslate"><span class="pre"><a href="../manualpages/DM/DM.html">DM</a></span></code> shares the same <code class="docutils notranslate"><span class="pre">DMXXX</span></code> as the parent
+<code class="docutils notranslate"><span class="pre"><a href="../manualpages/DM/DM.html">DM</a></span></code> and also inherits the hooks if it is refined or coarsened.</p>
+<p>If you provide callbacks to a solver <em>after</em> the <code class="docutils notranslate"><span class="pre"><a href="../manualpages/DM/DM.html">DM</a></span></code> associated with
+a solver has been refined or coarsened, those child <code class="docutils notranslate"><span class="pre"><a href="../manualpages/DM/DM.html">DM</a></span></code>s will not
+share a common <code class="docutils notranslate"><span class="pre">DMXXX</span></code>.</p>
+<p>The <code class="docutils notranslate"><span class="pre"><a href="../manualpages/TS/TS.html">TS</a></span></code> object manages its callback functions in a way similar to
+<code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSP.html">KSP</a></span></code> and <code class="docutils notranslate"><span class="pre"><a href="../manualpages/SNES/SNES.html">SNES</a></span></code>, although there are no multilevel <code class="docutils notranslate"><span class="pre"><a href="../manualpages/TS/TS.html">TS</a></span></code>
+implementations so in theory the <code class="docutils notranslate"><span class="pre">DMTS</span></code> object is currently unneeded.</p>
 </section>
 
 
@@ -711,7 +715,7 @@ implementations so in theory the <code class="docutils literal notranslate"><spa
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -727,7 +731,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

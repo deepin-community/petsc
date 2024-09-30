@@ -1,0 +1,8 @@
+# libpetsc64.so.X.Y soname links are managed by alternatives (libpetc64.so.X.Y)
+ldconfig-symlink-missing-for-shlib usr/lib/*/libpetsc64.so.* usr/lib/*/libpetsc64-complex.so.* libpetsc64.so.*
+
+# libpetsc64_complex.so is handled by alternatives in libpetsc64-complexX.Y-dev
+lacks-unversioned-link-to-shared-library example: usr/lib/*/libpetsc64_complex.so [usr/lib/*/libpetsc64_complex.so.*]
+
+# 64-bit (int64) scotch places libraries in a separate subdir, so RUNPATH is needed
+custom-library-search-path RUNPATH /usr/lib/*/scotch-int64 [usr/lib/*/libpetsc64_complex.so.*]

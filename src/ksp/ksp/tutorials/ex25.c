@@ -1,4 +1,3 @@
-
 /*
  Partial differential equation
 
@@ -87,7 +86,7 @@ static PetscErrorCode ComputeRHS(KSP ksp, Vec b, void *ctx)
   PetscCall(VecSetValues(b, 2, idx, v, INSERT_VALUES));
   PetscCall(VecAssemblyBegin(b));
   PetscCall(VecAssemblyEnd(b));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode ComputeMatrix(KSP ksp, Mat J, Mat jac, void *ctx)
@@ -123,7 +122,7 @@ static PetscErrorCode ComputeMatrix(KSP ksp, Mat J, Mat jac, void *ctx)
   }
   PetscCall(MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

@@ -1,4 +1,3 @@
-
 /*
     Note that for the complex numbers version, the VecDot() arguments
     within the code MUST remain in the order given for correct computation
@@ -10,7 +9,7 @@ static PetscErrorCode KSPSetUp_CGS(KSP ksp)
 {
   PetscFunctionBegin;
   PetscCall(KSPSetWorkVecs(ksp, 7));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSolve_CGS(KSP ksp)
@@ -55,7 +54,7 @@ static PetscErrorCode KSPSolve_CGS(KSP ksp)
   PetscCall(KSPLogResidualHistory(ksp, dp));
   PetscCall(KSPMonitor(ksp, 0, dp));
   PetscCall((*ksp->converged)(ksp, 0, dp, &ksp->reason, ksp->cnvP));
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Make the initial Rp == R */
   PetscCall(VecCopy(R, RP));
@@ -123,11 +122,11 @@ static PetscErrorCode KSPSolve_CGS(KSP ksp)
   if (i >= ksp->max_it) ksp->reason = KSP_DIVERGED_ITS;
 
   PetscCall(KSPUnwindPreconditioner(ksp, X, T));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPCGS - This code implements the CGS (Conjugate Gradient Squared) method.
+     KSPCGS - This code implements the CGS (Conjugate Gradient Squared) method {cite}`so:89`.
 
    Level: beginner
 
@@ -140,10 +139,7 @@ static PetscErrorCode KSPSolve_CGS(KSP ksp)
    Has this weird support for doing the convergence test with the natural norm, I assume this works only with
    no preconditioning and symmetric positive definite operator.
 
-   References:
-.  * - Sonneveld, 1989.
-
-.seealso: [](chapter_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPBCGS`, `KSPSetPCSide()`
+.seealso: [](ch_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPBCGS`, `KSPSetPCSide()`
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_CGS(KSP ksp)
 {
@@ -164,5 +160,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_CGS(KSP ksp)
   ksp->ops->buildresidual  = KSPBuildResidualDefault;
   ksp->ops->setfromoptions = NULL;
   ksp->ops->view           = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

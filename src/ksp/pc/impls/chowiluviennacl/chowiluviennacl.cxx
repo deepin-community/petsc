@@ -1,9 +1,7 @@
-
 /*
    Include files needed for the ViennaCL Chow-Patel parallel ILU preconditioner:
      pcimpl.h - private include file intended for use by all preconditioners
 */
-#define PETSC_SKIP_SPINLOCK
 #define PETSC_SKIP_IMMINTRIN_H_CUDAWORKAROUND 1
 
 #include <petsc/private/pcimpl.h> /*I "petscpc.h" I*/
@@ -64,7 +62,7 @@ static PetscErrorCode PCSetUp_CHOWILUVIENNACL(PC pc)
   } catch (char *ex) {
     SETERRQ(PETSC_COMM_SELF, PETSC_ERR_LIB, "ViennaCL error: %s", ex);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -108,7 +106,7 @@ static PetscErrorCode PCApply_CHOWILUVIENNACL(PC pc, Vec x, Vec y)
   PetscCall(VecViennaCLRestoreArrayRead(x, &xarray));
   PetscCall(VecViennaCLRestoreArrayWrite(y, &yarray));
   PetscCall(PetscObjectStateIncrease((PetscObject)y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -137,7 +135,7 @@ static PetscErrorCode PCDestroy_CHOWILUVIENNACL(PC pc)
       Free the private data structure that was hanging off the PC
   */
   PetscCall(PetscFree(pc->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSetFromOptions_CHOWILUVIENNACL(PC pc, PetscOptionItems *PetscOptionsObject)
@@ -145,19 +143,8 @@ static PetscErrorCode PCSetFromOptions_CHOWILUVIENNACL(PC pc, PetscOptionItems *
   PetscFunctionBegin;
   PetscOptionsHeadBegin(PetscOptionsObject, "CHOWILUVIENNACL options");
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*MC
-     PCCHOWILUViennaCL  - A smoothed agglomeration algorithm that can be used via the CUDA, OpenCL, and OpenMP backends of ViennaCL
-
-   Level: advanced
-
-   Developer Note:
-   This does not appear to be wired up with `PCRegisterType()`
-
-.seealso: `PCCreate()`, `PCSetType()`, `PCType`, `PC`
-M*/
 
 PETSC_EXTERN PetscErrorCode PCCreate_CHOWILUVIENNACL(PC pc)
 {
@@ -193,5 +180,5 @@ PETSC_EXTERN PetscErrorCode PCCreate_CHOWILUVIENNACL(PC pc)
   pc->ops->applyrichardson     = 0;
   pc->ops->applysymmetricleft  = 0;
   pc->ops->applysymmetricright = 0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

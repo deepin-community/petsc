@@ -1,4 +1,3 @@
-
 static char help[] = "Solves a simple data assimilation problem with one dimensional advection diffusion equation using TSAdjoint\n\n";
 
 /*
@@ -284,7 +283,7 @@ int main(int argc, char **argv)
      Always call PetscFinalize() before exiting a program.  This routine
        - finalizes the PETSc libraries as well as MPI
        - provides summary and diagnostic information if certain runtime
-         options are chosen (e.g., -log_summary).
+         options are chosen (e.g., -log_view).
   */
   PetscCall(PetscFinalize());
   return 0;
@@ -304,7 +303,7 @@ PetscErrorCode ComputeSolutionCoefficients(AppCtx *appctx)
   PetscCall(PetscRandomSetInterval(rand, .9, 1.0));
   for (i = 0; i < appctx->ncoeff; i++) PetscCall(PetscRandomGetValue(rand, &appctx->solutioncoefficients[i]));
   PetscCall(PetscRandomDestroy(&rand));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */
@@ -345,7 +344,7 @@ PetscErrorCode InitialConditions(Vec u, AppCtx *appctx)
   /* make sure initial conditions do not contain the constant functions, since with periodic boundary conditions the constant functions introduce a null space */
   PetscCall(VecSum(u, &sum));
   PetscCall(VecShift(u, -sum / lenglob));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -380,7 +379,7 @@ PetscErrorCode TrueSolution(Vec u, AppCtx *appctx)
   /* make sure initial conditions do not contain the constant functions, since with periodic boundary conditions the constant functions introduce a null space */
   PetscCall(VecSum(u, &sum));
   PetscCall(VecShift(u, -sum / lenglob));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------------------------------------------------------- */
 /*
@@ -411,7 +410,7 @@ PetscErrorCode ComputeReference(TS ts, PetscReal t, Vec obj, AppCtx *appctx)
   }
   PetscCall(DMDAVecRestoreArray(appctx->da, obj, &s));
   PetscCall(DMDAVecRestoreArrayRead(appctx->da, appctx->SEMop.grid, (void *)&xg));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode RHSFunction(TS ts, PetscReal t, Vec globalin, Vec globalout, void *ctx)
@@ -420,7 +419,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal t, Vec globalin, Vec globalout, void
 
   PetscFunctionBegin;
   PetscCall(MatMult(appctx->SEMop.keptstiff, globalin, globalout));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode RHSJacobian(TS ts, PetscReal t, Vec globalin, Mat A, Mat B, void *ctx)
@@ -429,7 +428,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal t, Vec globalin, Mat A, Mat B, void 
 
   PetscFunctionBegin;
   PetscCall(MatCopy(appctx->SEMop.keptstiff, A, DIFFERENT_NONZERO_PATTERN));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */
@@ -494,7 +493,7 @@ PetscErrorCode RHSLaplacian(TS ts, PetscReal t, Vec X, Mat A, Mat BB, void *ctx)
   PetscCall(VecReciprocal(appctx->SEMop.mass));
 
   PetscCall(PetscGaussLobattoLegendreElementLaplacianDestroy(appctx->SEMop.gll.n, appctx->SEMop.gll.nodes, appctx->SEMop.gll.weights, &temp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -545,7 +544,7 @@ PetscErrorCode RHSAdvection(TS ts, PetscReal t, Vec X, Mat A, Mat BB, void *ctx)
   PetscCall(VecReciprocal(appctx->SEMop.mass));
 
   PetscCall(PetscGaussLobattoLegendreElementAdvectionDestroy(appctx->SEMop.gll.n, appctx->SEMop.gll.nodes, appctx->SEMop.gll.weights, &temp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------ */
@@ -611,7 +610,7 @@ PetscErrorCode FormFunctionGradient(Tao tao, Vec ic, PetscReal *f, Vec G, void *
 
   PetscCall(TSAdjointSolve(appctx->ts));
   /* PetscCall(VecPointwiseDivide(G,G,appctx->SEMop.mass));*/
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MonitorError(Tao tao, void *ctx)
@@ -640,14 +639,14 @@ PetscErrorCode MonitorError(Tao tao, void *ctx)
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "history = [\n"));
   }
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "%3" PetscInt_FMT " %g %g %g\n", its, (double)nrm, (double)fct, (double)gnorm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MonitorDestroy(void **ctx)
 {
   PetscFunctionBegin;
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "];\n"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

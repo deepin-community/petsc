@@ -36,7 +36,7 @@ PetscErrorCode InitializeLambda(DM da, Vec lambda, PetscReal x, PetscReal y)
     l[j][i].v = 1.0;
     PetscCall(DMDAVecRestoreArray(da, lambda, &l));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -191,7 +191,7 @@ PetscErrorCode InitialConditions(DM da, Vec U)
      Restore vectors
   */
   PetscCall(DMDAVecRestoreArray(da, U, &u));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST
@@ -284,6 +284,12 @@ PetscErrorCode InitialConditions(DM da, Vec U)
       suffix: sell6
       args: -ts_max_steps 10 -ts_monitor -ts_adjoint_monitor -ts_trajectory_type memory -ts_trajectory_solution_only 0 -dm_mat_type sell -pc_type jacobi
       output_file: output/ex5adj_sell_6.out
+
+   test:
+      suffix: sell7
+      args: -ts_max_steps 10 -ts_monitor -ts_adjoint_monitor -ts_trajectory_type memory -ts_trajectory_solution_only 0 -dm_mat_type sellcuda -dm_vec_type cuda -pc_type jacobi
+      output_file: output/ex5adj_sell_6.out
+      requires: cuda
 
    test:
       suffix: gamg1

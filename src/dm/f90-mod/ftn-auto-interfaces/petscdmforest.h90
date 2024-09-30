@@ -138,7 +138,7 @@
        PetscErrorCode z
        end subroutine DMForestGetComputeAdaptivitySF
       subroutine DMForestGetAdaptivitySF(a,b,c,z)
-       import tDM,tPetscSF
+       import tPetscSF,tDM
        DM a ! DM
        PetscSF b ! PetscSF
        PetscSF c ! PetscSF
@@ -176,7 +176,7 @@
        PetscErrorCode z
        end subroutine DMForestGetCellChart
       subroutine DMForestGetCellSF(a,b,z)
-       import tDM,tPetscSF
+       import tPetscSF,tDM
        DM a ! DM
        PetscSF b ! PetscSF
        PetscErrorCode z

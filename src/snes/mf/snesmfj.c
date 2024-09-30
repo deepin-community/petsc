@@ -1,68 +1,66 @@
-
 #include <petsc/private/snesimpl.h> /*I  "petscsnes.h" I*/
 #include <petscdm.h>                /*I  "petscdm.h"   I*/
 #include <../src/mat/impls/mffd/mffdimpl.h>
 #include <petsc/private/matimpl.h>
 
 /*@C
-   MatMFFDComputeJacobian - Tells the matrix-free Jacobian object the new location at which
-       Jacobian matrix vector products will be computed at, i.e. J(x) * a. The x is obtained
-       from the `SNES` object (using `SNESGetSolution()`).
+  MatMFFDComputeJacobian - Tells the matrix-free Jacobian object the new location at which
+  Jacobian matrix-vector products will be computed at, i.e. J(x) * a. The x is obtained
+  from the `SNES` object (using `SNESGetSolution()`).
 
-   Collective
+  Collective
 
-   Input Parameters:
-+   snes - the nonlinear solver context
-.   x - the point at which the Jacobian vector products will be performed
-.   jac - the matrix-free Jacobian object of `MatType` `MATMFFD`, likely obtained with `MatCreateSNESMF()`
-.   B - either the same as jac or another matrix type (ignored)
-.   flag - not relevant for matrix-free form
--   dummy - the user context (ignored)
+  Input Parameters:
++ snes  - the nonlinear solver context
+. x     - the point at which the Jacobian-vector products will be performed
+. jac   - the matrix-free Jacobian object of `MatType` `MATMFFD`, likely obtained with `MatCreateSNESMF()`
+. B     - either the same as `jac` or another matrix type (ignored)
+- dummy - the user context (ignored)
 
-   Option Database Key:
-.  -snes_mf - use the matrix created with `MatSNESMFCreate()` to setup the Jacobian for each new solution in the Newton process
+  Options Database Key:
+. -snes_mf - use the matrix created with `MatSNESMFCreate()` to setup the Jacobian for each new solution in the Newton process
 
-   Level: developer
+  Level: developer
 
-   Notes:
-      If `MatMFFDSetBase()` is ever called on jac then this routine will NO longer get
-    the x from the `SNES` object and `MatMFFDSetBase()` must from that point on be used to
-    change the base vector x.
+  Notes:
+  If `MatMFFDSetBase()` is ever called on `jac` then this routine will NO longer get
+  the `x` from the `SNES` object and `MatMFFDSetBase()` must from that point on be used to
+  change the base vector `x`.
 
-     This can be passed into `SNESSetJacobian()` as the Jacobian evaluation function argument
-     when using a completely matrix-free solver,
-     that is the B matrix is also the same matrix operator. This is used when you select
-     -snes_mf but rarely used directly by users. (All this routine does is call `MatAssemblyBegin/End()` on
-     the `Mat` jac.)
+  This can be passed into `SNESSetJacobian()` as the Jacobian evaluation function argument
+  when using a completely matrix-free solver,
+  that is the B matrix is also the same matrix operator. This is used when you select
+  -snes_mf but rarely used directly by users. (All this routine does is call `MatAssemblyBegin/End()` on
+  the `Mat` `jac`.)
 
-.seealso: `MatMFFDGetH()`, `MatCreateSNESMF()`, `MatMFFDSetBase()`, `MatCreateMFFD()`, `MATMFFD`,
-          `MatMFFDSetHHistory()`, `MatMFFDSetFunctionError()`, `MatCreateMFFD()`, `SNESSetJacobian()`
+.seealso: [](ch_snes), `MatMFFDGetH()`, `MatCreateSNESMF()`, `MatMFFDSetBase()`, `MatCreateMFFD()`, `MATMFFD`,
+          `MatMFFDSetHHistory()`, `MatMFFDSetFunctionError()`, `SNESSetJacobian()`
 @*/
 PetscErrorCode MatMFFDComputeJacobian(SNES snes, Vec x, Mat jac, Mat B, void *dummy)
 {
   PetscFunctionBegin;
   PetscCall(MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode MatAssemblyEnd_MFFD(Mat, MatAssemblyType);
 PETSC_EXTERN PetscErrorCode MatMFFDSetBase_MFFD(Mat, Vec, Vec);
 
 /*@
-    MatSNESMFGetSNES - returns the `SNES` associated with a matrix created with `MatCreateSNESMF()`
+  MatSNESMFGetSNES - returns the `SNES` associated with a matrix created with `MatCreateSNESMF()`
 
-    Not collective
+  Not Collective
 
-    Input Parameter:
-.   J - the matrix
+  Input Parameter:
+. J - the matrix
 
-    Output Parameter:
-.   snes - the `SNES` object
+  Output Parameter:
+. snes - the `SNES` object
 
-    Level: advanced
+  Level: advanced
 
-.seealso: `Mat`, `SNES`, `MatCreateSNESMF()`
+.seealso: [](ch_snes), `Mat`, `SNES`, `MatCreateSNESMF()`
 @*/
 PetscErrorCode MatSNESMFGetSNES(Mat J, SNES *snes)
 {
@@ -71,7 +69,7 @@ PetscErrorCode MatSNESMFGetSNES(Mat J, SNES *snes)
   PetscFunctionBegin;
   PetscCall(MatShellGetContext(J, &j));
   *snes = (SNES)j->ctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -102,7 +100,7 @@ static PetscErrorCode MatAssemblyEnd_SNESMF(Mat J, MatAssemblyType mt)
     /* f value known by SNES is not correct for other differencing function */
     PetscCall(MatMFFDSetBase_MFFD(J, u, NULL));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -124,7 +122,7 @@ static PetscErrorCode MatAssemblyEnd_SNESMF_UseBase(Mat J, MatAssemblyType mt)
   PetscCall(SNESGetSolution(snes, &u));
   PetscCall(SNESGetFunction(snes, &f, NULL, NULL));
   PetscCall(MatMFFDSetBase_MFFD(J, u, f));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -136,7 +134,7 @@ static PetscErrorCode MatMFFDSetBase_SNESMF(Mat J, Vec U, Vec F)
   PetscFunctionBegin;
   PetscCall(MatMFFDSetBase_MFFD(J, U, F));
   J->ops->assemblyend = MatAssemblyEnd_MFFD;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSNESMFSetReuseBase_SNESMF(Mat J, PetscBool use)
@@ -147,39 +145,39 @@ static PetscErrorCode MatSNESMFSetReuseBase_SNESMF(Mat J, PetscBool use)
   } else {
     J->ops->assemblyend = MatAssemblyEnd_SNESMF;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-    MatSNESMFSetReuseBase - Causes the base vector to be used for differencing even if the function provided to `SNESSetFunction()` is not the
-                       same as that provided to `MatMFFDSetFunction()`.
+  MatSNESMFSetReuseBase - Causes the base vector to be used for differencing even if the function provided to `SNESSetFunction()` is not the
+  same as that provided to `MatMFFDSetFunction()`.
 
-    Logically Collective
+  Logically Collective
 
-    Input Parameters:
-+   J - the `MATMFFD` matrix
--   use - if true always reuse the base vector instead of recomputing f(u) even if the function in the `MATMFFD` is
+  Input Parameters:
++ J   - the `MATMFFD` matrix
+- use - if true always reuse the base vector instead of recomputing f(u) even if the function in the `MATMFFD` is
           not `SNESComputeFunction()`
 
-    Note:
-    Care must be taken when using this routine to insure that the function provided to `MatMFFDSetFunction()`, call it F_MF() is compatible with
-    with that provided to `SNESSetFunction()`, call it F_SNES(). That is, (F_MF(u + h*d) - F_SNES(u))/h has to approximate the derivative
+  Level: advanced
 
-    Developer Note:
-    This was provided for the MOOSE team who desired to have a `SNESSetFunction()` function that could change configurations (similar to variable
-    switching) to contacts while the function provided to `MatMFFDSetFunction()` cannot. Except for the possibility of changing the configuration
-    both functions compute the same mathematical function so the differencing makes sense.
+  Note:
+  Care must be taken when using this routine to insure that the function provided to `MatMFFDSetFunction()`, call it F_MF() is compatible with
+  with that provided to `SNESSetFunction()`, call it F_SNES(). That is, (F_MF(u + h*d) - F_SNES(u))/h has to approximate the derivative
 
-    Level: advanced
+  Developer Notes:
+  This was provided for the MOOSE team who desired to have a `SNESSetFunction()` function that could change configurations (similar to variable
+  switching) to contacts while the function provided to `MatMFFDSetFunction()` cannot. Except for the possibility of changing the configuration
+  both functions compute the same mathematical function so the differencing makes sense.
 
-.seealso: `MATMFFD`, `MatMFFDSetFunction()`, `SNESSetFunction()`, `MatCreateSNESMF()`, `MatSNESMFGetReuseBase()`
+.seealso: [](ch_snes), `SNES`, `MATMFFD`, `MatMFFDSetFunction()`, `SNESSetFunction()`, `MatCreateSNESMF()`, `MatSNESMFGetReuseBase()`
 @*/
 PetscErrorCode MatSNESMFSetReuseBase(Mat J, PetscBool use)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(J, MAT_CLASSID, 1);
   PetscTryMethod(J, "MatSNESMFSetReuseBase_C", (Mat, PetscBool), (J, use));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSNESMFGetReuseBase_SNESMF(Mat J, PetscBool *use)
@@ -187,72 +185,79 @@ static PetscErrorCode MatSNESMFGetReuseBase_SNESMF(Mat J, PetscBool *use)
   PetscFunctionBegin;
   if (J->ops->assemblyend == MatAssemblyEnd_SNESMF_UseBase) *use = PETSC_TRUE;
   else *use = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-    MatSNESMFGetReuseBase - Determines if the base vector is to be used for differencing even if the function provided to `SNESSetFunction()` is not the
-                       same as that provided to `MatMFFDSetFunction()`.
+  MatSNESMFGetReuseBase - Determines if the base vector is to be used for differencing even if the function provided to `SNESSetFunction()` is not the
+  same as that provided to `MatMFFDSetFunction()`.
 
-    Logically Collective
+  Logically Collective
 
-    Input Parameter:
-.   J - the `MATMFFD` matrix
+  Input Parameter:
+. J - the `MATMFFD` matrix
 
-    Output Parameter:
-.   use - if true always reuse the base vector instead of recomputing f(u) even if the function in the `MATMFFD` is
+  Output Parameter:
+. use - if true always reuse the base vector instead of recomputing f(u) even if the function in the `MATMFFD` is
           not `SNESComputeFunction()`
 
-    Level: advanced
+  Level: advanced
 
-    Note:
-    See `MatSNESMFSetReuseBase()`
+  Note:
+  See `MatSNESMFSetReuseBase()`
 
-.seealso: `MatSNESMFSetReuseBase()`, `MatCreateSNESMF()`, `MatSNESMFSetReuseBase()`
+.seealso: [](ch_snes), `Mat`, `SNES`, `MatSNESMFSetReuseBase()`, `MatCreateSNESMF()`
 @*/
 PetscErrorCode MatSNESMFGetReuseBase(Mat J, PetscBool *use)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(J, MAT_CLASSID, 1);
   PetscUseMethod(J, "MatSNESMFGetReuseBase_C", (Mat, PetscBool *), (J, use));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatCreateSNESMF - Creates a matrix-free matrix context for use with
-   a `SNES` solver.  This matrix can be used as the Jacobian argument for
-   the routine `SNESSetJacobian()`. See `MatCreateMFFD()` for details on how
-   the finite difference computation is done.
+  MatCreateSNESMF - Creates a finite differencing based matrix-free matrix context for use with
+  a `SNES` solver.  This matrix can be used as the Jacobian argument for
+  the routine `SNESSetJacobian()`. See `MatCreateMFFD()` for details on how
+  the finite difference computation is done.
 
-   Collective
+  Collective
 
-   Input Parameters:
-.  snes - the `SNES` context
+  Input Parameters:
+. snes - the `SNES` context
 
-   Output Parameter:
-.  J - the matrix-free matrix which is of type `MATMFFD`
+  Output Parameter:
+. J - the matrix-free matrix which is of type `MATMFFD`
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-     You can call `SNESSetJacobian()` with `MatMFFDComputeJacobian()` if you are using matrix and not a different
-     preconditioner matrix
+  Notes:
+  You can call `SNESSetJacobian()` with `MatMFFDComputeJacobian()` if you are not using a different
+  preconditioner matrix
 
-     If you wish to provide a different function to do differencing on to compute the matrix-free operator than
-     that provided to `SNESSetFunction()` then call `MatMFFDSetFunction()` with your function after this call.
+  If you wish to provide a different function to do differencing on to compute the matrix-free operator than
+  that provided to `SNESSetFunction()` then call `MatMFFDSetFunction()` with your function after this call.
 
-     The difference between this routine and `MatCreateMFFD()` is that this matrix
-     automatically gets the current base vector from the `SNES` object and not from an
-     explicit call to `MatMFFDSetBase()`.
+  The difference between this routine and `MatCreateMFFD()` is that this matrix
+  automatically gets the current base vector from the `SNES` object and not from an
+  explicit call to `MatMFFDSetBase()`.
 
-     If `MatMFFDSetBase()` is ever called on jac then this routine will NO longer get
-     the x from the `SNES` object and `MatMFFDSetBase()` must from that point on be used to
-     change the base vector x.
+  If `MatMFFDSetBase()` is ever called on `jac` then this routine will NO longer get
+  the x from the `SNES` object and `MatMFFDSetBase()` must from that point on be used to
+  change the base vector `x`.
 
-     Using a different function for the differencing will not work if you are using non-linear left preconditioning.
+  Using a different function for the differencing will not work if you are using non-linear left preconditioning.
 
-.seealso: `MATMFFD, `MatDestroy()`, `MatMFFDSetFunction()`, `MatMFFDSetFunctionError()`, `MatMFFDDSSetUmin()`
-          `MatMFFDSetHHistory()`, `MatMFFDResetHHistory()`, `MatCreateMFFD()`,
+  This uses finite-differencing to apply the operator. To create a matrix-free `Mat` whose matrix-vector operator you
+  provide with your own function use `MatCreateShell()`.
+
+  Developer Note:
+  This function should really be called `MatCreateSNESMFFD()` in correspondence to `MatCreateMFFD()` to clearly indicate
+  that this is for using finite differences to apply the operator matrix-free.
+
+.seealso: [](ch_snes), `SNES`, `MATMFFD`, `MatDestroy()`, `MatMFFDSetFunction()`, `MatMFFDSetFunctionError()`, `MatMFFDDSSetUmin()`
+          `MatMFFDSetHHistory()`, `MatMFFDResetHHistory()`, `MatCreateMFFD()`, `MatCreateShell()`,
           `MatMFFDGetH()`, `MatMFFDRegister()`, `MatMFFDComputeJacobian()`, `MatSNESMFSetReuseBase()`, `MatSNESMFGetReuseBase()`
 @*/
 PetscErrorCode MatCreateSNESMF(SNES snes, Mat *J)
@@ -290,5 +295,5 @@ PetscErrorCode MatCreateSNESMF(SNES snes, Mat *J)
   PetscCall(PetscObjectComposeFunction((PetscObject)*J, "MatMFFDSetBase_C", MatMFFDSetBase_SNESMF));
   PetscCall(PetscObjectComposeFunction((PetscObject)*J, "MatSNESMFSetReuseBase_C", MatSNESMFSetReuseBase_SNESMF));
   PetscCall(PetscObjectComposeFunction((PetscObject)*J, "MatSNESMFGetReuseBase_C", MatSNESMFGetReuseBase_SNESMF));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

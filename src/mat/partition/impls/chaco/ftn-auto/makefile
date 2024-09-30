@@ -1,15 +1,5 @@
 
-#requiresdefine   'PETSC_HAVE_FORTRAN'
-ALL: lib
+#requiresdefine   'PETSC_USE_FORTRAN_BINDINGS'
+#requirespackage 'PETSC_HAVE_CHACO'
 CPPFLAGS  = ${CHACO_INCLUDE}
-CFLAGS   =
-FFLAGS   =
-SOURCEC  = chacof.c
-SOURCEF  =
-SOURCEH  = 
-DIRS     =
 LIBBASE   = libpetscmat
-LOCDIR    = src/mat/partition/impls/chaco/ftn-auto/
-include ${PETSC_DIR}/lib/petsc/conf/variables
-include ${PETSC_DIR}/lib/petsc/conf/rules
-include ${PETSC_DIR}/lib/petsc/conf/test

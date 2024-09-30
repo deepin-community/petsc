@@ -1,13 +1,14 @@
 #include <petsc/private/characteristicimpl.h>
 
 static PetscBool CharacteristicPackageInitialized = PETSC_FALSE;
+
 /*@C
   CharacteristicFinalizePackage - This function destroys everything in the `Characteristics` package. It is
   called from `PetscFinalize()`.
 
   Level: developer
 
-.seealso: [](chapter_ts), `PetscFinalize()`, `CharacteristicInitializePackage()`
+.seealso: [](ch_ts), `PetscFinalize()`, `CharacteristicInitializePackage()`
 @*/
 PetscErrorCode CharacteristicFinalizePackage(void)
 {
@@ -15,7 +16,7 @@ PetscErrorCode CharacteristicFinalizePackage(void)
   PetscCall(PetscFunctionListDestroy(&CharacteristicList));
   CharacteristicPackageInitialized = PETSC_FALSE;
   CharacteristicRegisterAllCalled  = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -25,7 +26,7 @@ PetscErrorCode CharacteristicFinalizePackage(void)
 
   Level: developer
 
-.seealso: [](chapter_ts), `PetscInitialize()`, `CharacteristicFinalizePackage()`
+.seealso: [](ch_ts), `PetscInitialize()`, `CharacteristicFinalizePackage()`
 @*/
 PetscErrorCode CharacteristicInitializePackage(void)
 {
@@ -33,7 +34,7 @@ PetscErrorCode CharacteristicInitializePackage(void)
   PetscBool opt, pkg;
 
   PetscFunctionBegin;
-  if (CharacteristicPackageInitialized) PetscFunctionReturn(0);
+  if (CharacteristicPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   CharacteristicPackageInitialized = PETSC_TRUE;
   /* Register Classes */
   PetscCall(PetscClassIdRegister("Method of Characteristics", &CHARACTERISTIC_CLASSID));
@@ -65,7 +66,7 @@ PetscErrorCode CharacteristicInitializePackage(void)
   }
   /* Process package finalizer */
   PetscCall(PetscRegisterFinalize(CharacteristicFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_DYNAMIC_LIBRARIES)
@@ -78,7 +79,7 @@ PETSC_EXTERN PetscErrorCode PetscDLLibraryRegister_petsccharacteristic(void)
 {
   PetscFunctionBegin;
   PetscCall(CharacteristicInitializePackage());
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif /* PETSC_HAVE_DYNAMIC_LIBRARIES */

@@ -1,4 +1,3 @@
-
 /*
       Inverts 5 by 5 matrix using gaussian elimination with partial pivoting.
 
@@ -156,5 +155,5 @@ PETSC_EXTERN PetscErrorCode PetscKernel_A_gets_inverse_A_5(MatScalar *a, PetscIn
       ay[4] = stmp;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

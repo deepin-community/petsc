@@ -1,10 +1,9 @@
-
 static char help[] = "Bilinear elements on the unit square for the Laplacian. Input arguments are:\n\
   -m <size> : problem size\n\n";
 
 #include <petscksp.h>
 
-int FormElementStiffness(PetscReal H, PetscScalar *Ke)
+PetscErrorCode FormElementStiffness(PetscReal H, PetscScalar *Ke)
 {
   Ke[0]  = H / 6.0;
   Ke[1]  = -.125 * H;
@@ -22,16 +21,16 @@ int FormElementStiffness(PetscReal H, PetscScalar *Ke)
   Ke[13] = H / 12.0;
   Ke[14] = -.125 * H;
   Ke[15] = H / 6.0;
-  return 0;
+  return PETSC_SUCCESS;
 }
 
-int FormElementRhs(PetscReal x, PetscReal y, PetscReal H, PetscScalar *r)
+PetscErrorCode FormElementRhs(PetscReal x, PetscReal y, PetscReal H, PetscScalar *r)
 {
   r[0] = 0.;
   r[1] = 0.;
   r[2] = 0.;
   r[3] = 0.0;
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 /* Note: this code is for testing purposes only. The assembly process is not scalable */
@@ -204,5 +203,11 @@ int main(int argc, char **args)
       suffix: hypre_device_amg
       nsize: {{1 2}}
       args: -usezerorows 0 -mat_type hypre -pc_type hypre -m 25 -ksp_type cg -ksp_norm_type natural
+
+    test:
+      requires: hypre defined(PETSC_HAVE_HYPRE_DEVICE)
+      suffix: dev
+      nsize: 2
+      args: -m 25 -mat_type hypre -pc_type hypre -pc_hypre_type boomeramg -pc_hypre_boomeramg_coarsen_type PMIS
 
 TEST*/

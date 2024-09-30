@@ -1,4 +1,3 @@
-
 #include <petscmat.h>
 #include <petsc/private/matorderimpl.h>
 #include <amd.h>
@@ -71,5 +70,5 @@ PETSC_INTERN PetscErrorCode MatGetOrdering_AMD(Mat mat, MatOrderingType type, IS
 
   PetscCall(ISCreateGeneral(PETSC_COMM_SELF, nrow, perm, PETSC_COPY_VALUES, row));
   PetscCall(ISCreateGeneral(PETSC_COMM_SELF, nrow, perm, PETSC_OWN_POINTER, col));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

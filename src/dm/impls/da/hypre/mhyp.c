@@ -1,4 +1,3 @@
-
 /*
     Creates hypre ijmatrix from PETSc matrix
 */
@@ -25,7 +24,7 @@
 .seealso: `MatCreate()`, `PCPFMG`, `MatSetDM()`, `DMCreateMatrix()`
 M*/
 
-PetscErrorCode MatSetValuesLocal_HYPREStruct_3d(Mat mat, PetscInt nrow, const PetscInt irow[], PetscInt ncol, const PetscInt icol[], const PetscScalar y[], InsertMode addv)
+static PetscErrorCode MatSetValuesLocal_HYPREStruct_3d(Mat mat, PetscInt nrow, const PetscInt irow[], PetscInt ncol, const PetscInt icol[], const PetscScalar y[], InsertMode addv)
 {
   HYPRE_Int        index[3], entries[9];
   PetscInt         i, j, stencil, row;
@@ -61,10 +60,10 @@ PetscErrorCode MatSetValuesLocal_HYPREStruct_3d(Mat mat, PetscInt nrow, const Pe
     else PetscCallExternal(HYPRE_StructMatrixSetValues, ex->hmat, index, ncol, entries, values);
     values += ncol;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatZeroRowsLocal_HYPREStruct_3d(Mat mat, PetscInt nrow, const PetscInt irow[], PetscScalar d, Vec x, Vec b)
+static PetscErrorCode MatZeroRowsLocal_HYPREStruct_3d(Mat mat, PetscInt nrow, const PetscInt irow[], PetscScalar d, Vec x, Vec b)
 {
   HYPRE_Int        index[3], entries[7] = {0, 1, 2, 3, 4, 5, 6};
   PetscInt         row, i;
@@ -83,10 +82,10 @@ PetscErrorCode MatZeroRowsLocal_HYPREStruct_3d(Mat mat, PetscInt nrow, const Pet
     PetscCallExternal(HYPRE_StructMatrixSetValues, ex->hmat, index, 7, entries, values);
   }
   PetscCallExternal(HYPRE_StructMatrixAssemble, ex->hmat);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatZeroEntries_HYPREStruct_3d(Mat mat)
+static PetscErrorCode MatZeroEntries_HYPREStruct_3d(Mat mat)
 {
   HYPRE_Int        indices[7] = {0, 1, 2, 3, 4, 5, 6};
   Mat_HYPREStruct *ex         = (Mat_HYPREStruct *)mat->data;
@@ -95,7 +94,7 @@ PetscErrorCode MatZeroEntries_HYPREStruct_3d(Mat mat)
   /* hypre has no public interface to do this */
   PetscCallExternal(hypre_StructMatrixClearBoxValues, ex->hmat, &ex->hbox, 7, indices, 0, 1);
   PetscCallExternal(HYPRE_StructMatrixAssemble, ex->hmat);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSetUp_HYPREStruct(Mat mat)
@@ -227,10 +226,10 @@ static PetscErrorCode MatSetUp_HYPREStruct(Mat mat)
   ex->gnxgny *= ex->gnx;
   PetscCall(DMDAGetCorners(ex->da, &ex->xs, &ex->ys, &ex->zs, &ex->nx, &ex->ny, 0));
   ex->nxny = ex->nx * ex->ny;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatMult_HYPREStruct(Mat A, Vec x, Vec y)
+static PetscErrorCode MatMult_HYPREStruct(Mat A, Vec x, Vec y)
 {
   const PetscScalar *xx;
   PetscScalar       *yy;
@@ -263,27 +262,27 @@ PetscErrorCode MatMult_HYPREStruct(Mat A, Vec x, Vec y)
   PetscCall(VecGetArray(y, &yy));
   PetscCallExternal(HYPRE_StructVectorGetBoxValues, mx->hx, hlower, hupper, (HYPRE_Complex *)yy);
   PetscCall(VecRestoreArray(y, &yy));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatAssemblyEnd_HYPREStruct(Mat mat, MatAssemblyType mode)
+static PetscErrorCode MatAssemblyEnd_HYPREStruct(Mat mat, MatAssemblyType mode)
 {
   Mat_HYPREStruct *ex = (Mat_HYPREStruct *)mat->data;
 
   PetscFunctionBegin;
   PetscCallExternal(HYPRE_StructMatrixAssemble, ex->hmat);
   /* PetscCallExternal(HYPRE_StructMatrixPrint,"dummy",ex->hmat,0); */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatZeroEntries_HYPREStruct(Mat mat)
+static PetscErrorCode MatZeroEntries_HYPREStruct(Mat mat)
 {
   PetscFunctionBegin;
   /* before the DMDA is set to the matrix the zero doesn't need to do anything */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatDestroy_HYPREStruct(Mat mat)
+static PetscErrorCode MatDestroy_HYPREStruct(Mat mat)
 {
   Mat_HYPREStruct *ex = (Mat_HYPREStruct *)mat->data;
 
@@ -294,7 +293,7 @@ PetscErrorCode MatDestroy_HYPREStruct(Mat mat)
   PetscCall(PetscObjectDereference((PetscObject)ex->da));
   PetscCallMPI(MPI_Comm_free(&(ex->hcomm)));
   PetscCall(PetscFree(ex));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode MatCreate_HYPREStruct(Mat B)
@@ -319,7 +318,8 @@ PETSC_EXTERN PetscErrorCode MatCreate_HYPREStruct(Mat B)
 
   PetscCallMPI(MPI_Comm_dup(PetscObjectComm((PetscObject)B), &(ex->hcomm)));
   PetscCall(PetscObjectChangeTypeName((PetscObject)B, MATHYPRESTRUCT));
-  PetscFunctionReturn(0);
+  PetscHYPREInitialize();
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -340,7 +340,7 @@ PETSC_EXTERN PetscErrorCode MatCreate_HYPREStruct(Mat B)
 .seealso: `Mat`
 M*/
 
-PetscErrorCode MatSetValuesLocal_HYPRESStruct_3d(Mat mat, PetscInt nrow, const PetscInt irow[], PetscInt ncol, const PetscInt icol[], const PetscScalar y[], InsertMode addv)
+static PetscErrorCode MatSetValuesLocal_HYPRESStruct_3d(Mat mat, PetscInt nrow, const PetscInt irow[], PetscInt ncol, const PetscInt icol[], const PetscScalar y[], InsertMode addv)
 {
   HYPRE_Int         index[3], *entries;
   PetscInt          i, j, stencil;
@@ -440,10 +440,10 @@ PetscErrorCode MatSetValuesLocal_HYPRESStruct_3d(Mat mat, PetscInt nrow, const P
     }
   }
   PetscCall(PetscFree(entries));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatZeroRowsLocal_HYPRESStruct_3d(Mat mat, PetscInt nrow, const PetscInt irow[], PetscScalar d, Vec x, Vec b)
+static PetscErrorCode MatZeroRowsLocal_HYPRESStruct_3d(Mat mat, PetscInt nrow, const PetscInt irow[], PetscScalar d, Vec x, Vec b)
 {
   HYPRE_Int         index[3], *entries;
   PetscInt          i;
@@ -499,10 +499,10 @@ PetscErrorCode MatZeroRowsLocal_HYPRESStruct_3d(Mat mat, PetscInt nrow, const Pe
   PetscCall(PetscFree(values[0]));
   PetscCall(PetscFree(values));
   PetscCall(PetscFree(entries));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatZeroEntries_HYPRESStruct_3d(Mat mat)
+static PetscErrorCode MatZeroEntries_HYPRESStruct_3d(Mat mat)
 {
   Mat_HYPRESStruct *ex    = (Mat_HYPRESStruct *)mat->data;
   PetscInt          nvars = ex->nvars;
@@ -528,7 +528,7 @@ PetscErrorCode MatZeroEntries_HYPRESStruct_3d(Mat mat)
     PetscCall(PetscFree2(entries, values));
   }
   PetscCallExternal(HYPRE_SStructMatrixAssemble, ex->ss_mat);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSetUp_HYPRESStruct(Mat mat)
@@ -697,10 +697,10 @@ static PetscErrorCode MatSetUp_HYPRESStruct(Mat mat)
 
   ex->nxny   = ex->nx * ex->ny;
   ex->nxnynz = ex->nz * ex->nxny;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatMult_HYPRESStruct(Mat A, Vec x, Vec y)
+static PetscErrorCode MatMult_HYPRESStruct(Mat A, Vec x, Vec y)
 {
   const PetscScalar *xx;
   PetscScalar       *yy;
@@ -772,26 +772,26 @@ PetscErrorCode MatMult_HYPRESStruct(Mat A, Vec x, Vec y)
     PetscCall(VecRestoreArray(y, &yy));
     PetscCall(PetscFree(z));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatAssemblyEnd_HYPRESStruct(Mat mat, MatAssemblyType mode)
+static PetscErrorCode MatAssemblyEnd_HYPRESStruct(Mat mat, MatAssemblyType mode)
 {
   Mat_HYPRESStruct *ex = (Mat_HYPRESStruct *)mat->data;
 
   PetscFunctionBegin;
   PetscCallExternal(HYPRE_SStructMatrixAssemble, ex->ss_mat);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatZeroEntries_HYPRESStruct(Mat mat)
+static PetscErrorCode MatZeroEntries_HYPRESStruct(Mat mat)
 {
   PetscFunctionBegin;
   /* before the DMDA is set to the matrix the zero doesn't need to do anything */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatDestroy_HYPRESStruct(Mat mat)
+static PetscErrorCode MatDestroy_HYPRESStruct(Mat mat)
 {
   Mat_HYPRESStruct      *ex = (Mat_HYPRESStruct *)mat->data;
   ISLocalToGlobalMapping ltog;
@@ -806,7 +806,7 @@ PetscErrorCode MatDestroy_HYPRESStruct(Mat mat)
   PetscCall(PetscObjectDereference((PetscObject)ex->da));
   PetscCallMPI(MPI_Comm_free(&(ex->hcomm)));
   PetscCall(PetscFree(ex));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode MatCreate_HYPRESStruct(Mat B)
@@ -831,5 +831,6 @@ PETSC_EXTERN PetscErrorCode MatCreate_HYPRESStruct(Mat B)
 
   PetscCallMPI(MPI_Comm_dup(PetscObjectComm((PetscObject)B), &(ex->hcomm)));
   PetscCall(PetscObjectChangeTypeName((PetscObject)B, MATHYPRESSTRUCT));
-  PetscFunctionReturn(0);
+  PetscHYPREInitialize();
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

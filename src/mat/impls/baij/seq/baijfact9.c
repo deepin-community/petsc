@@ -1,11 +1,9 @@
-
 /*
     Factorization code for BAIJ format.
 */
 #include <../src/mat/impls/baij/seq/baij.h>
 #include <petsc/private/kernels/blockinvert.h>
 
-/* ------------------------------------------------------------*/
 /*
       Version for when blocks are 5 by 5
 */
@@ -290,7 +288,7 @@ PetscErrorCode MatLUFactorNumeric_SeqBAIJ_5_inplace(Mat C, Mat A, const MatFacto
   C->assembled           = PETSC_TRUE;
 
   PetscCall(PetscLogFlops(1.333333333333 * 5 * 5 * 5 * b->mbs)); /* from inverting diagonal blocks */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* MatLUFactorNumeric_SeqBAIJ_5 -
@@ -402,7 +400,7 @@ PetscErrorCode MatLUFactorNumeric_SeqBAIJ_5(Mat B, Mat A, const MatFactorInfo *i
   C->assembled           = PETSC_TRUE;
 
   PetscCall(PetscLogFlops(1.333333333333 * 5 * 5 * 5 * n)); /* from inverting diagonal blocks */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -666,7 +664,7 @@ PetscErrorCode MatLUFactorNumeric_SeqBAIJ_5_NaturalOrdering_inplace(Mat C, Mat A
   C->assembled           = PETSC_TRUE;
 
   PetscCall(PetscLogFlops(1.333333333333 * 5 * 5 * 5 * b->mbs)); /* from inverting diagonal blocks */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatLUFactorNumeric_SeqBAIJ_5_NaturalOrdering(Mat B, Mat A, const MatFactorInfo *info)
@@ -764,5 +762,5 @@ PetscErrorCode MatLUFactorNumeric_SeqBAIJ_5_NaturalOrdering(Mat B, Mat A, const 
   C->assembled           = PETSC_TRUE;
 
   PetscCall(PetscLogFlops(1.333333333333 * 5 * 5 * 5 * n)); /* from inverting diagonal blocks */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

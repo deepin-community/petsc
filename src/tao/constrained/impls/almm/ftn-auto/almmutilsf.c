@@ -28,7 +28,6 @@ extern void PetscRmPointer(void*);
 #endif
 
 #include "petsctao.h"
-#include "petscvec.h"
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define taoalmmgettype_ TAOALMMGETTYPE
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)

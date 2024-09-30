@@ -6,8 +6,8 @@ class Configure(config.package.GNUPackage):
     config.package.GNUPackage.__init__(self, framework)
     self.minversion       = '1.8'
     self.versionname      = 'H5_VERSION'
-    self.download         = ['https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.1/src/hdf5-1.12.1.tar.bz2',
-                             'http://ftp.mcs.anl.gov/pub/petsc/externalpackages/hdf5-1.12.1.tar.bz2']
+    self.download         = ['https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.12/hdf5-1.12.2/src/hdf5-1.12.2.tar.bz2',
+                             'https://web.cels.anl.gov/projects/petsc/download/externalpackages/hdf5-1.12.2.tar.bz2']
     self.download_solaris = ['https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.6/src/hdf5-1.10.6.tar.bz2']
 # David Moulton reports that HDF5 configure can fail on NERSC systems and this can be worked around by removing the
 #   getpwuid from the test for ac_func in gethostname getpwuid getrusage lstat
@@ -70,8 +70,11 @@ class Configure(config.package.GNUPackage):
       args.append('--enable-parallel')
     if not self.argDB['download-hdf5-shared-libraries']:
       args.append('--enable-shared=0')
-    if hasattr(self.compilers, 'FC') and self.argDB['with-hdf5-fortran-bindings']:
-      args.append('--enable-fortran')
+    if self.argDB['with-hdf5-fortran-bindings']:
+      if hasattr(self.compilers, 'FC'):
+        args.append('--enable-fortran')
+      else:
+        raise RuntimeError('Cannot build HDF5 Fortran bindings --with-fc=0 or with a malfunctioning Fortran compiler.')
     if self.zlib.found:
       args.append('--with-zlib=yes')
     else:

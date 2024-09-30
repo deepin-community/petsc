@@ -319,6 +319,11 @@ extern void PetscRmPointer(void*);
 #define tscomputeexacterror_ tscomputeexacterror
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define tsresize_ TSRESIZE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define tsresize_ tsresize
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define tssolve_ TSSOLVE
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define tssolve_ tssolve
@@ -434,29 +439,9 @@ extern void PetscRmPointer(void*);
 #define tsgettolerances_ tsgettolerances
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define tserrorweightednorm2_ TSERRORWEIGHTEDNORM2
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define tserrorweightednorm2_ tserrorweightednorm2
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define tserrorweightednorminfinity_ TSERRORWEIGHTEDNORMINFINITY
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define tserrorweightednorminfinity_ tserrorweightednorminfinity
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define tserrorweightednorm_ TSERRORWEIGHTEDNORM
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define tserrorweightednorm_ tserrorweightednorm
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define tserrorweightedenorm2_ TSERRORWEIGHTEDENORM2
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define tserrorweightedenorm2_ tserrorweightedenorm2
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define tserrorweightedenorminfinity_ TSERRORWEIGHTEDENORMINFINITY
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define tserrorweightedenorminfinity_ tserrorweightedenorminfinity
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define tserrorweightedenorm_ TSERRORWEIGHTEDENORM
@@ -497,11 +482,6 @@ extern void PetscRmPointer(void*);
 #define tsgetstages_ TSGETSTAGES
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define tsgetstages_ tsgetstages
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define tssetfunctiondomainerror_ TSSETFUNCTIONDOMAINERROR
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define tssetfunctiondomainerror_ tssetfunctiondomainerror
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define tsfunctiondomainerror_ TSFUNCTIONDOMAINERROR
@@ -869,6 +849,11 @@ PETSC_EXTERN void  tscomputeexacterror_(TS ts,Vec u,Vec e, int *__ierr)
 	(Vec)PetscToPointer((u) ),
 	(Vec)PetscToPointer((e) ));
 }
+PETSC_EXTERN void  tsresize_(TS ts, int *__ierr)
+{
+*__ierr = TSResize(
+	(TS)PetscToPointer((ts) ));
+}
 PETSC_EXTERN void  tssolve_(TS ts,Vec u, int *__ierr)
 {
 *__ierr = TSSolve(
@@ -993,42 +978,12 @@ PETSC_EXTERN void  tsgettolerances_(TS ts,PetscReal *atol,Vec *vatol,PetscReal *
 *__ierr = TSGetTolerances(
 	(TS)PetscToPointer((ts) ),atol,vatol,rtol,vrtol);
 }
-PETSC_EXTERN void  tserrorweightednorm2_(TS ts,Vec U,Vec Y,PetscReal *norm,PetscReal *norma,PetscReal *normr, int *__ierr)
-{
-*__ierr = TSErrorWeightedNorm2(
-	(TS)PetscToPointer((ts) ),
-	(Vec)PetscToPointer((U) ),
-	(Vec)PetscToPointer((Y) ),norm,norma,normr);
-}
-PETSC_EXTERN void  tserrorweightednorminfinity_(TS ts,Vec U,Vec Y,PetscReal *norm,PetscReal *norma,PetscReal *normr, int *__ierr)
-{
-*__ierr = TSErrorWeightedNormInfinity(
-	(TS)PetscToPointer((ts) ),
-	(Vec)PetscToPointer((U) ),
-	(Vec)PetscToPointer((Y) ),norm,norma,normr);
-}
 PETSC_EXTERN void  tserrorweightednorm_(TS ts,Vec U,Vec Y,NormType *wnormtype,PetscReal *norm,PetscReal *norma,PetscReal *normr, int *__ierr)
 {
 *__ierr = TSErrorWeightedNorm(
 	(TS)PetscToPointer((ts) ),
 	(Vec)PetscToPointer((U) ),
 	(Vec)PetscToPointer((Y) ),*wnormtype,norm,norma,normr);
-}
-PETSC_EXTERN void  tserrorweightedenorm2_(TS ts,Vec E,Vec U,Vec Y,PetscReal *norm,PetscReal *norma,PetscReal *normr, int *__ierr)
-{
-*__ierr = TSErrorWeightedENorm2(
-	(TS)PetscToPointer((ts) ),
-	(Vec)PetscToPointer((E) ),
-	(Vec)PetscToPointer((U) ),
-	(Vec)PetscToPointer((Y) ),norm,norma,normr);
-}
-PETSC_EXTERN void  tserrorweightedenorminfinity_(TS ts,Vec E,Vec U,Vec Y,PetscReal *norm,PetscReal *norma,PetscReal *normr, int *__ierr)
-{
-*__ierr = TSErrorWeightedENormInfinity(
-	(TS)PetscToPointer((ts) ),
-	(Vec)PetscToPointer((E) ),
-	(Vec)PetscToPointer((U) ),
-	(Vec)PetscToPointer((Y) ),norm,norma,normr);
 }
 PETSC_EXTERN void  tserrorweightedenorm_(TS ts,Vec E,Vec U,Vec Y,NormType *wnormtype,PetscReal *norm,PetscReal *norma,PetscReal *normr, int *__ierr)
 {
@@ -1074,12 +1029,6 @@ PETSC_EXTERN void  tsgetstages_(TS ts,PetscInt *ns,Vec **Y, int *__ierr)
 {
 *__ierr = TSGetStages(
 	(TS)PetscToPointer((ts) ),ns,Y);
-}
-
-PETSC_EXTERN void  tssetfunctiondomainerror_(TS ts,PetscErrorCode (*func)(TS, PetscReal, Vec, PetscBool *), int *__ierr)
-{
-*__ierr = TSSetFunctionDomainError(
-	(TS)PetscToPointer((ts) ),func);
 }
 PETSC_EXTERN void  tsfunctiondomainerror_(TS ts,PetscReal *stagetime,Vec Y,PetscBool *accept, int *__ierr)
 {

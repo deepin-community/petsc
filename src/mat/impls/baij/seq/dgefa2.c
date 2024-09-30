@@ -1,4 +1,3 @@
-
 /*
      Inverts 2 by 2 matrix using gaussian elimination with partial pivoting.
 
@@ -141,7 +140,7 @@ PETSC_EXTERN PetscErrorCode PetscKernel_A_gets_inverse_A_2(MatScalar *a, PetscRe
     ax[1] = ay[1];
     ay[1] = stmp;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* gaussian elimination with partial pivoting */
@@ -304,7 +303,7 @@ PETSC_EXTERN PetscErrorCode PetscKernel_A_gets_inverse_A_9(MatScalar *a, PetscRe
       ay[8] = stmp;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -501,5 +500,5 @@ PETSC_EXTERN PetscErrorCode PetscKernel_A_gets_inverse_A_15(MatScalar *a, PetscI
       ay[14] = stmp;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

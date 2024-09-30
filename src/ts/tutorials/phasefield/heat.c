@@ -1,4 +1,3 @@
-
 static char help[] = "Solves heat equation in 1d.\n";
 
 /*
@@ -198,7 +197,7 @@ PetscErrorCode FormFunction(TS ts, PetscReal ftime, Vec X, Vec F, void *ptr)
   PetscCall(DMDAVecRestoreArrayRead(da, localX, &x));
   PetscCall(DMDAVecRestoreArray(da, F, &f));
   PetscCall(DMRestoreLocalVector(da, &localX));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------- */
@@ -246,7 +245,7 @@ PetscErrorCode FormInitialSolution(DM da, Vec U)
   */
   for (i = xs; i < xs + xm; i++) {
     x = i * hx;
-    r = PetscSqrtScalar((x - .5) * (x - .5));
+    r = PetscSqrtReal((x - .5) * (x - .5));
     if (r < .125) u[i] = 1.0;
     else u[i] = -.5;
 
@@ -265,7 +264,7 @@ PetscErrorCode FormInitialSolution(DM da, Vec U)
      Restore vectors
   */
   PetscCall(DMDAVecRestoreArray(da, U, &u));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -398,7 +397,7 @@ PetscErrorCode MyMonitor(TS ts, PetscInt step, PetscReal time, Vec U, void *ptr)
   PetscCall(PetscDrawFlush(draw));
   PetscCall(PetscDrawSetPause(draw, pause));
   PetscCall(PetscDrawPause(draw));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MyDestroy(void **ptr)
@@ -407,7 +406,7 @@ PetscErrorCode MyDestroy(void **ptr)
 
   PetscFunctionBegin;
   PetscCall(PetscDrawViewPortsDestroy(ctx->ports));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

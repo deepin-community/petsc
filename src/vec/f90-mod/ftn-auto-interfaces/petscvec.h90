@@ -1,11 +1,3 @@
-      subroutine VecCreateMPI(a,b,c,d,z)
-       import tVec
-       MPI_Comm a ! MPI_Comm
-       PetscInt b ! PetscInt
-       PetscInt c ! PetscInt
-       Vec d ! Vec
-       PetscErrorCode z
-       end subroutine VecCreateMPI
       subroutine VecGhostGetLocalForm(a,b,z)
        import tVec
        Vec a ! Vec
@@ -67,6 +59,14 @@
        Vec g ! Vec
        PetscErrorCode z
        end subroutine VecCreateGhostBlock
+      subroutine VecCreateMPI(a,b,c,d,z)
+       import tVec
+       MPI_Comm a ! MPI_Comm
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       Vec d ! Vec
+       PetscErrorCode z
+       end subroutine VecCreateMPI
       subroutine VecCreateMPICUDA(a,b,c,d,z)
        import tVec
        MPI_Comm a ! MPI_Comm
@@ -117,12 +117,6 @@
        Vec d ! Vec
        PetscErrorCode z
        end subroutine VecCreateShared
-      subroutine VecCreate(a,b,z)
-       import tVec
-       MPI_Comm a ! MPI_Comm
-       Vec b ! Vec
-       PetscErrorCode z
-       end subroutine VecCreate
       subroutine VecMaxPointwiseDivide(a,b,c,z)
        import tVec
        Vec a ! Vec
@@ -257,6 +251,15 @@
        Vec d (*) ! Vec
        PetscErrorCode z
        end subroutine VecMAXPY
+      subroutine VecMAXPBY(a,b,c,d,e,z)
+       import tVec
+       Vec a ! Vec
+       PetscInt b ! PetscInt
+       PetscScalar c (*) ! PetscScalar
+       PetscScalar d ! PetscScalar
+       Vec e (*) ! Vec
+       PetscErrorCode z
+       end subroutine VecMAXPBY
       subroutine VecConcatenate(a,b,c,d,z)
        import tVec,tIS
        PetscInt a ! PetscInt
@@ -341,6 +344,12 @@
        Vec a ! Vec
        PetscErrorCode z
        end subroutine VecLockPop
+      subroutine VecCreate(a,b,z)
+       import tVec
+       MPI_Comm a ! MPI_Comm
+       Vec b ! Vec
+       PetscErrorCode z
+       end subroutine VecCreate
       subroutine VecStashGetInfo(a,b,c,d,e,z)
        import tVec
        Vec a ! Vec
@@ -470,11 +479,6 @@
        PetscInt c ! PetscInt
        PetscErrorCode z
        end subroutine VecStashSetInitialSize
-      subroutine VecConjugate(a,z)
-       import tVec
-       Vec a ! Vec
-       PetscErrorCode z
-       end subroutine VecConjugate
       subroutine VecSetRandom(a,b,z)
        import tVec,tPetscRandom
        Vec a ! Vec
@@ -528,7 +532,7 @@
        PetscErrorCode z
        end subroutine VecSwap
       subroutine VecStashView(a,b,z)
-       import tVec,tPetscViewer
+       import tPetscViewer,tVec
        Vec a ! Vec
        PetscViewer b ! PetscViewer
        PetscErrorCode z
@@ -575,6 +579,25 @@
        PetscOffloadMask b ! PetscOffloadMask
        PetscErrorCode z
        end subroutine VecGetOffloadMask
+      subroutine VecErrorWeightedNorms(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,z)
+       import tVec
+       Vec a ! Vec
+       Vec b ! Vec
+       Vec c ! Vec
+       NormType d ! NormType
+       PetscReal e ! PetscReal
+       Vec f ! Vec
+       PetscReal g ! PetscReal
+       Vec h ! Vec
+       PetscReal i ! PetscReal
+       PetscReal j ! PetscReal
+       PetscInt k ! PetscInt
+       PetscReal l ! PetscReal
+       PetscInt m ! PetscInt
+       PetscReal n ! PetscReal
+       PetscInt o ! PetscInt
+       PetscErrorCode z
+       end subroutine VecErrorWeightedNorms
       subroutine PetscCommSplitReductionBegin(a,z)
        MPI_Comm a ! MPI_Comm
        PetscErrorCode z
@@ -771,19 +794,12 @@
        Vec d ! Vec
        PetscErrorCode z
        end subroutine VecMedian
-      subroutine VecChop(a,b,z)
+      subroutine VecFilter(a,b,z)
        import tVec
        Vec a ! Vec
        PetscReal b ! PetscReal
        PetscErrorCode z
-       end subroutine VecChop
-      subroutine PetscSectionVecView(a,b,c,z)
-       import tVec,tPetscViewer,tPetscSection
-       PetscSection a ! PetscSection
-       Vec b ! Vec
-       PetscViewer c ! PetscViewer
-       PetscErrorCode z
-       end subroutine PetscSectionVecView
+       end subroutine VecFilter
       subroutine VecStrideSet(a,b,c,z)
        import tVec
        Vec a ! Vec
@@ -922,11 +938,31 @@
        Vec a ! Vec
        PetscErrorCode z
        end subroutine VecLog
+      subroutine VecAbs(a,z)
+       import tVec
+       Vec a ! Vec
+       PetscErrorCode z
+       end subroutine VecAbs
+      subroutine VecConjugate(a,z)
+       import tVec
+       Vec a ! Vec
+       PetscErrorCode z
+       end subroutine VecConjugate
       subroutine VecSqrtAbs(a,z)
        import tVec
        Vec a ! Vec
        PetscErrorCode z
        end subroutine VecSqrtAbs
+      subroutine VecImaginaryPart(a,z)
+       import tVec
+       Vec a ! Vec
+       PetscErrorCode z
+       end subroutine VecImaginaryPart
+      subroutine VecRealPart(a,z)
+       import tVec
+       Vec a ! Vec
+       PetscErrorCode z
+       end subroutine VecRealPart
       subroutine VecDotNorm2(a,b,c,d,z)
        import tVec
        Vec a ! Vec
@@ -947,27 +983,12 @@
        PetscScalar b ! PetscScalar
        PetscErrorCode z
        end subroutine VecMean
-      subroutine VecImaginaryPart(a,z)
-       import tVec
-       Vec a ! Vec
-       PetscErrorCode z
-       end subroutine VecImaginaryPart
-      subroutine VecRealPart(a,z)
-       import tVec
-       Vec a ! Vec
-       PetscErrorCode z
-       end subroutine VecRealPart
       subroutine VecShift(a,b,z)
        import tVec
        Vec a ! Vec
        PetscScalar b ! PetscScalar
        PetscErrorCode z
        end subroutine VecShift
-      subroutine VecAbs(a,z)
-       import tVec
-       Vec a ! Vec
-       PetscErrorCode z
-       end subroutine VecAbs
       subroutine VecPermute(a,b,c,z)
        import tVec,tIS
        Vec a ! Vec
@@ -989,6 +1010,13 @@
        PetscScalar c ! PetscScalar
        PetscErrorCode z
        end subroutine VecUniqueEntries
+      subroutine PetscSectionVecView(a,b,c,z)
+       import tPetscViewer,tVec,tPetscSection
+       PetscSection a ! PetscSection
+       Vec b ! Vec
+       PetscViewer c ! PetscViewer
+       PetscErrorCode z
+       end subroutine PetscSectionVecView
       subroutine VecTaggerDestroy(a,z)
        import tVecTagger
        VecTagger a ! VecTagger

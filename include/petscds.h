@@ -1,8 +1,7 @@
 /*
       Objects which encapsulate discretizations+continuum residuals
 */
-#ifndef PETSCDS_H
-#define PETSCDS_H
+#pragma once
 
 #include <petscfe.h>
 #include <petscfv.h>
@@ -19,6 +18,8 @@ PETSC_EXTERN PetscErrorCode PetscWeakFormCopy(PetscWeakForm, PetscWeakForm);
 PETSC_EXTERN PetscErrorCode PetscWeakFormClear(PetscWeakForm);
 PETSC_EXTERN PetscErrorCode PetscWeakFormGetNumFields(PetscWeakForm, PetscInt *);
 PETSC_EXTERN PetscErrorCode PetscWeakFormSetNumFields(PetscWeakForm, PetscInt);
+PETSC_EXTERN PetscErrorCode PetscDSGetForceQuad(PetscDS, PetscBool *);
+PETSC_EXTERN PetscErrorCode PetscDSSetForceQuad(PetscDS, PetscBool);
 PETSC_EXTERN PetscErrorCode PetscFormKeySort(PetscInt, PetscFormKey[]);
 PETSC_EXTERN PetscErrorCode PetscWeakFormRewriteKeys(PetscWeakForm, DMLabel, PetscInt, const PetscInt[]);
 PETSC_EXTERN PetscErrorCode PetscWeakFormReplaceLabel(PetscWeakForm, DMLabel);
@@ -67,6 +68,7 @@ PETSC_EXTERN PetscErrorCode PetscWeakFormSetRiemannSolver(PetscWeakForm, DMLabel
 PETSC_EXTERN PetscErrorCode PetscWeakFormSetIndexRiemannSolver(PetscWeakForm, DMLabel, PetscInt, PetscInt, PetscInt, PetscInt, void (*)(PetscInt, PetscInt, const PetscReal[], const PetscReal[], const PetscScalar[], const PetscScalar[], PetscInt, const PetscScalar[], PetscScalar[], void *));
 
 PETSC_EXTERN PetscErrorCode PetscDSInitializePackage(void);
+PETSC_EXTERN PetscErrorCode PetscDSFinalizePackage(void);
 
 PETSC_EXTERN PetscClassId PETSCDS_CLASSID;
 
@@ -91,7 +93,23 @@ typedef void (*PetscPointJac)(PetscInt, PetscInt, PetscInt, const PetscInt[], co
 typedef void (*PetscBdPointFunc)(PetscInt, PetscInt, PetscInt, const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], PetscReal, const PetscReal[], const PetscReal[], PetscInt, const PetscScalar[], PetscScalar[]);
 typedef void (*PetscBdPointJac)(PetscInt, PetscInt, PetscInt, const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], PetscReal, PetscReal, const PetscReal[], const PetscReal[], PetscInt, const PetscScalar[], PetscScalar[]);
 typedef void (*PetscRiemannFunc)(PetscInt, PetscInt, const PetscReal[], const PetscReal[], const PetscScalar[], const PetscScalar[], PetscInt, const PetscScalar[], PetscScalar[], void *);
-typedef PetscErrorCode (*PetscSimplePointFunc)(PetscInt, PetscReal, const PetscReal[], PetscInt, PetscScalar[], void *);
+
+/*S
+  PetscSimplePointFunc - A simple pointwise function
+
+  Calling Sequence:
++ dim  - The coordinate dimension of the original mesh (usually a surface)
+. time - The current time, or 0.
+. x    - The location of the current normal, in the coordinate space of the original mesh
+. r    - The layer number of this point
+. u    - The user provides the computed normal on output
+- ctx  - An optional user context
+
+  Level: beginner
+
+.seealso: `DMPlexTransformExtrudeSetNormalFunction()`
+S*/
+PETSC_EXTERN_TYPEDEF typedef PetscErrorCode (*PetscSimplePointFunc)(PetscInt dim, PetscReal time, const PetscReal x[], PetscInt r, PetscScalar u[], void *ctx);
 
 PETSC_EXTERN PetscFunctionList PetscDSList;
 PETSC_EXTERN PetscErrorCode    PetscDSCreate(MPI_Comm, PetscDS *);
@@ -128,6 +146,7 @@ PETSC_EXTERN PetscErrorCode PetscDSGetComponentOffsets(PetscDS, PetscInt *[]);
 PETSC_EXTERN PetscErrorCode PetscDSGetComponentDerivativeOffsets(PetscDS, PetscInt *[]);
 PETSC_EXTERN PetscErrorCode PetscDSGetComponentOffsetsCohesive(PetscDS, PetscInt, PetscInt *[]);
 PETSC_EXTERN PetscErrorCode PetscDSGetComponentDerivativeOffsetsCohesive(PetscDS, PetscInt, PetscInt *[]);
+PETSC_EXTERN PetscErrorCode PetscDSPermuteQuadPoint(PetscDS, PetscInt, PetscInt, PetscInt, PetscInt *);
 
 PETSC_EXTERN PetscErrorCode PetscDSGetWeakForm(PetscDS, PetscWeakForm *);
 PETSC_EXTERN PetscErrorCode PetscDSSetWeakForm(PetscDS, PetscWeakForm);
@@ -183,6 +202,7 @@ PETSC_EXTERN PetscErrorCode PetscDSGetWorkspace(PetscDS, PetscReal **, PetscScal
 PETSC_EXTERN PetscErrorCode PetscDSCopyConstants(PetscDS, PetscDS);
 PETSC_EXTERN PetscErrorCode PetscDSCopyExactSolutions(PetscDS, PetscDS);
 PETSC_EXTERN PetscErrorCode PetscDSCopyEquations(PetscDS, PetscDS);
+PETSC_EXTERN PetscErrorCode PetscDSCopy(PetscDS, DM, PetscDS);
 PETSC_EXTERN PetscErrorCode PetscDSSelectDiscretizations(PetscDS, PetscInt, const PetscInt[], PetscDS);
 PETSC_EXTERN PetscErrorCode PetscDSSelectEquations(PetscDS, PetscInt, const PetscInt[], PetscDS);
 PETSC_EXTERN PetscErrorCode PetscDSAddBoundary(PetscDS, DMBoundaryConditionType, const char[], DMLabel, PetscInt, const PetscInt[], PetscInt, PetscInt, const PetscInt[], void (*)(void), void (*)(void), void *, PetscInt *);
@@ -192,5 +212,3 @@ PETSC_EXTERN PetscErrorCode PetscDSGetNumBoundary(PetscDS, PetscInt *);
 PETSC_EXTERN PetscErrorCode PetscDSGetBoundary(PetscDS, PetscInt, PetscWeakForm *, DMBoundaryConditionType *, const char *[], DMLabel *, PetscInt *, const PetscInt *[], PetscInt *, PetscInt *, const PetscInt *[], void (**)(void), void (**)(void), void **);
 PETSC_EXTERN PetscErrorCode PetscDSCopyBoundary(PetscDS, PetscInt, const PetscInt[], PetscDS);
 PETSC_EXTERN PetscErrorCode PetscDSDestroyBoundary(PetscDS);
-
-#endif

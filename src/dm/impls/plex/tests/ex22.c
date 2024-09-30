@@ -1,4 +1,3 @@
-
 const char help[] = "Test DMPlexCoordinatesToReference().\n\n";
 
 #include <petscdm.h>
@@ -87,15 +86,15 @@ static PetscErrorCode testIdentity(DM dm, PetscBool dmIsSimplicial, PetscInt cel
           offset += count;
         }
       }
-      PetscCall(PetscSNPrintfCount(strBuf + offset, BUFSIZ - offset, ")\n", &count));
-      PetscCall(PetscInfo(dm, "%s", strBuf));
+      PetscCall(PetscSNPrintfCount(strBuf + offset, BUFSIZ - offset, ")", &count));
+      PetscCall(PetscInfo(dm, "%s\n", strBuf));
     }
   }
 
   PetscCall(DMRestoreWorkArray(dm, dimR * numPoints, MPIU_REAL, &inverted));
   PetscCall(DMRestoreWorkArray(dm, dimC * numPoints, MPIU_REAL, &mapped));
   PetscCall(DMRestoreWorkArray(dm, dimR * numPoints, MPIU_REAL, &preimage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode identityEmbedding(PetscInt dim, PetscReal time, const PetscReal *x, PetscInt Nf, PetscScalar *u, void *ctx)
@@ -103,7 +102,7 @@ static PetscErrorCode identityEmbedding(PetscInt dim, PetscReal time, const Pets
   PetscInt i;
 
   for (i = 0; i < dim; i++) u[i] = x[i];
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 int main(int argc, char **argv)

@@ -34,7 +34,7 @@ static PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   PetscCall(PetscOptionsBool("-heterogeneous", "Test save on N / load on M", EX, options->heterogeneous, &options->heterogeneous, NULL));
   PetscCall(PetscOptionsInt("-ntimes", "How many times do the cycle", EX, options->ntimes, &options->ntimes, NULL));
   PetscOptionsEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 };
 
 //TODO test DMLabel I/O (not yet working for PETSC_VIEWER_HDF5_XDMF)
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
     args: -ntimes 3 -interpolated_dm_plex_interpolate_pre -redistributed_dm_distribute
     args: -loaded_dm_view -interpolated_dm_view -redistributed_dm_view
     test:
-      # this partitioner should not shuffle anything, it should yield the same partititioning as the XDMF reader - added just for testing
+      # this partitioner should not shuffle anything, it should yield the same partitioning as the XDMF reader - added just for testing
       suffix: simple
       args: -petscpartitioner_type simple
     test:

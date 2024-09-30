@@ -1,11 +1,11 @@
-#ifndef PETSC_CUPMEVENT_HPP
-#define PETSC_CUPMEVENT_HPP
+#pragma once
 
 #include <petsc/private/cupminterface.hpp>
 #include <petsc/private/cpp/memory.hpp>
 #include <petsc/private/cpp/object_pool.hpp>
 
-#if defined(__cplusplus)
+#include <stack>
+
 namespace Petsc
 {
 
@@ -15,42 +15,68 @@ namespace device
 namespace cupm
 {
 
-namespace
-{
-
 // A pool for allocating cupmEvent_t's. While events are generally very cheap to create and
 // destroy, they are not free. Using the pool vs on-demand creation and destruction yields a ~20%
 // speedup.
 template <DeviceType T, unsigned long flags>
-struct CUPMEventPoolAllocator : impl::Interface<T>, AllocatorBase<typename impl::Interface<T>::cupmEvent_t> {
-  PETSC_CUPM_INHERIT_INTERFACE_TYPEDEFS_USING(interface_type, T);
+class CUPMEventPool : impl::Interface<T>, public RegisterFinalizeable<CUPMEventPool<T, flags>> {
+public:
+  PETSC_CUPM_INHERIT_INTERFACE_TYPEDEFS_USING(T);
 
-  PETSC_NODISCARD static PetscErrorCode create(cupmEvent_t *) noexcept;
-  PETSC_NODISCARD static PetscErrorCode destroy(cupmEvent_t) noexcept;
+  PetscErrorCode allocate(cupmEvent_t *) noexcept;
+  PetscErrorCode deallocate(cupmEvent_t *) noexcept;
+
+  PetscErrorCode finalize_() noexcept;
+
+private:
+  std::stack<cupmEvent_t> pool_;
 };
 
 template <DeviceType T, unsigned long flags>
-inline PetscErrorCode CUPMEventPoolAllocator<T, flags>::create(cupmEvent_t *event) noexcept
+inline PetscErrorCode CUPMEventPool<T, flags>::finalize_() noexcept
 {
   PetscFunctionBegin;
-  PetscCallCUPM(cupmEventCreateWithFlags(event, flags));
-  PetscFunctionReturn(0);
+  while (!pool_.empty()) {
+    PetscCallCUPM(cupmEventDestroy(std::move(pool_.top())));
+    PetscCallCXX(pool_.pop());
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T, unsigned long flags>
-inline PetscErrorCode CUPMEventPoolAllocator<T, flags>::destroy(cupmEvent_t event) noexcept
+inline PetscErrorCode CUPMEventPool<T, flags>::allocate(cupmEvent_t *event) noexcept
 {
   PetscFunctionBegin;
-  PetscCallCUPM(cupmEventDestroy(event));
-  PetscFunctionReturn(0);
+  PetscAssertPointer(event, 1);
+  if (pool_.empty()) {
+    PetscCall(this->register_finalize());
+    PetscCallCUPM(cupmEventCreateWithFlags(event, flags));
+  } else {
+    PetscCallCXX(*event = std::move(pool_.top()));
+    PetscCallCXX(pool_.pop());
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-} // anonymous namespace
-
-template <DeviceType T, unsigned long flags, typename allocator_type = CUPMEventPoolAllocator<T, flags>, typename pool_type = ObjectPool<typename allocator_type::value_type, allocator_type>>
-pool_type &cupm_event_pool() noexcept
+template <DeviceType T, unsigned long flags>
+inline PetscErrorCode CUPMEventPool<T, flags>::deallocate(cupmEvent_t *in_event) noexcept
 {
-  static pool_type pool;
+  PetscFunctionBegin;
+  PetscAssertPointer(in_event, 1);
+  if (auto event = std::exchange(*in_event, cupmEvent_t{})) {
+    if (this->registered()) {
+      PetscCallCXX(pool_.push(std::move(event)));
+    } else {
+      PetscCallCUPM(cupmEventDestroy(event));
+    }
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+template <DeviceType T, unsigned long flags>
+CUPMEventPool<T, flags> &cupm_event_pool() noexcept
+{
+  static CUPMEventPool<T, flags> pool;
   return pool;
 }
 
@@ -72,11 +98,11 @@ inline auto cupm_timer_event_pool() noexcept -> decltype(cupm_event_pool<T, impl
 // event-stream pairing for the async allocator. It is also used as the data member of
 // PetscEvent.
 template <DeviceType T>
-class CUPMEvent : impl::Interface<T>, public memory::PoolAllocated<CUPMEvent<T>> {
-  using pool_type = memory::PoolAllocated<CUPMEvent<T>>;
+class CUPMEvent : impl::Interface<T>, public memory::PoolAllocated {
+  using pool_type = memory::PoolAllocated;
 
 public:
-  PETSC_CUPM_INHERIT_INTERFACE_TYPEDEFS_USING(interface_type, T);
+  PETSC_CUPM_INHERIT_INTERFACE_TYPEDEFS_USING(T);
 
   constexpr CUPMEvent() noexcept = default;
   ~CUPMEvent() noexcept;
@@ -88,8 +114,8 @@ public:
   CUPMEvent(const CUPMEvent &)            = delete;
   CUPMEvent &operator=(const CUPMEvent &) = delete;
 
-  PETSC_NODISCARD cupmEvent_t    get() noexcept;
-  PETSC_NODISCARD PetscErrorCode record(cupmStream_t) noexcept;
+  PETSC_NODISCARD cupmEvent_t get() noexcept;
+  PetscErrorCode              record(cupmStream_t) noexcept;
 
   explicit operator bool() const noexcept;
 
@@ -101,13 +127,14 @@ template <DeviceType T>
 inline CUPMEvent<T>::~CUPMEvent() noexcept
 {
   PetscFunctionBegin;
-  if (event_) PetscCallAbort(PETSC_COMM_SELF, cupm_fast_event_pool<T>().deallocate(std::move(event_)));
+  PetscCallAbort(PETSC_COMM_SELF, cupm_fast_event_pool<T>().deallocate(&event_));
   PetscFunctionReturnVoid();
 }
 
 template <DeviceType T>
-inline CUPMEvent<T>::CUPMEvent(CUPMEvent &&other) noexcept : interface_type(std::move(other)), pool_type(std::move(other)), event_(util::exchange(other.event_, cupmEvent_t{}))
+inline CUPMEvent<T>::CUPMEvent(CUPMEvent &&other) noexcept : pool_type(std::move(other)), event_(util::exchange(other.event_, cupmEvent_t{}))
 {
+  static_assert(std::is_empty<impl::Interface<T>>::value, "");
 }
 
 template <DeviceType T>
@@ -115,9 +142,8 @@ inline CUPMEvent<T> &CUPMEvent<T>::operator=(CUPMEvent &&other) noexcept
 {
   PetscFunctionBegin;
   if (this != &other) {
-    interface_type::operator=(std::move(other));
-    pool_type::     operator=(std::move(other));
-    if (event_) PetscCallAbort(PETSC_COMM_SELF, cupm_fast_event_pool<T>().deallocate(std::move(event_)));
+    pool_type::operator=(std::move(other));
+    PetscCallAbort(PETSC_COMM_SELF, cupm_fast_event_pool<T>().deallocate(&event_));
     event_ = util::exchange(other.event_, cupmEvent_t{});
   }
   PetscFunctionReturn(*this);
@@ -136,7 +162,7 @@ inline PetscErrorCode CUPMEvent<T>::record(cupmStream_t stream) noexcept
 {
   PetscFunctionBegin;
   PetscCallCUPM(cupmEventRecord(get(), stream));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
@@ -150,6 +176,3 @@ inline CUPMEvent<T>::operator bool() const noexcept
 } // namespace device
 
 } // namespace Petsc
-#endif // __cplusplus
-
-#endif // PETSC_CUPMEVENT_HPP

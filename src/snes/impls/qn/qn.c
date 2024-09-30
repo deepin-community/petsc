@@ -27,11 +27,14 @@ static PetscErrorCode SNESSolve_QN(SNES snes)
   Vec                  F, W;
   Vec                  Y, D, Dold;
   PetscInt             i, i_r;
-  PetscReal            fnorm, xnorm, ynorm, gnorm;
+  PetscReal            fnorm, xnorm, ynorm;
   SNESLineSearchReason lssucceed;
   PetscBool            badstep, powell, periodic;
   PetscScalar          DolddotD, DolddotDold;
   SNESConvergedReason  reason;
+#if defined(PETSC_USE_INFO)
+  PetscReal gnorm;
+#endif
 
   /* basically just a regular newton's method except for the application of the Jacobian */
 
@@ -61,7 +64,7 @@ static PetscErrorCode SNESSolve_QN(SNES snes)
     PetscCall(SNESGetConvergedReason(snes->npc, &reason));
     if (reason < 0 && reason != SNES_DIVERGED_MAX_IT) {
       snes->reason = SNES_DIVERGED_INNER;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
     PetscCall(VecNorm(F, NORM_2, &fnorm));
   } else {
@@ -77,7 +80,7 @@ static PetscErrorCode SNESSolve_QN(SNES snes)
     PetscCall(SNESGetConvergedReason(snes->npc, &reason));
     if (reason < 0 && reason != SNES_DIVERGED_MAX_IT) {
       snes->reason = SNES_DIVERGED_INNER;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
   } else {
     PetscCall(VecCopy(F, D));
@@ -90,8 +93,8 @@ static PetscErrorCode SNESSolve_QN(SNES snes)
   PetscCall(SNESMonitor(snes, 0, fnorm));
 
   /* test convergence */
-  PetscUseTypeMethod(snes, converged, 0, 0.0, 0.0, fnorm, &snes->reason, snes->cnvP);
-  if (snes->reason) PetscFunctionReturn(0);
+  PetscCall(SNESConverged(snes, 0, 0.0, 0.0, fnorm));
+  if (snes->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   if (snes->npc && snes->npcside == PC_RIGHT) {
     PetscCall(PetscLogEventBegin(SNES_NPCSolve, snes->npc, X, 0, 0));
@@ -100,7 +103,7 @@ static PetscErrorCode SNESSolve_QN(SNES snes)
     PetscCall(SNESGetConvergedReason(snes->npc, &reason));
     if (reason < 0 && reason != SNES_DIVERGED_MAX_IT) {
       snes->reason = SNES_DIVERGED_INNER;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
     PetscCall(SNESGetNPCFunction(snes, F, &fnorm));
     PetscCall(VecCopy(F, D));
@@ -124,7 +127,9 @@ static PetscErrorCode SNESSolve_QN(SNES snes)
 
     /* line search for lambda */
     ynorm = 1;
+#if defined(PETSC_USE_INFO)
     gnorm = fnorm;
+#endif
     PetscCall(VecCopy(D, Dold));
     PetscCall(VecCopy(X, Xold));
     PetscCall(SNESLineSearchApply(snes->linesearch, X, F, &fnorm, Y));
@@ -150,7 +155,7 @@ static PetscErrorCode SNESSolve_QN(SNES snes)
       PetscCall(SNESGetConvergedReason(snes->npc, &reason));
       if (reason < 0 && reason != SNES_DIVERGED_MAX_IT) {
         snes->reason = SNES_DIVERGED_INNER;
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
       PetscCall(SNESGetNPCFunction(snes, F, &fnorm));
     }
@@ -161,17 +166,17 @@ static PetscErrorCode SNESSolve_QN(SNES snes)
     snes->ynorm = ynorm;
 
     PetscCall(SNESLogConvergenceHistory(snes, snes->norm, snes->iter));
-    PetscCall(SNESMonitor(snes, snes->iter, snes->norm));
 
     /* set parameter for default relative tolerance convergence test */
-    PetscUseTypeMethod(snes, converged, snes->iter, xnorm, ynorm, fnorm, &snes->reason, snes->cnvP);
-    if (snes->reason) PetscFunctionReturn(0);
+    PetscCall(SNESConverged(snes, snes->iter, xnorm, ynorm, fnorm));
+    PetscCall(SNESMonitor(snes, snes->iter, snes->norm));
+    if (snes->reason) PetscFunctionReturn(PETSC_SUCCESS);
     if (snes->npc && snes->npcside == PC_LEFT && snes->functype == SNES_FUNCTION_UNPRECONDITIONED) {
       PetscCall(SNESApplyNPC(snes, X, F, D));
       PetscCall(SNESGetConvergedReason(snes->npc, &reason));
       if (reason < 0 && reason != SNES_DIVERGED_MAX_IT) {
         snes->reason = SNES_DIVERGED_INNER;
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
     } else {
       PetscCall(VecCopy(F, D));
@@ -218,11 +223,7 @@ static PetscErrorCode SNESSolve_QN(SNES snes)
       PetscCall(MatLMVMReset(qn->B, PETSC_FALSE));
     }
   }
-  if (i == snes->max_its) {
-    PetscCall(PetscInfo(snes, "Maximum number of iterations has been reached: %" PetscInt_FMT "\n", snes->max_its));
-    if (!snes->reason) snes->reason = SNES_DIVERGED_MAX_IT;
-  }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESSetUp_QN(SNES snes)
@@ -294,7 +295,7 @@ static PetscErrorCode SNESSetUp_QN(SNES snes)
   PetscCall(MatLMVMReset(qn->B, PETSC_TRUE));
   PetscCall(MatLMVMSetHistorySize(qn->B, qn->m));
   PetscCall(MatLMVMAllocate(qn->B, snes->vec_sol, snes->vec_func));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESReset_QN(SNES snes)
@@ -306,7 +307,7 @@ static PetscErrorCode SNESReset_QN(SNES snes)
     qn = (SNES_QN *)snes->data;
     PetscCall(MatDestroy(&qn->B));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESDestroy_QN(SNES snes)
@@ -317,7 +318,7 @@ static PetscErrorCode SNESDestroy_QN(SNES snes)
   PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESQNSetScaleType_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESQNSetRestartType_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESQNSetType_C", NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESSetFromOptions_QN(SNES snes, PetscOptionItems *PetscOptionsObject)
@@ -357,7 +358,7 @@ static PetscErrorCode SNESSetFromOptions_QN(SNES snes, PetscOptionItems *PetscOp
     }
   }
   if (qn->monflg) PetscCall(PetscViewerASCIIGetStdout(PetscObjectComm((PetscObject)snes), &qn->monitor));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESView_QN(SNES snes, PetscViewer viewer)
@@ -371,172 +372,143 @@ static PetscErrorCode SNESView_QN(SNES snes, PetscViewer viewer)
     PetscCall(PetscViewerASCIIPrintf(viewer, "  type is %s, restart type is %s, scale type is %s\n", SNESQNTypes[qn->type], SNESQNRestartTypes[qn->restart_type], SNESQNScaleTypes[qn->scale_type]));
     PetscCall(PetscViewerASCIIPrintf(viewer, "  Stored subspace size: %" PetscInt_FMT "\n", qn->m));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-    SNESQNSetRestartType - Sets the restart type for `SNESQN`.
+  SNESQNSetRestartType - Sets the restart type for `SNESQN`.
 
-    Logically Collective
+  Logically Collective
 
-    Input Parameters:
-+   snes - the iterative context
--   rtype - restart type
+  Input Parameters:
++ snes  - the iterative context
+- rtype - restart type, see `SNESQNRestartType`
 
-    Options Database Keys:
-+   -snes_qn_restart_type <powell,periodic,none> - set the restart type
--   -snes_qn_m <m> - sets the number of stored updates and the restart period for periodic
+  Options Database Keys:
++ -snes_qn_restart_type <powell,periodic,none> - set the restart type
+- -snes_qn_m <m>                               - sets the number of stored updates and the restart period for periodic
 
-    Level: intermediate
+  Level: intermediate
 
-    `SNESQNRestartType`s:
-+   `SNES_QN_RESTART_NONE` - never restart
-.   `SNES_QN_RESTART_POWELL` - restart based upon descent criteria
--   `SNES_QN_RESTART_PERIODIC` - restart after a fixed number of iterations
-
-.seealso: `SNESQN`, `SNESQNRestartType`, `SNES_QN_RESTART_NONE`, `SNES_QN_RESTART_POWELL`, `SNES_QN_RESTART_PERIODIC`
+.seealso: [](ch_snes), `SNES`, `SNESQN`, `SNESQNRestartType`, `SNES_QN_RESTART_NONE`, `SNES_QN_RESTART_POWELL`, `SNES_QN_RESTART_PERIODIC`,
+          `SNESQNType`, `SNESQNScaleType`
 @*/
 PetscErrorCode SNESQNSetRestartType(SNES snes, SNESQNRestartType rtype)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   PetscTryMethod(snes, "SNESQNSetRestartType_C", (SNES, SNESQNRestartType), (snes, rtype));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-    SNESQNSetScaleType - Sets the scaling type for the inner inverse Jacobian in `SNESQN`.
+  SNESQNSetScaleType - Sets the scaling type for the inner inverse Jacobian in `SNESQN`.
 
-    Logically Collective
+  Logically Collective
 
-    Input Parameters:
-+   snes - the nonlinear solver context
--   stype - scale type
+  Input Parameters:
++ snes  - the nonlinear solver context
+- stype - scale type, see `SNESQNScaleType`
 
-    Options Database Key:
-.   -snes_qn_scale_type <diagonal,none,scalar,jacobian> - Scaling type
+  Options Database Key:
+. -snes_qn_scale_type <diagonal,none,scalar,jacobian> - Scaling type
 
-    Level: intermediate
+  Level: intermediate
 
-    `SNESQNScaleType`s:
-+   `SNES_QN_SCALE_NONE` - don't scale the problem
-.   `SNES_QN_SCALE_SCALAR` - use Shanno scaling
-.   `SNES_QN_SCALE_DIAGONAL` - scale with a diagonalized BFGS formula (see Gilbert and Lemarechal 1989), available
--   `SNES_QN_SCALE_JACOBIAN` - scale by solving a linear system coming from the Jacobian you provided with SNESSetJacobian() computed at the first iteration
-                             of QN and at ever restart.
-
-.seealso: `SNES`, `SNESQN`, `SNESLineSearch`, `SNESQNScaleType`, `SNESSetJacobian()`
+.seealso: [](ch_snes), `SNES`, `SNESQN`, `SNESLineSearch`, `SNESQNScaleType`, `SNESSetJacobian()`, `SNESQNType`, `SNESQNRestartType`
 @*/
-
 PetscErrorCode SNESQNSetScaleType(SNES snes, SNESQNScaleType stype)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   PetscTryMethod(snes, "SNESQNSetScaleType_C", (SNES, SNESQNScaleType), (snes, stype));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SNESQNSetScaleType_QN(SNES snes, SNESQNScaleType stype)
+static PetscErrorCode SNESQNSetScaleType_QN(SNES snes, SNESQNScaleType stype)
 {
   SNES_QN *qn = (SNES_QN *)snes->data;
 
   PetscFunctionBegin;
   qn->scale_type = stype;
   if (stype == SNES_QN_SCALE_JACOBIAN) snes->usesksp = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SNESQNSetRestartType_QN(SNES snes, SNESQNRestartType rtype)
+static PetscErrorCode SNESQNSetRestartType_QN(SNES snes, SNESQNRestartType rtype)
 {
   SNES_QN *qn = (SNES_QN *)snes->data;
 
   PetscFunctionBegin;
   qn->restart_type = rtype;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-    SNESQNSetType - Sets the quasi-Newton variant to be used in `SNESQN`.
+  SNESQNSetType - Sets the quasi-Newton variant to be used in `SNESQN`.
 
-    Logically Collective
+  Logically Collective
 
-    Input Parameters:
-+   snes - the iterative context
--   qtype - variant type
+  Input Parameters:
++ snes  - the iterative context
+- qtype - variant type, see `SNESQNType`
 
-    Options Database Key:
-.   -snes_qn_type <lbfgs,broyden,badbroyden> - quasi-Newton type
+  Options Database Key:
+. -snes_qn_type <lbfgs,broyden,badbroyden> - quasi-Newton type
 
-    Level: beginner
+  Level: intermediate
 
-    `SNESQNType`s:
-+   `SNES_QN_LBFGS` - LBFGS variant
-.   `SNES_QN_BROYDEN` - Broyden variant
--   `SNES_QN_BADBROYDEN` - Bad Broyden variant
-
-.seealso: `SNESQN`, `SNES_QN_LBFGS`, `SNES_QN_BROYDEN`, `SNES_QN_BADBROYDEN`, `SNESQNType`, `TAOLMVM`, `TAOBLMVM`
+.seealso: [](ch_snes), `SNESQN`, `SNES_QN_LBFGS`, `SNES_QN_BROYDEN`, `SNES_QN_BADBROYDEN`, `SNESQNType`,  `SNESQNScaleType`, `TAOLMVM`, `TAOBLMVM`
 @*/
-
 PetscErrorCode SNESQNSetType(SNES snes, SNESQNType qtype)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   PetscTryMethod(snes, "SNESQNSetType_C", (SNES, SNESQNType), (snes, qtype));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SNESQNSetType_QN(SNES snes, SNESQNType qtype)
+static PetscErrorCode SNESQNSetType_QN(SNES snes, SNESQNType qtype)
 {
   SNES_QN *qn = (SNES_QN *)snes->data;
 
   PetscFunctionBegin;
   qn->type = qtype;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
       SNESQN - Limited-Memory Quasi-Newton methods for the solution of nonlinear systems.
 
       Options Database Keys:
-+     -snes_qn_m <m> - Number of past states saved for the L-Broyden methods.
-.     -snes_qn_restart_type <powell,periodic,none> - set the restart type
-.     -snes_qn_powell_gamma - Angle condition for restart.
-.     -snes_qn_powell_descent - Descent condition for restart.
-.     -snes_qn_type <lbfgs,broyden,badbroyden> - QN type
++     -snes_qn_m <m>                                      - Number of past states saved for the L-Broyden methods.
+.     -snes_qn_restart_type <powell,periodic,none>        - set the restart type
+.     -snes_qn_powell_gamma                               - Angle condition for restart.
+.     -snes_qn_powell_descent                             - Descent condition for restart.
+.     -snes_qn_type <lbfgs,broyden,badbroyden>            - QN type
 .     -snes_qn_scale_type <diagonal,none,scalar,jacobian> - scaling performed on inner Jacobian
-.     -snes_linesearch_type <cp, l2, basic> - Type of line search.
--     -snes_qn_monitor - Monitors the quasi-newton Jacobian.
-
-      References:
-+   * -   Kelley, C.T., Iterative Methods for Linear and Nonlinear Equations, Chapter 8, SIAM, 1995.
-.   * -   R. Byrd, J. Nocedal, R. Schnabel, Representations of Quasi Newton Matrices and their use in Limited Memory Methods,
-      Technical Report, Northwestern University, June 1992.
-.   * -   Peter N. Brown, Alan C. Hindmarsh, Homer F. Walker, Experiments with Quasi-Newton Methods in Solving Stiff ODE
-      Systems, SIAM J. Sci. Stat. Comput. Vol 6(2), April 1985.
-.   * -   Peter R. Brune, Matthew G. Knepley, Barry F. Smith, and Xuemin Tu, "Composing Scalable Nonlinear Algebraic Solvers",
-       SIAM Review, 57(4), 2015
-.   * -   Griewank, Andreas. "Broyden updating, the good and the bad!." Doc. Math (2012): 301-315.
-.   * -   Gilbert, Jean Charles, and Claude Lemar{\'e}chal. "Some numerical experiments with variable-storage quasi-Newton algorithms."
-      Mathematical programming 45.1-3 (1989): 407-435.
--   * -   Dener A., Munson T. "Accelerating Limited-Memory Quasi-Newton Convergence for Large-Scale Optimization"
-      Computational Science - ICCS 2019. ICCS 2019. Lecture Notes in Computer Science, vol 11538. Springer, Cham
+.     -snes_linesearch_type <cp, l2, basic>               - Type of line search.
+-     -snes_qn_monitor                                    - Monitors the quasi-newton Jacobian.
 
       Level: beginner
 
       Notes:
-      This implements the L-BFGS, Broyden, and "Bad" Broyden algorithms for the solution of F(x) = b using
-      previous change in F(x) and x to form the approximate inverse Jacobian using a series of multiplicative rank-one
+      This implements the L-BFGS, Broyden, and "Bad" Broyden algorithms for the solution of $F(x) = b$ using
+      previous change in $F(x)$ and $x$ to form the approximate inverse Jacobian using a series of multiplicative rank-one
       updates.
 
       When using a nonlinear preconditioner, one has two options as to how the preconditioner is applied.  The first of
       these options, sequential, uses the preconditioner to generate a new solution and function and uses those at this
       iteration as the current iteration's values when constructing the approximate Jacobian.  The second, composed,
-      perturbs the problem the Jacobian represents to be P(x, b) - x = 0, where P(x, b) is the preconditioner.
+      perturbs the problem the Jacobian represents to be $P(x, b) - x = 0 $, where $P(x, b)$ is the preconditioner.
 
       Uses left nonlinear preconditioning by default.
 
-.seealso: `SNESQNRestartType`, `SNESQNSetRestartType()`, `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESNEWTONLS`, `SNESNEWTONTR`,
-          `SNESQNScaleType`, `SNESQNSetScaleType()`, `SNESQNSetType`, `SNESQNSetType ()`
+      See {cite}`byrd1994representations`, {cite}`kelley95`, {cite}`brown1985experiments`, {cite}`griewank2012broyden`, {cite}`gilbert1989some`,
+      {cite}`dener2019accelerating`, and {cite}`bruneknepleysmithtu15`
+
+.seealso: [](ch_snes), `SNESQNRestartType`, `SNESQNSetRestartType()`, `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESNEWTONLS`, `SNESNEWTONTR`,
+          `SNESQNScaleType`, `SNESQNSetScaleType()`, `SNESQNType`, `SNESQNSetType()`
 M*/
 PETSC_EXTERN PetscErrorCode SNESCreate_QN(SNES snes)
 {
@@ -581,5 +553,5 @@ PETSC_EXTERN PetscErrorCode SNESCreate_QN(SNES snes)
   PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESQNSetScaleType_C", SNESQNSetScaleType_QN));
   PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESQNSetRestartType_C", SNESQNSetRestartType_QN));
   PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESQNSetType_C", SNESQNSetType_QN));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

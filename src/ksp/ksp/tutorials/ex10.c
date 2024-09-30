@@ -1,4 +1,3 @@
-
 static char help[] = "Solve a small system and a large system through preloading\n\
   Input arguments are:\n\
   -permute <natural,rcm,nd,...> : solve system in permuted indexing\n\
@@ -41,10 +40,10 @@ PetscErrorCode CheckResult(KSP *ksp, Mat *A, Vec *b, Vec *x, IS *rowperm)
   PetscCall(VecDestroy(x));
   PetscCall(VecDestroy(b));
   PetscCall(ISDestroy(rowperm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode CreateSystem(const char filename[PETSC_MAX_PATH_LEN], RHSType rhstype, MatOrderingType ordering, PetscBool permute, IS *rowperm_out, Mat *A_out, Vec *b_out, Vec *x_out)
+PetscErrorCode CreateSystem(const char filename[PETSC_MAX_PATH_LEN], RHSType rhstype, MatOrderingType ordering, PetscBool permute, IS *colperm_out, Mat *A_out, Vec *b_out, Vec *x_out)
 {
   Vec                x, b, b2;
   Mat                A;      /* linear system matrix */
@@ -112,18 +111,18 @@ PetscErrorCode CreateSystem(const char filename[PETSC_MAX_PATH_LEN], RHSType rhs
     Mat Aperm;
     PetscCall(MatGetOrdering(A, ordering, &rowperm, &colperm));
     PetscCall(MatPermute(A, rowperm, colperm, &Aperm));
-    PetscCall(VecPermute(b, colperm, PETSC_FALSE));
+    PetscCall(VecPermute(b, rowperm, PETSC_FALSE));
     PetscCall(MatDestroy(&A));
     A = Aperm; /* Replace original operator with permuted version */
-    PetscCall(ISDestroy(&colperm));
+    PetscCall(ISDestroy(&rowperm));
   }
 
   *b_out       = b;
   *x_out       = x;
   *A_out       = A;
-  *rowperm_out = rowperm;
+  *colperm_out = colperm;
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ATTENTION: this is the example used in the Profiling chapter of the PETSc manual,
@@ -138,7 +137,7 @@ int main(int argc, char **args)
   char      file[2][PETSC_MAX_PATH_LEN], ordering[256] = MATORDERINGRCM;
   RHSType   rhstype = RHS_FILE;
   PetscBool flg, preload = PETSC_FALSE, trans = PETSC_FALSE, permute = PETSC_FALSE;
-  IS        rowperm = NULL;
+  IS        colperm = NULL;
 
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &args, (char *)0, help));
@@ -154,7 +153,7 @@ int main(int argc, char **args)
     PetscCall(PetscOptionsFList("-permute", "Permute matrix and vector to solve in new ordering", "", MatOrderingList, ordering, ordering, sizeof(ordering), &permute));
 
     if (flg) {
-      PetscCall(PetscStrcpy(file[1], file[0]));
+      PetscCall(PetscStrncpy(file[1], file[0], sizeof(file[1])));
       preload = PETSC_FALSE;
     } else {
       PetscCall(PetscOptionsString("-f0", "First file to load (small system)", "", file[0], file[0], sizeof(file[0]), &flg));
@@ -201,7 +200,7 @@ int main(int argc, char **args)
     =========================*/
 
   PetscPreLoadBegin(preload, "Load System 0");
-  PetscCall(CreateSystem(file[0], rhstype, ordering, permute, &rowperm, &A, &b, &x));
+  PetscCall(CreateSystem(file[0], rhstype, ordering, permute, &colperm, &A, &b, &x));
 
   PetscPreLoadStage("KSPSetUp 0");
   PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
@@ -221,9 +220,9 @@ int main(int argc, char **args)
   if (trans) PetscCall(KSPSolveTranspose(ksp, b, x));
   else PetscCall(KSPSolve(ksp, b, x));
 
-  if (permute) PetscCall(VecPermute(x, rowperm, PETSC_TRUE));
+  if (permute) PetscCall(VecPermute(x, colperm, PETSC_TRUE));
 
-  PetscCall(CheckResult(&ksp, &A, &b, &x, &rowperm));
+  PetscCall(CheckResult(&ksp, &A, &b, &x, &colperm));
 
   /*=========================
     solve a large system
@@ -231,7 +230,7 @@ int main(int argc, char **args)
 
   PetscPreLoadStage("Load System 1");
 
-  PetscCall(CreateSystem(file[1], rhstype, ordering, permute, &rowperm, &A, &b, &x));
+  PetscCall(CreateSystem(file[1], rhstype, ordering, permute, &colperm, &A, &b, &x));
 
   PetscPreLoadStage("KSPSetUp 1");
   PetscCall(KSPCreate(PETSC_COMM_WORLD, &ksp));
@@ -251,9 +250,9 @@ int main(int argc, char **args)
   if (trans) PetscCall(KSPSolveTranspose(ksp, b, x));
   else PetscCall(KSPSolve(ksp, b, x));
 
-  if (permute) PetscCall(VecPermute(x, rowperm, PETSC_TRUE));
+  if (permute) PetscCall(VecPermute(x, colperm, PETSC_TRUE));
 
-  PetscCall(CheckResult(&ksp, &A, &b, &x, &rowperm));
+  PetscCall(CheckResult(&ksp, &A, &b, &x, &colperm));
 
   PetscPreLoadEnd();
   /*

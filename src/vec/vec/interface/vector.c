@@ -15,55 +15,55 @@ PetscLogEvent VEC_SetRandom, VEC_ReduceArithmetic, VEC_ReduceCommunication, VEC_
 PetscLogEvent VEC_DotNorm2, VEC_AXPBYPCZ;
 PetscLogEvent VEC_ViennaCLCopyFromGPU, VEC_ViennaCLCopyToGPU;
 PetscLogEvent VEC_CUDACopyFromGPU, VEC_CUDACopyToGPU;
-PetscLogEvent VEC_CUDACopyFromGPUSome, VEC_CUDACopyToGPUSome;
 PetscLogEvent VEC_HIPCopyFromGPU, VEC_HIPCopyToGPU;
-PetscLogEvent VEC_HIPCopyFromGPUSome, VEC_HIPCopyToGPUSome;
 
 /*@
-   VecStashGetInfo - Gets how many values are currently in the vector stash, i.e. need
-       to be communicated to other processors during the VecAssemblyBegin/End() process
+  VecStashGetInfo - Gets how many values are currently in the vector stash, i.e. need
+  to be communicated to other processors during the `VecAssemblyBegin()`/`VecAssemblyEnd()` process
 
-    Not collective
+  Not Collective
 
-   Input Parameter:
-.   vec - the vector
+  Input Parameter:
+. vec - the vector
 
-   Output Parameters:
-+   nstash   - the size of the stash
-.   reallocs - the number of additional mallocs incurred.
-.   bnstash   - the size of the block stash
--   breallocs - the number of additional mallocs incurred.in the block stash
+  Output Parameters:
++ nstash    - the size of the stash
+. reallocs  - the number of additional mallocs incurred in building the stash
+. bnstash   - the size of the block stash
+- breallocs - the number of additional mallocs incurred in building the block stash (from `VecSetValuesBlocked()`)
 
-   Level: advanced
+  Level: advanced
 
-.seealso: [](chapter_vectors), `Vec`, `VecAssemblyBegin()`, `VecAssemblyEnd()`, `Vec`, `VecStashSetInitialSize()`, `VecStashView()`
+.seealso: [](ch_vectors), `Vec`, `VecAssemblyBegin()`, `VecAssemblyEnd()`, `VecStashSetInitialSize()`, `VecStashView()`
 @*/
 PetscErrorCode VecStashGetInfo(Vec vec, PetscInt *nstash, PetscInt *reallocs, PetscInt *bnstash, PetscInt *breallocs)
 {
   PetscFunctionBegin;
   PetscCall(VecStashGetInfo_Private(&vec->stash, nstash, reallocs));
   PetscCall(VecStashGetInfo_Private(&vec->bstash, bnstash, breallocs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecSetLocalToGlobalMapping - Sets a local numbering to global numbering used
-   by the routine `VecSetValuesLocal()` to allow users to insert vector entries
-   using a local (per-processor) numbering.
+  VecSetLocalToGlobalMapping - Sets a local numbering to global numbering used
+  by the routine `VecSetValuesLocal()` to allow users to insert vector entries
+  using a local (per-processor) numbering.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  x - vector
--  mapping - mapping created with ISLocalToGlobalMappingCreate() or ISLocalToGlobalMappingCreateIS()
+  Input Parameters:
++ x       - vector
+- mapping - mapping created with `ISLocalToGlobalMappingCreate()` or `ISLocalToGlobalMappingCreateIS()`
 
-   Level: intermediate
+  Level: intermediate
 
- Note:
-   All vectors obtained with `VecDuplicate()` from this vector inherit the same mapping.
+  Notes:
+  All vectors obtained with `VecDuplicate()` from this vector inherit the same mapping.
 
-seealso: [](chapter_vectors), `Vec`, `VecAssemblyBegin()`, `VecAssemblyEnd()`, `VecSetValues()`, `VecSetValuesLocal()`,
-           `VecSetLocalToGlobalMapping()`, `VecSetValuesBlockedLocal()`
+  Vectors obtained with `DMCreateGlobaVector()` will often have this attribute attached to the vector so this call is not needed
+
+.seealso: [](ch_vectors), `Vec`, `VecAssemblyBegin()`, `VecAssemblyEnd()`, `VecSetValues()`, `VecSetValuesLocal()`,
+           `VecGetLocalToGlobalMapping()`, `VecSetValuesBlockedLocal()`
 @*/
 PetscErrorCode VecSetLocalToGlobalMapping(Vec x, ISLocalToGlobalMapping mapping)
 {
@@ -72,46 +72,46 @@ PetscErrorCode VecSetLocalToGlobalMapping(Vec x, ISLocalToGlobalMapping mapping)
   if (mapping) PetscValidHeaderSpecific(mapping, IS_LTOGM_CLASSID, 2);
   if (x->ops->setlocaltoglobalmapping) PetscUseTypeMethod(x, setlocaltoglobalmapping, mapping);
   else PetscCall(PetscLayoutSetISLocalToGlobalMapping(x->map, mapping));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecGetLocalToGlobalMapping - Gets the local-to-global numbering set by `VecSetLocalToGlobalMapping()`
+  VecGetLocalToGlobalMapping - Gets the local-to-global numbering set by `VecSetLocalToGlobalMapping()`
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  X - the vector
+  Input Parameter:
+. X - the vector
 
-   Output Parameter:
-.  mapping - the mapping
+  Output Parameter:
+. mapping - the mapping
 
-   Level: advanced
+  Level: advanced
 
-.seealso: [](chapter_vectors), `Vec`, `VecSetValuesLocal()`
+.seealso: [](ch_vectors), `Vec`, `VecSetValuesLocal()`, `VecSetLocalToGlobalMapping()`
 @*/
 PetscErrorCode VecGetLocalToGlobalMapping(Vec X, ISLocalToGlobalMapping *mapping)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(X, VEC_CLASSID, 1);
   PetscValidType(X, 1);
-  PetscValidPointer(mapping, 2);
+  PetscAssertPointer(mapping, 2);
   *mapping = X->map->mapping;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecAssemblyBegin - Begins assembling the vector.  This routine should
-   be called after completing all calls to `VecSetValues()`.
+  VecAssemblyBegin - Begins assembling the vector; that is ensuring all the vector's entries are stored on the correct MPI process. This routine should
+  be called after completing all calls to `VecSetValues()`.
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  vec - the vector
+  Input Parameter:
+. vec - the vector
 
-   Level: beginner
+  Level: beginner
 
-.seealso: [](chapter_vectors), `Vec`, `VecAssemblyEnd()`, `VecSetValues()`
+.seealso: [](ch_vectors), `Vec`, `VecAssemblyEnd()`, `VecSetValues()`
 @*/
 PetscErrorCode VecAssemblyBegin(Vec vec)
 {
@@ -123,30 +123,29 @@ PetscErrorCode VecAssemblyBegin(Vec vec)
   PetscTryTypeMethod(vec, assemblybegin);
   PetscCall(PetscLogEventEnd(VEC_AssemblyBegin, vec, 0, 0, 0));
   PetscCall(PetscObjectStateIncrease((PetscObject)vec));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecAssemblyEnd - Completes assembling the vector.  This routine should
-   be called after `VecAssemblyBegin()`.
+  VecAssemblyEnd - Completes assembling the vector.  This routine should be called after `VecAssemblyBegin()`.
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  vec - the vector
+  Input Parameter:
+. vec - the vector
 
-   Options Database Keys:
-+  -vec_view - Prints vector in `PETSC_VIEWER_DEFAULT` format
-.  -vec_view ::ascii_matlab - Prints vector in `PETSC_VIEWER_ASCII_MATLAB` format to stdout
-.  -vec_view matlab:filename - Prints vector in MATLAB .mat file to filename (requires PETSc configured with --with-matlab)
-.  -vec_view draw - Activates vector viewing using drawing tools
-.  -display <name> - Sets display name (default is host)
-.  -draw_pause <sec> - Sets number of seconds to pause after display
--  -vec_view socket - Activates vector viewing using a socket
+  Options Database Keys:
++ -vec_view                 - Prints vector in `PETSC_VIEWER_DEFAULT` format
+. -vec_view ::ascii_matlab  - Prints vector in `PETSC_VIEWER_ASCII_MATLAB` format to stdout
+. -vec_view matlab:filename - Prints vector in MATLAB .mat file to filename (requires PETSc configured with --with-matlab)
+. -vec_view draw            - Activates vector viewing using drawing tools
+. -display <name>           - Sets display name (default is host)
+. -draw_pause <sec>         - Sets number of seconds to pause after display
+- -vec_view socket          - Activates vector viewing using a socket
 
-   Level: beginner
+  Level: beginner
 
-.seealso: [](chapter_vectors), `Vec`, `VecAssemblyBegin()`, `VecSetValues()`
+.seealso: [](ch_vectors), `Vec`, `VecAssemblyBegin()`, `VecSetValues()`
 @*/
 PetscErrorCode VecAssemblyEnd(Vec vec)
 {
@@ -157,36 +156,40 @@ PetscErrorCode VecAssemblyEnd(Vec vec)
   PetscTryTypeMethod(vec, assemblyend);
   PetscCall(PetscLogEventEnd(VEC_AssemblyEnd, vec, 0, 0, 0));
   PetscCall(VecViewFromOptions(vec, NULL, "-vec_view"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecSetPreallocationCOO - set preallocation for a vector using a coordinate format of the entries with global indices
+  VecSetPreallocationCOO - set preallocation for a vector using a coordinate format of the entries with global indices
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  x - vector being preallocated
-.  ncoo - number of entries
--  coo_i - entry indices
+  Input Parameters:
++ x     - vector being preallocated
+. ncoo  - number of entries
+- coo_i - entry indices
 
-   Level: beginner
+  Level: beginner
 
-   Notes:
-   Entries can be repeated, see `VecSetValuesCOO()`. Negative indices are not allowed unless vector option `VEC_IGNORE_NEGATIVE_INDICES` is set,
-   in which case they, along with the corresponding entries in `VecSetValuesCOO()`, are ignored. If vector option `VEC_NO_OFF_PROC_ENTRIES` is set,
-   remote entries are ignored, otherwise, they will be properly added or inserted to the vector.
+  Notes:
+  This and `VecSetValuesCOO()` provide an alternative API to using `VecSetValues()` to provide vector values.
 
-   The array coo_i[] may be freed immediately after calling this function.
+  This API is particularly efficient for use on GPUs.
 
-.seealso: [](chapter_vectors), `Vec`, VecSetValuesCOO(), VecSetPreallocationCOOLocal()
+  Entries can be repeated, see `VecSetValuesCOO()`. Negative indices are not allowed unless vector option `VEC_IGNORE_NEGATIVE_INDICES` is set,
+  in which case they, along with the corresponding entries in `VecSetValuesCOO()`, are ignored. If vector option `VEC_NO_OFF_PROC_ENTRIES` is set,
+  remote entries are ignored, otherwise, they will be properly added or inserted to the vector.
+
+  The array coo_i[] may be freed immediately after calling this function.
+
+.seealso: [](ch_vectors), `Vec`, `VecSetValuesCOO()`, `VecSetPreallocationCOOLocal()`
 @*/
 PetscErrorCode VecSetPreallocationCOO(Vec x, PetscCount ncoo, const PetscInt coo_i[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
   PetscValidType(x, 1);
-  if (ncoo) PetscValidIntPointer(coo_i, 3);
+  if (ncoo) PetscAssertPointer(coo_i, 3);
   PetscCall(PetscLogEventBegin(VEC_SetPreallocateCOO, x, 0, 0, 0));
   PetscCall(PetscLayoutSetUp(x->map));
   if (x->ops->setpreallocationcoo) {
@@ -200,32 +203,36 @@ PetscErrorCode VecSetPreallocationCOO(Vec x, PetscCount ncoo, const PetscInt coo
     PetscCall(ISDestroy(&is_coo_i));
   }
   PetscCall(PetscLogEventEnd(VEC_SetPreallocateCOO, x, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecSetPreallocationCOOLocal - set preallocation for vectors using a coordinate format of the entries with local indices
+  VecSetPreallocationCOOLocal - set preallocation for vectors using a coordinate format of the entries with local indices
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  x - vector being preallocated
-.  ncoo - number of entries
--  coo_i - row indices (local numbering; may be modified)
+  Input Parameters:
++ x     - vector being preallocated
+. ncoo  - number of entries
+- coo_i - row indices (local numbering; may be modified)
 
-   Level: beginner
+  Level: beginner
 
-   Notes:
-   The local indices are translated using the local to global mapping, thus `VecSetLocalToGlobalMapping()` must have been
-   called prior to this function.
+  Notes:
+  This and `VecSetValuesCOO()` provide an alternative API to using `VecSetValuesLocal()` to provide vector values.
 
-   The indices coo_i may be modified within this function. They might be translated to corresponding global
-   indices, but the caller should not rely on them having any specific value after this function returns. The arrays
-   can be freed or reused immediately after this function returns.
+  This API is particularly efficient for use on GPUs.
 
-   Entries can be repeated. Negative indices and remote indices might be allowed. see `VecSetPreallocationCOO()`.
+  The local indices are translated using the local to global mapping, thus `VecSetLocalToGlobalMapping()` must have been
+  called prior to this function.
 
-.seealso: [](chapter_vectors), `Vec`, VecSetPreallocationCOO(), VecSetValuesCOO()
+  The indices coo_i may be modified within this function. They might be translated to corresponding global
+  indices, but the caller should not rely on them having any specific value after this function returns. The arrays
+  can be freed or reused immediately after this function returns.
+
+  Entries can be repeated. Negative indices and remote indices might be allowed. see `VecSetPreallocationCOO()`.
+
+.seealso: [](ch_vectors), `Vec`, `VecSetPreallocationCOO()`, `VecSetValuesCOO()`
 @*/
 PetscErrorCode VecSetPreallocationCOOLocal(Vec x, PetscCount ncoo, PetscInt coo_i[])
 {
@@ -234,34 +241,38 @@ PetscErrorCode VecSetPreallocationCOOLocal(Vec x, PetscCount ncoo, PetscInt coo_
   PetscFunctionBegin;
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
   PetscValidType(x, 1);
-  if (ncoo) PetscValidIntPointer(coo_i, 3);
+  if (ncoo) PetscAssertPointer(coo_i, 3);
   PetscCheck(ncoo <= PETSC_MAX_INT, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "ncoo %" PetscCount_FMT " overflowed PetscInt; configure --with-64-bit-indices or request support", ncoo);
   PetscCall(PetscLayoutSetUp(x->map));
   PetscCall(VecGetLocalToGlobalMapping(x, &ltog));
   if (ltog) PetscCall(ISLocalToGlobalMappingApply(ltog, ncoo, coo_i, coo_i));
   PetscCall(VecSetPreallocationCOO(x, ncoo, coo_i));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecSetValuesCOO - set values at once in a vector preallocated using `VecSetPreallocationCOO()`
+  VecSetValuesCOO - set values at once in a vector preallocated using `VecSetPreallocationCOO()`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  x - vector being set
-.  coo_v - the value array
--  imode - the insert mode
+  Input Parameters:
++ x     - vector being set
+. coo_v - the value array
+- imode - the insert mode
 
-   Level: beginner
+  Level: beginner
 
-   Note:
-   The values must follow the order of the indices prescribed with `VecSetPreallocationCOO()` or `VecSetPreallocationCOOLocal()`.
-   When repeated entries are specified in the COO indices the coo_v values are first properly summed, regardless of the value of imode.
-   The imode flag indicates if coo_v must be added to the current values of the vector (`ADD_VALUES`) or overwritten (`INSERT_VALUES`).
-   `VecAssemblyBegin()` and `VecAssemblyEnd()` do not need to be called after this routine. It automatically handles the assembly process.
+  Note:
+  This and `VecSetPreallocationCOO() or ``VecSetPreallocationCOOLocal()` provide an alternative API to using `VecSetValues()` to provide vector values.
 
-.seealso: [](chapter_vectors), `Vec`, VecSetPreallocationCOO(), VecSetPreallocationCOOLocal(), VecSetValues()
+  This API is particularly efficient for use on GPUs.
+
+  The values must follow the order of the indices prescribed with `VecSetPreallocationCOO()` or `VecSetPreallocationCOOLocal()`.
+  When repeated entries are specified in the COO indices the `coo_v` values are first properly summed, regardless of the value of `imode`.
+  The imode flag indicates if `coo_v` must be added to the current values of the vector (`ADD_VALUES`) or overwritten (`INSERT_VALUES`).
+  `VecAssemblyBegin()` and `VecAssemblyEnd()` do not need to be called after this routine. It automatically handles the assembly process.
+
+.seealso: [](ch_vectors), `Vec`, `VecSetPreallocationCOO()`, `VecSetPreallocationCOOLocal()`, `VecSetValues()`
 @*/
 PetscErrorCode VecSetValuesCOO(Vec x, const PetscScalar coo_v[], InsertMode imode)
 {
@@ -292,11 +303,13 @@ PetscErrorCode VecSetValuesCOO(Vec x, const PetscScalar coo_v[], InsertMode imod
     PetscCall(VecAssemblyEnd(x));
   }
   PetscCall(PetscLogEventEnd(VEC_SetValuesCOO, x, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-static PetscErrorCode VecPointwiseApply_Private(Vec w, Vec x, Vec y, PetscLogEvent event, PetscErrorCode (*const pointwise_op)(Vec, Vec, Vec))
+static PetscErrorCode VecPointwiseApply_Private(Vec w, Vec x, Vec y, PetscDeviceContext dctx, PetscLogEvent event, const char async_name[], PetscErrorCode (*const pointwise_op)(Vec, Vec, Vec))
 {
+  PetscErrorCode (*async_fn)(Vec, Vec, Vec, PetscDeviceContext) = NULL;
+
   PetscFunctionBegin;
   PetscValidHeaderSpecific(w, VEC_CLASSID, 1);
   PetscValidHeaderSpecific(x, VEC_CLASSID, 2);
@@ -308,185 +321,224 @@ static PetscErrorCode VecPointwiseApply_Private(Vec w, Vec x, Vec y, PetscLogEve
   PetscCheckSameTypeAndComm(y, 3, w, 1);
   VecCheckSameSize(w, 1, x, 2);
   VecCheckSameSize(w, 1, y, 3);
+  VecCheckAssembled(x);
+  VecCheckAssembled(y);
   PetscCall(VecSetErrorIfLocked(w, 1));
   PetscValidFunction(pointwise_op, 5);
 
+  if (dctx) PetscCall(PetscObjectQueryFunction((PetscObject)w, async_name, &async_fn));
   if (event) PetscCall(PetscLogEventBegin(event, x, y, w, 0));
-  PetscCall((*pointwise_op)(w, x, y));
+  if (async_fn) {
+    PetscCall((*async_fn)(w, x, y, dctx));
+  } else {
+    PetscCall((*pointwise_op)(w, x, y));
+  }
   if (event) PetscCall(PetscLogEventEnd(event, x, y, w, 0));
   PetscCall(PetscObjectStateIncrease((PetscObject)w));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode VecPointwiseMaxAsync_Private(Vec w, Vec x, Vec y, PetscDeviceContext dctx)
+{
+  PetscFunctionBegin;
+  // REVIEW ME: no log event?
+  PetscCall(VecPointwiseApply_Private(w, x, y, dctx, 0, VecAsyncFnName(PointwiseMax), w->ops->pointwisemax));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecPointwiseMax - Computes the component-wise maximum `w[i] = max(x[i], y[i])`.
+  VecPointwiseMax - Computes the component-wise maximum `w[i] = max(x[i], y[i])`.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  x - the first input vector
--  y - the second input vector
+  Input Parameters:
++ x - the first input vector
+- y - the second input vector
 
-   Output Parameter:
-.  w - the result
+  Output Parameter:
+. w - the result
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   Any subset of the `x`, `y`, and `w` may be the same vector.
+  Notes:
+  Any subset of the `x`, `y`, and `w` may be the same vector.
 
-   For complex numbers compares only the real part
+  For complex numbers compares only the real part
 
-.seealso: [](chapter_vectors), `Vec`, `VecPointwiseDivide()`, `VecPointwiseMult()`, `VecPointwiseMin()`, `VecPointwiseMaxAbs()`, `VecMaxPointwiseDivide()`
+.seealso: [](ch_vectors), `Vec`, `VecPointwiseDivide()`, `VecPointwiseMult()`, `VecPointwiseMin()`, `VecPointwiseMaxAbs()`, `VecMaxPointwiseDivide()`
 @*/
 PetscErrorCode VecPointwiseMax(Vec w, Vec x, Vec y)
 {
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(w, VEC_CLASSID, 1);
+  PetscCall(VecPointwiseMaxAsync_Private(w, x, y, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode VecPointwiseMinAsync_Private(Vec w, Vec x, Vec y, PetscDeviceContext dctx)
+{
+  PetscFunctionBegin;
   // REVIEW ME: no log event?
-  PetscCall(VecPointwiseApply_Private(w, x, y, 0, w->ops->pointwisemax));
-  PetscFunctionReturn(0);
+  PetscCall(VecPointwiseApply_Private(w, x, y, dctx, 0, VecAsyncFnName(PointwiseMin), w->ops->pointwisemin));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecPointwiseMin - Computes the component-wise minimum `w[i] = min(x[i], y[i])`.
+  VecPointwiseMin - Computes the component-wise minimum `w[i] = min(x[i], y[i])`.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  x - the first input vector
--  y - the second input vector
+  Input Parameters:
++ x - the first input vector
+- y - the second input vector
 
-   Output Parameter:
-.  w - the result
+  Output Parameter:
+. w - the result
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   Any subset of the `x`, `y`, and `w` may be the same vector.
+  Notes:
+  Any subset of the `x`, `y`, and `w` may be the same vector.
 
-   For complex numbers compares only the real part
+  For complex numbers compares only the real part
 
-.seealso: [](chapter_vectors), `Vec`, `VecPointwiseDivide()`, `VecPointwiseMult()`, `VecPointwiseMin()`, `VecPointwiseMaxAbs()`, `VecMaxPointwiseDivide()`
+.seealso: [](ch_vectors), `Vec`, `VecPointwiseDivide()`, `VecPointwiseMult()`, `VecPointwiseMaxAbs()`, `VecMaxPointwiseDivide()`
 @*/
 PetscErrorCode VecPointwiseMin(Vec w, Vec x, Vec y)
 {
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(w, VEC_CLASSID, 1);
+  PetscCall(VecPointwiseMinAsync_Private(w, x, y, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode VecPointwiseMaxAbsAsync_Private(Vec w, Vec x, Vec y, PetscDeviceContext dctx)
+{
+  PetscFunctionBegin;
   // REVIEW ME: no log event?
-  PetscCall(VecPointwiseApply_Private(w, x, y, 0, w->ops->pointwisemin));
-  PetscFunctionReturn(0);
+  PetscCall(VecPointwiseApply_Private(w, x, y, dctx, 0, VecAsyncFnName(PointwiseMaxAbs), w->ops->pointwisemaxabs));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecPointwiseMaxAbs - Computes the component-wise maximum of the absolute values `w[i] = max(abs(x[i]), abs(y[i]))`.
+  VecPointwiseMaxAbs - Computes the component-wise maximum of the absolute values `w[i] = max(abs(x[i]), abs(y[i]))`.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  x - the first input vector
--  y - the second input vector
+  Input Parameters:
++ x - the first input vector
+- y - the second input vector
 
-   Output Parameter:
-.  w - the result
+  Output Parameter:
+. w - the result
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   Any subset of the `x`, `y`, and `w` may be the same vector.
+  Notes:
+  Any subset of the `x`, `y`, and `w` may be the same vector.
 
-.seealso: [](chapter_vectors), `Vec`, `VecPointwiseDivide()`, `VecPointwiseMult()`, `VecPointwiseMin()`, `VecPointwiseMax()`, `VecMaxPointwiseDivide()`
+.seealso: [](ch_vectors), `Vec`, `VecPointwiseDivide()`, `VecPointwiseMult()`, `VecPointwiseMin()`, `VecPointwiseMax()`, `VecMaxPointwiseDivide()`
 @*/
 PetscErrorCode VecPointwiseMaxAbs(Vec w, Vec x, Vec y)
 {
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(w, VEC_CLASSID, 1);
+  PetscCall(VecPointwiseMaxAbsAsync_Private(w, x, y, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode VecPointwiseDivideAsync_Private(Vec w, Vec x, Vec y, PetscDeviceContext dctx)
+{
+  PetscFunctionBegin;
   // REVIEW ME: no log event?
-  PetscCall(VecPointwiseApply_Private(w, x, y, 0, w->ops->pointwisemaxabs));
-  PetscFunctionReturn(0);
+  PetscCall(VecPointwiseApply_Private(w, x, y, dctx, 0, VecAsyncFnName(PointwiseDivide), w->ops->pointwisedivide));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecPointwiseDivide - Computes the component-wise division `w[i] = x[i] / y[i]`.
+  VecPointwiseDivide - Computes the component-wise division `w[i] = x[i] / y[i]`.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  x - the numerator vector
--  y - the denominator vector
+  Input Parameters:
++ x - the numerator vector
+- y - the denominator vector
 
-   Output Parameter:
-.  w - the result
+  Output Parameter:
+. w - the result
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   Any subset of the `x`, `y`, and `w` may be the same vector.
+  Note:
+  Any subset of the `x`, `y`, and `w` may be the same vector.
 
-.seealso: [](chapter_vectors), `Vec`, `VecPointwiseMult()`, `VecPointwiseMax()`, `VecPointwiseMin()`, `VecPointwiseMaxAbs()`, `VecMaxPointwiseDivide()`
+.seealso: [](ch_vectors), `Vec`, `VecPointwiseMult()`, `VecPointwiseMax()`, `VecPointwiseMin()`, `VecPointwiseMaxAbs()`, `VecMaxPointwiseDivide()`
 @*/
 PetscErrorCode VecPointwiseDivide(Vec w, Vec x, Vec y)
 {
   PetscFunctionBegin;
+  PetscCall(VecPointwiseDivideAsync_Private(w, x, y, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode VecPointwiseMultAsync_Private(Vec w, Vec x, Vec y, PetscDeviceContext dctx)
+{
+  PetscFunctionBegin;
   PetscValidHeaderSpecific(w, VEC_CLASSID, 1);
-  // REVIEW ME: no log event?
-  PetscCall(VecPointwiseApply_Private(w, x, y, 0, w->ops->pointwisedivide));
-  PetscFunctionReturn(0);
+  PetscCall(VecPointwiseApply_Private(w, x, y, dctx, VEC_PointwiseMult, VecAsyncFnName(PointwiseMult), w->ops->pointwisemult));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecPointwiseMult - Computes the component-wise multiplication `w[i] = x[i] * y[i]`.
+  VecPointwiseMult - Computes the component-wise multiplication `w[i] = x[i] * y[i]`.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-.  x, y  - the vectors
+  Input Parameters:
++ x - the first vector
+- y - the second vector
 
-   Output Parameter:
-.  w - the result
+  Output Parameter:
+. w - the result
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   Any subset of the `x`, `y`, and `w` may be the same vector.
+  Note:
+  Any subset of the `x`, `y`, and `w` may be the same vector.
 
-.seealso: [](chapter_vectors), `Vec`, `VecPointwiseDivide()`, `VecPointwiseMax()`, `VecPointwiseMin()`, `VecPointwiseMaxAbs()`, `VecMaxPointwiseDivide()`
+.seealso: [](ch_vectors), `Vec`, `VecPointwiseDivide()`, `VecPointwiseMax()`, `VecPointwiseMin()`, `VecPointwiseMaxAbs()`, `VecMaxPointwiseDivide()`
 @*/
 PetscErrorCode VecPointwiseMult(Vec w, Vec x, Vec y)
 {
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(w, VEC_CLASSID, 1);
-  PetscCall(VecPointwiseApply_Private(w, x, y, VEC_PointwiseMult, w->ops->pointwisemult));
-  PetscFunctionReturn(0);
+  PetscCall(VecPointwiseMultAsync_Private(w, x, y, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecDuplicate - Creates a new vector of the same type as an existing vector.
+  VecDuplicate - Creates a new vector of the same type as an existing vector.
 
-   Collective
+  Collective
 
-   Input Parameters:
-.  v - a vector to mimic
+  Input Parameter:
+. v - a vector to mimic
 
-   Output Parameter:
-.  newv - location to put new vector
+  Output Parameter:
+. newv - location to put new vector
 
-   Level: beginner
+  Level: beginner
 
-   Notes:
-   VecDuplicate() DOES NOT COPY the vector entries, but rather allocates storage
-   for the new vector.  Use `VecCopy()` to copy a vector.
+  Notes:
+  `VecDuplicate()` DOES NOT COPY the vector entries, but rather allocates storage
+  for the new vector.  Use `VecCopy()` to copy a vector.
 
-   Use `VecDestroy()` to free the space. Use `VecDuplicateVecs()` to get several
-   vectors.
+  Use `VecDestroy()` to free the space. Use `VecDuplicateVecs()` to get several
+  vectors.
 
-.seealso: [](chapter_vectors), `Vec`, `VecDestroy()`, `VecDuplicateVecs()`, `VecCreate()`, `VecCopy()`
+.seealso: [](ch_vectors), `Vec`, `VecDestroy()`, `VecDuplicateVecs()`, `VecCreate()`, `VecCopy()`
 @*/
 PetscErrorCode VecDuplicate(Vec v, Vec *newv)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidPointer(newv, 2);
+  PetscAssertPointer(newv, 2);
   PetscValidType(v, 1);
   PetscUseTypeMethod(v, duplicate, newv);
 #if PetscDefined(HAVE_DEVICE)
@@ -496,30 +548,30 @@ PetscErrorCode VecDuplicate(Vec v, Vec *newv)
   }
 #endif
   PetscCall(PetscObjectStateIncrease((PetscObject)(*newv)));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   VecDestroy - Destroys a vector.
+  VecDestroy - Destroys a vector.
 
-   Collective
+  Collective
 
-   Input Parameters:
-.  v  - the vector
+  Input Parameter:
+. v - the vector
 
-   Level: beginner
+  Level: beginner
 
-.seealso: [](chapter_vectors), `Vec`, `VecDuplicate()`, `VecDestroyVecs()`
+.seealso: [](ch_vectors), `Vec`, `VecCreate()`, `VecDuplicate()`, `VecDestroyVecs()`
 @*/
 PetscErrorCode VecDestroy(Vec *v)
 {
   PetscFunctionBegin;
-  PetscValidPointer(v, 1);
-  if (!*v) PetscFunctionReturn(0);
+  PetscAssertPointer(v, 1);
+  if (!*v) PetscFunctionReturn(PETSC_SUCCESS);
   PetscValidHeaderSpecific((*v), VEC_CLASSID, 1);
   if (--((PetscObject)(*v))->refct > 0) {
     *v = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   PetscCall(PetscObjectSAWsViewOff((PetscObject)*v));
@@ -529,42 +581,42 @@ PetscErrorCode VecDestroy(Vec *v)
   /* destroy the external/common part */
   PetscCall(PetscLayoutDestroy(&(*v)->map));
   PetscCall(PetscHeaderDestroy(v));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   VecDuplicateVecs - Creates several vectors of the same type as an existing vector.
+  VecDuplicateVecs - Creates several vectors of the same type as an existing vector.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  m - the number of vectors to obtain
--  v - a vector to mimic
+  Input Parameters:
++ m - the number of vectors to obtain
+- v - a vector to mimic
 
-   Output Parameter:
-.  V - location to put pointer to array of vectors
+  Output Parameter:
+. V - location to put pointer to array of vectors
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   Use `VecDestroyVecs()` to free the space. Use `VecDuplicate()` to form a single
-   vector.
+  Note:
+  Use `VecDestroyVecs()` to free the space. Use `VecDuplicate()` to form a single
+  vector.
 
-   Fortran Note:
-   The Fortran interface is slightly different from that given below, it
-   requires one to pass in V a `Vec` array of size at least m.
-   See the [](chapter_fortran) for details.
+  Fortran Notes:
+  The Fortran interface is slightly different from that given below, it
+  requires one to pass in `V` a `Vec` array of size at least `m`.
+  See the [](ch_fortran) for details.
 
-.seealso: [](chapter_vectors), `Vec`, [](chapter_fortran), `VecDestroyVecs()`, `VecDuplicate()`, `VecCreate()`, `VecDuplicateVecsF90()`
+.seealso: [](ch_vectors), `Vec`, [](ch_fortran), `VecDestroyVecs()`, `VecDuplicate()`, `VecCreate()`, `VecDuplicateVecsF90()`
 @*/
 PetscErrorCode VecDuplicateVecs(Vec v, PetscInt m, Vec *V[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidPointer(V, 3);
+  PetscAssertPointer(V, 3);
   PetscValidType(v, 1);
   PetscUseTypeMethod(v, duplicatevecs, m, V);
-#if defined(PETSC_HAVE_VIENNACL) || defined(PETSC_HAVE_CUDA)
+#if defined(PETSC_HAVE_VIENNACL) || defined(PETSC_HAVE_CUDA) || defined(PETSC_HAVE_HIP)
   if (v->boundtocpu && v->bindingpropagates) {
     PetscInt i;
 
@@ -578,132 +630,135 @@ PetscErrorCode VecDuplicateVecs(Vec v, PetscInt m, Vec *V[])
     }
   }
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   VecDestroyVecs - Frees a block of vectors obtained with `VecDuplicateVecs()`.
+  VecDestroyVecs - Frees a block of vectors obtained with `VecDuplicateVecs()`.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  vv - pointer to pointer to array of vector pointers, if `NULL` no vectors are destroyed
--  m - the number of vectors previously obtained, if zero no vectors are destroyed
+  Input Parameters:
++ m  - the number of vectors previously obtained, if zero no vectors are destroyed
+- vv - pointer to pointer to array of vector pointers, if `NULL` no vectors are destroyed
 
-   Level: intermediate
+  Level: intermediate
 
-   Fortran Note:
-   The Fortran interface is slightly different from that given below.
-   See the [](chapter_fortran) for details.
+  Fortran Notes:
+  The Fortran interface is slightly different from that given below.
+  See the [](ch_fortran) for details.
 
-.seealso: [](chapter_vectors), `Vec`, [](chapter_fortran), `VecDuplicateVecs()`, `VecDestroyVecsf90()`
+.seealso: [](ch_vectors), `Vec`, [](ch_fortran), `VecDuplicateVecs()`, `VecDestroyVecsf90()`
 @*/
 PetscErrorCode VecDestroyVecs(PetscInt m, Vec *vv[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(vv, 2);
+  PetscAssertPointer(vv, 2);
   PetscCheck(m >= 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Trying to destroy negative number of vectors %" PetscInt_FMT, m);
   if (!m || !*vv) {
     *vv = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscValidHeaderSpecific(**vv, VEC_CLASSID, 2);
   PetscValidType(**vv, 2);
   PetscCall((*(**vv)->ops->destroyvecs)(m, *vv));
   *vv = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   VecViewFromOptions - View a vector based on values in the options database
+  VecViewFromOptions - View a vector based on values in the options database
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  A - the vector
-.  obj - Optional object that provides the options prefix for this viewing
--  name - command line option
+  Input Parameters:
++ A    - the vector
+. obj  - Optional object that provides the options prefix for this viewing
+- name - command line option
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: [](chapter_vectors), `Vec`, `VecView`, `PetscObjectViewFromOptions()`, `VecCreate()`
+  Note:
+  See `PetscObjectViewFromOptions()` to see the `PetscViewer` and PetscViewerFormat` available
+
+.seealso: [](ch_vectors), `Vec`, `VecView`, `PetscObjectViewFromOptions()`, `VecCreate()`
 @*/
 PetscErrorCode VecViewFromOptions(Vec A, PetscObject obj, const char name[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(A, VEC_CLASSID, 1);
   PetscCall(PetscObjectViewFromOptions((PetscObject)A, obj, name));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   VecView - Views a vector object.
+  VecView - Views a vector object.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  vec - the vector
--  viewer - an optional visualization context
+  Input Parameters:
++ vec    - the vector
+- viewer - an optional `PetscViewer` visualization context
 
-   Level: beginner
+  Level: beginner
 
-   Notes:
-   The available visualization contexts include
+  Notes:
+  The available visualization contexts include
 +     `PETSC_VIEWER_STDOUT_SELF` - for sequential vectors
 .     `PETSC_VIEWER_STDOUT_WORLD` - for parallel vectors created on `PETSC_COMM_WORLD`
 -     `PETSC_VIEWER_STDOUT`_(comm) - for parallel vectors created on MPI communicator comm
 
-   You can change the format the vector is printed using the
-   option `PetscViewerPushFormat()`.
+  You can change the format the vector is printed using the
+  option `PetscViewerPushFormat()`.
 
-   The user can open alternative viewers with
+  The user can open alternative viewers with
 +    `PetscViewerASCIIOpen()` - Outputs vector to a specified file
 .    `PetscViewerBinaryOpen()` - Outputs vector in binary to a
-         specified file; corresponding input uses `VecLoad()`
+  specified file; corresponding input uses `VecLoad()`
 .    `PetscViewerDrawOpen()` - Outputs vector to an X window display
 .    `PetscViewerSocketOpen()` - Outputs vector to Socket viewer
 -    `PetscViewerHDF5Open()` - Outputs vector to HDF5 file viewer
 
-   The user can call `PetscViewerPushFormat()` to specify the output
-   format of ASCII printed objects (when using `PETSC_VIEWER_STDOUT_SELF`,
-   `PETSC_VIEWER_STDOUT_WORLD` and `PetscViewerASCIIOpen()`).  Available formats include
+  The user can call `PetscViewerPushFormat()` to specify the output
+  format of ASCII printed objects (when using `PETSC_VIEWER_STDOUT_SELF`,
+  `PETSC_VIEWER_STDOUT_WORLD` and `PetscViewerASCIIOpen()`).  Available formats include
 +    `PETSC_VIEWER_DEFAULT` - default, prints vector contents
 .    `PETSC_VIEWER_ASCII_MATLAB` - prints vector contents in MATLAB format
 .    `PETSC_VIEWER_ASCII_INDEX` - prints vector contents, including indices of vector elements
 -    `PETSC_VIEWER_ASCII_COMMON` - prints vector contents, using a
-         format common among all vector types
+  format common among all vector types
 
-    You can pass any number of vector objects, or other PETSc objects to the same viewer.
+  You can pass any number of vector objects, or other PETSc objects to the same viewer.
 
-    In the debugger you can do call `VecView`(v,0) to display the vector. (The same holds for any PETSc object viewer).
+  In the debugger you can do call `VecView`(v,0) to display the vector. (The same holds for any PETSc object viewer).
 
-   Notes for binary viewer:
-     If you pass multiple vectors to a binary viewer you can read them back in in the same order
-     with `VecLoad()`.
+  Notes for binary viewer:
+  If you pass multiple vectors to a binary viewer you can read them back in in the same order
+  with `VecLoad()`.
 
-     If the blocksize of the vector is greater than one then you must provide a unique prefix to
-     the vector with `PetscObjectSetOptionsPrefix`((`PetscObject`)vec,"uniqueprefix"); BEFORE calling `VecView()` on the
-     vector to be stored and then set that same unique prefix on the vector that you pass to `VecLoad()`. The blocksize
-     information is stored in an ASCII file with the same name as the binary file plus a ".info" appended to the
-     filename. If you copy the binary file, make sure you copy the associated .info file with it.
+  If the blocksize of the vector is greater than one then you must provide a unique prefix to
+  the vector with `PetscObjectSetOptionsPrefix`((`PetscObject`)vec,"uniqueprefix"); BEFORE calling `VecView()` on the
+  vector to be stored and then set that same unique prefix on the vector that you pass to `VecLoad()`. The blocksize
+  information is stored in an ASCII file with the same name as the binary file plus a ".info" appended to the
+  filename. If you copy the binary file, make sure you copy the associated .info file with it.
 
-     See the manual page for `VecLoad()` on the exact format the binary viewer stores
-     the values in the file.
+  See the manual page for `VecLoad()` on the exact format the binary viewer stores
+  the values in the file.
 
-   Notes for HDF5 Viewer:
-     The name of the `Vec` (given with `PetscObjectSetName()` is the name that is used
-     for the object in the HDF5 file. If you wish to store the same Vec into multiple
-     datasets in the same file (typically with different values), you must change its
-     name each time before calling the `VecView()`. To load the same vector,
-     the name of the Vec object passed to `VecLoad()` must be the same.
+  Notes for HDF5 Viewer:
+  The name of the `Vec` (given with `PetscObjectSetName()` is the name that is used
+  for the object in the HDF5 file. If you wish to store the same Vec into multiple
+  datasets in the same file (typically with different values), you must change its
+  name each time before calling the `VecView()`. To load the same vector,
+  the name of the Vec object passed to `VecLoad()` must be the same.
 
-     If the block size of the vector is greater than 1 then it is used as the first dimension in the HDF5 array.
-     If the function `PetscViewerHDF5SetBaseDimension2()`is called then even if the block size is one it will
-     be used as the first dimension in the HDF5 array (that is the HDF5 array will always be two dimensional)
-     See also `PetscViewerHDF5SetTimestep()` which adds an additional complication to reading and writing `Vec`
-     with the HDF5 viewer.
+  If the block size of the vector is greater than 1 then it is used as the first dimension in the HDF5 array.
+  If the function `PetscViewerHDF5SetBaseDimension2()`is called then even if the block size is one it will
+  be used as the first dimension in the HDF5 array (that is the HDF5 array will always be two dimensional)
+  See also `PetscViewerHDF5SetTimestep()` which adds an additional complication to reading and writing `Vec`
+  with the HDF5 viewer.
 
-.seealso: [](chapter_vectors), `Vec`, `PetscViewerASCIIOpen()`, `PetscViewerDrawOpen()`, `PetscDrawLGCreate()`,
+.seealso: [](ch_vectors), `Vec`, `VecViewFromOptions()`, `PetscViewerASCIIOpen()`, `PetscViewerDrawOpen()`, `PetscDrawLGCreate()`,
           `PetscViewerSocketOpen()`, `PetscViewerBinaryOpen()`, `VecLoad()`, `PetscViewerCreate()`,
           `PetscRealView()`, `PetscScalarView()`, `PetscIntView()`, `PetscViewerHDF5SetTimestep()`
 @*/
@@ -716,11 +771,12 @@ PetscErrorCode VecView(Vec vec, PetscViewer viewer)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(vec, VEC_CLASSID, 1);
   PetscValidType(vec, 1);
+  VecCheckAssembled(vec);
   if (!viewer) PetscCall(PetscViewerASCIIGetStdout(PetscObjectComm((PetscObject)vec), &viewer));
   PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
   PetscCall(PetscViewerGetFormat(viewer, &format));
   PetscCallMPI(MPI_Comm_size(PetscObjectComm((PetscObject)vec), &size));
-  if (size == 1 && format == PETSC_VIEWER_LOAD_BALANCE) PetscFunctionReturn(0);
+  if (size == 1 && format == PETSC_VIEWER_LOAD_BALANCE) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCheck(!vec->stash.n && !vec->bstash.n, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Must call VecAssemblyBegin/End() before viewing this vector");
 
@@ -750,7 +806,7 @@ PetscErrorCode VecView(Vec vec, PetscViewer viewer)
   }
   PetscCall(VecLockReadPop(vec));
   PetscCall(PetscLogEventEnd(VEC_View, vec, viewer, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_USE_DEBUG)
@@ -772,17 +828,22 @@ PETSC_UNUSED static int TV_display_type(const struct _p_Vec *v)
 #endif
 
 /*@C
-   VecViewNative - Views a vector object with the original type specific viewer
+  VecViewNative - Views a vector object with the original type specific viewer
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  vec - the vector
--  viewer - an optional visualization context
+  Input Parameters:
++ vec    - the vector
+- viewer - an optional `PetscViewer` visualization context
 
-   Level: developer
+  Level: developer
 
-.seealso: [](chapter_vectors), `Vec`, `PetscViewerASCIIOpen()`, `PetscViewerDrawOpen()`, `PetscDrawLGCreate()`, `VecView()`
+  Note:
+  This can be used with, for example, vectors obtained with `DMCreateGlobalVector()` for a `DMDA` to display the vector
+  in the PETSc storage format (each MPI process values follow the previous MPI processes) instead of the "natural" grid
+  ordering.
+
+.seealso: [](ch_vectors), `Vec`, `PetscViewerASCIIOpen()`, `PetscViewerDrawOpen()`, `PetscDrawLGCreate()`, `VecView()`
           `PetscViewerSocketOpen()`, `PetscViewerBinaryOpen()`, `VecLoad()`, `PetscViewerCreate()`,
           `PetscRealView()`, `PetscScalarView()`, `PetscIntView()`, `PetscViewerHDF5SetTimestep()`
 @*/
@@ -794,124 +855,124 @@ PetscErrorCode VecViewNative(Vec vec, PetscViewer viewer)
   if (!viewer) PetscCall(PetscViewerASCIIGetStdout(PetscObjectComm((PetscObject)vec), &viewer));
   PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
   PetscUseTypeMethod(vec, viewnative, viewer);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecGetSize - Returns the global number of elements of the vector.
+  VecGetSize - Returns the global number of elements of the vector.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  x - the vector
+  Input Parameter:
+. x - the vector
 
-   Output Parameters:
-.  size - the global length of the vector
+  Output Parameter:
+. size - the global length of the vector
 
-   Level: beginner
+  Level: beginner
 
-.seealso: [](chapter_vectors), `Vec`, `VecGetLocalSize()`
+.seealso: [](ch_vectors), `Vec`, `VecGetLocalSize()`
 @*/
 PetscErrorCode VecGetSize(Vec x, PetscInt *size)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
-  PetscValidIntPointer(size, 2);
+  PetscAssertPointer(size, 2);
   PetscValidType(x, 1);
   PetscUseTypeMethod(x, getsize, size);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecGetLocalSize - Returns the number of elements of the vector stored
-   in local memory.
+  VecGetLocalSize - Returns the number of elements of the vector stored
+  in local memory (that is on this MPI process)
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  x - the vector
+  Input Parameter:
+. x - the vector
 
-   Output Parameter:
-.  size - the length of the local piece of the vector
+  Output Parameter:
+. size - the length of the local piece of the vector
 
-   Level: beginner
+  Level: beginner
 
-.seealso: [](chapter_vectors), `Vec`, `VecGetSize()`
+.seealso: [](ch_vectors), `Vec`, `VecGetSize()`
 @*/
 PetscErrorCode VecGetLocalSize(Vec x, PetscInt *size)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
-  PetscValidIntPointer(size, 2);
+  PetscAssertPointer(size, 2);
   PetscValidType(x, 1);
   PetscUseTypeMethod(x, getlocalsize, size);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   VecGetOwnershipRange - Returns the range of indices owned by
-   this processor, assuming that the vectors are laid out with the
-   first n1 elements on the first processor, next n2 elements on the
-   second, etc.  For certain parallel layouts this range may not be
-   well defined.
+  VecGetOwnershipRange - Returns the range of indices owned by
+  this process. The vector is laid out with the
+  first n1 elements on the first processor, next n2 elements on the
+  second, etc.  For certain parallel layouts this range may not be
+  well defined.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  x - the vector
+  Input Parameter:
+. x - the vector
 
-   Output Parameters:
-+  low - the first local element, pass in `NULL` if not interested
--  high - one more than the last local element, pass in `NULL` if not interested
+  Output Parameters:
++ low  - the first local element, pass in `NULL` if not interested
+- high - one more than the last local element, pass in `NULL` if not interested
 
-   Level: beginner
+  Level: beginner
 
-   Note:
-   The high argument is one more than the last element stored locally.
+  Note:
+  The high argument is one more than the last element stored locally.
 
-   Fortran Note:
-   `PETSC_NULL_INTEGER` should be used instead of NULL
+  Fortran Notes:
+  `PETSC_NULL_INTEGER` should be used instead of NULL
 
-.seealso: [](chapter_vectors), `Vec`, `MatGetOwnershipRange()`, `MatGetOwnershipRanges()`, `VecGetOwnershipRanges()`
+.seealso: [](ch_vectors), `Vec`, `MatGetOwnershipRange()`, `MatGetOwnershipRanges()`, `VecGetOwnershipRanges()`
 @*/
 PetscErrorCode VecGetOwnershipRange(Vec x, PetscInt *low, PetscInt *high)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
   PetscValidType(x, 1);
-  if (low) PetscValidIntPointer(low, 2);
-  if (high) PetscValidIntPointer(high, 3);
+  if (low) PetscAssertPointer(low, 2);
+  if (high) PetscAssertPointer(high, 3);
   if (low) *low = x->map->rstart;
   if (high) *high = x->map->rend;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   VecGetOwnershipRanges - Returns the range of indices owned by EACH processor,
-   assuming that the vectors are laid out with the
-   first n1 elements on the first processor, next n2 elements on the
-   second, etc.  For certain parallel layouts this range may not be
-   well defined.
+  VecGetOwnershipRanges - Returns the range of indices owned by EACH processor,
+  The vector is laid out with the
+  first n1 elements on the first processor, next n2 elements on the
+  second, etc.  For certain parallel layouts this range may not be
+  well defined.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  x - the vector
+  Input Parameter:
+. x - the vector
 
-   Output Parameters:
-.  range - array of length size+1 with the start and end+1 for each process
+  Output Parameter:
+. ranges - array of length size+1 with the start and end+1 for each process
 
-   Level: beginner
+  Level: beginner
 
-   Notes:
-   The high argument is one more than the last element stored locally.
+  Notes:
+  The high argument is one more than the last element stored locally.
 
-   If the ranges are used after all vectors that share the ranges has been destroyed then the program will crash accessing ranges[].
+  If the ranges are used after all vectors that share the ranges has been destroyed then the program will crash accessing ranges[].
 
-   Fortran Note:
-   You must PASS in an array of length size+1
+  Fortran Notes:
+  You must PASS in an array of length size+1
 
-.seealso: [](chapter_vectors), `Vec`, `MatGetOwnershipRange()`, `MatGetOwnershipRanges()`, `VecGetOwnershipRange()`
+.seealso: [](ch_vectors), `Vec`, `MatGetOwnershipRange()`, `MatGetOwnershipRanges()`, `VecGetOwnershipRange()`
 @*/
 PetscErrorCode VecGetOwnershipRanges(Vec x, const PetscInt *ranges[])
 {
@@ -919,28 +980,29 @@ PetscErrorCode VecGetOwnershipRanges(Vec x, const PetscInt *ranges[])
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
   PetscValidType(x, 1);
   PetscCall(PetscLayoutGetRanges(x->map, ranges));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+// PetscClangLinter pragma disable: -fdoc-section-header-unknown
 /*@
-   VecSetOption - Sets an option for controlling a vector's behavior.
+  VecSetOption - Sets an option for controlling a vector's behavior.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  x - the vector
-.  op - the option
--  flag - turn the option on or off
+  Input Parameters:
++ x    - the vector
+. op   - the option
+- flag - turn the option on or off
 
-   Supported Options:
-+     `VEC_IGNORE_OFF_PROC_ENTRIES`, which causes `VecSetValues()` to ignore
+  Supported Options:
++ `VEC_IGNORE_OFF_PROC_ENTRIES` - which causes `VecSetValues()` to ignore
           entries destined to be stored on a separate processor. This can be used
           to eliminate the global reduction in the `VecAssemblyBegin()` if you know
           that you have only used `VecSetValues()` to set local elements
-.     `VEC_IGNORE_NEGATIVE_INDICES`, which means you can pass negative indices
+. `VEC_IGNORE_NEGATIVE_INDICES` - which means you can pass negative indices
           in ix in calls to `VecSetValues()` or `VecGetValues()`. These rows are simply
           ignored.
--     `VEC_SUBSET_OFF_PROC_ENTRIES`, which causes `VecAssemblyBegin()` to assume that the off-process
+- `VEC_SUBSET_OFF_PROC_ENTRIES` - which causes `VecAssemblyBegin()` to assume that the off-process
           entries will always be a subset (possibly equal) of the off-process entries set on the
           first assembly which had a true `VEC_SUBSET_OFF_PROC_ENTRIES` and the vector has not
           changed this flag afterwards. If this assembly is not such first assembly, then this
@@ -948,12 +1010,12 @@ PetscErrorCode VecGetOwnershipRanges(Vec x, const PetscInt *ranges[])
           a global reduction. Subsequent assemblies setting off-process values should use the same
           InsertMode as the first assembly.
 
-   Level: intermediate
+  Level: intermediate
 
-   Developer Note:
-   The `InsertMode` restriction could be removed by packing the stash messages out of place.
+  Developer Notes:
+  The `InsertMode` restriction could be removed by packing the stash messages out of place.
 
-.seealso: [](chapter_vectors), `Vec`, `VecSetValues()`
+.seealso: [](ch_vectors), `Vec`, `VecSetValues()`
 @*/
 PetscErrorCode VecSetOption(Vec x, VecOption op, PetscBool flag)
 {
@@ -961,7 +1023,7 @@ PetscErrorCode VecSetOption(Vec x, VecOption op, PetscBool flag)
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
   PetscValidType(x, 1);
   PetscTryTypeMethod(x, setoption, op, flag);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Default routines for obtaining and releasing; */
@@ -970,11 +1032,11 @@ PetscErrorCode VecDuplicateVecs_Default(Vec w, PetscInt m, Vec *V[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(w, VEC_CLASSID, 1);
-  PetscValidPointer(V, 3);
+  PetscAssertPointer(V, 3);
   PetscCheck(m > 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "m must be > 0: m = %" PetscInt_FMT, m);
   PetscCall(PetscMalloc1(m, V));
   for (PetscInt i = 0; i < m; i++) PetscCall(VecDuplicate(w, *V + i));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecDestroyVecs_Default(PetscInt m, Vec v[])
@@ -982,24 +1044,24 @@ PetscErrorCode VecDestroyVecs_Default(PetscInt m, Vec v[])
   PetscInt i;
 
   PetscFunctionBegin;
-  PetscValidPointer(v, 2);
+  PetscAssertPointer(v, 2);
   for (i = 0; i < m; i++) PetscCall(VecDestroy(&v[i]));
   PetscCall(PetscFree(v));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecResetArray - Resets a vector to use its default memory. Call this
-   after the use of `VecPlaceArray()`.
+  VecResetArray - Resets a vector to use its default memory. Call this
+  after the use of `VecPlaceArray()`.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-.  vec - the vector
+  Input Parameter:
+. vec - the vector
 
-   Level: developer
+  Level: developer
 
-.seealso: [](chapter_vectors), `Vec`, `VecGetArray()`, `VecRestoreArray()`, `VecReplaceArray()`, `VecPlaceArray()`
+.seealso: [](ch_vectors), `Vec`, `VecGetArray()`, `VecRestoreArray()`, `VecReplaceArray()`, `VecPlaceArray()`
 @*/
 PetscErrorCode VecResetArray(Vec vec)
 {
@@ -1008,7 +1070,7 @@ PetscErrorCode VecResetArray(Vec vec)
   PetscValidType(vec, 1);
   PetscUseTypeMethod(vec, resetarray);
   PetscCall(PetscObjectStateIncrease((PetscObject)vec));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -1018,22 +1080,22 @@ PetscErrorCode VecResetArray(Vec vec)
   Collective
 
   Input Parameters:
-+ vec - the newly loaded vector, this needs to have been created with `VecCreate()` or
-           some related function before a call to VecLoad().
-- viewer - binary file viewer, obtained from PetscViewerBinaryOpen() or
-           HDF5 file viewer, obtained from PetscViewerHDF5Open()
++ vec    - the newly loaded vector, this needs to have been created with `VecCreate()` or
+           some related function before the call to `VecLoad()`.
+- viewer - binary file viewer, obtained from `PetscViewerBinaryOpen()` or
+           HDF5 file viewer, obtained from `PetscViewerHDF5Open()`
 
-   Level: intermediate
+  Level: intermediate
 
   Notes:
-  Defaults to the standard Seq or MPI Vec, if you want some other type of `Vec` call `VecSetFromOptions()`
+  Defaults to the standard `VECSEQ` or `VECMPI`, if you want some other type of `Vec` call `VecSetFromOptions()`
   before calling this.
 
   The input file must contain the full global vector, as
   written by the routine `VecView()`.
 
-  If the type or size of vec is not set before a call to `VecLoad()`, PETSc
-  sets the type and the local and global sizes. If type and/or
+  If the type or size of `vec` is not set before a call to `VecLoad()`, PETSc
+  sets the type and the local and global sizes based on the vector it is reading in. If type and/or
   sizes are already set, then the same are used.
 
   If using the binary viewer and the blocksize of the vector is greater than one then you must provide a unique prefix to
@@ -1042,7 +1104,7 @@ PetscErrorCode VecResetArray(Vec vec)
   information is stored in an ASCII file with the same name as the binary file plus a ".info" appended to the
   filename. If you copy the binary file, make sure you copy the associated .info file with it.
 
-  If using HDF5, you must assign the Vec the same name as was used in the Vec
+  If using HDF5, you must assign the `Vec` the same name as was used in the Vec
   that was stored in the file using `PetscObjectSetName(). Otherwise you will
   get the error message: "Cannot H5DOpen2() with `Vec` name NAMEOFOBJECT".
 
@@ -1062,12 +1124,12 @@ PetscErrorCode VecResetArray(Vec vec)
      PetscScalar *values of all entries
 .ve
 
-   In addition, PETSc automatically uses byte swapping to work on all machines; the files
-   are written ALWAYS using big-endian ordering. On small-endian machines the numbers
-   are converted to the small-endian format when they are read in from the file.
-   See PetscBinaryRead() and PetscBinaryWrite() to see how this may be done.
+  In addition, PETSc automatically uses byte swapping to work on all machines; the files
+  are written ALWAYS using big-endian ordering. On small-endian machines the numbers
+  are converted to the small-endian format when they are read in from the file.
+  See PetscBinaryRead() and PetscBinaryWrite() to see how this may be done.
 
-.seealso: [](chapter_vectors), `Vec`, `PetscViewerBinaryOpen()`, `VecView()`, `MatLoad()`, `VecLoad()`
+.seealso: [](ch_vectors), `Vec`, `PetscViewerBinaryOpen()`, `VecView()`, `MatLoad()`
 @*/
 PetscErrorCode VecLoad(Vec vec, PetscViewer viewer)
 {
@@ -1094,62 +1156,81 @@ PetscErrorCode VecLoad(Vec vec, PetscViewer viewer)
     PetscUseTypeMethod(vec, load, viewer);
   }
   PetscCall(PetscLogEventEnd(VEC_Load, viewer, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecReciprocal - Replaces each component of a vector by its reciprocal.
+  VecReciprocal - Replaces each component of a vector by its reciprocal.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameter:
-.  vec - the vector
+  Input Parameter:
+. vec - the vector
 
-   Output Parameter:
-.  vec - the vector reciprocal
+  Output Parameter:
+. vec - the vector reciprocal
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: [](chapter_vectors), `Vec`, `VecLog()`, `VecExp()`, `VecSqrtAbs()`
+  Note:
+  Vector entries with value 0.0 are not changed
+
+.seealso: [](ch_vectors), `Vec`, `VecLog()`, `VecExp()`, `VecSqrtAbs()`
 @*/
 PetscErrorCode VecReciprocal(Vec vec)
 {
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(vec, VEC_CLASSID, 1);
-  PetscValidType(vec, 1);
-  PetscCheck(vec->stash.insertmode == NOT_SET_VALUES, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Not for unassembled vector");
-  PetscCall(VecSetErrorIfLocked(vec, 1));
-  PetscUseTypeMethod(vec, reciprocal);
-  PetscCall(PetscObjectStateIncrease((PetscObject)vec));
-  PetscFunctionReturn(0);
+  PetscCall(VecReciprocalAsync_Private(vec, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-    VecSetOperation - Allows user to set a vector operation.
+  VecSetOperation - Allows the user to override a particular vector operation.
 
-   Logically Collective; No Fortran Support
+  Logically Collective; No Fortran Support
 
-    Input Parameters:
-+   vec - the vector
-.   op - the name of the operation
--   f - the function that provides the operation.
+  Input Parameters:
++ vec - The vector to modify
+. op  - The name of the operation
+- f   - The function that provides the operation.
 
-   Level: advanced
+  Notes:
+  `f` may be `NULL` to remove the operation from `vec`. Depending on the operation this may be
+  allowed, however some always expect a valid function. In these cases an error will be raised
+  when calling the interface routine in question.
 
-    Usage:
+  See `VecOperation` for an up-to-date list of override-able operations. The operations listed
+  there have the form `VECOP_<OPERATION>`, where `<OPERATION>` is the suffix (in all capital
+  letters) of the public interface routine (e.g., `VecView()` -> `VECOP_VIEW`).
+
+  Overriding a particular `Vec`'s operation has no affect on any other `Vec`s past, present,
+  or future. The user should also note that overriding a method is "destructive"; the previous
+  method is not retained in any way.
+
+  Level: advanced
+
+  Example Usage:
 .vb
-      PetscErrorCode userview(Vec,PetscViewer);
-      PetscCall(VecCreateMPI(comm,m,M,&x));
-      PetscCall(VecSetOperation(x,VECOP_VIEW,(void(*)(void))userview));
+  // some new VecView() implementation, must have the same signature as the function it seeks
+  // to replace
+  PetscErrorCode UserVecView(Vec x, PetscViewer viewer)
+  {
+    PetscFunctionBeginUser;
+    // ...
+    PetscFunctionReturn(PETSC_SUCCESS);
+  }
+
+  // Create a VECMPI which has a pre-defined VecView() implementation
+  VecCreateMPI(comm, n, N, &x);
+  // Calls the VECMPI implementation for VecView()
+  VecView(x, viewer);
+
+  VecSetOperation(x, VECOP_VIEW, (void (*)(void))UserVecView);
+  // Now calls UserVecView()
+  VecView(x, viewer);
 .ve
 
-    Notes:
-    See the file include/petscvec.h for a complete list of matrix
-    operations, which all have the form VECOP_<OPERATION>, where
-    <OPERATION> is the name (in all capital letters) of the
-    user interface routine (e.g., VecView() -> VECOP_VIEW).
-
-.seealso: [](chapter_vectors), `Vec`, `VecCreate()`, `MatShellSetOperation()`
+.seealso: [](ch_vectors), `Vec`, `VecCreate()`, `MatShellSetOperation()`
 @*/
 PetscErrorCode VecSetOperation(Vec vec, VecOperation op, void (*f)(void))
 {
@@ -1160,39 +1241,42 @@ PetscErrorCode VecSetOperation(Vec vec, VecOperation op, void (*f)(void))
   } else if (op == VECOP_LOAD && !vec->ops->loadnative) {
     vec->ops->loadnative = vec->ops->load;
   }
-  (((void (**)(void))vec->ops)[(int)op]) = f;
-  PetscFunctionReturn(0);
+  ((void (**)(void))vec->ops)[(int)op] = f;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStashSetInitialSize - sets the sizes of the vec-stash, that is
-   used during the assembly process to store values that belong to
-   other processors.
+  VecStashSetInitialSize - sets the sizes of the vec-stash, that is
+  used during the assembly process to store values that belong to
+  other processors.
 
-   Not Collective, different processes can have different size stashes
+  Not Collective, different processes can have different size stashes
 
-   Input Parameters:
-+  vec   - the vector
-.  size  - the initial size of the stash.
--  bsize - the initial size of the block-stash(if used).
+  Input Parameters:
++ vec   - the vector
+. size  - the initial size of the stash.
+- bsize - the initial size of the block-stash(if used).
 
-   Options Database Keys:
-+   -vecstash_initial_size <size> or <size0,size1,...sizep-1>
--   -vecstash_block_initial_size <bsize> or <bsize0,bsize1,...bsizep-1>
+  Options Database Keys:
++ -vecstash_initial_size <size> or <size0,size1,...sizep-1>           - set initial size
+- -vecstash_block_initial_size <bsize> or <bsize0,bsize1,...bsizep-1> - set initial block size
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-     The block-stash is used for values set with `VecSetValuesBlocked()` while
-     the stash is used for values set with `VecSetValues()`
+  Notes:
+  The block-stash is used for values set with `VecSetValuesBlocked()` while
+  the stash is used for values set with `VecSetValues()`
 
-     Run with the option -info and look for output of the form
-     VecAssemblyBegin_MPIXXX:Stash has MM entries, uses nn mallocs.
-     to determine the appropriate value, MM, to use for size and
-     VecAssemblyBegin_MPIXXX:Block-Stash has BMM entries, uses nn mallocs.
-     to determine the value, BMM to use for bsize
+  Run with the option -info and look for output of the form
+  VecAssemblyBegin_MPIXXX:Stash has MM entries, uses nn mallocs.
+  to determine the appropriate value, MM, to use for size and
+  VecAssemblyBegin_MPIXXX:Block-Stash has BMM entries, uses nn mallocs.
+  to determine the value, BMM to use for bsize
 
-.seealso: [](chapter_vectors), `Vec`, `VecSetBlockSize()`, `VecSetValues()`, `VecSetValuesBlocked()`, `VecStashView()`
+  PETSc attempts to smartly manage the stash size so there is little likelihood setting a
+  a specific value here will affect performance
+
+.seealso: [](ch_vectors), `Vec`, `VecSetBlockSize()`, `VecSetValues()`, `VecSetValuesBlocked()`, `VecStashView()`
 @*/
 PetscErrorCode VecStashSetInitialSize(Vec vec, PetscInt size, PetscInt bsize)
 {
@@ -1200,59 +1284,31 @@ PetscErrorCode VecStashSetInitialSize(Vec vec, PetscInt size, PetscInt bsize)
   PetscValidHeaderSpecific(vec, VEC_CLASSID, 1);
   PetscCall(VecStashSetInitialSize_Private(&vec->stash, size));
   PetscCall(VecStashSetInitialSize_Private(&vec->bstash, bsize));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecConjugate - Conjugates a vector.
+  VecSetRandom - Sets all components of a vector to random numbers.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-.  x - the vector
+  Input Parameters:
++ x    - the vector
+- rctx - the random number context, formed by `PetscRandomCreate()`, or use `NULL` and it will create one internally.
 
-   Level: intermediate
+  Output Parameter:
+. x - the vector
 
-.seealso: [](chapter_vectors), `Vec`, `VecSet()`
-@*/
-PetscErrorCode VecConjugate(Vec x)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
-  PetscValidType(x, 1);
-  PetscCheck(x->stash.insertmode == NOT_SET_VALUES, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Not for unassembled vector");
-  PetscCall(VecSetErrorIfLocked(x, 1));
-  if (PetscDefined(USE_COMPLEX)) {
-    PetscUseTypeMethod(x, conjugate);
-    /* we need to copy norms here */
-    PetscCall(PetscObjectStateIncrease((PetscObject)x));
-  }
-  PetscFunctionReturn(0);
-}
-
-/*@
-   VecSetRandom - Sets all components of a vector to random numbers.
-
-   Logically Collective
-
-   Input Parameters:
-+  x  - the vector
--  rctx - the random number context, formed by PetscRandomCreate(), or NULL and
-          it will create one internally.
-
-   Output Parameter:
-.  x  - the vector
-
-   Example of Usage:
+  Example of Usage:
 .vb
      PetscRandomCreate(PETSC_COMM_WORLD,&rctx);
      VecSetRandom(x,rctx);
      PetscRandomDestroy(&rctx);
 .ve
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: [](chapter_vectors), `Vec`, `VecSet()`, `VecSetValues()`, `PetscRandomCreate()`, `PetscRandomDestroy()`
+.seealso: [](ch_vectors), `Vec`, `VecSet()`, `VecSetValues()`, `PetscRandomCreate()`, `PetscRandomDestroy()`
 @*/
 PetscErrorCode VecSetRandom(Vec x, PetscRandom rctx)
 {
@@ -1262,7 +1318,7 @@ PetscErrorCode VecSetRandom(Vec x, PetscRandom rctx)
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
   if (rctx) PetscValidHeaderSpecific(rctx, PETSC_RANDOM_CLASSID, 2);
   PetscValidType(x, 1);
-  PetscCheck(x->stash.insertmode == NOT_SET_VALUES, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Not for unassembled vector");
+  VecCheckAssembled(x);
   PetscCall(VecSetErrorIfLocked(x, 1));
 
   if (!rctx) {
@@ -1278,7 +1334,7 @@ PetscErrorCode VecSetRandom(Vec x, PetscRandom rctx)
 
   PetscCall(PetscRandomDestroy(&randObj));
   PetscCall(PetscObjectStateIncrease((PetscObject)x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -1291,13 +1347,16 @@ PetscErrorCode VecSetRandom(Vec x, PetscRandom rctx)
 
   Level: beginner
 
-.seealso: [](chapter_vectors), `Vec`, `VecCreate()`, `VecSetOptionsPrefix()`, `VecSet()`, `VecSetValues()`
+  Note:
+  If the norm of the vector is known to be zero then this skips the unneeded zeroing process
+
+.seealso: [](ch_vectors), `Vec`, `VecCreate()`, `VecSetOptionsPrefix()`, `VecSet()`, `VecSetValues()`
 @*/
 PetscErrorCode VecZeroEntries(Vec vec)
 {
   PetscFunctionBegin;
   PetscCall(VecSet(vec, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1311,7 +1370,7 @@ PetscErrorCode VecZeroEntries(Vec vec)
 
   Level: intermediate
 
-.seealso: [](chapter_vectors), `Vec`, `VecSetFromOptions()`, `VecSetType()`
+.seealso: [](ch_vectors), `Vec`, `VecSetFromOptions()`, `VecSetType()`
 */
 static PetscErrorCode VecSetTypeFromOptions_Private(Vec vec, PetscOptionItems *PetscOptionsObject)
 {
@@ -1335,7 +1394,7 @@ static PetscErrorCode VecSetTypeFromOptions_Private(Vec vec, PetscOptionItems *P
   } else {
     PetscCall(VecSetType(vec, defaultType));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -1349,11 +1408,11 @@ static PetscErrorCode VecSetTypeFromOptions_Private(Vec vec, PetscOptionItems *P
   Level: beginner
 
   Notes:
-  To see all options, run your program with the -help option, or consult the users manual.
+  To see all options, run your program with the -help option.
 
   Must be called after `VecCreate()` but before the vector is used.
 
-.seealso: [](chapter_vectors), `Vec`, `VecCreate()`, `VecSetOptionsPrefix()`
+.seealso: [](ch_vectors), `Vec`, `VecCreate()`, `VecSetOptionsPrefix()`
 @*/
 PetscErrorCode VecSetFromOptions(Vec vec)
 {
@@ -1379,11 +1438,11 @@ PetscErrorCode VecSetFromOptions(Vec vec)
   /* process any options handlers added with PetscObjectAddOptionsHandler() */
   PetscCall(PetscObjectProcessOptionsHandlers((PetscObject)vec, PetscOptionsObject));
   PetscOptionsEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  VecSetSizes - Sets the local and global sizes, and checks to determine compatibility
+  VecSetSizes - Sets the local and global sizes, and checks to determine compatibility of the sizes
 
   Collective
 
@@ -1395,11 +1454,11 @@ PetscErrorCode VecSetFromOptions(Vec vec)
   Level: intermediate
 
   Notes:
-  N cannot be `PETSC_DETERMINE` if n is `PETSC_DECIDE`
+  `N` cannot be `PETSC_DETERMINE` if `n` is `PETSC_DECIDE`
 
-  If one processor calls this with N of `PETSC_DETERMINE` then all processors must, otherwise the program will hang.
+  If one processor calls this with `N` of `PETSC_DETERMINE` then all processors must, otherwise the program will hang.
 
-.seealso: [](chapter_vectors), `Vec`, `VecGetSize()`, `PetscSplitOwnership()`
+.seealso: [](ch_vectors), `Vec`, `VecGetSize()`, `PetscSplitOwnership()`
 @*/
 PetscErrorCode VecSetSizes(Vec v, PetscInt n, PetscInt N)
 {
@@ -1415,25 +1474,27 @@ PetscErrorCode VecSetSizes(Vec v, PetscInt n, PetscInt N)
   v->map->N = N;
   PetscTryTypeMethod(v, create);
   v->ops->create = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecSetBlockSize - Sets the block size for future calls to `VecSetValuesBlocked()`
-   and `VecSetValuesBlockedLocal()`.
+  VecSetBlockSize - Sets the block size for future calls to `VecSetValuesBlocked()`
+  and `VecSetValuesBlockedLocal()`.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  v - the vector
--  bs - the blocksize
+  Input Parameters:
++ v  - the vector
+- bs - the blocksize
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   All vectors obtained by `VecDuplicate()` inherit the same blocksize.
+  Note:
+  All vectors obtained by `VecDuplicate()` inherit the same blocksize.
 
-.seealso: [](chapter_vectors), `Vec`, `VecSetValuesBlocked()`, `VecSetLocalToGlobalMapping()`, `VecGetBlockSize()`
+  Vectors obtained with `DMCreateGlobalVector()` and `DMCreateLocalVector()` generally already have a blocksize set based on the state of the `DM`
+
+.seealso: [](ch_vectors), `Vec`, `VecSetValuesBlocked()`, `VecSetLocalToGlobalMapping()`, `VecGetBlockSize()`
 @*/
 PetscErrorCode VecSetBlockSize(Vec v, PetscInt bs)
 {
@@ -1442,132 +1503,132 @@ PetscErrorCode VecSetBlockSize(Vec v, PetscInt bs)
   PetscValidLogicalCollectiveInt(v, bs, 2);
   PetscCall(PetscLayoutSetBlockSize(v->map, bs));
   v->bstash.bs = bs; /* use the same blocksize for the vec's block-stash */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecGetBlockSize - Gets the blocksize for the vector, i.e. what is used for `VecSetValuesBlocked()`
-   and `VecSetValuesBlockedLocal()`.
+  VecGetBlockSize - Gets the blocksize for the vector, i.e. what is used for `VecSetValuesBlocked()`
+  and `VecSetValuesBlockedLocal()`.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  v - the vector
+  Input Parameter:
+. v - the vector
 
-   Output Parameter:
-.  bs - the blocksize
+  Output Parameter:
+. bs - the blocksize
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   All vectors obtained by `VecDuplicate()` inherit the same blocksize.
+  Note:
+  All vectors obtained by `VecDuplicate()` inherit the same blocksize.
 
-.seealso: [](chapter_vectors), `Vec`, `VecSetValuesBlocked()`, `VecSetLocalToGlobalMapping()`, `VecSetBlockSize()`
+.seealso: [](ch_vectors), `Vec`, `VecSetValuesBlocked()`, `VecSetLocalToGlobalMapping()`, `VecSetBlockSize()`
 @*/
 PetscErrorCode VecGetBlockSize(Vec v, PetscInt *bs)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidIntPointer(bs, 2);
+  PetscAssertPointer(bs, 2);
   PetscCall(PetscLayoutGetBlockSize(v->map, bs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   VecSetOptionsPrefix - Sets the prefix used for searching for all
-   `Vec` options in the database.
+  VecSetOptionsPrefix - Sets the prefix used for searching for all
+  `Vec` options in the database.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  v - the `Vec` context
--  prefix - the prefix to prepend to all option names
+  Input Parameters:
++ v      - the `Vec` context
+- prefix - the prefix to prepend to all option names
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   A hyphen (-) must NOT be given at the beginning of the prefix name.
-   The first character of all runtime options is AUTOMATICALLY the hyphen.
+  Note:
+  A hyphen (-) must NOT be given at the beginning of the prefix name.
+  The first character of all runtime options is AUTOMATICALLY the hyphen.
 
-.seealso: [](chapter_vectors), `Vec`, `VecSetFromOptions()`
+.seealso: [](ch_vectors), `Vec`, `VecSetFromOptions()`
 @*/
 PetscErrorCode VecSetOptionsPrefix(Vec v, const char prefix[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
   PetscCall(PetscObjectSetOptionsPrefix((PetscObject)v, prefix));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   VecAppendOptionsPrefix - Appends to the prefix used for searching for all
-   `Vec` options in the database.
+  VecAppendOptionsPrefix - Appends to the prefix used for searching for all
+  `Vec` options in the database.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  v - the `Vec` context
--  prefix - the prefix to prepend to all option names
+  Input Parameters:
++ v      - the `Vec` context
+- prefix - the prefix to prepend to all option names
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   A hyphen (-) must NOT be given at the beginning of the prefix name.
-   The first character of all runtime options is AUTOMATICALLY the hyphen.
+  Note:
+  A hyphen (-) must NOT be given at the beginning of the prefix name.
+  The first character of all runtime options is AUTOMATICALLY the hyphen.
 
-.seealso: [](chapter_vectors), `Vec`, `VecGetOptionsPrefix()`
+.seealso: [](ch_vectors), `Vec`, `VecGetOptionsPrefix()`
 @*/
 PetscErrorCode VecAppendOptionsPrefix(Vec v, const char prefix[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
   PetscCall(PetscObjectAppendOptionsPrefix((PetscObject)v, prefix));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   VecGetOptionsPrefix - Sets the prefix used for searching for all
-   Vec options in the database.
+  VecGetOptionsPrefix - Sets the prefix used for searching for all
+  Vec options in the database.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  v - the `Vec` context
+  Input Parameter:
+. v - the `Vec` context
 
-   Output Parameter:
-.  prefix - pointer to the prefix string used
+  Output Parameter:
+. prefix - pointer to the prefix string used
 
-   Level: advanced
+  Level: advanced
 
-   Fortran Note:
-   The user must pass in a string `prefix` of
-   sufficient length to hold the prefix.
+  Fortran Notes:
+  The user must pass in a string `prefix` of
+  sufficient length to hold the prefix.
 
-.seealso: [](chapter_vectors), `Vec`, `VecAppendOptionsPrefix()`
+.seealso: [](ch_vectors), `Vec`, `VecAppendOptionsPrefix()`
 @*/
 PetscErrorCode VecGetOptionsPrefix(Vec v, const char *prefix[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
   PetscCall(PetscObjectGetOptionsPrefix((PetscObject)v, prefix));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecSetUp - Sets up the internal vector data structures for the later use.
+  VecSetUp - Sets up the internal vector data structures for the later use.
 
-   Collective
+  Collective
 
-   Input Parameters:
-.  v - the `Vec` context
+  Input Parameter:
+. v - the `Vec` context
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   For basic use of the `Vec` classes the user need not explicitly call
-   `VecSetUp()`, since these actions will happen automatically.
+  Notes:
+  For basic use of the `Vec` classes the user need not explicitly call
+  `VecSetUp()`, since these actions will happen automatically.
 
-.seealso: [](chapter_vectors), `Vec`, `VecCreate()`, `VecDestroy()`
+.seealso: [](ch_vectors), `Vec`, `VecCreate()`, `VecDestroy()`
 @*/
 PetscErrorCode VecSetUp(Vec v)
 {
@@ -1584,7 +1645,7 @@ PetscErrorCode VecSetUp(Vec v)
       PetscCall(VecSetType(v, VECMPI));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1593,31 +1654,7 @@ PetscErrorCode VecSetUp(Vec v)
     will become independent of PetscScalar/PetscReal
 */
 
-/*@
-   VecCopy - Copies a vector `y = x`
-
-   Logically Collective
-
-   Input Parameter:
-.  x - the vector
-
-   Output Parameter:
-.  y - the copy
-
-   Level: beginner
-
-   Note:
-   For default parallel PETSc vectors, both `x` and `y` must be distributed in
-   the same manner; local copies are done.
-
-   Developer Note:
-   `PetscCheckSameTypeAndComm`(x,1,y,2) is not used on these vectors because we allow one
-   of the vectors to be sequential and one to be parallel so long as both have the same
-   local sizes. This is used in some internal functions in PETSc.
-
-.seealso: [](chapter_vectors), `Vec`, `VecDuplicate()`
-@*/
-PetscErrorCode VecCopy(Vec x, Vec y)
+PetscErrorCode VecCopyAsync_Private(Vec x, Vec y, PetscDeviceContext dctx)
 {
   PetscBool flgs[4];
   PetscReal norms[4] = {0.0, 0.0, 0.0, 0.0};
@@ -1627,9 +1664,9 @@ PetscErrorCode VecCopy(Vec x, Vec y)
   PetscValidHeaderSpecific(y, VEC_CLASSID, 2);
   PetscValidType(x, 1);
   PetscValidType(y, 2);
-  if (x == y) PetscFunctionReturn(0);
+  if (x == y) PetscFunctionReturn(PETSC_SUCCESS);
   VecCheckSameLocalSize(x, 1, y, 2);
-  PetscCheck(x->stash.insertmode == NOT_SET_VALUES, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Not for unassembled vector");
+  VecCheckAssembled(x);
   PetscCall(VecSetErrorIfLocked(y, 2));
 
 #if !defined(PETSC_USE_MIXED_PRECISION)
@@ -1668,7 +1705,7 @@ PetscErrorCode VecCopy(Vec x, Vec y)
     PetscCall(VecRestoreArray(y, &yy));
   } else PetscUseTypeMethod(x, copy, y);
 #else
-  PetscUseTypeMethod(x, copy, y);
+  VecMethodDispatch(x, dctx, VecAsyncFnName(Copy), copy, (Vec, Vec, PetscDeviceContext), y);
 #endif
 
   PetscCall(PetscObjectStateIncrease((PetscObject)y));
@@ -1679,22 +1716,41 @@ PetscErrorCode VecCopy(Vec x, Vec y)
 #endif
 
   PetscCall(PetscLogEventEnd(VEC_Copy, x, y, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecSwap - Swaps the vectors `x` and `y`.
+  VecCopy - Copies a vector `y = x`
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-.  x, y  - the vectors
+  Input Parameter:
+. x - the vector
 
-   Level: advanced
+  Output Parameter:
+. y - the copy
 
-.seealso: [](chapter_vectors), `Vec`, `VecSet()`
+  Level: beginner
+
+  Note:
+  For default parallel PETSc vectors, both `x` and `y` must be distributed in
+  the same manner; local copies are done.
+
+  Developer Notes:
+  `PetscCheckSameTypeAndComm`(x,1,y,2) is not used on these vectors because we allow one
+  of the vectors to be sequential and one to be parallel so long as both have the same
+  local sizes. This is used in some internal functions in PETSc.
+
+.seealso: [](ch_vectors), `Vec`, `VecDuplicate()`
 @*/
-PetscErrorCode VecSwap(Vec x, Vec y)
+PetscErrorCode VecCopy(Vec x, Vec y)
+{
+  PetscFunctionBegin;
+  PetscCall(VecCopyAsync_Private(x, y, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode VecSwapAsync_Private(Vec x, Vec y, PetscDeviceContext dctx)
 {
   PetscReal normxs[4], normys[4];
   PetscBool flgxs[4], flgys[4];
@@ -1706,8 +1762,8 @@ PetscErrorCode VecSwap(Vec x, Vec y)
   PetscValidType(y, 2);
   PetscCheckSameTypeAndComm(x, 1, y, 2);
   VecCheckSameSize(x, 1, y, 2);
-  PetscCheck(x->stash.insertmode == NOT_SET_VALUES, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Not for unassembled vector");
-  PetscCheck(y->stash.insertmode == NOT_SET_VALUES, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Not for unassembled vector");
+  VecCheckAssembled(x);
+  VecCheckAssembled(y);
   PetscCall(VecSetErrorIfLocked(x, 1));
   PetscCall(VecSetErrorIfLocked(y, 2));
 
@@ -1717,7 +1773,7 @@ PetscErrorCode VecSwap(Vec x, Vec y)
   }
 
   PetscCall(PetscLogEventBegin(VEC_Swap, x, y, 0, 0));
-  PetscUseTypeMethod(x, swap, y);
+  VecMethodDispatch(x, dctx, VecAsyncFnName(Swap), swap, (Vec, Vec, PetscDeviceContext), y);
   PetscCall(PetscLogEventEnd(VEC_Swap, x, y, 0, 0));
 
   PetscCall(PetscObjectStateIncrease((PetscObject)x));
@@ -1726,7 +1782,26 @@ PetscErrorCode VecSwap(Vec x, Vec y)
     if (flgxs[i]) PetscCall(PetscObjectComposedDataSetReal((PetscObject)y, NormIds[i], normxs[i]));
     if (flgys[i]) PetscCall(PetscObjectComposedDataSetReal((PetscObject)x, NormIds[i], normys[i]));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+/*@
+  VecSwap - Swaps the values between two vectors, `x` and `y`.
+
+  Logically Collective
+
+  Input Parameters:
++ x - the first vector
+- y - the second vector
+
+  Level: advanced
+
+.seealso: [](ch_vectors), `Vec`, `VecSet()`
+@*/
+PetscErrorCode VecSwap(Vec x, Vec y)
+{
+  PetscFunctionBegin;
+  PetscCall(VecSwapAsync_Private(x, y, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -1735,16 +1810,16 @@ PetscErrorCode VecSwap(Vec x, Vec y)
   Collective
 
   Input Parameters:
-+ obj   - the `VecStash` object
-. bobj - optional other object that provides the prefix
++ obj        - the `Vec` containing a stash
+. bobj       - optional other object that provides the prefix
 - optionname - option to activate viewing
 
   Level: intermediate
 
-  Developer Note:
-  This cannot use `PetscObjectViewFromOptions()` because it takes a `Vec` as an argument but does not use VecView
+  Developer Notes:
+  This cannot use `PetscObjectViewFromOptions()` because it takes a `Vec` as an argument but does not use `VecView()`
 
-.seealso: [](chapter_vectors), `Vec`, `VecStashSetInitialSize()`
+.seealso: [](ch_vectors), `Vec`, `VecStashSetInitialSize()`
 @*/
 PetscErrorCode VecStashViewFromOptions(Vec obj, PetscObject bobj, const char optionname[])
 {
@@ -1762,21 +1837,21 @@ PetscErrorCode VecStashViewFromOptions(Vec obj, PetscObject bobj, const char opt
     PetscCall(PetscViewerPopFormat(viewer));
     PetscCall(PetscViewerDestroy(&viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStashView - Prints the entries in the vector stash and block stash.
+  VecStashView - Prints the entries in the vector stash and block stash.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  v - the vector
--  viewer - the viewer
+  Input Parameters:
++ v      - the vector
+- viewer - the viewer
 
-   Level: advanced
+  Level: advanced
 
-.seealso: [](chapter_vectors), `Vec`, `VecSetBlockSize()`, `VecSetValues()`, `VecSetValuesBlocked()`
+.seealso: [](ch_vectors), `Vec`, `VecSetBlockSize()`, `VecSetValues()`, `VecSetValuesBlocked()`
 @*/
 PetscErrorCode VecStashView(Vec v, PetscViewer viewer)
 {
@@ -1829,7 +1904,7 @@ PetscErrorCode VecStashView(Vec v, PetscViewer viewer)
   PetscCall(PetscViewerFlush(viewer));
   PetscCall(PetscViewerASCIIPopSynchronized(viewer));
   PetscCall(PetscViewerASCIIUseTabs(viewer, PETSC_TRUE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PetscOptionsGetVec(PetscOptions options, const char prefix[], const char key[], Vec v, PetscBool *set)
@@ -1851,85 +1926,98 @@ PetscErrorCode PetscOptionsGetVec(PetscOptions options, const char prefix[], con
   }
   PetscCall(PetscFree(xreal));
   if (set) *set = iset;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecGetLayout - get `PetscLayout` describing vector layout
+  VecGetLayout - get `PetscLayout` describing a vector layout
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  x - the vector
+  Input Parameter:
+. x - the vector
 
-   Output Parameter:
-.  map - the layout
+  Output Parameter:
+. map - the layout
 
-   Level: developer
+  Level: developer
 
-.seealso: [](chapter_vectors), `Vec`, `VecGetSizes()`, `VecGetOwnershipRange()`, `VecGetOwnershipRanges()`
+  Note:
+  The layout determines what vector elements are contained on each MPI process
+
+.seealso: [](ch_vectors), `PetscLayout`, `Vec`, `VecGetSizes()`, `VecGetOwnershipRange()`, `VecGetOwnershipRanges()`
 @*/
 PetscErrorCode VecGetLayout(Vec x, PetscLayout *map)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
-  PetscValidPointer(map, 2);
+  PetscAssertPointer(map, 2);
   *map = x->map;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecSetLayout - set `PetscLayout` describing vector layout
+  VecSetLayout - set `PetscLayout` describing vector layout
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  x - the vector
--  map - the layout
+  Input Parameters:
++ x   - the vector
+- map - the layout
 
-   Level: developer
+  Level: developer
 
-   Note:
-   It is normally only valid to replace the layout with a layout known to be equivalent.
+  Note:
+  It is normally only valid to replace the layout with a layout known to be equivalent.
 
-.seealso: [](chapter_vectors), `Vec`, `PetscLayout`, `VecGetLayout()`, `VecGetSizes()`, `VecGetOwnershipRange()`, `VecGetOwnershipRanges()`
+.seealso: [](ch_vectors), `Vec`, `PetscLayout`, `VecGetLayout()`, `VecGetSizes()`, `VecGetOwnershipRange()`, `VecGetOwnershipRanges()`
 @*/
 PetscErrorCode VecSetLayout(Vec x, PetscLayout map)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
   PetscCall(PetscLayoutReference(map, &x->map));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecSetInf(Vec xin)
 {
-  PetscInt     i, n = xin->map->n;
-  PetscScalar *xx;
-  PetscScalar  zero = 0.0, one = 1.0, inf = one / zero;
+  // use of variables one and zero over just doing 1.0/0.0 is deliberate. MSVC complains that
+  // we are dividing by zero in the latter case (ostensibly because dividing by 0 is UB, but
+  // only for *integers* not floats).
+  const PetscScalar one = 1.0, zero = 0.0;
+  PetscScalar       inf;
 
   PetscFunctionBegin;
-  if (xin->ops->set) PetscUseTypeMethod(xin, set, inf);
-  else {
+  PetscCall(PetscFPTrapPush(PETSC_FP_TRAP_OFF));
+  inf = one / zero;
+  PetscCall(PetscFPTrapPop());
+  if (xin->ops->set) {
+    PetscUseTypeMethod(xin, set, inf);
+  } else {
+    PetscInt     n;
+    PetscScalar *xx;
+
+    PetscCall(VecGetLocalSize(xin, &n));
     PetscCall(VecGetArrayWrite(xin, &xx));
-    for (i = 0; i < n; i++) xx[i] = inf;
+    for (PetscInt i = 0; i < n; ++i) xx[i] = inf;
     PetscCall(VecRestoreArrayWrite(xin, &xx));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-     VecBindToCPU - marks a vector to temporarily stay on the CPU and perform computations on the CPU
+  VecBindToCPU - marks a vector to temporarily stay on the CPU and perform computations on the CPU
 
   Logically collective
 
-   Input Parameters:
-+   v - the vector
--   flg - bind to the CPU if value of `PETSC_TRUE`
+  Input Parameters:
++ v   - the vector
+- flg - bind to the CPU if value of `PETSC_TRUE`
 
-   Level: intermediate
+  Level: intermediate
 
-.seelaso: `VecBoundToCPU()`
+.seealso: [](ch_vectors), `Vec`, `VecBoundToCPU()`
 @*/
 PetscErrorCode VecBindToCPU(Vec v, PetscBool flg)
 {
@@ -1937,94 +2025,94 @@ PetscErrorCode VecBindToCPU(Vec v, PetscBool flg)
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
   PetscValidLogicalCollectiveBool(v, flg, 2);
 #if defined(PETSC_HAVE_DEVICE)
-  if (v->boundtocpu == flg) PetscFunctionReturn(0);
+  if (v->boundtocpu == flg) PetscFunctionReturn(PETSC_SUCCESS);
   v->boundtocpu = flg;
   PetscTryTypeMethod(v, bindtocpu, flg);
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-     VecBoundToCPU - query if a vector is bound to the CPU
+  VecBoundToCPU - query if a vector is bound to the CPU
 
   Not collective
 
-   Input Parameter:
-.   v - the vector
+  Input Parameter:
+. v - the vector
 
-   Output Parameter:
-.   flg - the logical flag
+  Output Parameter:
+. flg - the logical flag
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: [](chapter_vectors), `Vec`, `VecBindToCPU()`
+.seealso: [](ch_vectors), `Vec`, `VecBindToCPU()`
 @*/
 PetscErrorCode VecBoundToCPU(Vec v, PetscBool *flg)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidBoolPointer(flg, 2);
+  PetscAssertPointer(flg, 2);
 #if defined(PETSC_HAVE_DEVICE)
   *flg = v->boundtocpu;
 #else
   *flg = PETSC_TRUE;
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecSetBindingPropagates - Sets whether the state of being bound to the CPU for a GPU vector type propagates to child and some other associated objects
+  VecSetBindingPropagates - Sets whether the state of being bound to the CPU for a GPU vector type propagates to child and some other associated objects
 
-   Input Parameters:
-+  v - the vector
--  flg - flag indicating whether the boundtocpu flag should be propagated
+  Input Parameters:
++ v   - the vector
+- flg - flag indicating whether the boundtocpu flag should be propagated
 
-   Level: developer
+  Level: developer
 
-   Notes:
-   If the value of flg is set to true, then `VecDuplicate()` and `VecDuplicateVecs()` will bind created vectors to GPU if the input vector is bound to the CPU.
-   The created vectors will also have their bindingpropagates flag set to true.
+  Notes:
+  If the value of flg is set to true, then `VecDuplicate()` and `VecDuplicateVecs()` will bind created vectors to GPU if the input vector is bound to the CPU.
+  The created vectors will also have their bindingpropagates flag set to true.
 
-   Developer Note:
-   If a `DMDA` has the `-dm_bind_below option` set to true, then vectors created by `DMCreateGlobalVector()` will have `VecSetBindingPropagates()` called on them to
-   set their bindingpropagates flag to true.
+  Developer Notes:
+  If a `DMDA` has the `-dm_bind_below option` set to true, then vectors created by `DMCreateGlobalVector()` will have `VecSetBindingPropagates()` called on them to
+  set their bindingpropagates flag to true.
 
-.seealso: [](chapter_vectors), `Vec`, `MatSetBindingPropagates()`, `VecGetBindingPropagates()`
+.seealso: [](ch_vectors), `Vec`, `MatSetBindingPropagates()`, `VecGetBindingPropagates()`
 @*/
 PetscErrorCode VecSetBindingPropagates(Vec v, PetscBool flg)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-#if defined(PETSC_HAVE_VIENNACL) || defined(PETSC_HAVE_CUDA)
+#if defined(PETSC_HAVE_VIENNACL) || defined(PETSC_HAVE_CUDA) || defined(PETSC_HAVE_HIP)
   v->bindingpropagates = flg;
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecGetBindingPropagates - Gets whether the state of being bound to the CPU for a GPU vector type propagates to child and some other associated objects
+  VecGetBindingPropagates - Gets whether the state of being bound to the CPU for a GPU vector type propagates to child and some other associated objects
 
-   Input Parameter:
-.  v - the vector
+  Input Parameter:
+. v - the vector
 
-   Output Parameter:
-.  flg - flag indicating whether the boundtocpu flag will be propagated
+  Output Parameter:
+. flg - flag indicating whether the boundtocpu flag will be propagated
 
-   Level: developer
+  Level: developer
 
-.seealso: [](chapter_vectors), `Vec`, `VecSetBindingPropagates()`
+.seealso: [](ch_vectors), `Vec`, `VecSetBindingPropagates()`
 @*/
 PetscErrorCode VecGetBindingPropagates(Vec v, PetscBool *flg)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidBoolPointer(flg, 2);
-#if defined(PETSC_HAVE_VIENNACL) || defined(PETSC_HAVE_CUDA)
+  PetscAssertPointer(flg, 2);
+#if defined(PETSC_HAVE_VIENNACL) || defined(PETSC_HAVE_CUDA) || defined(PETSC_HAVE_HIP)
   *flg = v->bindingpropagates;
 #else
   *flg = PETSC_FALSE;
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -2033,17 +2121,18 @@ PetscErrorCode VecGetBindingPropagates(Vec v, PetscBool *flg)
   Logically Collective
 
   Input Parameters:
-+  v    - the vector
--  mbytes - minimum data size in bytes
++ v      - the vector
+- mbytes - minimum data size in bytes
 
   Options Database Key:
 . -vec_pinned_memory_min <size> - minimum size (in bytes) for an allocation to use pinned memory on host.
-                                  Note that this takes a PetscScalar, to accommodate large values;
-                                  specifying -1 ensures that pinned memory will never be used.
 
   Level: developer
 
-.seealso: [](chapter_vectors), `Vec`, `VecGetPinnedMemoryMin()`
+  Note:
+  Specifying -1 ensures that pinned memory will never be used.
+
+.seealso: [](ch_vectors), `Vec`, `VecGetPinnedMemoryMin()`
 @*/
 PetscErrorCode VecSetPinnedMemoryMin(Vec v, size_t mbytes)
 {
@@ -2052,7 +2141,7 @@ PetscErrorCode VecSetPinnedMemoryMin(Vec v, size_t mbytes)
 #if PetscDefined(HAVE_DEVICE)
   v->minimum_bytes_pinned_memory = mbytes;
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -2060,25 +2149,25 @@ PetscErrorCode VecSetPinnedMemoryMin(Vec v, size_t mbytes)
 
   Logically Collective
 
-  Input Parameters:
-.  v    - the vector
+  Input Parameter:
+. v - the vector
 
-  Output Parameters:
-.  mbytes - minimum data size in bytes
+  Output Parameter:
+. mbytes - minimum data size in bytes
 
   Level: developer
 
-.seealso: [](chapter_vectors), `Vec`, `VecSetPinnedMemoryMin()`
+.seealso: [](ch_vectors), `Vec`, `VecSetPinnedMemoryMin()`
 @*/
 PetscErrorCode VecGetPinnedMemoryMin(Vec v, size_t *mbytes)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidPointer(mbytes, 2);
+  PetscAssertPointer(mbytes, 2);
 #if PetscDefined(HAVE_DEVICE)
   *mbytes = v->minimum_bytes_pinned_memory;
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -2086,23 +2175,23 @@ PetscErrorCode VecGetPinnedMemoryMin(Vec v, size_t *mbytes)
 
   Not Collective
 
-  Input Parameters:
-.   v - the vector
+  Input Parameter:
+. v - the vector
 
-  Output Parameters:
-.   mask - corresponding `PetscOffloadMask` enum value.
+  Output Parameter:
+. mask - corresponding `PetscOffloadMask` enum value.
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: [](chapter_vectors), `Vec`, `VecCreateSeqCUDA()`, `VecCreateSeqViennaCL()`, `VecGetArray()`, `VecGetType()`
+.seealso: [](ch_vectors), `Vec`, `VecCreateSeqCUDA()`, `VecCreateSeqViennaCL()`, `VecGetArray()`, `VecGetType()`
 @*/
 PetscErrorCode VecGetOffloadMask(Vec v, PetscOffloadMask *mask)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidPointer(mask, 2);
+  PetscAssertPointer(mask, 2);
   *mask = v->offloadmask;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if !defined(PETSC_HAVE_VIENNACL)
@@ -2136,3 +2225,154 @@ PETSC_EXTERN PetscErrorCode VecViennaCLRestoreCLMemWrite(Vec v)
   SETERRQ(PETSC_COMM_SELF, PETSC_ERR_LIB, "PETSc must be configured with --with-opencl to restore a Vec's cl_mem");
 }
 #endif
+
+static PetscErrorCode VecErrorWeightedNorms_Basic(Vec U, Vec Y, Vec E, NormType wnormtype, PetscReal atol, Vec vatol, PetscReal rtol, Vec vrtol, PetscReal ignore_max, PetscReal *norm, PetscInt *norm_loc, PetscReal *norma, PetscInt *norma_loc, PetscReal *normr, PetscInt *normr_loc)
+{
+  const PetscScalar *u, *y;
+  const PetscScalar *atola = NULL, *rtola = NULL, *erra = NULL;
+  PetscInt           n, n_loc = 0, na_loc = 0, nr_loc = 0;
+  PetscReal          nrm = 0, nrma = 0, nrmr = 0, err_loc[6];
+
+  PetscFunctionBegin;
+#define SkipSmallValue(a, b, tol) \
+  if (PetscAbsScalar(a) < tol || PetscAbsScalar(b) < tol) continue
+
+  PetscCall(VecGetLocalSize(U, &n));
+  PetscCall(VecGetArrayRead(U, &u));
+  PetscCall(VecGetArrayRead(Y, &y));
+  if (E) PetscCall(VecGetArrayRead(E, &erra));
+  if (vatol) PetscCall(VecGetArrayRead(vatol, &atola));
+  if (vrtol) PetscCall(VecGetArrayRead(vrtol, &rtola));
+  for (PetscInt i = 0; i < n; i++) {
+    PetscReal err, tol, tola, tolr;
+
+    SkipSmallValue(y[i], u[i], ignore_max);
+    atol = atola ? PetscRealPart(atola[i]) : atol;
+    rtol = rtola ? PetscRealPart(rtola[i]) : rtol;
+    err  = erra ? PetscAbsScalar(erra[i]) : PetscAbsScalar(y[i] - u[i]);
+    tola = atol;
+    tolr = rtol * PetscMax(PetscAbsScalar(u[i]), PetscAbsScalar(y[i]));
+    tol  = tola + tolr;
+    if (tola > 0.) {
+      if (wnormtype == NORM_INFINITY) nrma = PetscMax(nrma, err / tola);
+      else nrma += PetscSqr(err / tola);
+      na_loc++;
+    }
+    if (tolr > 0.) {
+      if (wnormtype == NORM_INFINITY) nrmr = PetscMax(nrmr, err / tolr);
+      else nrmr += PetscSqr(err / tolr);
+      nr_loc++;
+    }
+    if (tol > 0.) {
+      if (wnormtype == NORM_INFINITY) nrm = PetscMax(nrm, err / tol);
+      else nrm += PetscSqr(err / tol);
+      n_loc++;
+    }
+  }
+  if (E) PetscCall(VecRestoreArrayRead(E, &erra));
+  if (vatol) PetscCall(VecRestoreArrayRead(vatol, &atola));
+  if (vrtol) PetscCall(VecRestoreArrayRead(vrtol, &rtola));
+  PetscCall(VecRestoreArrayRead(U, &u));
+  PetscCall(VecRestoreArrayRead(Y, &y));
+#undef SkipSmallValue
+
+  err_loc[0] = nrm;
+  err_loc[1] = nrma;
+  err_loc[2] = nrmr;
+  err_loc[3] = (PetscReal)n_loc;
+  err_loc[4] = (PetscReal)na_loc;
+  err_loc[5] = (PetscReal)nr_loc;
+  if (wnormtype == NORM_2) {
+    PetscCall(MPIU_Allreduce(MPI_IN_PLACE, err_loc, 6, MPIU_REAL, MPIU_SUM, PetscObjectComm((PetscObject)U)));
+  } else {
+    PetscCall(MPIU_Allreduce(MPI_IN_PLACE, err_loc, 3, MPIU_REAL, MPIU_MAX, PetscObjectComm((PetscObject)U)));
+    PetscCall(MPIU_Allreduce(MPI_IN_PLACE, err_loc + 3, 3, MPIU_REAL, MPIU_SUM, PetscObjectComm((PetscObject)U)));
+  }
+  if (wnormtype == NORM_2) {
+    *norm  = PetscSqrtReal(err_loc[0]);
+    *norma = PetscSqrtReal(err_loc[1]);
+    *normr = PetscSqrtReal(err_loc[2]);
+  } else {
+    *norm  = err_loc[0];
+    *norma = err_loc[1];
+    *normr = err_loc[2];
+  }
+  *norm_loc  = (PetscInt)err_loc[3];
+  *norma_loc = (PetscInt)err_loc[4];
+  *normr_loc = (PetscInt)err_loc[5];
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/*@
+  VecErrorWeightedNorms - compute a weighted norm of the difference between two vectors
+
+  Collective
+
+  Input Parameters:
++ U          - first vector to be compared
+. Y          - second vector to be compared
+. E          - optional third vector representing the error (if not provided, the error is ||U-Y||)
+. wnormtype  - norm type
+. atol       - scalar for absolute tolerance
+. vatol      - vector representing per-entry absolute tolerances (can be ``NULL``)
+. rtol       - scalar for relative tolerance
+. vrtol      - vector representing per-entry relative tolerances (can be ``NULL``)
+- ignore_max - ignore values smaller then this value in absolute terms.
+
+  Output Parameters:
++ norm      - weighted norm
+. norm_loc  - number of vector locations used for the weighted norm
+. norma     - weighted norm based on the absolute tolerance
+. norma_loc - number of vector locations used for the absolute weighted norm
+. normr     - weighted norm based on the relative tolerance
+- normr_loc - number of vector locations used for the relative weighted norm
+
+  Level: developer
+
+  Notes:
+  This is primarily used for computing weighted local truncation errors in ``TS``.
+
+.seealso: [](ch_vectors), `Vec`, `NormType`, ``TSErrorWeightedNorm()``, ``TSErrorWeightedENorm()``
+@*/
+PetscErrorCode VecErrorWeightedNorms(Vec U, Vec Y, Vec E, NormType wnormtype, PetscReal atol, Vec vatol, PetscReal rtol, Vec vrtol, PetscReal ignore_max, PetscReal *norm, PetscInt *norm_loc, PetscReal *norma, PetscInt *norma_loc, PetscReal *normr, PetscInt *normr_loc)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(U, VEC_CLASSID, 1);
+  PetscValidType(U, 1);
+  PetscValidHeaderSpecific(Y, VEC_CLASSID, 2);
+  PetscValidType(Y, 2);
+  if (E) {
+    PetscValidHeaderSpecific(E, VEC_CLASSID, 3);
+    PetscValidType(E, 3);
+  }
+  PetscValidLogicalCollectiveEnum(U, wnormtype, 4);
+  PetscValidLogicalCollectiveReal(U, atol, 5);
+  if (vatol) {
+    PetscValidHeaderSpecific(vatol, VEC_CLASSID, 6);
+    PetscValidType(vatol, 6);
+  }
+  PetscValidLogicalCollectiveReal(U, rtol, 7);
+  if (vrtol) {
+    PetscValidHeaderSpecific(vrtol, VEC_CLASSID, 8);
+    PetscValidType(vrtol, 8);
+  }
+  PetscValidLogicalCollectiveReal(U, ignore_max, 9);
+  PetscAssertPointer(norm, 10);
+  PetscAssertPointer(norm_loc, 11);
+  PetscAssertPointer(norma, 12);
+  PetscAssertPointer(norma_loc, 13);
+  PetscAssertPointer(normr, 14);
+  PetscAssertPointer(normr_loc, 15);
+  PetscCheck(wnormtype == NORM_2 || wnormtype == NORM_INFINITY, PetscObjectComm((PetscObject)U), PETSC_ERR_SUP, "No support for norm type %s", NormTypes[wnormtype]);
+
+  /* There are potentially 5 vectors involved, some of them may happen to be of different type or bound to cpu.
+     Here we check that they all implement the same operation and call it if so.
+     Otherwise, we call the _Basic implementation that always works (provided VecGetArrayRead is implemented). */
+  PetscBool sameop = (PetscBool)(U->ops->errorwnorm && U->ops->errorwnorm == Y->ops->errorwnorm);
+  if (sameop && E) sameop = (PetscBool)(U->ops->errorwnorm == E->ops->errorwnorm);
+  if (sameop && vatol) sameop = (PetscBool)(U->ops->errorwnorm == vatol->ops->errorwnorm);
+  if (sameop && vrtol) sameop = (PetscBool)(U->ops->errorwnorm == vrtol->ops->errorwnorm);
+  if (sameop) PetscUseTypeMethod(U, errorwnorm, Y, E, wnormtype, atol, vatol, rtol, vrtol, ignore_max, norm, norm_loc, norma, norma_loc, normr, normr_loc);
+  else PetscCall(VecErrorWeightedNorms_Basic(U, Y, E, wnormtype, atol, vatol, rtol, vrtol, ignore_max, norm, norm_loc, norma, norma_loc, normr, normr_loc));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}

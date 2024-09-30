@@ -203,9 +203,9 @@ function petsc_testrun() {
     cmd_res=$?
   fi
   touch "$2" "$3"
-  # It appears current MPICH and OpenMPI just shut down the job execution and do not return an error code to the executable
-  # ETIMEDOUT=110 was used by OpenMPI 3.0.  MPICH used 255
-  # Earlier OpenMPI versions returned 1 and the error string
+  # It appears current MPICH and Open MPI just shut down the job execution and do not return an error code to the executable
+  # ETIMEDOUT=110 was used by Open MPI 3.0.  MPICH used 255
+  # Earlier Open MPI versions returned 1 and the error string
   if [ $cmd_res -eq 110 -o $cmd_res -eq 255 ] || \
         grep -F -q -s 'APPLICATION TIMED OUT' "$2" "$3" || \
         grep -F -q -s MPIEXEC_TIMEOUT "$2" "$3" || \
@@ -345,7 +345,7 @@ function petsc_mpiexec_valgrind() {
   npopt=$1;shift
   np=$1;shift
 
-  valgrind="valgrind -q --tool=memcheck --leak-check=yes --num-callers=20 --track-origins=yes --keep-debuginfo=yes --suppressions=$PETSC_DIR/share/petsc/valgrind/petsc-val.supp --error-exitcode=10"
+  valgrind="valgrind -q --tool=memcheck --leak-check=yes --num-callers=20 --track-origins=yes --keep-debuginfo=yes --suppressions=$PETSC_DIR/share/petsc/suppressions/valgrind --error-exitcode=10"
 
   if $printcmd; then
      echo $_mpiexec $npopt $np $valgrind "$@"

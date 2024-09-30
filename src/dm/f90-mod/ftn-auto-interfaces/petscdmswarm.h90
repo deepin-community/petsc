@@ -1,31 +1,3 @@
-      subroutine DMSwarmGetNumSpecies(a,b,z)
-       import tDM
-       DM a ! DM
-       PetscInt b ! PetscInt
-       PetscErrorCode z
-       end subroutine DMSwarmGetNumSpecies
-      subroutine DMSwarmSetNumSpecies(a,b,z)
-       import tDM
-       DM a ! DM
-       PetscInt b ! PetscInt
-       PetscErrorCode z
-       end subroutine DMSwarmSetNumSpecies
-      subroutine DMSwarmComputeLocalSizeFromOptions(a,z)
-       import tDM
-       DM a ! DM
-       PetscErrorCode z
-       end subroutine DMSwarmComputeLocalSizeFromOptions
-      subroutine DMSwarmInitializeCoordinates(a,z)
-       import tDM
-       DM a ! DM
-       PetscErrorCode z
-       end subroutine DMSwarmInitializeCoordinates
-      subroutine DMSwarmInitializeVelocitiesFromOptions(a,b,z)
-       import tDM
-       DM a ! DM
-       PetscReal b (*) ! PetscReal
-       PetscErrorCode z
-       end subroutine DMSwarmInitializeVelocitiesFromOptions
       subroutine DMSwarmFinalizeFieldRegister(a,z)
        import tDM
        DM a ! DM
@@ -119,3 +91,43 @@
        DMSwarmType b ! DMSwarmType
        PetscErrorCode z
        end subroutine DMSwarmSetType
+      subroutine DMSwarmGetMigrateType(a,b,z)
+       import tDM
+       DM a ! DM
+       DMSwarmMigrateType b ! DMSwarmMigrateType
+       PetscErrorCode z
+       end subroutine DMSwarmGetMigrateType
+      subroutine DMSwarmSetMigrateType(a,b,z)
+       import tDM
+       DM a ! DM
+       DMSwarmMigrateType b ! DMSwarmMigrateType
+       PetscErrorCode z
+       end subroutine DMSwarmSetMigrateType
+      subroutine DMSwarmGetNumSpecies(a,b,z)
+       import tDM
+       DM a ! DM
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine DMSwarmGetNumSpecies
+      subroutine DMSwarmSetNumSpecies(a,b,z)
+       import tDM
+       DM a ! DM
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine DMSwarmSetNumSpecies
+      subroutine DMSwarmComputeLocalSizeFromOptions(a,z)
+       import tDM
+       DM a ! DM
+       PetscErrorCode z
+       end subroutine DMSwarmComputeLocalSizeFromOptions
+      subroutine DMSwarmInitializeCoordinates(a,z)
+       import tDM
+       DM a ! DM
+       PetscErrorCode z
+       end subroutine DMSwarmInitializeCoordinates
+      subroutine DMSwarmInitializeVelocitiesFromOptions(a,b,z)
+       import tDM
+       DM a ! DM
+       PetscReal b (*) ! PetscReal
+       PetscErrorCode z
+       end subroutine DMSwarmInitializeVelocitiesFromOptions

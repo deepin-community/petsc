@@ -1,0 +1,6 @@
+petsc4py.typing.TSEventHandlerFunction
+======================================
+
+.. currentmodule:: petsc4py.typing
+
+.. autodata:: TSEventHandlerFunction

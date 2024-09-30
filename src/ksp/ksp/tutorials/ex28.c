@@ -1,4 +1,3 @@
-
 static char help[] = "Solves 1D wave equation using multigrid.\n\n";
 
 #include <petscdm.h>
@@ -61,7 +60,7 @@ PetscErrorCode ComputeInitialSolution(DM da, Vec x)
   }
   PetscCall(VecAssemblyBegin(x));
   PetscCall(VecAssemblyEnd(x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ComputeRHS(KSP ksp, Vec b, void *ctx)
@@ -78,7 +77,7 @@ PetscErrorCode ComputeRHS(KSP ksp, Vec b, void *ctx)
   h = 2.0 * PETSC_PI / ((mx));
   PetscCall(VecCopy(x, b));
   PetscCall(VecScale(b, h));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ComputeMatrix(KSP ksp, Mat J, Mat jac, void *ctx)
@@ -130,7 +129,7 @@ PetscErrorCode ComputeMatrix(KSP ksp, Mat J, Mat jac, void *ctx)
   PetscCall(MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY));
   PetscCall(MatView(jac, PETSC_VIEWER_BINARY_(PETSC_COMM_SELF)));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

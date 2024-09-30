@@ -1,4 +1,3 @@
-
 static char help[] = "Reads a PETSc matrix and vector from a file and solves a linear system.\n\
 This version first preloads and solves a small system, then loads \n\
 another (larger) system and solves it as well.  This example illustrates\n\
@@ -65,7 +64,7 @@ int main(int argc, char **args)
   */
   PetscCall(PetscOptionsGetString(NULL, NULL, "-f", file[0], sizeof(file[0]), &flg));
   if (flg) {
-    PetscCall(PetscStrcpy(file[1], file[0]));
+    PetscCall(PetscStrncpy(file[1], file[0], sizeof(file[1])));
     preload = PETSC_FALSE;
   } else {
     PetscCall(PetscOptionsGetString(NULL, NULL, "-f0", file[0], sizeof(file[0]), &flg));
@@ -323,7 +322,7 @@ int main(int argc, char **args)
       cknorm = PETSC_FALSE;
       PetscCall(PetscOptionsGetBool(NULL, NULL, "-cknorm", &cknorm, NULL));
       while (num_rhs--) {
-        if (num_rhs == 1) VecSet(x, 0.0);
+        if (num_rhs == 1) PetscCall(VecSet(x, 0.0));
         PetscCall(KSPSolve(ksp, b, x));
       }
       PetscCall(KSPGetIterationNumber(ksp, &its));
@@ -367,7 +366,7 @@ int main(int argc, char **args)
       - KSPView() prints information about the linear solver.
     */
     if (table) {
-      char *matrixname, kspinfo[120];
+      char *matrixname = NULL, kspinfo[120];
 
       /*
        Open a string viewer; then write info to it.
@@ -521,7 +520,7 @@ int main(int argc, char **args)
       suffix: 9
       requires: datafilespath double !defined(PETSC_USE_64BIT_INDICES)
       args: -f0 ${DATAFILESPATH}/matrices/medium
-      args: -viewer_binary_skip_info  -matload_block_size {{1 2 3 4 5 6 7}separate output} -ksp_max_it 100 -ksp_gmres_cgs_refinement_type refine_always -ksp_rtol 1.0e-15 -ksp_monitor_short
+      args: -viewer_binary_skip_info -matload_block_size {{1 2 3 4 5 6 7}separate output} -ksp_max_it 100 -ksp_gmres_cgs_refinement_type refine_always -ksp_rtol 1.0e-15 -ksp_monitor_short
       test:
          suffix: a
          args: -mat_type seqbaij
@@ -626,11 +625,9 @@ int main(int argc, char **args)
       test:
          suffix: boomeramg_euclid
          args: -pc_hypre_boomeramg_smooth_type Euclid -pc_hypre_boomeramg_smooth_num_levels 2 -pc_hypre_boomeramg_eu_level 1 -pc_hypre_boomeramg_eu_droptolerance 0.01
-         TODO: Need to determine if deprecated
       test:
          suffix: boomeramg_euclid_bj
          args: -pc_hypre_boomeramg_smooth_type Euclid -pc_hypre_boomeramg_smooth_num_levels 2 -pc_hypre_boomeramg_eu_level 1 -pc_hypre_boomeramg_eu_droptolerance 0.01 -pc_hypre_boomeramg_eu_bj
-         TODO: Need to determine if deprecated
       test:
          suffix: boomeramg_parasails
          args: -pc_hypre_boomeramg_smooth_type ParaSails -pc_hypre_boomeramg_smooth_num_levels 2
@@ -804,8 +801,8 @@ int main(int argc, char **args)
 
    testset:
       suffix: zeropivot
-      requires: datafilespath double !defined(PETSC_USE_64BIT_INDICES) mumps
-      args: -f0 ${DATAFILESPATH}/matrices/small -test_zeropivot -ksp_converged_reason -ksp_type fgmres -pc_type ksp
+      requires: datafilespath double !defined(PETSC_USE_64BIT_INDICES)
+      args: -f0 ${DATAFILESPATH}/matrices/small -test_zeropivot -ksp_converged_reason -ksp_type fgmres -pc_type ksp -fp_trap 0
       test:
          nsize: 3
          args: -ksp_pc_type bjacobi
@@ -871,8 +868,8 @@ int main(int argc, char **args)
       test:
          requires: datafilespath double !defined(PETSC_USE_64BIT_INDICES) mumps !defined(PETSCTEST_VALGRIND)
          suffix: hpddm_gen_non_hermitian_baij
-         output_file: output/ex72_5.out
+         output_file: output/ex72_10.out
          nsize: 4
          timeoutfactor: 2
-         args: -f0 ${DATAFILESPATH}/matrices/arco6 -pc_type hpddm -pc_hpddm_define_subdomains -pc_hpddm_levels_1_sub_pc_type lu -pc_hpddm_levels_1_eps_nev 30 -pc_hpddm_levels_1_st_share_sub_ksp -pc_hpddm_levels_1_eps_gen_non_hermitian -pc_hpddm_coarse_mat_type baij -pc_hpddm_block_splitting -pc_hpddm_levels_1_eps_threshold 0.8 -pc_hpddm_coarse_pc_type lu -ksp_pc_side right -mat_type baij -pc_hpddm_levels_1_sub_pc_factor_mat_solver_type mumps -pc_hpddm_levels_1_eps_tol 1.0e-2
+         args: -f0 ${DATAFILESPATH}/matrices/arco6 -pc_type hpddm -pc_hpddm_define_subdomains -pc_hpddm_levels_1_sub_pc_type lu -pc_hpddm_levels_1_eps_nev 30 -pc_hpddm_levels_1_st_share_sub_ksp -pc_hpddm_levels_1_eps_gen_non_hermitian -pc_hpddm_coarse_mat_type baij -pc_hpddm_block_splitting -pc_hpddm_levels_1_eps_threshold 0.8 -pc_hpddm_coarse_pc_type lu -ksp_pc_side right -mat_type baij -pc_hpddm_levels_1_sub_pc_factor_mat_solver_type mumps -pc_hpddm_levels_1_eps_tol 1.0e-2 -ksp_monitor_short
 TEST*/

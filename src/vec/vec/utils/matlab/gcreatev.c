@@ -1,4 +1,3 @@
-
 #include <petscvec.h> /*I "petscvec.h" I*/
 #include <petsc/private/petscimpl.h>
 
@@ -25,7 +24,7 @@ PETSC_EXTERN PetscErrorCode VecMatlabEnginePut_Default(PetscObject obj, void *me
   engPutVariable((Engine *)mengine, obj->name, mat);
 
   PetscCall(VecRestoreArrayRead(vec, &array));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode VecMatlabEngineGet_Default(PetscObject obj, void *mengine)
@@ -42,5 +41,5 @@ PETSC_EXTERN PetscErrorCode VecMatlabEngineGet_Default(PetscObject obj, void *me
   PetscCheck(mat, PETSC_COMM_SELF, PETSC_ERR_LIB, "Unable to get object %s from matlab", obj->name);
   PetscCall(PetscArraycpy(array, mxGetPr(mat), n));
   PetscCall(VecRestoreArray(vec, &array));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

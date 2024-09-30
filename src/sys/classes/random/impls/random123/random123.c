@@ -16,7 +16,7 @@ R123_ULONG_LONG PETSCR123_SEED_1 = R123_64BIT(0xAFF6369B3EE9FE96);
 R123_ULONG_LONG PETSCR123_SEED_2 = R123_64BIT(0x5956EBC717B60E07);
 R123_ULONG_LONG PETSCR123_SEED_3 = R123_64BIT(0xEE8612A0CBEABFF1);
 
-PetscErrorCode PetscRandomSeed_Random123(PetscRandom r)
+static PetscErrorCode PetscRandomSeed_Random123(PetscRandom r)
 {
   threefry4x64_ukey_t ukey;
   PetscRandom123     *r123 = (PetscRandom123 *)r->data;
@@ -35,12 +35,12 @@ PetscErrorCode PetscRandomSeed_Random123(PetscRandom r)
   r123->counter.v[3] = 3;
   r123->result       = threefry4x64(r123->counter, r123->key);
   r123->count        = 0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscReal PetscRandom123Step(PetscRandom123 *r123)
 {
-  PetscReal scale = ((PetscReal)1.) / (UINT64_MAX + ((PetscReal)1.));
+  PetscReal scale = ((PetscReal)1.) / (((PetscReal)UINT64_MAX) + ((PetscReal)1.));
   PetscReal shift = .5 * scale;
   PetscInt  mod   = (r123->count++) % 4;
   PetscReal ret;
@@ -58,7 +58,7 @@ static PetscReal PetscRandom123Step(PetscRandom123 *r123)
   return ret;
 }
 
-PetscErrorCode PetscRandomGetValue_Random123(PetscRandom r, PetscScalar *val)
+static PetscErrorCode PetscRandomGetValue_Random123(PetscRandom r, PetscScalar *val)
 {
   PetscRandom123 *r123 = (PetscRandom123 *)r->data;
   PetscScalar     rscal;
@@ -81,10 +81,10 @@ PetscErrorCode PetscRandomGetValue_Random123(PetscRandom r, PetscScalar *val)
   if (r->iset) rscal = rscal * r->width + r->low;
 #endif
   *val = rscal;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PetscRandomGetValueReal_Random123(PetscRandom r, PetscReal *val)
+static PetscErrorCode PetscRandomGetValueReal_Random123(PetscRandom r, PetscReal *val)
 {
   PetscRandom123 *r123 = (PetscRandom123 *)r->data;
   PetscReal       rreal;
@@ -93,14 +93,14 @@ PetscErrorCode PetscRandomGetValueReal_Random123(PetscRandom r, PetscReal *val)
   rreal = PetscRandom123Step(r123);
   if (r->iset) rreal = rreal * PetscRealPart(r->width) + PetscRealPart(r->low);
   *val = rreal;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PetscRandomDestroy_Random123(PetscRandom r)
+static PetscErrorCode PetscRandomDestroy_Random123(PetscRandom r)
 {
   PetscFunctionBegin;
   PetscCall(PetscFree(r->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static struct _PetscRandomOps PetscRandomOps_Values = {
@@ -115,13 +115,13 @@ static struct _PetscRandomOps PetscRandomOps_Values = {
 /*MC
    PETSCRANDOM123 - access to Random123 counter based pseudorandom number generators (currently threefry4x64)
 
-   Options Database Keys:
+   Options Database Key:
 . -random_type <rand,rand48,sprng,random123> - select the random number generator at runtim
 
-   Note:
-   PETSc must be ./configure with the option --download-random123 to use this random number generator.
-
   Level: beginner
+
+  Note:
+   PETSc must be ./configure with the option --download-random123 to use this random number generator.
 
 .seealso: `RandomCreate()`, `RandomSetType()`, `PETSCRAND`, `PETSCRAND48`, `PETSCSPRNG`, `PetscRandomSetFromOptions()`
 M*/
@@ -132,9 +132,9 @@ PETSC_EXTERN PetscErrorCode PetscRandomCreate_Random123(PetscRandom r)
 
   PetscFunctionBegin;
   PetscCall(PetscNew(&r123));
-  r->data = r123;
-  PetscCall(PetscMemcpy(r->ops, &PetscRandomOps_Values, sizeof(PetscRandomOps_Values)));
+  r->data   = r123;
+  r->ops[0] = PetscRandomOps_Values;
   PetscCall(PetscObjectChangeTypeName((PetscObject)r, PETSCRANDOM123));
   PetscCall(PetscRandomSeed(r));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

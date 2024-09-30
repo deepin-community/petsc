@@ -1,4 +1,3 @@
-
 static char help[] = "Reads a PETSc matrix and vector from a file; expands the matrix with the vector\n\n";
 
 /*
@@ -53,7 +52,7 @@ PetscErrorCode PadMatrix(Mat A, Vec v, PetscScalar c, Mat *B)
   PetscCall(VecRestoreArrayRead(v, &vv));
   PetscCall(PetscFree(cnt));
   PetscCall(PetscFree(indices));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **args)

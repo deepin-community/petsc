@@ -1,6 +1,4 @@
-
-#ifndef __TFS_H
-#define __TFS_H
+#pragma once
 
 /**********************************const.h*************************************
 
@@ -275,7 +273,7 @@ Input : pointer to ADT.
 Description: This function frees the storage associated with an xxt handle
 Usage: XXT_free(xxt_handle);
 **************************************xxt.h***********************************/
-PETSC_INTERN PetscInt XXT_free(xxt_ADT);
+PETSC_INTERN PetscErrorCode XXT_free(xxt_ADT);
 
 /*************************************xxt.h************************************
 Function: XXT_factor
@@ -326,13 +324,6 @@ XXT_solve(xxt_handle, double *x, NULL)
 assumes x has been initialized to be b
 **************************************xxt.h***********************************/
 PETSC_INTERN PetscErrorCode XXT_solve(xxt_ADT, PetscScalar *, PetscScalar *);
-
-/*************************************xxt.h************************************
-Function: XXT_stats
-
-Input : handle
-**************************************xxt.h***********************************/
-PETSC_INTERN PetscErrorCode XXT_stats(xxt_ADT);
 
 /*************************************xxt.h************************************
 Function: XXT_sp_1()
@@ -459,5 +450,3 @@ PETSC_INTERN PetscInt       PCTFS_len_bit_mask(PetscInt);
 PETSC_INTERN PetscInt       PCTFS_ct_bits(char *, PetscInt);
 PETSC_INTERN PetscErrorCode PCTFS_bm_to_proc(char *, PetscInt, PetscInt *);
 PETSC_INTERN PetscInt       PCTFS_len_buf(PetscInt, PetscInt);
-
-#endif

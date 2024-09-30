@@ -1,15 +1,14 @@
-
 #include <petsc/private/randomimpl.h>
 
-PetscErrorCode PetscRandomSeed_Rand(PetscRandom r)
+static PetscErrorCode PetscRandomSeed_Rand(PetscRandom r)
 {
   PetscFunctionBegin;
   srand(r->seed);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #define RAND_WRAP ((PetscReal)((rand() / (double)((unsigned int)RAND_MAX + 1))))
-PetscErrorCode PetscRandomGetValue_Rand(PetscRandom r, PetscScalar *val)
+static PetscErrorCode PetscRandomGetValue_Rand(PetscRandom r, PetscScalar *val)
 {
   PetscFunctionBegin;
 #if defined(PETSC_USE_COMPLEX)
@@ -19,10 +18,10 @@ PetscErrorCode PetscRandomGetValue_Rand(PetscRandom r, PetscScalar *val)
   if (r->iset) *val = r->width * RAND_WRAP + r->low;
   else *val = RAND_WRAP;
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PetscRandomGetValueReal_Rand(PetscRandom r, PetscReal *val)
+static PetscErrorCode PetscRandomGetValueReal_Rand(PetscRandom r, PetscReal *val)
 {
   PetscFunctionBegin;
 #if defined(PETSC_USE_COMPLEX)
@@ -32,7 +31,7 @@ PetscErrorCode PetscRandomGetValueReal_Rand(PetscRandom r, PetscReal *val)
   if (r->iset) *val = r->width * RAND_WRAP + r->low;
   else *val = RAND_WRAP;
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static struct _PetscRandomOps PetscRandomOps_Values = {
@@ -44,7 +43,7 @@ static struct _PetscRandomOps PetscRandomOps_Values = {
 /*MC
    PETSCRAND - access to the basic Unix random number generator
 
-   Options Database Keys:
+   Options Database Key:
 . -random_type <rand,rand48,sprng> - set the random number generator from the options database
 
   Level: beginner
@@ -58,7 +57,7 @@ M*/
 PETSC_EXTERN PetscErrorCode PetscRandomCreate_Rand(PetscRandom r)
 {
   PetscFunctionBegin;
-  PetscCall(PetscMemcpy(r->ops, &PetscRandomOps_Values, sizeof(PetscRandomOps_Values)));
+  r->ops[0] = PetscRandomOps_Values;
   PetscCall(PetscObjectChangeTypeName((PetscObject)r, PETSCRAND));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

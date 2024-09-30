@@ -2,20 +2,23 @@
 
 /*@
   VecWhichEqual - Creates an index set containing the indices
-             where the vectors Vec1 and Vec2 have identical elements.
+  where the vectors `Vec1` and `Vec2` have identical elements.
 
-  Collective on Vec
+  Collective
 
   Input Parameters:
-. Vec1, Vec2 - the two vectors to compare
++ Vec1 - the first vector to compare
+- Vec2 - the second two vector to compare
 
-  OutputParameter:
+  Output Parameter:
 . S - The index set containing the indices i where vec1[i] == vec2[i]
 
-  Notes:
-    the two vectors must have the same parallel layout
-
   Level: advanced
+
+  Note:
+  The two vectors must have the same parallel layout
+
+.seealso: `Vec`
 @*/
 PetscErrorCode VecWhichEqual(Vec Vec1, Vec Vec2, IS *S)
 {
@@ -58,27 +61,30 @@ PetscErrorCode VecWhichEqual(Vec Vec1, Vec Vec2, IS *S)
     }
   }
   PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)Vec1), n_same, same, PETSC_OWN_POINTER, S));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   VecWhichLessThan - Creates an index set containing the indices
-  where the vectors Vec1 < Vec2
+  where the vectors `Vec1` < `Vec2`
 
-  Collective on S
+  Collective
 
   Input Parameters:
-. Vec1, Vec2 - the two vectors to compare
++ Vec1 - the first vector to compare
+- Vec2 - the second vector to compare
 
-  OutputParameter:
+  Output Parameter:
 . S - The index set containing the indices i where vec1[i] < vec2[i]
+
+  Level: advanced
 
   Notes:
   The two vectors must have the same parallel layout
 
   For complex numbers this only compares the real part
 
-  Level: advanced
+.seealso: `Vec`
 @*/
 PetscErrorCode VecWhichLessThan(Vec Vec1, Vec Vec2, IS *S)
 {
@@ -121,27 +127,30 @@ PetscErrorCode VecWhichLessThan(Vec Vec1, Vec Vec2, IS *S)
     }
   }
   PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)Vec1), n_lt, lt, PETSC_OWN_POINTER, S));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   VecWhichGreaterThan - Creates an index set containing the indices
-  where the vectors Vec1 > Vec2
+  where the vectors `Vec1` > `Vec2`
 
-  Collective on S
+  Collective
 
   Input Parameters:
-. Vec1, Vec2 - the two vectors to compare
++ Vec1 - the first vector to compare
+- Vec2 - the second vector to compare
 
-  OutputParameter:
+  Output Parameter:
 . S - The index set containing the indices i where vec1[i] > vec2[i]
+
+  Level: advanced
 
   Notes:
   The two vectors must have the same parallel layout
 
   For complex numbers this only compares the real part
 
-  Level: advanced
+.seealso: `Vec`
 @*/
 PetscErrorCode VecWhichGreaterThan(Vec Vec1, Vec Vec2, IS *S)
 {
@@ -184,29 +193,31 @@ PetscErrorCode VecWhichGreaterThan(Vec Vec1, Vec Vec2, IS *S)
     }
   }
   PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)Vec1), n_gt, gt, PETSC_OWN_POINTER, S));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   VecWhichBetween - Creates an index set containing the indices
-               where  VecLow < V < VecHigh
+  where  `VecLow` < `V` < `VecHigh`
 
-  Collective on S
+  Collective
 
   Input Parameters:
-+ VecLow - lower bound
-. V - Vector to compare
++ VecLow  - lower bound
+. V       - Vector to compare
 - VecHigh - higher bound
 
-  OutputParameter:
+  Output Parameter:
 . S - The index set containing the indices i where veclow[i] < v[i] < vechigh[i]
+
+  Level: advanced
 
   Notes:
   The vectors must have the same parallel layout
 
   For complex numbers this only compares the real part
 
-  Level: advanced
+.seealso: `Vec`
 @*/
 PetscErrorCode VecWhichBetween(Vec VecLow, Vec V, Vec VecHigh, IS *S)
 {
@@ -255,26 +266,27 @@ PetscErrorCode VecWhichBetween(Vec VecLow, Vec V, Vec VecHigh, IS *S)
     if (V != VecLow && V != VecHigh) PetscCall(VecRestoreArrayRead(V, &vmiddle));
   }
   PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)V), n_vm, vm, PETSC_OWN_POINTER, S));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   VecWhichBetweenOrEqual - Creates an index set containing the indices
-  where  VecLow <= V <= VecHigh
+  where  `VecLow` <= `V` <= `VecHigh`
 
-  Collective on S
+  Collective
 
   Input Parameters:
-+ VecLow - lower bound
-. V - Vector to compare
++ VecLow  - lower bound
+. V       - Vector to compare
 - VecHigh - higher bound
 
-  OutputParameter:
+  Output Parameter:
 . S - The index set containing the indices i where veclow[i] <= v[i] <= vechigh[i]
 
   Level: advanced
-@*/
 
+.seealso: `Vec`
+@*/
 PetscErrorCode VecWhichBetweenOrEqual(Vec VecLow, Vec V, Vec VecHigh, IS *S)
 {
   PetscInt           i, n_vm = 0;
@@ -322,31 +334,36 @@ PetscErrorCode VecWhichBetweenOrEqual(Vec VecLow, Vec V, Vec VecHigh, IS *S)
     if (V != VecLow && V != VecHigh) PetscCall(VecRestoreArrayRead(V, &vmiddle));
   }
   PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)V), n_vm, vm, PETSC_OWN_POINTER, S));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecWhichInactive - Creates an index set containing the indices
-  where one of the following holds:
-    a) VecLow(i)  < V(i) < VecHigh(i)
-    b) VecLow(i)  = V(i) and D(i) <= 0 (< 0 when Strong is true)
-    c) VecHigh(i) = V(i) and D(i) >= 0 (> 0 when Strong is true)
+  VecWhichInactive - Creates an `IS` based on a set of vectors
 
-  Collective on S
+  Collective
 
   Input Parameters:
-+ VecLow - lower bound
-. V - Vector to compare
-. D - Direction to compare
++ VecLow  - lower bound
+. V       - Vector to compare
+. D       - Direction to compare
 . VecHigh - higher bound
-- Strong - indicator for applying strongly inactive test
+- Strong  - indicator for applying strongly inactive test
 
-  OutputParameter:
+  Output Parameter:
 . S - The index set containing the indices i where the bound is inactive
 
   Level: advanced
-@*/
 
+  Notes:
+  Creates an index set containing the indices where one of the following holds\:
+.vb
+  - VecLow(i)  < V(i) < VecHigh(i)
+  - VecLow(i)  = V(i) and D(i) <= 0 (< 0 when Strong is true)
+  - VecHigh(i) = V(i) and D(i) >= 0 (> 0 when Strong is true)
+.ve
+
+.seealso: `Vec`
+@*/
 PetscErrorCode VecWhichInactive(Vec VecLow, Vec V, Vec D, Vec VecHigh, PetscBool Strong, IS *S)
 {
   PetscInt           i, n_vm = 0;
@@ -358,7 +375,7 @@ PetscErrorCode VecWhichInactive(Vec VecLow, Vec V, Vec D, Vec VecHigh, PetscBool
   if (!VecLow && !VecHigh) {
     PetscCall(VecGetOwnershipRange(V, &low, &high));
     PetscCall(ISCreateStride(PetscObjectComm((PetscObject)V), high - low, low, 1, S));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscValidHeaderSpecific(VecLow, VEC_CLASSID, 1);
   PetscValidHeaderSpecific(V, VEC_CLASSID, 2);
@@ -433,12 +450,12 @@ PetscErrorCode VecWhichInactive(Vec VecLow, Vec V, Vec D, Vec VecHigh, PetscBool
     if (D != VecLow && D != VecHigh && D != V) PetscCall(VecRestoreArrayRead(D, &d));
   }
   PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)V), n_vm, vm, PETSC_OWN_POINTER, S));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   VecISAXPY - Adds a reduced vector to the appropriate elements of a full-space vector.
-                  vfull[is[i]] += alpha*vreduced[i]
+  vfull[is[i]] += alpha*vreduced[i]
 
   Input Parameters:
 + vfull    - the full-space vector
@@ -446,20 +463,21 @@ PetscErrorCode VecWhichInactive(Vec VecLow, Vec V, Vec D, Vec VecHigh, PetscBool
 . alpha    - the scalar coefficient
 - vreduced - the reduced-space vector
 
-  Output Parameters:
-. vfull    - the sum of the full-space vector and reduced-space vector
-
-  Notes:
-    The index set identifies entries in the global vector.
-    Negative indices are skipped; indices outside the ownership range of vfull will raise an error.
+  Output Parameter:
+. vfull - the sum of the full-space vector and reduced-space vector
 
   Level: advanced
+
+  Notes:
+  The index set identifies entries in the global vector.
+  Negative indices are skipped; indices outside the ownership range of `vfull` will raise an error.
 
 .seealso: `VecISCopy()`, `VecISSet()`, `VecAXPY()`
 @*/
 PetscErrorCode VecISAXPY(Vec vfull, IS is, PetscScalar alpha, Vec vreduced)
 {
-  PetscInt nfull, nreduced;
+  PetscInt  nfull, nreduced;
+  PetscBool sorted = PETSC_FALSE;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(vfull, VEC_CLASSID, 1);
@@ -467,10 +485,9 @@ PetscErrorCode VecISAXPY(Vec vfull, IS is, PetscScalar alpha, Vec vreduced)
   PetscValidHeaderSpecific(vreduced, VEC_CLASSID, 4);
   PetscCall(VecGetSize(vfull, &nfull));
   PetscCall(VecGetSize(vreduced, &nreduced));
-
-  if (nfull == nreduced) { /* Also takes care of masked vectors */
-    PetscCall(VecAXPY(vfull, alpha, vreduced));
-  } else {
+  if (nfull == nreduced) PetscCall(ISGetInfo(is, IS_SORTED, IS_GLOBAL, PETSC_TRUE, &sorted));
+  if (sorted) PetscCall(VecAXPY(vfull, alpha, vreduced));
+  else {
     PetscScalar       *y;
     const PetscScalar *x;
     PetscInt           i, n, m, rstart, rend;
@@ -481,7 +498,7 @@ PetscErrorCode VecISAXPY(Vec vfull, IS is, PetscScalar alpha, Vec vreduced)
     PetscCall(ISGetIndices(is, &id));
     PetscCall(ISGetLocalSize(is, &n));
     PetscCall(VecGetLocalSize(vreduced, &m));
-    PetscCheck(m == n, PETSC_COMM_SELF, PETSC_ERR_SUP, "IS local length not equal to Vec local length");
+    PetscCheck(m == n, PETSC_COMM_SELF, PETSC_ERR_SUP, "IS local length %" PetscInt_FMT " not equal to Vec local length %" PetscInt_FMT, n, m);
     PetscCall(VecGetOwnershipRange(vfull, &rstart, &rend));
     y -= rstart;
     if (alpha == 1.0) {
@@ -502,7 +519,7 @@ PetscErrorCode VecISAXPY(Vec vfull, IS is, PetscScalar alpha, Vec vreduced)
     PetscCall(VecRestoreArray(vfull, &y));
     PetscCall(VecRestoreArrayRead(vreduced, &x));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -511,26 +528,28 @@ PetscErrorCode VecISAXPY(Vec vfull, IS is, PetscScalar alpha, Vec vreduced)
   Input Parameters:
 + vfull    - the full-space vector
 . is       - the index set for the reduced space
-. mode     - the direction of copying, SCATTER_FORWARD or SCATTER_REVERSE
+. mode     - the direction of copying, `SCATTER_FORWARD` or `SCATTER_REVERSE`
 - vreduced - the reduced-space vector
 
-  Output Parameters:
-. vfull    - the sum of the full-space vector and reduced-space vector
-
-  Notes:
-    The index set identifies entries in the global vector.
-    Negative indices are skipped; indices outside the ownership range of vfull will raise an error.
-
-    mode == SCATTER_FORWARD: vfull[is[i]] = vreduced[i]
-    mode == SCATTER_REVERSE: vreduced[i] = vfull[is[i]]
+  Output Parameter:
+. vfull - the sum of the full-space vector and reduced-space vector
 
   Level: advanced
+
+  Notes:
+  The index set identifies entries in the global vector.
+  Negative indices are skipped; indices outside the ownership range of `vfull` will raise an error.
+.vb
+    mode == SCATTER_FORWARD: vfull[is[i]] = vreduced[i]
+    mode == SCATTER_REVERSE: vreduced[i] = vfull[is[i]]
+.ve
 
 .seealso: `VecISSet()`, `VecISAXPY()`, `VecCopy()`
 @*/
 PetscErrorCode VecISCopy(Vec vfull, IS is, ScatterMode mode, Vec vreduced)
 {
-  PetscInt nfull, nreduced;
+  PetscInt  nfull, nreduced;
+  PetscBool sorted = PETSC_FALSE;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(vfull, VEC_CLASSID, 1);
@@ -538,8 +557,8 @@ PetscErrorCode VecISCopy(Vec vfull, IS is, ScatterMode mode, Vec vreduced)
   PetscValidHeaderSpecific(vreduced, VEC_CLASSID, 4);
   PetscCall(VecGetSize(vfull, &nfull));
   PetscCall(VecGetSize(vreduced, &nreduced));
-
-  if (nfull == nreduced) { /* Also takes care of masked vectors */
+  if (nfull == nreduced) PetscCall(ISGetInfo(is, IS_SORTED, IS_GLOBAL, PETSC_TRUE, &sorted));
+  if (sorted) {
     if (mode == SCATTER_FORWARD) {
       PetscCall(VecCopy(vreduced, vfull));
     } else {
@@ -585,24 +604,24 @@ PetscErrorCode VecISCopy(Vec vfull, IS is, ScatterMode mode, Vec vreduced)
     } else SETERRQ(PetscObjectComm((PetscObject)vfull), PETSC_ERR_ARG_WRONG, "Only forward or reverse modes are legal");
     PetscCall(ISRestoreIndices(is, &id));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   ISComplementVec - Creates the complement of the index set relative to a layout defined by a Vec
+  ISComplementVec - Creates the complement of the index set relative to a layout defined by a `Vec`
 
-   Collective on IS
+  Collective
 
-   Input Parameters:
-+  S -  a PETSc IS
--  V - the reference vector space
+  Input Parameters:
++ S - a PETSc `IS`
+- V - the reference vector space
 
-   Output Parameter:
-.  T -  the complement of S
+  Output Parameter:
+. T - the complement of S
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `ISCreateGeneral()`
+.seealso: `IS`, `Vec`, `ISCreateGeneral()`
 @*/
 PetscErrorCode ISComplementVec(IS S, Vec V, IS *T)
 {
@@ -611,22 +630,22 @@ PetscErrorCode ISComplementVec(IS S, Vec V, IS *T)
   PetscFunctionBegin;
   PetscCall(VecGetOwnershipRange(V, &start, &end));
   PetscCall(ISComplement(S, start, end, T));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecISSet - Sets the elements of a vector, specified by an index set, to a constant
+  VecISSet - Sets the elements of a vector, specified by an index set, to a constant
 
-   Input Parameters:
-+  V - the vector
-.  S - index set for the locations in the vector
--  c - the constant
+  Input Parameters:
++ V - the vector
+. S - index set for the locations in the vector
+- c - the constant
+
+  Level: advanced
 
   Notes:
-    The index set identifies entries in the global vector.
-    Negative indices are skipped; indices outside the ownership range of V will raise an error.
-
-   Level: advanced
+  The index set identifies entries in the global vector.
+  Negative indices are skipped; indices outside the ownership range of V will raise an error.
 
 .seealso: `VecISCopy()`, `VecISAXPY()`, `VecSet()`
 @*/
@@ -637,7 +656,7 @@ PetscErrorCode VecISSet(Vec V, IS S, PetscScalar c)
   PetscScalar    *v;
 
   PetscFunctionBegin;
-  if (!S) PetscFunctionReturn(0); /* simply return with no-op if the index set is NULL */
+  if (!S) PetscFunctionReturn(PETSC_SUCCESS); /* simply return with no-op if the index set is NULL */
   PetscValidHeaderSpecific(V, VEC_CLASSID, 1);
   PetscValidHeaderSpecific(S, IS_CLASSID, 2);
   PetscValidType(V, 1);
@@ -653,7 +672,7 @@ PetscErrorCode VecISSet(Vec V, IS S, PetscScalar c)
   }
   PetscCall(ISRestoreIndices(S, &s));
   PetscCall(VecRestoreArray(V, &v));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if !defined(PETSC_USE_COMPLEX)
@@ -664,18 +683,20 @@ PetscErrorCode VecISSet(Vec V, IS S, PetscScalar c)
   If X[i] >= XU[i], then GP[i] = max(G[i],0);
 
   Input Parameters:
-+ G - current gradient vector
-. X - current solution vector with XL[i] <= X[i] <= XU[i]
++ G  - current gradient vector
+. X  - current solution vector with XL[i] <= X[i] <= XU[i]
 . XL - lower bounds
 - XU - upper bounds
 
   Output Parameter:
 . GP - gradient projection vector
 
-  Notes:
-    GP may be the same vector as G
-
   Level: advanced
+
+  Note:
+  `GP` may be the same vector as `G`
+
+.seealso: `Vec`
 @*/
 PetscErrorCode VecBoundGradientProjection(Vec G, Vec X, Vec XL, Vec XU, Vec GP)
 {
@@ -693,7 +714,7 @@ PetscErrorCode VecBoundGradientProjection(Vec G, Vec X, Vec XL, Vec XU, Vec GP)
   PetscValidHeaderSpecific(GP, VEC_CLASSID, 5);
   if (!XL && !XU) {
     PetscCall(VecCopy(G, GP));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   PetscCall(VecGetLocalSize(X, &n));
@@ -718,26 +739,27 @@ PetscErrorCode VecBoundGradientProjection(Vec G, Vec X, Vec XL, Vec XU, Vec GP)
   PetscCall(VecRestoreArrayRead(XL, &xlptr));
   PetscCall(VecRestoreArrayRead(XU, &xuptr));
   PetscCall(VecRestoreArrayPair(G, GP, &gptr, &gpptr));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
 /*@
-     VecStepMaxBounded - See below
+  VecStepMaxBounded - See below
 
-     Collective on Vec
+  Collective
 
-     Input Parameters:
-+      X  - vector with no negative entries
-.      XL - lower bounds
-.      XU - upper bounds
--      DX  - step direction, can have negative, positive or zero entries
+  Input Parameters:
++ X  - vector with no negative entries
+. XL - lower bounds
+. XU - upper bounds
+- DX - step direction, can have negative, positive or zero entries
 
-     Output Parameter:
-.     stepmax -   minimum value so that X[i] + stepmax*DX[i] <= XL[i]  or  XU[i] <= X[i] + stepmax*DX[i]
+  Output Parameter:
+. stepmax - minimum value so that X[i] + stepmax*DX[i] <= XL[i]  or  XU[i] <= X[i] + stepmax*DX[i]
 
   Level: intermediate
 
+.seealso: `Vec`
 @*/
 PetscErrorCode VecStepMaxBounded(Vec X, Vec DX, Vec XL, Vec XU, PetscReal *stepmax)
 {
@@ -768,29 +790,31 @@ PetscErrorCode VecStepMaxBounded(Vec X, Vec DX, Vec XL, Vec XU, PetscReal *stepm
   PetscCall(VecRestoreArrayRead(XU, &xu));
   PetscCall(VecRestoreArrayRead(DX, &dx));
   PetscCall(MPIU_Allreduce(&localmax, stepmax, 1, MPIU_REAL, MPIU_MAX, PetscObjectComm((PetscObject)X)));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-     VecStepBoundInfo - See below
+  VecStepBoundInfo - See below
 
-     Collective on Vec
+  Collective
 
-     Input Parameters:
-+      X  - vector with no negative entries
-.      XL - lower bounds
-.      XU - upper bounds
--      DX  - step direction, can have negative, positive or zero entries
+  Input Parameters:
++ X  - vector with no negative entries
+. XL - lower bounds
+. XU - upper bounds
+- DX - step direction, can have negative, positive or zero entries
 
-     Output Parameters:
-+     boundmin -  (may be NULL this it is not computed) maximum value so that   XL[i] <= X[i] + boundmax*DX[i] <= XU[i]
-.     wolfemin -  (may be NULL this it is not computed)
--     boundmax -   (may be NULL this it is not computed) minimum value so that X[i] + boundmax*DX[i] <= XL[i]  or  XU[i] <= X[i] + boundmax*DX[i]
-
-     Notes:
-    For complex numbers only compares the real part
+  Output Parameters:
++ boundmin - (may be `NULL` this it is not computed) maximum value so that   XL[i] <= X[i] + boundmax*DX[i] <= XU[i]
+. wolfemin - (may be `NULL` this it is not computed)
+- boundmax - (may be `NULL` this it is not computed) minimum value so that X[i] + boundmax*DX[i] <= XL[i]  or  XU[i] <= X[i] + boundmax*DX[i]
 
   Level: advanced
+
+  Note:
+  For complex numbers only compares the real part
+
+.seealso: `Vec`
 @*/
 PetscErrorCode VecStepBoundInfo(Vec X, Vec DX, Vec XL, Vec XU, PetscReal *boundmin, PetscReal *wolfemin, PetscReal *boundmax)
 {
@@ -844,26 +868,28 @@ PetscErrorCode VecStepBoundInfo(Vec X, Vec DX, Vec XL, Vec XU, PetscReal *boundm
     if (*boundmax < 0) *boundmax = PETSC_INFINITY;
     PetscCall(PetscInfo(X, "Step Bound Info: Max: %20.19e\n", (double)*boundmax));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-     VecStepMax - Returns the largest value so that x[i] + step*DX[i] >= 0 for all i
+  VecStepMax - Returns the largest value so that x[i] + step*DX[i] >= 0 for all i
 
-     Collective on Vec
+  Collective
 
-     Input Parameters:
-+      X  - vector with no negative entries
--      DX  - a step direction, can have negative, positive or zero entries
+  Input Parameters:
++ X  - vector with no negative entries
+- DX - a step direction, can have negative, positive or zero entries
 
-     Output Parameter:
-.    step - largest value such that x[i] + step*DX[i] >= 0 for all i
-
-     Notes:
-    For complex numbers only compares the real part
+  Output Parameter:
+. step - largest value such that x[i] + step*DX[i] >= 0 for all i
 
   Level: advanced
- @*/
+
+  Note:
+  For complex numbers only compares the real part
+
+.seealso: `Vec`
+@*/
 PetscErrorCode VecStepMax(Vec X, Vec DX, PetscReal *step)
 {
   PetscInt           i, nn;
@@ -884,13 +910,13 @@ PetscErrorCode VecStepMax(Vec X, Vec DX, PetscReal *step)
   PetscCall(VecRestoreArrayRead(X, &xx));
   PetscCall(VecRestoreArrayRead(DX, &dx));
   PetscCall(MPIU_Allreduce(&stepmax, step, 1, MPIU_REAL, MPIU_MIN, PetscObjectComm((PetscObject)X)));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   VecPow - Replaces each component of a vector by x_i^p
 
-  Logically Collective on v
+  Logically Collective
 
   Input Parameters:
 + v - the vector
@@ -898,6 +924,7 @@ PetscErrorCode VecStepMax(Vec X, Vec DX, PetscReal *step)
 
   Level: intermediate
 
+.seealso: `Vec`
 @*/
 PetscErrorCode VecPow(Vec v, PetscScalar p)
 {
@@ -949,7 +976,7 @@ PetscErrorCode VecPow(Vec v, PetscScalar p)
     }
   }
   PetscCall(VecRestoreArray(v, &v1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -968,6 +995,8 @@ PetscErrorCode VecPow(Vec v, PetscScalar p)
 . VMedian - The median vector (this can be any one of the input vectors)
 
   Level: advanced
+
+.seealso: `Vec`
 @*/
 PetscErrorCode VecMedian(Vec Vec1, Vec Vec2, Vec Vec3, Vec VMedian)
 {
@@ -983,15 +1012,15 @@ PetscErrorCode VecMedian(Vec Vec1, Vec Vec2, Vec Vec3, Vec VMedian)
 
   if (!Vec1 && !Vec3) {
     PetscCall(VecCopy(Vec2, VMedian));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (Vec1 == Vec2 || Vec1 == Vec3) {
     PetscCall(VecCopy(Vec1, VMedian));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (Vec2 == Vec3) {
     PetscCall(VecCopy(Vec2, VMedian));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /* Assert that Vec1 != Vec2 and Vec2 != Vec3 */
@@ -1036,5 +1065,5 @@ PetscErrorCode VecMedian(Vec Vec1, Vec Vec2, Vec Vec3, Vec VMedian)
     if (VMedian != Vec2) PetscCall(VecRestoreArrayRead(Vec2, &v2));
     if (VMedian != Vec3) PetscCall(VecRestoreArrayRead(Vec3, &v3));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

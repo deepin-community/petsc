@@ -28,7 +28,9 @@ extern void PetscRmPointer(void*);
 #endif
 
 #include "petscdm.h"
+#include "petscdmda.h"
 #include "petscdmplex.h"
+#include "petscdmswarm.h"
 #include "petscksp.h"
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmglobaltolocalsolve_ DMGLOBALTOLOCALSOLVE

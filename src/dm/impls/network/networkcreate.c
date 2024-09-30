@@ -2,12 +2,12 @@
 #include <petsc/private/dmnetworkimpl.h> /*I   "petscdmnetwork.h"   I*/
 #include <petsc/private/vecimpl.h>
 
-PetscErrorCode DMSetFromOptions_Network(DM dm, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode DMSetFromOptions_Network(DM dm, PetscOptionItems *PetscOptionsObject)
 {
   PetscFunctionBegin;
   PetscOptionsHeadBegin(PetscOptionsObject, "DMNetwork Options");
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* External function declarations here */
@@ -37,7 +37,7 @@ static PetscErrorCode VecArrayPrint_private(PetscViewer viewer, PetscInt n, cons
     PetscCall(PetscViewerASCIIPrintf(viewer, "    %g\n", (double)xv[i]));
 #endif
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode VecView_Network_Seq(DM networkdm, Vec X, PetscViewer viewer)
@@ -75,7 +75,7 @@ static PetscErrorCode VecView_Network_Seq(DM networkdm, Vec X, PetscViewer viewe
   }
   PetscCall(PetscViewerFlush(viewer));
   PetscCall(VecRestoreArrayRead(X, &xv));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode VecView_Network_MPI(DM networkdm, Vec X, PetscViewer viewer)
@@ -107,7 +107,7 @@ static PetscErrorCode VecView_Network_MPI(DM networkdm, Vec X, PetscViewer viewe
   len_loc += 2 * (1 + eEnd - eStart + vEnd - vStart);
 
   /* values = [nedges, nvertices; id, nvar, xedge; ...; id, nvars, xvertex;...], to be sent to proc[0] */
-  PetscCallMPI(MPI_Allreduce(&len_loc, &len, 1, MPIU_INT, MPI_MAX, comm));
+  PetscCall(MPIU_Allreduce(&len_loc, &len, 1, MPIU_INT, MPI_MAX, comm));
   PetscCall(PetscCalloc1(len, &values));
 
   if (rank == 0) PetscCall(PetscViewerASCIIPrintf(viewer, "Process [%d]\n", rank));
@@ -190,12 +190,12 @@ static PetscErrorCode VecView_Network_MPI(DM networkdm, Vec X, PetscViewer viewe
   PetscCall(PetscFree(values));
   PetscCall(VecRestoreArrayRead(localX, &xv));
   PetscCall(DMRestoreLocalVector(networkdm, &localX));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode VecView_MPI(Vec, PetscViewer);
 
-PetscErrorCode VecView_Network(Vec v, PetscViewer viewer)
+static PetscErrorCode VecView_Network(Vec v, PetscViewer viewer)
 {
   DM        dm;
   PetscBool isseq;
@@ -215,7 +215,7 @@ PetscErrorCode VecView_Network(Vec v, PetscViewer viewer)
     if (isseq) PetscCall(VecView_Seq(v, viewer));
     else PetscCall(VecView_MPI(v, viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMCreateGlobalVector_Network(DM dm, Vec *vec)
@@ -226,7 +226,7 @@ static PetscErrorCode DMCreateGlobalVector_Network(DM dm, Vec *vec)
   PetscCall(DMCreateGlobalVector(network->plex, vec));
   PetscCall(VecSetOperation(*vec, VECOP_VIEW, (void (*)(void))VecView_Network));
   PetscCall(VecSetDM(*vec, dm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMCreateLocalVector_Network(DM dm, Vec *vec)
@@ -236,7 +236,7 @@ static PetscErrorCode DMCreateLocalVector_Network(DM dm, Vec *vec)
   PetscFunctionBegin;
   PetscCall(DMCreateLocalVector(network->plex, vec));
   PetscCall(VecSetDM(*vec, dm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMNetworkInitializeToDefault_NonShared(DM dm)
@@ -275,7 +275,7 @@ PetscErrorCode DMNetworkInitializeToDefault_NonShared(DM dm)
   network->componentdataarray = NULL;
 
   network->max_comps_registered = DMNETWORK_MAX_COMP_REGISTERED_DEFAULT; /* return to default */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* Default values for the parameters in DMNetwork */
 PetscErrorCode DMNetworkInitializeToDefault(DM dm)
@@ -310,10 +310,10 @@ PetscErrorCode DMNetworkInitializeToDefault(DM dm)
   cloneshared->svertices  = NULL;
   cloneshared->sedgelist  = NULL;
   cloneshared->svtable    = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMInitialize_Network(DM dm)
+static PetscErrorCode DMInitialize_Network(DM dm)
 {
   PetscFunctionBegin;
   PetscCall(DMSetDimension(dm, 1));
@@ -325,7 +325,7 @@ PetscErrorCode DMInitialize_Network(DM dm)
   dm->ops->createlocalvector       = DMCreateLocalVector_Network;
   dm->ops->getlocaltoglobalmapping = NULL;
   dm->ops->createfieldis           = NULL;
-  dm->ops->createcoordinatedm      = NULL;
+  dm->ops->createcoordinatedm      = DMCreateCoordinateDM_Network;
   dm->ops->getcoloring             = NULL;
   dm->ops->creatematrix            = DMCreateMatrix_Network;
   dm->ops->createinterpolation     = NULL;
@@ -341,7 +341,7 @@ PetscErrorCode DMInitialize_Network(DM dm)
   dm->ops->destroy                 = DMDestroy_Network;
   dm->ops->createsubdm             = NULL;
   dm->ops->locatepoints            = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /*
   copies over the subnetid and index portions of the DMNetworkComponentHeader from original dm to the newdm
@@ -369,7 +369,7 @@ static PetscErrorCode DMNetworkCopyHeaderTopological(DM dm, DM newdm)
     newnetwork->header[i].maxcomps     = DMNETWORK_MAX_COMP_AT_POINT_DEFAULT;
     newnetwork->header[i].hsize        = sizeof(struct _p_DMNetworkComponentHeader) / sizeof(sizeof(DMNetworkComponentGenericDataType));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMClone_Network(DM dm, DM *newdm)
@@ -382,12 +382,33 @@ PetscErrorCode DMClone_Network(DM dm, DM *newdm)
   (*newdm)->data = newnetwork;
   PetscCall(DMNetworkInitializeToDefault_NonShared(*newdm));
   newnetwork->cloneshared = network->cloneshared; /* Share all data that can be cloneshared */
+
+  PetscCheck(network->plex, PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_NULL, "Must call DMNetworkLayoutSetUp() first");
   PetscCall(DMClone(network->plex, &newnetwork->plex));
   PetscCall(DMNetworkCopyHeaderTopological(dm, *newdm));
   PetscCall(DMNetworkInitializeNonTopological(*newdm)); /* initialize all non-topological data to the state after DMNetworkLayoutSetUp as been called */
   PetscCall(PetscObjectChangeTypeName((PetscObject)*newdm, DMNETWORK));
   PetscCall(DMInitialize_Network(*newdm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/* Developer Note: Be aware that the plex inside of the network does not have a coordinate plex.
+*/
+PetscErrorCode DMCreateCoordinateDM_Network(DM dm, DM *cdm)
+{
+  DM_Network *newnetwork = NULL;
+  PetscInt    Nf;
+  const char *prefix;
+
+  PetscFunctionBegin;
+  PetscCall(DMClone(dm, cdm));
+  newnetwork = (DM_Network *)(*cdm)->data;
+  PetscCall(DMGetNumFields(newnetwork->plex, &Nf));
+  PetscCall(DMSetNumFields(*cdm, Nf)); /* consistency with the coordinate plex */
+  PetscCall(PetscObjectGetOptionsPrefix((PetscObject)dm, &prefix));
+  PetscCall(PetscObjectSetOptionsPrefix((PetscObject)*cdm, prefix));
+  PetscCall(PetscObjectAppendOptionsPrefix((PetscObject)*cdm, "cdm_"));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -414,7 +435,7 @@ PETSC_EXTERN PetscErrorCode DMCreate_Network(DM dm)
 
   PetscCall(DMNetworkInitializeToDefault(dm));
   PetscCall(DMInitialize_Network(dm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -426,16 +447,17 @@ PETSC_EXTERN PetscErrorCode DMCreate_Network(DM dm)
 . comm - The communicator for the DMNetwork object
 
   Output Parameter:
-. network  - The DMNetwork object
+. network - The DMNetwork object
 
   Level: beginner
 
+.seealso: `DMCreate()`
 @*/
 PetscErrorCode DMNetworkCreate(MPI_Comm comm, DM *network)
 {
   PetscFunctionBegin;
-  PetscValidPointer(network, 2);
+  PetscAssertPointer(network, 2);
   PetscCall(DMCreate(comm, network));
   PetscCall(DMSetType(*network, DMNETWORK));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

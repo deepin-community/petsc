@@ -5,14 +5,14 @@
 
   Input Parameters:
 + cellType - The cell type
-- cone - The incoming cone
+- cone     - The incoming cone
 
   Output Parameter:
 . cone - The inverted cone (in-place)
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPolytopeType`, `DMPlexGenerate()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPolytopeType`, `DMPlexGenerate()`
 @*/
 PetscErrorCode DMPlexInvertCell(DMPolytopeType cellType, PetscInt cone[])
 {
@@ -58,7 +58,7 @@ PetscErrorCode DMPlexInvertCell(DMPolytopeType cellType, PetscInt cone[])
   default:
     break;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 #undef SWAPCONE
 }
 
@@ -66,7 +66,7 @@ PetscErrorCode DMPlexInvertCell(DMPolytopeType cellType, PetscInt cone[])
   DMPlexReorderCell - Flips cell orientations since `DMPLEX` stores some of them internally with outward normals.
 
   Input Parameters:
-+ dm - The `DMPLEX` object
++ dm   - The `DMPLEX` object
 . cell - The cell
 - cone - The incoming cone
 
@@ -75,7 +75,7 @@ PetscErrorCode DMPlexInvertCell(DMPolytopeType cellType, PetscInt cone[])
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPolytopeType`, `DMPlexGenerate()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPolytopeType`, `DMPlexGenerate()`
 @*/
 PetscErrorCode DMPlexReorderCell(DM dm, PetscInt cell, PetscInt cone[])
 {
@@ -84,7 +84,7 @@ PetscErrorCode DMPlexReorderCell(DM dm, PetscInt cell, PetscInt cone[])
   PetscFunctionBegin;
   PetscCall(DMPlexGetCellType(dm, cell, &cellType));
   PetscCall(DMPlexInvertCell(cellType, cone));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -92,13 +92,13 @@ PetscErrorCode DMPlexReorderCell(DM dm, PetscInt cell, PetscInt cone[])
 
   Not Collective
 
-  Inputs Parameters:
-+ dm - The `DMPLEX` object
+  Input Parameters:
++ dm   - The `DMPLEX` object
 - opts - The command line options
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexTetgenSetOptions()`, `DMPlexGenerate()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexTetgenSetOptions()`, `DMPlexGenerate()`
 @*/
 PetscErrorCode DMPlexTriangleSetOptions(DM dm, const char *opts)
 {
@@ -106,10 +106,10 @@ PetscErrorCode DMPlexTriangleSetOptions(DM dm, const char *opts)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidCharPointer(opts, 2);
+  PetscAssertPointer(opts, 2);
   PetscCall(PetscFree(mesh->triangleOpts));
   PetscCall(PetscStrallocpy(opts, &mesh->triangleOpts));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -117,13 +117,13 @@ PetscErrorCode DMPlexTriangleSetOptions(DM dm, const char *opts)
 
   Not Collective
 
-  Inputs Parameters:
-+ dm - The `DMPLEX` object
+  Input Parameters:
++ dm   - The `DMPLEX` object
 - opts - The command line options
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexTriangleSetOptions()`, `DMPlexGenerate()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexTriangleSetOptions()`, `DMPlexGenerate()`
 @*/
 PetscErrorCode DMPlexTetgenSetOptions(DM dm, const char *opts)
 {
@@ -131,10 +131,10 @@ PetscErrorCode DMPlexTetgenSetOptions(DM dm, const char *opts)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidCharPointer(opts, 2);
+  PetscAssertPointer(opts, 2);
   PetscCall(PetscFree(mesh->tetgenOpts));
   PetscCall(PetscStrallocpy(opts, &mesh->tetgenOpts));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -143,20 +143,20 @@ PetscErrorCode DMPlexTetgenSetOptions(DM dm, const char *opts)
   Not Collective
 
   Input Parameters:
-+ boundary - The `DMPLEX` boundary object
-. name - The mesh generation package name
++ boundary    - The `DMPLEX` boundary object
+. name        - The mesh generation package name
 - interpolate - Flag to create intermediate mesh elements
 
   Output Parameter:
 . mesh - The `DMPLEX` object
 
   Options Database Keys:
-+  -dm_plex_generate <name> - package to generate mesh, for example, triangle, ctetgen or tetgen
--  -dm_generator <name> - package to generate mesh, for example, triangle, ctetgen or tetgen
++ -dm_plex_generate <name> - package to generate mesh, for example, triangle, ctetgen or tetgen
+- -dm_generator <name>     - package to generate mesh, for example, triangle, ctetgen or tetgen
 
   Level: intermediate
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexCreate()`, `DMRefine()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexCreate()`, `DMRefine()`
 @*/
 PetscErrorCode DMPlexGenerate(DM boundary, const char name[], PetscBool interpolate, DM *mesh)
 {
@@ -183,7 +183,7 @@ PetscErrorCode DMPlexGenerate(DM boundary, const char name[], PetscBool interpol
       PetscCall(PetscStrcmp(fl->name, name, &flg));
       if (flg) {
         PetscCall((*fl->generate)(boundary, interpolate, mesh));
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
       fl = fl->next;
     }
@@ -192,7 +192,7 @@ PetscErrorCode DMPlexGenerate(DM boundary, const char name[], PetscBool interpol
     while (fl) {
       if (boundary->dim == fl->dim) {
         PetscCall((*fl->generate)(boundary, interpolate, mesh));
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
       fl = fl->next;
     }

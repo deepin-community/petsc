@@ -1,4 +1,3 @@
-
 #include <../src/mat/impls/adj/mpi/mpiadj.h> /*I "petscmat.h" I*/
 
 #if defined(PETSC_HAVE_UNISTD_H)
@@ -35,7 +34,7 @@ static PetscErrorCode MatPartitioningApply_Party(MatPartitioning part, IS *parti
   const char            *redm, *redo;
   char                  *mesg_log;
 #if defined(PETSC_HAVE_UNISTD_H)
-  int fd_stdout, fd_pipe[2], count, err;
+  int fd_stdout, fd_pipe[2], count;
 #endif
 
   PetscFunctionBegin;
@@ -69,7 +68,7 @@ static PetscErrorCode MatPartitioningApply_Party(MatPartitioning part, IS *parti
     matAdj = matSeq;
   }
 
-  adj = (Mat_MPIAdj *)matAdj->data; /* finaly adj contains adjacency graph */
+  adj = (Mat_MPIAdj *)matAdj->data; /* finally adj contains adjacency graph */
 
   /* arguments for Party library */
   n        = mat->rmap->N;             /* number of vertices in full graph */
@@ -101,8 +100,7 @@ static PetscErrorCode MatPartitioningApply_Party(MatPartitioning part, IS *parti
   part_info(n, vertex_w, edge_p, edge, NULL, p, part_party, 1);
 
 #if defined(PETSC_HAVE_UNISTD_H)
-  err = fflush(stdout);
-  PetscCheck(!err, PETSC_COMM_SELF, PETSC_ERR_SYS, "fflush() failed on stdout");
+  PetscCall(PetscFFlush(stdout));
   count = read(fd_pipe[0], mesg_log, (SIZE_LOG - 1) * sizeof(char));
   if (count < 0) count = 0;
   mesg_log[count] = 0;
@@ -130,10 +128,10 @@ static PetscErrorCode MatPartitioningApply_Party(MatPartitioning part, IS *parti
   PetscCall(PetscFree(part_party));
   PetscCall(MatDestroy(&matSeq));
   PetscCall(MatDestroy(&matAdj));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningView_Party(MatPartitioning part, PetscViewer viewer)
+static PetscErrorCode MatPartitioningView_Party(MatPartitioning part, PetscViewer viewer)
 {
   MatPartitioning_Party *party = (MatPartitioning_Party *)part->data;
   PetscBool              isascii;
@@ -148,28 +146,28 @@ PetscErrorCode MatPartitioningView_Party(MatPartitioning part, PetscViewer viewe
     if (party->redo) PetscCall(PetscViewerASCIIPrintf(viewer, "  Using matching optimization\n"));
     if (party->recursive) PetscCall(PetscViewerASCIIPrintf(viewer, "  Using recursive bipartitioning\n"));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   MatPartitioningPartySetGlobal - Set global method for Party partitioner.
+  MatPartitioningPartySetGlobal - Set global method for Party partitioner.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  part - the partitioning context
--  method - a string representing the method
+  Input Parameters:
++ part   - the partitioning context
+- global - a string representing the method
 
-   Options Database Key:
-.  -mat_partitioning_party_global <method> - the global method
+  Options Database Key:
+. -mat_partitioning_party_global <method> - the global method
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   The method may be one of `MP_PARTY_OPT`, `MP_PARTY_LIN`, `MP_PARTY_SCA`,
-   `MP_PARTY_RAN`, `MP_PARTY_GBF`, `MP_PARTY_GCF`, `MP_PARTY_BUB` or `MP_PARTY_DEF`, or
-   alternatively a string describing the method. Two or more methods can be
-   combined like "gbf,gcf". Check the Party Library Users Manual for details.
+  Note:
+  The method may be one of `MP_PARTY_OPT`, `MP_PARTY_LIN`, `MP_PARTY_SCA`,
+  `MP_PARTY_RAN`, `MP_PARTY_GBF`, `MP_PARTY_GCF`, `MP_PARTY_BUB` or `MP_PARTY_DEF`, or
+  alternatively a string describing the method. Two or more methods can be
+  combined like "gbf,gcf". Check the Party Library Users Manual for details.
 
 .seealso: `MATPARTITIONINGPARTY`, `MatPartitioningPartySetLocal()`
 @*/
@@ -178,35 +176,35 @@ PetscErrorCode MatPartitioningPartySetGlobal(MatPartitioning part, const char *g
   PetscFunctionBegin;
   PetscValidHeaderSpecific(part, MAT_PARTITIONING_CLASSID, 1);
   PetscTryMethod(part, "MatPartitioningPartySetGlobal_C", (MatPartitioning, const char *), (part, global));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningPartySetGlobal_Party(MatPartitioning part, const char *global)
+static PetscErrorCode MatPartitioningPartySetGlobal_Party(MatPartitioning part, const char *global)
 {
   MatPartitioning_Party *party = (MatPartitioning_Party *)part->data;
 
   PetscFunctionBegin;
   PetscCall(PetscStrncpy(party->global, global, 15));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   MatPartitioningPartySetLocal - Set local method used by the Party partitioner.
+  MatPartitioningPartySetLocal - Set local method used by the Party partitioner.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  part - the partitioning context
--  method - a string representing the method
+  Input Parameters:
++ part  - the partitioning context
+- local - a string representing the method
 
-   Options Database Key:
-.  -mat_partitioning_party_local <method> - the local method
+  Options Database Key:
+. -mat_partitioning_party_local <method> - the local method
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   The method may be one of `MP_PARTY_HELPFUL_SETS`, `MP_PARTY_KERNIGHAN_LIN`, or
-   `MP_PARTY_NONE`. Check the Party Library Users Manual for details.
+  Note:
+  The method may be one of `MP_PARTY_HELPFUL_SETS`, `MP_PARTY_KERNIGHAN_LIN`, or
+  `MP_PARTY_NONE`. Check the Party Library Users Manual for details.
 
 .seealso: `MATPARTITIONINGPARTY`, `MatPartitioningPartySetGlobal()`
 @*/
@@ -215,33 +213,33 @@ PetscErrorCode MatPartitioningPartySetLocal(MatPartitioning part, const char *lo
   PetscFunctionBegin;
   PetscValidHeaderSpecific(part, MAT_PARTITIONING_CLASSID, 1);
   PetscTryMethod(part, "MatPartitioningPartySetLocal_C", (MatPartitioning, const char *), (part, local));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningPartySetLocal_Party(MatPartitioning part, const char *local)
+static PetscErrorCode MatPartitioningPartySetLocal_Party(MatPartitioning part, const char *local)
 
 {
   MatPartitioning_Party *party = (MatPartitioning_Party *)part->data;
 
   PetscFunctionBegin;
   PetscCall(PetscStrncpy(party->local, local, 15));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatPartitioningPartySetCoarseLevel - Set the coarse level parameter for the
-   Party partitioner.
+  MatPartitioningPartySetCoarseLevel - Set the coarse level parameter for the
+  Party partitioner.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  part - the partitioning context
--  level - the coarse level in range [0.0,1.0]
+  Input Parameters:
++ part  - the partitioning context
+- level - the coarse level in range [0.0,1.0]
 
-   Options Database Key:
-.  -mat_partitioning_party_coarse <l> - Coarse level
+  Options Database Key:
+. -mat_partitioning_party_coarse <l> - Coarse level
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `MATPARTITIONINGPARTY`
 @*/
@@ -251,10 +249,10 @@ PetscErrorCode MatPartitioningPartySetCoarseLevel(MatPartitioning part, PetscRea
   PetscValidHeaderSpecific(part, MAT_PARTITIONING_CLASSID, 1);
   PetscValidLogicalCollectiveReal(part, level, 2);
   PetscTryMethod(part, "MatPartitioningPartySetCoarseLevel_C", (MatPartitioning, PetscReal), (part, level));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningPartySetCoarseLevel_Party(MatPartitioning part, PetscReal level)
+static PetscErrorCode MatPartitioningPartySetCoarseLevel_Party(MatPartitioning part, PetscReal level)
 {
   MatPartitioning_Party *party = (MatPartitioning_Party *)part->data;
 
@@ -262,25 +260,25 @@ PetscErrorCode MatPartitioningPartySetCoarseLevel_Party(MatPartitioning part, Pe
   PetscCheck(level >= 0.0 && level <= 1.0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Party: level of coarsening out of range [0.0-1.0]");
   party->nbvtxcoarsed = (PetscInt)(part->adj->cmap->N * level);
   if (party->nbvtxcoarsed < 20) party->nbvtxcoarsed = 20;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatPartitioningPartySetMatchOptimization - Activate matching optimization for
-   graph reduction.
+  MatPartitioningPartySetMatchOptimization - Activate matching optimization for
+  graph reduction.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  part - the partitioning context
--  opt - boolean flag
+  Input Parameters:
++ part - the partitioning context
+- opt  - boolean flag
 
-   Options Database Key:
-.  -mat_partitioning_party_match_optimization - Matching optimization on/off
+  Options Database Key:
+. -mat_partitioning_party_match_optimization - Matching optimization on/off
 
-   Level: advanced
+  Level: advanced
 
-.seealso:  `MATPARTITIONINGPARTY`
+.seealso: `MATPARTITIONINGPARTY`
 @*/
 PetscErrorCode MatPartitioningPartySetMatchOptimization(MatPartitioning part, PetscBool opt)
 {
@@ -288,33 +286,33 @@ PetscErrorCode MatPartitioningPartySetMatchOptimization(MatPartitioning part, Pe
   PetscValidHeaderSpecific(part, MAT_PARTITIONING_CLASSID, 1);
   PetscValidLogicalCollectiveBool(part, opt, 2);
   PetscTryMethod(part, "MatPartitioningPartySetMatchOptimization_C", (MatPartitioning, PetscBool), (part, opt));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningPartySetMatchOptimization_Party(MatPartitioning part, PetscBool opt)
+static PetscErrorCode MatPartitioningPartySetMatchOptimization_Party(MatPartitioning part, PetscBool opt)
 {
   MatPartitioning_Party *party = (MatPartitioning_Party *)part->data;
 
   PetscFunctionBegin;
   party->redo = opt;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatPartitioningPartySetBipart - Activate or deactivate recursive bisection in the Party partitioner
+  MatPartitioningPartySetBipart - Activate or deactivate recursive bisection in the Party partitioner
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  part - the partitioning context
--  bp - boolean flag
+  Input Parameters:
++ part - the partitioning context
+- bp   - boolean flag
 
-   Options Database Key:
--  -mat_partitioning_party_bipart - Bipartitioning option on/off
+  Options Database Key:
+. -mat_partitioning_party_bipart - Bipartitioning option on/off
 
-   Level: advanced
+  Level: advanced
 
-.seealso:  `MATPARTITIONINGPARTY`
+.seealso: `MATPARTITIONINGPARTY`
 @*/
 PetscErrorCode MatPartitioningPartySetBipart(MatPartitioning part, PetscBool bp)
 {
@@ -322,19 +320,19 @@ PetscErrorCode MatPartitioningPartySetBipart(MatPartitioning part, PetscBool bp)
   PetscValidHeaderSpecific(part, MAT_PARTITIONING_CLASSID, 1);
   PetscValidLogicalCollectiveBool(part, bp, 2);
   PetscTryMethod(part, "MatPartitioningPartySetBipart_C", (MatPartitioning, PetscBool), (part, bp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningPartySetBipart_Party(MatPartitioning part, PetscBool bp)
+static PetscErrorCode MatPartitioningPartySetBipart_Party(MatPartitioning part, PetscBool bp)
 {
   MatPartitioning_Party *party = (MatPartitioning_Party *)part->data;
 
   PetscFunctionBegin;
   party->recursive = bp;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningSetFromOptions_Party(MatPartitioning part, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode MatPartitioningSetFromOptions_Party(MatPartitioning part, PetscOptionItems *PetscOptionsObject)
 {
   PetscBool              flag;
   char                   value[256];
@@ -353,10 +351,10 @@ PetscErrorCode MatPartitioningSetFromOptions_Party(MatPartitioning part, PetscOp
   PetscCall(PetscOptionsBool("-mat_partitioning_party_bipart", "Bipartitioning on/off", "MatPartitioningPartySetBipart", party->recursive, &party->recursive, NULL));
   PetscCall(PetscOptionsBool("-mat_partitioning_party_verbose", "Show library output", "", party->verbose, &party->verbose, NULL));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningDestroy_Party(MatPartitioning part)
+static PetscErrorCode MatPartitioningDestroy_Party(MatPartitioning part)
 {
   MatPartitioning_Party *party = (MatPartitioning_Party *)part->data;
 
@@ -368,18 +366,17 @@ PetscErrorCode MatPartitioningDestroy_Party(MatPartitioning part)
   PetscCall(PetscObjectComposeFunction((PetscObject)part, "MatPartitioningPartySetCoarseLevel_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)part, "MatPartitioningPartySetMatchOptimization_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)part, "MatPartitioningPartySetBipart_C", NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-   MATPARTITIONINGPARTY - Creates a partitioning context via the external package Party.
+   MATPARTITIONINGPARTY - Creates a partitioning context via the external package Party <
+   http://wwwcs.upb.de/fachbereich/AG/monien/RESEARCH/PART/party.htm>.
 
    Level: beginner
 
-   Notes:
-    See http://wwwcs.upb.de/fachbereich/AG/monien/RESEARCH/PART/party.html
-
-    Does not support the `MatPartitioningSetUseEdgeWeights()` option
+   Note:
+   Does not support the `MatPartitioningSetUseEdgeWeights()` option
 
 .seealso: `MatPartitioningSetType()`, `MatPartitioningType`, `MatPartitioningPartySetGlobal()`, `MatPartitioningPartySetLocal()`,
           `MatPartitioningPartySetCoarseLevel()`, `MatPartitioningPartySetMatchOptimization()`, `MatPartitioningPartySetBipart()`
@@ -393,8 +390,8 @@ PETSC_EXTERN PetscErrorCode MatPartitioningCreate_Party(MatPartitioning part)
   PetscCall(PetscNew(&party));
   part->data = (void *)party;
 
-  PetscCall(PetscStrcpy(party->global, "gcf,gbf"));
-  PetscCall(PetscStrcpy(party->local, "kl"));
+  PetscCall(PetscStrncpy(party->global, "gcf,gbf", sizeof(party->global)));
+  PetscCall(PetscStrncpy(party->local, "kl", sizeof(party->local)));
 
   party->redm         = PETSC_TRUE;
   party->redo         = PETSC_TRUE;
@@ -412,5 +409,5 @@ PETSC_EXTERN PetscErrorCode MatPartitioningCreate_Party(MatPartitioning part)
   PetscCall(PetscObjectComposeFunction((PetscObject)part, "MatPartitioningPartySetCoarseLevel_C", MatPartitioningPartySetCoarseLevel_Party));
   PetscCall(PetscObjectComposeFunction((PetscObject)part, "MatPartitioningPartySetMatchOptimization_C", MatPartitioningPartySetMatchOptimization_Party));
   PetscCall(PetscObjectComposeFunction((PetscObject)part, "MatPartitioningPartySetBipart_C", MatPartitioningPartySetBipart_Party));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

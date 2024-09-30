@@ -35,11 +35,6 @@ extern void PetscRmPointer(void*);
 #define dmplexlandauaddmaxwellians_ dmplexlandauaddmaxwellians
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define dmplexlandauaccess_ DMPLEXLANDAUACCESS
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define dmplexlandauaccess_ dmplexlandauaccess
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmplexlandaudestroyvelocityspace_ DMPLEXLANDAUDESTROYVELOCITYSPACE
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmplexlandaudestroyvelocityspace_ dmplexlandaudestroyvelocityspace
@@ -75,12 +70,6 @@ PETSC_EXTERN void  dmplexlandauaddmaxwellians_(DM dm,Vec X,PetscReal *time,Petsc
 *__ierr = DMPlexLandauAddMaxwellians(
 	(DM)PetscToPointer((dm) ),
 	(Vec)PetscToPointer((X) ),*time,temps,ns,*grid,*b_id,*n_batch,actx);
-}
-PETSC_EXTERN void  dmplexlandauaccess_(DM pack,Vec X,PetscErrorCode (*func)(DM, Vec, PetscInt, PetscInt, PetscInt, void *),void*user_ctx, int *__ierr)
-{
-*__ierr = DMPlexLandauAccess(
-	(DM)PetscToPointer((pack) ),
-	(Vec)PetscToPointer((X) ),func,user_ctx);
 }
 PETSC_EXTERN void  dmplexlandaudestroyvelocityspace_(DM *dm, int *__ierr)
 {

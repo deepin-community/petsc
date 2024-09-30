@@ -1,4 +1,3 @@
-
 /*
     This file contains routines to reorder a matrix so that the diagonal
     elements are nonzero.
@@ -7,57 +6,60 @@
 #include <petsc/private/matimpl.h> /*I  "petscmat.h"  I*/
 
 #define SWAP(a, b) \
-  { \
+  do { \
     PetscInt _t; \
     _t = a; \
     a  = b; \
     b  = _t; \
-  }
+  } while (0)
 
 /*@
-    MatReorderForNonzeroDiagonal - Changes matrix ordering to remove
-    zeros from diagonal. This may help in the `PCLU` factorization to
-    prevent a zero pivot.
+  MatReorderForNonzeroDiagonal - Changes matrix ordering to remove
+  zeros from diagonal. This may help in the `PCLU` factorization to
+  prevent a zero pivot.
 
-    Collective
+  Collective
 
-    Input Parameters:
-+   mat  - matrix to reorder
--   rmap,cmap - row and column permutations.  Usually obtained from
-               `MatGetOrdering()`.
+  Input Parameters:
++ mat    - matrix to reorder
+. abstol - absolute tolerance, it attempts to move all values smaller off the diagonal
+. ris    - the row reordering
+- cis    - the column reordering; this may be changed
 
-    Level: intermediate
+  Level: intermediate
 
-    Notes:
-    This is not intended as a replacement for pivoting for matrices that
-    have ``bad'' structure. It is only a stop-gap measure. Should be called
-    after a call to `MatGetOrdering()`, this routine changes the column
-    ordering defined in cis.
+  Options Database Key:
+. -pc_factor_nonzeros_along_diagonal - Reorder to remove zeros from diagonal
 
-    Only works for `MATSEQAIJ` matrices
+  Notes:
+  This is not intended as a replacement for pivoting for matrices that
+  have ``bad'' structure. It is only a stop-gap measure.
 
-    Options Database Keys (When using `KSP`):
-.      -pc_factor_nonzeros_along_diagonal - Reorder to remove zeros from diagonal
+  Should be called
+  after a call to `MatGetOrdering()`.
 
-    Algorithm Notes:
-    Column pivoting is used.
+  Only works for `MATSEQAIJ` matrices
 
-    1) Choice of column is made by looking at the
-       non-zero elements in the troublesome row for columns that are not yet
-       included (moving from left to right).
+  Developer Notes:
+  Column pivoting is used.
 
-    2) If (1) fails we check all the columns to the left of the current row
-       and see if one of them has could be swapped. It can be swapped if
-       its corresponding row has a non-zero in the column it is being
-       swapped with; to make sure the previous nonzero diagonal remains
-       nonzero
+  1) Choice of column is made by looking at the
+  non-zero elements in the troublesome row for columns that are not yet
+  included (moving from left to right).
 
+  2) If (1) fails we check all the columns to the left of the current row
+  and see if one of them has could be swapped. It can be swapped if
+  its corresponding row has a non-zero in the column it is being
+  swapped with; to make sure the previous nonzero diagonal remains
+  nonzero
+
+.seealso: `Mat`, `MatGetFactor()`, `MatGetOrdering()`
 @*/
 PetscErrorCode MatReorderForNonzeroDiagonal(Mat mat, PetscReal abstol, IS ris, IS cis)
 {
   PetscFunctionBegin;
   PetscTryMethod(mat, "MatReorderForNonzeroDiagonal_C", (Mat, PetscReal, IS, IS), (mat, abstol, ris, cis));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_INTERN PetscErrorCode MatGetRow_SeqAIJ(Mat, PetscInt, PetscInt *, PetscInt **, PetscScalar **);
@@ -142,5 +144,5 @@ PETSC_INTERN PetscErrorCode MatReorderForNonzeroDiagonal_SeqAIJ(Mat mat, PetscRe
     PetscCall(MatRestoreRow_SeqAIJ(mat, row[prow], &nz, &j, &v));
   }
   PetscCall(ISDestroy(&icis));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

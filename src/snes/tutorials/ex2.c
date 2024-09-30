@@ -1,4 +1,3 @@
-
 static char help[] = "Newton method to solve u'' + u^{2} = f, sequentially.\n\
 This example employs a user-defined monitoring routine.\n\n";
 
@@ -187,8 +186,9 @@ int main(int argc, char **argv)
 PetscErrorCode FormInitialGuess(Vec x)
 {
   PetscScalar pfive = .50;
+  PetscFunctionBeginUser;
   PetscCall(VecSet(x, pfive));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -216,6 +216,7 @@ PetscErrorCode FormFunction(SNES snes, Vec x, Vec f, void *ctx)
   PetscScalar       *ff, d;
   PetscInt           i, n;
 
+  PetscFunctionBeginUser;
   /*
      Get pointers to vector data.
        - For default PETSc vectors, VecGetArray() returns a pointer to
@@ -243,7 +244,7 @@ PetscErrorCode FormFunction(SNES snes, Vec x, Vec f, void *ctx)
   PetscCall(VecRestoreArrayRead(x, &xx));
   PetscCall(VecRestoreArray(f, &ff));
   PetscCall(VecRestoreArrayRead(g, &gg));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -266,6 +267,7 @@ PetscErrorCode FormJacobian(SNES snes, Vec x, Mat jac, Mat B, void *dummy)
   PetscScalar        A[3], d;
   PetscInt           i, n, j[3];
 
+  PetscFunctionBeginUser;
   /*
      Get pointer to vector data
   */
@@ -319,7 +321,7 @@ PetscErrorCode FormJacobian(SNES snes, Vec x, Mat jac, Mat B, void *dummy)
     PetscCall(MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY));
   }
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -339,13 +341,17 @@ PetscErrorCode FormJacobian(SNES snes, Vec x, Mat jac, Mat B, void *dummy)
  */
 PetscErrorCode Monitor(SNES snes, PetscInt its, PetscReal fnorm, void *ctx)
 {
-  MonitorCtx *monP = (MonitorCtx *)ctx;
-  Vec         x;
+  MonitorCtx         *monP = (MonitorCtx *)ctx;
+  Vec                 x;
+  SNESConvergedReason reason;
 
+  PetscFunctionBeginUser;
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "iter = %" PetscInt_FMT ", SNES Function norm %g\n", its, (double)fnorm));
+  PetscCall(SNESGetConvergedReason(snes, &reason));
   PetscCall(SNESGetSolution(snes, &x));
   PetscCall(VecView(x, monP->viewer));
-  return 0;
+  PetscCall(PetscPrintf(PETSC_COMM_WORLD, "  converged = %s\n", SNESConvergedReasons[reason]));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST
@@ -365,6 +371,12 @@ PetscErrorCode Monitor(SNES snes, PetscInt its, PetscReal fnorm, void *ctx)
    test:
       suffix: 4
       args: -nox -snes_monitor_cancel -snes_monitor_short -snes_type newtontrdc -snes_view
+      requires: !single
+
+   test:
+      suffix: 5
+      filter: grep -v atol | sed -e "s/CONVERGED_ITS/DIVERGED_MAX_IT/g" | sed -e "s/CONVERGED_FNORM_RELATIVE/DIVERGED_MAX_IT/g"
+      args: -nox -snes_type {{newtonls newtontr ncg ngmres qn anderson nrichardson ms ksponly ksptransposeonly vinewtonrsls vinewtonssls fas ms}} -snes_max_it 1
       requires: !single
 
 TEST*/

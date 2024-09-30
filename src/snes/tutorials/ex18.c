@@ -1,4 +1,3 @@
-
 static char help[] = "Nonlinear Radiative Transport PDE with multigrid in 2d.\n\
 Uses 2-dimensional distributed arrays.\n\
 A 2-dim simplified Radiative Transport test problem is used, with analytic Jacobian. \n\
@@ -127,7 +126,7 @@ PetscErrorCode FormInitialGuess(SNES snes, Vec X, void *ctx)
     for (i = xs; i < xs + xm; i++) x[j][i] = tleft;
   }
   PetscCall(DMDAVecRestoreArray(da, X, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------  Evaluate Function F(x) --------------------- */
 PetscErrorCode FormFunction(SNES snes, Vec X, Vec F, void *ptr)
@@ -287,7 +286,7 @@ PetscErrorCode FormFunction(SNES snes, Vec X, Vec F, void *ptr)
   PetscCall(DMDAVecRestoreArray(da, F, &f));
   PetscCall(DMRestoreLocalVector(da, &localX));
   PetscCall(PetscLogFlops((22.0 + 4.0 * POWFLOP) * ym * xm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------  Evaluate Jacobian F(x) --------------------- */
 PetscErrorCode FormJacobian(SNES snes, Vec X, Mat jac, Mat B, void *ptr)
@@ -633,7 +632,7 @@ PetscErrorCode FormJacobian(SNES snes, Vec X, Mat jac, Mat B, void *ptr)
   }
 
   PetscCall(PetscLogFlops((41.0 + 8.0 * POWFLOP) * xm * ym));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST
@@ -646,6 +645,11 @@ PetscErrorCode FormJacobian(SNES snes, Vec X, Mat jac, Mat B, void *ptr)
    test:
       suffix: 2
       args: -pc_type mg -ksp_type fgmres -da_refine 2 -pc_mg_galerkin pmat -snes_view -snes_type newtontrdc
+      requires: !single
+
+   test:
+      suffix: 3
+      args: -pc_type mg -ksp_type fgmres -da_refine 2 -pc_mg_galerkin pmat -snes_view -snes_type newtontr -snes_tr_fallback_type dogleg
       requires: !single
 
 TEST*/

@@ -324,19 +324,16 @@ PETSC_EXTERN void  taogetfunctionlowerbound_(Tao tao,PetscReal *fmin, int *__ier
 *__ierr = TaoGetFunctionLowerBound(
 	(Tao)PetscToPointer((tao) ),fmin);
 }
-
 PETSC_EXTERN void  taosetmaximumfunctionevaluations_(Tao tao,PetscInt *nfcn, int *__ierr)
 {
 *__ierr = TaoSetMaximumFunctionEvaluations(
 	(Tao)PetscToPointer((tao) ),*nfcn);
 }
-
 PETSC_EXTERN void  taogetmaximumfunctionevaluations_(Tao tao,PetscInt *nfcn, int *__ierr)
 {
 *__ierr = TaoGetMaximumFunctionEvaluations(
 	(Tao)PetscToPointer((tao) ),nfcn);
 }
-
 PETSC_EXTERN void  taogetcurrentfunctionevaluations_(Tao tao,PetscInt *nfuncs, int *__ierr)
 {
 *__ierr = TaoGetCurrentFunctionEvaluations(
@@ -427,7 +424,6 @@ PETSC_EXTERN void  taodefaultcmonitor_(Tao tao,void*ctx, int *__ierr)
 *__ierr = TaoDefaultCMonitor(
 	(Tao)PetscToPointer((tao) ),ctx);
 }
-
 PETSC_EXTERN void  taodefaultconvergencetest_(Tao tao,void*dummy, int *__ierr)
 {
 *__ierr = TaoDefaultConvergenceTest(

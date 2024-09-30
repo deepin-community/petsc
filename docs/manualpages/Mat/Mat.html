@@ -1,0 +1,665 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>Mat &#8212; PETSc 3.20.6 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../_static/styles/bootstrap.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=796348d33e8b1d947c94" rel="stylesheet">
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/css/custom.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94">
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script src="../../_static/katex.min.js"></script>
+    <script src="../../_static/auto-render.min.js"></script>
+    <script src="../../_static/katex_autorenderer.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'manualpages/Mat/Mat';</script>
+    <link rel="shortcut icon" href="../../_static/petsc_favicon.png"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../../index.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../../_static/PETSc-TAO_RGB.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../../_static/PETSc-TAO_RGB_white.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        C/Fortran API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../petsc4py/index.html">
+                        petsc4py API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      
+        <div class="navbar-end-item navbar-persistent--container">
+          
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+        </div>
+      
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+
+
+  
+  
+    <div class="navbar-persistent--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+    </div>
+  
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+  </label>
+  
+
+</div>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../overview/index.html">
+                        Overview
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../index.html">
+                        C/Fortran API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../petsc4py/index.html">
+                        petsc4py API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../faq/index.html">
+                        FAQ
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../community/index.html">
+                        Community
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../developers/index.html">
+                        Developers
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../miscellaneous/index.html">
+                        Misc.
+                      </a>
+                    </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.com/petsc/petsc" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fab fa-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+  
+  <div id="rtd-footer-container"></div>
+
+      </div>
+      <main id="main-content" class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+            </div>
+            
+            
+            <article class="bd-article" role="main">
+              
+  <section class="tex2jax_ignore mathjax_ignore" id="mat">
+<h1>Mat<a class="headerlink" href="#mat" title="Permalink to this heading">#</a></h1>
+<p>Abstract PETSc matrix object used to manage all linear operators in PETSc, even those without an explicit sparse representation (such as matrix-free operators). Also used to hold representations of graphs for graph operations such as coloring, <code class="docutils notranslate"><span class="pre"><a href="../../manualpages/MatOrderings/MatColoringCreate.html">MatColoringCreate</a>()</span></code></p>
+<section id="synopsis">
+<h2>Synopsis<a class="headerlink" href="#synopsis" title="Permalink to this heading">#</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">typedef</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">_p_Mat</span><span class="w"> </span><span class="o">*</span><span class="n"><a href="../../manualpages/Mat/Mat.html">Mat</a></span><span class="p">;</span>
+</pre></div>
+</div>
+</section>
+<section id="note">
+<h2>Note<a class="headerlink" href="#note" title="Permalink to this heading">#</a></h2>
+<p>See <a class="reference internal" href="../../overview/matrix_table.html#doc-matrix"><span class="std std-ref">Summary of Matrix Types Available In PETSc</span></a>, <a class="reference internal" href="../../manual/mat.html#ch-matrices"><span class="std std-ref">Matrices</span></a> and <code class="docutils notranslate"><span class="pre"><a href="../../manualpages/Mat/MatType.html">MatType</a></span></code> for available matrix types</p>
+</section>
+<section id="see-also">
+<h2>See Also<a class="headerlink" href="#see-also" title="Permalink to this heading">#</a></h2>
+<p><a class="reference internal" href="../../overview/matrix_table.html#doc-matrix"><span class="std std-ref">Summary of Matrix Types Available In PETSc</span></a>, <a class="reference internal" href="../../manual/mat.html#ch-matrices"><span class="std std-ref">Matrices</span></a>, <code class="docutils notranslate"><span class="pre"><a href="../../manualpages/Mat/MatCreate.html">MatCreate</a>()</span></code>, <code class="docutils notranslate"><span class="pre"><a href="../../manualpages/Mat/MatType.html">MatType</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../../manualpages/Mat/MatSetType.html">MatSetType</a>()</span></code>, <code class="docutils notranslate"><span class="pre"><a href="../../manualpages/Mat/MatDestroy.html">MatDestroy</a>()</span></code></p>
+</section>
+<section id="level">
+<h2>Level<a class="headerlink" href="#level" title="Permalink to this heading">#</a></h2>
+<p>beginner</p>
+</section>
+<section id="location">
+<h2>Location<a class="headerlink" href="#location" title="Permalink to this heading">#</a></h2>
+<p><A HREF="../../include/petscmat.h.html#Mat">include/petscmat.h</A></p>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading">#</a></h2>
+<p><A HREF="../../src/ksp/ksp/tutorials/ex10.c.html">src/ksp/ksp/tutorials/ex10.c</A><BR>
+<A HREF="../../src/ksp/ksp/tutorials/ex1.c.html">src/ksp/ksp/tutorials/ex1.c</A><BR>
+<A HREF="../../src/dm/impls/stag/tutorials/ex3.c.html">src/dm/impls/stag/tutorials/ex3.c</A><BR>
+<A HREF="../../src/dm/impls/stag/tutorials/ex4.c.html">src/dm/impls/stag/tutorials/ex4.c</A><BR>
+<A HREF="../../src/dm/impls/stag/tutorials/ex2.c.html">src/dm/impls/stag/tutorials/ex2.c</A><BR>
+<A HREF="../../src/dm/impls/stag/tutorials/ex8.c.html">src/dm/impls/stag/tutorials/ex8.c</A><BR>
+<A HREF="../../src/dm/tutorials/ex14.c.html">src/dm/tutorials/ex14.c</A><BR>
+<A HREF="../../src/dm/tutorials/ex3.c.html">src/dm/tutorials/ex3.c</A><BR>
+<A HREF="../../src/ksp/ksp/tutorials/bench_kspsolve.c.html">src/ksp/ksp/tutorials/bench_kspsolve.c</A><BR>
+<A HREF="../../src/dm/impls/stag/tutorials/ex1.c.html">src/dm/impls/stag/tutorials/ex1.c</A><BR></p>
+</section>
+<section id="implementations">
+<h2>Implementations<a class="headerlink" href="#implementations" title="Permalink to this heading">#</a></h2>
+<p><A HREF="../../include/petsc/private/matimpl.h.html#_p_Mat">_p_Mat in include/petsc/private/matimpl.h</A><BR>
+<A HREF="../../include/petsc/private/matimpl.h.html#Mat_CompressedRow">Mat_CompressedRow in include/petsc/private/matimpl.h</A><BR>
+<A HREF="../../include/petsc/private/matimpl.h.html#Mat_Redundant">Mat_Redundant in include/petsc/private/matimpl.h</A><BR>
+<A HREF="../../include/petsc/private/matimpl.h.html#Mat_Product">Mat_Product in include/petsc/private/matimpl.h</A><BR>
+<A HREF="../../include/petsc/private/matisimpl.h.html#Mat_IS">Mat_IS in include/petsc/private/matisimpl.h</A><BR>
+<A HREF="../../include/petsc/private/petscelemental.h.html#Mat_Elemental">Mat_Elemental in include/petsc/private/petscelemental.h</A><BR>
+<A HREF="../../include/petsc/private/petscscalapack.h.html#Mat_ScaLAPACK">Mat_ScaLAPACK in include/petsc/private/petscscalapack.h</A><BR>
+<A HREF="../../src/dm/impls/da/hypre/mhyp.h.html#Mat_HYPREStruct">Mat_HYPREStruct in src/dm/impls/da/hypre/mhyp.h</A><BR>
+<A HREF="../../src/dm/impls/da/hypre/mhyp.h.html#Mat_HYPRESStruct">Mat_HYPRESStruct in src/dm/impls/da/hypre/mhyp.h</A><BR>
+<A HREF="../../src/dm/impls/da/usfft/matusfft.c.html#Mat_USFFT">Mat_USFFT in src/dm/impls/da/usfft/matusfft.c</A><BR>
+<A HREF="../../src/ksp/ksp/interface/eige.c.html#Mat_KSP">Mat_KSP in src/ksp/ksp/interface/eige.c</A><BR>
+<A HREF="../../src/ksp/ksp/utils/lmvm/brdn/brdn.h.html#Mat_Brdn">Mat_Brdn in src/ksp/ksp/utils/lmvm/brdn/brdn.h</A><BR>
+<A HREF="../../src/ksp/ksp/utils/lmvm/diagbrdn/diagbrdn.h.html#Mat_DiagBrdn">Mat_DiagBrdn in src/ksp/ksp/utils/lmvm/diagbrdn/diagbrdn.h</A><BR>
+<A HREF="../../src/ksp/ksp/utils/lmvm/lmvm.h.html#Mat_LMVM">Mat_LMVM in src/ksp/ksp/utils/lmvm/lmvm.h</A><BR>
+<A HREF="../../src/ksp/ksp/utils/lmvm/symbrdn/symbrdn.h.html#Mat_SymBrdn">Mat_SymBrdn in src/ksp/ksp/utils/lmvm/symbrdn/symbrdn.h</A><BR>
+<A HREF="../../src/ksp/ksp/utils/schurm/schurm.h.html#Mat_SchurComplement">Mat_SchurComplement in src/ksp/ksp/utils/schurm/schurm.h</A><BR>
+<A HREF="../../src/ksp/pc/impls/ml/ml.c.html#Mat_MLShell">Mat_MLShell in src/ksp/pc/impls/ml/ml.c</A><BR>
+<A HREF="../../src/mat/impls/adj/mpi/mpiadj.h.html#Mat_MPIAdj">Mat_MPIAdj in src/mat/impls/adj/mpi/mpiadj.h</A><BR>
+<A HREF="../../src/mat/impls/aij/mpi/mpiaij.h.html#Mat_APMPI">Mat_APMPI in src/mat/impls/aij/mpi/mpiaij.h</A><BR>
+<A HREF="../../src/mat/impls/aij/mpi/mpiaij.h.html#Mat_MPIAIJ">Mat_MPIAIJ in src/mat/impls/aij/mpi/mpiaij.h</A><BR>
+<A HREF="../../src/mat/impls/aij/mpi/pastix/pastix.c.html#Mat_Pastix">Mat_Pastix in src/mat/impls/aij/mpi/pastix/pastix.c</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/aij.h.html#Mat_SubSppt">Mat_SubSppt in src/mat/impls/aij/seq/aij.h</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/aij.h.html#Mat_SeqAIJOps">Mat_SeqAIJOps in src/mat/impls/aij/seq/aij.h</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/aij.h.html#Mat_MatMatTransMult">Mat_MatMatTransMult in src/mat/impls/aij/seq/aij.h</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/aij.h.html#Mat_MatTransMatMult">Mat_MatTransMatMult in src/mat/impls/aij/seq/aij.h</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/aij.h.html#Mat_AP">Mat_AP in src/mat/impls/aij/seq/aij.h</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/aij.h.html#Mat_RARt">Mat_RARt in src/mat/impls/aij/seq/aij.h</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/aij.h.html#Mat_MatMatMatMult">Mat_MatMatMatMult in src/mat/impls/aij/seq/aij.h</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/aij.h.html#Mat_SeqAIJ">Mat_SeqAIJ in src/mat/impls/aij/seq/aij.h</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/aijmkl/aijmkl.c.html#Mat_SeqAIJMKL">Mat_SeqAIJMKL in src/mat/impls/aij/seq/aijmkl/aijmkl.c</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/aijperm/aijperm.c.html#Mat_SeqAIJPERM">Mat_SeqAIJPERM in src/mat/impls/aij/seq/aijperm/aijperm.c</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/aijsell/aijsell.c.html#Mat_SeqAIJSELL">Mat_SeqAIJSELL in src/mat/impls/aij/seq/aijsell/aijsell.c</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/crl/crl.h.html#Mat_AIJCRL">Mat_AIJCRL in src/mat/impls/aij/seq/crl/crl.h</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/essl/essl.c.html#Mat_Essl">Mat_Essl in src/mat/impls/aij/seq/essl/essl.c</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/klu/klu.c.html#Mat_KLU">Mat_KLU in src/mat/impls/aij/seq/klu/klu.c</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/lusol/lusol.c.html#Mat_LUSOL">Mat_LUSOL in src/mat/impls/aij/seq/lusol/lusol.c</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/superlu/superlu.c.html#Mat_SuperLU">Mat_SuperLU in src/mat/impls/aij/seq/superlu/superlu.c</A><BR>
+<A HREF="../../src/mat/impls/aij/seq/umfpack/umfpack.c.html#Mat_UMFPACK">Mat_UMFPACK in src/mat/impls/aij/seq/umfpack/umfpack.c</A><BR>
+<A HREF="../../src/mat/impls/baij/mpi/mpibaij.h.html#Mat_MPIBAIJ">Mat_MPIBAIJ in src/mat/impls/baij/mpi/mpibaij.h</A><BR>
+<A HREF="../../src/mat/impls/baij/seq/baij.h.html#Mat_SeqBAIJ">Mat_SeqBAIJ in src/mat/impls/baij/seq/baij.h</A><BR>
+<A HREF="../../src/mat/impls/baij/seq/baijmkl/baijmkl.c.html#Mat_SeqBAIJMKL">Mat_SeqBAIJMKL in src/mat/impls/baij/seq/baijmkl/baijmkl.c</A><BR>
+<A HREF="../../src/mat/impls/blockmat/seq/blockmat.c.html#Mat_BlockMat">Mat_BlockMat in src/mat/impls/blockmat/seq/blockmat.c</A><BR>
+<A HREF="../../src/mat/impls/cdiagonal/cdiagonal.c.html#Mat_ConstantDiagonal">Mat_ConstantDiagonal in src/mat/impls/cdiagonal/cdiagonal.c</A><BR>
+<A HREF="../../src/mat/impls/composite/mcomposite.c.html#Mat_Composite">Mat_Composite in src/mat/impls/composite/mcomposite.c</A><BR>
+<A HREF="../../src/mat/impls/cufft/cufft.cu.html#Mat_CUFFT">Mat_CUFFT in src/mat/impls/cufft/cufft.cu</A><BR>
+<A HREF="../../src/mat/impls/dense/mpi/mpidense.h.html#Mat_MatMultDense">Mat_MatMultDense in src/mat/impls/dense/mpi/mpidense.h</A><BR>
+<A HREF="../../src/mat/impls/dense/mpi/mpidense.h.html#Mat_TransMatMultDense">Mat_TransMatMultDense in src/mat/impls/dense/mpi/mpidense.h</A><BR>
+<A HREF="../../src/mat/impls/dense/mpi/mpidense.h.html#Mat_MatTransMultDense">Mat_MatTransMultDense in src/mat/impls/dense/mpi/mpidense.h</A><BR>
+<A HREF="../../src/mat/impls/dense/mpi/mpidense.h.html#Mat_MPIDense">Mat_MPIDense in src/mat/impls/dense/mpi/mpidense.h</A><BR>
+<A HREF="../../src/mat/impls/dense/seq/dense.h.html#Mat_SeqDense">Mat_SeqDense in src/mat/impls/dense/seq/dense.h</A><BR>
+<A HREF="../../src/mat/impls/diagonal/diagonal.c.html#Mat_Diagonal">Mat_Diagonal in src/mat/impls/diagonal/diagonal.c</A><BR>
+<A HREF="../../src/mat/impls/fft/fft.h.html#Mat_FFT">Mat_FFT in src/mat/impls/fft/fft.h</A><BR>
+<A HREF="../../src/mat/impls/fft/fftw/fftw.c.html#Mat_FFTW">Mat_FFTW in src/mat/impls/fft/fftw/fftw.c</A><BR>
+<A HREF="../../src/mat/impls/hypre/mhypre.h.html#Mat_HYPRE">Mat_HYPRE in src/mat/impls/hypre/mhypre.h</A><BR>
+<A HREF="../../src/mat/impls/kaij/kaij.h.html#Mat_SeqKAIJ">Mat_SeqKAIJ in src/mat/impls/kaij/kaij.h</A><BR>
+<A HREF="../../src/mat/impls/kaij/kaij.h.html#Mat_MPIKAIJ">Mat_MPIKAIJ in src/mat/impls/kaij/kaij.h</A><BR>
+<A HREF="../../src/mat/impls/localref/mlocalref.c.html#Mat_LocalRef">Mat_LocalRef in src/mat/impls/localref/mlocalref.c</A><BR>
+<A HREF="../../src/mat/impls/lrc/lrc.c.html#Mat_LRC">Mat_LRC in src/mat/impls/lrc/lrc.c</A><BR>
+<A HREF="../../src/mat/impls/maij/maij.h.html#Mat_SeqMAIJ">Mat_SeqMAIJ in src/mat/impls/maij/maij.h</A><BR>
+<A HREF="../../src/mat/impls/maij/maij.h.html#Mat_MPIMAIJ">Mat_MPIMAIJ in src/mat/impls/maij/maij.h</A><BR>
+<A HREF="../../src/mat/impls/nest/matnestimpl.h.html#Mat_Nest">Mat_Nest in src/mat/impls/nest/matnestimpl.h</A><BR>
+<A HREF="../../src/mat/impls/normal/normm.c.html#Mat_Normal">Mat_Normal in src/mat/impls/normal/normm.c</A><BR>
+<A HREF="../../src/mat/impls/normal/normmh.c.html#Mat_NormalHermitian">Mat_NormalHermitian in src/mat/impls/normal/normmh.c</A><BR>
+<A HREF="../../src/mat/impls/preallocator/matpreallocator.c.html#Mat_Preallocator">Mat_Preallocator in src/mat/impls/preallocator/matpreallocator.c</A><BR>
+<A HREF="../../src/mat/impls/sbaij/mpi/mpisbaij.h.html#Mat_MPISBAIJ">Mat_MPISBAIJ in src/mat/impls/sbaij/mpi/mpisbaij.h</A><BR>
+<A HREF="../../src/mat/impls/sbaij/seq/cholmod/cholmodimpl.h.html#Mat_CHOLMOD">Mat_CHOLMOD in src/mat/impls/sbaij/seq/cholmod/cholmodimpl.h</A><BR>
+<A HREF="../../src/mat/impls/sbaij/seq/sbaij.h.html#Mat_SeqSBAIJ">Mat_SeqSBAIJ in src/mat/impls/sbaij/seq/sbaij.h</A><BR>
+<A HREF="../../src/mat/impls/scatter/mscatter.c.html#Mat_Scatter">Mat_Scatter in src/mat/impls/scatter/mscatter.c</A><BR>
+<A HREF="../../src/mat/impls/sell/mpi/mpisell.h.html#Mat_MPISELL">Mat_MPISELL in src/mat/impls/sell/mpi/mpisell.h</A><BR>
+<A HREF="../../src/mat/impls/sell/seq/sell.h.html#Mat_SeqSELL">Mat_SeqSELL in src/mat/impls/sell/seq/sell.h</A><BR>
+<A HREF="../../src/mat/impls/sell/seq/seqcuda/sellcuda.cu.html#Mat_SeqSELLCUDA">Mat_SeqSELLCUDA in src/mat/impls/sell/seq/seqcuda/sellcuda.cu</A><BR>
+<A HREF="../../src/mat/impls/shell/shell.c.html#Mat_Shell">Mat_Shell in src/mat/impls/shell/shell.c</A><BR>
+<A HREF="../../src/mat/impls/submat/submat.c.html#Mat_SubVirtual">Mat_SubVirtual in src/mat/impls/submat/submat.c</A><BR>
+<A HREF="../../src/mat/impls/transpose/htransm.c.html#Mat_HT">Mat_HT in src/mat/impls/transpose/htransm.c</A><BR>
+<A HREF="../../src/mat/impls/transpose/transm.c.html#Mat_Transpose">Mat_Transpose in src/mat/impls/transpose/transm.c</A><BR></p>
+<hr class="docutils" />
+<p><a class="reference internal" href="index.html"><span class="doc std std-doc">Index of all Mat routines</span></a><br />
+<a class="reference internal" href="../index.html"><span class="doc std std-doc">Table of Contents for all manual pages</span></a><br />
+<a class="reference internal" href="../singleindex.html"><span class="doc std std-doc">Index of all manual pages</span></a></p>
+</section>
+</section>
+
+
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div class="tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+</div>
+<nav id="bd-toc-nav" class="page-toc">
+    <ul class="visible nav section-nav flex-column">
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#synopsis">
+   Synopsis
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#note">
+   Note
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#see-also">
+   See Also
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#level">
+   Level
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#location">
+   Location
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#examples">
+   Examples
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#implementations">
+   Implementations
+  </a>
+ </li>
+</ul>
+
+</nav>
+</div>
+
+<div class="toc-item">
+  
+<div id="searchbox"></div>
+</div>
+
+<div class="toc-item">
+  
+
+<div class="tocsection editthispage">
+<a href=https://gitlab.com/petsc/petsc/-/edit/release/include/petscmat.h>
+        <i class="fa-solid fa-pencil"></i> Edit this page
+    </a>
+</div>
+
+</div>
+
+
+
+            </div>
+          
+          
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=796348d33e8b1d947c94"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    <p class="last-updated">
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
+</p>
+  </div>
+  
+</div>
+  </footer>
+  </body>
+</html>

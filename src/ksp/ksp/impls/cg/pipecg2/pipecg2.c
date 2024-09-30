@@ -18,22 +18,22 @@ static PetscErrorCode VecMergedDot_Private(Vec U, Vec W, Vec R, PetscInt normtyp
   PetscCall(VecGetLocalSize(U, &n));
 
   if (normtype == KSP_NORM_PRECONDITIONED) {
-    PetscPragmaSIMD for (j = 0; j < n; j++)
-    {
+    PetscPragmaSIMD
+    for (j = 0; j < n; j++) {
       sumwu += PW[j] * PetscConj(PU[j]);
       sumru += PR[j] * PetscConj(PU[j]);
       sumuu += PU[j] * PetscConj(PU[j]);
     }
   } else if (normtype == KSP_NORM_UNPRECONDITIONED) {
-    PetscPragmaSIMD for (j = 0; j < n; j++)
-    {
+    PetscPragmaSIMD
+    for (j = 0; j < n; j++) {
       sumwu += PW[j] * PetscConj(PU[j]);
       sumru += PR[j] * PetscConj(PU[j]);
       sumuu += PR[j] * PetscConj(PR[j]);
     }
   } else if (normtype == KSP_NORM_NATURAL) {
-    PetscPragmaSIMD for (j = 0; j < n; j++)
-    {
+    PetscPragmaSIMD
+    for (j = 0; j < n; j++) {
       sumwu += PW[j] * PetscConj(PU[j]);
       sumru += PR[j] * PetscConj(PU[j]);
     }
@@ -47,7 +47,7 @@ static PetscErrorCode VecMergedDot_Private(Vec U, Vec W, Vec R, PetscInt normtyp
   PetscCall(VecRestoreArrayRead(U, (const PetscScalar **)&PU));
   PetscCall(VecRestoreArrayRead(W, (const PetscScalar **)&PW));
   PetscCall(VecRestoreArrayRead(R, (const PetscScalar **)&PR));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*   VecMergedDot2_Private function merges the dot products for lambda_1 and lambda_4 */
@@ -63,8 +63,8 @@ static PetscErrorCode VecMergedDot2_Private(Vec N, Vec M, Vec W, PetscScalar *wm
   PetscCall(VecGetArrayRead(M, (const PetscScalar **)&PM));
   PetscCall(VecGetLocalSize(N, &n));
 
-  PetscPragmaSIMD for (j = 0; j < n; j++)
-  {
+  PetscPragmaSIMD
+  for (j = 0; j < n; j++) {
     sumwm += PW[j] * PetscConj(PM[j]);
     sumnm += PN[j] * PetscConj(PM[j]);
   }
@@ -75,7 +75,7 @@ static PetscErrorCode VecMergedDot2_Private(Vec N, Vec M, Vec W, PetscScalar *wm
   PetscCall(VecRestoreArrayRead(W, (const PetscScalar **)&PW));
   PetscCall(VecRestoreArrayRead(N, (const PetscScalar **)&PN));
   PetscCall(VecRestoreArrayRead(M, (const PetscScalar **)&PM));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*   VecMergedOpsShort_Private function merges the dot products, AXPY and SAXPY operations for all vectors for iteration 0  */
@@ -112,8 +112,8 @@ static PetscErrorCode VecMergedOpsShort_Private(Vec vx, Vec vr, Vec vz, Vec vw, 
   for (j = 0; j < 15; j++) lambda[j] = 0.0;
 
   if (normtype == KSP_NORM_PRECONDITIONED) {
-    PetscPragmaSIMD for (j = 0; j < n; j++)
-    {
+    PetscPragmaSIMD
+    for (j = 0; j < n; j++) {
       pz[j]  = pn[j];
       pq[j]  = pm[j];
       ps[j]  = pw[j];
@@ -167,8 +167,8 @@ static PetscErrorCode VecMergedOpsShort_Private(Vec vx, Vec vr, Vec vz, Vec vw, 
     lambda[14] = PetscConj(lambda[0]);
 
   } else if (normtype == KSP_NORM_UNPRECONDITIONED) {
-    PetscPragmaSIMD for (j = 0; j < n; j++)
-    {
+    PetscPragmaSIMD
+    for (j = 0; j < n; j++) {
       pz[j]  = pn[j];
       pq[j]  = pm[j];
       ps[j]  = pw[j];
@@ -222,8 +222,8 @@ static PetscErrorCode VecMergedOpsShort_Private(Vec vx, Vec vr, Vec vz, Vec vw, 
     lambda[14] = PetscConj(lambda[0]);
 
   } else if (normtype == KSP_NORM_NATURAL) {
-    PetscPragmaSIMD for (j = 0; j < n; j++)
-    {
+    PetscPragmaSIMD
+    for (j = 0; j < n; j++) {
       pz[j]  = pn[j];
       pq[j]  = pm[j];
       ps[j]  = pw[j];
@@ -297,7 +297,7 @@ static PetscErrorCode VecMergedOpsShort_Private(Vec vx, Vec vr, Vec vz, Vec vw, 
   PetscCall(VecRestoreArray(vm, (PetscScalar **)&pm));
   PetscCall(VecRestoreArray(vn, (PetscScalar **)&pn));
   PetscCall(VecRestoreArray(vu, (PetscScalar **)&pu));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*   VecMergedOps_Private function merges the dot products, AXPY and SAXPY operations for all vectors for iteration > 0  */
@@ -334,8 +334,8 @@ static PetscErrorCode VecMergedOps_Private(Vec vx, Vec vr, Vec vz, Vec vw, Vec v
   for (j = 0; j < 15; j++) lambda[j] = 0.0;
 
   if (normtype == KSP_NORM_PRECONDITIONED) {
-    PetscPragmaSIMD for (j = 0; j < n; j++)
-    {
+    PetscPragmaSIMD
+    for (j = 0; j < n; j++) {
       pa1[j] = (pg1[j] - pg0[j]) / alphaold;
       pb1[j] = (ph1[j] - ph0[j]) / alphaold;
 
@@ -391,8 +391,8 @@ static PetscErrorCode VecMergedOps_Private(Vec vx, Vec vr, Vec vz, Vec vw, Vec v
     lambda[13] = PetscConj(lambda[11]);
     lambda[14] = PetscConj(lambda[0]);
   } else if (normtype == KSP_NORM_UNPRECONDITIONED) {
-    PetscPragmaSIMD for (j = 0; j < n; j++)
-    {
+    PetscPragmaSIMD
+    for (j = 0; j < n; j++) {
       pa1[j] = (pg1[j] - pg0[j]) / alphaold;
       pb1[j] = (ph1[j] - ph0[j]) / alphaold;
 
@@ -448,8 +448,8 @@ static PetscErrorCode VecMergedOps_Private(Vec vx, Vec vr, Vec vz, Vec vw, Vec v
     lambda[13] = PetscConj(lambda[11]);
     lambda[14] = PetscConj(lambda[0]);
   } else if (normtype == KSP_NORM_NATURAL) {
-    PetscPragmaSIMD for (j = 0; j < n; j++)
-    {
+    PetscPragmaSIMD
+    for (j = 0; j < n; j++) {
       pa1[j] = (pg1[j] - pg0[j]) / alphaold;
       pb1[j] = (ph1[j] - ph0[j]) / alphaold;
 
@@ -526,7 +526,7 @@ static PetscErrorCode VecMergedOps_Private(Vec vx, Vec vr, Vec vz, Vec vw, Vec v
   PetscCall(VecRestoreArray(vm, (PetscScalar **)&pm));
   PetscCall(VecRestoreArray(vn, (PetscScalar **)&pn));
   PetscCall(VecRestoreArray(vu, (PetscScalar **)&pu));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -540,7 +540,7 @@ static PetscErrorCode KSPSetUp_PIPECG2(KSP ksp)
   PetscFunctionBegin;
   /* get work vectors needed by PIPECG2 */
   PetscCall(KSPSetWorkVecs(ksp, 20));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -645,7 +645,7 @@ static PetscErrorCode KSPSolve_PIPECG2(KSP ksp)
   ksp->rnorm = dp;
 
   PetscCall((*ksp->converged)(ksp, 0, dp, &ksp->reason, ksp->cnvP)); /* test for convergence */
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   for (i = 2; i < ksp->max_it; i += 2) {
     if (i == 2) {
@@ -712,32 +712,31 @@ static PetscErrorCode KSPSolve_PIPECG2(KSP ksp)
   }
 
   if (i >= ksp->max_it) ksp->reason = KSP_DIVERGED_ITS;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-   KSPPIPECG2 - Pipelined conjugate gradient method with a single non-blocking reduction per two iterations. [](sec_pipelineksp)
+   KSPPIPECG2 - Pipelined conjugate gradient method with a single non-blocking reduction per two iterations {cite}`tiwari2020pipelined`. [](sec_pipelineksp)
 
    Level: intermediate
 
    Notes:
-   This method has only a single non-blocking reduction per two iterations, compared to 2 blocking for standard CG.  The
+   This method has only a single non-blocking reduction per two iterations, compared to 2 blocking for standard `KSPCG`.  The
    non-blocking reduction is overlapped by two matrix-vector products and two preconditioner applications.
+
+   The solver has a two-step inner iteration, each of which computes the solution and updates the residual norm.
+   Hence the values from `KSPGetResidualHistory()` and `KSPGetIterationNumber()` will differ.
 
    MPI configuration may be necessary for reductions to make asynchronous progress, which is important for performance of pipelined methods.
    See [](doc_faq_pipelined)
 
+   Developer Note:
+   The implementation code contains a good amount of hand-tuned fusion of multiple inner products and similar computations on multiple vectors
+
    Contributed by:
    Manasi Tiwari, Computational and Data Sciences, Indian Institute of Science, Bangalore
 
-   Reference:
-   Manasi Tiwari and Sathish Vadhiyar, "Pipelined Conjugate Gradient Methods for Distributed Memory Systems",
-   Submitted to International Conference on High Performance Computing, Data and Analytics 2020.
-
-   Developer Note:
-   The implementation code contains a good amount of hand tuned fusion of multiple inner products and similar computations on multiple vectors
-
-.seealso: [](chapter_ksp), [](doc_faq_pipelined), [](sec_pipelineksp), `KSPCreate()`, `KSPSetType()`, `KSPCG`, `KSPPIPECG`, `KSPGROPPCG`
+.seealso: [](ch_ksp), [](doc_faq_pipelined), [](sec_pipelineksp), `KSPCreate()`, `KSPSetType()`, `KSPCG`, `KSPPIPECG`, `KSPGROPPCG`
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_PIPECG2(KSP ksp)
 {
@@ -754,5 +753,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_PIPECG2(KSP ksp)
   ksp->ops->setfromoptions = NULL;
   ksp->ops->buildsolution  = KSPBuildSolutionDefault;
   ksp->ops->buildresidual  = KSPBuildResidualDefault;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

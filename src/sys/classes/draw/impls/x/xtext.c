@@ -1,4 +1,3 @@
-
 /*
    This file contains simple code to manage access to fonts, insuring that
    library routines access/load fonts only once
@@ -29,7 +28,7 @@ PetscErrorCode PetscDrawXiFontFixed(PetscDraw_X *XBWin, int w, int h, PetscDrawX
 
   curfont  = font;
   *outfont = curfont;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* this is set by XListFonts at startup */
@@ -51,7 +50,7 @@ static PetscErrorCode PetscDrawXiLoadFont(PetscDraw_X *XBWin, PetscDrawXiFont *f
   XGCValues    values;
 
   PetscFunctionBegin;
-  (void)sprintf(font_name, "%dx%d", font->font_w, font->font_h);
+  PetscCall(PetscSNPrintf(font_name, PETSC_STATIC_ARRAY_LENGTH(font_name), "%dx%d", font->font_w, font->font_h));
   font->fnt = XLoadFont(XBWin->disp, font_name);
 
   /* The font->descent may not have been set correctly; get it now that
@@ -66,7 +65,7 @@ static PetscErrorCode PetscDrawXiLoadFont(PetscDraw_X *XBWin, PetscDrawXiFont *f
   /* Set the current font in the CG */
   values.font = font->fnt;
   XChangeGC(XBWin->disp, XBWin->gc.set, GCFont, &values);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Code to find fonts and their characteristics */
@@ -114,7 +113,7 @@ static PetscErrorCode PetscDrawXiInitFonts(PetscDraw_X *XBWin)
     act_nfonts = j;
     XFreeFontInfo(names, info, cnt);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawXiMatchFontSize(PetscDrawXiFont *font, int w, int h)
@@ -127,7 +126,7 @@ static PetscErrorCode PetscDrawXiMatchFontSize(PetscDrawXiFont *font, int w, int
       font->font_w       = w;
       font->font_h       = h;
       font->font_descent = nfonts[i].descent;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
   }
 
@@ -146,5 +145,5 @@ static PetscErrorCode PetscDrawXiMatchFontSize(PetscDrawXiFont *font, int w, int
   font->font_w       = nfonts[imax].w;
   font->font_h       = nfonts[imax].h;
   font->font_descent = nfonts[imax].descent;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

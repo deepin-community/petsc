@@ -199,7 +199,6 @@ PETSC_EXTERN void  matlmvmapplyj0inv_(Mat B,Vec X,Vec Y, int *__ierr)
 	(Vec)PetscToPointer((X) ),
 	(Vec)PetscToPointer((Y) ));
 }
-
 PETSC_EXTERN void  matlmvmisallocated_(Mat B,PetscBool *flg, int *__ierr)
 {
 *__ierr = MatLMVMIsAllocated(

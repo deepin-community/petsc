@@ -1,0 +1,599 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/sys/objects/ftn-custom/zoptionsf.c">Actual source code: zoptionsf.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2024-03-29T14:12:59+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">  This file contains Fortran stubs for Options routines.</font>
+<a name="line3">  3: </a><font color="#B22222">  These are not generated automatically since they require passing strings</font>
+<a name="line4">  4: </a><font color="#B22222">  between Fortran and C.</font>
+<a name="line5">  5: </a><font color="#B22222">*/</font>
+
+<a name="line7">  7: </a>#include <A href="../../../../include/petsc/private/fortranimpl.h.html">&lt;petsc/private/fortranimpl.h&gt;</A>
+<a name="line8">  8: </a>#include <A href="../../../../include/petscviewer.h.html">&lt;petscviewer.h&gt;</A>
+
+<a name="line10"> 10: </a><font color="#A020F0">#if defined(PETSC_HAVE_FORTRAN_CAPS)</font>
+<a name="line11"> 11: </a><strong><font color="#228B22">  #define petscoptionsbegin_               PETSCOPTIONSBEGIN</font></strong>
+<a name="line12"> 12: </a><strong><font color="#228B22">  #define petscoptionsend_                 PETSCOPTIONSEND</font></strong>
+<a name="line13"> 13: </a><strong><font color="#228B22">  #define petscoptionsbool_                PETSCOPTIONSBOOL</font></strong>
+<a name="line14"> 14: </a><strong><font color="#228B22">  #define petscoptionsboolarray_           PETSCOPTIONSBOOLARRAY</font></strong>
+<a name="line15"> 15: </a><strong><font color="#228B22">  #define petscoptionsenumprivate_         PETSCOPTIONSENUMPRIVATE</font></strong>
+<a name="line16"> 16: </a><strong><font color="#228B22">  #define petscoptionsint_                 PETSCOPTIONSINT</font></strong>
+<a name="line17"> 17: </a><strong><font color="#228B22">  #define petscoptionsintarray_            PETSCOPTIONSINTARRAY</font></strong>
+<a name="line18"> 18: </a><strong><font color="#228B22">  #define petscoptionsreal_                PETSCOPTIONSREAL</font></strong>
+<a name="line19"> 19: </a><strong><font color="#228B22">  #define petscoptionsrealarray_           PETSCOPTIONSREALARRAY</font></strong>
+<a name="line20"> 20: </a><strong><font color="#228B22">  #define petscoptionsscalar_              PETSCOPTIONSSCALAR</font></strong>
+<a name="line21"> 21: </a><strong><font color="#228B22">  #define petscoptionsscalararray_         PETSCOPTIONSSCALARARRAY</font></strong>
+<a name="line22"> 22: </a><strong><font color="#228B22">  #define petscoptionsstring               PETSCOPTIONSSTRING</font></strong>
+<a name="line23"> 23: </a><strong><font color="#228B22">  #define petscsubcommview_                PETSCSUBCOMMVIEW</font></strong>
+<a name="line24"> 24: </a><strong><font color="#228B22">  #define petscsubcommgetparent_           PETSCSUBCOMMGETPARENT</font></strong>
+<a name="line25"> 25: </a><strong><font color="#228B22">  #define petscsubcommgetcontiguousparent_ PETSCSUBCOMMGETCONTIGUOUSPARENT</font></strong>
+<a name="line26"> 26: </a><strong><font color="#228B22">  #define petscsubcommgetchild_            PETSCSUBCOMMGETCHILD</font></strong>
+<a name="line27"> 27: </a><strong><font color="#228B22">  #define petscoptionsallused_             PETSCOPTIONSALLUSED</font></strong>
+<a name="line28"> 28: </a><strong><font color="#228B22">  #define petscoptionsgetenumprivate_      PETSCOPTIONSGETENUMPRIVATE</font></strong>
+<a name="line29"> 29: </a><strong><font color="#228B22">  #define petscoptionsgetbool_             PETSCOPTIONSGETBOOL</font></strong>
+<a name="line30"> 30: </a><strong><font color="#228B22">  #define petscoptionsgetboolarray_        PETSCOPTIONSGETBOOLARRAY</font></strong>
+<a name="line31"> 31: </a><strong><font color="#228B22">  #define petscoptionsgetintarray_         PETSCOPTIONSGETINTARRAY</font></strong>
+<a name="line32"> 32: </a><strong><font color="#228B22">  #define petscoptionssetvalue_            PETSCOPTIONSSETVALUE</font></strong>
+<a name="line33"> 33: </a><strong><font color="#228B22">  #define petscoptionsclearvalue_          PETSCOPTIONSCLEARVALUE</font></strong>
+<a name="line34"> 34: </a><strong><font color="#228B22">  #define petscoptionshasname_             PETSCOPTIONSHASNAME</font></strong>
+<a name="line35"> 35: </a><strong><font color="#228B22">  #define petscoptionsgetint_              PETSCOPTIONSGETINT</font></strong>
+<a name="line36"> 36: </a><strong><font color="#228B22">  #define petscoptionsgetreal_             PETSCOPTIONSGETREAL</font></strong>
+<a name="line37"> 37: </a><strong><font color="#228B22">  #define petscoptionsgetscalar_           PETSCOPTIONSGETSCALAR</font></strong>
+<a name="line38"> 38: </a><strong><font color="#228B22">  #define petscoptionsgetscalararray_      PETSCOPTIONSGETSCALARARRAY</font></strong>
+<a name="line39"> 39: </a><strong><font color="#228B22">  #define petscoptionsgetrealarray_        PETSCOPTIONSGETREALARRAY</font></strong>
+<a name="line40"> 40: </a><strong><font color="#228B22">  #define petscoptionsgetstring_           PETSCOPTIONSGETSTRING</font></strong>
+<a name="line41"> 41: </a><strong><font color="#228B22">  #define petscgetprogramname              PETSCGETPROGRAMNAME</font></strong>
+<a name="line42"> 42: </a><strong><font color="#228B22">  #define petscoptionsinsertfile_          PETSCOPTIONSINSERTFILE</font></strong>
+<a name="line43"> 43: </a><strong><font color="#228B22">  #define petscoptionsclear_               PETSCOPTIONSCLEAR</font></strong>
+<a name="line44"> 44: </a><strong><font color="#228B22">  #define petscoptionsinsertstring_        PETSCOPTIONSINSERTSTRING</font></strong>
+<a name="line45"> 45: </a><strong><font color="#228B22">  #define petscoptionsview_                PETSCOPTIONSVIEW</font></strong>
+<a name="line46"> 46: </a><strong><font color="#228B22">  #define petscoptionsleft_                PETSCOPTIONSLEFT</font></strong>
+<a name="line47"> 47: </a><strong><font color="#228B22">  #define petscobjectviewfromoptions_      PETSCOBJECTVIEWFROMOPTIONS</font></strong>
+<a name="line48"> 48: </a><font color="#A020F0">#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE)</font>
+<a name="line49"> 49: </a><strong><font color="#228B22">  #define petscoptionsbegin_               petscoptionsbegin</font></strong>
+<a name="line50"> 50: </a><strong><font color="#228B22">  #define petscoptionsend_                 petscoptionsend</font></strong>
+<a name="line51"> 51: </a><strong><font color="#228B22">  #define petscoptionsbool_                petscoptionsbool</font></strong>
+<a name="line52"> 52: </a><strong><font color="#228B22">  #define petscoptionsboolarray_           petscoptionsboolarray</font></strong>
+<a name="line53"> 53: </a><strong><font color="#228B22">  #define petscoptionsenumprivate_         petscoptionsenumprivate_</font></strong>
+<a name="line54"> 54: </a><strong><font color="#228B22">  #define petscoptionsint_                 petscoptionsint</font></strong>
+<a name="line55"> 55: </a><strong><font color="#228B22">  #define petscoptionsintarray_            petscoptionsintarray</font></strong>
+<a name="line56"> 56: </a><strong><font color="#228B22">  #define petscoptionsreal_                petscoptionsreal</font></strong>
+<a name="line57"> 57: </a><strong><font color="#228B22">  #define petscoptionsrealarray_           petscoptionsrealarray</font></strong>
+<a name="line58"> 58: </a><strong><font color="#228B22">  #define petscoptionsscalar_              petscoptionsscalar</font></strong>
+<a name="line59"> 59: </a><strong><font color="#228B22">  #define petscoptionsscalararray_         petscoptionsscalararray</font></strong>
+<a name="line60"> 60: </a><strong><font color="#228B22">  #define petscoptionsstring_              petscoptionsstring</font></strong>
+<a name="line61"> 61: </a><strong><font color="#228B22">  #define petscsubcommview_                petscsubcommview</font></strong>
+<a name="line62"> 62: </a><strong><font color="#228B22">  #define petscsubcommgetparent_           petscsubcommgetparent</font></strong>
+<a name="line63"> 63: </a><strong><font color="#228B22">  #define petscsubcommgetcontiguousparent_ petscsubcommgetcontiguousparent</font></strong>
+<a name="line64"> 64: </a><strong><font color="#228B22">  #define petscsubcommgetchild_            petscsubcommgetchild</font></strong>
+<a name="line65"> 65: </a><strong><font color="#228B22">  #define petscoptionsallused_             petscoptionsallused</font></strong>
+<a name="line66"> 66: </a><strong><font color="#228B22">  #define petscoptionsgetenumprivate_      petscoptionsgetenumprivate</font></strong>
+<a name="line67"> 67: </a><strong><font color="#228B22">  #define petscoptionsgetbool_             petscoptionsgetbool</font></strong>
+<a name="line68"> 68: </a><strong><font color="#228B22">  #define petscoptionsgetboolarray_        petscoptionsgetboolarray</font></strong>
+<a name="line69"> 69: </a><strong><font color="#228B22">  #define petscoptionssetvalue_            petscoptionssetvalue</font></strong>
+<a name="line70"> 70: </a><strong><font color="#228B22">  #define petscoptionsclearvalue_          petscoptionsclearvalue</font></strong>
+<a name="line71"> 71: </a><strong><font color="#228B22">  #define petscoptionshasname_             petscoptionshasname</font></strong>
+<a name="line72"> 72: </a><strong><font color="#228B22">  #define petscoptionsgetint_              petscoptionsgetint</font></strong>
+<a name="line73"> 73: </a><strong><font color="#228B22">  #define petscoptionsgetreal_             petscoptionsgetreal</font></strong>
+<a name="line74"> 74: </a><strong><font color="#228B22">  #define petscoptionsgetscalar_           petscoptionsgetscalar</font></strong>
+<a name="line75"> 75: </a><strong><font color="#228B22">  #define petscoptionsgetscalararray_      petscoptionsgetscalararray</font></strong>
+<a name="line76"> 76: </a><strong><font color="#228B22">  #define petscoptionsgetrealarray_        petscoptionsgetrealarray</font></strong>
+<a name="line77"> 77: </a><strong><font color="#228B22">  #define petscoptionsgetstring_           petscoptionsgetstring</font></strong>
+<a name="line78"> 78: </a><strong><font color="#228B22">  #define petscoptionsgetintarray_         petscoptionsgetintarray</font></strong>
+<a name="line79"> 79: </a><strong><font color="#228B22">  #define petscgetprogramname_             petscgetprogramname</font></strong>
+<a name="line80"> 80: </a><strong><font color="#228B22">  #define petscoptionsinsertfile_          petscoptionsinsertfile</font></strong>
+<a name="line81"> 81: </a><strong><font color="#228B22">  #define petscoptionsclear_               petscoptionsclear</font></strong>
+<a name="line82"> 82: </a><strong><font color="#228B22">  #define petscoptionsinsertstring_        petscoptionsinsertstring</font></strong>
+<a name="line83"> 83: </a><strong><font color="#228B22">  #define petscoptionsview_                petscoptionsview</font></strong>
+<a name="line84"> 84: </a><strong><font color="#228B22">  #define petscoptionsleft_                petscoptionsleft</font></strong>
+<a name="line85"> 85: </a><strong><font color="#228B22">  #define petscobjectviewfromoptions_      petscobjectviewfromoptions</font></strong>
+<a name="line86"> 86: </a><font color="#A020F0">#endif</font>
+
+<a name="line88"> 88: </a>static PetscOptionItems PetscOptionsObjectBase, *PetscOptionsObject = NULL;
+
+<a name="line90"> 90: </a><strong><font color="#4169E1"><a name="petscoptionsbegin_"></a>PETSC_EXTERN void petscoptionsbegin_(MPI_Fint *fcomm, char *prefix, char *mess, char *sec, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T lenprefix, PETSC_FORTRAN_CHARLEN_T lenmess, PETSC_FORTRAN_CHARLEN_T lensec)</font></strong>
+<a name="line91"> 91: </a>{
+<a name="line92"> 92: </a>  <a href="../../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm = MPI_Comm_f2c(*fcomm);
+<a name="line93"> 93: </a>  char    *cprefix, *cmess, *csec;
+
+<a name="line95"> 95: </a>  FIXCHAR(prefix, lenprefix, cprefix);
+<a name="line96"> 96: </a>  FIXCHAR(mess, lenmess, cmess);
+<a name="line97"> 97: </a>  FIXCHAR(sec, lensec, csec);
+<a name="line98"> 98: </a>  <font color="#4169E1">if</font> (PetscOptionsObject) {
+<a name="line99"> 99: </a>    *ierr = <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONGSTATE</a>;
+<a name="line100">100: </a>    <font color="#4169E1">return</font>;
+<a name="line101">101: </a>  }
+<a name="line102">102: </a>  PetscOptionsObject = &amp;PetscOptionsObjectBase;
+<a name="line103">103: </a>  *ierr              = <a href="../../../../manualpages/Sys/PetscMemzero.html">PetscMemzero</a>(PetscOptionsObject, <font color="#4169E1">sizeof</font>(*PetscOptionsObject));
+<a name="line104">104: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line105">105: </a>  PetscOptionsObject-&gt;count = 1;
+<a name="line106">106: </a>  *ierr                     = PetscOptionsBegin_Private(PetscOptionsObject, comm, cprefix, cmess, csec);
+<a name="line107">107: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line108">108: </a>  FREECHAR(prefix, cprefix);
+<a name="line109">109: </a>  FREECHAR(mess, cmess);
+<a name="line110">110: </a>  FREECHAR(sec, csec);
+<a name="line111">111: </a>}
+
+<a name="line113">113: </a><strong><font color="#4169E1"><a name="petscoptionsend_"></a>PETSC_EXTERN void petscoptionsend_(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr)</font></strong>
+<a name="line114">114: </a>{
+<a name="line115">115: </a>  <font color="#4169E1">if</font> (!PetscOptionsObject) {
+<a name="line116">116: </a>    *ierr = <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONGSTATE</a>;
+<a name="line117">117: </a>    <font color="#4169E1">return</font>;
+<a name="line118">118: </a>  }
+<a name="line119">119: </a>  PetscOptionsObject-&gt;count = 1;
+<a name="line120">120: </a>  *ierr                     = PetscOptionsEnd_Private(PetscOptionsObject);
+<a name="line121">121: </a>  PetscOptionsObject        = NULL;
+<a name="line122">122: </a>}
+
+<a name="line124">124: </a><strong><font color="#4169E1"><a name="petscoptionsbool_"></a>PETSC_EXTERN void petscoptionsbool_(char *opt, char *text, char *man, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *currentvalue, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *value, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *set, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T lenopt, PETSC_FORTRAN_CHARLEN_T lentext, PETSC_FORTRAN_CHARLEN_T lenman)</font></strong>
+<a name="line125">125: </a>{
+<a name="line126">126: </a>  char *copt, *ctext, *cman;
+
+<a name="line128">128: </a>  FIXCHAR(opt, lenopt, copt);
+<a name="line129">129: </a>  FIXCHAR(text, lentext, ctext);
+<a name="line130">130: </a>  FIXCHAR(man, lenman, cman);
+<a name="line131">131: </a>  <font color="#4169E1">if</font> (!PetscOptionsObject) {
+<a name="line132">132: </a>    *ierr = <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONGSTATE</a>;
+<a name="line133">133: </a>    <font color="#4169E1">return</font>;
+<a name="line134">134: </a>  }
+<a name="line135">135: </a>  PetscOptionsObject-&gt;count = 1;
+<a name="line136">136: </a>  *ierr                     = PetscOptionsBool_Private(PetscOptionsObject, copt, ctext, cman, *currentvalue, value, set);
+<a name="line137">137: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line138">138: </a>  FREECHAR(opt, copt);
+<a name="line139">139: </a>  FREECHAR(text, ctext);
+<a name="line140">140: </a>  FREECHAR(man, cman);
+<a name="line141">141: </a>}
+
+<a name="line143">143: </a><strong><font color="#4169E1"><a name="petscoptionsboolarray_"></a>PETSC_EXTERN void petscoptionsboolarray_(char *opt, char *text, char *man, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *dvalue, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *nmax, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T lenopt, PETSC_FORTRAN_CHARLEN_T lentext, PETSC_FORTRAN_CHARLEN_T lenman)</font></strong>
+<a name="line144">144: </a>{
+<a name="line145">145: </a>  char     *copt, *ctext, *cman;
+<a name="line146">146: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+
+<a name="line148">148: </a>  FIXCHAR(opt, lenopt, copt);
+<a name="line149">149: </a>  FIXCHAR(text, lentext, ctext);
+<a name="line150">150: </a>  FIXCHAR(man, lenman, cman);
+<a name="line151">151: </a>  <font color="#4169E1">if</font> (!PetscOptionsObject) {
+<a name="line152">152: </a>    *ierr = <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONGSTATE</a>;
+<a name="line153">153: </a>    <font color="#4169E1">return</font>;
+<a name="line154">154: </a>  }
+<a name="line155">155: </a>  PetscOptionsObject-&gt;count = 1;
+<a name="line156">156: </a>  *ierr                     = PetscOptionsBoolArray_Private(PetscOptionsObject, copt, ctext, cman, dvalue, nmax, &amp;flag);
+<a name="line157">157: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line158">158: </a>  <font color="#4169E1">if</font> (!FORTRANNULLBOOL(flg)) *flg = flag;
+<a name="line159">159: </a>  FREECHAR(opt, copt);
+<a name="line160">160: </a>  FREECHAR(text, ctext);
+<a name="line161">161: </a>  FREECHAR(man, cman);
+<a name="line162">162: </a>}
+
+<a name="line164">164: </a><strong><font color="#4169E1"><a name="petscoptionsenumprivate_"></a>PETSC_EXTERN void petscoptionsenumprivate_(char *opt, char *text, char *man, const char *const *list, <a href="../../../../manualpages/Sys/PetscEnum.html">PetscEnum</a> *currentvalue, <a href="../../../../manualpages/Sys/PetscEnum.html">PetscEnum</a> *ivalue, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T lenopt, PETSC_FORTRAN_CHARLEN_T lentext, PETSC_FORTRAN_CHARLEN_T lenman)</font></strong>
+<a name="line165">165: </a>{
+<a name="line166">166: </a>  char     *copt, *ctext, *cman;
+<a name="line167">167: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+
+<a name="line169">169: </a>  FIXCHAR(opt, lenopt, copt);
+<a name="line170">170: </a>  FIXCHAR(text, lentext, ctext);
+<a name="line171">171: </a>  FIXCHAR(man, lenman, cman);
+<a name="line172">172: </a>  <font color="#4169E1">if</font> (!PetscOptionsObject) {
+<a name="line173">173: </a>    *ierr = <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONGSTATE</a>;
+<a name="line174">174: </a>    <font color="#4169E1">return</font>;
+<a name="line175">175: </a>  }
+<a name="line176">176: </a>  PetscOptionsObject-&gt;count = 1;
+<a name="line177">177: </a>  *ierr                     = PetscOptionsEnum_Private(PetscOptionsObject, copt, ctext, cman, list, *currentvalue, ivalue, &amp;flag);
+<a name="line178">178: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line179">179: </a>  <font color="#4169E1">if</font> (!FORTRANNULLBOOL(flg)) *flg = flag;
+<a name="line180">180: </a>  FREECHAR(opt, copt);
+<a name="line181">181: </a>  FREECHAR(text, ctext);
+<a name="line182">182: </a>  FREECHAR(man, cman);
+<a name="line183">183: </a>}
+
+<a name="line185">185: </a><strong><font color="#4169E1"><a name="petscoptionsint_"></a>PETSC_EXTERN void petscoptionsint_(char *opt, char *text, char *man, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *currentvalue, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *value, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *set, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T lenopt, PETSC_FORTRAN_CHARLEN_T lentext, PETSC_FORTRAN_CHARLEN_T lenman)</font></strong>
+<a name="line186">186: </a>{
+<a name="line187">187: </a>  char *copt, *ctext, *cman;
+
+<a name="line189">189: </a>  FIXCHAR(opt, lenopt, copt);
+<a name="line190">190: </a>  FIXCHAR(text, lentext, ctext);
+<a name="line191">191: </a>  FIXCHAR(man, lenman, cman);
+<a name="line192">192: </a>  <font color="#4169E1">if</font> (!PetscOptionsObject) {
+<a name="line193">193: </a>    *ierr = <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONGSTATE</a>;
+<a name="line194">194: </a>    <font color="#4169E1">return</font>;
+<a name="line195">195: </a>  }
+<a name="line196">196: </a>  PetscOptionsObject-&gt;count = 1;
+<a name="line197">197: </a>  *ierr                     = PetscOptionsInt_Private(PetscOptionsObject, copt, ctext, cman, *currentvalue, value, set, PETSC_MIN_INT, PETSC_MAX_INT);
+<a name="line198">198: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line199">199: </a>  FREECHAR(opt, copt);
+<a name="line200">200: </a>  FREECHAR(text, ctext);
+<a name="line201">201: </a>  FREECHAR(man, cman);
+<a name="line202">202: </a>}
+
+<a name="line204">204: </a><strong><font color="#4169E1"><a name="petscoptionsintarray_"></a>PETSC_EXTERN void petscoptionsintarray_(char *opt, char *text, char *man, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *currentvalue, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *n, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *set, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T lenopt, PETSC_FORTRAN_CHARLEN_T lentext, PETSC_FORTRAN_CHARLEN_T lenman)</font></strong>
+<a name="line205">205: </a>{
+<a name="line206">206: </a>  char *copt, *ctext, *cman;
+
+<a name="line208">208: </a>  FIXCHAR(opt, lenopt, copt);
+<a name="line209">209: </a>  FIXCHAR(text, lentext, ctext);
+<a name="line210">210: </a>  FIXCHAR(man, lenman, cman);
+<a name="line211">211: </a>  <font color="#4169E1">if</font> (!PetscOptionsObject) {
+<a name="line212">212: </a>    *ierr = <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONGSTATE</a>;
+<a name="line213">213: </a>    <font color="#4169E1">return</font>;
+<a name="line214">214: </a>  }
+<a name="line215">215: </a>  PetscOptionsObject-&gt;count = 1;
+<a name="line216">216: </a>  *ierr                     = PetscOptionsIntArray_Private(PetscOptionsObject, copt, ctext, cman, currentvalue, n, set);
+<a name="line217">217: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line218">218: </a>  FREECHAR(opt, copt);
+<a name="line219">219: </a>  FREECHAR(text, ctext);
+<a name="line220">220: </a>  FREECHAR(man, cman);
+<a name="line221">221: </a>}
+
+<a name="line223">223: </a><strong><font color="#4169E1"><a name="petscoptionsreal_"></a>PETSC_EXTERN void petscoptionsreal_(char *opt, char *text, char *man, <a href="../../../../manualpages/Sys/PetscReal.html">PetscReal</a> *currentvalue, <a href="../../../../manualpages/Sys/PetscReal.html">PetscReal</a> *value, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *set, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T lenopt, PETSC_FORTRAN_CHARLEN_T lentext, PETSC_FORTRAN_CHARLEN_T lenman)</font></strong>
+<a name="line224">224: </a>{
+<a name="line225">225: </a>  char *copt, *ctext, *cman;
+
+<a name="line227">227: </a>  FIXCHAR(opt, lenopt, copt);
+<a name="line228">228: </a>  FIXCHAR(text, lentext, ctext);
+<a name="line229">229: </a>  FIXCHAR(man, lenman, cman);
+<a name="line230">230: </a>  <font color="#4169E1">if</font> (!PetscOptionsObject) {
+<a name="line231">231: </a>    *ierr = <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONGSTATE</a>;
+<a name="line232">232: </a>    <font color="#4169E1">return</font>;
+<a name="line233">233: </a>  }
+<a name="line234">234: </a>  PetscOptionsObject-&gt;count = 1;
+<a name="line235">235: </a>  *ierr                     = PetscOptionsReal_Private(PetscOptionsObject, copt, ctext, cman, *currentvalue, value, set);
+<a name="line236">236: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line237">237: </a>  FREECHAR(opt, copt);
+<a name="line238">238: </a>  FREECHAR(text, ctext);
+<a name="line239">239: </a>  FREECHAR(man, cman);
+<a name="line240">240: </a>}
+
+<a name="line242">242: </a><strong><font color="#4169E1"><a name="petscoptionsrealarray_"></a>PETSC_EXTERN void petscoptionsrealarray_(char *opt, char *text, char *man, <a href="../../../../manualpages/Sys/PetscReal.html">PetscReal</a> *currentvalue, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *n, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *set, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T lenopt, PETSC_FORTRAN_CHARLEN_T lentext, PETSC_FORTRAN_CHARLEN_T lenman)</font></strong>
+<a name="line243">243: </a>{
+<a name="line244">244: </a>  char *copt, *ctext, *cman;
+
+<a name="line246">246: </a>  FIXCHAR(opt, lenopt, copt);
+<a name="line247">247: </a>  FIXCHAR(text, lentext, ctext);
+<a name="line248">248: </a>  FIXCHAR(man, lenman, cman);
+<a name="line249">249: </a>  <font color="#4169E1">if</font> (!PetscOptionsObject) {
+<a name="line250">250: </a>    *ierr = <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONGSTATE</a>;
+<a name="line251">251: </a>    <font color="#4169E1">return</font>;
+<a name="line252">252: </a>  }
+<a name="line253">253: </a>  PetscOptionsObject-&gt;count = 1;
+<a name="line254">254: </a>  *ierr                     = PetscOptionsRealArray_Private(PetscOptionsObject, copt, ctext, cman, currentvalue, n, set);
+<a name="line255">255: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line256">256: </a>  FREECHAR(opt, copt);
+<a name="line257">257: </a>  FREECHAR(text, ctext);
+<a name="line258">258: </a>  FREECHAR(man, cman);
+<a name="line259">259: </a>}
+
+<a name="line261">261: </a><strong><font color="#4169E1"><a name="petscoptionsscalar_"></a>PETSC_EXTERN void petscoptionsscalar_(char *opt, char *text, char *man, <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *currentvalue, <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *value, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *set, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T lenopt, PETSC_FORTRAN_CHARLEN_T lentext, PETSC_FORTRAN_CHARLEN_T lenman)</font></strong>
+<a name="line262">262: </a>{
+<a name="line263">263: </a>  char *copt, *ctext, *cman;
+
+<a name="line265">265: </a>  FIXCHAR(opt, lenopt, copt);
+<a name="line266">266: </a>  FIXCHAR(text, lentext, ctext);
+<a name="line267">267: </a>  FIXCHAR(man, lenman, cman);
+<a name="line268">268: </a>  <font color="#4169E1">if</font> (!PetscOptionsObject) {
+<a name="line269">269: </a>    *ierr = <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONGSTATE</a>;
+<a name="line270">270: </a>    <font color="#4169E1">return</font>;
+<a name="line271">271: </a>  }
+<a name="line272">272: </a>  PetscOptionsObject-&gt;count = 1;
+<a name="line273">273: </a>  *ierr                     = PetscOptionsScalar_Private(PetscOptionsObject, copt, ctext, cman, *currentvalue, value, set);
+<a name="line274">274: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line275">275: </a>  FREECHAR(opt, copt);
+<a name="line276">276: </a>  FREECHAR(text, ctext);
+<a name="line277">277: </a>  FREECHAR(man, cman);
+<a name="line278">278: </a>}
+
+<a name="line280">280: </a><strong><font color="#4169E1"><a name="petscoptionsscalararray_"></a>PETSC_EXTERN void petscoptionsscalararray_(char *opt, char *text, char *man, <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *currentvalue, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *n, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *set, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T lenopt, PETSC_FORTRAN_CHARLEN_T lentext, PETSC_FORTRAN_CHARLEN_T lenman)</font></strong>
+<a name="line281">281: </a>{
+<a name="line282">282: </a>  char *copt, *ctext, *cman;
+
+<a name="line284">284: </a>  FIXCHAR(opt, lenopt, copt);
+<a name="line285">285: </a>  FIXCHAR(text, lentext, ctext);
+<a name="line286">286: </a>  FIXCHAR(man, lenman, cman);
+<a name="line287">287: </a>  <font color="#4169E1">if</font> (!PetscOptionsObject) {
+<a name="line288">288: </a>    *ierr = <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONGSTATE</a>;
+<a name="line289">289: </a>    <font color="#4169E1">return</font>;
+<a name="line290">290: </a>  }
+<a name="line291">291: </a>  PetscOptionsObject-&gt;count = 1;
+<a name="line292">292: </a>  *ierr                     = PetscOptionsScalarArray_Private(PetscOptionsObject, copt, ctext, cman, currentvalue, n, set);
+<a name="line293">293: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line294">294: </a>  FREECHAR(opt, copt);
+<a name="line295">295: </a>  FREECHAR(text, ctext);
+<a name="line296">296: </a>  FREECHAR(man, cman);
+<a name="line297">297: </a>}
+
+<a name="line299">299: </a><strong><font color="#4169E1"><a name="petscoptionsstring_"></a>PETSC_EXTERN void petscoptionsstring_(char *opt, char *text, char *man, char *currentvalue, char *value, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T lenopt, PETSC_FORTRAN_CHARLEN_T lentext, PETSC_FORTRAN_CHARLEN_T lenman, PETSC_FORTRAN_CHARLEN_T lencurrent, PETSC_FORTRAN_CHARLEN_T lenvalue)</font></strong>
+<a name="line300">300: </a>{
+<a name="line301">301: </a>  char     *copt, *ctext, *cman, *ccurrent;
+<a name="line302">302: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+
+<a name="line304">304: </a>  FIXCHAR(opt, lenopt, copt);
+<a name="line305">305: </a>  FIXCHAR(text, lentext, ctext);
+<a name="line306">306: </a>  FIXCHAR(man, lenman, cman);
+<a name="line307">307: </a>  FIXCHAR(currentvalue, lencurrent, ccurrent);
+
+<a name="line309">309: </a>  <font color="#4169E1">if</font> (!PetscOptionsObject) {
+<a name="line310">310: </a>    *ierr = <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONGSTATE</a>;
+<a name="line311">311: </a>    <font color="#4169E1">return</font>;
+<a name="line312">312: </a>  }
+<a name="line313">313: </a>  PetscOptionsObject-&gt;count = 1;
+
+<a name="line315">315: </a>  *ierr = PetscOptionsString_Private(PetscOptionsObject, copt, ctext, cman, ccurrent, value, lenvalue - 1, &amp;flag);
+<a name="line316">316: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line317">317: </a>  <font color="#4169E1">if</font> (!FORTRANNULLBOOL(flg)) *flg = flag;
+<a name="line318">318: </a>  FREECHAR(opt, copt);
+<a name="line319">319: </a>  FREECHAR(text, ctext);
+<a name="line320">320: </a>  FREECHAR(man, cman);
+<a name="line321">321: </a>  FREECHAR(currentvalue, ccurrent);
+<a name="line322">322: </a>  FIXRETURNCHAR(flag, value, lenvalue);
+<a name="line323">323: </a>}
+
+<a name="line325">325: </a><strong><font color="#4169E1"><a name="petscoptionsinsertstring_"></a>PETSC_EXTERN void petscoptionsinsertstring_(PetscOptions *options, char *file, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len)</font></strong>
+<a name="line326">326: </a>{
+<a name="line327">327: </a>  char *c1;
+
+<a name="line329">329: </a>  FIXCHAR(file, len, c1);
+<a name="line330">330: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsInsertString.html">PetscOptionsInsertString</a>(*options, c1);
+<a name="line331">331: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line332">332: </a>  FREECHAR(file, c1);
+<a name="line333">333: </a>}
+
+<a name="line335">335: </a><strong><font color="#4169E1"><a name="petscoptionsinsertfile_"></a>PETSC_EXTERN void petscoptionsinsertfile_(MPI_Fint *comm, PetscOptions *options, char *file, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *require, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len)</font></strong>
+<a name="line336">336: </a>{
+<a name="line337">337: </a>  char *c1;
+
+<a name="line339">339: </a>  FIXCHAR(file, len, c1);
+<a name="line340">340: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsInsertFile.html">PetscOptionsInsertFile</a>(MPI_Comm_f2c(*comm), *options, c1, *require);
+<a name="line341">341: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line342">342: </a>  FREECHAR(file, c1);
+<a name="line343">343: </a>}
+
+<a name="line345">345: </a><strong><font color="#4169E1"><a name="petscoptionssetvalue_"></a>PETSC_EXTERN void petscoptionssetvalue_(PetscOptions *options, char *name, char *value, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len1, PETSC_FORTRAN_CHARLEN_T len2)</font></strong>
+<a name="line346">346: </a>{
+<a name="line347">347: </a>  char *c1, *c2;
+
+<a name="line349">349: </a>  FIXCHAR(name, len1, c1);
+<a name="line350">350: </a>  FIXCHAR(value, len2, c2);
+<a name="line351">351: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsSetValue.html">PetscOptionsSetValue</a>(*options, c1, c2);
+<a name="line352">352: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line353">353: </a>  FREECHAR(name, c1);
+<a name="line354">354: </a>  FREECHAR(value, c2);
+<a name="line355">355: </a>}
+
+<a name="line357">357: </a><strong><font color="#4169E1"><a name="petscoptionsclear_"></a>PETSC_EXTERN void petscoptionsclear_(PetscOptions *options, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr)</font></strong>
+<a name="line358">358: </a>{
+<a name="line359">359: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsClear.html">PetscOptionsClear</a>(*options);
+<a name="line360">360: </a>}
+
+<a name="line362">362: </a><strong><font color="#4169E1"><a name="petscoptionsclearvalue_"></a>PETSC_EXTERN void petscoptionsclearvalue_(PetscOptions *options, char *name, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len)</font></strong>
+<a name="line363">363: </a>{
+<a name="line364">364: </a>  char *c1;
+
+<a name="line366">366: </a>  FIXCHAR(name, len, c1);
+<a name="line367">367: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsClearValue.html">PetscOptionsClearValue</a>(*options, c1);
+<a name="line368">368: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line369">369: </a>  FREECHAR(name, c1);
+<a name="line370">370: </a>}
+
+<a name="line372">372: </a><strong><font color="#4169E1"><a name="petscoptionshasname_"></a>PETSC_EXTERN void petscoptionshasname_(PetscOptions *options, char *pre, char *name, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len1, PETSC_FORTRAN_CHARLEN_T len2)</font></strong>
+<a name="line373">373: </a>{
+<a name="line374">374: </a>  char *c1, *c2;
+
+<a name="line376">376: </a>  FIXCHAR(pre, len1, c1);
+<a name="line377">377: </a>  FIXCHAR(name, len2, c2);
+<a name="line378">378: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsHasName.html">PetscOptionsHasName</a>(*options, c1, c2, flg);
+<a name="line379">379: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line380">380: </a>  FREECHAR(pre, c1);
+<a name="line381">381: </a>  FREECHAR(name, c2);
+<a name="line382">382: </a>}
+
+<a name="line384">384: </a><strong><font color="#4169E1"><a name="petscoptionsgetint_"></a>PETSC_EXTERN void petscoptionsgetint_(PetscOptions *opt, char *pre, char *name, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *ivalue, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len1, PETSC_FORTRAN_CHARLEN_T len2)</font></strong>
+<a name="line385">385: </a>{
+<a name="line386">386: </a>  char     *c1, *c2;
+<a name="line387">387: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+
+<a name="line389">389: </a>  FIXCHAR(pre, len1, c1);
+<a name="line390">390: </a>  FIXCHAR(name, len2, c2);
+<a name="line391">391: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsGetInt.html">PetscOptionsGetInt</a>(*opt, c1, c2, ivalue, &amp;flag);
+<a name="line392">392: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line393">393: </a>  <font color="#4169E1">if</font> (!FORTRANNULLBOOL(flg)) *flg = flag;
+<a name="line394">394: </a>  FREECHAR(pre, c1);
+<a name="line395">395: </a>  FREECHAR(name, c2);
+<a name="line396">396: </a>}
+
+<a name="line398">398: </a><strong><font color="#4169E1"><a name="petscoptionsgetenumprivate_"></a>PETSC_EXTERN void petscoptionsgetenumprivate_(PetscOptions *options, char *pre, char *name, const char *const *list, <a href="../../../../manualpages/Sys/PetscEnum.html">PetscEnum</a> *ivalue, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len1, PETSC_FORTRAN_CHARLEN_T len2)</font></strong>
+<a name="line399">399: </a>{
+<a name="line400">400: </a>  char     *c1, *c2;
+<a name="line401">401: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+
+<a name="line403">403: </a>  FIXCHAR(pre, len1, c1);
+<a name="line404">404: </a>  FIXCHAR(name, len2, c2);
+<a name="line405">405: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsGetEnum.html">PetscOptionsGetEnum</a>(*options, c1, c2, list, ivalue, &amp;flag);
+<a name="line406">406: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line407">407: </a>  <font color="#4169E1">if</font> (!FORTRANNULLBOOL(flg)) *flg = flag;
+<a name="line408">408: </a>  FREECHAR(pre, c1);
+<a name="line409">409: </a>  FREECHAR(name, c2);
+<a name="line410">410: </a>}
+
+<a name="line412">412: </a><strong><font color="#4169E1"><a name="petscoptionsgetbool_"></a>PETSC_EXTERN void petscoptionsgetbool_(PetscOptions *options, char *pre, char *name, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *ivalue, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len1, PETSC_FORTRAN_CHARLEN_T len2)</font></strong>
+<a name="line413">413: </a>{
+<a name="line414">414: </a>  char     *c1, *c2;
+<a name="line415">415: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+
+<a name="line417">417: </a>  FIXCHAR(pre, len1, c1);
+<a name="line418">418: </a>  FIXCHAR(name, len2, c2);
+<a name="line419">419: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(*options, c1, c2, ivalue, &amp;flag);
+<a name="line420">420: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line421">421: </a>  <font color="#4169E1">if</font> (!FORTRANNULLBOOL(flg)) *flg = flag;
+<a name="line422">422: </a>  FREECHAR(pre, c1);
+<a name="line423">423: </a>  FREECHAR(name, c2);
+<a name="line424">424: </a>}
+
+<a name="line426">426: </a><strong><font color="#4169E1"><a name="petscoptionsgetboolarray_"></a>PETSC_EXTERN void petscoptionsgetboolarray_(PetscOptions *options, char *pre, char *name, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *dvalue, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *nmax, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len1, PETSC_FORTRAN_CHARLEN_T len2)</font></strong>
+<a name="line427">427: </a>{
+<a name="line428">428: </a>  char     *c1, *c2;
+<a name="line429">429: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+
+<a name="line431">431: </a>  FIXCHAR(pre, len1, c1);
+<a name="line432">432: </a>  FIXCHAR(name, len2, c2);
+<a name="line433">433: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsGetBoolArray.html">PetscOptionsGetBoolArray</a>(*options, c1, c2, dvalue, nmax, &amp;flag);
+<a name="line434">434: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line435">435: </a>  <font color="#4169E1">if</font> (!FORTRANNULLBOOL(flg)) *flg = flag;
+<a name="line436">436: </a>  FREECHAR(pre, c1);
+<a name="line437">437: </a>  FREECHAR(name, c2);
+<a name="line438">438: </a>}
+
+<a name="line440">440: </a><strong><font color="#4169E1"><a name="petscoptionsgetreal_"></a>PETSC_EXTERN void petscoptionsgetreal_(PetscOptions *options, char *pre, char *name, <a href="../../../../manualpages/Sys/PetscReal.html">PetscReal</a> *dvalue, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len1, PETSC_FORTRAN_CHARLEN_T len2)</font></strong>
+<a name="line441">441: </a>{
+<a name="line442">442: </a>  char     *c1, *c2;
+<a name="line443">443: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+
+<a name="line445">445: </a>  FIXCHAR(pre, len1, c1);
+<a name="line446">446: </a>  FIXCHAR(name, len2, c2);
+<a name="line447">447: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsGetReal.html">PetscOptionsGetReal</a>(*options, c1, c2, dvalue, &amp;flag);
+<a name="line448">448: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line449">449: </a>  <font color="#4169E1">if</font> (!FORTRANNULLBOOL(flg)) *flg = flag;
+<a name="line450">450: </a>  FREECHAR(pre, c1);
+<a name="line451">451: </a>  FREECHAR(name, c2);
+<a name="line452">452: </a>}
+
+<a name="line454">454: </a><strong><font color="#4169E1"><a name="petscoptionsgetscalar_"></a>PETSC_EXTERN void petscoptionsgetscalar_(PetscOptions *options, char *pre, char *name, <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *dvalue, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len1, PETSC_FORTRAN_CHARLEN_T len2)</font></strong>
+<a name="line455">455: </a>{
+<a name="line456">456: </a>  char     *c1, *c2;
+<a name="line457">457: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+
+<a name="line459">459: </a>  FIXCHAR(pre, len1, c1);
+<a name="line460">460: </a>  FIXCHAR(name, len2, c2);
+<a name="line461">461: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsGetScalar.html">PetscOptionsGetScalar</a>(*options, c1, c2, dvalue, &amp;flag);
+<a name="line462">462: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line463">463: </a>  <font color="#4169E1">if</font> (!FORTRANNULLBOOL(flg)) *flg = flag;
+<a name="line464">464: </a>  FREECHAR(pre, c1);
+<a name="line465">465: </a>  FREECHAR(name, c2);
+<a name="line466">466: </a>}
+
+<a name="line468">468: </a><strong><font color="#4169E1"><a name="petscoptionsgetscalararray_"></a>PETSC_EXTERN void petscoptionsgetscalararray_(PetscOptions *options, char *pre, char *name, <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *dvalue, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *nmax, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len1, PETSC_FORTRAN_CHARLEN_T len2)</font></strong>
+<a name="line469">469: </a>{
+<a name="line470">470: </a>  char     *c1, *c2;
+<a name="line471">471: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+
+<a name="line473">473: </a>  FIXCHAR(pre, len1, c1);
+<a name="line474">474: </a>  FIXCHAR(name, len2, c2);
+<a name="line475">475: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsGetScalarArray.html">PetscOptionsGetScalarArray</a>(*options, c1, c2, dvalue, nmax, &amp;flag);
+<a name="line476">476: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line477">477: </a>  <font color="#4169E1">if</font> (!FORTRANNULLBOOL(flg)) *flg = flag;
+<a name="line478">478: </a>  FREECHAR(pre, c1);
+<a name="line479">479: </a>  FREECHAR(name, c2);
+<a name="line480">480: </a>}
+
+<a name="line482">482: </a><strong><font color="#4169E1"><a name="petscoptionsgetrealarray_"></a>PETSC_EXTERN void petscoptionsgetrealarray_(PetscOptions *options, char *pre, char *name, <a href="../../../../manualpages/Sys/PetscReal.html">PetscReal</a> *dvalue, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *nmax, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len1, PETSC_FORTRAN_CHARLEN_T len2)</font></strong>
+<a name="line483">483: </a>{
+<a name="line484">484: </a>  char     *c1, *c2;
+<a name="line485">485: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+
+<a name="line487">487: </a>  FIXCHAR(pre, len1, c1);
+<a name="line488">488: </a>  FIXCHAR(name, len2, c2);
+<a name="line489">489: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsGetRealArray.html">PetscOptionsGetRealArray</a>(*options, c1, c2, dvalue, nmax, &amp;flag);
+<a name="line490">490: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line491">491: </a>  <font color="#4169E1">if</font> (!FORTRANNULLBOOL(flg)) *flg = flag;
+<a name="line492">492: </a>  FREECHAR(pre, c1);
+<a name="line493">493: </a>  FREECHAR(name, c2);
+<a name="line494">494: </a>}
+
+<a name="line496">496: </a><strong><font color="#4169E1"><a name="petscoptionsgetintarray_"></a>PETSC_EXTERN void petscoptionsgetintarray_(PetscOptions *options, char *pre, char *name, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *dvalue, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *nmax, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len1, PETSC_FORTRAN_CHARLEN_T len2)</font></strong>
+<a name="line497">497: </a>{
+<a name="line498">498: </a>  char     *c1, *c2;
+<a name="line499">499: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+
+<a name="line501">501: </a>  FIXCHAR(pre, len1, c1);
+<a name="line502">502: </a>  FIXCHAR(name, len2, c2);
+<a name="line503">503: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsGetIntArray.html">PetscOptionsGetIntArray</a>(*options, c1, c2, dvalue, nmax, &amp;flag);
+<a name="line504">504: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line505">505: </a>  <font color="#4169E1">if</font> (!FORTRANNULLBOOL(flg)) *flg = flag;
+<a name="line506">506: </a>  FREECHAR(pre, c1);
+<a name="line507">507: </a>  FREECHAR(name, c2);
+<a name="line508">508: </a>}
+
+<a name="line510">510: </a><strong><font color="#4169E1"><a name="petscoptionsgetstring_"></a>PETSC_EXTERN void petscoptionsgetstring_(PetscOptions *options, char *pre, char *name, char *string, <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len1, PETSC_FORTRAN_CHARLEN_T len2, PETSC_FORTRAN_CHARLEN_T len)</font></strong>
+<a name="line511">511: </a>{
+<a name="line512">512: </a>  char     *c1, *c2, *c3;
+<a name="line513">513: </a>  size_t    len3;
+<a name="line514">514: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a> flag;
+
+<a name="line516">516: </a>  FIXCHAR(pre, len1, c1);
+<a name="line517">517: </a>  FIXCHAR(name, len2, c2);
+<a name="line518">518: </a>  c3   = string;
+<a name="line519">519: </a>  len3 = len - 1;
+
+<a name="line521">521: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(*options, c1, c2, c3, len3, &amp;flag);
+<a name="line522">522: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line523">523: </a>  <font color="#4169E1">if</font> (!FORTRANNULLBOOL(flg)) *flg = flag;
+<a name="line524">524: </a>  FREECHAR(pre, c1);
+<a name="line525">525: </a>  FREECHAR(name, c2);
+<a name="line526">526: </a>  FIXRETURNCHAR(flag, string, len);
+<a name="line527">527: </a>}
+
+<a name="line529">529: </a><strong><font color="#4169E1"><a name="petscgetprogramname_"></a>PETSC_EXTERN void petscgetprogramname_(char *name, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len_in)</font></strong>
+<a name="line530">530: </a>{
+<a name="line531">531: </a>  char  *tmp;
+<a name="line532">532: </a>  size_t len;
+<a name="line533">533: </a>  tmp   = name;
+<a name="line534">534: </a>  len   = len_in - 1;
+<a name="line535">535: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscGetProgramName.html">PetscGetProgramName</a>(tmp, len);
+<a name="line536">536: </a>  FIXRETURNCHAR(<a href="../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, name, len_in);
+<a name="line537">537: </a>}
+
+<a name="line539">539: </a><strong><font color="#4169E1"><a name="petscoptionsview_"></a>PETSC_EXTERN void petscoptionsview_(PetscOptions *options, <a href="../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a> *vin, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr)</font></strong>
+<a name="line540">540: </a>{
+<a name="line541">541: </a>  <a href="../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a> v;
+
+<a name="line543">543: </a>  PetscPatchDefaultViewers_Fortran(vin, v);
+<a name="line544">544: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscOptionsView.html">PetscOptionsView</a>(*options, v);
+<a name="line545">545: </a>}
+
+<a name="line547">547: </a><strong><font color="#4169E1"><a name="petscobjectviewfromoptions_"></a>PETSC_EXTERN void petscobjectviewfromoptions_(<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a> *obj, <a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a> *bobj, char *option, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T loption)</font></strong>
+<a name="line548">548: </a>{
+<a name="line549">549: </a>  char *o;
+
+<a name="line551">551: </a>  FIXCHAR(option, loption, o);
+<a name="line552">552: </a>  CHKFORTRANNULLOBJECT(obj);
+<a name="line553">553: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscObjectViewFromOptions.html">PetscObjectViewFromOptions</a>(*obj, *bobj, o);
+<a name="line554">554: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line555">555: </a>  FREECHAR(option, o);
+<a name="line556">556: </a>}
+
+<a name="line558">558: </a><strong><font color="#4169E1"><a name="petscsubcommgetparent_"></a>PETSC_EXTERN void petscsubcommgetparent_(<a href="../../../../manualpages/Sys/PetscSubcomm.html">PetscSubcomm</a> *scomm, MPI_Fint *pcomm, int *ierr)</font></strong>
+<a name="line559">559: </a>{
+<a name="line560">560: </a>  <a href="../../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a> tcomm;
+<a name="line561">561: </a>  *ierr  = <a href="../../../../manualpages/Sys/PetscSubcommGetParent.html">PetscSubcommGetParent</a>(*scomm, &amp;tcomm);
+<a name="line562">562: </a>  *pcomm = MPI_Comm_c2f(tcomm);
+<a name="line563">563: </a>}
+
+<a name="line565">565: </a><strong><font color="#4169E1"><a name="petscsubcommgetcontiguousparent_"></a>PETSC_EXTERN void petscsubcommgetcontiguousparent_(<a href="../../../../manualpages/Sys/PetscSubcomm.html">PetscSubcomm</a> *scomm, MPI_Fint *pcomm, int *ierr)</font></strong>
+<a name="line566">566: </a>{
+<a name="line567">567: </a>  <a href="../../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a> tcomm;
+<a name="line568">568: </a>  *ierr  = <a href="../../../../manualpages/Sys/PetscSubcommGetContiguousParent.html">PetscSubcommGetContiguousParent</a>(*scomm, &amp;tcomm);
+<a name="line569">569: </a>  *pcomm = MPI_Comm_c2f(tcomm);
+<a name="line570">570: </a>}
+
+<a name="line572">572: </a><strong><font color="#4169E1"><a name="petscsubcommgetchild_"></a>PETSC_EXTERN void petscsubcommgetchild_(<a href="../../../../manualpages/Sys/PetscSubcomm.html">PetscSubcomm</a> *scomm, MPI_Fint *ccomm, int *ierr)</font></strong>
+<a name="line573">573: </a>{
+<a name="line574">574: </a>  <a href="../../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a> tcomm;
+<a name="line575">575: </a>  *ierr  = <a href="../../../../manualpages/Sys/PetscSubcommGetChild.html">PetscSubcommGetChild</a>(*scomm, &amp;tcomm);
+<a name="line576">576: </a>  *ccomm = MPI_Comm_c2f(tcomm);
+<a name="line577">577: </a>}
+
+<a name="line579">579: </a><strong><font color="#4169E1"><a name="petscsubcommview_"></a>PETSC_EXTERN void petscsubcommview_(<a href="../../../../manualpages/Sys/PetscSubcomm.html">PetscSubcomm</a> *psubcomm, <a href="../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a> *viewer, int *ierr)</font></strong>
+<a name="line580">580: </a>{
+<a name="line581">581: </a>  <a href="../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a> v;
+<a name="line582">582: </a>  PetscPatchDefaultViewers_Fortran(viewer, v);
+<a name="line583">583: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscSubcommView.html">PetscSubcommView</a>(*psubcomm, v);
+<a name="line584">584: </a>}
+</pre>
+</body>
+
+</html>

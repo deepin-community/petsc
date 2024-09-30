@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ksp/ksp/utils/lmvm/lmvmutils.c">Actual source code: lmvmutils.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/ksp/ksp/utils/lmvm/lmvmutils.c">Actual source code: lmvmutils.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:49:22+00:00">
+<meta name="date" content="2024-03-29T14:12:59+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -12,604 +12,666 @@
 <a name="line1">  1: </a>#include <A href="lmvm.h.html">&lt;../src/ksp/ksp/utils/lmvm/lmvm.h&gt;</A>
 
 <a name="line3">  3: </a><font color="#B22222">/*@</font>
-<a name="line4">  4: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a> - Adds (X-Xprev) and (F-Fprev) updates to an LMVM-type matrix.</font>
-<a name="line5">  5: </a><font color="#B22222">   The first time the function is called for an LMVM-type matrix, no update is</font>
-<a name="line6">  6: </a><font color="#B22222">   applied, but the given X and F vectors are stored for use as Xprev and</font>
-<a name="line7">  7: </a><font color="#B22222">   Fprev in the next update.</font>
+<a name="line4">  4: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a> - Adds (X-Xprev) and (F-Fprev) updates to an `MATLMVM` matrix.</font>
+<a name="line5">  5: </a><font color="#B22222">  The first time the function is called for an `MATLMVM` matrix, no update is</font>
+<a name="line6">  6: </a><font color="#B22222">  applied, but the given X and F vectors are stored for use as Xprev and</font>
+<a name="line7">  7: </a><font color="#B22222">  Fprev in the next update.</font>
 
-<a name="line9">  9: </a><font color="#B22222">   If the user has provided another LMVM-type matrix in place of J0, the J0</font>
-<a name="line10"> 10: </a><font color="#B22222">   matrix is also updated recursively.</font>
+<a name="line9">  9: </a><font color="#B22222">  If the user has provided another `MATLMVM` matrix in place of J0, the J0</font>
+<a name="line10"> 10: </a><font color="#B22222">  matrix is also updated recursively.</font>
 
-<a name="line12"> 12: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line13"> 13: </a><font color="#B22222">+  B - An LMVM-type matrix</font>
-<a name="line14"> 14: </a><font color="#B22222">.  X - Solution vector</font>
-<a name="line15"> 15: </a><font color="#B22222">-  F - Function vector</font>
+<a name="line12"> 12: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line13"> 13: </a><font color="#B22222">+ B - A `MATLMVM` matrix</font>
+<a name="line14"> 14: </a><font color="#B22222">. X - Solution vector</font>
+<a name="line15"> 15: </a><font color="#B22222">- F - Function vector</font>
 
-<a name="line17"> 17: </a><font color="#B22222">   Level: intermediate</font>
+<a name="line17"> 17: </a><font color="#B22222">  Level: intermediate</font>
 
-<a name="line19"> 19: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>()`</font>
+<a name="line19"> 19: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()`, `<a href="../../../../../manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>()`</font>
 <a name="line20"> 20: </a><font color="#B22222">@*/</font>
-<a name="line21"> 21: </a><strong><font color="#4169E1"><a name="MatLMVMUpdate"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> F)</font></strong>
+<a name="line21"> 21: </a><strong><font color="#4169E1"><a name="MatLMVMUpdate"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> F)</font></strong>
 <a name="line22"> 22: </a>{
 <a name="line23"> 23: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-
-<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line31"> 31: </a>  <font color="#4169E1">if</font> (!lmvm-&gt;allocated) {
-<a name="line32"> 32: </a>    <a href="../../../../../docs/manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>(B, X, F);
-<a name="line33"> 33: </a>  } <font color="#4169E1">else</font> {
-<a name="line34"> 34: </a>    VecCheckMatCompatible(B, X, 2, F, 3);
-<a name="line35"> 35: </a>  }
-<a name="line36"> 36: </a>  <font color="#4169E1">if</font> (lmvm-&gt;J0) {
-<a name="line37"> 37: </a>    <font color="#B22222">/* If the user provided an LMVM-type matrix as J0, then trigger its update as well */</font>
-<a name="line38"> 38: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)lmvm-&gt;J0, MATLMVM, &amp;same);
-<a name="line39"> 39: </a>    <font color="#4169E1">if</font> (same) <a href="../../../../../docs/manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a>(lmvm-&gt;J0, X, F);
-<a name="line40"> 40: </a>  }
-<a name="line41"> 41: </a>  (*lmvm-&gt;ops-&gt;update)(B, X, F);
-<a name="line42"> 42: </a>  <font color="#4169E1">return</font> 0;
-<a name="line43"> 43: </a>}
-
-<a name="line45"> 45: </a><font color="#B22222">/*@</font>
-<a name="line46"> 46: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a> - Removes all definitions of J0 and reverts to</font>
-<a name="line47"> 47: </a><font color="#B22222">   an identity matrix (scale = 1.0).</font>
-
-<a name="line49"> 49: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line50"> 50: </a><font color="#B22222">.  B - An LMVM-type matrix</font>
-
-<a name="line52"> 52: </a><font color="#B22222">   Level: advanced</font>
-
-<a name="line54"> 54: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>()`</font>
-<a name="line55"> 55: </a><font color="#B22222">@*/</font>
-<a name="line56"> 56: </a><strong><font color="#4169E1"><a name="MatLMVMClearJ0"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B)</font></strong>
-<a name="line57"> 57: </a>{
-<a name="line58"> 58: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line59"> 59: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-<a name="line60"> 60: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B);
-
-<a name="line63"> 63: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line65"> 65: </a>  lmvm-&gt;user_pc    = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
-<a name="line66"> 66: </a>  lmvm-&gt;user_ksp   = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
-<a name="line67"> 67: </a>  lmvm-&gt;user_scale = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
-<a name="line68"> 68: </a>  lmvm-&gt;J0scalar   = 1.0;
-<a name="line69"> 69: </a>  <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lmvm-&gt;J0diag);
-<a name="line70"> 70: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;lmvm-&gt;J0);
-<a name="line71"> 71: </a>  <a href="../../../../../docs/manualpages/PC/PCDestroy.html">PCDestroy</a>(&amp;lmvm-&gt;J0pc);
-<a name="line72"> 72: </a>  <font color="#4169E1">return</font> 0;
-<a name="line73"> 73: </a>}
-
-<a name="line75"> 75: </a><font color="#B22222">/*@</font>
-<a name="line76"> 76: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0Scale.html">MatLMVMSetJ0Scale</a> - Allows the user to define a scalar value</font>
-<a name="line77"> 77: </a><font color="#B22222">   mu such that J0 = mu*I.</font>
-
-<a name="line79"> 79: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line80"> 80: </a><font color="#B22222">+  B - An LMVM-type matrix</font>
-<a name="line81"> 81: </a><font color="#B22222">-  scale - Scalar value mu that defines the initial Jacobian</font>
-
-<a name="line83"> 83: </a><font color="#B22222">   Level: advanced</font>
-
-<a name="line85"> 85: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `MatLMVMSetDiagScale()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>()`</font>
-<a name="line86"> 86: </a><font color="#B22222">@*/</font>
-<a name="line87"> 87: </a><strong><font color="#4169E1"><a name="MatLMVMSetJ0Scale"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0Scale.html">MatLMVMSetJ0Scale</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> scale)</font></strong>
-<a name="line88"> 88: </a>{
-<a name="line89"> 89: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line90"> 90: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-<a name="line91"> 91: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B);
-
-<a name="line94"> 94: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line97"> 97: </a>  <a href="../../../../../docs/manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a>(B);
-<a name="line98"> 98: </a>  lmvm-&gt;J0scalar   = scale;
-<a name="line99"> 99: </a>  lmvm-&gt;user_scale = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line100">100: </a>  <font color="#4169E1">return</font> 0;
-<a name="line101">101: </a>}
-
-<a name="line103">103: </a><font color="#B22222">/*@</font>
-<a name="line104">104: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0Diag.html">MatLMVMSetJ0Diag</a> - Allows the user to define a vector</font>
-<a name="line105">105: </a><font color="#B22222">   V such that J0 = diag(V).</font>
-
-<a name="line107">107: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line108">108: </a><font color="#B22222">+  B - An LMVM-type matrix</font>
-<a name="line109">109: </a><font color="#B22222">-  V - Vector that defines the diagonal of the initial Jacobian</font>
-
-<a name="line111">111: </a><font color="#B22222">   Level: advanced</font>
-
-<a name="line113">113: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `MatLMVMSetScale()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>()`</font>
-<a name="line114">114: </a><font color="#B22222">@*/</font>
-<a name="line115">115: </a><strong><font color="#4169E1"><a name="MatLMVMSetJ0Diag"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0Diag.html">MatLMVMSetJ0Diag</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> V)</font></strong>
-<a name="line116">116: </a>{
-<a name="line117">117: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line118">118: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-<a name="line119">119: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B);
-
-<a name="line123">123: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line127">127: </a>  VecCheckSameSize(V, 2, lmvm-&gt;Fprev, 3);
-
-<a name="line129">129: </a>  <a href="../../../../../docs/manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a>(B);
-<a name="line130">130: </a>  <font color="#4169E1">if</font> (!lmvm-&gt;J0diag) <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(V, &amp;lmvm-&gt;J0diag);
-<a name="line131">131: </a>  <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(V, lmvm-&gt;J0diag);
-<a name="line132">132: </a>  lmvm-&gt;user_scale = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line133">133: </a>  <font color="#4169E1">return</font> 0;
-<a name="line134">134: </a>}
-
-<a name="line136">136: </a><font color="#B22222">/*@</font>
-<a name="line137">137: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a> - Allows the user to define the initial</font>
-<a name="line138">138: </a><font color="#B22222">   Jacobian matrix from which the LMVM-type approximation is</font>
-<a name="line139">139: </a><font color="#B22222">   built up. Inverse of this initial Jacobian is applied</font>
-<a name="line140">140: </a><font color="#B22222">   using an internal `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` solver, which defaults to `<a href="../../../../../docs/manualpages/KSP/KSPGMRES.html">KSPGMRES</a>`.</font>
-<a name="line141">141: </a><font color="#B22222">   This internal `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` solver has the "mat_lmvm_" option</font>
-<a name="line142">142: </a><font color="#B22222">   prefix.</font>
-
-<a name="line144">144: </a><font color="#B22222">   Note that another LMVM-type matrix can be used in place of</font>
-<a name="line145">145: </a><font color="#B22222">   J0, in which case updating the outer LMVM-type matrix will</font>
-<a name="line146">146: </a><font color="#B22222">   also trigger the update for the inner LMVM-type matrix. This</font>
-<a name="line147">147: </a><font color="#B22222">   is useful in cases where a full-memory diagonal approximation</font>
-<a name="line148">148: </a><font color="#B22222">   such as `MATLMVMDIAGBRDN` is used in place of J0.</font>
-
-<a name="line150">150: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line151">151: </a><font color="#B22222">+  B - An LMVM-type matrix</font>
-<a name="line152">152: </a><font color="#B22222">-  J0 - The initial Jacobian matrix</font>
-
-<a name="line154">154: </a><font color="#B22222">   Level: advanced</font>
-
-<a name="line156">156: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0PC.html">MatLMVMSetJ0PC</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0KSP.html">MatLMVMSetJ0KSP</a>()`</font>
-<a name="line157">157: </a><font color="#B22222">@*/</font>
-<a name="line158">158: </a><strong><font color="#4169E1"><a name="MatLMVMSetJ0"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> J0)</font></strong>
-<a name="line159">159: </a>{
-<a name="line160">160: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line161">161: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-<a name="line162">162: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B);
-
-<a name="line166">166: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line168">168: </a>  <a href="../../../../../docs/manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a>(B);
-<a name="line169">169: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;lmvm-&gt;J0);
-<a name="line170">170: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)J0);
-<a name="line171">171: </a>  lmvm-&gt;J0 = J0;
-<a name="line172">172: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)lmvm-&gt;J0, MATLMVM, &amp;same);
-<a name="line173">173: </a>  <font color="#4169E1">if</font> (!same &amp;&amp; lmvm-&gt;square) <a href="../../../../../docs/manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>(lmvm-&gt;J0ksp, lmvm-&gt;J0, lmvm-&gt;J0);
-<a name="line174">174: </a>  <font color="#4169E1">return</font> 0;
-<a name="line175">175: </a>}
-
-<a name="line177">177: </a><font color="#B22222">/*@</font>
-<a name="line178">178: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0PC.html">MatLMVMSetJ0PC</a> - Allows the user to define a `<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>` object that</font>
-<a name="line179">179: </a><font color="#B22222">   acts as the initial inverse-Jacobian matrix. This `<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>` should</font>
-<a name="line180">180: </a><font color="#B22222">   already contain all the operators necessary for its application.</font>
-<a name="line181">181: </a><font color="#B22222">   The LMVM-type matrix only calls `<a href="../../../../../docs/manualpages/PC/PCApply.html">PCApply</a>()` without changing any other</font>
-<a name="line182">182: </a><font color="#B22222">   options.</font>
-
-<a name="line184">184: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line185">185: </a><font color="#B22222">+  B - An LMVM-type matrix</font>
-<a name="line186">186: </a><font color="#B22222">-  J0pc - `<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>` object where `<a href="../../../../../docs/manualpages/PC/PCApply.html">PCApply</a>()` defines an inverse application for J0</font>
-
-<a name="line188">188: </a><font color="#B22222">   Level: advanced</font>
-
-<a name="line190">190: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMGetJ0PC.html">MatLMVMGetJ0PC</a>()`</font>
-<a name="line191">191: </a><font color="#B22222">@*/</font>
-<a name="line192">192: </a><strong><font color="#4169E1"><a name="MatLMVMSetJ0PC"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0PC.html">MatLMVMSetJ0PC</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/PC/PC.html">PC</a> J0pc)</font></strong>
-<a name="line193">193: </a>{
-<a name="line194">194: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line195">195: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-<a name="line196">196: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B);
-
-<a name="line200">200: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line203">203: </a>  <a href="../../../../../docs/manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a>(B);
-<a name="line204">204: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)J0pc);
-<a name="line205">205: </a>  lmvm-&gt;J0pc    = J0pc;
-<a name="line206">206: </a>  lmvm-&gt;user_pc = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line207">207: </a>  <font color="#4169E1">return</font> 0;
-<a name="line208">208: </a>}
-
-<a name="line210">210: </a><font color="#B22222">/*@</font>
-<a name="line211">211: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0KSP.html">MatLMVMSetJ0KSP</a> - Allows the user to provide a pre-configured</font>
-<a name="line212">212: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> solver for the initial inverse-Jacobian approximation.</font>
-<a name="line213">213: </a><font color="#B22222">   This `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` solver should already contain all the operators</font>
-<a name="line214">214: </a><font color="#B22222">   necessary to perform the inversion. The LMVM-type matrix only</font>
-<a name="line215">215: </a><font color="#B22222">   calls `<a href="../../../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>()` without changing any other options.</font>
-
-<a name="line217">217: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line218">218: </a><font color="#B22222">+  B - An LMVM-type matrix</font>
-<a name="line219">219: </a><font color="#B22222">-  J0ksp - `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` solver for the initial inverse-Jacobian application</font>
-
-<a name="line221">221: </a><font color="#B22222">   Level: advanced</font>
-
-<a name="line223">223: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMGetJ0KSP.html">MatLMVMGetJ0KSP</a>()`</font>
-<a name="line224">224: </a><font color="#B22222">@*/</font>
-<a name="line225">225: </a><strong><font color="#4169E1"><a name="MatLMVMSetJ0KSP"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0KSP.html">MatLMVMSetJ0KSP</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> J0ksp)</font></strong>
-<a name="line226">226: </a>{
-<a name="line227">227: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line228">228: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-<a name="line229">229: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B);
-
-<a name="line233">233: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line236">236: </a>  <a href="../../../../../docs/manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a>(B);
-<a name="line237">237: </a>  <a href="../../../../../docs/manualpages/KSP/KSPDestroy.html">KSPDestroy</a>(&amp;lmvm-&gt;J0ksp);
-<a name="line238">238: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)J0ksp);
-<a name="line239">239: </a>  lmvm-&gt;J0ksp    = J0ksp;
-<a name="line240">240: </a>  lmvm-&gt;user_ksp = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line241">241: </a>  <font color="#4169E1">return</font> 0;
-<a name="line242">242: </a>}
-
-<a name="line244">244: </a><font color="#B22222">/*@</font>
-<a name="line245">245: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMGetJ0.html">MatLMVMGetJ0</a> - Returns a pointer to the internal J0 matrix.</font>
-
-<a name="line247">247: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line248">248: </a><font color="#B22222">.  B - An LMVM-type matrix</font>
-
-<a name="line250">250: </a><font color="#B22222">   Output Parameter:</font>
-<a name="line251">251: </a><font color="#B22222">.  J0 - `<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>` object for defining the initial Jacobian</font>
-
-<a name="line253">253: </a><font color="#B22222">   Level: advanced</font>
-
-<a name="line255">255: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>()`</font>
-<a name="line256">256: </a><font color="#B22222">@*/</font>
-<a name="line257">257: </a><strong><font color="#4169E1"><a name="MatLMVMGetJ0"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMGetJ0.html">MatLMVMGetJ0</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *J0)</font></strong>
-<a name="line258">258: </a>{
-<a name="line259">259: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line260">260: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-
-<a name="line263">263: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line265">265: </a>  *J0 = lmvm-&gt;J0;
-<a name="line266">266: </a>  <font color="#4169E1">return</font> 0;
-<a name="line267">267: </a>}
-
-<a name="line269">269: </a><font color="#B22222">/*@</font>
-<a name="line270">270: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMGetJ0PC.html">MatLMVMGetJ0PC</a> - Returns a pointer to the internal `<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>` object</font>
-<a name="line271">271: </a><font color="#B22222">   associated with the initial Jacobian.</font>
-
-<a name="line273">273: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line274">274: </a><font color="#B22222">.  B - An LMVM-type matrix</font>
-
-<a name="line276">276: </a><font color="#B22222">   Output Parameter:</font>
-<a name="line277">277: </a><font color="#B22222">.  J0pc - `<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>` object for defining the initial inverse-Jacobian</font>
-
-<a name="line279">279: </a><font color="#B22222">   Level: advanced</font>
-
-<a name="line281">281: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0PC.html">MatLMVMSetJ0PC</a>()`</font>
-<a name="line282">282: </a><font color="#B22222">@*/</font>
-<a name="line283">283: </a><strong><font color="#4169E1"><a name="MatLMVMGetJ0PC"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMGetJ0PC.html">MatLMVMGetJ0PC</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/PC/PC.html">PC</a> *J0pc)</font></strong>
-<a name="line284">284: </a>{
-<a name="line285">285: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line286">286: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-
-<a name="line289">289: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line291">291: </a>  <font color="#4169E1">if</font> (lmvm-&gt;J0pc) {
-<a name="line292">292: </a>    *J0pc = lmvm-&gt;J0pc;
-<a name="line293">293: </a>  } <font color="#4169E1">else</font> {
-<a name="line294">294: </a>    <a href="../../../../../docs/manualpages/KSP/KSPGetPC.html">KSPGetPC</a>(lmvm-&gt;J0ksp, J0pc);
-<a name="line295">295: </a>  }
-<a name="line296">296: </a>  <font color="#4169E1">return</font> 0;
-<a name="line297">297: </a>}
-
-<a name="line299">299: </a><font color="#B22222">/*@</font>
-<a name="line300">300: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMGetJ0KSP.html">MatLMVMGetJ0KSP</a> - Returns a pointer to the internal `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` solver</font>
-<a name="line301">301: </a><font color="#B22222">   associated with the initial Jacobian.</font>
-
-<a name="line303">303: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line304">304: </a><font color="#B22222">.  B - An LMVM-type matrix</font>
-
-<a name="line306">306: </a><font color="#B22222">   Output Parameter:</font>
-<a name="line307">307: </a><font color="#B22222">.  J0ksp - `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` solver for defining the initial inverse-Jacobian</font>
-
-<a name="line309">309: </a><font color="#B22222">   Level: advanced</font>
-
-<a name="line311">311: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0KSP.html">MatLMVMSetJ0KSP</a>()`</font>
-<a name="line312">312: </a><font color="#B22222">@*/</font>
-<a name="line313">313: </a><strong><font color="#4169E1"><a name="MatLMVMGetJ0KSP"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMGetJ0KSP.html">MatLMVMGetJ0KSP</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> *J0ksp)</font></strong>
-<a name="line314">314: </a>{
-<a name="line315">315: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line316">316: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-
-<a name="line319">319: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line321">321: </a>  *J0ksp = lmvm-&gt;J0ksp;
-<a name="line322">322: </a>  <font color="#4169E1">return</font> 0;
-<a name="line323">323: </a>}
-
-<a name="line325">325: </a><font color="#B22222">/*@</font>
-<a name="line326">326: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMApplyJ0Fwd.html">MatLMVMApplyJ0Fwd</a> - Applies an approximation of the forward</font>
-<a name="line327">327: </a><font color="#B22222">   matrix-vector product with the initial Jacobian.</font>
-
-<a name="line329">329: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line330">330: </a><font color="#B22222">+  B - An LMVM-type matrix</font>
-<a name="line331">331: </a><font color="#B22222">-  X - vector to multiply with J0</font>
-
-<a name="line333">333: </a><font color="#B22222">   Output Parameter:</font>
-<a name="line334">334: </a><font color="#B22222">.  Y - resulting vector for the operation</font>
-
-<a name="line336">336: </a><font color="#B22222">   Level: advanced</font>
-
-<a name="line338">338: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0Scale.html">MatLMVMSetJ0Scale</a>()`, `MatLMVMSetJ0ScaleDiag()`,</font>
-<a name="line339">339: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0PC.html">MatLMVMSetJ0PC</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0KSP.html">MatLMVMSetJ0KSP</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMApplyJ0Inv.html">MatLMVMApplyJ0Inv</a>()`</font>
-<a name="line340">340: </a><font color="#B22222">@*/</font>
-<a name="line341">341: </a><strong><font color="#4169E1"><a name="MatLMVMApplyJ0Fwd"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMApplyJ0Fwd.html">MatLMVMApplyJ0Fwd</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> Y)</font></strong>
-<a name="line342">342: </a>{
-<a name="line343">343: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line344">344: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same, hasMult;
-<a name="line345">345: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B);
-<a name="line346">346: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>       Amat, Pmat;
-
-<a name="line351">351: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line354">354: </a>  VecCheckMatCompatible(B, X, 2, Y, 3);
-<a name="line355">355: </a>  <font color="#4169E1">if</font> (lmvm-&gt;user_pc || lmvm-&gt;user_ksp || lmvm-&gt;J0) {
-<a name="line356">356: </a>    <font color="#B22222">/* User may have defined a <a href="../../../../../docs/manualpages/PC/PC.html">PC</a> or <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> for J0^{-1} so let's try to use its operators. */</font>
-<a name="line357">357: </a>    <font color="#4169E1">if</font> (lmvm-&gt;user_pc) {
-<a name="line358">358: </a>      <a href="../../../../../docs/manualpages/PC/PCGetOperators.html">PCGetOperators</a>(lmvm-&gt;J0pc, &amp;Amat, &amp;Pmat);
-<a name="line359">359: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (lmvm-&gt;user_ksp) {
-<a name="line360">360: </a>      <a href="../../../../../docs/manualpages/KSP/KSPGetOperators.html">KSPGetOperators</a>(lmvm-&gt;J0ksp, &amp;Amat, &amp;Pmat);
-<a name="line361">361: </a>    } <font color="#4169E1">else</font> {
-<a name="line362">362: </a>      Amat = lmvm-&gt;J0;
-<a name="line363">363: </a>    }
-<a name="line364">364: </a>    <a href="../../../../../docs/manualpages/Mat/MatHasOperation.html">MatHasOperation</a>(Amat, MATOP_MULT, &amp;hasMult);
-<a name="line365">365: </a>    <font color="#4169E1">if</font> (hasMult) {
-<a name="line366">366: </a>      <font color="#B22222">/* product is available, use it */</font>
-<a name="line367">367: </a>      <a href="../../../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(Amat, X, Y);
-<a name="line368">368: </a>    } <font color="#4169E1">else</font> {
-<a name="line369">369: </a>      <font color="#B22222">/* there's no product, so treat J0 as identity */</font>
-<a name="line370">370: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(X, Y);
-<a name="line371">371: </a>    }
-<a name="line372">372: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (lmvm-&gt;user_scale) {
-<a name="line373">373: </a>    <font color="#4169E1">if</font> (lmvm-&gt;J0diag) {
-<a name="line374">374: </a>      <font color="#B22222">/* User has defined a diagonal vector for J0 */</font>
-<a name="line375">375: </a>      <a href="../../../../../docs/manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(X, lmvm-&gt;J0diag, Y);
-<a name="line376">376: </a>    } <font color="#4169E1">else</font> {
-<a name="line377">377: </a>      <font color="#B22222">/* User has defined a scalar value for J0 */</font>
-<a name="line378">378: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(X, Y);
-<a name="line379">379: </a>      <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(Y, lmvm-&gt;J0scalar);
-<a name="line380">380: </a>    }
-<a name="line381">381: </a>  } <font color="#4169E1">else</font> {
-<a name="line382">382: </a>    <font color="#B22222">/* There is no J0 representation so just apply an identity matrix */</font>
-<a name="line383">383: </a>    <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(X, Y);
-<a name="line384">384: </a>  }
-<a name="line385">385: </a>  <font color="#4169E1">return</font> 0;
-<a name="line386">386: </a>}
-
-<a name="line388">388: </a><font color="#B22222">/*@</font>
-<a name="line389">389: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMApplyJ0Inv.html">MatLMVMApplyJ0Inv</a> - Applies some estimation of the initial Jacobian</font>
-<a name="line390">390: </a><font color="#B22222">   inverse to the given vector. The specific form of the application</font>
-<a name="line391">391: </a><font color="#B22222">   depends on whether the user provided a scaling factor, a J0 matrix,</font>
-<a name="line392">392: </a><font color="#B22222">   a J0 `<a href="../../../../../docs/manualpages/PC/PC.html">PC</a>`, or a J0 `<a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a>` object. If no form of the initial Jacobian is</font>
-<a name="line393">393: </a><font color="#B22222">   provided, the function simply does an identity matrix application</font>
-<a name="line394">394: </a><font color="#B22222">   (vector copy).</font>
-
-<a name="line396">396: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line397">397: </a><font color="#B22222">+  B - An LMVM-type matrix</font>
-<a name="line398">398: </a><font color="#B22222">-  X - vector to "multiply" with J0^{-1}</font>
-
-<a name="line400">400: </a><font color="#B22222">   Output Parameter:</font>
-<a name="line401">401: </a><font color="#B22222">.  Y - resulting vector for the operation</font>
-
-<a name="line403">403: </a><font color="#B22222">   Level: advanced</font>
-
-<a name="line405">405: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0Scale.html">MatLMVMSetJ0Scale</a>()`, `MatLMVMSetJ0ScaleDiag()`,</font>
-<a name="line406">406: </a><font color="#B22222">          `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0PC.html">MatLMVMSetJ0PC</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMSetJ0KSP.html">MatLMVMSetJ0KSP</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMApplyJ0Fwd.html">MatLMVMApplyJ0Fwd</a>()`</font>
-<a name="line407">407: </a><font color="#B22222">@*/</font>
-<a name="line408">408: </a><strong><font color="#4169E1"><a name="MatLMVMApplyJ0Inv"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMApplyJ0Inv.html">MatLMVMApplyJ0Inv</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> Y)</font></strong>
-<a name="line409">409: </a>{
-<a name="line410">410: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line411">411: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same, hasSolve;
-<a name="line412">412: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../../../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B);
-
-<a name="line417">417: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line420">420: </a>  VecCheckMatCompatible(B, X, 2, Y, 3);
-
-<a name="line422">422: </a>  <font color="#B22222">/* Invert the initial Jacobian onto q (or apply scaling) */</font>
-<a name="line423">423: </a>  <font color="#4169E1">if</font> (lmvm-&gt;user_pc) {
-<a name="line424">424: </a>    <font color="#B22222">/* User has defined a J0 inverse so we can directly apply it as a preconditioner */</font>
-<a name="line425">425: </a>    <a href="../../../../../docs/manualpages/PC/PCApply.html">PCApply</a>(lmvm-&gt;J0pc, X, Y);
-<a name="line426">426: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (lmvm-&gt;user_ksp) {
-<a name="line427">427: </a>    <font color="#B22222">/* User has defined a J0 or a custom <a href="../../../../../docs/manualpages/KSP/KSP.html">KSP</a> so just perform a solution */</font>
-<a name="line428">428: </a>    <a href="../../../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>(lmvm-&gt;J0ksp, X, Y);
-<a name="line429">429: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (lmvm-&gt;J0) {
-<a name="line430">430: </a>    <a href="../../../../../docs/manualpages/Mat/MatHasOperation.html">MatHasOperation</a>(lmvm-&gt;J0, MATOP_SOLVE, &amp;hasSolve);
-<a name="line431">431: </a>    <font color="#4169E1">if</font> (hasSolve) {
-<a name="line432">432: </a>      <a href="../../../../../docs/manualpages/Mat/MatSolve.html">MatSolve</a>(lmvm-&gt;J0, X, Y);
-<a name="line433">433: </a>    } <font color="#4169E1">else</font> {
-<a name="line434">434: </a>      <a href="../../../../../docs/manualpages/KSP/KSPSolve.html">KSPSolve</a>(lmvm-&gt;J0ksp, X, Y);
-<a name="line435">435: </a>    }
-<a name="line436">436: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (lmvm-&gt;user_scale) {
-<a name="line437">437: </a>    <font color="#4169E1">if</font> (lmvm-&gt;J0diag) {
-<a name="line438">438: </a>      <a href="../../../../../docs/manualpages/Vec/VecPointwiseDivide.html">VecPointwiseDivide</a>(X, Y, lmvm-&gt;J0diag);
-<a name="line439">439: </a>    } <font color="#4169E1">else</font> {
-<a name="line440">440: </a>      <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(X, Y);
-<a name="line441">441: </a>      <a href="../../../../../docs/manualpages/Vec/VecScale.html">VecScale</a>(Y, 1.0 / lmvm-&gt;J0scalar);
-<a name="line442">442: </a>    }
-<a name="line443">443: </a>  } <font color="#4169E1">else</font> {
-<a name="line444">444: </a>    <font color="#B22222">/* There is no J0 representation so just apply an identity matrix */</font>
-<a name="line445">445: </a>    <a href="../../../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(X, Y);
-<a name="line446">446: </a>  }
-<a name="line447">447: </a>  <font color="#4169E1">return</font> 0;
-<a name="line448">448: </a>}
-
-<a name="line450">450: </a><font color="#B22222">/*@</font>
-<a name="line451">451: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMIsAllocated.html">MatLMVMIsAllocated</a> - Returns a boolean flag that shows whether</font>
-<a name="line452">452: </a><font color="#B22222">   the necessary data structures for the underlying matrix is allocated.</font>
-
-<a name="line454">454: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line455">455: </a><font color="#B22222">.  B - An LMVM-type matrix</font>
-
-<a name="line457">457: </a><font color="#B22222">   Output Parameter:</font>
-<a name="line458">458: </a><font color="#B22222">.  flg - `<a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>` if allocated, `<a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>` otherwise</font>
-
-<a name="line460">460: </a><font color="#B22222">   Level: intermediate</font>
-
-<a name="line462">462: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()`</font>
-<a name="line463">463: </a><font color="#B22222">@*/</font>
-
-<a name="line465">465: </a><strong><font color="#4169E1"><a name="MatLMVMIsAllocated"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMIsAllocated.html">MatLMVMIsAllocated</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *flg)</font></strong>
-<a name="line466">466: </a>{
-<a name="line467">467: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line468">468: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-
-<a name="line471">471: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line473">473: </a>  *flg = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
-<a name="line474">474: </a>  <font color="#4169E1">if</font> (lmvm-&gt;allocated &amp;&amp; B-&gt;preallocated &amp;&amp; B-&gt;assembled) *flg = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line475">475: </a>  <font color="#4169E1">return</font> 0;
-<a name="line476">476: </a>}
-
-<a name="line478">478: </a><font color="#B22222">/*@</font>
-<a name="line479">479: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a> - Produces all necessary common memory for</font>
-<a name="line480">480: </a><font color="#B22222">   LMVM approximations based on the solution and function vectors</font>
-<a name="line481">481: </a><font color="#B22222">   provided. If `<a href="../../../../../docs/manualpages/Mat/MatSetSizes.html">MatSetSizes</a>()` and `<a href="../../../../../docs/manualpages/Mat/MatSetUp.html">MatSetUp</a>()` have not been called</font>
-<a name="line482">482: </a><font color="#B22222">   before `<a href="../../../../../docs/manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>()`, the allocation will read sizes from</font>
-<a name="line483">483: </a><font color="#B22222">   the provided vectors and update the matrix.</font>
-
-<a name="line485">485: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line486">486: </a><font color="#B22222">+  B - An LMVM-type matrix</font>
-<a name="line487">487: </a><font color="#B22222">.  X - Solution vector</font>
-<a name="line488">488: </a><font color="#B22222">-  F - Function vector</font>
-
-<a name="line490">490: </a><font color="#B22222">   Level: intermediate</font>
-
-<a name="line492">492: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a>()`</font>
-<a name="line493">493: </a><font color="#B22222">@*/</font>
-<a name="line494">494: </a><strong><font color="#4169E1"><a name="MatLMVMAllocate"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> F)</font></strong>
-<a name="line495">495: </a>{
-<a name="line496">496: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line497">497: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-
-<a name="line502">502: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line504">504: </a>  (*lmvm-&gt;ops-&gt;allocate)(B, X, F);
-<a name="line505">505: </a>  <font color="#4169E1">if</font> (lmvm-&gt;J0) {
-<a name="line506">506: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)lmvm-&gt;J0, MATLMVM, &amp;same);
-<a name="line507">507: </a>    <font color="#4169E1">if</font> (same) <a href="../../../../../docs/manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>(lmvm-&gt;J0, X, F);
-<a name="line508">508: </a>  }
-<a name="line509">509: </a>  <font color="#4169E1">return</font> 0;
-<a name="line510">510: </a>}
-
-<a name="line512">512: </a><font color="#B22222">/*@</font>
-<a name="line513">513: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMResetShift.html">MatLMVMResetShift</a> - Zero the shift factor.</font>
-
-<a name="line515">515: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line516">516: </a><font color="#B22222">.  B - An LMVM-type matrix</font>
-
-<a name="line518">518: </a><font color="#B22222">   Level: intermediate</font>
-
-<a name="line520">520: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a>()`</font>
-<a name="line521">521: </a><font color="#B22222">@*/</font>
-<a name="line522">522: </a><strong><font color="#4169E1"><a name="MatLMVMResetShift"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMResetShift.html">MatLMVMResetShift</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B)</font></strong>
-<a name="line523">523: </a>{
-<a name="line524">524: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line525">525: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-
-<a name="line528">528: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line530">530: </a>  lmvm-&gt;shift = 0.0;
-<a name="line531">531: </a>  <font color="#4169E1">return</font> 0;
-<a name="line532">532: </a>}
-
-<a name="line534">534: </a><font color="#B22222">/*@</font>
-<a name="line535">535: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a> - Flushes all of the accumulated updates out of</font>
-<a name="line536">536: </a><font color="#B22222">   the LMVM approximation. In practice, this will not actually</font>
-<a name="line537">537: </a><font color="#B22222">   destroy the data associated with the updates. It simply resets</font>
-<a name="line538">538: </a><font color="#B22222">   counters, which leads to existing data being overwritten, and</font>
-<a name="line539">539: </a><font color="#B22222">   `<a href="../../../../../docs/manualpages/Mat/MatSolve.html">MatSolve</a>()` being applied as if there are no updates. A boolean</font>
-<a name="line540">540: </a><font color="#B22222">   flag is available to force destruction of the update vectors.</font>
-
-<a name="line542">542: </a><font color="#B22222">   If the user has provided another LMVM matrix as J0, the J0</font>
-<a name="line543">543: </a><font color="#B22222">   matrix is also reset in this function.</font>
-
-<a name="line545">545: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line546">546: </a><font color="#B22222">+  B - An LMVM-type matrix</font>
-<a name="line547">547: </a><font color="#B22222">-  destructive - flag for enabling destruction of data structures</font>
-
-<a name="line549">549: </a><font color="#B22222">   Level: intermediate</font>
-
-<a name="line551">551: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a>()`</font>
-<a name="line552">552: </a><font color="#B22222">@*/</font>
-<a name="line553">553: </a><strong><font color="#4169E1"><a name="MatLMVMReset"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> destructive)</font></strong>
-<a name="line554">554: </a>{
-<a name="line555">555: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line556">556: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-
-<a name="line559">559: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line561">561: </a>  (*lmvm-&gt;ops-&gt;reset)(B, destructive);
-<a name="line562">562: </a>  <font color="#4169E1">if</font> (lmvm-&gt;J0) {
-<a name="line563">563: </a>    <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)lmvm-&gt;J0, MATLMVM, &amp;same);
-<a name="line564">564: </a>    <font color="#4169E1">if</font> (same) <a href="../../../../../docs/manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>(lmvm-&gt;J0, destructive);
-<a name="line565">565: </a>  }
-<a name="line566">566: </a>  <font color="#4169E1">return</font> 0;
-<a name="line567">567: </a>}
-
-<a name="line569">569: </a><font color="#B22222">/*@</font>
-<a name="line570">570: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMSetHistorySize.html">MatLMVMSetHistorySize</a> - Set the number of past iterates to be</font>
-<a name="line571">571: </a><font color="#B22222">   stored for the construction of the limited-memory QN update.</font>
-
-<a name="line573">573: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line574">574: </a><font color="#B22222">+  B - An LMVM-type matrix</font>
-<a name="line575">575: </a><font color="#B22222">-  hist_size - number of past iterates (default 5)</font>
-
-<a name="line577">577: </a><font color="#B22222">   Options Database Key:</font>
-<a name="line578">578: </a><font color="#B22222">.  -mat_lmvm_hist_size &lt;m&gt; - set number of past iterates</font>
-
-<a name="line580">580: </a><font color="#B22222">   Level: beginner</font>
-
-<a name="line582">582: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMGetUpdateCount.html">MatLMVMGetUpdateCount</a>()`</font>
-<a name="line583">583: </a><font color="#B22222">@*/</font>
-<a name="line584">584: </a><strong><font color="#4169E1"><a name="MatLMVMSetHistorySize"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMSetHistorySize.html">MatLMVMSetHistorySize</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> hist_size)</font></strong>
-<a name="line585">585: </a>{
-<a name="line586">586: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line587">587: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-<a name="line588">588: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>       X, F;
-
-<a name="line591">591: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line593">593: </a>  <font color="#4169E1">if</font> (hist_size &gt; 0) {
-<a name="line594">594: </a>    lmvm-&gt;m = hist_size;
-<a name="line595">595: </a>    <font color="#4169E1">if</font> (lmvm-&gt;allocated &amp;&amp; lmvm-&gt;m != lmvm-&gt;m_old) {
-<a name="line596">596: </a>      <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lmvm-&gt;Xprev, &amp;X);
-<a name="line597">597: </a>      <a href="../../../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lmvm-&gt;Fprev, &amp;F);
-<a name="line598">598: </a>      <a href="../../../../../docs/manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>(B, <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>);
-<a name="line599">599: </a>      <a href="../../../../../docs/manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>(B, X, F);
-<a name="line600">600: </a>      <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;X);
-<a name="line601">601: </a>      <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;F);
-<a name="line602">602: </a>    }
-<a name="line604">604: </a>  <font color="#4169E1">return</font> 0;
-<a name="line605">605: </a>}
-
-<a name="line607">607: </a><font color="#B22222">/*@</font>
-<a name="line608">608: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMGetUpdateCount.html">MatLMVMGetUpdateCount</a> - Returns the number of accepted updates.</font>
-<a name="line609">609: </a><font color="#B22222">   This number may be greater than the total number of update vectors</font>
-<a name="line610">610: </a><font color="#B22222">   stored in the matrix. The counters are reset when `<a href="../../../../../docs/manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()`</font>
-<a name="line611">611: </a><font color="#B22222">   is called.</font>
-
-<a name="line613">613: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line614">614: </a><font color="#B22222">.  B - An LMVM-type matrix</font>
-
-<a name="line616">616: </a><font color="#B22222">   Output Parameter:</font>
-<a name="line617">617: </a><font color="#B22222">.  nupdates - number of accepted updates</font>
-
-<a name="line619">619: </a><font color="#B22222">   Level: intermediate</font>
-
-<a name="line621">621: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMGetRejectCount.html">MatLMVMGetRejectCount</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()`</font>
-<a name="line622">622: </a><font color="#B22222">@*/</font>
-<a name="line623">623: </a><strong><font color="#4169E1"><a name="MatLMVMGetUpdateCount"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMGetUpdateCount.html">MatLMVMGetUpdateCount</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *nupdates)</font></strong>
-<a name="line624">624: </a>{
-<a name="line625">625: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line626">626: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-
-<a name="line629">629: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line631">631: </a>  *nupdates = lmvm-&gt;nupdates;
-<a name="line632">632: </a>  <font color="#4169E1">return</font> 0;
-<a name="line633">633: </a>}
-
-<a name="line635">635: </a><font color="#B22222">/*@</font>
-<a name="line636">636: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/KSP/MatLMVMGetRejectCount.html">MatLMVMGetRejectCount</a> - Returns the number of rejected updates.</font>
-<a name="line637">637: </a><font color="#B22222">   The counters are reset when `<a href="../../../../../docs/manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()` is called.</font>
-
-<a name="line639">639: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line640">640: </a><font color="#B22222">.  B - An LMVM-type matrix</font>
-
-<a name="line642">642: </a><font color="#B22222">   Output Parameter:</font>
-<a name="line643">643: </a><font color="#B22222">.  nrejects - number of rejected updates</font>
-
-<a name="line645">645: </a><font color="#B22222">   Level: intermediate</font>
-
-<a name="line647">647: </a><font color="#B22222">.seealso: [](chapter_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMGetRejectCount.html">MatLMVMGetRejectCount</a>()`, `<a href="../../../../../docs/manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()`</font>
-<a name="line648">648: </a><font color="#B22222">@*/</font>
-<a name="line649">649: </a><strong><font color="#4169E1"><a name="MatLMVMGetRejectCount"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/KSP/MatLMVMGetRejectCount.html">MatLMVMGetRejectCount</a>(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *nrejects)</font></strong>
-<a name="line650">650: </a>{
-<a name="line651">651: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
-<a name="line652">652: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> same;
-
-<a name="line655">655: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same);
-<a name="line657">657: </a>  *nrejects = lmvm-&gt;nrejects;
-<a name="line658">658: </a>  <font color="#4169E1">return</font> 0;
-<a name="line659">659: </a>}
+<a name="line24"> 24: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+
+<a name="line26"> 26: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line30"> 30: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line31"> 31: </a>  <font color="#4169E1">if</font> (!same) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line32"> 32: </a>  <font color="#4169E1">if</font> (!lmvm-&gt;allocated) {
+<a name="line33"> 33: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>(B, X, F));
+<a name="line34"> 34: </a>  } <font color="#4169E1">else</font> {
+<a name="line35"> 35: </a>    VecCheckMatCompatible(B, X, 2, F, 3);
+<a name="line36"> 36: </a>  }
+<a name="line37"> 37: </a>  <font color="#4169E1">if</font> (lmvm-&gt;J0) {
+<a name="line38"> 38: </a>    <font color="#B22222">/* If the user provided an LMVM-type matrix as J0, then trigger its update as well */</font>
+<a name="line39"> 39: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)lmvm-&gt;J0, MATLMVM, &amp;same));
+<a name="line40"> 40: </a>    <font color="#4169E1">if</font> (same) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a>(lmvm-&gt;J0, X, F));
+<a name="line41"> 41: </a>  }
+<a name="line42"> 42: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>((*lmvm-&gt;ops-&gt;update)(B, X, F));
+<a name="line43"> 43: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line44"> 44: </a>}
+
+<a name="line46"> 46: </a><font color="#B22222">/*@</font>
+<a name="line47"> 47: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a> - Removes all definitions of J0 and reverts to</font>
+<a name="line48"> 48: </a><font color="#B22222">  an identity matrix (scale = 1.0).</font>
+
+<a name="line50"> 50: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line51"> 51: </a><font color="#B22222">. B - A `MATLMVM` matrix</font>
+
+<a name="line53"> 53: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line55"> 55: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>()`</font>
+<a name="line56"> 56: </a><font color="#B22222">@*/</font>
+<a name="line57"> 57: </a><strong><font color="#4169E1"><a name="MatLMVMClearJ0"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B)</font></strong>
+<a name="line58"> 58: </a>{
+<a name="line59"> 59: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line60"> 60: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+
+<a name="line62"> 62: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line64"> 64: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line65"> 65: </a>  <font color="#4169E1">if</font> (!same) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line66"> 66: </a>  lmvm-&gt;user_pc    = <a href="../../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line67"> 67: </a>  lmvm-&gt;user_ksp   = <a href="../../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line68"> 68: </a>  lmvm-&gt;user_scale = <a href="../../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line69"> 69: </a>  lmvm-&gt;J0scalar   = 1.0;
+<a name="line70"> 70: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;lmvm-&gt;J0diag));
+<a name="line71"> 71: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;lmvm-&gt;J0));
+<a name="line72"> 72: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/PC/PCDestroy.html">PCDestroy</a>(&amp;lmvm-&gt;J0pc));
+<a name="line73"> 73: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line74"> 74: </a>}
+
+<a name="line76"> 76: </a><font color="#B22222">/*@</font>
+<a name="line77"> 77: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMSetJ0Scale.html">MatLMVMSetJ0Scale</a> - Allows the user to define a scalar value</font>
+<a name="line78"> 78: </a><font color="#B22222">  mu such that J0 = mu*I.</font>
+
+<a name="line80"> 80: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line81"> 81: </a><font color="#B22222">+ B     - A `MATLMVM` matrix</font>
+<a name="line82"> 82: </a><font color="#B22222">- scale - Scalar value mu that defines the initial Jacobian</font>
+
+<a name="line84"> 84: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line86"> 86: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `MatLMVMSetDiagScale()`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>()`</font>
+<a name="line87"> 87: </a><font color="#B22222">@*/</font>
+<a name="line88"> 88: </a><strong><font color="#4169E1"><a name="MatLMVMSetJ0Scale"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMSetJ0Scale.html">MatLMVMSetJ0Scale</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> scale)</font></strong>
+<a name="line89"> 89: </a>{
+<a name="line90"> 90: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line91"> 91: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+
+<a name="line93"> 93: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line95"> 95: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line96"> 96: </a>  <font color="#4169E1">if</font> (!same) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line97"> 97: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(lmvm-&gt;square, <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_SUP</a>, <font color="#666666">"Scaling is available only for square LMVM matrices"</font>);
+<a name="line98"> 98: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a>(B));
+<a name="line99"> 99: </a>  lmvm-&gt;J0scalar   = scale;
+<a name="line100">100: </a>  lmvm-&gt;user_scale = <a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line101">101: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line102">102: </a>}
+
+<a name="line104">104: </a><font color="#B22222">/*@</font>
+<a name="line105">105: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMSetJ0Diag.html">MatLMVMSetJ0Diag</a> - Allows the user to define a vector</font>
+<a name="line106">106: </a><font color="#B22222">  V such that J0 = diag(V).</font>
+
+<a name="line108">108: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line109">109: </a><font color="#B22222">+ B - A `MATLMVM` matrix</font>
+<a name="line110">110: </a><font color="#B22222">- V - Vector that defines the diagonal of the initial Jacobian</font>
+
+<a name="line112">112: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line114">114: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `MatLMVMSetScale()`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>()`</font>
+<a name="line115">115: </a><font color="#B22222">@*/</font>
+<a name="line116">116: </a><strong><font color="#4169E1"><a name="MatLMVMSetJ0Diag"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMSetJ0Diag.html">MatLMVMSetJ0Diag</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> V)</font></strong>
+<a name="line117">117: </a>{
+<a name="line118">118: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line119">119: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+<a name="line120">120: </a>  <a href="../../../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B);
+
+<a name="line122">122: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line125">125: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line126">126: </a>  <font color="#4169E1">if</font> (!same) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line127">127: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(lmvm-&gt;allocated, comm, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ORDER</a>, <font color="#666666">"Matrix must be allocated before setting diagonal scaling"</font>);
+<a name="line128">128: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(lmvm-&gt;square, comm, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_SUP</a>, <font color="#666666">"Diagonal scaling is available only for square LMVM matrices"</font>);
+<a name="line129">129: </a>  VecCheckSameSize(V, 2, lmvm-&gt;Fprev, 3);
+
+<a name="line131">131: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a>(B));
+<a name="line132">132: </a>  <font color="#4169E1">if</font> (!lmvm-&gt;J0diag) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(V, &amp;lmvm-&gt;J0diag));
+<a name="line133">133: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecCopy.html">VecCopy</a>(V, lmvm-&gt;J0diag));
+<a name="line134">134: </a>  lmvm-&gt;user_scale = <a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line135">135: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line136">136: </a>}
+
+<a name="line138">138: </a><font color="#B22222">/*@</font>
+<a name="line139">139: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a> - Allows the user to define the initial</font>
+<a name="line140">140: </a><font color="#B22222">  Jacobian matrix from which the LMVM-type approximation is</font>
+<a name="line141">141: </a><font color="#B22222">  built up.</font>
+
+<a name="line143">143: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line144">144: </a><font color="#B22222">+ B  - A `MATLMVM` matrix</font>
+<a name="line145">145: </a><font color="#B22222">- J0 - The initial Jacobian matrix</font>
+
+<a name="line147">147: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line149">149: </a><font color="#B22222">  Notes:</font>
+<a name="line150">150: </a><font color="#B22222">  The inverse of this initial Jacobian is applied</font>
+<a name="line151">151: </a><font color="#B22222">  using an internal `<a href="../../../../../manualpages/KSP/KSP.html">KSP</a>` solver, which defaults to `<a href="../../../../../manualpages/KSP/KSPGMRES.html">KSPGMRES</a>`.</font>
+
+<a name="line153">153: </a><font color="#B22222">  This internal `<a href="../../../../../manualpages/KSP/KSP.html">KSP</a>` solver has the "mat_lmvm_" option</font>
+<a name="line154">154: </a><font color="#B22222">  prefix.</font>
+
+<a name="line156">156: </a><font color="#B22222">  Another `MATLMVM` matrix can be used in place of</font>
+<a name="line157">157: </a><font color="#B22222">  `J0`, in which case updating the outer `MATLMVM` matrix will</font>
+<a name="line158">158: </a><font color="#B22222">  also trigger the update for the inner `MATLMVM` matrix. This</font>
+<a name="line159">159: </a><font color="#B22222">  is useful in cases where a full-memory diagonal approximation</font>
+<a name="line160">160: </a><font color="#B22222">  such as `MATLMVMDIAGBRDN` is used in place of `J0`.</font>
+
+<a name="line162">162: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0PC.html">MatLMVMSetJ0PC</a>()`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0KSP.html">MatLMVMSetJ0KSP</a>()`</font>
+<a name="line163">163: </a><font color="#B22222">@*/</font>
+<a name="line164">164: </a><strong><font color="#4169E1"><a name="MatLMVMSetJ0"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/Mat/Mat.html">Mat</a> J0)</font></strong>
+<a name="line165">165: </a>{
+<a name="line166">166: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line167">167: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+
+<a name="line169">169: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line172">172: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line173">173: </a>  <font color="#4169E1">if</font> (!same) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line174">174: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a>(B));
+<a name="line175">175: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;lmvm-&gt;J0));
+<a name="line176">176: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)J0));
+<a name="line177">177: </a>  lmvm-&gt;J0 = J0;
+<a name="line178">178: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)lmvm-&gt;J0, MATLMVM, &amp;same));
+<a name="line179">179: </a>  <font color="#4169E1">if</font> (!same &amp;&amp; lmvm-&gt;square) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/KSPSetOperators.html">KSPSetOperators</a>(lmvm-&gt;J0ksp, lmvm-&gt;J0, lmvm-&gt;J0));
+<a name="line180">180: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line181">181: </a>}
+
+<a name="line183">183: </a><font color="#B22222">/*@</font>
+<a name="line184">184: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMSetJ0PC.html">MatLMVMSetJ0PC</a> - Allows the user to define a `<a href="../../../../../manualpages/PC/PC.html">PC</a>` object that</font>
+<a name="line185">185: </a><font color="#B22222">  acts as the initial inverse-Jacobian matrix.</font>
+
+<a name="line187">187: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line188">188: </a><font color="#B22222">+ B    - A `MATLMVM` matrix</font>
+<a name="line189">189: </a><font color="#B22222">- J0pc - `<a href="../../../../../manualpages/PC/PC.html">PC</a>` object where `<a href="../../../../../manualpages/PC/PCApply.html">PCApply</a>()` defines an inverse application for J0</font>
+
+<a name="line191">191: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line193">193: </a><font color="#B22222">  Note:</font>
+<a name="line194">194: </a><font color="#B22222">  `J0pc` should already contain all the operators necessary for its application.</font>
+<a name="line195">195: </a><font color="#B22222">  The `MATLMVM` matrix only calls `<a href="../../../../../manualpages/PC/PCApply.html">PCApply</a>()` without changing any other</font>
+<a name="line196">196: </a><font color="#B22222">  options.</font>
+
+<a name="line198">198: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMGetJ0PC.html">MatLMVMGetJ0PC</a>()`</font>
+<a name="line199">199: </a><font color="#B22222">@*/</font>
+<a name="line200">200: </a><strong><font color="#4169E1"><a name="MatLMVMSetJ0PC"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMSetJ0PC.html">MatLMVMSetJ0PC</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/PC/PC.html">PC</a> J0pc)</font></strong>
+<a name="line201">201: </a>{
+<a name="line202">202: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line203">203: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+<a name="line204">204: </a>  <a href="../../../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B);
+
+<a name="line206">206: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line209">209: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line210">210: </a>  <font color="#4169E1">if</font> (!same) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line211">211: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(lmvm-&gt;square, comm, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_SUP</a>, <font color="#666666">"Inverse J0 can be defined only for square LMVM matrices"</font>);
+<a name="line212">212: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a>(B));
+<a name="line213">213: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)J0pc));
+<a name="line214">214: </a>  lmvm-&gt;J0pc    = J0pc;
+<a name="line215">215: </a>  lmvm-&gt;user_pc = <a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line216">216: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line217">217: </a>}
+
+<a name="line219">219: </a><font color="#B22222">/*@</font>
+<a name="line220">220: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMSetJ0KSP.html">MatLMVMSetJ0KSP</a> - Allows the user to provide a pre-configured</font>
+<a name="line221">221: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/KSP.html">KSP</a> solver for the initial inverse-Jacobian approximation.</font>
+
+<a name="line223">223: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line224">224: </a><font color="#B22222">+ B     - A `MATLMVM` matrix</font>
+<a name="line225">225: </a><font color="#B22222">- J0ksp - `<a href="../../../../../manualpages/KSP/KSP.html">KSP</a>` solver for the initial inverse-Jacobian application</font>
+
+<a name="line227">227: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line229">229: </a><font color="#B22222">  Note:</font>
+<a name="line230">230: </a><font color="#B22222">  The `<a href="../../../../../manualpages/KSP/KSP.html">KSP</a>` solver should already contain all the operators</font>
+<a name="line231">231: </a><font color="#B22222">  necessary to perform the inversion. The `MATLMVM` matrix only</font>
+<a name="line232">232: </a><font color="#B22222">  calls `<a href="../../../../../manualpages/KSP/KSPSolve.html">KSPSolve</a>()` without changing any other options.</font>
+
+<a name="line234">234: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMGetJ0KSP.html">MatLMVMGetJ0KSP</a>()`</font>
+<a name="line235">235: </a><font color="#B22222">@*/</font>
+<a name="line236">236: </a><strong><font color="#4169E1"><a name="MatLMVMSetJ0KSP"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMSetJ0KSP.html">MatLMVMSetJ0KSP</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/KSP/KSP.html">KSP</a> J0ksp)</font></strong>
+<a name="line237">237: </a>{
+<a name="line238">238: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line239">239: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+<a name="line240">240: </a>  <a href="../../../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B);
+
+<a name="line242">242: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line245">245: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line246">246: </a>  <font color="#4169E1">if</font> (!same) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line247">247: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(lmvm-&gt;square, comm, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_SUP</a>, <font color="#666666">"Inverse J0 can be defined only for square LMVM matrices"</font>);
+<a name="line248">248: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/MatLMVMClearJ0.html">MatLMVMClearJ0</a>(B));
+<a name="line249">249: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/KSPDestroy.html">KSPDestroy</a>(&amp;lmvm-&gt;J0ksp));
+<a name="line250">250: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)J0ksp));
+<a name="line251">251: </a>  lmvm-&gt;J0ksp    = J0ksp;
+<a name="line252">252: </a>  lmvm-&gt;user_ksp = <a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line253">253: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line254">254: </a>}
+
+<a name="line256">256: </a><font color="#B22222">/*@</font>
+<a name="line257">257: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMGetJ0.html">MatLMVMGetJ0</a> - Returns a pointer to the internal `J0` matrix.</font>
+
+<a name="line259">259: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line260">260: </a><font color="#B22222">. B - A `MATLMVM` matrix</font>
+
+<a name="line262">262: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line263">263: </a><font color="#B22222">. J0 - `<a href="../../../../../manualpages/Mat/Mat.html">Mat</a>` object for defining the initial Jacobian</font>
+
+<a name="line265">265: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line267">267: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>()`</font>
+<a name="line268">268: </a><font color="#B22222">@*/</font>
+<a name="line269">269: </a><strong><font color="#4169E1"><a name="MatLMVMGetJ0"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMGetJ0.html">MatLMVMGetJ0</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/Mat/Mat.html">Mat</a> *J0)</font></strong>
+<a name="line270">270: </a>{
+<a name="line271">271: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line272">272: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+
+<a name="line274">274: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line276">276: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line277">277: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(same, <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONG</a>, <font color="#666666">"Matrix must be an LMVM-type."</font>);
+<a name="line278">278: </a>  *J0 = lmvm-&gt;J0;
+<a name="line279">279: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line280">280: </a>}
+
+<a name="line282">282: </a><font color="#B22222">/*@</font>
+<a name="line283">283: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMGetJ0PC.html">MatLMVMGetJ0PC</a> - Returns a pointer to the internal `<a href="../../../../../manualpages/PC/PC.html">PC</a>` object</font>
+<a name="line284">284: </a><font color="#B22222">  associated with the initial Jacobian.</font>
+
+<a name="line286">286: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line287">287: </a><font color="#B22222">. B - A `MATLMVM` matrix</font>
+
+<a name="line289">289: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line290">290: </a><font color="#B22222">. J0pc - `<a href="../../../../../manualpages/PC/PC.html">PC</a>` object for defining the initial inverse-Jacobian</font>
+
+<a name="line292">292: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line294">294: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0PC.html">MatLMVMSetJ0PC</a>()`</font>
+<a name="line295">295: </a><font color="#B22222">@*/</font>
+<a name="line296">296: </a><strong><font color="#4169E1"><a name="MatLMVMGetJ0PC"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMGetJ0PC.html">MatLMVMGetJ0PC</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/PC/PC.html">PC</a> *J0pc)</font></strong>
+<a name="line297">297: </a>{
+<a name="line298">298: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line299">299: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+
+<a name="line301">301: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line303">303: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line304">304: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(same, <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONG</a>, <font color="#666666">"Matrix must be an LMVM-type."</font>);
+<a name="line305">305: </a>  <font color="#4169E1">if</font> (lmvm-&gt;J0pc) {
+<a name="line306">306: </a>    *J0pc = lmvm-&gt;J0pc;
+<a name="line307">307: </a>  } <font color="#4169E1">else</font> {
+<a name="line308">308: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/KSPGetPC.html">KSPGetPC</a>(lmvm-&gt;J0ksp, J0pc));
+<a name="line309">309: </a>  }
+<a name="line310">310: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line311">311: </a>}
+
+<a name="line313">313: </a><font color="#B22222">/*@</font>
+<a name="line314">314: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMGetJ0KSP.html">MatLMVMGetJ0KSP</a> - Returns a pointer to the internal `<a href="../../../../../manualpages/KSP/KSP.html">KSP</a>` solver</font>
+<a name="line315">315: </a><font color="#B22222">  associated with the initial Jacobian.</font>
+
+<a name="line317">317: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line318">318: </a><font color="#B22222">. B - A `MATLMVM` matrix</font>
+
+<a name="line320">320: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line321">321: </a><font color="#B22222">. J0ksp - `<a href="../../../../../manualpages/KSP/KSP.html">KSP</a>` solver for defining the initial inverse-Jacobian</font>
+
+<a name="line323">323: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line325">325: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0KSP.html">MatLMVMSetJ0KSP</a>()`</font>
+<a name="line326">326: </a><font color="#B22222">@*/</font>
+<a name="line327">327: </a><strong><font color="#4169E1"><a name="MatLMVMGetJ0KSP"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMGetJ0KSP.html">MatLMVMGetJ0KSP</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/KSP/KSP.html">KSP</a> *J0ksp)</font></strong>
+<a name="line328">328: </a>{
+<a name="line329">329: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line330">330: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+
+<a name="line332">332: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line334">334: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line335">335: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(same, <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONG</a>, <font color="#666666">"Matrix must be an LMVM-type."</font>);
+<a name="line336">336: </a>  *J0ksp = lmvm-&gt;J0ksp;
+<a name="line337">337: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line338">338: </a>}
+
+<a name="line340">340: </a><font color="#B22222">/*@</font>
+<a name="line341">341: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMApplyJ0Fwd.html">MatLMVMApplyJ0Fwd</a> - Applies an approximation of the forward</font>
+<a name="line342">342: </a><font color="#B22222">  matrix-vector product with the initial Jacobian.</font>
+
+<a name="line344">344: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line345">345: </a><font color="#B22222">+ B - A `MATLMVM` matrix</font>
+<a name="line346">346: </a><font color="#B22222">- X - vector to multiply with J0</font>
+
+<a name="line348">348: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line349">349: </a><font color="#B22222">. Y - resulting vector for the operation</font>
+
+<a name="line351">351: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line353">353: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>()`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0Scale.html">MatLMVMSetJ0Scale</a>()`, `MatLMVMSetJ0ScaleDiag()`,</font>
+<a name="line354">354: </a><font color="#B22222">          `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0PC.html">MatLMVMSetJ0PC</a>()`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0KSP.html">MatLMVMSetJ0KSP</a>()`, `<a href="../../../../../manualpages/KSP/MatLMVMApplyJ0Inv.html">MatLMVMApplyJ0Inv</a>()`</font>
+<a name="line355">355: </a><font color="#B22222">@*/</font>
+<a name="line356">356: </a><strong><font color="#4169E1"><a name="MatLMVMApplyJ0Fwd"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMApplyJ0Fwd.html">MatLMVMApplyJ0Fwd</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> Y)</font></strong>
+<a name="line357">357: </a>{
+<a name="line358">358: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line359">359: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same, hasMult;
+<a name="line360">360: </a>  <a href="../../../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B);
+<a name="line361">361: </a>  <a href="../../../../../manualpages/Mat/Mat.html">Mat</a>       Amat, Pmat;
+
+<a name="line363">363: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line367">367: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line368">368: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(same, <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONG</a>, <font color="#666666">"Matrix must be an LMVM-type."</font>);
+<a name="line369">369: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(lmvm-&gt;allocated, comm, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ORDER</a>, <font color="#666666">"LMVM matrix must be allocated first"</font>);
+<a name="line370">370: </a>  VecCheckMatCompatible(B, X, 2, Y, 3);
+<a name="line371">371: </a>  <font color="#4169E1">if</font> (lmvm-&gt;user_pc || lmvm-&gt;user_ksp || lmvm-&gt;J0) {
+<a name="line372">372: </a>    <font color="#B22222">/* User may have defined a <a href="../../../../../manualpages/PC/PC.html">PC</a> or <a href="../../../../../manualpages/KSP/KSP.html">KSP</a> for J0^{-1} so let's try to use its operators. */</font>
+<a name="line373">373: </a>    <font color="#4169E1">if</font> (lmvm-&gt;user_pc) {
+<a name="line374">374: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/PC/PCGetOperators.html">PCGetOperators</a>(lmvm-&gt;J0pc, &amp;Amat, &amp;Pmat));
+<a name="line375">375: </a>    } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (lmvm-&gt;user_ksp) {
+<a name="line376">376: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/KSPGetOperators.html">KSPGetOperators</a>(lmvm-&gt;J0ksp, &amp;Amat, &amp;Pmat));
+<a name="line377">377: </a>    } <font color="#4169E1">else</font> {
+<a name="line378">378: </a>      Amat = lmvm-&gt;J0;
+<a name="line379">379: </a>    }
+<a name="line380">380: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Mat/MatHasOperation.html">MatHasOperation</a>(Amat, MATOP_MULT, &amp;hasMult));
+<a name="line381">381: </a>    <font color="#4169E1">if</font> (hasMult) {
+<a name="line382">382: </a>      <font color="#B22222">/* product is available, use it */</font>
+<a name="line383">383: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Mat/MatMult.html">MatMult</a>(Amat, X, Y));
+<a name="line384">384: </a>    } <font color="#4169E1">else</font> {
+<a name="line385">385: </a>      <font color="#B22222">/* there's no product, so treat J0 as identity */</font>
+<a name="line386">386: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecCopy.html">VecCopy</a>(X, Y));
+<a name="line387">387: </a>    }
+<a name="line388">388: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (lmvm-&gt;user_scale) {
+<a name="line389">389: </a>    <font color="#4169E1">if</font> (lmvm-&gt;J0diag) {
+<a name="line390">390: </a>      <font color="#B22222">/* User has defined a diagonal vector for J0 */</font>
+<a name="line391">391: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(X, lmvm-&gt;J0diag, Y));
+<a name="line392">392: </a>    } <font color="#4169E1">else</font> {
+<a name="line393">393: </a>      <font color="#B22222">/* User has defined a scalar value for J0 */</font>
+<a name="line394">394: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecAXPBY.html">VecAXPBY</a>(Y, lmvm-&gt;J0scalar, 0.0, X));
+<a name="line395">395: </a>    }
+<a name="line396">396: </a>  } <font color="#4169E1">else</font> {
+<a name="line397">397: </a>    <font color="#B22222">/* There is no J0 representation so just apply an identity matrix */</font>
+<a name="line398">398: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecCopy.html">VecCopy</a>(X, Y));
+<a name="line399">399: </a>  }
+<a name="line400">400: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line401">401: </a>}
+
+<a name="line403">403: </a><font color="#B22222">/*@</font>
+<a name="line404">404: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMApplyJ0Inv.html">MatLMVMApplyJ0Inv</a> - Applies some estimation of the initial Jacobian</font>
+<a name="line405">405: </a><font color="#B22222">  inverse to the given vector.</font>
+
+<a name="line407">407: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line408">408: </a><font color="#B22222">+ B - A `MATLMVM` matrix</font>
+<a name="line409">409: </a><font color="#B22222">- X - vector to "multiply" with J0^{-1}</font>
+
+<a name="line411">411: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line412">412: </a><font color="#B22222">. Y - resulting vector for the operation</font>
+
+<a name="line414">414: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line416">416: </a><font color="#B22222">  Note:</font>
+<a name="line417">417: </a><font color="#B22222">  The specific form of the application</font>
+<a name="line418">418: </a><font color="#B22222">  depends on whether the user provided a scaling factor, a J0 matrix,</font>
+<a name="line419">419: </a><font color="#B22222">  a J0 `<a href="../../../../../manualpages/PC/PC.html">PC</a>`, or a J0 `<a href="../../../../../manualpages/KSP/KSP.html">KSP</a>` object. If no form of the initial Jacobian is</font>
+<a name="line420">420: </a><font color="#B22222">  provided, the function simply does an identity matrix application</font>
+<a name="line421">421: </a><font color="#B22222">  (vector copy).</font>
+
+<a name="line423">423: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0.html">MatLMVMSetJ0</a>()`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0Scale.html">MatLMVMSetJ0Scale</a>()`, `MatLMVMSetJ0ScaleDiag()`,</font>
+<a name="line424">424: </a><font color="#B22222">          `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0PC.html">MatLMVMSetJ0PC</a>()`, `<a href="../../../../../manualpages/KSP/MatLMVMSetJ0KSP.html">MatLMVMSetJ0KSP</a>()`, `<a href="../../../../../manualpages/KSP/MatLMVMApplyJ0Fwd.html">MatLMVMApplyJ0Fwd</a>()`</font>
+<a name="line425">425: </a><font color="#B22222">@*/</font>
+<a name="line426">426: </a><strong><font color="#4169E1"><a name="MatLMVMApplyJ0Inv"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMApplyJ0Inv.html">MatLMVMApplyJ0Inv</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> Y)</font></strong>
+<a name="line427">427: </a>{
+<a name="line428">428: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line429">429: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same, hasSolve;
+<a name="line430">430: </a>  <a href="../../../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B);
+
+<a name="line432">432: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line436">436: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line437">437: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(same, <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONG</a>, <font color="#666666">"Matrix must be an LMVM-type."</font>);
+<a name="line438">438: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(lmvm-&gt;allocated, comm, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ORDER</a>, <font color="#666666">"LMVM matrix must be allocated first"</font>);
+<a name="line439">439: </a>  VecCheckMatCompatible(B, X, 2, Y, 3);
+
+<a name="line441">441: </a>  <font color="#B22222">/* Invert the initial Jacobian onto q (or apply scaling) */</font>
+<a name="line442">442: </a>  <font color="#4169E1">if</font> (lmvm-&gt;user_pc) {
+<a name="line443">443: </a>    <font color="#B22222">/* User has defined a J0 inverse so we can directly apply it as a preconditioner */</font>
+<a name="line444">444: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/PC/PCApply.html">PCApply</a>(lmvm-&gt;J0pc, X, Y));
+<a name="line445">445: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (lmvm-&gt;user_ksp) {
+<a name="line446">446: </a>    <font color="#B22222">/* User has defined a J0 or a custom <a href="../../../../../manualpages/KSP/KSP.html">KSP</a> so just perform a solution */</font>
+<a name="line447">447: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/KSPSolve.html">KSPSolve</a>(lmvm-&gt;J0ksp, X, Y));
+<a name="line448">448: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (lmvm-&gt;J0) {
+<a name="line449">449: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Mat/MatHasOperation.html">MatHasOperation</a>(lmvm-&gt;J0, MATOP_SOLVE, &amp;hasSolve));
+<a name="line450">450: </a>    <font color="#4169E1">if</font> (hasSolve) {
+<a name="line451">451: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Mat/MatSolve.html">MatSolve</a>(lmvm-&gt;J0, X, Y));
+<a name="line452">452: </a>    } <font color="#4169E1">else</font> {
+<a name="line453">453: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/KSPSolve.html">KSPSolve</a>(lmvm-&gt;J0ksp, X, Y));
+<a name="line454">454: </a>    }
+<a name="line455">455: </a>  } <font color="#4169E1">else</font> <font color="#4169E1">if</font> (lmvm-&gt;user_scale) {
+<a name="line456">456: </a>    <font color="#4169E1">if</font> (lmvm-&gt;J0diag) {
+<a name="line457">457: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecPointwiseDivide.html">VecPointwiseDivide</a>(X, Y, lmvm-&gt;J0diag));
+<a name="line458">458: </a>    } <font color="#4169E1">else</font> {
+<a name="line459">459: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecAXPBY.html">VecAXPBY</a>(Y, 1.0 / lmvm-&gt;J0scalar, 0.0, X));
+<a name="line460">460: </a>    }
+<a name="line461">461: </a>  } <font color="#4169E1">else</font> {
+<a name="line462">462: </a>    <font color="#B22222">/* There is no J0 representation so just apply an identity matrix */</font>
+<a name="line463">463: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecCopy.html">VecCopy</a>(X, Y));
+<a name="line464">464: </a>  }
+<a name="line465">465: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line466">466: </a>}
+
+<a name="line468">468: </a><font color="#B22222">/*@</font>
+<a name="line469">469: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMIsAllocated.html">MatLMVMIsAllocated</a> - Returns a boolean flag that shows whether</font>
+<a name="line470">470: </a><font color="#B22222">  the necessary data structures for the underlying matrix is allocated.</font>
+
+<a name="line472">472: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line473">473: </a><font color="#B22222">. B - A `MATLMVM` matrix</font>
+
+<a name="line475">475: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line476">476: </a><font color="#B22222">. flg - `<a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>` if allocated, `<a href="../../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>` otherwise</font>
+
+<a name="line478">478: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line480">480: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>()`, `<a href="../../../../../manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()`</font>
+<a name="line481">481: </a><font color="#B22222">@*/</font>
+<a name="line482">482: </a><strong><font color="#4169E1"><a name="MatLMVMIsAllocated"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMIsAllocated.html">MatLMVMIsAllocated</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *flg)</font></strong>
+<a name="line483">483: </a>{
+<a name="line484">484: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line485">485: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+
+<a name="line487">487: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line489">489: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line490">490: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(same, <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONG</a>, <font color="#666666">"Matrix must be an LMVM-type."</font>);
+<a name="line491">491: </a>  *flg = <a href="../../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line492">492: </a>  <font color="#4169E1">if</font> (lmvm-&gt;allocated &amp;&amp; B-&gt;preallocated &amp;&amp; B-&gt;assembled) *flg = <a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line493">493: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line494">494: </a>}
+
+<a name="line496">496: </a><font color="#B22222">/*@</font>
+<a name="line497">497: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a> - Produces all necessary common memory for</font>
+<a name="line498">498: </a><font color="#B22222">  LMVM approximations based on the solution and function vectors</font>
+<a name="line499">499: </a><font color="#B22222">  provided.</font>
+
+<a name="line501">501: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line502">502: </a><font color="#B22222">+ B - A `MATLMVM` matrix</font>
+<a name="line503">503: </a><font color="#B22222">. X - Solution vector</font>
+<a name="line504">504: </a><font color="#B22222">- F - Function vector</font>
+
+<a name="line506">506: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line508">508: </a><font color="#B22222">  Note:</font>
+<a name="line509">509: </a><font color="#B22222">  If `<a href="../../../../../manualpages/Mat/MatSetSizes.html">MatSetSizes</a>()` and `<a href="../../../../../manualpages/Mat/MatSetUp.html">MatSetUp</a>()` have not been called</font>
+<a name="line510">510: </a><font color="#B22222">  before `<a href="../../../../../manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>()`, the allocation will read sizes from</font>
+<a name="line511">511: </a><font color="#B22222">  the provided vectors and update the matrix.</font>
+
+<a name="line513">513: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()`, `<a href="../../../../../manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a>()`</font>
+<a name="line514">514: </a><font color="#B22222">@*/</font>
+<a name="line515">515: </a><strong><font color="#4169E1"><a name="MatLMVMAllocate"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> X, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> F)</font></strong>
+<a name="line516">516: </a>{
+<a name="line517">517: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line518">518: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+<a name="line519">519: </a>  <a href="../../../../../manualpages/Vec/VecType.html">VecType</a>   vtype;
+
+<a name="line521">521: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line525">525: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line526">526: </a>  <font color="#4169E1">if</font> (!same) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line527">527: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecGetType.html">VecGetType</a>(X, &amp;vtype));
+<a name="line528">528: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Mat/MatSetVecType.html">MatSetVecType</a>(B, vtype));
+<a name="line529">529: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>((*lmvm-&gt;ops-&gt;allocate)(B, X, F));
+<a name="line530">530: </a>  <font color="#4169E1">if</font> (lmvm-&gt;J0) {
+<a name="line531">531: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)lmvm-&gt;J0, MATLMVM, &amp;same));
+<a name="line532">532: </a>    <font color="#4169E1">if</font> (same) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>(lmvm-&gt;J0, X, F));
+<a name="line533">533: </a>  }
+<a name="line534">534: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line535">535: </a>}
+
+<a name="line537">537: </a><font color="#B22222">/*@</font>
+<a name="line538">538: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMResetShift.html">MatLMVMResetShift</a> - Zero the shift factor for a `MATLMVM`.</font>
+
+<a name="line540">540: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line541">541: </a><font color="#B22222">. B - A `MATLMVM` matrix</font>
+
+<a name="line543">543: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line545">545: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>()`, `<a href="../../../../../manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a>()`</font>
+<a name="line546">546: </a><font color="#B22222">@*/</font>
+<a name="line547">547: </a><strong><font color="#4169E1"><a name="MatLMVMResetShift"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMResetShift.html">MatLMVMResetShift</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B)</font></strong>
+<a name="line548">548: </a>{
+<a name="line549">549: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line550">550: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+
+<a name="line552">552: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line554">554: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line555">555: </a>  <font color="#4169E1">if</font> (!same) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line556">556: </a>  lmvm-&gt;shift = 0.0;
+<a name="line557">557: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line558">558: </a>}
+
+<a name="line560">560: </a><font color="#B22222">/*@</font>
+<a name="line561">561: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a> - Flushes all of the accumulated updates out of</font>
+<a name="line562">562: </a><font color="#B22222">  the `MATLMVM` approximation.</font>
+
+<a name="line564">564: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line565">565: </a><font color="#B22222">+ B           - A `MATLMVM` matrix</font>
+<a name="line566">566: </a><font color="#B22222">- destructive - flag for enabling destruction of data structures</font>
+
+<a name="line568">568: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line570">570: </a><font color="#B22222">  Note:</font>
+<a name="line571">571: </a><font color="#B22222">  In practice, this will not actually</font>
+<a name="line572">572: </a><font color="#B22222">  destroy the data associated with the updates. It simply resets</font>
+<a name="line573">573: </a><font color="#B22222">  counters, which leads to existing data being overwritten, and</font>
+<a name="line574">574: </a><font color="#B22222">  `<a href="../../../../../manualpages/Mat/MatSolve.html">MatSolve</a>()` being applied as if there are no updates. A boolean</font>
+<a name="line575">575: </a><font color="#B22222">  flag is available to force destruction of the update vectors.</font>
+
+<a name="line577">577: </a><font color="#B22222">  If the user has provided another LMVM matrix as J0, the J0</font>
+<a name="line578">578: </a><font color="#B22222">  matrix is also reset in this function.</font>
+
+<a name="line580">580: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>()`, `<a href="../../../../../manualpages/KSP/MatLMVMUpdate.html">MatLMVMUpdate</a>()`</font>
+<a name="line581">581: </a><font color="#B22222">@*/</font>
+<a name="line582">582: </a><strong><font color="#4169E1"><a name="MatLMVMReset"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> destructive)</font></strong>
+<a name="line583">583: </a>{
+<a name="line584">584: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line585">585: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+
+<a name="line587">587: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line589">589: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line590">590: </a>  <font color="#4169E1">if</font> (!same) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line591">591: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>((*lmvm-&gt;ops-&gt;reset)(B, destructive));
+<a name="line592">592: </a>  <font color="#4169E1">if</font> (lmvm-&gt;J0) {
+<a name="line593">593: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)lmvm-&gt;J0, MATLMVM, &amp;same));
+<a name="line594">594: </a>    <font color="#4169E1">if</font> (same) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>(lmvm-&gt;J0, destructive));
+<a name="line595">595: </a>  }
+<a name="line596">596: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line597">597: </a>}
+
+<a name="line599">599: </a><font color="#B22222">/*@</font>
+<a name="line600">600: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMSetHistorySize.html">MatLMVMSetHistorySize</a> - Set the number of past iterates to be</font>
+<a name="line601">601: </a><font color="#B22222">  stored for the construction of the limited-memory quasi-Newton update.</font>
+
+<a name="line603">603: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line604">604: </a><font color="#B22222">+ B         - A `MATLMVM` matrix</font>
+<a name="line605">605: </a><font color="#B22222">- hist_size - number of past iterates (default 5)</font>
+
+<a name="line607">607: </a><font color="#B22222">  Options Database Key:</font>
+<a name="line608">608: </a><font color="#B22222">. -mat_lmvm_hist_size &lt;m&gt; - set number of past iterates</font>
+
+<a name="line610">610: </a><font color="#B22222">  Level: beginner</font>
+
+<a name="line612">612: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMGetUpdateCount.html">MatLMVMGetUpdateCount</a>()`</font>
+<a name="line613">613: </a><font color="#B22222">@*/</font>
+<a name="line614">614: </a><strong><font color="#4169E1"><a name="MatLMVMSetHistorySize"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMSetHistorySize.html">MatLMVMSetHistorySize</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> hist_size)</font></strong>
+<a name="line615">615: </a>{
+<a name="line616">616: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line617">617: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+<a name="line618">618: </a>  <a href="../../../../../manualpages/Vec/Vec.html">Vec</a>       X, F;
+
+<a name="line620">620: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line622">622: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line623">623: </a>  <font color="#4169E1">if</font> (!same) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line624">624: </a>  <font color="#4169E1">if</font> (hist_size &gt; 0) {
+<a name="line625">625: </a>    lmvm-&gt;m = hist_size;
+<a name="line626">626: </a>    <font color="#4169E1">if</font> (lmvm-&gt;allocated &amp;&amp; lmvm-&gt;m != lmvm-&gt;m_old) {
+<a name="line627">627: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lmvm-&gt;Xprev, &amp;X));
+<a name="line628">628: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(lmvm-&gt;Fprev, &amp;F));
+<a name="line629">629: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>(B, <a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>));
+<a name="line630">630: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/KSP/MatLMVMAllocate.html">MatLMVMAllocate</a>(B, X, F));
+<a name="line631">631: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;X));
+<a name="line632">632: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;F));
+<a name="line633">633: </a>    }
+<a name="line634">634: </a>  } <font color="#4169E1">else</font> <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(hist_size &gt;= 0, <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONG</a>, <font color="#666666">"QN history size must be a non-negative integer."</font>);
+<a name="line635">635: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line636">636: </a>}
+
+<a name="line638">638: </a><font color="#B22222">/*@</font>
+<a name="line639">639: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMGetUpdateCount.html">MatLMVMGetUpdateCount</a> - Returns the number of accepted updates.</font>
+
+<a name="line641">641: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line642">642: </a><font color="#B22222">. B - A `MATLMVM` matrix</font>
+
+<a name="line644">644: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line645">645: </a><font color="#B22222">. nupdates - number of accepted updates</font>
+
+<a name="line647">647: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line649">649: </a><font color="#B22222">  Note:</font>
+<a name="line650">650: </a><font color="#B22222">  This number may be greater than the total number of update vectors</font>
+<a name="line651">651: </a><font color="#B22222">  stored in the matrix. The counters are reset when `<a href="../../../../../manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()`</font>
+<a name="line652">652: </a><font color="#B22222">  is called.</font>
+
+<a name="line654">654: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMGetRejectCount.html">MatLMVMGetRejectCount</a>()`, `<a href="../../../../../manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()`</font>
+<a name="line655">655: </a><font color="#B22222">@*/</font>
+<a name="line656">656: </a><strong><font color="#4169E1"><a name="MatLMVMGetUpdateCount"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMGetUpdateCount.html">MatLMVMGetUpdateCount</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *nupdates)</font></strong>
+<a name="line657">657: </a>{
+<a name="line658">658: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line659">659: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+
+<a name="line661">661: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line663">663: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line664">664: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(same, <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONG</a>, <font color="#666666">"Matrix must be an LMVM-type."</font>);
+<a name="line665">665: </a>  *nupdates = lmvm-&gt;nupdates;
+<a name="line666">666: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line667">667: </a>}
+
+<a name="line669">669: </a><font color="#B22222">/*@</font>
+<a name="line670">670: </a><font color="#B22222">  <a href="../../../../../manualpages/KSP/MatLMVMGetRejectCount.html">MatLMVMGetRejectCount</a> - Returns the number of rejected updates.</font>
+<a name="line671">671: </a><font color="#B22222">  The counters are reset when `<a href="../../../../../manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()` is called.</font>
+
+<a name="line673">673: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line674">674: </a><font color="#B22222">. B - A `MATLMVM` matrix</font>
+
+<a name="line676">676: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line677">677: </a><font color="#B22222">. nrejects - number of rejected updates</font>
+
+<a name="line679">679: </a><font color="#B22222">  Level: intermediate</font>
+
+<a name="line681">681: </a><font color="#B22222">.seealso: [](ch_ksp), [LMVM Matrices](sec_matlmvm), `MATLMVM`, `<a href="../../../../../manualpages/KSP/MatLMVMReset.html">MatLMVMReset</a>()`</font>
+<a name="line682">682: </a><font color="#B22222">@*/</font>
+<a name="line683">683: </a><strong><font color="#4169E1"><a name="MatLMVMGetRejectCount"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/KSP/MatLMVMGetRejectCount.html">MatLMVMGetRejectCount</a>(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> B, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *nrejects)</font></strong>
+<a name="line684">684: </a>{
+<a name="line685">685: </a>  Mat_LMVM *lmvm = (Mat_LMVM *)B-&gt;data;
+<a name="line686">686: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> same;
+
+<a name="line688">688: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line690">690: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectBaseTypeCompare.html">PetscObjectBaseTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B, MATLMVM, &amp;same));
+<a name="line691">691: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(same, <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)B), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONG</a>, <font color="#666666">"Matrix must be an LMVM-type."</font>);
+<a name="line692">692: </a>  *nrejects = lmvm-&gt;nrejects;
+<a name="line693">693: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line694">694: </a>}
 </pre>
 </body>
 

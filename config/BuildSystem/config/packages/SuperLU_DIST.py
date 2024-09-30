@@ -7,14 +7,14 @@ class Configure(config.package.CMakePackage):
     self.minversion       = '6.3.0'
     self.version          = '8.1.2'
     self.versionname      = 'SUPERLU_DIST_MAJOR_VERSION.SUPERLU_DIST_MINOR_VERSION.SUPERLU_DIST_PATCH_VERSION'
-    self.gitcommit        = 'v'+self.version
+    # self.gitcommit        = 'v'+self.version
+    self.gitcommit        = '02b7c0d71bc33e785d098b0f8e4c26414bb8e39a' # master, may-08-2023
     self.download         = ['git://https://github.com/xiaoyeli/superlu_dist','https://github.com/xiaoyeli/superlu_dist/archive/'+self.gitcommit+'.tar.gz']
     self.functions        = ['set_default_options_dist']
     self.includes         = ['superlu_ddefs.h']
     self.liblist          = [['libsuperlu_dist.a']]
-    # SuperLU_Dist does not work with --download-fblaslapack with Compaqf90 compiler on windows.
-    # However it should work with intel ifort.
-    self.downloadonWindows= 1
+    # SuperLU_DIST CMake requires working MPI_C_COMPILER (i.e. mpicc) but that is not provided with Microsoft and Intel Windows compilers and Microsoft Windows MPI
+    # self.downloadonWindows= 1
     self.hastests         = 1
     self.hastestsdatafiles= 1
     self.precisions       = ['double','single']
@@ -24,12 +24,14 @@ class Configure(config.package.CMakePackage):
 
   def setupDependencies(self, framework):
     config.package.CMakePackage.setupDependencies(self, framework)
+    self.scalartypes    = framework.require('PETSc.options.scalarTypes',self)
     self.blasLapack     = framework.require('config.packages.BlasLapack',self)
     self.parmetis       = framework.require('config.packages.parmetis',self)
     self.mpi            = framework.require('config.packages.MPI',self)
     self.cuda           = framework.require('config.packages.cuda',self)
+    self.hip            = framework.require('config.packages.hip',self)
     self.openmp         = framework.require('config.packages.openmp',self)
-    self.odeps          = [self.parmetis,self.cuda,self.openmp]
+    self.odeps          = [self.parmetis,self.cuda,self.hip,self.openmp]
     self.deps           = [self.mpi,self.blasLapack]
     return
 
@@ -46,10 +48,18 @@ class Configure(config.package.CMakePackage):
           args[place]=item[:-1]+' '+self.headers.toString(self.cuda.include)+' -DDEBUGlevel=0 -DPRNTlevel=0"'
       args.append('-DTPL_ENABLE_CUDALIB=TRUE')
       args.append('-DTPL_CUDA_LIBRARIES="'+self.libraries.toString(self.cuda.dlib)+'"')
-      args.append('-DCUDA_ARCH_FLAGS="-arch=sm_'+self.cuda.cudaArch+'"')
       with self.Language('CUDA'):
-        args.append('-DCMAKE_CUDA_COMPILER="'+self.getCompiler()+'"')
+        # already set in package.py so could be removed, but why are MPI include paths listed here
         args.append('-DCMAKE_CUDA_FLAGS="'+self.getCompilerFlags()+' '+self.mpi.includepaths+' '+self.headers.toString(self.cuda.include)+' -DDEBUGlevel=0 -DPRNTlevel=0"')
+
+    if self.hip.found:
+      args.append('-DTPL_ENABLE_HIPLIB=TRUE')
+      with self.Language('HIP'):
+        for place,item in enumerate(args):
+          if item.find('CMAKE_C_FLAGS') >= 0 or item.find('CMAKE_CXX_FLAGS') >= 0:
+            args[place]=item[:-1]+' '+' -DDEBUGlevel=0 -DPRNTlevel=0"'
+        hipArchFlags = '--amdgpu-target=' + self.hip.hipArch
+        args.append('-DHIP_HIPCC_FLAGS="'+hipArchFlags+' '+self.getCompilerFlags()+' '+self.mpi.includepaths+' '+self.headers.toString(self.hip.include)+' -DDEBUGlevel=0 -DPRNTlevel=0"')
 
     args.append('-DUSE_XSDK_DEFAULTS=YES')
     args.append('-DTPL_BLAS_LIBRARIES="'+self.libraries.toString(self.blasLapack.dlib)+'"')
@@ -87,11 +97,14 @@ class Configure(config.package.CMakePackage):
     self.compilers.CPPFLAGS += ' '+self.headers.toString(self.dinclude)
     if self.defaultIndexSize == 64:
       if not self.checkCompile('#include "superlu_ddefs.h"','#if !defined(_LONGINT)\n#error "No longint"\n#endif\n'):
-        raise RuntimeError('PETSc is being configured using --with-64-bit-indices but SuperLU_DIST library is built for 32 bit integers.\n\
+        raise RuntimeError('PETSc is being configured using --with-64-bit-indices but SuperLU_DIST library is built for 32-bit integers.\n\
 Suggest using --download-superlu_dist')
     else:
       if not self.checkCompile('#include "superlu_ddefs.h"','#if defined(_LONGINT)\n#error "longint is defined"\n#endif\n'):
-        raise RuntimeError('PETSc is being configured without using --with-64-bit-indices but SuperLU_DIST library is built for 64 bit integers.\n\
+        raise RuntimeError('PETSc is being configured without using --with-64-bit-indices but SuperLU_DIST library is built for 64-bit integers.\n\
 Suggest using --download-superlu_dist')
+
+    if self.executeTest(self.libraries.check,[self.lib, ['psgssvx']],{'otherLibs' : self.dlib}) and self.checkCompile('#include "superlu_sdefs.h"','') and self.scalartypes.scalartype == 'real' and self.scalartypes.precision == 'double':
+       self.addDefine('HAVE_SUPERLU_DIST_SINGLE',1)
     self.compilers.CPPFLAGS = oldFlags
     self.popLanguage()

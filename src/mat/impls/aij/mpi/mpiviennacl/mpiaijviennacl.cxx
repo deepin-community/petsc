@@ -4,7 +4,7 @@
 #include <../src/mat/impls/aij/mpi/mpiaij.h> /*I "petscmat.h" I*/
 #include <../src/mat/impls/aij/seq/seqviennacl/viennaclmatimpl.h>
 
-PetscErrorCode MatMPIAIJSetPreallocation_MPIAIJViennaCL(Mat B, PetscInt d_nz, const PetscInt d_nnz[], PetscInt o_nz, const PetscInt o_nnz[])
+static PetscErrorCode MatMPIAIJSetPreallocation_MPIAIJViennaCL(Mat B, PetscInt d_nz, const PetscInt d_nnz[], PetscInt o_nz, const PetscInt o_nnz[])
 {
   Mat_MPIAIJ *b = (Mat_MPIAIJ *)B->data;
 
@@ -23,10 +23,10 @@ PetscErrorCode MatMPIAIJSetPreallocation_MPIAIJViennaCL(Mat B, PetscInt d_nz, co
   PetscCall(MatSeqAIJSetPreallocation(b->A, d_nz, d_nnz));
   PetscCall(MatSeqAIJSetPreallocation(b->B, o_nz, o_nnz));
   B->preallocated = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatAssemblyEnd_MPIAIJViennaCL(Mat A, MatAssemblyType mode)
+static PetscErrorCode MatAssemblyEnd_MPIAIJViennaCL(Mat A, MatAssemblyType mode)
 {
   Mat_MPIAIJ *b = (Mat_MPIAIJ *)A->data;
   PetscBool   v;
@@ -40,14 +40,7 @@ PetscErrorCode MatAssemblyEnd_MPIAIJViennaCL(Mat A, MatAssemblyType mode)
     PetscCall(VecDestroy(&b->lvec));
     PetscCall(VecCreateSeqViennaCL(PETSC_COMM_SELF, m, &b->lvec));
   }
-  PetscFunctionReturn(0);
-}
-
-PetscErrorCode MatDestroy_MPIAIJViennaCL(Mat A)
-{
-  PetscFunctionBegin;
-  PetscCall(MatDestroy_MPIAIJ(A));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode MatCreate_MPIAIJViennaCL(Mat A)
@@ -60,50 +53,55 @@ PETSC_EXTERN PetscErrorCode MatCreate_MPIAIJViennaCL(Mat A)
   PetscCall(PetscObjectComposeFunction((PetscObject)A, "MatMPIAIJSetPreallocation_C", MatMPIAIJSetPreallocation_MPIAIJViennaCL));
   A->ops->assemblyend = MatAssemblyEnd_MPIAIJViennaCL;
   PetscCall(PetscObjectChangeTypeName((PetscObject)A, MATMPIAIJVIENNACL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   MatCreateAIJViennaCL - Creates a sparse matrix in `MATAIJ` (compressed row) format
-   (the default parallel PETSc format).  This matrix will ultimately be pushed down
-   to GPUs and use the ViennaCL library for calculations. For good matrix
-   assembly performance the user should preallocate the matrix storage by setting
-   the parameter nz (or the array nnz).  By setting these parameters accurately,
-   performance during matrix assembly can be increased substantially.
+  MatCreateAIJViennaCL - Creates a sparse matrix in `MATAIJ` (compressed row) format
+  (the default parallel PETSc format).  This matrix will ultimately be pushed down
+  to GPUs and use the ViennaCL library for calculations.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  comm - MPI communicator, set to `PETSC_COMM_SELF`
-.  m - number of rows
-.  n - number of columns
-.  nz - number of nonzeros per row (same for all rows)
--  nnz - array containing the number of nonzeros in the various rows
-         (possibly different for each row) or NULL
+  Input Parameters:
++ comm  - MPI communicator, set to `PETSC_COMM_SELF`
+. m     - number of rows, or `PETSC_DECIDE` if `M` is provided
+. n     - number of columns, or `PETSC_DECIDE` if `N` is provided
+. M     - number of global rows in the matrix, or `PETSC_DETERMINE` if `m` is provided
+. N     - number of global columns in the matrix, or `PETSC_DETERMINE` if `n` is provided
+. d_nz  - number of nonzeros per row in DIAGONAL portion of local submatrix
+           (same value is used for all local rows)
+. d_nnz - array containing the number of nonzeros in the various rows of the
+           DIAGONAL portion of the local submatrix (possibly different for each row)
+           or `NULL`, if `d_nz` is used to specify the nonzero structure.
+           The size of this array is equal to the number of local rows, i.e `m`.
+           For matrices you plan to factor you must leave room for the diagonal entry and
+           put in the entry even if it is zero.
+. o_nz  - number of nonzeros per row in the OFF-DIAGONAL portion of local
+           submatrix (same value is used for all local rows).
+- o_nnz - array containing the number of nonzeros in the various rows of the
+           OFF-DIAGONAL portion of the local submatrix (possibly different for
+           each row) or `NULL`, if `o_nz` is used to specify the nonzero
+           structure. The size of this array is equal to the number
+           of local rows, i.e `m`.
 
-   Output Parameter:
-.  A - the matrix
+  Output Parameter:
+. A - the matrix
 
-   It is recommended that one use the `MatCreate()`, `MatSetType()` and/or `MatSetFromOptions()`,
-   MatXXXXSetPreallocation() paradigm instead of this routine directly.
-   [MatXXXXSetPreallocation() is, for example, `MatSeqAIJSetPreallocation()`]
+  Level: intermediate
 
-   Notes:
-   If nnz is given then nz is ignored
+  Notes:
+  It is recommended that one use the `MatCreate()`, `MatSetType()` and/or `MatSetFromOptions()`,
+  MatXXXXSetPreallocation() paradigm instead of this routine directly.
+  [MatXXXXSetPreallocation() is, for example, `MatSeqAIJSetPreallocation()`]
 
-   The AIJ format, also called
-   compressed row storage), is fully compatible with standard Fortran 77
-   storage.  That is, the stored row and column indices can begin at
-   either one (as in Fortran) or zero.  See the users' manual for details.
+  The AIJ format, also called
+  compressed row storage), is fully compatible with standard Fortran
+  storage.  That is, the stored row and column indices can begin at
+  either one (as in Fortran) or zero.
 
-   Specify the preallocated storage with either nz or nnz (not both).
-   Set nz = `PETSC_DEFAULT` and nnz = NULL for PETSc to control dynamic memory
-   allocation.  For large problems you MUST preallocate memory or you
-   will get TERRIBLE performance, see the users' manual chapter on matrices.
-
-   Level: intermediate
-
-.seealso: `MatCreate()`, `MatCreateAIJ()`, `MatCreateAIJCUSPARSE()`, `MatSetValues()`, `MatSeqAIJSetColumnIndices()`, `MatCreateSeqAIJWithArrays()`, `MatCreateAIJ()`, `MATMPIAIJVIENNACL`, `MATAIJVIENNACL`
+.seealso: `Mat`, `MatCreate()`, `MatCreateAIJ()`, `MatCreateAIJCUSPARSE()`, `MatSetValues()`, `MatSeqAIJSetColumnIndices()`, `MatCreateSeqAIJWithArrays()`,
+          `MATMPIAIJVIENNACL`, `MATAIJVIENNACL`
 @*/
 PetscErrorCode MatCreateAIJViennaCL(MPI_Comm comm, PetscInt m, PetscInt n, PetscInt M, PetscInt N, PetscInt d_nz, const PetscInt d_nnz[], PetscInt o_nz, const PetscInt o_nnz[], Mat *A)
 {
@@ -120,7 +118,7 @@ PetscErrorCode MatCreateAIJViennaCL(MPI_Comm comm, PetscInt m, PetscInt n, Petsc
     PetscCall(MatSetType(*A, MATSEQAIJVIENNACL));
     PetscCall(MatSeqAIJSetPreallocation(*A, d_nz, d_nnz));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -140,5 +138,5 @@ PetscErrorCode MatCreateAIJViennaCL(MPI_Comm comm, PetscInt m, PetscInt n, Petsc
 
   Level: beginner
 
- .seealso: `MatCreateAIJViennaCL()`, `MATSEQAIJVIENNACL`, `MatCreateSeqAIJVIENNACL()`
+.seealso: `Mat`, `MatType`, `MatCreateAIJViennaCL()`, `MATSEQAIJVIENNACL`, `MatCreateSeqAIJVIENNACL()`
 M*/

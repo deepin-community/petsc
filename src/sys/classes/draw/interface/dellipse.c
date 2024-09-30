@@ -1,4 +1,3 @@
-
 /*
        Provides the calling sequences for all the basic Draw routines.
 */
@@ -7,12 +6,14 @@
 /*@
   PetscDrawEllipse - Draws an ellipse onto a drawable.
 
-  Not collective
+  Not Collective
 
   Input Parameters:
 + draw - The drawing context
-. x,y  - The center
-. a,b  - The major and minor axes lengths
+. x    - The x coordinate of the center
+. y    - The y coordinate of the center
+. a    - The major axes length
+. b    - The minor axes length
 - c    - The color
 
   Level: beginner
@@ -24,5 +25,5 @@ PetscErrorCode PetscDrawEllipse(PetscDraw draw, PetscReal x, PetscReal y, PetscR
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
   PetscUseTypeMethod(draw, ellipse, x, y, a, b, c);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

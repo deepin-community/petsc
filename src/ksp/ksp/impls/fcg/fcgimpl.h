@@ -1,12 +1,10 @@
-#ifndef __KSP_FCG_H
-#define __KSP_FCG_H
+#pragma once
 
 #include <petsc/private/kspimpl.h> /*I "petscksp.h" I*/
 
 typedef struct {
-  KSPCGType    type;       /* type of system (symmetric of Hermitian) */
-  PetscScalar  emin, emax; /* eigenvalues */
-  PetscInt     ned;        /* size of following arrays */
+  /* same header start as KSP_CG */
+  KSPCGType    type; /* type of system (symmetric of Hermitian) */
   PetscScalar *e, *d;
   PetscReal   *ee, *dd; /* work space for Lanczos algorithm */
 
@@ -19,5 +17,3 @@ typedef struct {
   PetscInt             nchunks;                           /* Number of chunks */
   KSPFCDTruncationType truncstrat;
 } KSP_FCG;
-
-#endif

@@ -17,13 +17,13 @@ static PetscErrorCode TaoLineSearchDestroy_MT(TaoLineSearch ls)
   PetscCall(PetscObjectDereference((PetscObject)mt->x));
   PetscCall(VecDestroy(&mt->work));
   PetscCall(PetscFree(ls->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoLineSearchSetFromOptions_MT(TaoLineSearch ls, PetscOptionItems *PetscOptionsObject)
 {
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoLineSearchMonitor_MT(TaoLineSearch ls)
@@ -33,7 +33,7 @@ static PetscErrorCode TaoLineSearchMonitor_MT(TaoLineSearch ls)
   PetscFunctionBegin;
   PetscCall(PetscViewerASCIIPrintf(ls->viewer, "stx: %g, fx: %g, dgx: %g\n", (double)mt->stx, (double)mt->fx, (double)mt->dgx));
   PetscCall(PetscViewerASCIIPrintf(ls->viewer, "sty: %g, fy: %g, dgy: %g\n", (double)mt->sty, (double)mt->fy, (double)mt->dgy));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoLineSearchApply_MT(TaoLineSearch ls, Vec x, PetscReal *f, Vec g, Vec s)
@@ -86,12 +86,12 @@ static PetscErrorCode TaoLineSearchApply_MT(TaoLineSearch ls, Vec x, PetscReal *
   if (PetscIsInfOrNanReal(dginit)) {
     PetscCall(PetscInfo(ls, "Initial Line Search step * g is Inf or Nan (%g)\n", (double)dginit));
     ls->reason = TAOLINESEARCH_FAILED_INFORNAN;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (dginit >= 0.0) {
     PetscCall(PetscInfo(ls, "Initial Line Search step * g is not descent direction (%g)\n", (double)dginit));
     ls->reason = TAOLINESEARCH_FAILED_ASCENT;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /* Initialization */
@@ -136,6 +136,12 @@ static PetscErrorCode TaoLineSearchApply_MT(TaoLineSearch ls, Vec x, PetscReal *
       ls->step = stx;
 
     PetscCall(VecWAXPY(mt->work, ls->step, s, x)); /* W = X + step*S */
+
+    if (ls->step == 0.0) {
+      PetscCall(PetscInfo(ls, "Step size is zero.\n"));
+      ls->reason = TAOLINESEARCH_HALTED_LOWERBOUND;
+      break;
+    }
 
     if (ls->bounded) PetscCall(VecMedian(ls->lower, mt->work, ls->upper, mt->work));
     if (ls->usegts) {
@@ -262,24 +268,19 @@ static PetscErrorCode TaoLineSearchApply_MT(TaoLineSearch ls, Vec x, PetscReal *
   /* Set new solution vector and compute gradient if needed */
   PetscCall(VecCopy(mt->work, x));
   if (!g_computed) PetscCall(TaoLineSearchComputeGradient(ls, mt->work, g));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-   TAOLINESEARCHMT - Line-search type with cubic interpolation that satisfies both the sufficient decrease and
-   curvature conditions. This method can take step lengths greater than 1.
+   TAOLINESEARCHMT - More-Thuente line-search type with cubic interpolation that satisfies both the sufficient decrease and
+   curvature conditions. This method can take step lengths greater than 1, {cite}`more:92`
 
-   More-Thuente line-search can be selected with "-tao_ls_type more-thuente".
-
-   References:
-.  * - JORGE J. MORE AND DAVID J. THUENTE, LINE SEARCH ALGORITHMS WITH GUARANTEED SUFFICIENT DECREASE.
-          ACM Trans. Math. Software 20, no. 3 (1994): 286-307.
+   Options Database Key:
+.  -tao_ls_type more-thuente - use this line search type
 
    Level: developer
 
 .seealso: `TaoLineSearchCreate()`, `TaoLineSearchSetType()`, `TaoLineSearchApply()`
-
-.keywords: Tao, linesearch
 M*/
 PETSC_EXTERN PetscErrorCode TaoLineSearchCreate_MT(TaoLineSearch ls)
 {
@@ -298,7 +299,7 @@ PETSC_EXTERN PetscErrorCode TaoLineSearchCreate_MT(TaoLineSearch ls)
   ls->ops->destroy        = TaoLineSearchDestroy_MT;
   ls->ops->setfromoptions = TaoLineSearchSetFromOptions_MT;
   ls->ops->monitor        = TaoLineSearchMonitor_MT;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -511,5 +512,5 @@ static PetscErrorCode Tao_mcstep(TaoLineSearch ls, PetscReal *stx, PetscReal *fx
     if (*sty > *stx) *stp = PetscMin(*stx + 0.66 * (*sty - *stx), *stp);
     else *stp = PetscMax(*stx + 0.66 * (*sty - *stx), *stp);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

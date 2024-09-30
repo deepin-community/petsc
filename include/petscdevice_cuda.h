@@ -1,5 +1,4 @@
-#ifndef PETSCDEVICE_CUDA_H
-#define PETSCDEVICE_CUDA_H
+#pragma once
 
 #include <petscdevice.h>
 #include <petscpkg_version.h>
@@ -158,31 +157,42 @@ PETSC_EXTERN const char *PetscCUFFTGetErrorName(cufftResult);
 PETSC_EXTERN cudaStream_t   PetscDefaultCudaStream; // The default stream used by PETSc
 PETSC_EXTERN PetscErrorCode PetscCUBLASGetHandle(cublasHandle_t *);
 PETSC_EXTERN PetscErrorCode PetscCUSOLVERDnGetHandle(cusolverDnHandle_t *);
+PETSC_EXTERN PetscErrorCode PetscGetCurrentCUDAStream(cudaStream_t *);
 
 #endif // PETSC_HAVE_CUDA
 
-// these can also be defined in petscdevice_hip.h
+// these can also be defined in petscdevice_hip.h so we undef and define them *only* if the
+// current compiler is NVCC. In this case if petscdevice_hip.h is included first, the macros
+// would already be defined, but they would be empty since we cannot be using HCC at the same
+// time.
+#if PetscDefined(USING_NVCC)
+  #undef PETSC_HOST_DECL
+  #undef PETSC_DEVICE_DECL
+  #undef PETSC_KERNEL_DECL
+  #undef PETSC_SHAREDMEM_DECL
+  #undef PETSC_FORCEINLINE
+  #undef PETSC_CONSTMEM_DECL
+
+  #define PETSC_HOST_DECL      __host__
+  #define PETSC_DEVICE_DECL    __device__
+  #define PETSC_KERNEL_DECL    __global__
+  #define PETSC_SHAREDMEM_DECL __shared__
+  #define PETSC_FORCEINLINE    __forceinline__
+  #define PETSC_CONSTMEM_DECL  __constant__
+#endif
+
+#ifndef PETSC_HOST_DECL // use HOST_DECL as canary
+  #define PETSC_HOST_DECL
+  #define PETSC_DEVICE_DECL
+  #define PETSC_KERNEL_DECL
+  #define PETSC_SHAREDMEM_DECL
+  #define PETSC_FORCEINLINE inline
+  #define PETSC_CONSTMEM_DECL
+#endif
+
 #ifndef PETSC_DEVICE_DEFINED_DECLS_PRIVATE
   #define PETSC_DEVICE_DEFINED_DECLS_PRIVATE
-  #if PetscDefined(USING_NVCC)
-    #define PETSC_HOST_DECL      __host__
-    #define PETSC_DEVICE_DECL    __device__
-    #define PETSC_KERNEL_DECL    __global__
-    #define PETSC_SHAREDMEM_DECL __shared__
-    #define PETSC_FORCEINLINE    __forceinline__
-    #define PETSC_CONSTMEM_DECL  __constant__
-  #else
-    #define PETSC_HOST_DECL
-    #define PETSC_DEVICE_DECL
-    #define PETSC_KERNEL_DECL
-    #define PETSC_SHAREDMEM_DECL
-    #define PETSC_FORCEINLINE inline
-    #define PETSC_CONSTMEM_DECL
-  #endif // PETSC_USING_NVCC
-
   #define PETSC_HOSTDEVICE_DECL        PETSC_HOST_DECL PETSC_DEVICE_DECL
   #define PETSC_DEVICE_INLINE_DECL     PETSC_DEVICE_DECL PETSC_FORCEINLINE
   #define PETSC_HOSTDEVICE_INLINE_DECL PETSC_HOSTDEVICE_DECL PETSC_FORCEINLINE
-#endif // PETSC_DEVICE_DEFINED_DECLS_PRIVATE
-
-#endif // PETSCDEVICE_CUDA_H
+#endif

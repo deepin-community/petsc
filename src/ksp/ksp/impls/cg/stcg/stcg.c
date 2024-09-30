@@ -1,4 +1,3 @@
-
 #include <../src/ksp/ksp/impls/cg/stcg/stcgimpl.h> /*I "petscksp.h" I*/
 
 #define STCG_PRECONDITIONED_DIRECTION   0
@@ -105,7 +104,7 @@ static PetscErrorCode KSPCGSolve_STCG(KSP ksp)
       cg->o_fcn = -cg->o_fcn;
       ++ksp->its;
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   if (rz < 0.0) {
@@ -140,7 +139,7 @@ static PetscErrorCode KSPCGSolve_STCG(KSP ksp)
       cg->o_fcn = -cg->o_fcn;
       ++ksp->its;
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /***************************************************************************/
@@ -218,7 +217,7 @@ static PetscErrorCode KSPCGSolve_STCG(KSP ksp)
       cg->o_fcn = -cg->o_fcn;
       ++ksp->its;
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /***************************************************************************/
@@ -248,7 +247,7 @@ static PetscErrorCode KSPCGSolve_STCG(KSP ksp)
     /* during the first step, we must follow a direction.                    */
     /*************************************************************************/
 
-    ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
+    ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
     PetscCall(PetscInfo(ksp, "KSPCGSolve_STCG: negative curvature: kappa=%g\n", (double)kappa));
 
     if (cg->radius != 0.0 && norm_p > 0.0) {
@@ -294,7 +293,7 @@ static PetscErrorCode KSPCGSolve_STCG(KSP ksp)
       cg->o_fcn = -cg->o_fcn;
       ++ksp->its;
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /***************************************************************************/
@@ -323,12 +322,13 @@ static PetscErrorCode KSPCGSolve_STCG(KSP ksp)
       /* However, the full step goes beyond the trust region.                */
       /***********************************************************************/
 
-      ksp->reason = KSP_CONVERGED_CG_CONSTRAINED;
+      ksp->reason = KSP_CONVERGED_STEP_LENGTH;
       PetscCall(PetscInfo(ksp, "KSPCGSolve_STCG: constrained step: radius=%g\n", (double)cg->radius));
 
       if (norm_p > 0.0) {
         /*********************************************************************/
         /* Follow the direction to the boundary of the trust region.         */
+        /* Final residual norm is never computed.                            */
         /*********************************************************************/
 
         step       = (PetscSqrtReal(dMp * dMp + norm_p * (r2 - norm_d)) - dMp) / norm_p;
@@ -489,12 +489,13 @@ static PetscErrorCode KSPCGSolve_STCG(KSP ksp)
       /* boundary of the trust region.                                       */
       /***********************************************************************/
 
-      ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
+      ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
       PetscCall(PetscInfo(ksp, "KSPCGSolve_STCG: negative curvature: kappa=%g\n", (double)kappa));
 
       if (cg->radius != 0.0 && norm_p > 0.0) {
         /*********************************************************************/
         /* Follow direction of negative curvature to boundary.               */
+        /* Final residual norm is never computed.                            */
         /*********************************************************************/
 
         step       = (PetscSqrtReal(dMp * dMp + norm_p * (r2 - norm_d)) - dMp) / norm_p;
@@ -515,7 +516,7 @@ static PetscErrorCode KSPCGSolve_STCG(KSP ksp)
       break;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 #endif
 }
 
@@ -527,7 +528,7 @@ static PetscErrorCode KSPCGSetUp_STCG(KSP ksp)
   /***************************************************************************/
 
   PetscCall(KSPSetWorkVecs(ksp, 3));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGDestroy_STCG(KSP ksp)
@@ -546,7 +547,7 @@ static PetscErrorCode KSPCGDestroy_STCG(KSP ksp)
   /***************************************************************************/
 
   PetscCall(KSPDestroyDefault(ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGSetRadius_STCG(KSP ksp, PetscReal radius)
@@ -555,7 +556,7 @@ static PetscErrorCode KSPCGSetRadius_STCG(KSP ksp, PetscReal radius)
 
   PetscFunctionBegin;
   cg->radius = radius;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGGetNormD_STCG(KSP ksp, PetscReal *norm_d)
@@ -564,7 +565,7 @@ static PetscErrorCode KSPCGGetNormD_STCG(KSP ksp, PetscReal *norm_d)
 
   PetscFunctionBegin;
   *norm_d = cg->norm_d;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGGetObjFcn_STCG(KSP ksp, PetscReal *o_fcn)
@@ -573,7 +574,7 @@ static PetscErrorCode KSPCGGetObjFcn_STCG(KSP ksp, PetscReal *o_fcn)
 
   PetscFunctionBegin;
   *o_fcn = cg->o_fcn;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGSetFromOptions_STCG(KSP ksp, PetscOptionItems *PetscOptionsObject)
@@ -585,50 +586,48 @@ static PetscErrorCode KSPCGSetFromOptions_STCG(KSP ksp, PetscOptionItems *PetscO
   PetscCall(PetscOptionsReal("-ksp_cg_radius", "Trust Region Radius", "KSPCGSetRadius", cg->radius, &cg->radius, NULL));
   PetscCall(PetscOptionsEList("-ksp_cg_dtype", "Norm used for direction", "", DType_Table, STCG_DIRECTION_TYPES, DType_Table[cg->dtype], &cg->dtype, NULL));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPSTCG -   Code to run conjugate gradient method subject to a constraint on the solution norm.
+   KSPSTCG -   Code to run conjugate gradient method subject to a constraint on the solution norm for use in a trust region method
+   {cite}`steihaug:83`, {cite}`toint1981towards`
 
-   Options Database Keys:
+   Options Database Key:
 .      -ksp_cg_radius <r> - Trust Region Radius
 
+   Level: developer
+
    Notes:
-    This is rarely used directly, it is used in Trust Region methods for nonlinear equations, `SNESNEWTONTR`
+   This is rarely used directly, it is used in Trust Region methods for nonlinear equations, `SNESNEWTONTR`
 
-  Use preconditioned conjugate gradient to compute
-  an approximate minimizer of the quadratic function
+   Use preconditioned conjugate gradient to compute an approximate minimizer of the quadratic function
 
-            q(s) = g^T * s + 0.5 * s^T * H * s
+   $$
+   q(s) = g^T * s + 0.5 * s^T * H * s
+   $$
 
    subject to the trust region constraint
 
-            || s || <= delta,
+   $$
+            || s || le delta,
+   $$
 
    where
-
+.vb
      delta is the trust region radius,
      g is the gradient vector,
      H is the Hessian approximation, and
      M is the positive definite preconditioner matrix.
-
-   `KSPConvergedReason` may be
-.vb
-   KSP_CONVERGED_CG_NEG_CURVE if convergence is reached along a negative curvature direction,
-   KSP_CONVERGED_CG_CONSTRAINED if convergence is reached along a constrained step,
 .ve
-   other `KSP` converged/diverged reasons
+
+   `KSPConvergedReason` may include
++  `KSP_CONVERGED_NEG_CURVE` - if convergence is reached along a negative curvature direction,
+-  `KSP_CONVERGED_STEP_LENGTH` - if convergence is reached along a constrained step,
 
   The preconditioner supplied should be symmetric and positive definite.
 
-   References:
-+  * - Steihaug, T. (1983): The conjugate gradient method and trust regions in large scale optimization. SIAM J. Numer. Anal. 20, 626--637
--  * - Toint, Ph.L. (1981): Towards an efficient sparsity exploiting Newton method for minimization. In: Duff, I., ed., Sparse Matrices and Their Uses, pp. 57--88. Academic Press
-
-   Level: developer
-
-.seealso: [](chapter_ksp), `KSPCreate()`, `KSPCGSetType()`, `KSPType`, `KSP`, `KSPCGSetRadius()`, `KSPCGGetNormD()`, `KSPCGGetObjFcn()`, `KSPNASH`, `KSPGLTR`, `KSPQCG`
+.seealso: [](ch_ksp), `KSPCreate()`, `KSPCGSetType()`, `KSPType`, `KSP`, `KSPCGSetRadius()`, `KSPCGGetNormD()`, `KSPCGGetObjFcn()`, `KSPNASH`, `KSPGLTR`, `KSPQCG`
 M*/
 
 PETSC_EXTERN PetscErrorCode KSPCreate_STCG(KSP ksp)
@@ -646,6 +645,7 @@ PETSC_EXTERN PetscErrorCode KSPCreate_STCG(KSP ksp)
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_PRECONDITIONED, PC_LEFT, 2));
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_NATURAL, PC_LEFT, 2));
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_NONE, PC_LEFT, 1));
+  PetscCall(KSPSetConvergedNegativeCurvature(ksp, PETSC_TRUE));
 
   /***************************************************************************/
   /* Sets the functions that are associated with this data structure         */
@@ -663,5 +663,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_STCG(KSP ksp)
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPCGSetRadius_C", KSPCGSetRadius_STCG));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPCGGetNormD_C", KSPCGGetNormD_STCG));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPCGGetObjFcn_C", KSPCGGetObjFcn_STCG));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

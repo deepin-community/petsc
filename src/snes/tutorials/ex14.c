@@ -1,4 +1,3 @@
-
 static char help[] = "Bratu nonlinear PDE in 3d.\n\
 We solve the  Bratu (SFI - solid fuel ignition) problem in a 3D rectangular\n\
 domain, using distributed arrays (DMDAs) to partition the parallel grid.\n\
@@ -254,7 +253,7 @@ PetscErrorCode FormInitialGuess(AppCtx *user, Vec X)
      Restore vector
   */
   PetscCall(DMDAVecRestoreArray(user->da, X, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -331,7 +330,7 @@ PetscErrorCode FormFunctionLocal(SNES snes, Vec localX, Vec F, void *ptr)
   PetscCall(DMDAVecRestoreArrayRead(da, localX, &x));
   PetscCall(DMDAVecRestoreArray(da, F, &f));
   PetscCall(PetscLogFlops(11.0 * ym * xm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -365,7 +364,7 @@ PetscErrorCode FormFunction(SNES snes, Vec X, Vec F, void *ptr)
 
   PetscCall(FormFunctionLocal(snes, localX, F, ptr));
   PetscCall(DMRestoreLocalVector(da, &localX));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -492,7 +491,7 @@ PetscErrorCode FormJacobian(SNES snes, Vec X, Mat J, Mat jac, void *ptr)
 
   /*
      Normally since the matrix has already been assembled above; this
-     would do nothing. But in the matrix free mode -snes_mf_operator
+     would do nothing. But in the matrix-free mode -snes_mf_operator
      this tells the "matrix-free" matrix that a new linear system solve
      is about to be done.
   */
@@ -505,7 +504,7 @@ PetscErrorCode FormJacobian(SNES snes, Vec X, Mat J, Mat jac, void *ptr)
      matrix. If we do, it will generate an error.
   */
   PetscCall(MatSetOption(jac, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST
@@ -539,6 +538,12 @@ PetscErrorCode FormJacobian(SNES snes, Vec X, Mat J, Mat jac, void *ptr)
       suffix: 5
       nsize: 4
       args: -fdcoloring_local -fdcoloring -ksp_monitor_short -da_refine 1 -snes_type newtontrdc
+      requires: !single
+
+   test:
+      suffix: 6
+      nsize: 4
+      args: -fdcoloring_local -fdcoloring -da_refine 1 -snes_type newtontr -snes_tr_fallback_type dogleg
       requires: !single
 
 TEST*/

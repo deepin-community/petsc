@@ -1,0 +1,603 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/mat/impls/diagonal/diagonal.c">Actual source code: diagonal.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2024-03-29T14:12:52+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petsc/private/matimpl.h.html">&lt;petsc/private/matimpl.h&gt;</A>
+
+<a name="line3">  3: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line4">  4: </a>  <a href="../../../../manualpages/Vec/Vec.html">Vec</a>              diag;
+<a name="line5">  5: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a>        diag_valid;
+<a name="line6">  6: </a>  <a href="../../../../manualpages/Vec/Vec.html">Vec</a>              inv_diag;
+<a name="line7">  7: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a>        inv_diag_valid;
+<a name="line8">  8: </a>  <a href="../../../../manualpages/Sys/PetscObjectState.html">PetscObjectState</a> diag_state, inv_diag_state;
+<a name="line9">  9: </a>  <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a>        *col;
+<a name="line10"> 10: </a>  <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>     *val;
+<a name="line11"> 11: </a>} Mat_Diagonal;
+
+<a name="line13"> 13: </a><strong><font color="#4169E1"><a name="MatDiagonalSetUpDiagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDiagonalSetUpDiagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A)</font></strong>
+<a name="line14"> 14: </a>{
+<a name="line15"> 15: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)A-&gt;data;
+
+<a name="line17"> 17: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line18"> 18: </a>  <font color="#4169E1">if</font> (!ctx-&gt;diag_valid) {
+<a name="line19"> 19: </a>    <a href="../../../../manualpages/Sys/PetscAssert.html">PetscAssert</a>(ctx-&gt;inv_diag_valid, <a href="../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A), <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_PLIB</a>, <font color="#666666">"Neither diagonal nor inverse diagonal is in a valid state"</font>);
+<a name="line20"> 20: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecCopy.html">VecCopy</a>(ctx-&gt;inv_diag, ctx-&gt;diag));
+<a name="line21"> 21: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecReciprocal.html">VecReciprocal</a>(ctx-&gt;diag));
+<a name="line22"> 22: </a>    ctx-&gt;diag_valid = <a href="../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line23"> 23: </a>  }
+<a name="line24"> 24: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line25"> 25: </a>}
+
+<a name="line27"> 27: </a><strong><font color="#4169E1"><a name="MatDiagonalSetUpInverseDiagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDiagonalSetUpInverseDiagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A)</font></strong>
+<a name="line28"> 28: </a>{
+<a name="line29"> 29: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)A-&gt;data;
+
+<a name="line31"> 31: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line32"> 32: </a>  <font color="#4169E1">if</font> (!ctx-&gt;inv_diag_valid) {
+<a name="line33"> 33: </a>    <a href="../../../../manualpages/Sys/PetscAssert.html">PetscAssert</a>(ctx-&gt;diag_valid, <a href="../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A), <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_PLIB</a>, <font color="#666666">"Neither diagonal nor inverse diagonal is in a valid state"</font>);
+<a name="line34"> 34: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecCopy.html">VecCopy</a>(ctx-&gt;diag, ctx-&gt;inv_diag));
+<a name="line35"> 35: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecReciprocal.html">VecReciprocal</a>(ctx-&gt;inv_diag));
+<a name="line36"> 36: </a>    ctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line37"> 37: </a>  }
+<a name="line38"> 38: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line39"> 39: </a>}
+
+<a name="line41"> 41: </a><strong><font color="#4169E1"><a name="MatAXPY_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatAXPY_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> Y, <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> a, <a href="../../../../manualpages/Mat/Mat.html">Mat</a> X, <a href="../../../../manualpages/Mat/MatStructure.html">MatStructure</a> str)</font></strong>
+<a name="line42"> 42: </a>{
+<a name="line43"> 43: </a>  Mat_Diagonal *yctx = (Mat_Diagonal *)Y-&gt;data;
+<a name="line44"> 44: </a>  Mat_Diagonal *xctx = (Mat_Diagonal *)X-&gt;data;
+
+<a name="line46"> 46: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line47"> 47: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(Y));
+<a name="line48"> 48: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(X));
+<a name="line49"> 49: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecAXPY.html">VecAXPY</a>(yctx-&gt;diag, a, xctx-&gt;diag));
+<a name="line50"> 50: </a>  yctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line51"> 51: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line52"> 52: </a>}
+
+<a name="line54"> 54: </a><strong><font color="#4169E1"><a name="MatGetRow_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatGetRow_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> row, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *ncols, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> **cols, <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> **vals)</font></strong>
+<a name="line55"> 55: </a>{
+<a name="line56"> 56: </a>  Mat_Diagonal *mat = (Mat_Diagonal *)A-&gt;data;
+
+<a name="line58"> 58: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line59"> 59: </a>  <font color="#4169E1">if</font> (ncols) *ncols = 1;
+<a name="line60"> 60: </a>  <font color="#4169E1">if</font> (cols) {
+<a name="line61"> 61: </a>    <font color="#4169E1">if</font> (!mat-&gt;col) <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(1, &amp;mat-&gt;col));
+<a name="line62"> 62: </a>    *mat-&gt;col = row;
+<a name="line63"> 63: </a>    *cols     = mat-&gt;col;
+<a name="line64"> 64: </a>  }
+<a name="line65"> 65: </a>  <font color="#4169E1">if</font> (vals) {
+<a name="line66"> 66: </a>    const <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *v;
+
+<a name="line68"> 68: </a>    <font color="#4169E1">if</font> (!mat-&gt;val) <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(1, &amp;mat-&gt;val));
+<a name="line69"> 69: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(mat-&gt;diag, &amp;v));
+<a name="line70"> 70: </a>    *mat-&gt;val = v[row];
+<a name="line71"> 71: </a>    *vals     = mat-&gt;val;
+<a name="line72"> 72: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(mat-&gt;diag, &amp;v));
+<a name="line73"> 73: </a>  }
+<a name="line74"> 74: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line75"> 75: </a>}
+
+<a name="line77"> 77: </a><strong><font color="#4169E1"><a name="MatRestoreRow_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatRestoreRow_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> row, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *ncols, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> **cols, <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> **vals)</font></strong>
+<a name="line78"> 78: </a>{
+<a name="line79"> 79: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line80"> 80: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line81"> 81: </a>}
+
+<a name="line83"> 83: </a><strong><font color="#4169E1"><a name="MatMult_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatMult_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> x, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> y)</font></strong>
+<a name="line84"> 84: </a>{
+<a name="line85"> 85: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)A-&gt;data;
+
+<a name="line87"> 87: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line88"> 88: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(A));
+<a name="line89"> 89: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(y, ctx-&gt;diag, x));
+<a name="line90"> 90: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line91"> 91: </a>}
+
+<a name="line93"> 93: </a><strong><font color="#4169E1"><a name="MatMultAdd_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatMultAdd_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> mat, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> v1, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> v2, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> v3)</font></strong>
+<a name="line94"> 94: </a>{
+<a name="line95"> 95: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)mat-&gt;data;
+
+<a name="line97"> 97: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line98"> 98: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(mat));
+<a name="line99"> 99: </a>  <font color="#4169E1">if</font> (v2 != v3) {
+<a name="line100">100: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(v3, ctx-&gt;diag, v1));
+<a name="line101">101: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecAXPY.html">VecAXPY</a>(v3, 1.0, v2));
+<a name="line102">102: </a>  } <font color="#4169E1">else</font> {
+<a name="line103">103: </a>    <a href="../../../../manualpages/Vec/Vec.html">Vec</a> w;
+<a name="line104">104: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(v3, &amp;w));
+<a name="line105">105: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(w, ctx-&gt;diag, v1));
+<a name="line106">106: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecAXPY.html">VecAXPY</a>(v3, 1.0, w));
+<a name="line107">107: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;w));
+<a name="line108">108: </a>  }
+<a name="line109">109: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line110">110: </a>}
+
+<a name="line112">112: </a><strong><font color="#4169E1"><a name="MatNorm_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatNorm_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Vec/NormType.html">NormType</a> type, <a href="../../../../manualpages/Sys/PetscReal.html">PetscReal</a> *nrm)</font></strong>
+<a name="line113">113: </a>{
+<a name="line114">114: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)A-&gt;data;
+
+<a name="line116">116: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line117">117: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(A));
+<a name="line118">118: </a>  type = (type == <a href="../../../../manualpages/Vec/NORM_FROBENIUS.html">NORM_FROBENIUS</a>) ? <a href="../../../../manualpages/Vec/NORM_2.html">NORM_2</a> : <a href="../../../../manualpages/Vec/NORM_INFINITY.html">NORM_INFINITY</a>;
+<a name="line119">119: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecNorm.html">VecNorm</a>(ctx-&gt;diag, type, nrm));
+<a name="line120">120: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line121">121: </a>}
+
+<a name="line123">123: </a><strong><font color="#4169E1"><a name="MatDuplicate_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDuplicate_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Mat/MatDuplicateOption.html">MatDuplicateOption</a> op, <a href="../../../../manualpages/Mat/Mat.html">Mat</a> *B)</font></strong>
+<a name="line124">124: </a>{
+<a name="line125">125: </a>  Mat_Diagonal *actx = (Mat_Diagonal *)A-&gt;data;
+
+<a name="line127">127: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line128">128: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatCreate.html">MatCreate</a>(<a href="../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A), B));
+<a name="line129">129: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetSizes.html">MatSetSizes</a>(*B, A-&gt;rmap-&gt;n, A-&gt;cmap-&gt;n, A-&gt;rmap-&gt;N, A-&gt;cmap-&gt;N));
+<a name="line130">130: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetBlockSizesFromMats.html">MatSetBlockSizesFromMats</a>(*B, A, A));
+<a name="line131">131: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetType.html">MatSetType</a>(*B, <a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>));
+<a name="line132">132: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/IS/PetscLayoutReference.html">PetscLayoutReference</a>(A-&gt;rmap, &amp;(*B)-&gt;rmap));
+<a name="line133">133: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/IS/PetscLayoutReference.html">PetscLayoutReference</a>(A-&gt;cmap, &amp;(*B)-&gt;cmap));
+<a name="line134">134: </a>  <font color="#4169E1">if</font> (op == <a href="../../../../manualpages/Mat/MatDuplicateOption.html">MAT_COPY_VALUES</a>) {
+<a name="line135">135: </a>    Mat_Diagonal *bctx = (Mat_Diagonal *)(*B)-&gt;data;
+
+<a name="line137">137: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetUp.html">MatSetUp</a>(A));
+<a name="line138">138: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetUp.html">MatSetUp</a>(*B));
+<a name="line139">139: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecCopy.html">VecCopy</a>(actx-&gt;diag, bctx-&gt;diag));
+<a name="line140">140: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecCopy.html">VecCopy</a>(actx-&gt;inv_diag, bctx-&gt;inv_diag));
+<a name="line141">141: </a>    bctx-&gt;diag_valid     = actx-&gt;diag_valid;
+<a name="line142">142: </a>    bctx-&gt;inv_diag_valid = actx-&gt;inv_diag_valid;
+<a name="line143">143: </a>  }
+<a name="line144">144: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line145">145: </a>}
+
+<a name="line147">147: </a><font color="#B22222">/*@</font>
+<a name="line148">148: </a><font color="#B22222">  <a href="../../../../manualpages/Mat/MatDiagonalGetDiagonal.html">MatDiagonalGetDiagonal</a> - Get the diagonal of a `<a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>`</font>
+
+<a name="line150">150: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line151">151: </a><font color="#B22222">. A - the `<a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>`</font>
+
+<a name="line153">153: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line154">154: </a><font color="#B22222">. diag - the `<a href="../../../../manualpages/Vec/Vec.html">Vec</a>` that defines the diagonal</font>
+
+<a name="line156">156: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line158">158: </a><font color="#B22222">  Note:</font>
+<a name="line159">159: </a><font color="#B22222">  The user must call</font>
+<a name="line160">160: </a><font color="#B22222">  `<a href="../../../../manualpages/Mat/MatDiagonalRestoreDiagonal.html">MatDiagonalRestoreDiagonal</a>()` before using the matrix again.</font>
+
+<a name="line162">162: </a><font color="#B22222">  For a copy of the diagonal values, rather than a reference, use `<a href="../../../../manualpages/Mat/MatGetDiagonal.html">MatGetDiagonal</a>()`</font>
+
+<a name="line164">164: </a><font color="#B22222">  Any changes to the obtained vector immediately change the action of the `<a href="../../../../manualpages/Mat/Mat.html">Mat</a>`. The matrix can be changed more efficiently by accessing this vector and changing its values, instead of filling a work vector and using `<a href="../../../../manualpages/Mat/MatDiagonalSet.html">MatDiagonalSet</a>()`</font>
+
+<a name="line166">166: </a><font color="#B22222">.seealso: [](ch_matrices), `<a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>`, `<a href="../../../../manualpages/Mat/MatCreateDiagonal.html">MatCreateDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatDiagonalRestoreDiagonal.html">MatDiagonalRestoreDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatDiagonalGetInverseDiagonal.html">MatDiagonalGetInverseDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatGetDiagonal.html">MatGetDiagonal</a>()`</font>
+<a name="line167">167: </a><font color="#B22222">@*/</font>
+<a name="line168">168: </a><strong><font color="#4169E1"><a name="MatDiagonalGetDiagonal"></a><a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../manualpages/Mat/MatDiagonalGetDiagonal.html">MatDiagonalGetDiagonal</a>(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> *diag)</font></strong>
+<a name="line169">169: </a>{
+<a name="line170">170: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line172">172: </a>  PetscAssertPointer(diag, 2);
+<a name="line173">173: </a>  *diag = NULL;
+<a name="line174">174: </a>  <a href="../../../../manualpages/Sys/PetscUseMethod.html">PetscUseMethod</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatDiagonalGetDiagonal_C"</font>, (<a href="../../../../manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> *), (A, diag));
+<a name="line175">175: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line176">176: </a>}
+
+<a name="line178">178: </a><strong><font color="#4169E1"><a name="MatDiagonalGetDiagonal_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDiagonalGetDiagonal_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> *diag)</font></strong>
+<a name="line179">179: </a>{
+<a name="line180">180: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)A-&gt;data;
+
+<a name="line182">182: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line183">183: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetUp.html">MatSetUp</a>(A));
+<a name="line184">184: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(A));
+<a name="line185">185: </a>  *diag = ctx-&gt;diag;
+<a name="line186">186: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectStateGet.html">PetscObjectStateGet</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)*diag, &amp;ctx-&gt;diag_state));
+<a name="line187">187: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line188">188: </a>}
+
+<a name="line190">190: </a><font color="#B22222">/*@</font>
+<a name="line191">191: </a><font color="#B22222">  <a href="../../../../manualpages/Mat/MatDiagonalRestoreDiagonal.html">MatDiagonalRestoreDiagonal</a> - Restore the diagonal of a `<a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>`</font>
+
+<a name="line193">193: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line194">194: </a><font color="#B22222">+ A    - the `<a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>`</font>
+<a name="line195">195: </a><font color="#B22222">- diag - the `<a href="../../../../manualpages/Vec/Vec.html">Vec</a>` obtained from `<a href="../../../../manualpages/Mat/MatDiagonalGetDiagonal.html">MatDiagonalGetDiagonal</a>()`</font>
+
+<a name="line197">197: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line199">199: </a><font color="#B22222">  Note:</font>
+<a name="line200">200: </a><font color="#B22222">  Use `<a href="../../../../manualpages/Mat/MatDiagonalSet.html">MatDiagonalSet</a>()` to change the values by copy, rather than reference.</font>
+
+<a name="line202">202: </a><font color="#B22222">.seealso: [](ch_matrices), `<a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>`, `<a href="../../../../manualpages/Mat/MatCreateDiagonal.html">MatCreateDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatDiagonalGetDiagonal.html">MatDiagonalGetDiagonal</a>()`</font>
+<a name="line203">203: </a><font color="#B22222">@*/</font>
+<a name="line204">204: </a><strong><font color="#4169E1"><a name="MatDiagonalRestoreDiagonal"></a><a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../manualpages/Mat/MatDiagonalRestoreDiagonal.html">MatDiagonalRestoreDiagonal</a>(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> *diag)</font></strong>
+<a name="line205">205: </a>{
+<a name="line206">206: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line208">208: </a>  PetscAssertPointer(diag, 2);
+<a name="line209">209: </a>  <a href="../../../../manualpages/Sys/PetscUseMethod.html">PetscUseMethod</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatDiagonalRestoreDiagonal_C"</font>, (<a href="../../../../manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> *), (A, diag));
+<a name="line210">210: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line211">211: </a>}
+
+<a name="line213">213: </a><strong><font color="#4169E1"><a name="MatDiagonalRestoreDiagonal_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDiagonalRestoreDiagonal_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> *diag)</font></strong>
+<a name="line214">214: </a>{
+<a name="line215">215: </a>  Mat_Diagonal    *ctx = (Mat_Diagonal *)A-&gt;data;
+<a name="line216">216: </a>  <a href="../../../../manualpages/Sys/PetscObjectState.html">PetscObjectState</a> diag_state;
+
+<a name="line218">218: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line219">219: </a>  <a href="../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(ctx-&gt;diag == *diag, <a href="../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A), <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONG</a>, <font color="#666666">"Restored a different diagonal vector"</font>);
+<a name="line220">220: </a>  ctx-&gt;diag_valid = <a href="../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line221">221: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectStateGet.html">PetscObjectStateGet</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)*diag, &amp;diag_state));
+<a name="line222">222: </a>  <font color="#4169E1">if</font> (ctx-&gt;diag_state != diag_state) {
+<a name="line223">223: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectStateIncrease.html">PetscObjectStateIncrease</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A));
+<a name="line224">224: </a>    ctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line225">225: </a>  }
+<a name="line226">226: </a>  *diag = NULL;
+<a name="line227">227: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line228">228: </a>}
+
+<a name="line230">230: </a><font color="#B22222">/*@</font>
+<a name="line231">231: </a><font color="#B22222">  <a href="../../../../manualpages/Mat/MatDiagonalGetInverseDiagonal.html">MatDiagonalGetInverseDiagonal</a> - Get the inverse diagonal of a `<a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>`</font>
+
+<a name="line233">233: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line234">234: </a><font color="#B22222">. A - the `<a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>`</font>
+
+<a name="line236">236: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line237">237: </a><font color="#B22222">. inv_diag - the `<a href="../../../../manualpages/Vec/Vec.html">Vec</a>` that defines the inverse diagonal</font>
+
+<a name="line239">239: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line241">241: </a><font color="#B22222">  Note:</font>
+<a name="line242">242: </a><font color="#B22222">  The user must call</font>
+<a name="line243">243: </a><font color="#B22222">  `<a href="../../../../manualpages/Mat/MatDiagonalRestoreInverseDiagonal.html">MatDiagonalRestoreInverseDiagonal</a>()` before using the matrix again.</font>
+
+<a name="line245">245: </a><font color="#B22222">  If a matrix is created only to call `<a href="../../../../manualpages/Mat/MatSolve.html">MatSolve</a>()` (which happens for `MATLMVMDIAGBROYDEN`),</font>
+<a name="line246">246: </a><font color="#B22222">  using `<a href="../../../../manualpages/Mat/MatDiagonalGetInverseDiagonal.html">MatDiagonalGetInverseDiagonal</a>()` and `<a href="../../../../manualpages/Mat/MatDiagonalRestoreInverseDiagonal.html">MatDiagonalRestoreInverseDiagonal</a>()` avoids copies</font>
+<a name="line247">247: </a><font color="#B22222">  and avoids any call to `<a href="../../../../manualpages/Vec/VecReciprocal.html">VecReciprocal</a>()`.</font>
+
+<a name="line249">249: </a><font color="#B22222">.seealso: [](ch_matrices), `<a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>`, `<a href="../../../../manualpages/Mat/MatCreateDiagonal.html">MatCreateDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatDiagonalRestoreInverseDiagonal.html">MatDiagonalRestoreInverseDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatDiagonalGetDiagonal.html">MatDiagonalGetDiagonal</a>()`, `MATLMVMBROYDEN`, `<a href="../../../../manualpages/Mat/MatSolve.html">MatSolve</a>()`</font>
+<a name="line250">250: </a><font color="#B22222">@*/</font>
+<a name="line251">251: </a><strong><font color="#4169E1"><a name="MatDiagonalGetInverseDiagonal"></a><a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../manualpages/Mat/MatDiagonalGetInverseDiagonal.html">MatDiagonalGetInverseDiagonal</a>(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> *inv_diag)</font></strong>
+<a name="line252">252: </a>{
+<a name="line253">253: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line255">255: </a>  PetscAssertPointer(inv_diag, 2);
+<a name="line256">256: </a>  *inv_diag = NULL;
+<a name="line257">257: </a>  <a href="../../../../manualpages/Sys/PetscUseMethod.html">PetscUseMethod</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatDiagonalGetInverseDiagonal_C"</font>, (<a href="../../../../manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> *), (A, inv_diag));
+<a name="line258">258: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line259">259: </a>}
+
+<a name="line261">261: </a><strong><font color="#4169E1"><a name="MatDiagonalGetInverseDiagonal_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDiagonalGetInverseDiagonal_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> *inv_diag)</font></strong>
+<a name="line262">262: </a>{
+<a name="line263">263: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)A-&gt;data;
+
+<a name="line265">265: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line266">266: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetUp.html">MatSetUp</a>(A));
+<a name="line267">267: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpInverseDiagonal(A));
+<a name="line268">268: </a>  *inv_diag = ctx-&gt;inv_diag;
+<a name="line269">269: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectStateGet.html">PetscObjectStateGet</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)*inv_diag, &amp;ctx-&gt;inv_diag_state));
+<a name="line270">270: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line271">271: </a>}
+
+<a name="line273">273: </a><font color="#B22222">/*@</font>
+<a name="line274">274: </a><font color="#B22222">  <a href="../../../../manualpages/Mat/MatDiagonalRestoreInverseDiagonal.html">MatDiagonalRestoreInverseDiagonal</a> - Restore the inverse diagonal of a `<a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>`</font>
+
+<a name="line276">276: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line277">277: </a><font color="#B22222">+ A        - the `<a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>`</font>
+<a name="line278">278: </a><font color="#B22222">- inv_diag - the `<a href="../../../../manualpages/Vec/Vec.html">Vec</a>` obtained from `<a href="../../../../manualpages/Mat/MatDiagonalGetInverseDiagonal.html">MatDiagonalGetInverseDiagonal</a>()`</font>
+
+<a name="line280">280: </a><font color="#B22222">  Level: developer</font>
+
+<a name="line282">282: </a><font color="#B22222">.seealso: [](ch_matrices), `<a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>`, `<a href="../../../../manualpages/Mat/MatCreateDiagonal.html">MatCreateDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatDiagonalGetInverseDiagonal.html">MatDiagonalGetInverseDiagonal</a>()`</font>
+<a name="line283">283: </a><font color="#B22222">@*/</font>
+<a name="line284">284: </a><strong><font color="#4169E1"><a name="MatDiagonalRestoreInverseDiagonal"></a><a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../manualpages/Mat/MatDiagonalRestoreInverseDiagonal.html">MatDiagonalRestoreInverseDiagonal</a>(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> *inv_diag)</font></strong>
+<a name="line285">285: </a>{
+<a name="line286">286: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line288">288: </a>  PetscAssertPointer(inv_diag, 2);
+<a name="line289">289: </a>  <a href="../../../../manualpages/Sys/PetscUseMethod.html">PetscUseMethod</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatDiagonalRestoreInverseDiagonal_C"</font>, (<a href="../../../../manualpages/Mat/Mat.html">Mat</a>, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> *), (A, inv_diag));
+<a name="line290">290: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line291">291: </a>}
+
+<a name="line293">293: </a><strong><font color="#4169E1"><a name="MatDiagonalRestoreInverseDiagonal_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDiagonalRestoreInverseDiagonal_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> *inv_diag)</font></strong>
+<a name="line294">294: </a>{
+<a name="line295">295: </a>  Mat_Diagonal    *ctx = (Mat_Diagonal *)A-&gt;data;
+<a name="line296">296: </a>  <a href="../../../../manualpages/Sys/PetscObjectState.html">PetscObjectState</a> inv_diag_state;
+
+<a name="line298">298: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line299">299: </a>  <a href="../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(ctx-&gt;inv_diag == *inv_diag, <a href="../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A), <a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_WRONG</a>, <font color="#666666">"Restored a different diagonal vector"</font>);
+<a name="line300">300: </a>  ctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line301">301: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectStateGet.html">PetscObjectStateGet</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)*inv_diag, &amp;inv_diag_state));
+<a name="line302">302: </a>  <font color="#4169E1">if</font> (ctx-&gt;inv_diag_state != inv_diag_state) {
+<a name="line303">303: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectStateIncrease.html">PetscObjectStateIncrease</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A));
+<a name="line304">304: </a>    ctx-&gt;diag_valid = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line305">305: </a>  }
+<a name="line306">306: </a>  *inv_diag = NULL;
+<a name="line307">307: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line308">308: </a>}
+
+<a name="line310">310: </a><strong><font color="#4169E1"><a name="MatDestroy_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDestroy_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> mat)</font></strong>
+<a name="line311">311: </a>{
+<a name="line312">312: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)mat-&gt;data;
+
+<a name="line314">314: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line315">315: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;ctx-&gt;diag));
+<a name="line316">316: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;ctx-&gt;inv_diag));
+<a name="line317">317: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(ctx-&gt;col));
+<a name="line318">318: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(ctx-&gt;val));
+<a name="line319">319: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)mat, <font color="#666666">"MatDiagonalGetDiagonal_C"</font>, NULL));
+<a name="line320">320: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)mat, <font color="#666666">"MatDiagonalRestoreDiagonal_C"</font>, NULL));
+<a name="line321">321: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)mat, <font color="#666666">"MatDiagonalGetInverseDiagonal_C"</font>, NULL));
+<a name="line322">322: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)mat, <font color="#666666">"MatDiagonalRestoreInverseDiagonal_C"</font>, NULL));
+<a name="line323">323: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(mat-&gt;data));
+<a name="line324">324: </a>  mat-&gt;structural_symmetry_eternal = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line325">325: </a>  mat-&gt;symmetry_eternal            = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line326">326: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line327">327: </a>}
+
+<a name="line329">329: </a><strong><font color="#4169E1"><a name="MatView_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatView_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> J, <a href="../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line330">330: </a>{
+<a name="line331">331: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)J-&gt;data;
+<a name="line332">332: </a>  <a href="../../../../manualpages/Sys/PetscBool.html">PetscBool</a>     iascii;
+
+<a name="line334">334: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line335">335: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii));
+<a name="line336">336: </a>  <font color="#4169E1">if</font> (iascii) {
+<a name="line337">337: </a>    <a href="../../../../manualpages/Viewer/PetscViewerFormat.html">PetscViewerFormat</a> format;
+
+<a name="line339">339: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Viewer/PetscViewerGetFormat.html">PetscViewerGetFormat</a>(viewer, &amp;format));
+<a name="line340">340: </a>    <font color="#4169E1">if</font> (format == <a href="../../../../manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_FACTOR_INFO</a> || format == <a href="../../../../manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_INFO</a>) <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line341">341: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(J));
+<a name="line342">342: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecView.html">VecView</a>(ctx-&gt;diag, viewer));
+<a name="line343">343: </a>  }
+<a name="line344">344: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line345">345: </a>}
+
+<a name="line347">347: </a><strong><font color="#4169E1"><a name="MatGetDiagonal_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatGetDiagonal_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> J, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> x)</font></strong>
+<a name="line348">348: </a>{
+<a name="line349">349: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)J-&gt;data;
+
+<a name="line351">351: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line352">352: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(J));
+<a name="line353">353: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecCopy.html">VecCopy</a>(ctx-&gt;diag, x));
+<a name="line354">354: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line355">355: </a>}
+
+<a name="line357">357: </a><strong><font color="#4169E1"><a name="MatDiagonalSet_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDiagonalSet_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> J, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> D, <a href="../../../../manualpages/Sys/InsertMode.html">InsertMode</a> is)</font></strong>
+<a name="line358">358: </a>{
+<a name="line359">359: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)J-&gt;data;
+
+<a name="line361">361: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line362">362: </a>  <font color="#4169E1">switch</font> (is) {
+<a name="line363">363: </a>  <font color="#4169E1">case</font> <a href="../../../../manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>:
+<a name="line364">364: </a>  <font color="#4169E1">case</font> <a href="../../../../manualpages/Sys/InsertMode.html">ADD_ALL_VALUES</a>:
+<a name="line365">365: </a>  <font color="#4169E1">case</font> <a href="../../../../manualpages/Sys/InsertMode.html">ADD_BC_VALUES</a>:
+<a name="line366">366: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(J));
+<a name="line367">367: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecAXPY.html">VecAXPY</a>(ctx-&gt;diag, 1.0, D));
+<a name="line368">368: </a>    ctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line369">369: </a>    <font color="#4169E1">break</font>;
+<a name="line370">370: </a>  <font color="#4169E1">case</font> <a href="../../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>:
+<a name="line371">371: </a>  <font color="#4169E1">case</font> <a href="../../../../manualpages/Sys/InsertMode.html">INSERT_BC_VALUES</a>:
+<a name="line372">372: </a>  <font color="#4169E1">case</font> <a href="../../../../manualpages/Sys/InsertMode.html">INSERT_ALL_VALUES</a>:
+<a name="line373">373: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetUp.html">MatSetUp</a>(J));
+<a name="line374">374: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecCopy.html">VecCopy</a>(D, ctx-&gt;diag));
+<a name="line375">375: </a>    ctx-&gt;diag_valid     = <a href="../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line376">376: </a>    ctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line377">377: </a>    <font color="#4169E1">break</font>;
+<a name="line378">378: </a>  <font color="#4169E1">case</font> <a href="../../../../manualpages/Sys/MAX_VALUES.html">MAX_VALUES</a>:
+<a name="line379">379: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(J));
+<a name="line380">380: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecPointwiseMax.html">VecPointwiseMax</a>(ctx-&gt;diag, D, ctx-&gt;diag));
+<a name="line381">381: </a>    ctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line382">382: </a>    <font color="#4169E1">break</font>;
+<a name="line383">383: </a>  <font color="#4169E1">case</font> <a href="../../../../manualpages/Sys/MIN_VALUES.html">MIN_VALUES</a>:
+<a name="line384">384: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(J));
+<a name="line385">385: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecPointwiseMin.html">VecPointwiseMin</a>(ctx-&gt;diag, D, ctx-&gt;diag));
+<a name="line386">386: </a>    ctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line387">387: </a>    <font color="#4169E1">break</font>;
+<a name="line388">388: </a>  <font color="#4169E1">case</font> <a href="../../../../manualpages/Sys/InsertMode.html">NOT_SET_VALUES</a>:
+<a name="line389">389: </a>    <font color="#4169E1">break</font>;
+<a name="line390">390: </a>  }
+<a name="line391">391: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line392">392: </a>}
+
+<a name="line394">394: </a><strong><font color="#4169E1"><a name="MatShift_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatShift_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> Y, <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> a)</font></strong>
+<a name="line395">395: </a>{
+<a name="line396">396: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)Y-&gt;data;
+
+<a name="line398">398: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line399">399: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(Y));
+<a name="line400">400: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecShift.html">VecShift</a>(ctx-&gt;diag, a));
+<a name="line401">401: </a>  ctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line402">402: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line403">403: </a>}
+
+<a name="line405">405: </a><strong><font color="#4169E1"><a name="MatScale_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatScale_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> Y, <a href="../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> a)</font></strong>
+<a name="line406">406: </a>{
+<a name="line407">407: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)Y-&gt;data;
+
+<a name="line409">409: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line410">410: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetUp.html">MatSetUp</a>(Y));
+<a name="line411">411: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(Y));
+<a name="line412">412: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecScale.html">VecScale</a>(ctx-&gt;diag, a));
+<a name="line413">413: </a>  ctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line414">414: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line415">415: </a>}
+
+<a name="line417">417: </a><strong><font color="#4169E1"><a name="MatDiagonalScale_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatDiagonalScale_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> Y, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> l, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> r)</font></strong>
+<a name="line418">418: </a>{
+<a name="line419">419: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)Y-&gt;data;
+
+<a name="line421">421: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line422">422: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpDiagonal(Y));
+<a name="line423">423: </a>  <font color="#4169E1">if</font> (l) {
+<a name="line424">424: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(ctx-&gt;diag, ctx-&gt;diag, l));
+<a name="line425">425: </a>    ctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line426">426: </a>  }
+<a name="line427">427: </a>  <font color="#4169E1">if</font> (r) {
+<a name="line428">428: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(ctx-&gt;diag, ctx-&gt;diag, r));
+<a name="line429">429: </a>    ctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line430">430: </a>  }
+<a name="line431">431: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line432">432: </a>}
+
+<a name="line434">434: </a><strong><font color="#4169E1"><a name="MatSetUp_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSetUp_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A)</font></strong>
+<a name="line435">435: </a>{
+<a name="line436">436: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)A-&gt;data;
+
+<a name="line438">438: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line439">439: </a>  <font color="#4169E1">if</font> (!ctx-&gt;diag) {
+<a name="line440">440: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/IS/PetscLayoutSetUp.html">PetscLayoutSetUp</a>(A-&gt;cmap));
+<a name="line441">441: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/IS/PetscLayoutSetUp.html">PetscLayoutSetUp</a>(A-&gt;rmap));
+<a name="line442">442: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatCreateVecs.html">MatCreateVecs</a>(A, &amp;ctx-&gt;diag, NULL));
+<a name="line443">443: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(ctx-&gt;diag, &amp;ctx-&gt;inv_diag));
+<a name="line444">444: </a>    <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecZeroEntries.html">VecZeroEntries</a>(ctx-&gt;diag));
+<a name="line445">445: </a>    ctx-&gt;diag_valid = <a href="../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line446">446: </a>  }
+<a name="line447">447: </a>  A-&gt;assembled = <a href="../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line448">448: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line449">449: </a>}
+
+<a name="line451">451: </a><strong><font color="#4169E1"><a name="MatZeroEntries_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatZeroEntries_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> Y)</font></strong>
+<a name="line452">452: </a>{
+<a name="line453">453: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)Y-&gt;data;
+
+<a name="line455">455: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line456">456: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetUp.html">MatSetUp</a>(Y));
+<a name="line457">457: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecZeroEntries.html">VecZeroEntries</a>(ctx-&gt;diag));
+<a name="line458">458: </a>  ctx-&gt;diag_valid     = <a href="../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line459">459: </a>  ctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line460">460: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line461">461: </a>}
+
+<a name="line463">463: </a><strong><font color="#4169E1"><a name="MatSolve_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolve_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> matin, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> b, <a href="../../../../manualpages/Vec/Vec.html">Vec</a> x)</font></strong>
+<a name="line464">464: </a>{
+<a name="line465">465: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)matin-&gt;data;
+
+<a name="line467">467: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line468">468: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MatDiagonalSetUpInverseDiagonal(matin));
+<a name="line469">469: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>(x, b, ctx-&gt;inv_diag));
+<a name="line470">470: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line471">471: </a>}
+
+<a name="line473">473: </a><strong><font color="#4169E1"><a name="MatGetInfo_Diagonal"></a>static <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatGetInfo_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../manualpages/Mat/MatInfoType.html">MatInfoType</a> flag, <a href="../../../../manualpages/Mat/MatInfo.html">MatInfo</a> *info)</font></strong>
+<a name="line474">474: </a>{
+<a name="line475">475: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line476">476: </a>  info-&gt;block_size        = 1.0;
+<a name="line477">477: </a>  info-&gt;nz_allocated      = A-&gt;cmap-&gt;N;
+<a name="line478">478: </a>  info-&gt;nz_used           = A-&gt;cmap-&gt;N;
+<a name="line479">479: </a>  info-&gt;nz_unneeded       = 0.0;
+<a name="line480">480: </a>  info-&gt;assemblies        = A-&gt;num_ass;
+<a name="line481">481: </a>  info-&gt;mallocs           = 0.0;
+<a name="line482">482: </a>  info-&gt;memory            = 0;
+<a name="line483">483: </a>  info-&gt;fill_ratio_given  = 0;
+<a name="line484">484: </a>  info-&gt;fill_ratio_needed = 0;
+<a name="line485">485: </a>  info-&gt;factor_mallocs    = 0;
+<a name="line486">486: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line487">487: </a>}
+
+<a name="line489">489: </a><font color="#B22222">/*@</font>
+<a name="line490">490: </a><font color="#B22222">  <a href="../../../../manualpages/Mat/MatCreateDiagonal.html">MatCreateDiagonal</a> - Creates a matrix defined by a given vector along its diagonal.</font>
+
+<a name="line492">492: </a><font color="#B22222">  Collective</font>
+
+<a name="line494">494: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line495">495: </a><font color="#B22222">. diag - vector for the diagonal</font>
+
+<a name="line497">497: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line498">498: </a><font color="#B22222">. J - the diagonal matrix</font>
+
+<a name="line500">500: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line502">502: </a><font color="#B22222">  Notes:</font>
+<a name="line503">503: </a><font color="#B22222">  Only supports square matrices with the same number of local rows and columns.</font>
+
+<a name="line505">505: </a><font color="#B22222">  The input vector `diag` will be referenced internally: any changes to `diag`</font>
+<a name="line506">506: </a><font color="#B22222">  will affect the matrix `J`.</font>
+
+<a name="line508">508: </a><font color="#B22222">.seealso: [](ch_matrices), `<a href="../../../../manualpages/Mat/Mat.html">Mat</a>`, `<a href="../../../../manualpages/Mat/MatDestroy.html">MatDestroy</a>()`, `MATCONSTANTDIAGONAL`, `<a href="../../../../manualpages/Mat/MatScale.html">MatScale</a>()`, `<a href="../../../../manualpages/Mat/MatShift.html">MatShift</a>()`, `<a href="../../../../manualpages/Mat/MatMult.html">MatMult</a>()`, `<a href="../../../../manualpages/Mat/MatGetDiagonal.html">MatGetDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatSolve.html">MatSolve</a>()`</font>
+<a name="line509">509: </a><font color="#B22222">          `<a href="../../../../manualpages/Mat/MatDiagonalRestoreInverseDiagonal.html">MatDiagonalRestoreInverseDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatDiagonalGetDiagonal.html">MatDiagonalGetDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatDiagonalRestoreDiagonal.html">MatDiagonalRestoreDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatDiagonalGetInverseDiagonal.html">MatDiagonalGetInverseDiagonal</a>()`</font>
+<a name="line510">510: </a><font color="#B22222">@*/</font>
+<a name="line511">511: </a><strong><font color="#4169E1"><a name="MatCreateDiagonal"></a><a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../manualpages/Mat/MatCreateDiagonal.html">MatCreateDiagonal</a>(<a href="../../../../manualpages/Vec/Vec.html">Vec</a> diag, <a href="../../../../manualpages/Mat/Mat.html">Mat</a> *J)</font></strong>
+<a name="line512">512: </a>{
+<a name="line513">513: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line515">515: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatCreate.html">MatCreate</a>(<a href="../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)diag), J));
+<a name="line516">516: </a>  <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> m, M;
+<a name="line517">517: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecGetLocalSize.html">VecGetLocalSize</a>(diag, &amp;m));
+<a name="line518">518: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecGetSize.html">VecGetSize</a>(diag, &amp;M));
+<a name="line519">519: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetSizes.html">MatSetSizes</a>(*J, m, m, M, M));
+<a name="line520">520: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetType.html">MatSetType</a>(*J, <a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>));
+
+<a name="line522">522: </a>  <a href="../../../../manualpages/IS/PetscLayout.html">PetscLayout</a> map;
+<a name="line523">523: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecGetLayout.html">VecGetLayout</a>(diag, &amp;map));
+<a name="line524">524: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetLayouts.html">MatSetLayouts</a>(*J, map, map));
+<a name="line525">525: </a>  Mat_Diagonal *ctx = (Mat_Diagonal *)(*J)-&gt;data;
+<a name="line526">526: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)diag));
+<a name="line527">527: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;ctx-&gt;diag));
+<a name="line528">528: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;ctx-&gt;inv_diag));
+<a name="line529">529: </a>  ctx-&gt;diag           = diag;
+<a name="line530">530: </a>  ctx-&gt;diag_valid     = <a href="../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line531">531: </a>  ctx-&gt;inv_diag_valid = <a href="../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line532">532: </a>  <a href="../../../../manualpages/Vec/VecType.html">VecType</a> type;
+<a name="line533">533: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(ctx-&gt;diag, &amp;ctx-&gt;inv_diag));
+<a name="line534">534: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Vec/VecGetType.html">VecGetType</a>(diag, &amp;type));
+<a name="line535">535: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscFree.html">PetscFree</a>((*J)-&gt;defaultvectype));
+<a name="line536">536: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscStrallocpy.html">PetscStrallocpy</a>(type, &amp;(*J)-&gt;defaultvectype));
+<a name="line537">537: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Mat/MatSetUp.html">MatSetUp</a>(*J));
+<a name="line538">538: </a>  ctx-&gt;col = NULL;
+<a name="line539">539: </a>  ctx-&gt;val = NULL;
+<a name="line540">540: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line541">541: </a>}
+
+<a name="line543">543: </a><font color="#B22222">/*MC</font>
+<a name="line544">544: </a><font color="#B22222">   <a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a> - <a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a> = "diagonal" - A diagonal matrix type with the diagonal implemented as a `<a href="../../../../manualpages/Vec/Vec.html">Vec</a>`.  Useful for</font>
+<a name="line545">545: </a><font color="#B22222">   cases where `<a href="../../../../manualpages/Vec/VecPointwiseMult.html">VecPointwiseMult</a>()` or `<a href="../../../../manualpages/Vec/VecPointwiseDivide.html">VecPointwiseDivide</a>()` should be thought of as the actions of a linear operator.</font>
+
+<a name="line547">547: </a><font color="#B22222">  Level: advanced</font>
+
+<a name="line549">549: </a><font color="#B22222">.seealso: [](ch_matrices), `<a href="../../../../manualpages/Mat/Mat.html">Mat</a>`, `<a href="../../../../manualpages/Mat/MatCreateDiagonal.html">MatCreateDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatDiagonalRestoreInverseDiagonal.html">MatDiagonalRestoreInverseDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatDiagonalGetDiagonal.html">MatDiagonalGetDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatDiagonalRestoreDiagonal.html">MatDiagonalRestoreDiagonal</a>()`, `<a href="../../../../manualpages/Mat/MatDiagonalGetInverseDiagonal.html">MatDiagonalGetInverseDiagonal</a>()`</font>
+<a name="line550">550: </a><font color="#B22222">M*/</font>
+<a name="line551">551: </a><strong><font color="#4169E1"><a name="MatCreate_Diagonal"></a>PETSC_INTERN <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatCreate_Diagonal(<a href="../../../../manualpages/Mat/Mat.html">Mat</a> A)</font></strong>
+<a name="line552">552: </a>{
+<a name="line553">553: </a>  Mat_Diagonal *ctx;
+
+<a name="line555">555: </a>  <a href="../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line556">556: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;ctx));
+<a name="line557">557: </a>  A-&gt;data = (void *)ctx;
+
+<a name="line559">559: </a>  A-&gt;structurally_symmetric      = <a href="../../../../manualpages/Sys/PetscBool3.html">PETSC_BOOL3_TRUE</a>;
+<a name="line560">560: </a>  A-&gt;structural_symmetry_eternal = <a href="../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line561">561: </a>  A-&gt;symmetry_eternal            = <a href="../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line562">562: </a>  A-&gt;symmetric                   = <a href="../../../../manualpages/Sys/PetscBool3.html">PETSC_BOOL3_TRUE</a>;
+<a name="line563">563: </a>  <font color="#4169E1">if</font> (!<a href="../../../../manualpages/Sys/PetscDefined.html">PetscDefined</a>(USE_COMPLEX)) A-&gt;hermitian = <a href="../../../../manualpages/Sys/PetscBool3.html">PETSC_BOOL3_TRUE</a>;
+
+<a name="line565">565: </a>  A-&gt;ops-&gt;getrow           = MatGetRow_Diagonal;
+<a name="line566">566: </a>  A-&gt;ops-&gt;restorerow       = MatRestoreRow_Diagonal;
+<a name="line567">567: </a>  A-&gt;ops-&gt;mult             = MatMult_Diagonal;
+<a name="line568">568: </a>  A-&gt;ops-&gt;multadd          = MatMultAdd_Diagonal;
+<a name="line569">569: </a>  A-&gt;ops-&gt;multtranspose    = MatMult_Diagonal;
+<a name="line570">570: </a>  A-&gt;ops-&gt;multtransposeadd = MatMultAdd_Diagonal;
+<a name="line571">571: </a>  A-&gt;ops-&gt;norm             = MatNorm_Diagonal;
+<a name="line572">572: </a>  A-&gt;ops-&gt;duplicate        = MatDuplicate_Diagonal;
+<a name="line573">573: </a>  A-&gt;ops-&gt;solve            = MatSolve_Diagonal;
+<a name="line574">574: </a>  A-&gt;ops-&gt;solvetranspose   = MatSolve_Diagonal;
+<a name="line575">575: </a>  A-&gt;ops-&gt;shift            = MatShift_Diagonal;
+<a name="line576">576: </a>  A-&gt;ops-&gt;scale            = MatScale_Diagonal;
+<a name="line577">577: </a>  A-&gt;ops-&gt;diagonalscale    = MatDiagonalScale_Diagonal;
+<a name="line578">578: </a>  A-&gt;ops-&gt;getdiagonal      = MatGetDiagonal_Diagonal;
+<a name="line579">579: </a>  A-&gt;ops-&gt;diagonalset      = MatDiagonalSet_Diagonal;
+<a name="line580">580: </a>  A-&gt;ops-&gt;view             = MatView_Diagonal;
+<a name="line581">581: </a>  A-&gt;ops-&gt;zeroentries      = MatZeroEntries_Diagonal;
+<a name="line582">582: </a>  A-&gt;ops-&gt;destroy          = MatDestroy_Diagonal;
+<a name="line583">583: </a>  A-&gt;ops-&gt;getinfo          = MatGetInfo_Diagonal;
+<a name="line584">584: </a>  A-&gt;ops-&gt;axpy             = MatAXPY_Diagonal;
+<a name="line585">585: </a>  A-&gt;ops-&gt;setup            = MatSetUp_Diagonal;
+
+<a name="line587">587: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatDiagonalGetDiagonal_C"</font>, MatDiagonalGetDiagonal_Diagonal));
+<a name="line588">588: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatDiagonalRestoreDiagonal_C"</font>, MatDiagonalRestoreDiagonal_Diagonal));
+<a name="line589">589: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatDiagonalGetInverseDiagonal_C"</font>, MatDiagonalGetInverseDiagonal_Diagonal));
+<a name="line590">590: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../manualpages/Sys/PetscObjectComposeFunction.html">PetscObjectComposeFunction</a>((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A, <font color="#666666">"MatDiagonalRestoreInverseDiagonal_C"</font>, MatDiagonalRestoreInverseDiagonal_Diagonal));
+<a name="line591">591: </a>  <a href="../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscObjectChangeTypeName((<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)A, <a href="../../../../manualpages/Mat/MATDIAGONAL.html">MATDIAGONAL</a>));
+<a name="line592">592: </a>  <a href="../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line593">593: </a>}
+</pre>
+</body>
+
+</html>

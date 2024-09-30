@@ -143,8 +143,8 @@ PetscErrorCode EvaluateFunction(Tao tao, Vec X, Vec F, void *ptr)
   }
   PetscCall(VecRestoreArrayRead(X, &x));
   PetscCall(VecRestoreArray(F, &f));
-  PetscLogFlops(2.0 * M * N);
-  PetscFunctionReturn(0);
+  PetscCall(PetscLogFlops(2.0 * M * N));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*------------------------------------------------------------*/
@@ -168,8 +168,8 @@ PetscErrorCode EvaluateJacobian(Tao tao, Vec X, Mat J, Mat Jpre, void *ptr)
   PetscCall(MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY));
 
   PetscCall(VecRestoreArrayRead(X, &x)); /* not used for linear least square, but keep for future nonlinear least square) */
-  PetscLogFlops(0);                      /* 0 for linear least square, >0 for nonlinear least square */
-  PetscFunctionReturn(0);
+  PetscCall(PetscLogFlops(0));           /* 0 for linear least square, >0 for nonlinear least square */
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------ */
@@ -181,8 +181,8 @@ PetscErrorCode FormDictionaryMatrix(Mat D, AppCtx *user)
   PetscCall(MatAssemblyBegin(D, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(D, MAT_FINAL_ASSEMBLY));
 
-  PetscLogFlops(0); /* 0 for fixed dictionary matrix, >0 for varying dictionary matrix */
-  PetscFunctionReturn(0);
+  PetscCall(PetscLogFlops(0)); /* 0 for fixed dictionary matrix, >0 for varying dictionary matrix */
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------ */
@@ -190,7 +190,7 @@ PetscErrorCode FormStartingPoint(Vec X)
 {
   PetscFunctionBegin;
   PetscCall(VecSet(X, 0.0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -206,7 +206,7 @@ PetscErrorCode InitializeUserData(AppCtx *user)
   b[m++] = 0.55;
   b[m++] = 0.96;
 
-  /* matlab generated random matrix, uniformly distributed in [0,1] with 2 digits accuracy. rng(0); A = rand(M, N); A = round(A*100)/100;
+  /* MATLAB generated random matrix, uniformly distributed in [0,1] with 2 digits accuracy. rng(0); A = rand(M, N); A = round(A*100)/100;
   A = [0.81  0.91  0.28  0.96  0.96
        0.91  0.63  0.55  0.16  0.49
        0.13  0.10  0.96  0.97  0.80]
@@ -245,7 +245,7 @@ PetscErrorCode InitializeUserData(AppCtx *user)
     user->D[k][k + 1] = 1.0;
   }
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

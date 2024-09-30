@@ -1,10 +1,9 @@
-
 /*
             This implements Richardson Iteration.
 */
 #include <../src/ksp/ksp/impls/rich/richardsonimpl.h> /*I "petscksp.h" I*/
 
-PetscErrorCode KSPSetUp_Richardson(KSP ksp)
+static PetscErrorCode KSPSetUp_Richardson(KSP ksp)
 {
   KSP_Richardson *richardsonP = (KSP_Richardson *)ksp->data;
 
@@ -14,10 +13,10 @@ PetscErrorCode KSPSetUp_Richardson(KSP ksp)
   } else {
     PetscCall(KSPSetWorkVecs(ksp, 2));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPSolve_Richardson(KSP ksp)
+static PetscErrorCode KSPSolve_Richardson(KSP ksp)
 {
   PetscInt        i, maxit;
   PetscReal       rnorm = 0.0, abr;
@@ -62,7 +61,7 @@ PetscErrorCode KSPSolve_Richardson(KSP ksp)
     PCRichardsonConvergedReason reason;
     PetscCall(PCApplyRichardson(ksp->pc, b, x, r, ksp->rtol, ksp->abstol, ksp->divtol, maxit, ksp->guess_zero, &ksp->its, &reason));
     ksp->reason = (KSPConvergedReason)reason;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   } else {
     PetscCall(PetscInfo(ksp, "KSPSolve_Richardson: Warning, skipping optimized PCApplyRichardson()\n"));
   }
@@ -144,10 +143,10 @@ PetscErrorCode KSPSolve_Richardson(KSP ksp)
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPView_Richardson(KSP ksp, PetscViewer viewer)
+static PetscErrorCode KSPView_Richardson(KSP ksp, PetscViewer viewer)
 {
   KSP_Richardson *richardsonP = (KSP_Richardson *)ksp->data;
   PetscBool       iascii;
@@ -161,10 +160,10 @@ PetscErrorCode KSPView_Richardson(KSP ksp, PetscViewer viewer)
       PetscCall(PetscViewerASCIIPrintf(viewer, "  damping factor=%g\n", (double)richardsonP->scale));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPSetFromOptions_Richardson(KSP ksp, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode KSPSetFromOptions_Richardson(KSP ksp, PetscOptionItems *PetscOptionsObject)
 {
   KSP_Richardson *rich = (KSP_Richardson *)ksp->data;
   PetscReal       tmp;
@@ -177,16 +176,16 @@ PetscErrorCode KSPSetFromOptions_Richardson(KSP ksp, PetscOptionItems *PetscOpti
   PetscCall(PetscOptionsBool("-ksp_richardson_self_scale", "dynamically determine optimal damping factor", "KSPRichardsonSetSelfScale", rich->selfscale, &flg2, &flg));
   if (flg) PetscCall(KSPRichardsonSetSelfScale(ksp, flg2));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPDestroy_Richardson(KSP ksp)
+static PetscErrorCode KSPDestroy_Richardson(KSP ksp)
 {
   PetscFunctionBegin;
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPRichardsonSetScale_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPRichardsonSetSelfScale_C", NULL));
   PetscCall(KSPDestroyDefault(ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPRichardsonSetScale_Richardson(KSP ksp, PetscReal scale)
@@ -196,7 +195,7 @@ static PetscErrorCode KSPRichardsonSetScale_Richardson(KSP ksp, PetscReal scale)
   PetscFunctionBegin;
   richardsonP        = (KSP_Richardson *)ksp->data;
   richardsonP->scale = scale;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPRichardsonSetSelfScale_Richardson(KSP ksp, PetscBool selfscale)
@@ -206,7 +205,7 @@ static PetscErrorCode KSPRichardsonSetSelfScale_Richardson(KSP ksp, PetscBool se
   PetscFunctionBegin;
   richardsonP            = (KSP_Richardson *)ksp->data;
   richardsonP->selfscale = selfscale;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPBuildResidual_Richardson(KSP ksp, Vec t, Vec v, Vec *V)
@@ -218,11 +217,11 @@ static PetscErrorCode KSPBuildResidual_Richardson(KSP ksp, Vec t, Vec v, Vec *V)
     PetscCall(VecCopy(ksp->work[0], v));
     *V = v;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPRICHARDSON - The preconditioned Richardson iterative method
+    KSPRICHARDSON - The preconditioned Richardson iterative method {cite}`richarson1911`
 
    Options Database Key:
 .   -ksp_richardson_scale - damping factor on the correction (defaults to 1.0)
@@ -230,35 +229,29 @@ static PetscErrorCode KSPBuildResidual_Richardson(KSP ksp, Vec t, Vec v, Vec *V)
    Level: beginner
 
    Notes:
-    x^{n+1} = x^{n} + scale*B(b - A x^{n})
+   $ x^{n+1} = x^{n} + scale*B(b - A x^{n})$
 
-          Here B is the application of the preconditioner
+   Here B is the application of the preconditioner
 
-          This method often (usually) will not converge unless scale is very small.
+   This method often (usually) will not converge unless scale is very small.
 
-    For some preconditioners, currently `PCSOR`, the convergence test is skipped to improve speed,
-    thus it always iterates the maximum number of iterations you've selected. When -ksp_monitor
-    (or any other monitor) is turned on, the norm is computed at each iteration and so the convergence test is run unless
-    you specifically call `KSPSetNormType`(ksp,`KSP_NORM_NONE`);
+   For some preconditioners, currently `PCSOR`, the convergence test is skipped to improve speed,
+   thus it always iterates the maximum number of iterations you've selected. When -ksp_monitor
+   (or any other monitor) is turned on, the norm is computed at each iteration and so the convergence test is run unless
+   you specifically call `KSPSetNormType`(ksp,`KSP_NORM_NONE`);
 
-         For some preconditioners, currently `PCMG` and `PCHYPRE` with BoomerAMG if -ksp_monitor (and also
-    any other monitor) is not turned on then the convergence test is done by the preconditioner itself and
-    so the solver may run more or fewer iterations then if -ksp_monitor is selected.
+   For some preconditioners, currently `PCMG` and `PCHYPRE` with BoomerAMG if -ksp_monitor (and also
+   any other monitor) is not turned on then the convergence test is done by the preconditioner itself and
+   so the solver may run more or fewer iterations then if -ksp_monitor is selected.
 
-    Supports only left preconditioning
+   Supports only left preconditioning
 
-    If using direct solvers such as `PCLU` and `PCCHOLESKY` one generally uses `KSPPREONLY` which uses exactly one iteration
+   If using direct solvers such as `PCLU` and `PCCHOLESKY` one generally uses `KSPPREONLY` instead of this which uses exactly one iteration
 
-$    -ksp_type richardson -pc_type jacobi gives one classically Jacobi preconditioning
+   `-ksp_type richardson -pc_type jacobi` gives one classical Jacobi preconditioning
 
-  Reference:
-. * - L. F. Richardson, "The Approximate Arithmetical Solution by Finite Differences of Physical Problems Involving
-   Differential Equations, with an Application to the Stresses in a Masonry Dam",
-  Philosophical Transactions of the Royal Society of London. Series A,
-  Containing Papers of a Mathematical or Physical Character, Vol. 210, 1911 (1911).
-
-.seealso: [](chapter_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`,
-          `KSPRichardsonSetScale()`, `KSPPREONLY`
+.seealso: [](ch_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`,
+          `KSPRichardsonSetScale()`, `KSPPREONLY`, `KSPRichardsonSetSelfScale()`
 M*/
 
 PETSC_EXTERN PetscErrorCode KSPCreate_Richardson(KSP ksp)
@@ -285,5 +278,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_Richardson(KSP ksp)
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPRichardsonSetSelfScale_C", KSPRichardsonSetSelfScale_Richardson));
 
   richardsonP->scale = 1.0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

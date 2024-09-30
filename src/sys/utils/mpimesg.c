@@ -1,4 +1,3 @@
-
 #include <petscsys.h> /*I  "petscsys.h"  I*/
 #include <petsc/private/mpiutils.h>
 
@@ -9,13 +8,13 @@
 
   Input Parameters:
 + comm     - Communicator
-. iflags   - an array of integers of length sizeof(comm). A '1' in ilengths[i] represent a
-             message from current node to ith node. Optionally NULL
-- ilengths - Non zero ilengths[i] represent a message to i of length ilengths[i].
-             Optionally NULL.
+. iflags   - an array of integers of length sizeof(comm). A '1' in `ilengths`[i] represent a
+             message from current node to ith node. Optionally `NULL`
+- ilengths - Non zero ilengths[i] represent a message to i of length `ilengths`[i].
+             Optionally `NULL`.
 
-  Output Parameters:
-. nrecvs    - number of messages received
+  Output Parameter:
+. nrecvs - number of messages received
 
   Level: developer
 
@@ -23,9 +22,9 @@
   With this info, the correct message lengths can be determined using
   `PetscGatherMessageLengths()`
 
-  Either iflags or ilengths should be provided.  If iflags is not
-  provided (NULL) it can be computed from ilengths. If iflags is
-  provided, ilengths is not required.
+  Either `iflags` or `ilengths` should be provided.  If `iflags` is not
+  provided (`NULL`) it can be computed from `ilengths`. If `iflags` is
+  provided, `ilengths` is not required.
 
 .seealso: `PetscGatherMessageLengths()`, `PetscGatherMessageLengths2()`, `PetscCommBuildTwoSided()`
 @*/
@@ -49,12 +48,12 @@ PetscErrorCode PetscGatherNumberOfMessages(MPI_Comm comm, const PetscMPIInt ifla
     }
   } else iflags_local = (PetscMPIInt *)iflags;
 
-  /* Post an allreduce to determine the numer of messages the current node will receive */
+  /* Post an allreduce to determine the number of messages the current MPI rank will receive */
   PetscCall(MPIU_Allreduce(iflags_local, recv_buf, size, MPI_INT, MPI_SUM, comm));
   *nrecvs = recv_buf[rank];
 
   PetscCall(PetscFree2(recv_buf, iflags_localm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -64,15 +63,15 @@ PetscErrorCode PetscGatherNumberOfMessages(MPI_Comm comm, const PetscMPIInt ifla
   Collective
 
   Input Parameters:
-+ comm      - Communicator
-. nsends    - number of messages that are to be sent.
-. nrecvs    - number of messages being received
-- ilengths  - an array of integers of length sizeof(comm)
-              a non zero ilengths[i] represent a message to i of length ilengths[i]
++ comm     - Communicator
+. nsends   - number of messages that are to be sent.
+. nrecvs   - number of messages being received
+- ilengths - an array of integers of length sizeof(comm)
+              a non zero `ilengths`[i] represent a message to i of length `ilengths`[i]
 
   Output Parameters:
-+ onodes    - list of node-ids from which messages are expected
-- olengths  - corresponding message lengths
++ onodes   - list of ranks from which messages are expected
+- olengths - corresponding message lengths
 
   Level: developer
 
@@ -82,7 +81,7 @@ PetscErrorCode PetscGatherNumberOfMessages(MPI_Comm comm, const PetscMPIInt ifla
 
   The calling function deallocates the memory in onodes and olengths
 
-  To determine nrecvs, one can use `PetscGatherNumberOfMessages()`
+  To determine `nrecvs`, one can use `PetscGatherNumberOfMessages()`
 
 .seealso: `PetscGatherNumberOfMessages()`, `PetscGatherMessageLengths2()`, `PetscCommBuildTwoSided()`
 @*/
@@ -99,7 +98,7 @@ PetscErrorCode PetscGatherMessageLengths(MPI_Comm comm, PetscMPIInt nsends, Pets
 
   /* cannot use PetscMalloc3() here because in the call to MPI_Waitall() they MUST be contiguous */
   PetscCall(PetscMalloc2(nrecvs + nsends, &r_waits, nrecvs + nsends, &w_status));
-  s_waits = r_waits + nrecvs;
+  if (nrecvs + nsends) s_waits = r_waits + nrecvs;
 
   /* Post the Irecv to get the message length-info */
   PetscCall(PetscMalloc1(nrecvs, olengths));
@@ -121,8 +120,8 @@ PetscErrorCode PetscGatherMessageLengths(MPI_Comm comm, PetscMPIInt nsends, Pets
   for (i = 0; i < nrecvs; ++i) {
     (*onodes)[i] = w_status[i].MPI_SOURCE;
 #if defined(PETSC_HAVE_OMPI_MAJOR_VERSION)
-    /* This line is a workaround for a bug in OpenMPI-2.1.1 distributed by Ubuntu-18.04.2 LTS.
-       It happens in self-to-self MPI_Send/Recv using MPI_ANY_SOURCE for message matching. OpenMPI
+    /* This line is a workaround for a bug in Open MPI 2.1.1 distributed by Ubuntu-18.04.2 LTS.
+       It happens in self-to-self MPI_Send/Recv using MPI_ANY_SOURCE for message matching. Open MPI
        does not put correct value in recv buffer. See also
        https://lists.mcs.anl.gov/pipermail/petsc-dev/2019-July/024803.html
        https://www.mail-archive.com/users@lists.open-mpi.org//msg33383.html
@@ -131,7 +130,7 @@ PetscErrorCode PetscGatherMessageLengths(MPI_Comm comm, PetscMPIInt nsends, Pets
 #endif
   }
   PetscCall(PetscFree2(r_waits, w_status));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Same as PetscGatherNumberOfMessages(), except using PetscInt for ilengths[] */
@@ -155,12 +154,12 @@ PetscErrorCode PetscGatherNumberOfMessages_Private(MPI_Comm comm, const PetscMPI
     }
   } else iflags_local = (PetscMPIInt *)iflags;
 
-  /* Post an allreduce to determine the numer of messages the current node will receive */
+  /* Post an allreduce to determine the number of messages the current MPI rank will receive */
   PetscCall(MPIU_Allreduce(iflags_local, recv_buf, size, MPI_INT, MPI_SUM, comm));
   *nrecvs = recv_buf[rank];
 
   PetscCall(PetscFree2(recv_buf, iflags_localm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Same as PetscGatherMessageLengths(), except using PetscInt for message lengths */
@@ -177,7 +176,7 @@ PetscErrorCode PetscGatherMessageLengths_Private(MPI_Comm comm, PetscMPIInt nsen
 
   /* cannot use PetscMalloc3() here because in the call to MPI_Waitall() they MUST be contiguous */
   PetscCall(PetscMalloc2(nrecvs + nsends, &r_waits, nrecvs + nsends, &w_status));
-  s_waits = r_waits + nrecvs;
+  if (r_waits) s_waits = r_waits + nrecvs;
 
   /* Post the Irecv to get the message length-info */
   PetscCall(PetscMalloc1(nrecvs, olengths));
@@ -201,7 +200,7 @@ PetscErrorCode PetscGatherMessageLengths_Private(MPI_Comm comm, PetscMPIInt nsen
     if (w_status[i].MPI_SOURCE == rank) (*olengths)[i] = ilengths[rank]; /* See comments in PetscGatherMessageLengths */
   }
   PetscCall(PetscFree2(r_waits, w_status));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -219,7 +218,7 @@ PetscErrorCode PetscGatherMessageLengths_Private(MPI_Comm comm, PetscMPIInt nsen
 - ilengths2 - second array of integers of length sizeof(comm)
 
   Output Parameters:
-+ onodes    - list of node-ids from which messages are expected
++ onodes    - list of ranks from which messages are expected
 . olengths1 - first corresponding message lengths
 - olengths2 - second  message lengths
 
@@ -229,9 +228,9 @@ PetscErrorCode PetscGatherMessageLengths_Private(MPI_Comm comm, PetscMPIInt nsen
   With this info, the correct `MPI_Irecv()` can be posted with the correct
   from-id, with a buffer with the right amount of memory required.
 
-  The calling function deallocates the memory in onodes and olengths
+  The calling function should `PetscFree()` the memory in `onodes` and `olengths`
 
-  To determine nrecvs, one can use PetscGatherNumberOfMessages()
+  To determine `nrecvs`, one can use `PetscGatherNumberOfMessages()`
 
 .seealso: `PetscGatherMessageLengths()`, `PetscGatherNumberOfMessages()`, `PetscCommBuildTwoSided()`
 @*/
@@ -282,7 +281,7 @@ PetscErrorCode PetscGatherMessageLengths2(MPI_Comm comm, PetscMPIInt nsends, Pet
   }
 
   PetscCall(PetscFree4(r_waits, buf_r, buf_s, w_status));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -309,7 +308,7 @@ PetscErrorCode PetscPostIrecvInt(MPI_Comm comm, PetscMPIInt tag, PetscMPIInt nre
 
   *rbuf    = rbuf_t;
   *r_waits = r_waits_t;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PetscPostIrecvScalar(MPI_Comm comm, PetscMPIInt tag, PetscMPIInt nrecvs, const PetscMPIInt onodes[], const PetscMPIInt olengths[], PetscScalar ***rbuf, MPI_Request **r_waits)
@@ -334,5 +333,5 @@ PetscErrorCode PetscPostIrecvScalar(MPI_Comm comm, PetscMPIInt tag, PetscMPIInt 
 
   *rbuf    = rbuf_t;
   *r_waits = r_waits_t;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -171,7 +171,7 @@ static void print_callback(const char *msg, int length)
 }
 
 // Outputs messages from the AmgX message buffer and clears it
-PetscErrorCode amgx_output_messages(PC_AMGX *amgx)
+static PetscErrorCode amgx_output_messages(PC_AMGX *amgx)
 {
   PetscFunctionBegin;
 
@@ -184,7 +184,7 @@ PetscErrorCode amgx_output_messages(PC_AMGX *amgx)
     amgx_output.clear();
   }
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 // XXX Need to add call in AmgX API that gracefully destroys everything
@@ -314,8 +314,8 @@ static PetscErrorCode PCSetUp_AMGX(PC pc)
   } else {
     PetscCall(MatSeqAIJRestoreArrayRead(amgx->localA, &amgx->values));
   }
-  amgx_output_messages(amgx);
-  PetscFunctionReturn(0);
+  PetscCall(amgx_output_messages(amgx));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -365,8 +365,8 @@ static PetscErrorCode PCApply_AMGX(PC pc, Vec b, Vec x)
     PetscCall(VecRestoreArrayWrite(x, &x_));
     PetscCall(VecRestoreArrayRead(b, &b_));
   }
-  amgx_output_messages(amgx);
-  PetscFunctionReturn(0);
+  PetscCall(amgx_output_messages(amgx));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCReset_AMGX(PC pc)
@@ -380,10 +380,10 @@ static PetscErrorCode PCReset_AMGX(PC pc)
     PetscCallAmgX(AMGX_vector_destroy(amgx->sol));
     PetscCallAmgX(AMGX_vector_destroy(amgx->rhs));
     if (amgx->nranks > 1) PetscCall(MatDestroy(&amgx->localA));
-    amgx_output_messages(amgx);
+    PetscCall(amgx_output_messages(amgx));
     amgx->solve_state_init = false;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -415,7 +415,7 @@ static PetscErrorCode PCDestroy_AMGX(PC pc)
   }
   s_count -= 1;
   PetscCall(PetscFree(amgx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <class T>
@@ -446,7 +446,7 @@ static PetscErrorCode PCSetFromOptions_AMGX(PC pc, PetscOptionItems *PetscOption
 
   // Set method
   std::string def_amg_method = map_reverse_lookup(AmgXControlMap::AMGMethods, amgx->amg_method);
-  PetscCall(PetscStrcpy(option, def_amg_method.c_str()));
+  PetscCall(PetscStrncpy(option, def_amg_method.c_str(), sizeof(option)));
   PetscCall(PetscOptionsString("-pc_amgx_amg_method", "AmgX AMG Method", "", option, option, MAX_PARAM_LEN, NULL));
   PetscCheck(AmgXControlMap::AMGMethods.count(option) == 1, PETSC_COMM_SELF, PETSC_ERR_PLIB, "AMG Method %s not registered for AmgX.", option);
   amgx->amg_method = AmgXControlMap::AMGMethods.at(option);
@@ -454,7 +454,7 @@ static PetscErrorCode PCSetFromOptions_AMGX(PC pc, PetscOptionItems *PetscOption
 
   // Set cycle
   std::string def_amg_cycle = map_reverse_lookup(AmgXControlMap::AMGCycles, amgx->amg_cycle);
-  PetscCall(PetscStrcpy(option, def_amg_cycle.c_str()));
+  PetscCall(PetscStrncpy(option, def_amg_cycle.c_str(), sizeof(option)));
   PetscCall(PetscOptionsString("-pc_amgx_amg_cycle", "AmgX AMG Cycle", "", option, option, MAX_PARAM_LEN, NULL));
   PetscCheck(AmgXControlMap::AMGCycles.count(option) == 1, PETSC_COMM_SELF, PETSC_ERR_PLIB, "AMG Cycle %s not registered for AmgX.", option);
   amgx->amg_cycle = AmgXControlMap::AMGCycles.at(option);
@@ -462,7 +462,7 @@ static PetscErrorCode PCSetFromOptions_AMGX(PC pc, PetscOptionItems *PetscOption
 
   // Set smoother
   std::string def_smoother = map_reverse_lookup(AmgXControlMap::Smoothers, amgx->smoother);
-  PetscCall(PetscStrcpy(option, def_smoother.c_str()));
+  PetscCall(PetscStrncpy(option, def_smoother.c_str(), sizeof(option)));
   PetscCall(PetscOptionsString("-pc_amgx_smoother", "AmgX Smoother", "", option, option, MAX_PARAM_LEN, NULL));
   PetscCheck(AmgXControlMap::Smoothers.count(option) == 1, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Smoother %s not registered for AmgX.", option);
   amgx->smoother = AmgXControlMap::Smoothers.at(option);
@@ -478,7 +478,7 @@ static PetscErrorCode PCSetFromOptions_AMGX(PC pc, PetscOptionItems *PetscOption
 
   // Set selector
   std::string def_selector = map_reverse_lookup(AmgXControlMap::Selectors, amgx->selector);
-  PetscCall(PetscStrcpy(option, def_selector.c_str()));
+  PetscCall(PetscStrncpy(option, def_selector.c_str(), sizeof(option)));
   PetscCall(PetscOptionsString("-pc_amgx_selector", "AmgX Selector", "", option, option, MAX_PARAM_LEN, NULL));
   PetscCheck(AmgXControlMap::Selectors.count(option) == 1, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Selector %s not registered for AmgX.", option);
 
@@ -502,7 +502,7 @@ static PetscErrorCode PCSetFromOptions_AMGX(PC pc, PetscOptionItems *PetscOption
 
   // Set max levels
   PetscCall(PetscOptionsInt("-pc_amgx_max_levels", "AmgX AMG Max Level Count", "", amgx->max_levels, &amgx->max_levels, NULL));
-  amgx->cfg_contents += "amg:max_levels=100,";
+  amgx->cfg_contents += "amg:max_levels=" + std::to_string(amgx->max_levels) + ",";
 
   // Set dense LU num rows
   PetscCall(PetscOptionsInt("-pc_amgx_dense_lu_num_rows", "AmgX Dense LU Number of Rows", "", amgx->dense_lu_num_rows, &amgx->dense_lu_num_rows, NULL));
@@ -518,7 +518,7 @@ static PetscErrorCode PCSetFromOptions_AMGX(PC pc, PetscOptionItems *PetscOption
 
   // Set coarse solver
   std::string def_coarse_solver = map_reverse_lookup(AmgXControlMap::CoarseSolvers, amgx->coarse_solver);
-  PetscCall(PetscStrcpy(option, def_coarse_solver.c_str()));
+  PetscCall(PetscStrncpy(option, def_coarse_solver.c_str(), sizeof(option)));
   PetscCall(PetscOptionsString("-pc_amgx_coarse_solver", "AmgX CoarseSolver", "", option, option, MAX_PARAM_LEN, NULL));
   PetscCheck(AmgXControlMap::CoarseSolvers.count(option) == 1, PETSC_COMM_SELF, PETSC_ERR_PLIB, "CoarseSolver %s not registered for AmgX.", option);
   amgx->coarse_solver = AmgXControlMap::CoarseSolvers.at(option);
@@ -536,7 +536,7 @@ static PetscErrorCode PCSetFromOptions_AMGX(PC pc, PetscOptionItems *PetscOption
   // Set whether AmgX output will be seen
   PetscCall(PetscOptionsBool("-pc_amgx_verbose", "Enable output from AmgX", "", amgx->verbose, &amgx->verbose, NULL));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCView_AMGX(PC pc, PetscViewer viewer)
@@ -551,7 +551,7 @@ static PetscErrorCode PCView_AMGX(PC pc, PetscViewer viewer)
     std::replace(output_cfg.begin(), output_cfg.end(), ',', '\n');
     PetscCall(PetscViewerASCIIPrintf(viewer, "\n%s\n", output_cfg.c_str()));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -578,7 +578,7 @@ static PetscErrorCode PCView_AMGX(PC pc, PetscViewer viewer)
    Note:
      Implementation will accept host or device pointers, but good performance will require that the `KSP` is also GPU accelerated so that data is not frequently transferred between host and device.
 
-.seealso: `PCGAMG`, `PCHYPRE`, `PCMG`, `PCAmgXGetResources()`, `PCCreate()`, `PCSetType()`, `PCType` (for list of available types), `PC`
+.seealso: [](ch_ksp), `PCGAMG`, `PCHYPRE`, `PCMG`, `PCAmgXGetResources()`, `PCCreate()`, `PCSetType()`, `PCType` (for list of available types), `PC`
 M*/
 
 PETSC_EXTERN PetscErrorCode PCCreate_AMGX(PC pc)
@@ -629,24 +629,24 @@ PETSC_EXTERN PetscErrorCode PCCreate_AMGX(PC pc)
   PetscCallMPI(MPI_Comm_size(amgx->comm, &amgx->nranks));
   PetscCallMPI(MPI_Comm_rank(amgx->comm, &amgx->rank));
 
-  amgx_output_messages(amgx);
-  PetscFunctionReturn(0);
+  PetscCall(amgx_output_messages(amgx));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PCAmgXGetResources - get AMGx's internal resource object
+  PCAmgXGetResources - get AMGx's internal resource object
 
-    Not Collective
+  Not Collective
 
-   Input Parameter:
-.  pc - the PC
+  Input Parameter:
+. pc - the PC
 
-   Output Parameter:
-.  rsrc_out - pointer to the AMGx resource object
+  Output Parameter:
+. rsrc_out - pointer to the AMGx resource object
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `PCAMGX`, `PC`, `PCGAMG`
+.seealso: [](ch_ksp), `PCAMGX`, `PC`, `PCGAMG`
 @*/
 PETSC_EXTERN PetscErrorCode PCAmgXGetResources(PC pc, void *rsrc_out)
 {
@@ -660,5 +660,5 @@ PETSC_EXTERN PetscErrorCode PCAmgXGetResources(PC pc, void *rsrc_out)
     amgx->rsrc_init = true;
   }
   *static_cast<AMGX_resources_handle *>(rsrc_out) = amgx->rsrc;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

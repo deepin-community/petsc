@@ -172,7 +172,7 @@ PetscErrorCode FormFunctionGradient(Tao tao, Vec X, PetscReal *f, Vec G, void *p
   *f = ff;
 
   PetscCall(PetscLogFlops(15.0 * nn));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------- */
@@ -236,7 +236,7 @@ PetscErrorCode FormHessian(Tao tao, Vec X, Mat H, Mat Hpre, void *ptr)
   PetscCall(MatAssemblyBegin(H, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(H, MAT_FINAL_ASSEMBLY));
   PetscCall(PetscLogFlops(9.0 * user->n / 2.0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST
@@ -356,5 +356,18 @@ PetscErrorCode FormHessian(Tao tao, Vec X, Mat H, Mat Hpre, void *ptr)
    test:
      suffix: 28
      args: -tao_fmin 10 -tao_converged_reason
+
+   test:
+     suffix: snes
+     args: -snes_monitor ::ascii_info_detail -tao_type snes -snes_type newtontr -snes_atol 1.e-4 -pc_type none -tao_mf_hessian -ksp_type cg
+
+   test:
+     suffix: snes_ls_armijo
+     args: -snes_monitor ::ascii_info_detail -tao_type snes -snes_type newtonls -snes_atol 1.e-4 -pc_type none -tao_mf_hessian -snes_linesearch_monitor -snes_linesearch_order 1
+
+   test:
+     suffix: snes_tr_cgnegcurve_kmdc
+     args: -snes_monitor ::ascii_info_detail -tao_type snes -snes_type newtontr -snes_atol 1.e-4 -pc_type none  -ksp_type cg -snes_tr_kmdc 0.01 -ksp_converged_neg_curve -ksp_converged_reason
+     requires: !single
 
 TEST*/

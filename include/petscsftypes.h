@@ -1,5 +1,4 @@
-#ifndef PETSCSFTYPES_H
-#define PETSCSFTYPES_H
+#pragma once
 
 /* SUBMANSEC = PetscSF */
 
@@ -8,8 +7,8 @@
 
    Level: intermediate
 
-       `PetscSF` uses the concept of star forests to indicate and determine the communication patterns concisely and efficiently.
-  A star  https://en.wikipedia.org/wiki/Star_(graph_theory) forest is simply a collection of trees of height 1. The leave nodes represent
+  `PetscSF` uses the concept of star forests to indicate and determine the communication patterns concisely and efficiently.
+  A star  <https://en.wikipedia.org/wiki/Star_(graph_theory)> forest is simply a collection of trees of height 1. The leave nodes represent
   "ghost locations" for the root nodes.
 
 .seealso: `PetscSFCreate()`, `VecScatter`, `VecScatterCreate()`
@@ -24,6 +23,14 @@ typedef struct _p_PetscSF *PetscSF;
 .seealso: `PetscSFSetType()`, `PetscSF`
 J*/
 typedef const char *PetscSFType;
+#define PETSCSFBASIC      "basic"
+#define PETSCSFNEIGHBOR   "neighbor"
+#define PETSCSFALLGATHERV "allgatherv"
+#define PETSCSFALLGATHER  "allgather"
+#define PETSCSFGATHERV    "gatherv"
+#define PETSCSFGATHER     "gather"
+#define PETSCSFALLTOALL   "alltoall"
+#define PETSCSFWINDOW     "window"
 
 /*S
    PetscSFNode - specifier of owner and index
@@ -31,19 +38,23 @@ typedef const char *PetscSFType;
    Level: beginner
 
   Sample Usage:
-$      PetscSFNode    *remote;
-$    PetscCall(PetscMalloc1(nleaves,&remote));
-$    for (i=0; i<size; i++) {
-$      remote[i].rank = i;
-$      remote[i].index = rank;
-$    }
+.vb
+    PetscSFNode    *remote;
+    PetscCall(PetscMalloc1(nleaves,&remote));
+    for (i=0; i<size; i++) {
+      remote[i].rank = i;
+      remote[i].index = rank;
+    }
+.ve
 
   Sample Fortran Usage:
-$     type(PetscSFNode) remote(6)
-$      remote(1)%rank  = modulo(rank+size-1,size)
-$      remote(1)%index = 1 * stride
+.vb
+    type(PetscSFNode) remote(6)
+    remote(1)%rank  = modulo(rank+size-1,size)
+    remote(1)%index = 1 * stride
+.ve
 
-.seealso: `PetscSFSetGraph()`
+.seealso: `PetscSF`, `PetscSFSetGraph()`
 S*/
 typedef struct {
   PetscInt rank;  /* Rank of owner */
@@ -52,7 +63,7 @@ typedef struct {
 
 /*S
      VecScatter - Object used to manage communication of data
-       between vectors in parallel. Manages both scatters and gathers
+     between vectors in parallel. Manages both scatters and gathers
 
    Level: beginner
 
@@ -61,11 +72,10 @@ S*/
 typedef PetscSF VecScatter;
 
 /*J
-    VecScatterType - String with the name of a PETSc vector scatter type
+   VecScatterType - String with the name of a PETSc vector scatter type
 
    Level: beginner
 
 .seealso: `PetscSFType`, `VecScatterSetType()`, `VecScatter`, `VecScatterCreate()`, `VecScatterDestroy()`
 J*/
 typedef PetscSFType VecScatterType;
-#endif

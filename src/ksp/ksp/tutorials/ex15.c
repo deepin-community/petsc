@@ -1,4 +1,3 @@
-
 static char help[] = "Solves a linear system in parallel with KSP.  Also\n\
 illustrates setting a user-defined shell preconditioner and using the\n\
 Input parameters include:\n\
@@ -58,7 +57,7 @@ int main(int argc, char **args)
   /*
      Create parallel matrix, specifying only its global dimensions.
      When using MatCreate(), the matrix format can be specified at
-     runtime. Also, the parallel partioning of the matrix is
+     runtime. Also, the parallel partitioning of the matrix is
      determined by PETSc at runtime.
   */
   PetscCall(MatCreate(PETSC_COMM_WORLD, &A));
@@ -242,10 +241,11 @@ PetscErrorCode SampleShellPCCreate(SampleShellPC **shell)
 {
   SampleShellPC *newctx;
 
+  PetscFunctionBeginUser;
   PetscCall(PetscNew(&newctx));
   newctx->diag = 0;
   *shell       = newctx;
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -271,13 +271,14 @@ PetscErrorCode SampleShellPCSetUp(PC pc, Mat pmat, Vec x)
   SampleShellPC *shell;
   Vec            diag;
 
+  PetscFunctionBeginUser;
   PetscCall(PCShellGetContext(pc, &shell));
   PetscCall(VecDuplicate(x, &diag));
   PetscCall(MatGetDiagonal(pmat, diag));
   PetscCall(VecReciprocal(diag));
 
   shell->diag = diag;
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -300,10 +301,10 @@ PetscErrorCode SampleShellPCApply(PC pc, Vec x, Vec y)
 {
   SampleShellPC *shell;
 
+  PetscFunctionBeginUser;
   PetscCall(PCShellGetContext(pc, &shell));
   PetscCall(VecPointwiseMult(y, x, shell->diag));
-
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -317,11 +318,11 @@ PetscErrorCode SampleShellPCDestroy(PC pc)
 {
   SampleShellPC *shell;
 
+  PetscFunctionBeginUser;
   PetscCall(PCShellGetContext(pc, &shell));
   PetscCall(VecDestroy(&shell->diag));
   PetscCall(PetscFree(shell));
-
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

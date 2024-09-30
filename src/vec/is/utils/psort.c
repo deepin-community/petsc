@@ -1,4 +1,3 @@
-
 #include <petsc/private/petscimpl.h>
 #include <petscis.h> /*I "petscis.h" I*/
 
@@ -10,14 +9,14 @@ static PetscErrorCode PetscParallelSortInt_Bitonic_Merge(MPI_Comm comm, PetscMPI
 
   PetscFunctionBegin;
   diff = rankEnd - rankStart;
-  if (diff <= 0) PetscFunctionReturn(0);
+  if (diff <= 0) PetscFunctionReturn(PETSC_SUCCESS);
   if (diff == 1) {
     if (forward) {
       PetscCall(PetscSortInt((PetscInt)n, keys));
     } else {
       PetscCall(PetscSortReverseInt((PetscInt)n, keys));
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   split = 1;
   while (2 * split < diff) split *= 2;
@@ -43,7 +42,7 @@ static PetscErrorCode PetscParallelSortInt_Bitonic_Merge(MPI_Comm comm, PetscMPI
   } else {
     PetscCall(PetscParallelSortInt_Bitonic_Merge(comm, tag, mid, rankEnd, rank, n, keys, buffer, forward));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* This is the bitonic sort that works on non-power-of-2 sizes found at http://www.iti.fh-flensburg.de/lang/algorithmen/sortieren/bitonic/oddn.htm */
@@ -54,14 +53,14 @@ static PetscErrorCode PetscParallelSortInt_Bitonic_Recursive(MPI_Comm comm, Pets
 
   PetscFunctionBegin;
   diff = rankEnd - rankStart;
-  if (diff <= 0) PetscFunctionReturn(0);
+  if (diff <= 0) PetscFunctionReturn(PETSC_SUCCESS);
   if (diff == 1) {
     if (forward) {
       PetscCall(PetscSortInt(n, keys));
     } else {
       PetscCall(PetscSortReverseInt(n, keys));
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   mid = rankStart + diff / 2;
   /* divide and conquer */
@@ -72,7 +71,7 @@ static PetscErrorCode PetscParallelSortInt_Bitonic_Recursive(MPI_Comm comm, Pets
   }
   /* bitonic merge */
   PetscCall(PetscParallelSortInt_Bitonic_Merge(comm, tag, rankStart, rankEnd, rank, n, keys, buffer, forward));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscParallelSortInt_Bitonic(MPI_Comm comm, PetscInt n, PetscInt keys[])
@@ -81,7 +80,7 @@ static PetscErrorCode PetscParallelSortInt_Bitonic(MPI_Comm comm, PetscInt n, Pe
   PetscInt   *buffer;
 
   PetscFunctionBegin;
-  PetscValidIntPointer(keys, 3);
+  PetscAssertPointer(keys, 3);
   PetscCall(PetscCommGetNewTag(comm, &tag));
   PetscCallMPI(MPI_Comm_size(comm, &size));
   PetscCallMPI(MPI_Comm_rank(comm, &rank));
@@ -89,7 +88,7 @@ static PetscErrorCode PetscParallelSortInt_Bitonic(MPI_Comm comm, PetscInt n, Pe
   PetscCall(PetscMalloc1(n, &buffer));
   PetscCall(PetscParallelSortInt_Bitonic_Recursive(comm, tag, 0, size, rank, mpin, keys, buffer, PETSC_TRUE));
   PetscCall(PetscFree(buffer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscParallelSampleSelect(PetscLayout mapin, PetscLayout mapout, PetscInt keysin[], PetscInt *outpivots[])
@@ -164,7 +163,7 @@ static PetscErrorCode PetscParallelSampleSelect(PetscLayout mapin, PetscLayout m
   *outpivots = finalpivots;
   PetscCall(PetscFree(keys_per));
   PetscCall(PetscFree(pivots));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscParallelRedistribute(PetscLayout map, PetscInt n, PetscInt arrayin[], PetscInt arrayout[])
@@ -230,7 +229,7 @@ static PetscErrorCode PetscParallelRedistribute(PetscLayout map, PetscInt n, Pet
   PetscCallMPI(MPI_Waitall(nfirst, firstreqs, MPI_STATUSES_IGNORE));
   PetscCallMPI(MPI_Waitall(nsecond, secondreqs, MPI_STATUSES_IGNORE));
   PetscCall(PetscFree2(firstreqs, secondreqs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscParallelSortInt_Samplesort(PetscLayout mapin, PetscLayout mapout, PetscInt keysin[], PetscInt keysout[])
@@ -284,7 +283,7 @@ static PetscErrorCode PetscParallelSortInt_Samplesort(PetscLayout mapin, PetscLa
   /* redistribute to the desired order */
   PetscCall(PetscParallelRedistribute(mapout, nrecv, buffer, keysout));
   PetscCall(PetscFree(buffer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -293,7 +292,7 @@ static PetscErrorCode PetscParallelSortInt_Samplesort(PetscLayout mapin, PetscLa
   Collective
 
   Input Parameters:
-+ mapin - `PetscLayout` describing the distribution of the input keys
++ mapin  - `PetscLayout` describing the distribution of the input keys
 . mapout - `PetscLayout` describing the desired distribution of the output keys
 - keysin - the pre-sorted array of integers
 
@@ -303,7 +302,9 @@ static PetscErrorCode PetscParallelSortInt_Samplesort(PetscLayout mapin, PetscLa
   Level: developer
 
   Notes:
-  This implements a distributed samplesort, which, with local array sizes n_in and n_out, global size N, and global number of processes P, does:
+
+  This implements a distributed samplesort, which, with local array sizes n_in and n_out,
+  global size N, and global number of MPI processes P, does\:
 .vb
   - sorts locally
   - chooses pivots by sorting (in parallel) (P-1) pivot suggestions from each process using bitonic sort and allgathering a subset of (P-1) of those
@@ -312,7 +313,7 @@ static PetscErrorCode PetscParallelSortInt_Samplesort(PetscLayout mapin, PetscLa
   - redistributing to match the mapout layout
 .ve
 
-  If keysin != keysout, then keysin will not be changed during `PetscParallelSortInt()`.
+  If `keysin` != `keysout`, then `keysin` will not be changed during `PetscParallelSortInt()`.
 
 .seealso: `PetscSortInt()`, `PetscParallelSortedInt()`
 @*/
@@ -323,20 +324,20 @@ PetscErrorCode PetscParallelSortInt(PetscLayout mapin, PetscLayout mapout, Petsc
   PetscInt   *keysincopy = NULL;
 
   PetscFunctionBegin;
-  PetscValidPointer(mapin, 1);
-  PetscValidPointer(mapout, 2);
+  PetscAssertPointer(mapin, 1);
+  PetscAssertPointer(mapout, 2);
   PetscCallMPI(MPI_Comm_compare(mapin->comm, mapout->comm, &result));
   PetscCheck(result == MPI_IDENT || result == MPI_CONGRUENT, mapin->comm, PETSC_ERR_ARG_NOTSAMECOMM, "layouts are not on the same communicator");
   PetscCall(PetscLayoutSetUp(mapin));
   PetscCall(PetscLayoutSetUp(mapout));
-  if (mapin->n) PetscValidIntPointer(keysin, 3);
-  if (mapout->n) PetscValidIntPointer(keysout, 4);
+  if (mapin->n) PetscAssertPointer(keysin, 3);
+  if (mapout->n) PetscAssertPointer(keysout, 4);
   PetscCheck(mapin->N == mapout->N, mapin->comm, PETSC_ERR_ARG_SIZ, "Input and output layouts have different global sizes (%" PetscInt_FMT " != %" PetscInt_FMT ")", mapin->N, mapout->N);
   PetscCallMPI(MPI_Comm_size(mapin->comm, &size));
   if (size == 1) {
     if (keysout != keysin) PetscCall(PetscMemcpy(keysout, keysin, mapin->n * sizeof(PetscInt)));
     PetscCall(PetscSortInt(mapout->n, keysout));
-    if (size == 1) PetscFunctionReturn(0);
+    if (size == 1) PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (keysout != keysin) {
     PetscCall(PetscMalloc1(mapin->n, &keysincopy));
@@ -353,5 +354,5 @@ PetscErrorCode PetscParallelSortInt(PetscLayout mapin, PetscLayout mapout, Petsc
   }
 #endif
   PetscCall(PetscFree(keysincopy));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

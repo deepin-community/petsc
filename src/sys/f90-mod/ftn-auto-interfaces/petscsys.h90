@@ -91,10 +91,19 @@
        PetscFunctionList b ! PetscFunctionList
        PetscErrorCode z
        end subroutine PetscFunctionListDuplicate
+      subroutine PetscWaitOnError(z)
+       PetscErrorCode z
+       end subroutine PetscWaitOnError
+      subroutine PetscAttachDebugger(z)
+       PetscErrorCode z
+       end subroutine PetscAttachDebugger
       subroutine PetscCheckPointerSetIntensity(a,z)
        PetscInt a ! PetscInt
        PetscErrorCode z
        end subroutine PetscCheckPointerSetIntensity
+      subroutine PetscPopErrorHandler(z)
+       PetscErrorCode z
+       end subroutine PetscPopErrorHandler
       subroutine PetscFPTrapPush(a,z)
        PetscFPTrap a ! PetscFPTrap
        PetscErrorCode z
@@ -112,20 +121,6 @@
       subroutine PetscPopSignalHandler(z)
        PetscErrorCode z
        end subroutine PetscPopSignalHandler
-      subroutine PetscWaitOnError(z)
-       PetscErrorCode z
-       end subroutine PetscWaitOnError
-      subroutine PetscAttachDebugger(z)
-       PetscErrorCode z
-       end subroutine PetscAttachDebugger
-      subroutine PetscPopErrorHandler(z)
-       PetscErrorCode z
-       end subroutine PetscPopErrorHandler
-      subroutine PetscMPIErrorString(a,b,z)
-       PetscMPIInt a ! PetscMPIInt
-       character b ! char
-       PetscErrorCode z
-       end subroutine PetscMPIErrorString
       subroutine PetscBinaryClose(a,z)
        integer a ! int
        PetscErrorCode z
@@ -196,11 +191,85 @@
        PetscBool a ! PetscBool
        PetscErrorCode z
        end subroutine PetscMallocLogRequestedSizeGet
+      subroutine PetscObjectDestroy(a,z)
+       PetscObject a ! PetscObject
+       PetscErrorCode z
+       end subroutine PetscObjectDestroy
+      subroutine PetscObjectGetTabLevel(a,b,z)
+       PetscObject a ! PetscObject
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscObjectGetTabLevel
+      subroutine PetscObjectSetTabLevel(a,b,z)
+       PetscObject a ! PetscObject
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscObjectSetTabLevel
+      subroutine PetscObjectIncrementTabLevel(a,b,c,z)
+       PetscObject a ! PetscObject
+       PetscObject b ! PetscObject
+       PetscInt c ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscObjectIncrementTabLevel
       subroutine PetscObjectGetClassId(a,b,z)
        PetscObject a ! PetscObject
        PetscClassId b ! PetscClassId
        PetscErrorCode z
        end subroutine PetscObjectGetClassId
+      subroutine PetscObjectSetPrintedOptions(a,z)
+       PetscObject a ! PetscObject
+       PetscErrorCode z
+       end subroutine PetscObjectSetPrintedOptions
+      subroutine PetscObjectInheritPrintedOptions(a,b,z)
+       PetscObject a ! PetscObject
+       PetscObject b ! PetscObject
+       PetscErrorCode z
+       end subroutine PetscObjectInheritPrintedOptions
+      subroutine PetscObjectSetFromOptions(a,z)
+       PetscObject a ! PetscObject
+       PetscErrorCode z
+       end subroutine PetscObjectSetFromOptions
+      subroutine PetscObjectSetUp(a,z)
+       PetscObject a ! PetscObject
+       PetscErrorCode z
+       end subroutine PetscObjectSetUp
+      subroutine PetscOptionsCreate(a,z)
+       import tPetscOptions
+       PetscOptions a ! PetscOptions
+       PetscErrorCode z
+       end subroutine PetscOptionsCreate
+      subroutine PetscOptionsDestroy(a,z)
+       import tPetscOptions
+       PetscOptions a ! PetscOptions
+       PetscErrorCode z
+       end subroutine PetscOptionsDestroy
+      subroutine PetscOptionsPush(a,z)
+       import tPetscOptions
+       PetscOptions a ! PetscOptions
+       PetscErrorCode z
+       end subroutine PetscOptionsPush
+      subroutine PetscOptionsPop(z)
+       PetscErrorCode z
+       end subroutine PetscOptionsPop
+      subroutine PetscOptionsAllUsed(a,b,z)
+       import tPetscOptions
+       PetscOptions a ! PetscOptions
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscOptionsAllUsed
+      subroutine PetscOptionsLeft(a,z)
+       import tPetscOptions
+       PetscOptions a ! PetscOptions
+       PetscErrorCode z
+       end subroutine PetscOptionsLeft
+      subroutine PetscInitialized(a,z)
+       PetscBool a ! PetscBool
+       PetscErrorCode z
+       end subroutine PetscInitialized
+      subroutine PetscFinalized(a,z)
+       PetscBool a ! PetscBool
+       PetscErrorCode z
+       end subroutine PetscFinalized
       subroutine PetscObjectGetId(a,b,z)
        PetscObject a ! PetscObject
        PetscObjectId b ! PetscObjectId
@@ -252,80 +321,6 @@
        PetscMPIInt b ! PetscMPIInt
        PetscErrorCode z
        end subroutine PetscCommGetNewTag
-      subroutine PetscObjectGetTabLevel(a,b,z)
-       PetscObject a ! PetscObject
-       PetscInt b ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscObjectGetTabLevel
-      subroutine PetscObjectSetTabLevel(a,b,z)
-       PetscObject a ! PetscObject
-       PetscInt b ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscObjectSetTabLevel
-      subroutine PetscObjectIncrementTabLevel(a,b,c,z)
-       PetscObject a ! PetscObject
-       PetscObject b ! PetscObject
-       PetscInt c ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscObjectIncrementTabLevel
-      subroutine PetscOptionsCreate(a,z)
-       import tPetscOptions
-       PetscOptions a ! PetscOptions
-       PetscErrorCode z
-       end subroutine PetscOptionsCreate
-      subroutine PetscOptionsDestroy(a,z)
-       import tPetscOptions
-       PetscOptions a ! PetscOptions
-       PetscErrorCode z
-       end subroutine PetscOptionsDestroy
-      subroutine PetscOptionsPush(a,z)
-       import tPetscOptions
-       PetscOptions a ! PetscOptions
-       PetscErrorCode z
-       end subroutine PetscOptionsPush
-      subroutine PetscOptionsPop(z)
-       PetscErrorCode z
-       end subroutine PetscOptionsPop
-      subroutine PetscOptionsAllUsed(a,b,z)
-       import tPetscOptions
-       PetscOptions a ! PetscOptions
-       PetscInt b ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscOptionsAllUsed
-      subroutine PetscOptionsLeft(a,z)
-       import tPetscOptions
-       PetscOptions a ! PetscOptions
-       PetscErrorCode z
-       end subroutine PetscOptionsLeft
-      subroutine PetscObjectDestroy(a,z)
-       PetscObject a ! PetscObject
-       PetscErrorCode z
-       end subroutine PetscObjectDestroy
-      subroutine PetscObjectSetPrintedOptions(a,z)
-       PetscObject a ! PetscObject
-       PetscErrorCode z
-       end subroutine PetscObjectSetPrintedOptions
-      subroutine PetscObjectInheritPrintedOptions(a,b,z)
-       PetscObject a ! PetscObject
-       PetscObject b ! PetscObject
-       PetscErrorCode z
-       end subroutine PetscObjectInheritPrintedOptions
-      subroutine PetscObjectSetFromOptions(a,z)
-       PetscObject a ! PetscObject
-       PetscErrorCode z
-       end subroutine PetscObjectSetFromOptions
-      subroutine PetscObjectSetUp(a,z)
-       PetscObject a ! PetscObject
-       PetscErrorCode z
-       end subroutine PetscObjectSetUp
-      subroutine PetscInitialized(a,z)
-       PetscBool a ! PetscBool
-       PetscErrorCode z
-       end subroutine PetscInitialized
-      subroutine PetscFinalized(a,z)
-       PetscBool a ! PetscBool
-       PetscErrorCode z
-       end subroutine PetscFinalized
       subroutine PetscElementalInitializePackage(z)
        PetscErrorCode z
        end subroutine PetscElementalInitializePackage
@@ -350,10 +345,39 @@
        PetscBuildTwoSidedType b ! PetscBuildTwoSidedType
        PetscErrorCode z
        end subroutine PetscCommBuildTwoSidedGetType
+      subroutine PetscSequentialPhaseBegin(a,b,z)
+       MPI_Comm a ! MPI_Comm
+       integer b ! int
+       PetscErrorCode z
+       end subroutine PetscSequentialPhaseBegin
+      subroutine PetscSequentialPhaseEnd(a,b,z)
+       MPI_Comm a ! MPI_Comm
+       integer b ! int
+       PetscErrorCode z
+       end subroutine PetscSequentialPhaseEnd
       subroutine PetscSleep(a,z)
        PetscReal a ! PetscReal
        PetscErrorCode z
        end subroutine PetscSleep
+      subroutine PetscSplitOwnershipBlock(a,b,c,d,z)
+       MPI_Comm a ! MPI_Comm
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       PetscInt d ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscSplitOwnershipBlock
+      subroutine PetscSplitOwnership(a,b,c,z)
+       MPI_Comm a ! MPI_Comm
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscSplitOwnership
+      subroutine PetscSplitOwnershipEqual(a,b,c,z)
+       MPI_Comm a ! MPI_Comm
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscSplitOwnershipEqual
       subroutine PetscSortedReal(a,b,c,z)
        PetscInt a ! PetscInt
        PetscReal b (*) ! PetscReal
@@ -398,80 +422,6 @@
        PetscInt d (*) ! PetscInt
        PetscErrorCode z
        end subroutine PetscSortSplitReal
-      subroutine PetscSortIntWithPermutation(a,b,c,z)
-       PetscInt a ! PetscInt
-       PetscInt b (*) ! PetscInt
-       PetscInt c (*) ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscSortIntWithPermutation
-      subroutine PetscSortRealWithPermutation(a,b,c,z)
-       PetscInt a ! PetscInt
-       PetscReal b (*) ! PetscReal
-       PetscInt c (*) ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscSortRealWithPermutation
-      subroutine PetscIntSortSemiOrdered(a,b,z)
-       PetscInt a ! PetscInt
-       PetscInt b (*) ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscIntSortSemiOrdered
-      subroutine PetscIntSortSemiOrderedWithArray(a,b,c,z)
-       PetscInt a ! PetscInt
-       PetscInt b (*) ! PetscInt
-       PetscInt c (*) ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscIntSortSemiOrderedWithArray
-      subroutine PetscMPIIntSortSemiOrdered(a,b,z)
-       PetscInt a ! PetscInt
-       PetscMPIInt b (*) ! PetscMPIInt
-       PetscErrorCode z
-       end subroutine PetscMPIIntSortSemiOrdered
-      subroutine PetscMPIIntSortSemiOrderedWithArray(a,b,c,z)
-       PetscInt a ! PetscInt
-       PetscMPIInt b (*) ! PetscMPIInt
-       PetscMPIInt c (*) ! PetscMPIInt
-       PetscErrorCode z
-       end subroutine PetscMPIIntSortSemiOrderedWithArray
-      subroutine PetscRealSortSemiOrdered(a,b,z)
-       PetscInt a ! PetscInt
-       PetscReal b (*) ! PetscReal
-       PetscErrorCode z
-       end subroutine PetscRealSortSemiOrdered
-      subroutine PetscRealSortSemiOrderedWithArrayInt(a,b,c,z)
-       PetscInt a ! PetscInt
-       PetscReal b (*) ! PetscReal
-       PetscInt c (*) ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscRealSortSemiOrderedWithArrayInt
-      subroutine PetscSequentialPhaseBegin(a,b,z)
-       MPI_Comm a ! MPI_Comm
-       integer b ! int
-       PetscErrorCode z
-       end subroutine PetscSequentialPhaseBegin
-      subroutine PetscSequentialPhaseEnd(a,b,z)
-       MPI_Comm a ! MPI_Comm
-       integer b ! int
-       PetscErrorCode z
-       end subroutine PetscSequentialPhaseEnd
-      subroutine PetscSplitOwnershipBlock(a,b,c,d,z)
-       MPI_Comm a ! MPI_Comm
-       PetscInt b ! PetscInt
-       PetscInt c ! PetscInt
-       PetscInt d ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscSplitOwnershipBlock
-      subroutine PetscSplitOwnership(a,b,c,z)
-       MPI_Comm a ! MPI_Comm
-       PetscInt b ! PetscInt
-       PetscInt c ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscSplitOwnership
-      subroutine PetscSplitOwnershipEqual(a,b,c,z)
-       MPI_Comm a ! MPI_Comm
-       PetscInt b ! PetscInt
-       PetscInt c ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscSplitOwnershipEqual
       subroutine PetscSortedInt(a,b,c,z)
        PetscInt a ! PetscInt
        PetscInt b (*) ! PetscInt
@@ -637,3 +587,48 @@
        PetscBool d ! PetscBool
        PetscErrorCode z
        end subroutine PetscParallelSortedInt
+      subroutine PetscSortIntWithPermutation(a,b,c,z)
+       PetscInt a ! PetscInt
+       PetscInt b (*) ! PetscInt
+       PetscInt c (*) ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscSortIntWithPermutation
+      subroutine PetscSortRealWithPermutation(a,b,c,z)
+       PetscInt a ! PetscInt
+       PetscReal b (*) ! PetscReal
+       PetscInt c (*) ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscSortRealWithPermutation
+      subroutine PetscIntSortSemiOrdered(a,b,z)
+       PetscInt a ! PetscInt
+       PetscInt b (*) ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscIntSortSemiOrdered
+      subroutine PetscIntSortSemiOrderedWithArray(a,b,c,z)
+       PetscInt a ! PetscInt
+       PetscInt b (*) ! PetscInt
+       PetscInt c (*) ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscIntSortSemiOrderedWithArray
+      subroutine PetscMPIIntSortSemiOrdered(a,b,z)
+       PetscInt a ! PetscInt
+       PetscMPIInt b (*) ! PetscMPIInt
+       PetscErrorCode z
+       end subroutine PetscMPIIntSortSemiOrdered
+      subroutine PetscMPIIntSortSemiOrderedWithArray(a,b,c,z)
+       PetscInt a ! PetscInt
+       PetscMPIInt b (*) ! PetscMPIInt
+       PetscMPIInt c (*) ! PetscMPIInt
+       PetscErrorCode z
+       end subroutine PetscMPIIntSortSemiOrderedWithArray
+      subroutine PetscRealSortSemiOrdered(a,b,z)
+       PetscInt a ! PetscInt
+       PetscReal b (*) ! PetscReal
+       PetscErrorCode z
+       end subroutine PetscRealSortSemiOrdered
+      subroutine PetscRealSortSemiOrderedWithArrayInt(a,b,c,z)
+       PetscInt a ! PetscInt
+       PetscReal b (*) ! PetscReal
+       PetscInt c (*) ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscRealSortSemiOrderedWithArrayInt

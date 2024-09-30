@@ -1,4 +1,3 @@
-
 !
 !  Include file for Fortran use of the DMDA (distributed array) package in PETSc
 !
@@ -14,7 +13,7 @@
 
 #define DMDALocalInfo PetscInt
 !
-!   DMDA_LOCAL_INFO_SIZE is one larger than the size in case the DA is larger than an integer (on 64 bit systems).
+!   DMDA_LOCAL_INFO_SIZE is one larger than the size in case the DMDA is larger than an integer (on 64-bit systems).
 !   non-int fields are not accessible from Fortran.
 !
 #define DMDA_LOCAL_INFO_SIZE 25

@@ -1,3 +1,5 @@
+#pragma once
+
 typedef enum {
   SA_ADJ,
   SA_TLM
@@ -28,7 +30,7 @@ PetscErrorCode EventFunction(TS ts, PetscReal t, Vec X, PetscScalar *fvalue, voi
   /* Event for fault-off time */
   fvalue[1] = t - user->tcl;
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PostEventFunction(TS ts, PetscInt nevents, PetscInt event_list[], PetscReal t, Vec X, PetscBool forwardsolve, void *ctx)
@@ -43,8 +45,8 @@ PetscErrorCode PostEventFunction(TS ts, PetscInt nevents, PetscInt event_list[],
     if (forwardsolve) user->Pmax = user->Pmax_ini; /* Remove the fault  - this is done by setting Pmax = Pmax_ini */
     else user->Pmax = 0.0;                         /* Going backward, reversal of event */
   }
-  PetscCall(TSRestartStep(ts)); /* Must set restart flag to ture, otherwise methods with FSAL will fail */
-  PetscFunctionReturn(0);
+  PetscCall(TSRestartStep(ts)); /* Must set restart flag to true, otherwise methods with FSAL will fail */
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -65,7 +67,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal t, Vec U, Vec F, AppCtx *ctx)
 
   PetscCall(VecRestoreArrayRead(U, &u));
   PetscCall(VecRestoreArray(F, &f));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -93,7 +95,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal t, Vec U, Mat A, Mat B, AppCtx *ctx)
     PetscCall(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -116,7 +118,7 @@ PetscErrorCode IFunction(TS ts, PetscReal t, Vec U, Vec Udot, Vec F, AppCtx *ctx
   PetscCall(VecRestoreArrayRead(U, &u));
   PetscCall(VecRestoreArrayRead(Udot, &udot));
   PetscCall(VecRestoreArray(F, &f));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -147,7 +149,7 @@ PetscErrorCode IJacobian(TS ts, PetscReal t, Vec U, Vec Udot, PetscReal a, Mat A
     PetscCall(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode RHSJacobianP(TS ts, PetscReal t, Vec X, Mat A, void *ctx0)
@@ -164,7 +166,7 @@ PetscErrorCode RHSJacobianP(TS ts, PetscReal t, Vec X, Mat A, void *ctx0)
 
   PetscCall(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode CostIntegrand(TS ts, PetscReal t, Vec U, Vec R, AppCtx *ctx)
@@ -178,7 +180,7 @@ PetscErrorCode CostIntegrand(TS ts, PetscReal t, Vec U, Vec R, AppCtx *ctx)
   r[0] = ctx->c * PetscPowScalarInt(PetscMax(0., u[0] - ctx->u_s), ctx->beta);
   PetscCall(VecRestoreArray(R, &r));
   PetscCall(VecRestoreArrayRead(U, &u));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Transpose of DRDU */
@@ -196,7 +198,7 @@ PetscErrorCode DRDUJacobianTranspose(TS ts, PetscReal t, Vec U, Mat DRDU, Mat B,
   PetscCall(VecRestoreArrayRead(U, &u));
   PetscCall(MatAssemblyBegin(DRDU, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(DRDU, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DRDPJacobianTranspose(TS ts, PetscReal t, Vec U, Mat DRDP, void *ctx)
@@ -205,7 +207,7 @@ PetscErrorCode DRDPJacobianTranspose(TS ts, PetscReal t, Vec U, Mat DRDP, void *
   PetscCall(MatZeroEntries(DRDP));
   PetscCall(MatAssemblyBegin(DRDP, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(DRDP, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ComputeSensiP(Vec lambda, Vec mu, AppCtx *ctx)
@@ -220,5 +222,5 @@ PetscErrorCode ComputeSensiP(Vec lambda, Vec mu, AppCtx *ctx)
   y[0]   = sensip;
   PetscCall(VecRestoreArray(mu, &y));
   PetscCall(VecRestoreArrayRead(lambda, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

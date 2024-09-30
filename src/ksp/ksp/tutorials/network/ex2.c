@@ -161,7 +161,7 @@ PetscErrorCode random_network(PetscInt nvertex, PetscInt *pnbranch, Node **pnode
   *pedgelist = edgelist;
   *pbranch   = branch;
   *pnode     = node;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode FormOperator(DM networkdm, Mat A, Vec b)
@@ -258,25 +258,23 @@ PetscErrorCode FormOperator(DM networkdm, Mat A, Vec b)
 
   PetscCall(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
 {
-  PetscInt    i, nbranch = 0, eStart, eEnd, vStart, vEnd;
-  PetscInt    seed = 0, nnode = 0;
-  PetscMPIInt size, rank;
-  DM          networkdm;
-  Vec         x, b;
-  Mat         A;
-  KSP         ksp;
-  PetscInt   *edgelist = NULL;
-  PetscInt    componentkey[2];
-  Node       *node;
-  Branch     *branch;
-#if defined(PETSC_USE_LOG)
+  PetscInt      i, nbranch = 0, eStart, eEnd, vStart, vEnd;
+  PetscInt      seed = 0, nnode = 0;
+  PetscMPIInt   size, rank;
+  DM            networkdm;
+  Vec           x, b;
+  Mat           A;
+  KSP           ksp;
+  PetscInt     *edgelist = NULL;
+  PetscInt      componentkey[2];
+  Node         *node;
+  Branch       *branch;
   PetscLogStage stage[3];
-#endif
 
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &argv, (char *)0, help));
@@ -362,7 +360,7 @@ int main(int argc, char **argv)
 /*TEST
 
    build:
-      requires: !single double defined(PETSC_HAVE_ATTRIBUTEALIGNED)
+      requires: !single double defined(PETSC_HAVE_ATTRIBUTEALIGNED) 64bitptr
 
    test:
       args: -ksp_converged_reason

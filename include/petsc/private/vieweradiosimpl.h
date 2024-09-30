@@ -1,6 +1,4 @@
-
-#ifndef __VIEWERADIOSIMPL_H
-#define __VIEWERADIOSIMPL_H
+#pragma once
 
 typedef struct {
   char         *filename;
@@ -9,5 +7,3 @@ typedef struct {
   int64_t       adios_handle;
   ADIOS_FILE   *adios_fp;
 } PetscViewer_ADIOS;
-
-#endif

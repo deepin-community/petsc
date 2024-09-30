@@ -1,4 +1,3 @@
-
 static char help[] = "Tests ISFilter().\n\n";
 
 #include <petscis.h>
@@ -16,7 +15,7 @@ static PetscErrorCode CreateIS(MPI_Comm comm, PetscInt n, PetscInt first, PetscI
   PetscCall(PetscMalloc1(n, &idx));
   for (i = 0, j = first; i < n; i++, j += step) idx[i] = j;
   PetscCall(ISCreateGeneral(comm, n, idx, PETSC_OWN_POINTER, is));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

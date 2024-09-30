@@ -1,6 +1,5 @@
-
 /*
-       cgimpl.h defines the simple data structured used to store information
+    cgimpl.h defines the simple data structured used to store information
     related to the type of matrix (e.g. complex symmetric) being solved and
     data used during the optional Lanczo process used to compute eigenvalues
 */
@@ -14,14 +13,9 @@ static PetscErrorCode KSPCGSetType_CGNE(KSP ksp, KSPCGType type)
 
   PetscFunctionBegin;
   cg->type = type;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-     KSPSetUp_CGNE - Sets up the workspace needed by the CGNE method.
-
-     IDENTICAL TO THE CG ONE EXCEPT for one extra work vector!
-*/
 static PetscErrorCode KSPSetUp_CGNE(KSP ksp)
 {
   KSP_CG  *cgP   = (KSP_CG *)ksp->data;
@@ -32,8 +26,7 @@ static PetscErrorCode KSPSetUp_CGNE(KSP ksp)
   PetscCall(KSPSetWorkVecs(ksp, 4));
 
   /*
-     If user requested computations of eigenvalues then allocate work
-     work space needed
+     If user requested computations of eigenvalues then allocate work work space needed
   */
   if (ksp->calc_sings) {
     /* get space to store tridiagonal matrix for Lanczos */
@@ -42,20 +35,9 @@ static PetscErrorCode KSPSetUp_CGNE(KSP ksp)
     ksp->ops->computeextremesingularvalues = KSPComputeExtremeSingularValues_CG;
     ksp->ops->computeeigenvalues           = KSPComputeEigenvalues_CG;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-       KSPSolve_CGNE - This routine actually applies the conjugate gradient
-    method
-
-   Input Parameter:
-.     ksp - the Krylov space object that was set to use conjugate gradient, by, for
-            example, KSPCreate(MPI_Comm,KSP *ksp); KSPSetType(ksp,KSPCG);
-
-    Virtually identical to the KSPSolve_CG, it should definitely reuse the same code.
-
-*/
 static PetscErrorCode KSPSolve_CGNE(KSP ksp)
 {
   PetscInt    i, stored_max_it, eigs;
@@ -119,7 +101,7 @@ static PetscErrorCode KSPSolve_CGNE(KSP ksp)
   PetscCall(KSPMonitor(ksp, 0, dp));
   ksp->rnorm = dp;
   PetscCall((*ksp->converged)(ksp, 0, dp, &ksp->reason, ksp->cnvP)); /* test for convergence */
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   i = 0;
   do {
@@ -186,7 +168,7 @@ static PetscErrorCode KSPSolve_CGNE(KSP ksp)
     i++;
   } while (i < ksp->max_it);
   if (i >= ksp->max_it) ksp->reason = KSP_DIVERGED_ITS;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -197,38 +179,35 @@ static PetscErrorCode KSPSolve_CGNE(KSP ksp)
 */
 
 /*MC
-     KSPCGNE - Applies the preconditioned conjugate gradient method to the normal equations
-          without explicitly forming A^t*A
+   KSPCGNE - Applies the preconditioned conjugate gradient method to the normal equations
+          without explicitly forming $A^T*A$
 
-   Options Database Keys:
+   Options Database Key:
 .   -ksp_cg_type <Hermitian or symmetric - (for complex matrices only) indicates the matrix is Hermitian or symmetric
 
    Level: beginner
 
    Notes:
    Eigenvalue computation routines including `KSPSetComputeEigenvalues()` and `KSPComputeEigenvalues()` will return information about the
-    spectrum of A^t*A, rather than A.
+   spectrum of $A^T*A$, rather than $A$.
 
    `KSPCGNE` is a general-purpose non-symmetric method. It works well when the singular values are much better behaved than
    eigenvalues. A unitary matrix is a classic example where `KSPCGNE` converges in one iteration, but `KSPGMRES` and `KSPCGS` need N
-   iterations, see [1]. If you intend to solve least squares problems, use `KSPLSQR`.
+   iterations, see {cite}`nachtigal90`. If you intend to solve least squares problems, use `KSPLSQR`.
 
    This is NOT a different algorithm than used with `KSPCG`, it merely uses that algorithm with the
-   matrix defined by A^t*A and preconditioner defined by B^t*B where B is the preconditioner for A.
+   matrix defined by $A^T*A$ and preconditioner defined by $B^T*B$ where $B$ is the preconditioner for $A$.
 
    This method requires that one be able to apply the transpose of the preconditioner and operator
    as well as the operator and preconditioner. If the transpose of the preconditioner is not available then
-   the preconditioner is used in its place so one ends up preconditioning A'A with B B. Seems odd?
+   the preconditioner is used in its place so one ends up preconditioning $A^T*A$ with $B*B$. Seems odd?
 
    This only supports left preconditioning.
 
-   Reference:
-.   [1] -  Nachtigal, Reddy, and Trefethen, "How fast are nonsymmetric matrix iterations", 1992
-
    Developer Note:
-   This object is subclassed off of `KSPCG`
+   This object is subclassed off of `KSPCG`, see the source code in src/ksp/ksp/impls/cg for comments on the structure of the code
 
-.seealso: [](chapter_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, 'KSPCG', `KSPLSQR', 'KSPCGLS`,
+.seealso: [](ch_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, 'KSPCG', `KSPLSQR', 'KSPCGLS`,
           `KSPCGSetType()`, `KSPBICG`, `KSPSetComputeEigenvalues()`, `KSPComputeEigenvalues()`
 M*/
 
@@ -267,5 +246,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_CGNE(KSP ksp)
       it. (Sort of like a dynamic member function that can be added at run time
   */
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPCGSetType_C", KSPCGSetType_CGNE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

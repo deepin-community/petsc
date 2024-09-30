@@ -22,7 +22,7 @@ static PetscErrorCode ViewOffsets(DM dm, Vec X)
   }
   if (X) PetscCall(VecRestoreArrayRead(X, &x));
   PetscCall(PetscFree(elem_restr_offsets));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -73,6 +73,7 @@ int main(int argc, char **argv)
     Vec      X;
     PetscInt cdim;
 
+    PetscCall(DMGetCoordinatesLocalSetUp(dm));
     PetscCall(DMGetCoordinateDim(dm, &cdim));
     PetscCall(DMGetCoordinateDM(dm, &cdm));
     PetscCall(PetscObjectSetName((PetscObject)cdm, "coords"));
@@ -134,7 +135,7 @@ int main(int argc, char **argv)
     args: -dm_plex_dim 3 -petscspace_degree 1 -dm_plex_simplex 0 -dm_plex_box_faces 1,1,3 -dm_plex_box_bd none,none,periodic -dm_view -view_coord -project_coordinates
 
   test:
-    suffix: 3d_q2_periodic  # not actually periodic because only 2 cells
+    suffix: 3d_q2_periodic # not actually periodic because only 2 cells
     args: -dm_plex_dim 3 -petscspace_degree 2 -dm_plex_simplex 0 -dm_plex_box_faces 2,2,2 -dm_plex_box_bd periodic,none,periodic -dm_view
 
 TEST*/

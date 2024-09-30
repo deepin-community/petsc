@@ -1,9 +1,7 @@
 -include ../../../../../petscdir.mk
 
 LIBBASE  = libpetscdm
-DIRS     = lagrange simple refined
-LOCDIR   = src/dm/dt/dualspace/impls/
+DIRS     = lagrange simple refined sum
 
 include ${PETSC_DIR}/lib/petsc/conf/variables
-include ${PETSC_DIR}/lib/petsc/conf/rules
-include ${PETSC_DIR}/lib/petsc/conf/test
+include ${PETSC_DIR}/lib/petsc/conf/rules.doc

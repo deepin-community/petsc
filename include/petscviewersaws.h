@@ -1,6 +1,4 @@
-
-#ifndef PETSCVIEWERSAWS_H
-#define PETSCVIEWERSAWS_H
+#pragma once
 
 #include <petscviewer.h>
 #include <SAWs.h>
@@ -11,11 +9,9 @@ PETSC_EXTERN PetscViewer    PETSC_VIEWER_SAWS_(MPI_Comm);
 
 #define PetscCallSAWs(func, args) \
   do { \
-    PetscErrorCode _ierr; \
+    int _ierr; \
     PetscStackPushExternal(#func); \
     _ierr = func args; \
     PetscStackPop; \
     PetscCheck(!_ierr, PETSC_COMM_SELF, PETSC_ERR_LIB, "Error in %s() %d", #func, _ierr); \
   } while (0)
-
-#endif

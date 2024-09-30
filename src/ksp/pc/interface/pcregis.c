@@ -1,4 +1,3 @@
-
 #include <petsc/private/pcimpl.h> /*I   "petscpc.h"   I*/
 
 PETSC_EXTERN PetscErrorCode PCCreate_Jacobi(PC);
@@ -73,21 +72,18 @@ PETSC_EXTERN PetscErrorCode PCCreate_H2OPUS(PC);
 PETSC_EXTERN PetscErrorCode PCCreate_MPI(PC);
 
 /*@C
-   PCRegisterAll - Registers all of the preconditioners in the PC package.
+  PCRegisterAll - Registers all of the preconditioners in the PC package.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  path - the library where the routines are to be found (optional)
+  Level: advanced
 
-   Level: advanced
-
-.seealso: `PCRegister()`
+.seealso: [](ch_ksp), `PCRegister()`
 @*/
 PetscErrorCode PCRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (PCRegisterAllCalled) PetscFunctionReturn(0);
+  if (PCRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   PCRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(PCRegister(PCNONE, PCCreate_None));
@@ -162,5 +158,5 @@ PetscErrorCode PCRegisterAll(void)
   PetscCall(PCRegister(PCH2OPUS, PCCreate_H2OPUS));
 #endif
   PetscCall(PCRegister(PCMPI, PCCreate_MPI));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

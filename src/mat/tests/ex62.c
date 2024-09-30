@@ -1,4 +1,3 @@
-
 static char help[] = "Test Matrix products for AIJ matrices\n\
 Input arguments are:\n\
   -fA <input_file> -fB <input_file> -fC <input_file>: file to load\n\n";
@@ -18,7 +17,7 @@ PetscErrorCode MatNormDifference(Mat A, Mat B, PetscReal *norm)
   PetscFunctionBegin;
   PetscCall(MatAXPY(B, -1.0, A, DIFFERENT_NONZERO_PATTERN));
   PetscCall(MatNorm(B, NORM_FROBENIUS, norm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **args)

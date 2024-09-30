@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>The Various Matrix Classes &#8212; PETSc 3.18.6 documentation</title>
+    <title>The Various Matrix Classes &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -142,31 +143,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -293,31 +293,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -395,15 +394,20 @@
   </p>
   <div class="bd-toc-item navbar-nav">
     <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="communication.html">Communication Channels for PETSc Developers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to PETSc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="communication.html">PETSc Developers Communication Channels</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="contributing/index.html">Contributing to PETSc</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing/developingmr.html">Developing a Merge Request</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/submittingmr.html">Submitting a Merge Request</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/pipelines.html">GitLab CI Pipelines</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mrmanagement.html">Merge request management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">PETSc Development Environment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="style.html">PETSc Style and Usage Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="integration.html">Getting your code and documentation into PETSc</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pipelines.html">Working with Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="buildsystem.html">BuildSystem</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">PETSc Testing System</a></li>
 <li class="toctree-l1"><a class="reference internal" href="documentation.html">Developing PETSc Documentation</a></li>
-<li class="toctree-l1 current active has-children"><a class="reference internal" href="design.html">The Design of PETSc</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="design.html">The Design of PETSc</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="kernel.html">The PETSc Kernel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="objects.html">Basic Object Design and Implementation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="callbacks.html">How the Solvers Handle User Provided Callbacks</a></li>
@@ -486,9 +490,9 @@ following:</p>
 storing additional information about adjacent rows with identical
 nonzero structure (so-called I-nodes); this I-node information is
 used in the key computational routines to improve performance (the
-default for the <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code> and <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATMPIAIJ.html">MATMPIAIJ</a></span></code> formats).</p></li>
+default for the <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code> and <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATMPIAIJ.html">MATMPIAIJ</a></span></code> formats).</p></li>
 <li><p>Storing the matrices using a fixed (problem dependent) block size
-(via the <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a></span></code> and <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATMPIBAIJ.html">MATMPIBAIJ</a></span></code> formats).</p></li>
+(via the <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a></span></code> and <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATMPIBAIJ.html">MATMPIBAIJ</a></span></code> formats).</p></li>
 </ul>
 <p>The advantage of the first approach is that it is a minimal change from
 a standard sparse matrix format and brings a large percentage of the
@@ -500,10 +504,10 @@ the overhead of small loops entirely.</p>
 <p>The following table presents the floating-point performance for a basic
 matrix-vector product using three approaches: a basic compressed row
 storage format (using the PETSc runtime options
-<code class="docutils literal notranslate"><span class="pre">-mat_seqaij</span> <span class="pre">-mat_nounroll)</span></code>; the same compressed row format using
-I-nodes (with the option <code class="docutils literal notranslate"><span class="pre">-mat_seqaij</span></code>); and a fixed block size code,
+<code class="docutils notranslate"><span class="pre">-mat_seqaij</span> <span class="pre">-mat_nounroll)</span></code>; the same compressed row format using
+I-nodes (with the option <code class="docutils notranslate"><span class="pre">-mat_seqaij</span></code>); and a fixed block size code,
 with a block size of 3 for these problems (using the option
-<code class="docutils literal notranslate"><span class="pre">-mat_seqbaij</span></code>). The rates were computed on one node of an older IBM
+<code class="docutils notranslate"><span class="pre">-mat_seqbaij</span></code>). The rates were computed on one node of an older IBM
 Power processor based system, using two test matrices. The first matrix
 (ARCO1), courtesy of Rick Dean of Arco, arises in multiphase flow
 simulation; it has 1,501 degrees of freedom, 26,131 matrix nonzeros, a
@@ -573,61 +577,60 @@ several times that of the basic sparse implementations.</p>
 <section id="sequential-aij-sparse-matrices">
 <h3>Sequential AIJ Sparse Matrices<a class="headerlink" href="#sequential-aij-sparse-matrices" title="Permalink to this heading">#</a></h3>
 <p>The default matrix representation within PETSc is the general sparse AIJ
-format (also called the Yale sparse matrix format or compressed sparse
-row format, CSR).</p>
+format (also called the compressed sparse row format, CSR).</p>
 </section>
 <section id="parallel-aij-sparse-matrices">
 <h3>Parallel AIJ Sparse Matrices<a class="headerlink" href="#parallel-aij-sparse-matrices" title="Permalink to this heading">#</a></h3>
 <p>The AIJ sparse matrix type, is the default parallel matrix format;
-additional implementation details are given in <span id="id1">[<a class="reference internal" href="#id1325" title="Satish Balay, William D. Gropp, Lois Curfman McInnes, and Barry F. Smith. Efficient management of parallelism in object oriented numerical software libraries. In E. Arge, A. M. Bruaset, and H. P. Langtangen, editors, Modern Software Tools in Scientific Computing, 163–202. Birkhäuser Press, 1997.">BGMS97</a>]</span>.</p>
+additional implementation details are given in <span id="id1">[<a class="reference internal" href="#id1427" title="Satish Balay, William D. Gropp, Lois Curfman McInnes, and Barry F. Smith. Efficient management of parallelism in object oriented numerical software libraries. In E. Arge, A. M. Bruaset, and H. P. Langtangen, editors, Modern Software Tools in Scientific Computing, 163–202. Birkhäuser Press, 1997.">BGMS97</a>]</span>.</p>
 </section>
 <section id="sequential-block-aij-sparse-matrices">
 <h3>Sequential Block AIJ Sparse Matrices<a class="headerlink" href="#sequential-block-aij-sparse-matrices" title="Permalink to this heading">#</a></h3>
 <p>The sequential and parallel block AIJ formats, which are extensions of
 the AIJ formats described above, are intended especially for use with
 multiclass PDEs. The block variants store matrix elements by fixed-sized
-dense <code class="docutils literal notranslate"><span class="pre">nb</span></code> <span class="math">\(\times\)</span> <code class="docutils literal notranslate"><span class="pre">nb</span></code> blocks. The stored row and column
+dense <code class="docutils notranslate"><span class="pre">nb</span></code> <span class="math">\(\times\)</span> <code class="docutils notranslate"><span class="pre">nb</span></code> blocks. The stored row and column
 indices begin at zero.</p>
-<p>The routine for creating a sequential block AIJ matrix with <code class="docutils literal notranslate"><span class="pre">m</span></code> rows,
-<code class="docutils literal notranslate"><span class="pre">n</span></code> columns, and a block size of <code class="docutils literal notranslate"><span class="pre">nb</span></code> is</p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MatCreateSeqBAIJ.html">MatCreateSeqBAIJ</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a></span><span class="w"> </span><span class="n">comm</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">nb</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">nz</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">nnz</span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/Mat.html">Mat</a></span><span class="w"> </span><span class="o">*</span><span class="n">A</span><span class="p">)</span>
+<p>The routine for creating a sequential block AIJ matrix with <code class="docutils notranslate"><span class="pre">m</span></code> rows,
+<code class="docutils notranslate"><span class="pre">n</span></code> columns, and a block size of <code class="docutils notranslate"><span class="pre">nb</span></code> is</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="../manualpages/Mat/MatCreateSeqBAIJ.html">MatCreateSeqBAIJ</a></span><span class="p">(</span><span class="n"><a href="../manualpages/Sys/MPI_Comm.html">MPI_Comm</a></span><span class="w"> </span><span class="n">comm</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">nb</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">nz</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">nnz</span><span class="p">,</span><span class="n"><a href="../manualpages/Mat/Mat.html">Mat</a></span><span class="w"> </span><span class="o">*</span><span class="n">A</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>The arguments <code class="docutils literal notranslate"><span class="pre">nz</span></code> and <code class="docutils literal notranslate"><span class="pre">nnz</span></code> can be used to preallocate matrix
+<p>The arguments <code class="docutils notranslate"><span class="pre">nz</span></code> and <code class="docutils notranslate"><span class="pre">nnz</span></code> can be used to preallocate matrix
 memory by indicating the number of <em>block</em> nonzeros per row. For good
 performance during matrix assembly, preallocation is crucial; however,
-you can set <code class="docutils literal notranslate"><span class="pre">nz=0</span></code> and <code class="docutils literal notranslate"><span class="pre">nnz=NULL</span></code> for PETSc to dynamically allocate
+you can set <code class="docutils notranslate"><span class="pre">nz=0</span></code> and <code class="docutils notranslate"><span class="pre">nnz=NULL</span></code> for PETSc to dynamically allocate
 matrix memory as needed. The PETSc users manual discusses preallocation
 for the AIJ format; extension to the block AIJ format is
 straightforward.</p>
-<p>Note that the routine <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MatSetValuesBlocked.html">MatSetValuesBlocked</a>()</span></code> can be used for more
+<p>Note that the routine <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MatSetValuesBlocked.html">MatSetValuesBlocked</a>()</span></code> can be used for more
 efficient matrix assembly when using the block AIJ format.</p>
 </section>
 <section id="parallel-block-aij-sparse-matrices">
 <h3>Parallel Block AIJ Sparse Matrices<a class="headerlink" href="#parallel-block-aij-sparse-matrices" title="Permalink to this heading">#</a></h3>
 <p>Parallel block AIJ matrices with block size nb can be created with the
-command <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MatCreateBAIJ.html">MatCreateBAIJ</a>()</span></code></p>
-<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MatCreateBAIJ.html">MatCreateBAIJ</a></span><span class="p">(</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a></span><span class="w"> </span><span class="n">comm</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">nb</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">d_nz</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">d_nnz</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">o_nz</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">o_nnz</span><span class="p">,</span><span class="n"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/Mat.html">Mat</a></span><span class="w"> </span><span class="o">*</span><span class="n">A</span><span class="p">);</span>
+command <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MatCreateBAIJ.html">MatCreateBAIJ</a>()</span></code></p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="n"><a href="../manualpages/Mat/MatCreateBAIJ.html">MatCreateBAIJ</a></span><span class="p">(</span><span class="n"><a href="../manualpages/Sys/MPI_Comm.html">MPI_Comm</a></span><span class="w"> </span><span class="n">comm</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">nb</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">m</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">n</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">M</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">N</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">d_nz</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">d_nnz</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="n">o_nz</span><span class="p">,</span><span class="kt">int</span><span class="w"> </span><span class="o">*</span><span class="n">o_nnz</span><span class="p">,</span><span class="n"><a href="../manualpages/Mat/Mat.html">Mat</a></span><span class="w"> </span><span class="o">*</span><span class="n">A</span><span class="p">);</span>
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">A</span></code> is the newly created matrix, while the arguments <code class="docutils literal notranslate"><span class="pre">m</span></code>, <code class="docutils literal notranslate"><span class="pre">n</span></code>,
-<code class="docutils literal notranslate"><span class="pre">M</span></code>, and <code class="docutils literal notranslate"><span class="pre">N</span></code> indicate the number of local rows and columns and the
+<p><code class="docutils notranslate"><span class="pre">A</span></code> is the newly created matrix, while the arguments <code class="docutils notranslate"><span class="pre">m</span></code>, <code class="docutils notranslate"><span class="pre">n</span></code>,
+<code class="docutils notranslate"><span class="pre">M</span></code>, and <code class="docutils notranslate"><span class="pre">N</span></code> indicate the number of local rows and columns and the
 number of global rows and columns, respectively. Either the local or
-global parameters can be replaced with <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a></span></code>, so that PETSc
+global parameters can be replaced with <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a></span></code>, so that PETSc
 will determine them. The matrix is stored with a fixed number of rows on
-each processor, given by <code class="docutils literal notranslate"><span class="pre">m</span></code>, or determined by PETSc if <code class="docutils literal notranslate"><span class="pre">m</span></code> is
-<code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a></span></code>.</p>
-<p>If <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a></span></code> is not used for <code class="docutils literal notranslate"><span class="pre">m</span></code> and <code class="docutils literal notranslate"><span class="pre">n</span></code> then you must ensure
+each processor, given by <code class="docutils notranslate"><span class="pre">m</span></code>, or determined by PETSc if <code class="docutils notranslate"><span class="pre">m</span></code> is
+<code class="docutils notranslate"><span class="pre"><a href="../manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a></span></code>.</p>
+<p>If <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a></span></code> is not used for <code class="docutils notranslate"><span class="pre">m</span></code> and <code class="docutils notranslate"><span class="pre">n</span></code> then you must ensure
 that they are chosen to be compatible with the vectors. To do so, you
-first consider the product <span class="math">\(y = A x\)</span>. The <code class="docutils literal notranslate"><span class="pre">m</span></code> that used in
-<code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MatCreateBAIJ.html">MatCreateBAIJ</a>()</span></code> must match the local size used in the
-<code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Vec/VecCreateMPI.html">VecCreateMPI</a>()</span></code> for <code class="docutils literal notranslate"><span class="pre">y</span></code>. The <code class="docutils literal notranslate"><span class="pre">n</span></code> used must match that used as the
-local size in <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Vec/VecCreateMPI.html">VecCreateMPI</a>()</span></code> for <code class="docutils literal notranslate"><span class="pre">x</span></code>.</p>
-<p>You must set <code class="docutils literal notranslate"><span class="pre">d_nz=0</span></code>, <code class="docutils literal notranslate"><span class="pre">o_nz=0</span></code>, <code class="docutils literal notranslate"><span class="pre">d_nnz=NULL</span></code>, and <code class="docutils literal notranslate"><span class="pre">o_nnz=NULL</span></code> for
+first consider the product <span class="math">\(y = A x\)</span>. The <code class="docutils notranslate"><span class="pre">m</span></code> that used in
+<code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MatCreateBAIJ.html">MatCreateBAIJ</a>()</span></code> must match the local size used in the
+<code class="docutils notranslate"><span class="pre"><a href="../manualpages/Vec/VecCreateMPI.html">VecCreateMPI</a>()</span></code> for <code class="docutils notranslate"><span class="pre">y</span></code>. The <code class="docutils notranslate"><span class="pre">n</span></code> used must match that used as the
+local size in <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Vec/VecCreateMPI.html">VecCreateMPI</a>()</span></code> for <code class="docutils notranslate"><span class="pre">x</span></code>.</p>
+<p>You must set <code class="docutils notranslate"><span class="pre">d_nz=0</span></code>, <code class="docutils notranslate"><span class="pre">o_nz=0</span></code>, <code class="docutils notranslate"><span class="pre">d_nnz=NULL</span></code>, and <code class="docutils notranslate"><span class="pre">o_nnz=NULL</span></code> for
 PETSc to control dynamic allocation of matrix memory space. Analogous to
-<code class="docutils literal notranslate"><span class="pre">nz</span></code> and <code class="docutils literal notranslate"><span class="pre">nnz</span></code> for the routine <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MatCreateSeqBAIJ.html">MatCreateSeqBAIJ</a>()</span></code>, these
+<code class="docutils notranslate"><span class="pre">nz</span></code> and <code class="docutils notranslate"><span class="pre">nnz</span></code> for the routine <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MatCreateSeqBAIJ.html">MatCreateSeqBAIJ</a>()</span></code>, these
 arguments optionally specify block nonzero information for the diagonal
-(<code class="docutils literal notranslate"><span class="pre">d_nz</span></code> and <code class="docutils literal notranslate"><span class="pre">d_nnz</span></code>) and off-diagonal (<code class="docutils literal notranslate"><span class="pre">o_nz</span></code> and <code class="docutils literal notranslate"><span class="pre">o_nnz</span></code>) parts of
+(<code class="docutils notranslate"><span class="pre">d_nz</span></code> and <code class="docutils notranslate"><span class="pre">d_nnz</span></code>) and off-diagonal (<code class="docutils notranslate"><span class="pre">o_nz</span></code> and <code class="docutils notranslate"><span class="pre">o_nnz</span></code>) parts of
 the matrix. For a square global matrix, we define each processor’s
 diagonal portion to be its local rows and the corresponding columns (a
 square submatrix); each processor’s off-diagonal portion encompasses the
@@ -652,7 +655,7 @@ dense format described above.</p>
 <h2>References<a class="headerlink" href="#references" title="Permalink to this heading">#</a></h2>
 <div class="docutils container" id="id2">
 <dl class="citation">
-<dt class="label" id="id1325"><span class="brackets"><a class="fn-backref" href="#id1">BGMS97</a></span></dt>
+<dt class="label" id="id1427"><span class="brackets"><a class="fn-backref" href="#id1">BGMS97</a></span></dt>
 <dd><p>Satish Balay, William D. Gropp, Lois Curfman McInnes, and Barry F. Smith. Efficient management of parallelism in object oriented numerical software libraries. In E. Arge, A. M. Bruaset, and H. P. Langtangen, editors, <em>Modern Software Tools in Scientific Computing</em>, 163–202. Birkhäuser Press, 1997.</p>
 </dd>
 </dl>
@@ -802,7 +805,7 @@ dense format described above.</p>
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -818,7 +821,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

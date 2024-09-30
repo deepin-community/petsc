@@ -173,6 +173,20 @@
        PetscReal c ! PetscReal
        PetscErrorCode z
        end subroutine DMDASetGLLCoordinates
+      subroutine DMDAGetReducedDMDA(a,b,c,z)
+       import tDM
+       DM a ! DM
+       PetscInt b ! PetscInt
+       DM c ! DM
+       PetscErrorCode z
+       end subroutine DMDAGetReducedDMDA
+      subroutine DMDACreateCompatibleDMDA(a,b,c,z)
+       import tDM
+       DM a ! DM
+       PetscInt b ! PetscInt
+       DM c ! DM
+       PetscErrorCode z
+       end subroutine DMDACreateCompatibleDMDA
       subroutine DMDACreate(a,b,z)
        import tDM
        MPI_Comm a ! MPI_Comm
@@ -194,6 +208,13 @@
        Vec b ! Vec
        PetscErrorCode z
        end subroutine DMDACreateNaturalVector
+      subroutine DMDAConvertToCell(a,b,c,z)
+       import tDM
+       DM a ! DM
+       MatStencil b ! MatStencil
+       PetscInt c ! PetscInt
+       PetscErrorCode z
+       end subroutine DMDAConvertToCell
       subroutine DMDAGetElementsCorners(a,b,c,d,z)
        import tDM
        DM a ! DM
@@ -234,6 +255,38 @@
        IS b ! IS
        PetscErrorCode z
        end subroutine DMDARestoreSubdomainCornersIS
+      subroutine DMDAGlobalToNaturalBegin(a,b,c,d,z)
+       import tDM,tVec
+       DM a ! DM
+       Vec b ! Vec
+       InsertMode c ! InsertMode
+       Vec d ! Vec
+       PetscErrorCode z
+       end subroutine DMDAGlobalToNaturalBegin
+      subroutine DMDAGlobalToNaturalEnd(a,b,c,d,z)
+       import tDM,tVec
+       DM a ! DM
+       Vec b ! Vec
+       InsertMode c ! InsertMode
+       Vec d ! Vec
+       PetscErrorCode z
+       end subroutine DMDAGlobalToNaturalEnd
+      subroutine DMDANaturalToGlobalBegin(a,b,c,d,z)
+       import tDM,tVec
+       DM a ! DM
+       Vec b ! Vec
+       InsertMode c ! InsertMode
+       Vec d ! Vec
+       PetscErrorCode z
+       end subroutine DMDANaturalToGlobalBegin
+      subroutine DMDANaturalToGlobalEnd(a,b,c,d,z)
+       import tDM,tVec
+       DM a ! DM
+       Vec b ! Vec
+       InsertMode c ! InsertMode
+       Vec d ! Vec
+       PetscErrorCode z
+       end subroutine DMDANaturalToGlobalEnd
       subroutine DMDAGlobalToNaturalAllCreate(a,b,z)
        import tVecScatter,tDM
        DM a ! DM
@@ -252,6 +305,20 @@
        AO b ! AO
        PetscErrorCode z
        end subroutine DMDAGetAO
+      subroutine DMCreateAggregates(a,b,c,z)
+       import tDM,tMat
+       DM a ! DM
+       DM b ! DM
+       Mat c ! Mat
+       PetscErrorCode z
+       end subroutine DMCreateAggregates
+      subroutine DMDACreateAggregates(a,b,c,z)
+       import tDM,tMat
+       DM a ! DM
+       DM b ! DM
+       Mat c ! Mat
+       PetscErrorCode z
+       end subroutine DMDACreateAggregates
       subroutine DMDAGetNumCells(a,b,c,d,e,z)
        import tDM
        DM a ! DM
@@ -330,70 +397,3 @@
        PetscReal g ! PetscReal
        PetscErrorCode z
        end subroutine DMDASetUniformCoordinates
-      subroutine DMDAGetReducedDMDA(a,b,c,z)
-       import tDM
-       DM a ! DM
-       PetscInt b ! PetscInt
-       DM c ! DM
-       PetscErrorCode z
-       end subroutine DMDAGetReducedDMDA
-      subroutine DMDACreateCompatibleDMDA(a,b,c,z)
-       import tDM
-       DM a ! DM
-       PetscInt b ! PetscInt
-       DM c ! DM
-       PetscErrorCode z
-       end subroutine DMDACreateCompatibleDMDA
-      subroutine DMDAConvertToCell(a,b,c,z)
-       import tDM
-       DM a ! DM
-       MatStencil b ! MatStencil
-       PetscInt c ! PetscInt
-       PetscErrorCode z
-       end subroutine DMDAConvertToCell
-      subroutine DMDAGlobalToNaturalBegin(a,b,c,d,z)
-       import tDM,tVec
-       DM a ! DM
-       Vec b ! Vec
-       InsertMode c ! InsertMode
-       Vec d ! Vec
-       PetscErrorCode z
-       end subroutine DMDAGlobalToNaturalBegin
-      subroutine DMDAGlobalToNaturalEnd(a,b,c,d,z)
-       import tDM,tVec
-       DM a ! DM
-       Vec b ! Vec
-       InsertMode c ! InsertMode
-       Vec d ! Vec
-       PetscErrorCode z
-       end subroutine DMDAGlobalToNaturalEnd
-      subroutine DMDANaturalToGlobalBegin(a,b,c,d,z)
-       import tDM,tVec
-       DM a ! DM
-       Vec b ! Vec
-       InsertMode c ! InsertMode
-       Vec d ! Vec
-       PetscErrorCode z
-       end subroutine DMDANaturalToGlobalBegin
-      subroutine DMDANaturalToGlobalEnd(a,b,c,d,z)
-       import tDM,tVec
-       DM a ! DM
-       Vec b ! Vec
-       InsertMode c ! InsertMode
-       Vec d ! Vec
-       PetscErrorCode z
-       end subroutine DMDANaturalToGlobalEnd
-      subroutine DMCreateAggregates(a,b,c,z)
-       import tDM,tMat
-       DM a ! DM
-       DM b ! DM
-       Mat c ! Mat
-       PetscErrorCode z
-       end subroutine DMCreateAggregates
-      subroutine DMDACreateAggregates(a,b,c,z)
-       import tDM,tMat
-       DM a ! DM
-       DM b ! DM
-       Mat c ! Mat
-       PetscErrorCode z
-       end subroutine DMDACreateAggregates

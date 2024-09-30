@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Download &#8212; PETSc 3.18.6 documentation</title>
+    <title>Download &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -142,31 +143,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -293,31 +293,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -437,7 +436,7 @@
 <span id="doc-download"></span><h1>Download<a class="headerlink" href="#download" title="Permalink to this heading">#</a></h1>
 <section id="recommended-obtain-release-version-with-git">
 <h2>Recommended: Obtain Release Version With Git<a class="headerlink" href="#recommended-obtain-release-version-with-git" title="Permalink to this heading">#</a></h2>
-<p>Use <code class="docutils literal notranslate"><span class="pre">release</span></code> branch from PETSc git repository - it provides latest release with additional fixes.</p>
+<p>Use <code class="docutils notranslate"><span class="pre">release</span></code> branch from PETSc git repository - it provides latest release with additional fixes.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </span>release<span class="w"> </span>https://gitlab.com/petsc/petsc.git<span class="w"> </span>petsc
 <span class="gp">$ </span>git<span class="w"> </span>pull<span class="w"> </span><span class="c1"># obtain new release fixes (since a prior clone or pull)</span>
 </pre></div>
@@ -455,35 +454,34 @@ library.</p>
 <h2>Alternative: Obtain Release Version with Tarball<a class="headerlink" href="#alternative-obtain-release-version-with-tarball" title="Permalink to this heading">#</a></h2>
 <p>Tarball which contains only the source. Documentation available <a class="reference external" href="https://petsc.org/release">online</a>.</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-3.18.6.tar.gz">petsc-3.18.6.tar.gz</a></p></li>
+<li><p><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/download/release-snapshots/petsc-3.20.6.tar.gz">petsc-3.20.6.tar.gz</a></p></li>
 </ul>
 <p>Tarball which includes all documentation, recommended for offline use.</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc-with-docs-3.18.6.tar.gz">petsc-with-docs-3.18.6.tar.gz</a></p></li>
+<li><p><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/download/release-snapshots/petsc-with-docs-3.20.6.tar.gz">petsc-with-docs-3.20.6.tar.gz</a></p></li>
 </ul>
 <p>Tarball to enable a separate installation of petsc4py.</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://ftp.mcs.anl.gov/pub/petsc/release-snapshots/petsc4py-3.18.6.tar.gz">petsc4py-3.18.6.tar.gz</a></p></li>
+<li><p><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/download/release-snapshots/petsc4py-3.20.6.tar.gz">petsc4py-3.20.6.tar.gz</a></p></li>
 </ul>
 <p>To extract the sources use:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>tar<span class="w"> </span>xf<span class="w"> </span>petsc-&lt;version<span class="w"> </span>number&gt;.tar.gz
 </pre></div>
 </div>
-<p>Use mirror if GitLab and our primary download server are unavailable:</p>
+<p>Current and older release tarballs are available at:</p>
 <ul class="simple">
-<li><p><a class="reference external" href="https://ftp.mcs.anl.gov/pub/petsc/release-snapshots/">Primary server</a></p></li>
-<li><p><a class="reference external" href="https://www.mcs.anl.gov/petsc/mirror/release-snapshots/">Mirror</a></p></li>
+<li><p><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/download/release-snapshots/">Primary server</a></p></li>
 </ul>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Older releases of PETSc are also available above. These should only be used for
+<p>Older release tarballs of PETSc should only be used for
 applications that have not been updated to the latest release. We urge you, whenever
 possible, to upgrade to the latest version of PETSc.</p>
 </div>
 </section>
 <section id="advanced-obtain-petsc-development-version-with-git">
 <h2>Advanced: Obtain PETSc Development Version With Git<a class="headerlink" href="#advanced-obtain-petsc-development-version-with-git" title="Permalink to this heading">#</a></h2>
-<p>Improvements and new features get added to <code class="docutils literal notranslate"><span class="pre">main</span></code> branch of PETSc git repository. To obtain development sources, use:</p>
+<p>Improvements and new features get added to <code class="docutils notranslate"><span class="pre">main</span></code> branch of PETSc git repository. To obtain development sources, use:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>git<span class="w"> </span>clone<span class="w"> </span>https://gitlab.com/petsc/petsc.git<span class="w"> </span>petsc
 </pre></div>
 </div>
@@ -492,7 +490,7 @@ possible, to upgrade to the latest version of PETSc.</p>
 <span class="gp">$ </span>git<span class="w"> </span>pull
 </pre></div>
 </div>
-<p>More details on contributing to PETSc development are at <a class="reference internal" href="../developers/contributing.html#ch-contributing"><span class="std std-ref">Contributing to PETSc</span></a>. The development version of
+<p>More details on contributing to PETSc development are at <a class="reference internal" href="../developers/contributing/index.html#ch-contributing"><span class="std std-ref">Contributing to PETSc</span></a>. The development version of
 the documentation, which is largely the same as the release documentation is <a class="reference external" href="https://petsc.org/main">available</a>.</p>
 </section>
 </section>
@@ -607,7 +605,7 @@ the documentation, which is largely the same as the release documentation is <a 
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -623,7 +621,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

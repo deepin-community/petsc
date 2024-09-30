@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/color/impls/minpack/dsm.c">Actual source code: dsm.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/mat/color/impls/minpack/dsm.c">Actual source code: dsm.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:48:17+00:00">
+<meta name="date" content="2024-03-29T14:12:26+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -13,15 +13,15 @@
 
 <a name="line3">  3: </a>#include <A href="color.h.html">&lt;../src/mat/color/impls/minpack/color.h&gt;</A>
 
-<a name="line5">  5: </a>static <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> c_n1 = -1;
+<a name="line5">  5: </a>static <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> c_n1 = -1;
 
-<a name="line7">  7: </a><strong><font color="#4169E1"><a name="MINPACKdsm"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MINPACKdsm(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *m, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *n, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *npairs, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *indrow, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *indcol, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *ngrp, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *maxgrp, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *mingrp, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *info, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *ipntr, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *jpntr, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *iwa, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *liwa)</font></strong>
+<a name="line7">  7: </a><strong><font color="#4169E1"><a name="MINPACKdsm"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MINPACKdsm(<a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *m, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *n, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *npairs, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *indrow, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *indcol, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *ngrp, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *maxgrp, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *mingrp, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *info, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *ipntr, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *jpntr, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *iwa, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *liwa)</font></strong>
 <a name="line8">  8: </a>{
 <a name="line9">  9: </a>  <font color="#B22222">/* System generated locals */</font>
-<a name="line10"> 10: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i__1, i__2, i__3;
+<a name="line10"> 10: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> i__1, i__2, i__3;
 
 <a name="line12"> 12: </a>  <font color="#B22222">/* Local variables */</font>
-<a name="line13"> 13: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i, j, maxclq, numgrp;
+<a name="line13"> 13: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> i, j, maxclq, numgrp;
 
 <a name="line15"> 15: </a>  <font color="#B22222">/*     Given the sparsity pattern of an m by n matrix A, this */</font>
 <a name="line16"> 16: </a>  <font color="#B22222">/*     subroutine determines a partition of the columns of A */</font>
@@ -94,78 +94,79 @@
 <a name="line83"> 83: </a>  <font color="#B22222">/*     Argonne National Laboratory. MINPACK Project. December 1984. */</font>
 <a name="line84"> 84: </a>  <font color="#B22222">/*     Thomas F. Coleman, Burton S. Garbow, Jorge J. More' */</font>
 
-<a name="line86"> 86: </a>  <font color="#B22222">/* Parameter adjustments */</font>
-<a name="line87"> 87: </a>  --iwa;
-<a name="line88"> 88: </a>  --jpntr;
-<a name="line89"> 89: </a>  --ipntr;
-<a name="line90"> 90: </a>  --ngrp;
-<a name="line91"> 91: </a>  --indcol;
-<a name="line92"> 92: </a>  --indrow;
+<a name="line86"> 86: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line87"> 87: </a>  <font color="#B22222">/* Parameter adjustments */</font>
+<a name="line88"> 88: </a>  --iwa;
+<a name="line89"> 89: </a>  --jpntr;
+<a name="line90"> 90: </a>  --ipntr;
+<a name="line91"> 91: </a>  --ngrp;
+<a name="line92"> 92: </a>  --indcol;
+<a name="line93"> 93: </a>  --indrow;
 
-<a name="line94"> 94: </a>  *info = 0;
+<a name="line95"> 95: </a>  *info = 0;
 
-<a name="line96"> 96: </a>  <font color="#B22222">/*     Determine a lower bound for the number of groups. */</font>
+<a name="line97"> 97: </a>  <font color="#B22222">/*     Determine a lower bound for the number of groups. */</font>
 
-<a name="line98"> 98: </a>  *mingrp = 0;
-<a name="line99"> 99: </a>  i__1    = *m;
-<a name="line100">100: </a>  <font color="#4169E1">for</font> (i = 1; i &lt;= i__1; ++i) {
-<a name="line101">101: </a>    <font color="#B22222">/* Computing MAX */</font>
-<a name="line102">102: </a>    i__2    = *mingrp;
-<a name="line103">103: </a>    i__3    = ipntr[i + 1] - ipntr[i];
-<a name="line104">104: </a>    *mingrp = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(i__2, i__3);
-<a name="line105">105: </a>  }
+<a name="line99"> 99: </a>  *mingrp = 0;
+<a name="line100">100: </a>  i__1    = *m;
+<a name="line101">101: </a>  <font color="#4169E1">for</font> (i = 1; i &lt;= i__1; ++i) {
+<a name="line102">102: </a>    <font color="#B22222">/* Computing MAX */</font>
+<a name="line103">103: </a>    i__2    = *mingrp;
+<a name="line104">104: </a>    i__3    = ipntr[i + 1] - ipntr[i];
+<a name="line105">105: </a>    *mingrp = <a href="../../../../../manualpages/Sys/PetscMax.html">PetscMax</a>(i__2, i__3);
+<a name="line106">106: </a>  }
 
-<a name="line107">107: </a>  <font color="#B22222">/*     Determine the degree sequence for the intersection */</font>
-<a name="line108">108: </a>  <font color="#B22222">/*     graph of the columns of A. */</font>
+<a name="line108">108: </a>  <font color="#B22222">/*     Determine the degree sequence for the intersection */</font>
+<a name="line109">109: </a>  <font color="#B22222">/*     graph of the columns of A. */</font>
 
-<a name="line110">110: </a>  MINPACKdegr(n, &amp;indrow[1], &amp;jpntr[1], &amp;indcol[1], &amp;ipntr[1], &amp;iwa[*n * 5 + 1], &amp;iwa[*n + 1]);
+<a name="line111">111: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MINPACKdegr(n, &amp;indrow[1], &amp;jpntr[1], &amp;indcol[1], &amp;ipntr[1], &amp;iwa[*n * 5 + 1], &amp;iwa[*n + 1]));
 
-<a name="line112">112: </a>  <font color="#B22222">/*     Color the intersection graph of the columns of A */</font>
-<a name="line113">113: </a>  <font color="#B22222">/*     with the smallest-last (SL) ordering. */</font>
+<a name="line113">113: </a>  <font color="#B22222">/*     Color the intersection graph of the columns of A */</font>
+<a name="line114">114: </a>  <font color="#B22222">/*     with the smallest-last (SL) ordering. */</font>
 
-<a name="line115">115: </a>  MINPACKslo(n, &amp;indrow[1], &amp;jpntr[1], &amp;indcol[1], &amp;ipntr[1], &amp;iwa[*n * 5 + 1], &amp;iwa[(*n &lt;&lt; 2) + 1], &amp;maxclq, &amp;iwa[1], &amp;iwa[*n + 1], &amp;iwa[(*n &lt;&lt; 1) + 1], &amp;iwa[*n * 3 + 1]);
-<a name="line116">116: </a>  MINPACKseq(n, &amp;indrow[1], &amp;jpntr[1], &amp;indcol[1], &amp;ipntr[1], &amp;iwa[(*n &lt;&lt; 2) + 1], &amp;ngrp[1], maxgrp, &amp;iwa[*n + 1]);
-<a name="line117">117: </a>  *mingrp = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(*mingrp, maxclq);
+<a name="line116">116: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MINPACKslo(n, &amp;indrow[1], &amp;jpntr[1], &amp;indcol[1], &amp;ipntr[1], &amp;iwa[*n * 5 + 1], &amp;iwa[(*n &lt;&lt; 2) + 1], &amp;maxclq, &amp;iwa[1], &amp;iwa[*n + 1], &amp;iwa[(*n &lt;&lt; 1) + 1], &amp;iwa[*n * 3 + 1]));
+<a name="line117">117: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MINPACKseq(n, &amp;indrow[1], &amp;jpntr[1], &amp;indcol[1], &amp;ipntr[1], &amp;iwa[(*n &lt;&lt; 2) + 1], &amp;ngrp[1], maxgrp, &amp;iwa[*n + 1]));
+<a name="line118">118: </a>  *mingrp = <a href="../../../../../manualpages/Sys/PetscMax.html">PetscMax</a>(*mingrp, maxclq);
 
-<a name="line119">119: </a>  <font color="#B22222">/*     Exit if the smallest-last ordering is optimal. */</font>
+<a name="line120">120: </a>  <font color="#B22222">/*     Exit if the smallest-last ordering is optimal. */</font>
 
-<a name="line121">121: </a>  <font color="#4169E1">if</font> (*maxgrp == *mingrp) <font color="#4169E1">return</font> 0;
+<a name="line122">122: </a>  <font color="#4169E1">if</font> (*maxgrp == *mingrp) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 
-<a name="line123">123: </a>  <font color="#B22222">/*     Color the intersection graph of the columns of A */</font>
-<a name="line124">124: </a>  <font color="#B22222">/*     with the incidence-degree (ID) ordering. */</font>
+<a name="line124">124: </a>  <font color="#B22222">/*     Color the intersection graph of the columns of A */</font>
+<a name="line125">125: </a>  <font color="#B22222">/*     with the incidence-degree (ID) ordering. */</font>
 
-<a name="line126">126: </a>  MINPACKido(m, n, &amp;indrow[1], &amp;jpntr[1], &amp;indcol[1], &amp;ipntr[1], &amp;iwa[*n * 5 + 1], &amp;iwa[(*n &lt;&lt; 2) + 1], &amp;maxclq, &amp;iwa[1], &amp;iwa[*n + 1], &amp;iwa[(*n &lt;&lt; 1) + 1], &amp;iwa[*n * 3 + 1]);
-<a name="line127">127: </a>  MINPACKseq(n, &amp;indrow[1], &amp;jpntr[1], &amp;indcol[1], &amp;ipntr[1], &amp;iwa[(*n &lt;&lt; 2) + 1], &amp;iwa[1], &amp;numgrp, &amp;iwa[*n + 1]);
-<a name="line128">128: </a>  *mingrp = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(*mingrp, maxclq);
+<a name="line127">127: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MINPACKido(m, n, &amp;indrow[1], &amp;jpntr[1], &amp;indcol[1], &amp;ipntr[1], &amp;iwa[*n * 5 + 1], &amp;iwa[(*n &lt;&lt; 2) + 1], &amp;maxclq, &amp;iwa[1], &amp;iwa[*n + 1], &amp;iwa[(*n &lt;&lt; 1) + 1], &amp;iwa[*n * 3 + 1]));
+<a name="line128">128: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MINPACKseq(n, &amp;indrow[1], &amp;jpntr[1], &amp;indcol[1], &amp;ipntr[1], &amp;iwa[(*n &lt;&lt; 2) + 1], &amp;iwa[1], &amp;numgrp, &amp;iwa[*n + 1]));
+<a name="line129">129: </a>  *mingrp = <a href="../../../../../manualpages/Sys/PetscMax.html">PetscMax</a>(*mingrp, maxclq);
 
-<a name="line130">130: </a>  <font color="#B22222">/*     Retain the better of the two orderings so far. */</font>
+<a name="line131">131: </a>  <font color="#B22222">/*     Retain the better of the two orderings so far. */</font>
 
-<a name="line132">132: </a>  <font color="#4169E1">if</font> (numgrp &lt; *maxgrp) {
-<a name="line133">133: </a>    *maxgrp = numgrp;
-<a name="line134">134: </a>    i__1    = *n;
-<a name="line135">135: </a>    <font color="#4169E1">for</font> (j = 1; j &lt;= i__1; ++j) ngrp[j] = iwa[j];
+<a name="line133">133: </a>  <font color="#4169E1">if</font> (numgrp &lt; *maxgrp) {
+<a name="line134">134: </a>    *maxgrp = numgrp;
+<a name="line135">135: </a>    i__1    = *n;
+<a name="line136">136: </a>    <font color="#4169E1">for</font> (j = 1; j &lt;= i__1; ++j) ngrp[j] = iwa[j];
 
-<a name="line137">137: </a>    <font color="#B22222">/*        Exit if the incidence-degree ordering is optimal. */</font>
+<a name="line138">138: </a>    <font color="#B22222">/*        Exit if the incidence-degree ordering is optimal. */</font>
 
-<a name="line139">139: </a>    <font color="#4169E1">if</font> (*maxgrp == *mingrp) <font color="#4169E1">return</font> 0;
-<a name="line140">140: </a>  }
+<a name="line140">140: </a>    <font color="#4169E1">if</font> (*maxgrp == *mingrp) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line141">141: </a>  }
 
-<a name="line142">142: </a>  <font color="#B22222">/*     Color the intersection graph of the columns of A */</font>
-<a name="line143">143: </a>  <font color="#B22222">/*     with the largest-first (LF) ordering. */</font>
+<a name="line143">143: </a>  <font color="#B22222">/*     Color the intersection graph of the columns of A */</font>
+<a name="line144">144: </a>  <font color="#B22222">/*     with the largest-first (LF) ordering. */</font>
 
-<a name="line145">145: </a>  i__1 = *n - 1;
-<a name="line146">146: </a>  MINPACKnumsrt(n, &amp;i__1, &amp;iwa[*n * 5 + 1], &amp;c_n1, &amp;iwa[(*n &lt;&lt; 2) + 1], &amp;iwa[(*n &lt;&lt; 1) + 1], &amp;iwa[*n + 1]);
-<a name="line147">147: </a>  MINPACKseq(n, &amp;indrow[1], &amp;jpntr[1], &amp;indcol[1], &amp;ipntr[1], &amp;iwa[(*n &lt;&lt; 2) + 1], &amp;iwa[1], &amp;numgrp, &amp;iwa[*n + 1]);
+<a name="line146">146: </a>  i__1 = *n - 1;
+<a name="line147">147: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MINPACKnumsrt(n, &amp;i__1, &amp;iwa[*n * 5 + 1], &amp;c_n1, &amp;iwa[(*n &lt;&lt; 2) + 1], &amp;iwa[(*n &lt;&lt; 1) + 1], &amp;iwa[*n + 1]));
+<a name="line148">148: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(MINPACKseq(n, &amp;indrow[1], &amp;jpntr[1], &amp;indcol[1], &amp;ipntr[1], &amp;iwa[(*n &lt;&lt; 2) + 1], &amp;iwa[1], &amp;numgrp, &amp;iwa[*n + 1]));
 
-<a name="line149">149: </a>  <font color="#B22222">/*     Retain the best of the three orderings and exit. */</font>
+<a name="line150">150: </a>  <font color="#B22222">/*     Retain the best of the three orderings and exit. */</font>
 
-<a name="line151">151: </a>  <font color="#4169E1">if</font> (numgrp &lt; *maxgrp) {
-<a name="line152">152: </a>    *maxgrp = numgrp;
-<a name="line153">153: </a>    i__1    = *n;
-<a name="line154">154: </a>    <font color="#4169E1">for</font> (j = 1; j &lt;= i__1; ++j) ngrp[j] = iwa[j];
-<a name="line155">155: </a>  }
-<a name="line156">156: </a>  <font color="#4169E1">return</font> 0;
-<a name="line157">157: </a>}
+<a name="line152">152: </a>  <font color="#4169E1">if</font> (numgrp &lt; *maxgrp) {
+<a name="line153">153: </a>    *maxgrp = numgrp;
+<a name="line154">154: </a>    i__1    = *n;
+<a name="line155">155: </a>    <font color="#4169E1">for</font> (j = 1; j &lt;= i__1; ++j) ngrp[j] = iwa[j];
+<a name="line156">156: </a>  }
+<a name="line157">157: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line158">158: </a>}
 </pre>
 </body>
 

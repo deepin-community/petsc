@@ -59,11 +59,6 @@ extern void PetscRmPointer(void*);
 #define pcasmsetsortindices_ pcasmsetsortindices
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define pcasmcreatesubdomains2d_ PCASMCREATESUBDOMAINS2D
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define pcasmcreatesubdomains2d_ pcasmcreatesubdomains2d
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define pcasmsetdmsubdomains_ PCASMSETDMSUBDOMAINS
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define pcasmsetdmsubdomains_ pcasmsetdmsubdomains
@@ -72,16 +67,6 @@ extern void PetscRmPointer(void*);
 #define pcasmgetdmsubdomains_ PCASMGETDMSUBDOMAINS
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define pcasmgetdmsubdomains_ pcasmgetdmsubdomains
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define pcasmgetsubmattype_ PCASMGETSUBMATTYPE
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define pcasmgetsubmattype_ pcasmgetsubmattype
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define pcasmsetsubmattype_ PCASMSETSUBMATTYPE
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define pcasmsetsubmattype_ pcasmsetsubmattype
 #endif
 
 
@@ -119,10 +104,6 @@ PETSC_EXTERN void  pcasmsetsortindices_(PC pc,PetscBool *doSort, int *__ierr)
 *__ierr = PCASMSetSortIndices(
 	(PC)PetscToPointer((pc) ),*doSort);
 }
-PETSC_EXTERN void  pcasmcreatesubdomains2d_(PetscInt *m,PetscInt *n,PetscInt *M,PetscInt *N,PetscInt *dof,PetscInt *overlap,PetscInt *Nsub,IS **is,IS **is_local, int *__ierr)
-{
-*__ierr = PCASMCreateSubdomains2D(*m,*n,*M,*N,*dof,*overlap,Nsub,is,is_local);
-}
 PETSC_EXTERN void  pcasmsetdmsubdomains_(PC pc,PetscBool *flg, int *__ierr)
 {
 *__ierr = PCASMSetDMSubdomains(
@@ -132,17 +113,6 @@ PETSC_EXTERN void  pcasmgetdmsubdomains_(PC pc,PetscBool *flg, int *__ierr)
 {
 *__ierr = PCASMGetDMSubdomains(
 	(PC)PetscToPointer((pc) ),flg);
-}
-PETSC_EXTERN void  pcasmgetsubmattype_(PC pc,MatType *sub_mat_type, int *__ierr)
-{
-*__ierr = PCASMGetSubMatType(
-	(PC)PetscToPointer((pc) ),
-	(MatType* )PetscToPointer((sub_mat_type) ));
-}
-PETSC_EXTERN void  pcasmsetsubmattype_(PC pc,MatType *sub_mat_type, int *__ierr)
-{
-*__ierr = PCASMSetSubMatType(
-	(PC)PetscToPointer((pc) ),*sub_mat_type);
 }
 #if defined(__cplusplus)
 }

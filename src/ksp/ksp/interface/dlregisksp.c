@@ -1,4 +1,3 @@
-
 #include <petsc/private/pcimpl.h>
 #include <petsc/private/pcpatchimpl.h> /* For new events */
 #include <petsc/private/kspimpl.h>
@@ -16,13 +15,14 @@ const char *const        PCFailedReasons_Shifted[] = {"SETUP_ERROR", "FACTOR_NOE
 const char *const *const PCFailedReasons           = PCFailedReasons_Shifted + 1;
 
 static PetscBool PCPackageInitialized = PETSC_FALSE;
+
 /*@C
   PCFinalizePackage - This function destroys everything in the `PC` package. It is
   called from `PetscFinalize()`.
 
   Level: developer
 
-.seealso: [](chapter_ksp), `PetscFinalize()`, `PCInitializePackage()`
+.seealso: [](ch_ksp), `PetscFinalize()`, `PCInitializePackage()`
 @*/
 PetscErrorCode PCFinalizePackage(void)
 {
@@ -31,7 +31,7 @@ PetscErrorCode PCFinalizePackage(void)
   PetscCall(PetscFunctionListDestroy(&PCMGCoarseList));
   PCPackageInitialized = PETSC_FALSE;
   PCRegisterAllCalled  = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -41,7 +41,7 @@ PetscErrorCode PCFinalizePackage(void)
 
   Level: developer
 
-.seealso: [](chapter_ksp), `PetscInitialize()`, `PCFinalizePackage()`
+.seealso: [](ch_ksp), `PetscInitialize()`, `PCFinalizePackage()`
 @*/
 PetscErrorCode PCInitializePackage(void)
 {
@@ -49,7 +49,7 @@ PetscErrorCode PCInitializePackage(void)
   PetscBool opt, pkg;
 
   PetscFunctionBegin;
-  if (PCPackageInitialized) PetscFunctionReturn(0);
+  if (PCPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   PCPackageInitialized = PETSC_TRUE;
   /* Initialize subpackages */
   PetscCall(PCGAMGInitializePackage());
@@ -88,8 +88,6 @@ PetscErrorCode PCInitializePackage(void)
   PetscCall(PetscLogEventRegister("KSPSolve_FS_Up", KSP_CLASSID, &KSP_Solve_FS_U));
   PetscCall(PetscLogEventRegister("KSPSolve_FS_Low", KSP_CLASSID, &KSP_Solve_FS_L));
 
-  PetscCall(PetscLogStageRegister("PCMPI", &PCMPIStage));
-
   /* Process Info */
   {
     PetscClassId classids[1];
@@ -107,25 +105,26 @@ PetscErrorCode PCInitializePackage(void)
   PetscCall(PetscObjectComposedDataRegister(&PetscMGLevelId));
   /* Register package finalizer */
   PetscCall(PetscRegisterFinalize(PCFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 const char *const        KSPCGTypes[]                 = {"SYMMETRIC", "HERMITIAN", "KSPCGType", "KSP_CG_", NULL};
 const char *const        KSPGMRESCGSRefinementTypes[] = {"REFINE_NEVER", "REFINE_IFNEEDED", "REFINE_ALWAYS", "KSPGMRESRefinementType", "KSP_GMRES_CGS_", NULL};
 const char *const        KSPNormTypes_Shifted[]       = {"DEFAULT", "NONE", "PRECONDITIONED", "UNPRECONDITIONED", "NATURAL", "KSPNormType", "KSP_NORM_", NULL};
 const char *const *const KSPNormTypes                 = KSPNormTypes_Shifted + 1;
-const char *const KSPConvergedReasons_Shifted[] = {"DIVERGED_PC_FAILED", "DIVERGED_INDEFINITE_MAT", "DIVERGED_NANORINF", "DIVERGED_INDEFINITE_PC", "DIVERGED_NONSYMMETRIC", "DIVERGED_BREAKDOWN_BICG", "DIVERGED_BREAKDOWN", "DIVERGED_DTOL", "DIVERGED_ITS", "DIVERGED_NULL", "", "CONVERGED_ITERATING", "CONVERGED_RTOL_NORMAL", "CONVERGED_RTOL", "CONVERGED_ATOL", "CONVERGED_ITS", "CONVERGED_CG_NEG_CURVE", "CONVERGED_CG_CONSTRAINED", "CONVERGED_STEP_LENGTH", "CONVERGED_HAPPY_BREAKDOWN", "CONVERGED_ATOL_NORMAL", "KSPConvergedReason", "KSP_", NULL};
+const char *const KSPConvergedReasons_Shifted[] = {"DIVERGED_PC_FAILED", "DIVERGED_INDEFINITE_MAT", "DIVERGED_NANORINF", "DIVERGED_INDEFINITE_PC", "DIVERGED_NONSYMMETRIC", "DIVERGED_BREAKDOWN_BICG", "DIVERGED_BREAKDOWN", "DIVERGED_DTOL", "DIVERGED_ITS", "DIVERGED_NULL", "", "CONVERGED_ITERATING", "CONVERGED_RTOL_NORMAL", "CONVERGED_RTOL", "CONVERGED_ATOL", "CONVERGED_ITS", "CONVERGED_NEG_CURVE", "CONVERGED_STEP_LENGTH", "CONVERGED_HAPPY_BREAKDOWN", "CONVERGED_ATOL_NORMAL", "KSPConvergedReason", "KSP_", NULL};
 const char *const *KSPConvergedReasons     = KSPConvergedReasons_Shifted + 11;
 const char *const  KSPFCDTruncationTypes[] = {"STANDARD", "NOTAY", "KSPFCDTruncationTypes", "KSP_FCD_TRUNC_TYPE_", NULL};
 
 static PetscBool KSPPackageInitialized = PETSC_FALSE;
+
 /*@C
-  KSPFinalizePackage - This function destroys everything in the Petsc interface to the KSP package. It is
-  called from PetscFinalize().
+  KSPFinalizePackage - This function destroys everything in the `KSP` package. It is
+  called from `PetscFinalize()`.
 
   Level: developer
 
-.seealso: [](chapter_ksp), `PetscFinalize()`, `KSPInitializePackage()`
+.seealso: [](ch_ksp), `PetscFinalize()`, `KSPInitializePackage()`
 @*/
 PetscErrorCode KSPFinalizePackage(void)
 {
@@ -138,7 +137,7 @@ PetscErrorCode KSPFinalizePackage(void)
   KSPPackageInitialized       = PETSC_FALSE;
   KSPRegisterAllCalled        = PETSC_FALSE;
   KSPMonitorRegisterAllCalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -148,7 +147,7 @@ PetscErrorCode KSPFinalizePackage(void)
 
   Level: developer
 
-.seealso: [](chapter_ksp), `PetscInitialize()`, `KSPFinalizePackage()`
+.seealso: [](ch_ksp), `PetscInitialize()`, `KSPFinalizePackage()`
 @*/
 PetscErrorCode KSPInitializePackage(void)
 {
@@ -156,7 +155,7 @@ PetscErrorCode KSPInitializePackage(void)
   PetscBool opt, pkg, cls;
 
   PetscFunctionBegin;
-  if (KSPPackageInitialized) PetscFunctionReturn(0);
+  if (KSPPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   KSPPackageInitialized = PETSC_TRUE;
   /* Register Classes */
   PetscCall(PetscClassIdRegister("Krylov Solver", &KSP_CLASSID));
@@ -176,6 +175,7 @@ PetscErrorCode KSPInitializePackage(void)
   PetscCall(PetscLogEventRegister("KSPGMRESOrthog", KSP_CLASSID, &KSP_GMRESOrthogonalization));
   PetscCall(PetscLogEventRegister("KSPSolveTranspos", KSP_CLASSID, &KSP_SolveTranspose));
   PetscCall(PetscLogEventRegister("KSPMatSolve", KSP_CLASSID, &KSP_MatSolve));
+  PetscCall(PetscLogEventRegister("KSPMatSolveTrans", KSP_CLASSID, &KSP_MatSolveTranspose));
   /* Process Info */
   {
     PetscClassId classids[3];
@@ -199,7 +199,7 @@ PetscErrorCode KSPInitializePackage(void)
   }
   /* Register package finalizer */
   PetscCall(PetscRegisterFinalize(KSPFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_DYNAMIC_LIBRARIES)
@@ -214,7 +214,7 @@ PETSC_EXTERN PetscErrorCode PetscDLLibraryRegister_petscksp(void)
   PetscFunctionBegin;
   PetscCall(PCInitializePackage());
   PetscCall(KSPInitializePackage());
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif /* PETSC_HAVE_DYNAMIC_LIBRARIES */

@@ -1,4 +1,3 @@
-
 #include <petsc/private/viewerimpl.h> /*I "petscsys.h" I*/
 
 PETSC_EXTERN PetscErrorCode PetscViewerCreate_Socket(PetscViewer);
@@ -20,18 +19,18 @@ PETSC_EXTERN PetscErrorCode PetscViewerCreate_CGNS(PetscViewer);
 PetscBool PetscViewerRegisterAllCalled;
 
 /*@C
-  PetscViewerRegisterAll - Registers all of the viewer methods in the `PetscViewer` package.
+  PetscViewerRegisterAll - Registers all of the viewer types (`PetscViewerType`) in the `PetscViewer` package.
 
   Not Collective
 
-   Level: developer
+  Level: developer
 
 .seealso: [](sec_viewers), `PetscViewer`
 @*/
 PetscErrorCode PetscViewerRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (PetscViewerRegisterAllCalled) PetscFunctionReturn(0);
+  if (PetscViewerRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   PetscViewerRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(PetscViewerRegister(PETSCVIEWERASCII, PetscViewerCreate_ASCII));
@@ -65,5 +64,5 @@ PetscErrorCode PetscViewerRegisterAll(void)
 #if defined(PETSC_HAVE_CGNS)
   PetscCall(PetscViewerRegister(PETSCVIEWERCGNS, PetscViewerCreate_CGNS));
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

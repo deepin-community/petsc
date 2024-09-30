@@ -18,7 +18,7 @@ PetscErrorCode pyramidNormal(PetscInt dim, PetscReal time, const PetscReal x[], 
 
   for (d = 0; d < dim; ++d) u[d] = x[d] - apex[d];
   for (d = dim; d < 3; ++d) u[d] = 0.0 - apex[d];
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 static PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
@@ -27,13 +27,13 @@ static PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   PetscBool flg;
 
   PetscFunctionBeginUser;
-  PetscCall(PetscStrcpy(options->bdLabel, "marker"));
+  PetscCall(PetscStrncpy(options->bdLabel, "marker", sizeof(options->bdLabel)));
   PetscOptionsBegin(comm, "", "Parallel Mesh Adaptation Options", "DMPLEX");
   PetscCall(PetscOptionsString("-label", "The boundary label name", "ex44.c", options->bdLabel, options->bdLabel, sizeof(options->bdLabel), NULL));
   PetscCall(PetscOptionsIntArray("-bd", "The boundaries to be extruded", "ex44.c", options->bd, &n, &flg));
   options->Nbd = flg ? n : 0;
   PetscOptionsEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *ctx, DM *dm)
@@ -43,7 +43,7 @@ static PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *ctx, DM *dm)
   PetscCall(DMSetType(*dm, DMPLEX));
   PetscCall(DMSetFromOptions(*dm));
   PetscCall(DMViewFromOptions(*dm, NULL, "-dm_view"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode CreateAdaptLabel(DM dm, AppCtx *ctx, DMLabel *adaptLabel)
@@ -54,7 +54,7 @@ static PetscErrorCode CreateAdaptLabel(DM dm, AppCtx *ctx, DMLabel *adaptLabel)
   PetscFunctionBegin;
   if (!ctx->Nbd) {
     *adaptLabel = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(DMGetLabel(dm, ctx->bdLabel, &label));
   PetscCall(DMLabelCreate(PETSC_COMM_SELF, "Adaptation Label", adaptLabel));
@@ -71,7 +71,7 @@ static PetscErrorCode CreateAdaptLabel(DM dm, AppCtx *ctx, DMLabel *adaptLabel)
     PetscCall(ISRestoreIndices(bdIS, &points));
     PetscCall(ISDestroy(&bdIS));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -102,6 +102,11 @@ int main(int argc, char **argv)
 /*TEST
 
   test:
+    suffix: seg_periodic_0
+    args: -dm_plex_dim 1 -dm_plex_box_faces 3 -dm_plex_transform_extrude_periodic -dm_plex_transform_extrude_use_tensor 0 \
+          -dm_view -adapt_dm_view -dm_plex_check_all
+
+  test:
     suffix: tri_tensor_0
     requires: triangle
     args: -dm_plex_transform_extrude_use_tensor {{0 1}separate output} \
@@ -125,6 +130,16 @@ int main(int argc, char **argv)
   test:
     suffix: quad_symmetric_0
     args: -dm_plex_simplex 0 -dm_plex_transform_extrude_symmetric \
+          -dm_view -adapt_dm_view -dm_plex_check_all
+
+  test:
+    suffix: quad_label
+    args: -dm_plex_simplex 0 -dm_plex_transform_label_replica_inc {{0 100}separate output} \
+          -dm_view -adapt_dm_view -dm_plex_check_all
+
+  test:
+    suffix: quad_periodic_0
+    args: -dm_plex_simplex 0 -dm_plex_transform_extrude_periodic -dm_plex_transform_extrude_use_tensor 0 \
           -dm_view -adapt_dm_view -dm_plex_check_all
 
   testset:

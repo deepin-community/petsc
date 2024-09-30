@@ -4,12 +4,13 @@ import os
 class Configure(config.package.GNUPackage):
   def __init__(self, framework):
     config.package.GNUPackage.__init__(self, framework)
-    self.version                = '4.1.4'
+    self.version                = '4.1.6'
     self.download               = ['https://download.open-mpi.org/release/open-mpi/v4.1/openmpi-'+self.version+'.tar.gz',
-                                   'http://ftp.mcs.anl.gov/pub/petsc/externalpackages/openmpi-'+self.version+'.tar.gz']
+                                   'https://web.cels.anl.gov/projects/petsc/download/externalpackages/openmpi-'+self.version+'.tar.gz']
     self.downloaddirnames       = ['openmpi','ompi']
     self.skippackagewithoptions = 1
     self.isMPI                  = 1
+    self.buildLanguages         = ['C','Cxx']
     return
 
   def setupDependencies(self, framework):
@@ -24,8 +25,6 @@ class Configure(config.package.GNUPackage):
     args.append('--with-rsh=ssh')
     args.append('--disable-man-pages')
     args.append('MAKE='+self.make.make)
-    if not hasattr(self.compilers, 'CXX'):
-      raise RuntimeError('Error: OpenMPI requires C++ compiler. None specified')
     if hasattr(self.compilers, 'FC'):
       self.pushLanguage('FC')
       if not self.fortran.fortranIsF90:
@@ -69,20 +68,22 @@ class Configure(config.package.GNUPackage):
         else:
           raise RuntimeError
       except RuntimeError:
-        raise RuntimeError('Could not initialize 3rd-party submodule needed by OpenMPI')
+        raise RuntimeError('Could not initialize 3rd-party submodule needed by Open MPI')
     return
 
   def preInstall(self):
+    if not self.getExecutable('perl'):
+      raise RuntimeError('Cannot find perl required by --download-openmpi, install perl (possibly with a package manager) and run ./configure again') 
     self.Bootstrap('AUTOMAKE_JOBS=%d ./autogen.pl' % self.make.make_np)
 
   def checkDownload(self):
     if config.setCompilers.Configure.isCygwin(self.log):
       if config.setCompilers.Configure.isGNU(self.setCompilers.CC, self.log):
-        raise RuntimeError('Cannot download-install OpenMPI on Windows with cygwin compilers. Suggest installing OpenMPI via cygwin installer')
+        raise RuntimeError('Cannot download-install Open MPI on Windows with cygwin compilers. Suggest installing Open MPI via cygwin installer')
       else:
-        raise RuntimeError('Cannot download-install OpenMPI on Windows with Microsoft or Intel Compilers. Suggest using MS-MPI or Intel-MPI (do not use MPICH2')
+        raise RuntimeError('Cannot download-install Open MPI on Windows with Microsoft or Intel Compilers. Suggest using MS-MPI or Intel-MPI (do not use MPICH2')
     if self.argDB['download-'+self.downloadname.lower()] and  'package-prefix-hash' in self.argDB and self.argDB['package-prefix-hash'] == 'reuse':
-      self.logWrite('Reusing package prefix install of '+self.defaultInstallDir+' for OpenMPI')
+      self.logWrite('Reusing package prefix install of '+self.defaultInstallDir+' for Open MPI')
       self.installDir = self.defaultInstallDir
       self.updateCompilers(self.installDir,'mpicc','mpicxx','mpif77','mpif90')
       return self.installDir
@@ -91,7 +92,7 @@ class Configure(config.package.GNUPackage):
     return ''
 
   def Install(self):
-    '''After downloading and installing OpenMPI we need to reset the compilers to use those defined by the OpenMPI install'''
+    '''After downloading and installing Open MPI we need to reset the compilers to use those defined by the Open MPI install'''
     if 'package-prefix-hash' in self.argDB and self.argDB['package-prefix-hash'] == 'reuse':
       return self.defaultInstallDir
     installDir = config.package.GNUPackage.Install(self)

@@ -2,8 +2,7 @@
        Abstract data structure and functions for graphics.
 */
 
-#ifndef PETSCDRAWIMPL_H
-#define PETSCDRAWIMPL_H
+#pragma once
 
 #include <petsc/private/petscimpl.h>
 #include <petscdraw.h>
@@ -48,6 +47,7 @@ struct _PetscDrawOps {
   PetscErrorCode (*pixeltocoordinate)(PetscDraw, int, int, PetscReal *, PetscReal *);
   PetscErrorCode (*pointpixel)(PetscDraw, int, int, int);
   PetscErrorCode (*boxedstring)(PetscDraw, PetscReal, PetscReal, int, int, const char[], PetscReal *, PetscReal *);
+  PetscErrorCode (*setvisible)(PetscDraw, PetscBool);
 };
 
 struct _p_PetscDraw {
@@ -148,5 +148,3 @@ struct _p_PetscDrawSP {
   PetscBool     colorized;
 };
 #define PETSC_DRAW_SP_CHUNK_SIZE 100
-
-#endif /* PETSCDRAWIMPL_H */

@@ -1,4 +1,3 @@
-
 static char help[] = "Tests the parallel case for MatIncreaseOverlap(). Input arguments are:\n\
   -f <input_file> : file to load.  For example see $PETSC_DIR/share/petsc/datafiles/matrices\n\
   -nd <size>      : > 0  number of domains per processor \n\
@@ -30,7 +29,7 @@ PetscErrorCode ISAllGatherDisjoint(IS iis, IS **ois)
   PetscCall(ISDestroy(&is));
   PetscCall(PetscFree(sizes));
   *ois = is2;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **args)

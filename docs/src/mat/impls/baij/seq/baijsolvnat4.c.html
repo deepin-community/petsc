@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/impls/baij/seq/baijsolvnat4.c">Actual source code: baijsolvnat4.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/mat/impls/baij/seq/baijsolvnat4.c">Actual source code: baijsolvnat4.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:47:45+00:00">
+<meta name="date" content="2024-03-29T14:12:48+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -16,669 +16,585 @@
 <a name="line5">  5: </a><font color="#B22222">      Special case where the matrix was ILU(0) factored in the natural</font>
 <a name="line6">  6: </a><font color="#B22222">   ordering. This eliminates the need for the column and row permutation.</font>
 <a name="line7">  7: </a><font color="#B22222">*/</font>
-<a name="line8">  8: </a><strong><font color="#4169E1"><a name="MatSolve_SeqBAIJ_4_NaturalOrdering_inplace"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolve_SeqBAIJ_4_NaturalOrdering_inplace(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> bb, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xx)</font></strong>
+<a name="line8">  8: </a><strong><font color="#4169E1"><a name="MatSolve_SeqBAIJ_4_NaturalOrdering_inplace"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolve_SeqBAIJ_4_NaturalOrdering_inplace(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> bb, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> xx)</font></strong>
 <a name="line9">  9: </a>{
 <a name="line10"> 10: </a>  Mat_SeqBAIJ       *a  = (Mat_SeqBAIJ *)A-&gt;data;
-<a name="line11"> 11: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           n  = a-&gt;mbs;
-<a name="line12"> 12: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *ai = a-&gt;i, *aj = a-&gt;j;
-<a name="line13"> 13: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    *diag = a-&gt;diag;
+<a name="line11"> 11: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>           n  = a-&gt;mbs;
+<a name="line12"> 12: </a>  const <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>    *ai = a-&gt;i, *aj = a-&gt;j;
+<a name="line13"> 13: </a>  const <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>    *diag = a-&gt;diag;
 <a name="line14"> 14: </a>  const MatScalar   *aa   = a-&gt;a;
-<a name="line15"> 15: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *x;
-<a name="line16"> 16: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *b;
-
-<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(bb, &amp;b);
-<a name="line19"> 19: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(xx, &amp;x);
-
-<a name="line21"> 21: </a><font color="#A020F0">#if defined(PETSC_USE_FORTRAN_KERNEL_SOLVEBAIJ)</font>
-<a name="line22"> 22: </a>  {
-<a name="line23"> 23: </a>    static <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> w[2000]; <font color="#B22222">/* very BAD need to fix */</font>
-<a name="line24"> 24: </a>    fortransolvebaij4_(&amp;n, x, ai, aj, diag, aa, b, w);
-<a name="line25"> 25: </a>  }
-<a name="line26"> 26: </a><font color="#A020F0">#elif defined(PETSC_USE_FORTRAN_KERNEL_SOLVEBAIJUNROLL)</font>
-<a name="line27"> 27: </a>  fortransolvebaij4unroll_(&amp;n, x, ai, aj, diag, aa, b);
-<a name="line28"> 28: </a><font color="#A020F0">#else</font>
-<a name="line29"> 29: </a>  {
-<a name="line30"> 30: </a>    <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>      s1, s2, s3, s4, x1, x2, x3, x4;
-<a name="line31"> 31: </a>    const MatScalar *v;
-<a name="line32"> 32: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         jdx, idt, idx, nz, i, ai16;
-<a name="line33"> 33: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  *vi;
-
-<a name="line35"> 35: </a>    <font color="#B22222">/* forward solve the lower triangular */</font>
-<a name="line36"> 36: </a>    idx  = 0;
-<a name="line37"> 37: </a>    x[0] = b[0];
-<a name="line38"> 38: </a>    x[1] = b[1];
-<a name="line39"> 39: </a>    x[2] = b[2];
-<a name="line40"> 40: </a>    x[3] = b[3];
-<a name="line41"> 41: </a>    <font color="#4169E1">for</font> (i = 1; i &lt; n; i++) {
-<a name="line42"> 42: </a>      v  = aa + 16 * ai[i];
-<a name="line43"> 43: </a>      vi = aj + ai[i];
-<a name="line44"> 44: </a>      nz = diag[i] - ai[i];
-<a name="line45"> 45: </a>      idx += 4;
-<a name="line46"> 46: </a>      s1 = b[idx];
-<a name="line47"> 47: </a>      s2 = b[1 + idx];
-<a name="line48"> 48: </a>      s3 = b[2 + idx];
-<a name="line49"> 49: </a>      s4 = b[3 + idx];
-<a name="line50"> 50: </a>      <font color="#4169E1">while</font> (nz--) {
-<a name="line51"> 51: </a>        jdx = 4 * (*vi++);
-<a name="line52"> 52: </a>        x1  = x[jdx];
-<a name="line53"> 53: </a>        x2  = x[1 + jdx];
-<a name="line54"> 54: </a>        x3  = x[2 + jdx];
-<a name="line55"> 55: </a>        x4  = x[3 + jdx];
-<a name="line56"> 56: </a>        s1 -= v[0] * x1 + v[4] * x2 + v[8] * x3 + v[12] * x4;
-<a name="line57"> 57: </a>        s2 -= v[1] * x1 + v[5] * x2 + v[9] * x3 + v[13] * x4;
-<a name="line58"> 58: </a>        s3 -= v[2] * x1 + v[6] * x2 + v[10] * x3 + v[14] * x4;
-<a name="line59"> 59: </a>        s4 -= v[3] * x1 + v[7] * x2 + v[11] * x3 + v[15] * x4;
-<a name="line60"> 60: </a>        v += 16;
-<a name="line61"> 61: </a>      }
-<a name="line62"> 62: </a>      x[idx]     = s1;
-<a name="line63"> 63: </a>      x[1 + idx] = s2;
-<a name="line64"> 64: </a>      x[2 + idx] = s3;
-<a name="line65"> 65: </a>      x[3 + idx] = s4;
-<a name="line66"> 66: </a>    }
-<a name="line67"> 67: </a>    <font color="#B22222">/* backward solve the upper triangular */</font>
-<a name="line68"> 68: </a>    idt = 4 * (n - 1);
-<a name="line69"> 69: </a>    <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0; i--) {
-<a name="line70"> 70: </a>      ai16 = 16 * diag[i];
-<a name="line71"> 71: </a>      v    = aa + ai16 + 16;
-<a name="line72"> 72: </a>      vi   = aj + diag[i] + 1;
-<a name="line73"> 73: </a>      nz   = ai[i + 1] - diag[i] - 1;
-<a name="line74"> 74: </a>      s1   = x[idt];
-<a name="line75"> 75: </a>      s2   = x[1 + idt];
-<a name="line76"> 76: </a>      s3   = x[2 + idt];
-<a name="line77"> 77: </a>      s4   = x[3 + idt];
-<a name="line78"> 78: </a>      <font color="#4169E1">while</font> (nz--) {
-<a name="line79"> 79: </a>        idx = 4 * (*vi++);
-<a name="line80"> 80: </a>        x1  = x[idx];
-<a name="line81"> 81: </a>        x2  = x[1 + idx];
-<a name="line82"> 82: </a>        x3  = x[2 + idx];
-<a name="line83"> 83: </a>        x4  = x[3 + idx];
-<a name="line84"> 84: </a>        s1 -= v[0] * x1 + v[4] * x2 + v[8] * x3 + v[12] * x4;
-<a name="line85"> 85: </a>        s2 -= v[1] * x1 + v[5] * x2 + v[9] * x3 + v[13] * x4;
-<a name="line86"> 86: </a>        s3 -= v[2] * x1 + v[6] * x2 + v[10] * x3 + v[14] * x4;
-<a name="line87"> 87: </a>        s4 -= v[3] * x1 + v[7] * x2 + v[11] * x3 + v[15] * x4;
-<a name="line88"> 88: </a>        v += 16;
-<a name="line89"> 89: </a>      }
-<a name="line90"> 90: </a>      v          = aa + ai16;
-<a name="line91"> 91: </a>      x[idt]     = v[0] * s1 + v[4] * s2 + v[8] * s3 + v[12] * s4;
-<a name="line92"> 92: </a>      x[1 + idt] = v[1] * s1 + v[5] * s2 + v[9] * s3 + v[13] * s4;
-<a name="line93"> 93: </a>      x[2 + idt] = v[2] * s1 + v[6] * s2 + v[10] * s3 + v[14] * s4;
-<a name="line94"> 94: </a>      x[3 + idt] = v[3] * s1 + v[7] * s2 + v[11] * s3 + v[15] * s4;
-<a name="line95"> 95: </a>      idt -= 4;
-<a name="line96"> 96: </a>    }
-<a name="line97"> 97: </a>  }
-<a name="line98"> 98: </a><font color="#A020F0">#endif</font>
-
-<a name="line100">100: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(bb, &amp;b);
-<a name="line101">101: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xx, &amp;x);
-<a name="line102">102: </a>  <a href="../../../../../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>(2.0 * 16 * (a-&gt;nz) - 4.0 * A-&gt;cmap-&gt;n);
-<a name="line103">103: </a>  <font color="#4169E1">return</font> 0;
-<a name="line104">104: </a>}
-
-<a name="line106">106: </a><strong><font color="#4169E1"><a name="MatSolve_SeqBAIJ_4_NaturalOrdering"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolve_SeqBAIJ_4_NaturalOrdering(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> bb, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xx)</font></strong>
-<a name="line107">107: </a>{
-<a name="line108">108: </a>  Mat_SeqBAIJ       *a = (Mat_SeqBAIJ *)A-&gt;data;
-<a name="line109">109: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     n = a-&gt;mbs, *vi, *ai = a-&gt;i, *aj = a-&gt;j, *adiag = a-&gt;diag;
-<a name="line110">110: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>           i, k, nz, idx, jdx, idt;
-<a name="line111">111: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     bs = A-&gt;rmap-&gt;bs, bs2 = a-&gt;bs2;
-<a name="line112">112: </a>  const MatScalar   *aa = a-&gt;a, *v;
-<a name="line113">113: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *x;
-<a name="line114">114: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *b;
-<a name="line115">115: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>        s1, s2, s3, s4, x1, x2, x3, x4;
-
-<a name="line117">117: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(bb, &amp;b);
-<a name="line118">118: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(xx, &amp;x);
-<a name="line119">119: </a>  <font color="#B22222">/* forward solve the lower triangular */</font>
-<a name="line120">120: </a>  idx  = 0;
-<a name="line121">121: </a>  x[0] = b[idx];
-<a name="line122">122: </a>  x[1] = b[1 + idx];
-<a name="line123">123: </a>  x[2] = b[2 + idx];
-<a name="line124">124: </a>  x[3] = b[3 + idx];
-<a name="line125">125: </a>  <font color="#4169E1">for</font> (i = 1; i &lt; n; i++) {
-<a name="line126">126: </a>    v   = aa + bs2 * ai[i];
-<a name="line127">127: </a>    vi  = aj + ai[i];
-<a name="line128">128: </a>    nz  = ai[i + 1] - ai[i];
-<a name="line129">129: </a>    idx = bs * i;
-<a name="line130">130: </a>    s1  = b[idx];
-<a name="line131">131: </a>    s2  = b[1 + idx];
-<a name="line132">132: </a>    s3  = b[2 + idx];
-<a name="line133">133: </a>    s4  = b[3 + idx];
-<a name="line134">134: </a>    <font color="#4169E1">for</font> (k = 0; k &lt; nz; k++) {
-<a name="line135">135: </a>      jdx = bs * vi[k];
-<a name="line136">136: </a>      x1  = x[jdx];
-<a name="line137">137: </a>      x2  = x[1 + jdx];
-<a name="line138">138: </a>      x3  = x[2 + jdx];
-<a name="line139">139: </a>      x4  = x[3 + jdx];
-<a name="line140">140: </a>      s1 -= v[0] * x1 + v[4] * x2 + v[8] * x3 + v[12] * x4;
-<a name="line141">141: </a>      s2 -= v[1] * x1 + v[5] * x2 + v[9] * x3 + v[13] * x4;
-<a name="line142">142: </a>      s3 -= v[2] * x1 + v[6] * x2 + v[10] * x3 + v[14] * x4;
-<a name="line143">143: </a>      s4 -= v[3] * x1 + v[7] * x2 + v[11] * x3 + v[15] * x4;
-
-<a name="line145">145: </a>      v += bs2;
-<a name="line146">146: </a>    }
-
-<a name="line148">148: </a>    x[idx]     = s1;
-<a name="line149">149: </a>    x[1 + idx] = s2;
-<a name="line150">150: </a>    x[2 + idx] = s3;
-<a name="line151">151: </a>    x[3 + idx] = s4;
-<a name="line152">152: </a>  }
-
-<a name="line154">154: </a>  <font color="#B22222">/* backward solve the upper triangular */</font>
-<a name="line155">155: </a>  <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0; i--) {
-<a name="line156">156: </a>    v   = aa + bs2 * (adiag[i + 1] + 1);
-<a name="line157">157: </a>    vi  = aj + adiag[i + 1] + 1;
-<a name="line158">158: </a>    nz  = adiag[i] - adiag[i + 1] - 1;
-<a name="line159">159: </a>    idt = bs * i;
-<a name="line160">160: </a>    s1  = x[idt];
-<a name="line161">161: </a>    s2  = x[1 + idt];
-<a name="line162">162: </a>    s3  = x[2 + idt];
-<a name="line163">163: </a>    s4  = x[3 + idt];
-
-<a name="line165">165: </a>    <font color="#4169E1">for</font> (k = 0; k &lt; nz; k++) {
-<a name="line166">166: </a>      idx = bs * vi[k];
-<a name="line167">167: </a>      x1  = x[idx];
-<a name="line168">168: </a>      x2  = x[1 + idx];
-<a name="line169">169: </a>      x3  = x[2 + idx];
-<a name="line170">170: </a>      x4  = x[3 + idx];
-<a name="line171">171: </a>      s1 -= v[0] * x1 + v[4] * x2 + v[8] * x3 + v[12] * x4;
-<a name="line172">172: </a>      s2 -= v[1] * x1 + v[5] * x2 + v[9] * x3 + v[13] * x4;
-<a name="line173">173: </a>      s3 -= v[2] * x1 + v[6] * x2 + v[10] * x3 + v[14] * x4;
-<a name="line174">174: </a>      s4 -= v[3] * x1 + v[7] * x2 + v[11] * x3 + v[15] * x4;
-
-<a name="line176">176: </a>      v += bs2;
-<a name="line177">177: </a>    }
-<a name="line178">178: </a>    <font color="#B22222">/* x = inv_diagonal*x */</font>
-<a name="line179">179: </a>    x[idt]     = v[0] * s1 + v[4] * s2 + v[8] * s3 + v[12] * s4;
-<a name="line180">180: </a>    x[1 + idt] = v[1] * s1 + v[5] * s2 + v[9] * s3 + v[13] * s4;
-<a name="line181">181: </a>    x[2 + idt] = v[2] * s1 + v[6] * s2 + v[10] * s3 + v[14] * s4;
-<a name="line182">182: </a>    x[3 + idt] = v[3] * s1 + v[7] * s2 + v[11] * s3 + v[15] * s4;
-<a name="line183">183: </a>  }
-
-<a name="line185">185: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(bb, &amp;b);
-<a name="line186">186: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xx, &amp;x);
-<a name="line187">187: </a>  <a href="../../../../../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>(2.0 * bs2 * (a-&gt;nz) - bs * A-&gt;cmap-&gt;n);
-<a name="line188">188: </a>  <font color="#4169E1">return</font> 0;
-<a name="line189">189: </a>}
-
-<a name="line191">191: </a><strong><font color="#4169E1"><a name="MatSolve_SeqBAIJ_4_NaturalOrdering_Demotion"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolve_SeqBAIJ_4_NaturalOrdering_Demotion(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> bb, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xx)</font></strong>
-<a name="line192">192: </a>{
-<a name="line193">193: </a>  Mat_SeqBAIJ       *a = (Mat_SeqBAIJ *)A-&gt;data;
-<a name="line194">194: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     n = a-&gt;mbs, *ai = a-&gt;i, *aj = a-&gt;j, *diag = a-&gt;diag;
-<a name="line195">195: </a>  const MatScalar   *aa = a-&gt;a;
-<a name="line196">196: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *b;
-<a name="line197">197: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *x;
-
-<a name="line199">199: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(bb, &amp;b);
-<a name="line200">200: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(xx, &amp;x);
-
-<a name="line202">202: </a>  {
-<a name="line203">203: </a>    MatScalar        s1, s2, s3, s4, x1, x2, x3, x4;
-<a name="line204">204: </a>    const MatScalar *v;
-<a name="line205">205: </a>    MatScalar       *t = (MatScalar *)x;
-<a name="line206">206: </a>    <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>         jdx, idt, idx, nz, i, ai16;
-<a name="line207">207: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  *vi;
-
-<a name="line209">209: </a>    <font color="#B22222">/* forward solve the lower triangular */</font>
-<a name="line210">210: </a>    idx  = 0;
-<a name="line211">211: </a>    t[0] = (MatScalar)b[0];
-<a name="line212">212: </a>    t[1] = (MatScalar)b[1];
-<a name="line213">213: </a>    t[2] = (MatScalar)b[2];
-<a name="line214">214: </a>    t[3] = (MatScalar)b[3];
-<a name="line215">215: </a>    <font color="#4169E1">for</font> (i = 1; i &lt; n; i++) {
-<a name="line216">216: </a>      v  = aa + 16 * ai[i];
-<a name="line217">217: </a>      vi = aj + ai[i];
-<a name="line218">218: </a>      nz = diag[i] - ai[i];
-<a name="line219">219: </a>      idx += 4;
-<a name="line220">220: </a>      s1 = (MatScalar)b[idx];
-<a name="line221">221: </a>      s2 = (MatScalar)b[1 + idx];
-<a name="line222">222: </a>      s3 = (MatScalar)b[2 + idx];
-<a name="line223">223: </a>      s4 = (MatScalar)b[3 + idx];
-<a name="line224">224: </a>      <font color="#4169E1">while</font> (nz--) {
-<a name="line225">225: </a>        jdx = 4 * (*vi++);
-<a name="line226">226: </a>        x1  = t[jdx];
-<a name="line227">227: </a>        x2  = t[1 + jdx];
-<a name="line228">228: </a>        x3  = t[2 + jdx];
-<a name="line229">229: </a>        x4  = t[3 + jdx];
-<a name="line230">230: </a>        s1 -= v[0] * x1 + v[4] * x2 + v[8] * x3 + v[12] * x4;
-<a name="line231">231: </a>        s2 -= v[1] * x1 + v[5] * x2 + v[9] * x3 + v[13] * x4;
-<a name="line232">232: </a>        s3 -= v[2] * x1 + v[6] * x2 + v[10] * x3 + v[14] * x4;
-<a name="line233">233: </a>        s4 -= v[3] * x1 + v[7] * x2 + v[11] * x3 + v[15] * x4;
-<a name="line234">234: </a>        v += 16;
-<a name="line235">235: </a>      }
-<a name="line236">236: </a>      t[idx]     = s1;
-<a name="line237">237: </a>      t[1 + idx] = s2;
-<a name="line238">238: </a>      t[2 + idx] = s3;
-<a name="line239">239: </a>      t[3 + idx] = s4;
-<a name="line240">240: </a>    }
-<a name="line241">241: </a>    <font color="#B22222">/* backward solve the upper triangular */</font>
-<a name="line242">242: </a>    idt = 4 * (n - 1);
-<a name="line243">243: </a>    <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0; i--) {
-<a name="line244">244: </a>      ai16 = 16 * diag[i];
-<a name="line245">245: </a>      v    = aa + ai16 + 16;
-<a name="line246">246: </a>      vi   = aj + diag[i] + 1;
-<a name="line247">247: </a>      nz   = ai[i + 1] - diag[i] - 1;
-<a name="line248">248: </a>      s1   = t[idt];
-<a name="line249">249: </a>      s2   = t[1 + idt];
-<a name="line250">250: </a>      s3   = t[2 + idt];
-<a name="line251">251: </a>      s4   = t[3 + idt];
-<a name="line252">252: </a>      <font color="#4169E1">while</font> (nz--) {
-<a name="line253">253: </a>        idx = 4 * (*vi++);
-<a name="line254">254: </a>        x1  = (MatScalar)x[idx];
-<a name="line255">255: </a>        x2  = (MatScalar)x[1 + idx];
-<a name="line256">256: </a>        x3  = (MatScalar)x[2 + idx];
-<a name="line257">257: </a>        x4  = (MatScalar)x[3 + idx];
-<a name="line258">258: </a>        s1 -= v[0] * x1 + v[4] * x2 + v[8] * x3 + v[12] * x4;
-<a name="line259">259: </a>        s2 -= v[1] * x1 + v[5] * x2 + v[9] * x3 + v[13] * x4;
-<a name="line260">260: </a>        s3 -= v[2] * x1 + v[6] * x2 + v[10] * x3 + v[14] * x4;
-<a name="line261">261: </a>        s4 -= v[3] * x1 + v[7] * x2 + v[11] * x3 + v[15] * x4;
-<a name="line262">262: </a>        v += 16;
-<a name="line263">263: </a>      }
-<a name="line264">264: </a>      v          = aa + ai16;
-<a name="line265">265: </a>      x[idt]     = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)(v[0] * s1 + v[4] * s2 + v[8] * s3 + v[12] * s4);
-<a name="line266">266: </a>      x[1 + idt] = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)(v[1] * s1 + v[5] * s2 + v[9] * s3 + v[13] * s4);
-<a name="line267">267: </a>      x[2 + idt] = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)(v[2] * s1 + v[6] * s2 + v[10] * s3 + v[14] * s4);
-<a name="line268">268: </a>      x[3 + idt] = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)(v[3] * s1 + v[7] * s2 + v[11] * s3 + v[15] * s4);
-<a name="line269">269: </a>      idt -= 4;
-<a name="line270">270: </a>    }
-<a name="line271">271: </a>  }
-
-<a name="line273">273: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(bb, &amp;b);
-<a name="line274">274: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xx, &amp;x);
-<a name="line275">275: </a>  <a href="../../../../../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>(2.0 * 16 * (a-&gt;nz) - 4.0 * A-&gt;cmap-&gt;n);
-<a name="line276">276: </a>  <font color="#4169E1">return</font> 0;
-<a name="line277">277: </a>}
-
-<a name="line279">279: </a><font color="#A020F0">#if defined(PETSC_HAVE_SSE)</font>
-
-<a name="line281">281: </a><font color="#A020F0">  #include PETSC_HAVE_SSE</font>
-<a name="line282">282: </a><strong><font color="#4169E1"><a name="MatSolve_SeqBAIJ_4_NaturalOrdering_SSE_Demotion_usj"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolve_SeqBAIJ_4_NaturalOrdering_SSE_Demotion_usj(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> bb, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xx)</font></strong>
-<a name="line283">283: </a>{
-<a name="line284">284: </a>  Mat_SeqBAIJ    *a  = (Mat_SeqBAIJ *)A-&gt;data;
-<a name="line285">285: </a>  unsigned short *aj = (unsigned short *)a-&gt;j;
-<a name="line286">286: </a>  int            *ai = a-&gt;i, n = a-&gt;mbs, *diag = a-&gt;diag;
-<a name="line287">287: </a>  MatScalar      *aa = a-&gt;a;
-<a name="line288">288: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>    *x, *b;
-
-<a name="line290">290: </a>  SSE_SCOPE_BEGIN;
-<a name="line291">291: </a>  <font color="#B22222">/*</font>
-<a name="line292">292: </a><font color="#B22222">     Note: This code currently uses demotion of double</font>
-<a name="line293">293: </a><font color="#B22222">     to float when performing the mixed-mode computation.</font>
-<a name="line294">294: </a><font color="#B22222">     This may not be numerically reasonable for all applications.</font>
-<a name="line295">295: </a><font color="#B22222">  */</font>
-<a name="line296">296: </a>  PREFETCH_NTA(aa + 16 * ai[1]);
-
-<a name="line298">298: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(bb, &amp;b);
-<a name="line299">299: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(xx, &amp;x);
-<a name="line300">300: </a>  {
-<a name="line301">301: </a>    <font color="#B22222">/* x will first be computed in single precision then promoted inplace to double */</font>
-<a name="line302">302: </a>    MatScalar      *v, *t = (MatScalar *)x;
-<a name="line303">303: </a>    int             nz, i, idt, ai16;
-<a name="line304">304: </a>    unsigned int    jdx, idx;
-<a name="line305">305: </a>    unsigned short *vi;
-<a name="line306">306: </a>    <font color="#B22222">/* Forward solve the lower triangular factor. */</font>
-
-<a name="line308">308: </a>    <font color="#B22222">/* First block is the identity. */</font>
-<a name="line309">309: </a>    idx = 0;
-<a name="line310">310: </a>    CONVERT_DOUBLE4_FLOAT4(t, b);
-<a name="line311">311: </a>    v = aa + 16 * ((unsigned int)ai[1]);
-
-<a name="line313">313: </a>    <font color="#4169E1">for</font> (i = 1; i &lt; n;) {
-<a name="line314">314: </a>      PREFETCH_NTA(&amp;v[8]);
-<a name="line315">315: </a>      vi = aj + ai[i];
-<a name="line316">316: </a>      nz = diag[i] - ai[i];
-<a name="line317">317: </a>      idx += 4;
-
-<a name="line319">319: </a>      <font color="#B22222">/* Demote RHS from double to float. */</font>
-<a name="line320">320: </a>      CONVERT_DOUBLE4_FLOAT4(&amp;t[idx], &amp;b[idx]);
-<a name="line321">321: </a>      LOAD_PS(&amp;t[idx], XMM7);
-
-<a name="line323">323: </a>      <font color="#4169E1">while</font> (nz--) {
-<a name="line324">324: </a>        PREFETCH_NTA(&amp;v[16]);
-<a name="line325">325: </a>        jdx = 4 * ((unsigned int)(*vi++));
-
-<a name="line327">327: </a>        <font color="#B22222">/* 4x4 Matrix-Vector product with negative accumulation: */</font>
-<a name="line328">328: </a>        SSE_INLINE_BEGIN_2(&amp;t[jdx], v)
-<a name="line329">329: </a>        SSE_LOAD_PS(SSE_ARG_1, FLOAT_0, XMM6)
-
-<a name="line331">331: </a>        <font color="#B22222">/* First Column */</font>
-<a name="line332">332: </a>        SSE_COPY_PS(XMM0, XMM6)
-<a name="line333">333: </a>        SSE_SHUFFLE(XMM0, XMM0, 0x00)
-<a name="line334">334: </a>        SSE_MULT_PS_M(XMM0, SSE_ARG_2, FLOAT_0)
-<a name="line335">335: </a>        SSE_SUB_PS(XMM7, XMM0)
-
-<a name="line337">337: </a>        <font color="#B22222">/* Second Column */</font>
-<a name="line338">338: </a>        SSE_COPY_PS(XMM1, XMM6)
-<a name="line339">339: </a>        SSE_SHUFFLE(XMM1, XMM1, 0x55)
-<a name="line340">340: </a>        SSE_MULT_PS_M(XMM1, SSE_ARG_2, FLOAT_4)
-<a name="line341">341: </a>        SSE_SUB_PS(XMM7, XMM1)
-
-<a name="line343">343: </a>        SSE_PREFETCH_NTA(SSE_ARG_2, FLOAT_24)
-
-<a name="line345">345: </a>        <font color="#B22222">/* Third Column */</font>
-<a name="line346">346: </a>        SSE_COPY_PS(XMM2, XMM6)
-<a name="line347">347: </a>        SSE_SHUFFLE(XMM2, XMM2, 0xAA)
-<a name="line348">348: </a>        SSE_MULT_PS_M(XMM2, SSE_ARG_2, FLOAT_8)
-<a name="line349">349: </a>        SSE_SUB_PS(XMM7, XMM2)
-
-<a name="line351">351: </a>        <font color="#B22222">/* Fourth Column */</font>
-<a name="line352">352: </a>        SSE_COPY_PS(XMM3, XMM6)
-<a name="line353">353: </a>        SSE_SHUFFLE(XMM3, XMM3, 0xFF)
-<a name="line354">354: </a>        SSE_MULT_PS_M(XMM3, SSE_ARG_2, FLOAT_12)
-<a name="line355">355: </a>        SSE_SUB_PS(XMM7, XMM3)
-<a name="line356">356: </a>        SSE_INLINE_END_2
-
-<a name="line358">358: </a>        v += 16;
-<a name="line359">359: </a>      }
-<a name="line360">360: </a>      v = aa + 16 * ai[++i];
-<a name="line361">361: </a>      PREFETCH_NTA(v);
-<a name="line362">362: </a>      STORE_PS(&amp;t[idx], XMM7);
-<a name="line363">363: </a>    }
-
-<a name="line365">365: </a>    <font color="#B22222">/* Backward solve the upper triangular factor.*/</font>
-
-<a name="line367">367: </a>    idt  = 4 * (n - 1);
-<a name="line368">368: </a>    ai16 = 16 * diag[n - 1];
-<a name="line369">369: </a>    v    = aa + ai16 + 16;
-<a name="line370">370: </a>    <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0;) {
-<a name="line371">371: </a>      PREFETCH_NTA(&amp;v[8]);
-<a name="line372">372: </a>      vi = aj + diag[i] + 1;
-<a name="line373">373: </a>      nz = ai[i + 1] - diag[i] - 1;
-
-<a name="line375">375: </a>      LOAD_PS(&amp;t[idt], XMM7);
-
-<a name="line377">377: </a>      <font color="#4169E1">while</font> (nz--) {
-<a name="line378">378: </a>        PREFETCH_NTA(&amp;v[16]);
-<a name="line379">379: </a>        idx = 4 * ((unsigned int)(*vi++));
-
-<a name="line381">381: </a>        <font color="#B22222">/* 4x4 Matrix-Vector Product with negative accumulation: */</font>
-<a name="line382">382: </a>        SSE_INLINE_BEGIN_2(&amp;t[idx], v)
-<a name="line383">383: </a>        SSE_LOAD_PS(SSE_ARG_1, FLOAT_0, XMM6)
-
-<a name="line385">385: </a>        <font color="#B22222">/* First Column */</font>
-<a name="line386">386: </a>        SSE_COPY_PS(XMM0, XMM6)
-<a name="line387">387: </a>        SSE_SHUFFLE(XMM0, XMM0, 0x00)
-<a name="line388">388: </a>        SSE_MULT_PS_M(XMM0, SSE_ARG_2, FLOAT_0)
-<a name="line389">389: </a>        SSE_SUB_PS(XMM7, XMM0)
-
-<a name="line391">391: </a>        <font color="#B22222">/* Second Column */</font>
-<a name="line392">392: </a>        SSE_COPY_PS(XMM1, XMM6)
-<a name="line393">393: </a>        SSE_SHUFFLE(XMM1, XMM1, 0x55)
-<a name="line394">394: </a>        SSE_MULT_PS_M(XMM1, SSE_ARG_2, FLOAT_4)
-<a name="line395">395: </a>        SSE_SUB_PS(XMM7, XMM1)
-
-<a name="line397">397: </a>        SSE_PREFETCH_NTA(SSE_ARG_2, FLOAT_24)
-
-<a name="line399">399: </a>        <font color="#B22222">/* Third Column */</font>
-<a name="line400">400: </a>        SSE_COPY_PS(XMM2, XMM6)
-<a name="line401">401: </a>        SSE_SHUFFLE(XMM2, XMM2, 0xAA)
-<a name="line402">402: </a>        SSE_MULT_PS_M(XMM2, SSE_ARG_2, FLOAT_8)
-<a name="line403">403: </a>        SSE_SUB_PS(XMM7, XMM2)
-
-<a name="line405">405: </a>        <font color="#B22222">/* Fourth Column */</font>
-<a name="line406">406: </a>        SSE_COPY_PS(XMM3, XMM6)
-<a name="line407">407: </a>        SSE_SHUFFLE(XMM3, XMM3, 0xFF)
-<a name="line408">408: </a>        SSE_MULT_PS_M(XMM3, SSE_ARG_2, FLOAT_12)
-<a name="line409">409: </a>        SSE_SUB_PS(XMM7, XMM3)
-<a name="line410">410: </a>        SSE_INLINE_END_2
-<a name="line411">411: </a>        v += 16;
-<a name="line412">412: </a>      }
-<a name="line413">413: </a>      v    = aa + ai16;
-<a name="line414">414: </a>      ai16 = 16 * diag[--i];
-<a name="line415">415: </a>      PREFETCH_NTA(aa + ai16 + 16);
-<a name="line416">416: </a>      <font color="#B22222">/*</font>
-<a name="line417">417: </a><font color="#B22222">         Scale the result by the diagonal 4x4 block,</font>
-<a name="line418">418: </a><font color="#B22222">         which was inverted as part of the factorization</font>
-<a name="line419">419: </a><font color="#B22222">      */</font>
-<a name="line420">420: </a>      SSE_INLINE_BEGIN_3(v, &amp;t[idt], aa + ai16)
-<a name="line421">421: </a>      <font color="#B22222">/* First Column */</font>
-<a name="line422">422: </a>      SSE_COPY_PS(XMM0, XMM7)
-<a name="line423">423: </a>      SSE_SHUFFLE(XMM0, XMM0, 0x00)
-<a name="line424">424: </a>      SSE_MULT_PS_M(XMM0, SSE_ARG_1, FLOAT_0)
-
-<a name="line426">426: </a>      <font color="#B22222">/* Second Column */</font>
-<a name="line427">427: </a>      SSE_COPY_PS(XMM1, XMM7)
-<a name="line428">428: </a>      SSE_SHUFFLE(XMM1, XMM1, 0x55)
-<a name="line429">429: </a>      SSE_MULT_PS_M(XMM1, SSE_ARG_1, FLOAT_4)
-<a name="line430">430: </a>      SSE_ADD_PS(XMM0, XMM1)
-
-<a name="line432">432: </a>      SSE_PREFETCH_NTA(SSE_ARG_3, FLOAT_24)
-
-<a name="line434">434: </a>      <font color="#B22222">/* Third Column */</font>
-<a name="line435">435: </a>      SSE_COPY_PS(XMM2, XMM7)
-<a name="line436">436: </a>      SSE_SHUFFLE(XMM2, XMM2, 0xAA)
-<a name="line437">437: </a>      SSE_MULT_PS_M(XMM2, SSE_ARG_1, FLOAT_8)
-<a name="line438">438: </a>      SSE_ADD_PS(XMM0, XMM2)
-
-<a name="line440">440: </a>      <font color="#B22222">/* Fourth Column */</font>
-<a name="line441">441: </a>      SSE_COPY_PS(XMM3, XMM7)
-<a name="line442">442: </a>      SSE_SHUFFLE(XMM3, XMM3, 0xFF)
-<a name="line443">443: </a>      SSE_MULT_PS_M(XMM3, SSE_ARG_1, FLOAT_12)
-<a name="line444">444: </a>      SSE_ADD_PS(XMM0, XMM3)
-
-<a name="line446">446: </a>      SSE_STORE_PS(SSE_ARG_2, FLOAT_0, XMM0)
-<a name="line447">447: </a>      SSE_INLINE_END_3
-
-<a name="line449">449: </a>      v = aa + ai16 + 16;
-<a name="line450">450: </a>      idt -= 4;
-<a name="line451">451: </a>    }
-
-<a name="line453">453: </a>    <font color="#B22222">/* Convert t from single precision back to double precision (inplace)*/</font>
-<a name="line454">454: </a>    idt = 4 * (n - 1);
-<a name="line455">455: </a>    <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0; i--) {
-<a name="line456">456: </a>      <font color="#B22222">/*     CONVERT_FLOAT4_DOUBLE4(&amp;x[idt],&amp;t[idt]); */</font>
-<a name="line457">457: </a>      <font color="#B22222">/* Unfortunately, CONVERT_ will count from 0 to 3 which doesn't work here. */</font>
-<a name="line458">458: </a>      <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *xtemp = &amp;x[idt];
-<a name="line459">459: </a>      MatScalar   *ttemp = &amp;t[idt];
-<a name="line460">460: </a>      xtemp[3]           = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[3];
-<a name="line461">461: </a>      xtemp[2]           = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[2];
-<a name="line462">462: </a>      xtemp[1]           = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[1];
-<a name="line463">463: </a>      xtemp[0]           = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[0];
-<a name="line464">464: </a>      idt -= 4;
-<a name="line465">465: </a>    }
-
-<a name="line467">467: </a>  } <font color="#B22222">/* End of artificial scope. */</font>
-<a name="line468">468: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(bb, &amp;b);
-<a name="line469">469: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xx, &amp;x);
-<a name="line470">470: </a>  <a href="../../../../../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>(2.0 * 16 * (a-&gt;nz) - 4.0 * A-&gt;cmap-&gt;n);
-<a name="line471">471: </a>  SSE_SCOPE_END;
-<a name="line472">472: </a>  <font color="#4169E1">return</font> 0;
-<a name="line473">473: </a>}
-
-<a name="line475">475: </a><strong><font color="#4169E1"><a name="MatSolve_SeqBAIJ_4_NaturalOrdering_SSE_Demotion"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolve_SeqBAIJ_4_NaturalOrdering_SSE_Demotion(<a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> bb, <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a> xx)</font></strong>
-<a name="line476">476: </a>{
-<a name="line477">477: </a>  Mat_SeqBAIJ *a  = (Mat_SeqBAIJ *)A-&gt;data;
-<a name="line478">478: </a>  int         *aj = a-&gt;j;
-<a name="line479">479: </a>  int         *ai = a-&gt;i, n = a-&gt;mbs, *diag = a-&gt;diag;
-<a name="line480">480: </a>  MatScalar   *aa = a-&gt;a;
-<a name="line481">481: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *x, *b;
-
-<a name="line483">483: </a>  SSE_SCOPE_BEGIN;
-<a name="line484">484: </a>  <font color="#B22222">/*</font>
-<a name="line485">485: </a><font color="#B22222">     Note: This code currently uses demotion of double</font>
-<a name="line486">486: </a><font color="#B22222">     to float when performing the mixed-mode computation.</font>
-<a name="line487">487: </a><font color="#B22222">     This may not be numerically reasonable for all applications.</font>
-<a name="line488">488: </a><font color="#B22222">  */</font>
-<a name="line489">489: </a>  PREFETCH_NTA(aa + 16 * ai[1]);
-
-<a name="line491">491: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(bb, &amp;b);
-<a name="line492">492: </a>  <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(xx, &amp;x);
-<a name="line493">493: </a>  {
-<a name="line494">494: </a>    <font color="#B22222">/* x will first be computed in single precision then promoted inplace to double */</font>
-<a name="line495">495: </a>    MatScalar *v, *t = (MatScalar *)x;
-<a name="line496">496: </a>    int        nz, i, idt, ai16;
-<a name="line497">497: </a>    int        jdx, idx;
-<a name="line498">498: </a>    int       *vi;
-<a name="line499">499: </a>    <font color="#B22222">/* Forward solve the lower triangular factor. */</font>
-
-<a name="line501">501: </a>    <font color="#B22222">/* First block is the identity. */</font>
-<a name="line502">502: </a>    idx = 0;
-<a name="line503">503: </a>    CONVERT_DOUBLE4_FLOAT4(t, b);
-<a name="line504">504: </a>    v = aa + 16 * ai[1];
-
-<a name="line506">506: </a>    <font color="#4169E1">for</font> (i = 1; i &lt; n;) {
-<a name="line507">507: </a>      PREFETCH_NTA(&amp;v[8]);
-<a name="line508">508: </a>      vi = aj + ai[i];
-<a name="line509">509: </a>      nz = diag[i] - ai[i];
-<a name="line510">510: </a>      idx += 4;
-
-<a name="line512">512: </a>      <font color="#B22222">/* Demote RHS from double to float. */</font>
-<a name="line513">513: </a>      CONVERT_DOUBLE4_FLOAT4(&amp;t[idx], &amp;b[idx]);
-<a name="line514">514: </a>      LOAD_PS(&amp;t[idx], XMM7);
-
-<a name="line516">516: </a>      <font color="#4169E1">while</font> (nz--) {
-<a name="line517">517: </a>        PREFETCH_NTA(&amp;v[16]);
-<a name="line518">518: </a>        jdx = 4 * (*vi++);
-<a name="line519">519: </a>        <font color="#B22222">/*          jdx = *vi++; */</font>
-
-<a name="line521">521: </a>        <font color="#B22222">/* 4x4 Matrix-Vector product with negative accumulation: */</font>
-<a name="line522">522: </a>        SSE_INLINE_BEGIN_2(&amp;t[jdx], v)
-<a name="line523">523: </a>        SSE_LOAD_PS(SSE_ARG_1, FLOAT_0, XMM6)
-
-<a name="line525">525: </a>        <font color="#B22222">/* First Column */</font>
-<a name="line526">526: </a>        SSE_COPY_PS(XMM0, XMM6)
-<a name="line527">527: </a>        SSE_SHUFFLE(XMM0, XMM0, 0x00)
-<a name="line528">528: </a>        SSE_MULT_PS_M(XMM0, SSE_ARG_2, FLOAT_0)
-<a name="line529">529: </a>        SSE_SUB_PS(XMM7, XMM0)
-
-<a name="line531">531: </a>        <font color="#B22222">/* Second Column */</font>
-<a name="line532">532: </a>        SSE_COPY_PS(XMM1, XMM6)
-<a name="line533">533: </a>        SSE_SHUFFLE(XMM1, XMM1, 0x55)
-<a name="line534">534: </a>        SSE_MULT_PS_M(XMM1, SSE_ARG_2, FLOAT_4)
-<a name="line535">535: </a>        SSE_SUB_PS(XMM7, XMM1)
-
-<a name="line537">537: </a>        SSE_PREFETCH_NTA(SSE_ARG_2, FLOAT_24)
-
-<a name="line539">539: </a>        <font color="#B22222">/* Third Column */</font>
-<a name="line540">540: </a>        SSE_COPY_PS(XMM2, XMM6)
-<a name="line541">541: </a>        SSE_SHUFFLE(XMM2, XMM2, 0xAA)
-<a name="line542">542: </a>        SSE_MULT_PS_M(XMM2, SSE_ARG_2, FLOAT_8)
-<a name="line543">543: </a>        SSE_SUB_PS(XMM7, XMM2)
-
-<a name="line545">545: </a>        <font color="#B22222">/* Fourth Column */</font>
-<a name="line546">546: </a>        SSE_COPY_PS(XMM3, XMM6)
-<a name="line547">547: </a>        SSE_SHUFFLE(XMM3, XMM3, 0xFF)
-<a name="line548">548: </a>        SSE_MULT_PS_M(XMM3, SSE_ARG_2, FLOAT_12)
-<a name="line549">549: </a>        SSE_SUB_PS(XMM7, XMM3)
-<a name="line550">550: </a>        SSE_INLINE_END_2
-
-<a name="line552">552: </a>        v += 16;
-<a name="line553">553: </a>      }
-<a name="line554">554: </a>      v = aa + 16 * ai[++i];
-<a name="line555">555: </a>      PREFETCH_NTA(v);
-<a name="line556">556: </a>      STORE_PS(&amp;t[idx], XMM7);
-<a name="line557">557: </a>    }
-
-<a name="line559">559: </a>    <font color="#B22222">/* Backward solve the upper triangular factor.*/</font>
-
-<a name="line561">561: </a>    idt  = 4 * (n - 1);
-<a name="line562">562: </a>    ai16 = 16 * diag[n - 1];
-<a name="line563">563: </a>    v    = aa + ai16 + 16;
-<a name="line564">564: </a>    <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0;) {
-<a name="line565">565: </a>      PREFETCH_NTA(&amp;v[8]);
-<a name="line566">566: </a>      vi = aj + diag[i] + 1;
-<a name="line567">567: </a>      nz = ai[i + 1] - diag[i] - 1;
-
-<a name="line569">569: </a>      LOAD_PS(&amp;t[idt], XMM7);
-
-<a name="line571">571: </a>      <font color="#4169E1">while</font> (nz--) {
-<a name="line572">572: </a>        PREFETCH_NTA(&amp;v[16]);
-<a name="line573">573: </a>        idx = 4 * (*vi++);
-<a name="line574">574: </a>        <font color="#B22222">/*          idx = *vi++; */</font>
-
-<a name="line576">576: </a>        <font color="#B22222">/* 4x4 Matrix-Vector Product with negative accumulation: */</font>
-<a name="line577">577: </a>        SSE_INLINE_BEGIN_2(&amp;t[idx], v)
-<a name="line578">578: </a>        SSE_LOAD_PS(SSE_ARG_1, FLOAT_0, XMM6)
-
-<a name="line580">580: </a>        <font color="#B22222">/* First Column */</font>
-<a name="line581">581: </a>        SSE_COPY_PS(XMM0, XMM6)
-<a name="line582">582: </a>        SSE_SHUFFLE(XMM0, XMM0, 0x00)
-<a name="line583">583: </a>        SSE_MULT_PS_M(XMM0, SSE_ARG_2, FLOAT_0)
-<a name="line584">584: </a>        SSE_SUB_PS(XMM7, XMM0)
-
-<a name="line586">586: </a>        <font color="#B22222">/* Second Column */</font>
-<a name="line587">587: </a>        SSE_COPY_PS(XMM1, XMM6)
-<a name="line588">588: </a>        SSE_SHUFFLE(XMM1, XMM1, 0x55)
-<a name="line589">589: </a>        SSE_MULT_PS_M(XMM1, SSE_ARG_2, FLOAT_4)
-<a name="line590">590: </a>        SSE_SUB_PS(XMM7, XMM1)
-
-<a name="line592">592: </a>        SSE_PREFETCH_NTA(SSE_ARG_2, FLOAT_24)
-
-<a name="line594">594: </a>        <font color="#B22222">/* Third Column */</font>
-<a name="line595">595: </a>        SSE_COPY_PS(XMM2, XMM6)
-<a name="line596">596: </a>        SSE_SHUFFLE(XMM2, XMM2, 0xAA)
-<a name="line597">597: </a>        SSE_MULT_PS_M(XMM2, SSE_ARG_2, FLOAT_8)
-<a name="line598">598: </a>        SSE_SUB_PS(XMM7, XMM2)
-
-<a name="line600">600: </a>        <font color="#B22222">/* Fourth Column */</font>
-<a name="line601">601: </a>        SSE_COPY_PS(XMM3, XMM6)
-<a name="line602">602: </a>        SSE_SHUFFLE(XMM3, XMM3, 0xFF)
-<a name="line603">603: </a>        SSE_MULT_PS_M(XMM3, SSE_ARG_2, FLOAT_12)
-<a name="line604">604: </a>        SSE_SUB_PS(XMM7, XMM3)
-<a name="line605">605: </a>        SSE_INLINE_END_2
-<a name="line606">606: </a>        v += 16;
-<a name="line607">607: </a>      }
-<a name="line608">608: </a>      v    = aa + ai16;
-<a name="line609">609: </a>      ai16 = 16 * diag[--i];
-<a name="line610">610: </a>      PREFETCH_NTA(aa + ai16 + 16);
-<a name="line611">611: </a>      <font color="#B22222">/*</font>
-<a name="line612">612: </a><font color="#B22222">         Scale the result by the diagonal 4x4 block,</font>
-<a name="line613">613: </a><font color="#B22222">         which was inverted as part of the factorization</font>
-<a name="line614">614: </a><font color="#B22222">      */</font>
-<a name="line615">615: </a>      SSE_INLINE_BEGIN_3(v, &amp;t[idt], aa + ai16)
-<a name="line616">616: </a>      <font color="#B22222">/* First Column */</font>
-<a name="line617">617: </a>      SSE_COPY_PS(XMM0, XMM7)
-<a name="line618">618: </a>      SSE_SHUFFLE(XMM0, XMM0, 0x00)
-<a name="line619">619: </a>      SSE_MULT_PS_M(XMM0, SSE_ARG_1, FLOAT_0)
-
-<a name="line621">621: </a>      <font color="#B22222">/* Second Column */</font>
-<a name="line622">622: </a>      SSE_COPY_PS(XMM1, XMM7)
-<a name="line623">623: </a>      SSE_SHUFFLE(XMM1, XMM1, 0x55)
-<a name="line624">624: </a>      SSE_MULT_PS_M(XMM1, SSE_ARG_1, FLOAT_4)
-<a name="line625">625: </a>      SSE_ADD_PS(XMM0, XMM1)
-
-<a name="line627">627: </a>      SSE_PREFETCH_NTA(SSE_ARG_3, FLOAT_24)
-
-<a name="line629">629: </a>      <font color="#B22222">/* Third Column */</font>
-<a name="line630">630: </a>      SSE_COPY_PS(XMM2, XMM7)
-<a name="line631">631: </a>      SSE_SHUFFLE(XMM2, XMM2, 0xAA)
-<a name="line632">632: </a>      SSE_MULT_PS_M(XMM2, SSE_ARG_1, FLOAT_8)
-<a name="line633">633: </a>      SSE_ADD_PS(XMM0, XMM2)
-
-<a name="line635">635: </a>      <font color="#B22222">/* Fourth Column */</font>
-<a name="line636">636: </a>      SSE_COPY_PS(XMM3, XMM7)
-<a name="line637">637: </a>      SSE_SHUFFLE(XMM3, XMM3, 0xFF)
-<a name="line638">638: </a>      SSE_MULT_PS_M(XMM3, SSE_ARG_1, FLOAT_12)
-<a name="line639">639: </a>      SSE_ADD_PS(XMM0, XMM3)
-
-<a name="line641">641: </a>      SSE_STORE_PS(SSE_ARG_2, FLOAT_0, XMM0)
-<a name="line642">642: </a>      SSE_INLINE_END_3
-
-<a name="line644">644: </a>      v = aa + ai16 + 16;
-<a name="line645">645: </a>      idt -= 4;
-<a name="line646">646: </a>    }
-
-<a name="line648">648: </a>    <font color="#B22222">/* Convert t from single precision back to double precision (inplace)*/</font>
-<a name="line649">649: </a>    idt = 4 * (n - 1);
-<a name="line650">650: </a>    <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0; i--) {
-<a name="line651">651: </a>      <font color="#B22222">/*     CONVERT_FLOAT4_DOUBLE4(&amp;x[idt],&amp;t[idt]); */</font>
-<a name="line652">652: </a>      <font color="#B22222">/* Unfortunately, CONVERT_ will count from 0 to 3 which doesn't work here. */</font>
-<a name="line653">653: </a>      <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *xtemp = &amp;x[idt];
-<a name="line654">654: </a>      MatScalar   *ttemp = &amp;t[idt];
-<a name="line655">655: </a>      xtemp[3]           = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[3];
-<a name="line656">656: </a>      xtemp[2]           = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[2];
-<a name="line657">657: </a>      xtemp[1]           = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[1];
-<a name="line658">658: </a>      xtemp[0]           = (<a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[0];
-<a name="line659">659: </a>      idt -= 4;
-<a name="line660">660: </a>    }
-
-<a name="line662">662: </a>  } <font color="#B22222">/* End of artificial scope. */</font>
-<a name="line663">663: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(bb, &amp;b);
-<a name="line664">664: </a>  <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xx, &amp;x);
-<a name="line665">665: </a>  <a href="../../../../../docs/manualpages/Sys/PetscLogFlops.html">PetscLogFlops</a>(2.0 * 16 * (a-&gt;nz) - 4.0 * A-&gt;cmap-&gt;n);
-<a name="line666">666: </a>  SSE_SCOPE_END;
-<a name="line667">667: </a>  <font color="#4169E1">return</font> 0;
-<a name="line668">668: </a>}
-
-<a name="line670">670: </a><font color="#A020F0">#endif</font>
+<a name="line15"> 15: </a>  <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>       *x;
+<a name="line16"> 16: </a>  const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *b;
+
+<a name="line18"> 18: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line19"> 19: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(bb, &amp;b));
+<a name="line20"> 20: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecGetArray.html">VecGetArray</a>(xx, &amp;x));
+
+<a name="line22"> 22: </a><font color="#A020F0">#if defined(PETSC_USE_FORTRAN_KERNEL_SOLVEBAIJ)</font>
+<a name="line23"> 23: </a>  {
+<a name="line24"> 24: </a>    static <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> w[2000]; <font color="#B22222">/* very BAD need to fix */</font>
+<a name="line25"> 25: </a>    fortransolvebaij4_(&amp;n, x, ai, aj, diag, aa, b, w);
+<a name="line26"> 26: </a>  }
+<a name="line27"> 27: </a><font color="#A020F0">#elif defined(PETSC_USE_FORTRAN_KERNEL_SOLVEBAIJUNROLL)</font>
+<a name="line28"> 28: </a>  fortransolvebaij4unroll_(&amp;n, x, ai, aj, diag, aa, b);
+<a name="line29"> 29: </a><font color="#A020F0">#else</font>
+<a name="line30"> 30: </a>  {
+<a name="line31"> 31: </a>    <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>      s1, s2, s3, s4, x1, x2, x3, x4;
+<a name="line32"> 32: </a>    const MatScalar *v;
+<a name="line33"> 33: </a>    <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>         jdx, idt, idx, nz, i, ai16;
+<a name="line34"> 34: </a>    const <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>  *vi;
+
+<a name="line36"> 36: </a>    <font color="#B22222">/* forward solve the lower triangular */</font>
+<a name="line37"> 37: </a>    idx  = 0;
+<a name="line38"> 38: </a>    x[0] = b[0];
+<a name="line39"> 39: </a>    x[1] = b[1];
+<a name="line40"> 40: </a>    x[2] = b[2];
+<a name="line41"> 41: </a>    x[3] = b[3];
+<a name="line42"> 42: </a>    <font color="#4169E1">for</font> (i = 1; i &lt; n; i++) {
+<a name="line43"> 43: </a>      v  = aa + 16 * ai[i];
+<a name="line44"> 44: </a>      vi = aj + ai[i];
+<a name="line45"> 45: </a>      nz = diag[i] - ai[i];
+<a name="line46"> 46: </a>      idx += 4;
+<a name="line47"> 47: </a>      s1 = b[idx];
+<a name="line48"> 48: </a>      s2 = b[1 + idx];
+<a name="line49"> 49: </a>      s3 = b[2 + idx];
+<a name="line50"> 50: </a>      s4 = b[3 + idx];
+<a name="line51"> 51: </a>      <font color="#4169E1">while</font> (nz--) {
+<a name="line52"> 52: </a>        jdx = 4 * (*vi++);
+<a name="line53"> 53: </a>        x1  = x[jdx];
+<a name="line54"> 54: </a>        x2  = x[1 + jdx];
+<a name="line55"> 55: </a>        x3  = x[2 + jdx];
+<a name="line56"> 56: </a>        x4  = x[3 + jdx];
+<a name="line57"> 57: </a>        s1 -= v[0] * x1 + v[4] * x2 + v[8] * x3 + v[12] * x4;
+<a name="line58"> 58: </a>        s2 -= v[1] * x1 + v[5] * x2 + v[9] * x3 + v[13] * x4;
+<a name="line59"> 59: </a>        s3 -= v[2] * x1 + v[6] * x2 + v[10] * x3 + v[14] * x4;
+<a name="line60"> 60: </a>        s4 -= v[3] * x1 + v[7] * x2 + v[11] * x3 + v[15] * x4;
+<a name="line61"> 61: </a>        v += 16;
+<a name="line62"> 62: </a>      }
+<a name="line63"> 63: </a>      x[idx]     = s1;
+<a name="line64"> 64: </a>      x[1 + idx] = s2;
+<a name="line65"> 65: </a>      x[2 + idx] = s3;
+<a name="line66"> 66: </a>      x[3 + idx] = s4;
+<a name="line67"> 67: </a>    }
+<a name="line68"> 68: </a>    <font color="#B22222">/* backward solve the upper triangular */</font>
+<a name="line69"> 69: </a>    idt = 4 * (n - 1);
+<a name="line70"> 70: </a>    <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0; i--) {
+<a name="line71"> 71: </a>      ai16 = 16 * diag[i];
+<a name="line72"> 72: </a>      v    = aa + ai16 + 16;
+<a name="line73"> 73: </a>      vi   = aj + diag[i] + 1;
+<a name="line74"> 74: </a>      nz   = ai[i + 1] - diag[i] - 1;
+<a name="line75"> 75: </a>      s1   = x[idt];
+<a name="line76"> 76: </a>      s2   = x[1 + idt];
+<a name="line77"> 77: </a>      s3   = x[2 + idt];
+<a name="line78"> 78: </a>      s4   = x[3 + idt];
+<a name="line79"> 79: </a>      <font color="#4169E1">while</font> (nz--) {
+<a name="line80"> 80: </a>        idx = 4 * (*vi++);
+<a name="line81"> 81: </a>        x1  = x[idx];
+<a name="line82"> 82: </a>        x2  = x[1 + idx];
+<a name="line83"> 83: </a>        x3  = x[2 + idx];
+<a name="line84"> 84: </a>        x4  = x[3 + idx];
+<a name="line85"> 85: </a>        s1 -= v[0] * x1 + v[4] * x2 + v[8] * x3 + v[12] * x4;
+<a name="line86"> 86: </a>        s2 -= v[1] * x1 + v[5] * x2 + v[9] * x3 + v[13] * x4;
+<a name="line87"> 87: </a>        s3 -= v[2] * x1 + v[6] * x2 + v[10] * x3 + v[14] * x4;
+<a name="line88"> 88: </a>        s4 -= v[3] * x1 + v[7] * x2 + v[11] * x3 + v[15] * x4;
+<a name="line89"> 89: </a>        v += 16;
+<a name="line90"> 90: </a>      }
+<a name="line91"> 91: </a>      v          = aa + ai16;
+<a name="line92"> 92: </a>      x[idt]     = v[0] * s1 + v[4] * s2 + v[8] * s3 + v[12] * s4;
+<a name="line93"> 93: </a>      x[1 + idt] = v[1] * s1 + v[5] * s2 + v[9] * s3 + v[13] * s4;
+<a name="line94"> 94: </a>      x[2 + idt] = v[2] * s1 + v[6] * s2 + v[10] * s3 + v[14] * s4;
+<a name="line95"> 95: </a>      x[3 + idt] = v[3] * s1 + v[7] * s2 + v[11] * s3 + v[15] * s4;
+<a name="line96"> 96: </a>      idt -= 4;
+<a name="line97"> 97: </a>    }
+<a name="line98"> 98: </a>  }
+<a name="line99"> 99: </a><font color="#A020F0">#endif</font>
+
+<a name="line101">101: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(bb, &amp;b));
+<a name="line102">102: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xx, &amp;x));
+<a name="line103">103: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Profiling/PetscLogFlops.html">PetscLogFlops</a>(2.0 * 16 * (a-&gt;nz) - 4.0 * A-&gt;cmap-&gt;n));
+<a name="line104">104: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line105">105: </a>}
+
+<a name="line107">107: </a><strong><font color="#4169E1"><a name="MatSolve_SeqBAIJ_4_NaturalOrdering"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolve_SeqBAIJ_4_NaturalOrdering(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> bb, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> xx)</font></strong>
+<a name="line108">108: </a>{
+<a name="line109">109: </a>  Mat_SeqBAIJ       *a = (Mat_SeqBAIJ *)A-&gt;data;
+<a name="line110">110: </a>  const <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>     n = a-&gt;mbs, *vi, *ai = a-&gt;i, *aj = a-&gt;j, *adiag = a-&gt;diag;
+<a name="line111">111: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>           i, k, nz, idx, jdx, idt;
+<a name="line112">112: </a>  const <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>     bs = A-&gt;rmap-&gt;bs, bs2 = a-&gt;bs2;
+<a name="line113">113: </a>  const MatScalar   *aa = a-&gt;a, *v;
+<a name="line114">114: </a>  <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>       *x;
+<a name="line115">115: </a>  const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *b;
+<a name="line116">116: </a>  <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>        s1, s2, s3, s4, x1, x2, x3, x4;
+
+<a name="line118">118: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line119">119: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(bb, &amp;b));
+<a name="line120">120: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecGetArray.html">VecGetArray</a>(xx, &amp;x));
+<a name="line121">121: </a>  <font color="#B22222">/* forward solve the lower triangular */</font>
+<a name="line122">122: </a>  idx  = 0;
+<a name="line123">123: </a>  x[0] = b[idx];
+<a name="line124">124: </a>  x[1] = b[1 + idx];
+<a name="line125">125: </a>  x[2] = b[2 + idx];
+<a name="line126">126: </a>  x[3] = b[3 + idx];
+<a name="line127">127: </a>  <font color="#4169E1">for</font> (i = 1; i &lt; n; i++) {
+<a name="line128">128: </a>    v   = aa + bs2 * ai[i];
+<a name="line129">129: </a>    vi  = aj + ai[i];
+<a name="line130">130: </a>    nz  = ai[i + 1] - ai[i];
+<a name="line131">131: </a>    idx = bs * i;
+<a name="line132">132: </a>    s1  = b[idx];
+<a name="line133">133: </a>    s2  = b[1 + idx];
+<a name="line134">134: </a>    s3  = b[2 + idx];
+<a name="line135">135: </a>    s4  = b[3 + idx];
+<a name="line136">136: </a>    <font color="#4169E1">for</font> (k = 0; k &lt; nz; k++) {
+<a name="line137">137: </a>      jdx = bs * vi[k];
+<a name="line138">138: </a>      x1  = x[jdx];
+<a name="line139">139: </a>      x2  = x[1 + jdx];
+<a name="line140">140: </a>      x3  = x[2 + jdx];
+<a name="line141">141: </a>      x4  = x[3 + jdx];
+<a name="line142">142: </a>      s1 -= v[0] * x1 + v[4] * x2 + v[8] * x3 + v[12] * x4;
+<a name="line143">143: </a>      s2 -= v[1] * x1 + v[5] * x2 + v[9] * x3 + v[13] * x4;
+<a name="line144">144: </a>      s3 -= v[2] * x1 + v[6] * x2 + v[10] * x3 + v[14] * x4;
+<a name="line145">145: </a>      s4 -= v[3] * x1 + v[7] * x2 + v[11] * x3 + v[15] * x4;
+
+<a name="line147">147: </a>      v += bs2;
+<a name="line148">148: </a>    }
+
+<a name="line150">150: </a>    x[idx]     = s1;
+<a name="line151">151: </a>    x[1 + idx] = s2;
+<a name="line152">152: </a>    x[2 + idx] = s3;
+<a name="line153">153: </a>    x[3 + idx] = s4;
+<a name="line154">154: </a>  }
+
+<a name="line156">156: </a>  <font color="#B22222">/* backward solve the upper triangular */</font>
+<a name="line157">157: </a>  <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0; i--) {
+<a name="line158">158: </a>    v   = aa + bs2 * (adiag[i + 1] + 1);
+<a name="line159">159: </a>    vi  = aj + adiag[i + 1] + 1;
+<a name="line160">160: </a>    nz  = adiag[i] - adiag[i + 1] - 1;
+<a name="line161">161: </a>    idt = bs * i;
+<a name="line162">162: </a>    s1  = x[idt];
+<a name="line163">163: </a>    s2  = x[1 + idt];
+<a name="line164">164: </a>    s3  = x[2 + idt];
+<a name="line165">165: </a>    s4  = x[3 + idt];
+
+<a name="line167">167: </a>    <font color="#4169E1">for</font> (k = 0; k &lt; nz; k++) {
+<a name="line168">168: </a>      idx = bs * vi[k];
+<a name="line169">169: </a>      x1  = x[idx];
+<a name="line170">170: </a>      x2  = x[1 + idx];
+<a name="line171">171: </a>      x3  = x[2 + idx];
+<a name="line172">172: </a>      x4  = x[3 + idx];
+<a name="line173">173: </a>      s1 -= v[0] * x1 + v[4] * x2 + v[8] * x3 + v[12] * x4;
+<a name="line174">174: </a>      s2 -= v[1] * x1 + v[5] * x2 + v[9] * x3 + v[13] * x4;
+<a name="line175">175: </a>      s3 -= v[2] * x1 + v[6] * x2 + v[10] * x3 + v[14] * x4;
+<a name="line176">176: </a>      s4 -= v[3] * x1 + v[7] * x2 + v[11] * x3 + v[15] * x4;
+
+<a name="line178">178: </a>      v += bs2;
+<a name="line179">179: </a>    }
+<a name="line180">180: </a>    <font color="#B22222">/* x = inv_diagonal*x */</font>
+<a name="line181">181: </a>    x[idt]     = v[0] * s1 + v[4] * s2 + v[8] * s3 + v[12] * s4;
+<a name="line182">182: </a>    x[1 + idt] = v[1] * s1 + v[5] * s2 + v[9] * s3 + v[13] * s4;
+<a name="line183">183: </a>    x[2 + idt] = v[2] * s1 + v[6] * s2 + v[10] * s3 + v[14] * s4;
+<a name="line184">184: </a>    x[3 + idt] = v[3] * s1 + v[7] * s2 + v[11] * s3 + v[15] * s4;
+<a name="line185">185: </a>  }
+
+<a name="line187">187: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(bb, &amp;b));
+<a name="line188">188: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xx, &amp;x));
+<a name="line189">189: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Profiling/PetscLogFlops.html">PetscLogFlops</a>(2.0 * bs2 * (a-&gt;nz) - bs * A-&gt;cmap-&gt;n));
+<a name="line190">190: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line191">191: </a>}
+
+<a name="line193">193: </a><font color="#A020F0">#if defined(PETSC_HAVE_SSE)</font>
+
+<a name="line195">195: </a><font color="#A020F0">  #include PETSC_HAVE_SSE</font>
+<a name="line196">196: </a><strong><font color="#4169E1"><a name="MatSolve_SeqBAIJ_4_NaturalOrdering_SSE_Demotion_usj"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolve_SeqBAIJ_4_NaturalOrdering_SSE_Demotion_usj(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> bb, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> xx)</font></strong>
+<a name="line197">197: </a>{
+<a name="line198">198: </a>  Mat_SeqBAIJ    *a  = (Mat_SeqBAIJ *)A-&gt;data;
+<a name="line199">199: </a>  unsigned short *aj = (unsigned short *)a-&gt;j;
+<a name="line200">200: </a>  int            *ai = a-&gt;i, n = a-&gt;mbs, *diag = a-&gt;diag;
+<a name="line201">201: </a>  MatScalar      *aa = a-&gt;a;
+<a name="line202">202: </a>  <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>    *x, *b;
+
+<a name="line204">204: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line205">205: </a>  SSE_SCOPE_BEGIN;
+<a name="line206">206: </a>  <font color="#B22222">/*</font>
+<a name="line207">207: </a><font color="#B22222">     Note: This code currently uses demotion of double</font>
+<a name="line208">208: </a><font color="#B22222">     to float when performing the mixed-mode computation.</font>
+<a name="line209">209: </a><font color="#B22222">     This may not be numerically reasonable for all applications.</font>
+<a name="line210">210: </a><font color="#B22222">  */</font>
+<a name="line211">211: </a>  PREFETCH_NTA(aa + 16 * ai[1]);
+
+<a name="line213">213: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecGetArray.html">VecGetArray</a>(bb, &amp;b));
+<a name="line214">214: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecGetArray.html">VecGetArray</a>(xx, &amp;x));
+<a name="line215">215: </a>  {
+<a name="line216">216: </a>    <font color="#B22222">/* x will first be computed in single precision then promoted inplace to double */</font>
+<a name="line217">217: </a>    MatScalar      *v, *t = (MatScalar *)x;
+<a name="line218">218: </a>    int             nz, i, idt, ai16;
+<a name="line219">219: </a>    unsigned int    jdx, idx;
+<a name="line220">220: </a>    unsigned short *vi;
+<a name="line221">221: </a>    <font color="#B22222">/* Forward solve the lower triangular factor. */</font>
+
+<a name="line223">223: </a>    <font color="#B22222">/* First block is the identity. */</font>
+<a name="line224">224: </a>    idx = 0;
+<a name="line225">225: </a>    CONVERT_DOUBLE4_FLOAT4(t, b);
+<a name="line226">226: </a>    v = aa + 16 * ((unsigned int)ai[1]);
+
+<a name="line228">228: </a>    <font color="#4169E1">for</font> (i = 1; i &lt; n;) {
+<a name="line229">229: </a>      PREFETCH_NTA(&amp;v[8]);
+<a name="line230">230: </a>      vi = aj + ai[i];
+<a name="line231">231: </a>      nz = diag[i] - ai[i];
+<a name="line232">232: </a>      idx += 4;
+
+<a name="line234">234: </a>      <font color="#B22222">/* Demote RHS from double to float. */</font>
+<a name="line235">235: </a>      CONVERT_DOUBLE4_FLOAT4(&amp;t[idx], &amp;b[idx]);
+<a name="line236">236: </a>      LOAD_PS(&amp;t[idx], XMM7);
+
+<a name="line238">238: </a>      <font color="#4169E1">while</font> (nz--) {
+<a name="line239">239: </a>        PREFETCH_NTA(&amp;v[16]);
+<a name="line240">240: </a>        jdx = 4 * ((unsigned int)(*vi++));
+
+<a name="line242">242: </a>        <font color="#B22222">/* 4x4 Matrix-Vector product with negative accumulation: */</font>
+<a name="line243">243: </a>        SSE_INLINE_BEGIN_2(&amp;t[jdx], v)
+<a name="line244">244: </a>        SSE_LOAD_PS(SSE_ARG_1, FLOAT_0, XMM6)
+
+<a name="line246">246: </a>        <font color="#B22222">/* First Column */</font>
+<a name="line247">247: </a>        SSE_COPY_PS(XMM0, XMM6)
+<a name="line248">248: </a>        SSE_SHUFFLE(XMM0, XMM0, 0x00)
+<a name="line249">249: </a>        SSE_MULT_PS_M(XMM0, SSE_ARG_2, FLOAT_0)
+<a name="line250">250: </a>        SSE_SUB_PS(XMM7, XMM0)
+
+<a name="line252">252: </a>        <font color="#B22222">/* Second Column */</font>
+<a name="line253">253: </a>        SSE_COPY_PS(XMM1, XMM6)
+<a name="line254">254: </a>        SSE_SHUFFLE(XMM1, XMM1, 0x55)
+<a name="line255">255: </a>        SSE_MULT_PS_M(XMM1, SSE_ARG_2, FLOAT_4)
+<a name="line256">256: </a>        SSE_SUB_PS(XMM7, XMM1)
+
+<a name="line258">258: </a>        SSE_PREFETCH_NTA(SSE_ARG_2, FLOAT_24)
+
+<a name="line260">260: </a>        <font color="#B22222">/* Third Column */</font>
+<a name="line261">261: </a>        SSE_COPY_PS(XMM2, XMM6)
+<a name="line262">262: </a>        SSE_SHUFFLE(XMM2, XMM2, 0xAA)
+<a name="line263">263: </a>        SSE_MULT_PS_M(XMM2, SSE_ARG_2, FLOAT_8)
+<a name="line264">264: </a>        SSE_SUB_PS(XMM7, XMM2)
+
+<a name="line266">266: </a>        <font color="#B22222">/* Fourth Column */</font>
+<a name="line267">267: </a>        SSE_COPY_PS(XMM3, XMM6)
+<a name="line268">268: </a>        SSE_SHUFFLE(XMM3, XMM3, 0xFF)
+<a name="line269">269: </a>        SSE_MULT_PS_M(XMM3, SSE_ARG_2, FLOAT_12)
+<a name="line270">270: </a>        SSE_SUB_PS(XMM7, XMM3)
+<a name="line271">271: </a>        SSE_INLINE_END_2
+
+<a name="line273">273: </a>        v += 16;
+<a name="line274">274: </a>      }
+<a name="line275">275: </a>      v = aa + 16 * ai[++i];
+<a name="line276">276: </a>      PREFETCH_NTA(v);
+<a name="line277">277: </a>      STORE_PS(&amp;t[idx], XMM7);
+<a name="line278">278: </a>    }
+
+<a name="line280">280: </a>    <font color="#B22222">/* Backward solve the upper triangular factor.*/</font>
+
+<a name="line282">282: </a>    idt  = 4 * (n - 1);
+<a name="line283">283: </a>    ai16 = 16 * diag[n - 1];
+<a name="line284">284: </a>    v    = aa + ai16 + 16;
+<a name="line285">285: </a>    <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0;) {
+<a name="line286">286: </a>      PREFETCH_NTA(&amp;v[8]);
+<a name="line287">287: </a>      vi = aj + diag[i] + 1;
+<a name="line288">288: </a>      nz = ai[i + 1] - diag[i] - 1;
+
+<a name="line290">290: </a>      LOAD_PS(&amp;t[idt], XMM7);
+
+<a name="line292">292: </a>      <font color="#4169E1">while</font> (nz--) {
+<a name="line293">293: </a>        PREFETCH_NTA(&amp;v[16]);
+<a name="line294">294: </a>        idx = 4 * ((unsigned int)(*vi++));
+
+<a name="line296">296: </a>        <font color="#B22222">/* 4x4 Matrix-Vector Product with negative accumulation: */</font>
+<a name="line297">297: </a>        SSE_INLINE_BEGIN_2(&amp;t[idx], v)
+<a name="line298">298: </a>        SSE_LOAD_PS(SSE_ARG_1, FLOAT_0, XMM6)
+
+<a name="line300">300: </a>        <font color="#B22222">/* First Column */</font>
+<a name="line301">301: </a>        SSE_COPY_PS(XMM0, XMM6)
+<a name="line302">302: </a>        SSE_SHUFFLE(XMM0, XMM0, 0x00)
+<a name="line303">303: </a>        SSE_MULT_PS_M(XMM0, SSE_ARG_2, FLOAT_0)
+<a name="line304">304: </a>        SSE_SUB_PS(XMM7, XMM0)
+
+<a name="line306">306: </a>        <font color="#B22222">/* Second Column */</font>
+<a name="line307">307: </a>        SSE_COPY_PS(XMM1, XMM6)
+<a name="line308">308: </a>        SSE_SHUFFLE(XMM1, XMM1, 0x55)
+<a name="line309">309: </a>        SSE_MULT_PS_M(XMM1, SSE_ARG_2, FLOAT_4)
+<a name="line310">310: </a>        SSE_SUB_PS(XMM7, XMM1)
+
+<a name="line312">312: </a>        SSE_PREFETCH_NTA(SSE_ARG_2, FLOAT_24)
+
+<a name="line314">314: </a>        <font color="#B22222">/* Third Column */</font>
+<a name="line315">315: </a>        SSE_COPY_PS(XMM2, XMM6)
+<a name="line316">316: </a>        SSE_SHUFFLE(XMM2, XMM2, 0xAA)
+<a name="line317">317: </a>        SSE_MULT_PS_M(XMM2, SSE_ARG_2, FLOAT_8)
+<a name="line318">318: </a>        SSE_SUB_PS(XMM7, XMM2)
+
+<a name="line320">320: </a>        <font color="#B22222">/* Fourth Column */</font>
+<a name="line321">321: </a>        SSE_COPY_PS(XMM3, XMM6)
+<a name="line322">322: </a>        SSE_SHUFFLE(XMM3, XMM3, 0xFF)
+<a name="line323">323: </a>        SSE_MULT_PS_M(XMM3, SSE_ARG_2, FLOAT_12)
+<a name="line324">324: </a>        SSE_SUB_PS(XMM7, XMM3)
+<a name="line325">325: </a>        SSE_INLINE_END_2
+<a name="line326">326: </a>        v += 16;
+<a name="line327">327: </a>      }
+<a name="line328">328: </a>      v    = aa + ai16;
+<a name="line329">329: </a>      ai16 = 16 * diag[--i];
+<a name="line330">330: </a>      PREFETCH_NTA(aa + ai16 + 16);
+<a name="line331">331: </a>      <font color="#B22222">/*</font>
+<a name="line332">332: </a><font color="#B22222">         Scale the result by the diagonal 4x4 block,</font>
+<a name="line333">333: </a><font color="#B22222">         which was inverted as part of the factorization</font>
+<a name="line334">334: </a><font color="#B22222">      */</font>
+<a name="line335">335: </a>      SSE_INLINE_BEGIN_3(v, &amp;t[idt], aa + ai16)
+<a name="line336">336: </a>      <font color="#B22222">/* First Column */</font>
+<a name="line337">337: </a>      SSE_COPY_PS(XMM0, XMM7)
+<a name="line338">338: </a>      SSE_SHUFFLE(XMM0, XMM0, 0x00)
+<a name="line339">339: </a>      SSE_MULT_PS_M(XMM0, SSE_ARG_1, FLOAT_0)
+
+<a name="line341">341: </a>      <font color="#B22222">/* Second Column */</font>
+<a name="line342">342: </a>      SSE_COPY_PS(XMM1, XMM7)
+<a name="line343">343: </a>      SSE_SHUFFLE(XMM1, XMM1, 0x55)
+<a name="line344">344: </a>      SSE_MULT_PS_M(XMM1, SSE_ARG_1, FLOAT_4)
+<a name="line345">345: </a>      SSE_ADD_PS(XMM0, XMM1)
+
+<a name="line347">347: </a>      SSE_PREFETCH_NTA(SSE_ARG_3, FLOAT_24)
+
+<a name="line349">349: </a>      <font color="#B22222">/* Third Column */</font>
+<a name="line350">350: </a>      SSE_COPY_PS(XMM2, XMM7)
+<a name="line351">351: </a>      SSE_SHUFFLE(XMM2, XMM2, 0xAA)
+<a name="line352">352: </a>      SSE_MULT_PS_M(XMM2, SSE_ARG_1, FLOAT_8)
+<a name="line353">353: </a>      SSE_ADD_PS(XMM0, XMM2)
+
+<a name="line355">355: </a>      <font color="#B22222">/* Fourth Column */</font>
+<a name="line356">356: </a>      SSE_COPY_PS(XMM3, XMM7)
+<a name="line357">357: </a>      SSE_SHUFFLE(XMM3, XMM3, 0xFF)
+<a name="line358">358: </a>      SSE_MULT_PS_M(XMM3, SSE_ARG_1, FLOAT_12)
+<a name="line359">359: </a>      SSE_ADD_PS(XMM0, XMM3)
+
+<a name="line361">361: </a>      SSE_STORE_PS(SSE_ARG_2, FLOAT_0, XMM0)
+<a name="line362">362: </a>      SSE_INLINE_END_3
+
+<a name="line364">364: </a>      v = aa + ai16 + 16;
+<a name="line365">365: </a>      idt -= 4;
+<a name="line366">366: </a>    }
+
+<a name="line368">368: </a>    <font color="#B22222">/* Convert t from single precision back to double precision (inplace)*/</font>
+<a name="line369">369: </a>    idt = 4 * (n - 1);
+<a name="line370">370: </a>    <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0; i--) {
+<a name="line371">371: </a>      <font color="#B22222">/*     CONVERT_FLOAT4_DOUBLE4(&amp;x[idt],&amp;t[idt]); */</font>
+<a name="line372">372: </a>      <font color="#B22222">/* Unfortunately, CONVERT_ will count from 0 to 3 which doesn't work here. */</font>
+<a name="line373">373: </a>      <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *xtemp = &amp;x[idt];
+<a name="line374">374: </a>      MatScalar   *ttemp = &amp;t[idt];
+<a name="line375">375: </a>      xtemp[3]           = (<a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[3];
+<a name="line376">376: </a>      xtemp[2]           = (<a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[2];
+<a name="line377">377: </a>      xtemp[1]           = (<a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[1];
+<a name="line378">378: </a>      xtemp[0]           = (<a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[0];
+<a name="line379">379: </a>      idt -= 4;
+<a name="line380">380: </a>    }
+
+<a name="line382">382: </a>  } <font color="#B22222">/* End of artificial scope. */</font>
+<a name="line383">383: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(bb, &amp;b));
+<a name="line384">384: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xx, &amp;x));
+<a name="line385">385: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Profiling/PetscLogFlops.html">PetscLogFlops</a>(2.0 * 16 * (a-&gt;nz) - 4.0 * A-&gt;cmap-&gt;n));
+<a name="line386">386: </a>  SSE_SCOPE_END;
+<a name="line387">387: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line388">388: </a>}
+
+<a name="line390">390: </a><strong><font color="#4169E1"><a name="MatSolve_SeqBAIJ_4_NaturalOrdering_SSE_Demotion"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MatSolve_SeqBAIJ_4_NaturalOrdering_SSE_Demotion(<a href="../../../../../manualpages/Mat/Mat.html">Mat</a> A, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> bb, <a href="../../../../../manualpages/Vec/Vec.html">Vec</a> xx)</font></strong>
+<a name="line391">391: </a>{
+<a name="line392">392: </a>  Mat_SeqBAIJ *a  = (Mat_SeqBAIJ *)A-&gt;data;
+<a name="line393">393: </a>  int         *aj = a-&gt;j;
+<a name="line394">394: </a>  int         *ai = a-&gt;i, n = a-&gt;mbs, *diag = a-&gt;diag;
+<a name="line395">395: </a>  MatScalar   *aa = a-&gt;a;
+<a name="line396">396: </a>  <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *x, *b;
+
+<a name="line398">398: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line399">399: </a>  SSE_SCOPE_BEGIN;
+<a name="line400">400: </a>  <font color="#B22222">/*</font>
+<a name="line401">401: </a><font color="#B22222">     Note: This code currently uses demotion of double</font>
+<a name="line402">402: </a><font color="#B22222">     to float when performing the mixed-mode computation.</font>
+<a name="line403">403: </a><font color="#B22222">     This may not be numerically reasonable for all applications.</font>
+<a name="line404">404: </a><font color="#B22222">  */</font>
+<a name="line405">405: </a>  PREFETCH_NTA(aa + 16 * ai[1]);
+
+<a name="line407">407: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecGetArray.html">VecGetArray</a>(bb, &amp;b));
+<a name="line408">408: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecGetArray.html">VecGetArray</a>(xx, &amp;x));
+<a name="line409">409: </a>  {
+<a name="line410">410: </a>    <font color="#B22222">/* x will first be computed in single precision then promoted inplace to double */</font>
+<a name="line411">411: </a>    MatScalar *v, *t = (MatScalar *)x;
+<a name="line412">412: </a>    int        nz, i, idt, ai16;
+<a name="line413">413: </a>    int        jdx, idx;
+<a name="line414">414: </a>    int       *vi;
+<a name="line415">415: </a>    <font color="#B22222">/* Forward solve the lower triangular factor. */</font>
+
+<a name="line417">417: </a>    <font color="#B22222">/* First block is the identity. */</font>
+<a name="line418">418: </a>    idx = 0;
+<a name="line419">419: </a>    CONVERT_DOUBLE4_FLOAT4(t, b);
+<a name="line420">420: </a>    v = aa + 16 * ai[1];
+
+<a name="line422">422: </a>    <font color="#4169E1">for</font> (i = 1; i &lt; n;) {
+<a name="line423">423: </a>      PREFETCH_NTA(&amp;v[8]);
+<a name="line424">424: </a>      vi = aj + ai[i];
+<a name="line425">425: </a>      nz = diag[i] - ai[i];
+<a name="line426">426: </a>      idx += 4;
+
+<a name="line428">428: </a>      <font color="#B22222">/* Demote RHS from double to float. */</font>
+<a name="line429">429: </a>      CONVERT_DOUBLE4_FLOAT4(&amp;t[idx], &amp;b[idx]);
+<a name="line430">430: </a>      LOAD_PS(&amp;t[idx], XMM7);
+
+<a name="line432">432: </a>      <font color="#4169E1">while</font> (nz--) {
+<a name="line433">433: </a>        PREFETCH_NTA(&amp;v[16]);
+<a name="line434">434: </a>        jdx = 4 * (*vi++);
+<a name="line435">435: </a>        <font color="#B22222">/*          jdx = *vi++; */</font>
+
+<a name="line437">437: </a>        <font color="#B22222">/* 4x4 Matrix-Vector product with negative accumulation: */</font>
+<a name="line438">438: </a>        SSE_INLINE_BEGIN_2(&amp;t[jdx], v)
+<a name="line439">439: </a>        SSE_LOAD_PS(SSE_ARG_1, FLOAT_0, XMM6)
+
+<a name="line441">441: </a>        <font color="#B22222">/* First Column */</font>
+<a name="line442">442: </a>        SSE_COPY_PS(XMM0, XMM6)
+<a name="line443">443: </a>        SSE_SHUFFLE(XMM0, XMM0, 0x00)
+<a name="line444">444: </a>        SSE_MULT_PS_M(XMM0, SSE_ARG_2, FLOAT_0)
+<a name="line445">445: </a>        SSE_SUB_PS(XMM7, XMM0)
+
+<a name="line447">447: </a>        <font color="#B22222">/* Second Column */</font>
+<a name="line448">448: </a>        SSE_COPY_PS(XMM1, XMM6)
+<a name="line449">449: </a>        SSE_SHUFFLE(XMM1, XMM1, 0x55)
+<a name="line450">450: </a>        SSE_MULT_PS_M(XMM1, SSE_ARG_2, FLOAT_4)
+<a name="line451">451: </a>        SSE_SUB_PS(XMM7, XMM1)
+
+<a name="line453">453: </a>        SSE_PREFETCH_NTA(SSE_ARG_2, FLOAT_24)
+
+<a name="line455">455: </a>        <font color="#B22222">/* Third Column */</font>
+<a name="line456">456: </a>        SSE_COPY_PS(XMM2, XMM6)
+<a name="line457">457: </a>        SSE_SHUFFLE(XMM2, XMM2, 0xAA)
+<a name="line458">458: </a>        SSE_MULT_PS_M(XMM2, SSE_ARG_2, FLOAT_8)
+<a name="line459">459: </a>        SSE_SUB_PS(XMM7, XMM2)
+
+<a name="line461">461: </a>        <font color="#B22222">/* Fourth Column */</font>
+<a name="line462">462: </a>        SSE_COPY_PS(XMM3, XMM6)
+<a name="line463">463: </a>        SSE_SHUFFLE(XMM3, XMM3, 0xFF)
+<a name="line464">464: </a>        SSE_MULT_PS_M(XMM3, SSE_ARG_2, FLOAT_12)
+<a name="line465">465: </a>        SSE_SUB_PS(XMM7, XMM3)
+<a name="line466">466: </a>        SSE_INLINE_END_2
+
+<a name="line468">468: </a>        v += 16;
+<a name="line469">469: </a>      }
+<a name="line470">470: </a>      v = aa + 16 * ai[++i];
+<a name="line471">471: </a>      PREFETCH_NTA(v);
+<a name="line472">472: </a>      STORE_PS(&amp;t[idx], XMM7);
+<a name="line473">473: </a>    }
+
+<a name="line475">475: </a>    <font color="#B22222">/* Backward solve the upper triangular factor.*/</font>
+
+<a name="line477">477: </a>    idt  = 4 * (n - 1);
+<a name="line478">478: </a>    ai16 = 16 * diag[n - 1];
+<a name="line479">479: </a>    v    = aa + ai16 + 16;
+<a name="line480">480: </a>    <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0;) {
+<a name="line481">481: </a>      PREFETCH_NTA(&amp;v[8]);
+<a name="line482">482: </a>      vi = aj + diag[i] + 1;
+<a name="line483">483: </a>      nz = ai[i + 1] - diag[i] - 1;
+
+<a name="line485">485: </a>      LOAD_PS(&amp;t[idt], XMM7);
+
+<a name="line487">487: </a>      <font color="#4169E1">while</font> (nz--) {
+<a name="line488">488: </a>        PREFETCH_NTA(&amp;v[16]);
+<a name="line489">489: </a>        idx = 4 * (*vi++);
+<a name="line490">490: </a>        <font color="#B22222">/*          idx = *vi++; */</font>
+
+<a name="line492">492: </a>        <font color="#B22222">/* 4x4 Matrix-Vector Product with negative accumulation: */</font>
+<a name="line493">493: </a>        SSE_INLINE_BEGIN_2(&amp;t[idx], v)
+<a name="line494">494: </a>        SSE_LOAD_PS(SSE_ARG_1, FLOAT_0, XMM6)
+
+<a name="line496">496: </a>        <font color="#B22222">/* First Column */</font>
+<a name="line497">497: </a>        SSE_COPY_PS(XMM0, XMM6)
+<a name="line498">498: </a>        SSE_SHUFFLE(XMM0, XMM0, 0x00)
+<a name="line499">499: </a>        SSE_MULT_PS_M(XMM0, SSE_ARG_2, FLOAT_0)
+<a name="line500">500: </a>        SSE_SUB_PS(XMM7, XMM0)
+
+<a name="line502">502: </a>        <font color="#B22222">/* Second Column */</font>
+<a name="line503">503: </a>        SSE_COPY_PS(XMM1, XMM6)
+<a name="line504">504: </a>        SSE_SHUFFLE(XMM1, XMM1, 0x55)
+<a name="line505">505: </a>        SSE_MULT_PS_M(XMM1, SSE_ARG_2, FLOAT_4)
+<a name="line506">506: </a>        SSE_SUB_PS(XMM7, XMM1)
+
+<a name="line508">508: </a>        SSE_PREFETCH_NTA(SSE_ARG_2, FLOAT_24)
+
+<a name="line510">510: </a>        <font color="#B22222">/* Third Column */</font>
+<a name="line511">511: </a>        SSE_COPY_PS(XMM2, XMM6)
+<a name="line512">512: </a>        SSE_SHUFFLE(XMM2, XMM2, 0xAA)
+<a name="line513">513: </a>        SSE_MULT_PS_M(XMM2, SSE_ARG_2, FLOAT_8)
+<a name="line514">514: </a>        SSE_SUB_PS(XMM7, XMM2)
+
+<a name="line516">516: </a>        <font color="#B22222">/* Fourth Column */</font>
+<a name="line517">517: </a>        SSE_COPY_PS(XMM3, XMM6)
+<a name="line518">518: </a>        SSE_SHUFFLE(XMM3, XMM3, 0xFF)
+<a name="line519">519: </a>        SSE_MULT_PS_M(XMM3, SSE_ARG_2, FLOAT_12)
+<a name="line520">520: </a>        SSE_SUB_PS(XMM7, XMM3)
+<a name="line521">521: </a>        SSE_INLINE_END_2
+<a name="line522">522: </a>        v += 16;
+<a name="line523">523: </a>      }
+<a name="line524">524: </a>      v    = aa + ai16;
+<a name="line525">525: </a>      ai16 = 16 * diag[--i];
+<a name="line526">526: </a>      PREFETCH_NTA(aa + ai16 + 16);
+<a name="line527">527: </a>      <font color="#B22222">/*</font>
+<a name="line528">528: </a><font color="#B22222">         Scale the result by the diagonal 4x4 block,</font>
+<a name="line529">529: </a><font color="#B22222">         which was inverted as part of the factorization</font>
+<a name="line530">530: </a><font color="#B22222">      */</font>
+<a name="line531">531: </a>      SSE_INLINE_BEGIN_3(v, &amp;t[idt], aa + ai16)
+<a name="line532">532: </a>      <font color="#B22222">/* First Column */</font>
+<a name="line533">533: </a>      SSE_COPY_PS(XMM0, XMM7)
+<a name="line534">534: </a>      SSE_SHUFFLE(XMM0, XMM0, 0x00)
+<a name="line535">535: </a>      SSE_MULT_PS_M(XMM0, SSE_ARG_1, FLOAT_0)
+
+<a name="line537">537: </a>      <font color="#B22222">/* Second Column */</font>
+<a name="line538">538: </a>      SSE_COPY_PS(XMM1, XMM7)
+<a name="line539">539: </a>      SSE_SHUFFLE(XMM1, XMM1, 0x55)
+<a name="line540">540: </a>      SSE_MULT_PS_M(XMM1, SSE_ARG_1, FLOAT_4)
+<a name="line541">541: </a>      SSE_ADD_PS(XMM0, XMM1)
+
+<a name="line543">543: </a>      SSE_PREFETCH_NTA(SSE_ARG_3, FLOAT_24)
+
+<a name="line545">545: </a>      <font color="#B22222">/* Third Column */</font>
+<a name="line546">546: </a>      SSE_COPY_PS(XMM2, XMM7)
+<a name="line547">547: </a>      SSE_SHUFFLE(XMM2, XMM2, 0xAA)
+<a name="line548">548: </a>      SSE_MULT_PS_M(XMM2, SSE_ARG_1, FLOAT_8)
+<a name="line549">549: </a>      SSE_ADD_PS(XMM0, XMM2)
+
+<a name="line551">551: </a>      <font color="#B22222">/* Fourth Column */</font>
+<a name="line552">552: </a>      SSE_COPY_PS(XMM3, XMM7)
+<a name="line553">553: </a>      SSE_SHUFFLE(XMM3, XMM3, 0xFF)
+<a name="line554">554: </a>      SSE_MULT_PS_M(XMM3, SSE_ARG_1, FLOAT_12)
+<a name="line555">555: </a>      SSE_ADD_PS(XMM0, XMM3)
+
+<a name="line557">557: </a>      SSE_STORE_PS(SSE_ARG_2, FLOAT_0, XMM0)
+<a name="line558">558: </a>      SSE_INLINE_END_3
+
+<a name="line560">560: </a>      v = aa + ai16 + 16;
+<a name="line561">561: </a>      idt -= 4;
+<a name="line562">562: </a>    }
+
+<a name="line564">564: </a>    <font color="#B22222">/* Convert t from single precision back to double precision (inplace)*/</font>
+<a name="line565">565: </a>    idt = 4 * (n - 1);
+<a name="line566">566: </a>    <font color="#4169E1">for</font> (i = n - 1; i &gt;= 0; i--) {
+<a name="line567">567: </a>      <font color="#B22222">/*     CONVERT_FLOAT4_DOUBLE4(&amp;x[idt],&amp;t[idt]); */</font>
+<a name="line568">568: </a>      <font color="#B22222">/* Unfortunately, CONVERT_ will count from 0 to 3 which doesn't work here. */</font>
+<a name="line569">569: </a>      <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *xtemp = &amp;x[idt];
+<a name="line570">570: </a>      MatScalar   *ttemp = &amp;t[idt];
+<a name="line571">571: </a>      xtemp[3]           = (<a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[3];
+<a name="line572">572: </a>      xtemp[2]           = (<a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[2];
+<a name="line573">573: </a>      xtemp[1]           = (<a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[1];
+<a name="line574">574: </a>      xtemp[0]           = (<a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>)ttemp[0];
+<a name="line575">575: </a>      idt -= 4;
+<a name="line576">576: </a>    }
+
+<a name="line578">578: </a>  } <font color="#B22222">/* End of artificial scope. */</font>
+<a name="line579">579: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(bb, &amp;b));
+<a name="line580">580: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(xx, &amp;x));
+<a name="line581">581: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Profiling/PetscLogFlops.html">PetscLogFlops</a>(2.0 * 16 * (a-&gt;nz) - 4.0 * A-&gt;cmap-&gt;n));
+<a name="line582">582: </a>  SSE_SCOPE_END;
+<a name="line583">583: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line584">584: </a>}
+
+<a name="line586">586: </a><font color="#A020F0">#endif</font>
 </pre>
 </body>
 

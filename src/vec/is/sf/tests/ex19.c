@@ -1,4 +1,3 @@
-
 static char help[] = "Test leaf sorting in PetscSFSetGraph()\n\n";
 
 #include <petscsf.h>
@@ -31,7 +30,7 @@ static PetscErrorCode GetOptions(MPI_Comm comm, AppCtx *ctx)
   ctx->contiguousLeaves = (PetscBool)(ctx->leaveStep == 1);
   PetscCallMPI(MPI_Comm_size(comm, &ctx->size));
   PetscCallMPI(MPI_Comm_rank(comm, &ctx->rank));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscSFCheckEqual_Private(PetscSF sf0, PetscSF sf1)
@@ -46,8 +45,8 @@ static PetscErrorCode PetscSFCheckEqual_Private(PetscSF sf0, PetscSF sf1)
   PetscCall(PetscSFGetGraph(sf0, &nRoot, NULL, NULL, NULL));
   PetscCall(PetscSFGetLeafRange(sf0, NULL, &nLeave));
   nLeave++;
-  PetscCall(VecCreateMPI(comm, nRoot, PETSC_DECIDE, &vecRoot0));
-  PetscCall(VecCreateMPI(comm, nLeave, PETSC_DECIDE, &vecLeave0));
+  PetscCall(VecCreateFromOptions(comm, NULL, 1, nRoot, PETSC_DECIDE, &vecRoot0));
+  PetscCall(VecCreateFromOptions(comm, NULL, 1, nLeave, PETSC_DECIDE, &vecLeave0));
   PetscCall(VecDuplicate(vecRoot0, &vecRoot1));
   PetscCall(VecDuplicate(vecLeave0, &vecLeave1));
   {
@@ -80,7 +79,7 @@ static PetscErrorCode PetscSFCheckEqual_Private(PetscSF sf0, PetscSF sf1)
   PetscCall(VecDestroy(&vecRoot1));
   PetscCall(VecDestroy(&vecLeave0));
   PetscCall(VecDestroy(&vecLeave1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode CreateSF0(AppCtx *ctx, PetscSF *sf0)
@@ -119,7 +118,7 @@ PetscErrorCode CreateSF0(AppCtx *ctx, PetscSF *sf0)
     }
   }
   *sf0 = sf;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode CreateSF1(AppCtx *ctx, PetscSF *sf1)
@@ -152,7 +151,7 @@ PetscErrorCode CreateSF1(AppCtx *ctx, PetscSF *sf1)
     PetscCheck(!tlocal, PETSC_COMM_SELF, PETSC_ERR_PLIB, "ilocal=NULL expected for contiguous case");
   }
   *sf1 = sf;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

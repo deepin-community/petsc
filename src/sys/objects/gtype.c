@@ -1,31 +1,29 @@
-
 /*
      Provides utility routines for manulating any type of PETSc object.
 */
 #include <petsc/private/petscimpl.h> /*I   "petscsys.h"    I*/
 
 /*@C
-   PetscObjectGetType - Gets the object type of any `PetscObject`.
+  PetscObjectGetType - Gets the object type of any `PetscObject`.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  obj - any PETSc object, for example a `Vec`, `Mat` or `KSP`.
-         Thus must be cast with a (`PetscObject`), for example,
-         `PetscObjectGetType`((`PetscObject`)mat,&type);
+  Input Parameter:
+. obj - any PETSc object, for example a `Vec`, `Mat` or `KSP`. It must be cast with a (`PetscObject`), for example,
+        `PetscObjectGetType`((`PetscObject`)mat,&type);
 
-   Output Parameter:
-.  type - the object type, for example, `MATSEQAIJ`
+  Output Parameter:
+. type - the object type, for example, `MATSEQAIJ`
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `PetscObject`, `PetscClassId`, `PetscObjectGetClassName()`
+.seealso: `PetscObject`, `PetscClassId`, `PetscObjectGetClassName()`, `PetscObjectGetClassId()`
 @*/
 PetscErrorCode PetscObjectGetType(PetscObject obj, const char *type[])
 {
   PetscFunctionBegin;
   PetscValidHeader(obj, 1);
-  PetscValidPointer(type, 2);
+  PetscAssertPointer(type, 2);
   *type = obj->type_name;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

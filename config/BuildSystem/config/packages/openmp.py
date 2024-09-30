@@ -22,7 +22,8 @@ class Configure(config.package.Package):
     ''' Note it may be different for the C, C++, and FC compilers'''
     ''' Needs to check if OpenMP actually exists and works '''
     self.found = 0
-    oflags = ["-fopenmp", # Gnu
+    oflags = ["-qopenmp", # Intel (must come before -fopenmp for icx)
+              "-fopenmp", # Gnu
               "-qsmp=omp",# IBM XL C/C++
               "-h omp",   # Cray. Must come after XL because XL interprets this option as meaning "-soname omp"
               "-mp",      # Portland Group
@@ -35,6 +36,7 @@ class Configure(config.package.Package):
 
     # No ('CUDA','CUDAC') since cuda host code is compiled by host CXX
     foundversion = False
+    linkers = []
     for language, compiler in [('C','CC'),('Cxx','CXX'),('FC','FC'),('HIP','HIPC'),('SYCL','SYCLC')]:
       if hasattr(self.compilers, compiler):
         self.setCompilers.pushLanguage(language)
@@ -60,7 +62,10 @@ class Configure(config.package.Package):
                   foundversion = True
                   break
             # OpenMP compile flag is also needed at link time but preprocessor flags not passed to linker
-            self.setCompilers.addLinkerFlag(ompflag)
+            linker = self.setCompilers.getLinkerFlagsArg()
+            if linker+' '+ompflag not in linkers:
+              self.setCompilers.addLinkerFlag(ompflag)
+              linkers.append(linker+' '+ompflag)
             break
         if not self.found:
           raise RuntimeError(compiler + ' Compiler has no support for OpenMP')

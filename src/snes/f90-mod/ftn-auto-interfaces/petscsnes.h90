@@ -57,7 +57,7 @@
        PetscErrorCode z
        end subroutine SNESMultiblockSetFields
       subroutine SNESMultiblockSetIS(a,b,c,z)
-       import tIS,tSNES
+       import tSNES,tIS
        SNES a ! SNES
        character b (*) ! char
        IS c ! IS
@@ -108,7 +108,7 @@
        PetscErrorCode z
        end subroutine SNESNASMGetSubdomains
       subroutine SNESNASMGetSubdomainVecs(a,b,c,d,e,f,z)
-       import tVec,tSNES
+       import tSNES,tVec
        SNES a ! SNES
        PetscInt b ! PetscInt
        Vec c ! Vec
@@ -149,7 +149,7 @@
        PetscErrorCode z
        end subroutine SNESNASMGetNumber
       subroutine SNESNASMSetWeight(a,b,z)
-       import tVec,tSNES
+       import tSNES,tVec
        SNES a ! SNES
        Vec b ! Vec
        PetscErrorCode z
@@ -202,15 +202,36 @@
        SNESQNType b ! SNESQNType
        PetscErrorCode z
        end subroutine SNESQNSetType
+      subroutine SNESNewtonTRSetFallbackType(a,b,z)
+       import tSNES
+       SNES a ! SNES
+       SNESNewtonTRFallbackType b ! SNESNewtonTRFallbackType
+       PetscErrorCode z
+       end subroutine SNESNewtonTRSetFallbackType
+      subroutine SNESVIGetActiveSetIS(a,b,c,d,z)
+       import tSNES,tVec,tIS
+       SNES a ! SNES
+       Vec b ! Vec
+       Vec c ! Vec
+       IS d ! IS
+       PetscErrorCode z
+       end subroutine SNESVIGetActiveSetIS
       subroutine SNESVISetVariableBounds(a,b,c,z)
-       import tVec,tSNES
+       import tSNES,tVec
        SNES a ! SNES
        Vec b ! Vec
        Vec c ! Vec
        PetscErrorCode z
        end subroutine SNESVISetVariableBounds
+      subroutine SNESVIGetVariableBounds(a,b,c,z)
+       import tSNES,tVec
+       SNES a ! SNES
+       Vec b ! Vec
+       Vec c ! Vec
+       PetscErrorCode z
+       end subroutine SNESVIGetVariableBounds
       subroutine SNESVIGetInactiveSet(a,b,z)
-       import tIS,tSNES
+       import tSNES,tIS
        SNES a ! SNES
        IS b ! IS
        PetscErrorCode z
@@ -430,28 +451,28 @@
        PetscErrorCode z
        end subroutine SNESGetSolutionNorm
       subroutine SNESComputeFunction(a,b,c,z)
-       import tVec,tSNES
+       import tSNES,tVec
        SNES a ! SNES
        Vec b ! Vec
        Vec c ! Vec
        PetscErrorCode z
        end subroutine SNESComputeFunction
       subroutine SNESComputeMFFunction(a,b,c,z)
-       import tVec,tSNES
+       import tSNES,tVec
        SNES a ! SNES
        Vec b ! Vec
        Vec c ! Vec
        PetscErrorCode z
        end subroutine SNESComputeMFFunction
       subroutine SNESComputeNGS(a,b,c,z)
-       import tVec,tSNES
+       import tSNES,tVec
        SNES a ! SNES
        Vec b ! Vec
        Vec c ! Vec
        PetscErrorCode z
        end subroutine SNESComputeNGS
       subroutine SNESComputeJacobian(a,b,c,d,z)
-       import tVec,tMat,tSNES
+       import tSNES,tVec,tMat
        SNES a ! SNES
        Vec b ! Vec
        Mat c ! Mat
@@ -571,6 +592,15 @@
        PetscReal b ! PetscReal
        PetscErrorCode z
        end subroutine SNESSetTrustRegionTolerance
+      subroutine SNESConverged(a,b,c,d,e,z)
+       import tSNES
+       SNES a ! SNES
+       PetscInt b ! PetscInt
+       PetscReal c ! PetscReal
+       PetscReal d ! PetscReal
+       PetscReal e ! PetscReal
+       PetscErrorCode z
+       end subroutine SNESConverged
       subroutine SNESMonitor(a,b,c,z)
        import tSNES
        SNES a ! SNES
@@ -610,26 +640,26 @@
        PetscErrorCode z
        end subroutine SNESConvergedReasonViewFromOptions
       subroutine SNESSolve(a,b,c,z)
-       import tVec,tSNES
+       import tSNES,tVec
        SNES a ! SNES
        Vec b ! Vec
        Vec c ! Vec
        PetscErrorCode z
        end subroutine SNESSolve
       subroutine SNESSetSolution(a,b,z)
-       import tVec,tSNES
+       import tSNES,tVec
        SNES a ! SNES
        Vec b ! Vec
        PetscErrorCode z
        end subroutine SNESSetSolution
       subroutine SNESGetSolution(a,b,z)
-       import tVec,tSNES
+       import tSNES,tVec
        SNES a ! SNES
        Vec b ! Vec
        PetscErrorCode z
        end subroutine SNESGetSolution
       subroutine SNESGetSolutionUpdate(a,b,z)
-       import tVec,tSNES
+       import tSNES,tVec
        SNES a ! SNES
        Vec b ! Vec
        PetscErrorCode z
@@ -677,13 +707,13 @@
        PetscErrorCode z
        end subroutine SNESGetKSP
       subroutine SNESSetDM(a,b,z)
-       import tDM,tSNES
+       import tSNES,tDM
        SNES a ! SNES
        DM b ! DM
        PetscErrorCode z
        end subroutine SNESSetDM
       subroutine SNESGetDM(a,b,z)
-       import tDM,tSNES
+       import tSNES,tDM
        SNES a ! SNES
        DM b ! DM
        PetscErrorCode z
@@ -731,7 +761,7 @@
        PetscErrorCode z
        end subroutine SNESGetLineSearch
       subroutine SNESApplyNPC(a,b,c,d,z)
-       import tVec,tSNES
+       import tSNES,tVec
        SNES a ! SNES
        Vec b ! Vec
        Vec c ! Vec
@@ -739,7 +769,7 @@
        PetscErrorCode z
        end subroutine SNESApplyNPC
       subroutine SNESGetNPCFunction(a,b,c,z)
-       import tVec,tSNES
+       import tSNES,tVec
        SNES a ! SNES
        Vec b ! Vec
        PetscReal c ! PetscReal
@@ -945,7 +975,7 @@
        PetscErrorCode z
        end subroutine SNESLineSearchSetReason
       subroutine MatSNESMFGetSNES(a,b,z)
-       import tMat,tSNES
+       import tSNES,tMat
        Mat a ! Mat
        SNES b ! SNES
        PetscErrorCode z
@@ -963,7 +993,7 @@
        PetscErrorCode z
        end subroutine MatSNESMFGetReuseBase
       subroutine MatCreateSNESMF(a,b,z)
-       import tMat,tSNES
+       import tSNES,tMat
        SNES a ! SNES
        Mat b ! Mat
        PetscErrorCode z
@@ -979,7 +1009,7 @@
        PetscErrorCode z
        end subroutine PetscConvEstSetFromOptions
       subroutine PetscConvEstView(a,b,z)
-       import tPetscConvEst,tPetscViewer
+       import tPetscViewer,tPetscConvEst
        PetscConvEst a ! PetscConvEst
        PetscViewer b ! PetscViewer
        PetscErrorCode z
@@ -1014,7 +1044,7 @@
        PetscErrorCode z
        end subroutine PetscConvEstGetConvRate
       subroutine PetscConvEstRateView(a,b,c,z)
-       import tPetscConvEst,tPetscViewer
+       import tPetscViewer,tPetscConvEst
        PetscConvEst a ! PetscConvEst
        PetscReal b (*) ! PetscReal
        PetscViewer c ! PetscViewer

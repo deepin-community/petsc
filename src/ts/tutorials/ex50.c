@@ -1,4 +1,3 @@
-
 static char help[] = "Solves one dimensional Burger's equation compares with exact solution\n\n";
 
 /*
@@ -242,7 +241,7 @@ int main(int argc, char **argv)
      Always call PetscFinalize() before exiting a program.  This routine
        - finalizes the PETSc libraries as well as MPI
        - provides summary and diagnostic information if certain runtime
-         options are chosen (e.g., -log_summary).
+         options are chosen (e.g., -log_view).
   */
   PetscCall(PetscFinalize());
   return 0;
@@ -264,6 +263,7 @@ PetscErrorCode TrueSolution(TS ts, PetscReal t, Vec u, AppCtx *appctx)
   const PetscScalar *xg;
   PetscInt           i, xs, xn;
 
+  PetscFunctionBeginUser;
   PetscCall(DMDAVecGetArray(appctx->da, u, &s));
   PetscCall(DMDAVecGetArrayRead(appctx->da, appctx->SEMop.grid, (void *)&xg));
   PetscCall(DMDAGetCorners(appctx->da, &xs, NULL, NULL, &xn, NULL, NULL));
@@ -272,7 +272,7 @@ PetscErrorCode TrueSolution(TS ts, PetscReal t, Vec u, AppCtx *appctx)
   }
   PetscCall(DMDAVecRestoreArray(appctx->da, u, &s));
   PetscCall(DMDAVecRestoreArrayRead(appctx->da, appctx->SEMop.grid, (void *)&xg));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode RHSFunction(TS ts, PetscReal t, Vec globalin, Vec globalout, void *ctx)
@@ -284,7 +284,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal t, Vec globalin, Vec globalout, void
   PetscCall(VecPointwiseMult(globalout, globalin, globalout)); /* u grad u */
   PetscCall(VecScale(globalout, -1.0));
   PetscCall(MatMultAdd(appctx->SEMop.keptstiff, globalin, globalout, globalout));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -315,7 +315,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal t, Vec globalin, Mat A, Mat B, void 
   /*   A  = K - A    */
   PetscCall(MatScale(A, -1.0));
   PetscCall(MatAXPY(A, 0.0, appctx->SEMop.keptstiff, SAME_NONZERO_PATTERN));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */
@@ -335,6 +335,7 @@ PetscErrorCode MatMult_Laplacian(Mat A, Vec x, Vec y)
   PetscBLASInt       _One  = 1, n;
   PetscScalar        _DOne = 1;
 
+  PetscFunctionBeginUser;
   PetscCall(MatShellGetContext(A, &appctx));
   PetscCall(DMGetLocalVector(appctx->da, &xlocal));
   PetscCall(DMGlobalToLocalBegin(appctx->da, x, INSERT_VALUES, xlocal));
@@ -360,7 +361,7 @@ PetscErrorCode MatMult_Laplacian(Mat A, Vec x, Vec y)
   PetscCall(DMRestoreLocalVector(appctx->da, &xlocal));
   PetscCall(DMRestoreLocalVector(appctx->da, &ylocal));
   PetscCall(VecPointwiseDivide(y, y, appctx->SEMop.mass));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatMult_Advection(Mat A, Vec x, Vec y)
@@ -374,6 +375,7 @@ PetscErrorCode MatMult_Advection(Mat A, Vec x, Vec y)
   PetscBLASInt       _One  = 1, n;
   PetscScalar        _DOne = 1;
 
+  PetscFunctionBeginUser;
   PetscCall(MatShellGetContext(A, &appctx));
   PetscCall(DMGetLocalVector(appctx->da, &xlocal));
   PetscCall(DMGlobalToLocalBegin(appctx->da, x, INSERT_VALUES, xlocal));
@@ -396,7 +398,7 @@ PetscErrorCode MatMult_Advection(Mat A, Vec x, Vec y)
   PetscCall(DMRestoreLocalVector(appctx->da, &ylocal));
   PetscCall(VecPointwiseDivide(y, y, appctx->SEMop.mass));
   PetscCall(VecScale(y, -1.0));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -424,6 +426,7 @@ PetscErrorCode RHSMatrixLaplaciangllDM(TS ts, PetscReal t, Vec X, Mat A, Mat BB,
   PetscInt   *rowsDM;
   PetscBool   flg = PETSC_FALSE;
 
+  PetscFunctionBeginUser;
   PetscCall(PetscOptionsGetBool(NULL, NULL, "-gll_mf", &flg, NULL));
 
   if (!flg) {
@@ -468,7 +471,7 @@ PetscErrorCode RHSMatrixLaplaciangllDM(TS ts, PetscReal t, Vec X, Mat A, Mat BB,
     PetscCall(MatShellSetContext(A, appctx));
     PetscCall(MatShellSetOperation(A, MATOP_MULT, (void (*)(void))MatMult_Laplacian));
   }
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -495,6 +498,7 @@ PetscErrorCode RHSMatrixAdvectiongllDM(TS ts, PetscReal t, Vec X, Mat A, Mat BB,
   PetscInt   *rowsDM;
   PetscBool   flg = PETSC_FALSE;
 
+  PetscFunctionBeginUser;
   PetscCall(PetscOptionsGetBool(NULL, NULL, "-gll_mf", &flg, NULL));
 
   if (!flg) {
@@ -527,7 +531,7 @@ PetscErrorCode RHSMatrixAdvectiongllDM(TS ts, PetscReal t, Vec X, Mat A, Mat BB,
     PetscCall(MatShellSetContext(A, appctx));
     PetscCall(MatShellSetOperation(A, MATOP_MULT, (void (*)(void))MatMult_Advection));
   }
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST
@@ -547,11 +551,11 @@ PetscErrorCode RHSMatrixAdvectiongllDM(TS ts, PetscReal t, Vec X, Mat A, Mat BB,
     test:
       suffix: 3
       requires: !single
-      args: -ts_view  -ts_type beuler -gll_mf -pc_type none -ts_max_steps 5 -ts_monitor_error
+      args: -ts_view -ts_type beuler -gll_mf -pc_type none -ts_max_steps 5 -ts_monitor_error
 
     test:
       suffix: 4
       requires: !single
-      args: -ts_view  -ts_type beuler  -pc_type none -ts_max_steps 5 -ts_monitor_error
+      args: -ts_view -ts_type beuler -pc_type none -ts_max_steps 5 -ts_monitor_error
 
 TEST*/

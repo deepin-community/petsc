@@ -53,8 +53,10 @@ static PetscErrorCode KSPSolve_BCGSL(KSP ksp)
   if (ksp->normtype != KSP_NORM_NONE) ksp->rnorm = zeta0;
   else ksp->rnorm = 0.0;
   PetscCall(PetscObjectSAWsGrantAccess((PetscObject)ksp));
+  PetscCall(KSPLogResidualHistory(ksp, ksp->rnorm));
+  PetscCall(KSPMonitor(ksp, ksp->its, ksp->rnorm));
   PetscCall((*ksp->converged)(ksp, 0, ksp->rnorm, &ksp->reason, ksp->cnvP));
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(VecSet(VVU[0], 0.0));
   alpha = 0.;
@@ -76,17 +78,19 @@ static PetscErrorCode KSPSolve_BCGSL(KSP ksp)
 
   for (k = 0; k < maxit; k += bcgsl->ell) {
     ksp->its = k;
-    if (ksp->normtype != KSP_NORM_NONE) ksp->rnorm = zeta;
-    else ksp->rnorm = 0.0;
+    if (k > 0) {
+      if (ksp->normtype != KSP_NORM_NONE) ksp->rnorm = zeta;
+      else ksp->rnorm = 0.0;
 
-    PetscCall(KSPLogResidualHistory(ksp, ksp->rnorm));
-    PetscCall(KSPMonitor(ksp, ksp->its, ksp->rnorm));
+      PetscCall(KSPLogResidualHistory(ksp, ksp->rnorm));
+      PetscCall(KSPMonitor(ksp, ksp->its, ksp->rnorm));
 
-    PetscCall((*ksp->converged)(ksp, k, ksp->rnorm, &ksp->reason, ksp->cnvP));
-    if (ksp->reason < 0) PetscFunctionReturn(0);
-    if (ksp->reason) {
-      if (bcgsl->delta > 0.0) PetscCall(VecAXPY(VX, 1.0, VXR));
-      PetscFunctionReturn(0);
+      PetscCall((*ksp->converged)(ksp, k, ksp->rnorm, &ksp->reason, ksp->cnvP));
+      if (ksp->reason < 0) PetscFunctionReturn(PETSC_SUCCESS);
+      if (ksp->reason) {
+        if (bcgsl->delta > 0.0) PetscCall(VecAXPY(VX, 1.0, VXR));
+        PetscFunctionReturn(PETSC_SUCCESS);
+      }
     }
 
     /* BiCG part */
@@ -98,7 +102,7 @@ static PetscErrorCode KSPSolve_BCGSL(KSP ksp)
       KSPCheckDot(ksp, rho1);
       if (rho1 == 0.0) {
         ksp->reason = KSP_DIVERGED_BREAKDOWN_BICG;
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
       beta = alpha * (rho1 / rho0);
       rho0 = rho1;
@@ -113,7 +117,7 @@ static PetscErrorCode KSPSolve_BCGSL(KSP ksp)
       KSPCheckDot(ksp, sigma);
       if (sigma == 0.0) {
         ksp->reason = KSP_DIVERGED_BREAKDOWN_BICG;
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
       alpha = rho1 / sigma;
 
@@ -143,7 +147,7 @@ static PetscErrorCode KSPSolve_BCGSL(KSP ksp)
         ksp->rnorm = nrm0;
 
         PetscCall(PetscObjectSAWsGrantAccess((PetscObject)ksp));
-        if (ksp->reason < 0) PetscFunctionReturn(0);
+        if (ksp->reason < 0) PetscFunctionReturn(PETSC_SUCCESS);
       }
     }
 
@@ -169,7 +173,7 @@ static PetscErrorCode KSPSolve_BCGSL(KSP ksp)
 #endif
         if (bierr != 0) {
           ksp->reason = KSP_DIVERGED_BREAKDOWN;
-          PetscFunctionReturn(0);
+          PetscFunctionReturn(PETSC_SUCCESS);
         }
         /* Apply pseudo-inverse */
         max_s = bcgsl->s[0];
@@ -191,7 +195,7 @@ static PetscErrorCode KSPSolve_BCGSL(KSP ksp)
         PetscCallBLAS("LAPACKpotrf", LAPACKpotrf_("Lower", &bell, &MZa[1 + ldMZ], &ldMZ, &bierr));
         if (bierr != 0) {
           ksp->reason = KSP_DIVERGED_BREAKDOWN;
-          PetscFunctionReturn(0);
+          PetscFunctionReturn(PETSC_SUCCESS);
         }
         PetscCall(PetscArraycpy(&AY0c[1], &MZb[1], bcgsl->ell));
         PetscCallBLAS("LAPACKpotrs", LAPACKpotrs_("Lower", &bell, &ione, &MZa[1 + ldMZ], &ldMZ, &AY0c[1], &ldMZ, &bierr));
@@ -205,7 +209,7 @@ static PetscErrorCode KSPSolve_BCGSL(KSP ksp)
       PetscCallBLAS("LAPACKpotrf", LAPACKpotrf_("Lower", &neqs, &MZa[1 + ldMZ], &ldMZ, &bierr));
       if (bierr != 0) {
         ksp->reason = KSP_DIVERGED_BREAKDOWN;
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
       PetscCall(PetscArraycpy(&AY0c[1], &MZb[1], bcgsl->ell - 1));
       PetscCallBLAS("LAPACKpotrs", LAPACKpotrs_("Lower", &neqs, &ione, &MZa[1 + ldMZ], &ldMZ, &AY0c[1], &ldMZ, &bierr));
@@ -249,7 +253,7 @@ static PetscErrorCode KSPSolve_BCGSL(KSP ksp)
     for (h = bcgsl->ell; h > 0 && omega == 0.0; h--) omega = AY0c[h];
     if (omega == 0.0) {
       ksp->reason = KSP_DIVERGED_BREAKDOWN;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
 
     PetscCall(VecMAXPY(VX, bcgsl->ell, AY0c + 1, VVR));
@@ -290,25 +294,25 @@ static PetscErrorCode KSPSolve_BCGSL(KSP ksp)
   PetscCall(KSPLogResidualHistory(ksp, ksp->rnorm));
   PetscCall((*ksp->converged)(ksp, k, ksp->rnorm, &ksp->reason, ksp->cnvP));
   if (!ksp->reason) ksp->reason = KSP_DIVERGED_ITS;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   KSPBCGSLSetXRes - Sets the parameter governing when
-   exact residuals will be used instead of computed residuals.
+  KSPBCGSLSetXRes - Sets the parameter governing when
+  exact residuals will be used instead of computed residuals for `KSPCBGSL`.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  ksp - iterative context of type `KSPBCGSL`
--  delta - computed residuals are used alone when delta is not positive
+  Input Parameters:
++ ksp   - iterative context of type `KSPBCGSL`
+- delta - computed residuals are used alone when delta is not positive
 
-   Options Database Key:
-.  -ksp_bcgsl_xres delta - Threshold used to decide when to refresh computed residuals
+  Options Database Key:
+. -ksp_bcgsl_xres delta - Threshold used to decide when to refresh computed residuals
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: [](chapter_ksp), `KSPBCGSLSetEll()`, `KSPBCGSLSetPol()`, `KSP`, `KSPCBGSL`, `KSPBCGSLSetUsePseudoinverse()`
+.seealso: [](ch_ksp), `KSPBCGSLSetEll()`, `KSPBCGSLSetPol()`, `KSP`, `KSPCBGSL`, `KSPBCGSLSetUsePseudoinverse()`
 @*/
 PetscErrorCode KSPBCGSLSetXRes(KSP ksp, PetscReal delta)
 {
@@ -325,24 +329,24 @@ PetscErrorCode KSPBCGSLSetXRes(KSP ksp, PetscReal delta)
     }
   }
   bcgsl->delta = delta;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   KSPBCGSLSetUsePseudoinverse - Use pseudoinverse (via SVD) to solve polynomial part of update in `KSPCBGSL` solver
+  KSPBCGSLSetUsePseudoinverse - Use pseudoinverse (via SVD) to solve polynomial part of the update in `KSPCBGSL` solver
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  ksp - iterative context of type `KSPCBGSL`
--  use_pinv - set to PETSC_TRUE when using pseudoinverse
+  Input Parameters:
++ ksp      - iterative context of type `KSPCBGSL`
+- use_pinv - set to `PETSC_TRUE` when using pseudoinverse
 
-   Options Database Key:
-.  -ksp_bcgsl_pinv - use pseudoinverse
+  Options Database Key:
+. -ksp_bcgsl_pinv <true,false> - use pseudoinverse
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: [](chapter_ksp), `KSPBCGSLSetEll()`, `KSP`, `KSPCBGSL`, `KSPBCGSLSetPol()`, `KSPBCGSLSetXRes()`
+.seealso: [](ch_ksp), `KSPBCGSLSetEll()`, `KSP`, `KSPCBGSL`, `KSPBCGSLSetPol()`, `KSPBCGSLSetXRes()`
 @*/
 PetscErrorCode KSPBCGSLSetUsePseudoinverse(KSP ksp, PetscBool use_pinv)
 {
@@ -350,26 +354,26 @@ PetscErrorCode KSPBCGSLSetUsePseudoinverse(KSP ksp, PetscBool use_pinv)
 
   PetscFunctionBegin;
   bcgsl->pinv = use_pinv;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   KSPBCGSLSetPol - Sets the type of polynomial part that will
-   be used in the  `KSPCBGSL` solver.
+  KSPBCGSLSetPol - Sets the type of polynomial part that will
+  be used in the `KSPCBGSL` `KSPSolve()`
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  ksp - iterative context of type `KSPCBGSL`
--  uMROR - set to PETSC_TRUE when the polynomial is a convex combination of an MR and an OR step.
+  Input Parameters:
++ ksp   - iterative context of type `KSPCBGSL`
+- uMROR - set to `PETSC_TRUE` when the polynomial is a convex combination of an MR and an OR step.
 
-   Options Database Keys:
-+  -ksp_bcgsl_cxpoly - use enhanced polynomial
--  -ksp_bcgsl_mrpoly - use standard polynomial
+  Options Database Keys:
++ -ksp_bcgsl_cxpoly - use enhanced polynomial
+- -ksp_bcgsl_mrpoly - use standard polynomial
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: [](chapter_ksp), `KSP`, `KSPBCGSL`, `KSPCreate()`, `KSPSetType()`, `KSPCBGSL`, `KSPBCGSLSetUsePseudoinverse()`, `KSPBCGSLSetEll()`, `KSPBCGSLSetXRes()`
+.seealso: [](ch_ksp), `KSP`, `KSPBCGSL`, `KSPCreate()`, `KSPSetType()`, `KSPCBGSL`, `KSPBCGSLSetUsePseudoinverse()`, `KSPBCGSLSetEll()`, `KSPBCGSLSetXRes()`
 @*/
 PetscErrorCode KSPBCGSLSetPol(KSP ksp, PetscBool uMROR)
 {
@@ -390,29 +394,29 @@ PetscErrorCode KSPBCGSLSetPol(KSP ksp, PetscBool uMROR)
     bcgsl->bConvex  = uMROR;
     ksp->setupstage = KSP_SETUP_NEW;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   KSPBCGSLSetEll - Sets the number of search directions in `KSPCBGSL` solver
+  KSPBCGSLSetEll - Sets the number of search directions to use in the `KSPCBGSL` solver
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  ksp - iterative context of type `KSPCBGSL`
--  ell - number of search directions
+  Input Parameters:
++ ksp - iterative context of type `KSPCBGSL`
+- ell - number of search directions
 
-   Options Database Keys:
-.  -ksp_bcgsl_ell ell - Number of Krylov search directions
+  Options Database Key:
+. -ksp_bcgsl_ell ell - Number of Krylov search directions
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-   For large ell it is common for the polynomial update problem to become singular (due to happy breakdown for smallish
-   test problems, but also for larger problems). Consequently, by default, the system is solved by pseudoinverse, which
-   allows the iteration to complete successfully. See `KSPBCGSLSetUsePseudoinverse()` to switch to a conventional solve.
+  Notes:
+  For large `ell` it is common for the polynomial update problem to become singular (due to happy breakdown for smallish
+  test problems, but also for larger problems). Consequently, by default, the system is solved by pseudoinverse, which
+  allows the iteration to complete successfully. See `KSPBCGSLSetUsePseudoinverse()` to switch to a conventional solve.
 
-.seealso: [](chapter_ksp), `KSPBCGSLSetUsePseudoinverse()`, `KSP`, `KSPBCGSL`, `KSPBCGSLSetPol()`, `KSPBCGSLSetXRes()`
+.seealso: [](ch_ksp), `KSPBCGSLSetUsePseudoinverse()`, `KSP`, `KSPBCGSL`, `KSPBCGSLSetPol()`, `KSPBCGSLSetXRes()`
 @*/
 PetscErrorCode KSPBCGSLSetEll(KSP ksp, PetscInt ell)
 {
@@ -432,10 +436,10 @@ PetscErrorCode KSPBCGSLSetEll(KSP ksp, PetscInt ell)
     bcgsl->ell      = ell;
     ksp->setupstage = KSP_SETUP_NEW;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPView_BCGSL(KSP ksp, PetscViewer viewer)
+static PetscErrorCode KSPView_BCGSL(KSP ksp, PetscViewer viewer)
 {
   KSP_BCGSL *bcgsl = (KSP_BCGSL *)ksp->data;
   PetscBool  isascii;
@@ -447,10 +451,10 @@ PetscErrorCode KSPView_BCGSL(KSP ksp, PetscViewer viewer)
     PetscCall(PetscViewerASCIIPrintf(viewer, "  Ell = %" PetscInt_FMT "\n", bcgsl->ell));
     PetscCall(PetscViewerASCIIPrintf(viewer, "  Delta = %g\n", (double)bcgsl->delta));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPSetFromOptions_BCGSL(KSP ksp, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode KSPSetFromOptions_BCGSL(KSP ksp, PetscOptionItems *PetscOptionsObject)
 {
   KSP_BCGSL *bcgsl = (KSP_BCGSL *)ksp->data;
   PetscInt   this_ell;
@@ -483,10 +487,10 @@ PetscErrorCode KSPSetFromOptions_BCGSL(KSP ksp, PetscOptionItems *PetscOptionsOb
   PetscCall(PetscOptionsBool("-ksp_bcgsl_pinv", "Polynomial correction via pseudoinverse", "KSPBCGSLSetUsePseudoinverse", flg, &flg, NULL));
   PetscCall(KSPBCGSLSetUsePseudoinverse(ksp, flg));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPSetUp_BCGSL(KSP ksp)
+static PetscErrorCode KSPSetUp_BCGSL(KSP ksp)
 {
   KSP_BCGSL *bcgsl = (KSP_BCGSL *)ksp->data;
   PetscInt   ell = bcgsl->ell, ldMZ = ell + 1;
@@ -496,10 +500,10 @@ PetscErrorCode KSPSetUp_BCGSL(KSP ksp)
   PetscCall(PetscMalloc5(ldMZ, &AY0c, ldMZ, &AYlc, ldMZ, &AYtc, ldMZ * ldMZ, &MZa, ldMZ * ldMZ, &MZb));
   PetscCall(PetscBLASIntCast(5 * ell, &bcgsl->lwork));
   PetscCall(PetscMalloc5(bcgsl->lwork, &bcgsl->work, ell, &bcgsl->s, ell * ell, &bcgsl->u, ell * ell, &bcgsl->v, 5 * ell, &bcgsl->realwork));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPReset_BCGSL(KSP ksp)
+static PetscErrorCode KSPReset_BCGSL(KSP ksp)
 {
   KSP_BCGSL *bcgsl = (KSP_BCGSL *)ksp->data;
 
@@ -507,54 +511,46 @@ PetscErrorCode KSPReset_BCGSL(KSP ksp)
   PetscCall(VecDestroyVecs(ksp->nwork, &ksp->work));
   PetscCall(PetscFree5(AY0c, AYlc, AYtc, MZa, MZb));
   PetscCall(PetscFree5(bcgsl->work, bcgsl->s, bcgsl->u, bcgsl->v, bcgsl->realwork));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPDestroy_BCGSL(KSP ksp)
+static PetscErrorCode KSPDestroy_BCGSL(KSP ksp)
 {
   PetscFunctionBegin;
   PetscCall(KSPReset_BCGSL(ksp));
   PetscCall(KSPDestroyDefault(ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPBCGSL - Implements a slight variant of the Enhanced
-                BiCGStab(L) algorithm in (3) and (2).  The variation
+    KSPBCGSL - Implements a slight variant of the Enhanced BiCGStab(L) algorithm in {cite}`fokkema1996enhanced`
+                and {cite}`sleijpen1994bicgstab`, see also {cite}`sleijpen1995overview`. The variation
                 concerns cases when either kappa0**2 or kappa1**2 is
                 negative due to round-off. Kappa0 has also been pulled
                 out of the denominator in the formula for ghat.
 
    Options Database Keys:
-+  -ksp_bcgsl_ell <ell> - Number of Krylov search directions, defaults to 2, cf. `KSPBCGSLSetEll()`
-.  -ksp_bcgsl_cxpol - Use a convex function of the MinRes and OR polynomials after the BiCG step instead of default MinRes, cf. `KSPBCGSLSetPol()`
-.  -ksp_bcgsl_mrpoly - Use the default MinRes polynomial after the BiCG step, cf. `KSPBCGSLSetPol()`
-.  -ksp_bcgsl_xres <res> - Threshold used to decide when to refresh computed residuals, cf. `KSPBCGSLSetXRes()`
++  -ksp_bcgsl_ell <ell>         - Number of Krylov search directions, defaults to 2, cf. `KSPBCGSLSetEll()`
+.  -ksp_bcgsl_cxpol             - Use a convex function of the MinRes and OR polynomials after the BiCG step instead of default MinRes, cf. `KSPBCGSLSetPol()`
+.  -ksp_bcgsl_mrpoly            - Use the default MinRes polynomial after the BiCG step, cf. `KSPBCGSLSetPol()`
+.  -ksp_bcgsl_xres <res>        - Threshold used to decide when to refresh computed residuals, cf. `KSPBCGSLSetXRes()`
 -  -ksp_bcgsl_pinv <true/false> - (de)activate use of pseudoinverse, cf. `KSPBCGSLSetUsePseudoinverse()`
 
    Level: intermediate
 
-    References:
-+   * - G.L.G. Sleijpen, H.A. van der Vorst, "An overview of
-         approaches for the stable computation of hybrid BiCG
-         methods", Applied Numerical Mathematics: Transactions
-         f IMACS, 19(3), 1996.
-.   * - G.L.G. Sleijpen, H.A. van der Vorst, D.R. Fokkema,
-         "BiCGStab(L) and other hybrid BiCG methods",
-          Numerical Algorithms, 7, 1994.
--   * - D.R. Fokkema, "Enhanced implementation of BiCGStab(L)
-         for solving linear systems of equations", preprint
-         from www.citeseer.com.
-
    Contributed by:
    Joel M. Malard, email jm.malard@pnl.gov
 
+   Note:
+   The "sub-iterations" of this solver are not reported by `-ksp_monitor` or recorded in `KSPSetResidualHistory()` since the solution is not directly computed for
+   these sub-iterations.
+
    Developer Notes:
-    This has not been completely cleaned up into PETSc style.
+   This has not been completely cleaned up into PETSc style.
 
-    All the BLAS and LAPACK calls in the source should be removed and replaced with loops and the macros for block solvers converted from LINPACK.
+   All the BLAS and LAPACK calls in the source should be removed and replaced with loops and the macros for block solvers converted from LINPACK.
 
-.seealso: [](chapter_ksp), `KSPFBCGS`, `KSPFBCGSR`, `KSPBCGS`, `KSPPIPEBCGS`, `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPFGMRES`, `KSPBCGS`, `KSPSetPCSide()`,
+.seealso: [](ch_ksp), `KSPFBCGS`, `KSPFBCGSR`, `KSPBCGS`, `KSPPIPEBCGS`, `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPFGMRES`, `KSPBCGS`, `KSPSetPCSide()`,
           `KSPBCGSLSetEll()`, `KSPBCGSLSetXRes()`, `KSPBCGSLSetUsePseudoinverse()`, `KSPBCGSLSetPol()`
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_BCGSL(KSP ksp)
@@ -589,5 +585,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_BCGSL(KSP ksp)
 
   /* Set the threshold for when exact residuals will be used */
   bcgsl->delta = 0.0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

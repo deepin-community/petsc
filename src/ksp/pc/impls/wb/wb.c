@@ -1,7 +1,6 @@
-
 #include <petscdmda.h>              /*I "petscdmda.h" I*/
 #include <petsc/private/pcmgimpl.h> /*I "petscksp.h" I*/
-#include <petscctable.h>
+#include <petsc/private/hashmapi.h>
 
 typedef struct {
   PCExoticType type;
@@ -16,10 +15,10 @@ const char *const PCExoticTypes[] = {"face", "wirebasket", "PCExoticType", "PC_E
       DMDAGetWireBasketInterpolation - Gets the interpolation for a wirebasket based coarse space
 
 */
-PetscErrorCode DMDAGetWireBasketInterpolation(PC pc, DM da, PC_Exotic *exotic, Mat Aglobal, MatReuse reuse, Mat *P)
+static PetscErrorCode DMDAGetWireBasketInterpolation(PC pc, DM da, PC_Exotic *exotic, Mat Aglobal, MatReuse reuse, Mat *P)
 {
   PetscInt               dim, i, j, k, m, n, p, dof, Nint, Nface, Nwire, Nsurf, *Iint, *Isurf, cint = 0, csurf = 0, istart, jstart, kstart, *II, N, c = 0;
-  PetscInt               mwidth, nwidth, pwidth, cnt, mp, np, pp, Ntotal, gl[26], *globals, Ng, *IIint, *IIsurf, Nt;
+  PetscInt               mwidth, nwidth, pwidth, cnt, mp, np, pp, Ntotal, gl[26], *globals, Ng, *IIint, *IIsurf;
   Mat                    Xint, Xsurf, Xint_tmp;
   IS                     isint, issurf, is, row, col;
   ISLocalToGlobalMapping ltg;
@@ -31,7 +30,7 @@ PetscErrorCode DMDAGetWireBasketInterpolation(PC pc, DM da, PC_Exotic *exotic, M
 #if defined(PETSC_USE_DEBUG_foo)
   PetscScalar tmp;
 #endif
-  PetscTable ht;
+  PetscHMapI ht = NULL;
 
   PetscFunctionBegin;
   PetscCall(DMDAGetInfo(da, &dim, NULL, NULL, NULL, &mp, &np, &pp, &dof, NULL, NULL, NULL, NULL, NULL));
@@ -155,6 +154,7 @@ PetscErrorCode DMDAGetWireBasketInterpolation(PC pc, DM da, PC_Exotic *exotic, M
       }
     }
   }
+#undef Endpoint
   PetscCheck(c == N, PETSC_COMM_SELF, PETSC_ERR_PLIB, "c != N");
   PetscCheck(cint == Nint, PETSC_COMM_SELF, PETSC_ERR_PLIB, "cint != Nint");
   PetscCheck(csurf == Nsurf, PETSC_COMM_SELF, PETSC_ERR_PLIB, "csurf != Nsurf");
@@ -294,17 +294,24 @@ PetscErrorCode DMDAGetWireBasketInterpolation(PC pc, DM da, PC_Exotic *exotic, M
   PetscCallMPI(MPI_Allgather(gl, 26, MPIU_INT, globals, 26, MPIU_INT, PetscObjectComm((PetscObject)da)));
 
   /* Number the coarse grid points from 0 to Ntotal */
-  PetscCall(MatGetSize(Aglobal, &Nt, NULL));
-  PetscCall(PetscTableCreate(Ntotal / 3, Nt + 1, &ht));
-  for (i = 0; i < 26 * mp * np * pp; i++) PetscCall(PetscTableAddCount(ht, globals[i] + 1));
-  PetscCall(PetscTableGetCount(ht, &cnt));
+  PetscCall(PetscHMapICreateWithSize(Ntotal / 3, &ht));
+  for (i = 0, cnt = 0; i < 26 * mp * np * pp; i++) {
+    PetscHashIter it      = 0;
+    PetscBool     missing = PETSC_TRUE;
+
+    PetscCall(PetscHMapIPut(ht, globals[i] + 1, &it, &missing));
+    if (missing) {
+      ++cnt;
+      PetscCall(PetscHMapIIterSet(ht, it, cnt));
+    }
+  }
   PetscCheck(cnt == Ntotal, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Hash table size %" PetscInt_FMT " not equal to total number coarse grid points %" PetscInt_FMT, cnt, Ntotal);
   PetscCall(PetscFree(globals));
   for (i = 0; i < 26; i++) {
-    PetscCall(PetscTableFind(ht, gl[i] + 1, &gl[i]));
-    gl[i]--;
+    PetscCall(PetscHMapIGetWithDefault(ht, gl[i] + 1, 0, gl + i));
+    --(gl[i]);
   }
-  PetscCall(PetscTableDestroy(&ht));
+  PetscCall(PetscHMapIDestroy(&ht));
   /* PetscIntView(26,gl,PETSC_VIEWER_STDOUT_WORLD); */
 
   /* construct global interpolation matrix */
@@ -350,17 +357,17 @@ PetscErrorCode DMDAGetWireBasketInterpolation(PC pc, DM da, PC_Exotic *exotic, M
   PetscCall(ISDestroy(&issurf));
   PetscCall(MatDestroy(&Xint));
   PetscCall(MatDestroy(&Xsurf));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
       DMDAGetFaceInterpolation - Gets the interpolation for a face based coarse space
 
 */
-PetscErrorCode DMDAGetFaceInterpolation(PC pc, DM da, PC_Exotic *exotic, Mat Aglobal, MatReuse reuse, Mat *P)
+static PetscErrorCode DMDAGetFaceInterpolation(PC pc, DM da, PC_Exotic *exotic, Mat Aglobal, MatReuse reuse, Mat *P)
 {
   PetscInt               dim, i, j, k, m, n, p, dof, Nint, Nface, Nwire, Nsurf, *Iint, *Isurf, cint = 0, csurf = 0, istart, jstart, kstart, *II, N, c = 0;
-  PetscInt               mwidth, nwidth, pwidth, cnt, mp, np, pp, Ntotal, gl[6], *globals, Ng, *IIint, *IIsurf, Nt;
+  PetscInt               mwidth, nwidth, pwidth, cnt, mp, np, pp, Ntotal, gl[6], *globals, Ng, *IIint, *IIsurf;
   Mat                    Xint, Xsurf, Xint_tmp;
   IS                     isint, issurf, is, row, col;
   ISLocalToGlobalMapping ltg;
@@ -372,7 +379,7 @@ PetscErrorCode DMDAGetFaceInterpolation(PC pc, DM da, PC_Exotic *exotic, Mat Agl
 #if defined(PETSC_USE_DEBUG_foo)
   PetscScalar tmp;
 #endif
-  PetscTable ht;
+  PetscHMapI ht;
 
   PetscFunctionBegin;
   PetscCall(DMDAGetInfo(da, &dim, NULL, NULL, NULL, &mp, &np, &pp, &dof, NULL, NULL, NULL, NULL, NULL));
@@ -468,6 +475,7 @@ PetscErrorCode DMDAGetFaceInterpolation(PC pc, DM da, PC_Exotic *exotic, Mat Agl
       }
     }
   }
+#undef Endpoint
   PetscCheck(c == N, PETSC_COMM_SELF, PETSC_ERR_PLIB, "c != N");
   PetscCheck(cint == Nint, PETSC_COMM_SELF, PETSC_ERR_PLIB, "cint != Nint");
   PetscCheck(csurf == Nsurf, PETSC_COMM_SELF, PETSC_ERR_PLIB, "csurf != Nsurf");
@@ -574,17 +582,24 @@ PetscCall(PetscMalloc1(6 * mp * np * pp, &globals));
 PetscCallMPI(MPI_Allgather(gl, 6, MPIU_INT, globals, 6, MPIU_INT, PetscObjectComm((PetscObject)da)));
 
 /* Number the coarse grid points from 0 to Ntotal */
-PetscCall(MatGetSize(Aglobal, &Nt, NULL));
-PetscCall(PetscTableCreate(Ntotal / 3, Nt + 1, &ht));
-for (i = 0; i < 6 * mp * np * pp; i++) PetscCall(PetscTableAddCount(ht, globals[i] + 1));
-PetscCall(PetscTableGetCount(ht, &cnt));
+PetscCall(PetscHMapICreateWithSize(Ntotal / 3, &ht));
+for (i = 0, cnt = 0; i < 6 * mp * np * pp; i++) {
+  PetscHashIter it      = 0;
+  PetscBool     missing = PETSC_TRUE;
+
+  PetscCall(PetscHMapIPut(ht, globals[i] + 1, &it, &missing));
+  if (missing) {
+    ++cnt;
+    PetscCall(PetscHMapIIterSet(ht, it, cnt));
+  }
+}
 PetscCheck(cnt == Ntotal, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Hash table size %" PetscInt_FMT " not equal to total number coarse grid points %" PetscInt_FMT, cnt, Ntotal);
 PetscCall(PetscFree(globals));
 for (i = 0; i < 6; i++) {
-  PetscCall(PetscTableFind(ht, gl[i] + 1, &gl[i]));
-  gl[i]--;
+  PetscCall(PetscHMapIGetWithDefault(ht, gl[i] + 1, 0, gl + i));
+  --(gl[i]);
 }
-PetscCall(PetscTableDestroy(&ht));
+PetscCall(PetscHMapIDestroy(&ht));
 /* PetscIntView(6,gl,PETSC_VIEWER_STDOUT_WORLD); */
 
 /* construct global interpolation matrix */
@@ -630,35 +645,35 @@ PetscCall(ISDestroy(&isint));
 PetscCall(ISDestroy(&issurf));
 PetscCall(MatDestroy(&Xint));
 PetscCall(MatDestroy(&Xsurf));
-PetscFunctionReturn(0);
+PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCExoticSetType - Sets the type of coarse grid interpolation to use
+  PCExoticSetType - Sets the type of coarse grid interpolation to use
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  type - either PC_EXOTIC_FACE or PC_EXOTIC_WIREBASKET (defaults to face)
+  Input Parameters:
++ pc   - the preconditioner context
+- type - either PC_EXOTIC_FACE or PC_EXOTIC_WIREBASKET (defaults to face)
 
-   Notes:
-    The face based interpolation has 1 degree of freedom per face and ignores the
-     edge and vertex values completely in the coarse problem. For any seven point
-     stencil the interpolation of a constant on all faces into the interior is that constant.
+  Notes:
+  The face based interpolation has 1 degree of freedom per face and ignores the
+  edge and vertex values completely in the coarse problem. For any seven point
+  stencil the interpolation of a constant on all faces into the interior is that constant.
 
-     The wirebasket interpolation has 1 degree of freedom per vertex, per edge and
-     per face. A constant on the subdomain boundary is interpolated as that constant
-     in the interior of the domain.
+  The wirebasket interpolation has 1 degree of freedom per vertex, per edge and
+  per face. A constant on the subdomain boundary is interpolated as that constant
+  in the interior of the domain.
 
-     The coarse grid matrix is obtained via the Galerkin computation A_c = R A R^T, hence
-     if A is nonsingular A_c is also nonsingular.
+  The coarse grid matrix is obtained via the Galerkin computation A_c = R A R^T, hence
+  if A is nonsingular A_c is also nonsingular.
 
-     Both interpolations are suitable for only scalar problems.
+  Both interpolations are suitable for only scalar problems.
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCEXOTIC`, `PCExoticType()`
+.seealso: [](ch_ksp), `PCEXOTIC`, `PCExoticType()`
 @*/
 PetscErrorCode PCExoticSetType(PC pc, PCExoticType type)
 {
@@ -666,7 +681,7 @@ PetscErrorCode PCExoticSetType(PC pc, PCExoticType type)
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscValidLogicalCollectiveEnum(pc, type, 2);
   PetscTryMethod(pc, "PCExoticSetType_C", (PC, PCExoticType), (pc, type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCExoticSetType_Exotic(PC pc, PCExoticType type)
@@ -676,10 +691,10 @@ static PetscErrorCode PCExoticSetType_Exotic(PC pc, PCExoticType type)
 
   PetscFunctionBegin;
   ctx->type = type;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCSetUp_Exotic(PC pc)
+static PetscErrorCode PCSetUp_Exotic(PC pc)
 {
   Mat        A;
   PC_MG     *mg    = (PC_MG *)pc->data;
@@ -689,19 +704,20 @@ PetscErrorCode PCSetUp_Exotic(PC pc)
   PetscFunctionBegin;
   PetscCheck(pc->dm, PetscObjectComm((PetscObject)pc), PETSC_ERR_ARG_WRONGSTATE, "Need to call PCSetDM() before using this PC");
   PetscCall(PCGetOperators(pc, NULL, &A));
+  PetscCheck(ex->type == PC_EXOTIC_FACE || ex->type == PC_EXOTIC_WIREBASKET, PetscObjectComm((PetscObject)pc), PETSC_ERR_PLIB, "Unknown exotic coarse space %d", ex->type);
   if (ex->type == PC_EXOTIC_FACE) {
     PetscCall(DMDAGetFaceInterpolation(pc, pc->dm, ex, A, reuse, &ex->P));
-  } else if (ex->type == PC_EXOTIC_WIREBASKET) {
+  } else /* if (ex->type == PC_EXOTIC_WIREBASKET) */ {
     PetscCall(DMDAGetWireBasketInterpolation(pc, pc->dm, ex, A, reuse, &ex->P));
-  } else SETERRQ(PetscObjectComm((PetscObject)pc), PETSC_ERR_PLIB, "Unknown exotic coarse space %d", ex->type);
+  }
   PetscCall(PCMGSetInterpolation(pc, 1, ex->P));
   /* if PC has attached DM we must remove it or the PCMG will use it to compute incorrect sized vectors and interpolations */
   PetscCall(PCSetDM(pc, NULL));
   PetscCall(PCSetUp_MG(pc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCDestroy_Exotic(PC pc)
+static PetscErrorCode PCDestroy_Exotic(PC pc)
 {
   PC_MG     *mg  = (PC_MG *)pc->data;
   PC_Exotic *ctx = (PC_Exotic *)mg->innerctx;
@@ -712,10 +728,10 @@ PetscErrorCode PCDestroy_Exotic(PC pc)
   PetscCall(PetscFree(ctx));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCExoticSetType_C", NULL));
   PetscCall(PCDestroy_MG(pc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCView_Exotic(PC pc, PetscViewer viewer)
+static PetscErrorCode PCView_Exotic(PC pc, PetscViewer viewer)
 {
   PC_MG     *mg = (PC_MG *)pc->data;
   PetscBool  iascii;
@@ -743,10 +759,10 @@ PetscErrorCode PCView_Exotic(PC pc, PetscViewer viewer)
     }
   }
   PetscCall(PCView_MG(pc, viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCSetFromOptions_Exotic(PC pc, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode PCSetFromOptions_Exotic(PC pc, PetscOptionItems *PetscOptionsObject)
 {
   PetscBool    flg;
   PC_MG       *mg = (PC_MG *)pc->data;
@@ -762,6 +778,7 @@ PetscErrorCode PCSetFromOptions_Exotic(PC pc, PetscOptionItems *PetscOptionsObje
     if (!ctx->ksp) {
       const char *prefix;
       PetscCall(KSPCreate(PETSC_COMM_SELF, &ctx->ksp));
+      PetscCall(KSPSetNestLevel(ctx->ksp, pc->kspnestlevel));
       PetscCall(KSPSetErrorIfNotConverged(ctx->ksp, pc->erroriffailure));
       PetscCall(PetscObjectIncrementTabLevel((PetscObject)ctx->ksp, (PetscObject)pc, 1));
       PetscCall(PCGetOptionsPrefix(pc, &prefix));
@@ -771,7 +788,7 @@ PetscErrorCode PCSetFromOptions_Exotic(PC pc, PetscOptionItems *PetscOptionsObje
     PetscCall(KSPSetFromOptions(ctx->ksp));
   }
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -787,37 +804,17 @@ PetscErrorCode PCSetFromOptions_Exotic(PC pc, PetscOptionItems *PetscOptionsObje
 
    By default this uses `KSPGMRES` on the fine grid smoother so this should be used with `KSPFGMRES` or the smoother changed to not use `KSPGMRES`
 
-   References:
-+  * - These coarse grid spaces originate in the work of Bramble, Pasciak  and Schatz, "The Construction
-   of Preconditioners for Elliptic Problems by Substructing IV", Mathematics of Computation, volume 53, 1989.
-.  * - They were generalized slightly in "Domain Decomposition Method for Linear Elasticity", Ph. D. thesis, Barry Smith,
-   New York University, 1990.
-.  * - They were then explored in great detail in Dryja, Smith, Widlund, "Schwarz Analysis
-   of Iterative Substructuring Methods for Elliptic Problems in Three Dimensions, SIAM Journal on Numerical
-   Analysis, volume 31. 1994. These were developed in the context of iterative substructuring preconditioners.
-.  * - They were then ingeniously applied as coarse grid spaces for overlapping Schwarz methods by Dohrmann and Widlund.
-   They refer to them as GDSW (generalized Dryja, Smith, Widlund preconditioners). See, for example,
-   Clark R. Dohrmann, Axel Klawonn, and Olof B. Widlund. Extending theory for domain decomposition algorithms to irregular subdomains. In Ulrich Langer, Marco
-   Discacciati, David Keyes, Olof Widlund, and Walter Zulehner, editors, Proceedings
-   of the 17th International Conference on Domain Decomposition Methods in
-   Science and Engineering, held in Strobl, Austria, 2006, number 60 in
-   Springer Verlag, Lecture Notes in Computational Science and Engineering, 2007.
-.  * -  Clark R. Dohrmann, Axel Klawonn, and Olof B. Widlund. A family of energy minimizing coarse spaces for overlapping Schwarz preconditioners. In Ulrich Langer,
-   Marco Discacciati, David Keyes, Olof Widlund, and Walter Zulehner, editors, Proceedings
-   of the 17th International Conference on Domain Decomposition Methods
-   in Science and Engineering, held in Strobl, Austria, 2006, number 60 in
-   Springer Verlag, Lecture Notes in Computational Science and Engineering, 2007
-.  * - Clark R. Dohrmann, Axel Klawonn, and Olof B. Widlund. Domain decomposition
-   for less regular subdomains: Overlapping Schwarz in two dimensions. SIAM J.
-   Numer. Anal., 46(4), 2008.
--  * - Clark R. Dohrmann and Olof B. Widlund. An overlapping Schwarz
-   algorithm for almost incompressible elasticity. Technical Report
-   TR2008 912, Department of Computer Science, Courant Institute
-   of Mathematical Sciences, New York University, May 2008. URL:
+   These coarse grid spaces originate in the work of Bramble, Pasciak  and Schatz {cite}`bramble1989construction`.
+   They were generalized slightly in "Domain Decomposition Method for Linear Elasticity", Ph. D. thesis, Barry Smith, {cite}`smith1990domain`.
+   They were then explored in great detail in Dryja, Smith, Widlund {cite}`dryja1994schwarz`. These were developed in the context of iterative substructuring preconditioners.
+
+   They were then ingeniously applied as coarse grid spaces for overlapping Schwarz methods by Dohrmann and Widlund.
+   They refer to them as GDSW (generalized Dryja, Smith, Widlund preconditioners). See, for example, {cite}`dohrmann2008extending`, {cite}`dohrmann2008family`,
+   {cite}`dohrmann2008domain`, {cite}`dohrmann2009overlapping`.
 
    The usual `PCMG` options are supported, such as -mg_levels_pc_type <type> -mg_coarse_pc_type <type> and  -pc_mg_type <type>
 
-.seealso: `PCMG`, `PCSetDM()`, `PCExoticType`, `PCExoticSetType()`
+.seealso: [](ch_ksp), `PCMG`, `PCSetDM()`, `PCExoticType`, `PCExoticSetType()`
 M*/
 
 PETSC_EXTERN PetscErrorCode PCCreate_Exotic(PC pc)
@@ -847,5 +844,5 @@ PETSC_EXTERN PetscErrorCode PCCreate_Exotic(PC pc)
   pc->ops->setup          = PCSetUp_Exotic;
 
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCExoticSetType_C", PCExoticSetType_Exotic));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

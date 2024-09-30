@@ -1,21 +1,20 @@
-
 /*
     Identity preconditioner, simply copies vector x to y.
 */
 #include <petsc/private/pcimpl.h> /*I "petscpc.h" I*/
 
-PetscErrorCode PCApply_None(PC pc, Vec x, Vec y)
+static PetscErrorCode PCApply_None(PC pc, Vec x, Vec y)
 {
   PetscFunctionBegin;
   PetscCall(VecCopy(x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCMatApply_None(PC pc, Mat X, Mat Y)
+static PetscErrorCode PCMatApply_None(PC pc, Mat X, Mat Y)
 {
   PetscFunctionBegin;
   PetscCall(MatCopy(X, Y, SAME_NONZERO_PATTERN));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -28,7 +27,7 @@ PetscErrorCode PCMatApply_None(PC pc, Mat X, Mat Y)
   This is implemented by a `VecCopy()`. It would be nice if the `KSP` implementations could be organized to avoid this copy without making them
   more complex.
 
-.seealso: `PCCreate()`, `PCSetType()`, `PCType`, `PC`
+.seealso: [](ch_ksp), `PCCreate()`, `PCSetType()`, `PCType`, `PC`
 M*/
 
 PETSC_EXTERN PetscErrorCode PCCreate_None(PC pc)
@@ -44,5 +43,5 @@ PETSC_EXTERN PetscErrorCode PCCreate_None(PC pc)
   pc->ops->applysymmetricright = PCApply_None;
 
   pc->data = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

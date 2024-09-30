@@ -82,7 +82,7 @@ static PetscErrorCode DMPlexCreateSectionFields(DM dm, const PetscInt numComp[],
   PetscCall(DMPlexGetChart(dm, &pStart, &pEnd));
   PetscCall(PetscSectionSetChart(*section, pStart, pEnd));
   PetscCall(PetscFree(isFE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Set the number of dof on each point and separate by fields */
@@ -104,7 +104,7 @@ static PetscErrorCode DMPlexCreateSectionDof(DM dm, DMLabel label[], const Petsc
     PetscDS   ds;
     PetscBool isCohesive;
 
-    PetscCall(DMGetRegionNumDS(dm, n, NULL, NULL, &ds));
+    PetscCall(DMGetRegionNumDS(dm, n, NULL, NULL, &ds, NULL));
     PetscCall(PetscDSIsCohesive(ds, &isCohesive));
     if (isCohesive) {
       hasCohesive = PETSC_TRUE;
@@ -185,7 +185,7 @@ static PetscErrorCode DMPlexCreateSectionDof(DM dm, DMLabel label[], const Petsc
     }
   }
   PetscCall(PetscFree(isFE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Set the number of dof on each point and separate by fields
@@ -261,7 +261,7 @@ static PetscErrorCode DMPlexCreateSectionBCDof(DM dm, PetscInt numBC, const Pets
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Set the constrained field indices on each point
@@ -275,7 +275,7 @@ static PetscErrorCode DMPlexCreateSectionBCIndicesField(DM dm, PetscInt numBC, c
 
   PetscFunctionBegin;
   PetscCall(PetscSectionGetNumFields(section, &Nf));
-  if (!Nf) PetscFunctionReturn(0);
+  if (!Nf) PetscFunctionReturn(PETSC_SUCCESS);
   /* Initialize all field indices to -1 */
   PetscCall(PetscSectionGetChart(section, &pStart, &pEnd));
   for (p = pStart; p < pEnd; ++p) {
@@ -349,7 +349,7 @@ static PetscErrorCode DMPlexCreateSectionBCIndicesField(DM dm, PetscInt numBC, c
     }
   }
   PetscCall(PetscFree(indices));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Set the constrained indices on each point */
@@ -392,7 +392,7 @@ static PetscErrorCode DMPlexCreateSectionBCIndices(DM dm, PetscSection section)
     }
   }
   PetscCall(PetscFree(indices));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -401,15 +401,15 @@ static PetscErrorCode DMPlexCreateSectionBCIndices(DM dm, PetscSection section)
   Not Collective
 
   Input Parameters:
-+ dm        - The `DMPLEX` object
-. label     - The label indicating the mesh support of each field, or NULL for the whole mesh
-. numComp   - An array of size numFields that holds the number of components for each field
-. numDof    - An array of size numFields*(dim+1) which holds the number of dof for each field on a mesh piece of dimension d
-. numBC     - The number of boundary conditions
-. bcField   - An array of size numBC giving the field number for each boundary condition
-. bcComps   - [Optional] An array of size numBC giving an `IS` holding the field components to which each boundary condition applies
-. bcPoints  - An array of size numBC giving an `IS` holding the `DMPLEX` points to which each boundary condition applies
-- perm      - Optional permutation of the chart, or NULL
++ dm       - The `DMPLEX` object
+. label    - The label indicating the mesh support of each field, or NULL for the whole mesh
+. numComp  - An array of size numFields that holds the number of components for each field
+. numDof   - An array of size numFields*(dim+1) which holds the number of dof for each field on a mesh piece of dimension d
+. numBC    - The number of boundary conditions
+. bcField  - An array of size numBC giving the field number for each boundary condition
+. bcComps  - [Optional] An array of size numBC giving an `IS` holding the field components to which each boundary condition applies
+. bcPoints - An array of size numBC giving an `IS` holding the `DMPLEX` points to which each boundary condition applies
+- perm     - Optional permutation of the chart, or NULL
 
   Output Parameter:
 . section - The `PetscSection` object
@@ -422,10 +422,10 @@ static PetscErrorCode DMPlexCreateSectionBCIndices(DM dm, PetscSection section)
 
   The chart permutation is the same one set using `PetscSectionSetPermutation()`
 
-  Developer Note:
+  Developer Notes:
   This is used by `DMCreateLocalSection()`?
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexCreate()`, `PetscSectionCreate()`, `PetscSectionSetPermutation()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexCreate()`, `PetscSectionCreate()`, `PetscSectionSetPermutation()`
 @*/
 PetscErrorCode DMPlexCreateSection(DM dm, DMLabel label[], const PetscInt numComp[], const PetscInt numDof[], PetscInt numBC, const PetscInt bcField[], const IS bcComps[], const IS bcPoints[], IS perm, PetscSection *section)
 {
@@ -444,7 +444,7 @@ PetscErrorCode DMPlexCreateSection(DM dm, DMLabel label[], const PetscInt numCom
     PetscCall(DMPlexCreateSectionBCIndices(dm, *section));
   }
   PetscCall(PetscSectionViewFromOptions(*section, NULL, "-section_view"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateLocalSection_Plex(DM dm)
@@ -481,7 +481,7 @@ PetscErrorCode DMCreateLocalSection_Plex(DM dm)
     PetscDS  dsBC;
     PetscInt numBd, bd;
 
-    PetscCall(DMGetRegionNumDS(dm, s, NULL, NULL, &dsBC));
+    PetscCall(DMGetRegionNumDS(dm, s, NULL, NULL, &dsBC, NULL));
     PetscCall(PetscDSGetNumBoundary(dsBC, &numBd));
     PetscCheck(Nf || !numBd, PetscObjectComm((PetscObject)dm), PETSC_ERR_PLIB, "number of fields is zero and number of boundary conditions is nonzero (this should never happen)");
     for (bd = 0; bd < numBd; ++bd) {
@@ -494,7 +494,7 @@ PetscErrorCode DMCreateLocalSection_Plex(DM dm)
     }
   }
   /* Add ghost cell boundaries for FVM */
-  PetscCall(DMPlexGetGhostCellStratum(dm, &cEndInterior, NULL));
+  PetscCall(DMPlexGetCellTypeStratum(dm, DM_POLYTOPE_FV_GHOST, &cEndInterior, NULL));
   for (f = 0; f < Nf; ++f)
     if (!isFE[f] && cEndInterior >= 0) ++numBC;
   PetscCall(PetscCalloc3(numBC, &bcFields, numBC, &bcPoints, numBC, &bcComps));
@@ -516,7 +516,7 @@ PetscErrorCode DMCreateLocalSection_Plex(DM dm)
     PetscDS  dsBC;
     PetscInt numBd, bd;
 
-    PetscCall(DMGetRegionNumDS(dm, s, NULL, NULL, &dsBC));
+    PetscCall(DMGetRegionNumDS(dm, s, NULL, NULL, &dsBC, NULL));
     PetscCall(PetscDSGetNumBoundary(dsBC, &numBd));
     for (bd = 0; bd < numBd; ++bd) {
       DMLabel                 label;
@@ -629,5 +629,15 @@ PetscErrorCode DMCreateLocalSection_Plex(DM dm)
   PetscCall(PetscFree3(bcFields, bcPoints, bcComps));
   PetscCall(PetscFree3(labels, numComp, numDof));
   PetscCall(PetscFree(isFE));
-  PetscFunctionReturn(0);
+  /* Checking for CEED usage */
+  {
+    PetscBool useCeed;
+
+    PetscCall(DMPlexGetUseCeed(dm, &useCeed));
+    if (useCeed) {
+      PetscCall(DMPlexSetUseMatClosurePermutation(dm, PETSC_FALSE));
+      PetscCall(DMUseTensorOrder(dm, PETSC_TRUE));
+    }
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

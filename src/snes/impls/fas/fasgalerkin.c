@@ -1,19 +1,19 @@
 #include <../src/snes/impls/fas/fasimpls.h> /*I  "petscsnes.h"  I*/
 
 /*@
-   SNESFASGetGalerkin - Gets if the coarse problems are formed by projection to the fine problem
+  SNESFASGetGalerkin - Gets if the coarse problems are formed by projection to the fine problem
 
-   Not collective but the result would be the same on all MPI ranks
+  Not Collective but the result would be the same on all MPI processes
 
-   Input Parameter:
-.  snes - the `SNESFAS` nonlinear solver context
+  Input Parameter:
+. snes - the `SNESFAS` nonlinear solver context
 
-   Output parameter:
-.  flg - `PETSC_TRUE` if the coarse problem is formed by projection
+  Output Parameter:
+. flg - `PETSC_TRUE` if the coarse problem is formed by projection
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `SNESFAS`, `SNESFASSetLevels()`, `SNESFASSetGalerkin()`
+.seealso: [](ch_snes), `SNES`, `SNESFAS`, `SNESFASSetLevels()`, `SNESFASSetGalerkin()`
 @*/
 PetscErrorCode SNESFASGetGalerkin(SNES snes, PetscBool *flg)
 {
@@ -23,21 +23,21 @@ PetscErrorCode SNESFASGetGalerkin(SNES snes, PetscBool *flg)
   PetscValidHeaderSpecificType(snes, SNES_CLASSID, 1, SNESFAS);
   fas  = (SNES_FAS *)snes->data;
   *flg = fas->galerkin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   SNESFASSetGalerkin - Sets coarse problems as formed by projection to the fine problem
+  SNESFASSetGalerkin - Sets coarse problems as formed by projection to the fine problem
 
-   Collective
+  Logically Collective
 
-   Input Parameters:
-+  snes - the `SNESFAS` nonlinear solver context
--  flg - `PETSC_TRUE` to use the projection process
+  Input Parameters:
++ snes - the `SNESFAS` nonlinear solver context
+- flg  - `PETSC_TRUE` to use the projection process
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `SNESFAS`, `SNESFASSetLevels()`, `SNESFASGetGalerkin()`
+.seealso: [](ch_snes), `SNES`, `SNESFAS`, `SNESFASSetLevels()`, `SNESFASGetGalerkin()`
 @*/
 PetscErrorCode SNESFASSetGalerkin(SNES snes, PetscBool flg)
 {
@@ -48,29 +48,29 @@ PetscErrorCode SNESFASSetGalerkin(SNES snes, PetscBool flg)
   fas           = (SNES_FAS *)snes->data;
   fas->galerkin = flg;
   if (fas->next) PetscCall(SNESFASSetGalerkin(fas->next, flg));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   SNESFASGalerkinFunctionDefault - Computes the Galerkin FAS function
+  SNESFASGalerkinFunctionDefault - Computes the Galerkin FAS function
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  snes - the `SNESFAS` nonlinear solver context
-.  X - input vector
--  ctx - the application context
+  Input Parameters:
++ snes - the `SNESFAS` nonlinear solver context
+. X    - input vector
+- ctx  - the application context
 
-   Output Parameter:
-.  F - output vector
+  Output Parameter:
+. F - output vector
 
-   Note:
-   The Galerkin FAS function evaluation is defined as
+  Level: developer
+
+  Note:
+  The Galerkin FAS function evaluation is defined as
 $  F^l(x^l) = I^l_0 F^0(P^0_l x^l)
 
-   Level: developer
-
-.seealso: `SNESFAS`, `SNESFASGetGalerkin()`, `SNESFASSetGalerkin()`
+.seealso: [](ch_snes), `SNES`, `SNESFAS`, `SNESFASGetGalerkin()`, `SNESFASSetGalerkin()`
 @*/
 PetscErrorCode SNESFASGalerkinFunctionDefault(SNES snes, Vec X, Vec F, void *ctx)
 {
@@ -95,5 +95,5 @@ PetscErrorCode SNESFASGalerkinFunctionDefault(SNES snes, Vec X, Vec F, void *ctx
   prevsnes->vec_rhs = b_temp;
   /* restrict up the function */
   PetscCall(MatRestrict(prevfas->restrct, prevfas->Fg, F));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

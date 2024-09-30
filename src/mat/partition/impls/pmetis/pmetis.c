@@ -1,4 +1,3 @@
-
 #include <../src/mat/impls/adj/mpi/mpiadj.h> /*I "petscmat.h" I*/
 
 /*
@@ -46,7 +45,7 @@ static PetscErrorCode MatPartitioningApply_Parmetis_Private(MatPartitioning part
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(part, MAT_PARTITIONING_CLASSID, 1);
-  PetscValidPointer(partitioning, 4);
+  PetscAssertPointer(partitioning, 4);
   PetscCall(PetscObjectTypeCompare((PetscObject)mat, MATMPIADJ, &flg));
   if (flg) {
     amat = mat;
@@ -207,7 +206,7 @@ static PetscErrorCode MatPartitioningApply_Parmetis_Private(MatPartitioning part
   }
   PetscCall(MatDestroy(&pmat));
   PetscCall(MatDestroy(&amat));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -217,7 +216,7 @@ static PetscErrorCode MatPartitioningApplyND_Parmetis(MatPartitioning part, IS *
 {
   PetscFunctionBegin;
   PetscCall(MatPartitioningApply_Parmetis_Private(part, PETSC_TRUE, PETSC_FALSE, partitioning));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -227,7 +226,7 @@ static PetscErrorCode MatPartitioningApply_Parmetis(MatPartitioning part, IS *pa
 {
   PetscFunctionBegin;
   PetscCall(MatPartitioningApply_Parmetis_Private(part, PETSC_FALSE, PETSC_FALSE, partitioning));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -237,10 +236,10 @@ static PetscErrorCode MatPartitioningImprove_Parmetis(MatPartitioning part, IS *
 {
   PetscFunctionBegin;
   PetscCall(MatPartitioningApply_Parmetis_Private(part, PETSC_FALSE, PETSC_TRUE, partitioning));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningView_Parmetis(MatPartitioning part, PetscViewer viewer)
+static PetscErrorCode MatPartitioningView_Parmetis(MatPartitioning part, PetscViewer viewer)
 {
   MatPartitioning_Parmetis *pmetis = (MatPartitioning_Parmetis *)part->data;
   PetscMPIInt               rank;
@@ -261,19 +260,19 @@ PetscErrorCode MatPartitioningView_Parmetis(MatPartitioning part, PetscViewer vi
     PetscCall(PetscViewerFlush(viewer));
     PetscCall(PetscViewerASCIIPopSynchronized(viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-     MatPartitioningParmetisSetCoarseSequential - Use the sequential code to
-         do the partitioning of the coarse grid.
+  MatPartitioningParmetisSetCoarseSequential - Use the sequential code to
+  do the partitioning of the coarse grid.
 
   Logically Collective
 
   Input Parameter:
-.  part - the partitioning context
+. part - the partitioning context
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `MATPARTITIONINGPARMETIS`
 @*/
@@ -283,19 +282,19 @@ PetscErrorCode MatPartitioningParmetisSetCoarseSequential(MatPartitioning part)
 
   PetscFunctionBegin;
   pmetis->parallel = 1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-     MatPartitioningParmetisSetRepartition - Repartition
-     current mesh to rebalance computation.
+  MatPartitioningParmetisSetRepartition - Repartition
+  current mesh to rebalance computation.
 
   Logically Collective
 
   Input Parameter:
-.  part - the partitioning context
+. part - the partitioning context
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `MATPARTITIONINGPARMETIS`
 @*/
@@ -305,7 +304,7 @@ PetscErrorCode MatPartitioningParmetisSetRepartition(MatPartitioning part)
 
   PetscFunctionBegin;
   pmetis->repartition = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -317,7 +316,7 @@ PetscErrorCode MatPartitioningParmetisSetRepartition(MatPartitioning part)
   Output Parameter:
 . cut - the edge cut
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `MATPARTITIONINGPARMETIS`
 @*/
@@ -327,10 +326,10 @@ PetscErrorCode MatPartitioningParmetisGetEdgeCut(MatPartitioning part, PetscInt 
 
   PetscFunctionBegin;
   *cut = pmetis->cuts;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningSetFromOptions_Parmetis(MatPartitioning part, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode MatPartitioningSetFromOptions_Parmetis(MatPartitioning part, PetscOptionItems *PetscOptionsObject)
 {
   PetscBool flag = PETSC_FALSE;
 
@@ -341,16 +340,16 @@ PetscErrorCode MatPartitioningSetFromOptions_Parmetis(MatPartitioning part, Pets
   PetscCall(PetscOptionsBool("-mat_partitioning_parmetis_repartition", "", "MatPartitioningParmetisSetRepartition", flag, &flag, NULL));
   if (flag) PetscCall(MatPartitioningParmetisSetRepartition(part));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningDestroy_Parmetis(MatPartitioning part)
+static PetscErrorCode MatPartitioningDestroy_Parmetis(MatPartitioning part)
 {
   MatPartitioning_Parmetis *pmetis = (MatPartitioning_Parmetis *)part->data;
 
   PetscFunctionBegin;
   PetscCall(PetscFree(pmetis));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -361,7 +360,7 @@ PetscErrorCode MatPartitioningDestroy_Parmetis(MatPartitioning part)
    Input Parameter:
 .  part - the partitioning context
 
-   Options Database Keys:
+   Options Database Key:
 .  -mat_partitioning_parmetis_coarse_sequential - use sequential PARMETIS coarse partitioner
 
    Level: beginner
@@ -394,34 +393,37 @@ PETSC_EXTERN PetscErrorCode MatPartitioningCreate_Parmetis(MatPartitioning part)
   part->ops->view           = MatPartitioningView_Parmetis;
   part->ops->destroy        = MatPartitioningDestroy_Parmetis;
   part->ops->setfromoptions = MatPartitioningSetFromOptions_Parmetis;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-     MatMeshToCellGraph -   Uses the ParMETIS package to convert a `Mat` that represents coupling of vertices of a mesh to a `Mat` the represents the graph of the coupling
-                       between cells (the "dual" graph) and is suitable for partitioning with the `MatPartitioning object`. Use this to partition
-                       cells of a mesh.
+  MatMeshToCellGraph - Convert a mesh to a cell graph.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+     mesh - the graph that represents the coupling of the vertices of the mesh
--     ncommonnodes - mesh elements that share this number of common nodes are considered neighbors, use 2 for triangles and
+  Input Parameters:
++ mesh         - the graph that represents the coupling of the vertices of the mesh
+- ncommonnodes - mesh elements that share this number of common nodes are considered neighbors, use 2 for triangles and
                      quadrilaterials, 3 for tetrahedrals and 4 for hexahedrals
 
-   Output Parameter:
-.     dual - the dual graph
+  Output Parameter:
+. dual - the dual graph
 
-   Notes:
-     Currently requires ParMetis to be installed and uses ParMETIS_V3_Mesh2Dual()
+  Level: advanced
 
-$     Each row of the mesh object represents a single cell in the mesh. For triangles it has 3 entries, quadrilaterials 4 entries,
-$         tetrahedrals 4 entries and hexahedrals 8 entries. You can mix triangles and quadrilaterals in the same mesh, but cannot
-$         mix  tetrahedrals and hexahedrals
-$     The columns of each row of the Mat mesh are the global vertex numbers of the vertices of that row's cell.
-$     The number of rows in mesh is number of cells, the number of columns is the number of vertices.
+  Notes:
+  Uses the ParMETIS package to convert a `Mat` that represents coupling of vertices of a mesh
+  to a `Mat` the represents the graph of the coupling between cells (the "dual" graph) and is
+  suitable for partitioning with the `MatPartitioning` object. Use this to partition cells of a
+  mesh.
 
-   Level: advanced
+  Currently requires ParMetis to be installed and uses ParMETIS_V3_Mesh2Dual()
+
+  Each row of the mesh object represents a single cell in the mesh. For triangles it has 3 entries, quadrilaterials 4 entries,
+  tetrahedrals 4 entries and hexahedrals 8 entries. You can mix triangles and quadrilaterals in the same mesh, but cannot
+  mix  tetrahedrals and hexahedrals
+  The columns of each row of the `Mat` mesh are the global vertex numbers of the vertices of that row's cell.
+  The number of rows in mesh is number of cells, the number of columns is the number of vertices.
 
 .seealso: `MatCreateMPIAdj()`, `MatPartitioningCreate()`
 @*/
@@ -443,5 +445,5 @@ PetscErrorCode MatMeshToCellGraph(Mat mesh, PetscInt ncommonnodes, Mat *dual)
   newadj = (Mat_MPIAdj *)(*dual)->data;
 
   newadj->freeaijwithfree = PETSC_TRUE; /* signal the matrix should be freed with system free since space was allocated by ParMETIS */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

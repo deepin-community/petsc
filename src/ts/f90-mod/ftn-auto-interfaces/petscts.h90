@@ -23,7 +23,7 @@
        PetscErrorCode z
        end subroutine TSAdaptHistorySetHistory
       subroutine TSAdaptHistorySetTrajectory(a,b,c,z)
-       import tTSAdapt,tTSTrajectory
+       import tTSTrajectory,tTSAdapt
        TSAdapt a ! TSAdapt
        TSTrajectory b ! TSTrajectory
        PetscBool c ! PetscBool
@@ -124,7 +124,7 @@
        PetscErrorCode z
        end subroutine TSAdaptSetTimeStepIncreaseDelay
       subroutine TSAdaptCheckStage(a,b,c,d,e,z)
-       import tTS,tTSAdapt,tVec
+       import tTSAdapt,tVec,tTS
        TSAdapt a ! TSAdapt
        TS b ! TS
        PetscReal c ! PetscReal
@@ -295,7 +295,7 @@
        PetscErrorCode z
        end subroutine TSSundialsSetTolerance
       subroutine TSSundialsGetPC(a,b,z)
-       import tPC,tTS
+       import tTS,tPC
        TS a ! TS
        PC b ! PC
        PetscErrorCode z
@@ -379,7 +379,7 @@
        PetscErrorCode z
        end subroutine TSSetFromOptions
       subroutine TSGetTrajectory(a,b,z)
-       import tTS,tTSTrajectory
+       import tTSTrajectory,tTS
        TS a ! TS
        TSTrajectory b ! TSTrajectory
        PetscErrorCode z
@@ -400,7 +400,7 @@
        PetscErrorCode z
        end subroutine TSRemoveTrajectory
       subroutine TSComputeRHSJacobian(a,b,c,d,e,z)
-       import tVec,tMat,tTS
+       import tVec,tTS,tMat
        TS a ! TS
        PetscReal b ! PetscReal
        Vec c ! Vec
@@ -441,7 +441,7 @@
        PetscErrorCode z
        end subroutine TSComputeIFunction
       subroutine TSComputeIJacobian(a,b,c,d,e,f,g,h,z)
-       import tVec,tMat,tTS
+       import tVec,tTS,tMat
        TS a ! TS
        PetscReal b ! PetscReal
        Vec c ! Vec
@@ -469,7 +469,7 @@
        PetscErrorCode z
        end subroutine TSComputeI2Function
       subroutine TSComputeI2Jacobian(a,b,c,d,e,f,g,h,i,z)
-       import tVec,tMat,tTS
+       import tVec,tTS,tMat
        TS a ! TS
        PetscReal b ! PetscReal
        Vec c ! Vec
@@ -593,19 +593,19 @@
        PetscErrorCode z
        end subroutine TSReset
       subroutine TSGetSNES(a,b,z)
-       import tTS,tSNES
+       import tSNES,tTS
        TS a ! TS
        SNES b ! SNES
        PetscErrorCode z
        end subroutine TSGetSNES
       subroutine TSSetSNES(a,b,z)
-       import tTS,tSNES
+       import tSNES,tTS
        TS a ! TS
        SNES b ! SNES
        PetscErrorCode z
        end subroutine TSSetSNES
       subroutine TSGetKSP(a,b,z)
-       import tTS,tKSP
+       import tKSP,tTS
        TS a ! TS
        KSP b ! KSP
        PetscErrorCode z
@@ -743,6 +743,11 @@
        Vec c ! Vec
        PetscErrorCode z
        end subroutine TSComputeExactError
+      subroutine TSResize(a,z)
+       import tTS
+       TS a ! TS
+       PetscErrorCode z
+       end subroutine TSResize
       subroutine TSSolve(a,b,z)
        import tVec,tTS
        TS a ! TS
@@ -875,26 +880,6 @@
        Vec e ! Vec
        PetscErrorCode z
        end subroutine TSGetTolerances
-      subroutine TSErrorWeightedNorm2(a,b,c,d,e,f,z)
-       import tVec,tTS
-       TS a ! TS
-       Vec b ! Vec
-       Vec c ! Vec
-       PetscReal d ! PetscReal
-       PetscReal e ! PetscReal
-       PetscReal f ! PetscReal
-       PetscErrorCode z
-       end subroutine TSErrorWeightedNorm2
-      subroutine TSErrorWeightedNormInfinity(a,b,c,d,e,f,z)
-       import tVec,tTS
-       TS a ! TS
-       Vec b ! Vec
-       Vec c ! Vec
-       PetscReal d ! PetscReal
-       PetscReal e ! PetscReal
-       PetscReal f ! PetscReal
-       PetscErrorCode z
-       end subroutine TSErrorWeightedNormInfinity
       subroutine TSErrorWeightedNorm(a,b,c,d,e,f,g,z)
        import tVec,tTS
        TS a ! TS
@@ -906,28 +891,6 @@
        PetscReal g ! PetscReal
        PetscErrorCode z
        end subroutine TSErrorWeightedNorm
-      subroutine TSErrorWeightedENorm2(a,b,c,d,e,f,g,z)
-       import tVec,tTS
-       TS a ! TS
-       Vec b ! Vec
-       Vec c ! Vec
-       Vec d ! Vec
-       PetscReal e ! PetscReal
-       PetscReal f ! PetscReal
-       PetscReal g ! PetscReal
-       PetscErrorCode z
-       end subroutine TSErrorWeightedENorm2
-      subroutine TSErrorWeightedENormInfinity(a,b,c,d,e,f,g,z)
-       import tVec,tTS
-       TS a ! TS
-       Vec b ! Vec
-       Vec c ! Vec
-       Vec d ! Vec
-       PetscReal e ! PetscReal
-       PetscReal f ! PetscReal
-       PetscReal g ! PetscReal
-       PetscErrorCode z
-       end subroutine TSErrorWeightedENormInfinity
       subroutine TSErrorWeightedENorm(a,b,c,d,e,f,g,h,z)
        import tVec,tTS
        TS a ! TS
@@ -985,12 +948,6 @@
        Vec c ! Vec
        PetscErrorCode z
        end subroutine TSGetStages
-      subroutine TSSetFunctionDomainError(a,b,z)
-       import tTS
-       TS a ! TS
-       external b ! void function pointer
-       PetscErrorCode z
-       end subroutine TSSetFunctionDomainError
       subroutine TSFunctionDomainError(a,b,c,d,z)
        import tVec,tTS
        TS a ! TS
@@ -1038,7 +995,7 @@
        PetscErrorCode z
        end subroutine TSGetTimeSpanSolutions
       subroutine TSTrajectorySet(a,b,c,d,e,z)
-       import tVec,tTS,tTSTrajectory
+       import tVec,tTSTrajectory,tTS
        TSTrajectory a ! TSTrajectory
        TS b ! TS
        PetscInt c ! PetscInt
@@ -1053,7 +1010,7 @@
        PetscErrorCode z
        end subroutine TSTrajectoryGetNumSteps
       subroutine TSTrajectoryGet(a,b,c,d,z)
-       import tTS,tTSTrajectory
+       import tTSTrajectory,tTS
        TSTrajectory a ! TSTrajectory
        TS b ! TS
        PetscInt c ! PetscInt
@@ -1061,7 +1018,7 @@
        PetscErrorCode z
        end subroutine TSTrajectoryGet
       subroutine TSTrajectoryGetVecs(a,b,c,d,e,f,z)
-       import tVec,tTS,tTSTrajectory
+       import tVec,tTSTrajectory,tTS
        TSTrajectory a ! TSTrajectory
        TS b ! TS
        PetscInt c ! PetscInt
@@ -1105,13 +1062,13 @@
        PetscErrorCode z
        end subroutine TSTrajectorySetKeepFiles
       subroutine TSTrajectorySetFromOptions(a,b,z)
-       import tTS,tTSTrajectory
+       import tTSTrajectory,tTS
        TSTrajectory a ! TSTrajectory
        TS b ! TS
        PetscErrorCode z
        end subroutine TSTrajectorySetFromOptions
       subroutine TSTrajectorySetUp(a,b,z)
-       import tTS,tTSTrajectory
+       import tTSTrajectory,tTS
        TSTrajectory a ! TSTrajectory
        TS b ! TS
        PetscErrorCode z
@@ -1129,7 +1086,7 @@
        PetscErrorCode z
        end subroutine TSTrajectoryGetSolutionOnly
       subroutine TSTrajectoryGetUpdatedHistoryVecs(a,b,c,d,e,z)
-       import tVec,tTS,tTSTrajectory
+       import tVec,tTSTrajectory,tTS
        TSTrajectory a ! TSTrajectory
        TS b ! TS
        PetscReal c ! PetscReal

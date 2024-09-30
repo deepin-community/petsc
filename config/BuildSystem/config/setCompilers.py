@@ -7,7 +7,7 @@ from functools import reduce
 from collections import namedtuple
 from collections import defaultdict
 
-# not sure how to handle this with 'self' so its outside the class
+# not sure how to handle this with 'self' so it's outside the class
 def noCheck(command, status, output, error):
   return
 
@@ -20,9 +20,9 @@ except NameError:
 def _picTestIncludes(export=''):
   return '\n'.join(['#include <stdio.h>',
                     'int (*fprintf_ptr)(FILE*,const char*,...) = fprintf;',
-                    'void '+export+' foo(void){',
+                    'int '+export+' foo(void){',
                     '  fprintf_ptr(stdout,"hello");',
-                    '  return;',
+                    '  return 0;',
                     '}',
                     'void bar(void){foo();}\n'])
 
@@ -59,7 +59,7 @@ class CaseInsensitiveDefaultDict(defaultdict):
     return self[key]
 
 def default_cxx_dialect_ranges():
-  return ('c++11','c++17')
+  return ('c++11','c++20')
 
 class Configure(config.base.Configure):
   def __init__(self, framework):
@@ -142,7 +142,7 @@ class Configure(config.base.Configure):
     help.addArgument('Compilers', '-with-large-file-io=<bool>', nargs.ArgBool(None, 0, 'Allow IO with files greater then 2 GB'))
 
     help.addArgument('Compilers', '-CUDAPP=<prog>',        nargs.Arg(None, None, 'Specify the CUDA preprocessor'))
-    help.addArgument('Compilers', '-CUDAPPFLAGS=<string>', nargs.Arg(None, '-Wno-deprecated-gpu-targets', 'Specify the CUDA preprocessor options'))
+    help.addArgument('Compilers', '-CUDAPPFLAGS=<string>', nargs.Arg(None, None, 'Specify the CUDA preprocessor options'))
     help.addArgument('Compilers', '-with-cudac=<prog>',    nargs.Arg(None, None, 'Specify the CUDA compiler'))
     help.addArgument('Compilers', '-CUDAC=<prog>',         nargs.Arg(None, None, 'Specify the CUDA compiler'))
     help.addArgument('Compilers', '-CUDAFLAGS=<string>',   nargs.Arg(None, None, 'Specify the CUDA compiler options'))
@@ -160,7 +160,7 @@ class Configure(config.base.Configure):
     help.addArgument('Compilers', '-with-syclc=<prog>',    nargs.Arg(None, None, 'Specify the SYCL compiler'))
     help.addArgument('Compilers', '-SYCLC=<prog>',         nargs.Arg(None, None, 'Specify the SYCL compiler'))
     help.addArgument('Compilers', '-SYCLFLAGS=<string>',   nargs.Arg(None, None, 'Specify the SYCL compiler options'))
-    help.addArgument('Compilers', '-SYCLC_LINKER_FLAGS=<string>',        nargs.Arg(None, [], 'Specify the SYCL linker flags'))
+    help.addArgument('Compilers', '-SYCLC_LINKER_FLAGS=<string>',        nargs.Arg(None, '', 'Specify the SYCL linker flags'))
 
 ##    help.addArgument('Compilers', '-LD=<prog>',              nargs.Arg(None, None, 'Specify the executable linker'))
 ##    help.addArgument('Compilers', '-CC_LD=<prog>',           nargs.Arg(None, None, 'Specify the linker for C only'))
@@ -178,7 +178,16 @@ class Configure(config.base.Configure):
     help.addArgument('Compilers', '-dynamicLibraryFlags=<string>',    nargs.Arg(None, [], 'Specify the dynamic library flags'))
     help.addArgument('Compilers', '-LIBS=<string>',          nargs.Arg(None, None, 'Specify extra libraries for all links'))
     help.addArgument('Compilers', '-with-environment-variables=<bool>',nargs.ArgBool(None, 0, 'Use compiler variables found in environment'))
-    help.addArgument('Compilers', '-with-cxx-dialect=<dialect>',nargs.Arg(None, 'auto', 'Dialect under which to compile C++ sources. Pass "c++17" to use "-std=c++17", "gnu++17" to use "-std=gnu++17" or pass just the numer (e.g. "17") to have PETSc auto-detect gnu extensions. Pass "auto" to let PETSc auto-detect everything or "0" to use the compiler"s default. Available: (11, 14, 17, auto, 0)'))
+    min_ver, max_ver   = default_cxx_dialect_ranges()
+    min_ver            = int(min_ver[2:])
+    max_ver            = int(max_ver[2:])
+    available_dialects = []
+    while min_ver <= max_ver:
+      available_dialects.append(min_ver)
+      min_ver += 3
+
+    available_dialects = ', '.join(map(str, available_dialects))
+    help.addArgument('Compilers', '-with-cxx-dialect=<dialect>',nargs.Arg(None, 'auto', 'Dialect under which to compile C++ sources. Pass "c++17" to use "-std=c++17", "gnu++17" to use "-std=gnu++17" or pass just the number (e.g. "17") to have PETSc auto-detect gnu extensions. Pass "auto" to let PETSc auto-detect everything or "0" to use the compiler"s default. Available: ({}, auto, 0)'.format(available_dialects)))
     help.addArgument('Compilers', '-with-hip-dialect=<dialect>',nargs.Arg(None, 'auto', 'Dialect under which to compile HIP sources. If set should probably be equivalent to c++ dialect (see --with-cxx-dialect)'))
     help.addArgument('Compilers', '-with-cuda-dialect=<dialect>',nargs.Arg(None, 'auto', 'Dialect under which to compile CUDA sources. If set should probably be equivalent to c++ dialect (see --with-cxx-dialect)'))
     help.addArgument('Compilers', '-with-sycl-dialect=<dialect>',nargs.Arg(None, 'auto', 'Dialect under which to compile SYCL sources. If set should probably be equivalent to c++ dialect (see --with-cxx-dialect)'))
@@ -239,7 +248,7 @@ class Configure(config.base.Configure):
                                                  ]]))
       if not found and Configure.isCrayPEWrapper(compiler,log):
         (output, error, status) = config.base.Configure.executeShellCommand(compiler+' --version', log = log)
-        found = any([s in output for s in ['(GCC)']])
+        found = any([s in output for s in ['(GCC)','GNU Fortran','gcc-','g++-']])
       if found:
         if log: log.write('Detected GNU compiler\n')
         return 1
@@ -316,7 +325,7 @@ class Configure(config.base.Configure):
       (output, error, status) = config.base.Configure.executeShellCommand(compiler+' --version', log = log)
       output = output + error
       import re
-      strmatch = re.match('gcc[-0-9]*\s+\(.*\)\s+(\d+)\.(\d+)',output)
+      strmatch = re.match(r'gcc[-0-9]*\s+\(.*\)\s+(\d+)\.(\d+)',output)
       if strmatch:
         VMAJOR,VMINOR = strmatch.groups()
         if (int(VMAJOR),int(VMINOR)) >= (11,0):
@@ -347,7 +356,7 @@ class Configure(config.base.Configure):
       (output, error, status) = config.base.Configure.executeShellCommand(compiler+' --version', log = log)
       output = output + error
       import re
-      strmatch = re.match('GNU Fortran\s+\(.*\)\s+(\d+)\.(\d+)',output)
+      strmatch = re.match(r'GNU Fortran\s+\(.*\)\s+(\d+)\.(\d+)',output)
       if strmatch:
         VMAJOR,VMINOR = strmatch.groups()
         if (int(VMAJOR),int(VMINOR)) >= (4,6):
@@ -363,7 +372,7 @@ class Configure(config.base.Configure):
       (output, error, status) = config.base.Configure.executeShellCommand(compiler+' --version', log = log)
       output = output + error
       import re
-      strmatch = re.match('GNU Fortran\s+\(.*\)\s+(\d+)\.(\d+)',output)
+      strmatch = re.match(r'GNU Fortran\s+\(.*\)\s+(\d+)\.(\d+)',output)
       if strmatch:
         VMAJOR,VMINOR = strmatch.groups()
         if (int(VMAJOR),int(VMINOR)) >= (4,7):
@@ -379,7 +388,7 @@ class Configure(config.base.Configure):
       (output, error, status) = config.base.Configure.executeShellCommand(compiler+' --version', log = log)
       output = output + error
       import re
-      strmatch = re.match('GNU Fortran\s+\(.*\)\s+(\d+)\.(\d+)',output)
+      strmatch = re.match(r'GNU Fortran\s+\(.*\)\s+(\d+)\.(\d+)',output)
       if strmatch:
         VMAJOR,VMINOR = strmatch.groups()
         if (int(VMAJOR),int(VMINOR)) >= (10,0):
@@ -395,7 +404,7 @@ class Configure(config.base.Configure):
       (output, error, status) = config.base.Configure.executeShellCommand(compiler+' --version', log = log)
       output = output + error
       import re
-      strmatch = re.match('GNU Fortran\s+\(.*\)\s+(\d+)\.(\d+)',output)
+      strmatch = re.match(r'GNU Fortran\s+\(.*\)\s+(\d+)\.(\d+)',output)
       if strmatch:
         VMAJOR,VMINOR = strmatch.groups()
         if (int(VMAJOR),int(VMINOR)) >= (8,0):
@@ -549,41 +558,30 @@ class Configure(config.base.Configure):
     except RuntimeError:
       pass
 
-  @staticmethod
-  def isWindows(compiler, log, disambiguate_win32fe = False):
+  @classmethod
+  def isWindows(cls, compiler, log):
     '''Returns true if the compiler is a Windows compiler'''
-    if disambiguate_win32fe:
-      compiler_or_path = str(compiler).split()
-      if len(compiler_or_path) == 1:
-        # compiler was just the bare unqualified name, i.e. 'cl' or 'ifort'
-        compiler = compiler_or_path[0]
-      else:
-        # compiler may be /path/to/petsc/win32fe cl, we need to extract only 'cl' from it
-        last = ''
-        for sub_elem in compiler_or_path:
-          # last entry is the win32fe path, so current must be compiler name
-          if last.casefold().endswith('win32fe'):
-            compiler = sub_elem
-            break
-          last = sub_elem
-    if compiler in {'icl', 'cl', 'bcc32', 'ifl', 'df', 'lib', 'tlib'}:
-      if log: log.write('Detected Windows compiler\n')
-      return 1
-    if compiler in {'ifort','f90'} and Configure.isCygwin(log):
-      if log: log.write('Detected Windows compiler\n')
-      return 1
+    if cls.isCygwin(log):
+      compiler = os.path.basename(compiler)
+      if compiler.startswith('win_'):
+        if log: log.write('Detected Windows compiler\n')
+        return 1
+    if log: log.write('Detected Non-Windows compiler\n')
+    return 0
 
   @classmethod
   def isMSVC(cls, compiler, log):
-    """Returns true if the compiler is MSVC"""
-    if cls.isWindows(compiler,log,disambiguate_win32fe=True):
-      output, error, _ = cls.executeShellCommand(compiler+' --version',checkCommand=noCheck,log=log)
-      output = '\n'.join((output,error)).casefold()
-      if all(sub.casefold() in output for sub in ('microsoft','c/c++ optimizing compiler')):
-        if log:
-          log.write('Detected MSVC\n')
-        return 1
-    return 0
+    """
+    Returns true if the compiler is MSVC. Does not distinguish between raw MSVC and win32fe + MSVC
+    """
+    output, error, _ = cls.executeShellCommand(compiler + ' --version', checkCommand=noCheck, log=log)
+    output           = '\n'.join((output, error)).casefold()
+    found            = all(
+      sub.casefold() in output for sub in ('microsoft', 'c/c++ optimizing compiler')
+    )
+    if log:
+      log.write('Detected MSVC\n' if found else 'Did not detect MSVC\n')
+    return int(found)
 
   @staticmethod
   def isSolarisAR(ar, log):
@@ -630,10 +628,14 @@ class Configure(config.base.Configure):
         if log: log.write('Detected Darwin')
         isDarwin_value = True
         import platform
-        v = tuple([int(a) for a in platform.mac_ver()[0].split('.')])
-        if v >= (10,15,0):
-          if log: log.write('Detected Darwin/MacOSX Catalina OS\n')
-          isDarwinCatalina_value = True
+        try:
+          v = tuple([int(a) for a in platform.mac_ver()[0].split('.')])
+          if v >= (10,15,0):
+            if log: log.write('Detected Darwin/macOS Catalina OS\n')
+            isDarwinCatalina_value = True
+        except:
+          if log: log.write('macOS version detecton failed!\n')
+          pass
       if output.find('freebsd') >= 0:
         if log: log.write('Detected FreeBSD')
         isFreeBSD_value = True
@@ -649,7 +651,7 @@ class Configure(config.base.Configure):
   @staticmethod
   def isCygwin(log):
     '''Returns true if system is Cygwin'''
-    global isUname_value,sCygwin_value
+    global isUname_value,isCygwin_value
     if not isUname_value: config.setCompilers.Configure.isUname(log)
     return isCygwin_value
 
@@ -733,7 +735,9 @@ class Configure(config.base.Configure):
       if flagsArg in self.argDB: setattr(self, flagsArg, self.argDB[flagsArg])
       else: setattr(self, flagsArg, '')
       self.logPrint('Initialized '+flagsArg+' to '+str(getattr(self, flagsArg)))
-    for flagsArg in ['CC_LINKER_FLAGS', 'CXX_LINKER_FLAGS', 'FC_LINKER_FLAGS', 'CUDAC_LINKER_FLAGS', 'HIPC_LINKER_FLAGS', 'SYCLC_LINKER_FLAGS', 'sharedLibraryFlags', 'dynamicLibraryFlags']:
+    # SYCLC_LINKER_FLAGS is init'ed above in the "for language" loop.
+    # FIXME: these linker flags are init'ed as a list, while others are init'ed as a string. Need to make them consistent.
+    for flagsArg in ['CC_LINKER_FLAGS', 'CXX_LINKER_FLAGS', 'FC_LINKER_FLAGS', 'CUDAC_LINKER_FLAGS', 'HIPC_LINKER_FLAGS', 'sharedLibraryFlags', 'dynamicLibraryFlags']:
       if isinstance(self.argDB[flagsArg],str): val = [self.argDB[flagsArg]]
       else: val = self.argDB[flagsArg]
       setattr(self, flagsArg, val)
@@ -773,7 +777,8 @@ class Configure(config.base.Configure):
     isGNUish indicates if the compiler is gnu compliant (i.e. clang).
     -with-<lang>-dialect can take options:
       auto: use highest supported dialect configure can determine
-      [[c|gnu][xx|++]]20: not yet supported
+      [[c|gnu][xx|++]]23: not yet supported
+      [[c|gnu][xx|++]]20: gnu++20 or c++20
       [[c|gnu][xx|++]]17: gnu++17 or c++17
       [[c|gnu][xx|++]]14: gnu++14 or c++14
       [[c|gnu][xx|++]]11: gnu++11 or c++11
@@ -809,6 +814,7 @@ class Configure(config.base.Configure):
         #include <random>
         #include <complex>
         #include <iostream>
+        #include <algorithm>
 
         template<class T> void ignore(const T&) { } // silence unused variable warnings
         class valClass
@@ -859,6 +865,8 @@ class Configure(config.base.Configure):
         std::normal_distribution<double> dist(0,1);
         const double x = dist(mt);
         std::cout << x << ret << std::endl;
+        std::vector<std::unique_ptr<double>> vector;
+        std::sort(vector.begin(), vector.end(), [](std::unique_ptr<double> &a, std::unique_ptr<double> &b) { return *a < *b; });
         """
       )
 
@@ -893,6 +901,7 @@ class Configure(config.base.Configure):
         #include <any>
         #include <optional>
         #include <variant>
+        #include <tuple>
 
         [[nodiscard]] int nodiscardFunc() { return 0; }
         struct S2
@@ -907,6 +916,10 @@ class Configure(config.base.Configure):
           // since c++17: OK: captures the enclosing S2 by copy
           auto lmbd = [=, *this] { std::cout << i << " " << this->var << std::endl; };
           lmbd();
+        }
+        std::tuple<double, int, char> foobar()
+        {
+          return {3.8, 0, 'x'};
         }
         """
       )))
@@ -927,6 +940,60 @@ class Configure(config.base.Configure):
         // static_assert with no message since c++17
         static_assert(std::is_same_v<squareShape,squareShape>);
         auto val = nodiscardFunc();ignore(val);
+        // structured binding
+        const auto [ab, cd, ef] = foobar();
+        """
+      )))
+
+    def includes20():
+      return '\n'.join((includes17(),textwrap.dedent(
+        """
+        // c++20 includes
+        #include <compare>
+        #include <concepts>
+
+        consteval int sqr_cpp20(int n)
+        {
+          return n*n;
+        }
+        constexpr auto r = sqr_cpp20(10);
+        static_assert(r == 100);
+
+        const char *g_cpp20() { return "dynamic initialization"; }
+        constexpr const char *f_cpp20(bool p) { return p ? "constant initializer" : g_cpp20(); }
+        constinit const char *cinit_c = f_cpp20(true); // OK
+
+        // Declaration of the concept "Hashable", which is satisfied by any type 'T'
+        // such that for values 'a' of type 'T', the expression std::hash<T>{}(a)
+        // compiles and its result is convertible to std::size_t
+        template <typename T>
+        concept Hashable = requires(T a)
+        {
+          { std::hash<T>{}(a) } -> std::convertible_to<std::size_t>;
+        };
+
+        struct meow {};
+
+        // Constrained C++20 function template:
+        template <Hashable T>
+        void f_concept(T) {}
+
+        void abbrev_f1(auto); // same as template<class T> void abbrev_f1(T)
+        void abbrev_f4(const std::destructible auto*, std::floating_point auto&); // same as template<C3 T, C4 U> void abbrev_f4(const T*, U&);
+
+        template<>
+        void abbrev_f4<int>(const int*, const double&); // specialization of abbrev_f4<int, const double> (since C++20)
+        """
+      )))
+
+    def body20():
+      return '\n'.join((body17(),textwrap.dedent(
+        """
+        // c++20 body
+        ignore(cinit_c);
+
+        using std::operator""s;
+        f_concept("abc"s);
         """
       )))
 
@@ -977,7 +1044,8 @@ class Configure(config.base.Configure):
       Dialect(num='11',includes=includes11(),body=body11()),
       Dialect(num='14',includes=includes14(),body=body14()),
       Dialect(num='17',includes=includes17(),body=body17()),
-      Dialect(num='20',includes=includes17(),body=body17()), # no c++20 checks yet
+      Dialect(num='20',includes=includes20(),body=body20()),
+      Dialect(num='23',includes=includes20(),body=body20()) # no c++23 checks yet
     )
 
     # search compiler flags to see if user has set the c++ standard from there
@@ -1020,8 +1088,10 @@ class Configure(config.base.Configure):
       # if we have done this before, then previouslySetExplicitly holds the previous
       # explicit value
       explicit      = previouslySetExplicitly if processedBefore else True
-      if withLangDialect.endswith('20'):
-        mess = 'C++20 is not yet fully supported, PETSc only tests up to C++{maxver}. Remove -std=[...] from compiler flags and/or omit --{opt}=[...] from configure to have PETSc automatically detect the most appropriate flag for you'.format(maxver=default_cxx_dialect_ranges()[1],opt=configureArg)
+      max_sup_ver   = default_cxx_dialect_ranges()[1].replace('c++','')
+      max_unsup_ver = str(int(max_sup_ver) + 3)
+      if withLangDialect.endswith(max_unsup_ver):
+        mess = 'C++{unsup_ver} is not yet fully supported, PETSc only tests up to C++{maxver}. Remove -std=[...] from compiler flags and/or omit --{opt}=[...] from configure to have PETSc automatically detect the most appropriate flag for you'.format(unsup_ver=max_unsup_ver,maxver=max_sup_ver,opt=configureArg)
         self.logPrintWarning(mess)
 
     minDialect,maxDialect = 0,-1
@@ -1031,15 +1101,21 @@ class Configure(config.base.Configure):
         break
 
     if maxDialect == -1:
-      ver    = int(withLangDialect[-2:])
+      try:
+        ver = int(withLangDialect[-2:])
+      except ValueError:
+        ver = 9e9
       minver = int(dialects[0].num)
-      if ver == 89 or ver < minver:
-        mess = 'PETSc requires at least C++{}, how old is your compiler?'.format(minver)
-        # throw RTE (which is meant to be caught) as this indicates compiler is too old
-        raise RuntimeError(mess)
-      mess = 'Unknown C++ dialect: {val}'.format(val=withLangDialect)
-      # throw CSE (which is NOT meant to be caught) as this is an unhandled exception
-      raise ConfigureSetupError(mess)
+      if ver in {89, 98} or ver < minver:
+        mess = 'PETSc requires at least C++{} when using {}'.format(minver, language.replace('x', '+'))
+      else:
+        mess = 'Unknown C++ dialect: {}'.format(withLangDialect)
+      if explicit:
+        mess += ' (you have explicitly requested --{}={}). Remove this flag and let configure choose the most appropriate flag for you.'.format(configureArg, withLangDialect)
+        # If the user explicitly requested the dialect throw CSE (which is NOT meant to be
+        # caught) as this indicates a user error
+        raise ConfigureSetupError(mess)
+      raise RuntimeError(mess)
     self.logPrint('checkCxxDialect: dialect {dlct} has been {expl} selected for {lang}'.format(dlct=withLangDialect,expl='EXPLICITLY' if explicit else 'NOT explicitly',lang=LANG))
 
     def checkPackageRange(packageRanges,kind,dialectIdx):
@@ -1122,23 +1198,38 @@ class Configure(config.base.Configure):
               ),
               '' # for extra newline at the end
             ))
-            if flag.endswith(dialects[0].num):
-              # it's the compilers fault we can't try the next dialect
-              dialectNum = dialects[0].num
-            elif withLangDialect in ('NONE','AUTO'):
-              # it's a packages fault we can't try the next dialect
-              packDialects   = self.cxxDialectPackageRanges[0]
-              minPackDialect = max(packDialects.keys())
-              base_mess = '\n'.join((
-                'Using {lang} dialect C++{ver} as lower bound due to package(s):',
-                '\n'.join('- '+s for s in packDialects[minPackDialect]),
-                ' '.join(('But',base_mess))
-              ))
-              dialectNum = minPackDiaect[-2:]
+            if withLangDialect in ('NONE','AUTO'):
+              packDialects = self.cxxDialectPackageRanges[0]
+              if packDialects.keys():
+                # it's a packages fault we can't try the next dialect
+                minPackDialect = max(packDialects.keys())
+                base_mess      = '\n'.join((
+                  'Using {lang} dialect C++{ver} as lower bound due to package(s):',
+                  '\n'.join('- '+s for s in packDialects[minPackDialect]),
+                  ' '.join(('But',base_mess))
+                ))
+                dialectNum = minPackDialect[-2:]
+                explicit   = True
+              else:
+                assert flag.endswith(dialects[0].num)
+                # it's the compilers fault we can't try the next dialect
+                dialectNum = dialects[0].num
             else:
               # if nothing else then it's because the user requested a particular version
               dialectNum = dialectNumStr
-            mess = base_mess.format(lang=language.replace('x','+'),compiler=compiler,ver=dialectNum)
+              base_mess  = '\n'.join((
+                base_mess,
+                'Note, you have explicitly requested --{}={}. If you do not need C++{ver}, then remove this flag and let configure choose the most appropriate flag for you.'
+                '\nIf you DO need it, then (assuming your compiler isn\'t just old) try consulting your compilers user manual. There may be other flags (e.g. \'--gcc-toolchain\') you must pass to enable C++{ver}'.format(configureArg, withLangDialect, ver='{ver}')
+              ))
+            if dialectNum.isdigit():
+              ver = dialectNum
+            else:
+              ver = dialectNum.casefold().replace('c++', '').replace('gnu++', '')
+            mess = base_mess.format(lang=language.replace('x','+'),compiler=compiler,ver=ver)
+            if explicit:
+              # if the user explicitly set the version, then this is a hard error
+              raise ConfigureSetupError(mess)
             raise RuntimeError(mess)
         else:
           # success
@@ -1180,6 +1271,7 @@ class Configure(config.base.Configure):
         return
       if not self.checkLink(linkLanguage=linkLanguage,includes=includes,body=body):
         msg = 'Cannot compile/link {} with {}.'.format(language,compiler)
+        msg = '\nIf the above linker messages do not indicate failure of the compiler you can rerun with the option --ignoreLinkOutput=1'
         raise RuntimeError(msg)
       oldlibs     = self.LIBS
       compilerObj = self.framework.getCompilerObject(linkLanguage if linkLanguage else language)
@@ -1263,20 +1355,14 @@ class Configure(config.base.Configure):
     if hasattr(self, 'CC'):
       yield self.CC
       if self.argDB['download-mpich']: mesg ='with downloaded MPICH'
-      elif self.argDB['download-openmpi']: mesg ='with downloaded OpenMPI'
+      elif self.argDB['download-openmpi']: mesg ='with downloaded Open MPI'
       else: mesg = ''
       raise RuntimeError('Error '+mesg+': '+self.mesg)
     elif 'with-cc' in self.argDB:
-      if self.isWindows(self.argDB['with-cc'], self.log):
-        yield 'win32fe '+self.argDB['with-cc']
-      else:
-        yield self.argDB['with-cc']
+      yield self.argDB['with-cc']
       raise RuntimeError('C compiler you provided with -with-cc='+self.argDB['with-cc']+' cannot be found or does not work.'+'\n'+self.mesg)
     elif 'CC' in self.argDB:
-      if self.isWindows(self.argDB['CC'], self.log):
-        yield 'win32fe '+self.argDB['CC']
-      else:
-        yield self.argDB['CC']
+      yield self.argDB['CC']
       raise RuntimeError('C compiler you provided with -CC='+self.argDB['CC']+' cannot be found or does not work.'+'\n'+self.mesg)
     elif self.useMPICompilers() and 'with-mpi-dir' in self.argDB and os.path.isdir(os.path.join(self.argDB['with-mpi-dir'], 'bin')):
       self.usedMPICompilers = 1
@@ -1323,10 +1409,10 @@ class Configure(config.base.Configure):
       yield 'icc'
       yield 'cc'
       yield 'xlc'
-      yield 'win32fe icl'
-      yield 'win32fe cl'
+      path = os.path.join(os.getcwd(),'lib','petsc','win32fe','bin')
+      yield os.path.join(path,'win_icl')
+      yield os.path.join(path,'win_cl')
       yield 'pgcc'
-      yield 'win32fe bcc32'
     return
 
   def showMPIWrapper(self,compiler):
@@ -1358,10 +1444,14 @@ class Configure(config.base.Configure):
     if not hasattr(self, 'CC'):
       raise RuntimeError('Could not locate a functional C compiler')
     try:
-      self.executeShellCommand(self.CC+' --version', log = self.log)
+      (output,error,status) = self.executeShellCommand(self.CC+' --version', log = self.log)
     except:
       pass
-    (output, error, status) = config.base.Configure.executeShellCommand(compiler+' -v | head -n 20', log = self.log)
+    else:
+      if self.isDarwin(self.log) and self.isARM(self.log) and output.find('x86_64-apple-darwin') > -1:
+        raise RuntimeError('Running on a macOS ARM system but your compilers are configured for Intel processors\n' + output + '\n')
+
+    (output, error, status) = config.base.Configure.executeShellCommand(self.CC+' -v | head -n 20', log = self.log)
     output = output + error
     if '(gcc version 4.8.5 compatibility)' in output or re.match('^Selected GCC installation:.*4.8.5$', output):
        self.logPrintWarning('Intel compiler being used with gcc 4.8.5 compatibility, failures may occur. Recommend having a newer gcc version in your path.')
@@ -1415,6 +1505,7 @@ class Configure(config.base.Configure):
       yield 'nvcc'
       yield os.path.join('/Developer','NVIDIA','CUDA-6.5','bin','nvcc')
       yield os.path.join('/usr','local','cuda','bin','nvcc')
+      yield 'clang'
     return
 
   def checkCUDACompiler(self):
@@ -1425,15 +1516,7 @@ class Configure(config.base.Configure):
         if self.getExecutable(compiler, resultName = 'CUDAC'):
           self.checkCompiler('CUDA')
           # Put version info into the log
-          compilerVersion = self.executeShellCommand(self.CUDAC+' --version', log = self.log)
-          compilerVersion = compilerVersion[0]
-          compilerVersion = compilerVersion.split()
-          i = 0
-          for word in compilerVersion:
-            i = i+1
-            if word == 'release':
-              break
-          self.compilerVersionCUDA = compilerVersion[i].strip(',')
+          self.executeShellCommand(self.CUDAC+' --version', log = self.log)
           break
       except RuntimeError as e:
         self.mesg = str(e)
@@ -1495,22 +1578,11 @@ class Configure(config.base.Configure):
         if self.getExecutable(compiler, resultName = 'HIPC'):
           self.checkCompiler('HIP')
           # Put version info into the log
-          compilerVersion = self.executeShellCommand(self.HIPC+' --version', log = self.log)
-          if 'nvcc' in compilerVersion and 'NVIDIA' in compilerVersion:
-            hipLine = compilerVersion.split('\n')[0]
-            self.compilerVersionHIP = hipLine.split(':')[1]
-            nvccReleaseLine = compilerVersion.split('\n')[-1]
-            import re
-            if 'release' in nvccReleaseLine:
-              self.compilerVersionCUDA = re.split('release',nvccReleaseLine)[1]
-            else:
-              raise RuntimeError('Error: Could not determine CUDA version from HIPC')
-          else:
-            self.compilerVersionHIP = compilerVersion[0]
+          self.executeShellCommand(self.HIPC+' --version', log = self.log)
           break
       except RuntimeError as e:
         self.mesg = str(e)
-        self.logPrint('HERE Error testing HIP compiler: '+str(e))
+        self.logPrint('Error testing HIP compiler: '+str(e))
         self.delMakeMacro('HIPC')
         del self.HIPC
     return
@@ -1565,9 +1637,7 @@ class Configure(config.base.Configure):
         if self.getExecutable(compiler, resultName = 'SYCLC'):
           self.checkCompiler('SYCL')
           # Put version info into the log
-          compilerVersion = self.executeShellCommand(self.SYCLC+' --version', log = self.log)
-          compilerVersion = compilerVersion[0]
-          compilerVersoin = compilerVersion.partition('Compiler')[-1].strip()
+          self.executeShellCommand(self.SYCLC+' --version', log = self.log)
           break
       except RuntimeError as e:
         self.mesg = str(e)
@@ -1606,7 +1676,7 @@ class Configure(config.base.Configure):
     if hasattr(self, 'CXX'):
       yield self.CXX
       if self.argDB['download-mpich']: mesg ='with downloaded MPICH'
-      elif self.argDB['download-openmpi']: mesg ='with downloaded OpenMPI'
+      elif self.argDB['download-openmpi']: mesg ='with downloaded Open MPI'
       else: mesg = ''
       raise RuntimeError('Error '+mesg+': '+self.mesg)
     elif 'with-c++' in self.argDB:
@@ -1616,16 +1686,10 @@ class Configure(config.base.Configure):
 
     if 'with-cxx' in self.argDB:
       if self.argDB['with-cxx'] == 'gcc': raise RuntimeError('Cannot use C compiler gcc as the C++ compiler passed in with --with-cxx')
-      if self.isWindows(self.argDB['with-cxx'], self.log):
-        yield 'win32fe '+self.argDB['with-cxx']
-      else:
-        yield self.argDB['with-cxx']
+      yield self.argDB['with-cxx']
       raise RuntimeError('C++ compiler you provided with -with-cxx='+self.argDB['with-cxx']+' cannot be found or does not work.'+'\n'+self.mesg)
     elif 'CXX' in self.argDB:
-      if self.isWindows(self.argDB['CXX'], self.log):
-        yield 'win32fe '+self.argDB['CXX']
-      else:
-        yield self.argDB['CXX']
+      yield self.argDB['CXX']
       raise RuntimeError('C++ compiler you provided with -CXX='+self.argDB['CXX']+' cannot be found or does not work.'+'\n'+self.mesg)
     elif self.usedMPICompilers and 'with-mpi-dir' in self.argDB and os.path.isdir(os.path.join(self.argDB['with-mpi-dir'], 'bin')):
       yield os.path.join(self.argDB['with-mpi-dir'], 'bin', 'mpinc++')
@@ -1633,7 +1697,8 @@ class Configure(config.base.Configure):
       yield os.path.join(self.argDB['with-mpi-dir'], 'bin', 'mpicxx')
       yield os.path.join(self.argDB['with-mpi-dir'], 'bin', 'hcp')
       yield os.path.join(self.argDB['with-mpi-dir'], 'bin', 'mpic++')
-      yield os.path.join(self.argDB['with-mpi-dir'], 'bin', 'mpiCC')
+      if not Configure.isDarwin(self.log):
+        yield os.path.join(self.argDB['with-mpi-dir'], 'bin', 'mpiCC')
       yield os.path.join(self.argDB['with-mpi-dir'], 'bin', 'mpCC_r')
       raise RuntimeError('bin/<mpiCC,mpicxx,hcp,mpCC_r> you provided with -with-mpi-dir='+self.argDB['with-mpi-dir']+' cannot be found or does not work. See https://petsc.org/release/faq/#invalid-mpi-compilers')
     else:
@@ -1651,16 +1716,17 @@ class Configure(config.base.Configure):
         yield 'mpicxx'
         yield 'mpiicpc'
         yield 'mpCC_r'
-        yield 'mpiCC'
+        if not Configure.isDarwin(self.log):
+          yield 'mpiCC'
         yield 'mpic++'
         yield 'mpCC'
         yield 'mpxlC'
       else:
         #attempt to match c++ compiler with c compiler
-        if self.CC.find('win32fe cl') >= 0:
-          yield 'win32fe cl'
-        elif self.CC.find('win32fe icl') >= 0:
-          yield 'win32fe icl'
+        if self.CC.find('win_cl') >= 0:
+          yield self.CC
+        elif self.CC.find('win_icl') >= 0:
+          yield self.CC
         elif self.CC == 'gcc':
           yield 'g++'
         elif self.CC == 'clang':
@@ -1680,11 +1746,11 @@ class Configure(config.base.Configure):
         yield 'cc++'
         yield 'xlC'
         yield 'ccpc'
-        yield 'win32fe icl'
-        yield 'win32fe cl'
+        path = os.path.join(os.getcwd(),'lib','petsc','win32fe','bin')
+        yield os.path.join(path,'win_icl')
+        yield os.path.join(path,'win_cl')
         yield 'pgCC'
         yield 'CC'
-        yield 'win32fe bcc32'
     return
 
   def checkCxxCompiler(self):
@@ -1749,20 +1815,14 @@ class Configure(config.base.Configure):
     if hasattr(self, 'FC'):
       yield self.FC
       if self.argDB['download-mpich']: mesg ='with downloaded MPICH'
-      elif self.argDB['download-openmpi']: mesg ='with downloaded OpenMPI'
+      elif self.argDB['download-openmpi']: mesg ='with downloaded Open MPI'
       else: mesg = ''
       raise RuntimeError('Error '+mesg+': '+self.mesg)
     elif 'with-fc' in self.argDB:
-      if self.isWindows(self.argDB['with-fc'], self.log):
-        yield 'win32fe '+self.argDB['with-fc']
-      else:
-        yield self.argDB['with-fc']
+      yield self.argDB['with-fc']
       raise RuntimeError('Fortran compiler you provided with --with-fc='+self.argDB['with-fc']+' cannot be found or does not work.'+'\n'+self.mesg)
     elif 'FC' in self.argDB:
-      if self.isWindows(self.argDB['FC'], self.log):
-        yield 'win32fe '+self.argDB['FC']
-      else:
-        yield self.argDB['FC']
+      yield self.argDB['FC']
       yield self.argDB['FC']
       raise RuntimeError('Fortran compiler you provided with -FC='+self.argDB['FC']+' cannot be found or does not work.'+'\n'+self.mesg)
     elif self.usedMPICompilers and 'with-mpi-dir' in self.argDB and os.path.isdir(os.path.join(self.argDB['with-mpi-dir'], 'bin')):
@@ -1793,6 +1853,7 @@ class Configure(config.base.Configure):
         yield 'mpxlf'
         yield 'mpf90'
       else:
+        path = os.path.join(os.getcwd(),'lib','petsc','win32fe','bin')
         #attempt to match fortran compiler with c compiler
         if self.CC == 'gcc':
           yield 'gfortran'
@@ -1805,19 +1866,15 @@ class Configure(config.base.Configure):
           yield 'xlf'
         elif self.CC == 'ncc':
           yield 'nfort'
-        elif self.CC.find('win32fe cl') >= 0:
-          yield 'win32fe f90'
-          yield 'win32fe ifc'
-        elif self.CC.find('win32fe icl') >= 0:
-          yield 'win32fe ifc'
+        elif self.CC.find('win_icl') >= 0:
+          yield os.path.join(path,'win_ifort')
         yield 'gfortran'
         yield 'g95'
         yield 'xlf90'
         yield 'xlf'
         yield 'f90'
         yield 'lf95'
-        yield 'win32fe ifort'
-        yield 'win32fe ifl'
+        yield os.path.join(path,'win_ifort')
         yield 'ifort'
         yield 'ifc'
         yield 'pgf90'
@@ -1892,7 +1949,7 @@ class Configure(config.base.Configure):
 
   def containsInvalidFlag(self, output):
     '''If the output contains evidence that an invalid flag was used, return True'''
-    substrings = ('unrecognized command line option','unrecognised command line option',
+    substrings = ('unknown argument', 'ignoring unsupported linker flag', 'unrecognized command line option','unrecognised command line option',
                   'unrecognized option','unrecognised option','not recognized',
                   'not recognised','unknown option','unknown warning option',
                   'unknown flag','unknown switch','ignoring option','ignored','argument unused',
@@ -1900,7 +1957,7 @@ class Configure(config.base.Configure):
                   'invalid option','invalid suboption','bad ',' option','petsc error',
                   'unbekannte option','linker input file unused because linking not done',
                   'warning: // comments are not allowed in this language',
-                  'no se reconoce la opci','non reconnue','warning: unsupported linker arg:')
+                  'no se reconoce la opci','non reconnue','warning: unsupported linker arg:','ignoring unknown option')
     outlo = output.lower()
     return any(sub.lower() in outlo for sub in substrings)
 
@@ -1938,7 +1995,7 @@ class Configure(config.base.Configure):
     raise RuntimeError('Bad compiler flag: '+flag)
 
   @contextlib.contextmanager
-  def extraCompilerFlags(self, extraFlags, lang = None):
+  def extraCompilerFlags(self, extraFlags, lang = None, **kwargs):
     assert isinstance(extraFlags,(list,tuple)), "extraFlags must be either a list or tuple"
     if lang:
       self.pushLanguage(lang)
@@ -1948,7 +2005,7 @@ class Configure(config.base.Configure):
     try:
       for i,flag in enumerate(extraFlags):
         try:
-          self.addCompilerFlag(flag)
+          self.addCompilerFlag(flag, **kwargs)
         except RuntimeError:
           skipFlags.append((i,flag))
       yield skipFlags
@@ -1978,6 +2035,7 @@ class Configure(config.base.Configure):
   def generatePICGuesses(self):
     if self.language[-1] == 'CUDA':
       yield '-Xcompiler -fPIC'
+      yield '-fPIC'
       return
     if config.setCompilers.Configure.isGNU(self.getCompiler(), self.log):
       PICFlags = ['-fPIC']
@@ -2013,7 +2071,7 @@ class Configure(config.base.Configure):
       # this is a flaw in configure; it is a legitimate use case where PETSc is built with PIC flags but not shared libraries
       # to fix it the capability to build shared libraries must be enabled in configure if --with-pic=true even if shared libraries are off and this
       # test must use that capability instead of using the default shared library build in that case which is static libraries
-      raise RuntimeError("Cannot determine compiler PIC flags if shared libraries is turned off\nEither run using --with-shared-libraries or --with-pic=0 and supply the compiler PIC flag via CFLAGS, CXXXFLAGS, and FCFLAGS\n")
+      raise RuntimeError("Cannot determine compiler PIC flags if shared libraries is turned off\nEither run using --with-shared-libraries or --with-pic=0 and supply the compiler PIC flag via CFLAGS, CXXFLAGS, and FCFLAGS\n")
     if self.sharedLibraries and self.mainLanguage == 'C': languages = []
     else: languages = ['C']
     langMap = {'FC':'FC','Cxx':'CXX','CUDA':'CUDAC','HIP':'HIPC','SYCL':'SYCLC'}
@@ -2052,7 +2110,7 @@ class Configure(config.base.Configure):
     return
 
   def checkLargeFileIO(self):
-    '''check for large file support with 64bit offset'''
+    '''check for large file support with 64-bit offset'''
     if not self.argDB['with-large-file-io']:
       return
     languages = ['C']
@@ -2077,12 +2135,8 @@ class Configure(config.base.Configure):
       flag = self.argDB['AR_FLAGS']
     elif prog.endswith('ar'):
       flag = 'cr'
-    elif prog == 'win32fe':
-      args = os.path.basename(archiver).split(' ')
-      if 'lib' in args:
-        flag = '-a'
-      elif 'tlib' in args:
-        flag = '-a -P512'
+    elif os.path.basename(archiver).endswith('_lib'):
+      flag = '-a'
     if prog.endswith('ar') and not (self.isSolarisAR(prog, self.log) or self.isAIXAR(prog, self.log)):
       self.FAST_AR_FLAGS = 'Scq'
     else:
@@ -2093,16 +2147,10 @@ class Configure(config.base.Configure):
   def generateArchiverGuesses(self):
     defaultAr = None
     if 'with-ar' in self.argDB:
-      if self.isWindows(self.argDB['with-ar'], self.log):
-        defaultAr = 'win32fe '+self.argDB['with-ar']
-      else:
-        defaultAr = self.argDB['with-ar']
+      defaultAr = self.argDB['with-ar']
     envAr = None
     if 'AR' in self.argDB:
-      if self.isWindows(self.argDB['AR'], self.log):
-        envAr = 'win32fe '+self.argDB['AR']
-      else:
-        envAr = self.argDB['AR']
+      envAr = self.argDB['AR']
     defaultRanlib = None
     if 'with-ranlib' in self.argDB:
       defaultRanlib = self.argDB['with-ranlib']
@@ -2111,16 +2159,16 @@ class Configure(config.base.Configure):
       envRanlib = self.argDB['RANLIB']
     if defaultAr and defaultRanlib:
       yield(defaultAr,self.getArchiverFlags(defaultAr),defaultRanlib)
-      raise RuntimeError('The archiver set --with-ar="'+defaultAr+'" is incompatible with the ranlib set --with-ranlib="'+defaultRanlib+'".')
+      raise RuntimeError('The archiver set --with-ar="'+defaultAr+'" is broken or incompatible with the ranlib set --with-ranlib="'+defaultRanlib+'".')
     if defaultAr and envRanlib:
       yield(defaultAr,self.getArchiverFlags(defaultAr),envRanlib)
-      raise RuntimeError('The archiver set --with-ar="'+defaultAr+'" is incompatible with the ranlib set (perhaps in your environment) -RANLIB="'+envRanlib+'".')
+      raise RuntimeError('The archiver set --with-ar="'+defaultAr+'" is broken or incompatible with the ranlib set (perhaps in your environment) -RANLIB="'+envRanlib+'".')
     if envAr and defaultRanlib:
       yield(envAr,self.getArchiverFlags(envAr),defaultRanlib)
-      raise RuntimeError('The archiver set --AR="'+envAr+'" is incompatible with the ranlib set --with-ranlib="'+defaultRanlib+'".')
+      raise RuntimeError('The archiver set --AR="'+envAr+'" is broken or incompatible with the ranlib set --with-ranlib="'+defaultRanlib+'".')
     if envAr and envRanlib:
       yield(envAr,self.getArchiverFlags(envAr),envRanlib)
-      raise RuntimeError('The archiver set --AR="'+envAr+'" is incompatible with the ranlib set (perhaps in your environment) -RANLIB="'+envRanlib+'".')
+      raise RuntimeError('The archiver set --AR="'+envAr+'" is broken or incompatible with the ranlib set (perhaps in your environment) -RANLIB="'+envRanlib+'".')
     if defaultAr:
       yield (defaultAr,self.getArchiverFlags(defaultAr),'ranlib')
       yield (defaultAr,self.getArchiverFlags(defaultAr),'true')
@@ -2131,23 +2179,27 @@ class Configure(config.base.Configure):
       raise RuntimeError('You set a value for -AR="'+envAr+'" (perhaps in your environment), but '+envAr+' cannot be used\n')
     if defaultRanlib:
       yield ('ar',self.getArchiverFlags('ar'),defaultRanlib)
-      yield ('win32fe tlib',self.getArchiverFlags('win32fe tlib'),defaultRanlib)
-      yield ('win32fe lib',self.getArchiverFlags('win32fe lib'),defaultRanlib)
+      path = os.path.join(os.getcwd(),'lib','petsc','bin')
+      war  = os.path.join(path,'win_lib')
+      yield (war,self.getArchiverFlags(war),defaultRanlib)
       raise RuntimeError('You set --with-ranlib="'+defaultRanlib+'", but '+defaultRanlib+' cannot be used\n')
     if envRanlib:
       yield ('ar',self.getArchiverFlags('ar'),envRanlib)
-      yield ('win32fe tlib',self.getArchiverFlags('win32fe tlib'),envRanlib)
-      yield ('win32fe lib',self.getArchiverFlags('win32fe lib'),envRanlib)
+      path = os.path.join(os.getcwd(),'lib','petsc','bin')
+      war  = os.path.join(path,'win_lib')
+      yield (war,self.getArchiverFlags('war'),envRanlib)
       raise RuntimeError('You set -RANLIB="'+envRanlib+'" (perhaps in your environment), but '+defaultRanlib+' cannot be used\n')
+    if config.setCompilers.Configure.isWindows(self.getCompiler(), self.log):
+      path = os.path.join(os.getcwd(),'lib','petsc','bin')
+      war  = os.path.join(path,'win_lib')
+      yield (war,self.getArchiverFlags(war),'true')
     yield ('ar',self.getArchiverFlags('ar'),'ranlib -c')
     yield ('ar',self.getArchiverFlags('ar'),'ranlib')
     yield ('ar',self.getArchiverFlags('ar'),'true')
-    # IBM with 64 bit pointers
+    # IBM with 64-bit pointers
     yield ('ar','-X64 '+self.getArchiverFlags('ar'),'ranlib -c')
     yield ('ar','-X64 '+self.getArchiverFlags('ar'),'ranlib')
     yield ('ar','-X64 '+self.getArchiverFlags('ar'),'true')
-    yield ('win32fe tlib',self.getArchiverFlags('win32fe tlib'),'true')
-    yield ('win32fe lib',self.getArchiverFlags('win32fe lib'),'true')
     return
 
   def checkArchiver(self):
@@ -2160,7 +2212,7 @@ class Configure(config.base.Configure):
         error = error.splitlines()
         error = [s for s in error if not (s.find('unsupported GNU_PROPERTY_TYPE') >= 0 and s.find('warning:') >= 0)]
         error = [s for s in error if s.find("xiar: executing 'ar'") < 0]
-        if error: '\n'.join(error)
+        if error: error = '\n'.join(error)
         else: error = ''
       if error or status:
         self.logError('archiver', status, output, error)
@@ -2204,12 +2256,15 @@ class Configure(config.base.Configure):
           else:
             os.remove(arcWindows)
             break
-    else:
-      if os.path.isfile(objName):
-        os.remove(objName)
-      self.LIBS = oldLibs
-      self.popLanguage()
-      raise RuntimeError('Could not find a suitable archiver.  Use --with-ar to specify an archiver.')
+      else:
+        if os.path.isfile(objName):
+          os.remove(objName)
+        self.LIBS = oldLibs
+        self.popLanguage()
+        if 'with-ar' in self.argDB:
+          raise RuntimeError('Archiver set with --with-ar='+self.argDB['with-ar']+' does not exist')
+        else:
+          raise RuntimeError('Could not find a suitable archiver.  Use --with-ar to specify an archiver.')
     self.AR_FLAGS      = arflags
     self.AR_LIB_SUFFIX = arext
     self.framework.addMakeMacro('AR_FLAGS', self.AR_FLAGS)
@@ -2266,10 +2321,10 @@ class Configure(config.base.Configure):
       yield (self.argDB['LD_SHARED'], [], 'so')
     if Configure.isDarwin(self.log):
       if 'with-shared-ld' in self.argDB:
-        yield (self.argDB['with-shared-ld'], ['-dynamiclib -single_module', '-undefined dynamic_lookup', '-multiply_defined suppress', '-no_compact_unwind'], 'dylib')
+        yield (self.argDB['with-shared-ld'], ['-dynamiclib', '-undefined dynamic_lookup', '-no_compact_unwind'], 'dylib')
       if hasattr(self, 'CXX') and self.mainLanguage == 'Cxx':
-        yield (self.CXX, ['-dynamiclib -single_module', '-undefined dynamic_lookup', '-multiply_defined suppress', '-no_compact_unwind'], 'dylib')
-      yield (self.CC, ['-dynamiclib -single_module', '-undefined dynamic_lookup', '-multiply_defined suppress', '-no_compact_unwind'], 'dylib')
+        yield (self.CXX, ['-dynamiclib', '-undefined dynamic_lookup', '-no_compact_unwind'], 'dylib')
+      yield (self.CC, ['-dynamiclib', '-undefined dynamic_lookup', '-no_compact_unwind'], 'dylib')
     if hasattr(self, 'CXX') and self.mainLanguage == 'Cxx':
       # C++ compiler default
       yield (self.CXX, ['-qmkshrobj'], 'so')
@@ -2346,10 +2401,10 @@ class Configure(config.base.Configure):
         if self.sharedLibraries: break
         self.delMakeMacro('LD_SHARED')
         del self.LD_SHARED
-        del self.sharedLinker
+        if hasattr(self,'sharedLinker'): del self.sharedLinker
     return
 
-  def checkLinkerFlag(self, flag):
+  def checkLinkerFlag(self, flag, filterAlways = 0):
     '''Determine whether the linker accepts the given flag'''
     flagsArg = self.getLinkerFlagsArg()
     oldFlags = getattr(self, flagsArg)
@@ -2359,7 +2414,7 @@ class Configure(config.base.Configure):
     if status:
       valid = 0
       self.logPrint('Rejecting linker flag '+flag+' due to nonzero status from link')
-    output = self.filterLinkOutput(output)
+    output = self.filterLinkOutput(output, filterAlways)
     if self.containsInvalidFlag(output):
       valid = 0
       self.logPrint('Rejecting '+self.language[-1]+' linker flag '+flag+' due to \n'+output)
@@ -2387,8 +2442,8 @@ class Configure(config.base.Configure):
       languages.append('FC')
     for language in languages:
       self.pushLanguage(language)
-      for testFlag in ['-Wl,-bind_at_load','-Wl,-multiply_defined,suppress', '-Wl,-multiply_defined -Wl,suppress', '-Wl,-commons,use_dylibs', '-Wl,-search_paths_first', '-Wl,-no_compact_unwind']:
-        if self.checkLinkerFlag(testFlag):
+      for testFlag in ['-Wl,-ld_classic', '-Wl,-bind_at_load', '-Wl,-commons,use_dylibs', '-Wl,-search_paths_first', '-Wl,-no_compact_unwind']:
+        if self.checkLinkerFlag(testFlag, filterAlways=1):
           # expand to CC_LINKER_FLAGS or CXX_LINKER_FLAGS or FC_LINKER_FLAGS
           linker_flag_var = langMap[language]+'_LINKER_FLAGS'
           val = getattr(self,linker_flag_var)
@@ -2486,10 +2541,10 @@ class Configure(config.base.Configure):
     # Mac OSX
     if Configure.isDarwin(self.log):
       if 'with-dynamic-ld' in self.argDB:
-        yield (self.argDB['with-dynamic-ld'], ['-dynamiclib -single_module -undefined dynamic_lookup -multiply_defined suppress'], 'dylib')
+        yield (self.argDB['with-dynamic-ld'], ['-dynamiclib -undefined dynamic_lookup'], 'dylib')
       if hasattr(self, 'CXX') and self.mainLanguage == 'Cxx':
-        yield (self.CXX, ['-dynamiclib -single_module -undefined dynamic_lookup -multiply_defined suppress'], 'dylib')
-      yield (self.CC, ['-dynamiclib -single_module -undefined dynamic_lookup -multiply_defined suppress'], 'dylib')
+        yield (self.CXX, ['-dynamiclib -undefined dynamic_lookup'], 'dylib')
+      yield (self.CC, ['-dynamiclib -undefined dynamic_lookup'], 'dylib')
     # Shared default
     if hasattr(self, 'sharedLinker'):
       yield (self.sharedLinker, self.sharedLibraryFlags, 'so')
@@ -2507,8 +2562,8 @@ class Configure(config.base.Configure):
       self.logPrint('Dynamic loading disabled since dlfcn.h was missing')
       return
     self.libraries.saveLog()
-    if not self.libraries.add('dl', ['dlopen', 'dlsym', 'dlclose']):
-      if not self.libraries.check('', ['dlopen', 'dlsym', 'dlclose']):
+    if not self.libraries.check('', ['dlopen', 'dlsym', 'dlclose']):
+      if not self.libraries.add('dl', ['dlopen', 'dlsym', 'dlclose']):
         self.logWrite(self.libraries.restoreLog())
         self.logPrint('Dynamic linking disabled since functions dlopen(), dlsym(), and dlclose() were not found')
         return
@@ -2642,7 +2697,7 @@ if (dlclose(handle)) {
     return
 
   def requireMpiLdPath(self):
-    '''OpenMPI wrappers require LD_LIBRARY_PATH set'''
+    '''Open MPI wrappers require LD_LIBRARY_PATH set'''
     if 'with-mpi-dir' in self.argDB:
       libdir = os.path.join(self.argDB['with-mpi-dir'], 'lib')
       if os.path.exists(os.path.join(libdir,'libopen-rte.so')):
@@ -2658,7 +2713,7 @@ if (dlclose(handle)) {
       if envVal in os.environ:
         msg = 'Found environment variable: %s=%s. ' % (envVal, os.environ[envVal])
         if envVal in self.framework.clArgDB or (envVal in ignoreEnvCompilers and 'with-'+envVal.lower() in self.framework.clArgDB):
-          self.logPrintWarning(msg+'Ignoring it, since its also set on command line')
+          self.logPrintWarning(msg+"Ignoring it, since it's also set on command line")
           del os.environ[envVal]
         elif self.argDB['with-environment-variables']:
           self.logPrintWarning(msg+'Using it! Use "./configure --disable-environment-variables" to NOT use the environmental variables')
@@ -2710,21 +2765,22 @@ if (dlclose(handle)) {
     self.executeTest(self.checkMPICompilerOverride)
     self.executeTest(self.requireMpiLdPath)
     self.executeTest(self.checkInitialFlags)
+    if hasattr(self.framework,'conda_active'):
+      self.framework.additional_error_message = 'Conda may be causing this compiling/linking problem, consider turning off Conda.'
     self.executeTest(self.checkCCompiler)
     self.executeTest(self.checkCPreprocessor)
 
-    def compilerIsDisabledFromOptions(compiler):
-      """Return True if compiler is disabled via configure options (and delete it from the argdb), False otherwise"""
-      disabled = self.argDB.get('with-'+compiler.lower()) == '0'
-      if disabled:
-        COMPILER = compiler.upper()
-        if COMPILER in self.argDB:
-          del self.argDB[COMPILER]
-      return disabled
-
     for LANG in ['Cxx','CUDA','HIP','SYCL']:
       compilerName = LANG.upper() if LANG == 'Cxx' else LANG+'C'
-      if not compilerIsDisabledFromOptions(compilerName):
+      argdbName    = 'with-' + compilerName.casefold()
+      argdbVal     = self.argDB.get(argdbName)
+      if argdbVal == '0':
+        # compiler was explicitly disabled, i.e. --with-cxx=0
+        COMPILER_NAME = compilerName.upper()
+        if COMPILER_NAME in self.argDB:
+          del self.argDB[COMPILER_NAME]
+          continue
+      else:
         self.executeTest(getattr(self,LANG.join(('check','Compiler'))))
         try:
           self.executeTest(self.checkDeviceHostCompiler,args=[LANG])
@@ -2737,6 +2793,15 @@ if (dlclose(handle)) {
             self.executeTest(self.checkCxxDialect,args=[LANG],kargs={'isGNUish':isGNUish})
           except RuntimeError as e:
             self.mesg = str(e)
+            if argdbVal is not None:
+              # user explicitly enabled a compiler, e.g. --with-cxx=clang++, so the fact
+              # that it does not work is an immediate problem
+              self.mesg += '\n'.join((
+                '',
+                'Note, you have explicitly requested --{}={}. If you don\'t need {}, or that specific compiler, remove this flag -- configure may be able to find a more suitable compiler automatically.',
+                'If you DO need the above, then consult your compilers user manual. It\'s possible you may need to add additional flags (or perhaps load additional modules) to enable compliance'
+              )).format(argdbName, argdbVal, LANG.replace('x', '+'))
+              raise config.base.ConfigureSetupError(self.mesg)
             self.logPrint(' '.join(('Error testing',LANG,'compiler:',self.mesg)))
             self.delMakeMacro(compilerName)
             delattr(self,compilerName)
@@ -2758,6 +2823,9 @@ if (dlclose(handle)) {
     self.executeTest(self.checkSharedLinkerPaths)
     self.executeTest(self.checkLibC)
     self.executeTest(self.checkDynamicLinker)
+    if hasattr(self.framework,'conda_active'):
+      del self.framework.additional_error_message
+
     self.executeTest(self.checkPragma)
     self.executeTest(self.checkAtFileOption)
     self.executeTest(self.output)

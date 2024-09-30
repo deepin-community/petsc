@@ -1,4 +1,3 @@
-
 static char help[] = "Newton methods to solve u''  = f in parallel with periodic boundary conditions.\n\n";
 
 /*
@@ -157,7 +156,7 @@ PetscErrorCode FormFunction(SNES snes, Vec x, Vec f, void *ctx)
   PetscCall(DMDAVecRestoreArray(da, xlocal, &xx));
   PetscCall(DMDAVecRestoreArray(da, f, &ff));
   PetscCall(DMRestoreLocalVector(da, &xlocal));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -209,7 +208,7 @@ PetscErrorCode FormJacobian(SNES snes, Vec x, Mat jac, Mat B, void *ctx)
   PetscCall(DMDAVecRestoreArrayRead(da, x, &xx));
   PetscCall(MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

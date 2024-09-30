@@ -1,4 +1,3 @@
-
 #include <petsc/private/dmdaimpl.h> /*I      "petscdmda.h"     I*/
 #include <petscmat.h>
 #include <petscbt.h>
@@ -19,7 +18,7 @@ static PetscErrorCode DMDASetBlockFills_Private(const PetscInt *dfill, PetscInt 
   PetscInt i, j, nz, *fill;
 
   PetscFunctionBegin;
-  if (!dfill) PetscFunctionReturn(0);
+  if (!dfill) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* count number nonzeros */
   nz = 0;
@@ -45,7 +44,7 @@ static PetscErrorCode DMDASetBlockFills_Private(const PetscInt *dfill, PetscInt 
   fill[w] = nz;
 
   *rfill = fill;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMDASetBlockFillsSparse_Private(const PetscInt *dfillsparse, PetscInt w, PetscInt **rfill)
@@ -53,7 +52,7 @@ static PetscErrorCode DMDASetBlockFillsSparse_Private(const PetscInt *dfillspars
   PetscInt nz;
 
   PetscFunctionBegin;
-  if (!dfillsparse) PetscFunctionReturn(0);
+  if (!dfillsparse) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Determine number of non-zeros */
   nz = (dfillsparse[w] - w - 1);
@@ -61,7 +60,7 @@ static PetscErrorCode DMDASetBlockFillsSparse_Private(const PetscInt *dfillspars
   /* Allocate space for our copy of the given sparse matrix representation. */
   PetscCall(PetscMalloc1(nz + w + 1, rfill));
   PetscCall(PetscArraycpy(*rfill, dfillsparse, nz + w + 1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMDASetBlockFills_Private2(DM_DA *dd)
@@ -79,43 +78,44 @@ static PetscErrorCode DMDASetBlockFills_Private2(DM_DA *dd)
   for (i = 0; i < dd->w; i++) {
     if (dd->ofillcols[i]) dd->ofillcols[i] = cnt++;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-    DMDASetBlockFills - Sets the fill pattern in each block for a multi-component problem
-    of the matrix returned by `DMCreateMatrix()`.
+  DMDASetBlockFills - Sets the fill pattern in each block for a multi-component problem
+  of the matrix returned by `DMCreateMatrix()`.
 
-    Logically Collective on da
+  Logically Collective
 
-    Input Parameters:
-+   da - the distributed array
-.   dfill - the fill pattern in the diagonal block (may be NULL, means use dense block)
--   ofill - the fill pattern in the off-diagonal blocks
+  Input Parameters:
++ da    - the distributed array
+. dfill - the fill pattern in the diagonal block (may be `NULL`, means use dense block)
+- ofill - the fill pattern in the off-diagonal blocks
 
-    Level: developer
+  Level: developer
 
-    Notes:
-    This only makes sense when you are doing multicomponent problems but using the
-       `MATMPIAIJ` matrix format
+  Notes:
+  This only makes sense when you are doing multicomponent problems but using the
+  `MATMPIAIJ` matrix format
 
-           The format for dfill and ofill is a 2 dimensional dof by dof matrix with 1 entries
-       representing coupling and 0 entries for missing coupling. For example
+  The format for `dfill` and `ofill` is a 2 dimensional dof by dof matrix with 1 entries
+  representing coupling and 0 entries for missing coupling. For example
 .vb
             dfill[9] = {1, 0, 0,
                         1, 1, 0,
                         0, 1, 1}
 .ve
-       means that row 0 is coupled with only itself in the diagonal block, row 1 is coupled with
-       itself and row 0 (in the diagonal block) and row 2 is coupled with itself and row 1 (in the
-       diagonal block).
+  means that row 0 is coupled with only itself in the diagonal block, row 1 is coupled with
+  itself and row 0 (in the diagonal block) and row 2 is coupled with itself and row 1 (in the
+  diagonal block).
 
-     `DMDASetGetMatrix()` allows you to provide general code for those more complicated nonzero patterns then
-     can be represented in the dfill, ofill format
+  `DMDASetGetMatrix()` allows you to provide general code for those more complicated nonzero patterns then
+  can be represented in the `dfill`, `ofill` format
 
-   Contributed by Glenn Hammond
+  Contributed by\:
+  Glenn Hammond
 
-.seealso: `DM`, `DMDA`, `DMCreateMatrix()`, `DMDASetGetMatrix()`, `DMSetMatrixPreallocateOnly()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMCreateMatrix()`, `DMDASetGetMatrix()`, `DMSetMatrixPreallocateOnly()`, `DMDASetBlockFillsSparse()`
 @*/
 PetscErrorCode DMDASetBlockFills(DM da, const PetscInt *dfill, const PetscInt *ofill)
 {
@@ -128,47 +128,48 @@ PetscErrorCode DMDASetBlockFills(DM da, const PetscInt *dfill, const PetscInt *o
 
   /* count nonzeros in ofill columns */
   PetscCall(DMDASetBlockFills_Private2(dd));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-    DMDASetBlockFillsSparse - Sets the fill pattern in each block for a multi-component problem
-    of the matrix returned by `DMCreateMatrix()`, using sparse representations
-    of fill patterns.
+  DMDASetBlockFillsSparse - Sets the fill pattern in each block for a multi-component problem
+  of the matrix returned by `DMCreateMatrix()`, using sparse representations
+  of fill patterns.
 
-    Logically Collective on da
+  Logically Collective
 
-    Input Parameters:
-+   da - the distributed array
-.   dfill - the sparse fill pattern in the diagonal block (may be NULL, means use dense block)
--   ofill - the sparse fill pattern in the off-diagonal blocks
+  Input Parameters:
++ da          - the distributed array
+. dfillsparse - the sparse fill pattern in the diagonal block (may be `NULL`, means use dense block)
+- ofillsparse - the sparse fill pattern in the off-diagonal blocks
 
-    Level: developer
+  Level: developer
 
-    Notes:
-    This only makes sense when you are doing multicomponent problems but using the
-       `MATMPIAIJ` matrix format
+  Notes:
+  This only makes sense when you are doing multicomponent problems but using the
+  `MATMPIAIJ` matrix format
 
-           The format for dfill and ofill is a sparse representation of a
-           dof-by-dof matrix with 1 entries representing coupling and 0 entries
-           for missing coupling.  The sparse representation is a 1 dimensional
-           array of length nz + dof + 1, where nz is the number of non-zeros in
-           the matrix.  The first dof entries in the array give the
-           starting array indices of each row's items in the rest of the array,
-           the dof+1st item contains the value nz + dof + 1 (i.e. the entire length of the array)
-           and the remaining nz items give the column indices of each of
-           the 1s within the logical 2D matrix.  Each row's items within
-           the array are the column indices of the 1s within that row
-           of the 2D matrix.  PETSc developers may recognize that this is the
-           same format as that computed by the `DMDASetBlockFills_Private()`
-           function from a dense 2D matrix representation.
+  The format for `dfill` and `ofill` is a sparse representation of a
+  dof-by-dof matrix with 1 entries representing coupling and 0 entries
+  for missing coupling.  The sparse representation is a 1 dimensional
+  array of length nz + dof + 1, where nz is the number of non-zeros in
+  the matrix.  The first dof entries in the array give the
+  starting array indices of each row's items in the rest of the array,
+  the dof+1st item contains the value nz + dof + 1 (i.e. the entire length of the array)
+  and the remaining nz items give the column indices of each of
+  the 1s within the logical 2D matrix.  Each row's items within
+  the array are the column indices of the 1s within that row
+  of the 2D matrix.  PETSc developers may recognize that this is the
+  same format as that computed by the `DMDASetBlockFills_Private()`
+  function from a dense 2D matrix representation.
 
-     `DMDASetGetMatrix()` allows you to provide general code for those more complicated nonzero patterns then
-     can be represented in the dfill, ofill format
+  `DMDASetGetMatrix()` allows you to provide general code for those more complicated nonzero patterns then
+  can be represented in the `dfill`, `ofill` format
 
-   Contributed by Philip C. Roth
+  Contributed by\:
+  Philip C. Roth
 
-.seealso: `DM`, `DMDA`, `DMDASetBlockFills()`, `DMCreateMatrix()`, `DMDASetGetMatrix()`, `DMSetMatrixPreallocateOnly()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDASetBlockFills()`, `DMCreateMatrix()`, `DMDASetGetMatrix()`, `DMSetMatrixPreallocateOnly()`
 @*/
 PetscErrorCode DMDASetBlockFillsSparse(DM da, const PetscInt *dfillsparse, const PetscInt *ofillsparse)
 {
@@ -181,7 +182,7 @@ PetscErrorCode DMDASetBlockFillsSparse(DM da, const PetscInt *dfillsparse, const
 
   /* count nonzeros in ofill columns */
   PetscCall(DMDASetBlockFills_Private2(dd));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateColoring_DA(DM da, ISColoringType ctype, ISColoring *coloring)
@@ -223,10 +224,8 @@ PetscErrorCode DMCreateColoring_DA(DM da, ISColoringType ctype, ISColoring *colo
   if (ctype == IS_COLORING_LOCAL) {
     if (size == 1) {
       ctype = IS_COLORING_GLOBAL;
-    } else if (dim > 1) {
-      if ((m == 1 && bx == DM_BOUNDARY_PERIODIC) || (n == 1 && by == DM_BOUNDARY_PERIODIC) || (p == 1 && bz == DM_BOUNDARY_PERIODIC)) {
-        SETERRQ(PetscObjectComm((PetscObject)da), PETSC_ERR_SUP, "IS_COLORING_LOCAL cannot be used for periodic boundary condition having both ends of the domain  on the same process");
-      }
+    } else {
+      PetscCheck((dim == 1) || !((m == 1 && bx == DM_BOUNDARY_PERIODIC) || (n == 1 && by == DM_BOUNDARY_PERIODIC) || (p == 1 && bz == DM_BOUNDARY_PERIODIC)), PetscObjectComm((PetscObject)da), PETSC_ERR_SUP, "IS_COLORING_LOCAL cannot be used for periodic boundary condition having both ends of the domain on the same process");
     }
   }
 
@@ -259,15 +258,13 @@ PetscErrorCode DMCreateColoring_DA(DM da, ISColoringType ctype, ISColoring *colo
     dd->Xs = dd->Xs * nc;
     dd->Xe = dd->Xe * nc;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/* ---------------------------------------------------------------------------------*/
 
 PetscErrorCode DMCreateColoring_DA_2d_MPIAIJ(DM da, ISColoringType ctype, ISColoring *coloring)
 {
   PetscInt         xs, ys, nx, ny, i, j, ii, gxs, gys, gnx, gny, m, n, M, N, dim, s, k, nc, col;
-  PetscInt         ncolors;
+  PetscInt         ncolors = 0;
   MPI_Comm         comm;
   DMBoundaryType   bx, by;
   DMDAStencilType  st;
@@ -325,10 +322,8 @@ PetscErrorCode DMCreateColoring_DA_2d_MPIAIJ(DM da, ISColoringType ctype, ISColo
     } else SETERRQ(PetscObjectComm((PetscObject)da), PETSC_ERR_ARG_WRONG, "Unknown ISColoringType %d", (int)ctype);
   }
   PetscCall(ISColoringReference(*coloring));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/* ---------------------------------------------------------------------------------*/
 
 PetscErrorCode DMCreateColoring_DA_3d_MPIAIJ(DM da, ISColoringType ctype, ISColoring *coloring)
 {
@@ -344,10 +339,16 @@ PetscErrorCode DMCreateColoring_DA_3d_MPIAIJ(DM da, ISColoringType ctype, ISColo
   /*
          nc - number of components per grid point
          col - number of colors needed in one direction for single component problem
-
   */
   PetscCall(DMDAGetInfo(da, &dim, &m, &n, &p, &M, &N, &P, &nc, &s, &bx, &by, &bz, &st));
   col = 2 * s + 1;
+  PetscCheck(bx != DM_BOUNDARY_PERIODIC || (m % col) == 0, PetscObjectComm((PetscObject)da), PETSC_ERR_SUP, "For coloring efficiency ensure number of grid points in X is divisible\n\
+                 by 2*stencil_width + 1\n");
+  PetscCheck(by != DM_BOUNDARY_PERIODIC || (n % col) == 0, PetscObjectComm((PetscObject)da), PETSC_ERR_SUP, "For coloring efficiency ensure number of grid points in Y is divisible\n\
+                 by 2*stencil_width + 1\n");
+  PetscCheck(bz != DM_BOUNDARY_PERIODIC || (p % col) == 0, PetscObjectComm((PetscObject)da), PETSC_ERR_SUP, "For coloring efficiency ensure number of grid points in Z is divisible\n\
+                 by 2*stencil_width + 1\n");
+
   PetscCall(DMDAGetCorners(da, &xs, &ys, &zs, &nx, &ny, &nz));
   PetscCall(DMDAGetGhostCorners(da, &gxs, &gys, &gzs, &gnx, &gny, &gnz));
   PetscCall(PetscObjectGetComm((PetscObject)da, &comm));
@@ -389,10 +390,8 @@ PetscErrorCode DMCreateColoring_DA_3d_MPIAIJ(DM da, ISColoringType ctype, ISColo
     *coloring = dd->ghostedcoloring;
   } else SETERRQ(PetscObjectComm((PetscObject)da), PETSC_ERR_ARG_WRONG, "Unknown ISColoringType %d", (int)ctype);
   PetscCall(ISColoringReference(*coloring));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/* ---------------------------------------------------------------------------------*/
 
 PetscErrorCode DMCreateColoring_DA_1d_MPIAIJ(DM da, ISColoringType ctype, ISColoring *coloring)
 {
@@ -407,7 +406,6 @@ PetscErrorCode DMCreateColoring_DA_1d_MPIAIJ(DM da, ISColoringType ctype, ISColo
   /*
          nc - number of components per grid point
          col - number of colors needed in one direction for single component problem
-
   */
   PetscCall(DMDAGetInfo(da, &dim, &m, NULL, NULL, &M, NULL, NULL, &nc, &s, &bx, NULL, NULL, NULL));
   col = 2 * s + 1;
@@ -460,7 +458,7 @@ PetscErrorCode DMCreateColoring_DA_1d_MPIAIJ(DM da, ISColoringType ctype, ISColo
     *coloring = dd->ghostedcoloring;
   } else SETERRQ(PetscObjectComm((PetscObject)da), PETSC_ERR_ARG_WRONG, "Unknown ISColoringType %d", (int)ctype);
   PetscCall(ISColoringReference(*coloring));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateColoring_DA_2d_5pt_MPIAIJ(DM da, ISColoringType ctype, ISColoring *coloring)
@@ -476,7 +474,6 @@ PetscErrorCode DMCreateColoring_DA_2d_5pt_MPIAIJ(DM da, ISColoringType ctype, IS
   /*
          nc - number of components per grid point
          col - number of colors needed in one direction for single component problem
-
   */
   PetscCall(DMDAGetInfo(da, &dim, &m, &n, NULL, NULL, NULL, NULL, &nc, &s, &bx, &by, NULL, NULL));
   PetscCall(DMDAGetCorners(da, &xs, &ys, NULL, &nx, &ny, NULL));
@@ -511,7 +508,7 @@ PetscErrorCode DMCreateColoring_DA_2d_5pt_MPIAIJ(DM da, ISColoringType ctype, IS
     }
     *coloring = dd->ghostedcoloring;
   } else SETERRQ(PetscObjectComm((PetscObject)da), PETSC_ERR_ARG_WRONG, "Unknown ISColoringType %d", (int)ctype);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* =========================================================================== */
@@ -530,43 +527,22 @@ extern PetscErrorCode DMCreateMatrix_DA_2d_MPISELL(DM, Mat);
 extern PetscErrorCode DMCreateMatrix_DA_3d_MPISELL(DM, Mat);
 extern PetscErrorCode DMCreateMatrix_DA_IS(DM, Mat);
 
-/*@C
-   MatSetupDM - Sets the `DMDA` that is to be used by the HYPRE_StructMatrix PETSc matrix
-
-   Logically Collective on mat
-
-   Input Parameters:
-+  mat - the matrix
--  da - the da
-
-   Level: intermediate
-
-.seealso: `Mat`, `MatSetUp()`
-@*/
-PetscErrorCode MatSetupDM(Mat mat, DM da)
-{
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(mat, MAT_CLASSID, 1);
-  PetscValidHeaderSpecificType(da, DM_CLASSID, 2, DMDA);
-  PetscTryMethod(mat, "MatSetupDM_C", (Mat, DM), (mat, da));
-  PetscFunctionReturn(0);
-}
-
-PetscErrorCode MatView_MPI_DA(Mat A, PetscViewer viewer)
+static PetscErrorCode MatView_MPI_DA(Mat A, PetscViewer viewer)
 {
   DM                da;
   const char       *prefix;
-  Mat               Anatural;
+  Mat               AA, Anatural;
   AO                ao;
   PetscInt          rstart, rend, *petsc, i;
   IS                is;
   MPI_Comm          comm;
   PetscViewerFormat format;
+  PetscBool         flag;
 
   PetscFunctionBegin;
   /* Check whether we are just printing info, in which case MatView() already viewed everything we wanted to view */
   PetscCall(PetscViewerGetFormat(viewer, &format));
-  if (format == PETSC_VIEWER_ASCII_INFO || format == PETSC_VIEWER_ASCII_INFO_DETAIL) PetscFunctionReturn(0);
+  if (format == PETSC_VIEWER_ASCII_INFO || format == PETSC_VIEWER_ASCII_INFO_DETAIL) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(PetscObjectGetComm((PetscObject)A, &comm));
   PetscCall(MatGetDM(A, &da));
@@ -580,6 +556,11 @@ PetscErrorCode MatView_MPI_DA(Mat A, PetscViewer viewer)
   PetscCall(ISCreateGeneral(comm, rend - rstart, petsc, PETSC_OWN_POINTER, &is));
 
   /* call viewer on natural ordering */
+  PetscCall(PetscObjectBaseTypeCompare((PetscObject)A, MATMPISELL, &flag));
+  if (flag) {
+    PetscCall(MatConvert(A, MATAIJ, MAT_INITIAL_MATRIX, &AA));
+    A = AA;
+  }
   PetscCall(MatCreateSubMatrix(A, is, is, MAT_INITIAL_MATRIX, &Anatural));
   PetscCall(ISDestroy(&is));
   PetscCall(PetscObjectGetOptionsPrefix((PetscObject)A, &prefix));
@@ -589,10 +570,11 @@ PetscErrorCode MatView_MPI_DA(Mat A, PetscViewer viewer)
   PetscCall(MatView(Anatural, viewer));
   ((PetscObject)Anatural)->donotPetscObjectPrintClassNamePrefixType = PETSC_FALSE;
   PetscCall(MatDestroy(&Anatural));
-  PetscFunctionReturn(0);
+  if (flag) PetscCall(MatDestroy(&AA));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatLoad_MPI_DA(Mat A, PetscViewer viewer)
+static PetscErrorCode MatLoad_MPI_DA(Mat A, PetscViewer viewer)
 {
   DM       da;
   Mat      Anatural, Aapp;
@@ -627,19 +609,19 @@ PetscErrorCode MatLoad_MPI_DA(Mat A, PetscViewer viewer)
   PetscCall(MatHeaderReplace(A, &Aapp));
   PetscCall(ISDestroy(&is));
   PetscCall(MatDestroy(&Anatural));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateMatrix_DA(DM da, Mat *J)
 {
-  PetscInt dim, dof, nx, ny, nz, dims[3], starts[3], M, N, P;
-  Mat      A;
-  MPI_Comm comm;
-  MatType  Atype;
-  void (*aij)(void) = NULL, (*baij)(void) = NULL, (*sbaij)(void) = NULL, (*sell)(void) = NULL, (*is)(void) = NULL;
+  PetscInt    dim, dof, nx, ny, nz, dims[3], starts[3], M, N, P;
+  Mat         A;
+  MPI_Comm    comm;
+  MatType     Atype;
   MatType     mtype;
   PetscMPIInt size;
-  DM_DA      *dd = (DM_DA *)da->data;
+  DM_DA      *dd    = (DM_DA *)da->data;
+  void (*aij)(void) = NULL, (*baij)(void) = NULL, (*sbaij)(void) = NULL, (*sell)(void) = NULL, (*is)(void) = NULL;
 
   PetscFunctionBegin;
   PetscCall(MatInitializePackage());
@@ -665,7 +647,6 @@ PetscErrorCode DMCreateMatrix_DA(DM da, Mat *J)
   /*
          nc - number of components per grid point
          col - number of colors needed in one direction for single component problem
-
   */
   M   = dd->M;
   N   = dd->N;
@@ -696,19 +677,21 @@ PetscErrorCode DMCreateMatrix_DA(DM da, Mat *J)
    specialized setting routines depend only on the particular preallocation
    details of the matrix, not the type itself.
   */
-  PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatMPIAIJSetPreallocation_C", &aij));
-  if (!aij) PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatSeqAIJSetPreallocation_C", &aij));
-  if (!aij) {
-    PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatMPIBAIJSetPreallocation_C", &baij));
-    if (!baij) PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatSeqBAIJSetPreallocation_C", &baij));
-    if (!baij) {
-      PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatMPISBAIJSetPreallocation_C", &sbaij));
-      if (!sbaij) PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatSeqSBAIJSetPreallocation_C", &sbaij));
-      if (!sbaij) {
-        PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatMPISELLSetPreallocation_C", &sell));
-        if (!sell) PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatSeqSELLSetPreallocation_C", &sell));
+  if (!da->prealloc_skip) { // Flag is likely set when user intends to use MatSetPreallocationCOO()
+    PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatMPIAIJSetPreallocation_C", &aij));
+    if (!aij) PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatSeqAIJSetPreallocation_C", &aij));
+    if (!aij) {
+      PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatMPIBAIJSetPreallocation_C", &baij));
+      if (!baij) PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatSeqBAIJSetPreallocation_C", &baij));
+      if (!baij) {
+        PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatMPISBAIJSetPreallocation_C", &sbaij));
+        if (!sbaij) PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatSeqSBAIJSetPreallocation_C", &sbaij));
+        if (!sbaij) {
+          PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatMPISELLSetPreallocation_C", &sell));
+          if (!sell) PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatSeqSELLSetPreallocation_C", &sell));
+        }
+        if (!sell) PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatISSetPreallocation_C", &is));
       }
-      if (!sell) PetscCall(PetscObjectQueryFunction((PetscObject)A, "MatISSetPreallocation_C", &is));
     }
   }
   if (aij) {
@@ -759,7 +742,7 @@ PetscErrorCode DMCreateMatrix_DA(DM da, Mat *J)
     } else SETERRQ(PetscObjectComm((PetscObject)da), PETSC_ERR_SUP, "Not implemented for %" PetscInt_FMT " dimension and Matrix Type: %s in %" PetscInt_FMT " dimension! Send mail to petsc-maint@mcs.anl.gov for code", dim, Atype, dim);
   } else if (is) {
     PetscCall(DMCreateMatrix_DA_IS(da, A));
-  } else {
+  } else { // unknown type or da->prealloc_skip so structural information may be needed, but no prealloc
     ISLocalToGlobalMapping ltog;
 
     PetscCall(MatSetBlockSize(A, dof));
@@ -777,10 +760,9 @@ PetscErrorCode DMCreateMatrix_DA(DM da, Mat *J)
     PetscCall(MatSetOperation(A, MATOP_LOAD, (void (*)(void))MatLoad_MPI_DA));
   }
   *J = A;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/* ---------------------------------------------------------------------------------*/
 PETSC_EXTERN PetscErrorCode MatISSetPreallocation_IS(Mat, PetscInt, const PetscInt[], PetscInt, const PetscInt[]);
 
 PetscErrorCode DMCreateMatrix_DA_IS(DM dm, Mat J)
@@ -843,7 +825,7 @@ PetscErrorCode DMCreateMatrix_DA_IS(DM dm, Mat J)
     PetscCall(MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateMatrix_DA_2d_MPISELL(DM da, Mat J)
@@ -860,7 +842,6 @@ PetscErrorCode DMCreateMatrix_DA_2d_MPISELL(DM da, Mat J)
   /*
          nc - number of components per grid point
          col - number of colors needed in one direction for single component problem
-
   */
   PetscCall(DMDAGetInfo(da, &dim, &m, &n, NULL, NULL, NULL, NULL, &nc, &s, &bx, &by, NULL, &st));
   col = 2 * s + 1;
@@ -945,7 +926,7 @@ PetscErrorCode DMCreateMatrix_DA_2d_MPISELL(DM da, Mat J)
     PetscCall(MatSetOption(J, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
   }
   PetscCall(PetscFree2(rows, cols));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateMatrix_DA_3d_MPISELL(DM da, Mat J)
@@ -963,7 +944,6 @@ PetscErrorCode DMCreateMatrix_DA_3d_MPISELL(DM da, Mat J)
   /*
          nc - number of components per grid point
          col - number of colors needed in one direction for single component problem
-
   */
   PetscCall(DMDAGetInfo(da, &dim, &m, &n, &p, &M, &N, &P, &nc, &s, &bx, &by, &bz, &st));
   col = 2 * s + 1;
@@ -1057,7 +1037,7 @@ PetscErrorCode DMCreateMatrix_DA_3d_MPISELL(DM da, Mat J)
     PetscCall(MatSetOption(J, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
   }
   PetscCall(PetscFree2(rows, cols));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateMatrix_DA_2d_MPIAIJ(DM da, Mat J)
@@ -1074,7 +1054,6 @@ PetscErrorCode DMCreateMatrix_DA_2d_MPIAIJ(DM da, Mat J)
   /*
          nc - number of components per grid point
          col - number of colors needed in one direction for single component problem
-
   */
   PetscCall(DMDAGetInfo(da, &dim, &m, &n, NULL, &M, &N, NULL, &nc, &s, &bx, &by, NULL, &st));
   if (bx == DM_BOUNDARY_NONE && by == DM_BOUNDARY_NONE) PetscCall(MatSetOption(J, MAT_SORTED_FULL, PETSC_TRUE));
@@ -1169,7 +1148,7 @@ PetscErrorCode DMCreateMatrix_DA_2d_MPIAIJ(DM da, Mat J)
     if (bx == DM_BOUNDARY_NONE && by == DM_BOUNDARY_NONE) PetscCall(MatSetOption(J, MAT_SORTED_FULL, PETSC_FALSE));
   }
   PetscCall(PetscFree2(rows, cols));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateMatrix_DA_2d_MPIAIJ_Fill(DM da, Mat J)
@@ -1189,7 +1168,6 @@ PetscErrorCode DMCreateMatrix_DA_2d_MPIAIJ_Fill(DM da, Mat J)
   /*
          nc - number of components per grid point
          col - number of colors needed in one direction for single component problem
-
   */
   PetscCall(DMDAGetInfo(da, &dim, &m, &n, NULL, &M, &N, NULL, &nc, &s, &bx, &by, NULL, &st));
   col = 2 * s + 1;
@@ -1294,10 +1272,8 @@ PetscErrorCode DMCreateMatrix_DA_2d_MPIAIJ_Fill(DM da, Mat J)
     PetscCall(MatSetOption(J, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
   }
   PetscCall(PetscFree(cols));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/* ---------------------------------------------------------------------------------*/
 
 PetscErrorCode DMCreateMatrix_DA_3d_MPIAIJ(DM da, Mat J)
 {
@@ -1314,7 +1290,6 @@ PetscErrorCode DMCreateMatrix_DA_3d_MPIAIJ(DM da, Mat J)
   /*
          nc - number of components per grid point
          col - number of colors needed in one direction for single component problem
-
   */
   PetscCall(DMDAGetInfo(da, &dim, &m, &n, &p, &M, &N, &P, &nc, &s, &bx, &by, &bz, &st));
   if (bx == DM_BOUNDARY_NONE && by == DM_BOUNDARY_NONE && bz == DM_BOUNDARY_NONE) PetscCall(MatSetOption(J, MAT_SORTED_FULL, PETSC_TRUE));
@@ -1422,10 +1397,8 @@ PetscErrorCode DMCreateMatrix_DA_3d_MPIAIJ(DM da, Mat J)
     PetscCall(MatSetOption(J, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
   }
   PetscCall(PetscFree2(rows, cols));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/* ---------------------------------------------------------------------------------*/
 
 PetscErrorCode DMCreateMatrix_DA_1d_MPIAIJ_Fill(DM da, Mat J)
 {
@@ -1443,7 +1416,6 @@ PetscErrorCode DMCreateMatrix_DA_1d_MPIAIJ_Fill(DM da, Mat J)
 
   /*
          nc - number of components per grid point
-
   */
   PetscCall(DMDAGetInfo(da, &dim, &m, NULL, NULL, NULL, NULL, NULL, &nc, &s, &bx, NULL, NULL, NULL));
   PetscCheck(s <= 1, PetscObjectComm((PetscObject)da), PETSC_ERR_SUP, "Matrix creation for 1d not implemented correctly for stencil width larger than 1");
@@ -1585,10 +1557,8 @@ PetscErrorCode DMCreateMatrix_DA_1d_MPIAIJ_Fill(DM da, Mat J)
     PetscCall(MatBindToCPU(J, PETSC_FALSE));
     PetscCall(MatSetOption(J, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/* ---------------------------------------------------------------------------------*/
 
 PetscErrorCode DMCreateMatrix_DA_1d_MPIAIJ(DM da, Mat J)
 {
@@ -1602,7 +1572,6 @@ PetscErrorCode DMCreateMatrix_DA_1d_MPIAIJ(DM da, Mat J)
   /*
          nc - number of components per grid point
          col - number of colors needed in one direction for single component problem
-
   */
   PetscCall(DMDAGetInfo(da, &dim, &m, NULL, NULL, NULL, NULL, NULL, &nc, &s, &bx, NULL, NULL, NULL));
   if (bx == DM_BOUNDARY_NONE) PetscCall(MatSetOption(J, MAT_SORTED_FULL, PETSC_TRUE));
@@ -1652,10 +1621,8 @@ PetscErrorCode DMCreateMatrix_DA_1d_MPIAIJ(DM da, Mat J)
     PetscCall(MatSetOption(J, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
     PetscCall(PetscFree2(rows, cols));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/* ---------------------------------------------------------------------------------*/
 
 PetscErrorCode DMCreateMatrix_DA_1d_SeqAIJ_NoPreallocation(DM da, Mat J)
 {
@@ -1717,7 +1684,7 @@ PetscErrorCode DMCreateMatrix_DA_1d_SeqAIJ_NoPreallocation(DM da, Mat J)
     PetscCall(PetscFree2(rows, cols));
   }
   PetscCall(MatSetOption(J, MAT_SORTED_FULL, PETSC_FALSE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateMatrix_DA_2d_MPIBAIJ(DM da, Mat J)
@@ -1809,7 +1776,7 @@ PetscErrorCode DMCreateMatrix_DA_2d_MPIBAIJ(DM da, Mat J)
     PetscCall(MatSetOption(J, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
   }
   PetscCall(PetscFree(cols));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateMatrix_DA_3d_MPIBAIJ(DM da, Mat J)
@@ -1827,7 +1794,6 @@ PetscErrorCode DMCreateMatrix_DA_3d_MPIBAIJ(DM da, Mat J)
   /*
          nc - number of components per grid point
          col - number of colors needed in one direction for single component problem
-
   */
   PetscCall(DMDAGetInfo(da, &dim, &m, &n, &p, NULL, NULL, NULL, &nc, &s, &bx, &by, &bz, &st));
   col = 2 * s + 1;
@@ -1917,7 +1883,7 @@ PetscErrorCode DMCreateMatrix_DA_3d_MPIBAIJ(DM da, Mat J)
     PetscCall(MatSetOption(J, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
   }
   PetscCall(PetscFree(cols));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1935,7 +1901,7 @@ static PetscErrorCode L2GFilterUpperTriangular(ISLocalToGlobalMapping ltog, Pets
     if (col[i] >= *row) col[n++] = col[i];
   }
   *cnt = n;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateMatrix_DA_2d_MPISBAIJ(DM da, Mat J)
@@ -2027,7 +1993,7 @@ PetscErrorCode DMCreateMatrix_DA_2d_MPISBAIJ(DM da, Mat J)
     PetscCall(MatSetOption(J, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
   }
   PetscCall(PetscFree(cols));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateMatrix_DA_3d_MPISBAIJ(DM da, Mat J)
@@ -2133,10 +2099,8 @@ PetscErrorCode DMCreateMatrix_DA_3d_MPISBAIJ(DM da, Mat J)
     PetscCall(MatSetOption(J, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
   }
   PetscCall(PetscFree(cols));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/* ---------------------------------------------------------------------------------*/
 
 PetscErrorCode DMCreateMatrix_DA_3d_MPIAIJ_Fill(DM da, Mat J)
 {
@@ -2156,16 +2120,9 @@ PetscErrorCode DMCreateMatrix_DA_3d_MPIAIJ_Fill(DM da, Mat J)
   /*
          nc - number of components per grid point
          col - number of colors needed in one direction for single component problem
-
   */
   PetscCall(DMDAGetInfo(da, &dim, &m, &n, &p, &M, &N, &P, &nc, &s, &bx, &by, &bz, &st));
   col = 2 * s + 1;
-  PetscCheck(bx != DM_BOUNDARY_PERIODIC || (m % col) == 0, PetscObjectComm((PetscObject)da), PETSC_ERR_SUP, "For coloring efficiency ensure number of grid points in X is divisible\n\
-                 by 2*stencil_width + 1\n");
-  PetscCheck(by != DM_BOUNDARY_PERIODIC || (n % col) == 0, PetscObjectComm((PetscObject)da), PETSC_ERR_SUP, "For coloring efficiency ensure number of grid points in Y is divisible\n\
-                 by 2*stencil_width + 1\n");
-  PetscCheck(bz != DM_BOUNDARY_PERIODIC || (p % col) == 0, PetscObjectComm((PetscObject)da), PETSC_ERR_SUP, "For coloring efficiency ensure number of grid points in Z is divisible\n\
-                 by 2*stencil_width + 1\n");
 
   /*
        With one processor in periodic domains in a skinny dimension the code will label nonzero columns multiple times
@@ -2283,5 +2240,5 @@ PetscErrorCode DMCreateMatrix_DA_3d_MPIAIJ_Fill(DM da, Mat J)
     PetscCall(MatSetOption(J, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
   }
   PetscCall(PetscFree(cols));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -27,7 +27,7 @@ extern void PetscRmPointer(void*);
 #define PetscRmPointer(a)
 #endif
 
-#include "petscts.h"
+#include <petscts.h>
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define tssetcostgradients_ TSSETCOSTGRADIENTS
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)

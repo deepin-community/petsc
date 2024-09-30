@@ -352,6 +352,10 @@ extern "C" {
       self.addDefine('HAVE_FENV_H', 1)
     else:
       self.logPrint('<fenv.h> with FE_DFL_ENV not found')
+    if not self.math is None and self.check(self.math, ['feclearexcept'], prototype = ['#include <fenv.h>'], call = ['feclearexcept(FE_INEXACT);']):
+      self.addDefine('HAVE_FE_VALUES', 1)
+    else:
+      self.logPrint('<fenv.h> with FE_INEXACT not found')
     return
 
   def checkMathLog2(self):
@@ -609,7 +613,7 @@ extern PETSC_DLLEXPORT int foo() {
     '''Checks for the flag that allows executables to export symbols to dlsym()'''
     # Right now, we just check some compilers, but we should make a test trying to load a symbol from the executable
     # Discussion: https://stackoverflow.com/questions/6292473/how-to-call-function-in-executable-from-my-library/6298434#6298434
-    for flag in ['', '-Wl,-export_dynamic', '-export-dynamic']:
+    for flag in ['', '-Wl,-export_dynamic', '-Wl,-export-dynamic', '-export-dynamic']:
       if self.checkExportedSymbols(flag):
         self.addDefine('HAVE_EXECUTABLE_EXPORT', 1)
         self.addMakeMacro('EXEFLAGS', flag)

@@ -1,4 +1,3 @@
-
 static char help[] = "Test partition. Reads a PETSc matrix and vector from a file and solves a linear system.\n\
 This   Input parameters include\n\
   -f <input_file> : file to load \n\
@@ -136,7 +135,7 @@ int main(int argc, char **args)
   if (flg) {
     KSPConvergedReason reason;
     PetscCall(KSPGetConvergedReason(ksp, &reason));
-    PetscPrintf(PETSC_COMM_WORLD, "KSPConvergedReason: %s\n", KSPConvergedReasons[reason]);
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD, "KSPConvergedReason: %s\n", KSPConvergedReasons[reason]));
   }
 
   /* Free work space.*/

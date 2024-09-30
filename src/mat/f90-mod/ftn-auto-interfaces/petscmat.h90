@@ -165,48 +165,153 @@
        PetscReal c ! PetscReal
        PetscErrorCode z
        end subroutine MatMumpsGetRinfog
+      subroutine MatMumpsGetNullPivots(a,b,c,z)
+       import tMat
+       Mat a ! Mat
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       PetscErrorCode z
+       end subroutine MatMumpsGetNullPivots
       subroutine MatSTRUMPACKSetReordering(a,b,z)
        import tMat
        Mat a ! Mat
        MatSTRUMPACKReordering b ! MatSTRUMPACKReordering
        PetscErrorCode z
        end subroutine MatSTRUMPACKSetReordering
+      subroutine MatSTRUMPACKGetReordering(a,b,z)
+       import tMat
+       Mat a ! Mat
+       MatSTRUMPACKReordering b ! MatSTRUMPACKReordering
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKGetReordering
       subroutine MatSTRUMPACKSetColPerm(a,b,z)
        import tMat
        Mat a ! Mat
        PetscBool b ! PetscBool
        PetscErrorCode z
        end subroutine MatSTRUMPACKSetColPerm
-      subroutine MatSTRUMPACKSetHSSRelTol(a,b,z)
+      subroutine MatSTRUMPACKGetColPerm(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscBool b ! PetscBool
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKGetColPerm
+      subroutine MatSTRUMPACKSetGPU(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscBool b ! PetscBool
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKSetGPU
+      subroutine MatSTRUMPACKGetGPU(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscBool b ! PetscBool
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKGetGPU
+      subroutine MatSTRUMPACKSetCompression(a,b,z)
+       import tMat
+       Mat a ! Mat
+       MatSTRUMPACKCompressionType b ! MatSTRUMPACKCompressionType
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKSetCompression
+      subroutine MatSTRUMPACKGetCompression(a,b,z)
+       import tMat
+       Mat a ! Mat
+       MatSTRUMPACKCompressionType b ! MatSTRUMPACKCompressionType
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKGetCompression
+      subroutine MatSTRUMPACKSetCompRelTol(a,b,z)
        import tMat
        Mat a ! Mat
        PetscReal b ! PetscReal
        PetscErrorCode z
-       end subroutine MatSTRUMPACKSetHSSRelTol
-      subroutine MatSTRUMPACKSetHSSAbsTol(a,b,z)
+       end subroutine MatSTRUMPACKSetCompRelTol
+      subroutine MatSTRUMPACKGetCompRelTol(a,b,z)
        import tMat
        Mat a ! Mat
        PetscReal b ! PetscReal
        PetscErrorCode z
-       end subroutine MatSTRUMPACKSetHSSAbsTol
-      subroutine MatSTRUMPACKSetHSSMaxRank(a,b,z)
+       end subroutine MatSTRUMPACKGetCompRelTol
+      subroutine MatSTRUMPACKSetCompAbsTol(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscReal b ! PetscReal
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKSetCompAbsTol
+      subroutine MatSTRUMPACKGetCompAbsTol(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscReal b ! PetscReal
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKGetCompAbsTol
+      subroutine MatSTRUMPACKSetCompLeafSize(a,b,z)
        import tMat
        Mat a ! Mat
        PetscInt b ! PetscInt
        PetscErrorCode z
-       end subroutine MatSTRUMPACKSetHSSMaxRank
-      subroutine MatSTRUMPACKSetHSSLeafSize(a,b,z)
+       end subroutine MatSTRUMPACKSetCompLeafSize
+      subroutine MatSTRUMPACKGetCompLeafSize(a,b,z)
        import tMat
        Mat a ! Mat
        PetscInt b ! PetscInt
        PetscErrorCode z
-       end subroutine MatSTRUMPACKSetHSSLeafSize
-      subroutine MatSTRUMPACKSetHSSMinSepSize(a,b,z)
+       end subroutine MatSTRUMPACKGetCompLeafSize
+      subroutine MatSTRUMPACKSetGeometricNxyz(a,b,c,d,z)
+       import tMat
+       Mat a ! Mat
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       PetscInt d ! PetscInt
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKSetGeometricNxyz
+      subroutine MatSTRUMPACKSetGeometricComponents(a,b,z)
        import tMat
        Mat a ! Mat
        PetscInt b ! PetscInt
        PetscErrorCode z
-       end subroutine MatSTRUMPACKSetHSSMinSepSize
+       end subroutine MatSTRUMPACKSetGeometricComponents
+      subroutine MatSTRUMPACKSetGeometricWidth(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKSetGeometricWidth
+      subroutine MatSTRUMPACKSetCompMinSepSize(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKSetCompMinSepSize
+      subroutine MatSTRUMPACKGetCompMinSepSize(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKGetCompMinSepSize
+      subroutine MatSTRUMPACKSetCompLossyPrecision(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKSetCompLossyPrecision
+      subroutine MatSTRUMPACKGetCompLossyPrecision(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKGetCompLossyPrecision
+      subroutine MatSTRUMPACKSetCompButterflyLevels(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKSetCompButterflyLevels
+      subroutine MatSTRUMPACKGetCompButterflyLevels(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine MatSTRUMPACKGetCompButterflyLevels
       subroutine MatSeqAIJSetTotalPreallocation(a,b,z)
        import tMat
        Mat a ! Mat
@@ -531,6 +636,36 @@
        Mat b ! Mat
        PetscErrorCode z
        end subroutine MatDenseRestoreSubMatrix
+      subroutine MatDiagonalGetDiagonal(a,b,z)
+       import tVec,tMat
+       Mat a ! Mat
+       Vec b ! Vec
+       PetscErrorCode z
+       end subroutine MatDiagonalGetDiagonal
+      subroutine MatDiagonalRestoreDiagonal(a,b,z)
+       import tVec,tMat
+       Mat a ! Mat
+       Vec b ! Vec
+       PetscErrorCode z
+       end subroutine MatDiagonalRestoreDiagonal
+      subroutine MatDiagonalGetInverseDiagonal(a,b,z)
+       import tVec,tMat
+       Mat a ! Mat
+       Vec b ! Vec
+       PetscErrorCode z
+       end subroutine MatDiagonalGetInverseDiagonal
+      subroutine MatDiagonalRestoreInverseDiagonal(a,b,z)
+       import tVec,tMat
+       Mat a ! Mat
+       Vec b ! Vec
+       PetscErrorCode z
+       end subroutine MatDiagonalRestoreInverseDiagonal
+      subroutine MatCreateDiagonal(a,b,z)
+       import tVec,tMat
+       Vec a ! Vec
+       Mat b ! Mat
+       PetscErrorCode z
+       end subroutine MatCreateDiagonal
       subroutine MatCreateVecsFFTW(a,b,c,d,z)
        import tVec,tMat
        Mat a ! Mat
@@ -593,12 +728,6 @@
        Mat b ! Mat
        PetscErrorCode z
        end subroutine MatISRestoreLocalMat
-      subroutine MatISSetLocalMatType(a,b,z)
-       import tMat
-       Mat a ! Mat
-       MatType b ! MatType
-       PetscErrorCode z
-       end subroutine MatISSetLocalMatType
       subroutine MatISSetLocalMat(a,b,z)
        import tMat
        Mat a ! Mat
@@ -648,6 +777,15 @@
        Mat e ! Mat
        PetscErrorCode z
        end subroutine MatLRCGetMats
+      subroutine MatLRCSetMats(a,b,c,d,e,z)
+       import tVec,tMat
+       Mat a ! Mat
+       Mat b ! Mat
+       Mat c ! Mat
+       Vec d ! Vec
+       Mat e ! Mat
+       PetscErrorCode z
+       end subroutine MatLRCSetMats
       subroutine MatCreateLRC(a,b,c,d,e,z)
        import tVec,tMat
        Mat a ! Mat
@@ -677,18 +815,6 @@
        Mat c ! Mat
        PetscErrorCode z
        end subroutine MatCreateMAIJ
-      subroutine MatMFFDDSSetUmin(a,b,z)
-       import tMat
-       Mat a ! Mat
-       PetscReal b ! PetscReal
-       PetscErrorCode z
-       end subroutine MatMFFDDSSetUmin
-      subroutine MatMFFDWPSetComputeNormU(a,b,z)
-       import tMat
-       Mat a ! Mat
-       PetscBool b ! PetscBool
-       PetscErrorCode z
-       end subroutine MatMFFDWPSetComputeNormU
       subroutine MatCreateMFFD(a,b,c,d,e,f,z)
        import tMat
        MPI_Comm a ! MPI_Comm
@@ -736,6 +862,18 @@
        Vec c ! Vec
        PetscErrorCode z
        end subroutine MatMFFDSetBase
+      subroutine MatMFFDDSSetUmin(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscReal b ! PetscReal
+       PetscErrorCode z
+       end subroutine MatMFFDDSSetUmin
+      subroutine MatMFFDWPSetComputeNormU(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscBool b ! PetscBool
+       PetscErrorCode z
+       end subroutine MatMFFDWPSetComputeNormU
       subroutine MatNestGetSubMat(a,b,c,d,z)
        import tMat
        Mat a ! Mat
@@ -858,12 +996,20 @@
        VecScatter b ! VecScatter
        PetscErrorCode z
        end subroutine MatScatterSetVecScatter
-      subroutine MatShellSetContextDestroy(a,b,z)
+      subroutine MatCreateSELLCUDA(a,b,c,d,e,f,g,h,i,j,z)
        import tMat
-       Mat a ! Mat
-       external b ! void function pointer
+       MPI_Comm a ! MPI_Comm
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       PetscInt d ! PetscInt
+       PetscInt e ! PetscInt
+       PetscInt f ! PetscInt
+       PetscInt g (*) ! PetscInt
+       PetscInt h ! PetscInt
+       PetscInt i (*) ! PetscInt
+       Mat j ! Mat
        PetscErrorCode z
-       end subroutine MatShellSetContextDestroy
+       end subroutine MatCreateSELLCUDA
       subroutine MatShellSetManageScalingShifts(a,z)
        import tMat
        Mat a ! Mat
@@ -927,12 +1073,25 @@
        PetscErrorCode z
        end subroutine MatNullSpaceDestroy
       subroutine MatNullSpaceTest(a,b,c,z)
-       import tMat,tMatNullSpace
+       import tMatNullSpace,tMat
        MatNullSpace a ! MatNullSpace
        Mat b ! Mat
        PetscBool c ! PetscBool
        PetscErrorCode z
        end subroutine MatNullSpaceTest
+      subroutine MatProductReplaceMats(a,b,c,d,z)
+       import tMat
+       Mat a ! Mat
+       Mat b ! Mat
+       Mat c ! Mat
+       Mat d ! Mat
+       PetscErrorCode z
+       end subroutine MatProductReplaceMats
+      subroutine MatProductSetFromOptions(a,z)
+       import tMat
+       Mat a ! Mat
+       PetscErrorCode z
+       end subroutine MatProductSetFromOptions
       subroutine MatProductNumeric(a,z)
        import tMat
        Mat a ! Mat
@@ -949,12 +1108,6 @@
        PetscReal b ! PetscReal
        PetscErrorCode z
        end subroutine MatProductSetFill
-      subroutine MatProductSetAlgorithm(a,b,z)
-       import tMat
-       Mat a ! Mat
-       MatProductAlgorithm b ! MatProductAlgorithm
-       PetscErrorCode z
-       end subroutine MatProductSetAlgorithm
       subroutine MatProductSetType(a,b,z)
        import tMat
        Mat a ! Mat
@@ -997,7 +1150,7 @@
        PetscErrorCode z
        end subroutine MatProductGetMats
       subroutine MatSetRandom(a,b,z)
-       import tMat,tPetscRandom
+       import tPetscRandom,tMat
        Mat a ! Mat
        PetscRandom b ! PetscRandom
        PetscErrorCode z
@@ -1580,6 +1733,11 @@
        PetscInt b ! PetscInt
        PetscErrorCode z
        end subroutine MatSetBlockSize
+      subroutine MatComputeVariableBlockEnvelope(a,z)
+       import tMat
+       Mat a ! Mat
+       PetscErrorCode z
+       end subroutine MatComputeVariableBlockEnvelope
       subroutine MatInvertVariableBlockEnvelope(a,b,c,z)
        import tMat
        Mat a ! Mat
@@ -1688,37 +1846,37 @@
        PetscErrorCode z
        end subroutine MatMatRestrict
       subroutine MatGetNullSpace(a,b,z)
-       import tMat,tMatNullSpace
+       import tMatNullSpace,tMat
        Mat a ! Mat
        MatNullSpace b ! MatNullSpace
        PetscErrorCode z
        end subroutine MatGetNullSpace
       subroutine MatSetNullSpace(a,b,z)
-       import tMat,tMatNullSpace
+       import tMatNullSpace,tMat
        Mat a ! Mat
        MatNullSpace b ! MatNullSpace
        PetscErrorCode z
        end subroutine MatSetNullSpace
       subroutine MatGetTransposeNullSpace(a,b,z)
-       import tMat,tMatNullSpace
+       import tMatNullSpace,tMat
        Mat a ! Mat
        MatNullSpace b ! MatNullSpace
        PetscErrorCode z
        end subroutine MatGetTransposeNullSpace
       subroutine MatSetTransposeNullSpace(a,b,z)
-       import tMat,tMatNullSpace
+       import tMatNullSpace,tMat
        Mat a ! Mat
        MatNullSpace b ! MatNullSpace
        PetscErrorCode z
        end subroutine MatSetTransposeNullSpace
       subroutine MatSetNearNullSpace(a,b,z)
-       import tMat,tMatNullSpace
+       import tMatNullSpace,tMat
        Mat a ! Mat
        MatNullSpace b ! MatNullSpace
        PetscErrorCode z
        end subroutine MatSetNearNullSpace
       subroutine MatGetNearNullSpace(a,b,z)
-       import tMat,tMatNullSpace
+       import tMatNullSpace,tMat
        Mat a ! Mat
        MatNullSpace b ! MatNullSpace
        PetscErrorCode z
@@ -1989,6 +2147,12 @@
        PetscBool b ! PetscBool
        PetscErrorCode z
        end subroutine MatHasCongruentLayouts
+      subroutine MatEliminateZeros(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscBool b ! PetscBool
+       PetscErrorCode z
+       end subroutine MatEliminateZeros
       subroutine MatFDColoringSetParameters(a,b,c,z)
        import tMatFDColoring
        MatFDColoring a ! MatFDColoring
@@ -2004,7 +2168,7 @@
        PetscErrorCode z
        end subroutine MatFDColoringSetBlockSize
       subroutine MatFDColoringSetUp(a,b,c,z)
-       import tMatFDColoring,tMat,tISColoring
+       import tMat,tMatFDColoring,tISColoring
        Mat a ! Mat
        ISColoring b ! ISColoring
        MatFDColoring c ! MatFDColoring
@@ -2016,7 +2180,7 @@
        PetscErrorCode z
        end subroutine MatFDColoringSetFromOptions
       subroutine MatFDColoringCreate(a,b,c,z)
-       import tMatFDColoring,tMat,tISColoring
+       import tMat,tMatFDColoring,tISColoring
        Mat a ! Mat
        ISColoring b ! ISColoring
        MatFDColoring c ! MatFDColoring
@@ -2027,6 +2191,113 @@
        MatFDColoring a ! MatFDColoring
        PetscErrorCode z
        end subroutine MatFDColoringDestroy
+      subroutine MatAXPY(a,b,c,d,z)
+       import tMat
+       Mat a ! Mat
+       PetscScalar b ! PetscScalar
+       Mat c ! Mat
+       MatStructure d ! MatStructure
+       PetscErrorCode z
+       end subroutine MatAXPY
+      subroutine MatShift(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscScalar b ! PetscScalar
+       PetscErrorCode z
+       end subroutine MatShift
+      subroutine MatDiagonalSet(a,b,c,z)
+       import tVec,tMat
+       Mat a ! Mat
+       Vec b ! Vec
+       InsertMode c ! InsertMode
+       PetscErrorCode z
+       end subroutine MatDiagonalSet
+      subroutine MatAYPX(a,b,c,d,z)
+       import tMat
+       Mat a ! Mat
+       PetscScalar b ! PetscScalar
+       Mat c ! Mat
+       MatStructure d ! MatStructure
+       PetscErrorCode z
+       end subroutine MatAYPX
+      subroutine MatFilter(a,b,c,d,z)
+       import tMat
+       Mat a ! Mat
+       PetscReal b ! PetscReal
+       PetscBool c ! PetscBool
+       PetscBool d ! PetscBool
+       PetscErrorCode z
+       end subroutine MatFilter
+      subroutine MatComputeBandwidth(a,b,c,z)
+       import tMat
+       Mat a ! Mat
+       PetscReal b ! PetscReal
+       PetscInt c ! PetscInt
+       PetscErrorCode z
+       end subroutine MatComputeBandwidth
+      subroutine MatCreate(a,b,z)
+       import tMat
+       MPI_Comm a ! MPI_Comm
+       Mat b ! Mat
+       PetscErrorCode z
+       end subroutine MatCreate
+      subroutine MatSetErrorIfFailure(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscBool b ! PetscBool
+       PetscErrorCode z
+       end subroutine MatSetErrorIfFailure
+      subroutine MatSetSizes(a,b,c,d,e,z)
+       import tMat
+       Mat a ! Mat
+       PetscInt b ! PetscInt
+       PetscInt c ! PetscInt
+       PetscInt d ! PetscInt
+       PetscInt e ! PetscInt
+       PetscErrorCode z
+       end subroutine MatSetSizes
+      subroutine MatSetFromOptions(a,z)
+       import tMat
+       Mat a ! Mat
+       PetscErrorCode z
+       end subroutine MatSetFromOptions
+      subroutine MatHeaderReplace(a,b,z)
+       import tMat
+       Mat a ! Mat
+       Mat b ! Mat
+       PetscErrorCode z
+       end subroutine MatHeaderReplace
+      subroutine MatBindToCPU(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscBool b ! PetscBool
+       PetscErrorCode z
+       end subroutine MatBindToCPU
+      subroutine MatBoundToCPU(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscBool b ! PetscBool
+       PetscErrorCode z
+       end subroutine MatBoundToCPU
+      subroutine MatSetValuesCOO(a,b,c,z)
+       import tMat
+       Mat a ! Mat
+       PetscScalar b (*) ! PetscScalar
+       InsertMode c ! InsertMode
+       PetscErrorCode z
+       end subroutine MatSetValuesCOO
+      subroutine MatSetBindingPropagates(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscBool b ! PetscBool
+       PetscErrorCode z
+       end subroutine MatSetBindingPropagates
+      subroutine MatGetBindingPropagates(a,b,z)
+       import tMat
+       Mat a ! Mat
+       PetscBool b ! PetscBool
+       PetscErrorCode z
+       end subroutine MatGetBindingPropagates
       subroutine MatGetColumnVector(a,b,c,z)
        import tVec,tMat
        Mat a ! Mat
@@ -2084,119 +2355,6 @@
        PetscReal c (*) ! PetscReal
        PetscErrorCode z
        end subroutine MatGetColumnReductions
-      subroutine MatAXPY(a,b,c,d,z)
-       import tMat
-       Mat a ! Mat
-       PetscScalar b ! PetscScalar
-       Mat c ! Mat
-       MatStructure d ! MatStructure
-       PetscErrorCode z
-       end subroutine MatAXPY
-      subroutine MatShift(a,b,z)
-       import tMat
-       Mat a ! Mat
-       PetscScalar b ! PetscScalar
-       PetscErrorCode z
-       end subroutine MatShift
-      subroutine MatDiagonalSet(a,b,c,z)
-       import tVec,tMat
-       Mat a ! Mat
-       Vec b ! Vec
-       InsertMode c ! InsertMode
-       PetscErrorCode z
-       end subroutine MatDiagonalSet
-      subroutine MatAYPX(a,b,c,d,z)
-       import tMat
-       Mat a ! Mat
-       PetscScalar b ! PetscScalar
-       Mat c ! Mat
-       MatStructure d ! MatStructure
-       PetscErrorCode z
-       end subroutine MatAYPX
-      subroutine MatComputeOperator(a,b,c,z)
-       import tMat
-       Mat a ! Mat
-       MatType b ! MatType
-       Mat c ! Mat
-       PetscErrorCode z
-       end subroutine MatComputeOperator
-      subroutine MatComputeOperatorTranspose(a,b,c,z)
-       import tMat
-       Mat a ! Mat
-       MatType b ! MatType
-       Mat c ! Mat
-       PetscErrorCode z
-       end subroutine MatComputeOperatorTranspose
-      subroutine MatChop(a,b,z)
-       import tMat
-       Mat a ! Mat
-       PetscReal b ! PetscReal
-       PetscErrorCode z
-       end subroutine MatChop
-      subroutine MatComputeBandwidth(a,b,c,z)
-       import tMat
-       Mat a ! Mat
-       PetscReal b ! PetscReal
-       PetscInt c ! PetscInt
-       PetscErrorCode z
-       end subroutine MatComputeBandwidth
-      subroutine MatCreate(a,b,z)
-       import tMat
-       MPI_Comm a ! MPI_Comm
-       Mat b ! Mat
-       PetscErrorCode z
-       end subroutine MatCreate
-      subroutine MatSetErrorIfFailure(a,b,z)
-       import tMat
-       Mat a ! Mat
-       PetscBool b ! PetscBool
-       PetscErrorCode z
-       end subroutine MatSetErrorIfFailure
-      subroutine MatSetSizes(a,b,c,d,e,z)
-       import tMat
-       Mat a ! Mat
-       PetscInt b ! PetscInt
-       PetscInt c ! PetscInt
-       PetscInt d ! PetscInt
-       PetscInt e ! PetscInt
-       PetscErrorCode z
-       end subroutine MatSetSizes
-      subroutine MatSetFromOptions(a,z)
-       import tMat
-       Mat a ! Mat
-       PetscErrorCode z
-       end subroutine MatSetFromOptions
-      subroutine MatBindToCPU(a,b,z)
-       import tMat
-       Mat a ! Mat
-       PetscBool b ! PetscBool
-       PetscErrorCode z
-       end subroutine MatBindToCPU
-      subroutine MatBoundToCPU(a,b,z)
-       import tMat
-       Mat a ! Mat
-       PetscBool b ! PetscBool
-       PetscErrorCode z
-       end subroutine MatBoundToCPU
-      subroutine MatSetValuesCOO(a,b,c,z)
-       import tMat
-       Mat a ! Mat
-       PetscScalar b (*) ! PetscScalar
-       InsertMode c ! InsertMode
-       PetscErrorCode z
-       end subroutine MatSetValuesCOO
-      subroutine MatSetBindingPropagates(a,b,z)
-       import tMat
-       Mat a ! Mat
-       PetscBool b ! PetscBool
-       PetscErrorCode z
-       end subroutine MatSetBindingPropagates
-      subroutine MatGetBindingPropagates(a,b,z)
-       import tMat
-       Mat a ! Mat
-       PetscBool b ! PetscBool
-       PetscErrorCode z
-       end subroutine MatGetBindingPropagates
       subroutine MatMultEqual(a,b,c,d,z)
        import tMat
        Mat a ! Mat

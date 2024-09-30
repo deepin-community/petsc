@@ -1,4 +1,3 @@
-
 #include <petsc/private/matimpl.h>
 #include <petsc/private/pcimpl.h>
 #include <petsc/private/dmimpl.h>
@@ -82,7 +81,7 @@ static PetscErrorCode _DMDADetermineRankFromGlobalIJK(PetscInt dim, PetscInt i, 
     *rank_re = pi + pj * Mp + pk * (Mp * Np);
     break;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode _DMDADetermineGlobalS0(PetscInt dim, PetscMPIInt rank_re, PetscInt Mp_re, PetscInt Np_re, PetscInt Pp_re, PetscInt range_i_re[], PetscInt range_j_re[], PetscInt range_k_re[], PetscInt *s0)
@@ -118,7 +117,7 @@ static PetscErrorCode _DMDADetermineGlobalS0(PetscInt dim, PetscMPIInt rank_re, 
     break;
   }
   *s0 = start_IJK;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCTelescopeSetUp_dmda_repart_coors2d(PC_Telescope sred, DM dm, DM subdm)
@@ -132,7 +131,7 @@ static PetscErrorCode PCTelescopeSetUp_dmda_repart_coors2d(PC_Telescope sred, DM
 
   PetscFunctionBegin;
   PetscCall(DMGetCoordinates(dm, &coor));
-  if (!coor) return (0);
+  if (!coor) PetscFunctionReturn(PETSC_SUCCESS);
   if (PCTelescope_isActiveRank(sred)) PetscCall(DMDASetUniformCoordinates(subdm, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0));
   /* Get the coordinate vector from the distributed array */
   PetscCall(DMGetCoordinateDM(dm, &cdm));
@@ -209,7 +208,7 @@ static PetscErrorCode PCTelescopeSetUp_dmda_repart_coors2d(PC_Telescope sred, DM
   PetscCall(ISDestroy(&is_local));
   PetscCall(VecDestroy(&perm_coors));
   PetscCall(VecDestroy(&coor_natural));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCTelescopeSetUp_dmda_repart_coors3d(PC_Telescope sred, DM dm, DM subdm)
@@ -223,7 +222,7 @@ static PetscErrorCode PCTelescopeSetUp_dmda_repart_coors3d(PC_Telescope sred, DM
 
   PetscFunctionBegin;
   PetscCall(DMGetCoordinates(dm, &coor));
-  if (!coor) PetscFunctionReturn(0);
+  if (!coor) PetscFunctionReturn(PETSC_SUCCESS);
 
   if (PCTelescope_isActiveRank(sred)) PetscCall(DMDASetUniformCoordinates(subdm, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0));
 
@@ -308,7 +307,7 @@ static PetscErrorCode PCTelescopeSetUp_dmda_repart_coors3d(PC_Telescope sred, DM
   PetscCall(ISDestroy(&is_local));
   PetscCall(VecDestroy(&perm_coors));
   PetscCall(VecDestroy(&coor_natural));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCTelescopeSetUp_dmda_repart_coors(PC pc, PC_Telescope sred, PC_Telescope_DMDACtx *ctx)
@@ -322,7 +321,7 @@ static PetscErrorCode PCTelescopeSetUp_dmda_repart_coors(PC pc, PC_Telescope sre
   PetscFunctionBegin;
   PetscCall(PCGetDM(pc, &dm));
   PetscCall(DMGetCoordinates(dm, &coor));
-  if (!coor) PetscFunctionReturn(0);
+  if (!coor) PetscFunctionReturn(PETSC_SUCCESS);
   psubcomm = sred->psubcomm;
   comm     = PetscSubcommParent(psubcomm);
   subdm    = ctx->dmrepart;
@@ -339,11 +338,11 @@ static PetscErrorCode PCTelescopeSetUp_dmda_repart_coors(PC pc, PC_Telescope sre
     PetscCall(PCTelescopeSetUp_dmda_repart_coors3d(sred, dm, subdm));
     break;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* setup repartitioned dm */
-PetscErrorCode PCTelescopeSetUp_dmda_repart(PC pc, PC_Telescope sred, PC_Telescope_DMDACtx *ctx)
+static PetscErrorCode PCTelescopeSetUp_dmda_repart(PC pc, PC_Telescope sred, PC_Telescope_DMDACtx *ctx)
 {
   DM                    dm;
   PetscInt              dim, nx, ny, nz, ndof, nsw, sum, k;
@@ -480,10 +479,10 @@ PetscErrorCode PCTelescopeSetUp_dmda_repart(PC pc, PC_Telescope sred, PC_Telesco
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCTelescopeSetUp_dmda_permutation_3d(PC pc, PC_Telescope sred, PC_Telescope_DMDACtx *ctx)
+static PetscErrorCode PCTelescopeSetUp_dmda_permutation_3d(PC pc, PC_Telescope sred, PC_Telescope_DMDACtx *ctx)
 {
   DM       dm;
   MPI_Comm comm;
@@ -551,10 +550,10 @@ PetscErrorCode PCTelescopeSetUp_dmda_permutation_3d(PC pc, PC_Telescope sred, PC
   PetscCall(MatCreateMAIJ(Pscalar, ndof, &P));
   PetscCall(MatDestroy(&Pscalar));
   ctx->permutation = P;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCTelescopeSetUp_dmda_permutation_2d(PC pc, PC_Telescope sred, PC_Telescope_DMDACtx *ctx)
+static PetscErrorCode PCTelescopeSetUp_dmda_permutation_2d(PC pc, PC_Telescope sred, PC_Telescope_DMDACtx *ctx)
 {
   DM       dm;
   MPI_Comm comm;
@@ -617,10 +616,10 @@ PetscErrorCode PCTelescopeSetUp_dmda_permutation_2d(PC pc, PC_Telescope sred, PC
   PetscCall(MatCreateMAIJ(Pscalar, ndof, &P));
   PetscCall(MatDestroy(&Pscalar));
   ctx->permutation = P;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCTelescopeSetUp_dmda_scatters(PC pc, PC_Telescope sred, PC_Telescope_DMDACtx *ctx)
+static PetscErrorCode PCTelescopeSetUp_dmda_scatters(PC pc, PC_Telescope sred, PC_Telescope_DMDACtx *ctx)
 {
   Vec        xred, yred, xtmp, x, xp;
   VecScatter scatter;
@@ -662,7 +661,7 @@ PetscErrorCode PCTelescopeSetUp_dmda_scatters(PC pc, PC_Telescope sred, PC_Teles
 
   ctx->xp = xp;
   PetscCall(VecDestroy(&x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCTelescopeSetUp_dmda(PC pc, PC_Telescope sred)
@@ -681,8 +680,8 @@ PetscErrorCode PCTelescopeSetUp_dmda(PC pc, PC_Telescope sred)
   PetscCall(PCGetDM(pc, &dm));
   PetscCall(DMDAGetInfo(dm, &dim, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL));
 
-  PCTelescopeSetUp_dmda_repart(pc, sred, ctx);
-  PCTelescopeSetUp_dmda_repart_coors(pc, sred, ctx);
+  PetscCall(PCTelescopeSetUp_dmda_repart(pc, sred, ctx));
+  PetscCall(PCTelescopeSetUp_dmda_repart_coors(pc, sred, ctx));
   switch (dim) {
   case 1:
     SETERRQ(comm, PETSC_ERR_SUP, "Telescope: DMDA (1D) repartitioning not provided");
@@ -694,10 +693,10 @@ PetscErrorCode PCTelescopeSetUp_dmda(PC pc, PC_Telescope sred)
     break;
   }
   PetscCall(PCTelescopeSetUp_dmda_scatters(pc, sred, ctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCTelescopeMatCreate_dmda_dmactivefalse(PC pc, PC_Telescope sred, MatReuse reuse, Mat *A)
+static PetscErrorCode PCTelescopeMatCreate_dmda_dmactivefalse(PC pc, PC_Telescope sred, MatReuse reuse, Mat *A)
 {
   PC_Telescope_DMDACtx *ctx;
   MPI_Comm              comm, subcomm;
@@ -738,7 +737,7 @@ PetscErrorCode PCTelescopeMatCreate_dmda_dmactivefalse(PC pc, PC_Telescope sred,
   PetscCall(ISDestroy(&iscol));
   PetscCall(MatDestroy(&Bperm));
   PetscCall(MatDestroyMatrices(1, &_Blocal));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCTelescopeMatCreate_dmda(PC pc, PC_Telescope sred, MatReuse reuse, Mat *A)
@@ -772,10 +771,10 @@ PetscErrorCode PCTelescopeMatCreate_dmda(PC pc, PC_Telescope sred, MatReuse reus
   } else {
     PetscCall(PCTelescopeMatCreate_dmda_dmactivefalse(pc, sred, reuse, A));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCTelescopeSubNullSpaceCreate_dmda_Telescope(PC pc, PC_Telescope sred, MatNullSpace nullspace, MatNullSpace *sub_nullspace)
+static PetscErrorCode PCTelescopeSubNullSpaceCreate_dmda_Telescope(PC pc, PC_Telescope sred, MatNullSpace nullspace, MatNullSpace *sub_nullspace)
 {
   PetscBool             has_const;
   PetscInt              i, k, n = 0;
@@ -827,7 +826,7 @@ PetscErrorCode PCTelescopeSubNullSpaceCreate_dmda_Telescope(PC pc, PC_Telescope 
     PetscCheck(!nullspace->remove, PetscObjectComm((PetscObject)pc), PETSC_ERR_SUP, "Propagation of custom remove callbacks not supported when propagating (near) nullspaces with PCTelescope");
     PetscCheck(!nullspace->rmctx, PetscObjectComm((PetscObject)pc), PETSC_ERR_SUP, "Propagation of custom remove callback context not supported when propagating (near) nullspaces with PCTelescope");
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCTelescopeMatNullSpaceCreate_dmda(PC pc, PC_Telescope sred, Mat sub_mat)
@@ -860,7 +859,7 @@ PetscErrorCode PCTelescopeMatNullSpaceCreate_dmda(PC pc, PC_Telescope sred, Mat 
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCApply_Telescope_dmda(PC pc, Vec x, Vec y)
@@ -923,7 +922,7 @@ PetscErrorCode PCApply_Telescope_dmda(PC pc, Vec x, Vec y)
   PetscCall(VecScatterBegin(scatter, xtmp, xp, INSERT_VALUES, SCATTER_REVERSE));
   PetscCall(VecScatterEnd(scatter, xtmp, xp, INSERT_VALUES, SCATTER_REVERSE));
   PetscCall(MatMult(perm, xp, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCApplyRichardson_Telescope_dmda(PC pc, Vec x, Vec y, Vec w, PetscReal rtol, PetscReal abstol, PetscReal dtol, PetscInt its, PetscBool zeroguess, PetscInt *outits, PCRichardsonConvergedReason *reason)
@@ -980,7 +979,7 @@ PetscErrorCode PCApplyRichardson_Telescope_dmda(PC pc, Vec x, Vec y, Vec w, Pets
 
   if (!*reason) *reason = PCRICHARDSON_CONVERGED_ITS;
   *outits = 1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCReset_Telescope_dmda(PC pc)
@@ -995,10 +994,10 @@ PetscErrorCode PCReset_Telescope_dmda(PC pc)
   PetscCall(DMDestroy(&ctx->dmrepart));
   PetscCall(PetscFree3(ctx->range_i_re, ctx->range_j_re, ctx->range_k_re));
   PetscCall(PetscFree3(ctx->start_i_re, ctx->start_j_re, ctx->start_k_re));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMView_DA_Short_3d(DM dm, PetscViewer v)
+static PetscErrorCode DMView_DA_Short_3d(DM dm, PetscViewer v)
 {
   PetscInt    M, N, P, m, n, p, ndof, nsw;
   MPI_Comm    comm;
@@ -1013,10 +1012,10 @@ PetscErrorCode DMView_DA_Short_3d(DM dm, PetscViewer v)
   if (prefix) PetscCall(PetscViewerASCIIPrintf(v, "DMDA Object:    (%s)    %d MPI processes\n", prefix, size));
   else PetscCall(PetscViewerASCIIPrintf(v, "DMDA Object:    %d MPI processes\n", size));
   PetscCall(PetscViewerASCIIPrintf(v, "  M %" PetscInt_FMT " N %" PetscInt_FMT " P %" PetscInt_FMT " m %" PetscInt_FMT " n %" PetscInt_FMT " p %" PetscInt_FMT " dof %" PetscInt_FMT " overlap %" PetscInt_FMT "\n", M, N, P, m, n, p, ndof, nsw));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMView_DA_Short_2d(DM dm, PetscViewer v)
+static PetscErrorCode DMView_DA_Short_2d(DM dm, PetscViewer v)
 {
   PetscInt    M, N, m, n, ndof, nsw;
   MPI_Comm    comm;
@@ -1031,7 +1030,7 @@ PetscErrorCode DMView_DA_Short_2d(DM dm, PetscViewer v)
   if (prefix) PetscCall(PetscViewerASCIIPrintf(v, "DMDA Object:    (%s)    %d MPI processes\n", prefix, size));
   else PetscCall(PetscViewerASCIIPrintf(v, "DMDA Object:    %d MPI processes\n", size));
   PetscCall(PetscViewerASCIIPrintf(v, "  M %" PetscInt_FMT " N %" PetscInt_FMT " m %" PetscInt_FMT " n %" PetscInt_FMT " dof %" PetscInt_FMT " overlap %" PetscInt_FMT "\n", M, N, m, n, ndof, nsw));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMView_DA_Short(DM dm, PetscViewer v)
@@ -1048,5 +1047,5 @@ PetscErrorCode DMView_DA_Short(DM dm, PetscViewer v)
     PetscCall(DMView_DA_Short_3d(dm, v));
     break;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

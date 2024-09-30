@@ -1,16 +1,15 @@
-
 #include <petsc/private/snesimpl.h>
 #include <petsc/private/linesearchimpl.h>
 
 static PetscBool SNESPackageInitialized = PETSC_FALSE;
 
 /*@C
-  SNESFinalizePackage - This function destroys everything in the Petsc interface to the SNES package. It is
-  called from PetscFinalize().
+  SNESFinalizePackage - This function destroys everything in the PETSc interface to the `SNES` package. It is
+  called from `PetscFinalize()`.
 
   Level: developer
 
-.seealso: `PetscFinalize()`
+.seealso: [](ch_snes), `SNES`, `PetscFinalize()`
 @*/
 PetscErrorCode SNESFinalizePackage(void)
 {
@@ -20,17 +19,17 @@ PetscErrorCode SNESFinalizePackage(void)
   SNESPackageInitialized          = PETSC_FALSE;
   SNESRegisterAllCalled           = PETSC_FALSE;
   SNESLineSearchRegisterAllCalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  SNESInitializePackage - This function initializes everything in the SNES package. It is called
-  from PetscDLLibraryRegister_petscsnes() when using dynamic libraries, and on the first call to SNESCreate()
+  SNESInitializePackage - This function initializes everything in the `SNES` package. It is called
+  from PetscDLLibraryRegister_petscsnes() when using dynamic libraries, and on the first call to `SNESCreate()`
   when using shared or static libraries.
 
   Level: developer
 
-.seealso: `PetscInitialize()`
+.seealso: [](ch_snes), `SNES`, `PetscInitialize()`
 @*/
 PetscErrorCode SNESInitializePackage(void)
 {
@@ -38,7 +37,7 @@ PetscErrorCode SNESInitializePackage(void)
   PetscBool opt, pkg, cls;
 
   PetscFunctionBegin;
-  if (SNESPackageInitialized) PetscFunctionReturn(0);
+  if (SNESPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   SNESPackageInitialized = PETSC_TRUE;
   /* Initialize subpackages */
   PetscCall(SNESMSInitializePackage());
@@ -51,7 +50,7 @@ PetscErrorCode SNESInitializePackage(void)
   PetscCall(SNESLineSearchRegisterAll());
   /* Register Events */
   PetscCall(PetscLogEventRegister("SNESSolve", SNES_CLASSID, &SNES_Solve));
-  PetscCall(PetscLogEventRegister("SNESSetUp", SNES_CLASSID, &SNES_Setup));
+  PetscCall(PetscLogEventRegister("SNESSetUp", SNES_CLASSID, &SNES_SetUp));
   PetscCall(PetscLogEventRegister("SNESFunctionEval", SNES_CLASSID, &SNES_FunctionEval));
   PetscCall(PetscLogEventRegister("SNESObjectiveEval", SNES_CLASSID, &SNES_ObjectiveEval));
   PetscCall(PetscLogEventRegister("SNESNGSEval", SNES_CLASSID, &SNES_NGSEval));
@@ -82,7 +81,7 @@ PetscErrorCode SNESInitializePackage(void)
   }
   /* Register package finalizer */
   PetscCall(PetscRegisterFinalize(SNESFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_DYNAMIC_LIBRARIES)
@@ -96,7 +95,7 @@ PETSC_EXTERN PetscErrorCode PetscDLLibraryRegister_petscsnes(void)
 {
   PetscFunctionBegin;
   PetscCall(SNESInitializePackage());
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif /* PETSC_HAVE_DYNAMIC_LIBRARIES */

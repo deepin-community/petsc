@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/forest/tutorials/ex1.c">Actual source code: ex1.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/dm/impls/forest/tutorials/ex1.c">Actual source code: ex1.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:48:34+00:00">
+<meta name="date" content="2024-03-29T14:12:44+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -17,34 +17,35 @@
 
 <a name="line7">  7: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
 <a name="line8">  8: </a>{
-<a name="line9">  9: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>          dm;
+<a name="line9">  9: </a>  <a href="../../../../../manualpages/DM/DM.html">DM</a>          dm;
 <a name="line10"> 10: </a>  char        typeString[256] = {'\0'};
-<a name="line11"> 11: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer          = NULL;
-<a name="line12"> 12: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   conv            = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line11"> 11: </a>  <a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer          = NULL;
+<a name="line12"> 12: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a>   conv            = <a href="../../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
 
-<a name="line15"> 15: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help);
-<a name="line16"> 16: </a>  <a href="../../../../../docs/manualpages/DM/DMCreate.html">DMCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;dm);
-<a name="line17"> 17: </a>  <a href="../../../../../docs/manualpages/Sys/PetscStrncpy.html">PetscStrncpy</a>(typeString, <a href="../../../../../docs/manualpages/DMForest/DMFOREST.html">DMFOREST</a>, 256);
-<a name="line18"> 18: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, NULL, <font color="#666666">"<a href="../../../../../docs/manualpages/DM/DM.html">DM</a> Forest example options"</font>, NULL);
-<a name="line19"> 19: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsString.html">PetscOptionsString</a>(<font color="#666666">"-dm_type"</font>, <font color="#666666">"The type of the dm"</font>, NULL, <a href="../../../../../docs/manualpages/DMForest/DMFOREST.html">DMFOREST</a>, typeString, <font color="#4169E1">sizeof</font>(typeString), NULL);
-<a name="line20"> 20: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-test_convert"</font>, <font color="#666666">"Test conversion to <a href="../../../../../docs/manualpages/DMPlex/DMPLEX.html">DMPLEX</a>"</font>, NULL, conv, &amp;conv, NULL);
-<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
-<a name="line22"> 22: </a>  <a href="../../../../../docs/manualpages/DM/DMSetType.html">DMSetType</a>(dm, (<a href="../../../../../docs/manualpages/DM/DMType.html">DMType</a>)typeString);
-<a name="line23"> 23: </a>  <a href="../../../../../docs/manualpages/DM/DMSetFromOptions.html">DMSetFromOptions</a>(dm);
-<a name="line24"> 24: </a>  <a href="../../../../../docs/manualpages/DM/DMSetUp.html">DMSetUp</a>(dm);
-<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/DM/DMViewFromOptions.html">DMViewFromOptions</a>(dm, NULL, <font color="#666666">"-dm_view"</font>);
-<a name="line26"> 26: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;viewer);
+<a name="line14"> 14: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBeginUser.html">PetscFunctionBeginUser</a>;
+<a name="line15"> 15: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help));
+<a name="line16"> 16: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMCreate.html">DMCreate</a>(<a href="../../../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;dm));
+<a name="line17"> 17: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscStrncpy.html">PetscStrncpy</a>(typeString, <a href="../../../../../manualpages/DMForest/DMFOREST.html">DMFOREST</a>, 256));
+<a name="line18"> 18: </a>  <a href="../../../../../manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(<a href="../../../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, NULL, <font color="#666666">"<a href="../../../../../manualpages/DM/DM.html">DM</a> Forest example options"</font>, NULL);
+<a name="line19"> 19: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscOptionsString.html">PetscOptionsString</a>(<font color="#666666">"-dm_type"</font>, <font color="#666666">"The type of the dm"</font>, NULL, <a href="../../../../../manualpages/DMForest/DMFOREST.html">DMFOREST</a>, typeString, <font color="#4169E1">sizeof</font>(typeString), NULL));
+<a name="line20"> 20: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscOptionsBool.html">PetscOptionsBool</a>(<font color="#666666">"-test_convert"</font>, <font color="#666666">"Test conversion to <a href="../../../../../manualpages/DMPlex/DMPLEX.html">DMPLEX</a>"</font>, NULL, conv, &amp;conv, NULL));
+<a name="line21"> 21: </a>  <a href="../../../../../manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line22"> 22: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMSetType.html">DMSetType</a>(dm, (<a href="../../../../../manualpages/DM/DMType.html">DMType</a>)typeString));
+<a name="line23"> 23: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMSetFromOptions.html">DMSetFromOptions</a>(dm));
+<a name="line24"> 24: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMSetUp.html">DMSetUp</a>(dm));
+<a name="line25"> 25: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMViewFromOptions.html">DMViewFromOptions</a>(dm, NULL, <font color="#666666">"-dm_view"</font>));
+<a name="line26"> 26: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;viewer));
 <a name="line27"> 27: </a>  <font color="#4169E1">if</font> (conv) {
-<a name="line28"> 28: </a>    <a href="../../../../../docs/manualpages/DM/DM.html">DM</a> dmConv;
+<a name="line28"> 28: </a>    <a href="../../../../../manualpages/DM/DM.html">DM</a> dmConv;
 
-<a name="line30"> 30: </a>    <a href="../../../../../docs/manualpages/DM/DMConvert.html">DMConvert</a>(dm, <a href="../../../../../docs/manualpages/DMPlex/DMPLEX.html">DMPLEX</a>, &amp;dmConv);
-<a name="line31"> 31: </a>    <a href="../../../../../docs/manualpages/DM/DMLocalizeCoordinates.html">DMLocalizeCoordinates</a>(dmConv);
-<a name="line32"> 32: </a>    <a href="../../../../../docs/manualpages/DM/DMViewFromOptions.html">DMViewFromOptions</a>(dmConv, NULL, <font color="#666666">"-dm_conv_view"</font>);
-<a name="line33"> 33: </a>    <a href="../../../../../docs/manualpages/DMPlex/DMPlexCheckCellShape.html">DMPlexCheckCellShape</a>(dmConv, <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, <a href="../../../../../docs/manualpages/Sys/PETSC_DETERMINE.html">PETSC_DETERMINE</a>);
-<a name="line34"> 34: </a>    <a href="../../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dmConv);
+<a name="line30"> 30: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMConvert.html">DMConvert</a>(dm, <a href="../../../../../manualpages/DMPlex/DMPLEX.html">DMPLEX</a>, &amp;dmConv));
+<a name="line31"> 31: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMLocalizeCoordinates.html">DMLocalizeCoordinates</a>(dmConv));
+<a name="line32"> 32: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMViewFromOptions.html">DMViewFromOptions</a>(dmConv, NULL, <font color="#666666">"-dm_conv_view"</font>));
+<a name="line33"> 33: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMPlex/DMPlexCheckCellShape.html">DMPlexCheckCellShape</a>(dmConv, <a href="../../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>, <a href="../../../../../manualpages/Sys/PETSC_DETERMINE.html">PETSC_DETERMINE</a>));
+<a name="line34"> 34: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dmConv));
 <a name="line35"> 35: </a>  }
-<a name="line36"> 36: </a>  <a href="../../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dm);
-<a name="line37"> 37: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line36"> 36: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dm));
+<a name="line37"> 37: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscFinalize.html">PetscFinalize</a>());
 <a name="line38"> 38: </a>  <font color="#4169E1">return</font> 0;
 <a name="line39"> 39: </a>}
 

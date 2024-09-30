@@ -12,7 +12,8 @@ static char help[] = "Adjoint sensitivity of a hybrid system with state-dependen
   Initially u=[0 1]^T and i=1.
 
   References:
-+ * - H. Zhang, S. Abhyankar, E. Constantinescu, M. Mihai, Discrete Adjoint Sensitivity Analysis of Hybrid Dynamical Systems With Switching, IEEE Transactions on Circuits and Systems I: Regular Papers, 64(5), May 2017
++ * - H. Zhang, S. Abhyankar, E. Constantinescu, M. Mihai, Discrete Adjoint Sensitivity Analysis of Hybrid Dynamical Systems With Switching,
+      IEEE Transactions on Circuits and Systems I: Regular Papers, 64(5), May 2017
 - * - I. A. Hiskens, M.A. Pai, Trajectory Sensitivity Analysis of Hybrid Systems, IEEE Transactions on Circuits and Systems, Vol 47, No 2, February 2000
 */
 
@@ -37,7 +38,7 @@ PetscErrorCode EventFunction(TS ts, PetscReal t, Vec U, PetscScalar *fvalue, voi
     fvalue[0] = u[1] - actx->lambda2 * u[0];
   }
   PetscCall(VecRestoreArrayRead(U, &u));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ShiftGradients(TS ts, Vec U, AppCtx *actx)
@@ -93,7 +94,7 @@ PetscErrorCode ShiftGradients(TS ts, Vec U, AppCtx *actx)
   x[1]   = tmp[1];
   PetscCall(VecRestoreArray(mu[1], &y));
   PetscCall(VecRestoreArray(lambda[1], &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PostEventFunction(TS ts, PetscInt nevents, PetscInt event_list[], PetscReal t, Vec U, PetscBool forwardsolve, void *ctx)
@@ -110,7 +111,7 @@ PetscErrorCode PostEventFunction(TS ts, PetscInt nevents, PetscInt event_list[],
     actx->mode = 1;
     /* PetscCall(PetscPrintf(PETSC_COMM_SELF,"Change from mode 2 to 1 at t = %f \n",(double)t)); */
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -139,7 +140,7 @@ static PetscErrorCode IFunction(TS ts, PetscReal t, Vec U, Vec Udot, Vec F, void
   PetscCall(VecRestoreArrayRead(U, &u));
   PetscCall(VecRestoreArrayRead(Udot, &udot));
   PetscCall(VecRestoreArray(F, &f));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -178,14 +179,14 @@ static PetscErrorCode IJacobian(TS ts, PetscReal t, Vec U, Vec Udot, PetscReal a
     PetscCall(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Matrix JacobianP is constant so that it only needs to be evaluated once */
 static PetscErrorCode RHSJacobianP(TS ts, PetscReal t, Vec X, Mat A, void *ctx)
 {
   PetscFunctionBeginUser;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

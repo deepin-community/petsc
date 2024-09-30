@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Overview &#8212; PETSc 3.18.6 documentation</title>
+    <title>Overview &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -53,7 +54,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="PETSc in a nutshell" href="nutshell.html" />
-    <link rel="prev" title="PETSc 3.18" href="../index.html" />
+    <link rel="prev" title="PETSc 3.20" href="../index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="docsearch:language" content="en">
   </head>
@@ -142,31 +143,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -293,31 +293,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -396,18 +395,20 @@
   <div class="bd-toc-item navbar-nav">
     <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="nutshell.html">PETSc in a nutshell</a></li>
-<li class="toctree-l1"><a class="reference internal" href="features.html">Core Features and Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Supported Systems</a></li>
+
 <li class="toctree-l1"><a class="reference internal" href="gpu_roadmap.html">GPU Support Roadmap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vector_table.html">Summary of Vector Types Available In PETSc</a></li>
 <li class="toctree-l1"><a class="reference internal" href="matrix_table.html">Summary of Matrix Types Available In PETSc</a></li>
 <li class="toctree-l1"><a class="reference internal" href="linear_solve_table.html">Summary of Sparse Linear Solvers Available In PETSc</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nonlinear_solve_table.html">Summary of Nonlinear Solvers Available In PETSc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integrator_table.html">Summary of Time Integrators Available In PETSc</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tao_solve_table.html">Summary of Tao Solvers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="discrete_table.html">Summary of Discretization Management Systems</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../docs/manual/index.html">User-Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../docs/manual/introduction.html">Introduction to PETSc</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/about_this_manual.html">About This Manual</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../manual/index.html">User-Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manual/introduction.html">Introduction to PETSc</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manual/about_this_manual.html">About This Manual</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/getting_started.html">Getting Started</a></li>
 
 
 
@@ -416,46 +417,139 @@
 
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../docs/manual/programming.html">The Solvers in PETSc/TAO</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/vec.html">Vectors and Parallel Data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/mat.html">Matrices</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/ksp.html">KSP: Linear System Solvers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/snes.html">SNES: Nonlinear Solvers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/ts.html">TS: Scalable ODE and DAE Solvers</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manual/programming.html">The Solvers in PETSc/TAO</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manual/vec.html">Vectors and Parallel Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/mat.html">Matrices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/ksp.html">KSP: Linear System Solvers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/snes.html">SNES: Nonlinear Solvers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/ts.html">TS: Scalable ODE and DAE Solvers</a></li>
 
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/tao.html">TAO: Optimization Solvers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/tao.html">TAO: Optimization Solvers</a></li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../docs/manual/dm.html">DM: Interfacing Between Solvers and Models/Discretizations</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/dmbase.html">DM Basics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/dmplex.html">DMPlex: Unstructured Grids in PETSc</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/dmstag.html">DMSTAG: Staggered, Structured Grids in PETSc</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/dt.html">PetscDT: Discretization Technology in PETSc</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/fe.html">PetscFE: Finite Element Infrastructure in PETSc</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/dmnetwork.html">Networks</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manual/dm.html">DM: Interfacing Between Solvers and Models/Discretizations</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manual/dmbase.html">DM Basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/dmplex.html">DMPlex: Unstructured Grids</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/dmstag.html">DMSTAG: Staggered, Structured Grid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/dmnetwork.html">Networks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/dt.html">PetscDT: Discretization Technology in PETSc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/fe.html">PetscFE: Finite Element Infrastructure in PETSc</a></li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../docs/manual/additional.html">Additional Information</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/fortran.html">PETSc for Fortran Users</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/matlab.html">Using MATLAB with PETSc</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/profiling.html">Profiling</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/performance.html">Hints for Performance Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/blas-lapack.html">The Use of BLAS and LAPACK in PETSc and external libraries</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/other.html">Other PETSc Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/advanced.html">Advanced Features of Matrices and Solvers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/tests.html">Running PETSc Tests</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/acknowledgements.html">Acknowledgments</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manual/additional.html">Additional Information</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manual/fortran.html">PETSc for Fortran Users</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/matlab.html">Using MATLAB with PETSc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/profiling.html">Profiling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/performance.html">Hints for Performance Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/blas-lapack.html">The Use of BLAS and LAPACK in PETSc and external libraries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/other.html">Other PETSc Features</a></li>
+
+<li class="toctree-l3"><a class="reference internal" href="../manual/advanced.html">Advanced Features of Matrices and Solvers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/tests.html">Running PETSc Tests</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../docs/manualpages/index.html">API-Docs</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../docs/changes/index.html">Changes for each release</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../manualpages/index.html">C/Fortran API</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/Vector.html">Vectors and Index Sets</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Vec/index.html">Vector Operations (Vec)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/IS/index.html">Index sets (IS)</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../docs/changes/index.html">Changes for each release</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../docs/manualpages/singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/Matrix.html">Matrices and Matrix Operations</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Mat/index.html">Matrix Operations (Mat)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/MatOrderings/index.html">Matrix colorings (MatColoring), orderings (MatOrdering), partitionings (MatPartitioning), and coarsening (MatCoarsen)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/MatFD/index.html">Finite difference computation of Jacobians (MatFD)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/DataLayout.html">Data Layout and Communication</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/PetscSF/index.html">Star Forest Communication (PetscSF)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/PetscSection/index.html">Section Data Layout (PetscSection)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/AO/index.html">Application Orderings (AO)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/DataManagement.html">Data Management between Vec and Mat, and Distributed Mesh Data Structures</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DM/index.html">Data Management (DM)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMDA/index.html">Structured Grids (DMDA)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMStag/index.html">Staggered, Structured Grids (DMSTAG)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMPlex/index.html">Unstructured Grids and Cell Complexes (DMPLEX)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMNetwork/index.html">Graphs and Networks (DMNETWORK)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMForest/index.html">A Forest of Trees and Structured Adaptive Refinement (DMFOREST)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMPatch/index.html">Sequences of parallel mesh patches (DMPATCH)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMSwarm/index.html">Particle Discretizations (DMSWARM)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMMOAB/index.html">MOAB Mesh Representation (DMMOAB)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMLabel/index.html">Selecting Parts of Meshes (DMLabel)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMPRODUCT/index.html">Tensor products of meshes (DMRODUCT)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/Discretization.html">Discretization and Function Spaces</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DT/index.html">Discretization Technology and Quadrature (DT)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/SPACE/index.html">Function Spaces (PetscSpace)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DUALSPACE/index.html">Dual Spaces (PetscDualSpace)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/FE/index.html">Finite Elements (PetscFE)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/FV/index.html">Finite Volumes (PetscFV)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/PF/index.html">Defining your own mathematical functions (PF)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/LANDAU/index.html">Landau Collision Operator</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/LinearSolvers.html">Linear Solvers and Preconditioners</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/KSP/index.html">Linear Solvers and Krylov Methods (KSP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/PC/index.html">Preconditioners (PC)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/NonlinearSolvers.html">Nonlinear Solvers</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/SNES/index.html">Nonlinear Solvers (SNES)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/SNESFAS/index.html">Full Approximation Scheme (FAS) nonlinear multigrid</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/Timestepping.html">Forward and Adjoint Timestepping</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/TS/index.html">Time Stepping ODE and DAE Solvers (TS)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Sensitivity/index.html">Sensitivity Analysis for ODE and DAE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Characteristic/index.html">Semi-Lagrangian Solves using the Method of Characteristics</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/Optimization.html">Optimization</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Tao/index.html">Optimization Solvers (Tao)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/TaoLineSearch/index.html">Optimization Line Search (TaoLineSearch)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/Visualization.html">Graphics and Visualization</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Draw/index.html">Graphics (Draw)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Viewer/index.html">Viewing Objects (Viewer)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/System.html">System Routines, Profiling, Data Structures</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Sys/index.html">PETSc Options, IO, and System Utilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/PetscH/index.html">Hash Tables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Profiling/index.html">Profiling and Logging</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../changes/index.html">Changes for each release</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changes/index.html">Changes for each release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../manualpages/singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="previous_release_docs.html">Documentation for previous PETSc releases</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.19/docs"> 3.19</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.18/docs"> 3.18</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.17/docs"> 3.17</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.16/docs"> 3.16</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.15/docs"> 3.15</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.14/docs"> 3.14</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.13/docs"> 3.13</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.12/docs"> 3.12</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.11/docs"> 3.11</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.10/docs"> 3.10</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.9/docs"> 3.9</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.8/docs"> 3.8</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.7/docs"> 3.7</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.6/docs"> 3.6</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.5/docs"> 3.5</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.4/docs"> 3.4</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.3/docs"> 3.3</a></li>
+</ul>
+</li>
 </ul>
 
   </div>
@@ -499,15 +593,12 @@ managing parallel PDE discretizations including parallel matrix and vector assem
 <li class="toctree-l1"><a class="reference internal" href="nutshell.html">PETSc in a nutshell</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="nutshell.html#algebraic-objects">Algebraic objects</a></li>
 <li class="toctree-l2"><a class="reference internal" href="nutshell.html#solvers">Solvers</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nutshell.html#dm-interfacing-solvers-to-models-discretizations">DM: Interfacing Solvers to Models/Discretizations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="nutshell.html#utilities-for-the-simulation-solver-process">Utilities for the Simulation/Solver Process</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nutshell.html#model-discretization-interfaces-to-solvers">Model/Discretization Interfaces to Solvers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nutshell.html#utilities-for-simulations-solvers">Utilities for Simulations/Solvers</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="features.html">Core Features and Functionality</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="features.html#supported-systems">Supported Systems</a></li>
-<li class="toctree-l2"><a class="reference internal" href="features.html#accelerator-gpu-features">Accelerator/GPU Features</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Supported Systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html#accelerator-gpu-features">Accelerator/GPU Features</a></li>
 <li class="toctree-l1"><a class="reference internal" href="gpu_roadmap.html">GPU Support Roadmap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vector_table.html">Summary of Vector Types Available In PETSc</a></li>
 <li class="toctree-l1"><a class="reference internal" href="matrix_table.html">Summary of Matrix Types Available In PETSc</a></li>
@@ -518,6 +609,7 @@ managing parallel PDE discretizations including parallel matrix and vector assem
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="nonlinear_solve_table.html">Summary of Nonlinear Solvers Available In PETSc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integrator_table.html">Summary of Time Integrators Available In PETSc</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tao_solve_table.html">Summary of Tao Solvers</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="tao_solve_table.html#unconstrained">Unconstrained</a></li>
 <li class="toctree-l2"><a class="reference internal" href="tao_solve_table.html#bound-constrained">Bound Constrained</a></li>
@@ -528,35 +620,65 @@ managing parallel PDE discretizations including parallel matrix and vector assem
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="discrete_table.html">Summary of Discretization Management Systems</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../docs/manual/index.html">User-Guide</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manual/introduction.html">Introduction to PETSc</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manual/programming.html">The Solvers in PETSc/TAO</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manual/dm.html">DM: Interfacing Between Solvers and Models/Discretizations</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manual/additional.html">Additional Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../manual/index.html">User-Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../manual/introduction.html">Introduction to PETSc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manual/programming.html">The Solvers in PETSc/TAO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manual/dm.html">DM: Interfacing Between Solvers and Models/Discretizations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manual/additional.html">Additional Information</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../docs/manualpages/index.html">API-Docs</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../docs/changes/index.html">Changes for each release</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../manualpages/index.html">C/Fortran API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/Vector.html">Vectors and Index Sets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/Matrix.html">Matrices and Matrix Operations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/DataLayout.html">Data Layout and Communication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/DataManagement.html">Data Management between Vec and Mat, and Distributed Mesh Data Structures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/Discretization.html">Discretization and Function Spaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/LinearSolvers.html">Linear Solvers and Preconditioners</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/NonlinearSolvers.html">Nonlinear Solvers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/Timestepping.html">Forward and Adjoint Timestepping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/Optimization.html">Optimization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/Visualization.html">Graphics and Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/System.html">System Routines, Profiling, Data Structures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../changes/index.html">Changes for each release</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html">Single Index of all PETSc Manual Pages</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../docs/changes/index.html">Changes for each release</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../docs/changes/index.html#releases-of-petsc">Releases of PETSc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changes/index.html">Changes for each release</a><ul class="simple">
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../docs/manualpages/singleindex.html">Single Index of all PETSc Manual Pages</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html#a">A</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html#c">C</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html#d">D</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html#i">I</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html#k">K</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html#m">M</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html#n">N</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html#p">P</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html#r">R</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html#s">S</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html#t">T</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html#v">V</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../manualpages/singleindex.html">Single Index of all PETSc Manual Pages</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html#a">A</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html#c">C</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html#d">D</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html#i">I</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html#k">K</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html#m">M</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html#n">N</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html#p">P</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html#r">R</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html#s">S</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html#t">T</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html#v">V</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="previous_release_docs.html">Documentation for previous PETSc releases</a><ul>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.19/docs"> 3.19</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.18/docs"> 3.18</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.17/docs"> 3.17</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.16/docs"> 3.16</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.15/docs"> 3.15</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.14/docs"> 3.14</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.13/docs"> 3.13</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.12/docs"> 3.12</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.11/docs"> 3.11</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.10/docs"> 3.10</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.9/docs"> 3.9</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.8/docs"> 3.8</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.7/docs"> 3.7</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.6/docs"> 3.6</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.5/docs"> 3.5</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.4/docs"> 3.4</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.3/docs"> 3.3</a></li>
 </ul>
 </li>
 </ul>
@@ -575,7 +697,7 @@ managing parallel PDE discretizations including parallel matrix and vector assem
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
           <p class="prev-next-subtitle">previous</p>
-          <p class="prev-next-title">PETSc 3.18</p>
+          <p class="prev-next-title">PETSc 3.20</p>
       </div>
   </a>
   <a class='right-next' id="next-link" href="nutshell.html" title="next page">
@@ -646,7 +768,7 @@ managing parallel PDE discretizations including parallel matrix and vector assem
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -662,7 +784,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

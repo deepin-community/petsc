@@ -49,11 +49,6 @@ extern void PetscRmPointer(void*);
 #define pcgasmsetsortindices_ pcgasmsetsortindices
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define pcgasmcreatesubdomains2d_ PCGASMCREATESUBDOMAINS2D
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define pcgasmcreatesubdomains2d_ pcgasmcreatesubdomains2d
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define pcgasmsetusedmsubdomains_ PCGASMSETUSEDMSUBDOMAINS
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define pcgasmsetusedmsubdomains_ pcgasmsetusedmsubdomains
@@ -88,11 +83,6 @@ PETSC_EXTERN void  pcgasmsetsortindices_(PC pc,PetscBool *doSort, int *__ierr)
 {
 *__ierr = PCGASMSetSortIndices(
 	(PC)PetscToPointer((pc) ),*doSort);
-}
-PETSC_EXTERN void  pcgasmcreatesubdomains2d_(PC pc,PetscInt *M,PetscInt *N,PetscInt *Mdomains,PetscInt *Ndomains,PetscInt *dof,PetscInt *overlap,PetscInt *nsub,IS **iis,IS **ois, int *__ierr)
-{
-*__ierr = PCGASMCreateSubdomains2D(
-	(PC)PetscToPointer((pc) ),*M,*N,*Mdomains,*Ndomains,*dof,*overlap,nsub,iis,ois);
 }
 PETSC_EXTERN void  pcgasmsetusedmsubdomains_(PC pc,PetscBool *flg, int *__ierr)
 {

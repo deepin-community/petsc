@@ -32,7 +32,7 @@ static PetscErrorCode KSPAllocateVectors_FCG(KSP ksp, PetscInt nvecsneeded, Pets
     fcg->chunksizes[fcg->nchunks] = nnewvecs;
     ++fcg->nchunks;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSetUp_FCG(KSP ksp)
@@ -67,7 +67,7 @@ static PetscErrorCode KSPSetUp_FCG(KSP ksp)
     ksp->ops->computeextremesingularvalues = KSPComputeExtremeSingularValues_CG;
     ksp->ops->computeeigenvalues           = KSPComputeEigenvalues_CG;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSolve_FCG(KSP ksp)
@@ -138,7 +138,7 @@ static PetscErrorCode KSPSolve_FCG(KSP ksp)
   } else {
     PetscCall((*ksp->converged)(ksp, 0, dp, &ksp->reason, ksp->cnvP));
   }
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Apply PC if not already done for convergence check */
   if (ksp->normtype == KSP_NORM_UNPRECONDITIONED || ksp->normtype == KSP_NORM_NONE) { PetscCall(KSP_PCApply(ksp, R, Z)); /*   z <- Br         */ }
@@ -228,6 +228,16 @@ static PetscErrorCode KSPSolve_FCG(KSP ksp)
       SETERRQ(PetscObjectComm((PetscObject)ksp), PETSC_ERR_SUP, "%s", KSPNormTypes[ksp->normtype]);
     }
 
+    if (eigs) {
+      if (i > 0) {
+        PetscCheck(ksp->max_it == stored_max_it, PetscObjectComm((PetscObject)ksp), PETSC_ERR_SUP, "Can not change maxit AND calculate eigenvalues");
+        e[i] = PetscSqrtReal(PetscAbsScalar(beta / betaold)) / alphaold;
+        d[i] = PetscSqrtReal(PetscAbsScalar(beta / betaold)) * e[i] + 1.0 / alpha;
+      } else {
+        d[i] = PetscSqrtReal(PetscAbsScalar(beta)) * e[i] + 1.0 / alpha;
+      }
+    }
+
     /* Check for convergence */
     ksp->rnorm = dp;
     PetscCall(KSPLogResidualHistory(ksp, dp));
@@ -240,21 +250,10 @@ static PetscErrorCode KSPSolve_FCG(KSP ksp)
 
     /* Compute current C (which is W/dpi) */
     PetscCall(VecScale(Ccurr, 1.0 / dpi)); /*   w <- ci/dpi   */
-
-    if (eigs) {
-      if (i > 0) {
-        PetscCheck(ksp->max_it == stored_max_it, PetscObjectComm((PetscObject)ksp), PETSC_ERR_SUP, "Can not change maxit AND calculate eigenvalues");
-        e[i] = PetscSqrtReal(PetscAbsScalar(beta / betaold)) / alphaold;
-        d[i] = PetscSqrtReal(PetscAbsScalar(beta / betaold)) * e[i] + 1.0 / alpha;
-      } else {
-        d[i] = PetscSqrtReal(PetscAbsScalar(beta)) * e[i] + 1.0 / alpha;
-      }
-      fcg->ned = ksp->its - 1;
-    }
     ++i;
   } while (i < ksp->max_it);
   if (i >= ksp->max_it) ksp->reason = KSP_DIVERGED_ITS;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPDestroy_FCG(KSP ksp)
@@ -265,7 +264,7 @@ static PetscErrorCode KSPDestroy_FCG(KSP ksp)
   PetscFunctionBegin;
 
   /* Destroy "standard" work vecs */
-  VecDestroyVecs(ksp->nwork, &ksp->work);
+  PetscCall(VecDestroyVecs(ksp->nwork, &ksp->work));
 
   /* Destroy P and C vectors and the arrays that manage pointers to them */
   if (fcg->nvecs) {
@@ -278,7 +277,7 @@ static PetscErrorCode KSPDestroy_FCG(KSP ksp)
   /* free space used for singular value calculations */
   if (ksp->calc_sings) PetscCall(PetscFree4(fcg->e, fcg->d, fcg->ee, fcg->dd));
   PetscCall(KSPDestroyDefault(ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPView_FCG(KSP ksp, PetscViewer viewer)
@@ -302,7 +301,7 @@ static PetscErrorCode KSPView_FCG(KSP ksp, PetscViewer viewer)
   } else if (isstring) {
     PetscCall(PetscViewerStringSPrintf(viewer, "m_max %" PetscInt_FMT " nprealloc %" PetscInt_FMT " %s", fcg->mmax, fcg->nprealloc, truncstr));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -311,20 +310,19 @@ static PetscErrorCode KSPView_FCG(KSP ksp, PetscViewer viewer)
   Logically Collective
 
   Input Parameters:
-+  ksp - the Krylov space context
--  mmax - the maximum number of previous directions to orthogonalize against
++ ksp  - the Krylov space context
+- mmax - the maximum number of previous directions to orthogonalize against
 
   Options Database Key:
-.   -ksp_fcg_mmax <N>  - maximum number of search directions
+. -ksp_fcg_mmax <N> - maximum number of search directions
 
   Level: intermediate
 
   Note:
-   mmax + 1 directions are stored (mmax previous ones along with a current one)
-  and whether all are used in each iteration also depends on the truncation strategy
-  (see KSPFCGSetTruncationType())
+  `mmax` + 1 directions are stored (`mmax` previous ones along with a current one)
+  and whether all are used in each iteration also depends on the truncation strategy, see `KSPFCGSetTruncationType()`
 
-.seealso: [](chapter_ksp), `KSPFCG`, `KSPFCGGetTruncationType()`, `KSPFCGGetNprealloc()`, `KSPFCGetMmax()`
+.seealso: [](ch_ksp), `KSPFCG`, `KSPFCGGetTruncationType()`, `KSPFCGGetNprealloc()`, `KSPFCGetMmax()`
 @*/
 PetscErrorCode KSPFCGSetMmax(KSP ksp, PetscInt mmax)
 {
@@ -334,28 +332,27 @@ PetscErrorCode KSPFCGSetMmax(KSP ksp, PetscInt mmax)
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 1);
   PetscValidLogicalCollectiveInt(ksp, mmax, 2);
   fcg->mmax = mmax;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   KSPFCGGetMmax - get the maximum number of previous directions `KSPFCG` will store
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  ksp - the Krylov space context
+  Input Parameter:
+. ksp - the Krylov space context
 
-   Output Parameter:
-.  mmax - the maximum number of previous directions allowed for orthogonalization
+  Output Parameter:
+. mmax - the maximum number of previous directions allowed for orthogonalization
 
-   Level: intermediate
+  Level: intermediate
 
   Note:
-  FCG stores mmax+1 directions at most (mmax previous ones, and one current one)
+  `KSPFCG` stores `mmax`+1 directions at most (`mmax` previous ones, and one current one)
 
-.seealso: [](chapter_ksp), `KSPFCG`, `KSPFCGGetTruncationType()`, `KSPFCGGetNprealloc()`, `KSPFCGSetMmax()`
+.seealso: [](ch_ksp), `KSPFCG`, `KSPFCGGetTruncationType()`, `KSPFCGGetNprealloc()`, `KSPFCGSetMmax()`
 @*/
-
 PetscErrorCode KSPFCGGetMmax(KSP ksp, PetscInt *mmax)
 {
   KSP_FCG *fcg = (KSP_FCG *)ksp->data;
@@ -363,7 +360,7 @@ PetscErrorCode KSPFCGGetMmax(KSP ksp, PetscInt *mmax)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 1);
   *mmax = fcg->mmax;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -372,15 +369,15 @@ PetscErrorCode KSPFCGGetMmax(KSP ksp, PetscInt *mmax)
   Logically Collective
 
   Input Parameters:
-+  ksp - the Krylov space context
--  nprealloc - the number of vectors to preallocate
++ ksp       - the Krylov space context
+- nprealloc - the number of vectors to preallocate
 
   Options Database Key:
 . -ksp_fcg_nprealloc <N> - number of directions to preallocate
 
   Level: advanced
 
-.seealso: [](chapter_ksp), `KSPFCG`, `KSPFCGGetTruncationType()`, `KSPFCGGetNprealloc()`, `KSPFCGSetMmax()`, `KSPFCGGetMmax()`
+.seealso: [](ch_ksp), `KSPFCG`, `KSPFCGGetTruncationType()`, `KSPFCGGetNprealloc()`, `KSPFCGSetMmax()`, `KSPFCGGetMmax()`
 @*/
 PetscErrorCode KSPFCGSetNprealloc(KSP ksp, PetscInt nprealloc)
 {
@@ -391,23 +388,23 @@ PetscErrorCode KSPFCGSetNprealloc(KSP ksp, PetscInt nprealloc)
   PetscValidLogicalCollectiveInt(ksp, nprealloc, 2);
   PetscCheck(nprealloc <= fcg->mmax + 1, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Cannot preallocate more than m_max+1 vectors");
   fcg->nprealloc = nprealloc;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   KSPFCGGetNprealloc - get the number of directions preallocate by `KSPFCG`
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  ksp - the Krylov space context
+  Input Parameter:
+. ksp - the Krylov space context
 
-   Output Parameter:
-.  nprealloc - the number of directions preallocated
+  Output Parameter:
+. nprealloc - the number of directions preallocated
 
-   Level: advanced
+  Level: advanced
 
-.seealso: [](chapter_ksp), `KSPFCG`, `KSPFCGGetTruncationType()`, `KSPFCGSetNprealloc()`, `KSPFCGSetMmax()`, `KSPFCGGetMmax()`
+.seealso: [](ch_ksp), `KSPFCG`, `KSPFCGGetTruncationType()`, `KSPFCGSetNprealloc()`, `KSPFCGSetMmax()`, `KSPFCGGetMmax()`
 @*/
 PetscErrorCode KSPFCGGetNprealloc(KSP ksp, PetscInt *nprealloc)
 {
@@ -416,7 +413,7 @@ PetscErrorCode KSPFCGGetNprealloc(KSP ksp, PetscInt *nprealloc)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 1);
   *nprealloc = fcg->nprealloc;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -425,8 +422,8 @@ PetscErrorCode KSPFCGGetNprealloc(KSP ksp, PetscInt *nprealloc)
   Logically Collective
 
   Input Parameters:
-+  ksp - the Krylov space context
--  truncstrat - the choice of strategy
++ ksp        - the Krylov space context
+- truncstrat - the choice of strategy
 .vb
   KSP_FCD_TRUNC_TYPE_STANDARD uses all (up to mmax) stored directions
   KSP_FCD_TRUNC_TYPE_NOTAY uses the last max(1,mod(i,mmax)) stored directions at iteration i=0,1,..
@@ -437,7 +434,8 @@ PetscErrorCode KSPFCGGetNprealloc(KSP ksp, PetscInt *nprealloc)
 
   Level: intermediate
 
-.seealso: [](chapter_ksp), `KSPFCDTruncationType`, `KSPFCGGetTruncationType`, `KSPFCGSetNprealloc()`, `KSPFCGSetMmax()`, `KSPFCGGetMmax()`
+.seealso: [](ch_ksp), `KSPFCDTruncationType`, `KSPFCGGetTruncationType()`, `KSPFCGSetNprealloc()`, `KSPFCGSetMmax()`, `KSPFCGGetMmax()`,
+          `KSP_FCD_TRUNC_TYPE_STANDARD`, `KSP_FCD_TRUNC_TYPE_NOTAY`
 @*/
 PetscErrorCode KSPFCGSetTruncationType(KSP ksp, KSPFCDTruncationType truncstrat)
 {
@@ -447,23 +445,23 @@ PetscErrorCode KSPFCGSetTruncationType(KSP ksp, KSPFCDTruncationType truncstrat)
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 1);
   PetscValidLogicalCollectiveEnum(ksp, truncstrat, 2);
   fcg->truncstrat = truncstrat;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   KSPFCGGetTruncationType - get the truncation strategy employed by `KSPFCG`
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  ksp - the Krylov space context
+  Input Parameter:
+. ksp - the Krylov space context
 
-   Output Parameter:
-.  truncstrat - the strategy type
+  Output Parameter:
+. truncstrat - the strategy type
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: [](chapter_ksp), `KSPFCG`, `KSPFCGSetTruncationType`, `KSPFCDTruncationType`, `KSPFCGSetTruncationType()`
+.seealso: [](ch_ksp), `KSPFCG`, `KSPFCGSetTruncationType()`, `KSPFCDTruncationType`, `KSP_FCD_TRUNC_TYPE_STANDARD`, `KSP_FCD_TRUNC_TYPE_NOTAY`
 @*/
 PetscErrorCode KSPFCGGetTruncationType(KSP ksp, KSPFCDTruncationType *truncstrat)
 {
@@ -472,7 +470,7 @@ PetscErrorCode KSPFCGGetTruncationType(KSP ksp, KSPFCDTruncationType *truncstrat
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 1);
   *truncstrat = fcg->truncstrat;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSetFromOptions_FCG(KSP ksp, PetscOptionItems *PetscOptionsObject)
@@ -489,11 +487,12 @@ static PetscErrorCode KSPSetFromOptions_FCG(KSP ksp, PetscOptionItems *PetscOpti
   if (flg) PetscCall(KSPFCGSetNprealloc(ksp, nprealloc));
   PetscCall(PetscOptionsEnum("-ksp_fcg_truncation_type", "Truncation approach for directions", "KSPFCGSetTruncationType", KSPFCDTruncationTypes, (PetscEnum)fcg->truncstrat, (PetscEnum *)&fcg->truncstrat, NULL));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-      KSPFCG - Implements the Flexible Conjugate Gradient method (FCG). Unlike most `KSP` methods this allows the preconditioner to be nonlinear. [](sec_flexibleksp)
+  KSPFCG - Implements the Flexible Conjugate Gradient method (FCG) {cite}`flexiblecg`, {cite}`generalizedcg`.
+  Unlike most `KSP` methods this allows the preconditioner to be nonlinear. [](sec_flexibleksp)
 
   Options Database Keys:
 +   -ksp_fcg_mmax <N>  - maximum number of search directions
@@ -502,18 +501,15 @@ static PetscErrorCode KSPSetFromOptions_FCG(KSP ksp, PetscOptionItems *PetscOpti
 
   Level: beginner
 
-   Note:
-   Supports left preconditioning only.
+  Notes:
+  Compare to `KSPFCG`
+
+  Supports left preconditioning only.
 
   Contributed by:
   Patrick Sanan
 
-  References:
-+ * - Notay, Y."Flexible Conjugate Gradients", SIAM J. Sci. Comput. 22:4, 2000
-- * - Axelsson, O. and Vassilevski, P. S. "A Black Box Generalized Conjugate Gradient Solver with Inner Iterations and Variable step Preconditioning",
-    SIAM J. Matrix Anal. Appl. 12:4, 1991
-
-.seealso: [](chapter_ksp), [](sec_flexibleksp), `KSPGCR`, `KSPFGMRES`, `KSPCG`, `KSPFCGSetMmax()`, `KSPFCGGetMmax()`, `KSPFCGSetNprealloc()`, `KSPFCGGetNprealloc()`, `KSPFCGSetTruncationType()`, `KSPFCGGetTruncationType()`,
+.seealso: [](ch_ksp), [](sec_flexibleksp), `KSPGCR`, `KSPFGMRES`, `KSPCG`, `KSPFCGSetMmax()`, `KSPFCGGetMmax()`, `KSPFCGSetNprealloc()`, `KSPFCGGetNprealloc()`, `KSPFCGSetTruncationType()`, `KSPFCGGetTruncationType()`,
            `KSPFCGGetTruncationType`
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_FCG(KSP ksp)
@@ -548,5 +544,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_FCG(KSP ksp)
   ksp->ops->setfromoptions = KSPSetFromOptions_FCG;
   ksp->ops->buildsolution  = KSPBuildSolutionDefault;
   ksp->ops->buildresidual  = KSPBuildResidualDefault;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

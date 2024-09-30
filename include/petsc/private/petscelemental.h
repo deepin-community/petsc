@@ -1,5 +1,4 @@
-#ifndef _PETSCELEMENTAL_H
-#define _PETSCELEMENTAL_H
+#pragma once
 
 #include <petsc/private/matimpl.h>
 #include <petscmatelemental.h>
@@ -52,16 +51,14 @@ static inline void RO2P(Mat A, PetscInt rc, PetscInt rank, PetscInt offset, Pets
   }
 }
 
-static inline void E2RO(Mat A, PetscInt rc, PetscInt p, PetscInt *rank, PetscInt *offset)
+static inline void E2RO(Mat A, PetscInt, PetscInt p, PetscInt *rank, PetscInt *offset)
 {
   Mat_Elemental *a = (Mat_Elemental *)A->data;
   *rank            = p % a->commsize;
   *offset          = p / a->commsize;
 }
-static inline void RO2E(Mat A, PetscInt rc, PetscInt rank, PetscInt offset, PetscInt *e)
+static inline void RO2E(Mat A, PetscInt, PetscInt rank, PetscInt offset, PetscInt *e)
 {
   Mat_Elemental *a = (Mat_Elemental *)A->data;
   *e               = offset * a->commsize + rank;
 }
-
-#endif

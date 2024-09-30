@@ -4,14 +4,14 @@
 */
 #include <../src/mat/impls/aij/seq/aij.h> /*I "petscmat.h" I*/
 
-PetscErrorCode MatDestroy_SeqAIJ_MatMatMatMult(void *data)
+static PetscErrorCode MatDestroy_SeqAIJ_MatMatMatMult(void *data)
 {
   Mat_MatMatMatMult *matmatmatmult = (Mat_MatMatMatMult *)data;
 
   PetscFunctionBegin;
   PetscCall(MatDestroy(&matmatmatmult->BC));
   PetscCall(PetscFree(matmatmatmult));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatMatMatMultSymbolic_SeqAIJ_SeqAIJ_SeqAIJ(Mat A, Mat B, Mat C, PetscReal fill, Mat D)
@@ -40,7 +40,7 @@ PetscErrorCode MatMatMatMultSymbolic_SeqAIJ_SeqAIJ_SeqAIJ(Mat A, Mat B, Mat C, P
   D->product->destroy = MatDestroy_SeqAIJ_MatMatMatMult;
 
   D->ops->matmatmultnumeric = MatMatMatMultNumeric_SeqAIJ_SeqAIJ_SeqAIJ;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatMatMatMultNumeric_SeqAIJ_SeqAIJ_SeqAIJ(Mat A, Mat B, Mat C, Mat D)
@@ -56,5 +56,5 @@ PetscErrorCode MatMatMatMultNumeric_SeqAIJ_SeqAIJ_SeqAIJ(Mat A, Mat B, Mat C, Ma
   PetscCheck(BC, PetscObjectComm((PetscObject)D), PETSC_ERR_PLIB, "Missing BC mat");
   PetscCall((*BC->ops->matmultnumeric)(B, C, BC));
   PetscCall((*D->ops->matmultnumeric)(A, BC, D));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

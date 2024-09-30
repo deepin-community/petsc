@@ -17,8 +17,8 @@ PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   PetscBool flg;
 
   PetscFunctionBegin;
-  PetscCall(PetscStrcpy(options->filename, ""));
-  PetscCall(PetscStrcpy(options->tagname, "petsc_tag"));
+  PetscCall(PetscStrncpy(options->filename, "", sizeof(options->filename)));
+  PetscCall(PetscStrncpy(options->tagname, "petsc_tag", sizeof(options->tagname)));
   options->dim = -1;
 
   PetscOptionsBegin(comm, "", "MOAB example options", "DMMOAB");
@@ -28,7 +28,7 @@ PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   PetscOptionsEnd();
 
   PetscCall(PetscLogEventRegister("CreateMesh", DM_CLASSID, &options->createMeshEvent));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *user, DM *dm)
@@ -99,7 +99,7 @@ PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *user, DM *dm)
   PetscCall(PetscObjectSetName((PetscObject)*dm, "MOAB mesh"));
   PetscCall(PetscLogEventEnd(user->createMeshEvent, 0, 0, 0, 0));
   user->dm = *dm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

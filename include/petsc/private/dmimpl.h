@@ -1,6 +1,4 @@
-
-#ifndef _DMIMPL_H
-#define _DMIMPL_H
+#pragma once
 
 #include <petscdm.h>
 #ifdef PETSC_HAVE_LIBCEED
@@ -24,7 +22,7 @@ typedef struct _PetscHashAuxKey {
 
 #define PetscHashAuxKeyEqual(k1, k2) (((k1).label == (k2).label) ? (((k1).value == (k2).value) ? ((k1).part == (k2).part) : 0) : 0)
 
-PETSC_HASH_MAP(HMapAux, PetscHashAuxKey, Vec, PetscHashAuxKeyHash, PetscHashAuxKeyEqual, NULL)
+PETSC_HASH_MAP(HMapAux, PetscHashAuxKey, Vec, PetscHashAuxKeyHash, PetscHashAuxKeyEqual, PETSC_NULLPTR)
 
 struct _n_DMGeneratorFunctionList {
   PetscErrorCode (*generate)(DM, PetscBool, DM *);
@@ -193,6 +191,7 @@ typedef struct _n_Field {
 
 typedef struct _n_Space {
   PetscDS ds;     /* Approximation space in this domain */
+  PetscDS dsIn;   /* Approximation space for input to this domain (now only used for cohesive cells) */
   DMLabel label;  /* Label defining the domain of definition of the discretization */
   IS      fields; /* Map from DS field numbers to original field numbers in the DM */
 } DMSpace;
@@ -239,6 +238,7 @@ struct _p_DM {
   MatType                mattype;    /* type of matrix created with DMCreateMatrix() */
   PetscInt               bind_below; /* Local size threshold (in entries/rows) below which Vec/Mat objects are bound to CPU */
   PetscInt               bs;
+  DMBlockingType         blocking_type;
   ISLocalToGlobalMapping ltogmap;
   PetscBool              prealloc_skip;      // Flag indicating the DMCreateMatrix() should not preallocate (only set sizes and local-to-global)
   PetscBool              prealloc_only;      /* Flag indicating the DMCreateMatrix() should only preallocate, not fill the matrix */
@@ -270,6 +270,12 @@ struct _p_DM {
   PetscSection localSection;  /* Layout for local vectors */
   PetscSection globalSection; /* Layout for global vectors */
   PetscLayout  map;
+  // Affine transform applied in DMGlobalToLocal
+  struct {
+    VecScatter affine_to_local;
+    Vec        affine;
+    PetscErrorCode (*setup)(DM);
+  } periodic;
   /* Constraints */
   struct {
     PetscSection section;
@@ -305,12 +311,15 @@ struct _p_DM {
   PetscErrorCode (*monitordestroy[MAXDMMONITORS])(void **);
   void    *monitorcontext[MAXDMMONITORS];
   PetscInt numbermonitors;
+  /* Configuration */
+  PetscBool cloneOpts; /* Flag indicating that this is a linked clone and should not respond to some options. This is currently used to prevent transformations from also affecting the coordinate DM */
 
   PetscObject dmksp, dmsnes, dmts;
 #ifdef PETSC_HAVE_LIBCEED
-  Ceed                ceed;          /* LibCEED context */
-  CeedElemRestriction ceedERestrict; /* Map from the local vector (Lvector) to the cells (Evector) */
+  Ceed                ceed;          // LibCEED context
+  CeedElemRestriction ceedERestrict; // Map from the local vector (Lvector) to the cells (Evector)
 #endif
+  DMCeed dmceed; // CEED operator and data for this problem
 };
 
 PETSC_EXTERN PetscLogEvent DM_Convert;
@@ -326,6 +335,7 @@ PETSC_EXTERN PetscLogEvent DM_CreateMatrix;
 PETSC_EXTERN PetscLogEvent DM_CreateMassMatrix;
 PETSC_EXTERN PetscLogEvent DM_Load;
 PETSC_EXTERN PetscLogEvent DM_AdaptInterpolator;
+PETSC_EXTERN PetscLogEvent DM_ProjectFunction;
 
 PETSC_EXTERN PetscErrorCode DMCreateGlobalVector_Section_Private(DM, Vec *);
 PETSC_EXTERN PetscErrorCode DMCreateLocalVector_Section_Private(DM, Vec *);
@@ -420,7 +430,7 @@ static inline PetscErrorCode DMGetLocalOffset_Private(DM dm, PetscInt point, Pet
     *end                 = *start + s->atlasDof[point - s->pStart];
   }
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode DMGetLocalFieldOffset_Private(DM dm, PetscInt point, PetscInt field, PetscInt *start, PetscInt *end)
@@ -442,7 +452,7 @@ static inline PetscErrorCode DMGetLocalFieldOffset_Private(DM dm, PetscInt point
     *end                 = *start + s->atlasDof[point - s->pStart];
   }
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode DMGetGlobalOffset_Private(DM dm, PetscInt point, PetscInt *start, PetscInt *end)
@@ -468,7 +478,7 @@ static inline PetscErrorCode DMGetGlobalOffset_Private(DM dm, PetscInt point, Pe
     *end                    = *start + dof - cdof + (dof < 0 ? 1 : 0);
   }
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode DMGetGlobalFieldOffset_Private(DM dm, PetscInt point, PetscInt field, PetscInt *start, PetscInt *end)
@@ -512,7 +522,7 @@ static inline PetscErrorCode DMGetGlobalFieldOffset_Private(DM dm, PetscInt poin
     *end   = *start < 0 ? *start - (fdof - fcdof) : *start + fdof - fcdof;
   }
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode DMGetBasisTransformDM_Internal(DM, DM *);
@@ -531,5 +541,3 @@ PETSC_EXTERN PetscErrorCode DMUniversalLabelGetLabel(DMUniversalLabel, DMLabel *
 PETSC_EXTERN PetscErrorCode DMUniversalLabelCreateLabels(DMUniversalLabel, PetscBool, DM);
 PETSC_EXTERN PetscErrorCode DMUniversalLabelSetLabelValue(DMUniversalLabel, DM, PetscBool, PetscInt, PetscInt);
 PETSC_INTERN PetscInt       PetscGCD(PetscInt a, PetscInt b);
-
-#endif

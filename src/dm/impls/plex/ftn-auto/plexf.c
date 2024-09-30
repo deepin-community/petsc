@@ -129,11 +129,6 @@ extern void PetscRmPointer(void*);
 #define dmplexsetconesize_ dmplexsetconesize
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define dmplexaddconesize_ DMPLEXADDCONESIZE
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define dmplexaddconesize_ dmplexaddconesize
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmplexgetconerecursivevertices_ DMPLEXGETCONERECURSIVEVERTICES
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmplexgetconerecursivevertices_ dmplexgetconerecursivevertices
@@ -259,9 +254,9 @@ extern void PetscRmPointer(void*);
 #define dmplexsetclosurepermutationtensor_ dmplexsetclosurepermutationtensor
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define dmplexgetghostcellstratum_ DMPLEXGETGHOSTCELLSTRATUM
+#define dmplexgetcelltypestratum_ DMPLEXGETCELLTYPESTRATUM
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define dmplexgetghostcellstratum_ dmplexgetghostcellstratum
+#define dmplexgetcelltypestratum_ dmplexgetcelltypestratum
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmplexgetcellnumbering_ DMPLEXGETCELLNUMBERING
@@ -487,11 +482,6 @@ PETSC_EXTERN void  dmplexsetconesize_(DM dm,PetscInt *p,PetscInt *size, int *__i
 *__ierr = DMPlexSetConeSize(
 	(DM)PetscToPointer((dm) ),*p,*size);
 }
-PETSC_EXTERN void  dmplexaddconesize_(DM dm,PetscInt *p,PetscInt *size, int *__ierr)
-{
-*__ierr = DMPlexAddConeSize(
-	(DM)PetscToPointer((dm) ),*p,*size);
-}
 PETSC_EXTERN void  dmplexgetconerecursivevertices_(DM dm,IS points,IS *expandedPoints, int *__ierr)
 {
 *__ierr = DMPlexGetConeRecursiveVertices(
@@ -621,10 +611,10 @@ PETSC_EXTERN void  dmplexsetclosurepermutationtensor_(DM dm,PetscInt *point,Pets
 	(DM)PetscToPointer((dm) ),*point,
 	(PetscSection)PetscToPointer((section) ));
 }
-PETSC_EXTERN void  dmplexgetghostcellstratum_(DM dm,PetscInt *gcStart,PetscInt *gcEnd, int *__ierr)
+PETSC_EXTERN void  dmplexgetcelltypestratum_(DM dm,DMPolytopeType *ct,PetscInt *start,PetscInt *end, int *__ierr)
 {
-*__ierr = DMPlexGetGhostCellStratum(
-	(DM)PetscToPointer((dm) ),gcStart,gcEnd);
+*__ierr = DMPlexGetCellTypeStratum(
+	(DM)PetscToPointer((dm) ),*ct,start,end);
 }
 PETSC_EXTERN void  dmplexgetcellnumbering_(DM dm,IS *globalCellNumbers, int *__ierr)
 {

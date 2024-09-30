@@ -42,33 +42,29 @@ static PetscErrorCode DMPlexCreateOrderingClosure_Static(DM dm, PetscInt numPoin
   }
   *clperm    = perm;
   *invclperm = iperm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*@
+/*@C
   DMPlexGetOrdering - Calculate a reordering of the mesh
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm - The DMPlex object
-. otype - type of reordering, one of the following:
-$     MATORDERINGNATURAL - Natural
-$     MATORDERINGND - Nested Dissection
-$     MATORDERING1WD - One-way Dissection
-$     MATORDERINGRCM - Reverse Cuthill-McKee
-$     MATORDERINGQMD - Quotient Minimum Degree
-- label - [Optional] Label used to segregate ordering into sets, or NULL
++ dm    - The DMPlex object
+. otype - type of reordering, see `MatOrderingType`
+- label - [Optional] Label used to segregate ordering into sets, or `NULL`
 
   Output Parameter:
-. perm - The point permutation as an IS, perm[old point number] = new point number
-
-  Note: The label is used to group sets of points together by label value. This makes it easy to reorder a mesh which
-  has different types of cells, and then loop over each set of reordered cells for assembly.
+. perm - The point permutation as an `IS`, `perm`[old point number] = new point number
 
   Level: intermediate
 
-.seealso: `DMPlexPermute()`, `MatGetOrdering()`
+  Note:
+  The label is used to group sets of points together by label value. This makes it easy to reorder a mesh which
+  has different types of cells, and then loop over each set of reordered cells for assembly.
+
+.seealso: `DMPLEX`, `DMPlexPermute()`, `MatOrderingType`, `MatGetOrdering()`
 @*/
 PetscErrorCode DMPlexGetOrdering(DM dm, MatOrderingType otype, DMLabel label, IS *perm)
 {
@@ -77,7 +73,7 @@ PetscErrorCode DMPlexGetOrdering(DM dm, MatOrderingType otype, DMLabel label, IS
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(perm, 4);
+  PetscAssertPointer(perm, 4);
   PetscCall(DMPlexCreateNeighborCSR(dm, 0, &numCells, &start, &adjacency));
   PetscCall(PetscMalloc3(numCells, &cperm, numCells, &mask, numCells * 2, &xls));
   if (numCells) {
@@ -134,23 +130,23 @@ PetscErrorCode DMPlexGetOrdering(DM dm, MatOrderingType otype, DMLabel label, IS
   /* Invert permutation */
   PetscCall(DMPlexGetChart(dm, &pStart, &pEnd));
   PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)dm), pEnd - pStart, invclperm, PETSC_OWN_POINTER, perm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexGetOrdering1D - Reorder the vertices so that the mesh is in a line
 
-  Collective on dm
+  Collective
 
   Input Parameter:
-. dm - The DMPlex object
+. dm - The `DMPLEX` object
 
   Output Parameter:
-. perm - The point permutation as an IS, perm[old point number] = new point number
+. perm - The point permutation as an `IS`, `perm`[old point number] = new point number
 
   Level: intermediate
 
-.seealso: `DMPlexGetOrdering()`, `DMPlexPermute()`, `MatGetOrdering()`
+.seealso: `DMPLEX`, `DMPlexGetOrdering()`, `DMPlexPermute()`, `MatGetOrdering()`
 @*/
 PetscErrorCode DMPlexGetOrdering1D(DM dm, IS *perm)
 {
@@ -196,7 +192,7 @@ PetscErrorCode DMPlexGetOrdering1D(DM dm, IS *perm)
     PetscCheck(pos == pEnd, PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_WRONG, "Last vertex was %" PetscInt_FMT ", not %" PetscInt_FMT, pos, pEnd);
   }
   PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)dm), pEnd - pStart, points, PETSC_OWN_POINTER, perm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexRemapCoordinates_Private(IS perm, PetscSection cs, Vec coordinates, PetscSection *csNew, Vec *coordinatesNew)
@@ -226,24 +222,24 @@ static PetscErrorCode DMPlexRemapCoordinates_Private(IS perm, PetscSection cs, V
   PetscCall(ISRestoreIndices(perm, &pperm));
   PetscCall(VecRestoreArray(coordinates, &coords));
   PetscCall(VecRestoreArray(*coordinatesNew, &coordsNew));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexPermute - Reorder the mesh according to the input permutation
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm - The DMPlex object
-- perm - The point permutation, perm[old point number] = new point number
++ dm   - The `DMPLEX` object
+- perm - The point permutation, `perm`[old point number] = new point number
 
   Output Parameter:
-. pdm - The permuted DM
+. pdm - The permuted `DM`
 
   Level: intermediate
 
-.seealso: `MatPermute()`
+.seealso: `DMPLEX`, `MatPermute()`
 @*/
 PetscErrorCode DMPlexPermute(DM dm, IS perm, DM *pdm)
 {
@@ -254,7 +250,7 @@ PetscErrorCode DMPlexPermute(DM dm, IS perm, DM *pdm)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscValidHeaderSpecific(perm, IS_CLASSID, 2);
-  PetscValidPointer(pdm, 3);
+  PetscAssertPointer(pdm, 3);
   PetscCall(DMCreate(PetscObjectComm((PetscObject)dm), pdm));
   PetscCall(DMSetType(*pdm, DMPLEX));
   PetscCall(PetscObjectGetName((PetscObject)dm, &name));
@@ -367,7 +363,7 @@ PetscErrorCode DMPlexPermute(DM dm, IS perm, DM *pdm)
   }
   PetscCall(DMPlexCopy_Internal(dm, PETSC_TRUE, PETSC_TRUE, *pdm));
   (*pdm)->setupcalled = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMPlexReorderSetDefault_Plex(DM dm, DMPlexReorderDefaultFlag reorder)
@@ -376,17 +372,17 @@ PetscErrorCode DMPlexReorderSetDefault_Plex(DM dm, DMPlexReorderDefaultFlag reor
 
   PetscFunctionBegin;
   mesh->reorderDefault = reorder;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexReorderSetDefault - Set flag indicating whether the DM should be reordered by default
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+ dm        - The DM
-- reorder   - Flag for reordering
++ dm      - The `DM`
+- reorder - Flag for reordering
 
   Level: intermediate
 
@@ -397,7 +393,7 @@ PetscErrorCode DMPlexReorderSetDefault(DM dm, DMPlexReorderDefaultFlag reorder)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscTryMethod(dm, "DMPlexReorderSetDefault_C", (DM, DMPlexReorderDefaultFlag), (dm, reorder));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMPlexReorderGetDefault_Plex(DM dm, DMPlexReorderDefaultFlag *reorder)
@@ -406,16 +402,16 @@ PetscErrorCode DMPlexReorderGetDefault_Plex(DM dm, DMPlexReorderDefaultFlag *reo
 
   PetscFunctionBegin;
   *reorder = mesh->reorderDefault;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexReorderGetDefault - Get flag indicating whether the DM should be reordered by default
 
-  Not collective
+  Not Collective
 
   Input Parameter:
-. dm      - The DM
+. dm - The `DM`
 
   Output Parameter:
 . reorder - Flag for reordering
@@ -428,7 +424,7 @@ PetscErrorCode DMPlexReorderGetDefault(DM dm, DMPlexReorderDefaultFlag *reorder)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(reorder, 2);
+  PetscAssertPointer(reorder, 2);
   PetscUseMethod(dm, "DMPlexReorderGetDefault_C", (DM, DMPlexReorderDefaultFlag *), (dm, reorder));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

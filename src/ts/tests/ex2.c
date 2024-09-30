@@ -4,9 +4,9 @@
           Solves U_t=F(t,u)
           Where:
 
-                  [2*u1+u2
-          F(t,u)= [u1+2*u2+u3
-                  [   u2+2*u3
+                  [2*u1+u2   ]
+          F(t,u)= [u1+2*u2+u3]
+                  [   u2+2*u3]
        We can compare the solutions from euler, beuler and SUNDIALS to
        see what is the difference.
 
@@ -34,15 +34,33 @@ int main(int argc, char **argv)
   PetscReal dt, ftime;
   TS        ts;
   Mat       A = 0, S;
+  PetscBool nest;
 
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &argv, (char *)0, help));
   PetscCall(PetscOptionsGetInt(NULL, NULL, "-time", &time_steps, NULL));
+  PetscCall(PetscOptionsGetBool(NULL, NULL, "-nest", &nest, NULL));
+
+  /* create vector to hold state */
+  if (nest) {
+    Vec g[3];
+
+    PetscCall(VecCreate(PETSC_COMM_WORLD, &g[0]));
+    PetscCall(VecSetSizes(g[0], PETSC_DECIDE, 1));
+    PetscCall(VecSetFromOptions(g[0]));
+    PetscCall(VecDuplicate(g[0], &g[1]));
+    PetscCall(VecDuplicate(g[0], &g[2]));
+    PetscCall(VecCreateNest(PETSC_COMM_WORLD, 3, NULL, g, &global));
+    PetscCall(VecDestroy(&g[0]));
+    PetscCall(VecDestroy(&g[1]));
+    PetscCall(VecDestroy(&g[2]));
+  } else {
+    PetscCall(VecCreate(PETSC_COMM_WORLD, &global));
+    PetscCall(VecSetSizes(global, PETSC_DECIDE, 3));
+    PetscCall(VecSetFromOptions(global));
+  }
 
   /* set initial conditions */
-  PetscCall(VecCreate(PETSC_COMM_WORLD, &global));
-  PetscCall(VecSetSizes(global, PETSC_DECIDE, 3));
-  PetscCall(VecSetFromOptions(global));
   PetscCall(Initial(global, NULL));
 
   /* make timestep context */
@@ -104,7 +122,7 @@ PetscErrorCode MyMatMult(Mat S, Vec x, Vec y)
 
   PetscCall(VecRestoreArrayRead(x, &inptr));
   PetscCall(VecRestoreArrayWrite(y, &outptr));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* this test problem has initial values (1,1,1).                      */
@@ -113,6 +131,7 @@ PetscErrorCode Initial(Vec global, void *ctx)
   PetscScalar *localptr;
   PetscInt     i, mybase, myend, locsize;
 
+  PetscFunctionBeginUser;
   /* determine starting point of each processor */
   PetscCall(VecGetOwnershipRange(global, &mybase, &myend));
   PetscCall(VecGetLocalSize(global, &locsize));
@@ -124,7 +143,7 @@ PetscErrorCode Initial(Vec global, void *ctx)
   if (mybase == 0) localptr[0] = 1.0;
 
   PetscCall(VecRestoreArrayWrite(global, &localptr));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode Monitor(TS ts, PetscInt step, PetscReal time, Vec global, void *ctx)
@@ -135,6 +154,7 @@ PetscErrorCode Monitor(TS ts, PetscInt step, PetscReal time, Vec global, void *c
   Vec                tmp_vec;
   const PetscScalar *tmp;
 
+  PetscFunctionBeginUser;
   /* Get the size of the vector */
   PetscCall(VecGetSize(global, &n));
 
@@ -161,7 +181,7 @@ PetscErrorCode Monitor(TS ts, PetscInt step, PetscReal time, Vec global, void *c
   PetscCall(ISDestroy(&to));
   PetscCall(PetscFree(idx));
   PetscCall(VecDestroy(&tmp_vec));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode RHSFunction(TS ts, PetscReal t, Vec globalin, Vec globalout, void *ctx)
@@ -173,6 +193,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal t, Vec globalin, Vec globalout, void
   VecScatter         scatter;
   Vec                tmp_in, tmp_out;
 
+  PetscFunctionBeginUser;
   /* Get the length of parallel vector */
   PetscCall(VecGetSize(globalin, &n));
 
@@ -216,7 +237,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal t, Vec globalin, Vec globalout, void
   PetscCall(VecDestroy(&tmp_in));
   PetscCall(VecDestroy(&tmp_out));
   PetscCall(PetscFree(idx));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode RHSJacobian(TS ts, PetscReal t, Vec x, Mat A, Mat BB, void *ctx)
@@ -225,6 +246,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal t, Vec x, Mat A, Mat BB, void *ctx)
   const PetscScalar *tmp;
   PetscInt           idx[3], i;
 
+  PetscFunctionBeginUser;
   idx[0] = 0;
   idx[1] = 1;
   idx[2] = 2;
@@ -257,7 +279,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal t, Vec x, Mat A, Mat BB, void *ctx)
   }
   PetscCall(VecRestoreArrayRead(x, &tmp));
 
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -282,12 +304,17 @@ PetscReal solz(PetscReal t)
 
     test:
       suffix: euler
-      args: -ts_type euler
+      args: -ts_type euler -nest {{0 1}}
       requires: !single
 
     test:
       suffix: beuler
-      args:   -ts_type beuler
+      args: -ts_type beuler -nest {{0 1}}
+      requires: !single
+
+    test:
+      suffix: rk
+      args: -ts_type rk -nest {{0 1}} -ts_adapt_monitor
       requires: !single
 
 TEST*/

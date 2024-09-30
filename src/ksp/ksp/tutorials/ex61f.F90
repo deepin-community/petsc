@@ -6,7 +6,7 @@
 !        Run with "export OMP_NUM_THREADS=16 ./ex61f"
 !           to use 16 independent threads
 !
-!        ./configure --with-threadsafety --with-log=0 --with-openmp
+!        ./configure --with-threadsafety --with-openmp
 !
          module ex61fmodule
          implicit none
@@ -156,7 +156,7 @@
        print*,'nz = ', nz
 
 !      ----------------------------------
-!      convert from fortran to c indexing
+!      convert from Fortran to C indexing
 !      ----------------------------------
        ilist(1:nz) = ilist(1:nz) - 1
        jlist(1:nz) = jlist(1:nz) - 1

@@ -1,5 +1,0 @@
-# libpetsc64.so.X.Y soname links are managed by alternatives (libpetc64.so.X.Y)
-ldconfig-symlink-missing-for-shlib usr/lib/*/libpetsc64.so.* usr/lib/*/libpetsc64-real.so.* libpetsc64.so.*
-
-# libpetsc64_real.so is handled by alternatives in libpetsc64-realX.Y-dev
-lacks-unversioned-link-to-shared-library example: usr/lib/*/libpetsc64_real.so [usr/lib/*/libpetsc64_real.so.*]

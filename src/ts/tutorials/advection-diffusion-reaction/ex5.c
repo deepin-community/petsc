@@ -1,4 +1,3 @@
-
 static char help[] = "Demonstrates Pattern Formation with Reaction-Diffusion Equations.\n";
 
 /*F
@@ -81,7 +80,7 @@ PetscErrorCode InitialConditions(DM da, Vec U)
      Restore access to vector
   */
   PetscCall(DMDAVecRestoreArray(da, U, &u));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -164,13 +163,13 @@ int main(int argc, char **argv)
      depends: reaction_diffusion.c
 
    test:
-      args: -ts_view  -ts_monitor -ts_max_time 500
+      args: -ts_view -ts_monitor -ts_max_time 500
       requires: double
       timeoutfactor: 3
 
    test:
       suffix: 2
-      args: -ts_view  -ts_monitor -ts_max_time 500 -ts_monitor_draw_solution
+      args: -ts_view -ts_monitor -ts_max_time 500 -ts_monitor_draw_solution
       requires: x double
       output_file: output/ex5_1.out
       timeoutfactor: 3

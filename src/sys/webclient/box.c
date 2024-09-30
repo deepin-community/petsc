@@ -1,7 +1,5 @@
-
 #include <petscwebclient.h>
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-#pragma gcc diagnostic   ignored "-Wdeprecated-declarations"
+PETSC_PRAGMA_DIAGNOSTIC_IGNORED_BEGIN("-Wdeprecated-declarations")
 
 /*
    These variables identify the code as a PETSc application to Box.
@@ -42,12 +40,12 @@ static PetscErrorCode PetscBoxStartWebServer_Private(void)
   options[0] = "listening_ports";
   options[1] = "8081s";
 
-  PetscCall(PetscStrcpy(keyfile, "sslclient.pem"));
+  PetscCall(PetscStrncpy(keyfile, "sslclient.pem", sizeof(keyfile)));
   PetscCall(PetscTestFile(keyfile, 'r', &exists));
   if (!exists) {
     PetscCall(PetscGetHomeDirectory(keyfile, PETSC_MAX_PATH_LEN));
-    PetscCall(PetscStrcat(keyfile, "/"));
-    PetscCall(PetscStrcat(keyfile, "sslclient.pem"));
+    PetscCall(PetscStrlcat(keyfile, "/", sizeof(keyfile)));
+    PetscCall(PetscStrlcat(keyfile, "sslclient.pem", sizeof(keyfile)));
     PetscCall(PetscTestFile(keyfile, 'r', &exists));
     PetscCheck(exists, PETSC_COMM_SELF, PETSC_ERR_FILE_OPEN, "Unable to locate sslclient.pem file in current directory or home directory");
   }
@@ -62,7 +60,7 @@ static PetscErrorCode PetscBoxStartWebServer_Private(void)
   ctx                     = mg_start(&callbacks, NULL, options);
   PetscCheck(ctx, PETSC_COMM_SELF, PETSC_ERR_LIB, "Unable to start up webserver");
   while (!result) { };
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
   #if defined(PETSC_HAVE_UNISTD_H)
@@ -70,38 +68,38 @@ static PetscErrorCode PetscBoxStartWebServer_Private(void)
   #endif
 
 /*@C
-     PetscBoxAuthorize - Get authorization and refresh token for accessing Box drive from PETSc
+  PetscBoxAuthorize - Get authorization and refresh token for accessing Box drive from PETSc
 
-   Not collective, only the first rank in `MPI_Comm` does anything
+  Not Collective, only the first rank in `MPI_Comm` does anything
 
-   Input Parameters:
-+  comm - the MPI communicator
--  tokensize - size of the token arrays
+  Input Parameters:
++ comm      - the MPI communicator
+- tokensize - size of the token arrays
 
-   Output Parameters:
-+  access_token - can be used with `PetscBoxUpload()` for this one session
--  refresh_token - can be used for ever to obtain new access_tokens with `PetscBoxRefresh()`, guard this like a password
-                   it gives access to your Box Drive
+  Output Parameters:
++ access_token  - can be used with `PetscBoxUpload()` for this one session
+- refresh_token - can be used for ever to obtain new access_tokens with `PetscBoxRefresh()`,
+                  guard this like a password  it gives access to your Box Drive
 
-   Notes:
-    This call requires stdout and stdin access from process 0 on the MPI communicator
+  Level: intermediate
 
-   You can run src/sys/webclient/tutorials/boxobtainrefreshtoken to get a refresh token and then in the future pass it to
-   PETSc programs with -box_refresh_token XXX
+  Notes:
+  This call requires `stdout` and `stdin` access from process 0 on the MPI communicator
 
-   This requires PETSc be installed using --with-saws or --download-saws
+  You can run src/sys/webclient/tutorials/boxobtainrefreshtoken to get a refresh token and then
+  in the future pass it to PETSc programs with `-box_refresh_token XXX`
 
-   Requires the user have created a self-signed ssl certificate with
+  This requires PETSc be installed using `--with-saws` or `--download-saws`
 
-$    saws/CA.pl  -newcert  (using the passphrase of password)
-$    cat newkey.pem newcert.pem > sslclient.pem
+  Requires the user have created a self-signed ssl certificate with
+.vb
+  saws/CA.pl  -newcert  (using the passphrase of password)
+  cat newkey.pem newcert.pem > sslclient.pem
+.ve
+  and put the resulting file in either the current directory (with the application) or in the
+  home directory. This seems kind of silly but it was all I could figure out.
 
-    and put the resulting file in either the current directory (with the application) or in the home directory. This seems kind of
-    silly but it was all I could figure out.
-
-   Level: intermediate
-
-.seealso: `PetscBoxRefresh()`, `PetscBoxUpload()`, `PetscURLShorten()`
+.seealso: `PetscBoxRefresh()`, `PetscBoxUpload()`
 @*/
 PetscErrorCode PetscBoxAuthorize(MPI_Comm comm, char access_token[], char refresh_token[], size_t tokensize)
 {
@@ -128,13 +126,13 @@ PetscErrorCode PetscBoxAuthorize(MPI_Comm comm, char access_token[], char refres
 
     PetscCall(PetscSSLInitializeContext(&ctx));
     PetscCall(PetscHTTPSConnect("www.box.com", 443, ctx, &sock, &ssl));
-    PetscCall(PetscStrcpy(body, "code="));
-    PetscCall(PetscStrcat(body, buff));
-    PetscCall(PetscStrcat(body, "&client_id="));
-    PetscCall(PetscStrcat(body, PETSC_BOX_CLIENT_ID));
-    PetscCall(PetscStrcat(body, "&client_secret="));
-    PetscCall(PetscStrcat(body, PETSC_BOX_CLIENT_ST));
-    PetscCall(PetscStrcat(body, "&grant_type=authorization_code"));
+    PetscCall(PetscStrncpy(body, "code=", sizeof(body)));
+    PetscCall(PetscStrlcat(body, buff, sizeof(body)));
+    PetscCall(PetscStrlcat(body, "&client_id=", sizeof(body)));
+    PetscCall(PetscStrlcat(body, PETSC_BOX_CLIENT_ID, sizeof(body)));
+    PetscCall(PetscStrlcat(body, "&client_secret=", sizeof(body)));
+    PetscCall(PetscStrlcat(body, PETSC_BOX_CLIENT_ST, sizeof(body)));
+    PetscCall(PetscStrlcat(body, "&grant_type=authorization_code", sizeof(body)));
 
     PetscCall(PetscHTTPSRequest("POST", "www.box.com/api/oauth2/token", NULL, "application/x-www-form-urlencoded", body, ssl, buff, sizeof(buff)));
     PetscCall(PetscSSLDestroyContext(ctx));
@@ -149,28 +147,28 @@ PetscErrorCode PetscBoxAuthorize(MPI_Comm comm, char access_token[], char refres
     PetscCall(PetscPrintf(comm, "programs with the option -box_refresh_token %s\n", refresh_token));
     PetscCall(PetscPrintf(comm, "to access Box Drive automatically\n"));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
 /*@C
-     PetscBoxRefresh - Get a new authorization token for accessing Box drive from PETSc from a refresh token
+  PetscBoxRefresh - Get a new authorization token for accessing Box drive from PETSc from a refresh token
 
-   Not collective, only the first process in the `MPI_Comm` does anything
+  Not Collective, only the first process in the `MPI_Comm` does anything
 
-   Input Parameters:
-+   comm - MPI communicator
-.   refresh token - obtained with `PetscBoxAuthorize()`, if NULL PETSc will first look for one in the options data
+  Input Parameters:
++ comm          - MPI communicator
+. refresh_token - obtained with `PetscBoxAuthorize()`, if `NULL` PETSc will first look for one in the options data
                     if not found it will call `PetscBoxAuthorize()`
--   tokensize - size of the output string access_token
+- tokensize     - size of the output string access_token
 
-   Output Parameters:
-+   access_token - token that can be passed to `PetscBoxUpload()`
--   new_refresh_token - the old refresh token is no longer valid, not this is different than Google where the same refresh_token is used forever
+  Output Parameters:
++ access_token      - token that can be passed to `PetscBoxUpload()`
+- new_refresh_token - the old refresh token is no longer valid, not this is different than Google where the same refresh_token is used forever
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PetscURLShorten()`, `PetscBoxAuthorize()`, `PetscBoxUpload()`
+.seealso: `PetscBoxAuthorize()`, `PetscBoxUpload()`
 @*/
 PetscErrorCode PetscBoxRefresh(MPI_Comm comm, const char refresh_token[], char access_token[], char new_refresh_token[], size_t tokensize)
 {
@@ -193,7 +191,7 @@ PetscErrorCode PetscBoxRefresh(MPI_Comm comm, const char refresh_token[], char a
       if (!set) {
         PetscCall(PetscBoxAuthorize(comm, access_token, new_refresh_token, 512 * sizeof(char)));
         PetscCall(PetscFree(refreshtoken));
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
 #else
       PetscCheck(set, PETSC_COMM_SELF, PETSC_ERR_LIB, "Must provide refresh token with -box_refresh_token XXX");
@@ -201,14 +199,14 @@ PetscErrorCode PetscBoxRefresh(MPI_Comm comm, const char refresh_token[], char a
     }
     PetscCall(PetscSSLInitializeContext(&ctx));
     PetscCall(PetscHTTPSConnect("www.box.com", 443, ctx, &sock, &ssl));
-    PetscCall(PetscStrcpy(body, "client_id="));
-    PetscCall(PetscStrcat(body, PETSC_BOX_CLIENT_ID));
-    PetscCall(PetscStrcat(body, "&client_secret="));
-    PetscCall(PetscStrcat(body, PETSC_BOX_CLIENT_ST));
-    PetscCall(PetscStrcat(body, "&refresh_token="));
-    PetscCall(PetscStrcat(body, refreshtoken));
+    PetscCall(PetscStrncpy(body, "client_id=", sizeof(body)));
+    PetscCall(PetscStrlcat(body, PETSC_BOX_CLIENT_ID, sizeof(body)));
+    PetscCall(PetscStrlcat(body, "&client_secret=", sizeof(body)));
+    PetscCall(PetscStrlcat(body, PETSC_BOX_CLIENT_ST, sizeof(body)));
+    PetscCall(PetscStrlcat(body, "&refresh_token=", sizeof(body)));
+    PetscCall(PetscStrlcat(body, refreshtoken, sizeof(body)));
     if (!refresh_token) PetscCall(PetscFree(refreshtoken));
-    PetscCall(PetscStrcat(body, "&grant_type=refresh_token"));
+    PetscCall(PetscStrlcat(body, "&grant_type=refresh_token", sizeof(body)));
 
     PetscCall(PetscHTTPSRequest("POST", "www.box.com/api/oauth2/token", NULL, "application/x-www-form-urlencoded", body, ssl, buff, sizeof(buff)));
     PetscCall(PetscSSLDestroyContext(ctx));
@@ -223,27 +221,27 @@ PetscErrorCode PetscBoxRefresh(MPI_Comm comm, const char refresh_token[], char a
     PetscCall(PetscPrintf(comm, "programs with the option -box_refresh_token %s\n", new_refresh_token));
     PetscCall(PetscPrintf(comm, "to access Box Drive automatically\n"));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #include <sys/stat.h>
 
 /*@C
-     PetscBoxUpload - Loads a file to the Box Drive
+  PetscBoxUpload - Loads a file to the Box Drive
 
-     This routine has not yet been written; it is just copied from Google Drive
+  This routine has not yet been written; it is just copied from Google Drive
 
-     Not collective, only the first process in the `MPI_Comm` uploads the file
+  Not collective, only the first process in the `MPI_Comm` uploads the file
 
   Input Parameters:
-+   comm - MPI communicator
-.   access_token - obtained with `PetscBoxRefresh()`, pass NULL to have PETSc generate one
--   filename - file to upload; if you upload multiple times it will have different names each time on Box Drive
++ comm         - MPI communicator
+. access_token - obtained with `PetscBoxRefresh()`, pass `NULL` to have PETSc generate one
+- filename     - file to upload; if you upload multiple times it will have different names each time on Box Drive
 
   Options Database Key:
-.  -box_refresh_token XXX - the token value
+. -box_refresh_token XXX - the token value
 
-  Usage Patterns:
+  Example Usage:
 .vb
     With PETSc option -box_refresh_token XXX given
     PetscBoxUpload(comm,NULL,filename);        will upload file with no user interaction
@@ -263,9 +261,9 @@ PetscErrorCode PetscBoxRefresh(MPI_Comm comm, const char refresh_token[], char a
     PetscBoxUpload(comm,access_token,filename);
 .ve
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PetscURLShorten()`, `PetscBoxAuthorize()`, `PetscBoxRefresh()`
+.seealso: `PetscBoxAuthorize()`, `PetscBoxRefresh()`
 @*/
 PetscErrorCode PetscBoxUpload(MPI_Comm comm, const char access_token[], const char filename[])
 {
@@ -282,26 +280,30 @@ PetscErrorCode PetscBoxUpload(MPI_Comm comm, const char access_token[], const ch
   PetscFunctionBegin;
   PetscCallMPI(MPI_Comm_rank(comm, &rank));
   if (rank == 0) {
-    PetscCall(PetscStrcpy(head, "Authorization: Bearer "));
-    PetscCall(PetscStrcat(head, access_token));
-    PetscCall(PetscStrcat(head, "\r\n"));
-    PetscCall(PetscStrcat(head, "uploadType: multipart\r\n"));
+    PetscCall(PetscStrncpy(head, "Authorization: Bearer ", sizeof(head)));
+    PetscCall(PetscStrlcat(head, access_token, sizeof(head)));
+    PetscCall(PetscStrlcat(head, "\r\n", sizeof(head)));
+    PetscCall(PetscStrlcat(head, "uploadType: multipart\r\n", sizeof(head)));
 
     err = stat(filename, &sb);
     PetscCheck(!err, PETSC_COMM_SELF, PETSC_ERR_FILE_OPEN, "Unable to stat file: %s", filename);
     len = 1024 + sb.st_size;
     PetscCall(PetscMalloc1(len, &body));
-    PetscCall(PetscStrcpy(body, "--foo_bar_baz\r\n"
-                                "Content-Type: application/json\r\n\r\n"
-                                "{"));
+    PetscCall(PetscStrncpy(body,
+                           "--foo_bar_baz\r\n"
+                           "Content-Type: application/json\r\n\r\n"
+                           "{",
+                           len));
     PetscCall(PetscPushJSONValue(body, "title", filename, len));
-    PetscCall(PetscStrcat(body, ","));
+    PetscCall(PetscStrlcat(body, ",", len));
     PetscCall(PetscPushJSONValue(body, "mimeType", "text.html", len));
-    PetscCall(PetscStrcat(body, ","));
+    PetscCall(PetscStrlcat(body, ",", len));
     PetscCall(PetscPushJSONValue(body, "description", "a file", len));
-    PetscCall(PetscStrcat(body, "}\r\n\r\n"
-                                "--foo_bar_baz\r\n"
-                                "Content-Type: text/html\r\n\r\n"));
+    PetscCall(PetscStrlcat(body,
+                           "}\r\n\r\n"
+                           "--foo_bar_baz\r\n"
+                           "Content-Type: text/html\r\n\r\n",
+                           len));
     PetscCall(PetscStrlen(body, &blen));
     fd = fopen(filename, "r");
     PetscCheck(fd, PETSC_COMM_SELF, PETSC_ERR_FILE_OPEN, "Unable to open file: %s", filename);
@@ -309,8 +311,10 @@ PetscErrorCode PetscBoxUpload(MPI_Comm comm, const char access_token[], const ch
     PetscCheck(rd == (size_t)sb.st_size, PETSC_COMM_SELF, PETSC_ERR_FILE_OPEN, "Unable to read entire file: %s %d %d", filename, (int)rd, (int)sb.st_size);
     fclose(fd);
     body[blen + rd] = 0;
-    PetscCall(PetscStrcat(body, "\r\n\r\n"
-                                "--foo_bar_baz\r\n"));
+    PetscCall(PetscStrlcat(body,
+                           "\r\n\r\n"
+                           "--foo_bar_baz\r\n",
+                           len));
     PetscCall(PetscSSLInitializeContext(&ctx));
     PetscCall(PetscHTTPSConnect("www.boxapis.com", 443, ctx, &sock, &ssl));
     PetscCall(PetscHTTPSRequest("POST", "www.boxapis.com/upload/drive/v2/files/", head, "multipart/related; boundary=\"foo_bar_baz\"", body, ssl, buff, sizeof(buff)));
@@ -320,5 +324,5 @@ PetscErrorCode PetscBoxUpload(MPI_Comm comm, const char access_token[], const ch
     PetscCall(PetscStrstr(buff, "\"title\"", &title));
     PetscCheck(title, PETSC_COMM_SELF, PETSC_ERR_LIB, "Upload of file %s failed", filename);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

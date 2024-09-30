@@ -9,8 +9,8 @@ int main(int argc, char **argv)
   PetscMPIInt nproc, grank, mycolor;
   PetscInt    i, n, N = 20, low, high;
   MPI_Comm    subcomm;
-  Vec         x  = PETSC_NULL; /* global vectors on PETSC_COMM_WORLD */
-  Vec         yg = PETSC_NULL; /* global vectors on PETSC_COMM_WORLD */
+  Vec         x  = NULL; /* global vectors on PETSC_COMM_WORLD */
+  Vec         yg = NULL; /* global vectors on PETSC_COMM_WORLD */
   VecScatter  vscat;
   IS          ix, iy;
   PetscBool   iscuda = PETSC_FALSE; /* Option to use VECCUDA vectors */
@@ -128,14 +128,7 @@ int main(int argc, char **argv)
       PetscCall(VecScatterBegin(vscat, yg, x, INSERT_VALUES, SCATTER_REVERSE));
       PetscCall(VecScatterEnd(vscat, yg, x, INSERT_VALUES, SCATTER_REVERSE));
       PetscCall(VecResetArray(yg));
-      if (iscuda) {
-#if defined(PETSC_HAVE_CUDA)
-        PetscCall(VecCUDARestoreArray(y, &yvalue));
-#endif
-      } else {
-        PetscCall(VecRestoreArray(y, &yvalue));
-      }
-
+      PetscCall(VecRestoreArray(y, &yvalue));
       PetscCall(VecDestroy(&y));
     } else {
       /* Ranks outside of subcomm0 do not supply values to yg */
@@ -491,7 +484,7 @@ int main(int argc, char **argv)
        suffix: 7
        args: -world2sub -sf_type neighbor
        output_file: output/ex9_1.out
-       # OpenMPI has a bug wrt MPI_Neighbor_alltoallv etc (https://github.com/open-mpi/ompi/pull/6782). Once the patch is in, we can remove !define(PETSC_HAVE_OMPI_MAJOR_VERSION)
+       # Open MPI has a bug wrt MPI_Neighbor_alltoallv etc (https://github.com/open-mpi/ompi/pull/6782). Once the patch is in, we can remove !define(PETSC_HAVE_OMPI_MAJOR_VERSION)
        # segfaults with NECMPI
        requires: defined(PETSC_HAVE_MPI_NEIGHBORHOOD_COLLECTIVES) !defined(PETSC_HAVE_OMPI_MAJOR_VERSION) !defined(PETSC_HAVE_NECMPI)
 TEST*/

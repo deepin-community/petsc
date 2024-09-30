@@ -1,4 +1,3 @@
-
 /*
       Inverts 6 by 6 matrix using gaussian elimination with partial pivoting.
 
@@ -160,5 +159,5 @@ PETSC_EXTERN PetscErrorCode PetscKernel_A_gets_inverse_A_6(MatScalar *a, PetscRe
       ay[5] = stmp;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

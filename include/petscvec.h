@@ -3,8 +3,7 @@
   degrees of freedom for finite element/finite difference functions
   on a grid. They have more mathematical structure then simple arrays.
 */
-#ifndef PETSCVEC_H
-#define PETSCVEC_H
+#pragma once
 
 #include <petscsys.h>
 #include <petscsftypes.h> /* for VecScatter, VecScatterType */
@@ -15,27 +14,36 @@
 /* SUBMANSEC = Vec */
 
 /*S
-     Vec - Abstract PETSc vector object
+   Vec - Abstract PETSc vector object. Used for holding solutions and right-hand sides for (non) linear systems and integrators
 
    Level: beginner
 
-.seealso: `VecCreate()`, `VecType`, `VecSetType()`
+   Note:
+   Internally the actual vector representation is generally a simple array but most PETSc code can work on other representations through this abstraction
+
+.seealso: [](doc_vector), [](ch_vectors), `VecCreate()`, `VecType`, `VecSetType()`
 S*/
 typedef struct _p_Vec *Vec;
 
 /*E
   ScatterMode - Determines the direction of a scatter
 
+  Values:
++  `SCATTER_FORWARD`       - Scatters the values as dictated by the `VecScatterCreate()` call
+.  `SCATTER_REVERSE`       - Moves the values in the opposite direction than the directions indicated in the `VecScatterCreate()` call
+.  `SCATTER_FORWARD_LOCAL` - Scatters the values as dictated by the `VecScatterCreate()` call except NO MPI communication is done
+-  `SCATTER_REVERSE_LOCAL` - Moves the values in the opposite direction than the directions indicated in the `VecScatterCreate()` call
+                             except NO MPI communication is done
+
   Level: beginner
 
-.seealso: `VecScatter`, `VecScatterBegin()`, `VecScatterEnd()`
+.seealso: [](ch_vectors), `VecScatter`, `VecScatterBegin()`, `VecScatterEnd()`, `SCATTER_FORWARD`, `SCATTER_REVERSE`, `SCATTER_FORWARD_LOCAL`, `SCATTER_REVERSE_LOCAL`
 E*/
 typedef enum {
   SCATTER_FORWARD       = 0,
   SCATTER_REVERSE       = 1,
   SCATTER_FORWARD_LOCAL = 2,
-  SCATTER_REVERSE_LOCAL = 3,
-  SCATTER_LOCAL         = 2
+  SCATTER_REVERSE_LOCAL = 3
 } ScatterMode;
 
 /*MC
@@ -43,70 +51,66 @@ typedef enum {
 
     Level: beginner
 
-.seealso: `VecScatter`, `ScatterMode`, `VecScatterCreate()`, `VecScatterBegin()`, `VecScatterEnd()`, `SCATTER_REVERSE`, `SCATTER_FORWARD_LOCAL`,
+.seealso: [](ch_vectors), `VecScatter`, `ScatterMode`, `VecScatterCreate()`, `VecScatterBegin()`, `VecScatterEnd()`, `SCATTER_REVERSE`, `SCATTER_FORWARD_LOCAL`,
           `SCATTER_REVERSE_LOCAL`
-
 M*/
 
 /*MC
     SCATTER_REVERSE - Moves the values in the opposite direction then the directions indicated in
-         in the `VecScatterCreate()`
+                      in the `VecScatterCreate()`
 
     Level: beginner
 
-.seealso: `VecScatter`, `ScatterMode`, `VecScatterCreate()`, `VecScatterBegin()`, `VecScatterEnd()`, `SCATTER_FORWARD`, `SCATTER_FORWARD_LOCAL`,
+.seealso: [](ch_vectors), `VecScatter`, `ScatterMode`, `VecScatterCreate()`, `VecScatterBegin()`, `VecScatterEnd()`, `SCATTER_FORWARD`, `SCATTER_FORWARD_LOCAL`,
           `SCATTER_REVERSE_LOCAL`
-
 M*/
 
 /*MC
     SCATTER_FORWARD_LOCAL - Scatters the values as dictated by the `VecScatterCreate()` call except NO parallel communication
-       is done. Any variables that have be moved between processes are ignored
+                            is done. Any variables that have be moved between processes are ignored
 
     Level: developer
 
-.seealso: `VecScatter`, `ScatterMode`, `VecScatterCreate()`, `VecScatterBegin()`, `VecScatterEnd()`, `SCATTER_REVERSE`, `SCATTER_FORWARD`,
+.seealso: [](ch_vectors), `VecScatter`, `ScatterMode`, `VecScatterCreate()`, `VecScatterBegin()`, `VecScatterEnd()`, `SCATTER_REVERSE`, `SCATTER_FORWARD`,
           `SCATTER_REVERSE_LOCAL`
-
 M*/
 
 /*MC
     SCATTER_REVERSE_LOCAL - Moves the values in the opposite direction then the directions indicated in
-         in the `VecScatterCreate()`  except NO parallel communication
-       is done. Any variables that have be moved between processes are ignored
+                           in the `VecScatterCreate()`  except NO parallel communication
+                           is done. Any variables that have be moved between processes are ignored
 
     Level: developer
 
-.seealso: `VecScatter`, `ScatterMode`, `VecScatterCreate()`, `VecScatterBegin()`, `VecScatterEnd()`, `SCATTER_FORWARD`, `SCATTER_FORWARD_LOCAL`,
+.seealso: [](ch_vectors), `VecScatter`, `ScatterMode`, `VecScatterCreate()`, `VecScatterBegin()`, `VecScatterEnd()`, `SCATTER_FORWARD`, `SCATTER_FORWARD_LOCAL`,
           `SCATTER_REVERSE`
-
 M*/
 
 /*J
-    VecType - String with the name of a PETSc vector
+   VecType - String with the name of a PETSc vector type
 
    Level: beginner
 
-.seealso: `VecSetType()`, `Vec`, `VecCreate()`, `VecDestroy()`
+.seealso: [](doc_vector), [](ch_vectors), `VecSetType()`, `Vec`, `VecCreate()`, `VecDestroy()`
 J*/
 typedef const char *VecType;
 #define VECSEQ         "seq"
 #define VECMPI         "mpi"
-#define VECSTANDARD    "standard" /* seq on one process and mpi on several */
+#define VECSTANDARD    "standard" /* seq on one process and mpi on multiple */
 #define VECSHARED      "shared"
 #define VECSEQVIENNACL "seqviennacl"
 #define VECMPIVIENNACL "mpiviennacl"
-#define VECVIENNACL    "viennacl" /* seqviennacl on one process and mpiviennacl on several */
+#define VECVIENNACL    "viennacl" /* seqviennacl on one process and mpiviennacl on multiple */
 #define VECSEQCUDA     "seqcuda"
 #define VECMPICUDA     "mpicuda"
-#define VECCUDA        "cuda" /* seqcuda on one process and mpicuda on several */
+#define VECCUDA        "cuda" /* seqcuda on one process and mpicuda on multiple */
 #define VECSEQHIP      "seqhip"
 #define VECMPIHIP      "mpihip"
-#define VECHIP         "hip" /* seqcuda on one process and mpicuda on several */
+#define VECHIP         "hip" /* seqhip on one process and mpihip on multiple */
 #define VECNEST        "nest"
 #define VECSEQKOKKOS   "seqkokkos"
 #define VECMPIKOKKOS   "mpikokkos"
-#define VECKOKKOS      "kokkos" /* seqkokkos on one process and mpikokkos on several */
+#define VECKOKKOS      "kokkos" /* seqkokkos on one process and mpikokkos on multiple */
 
 /* Dynamic creation and loading functions */
 PETSC_EXTERN PetscErrorCode VecScatterSetType(VecScatter, VecScatterType);
@@ -125,12 +129,12 @@ PETSC_EXTERN PetscErrorCode VecInitializePackage(void);
 PETSC_EXTERN PetscErrorCode VecFinalizePackage(void);
 
 PETSC_EXTERN PetscErrorCode VecCreate(MPI_Comm, Vec *);
+PETSC_EXTERN PetscErrorCode VecCreateFromOptions(MPI_Comm, const char *, PetscInt, PetscInt, PetscInt, Vec *);
 PETSC_EXTERN PetscErrorCode VecCreateSeq(MPI_Comm, PetscInt, Vec *);
 PETSC_EXTERN PetscErrorCode VecCreateMPI(MPI_Comm, PetscInt, PetscInt, Vec *);
 PETSC_EXTERN PetscErrorCode VecCreateSeqWithArray(MPI_Comm, PetscInt, PetscInt, const PetscScalar[], Vec *);
 PETSC_EXTERN PetscErrorCode VecCreateMPIWithArray(MPI_Comm, PetscInt, PetscInt, PetscInt, const PetscScalar[], Vec *);
 PETSC_EXTERN PetscErrorCode VecCreateShared(MPI_Comm, PetscInt, PetscInt, Vec *);
-PETSC_EXTERN PetscErrorCode VecCreateNode(MPI_Comm, PetscInt, PetscInt, Vec *);
 
 PETSC_EXTERN PetscErrorCode VecSetFromOptions(Vec);
 PETSC_EXTERN PetscErrorCode VecViewFromOptions(Vec, PetscObject, const char[]);
@@ -157,9 +161,20 @@ PETSC_EXTERN PetscErrorCode VecConcatenate(PetscInt, const Vec[], Vec *, IS *[])
 /*E
     NormType - determines what type of norm to compute
 
+    Values:
++    `NORM_1`         - the one norm, $||v|| = \sum_i | v_i |$. $||A|| = \max_j || v_*j ||$, maximum column sum
+.    `NORM_2`         - the two norm, $||v|| = sqrt(\sum_i |v_i|^2)$ (vectors only)
+.    `NORM_FROBENIUS` - $||A|| = sqrt(\sum_ij |A_ij|^2)$, same as `NORM_2` for vectors
+.    `NORM_INFINITY`  - $||v|| = \max_i |v_i|$. $||A|| = \max_i || v_i* ||$, maximum row sum
+-    `NORM_1_AND_2`   - computes both the 1 and 2 norm of a vector. The values are stored in two adjacent `PetscReal` memory locations
+
     Level: beginner
 
-.seealso: `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `MatNorm()`
+    Note:
+    The `v` above represents a `Vec` while the `A` represents a `Mat`
+
+.seealso: [](ch_vectors), `Vec`, `Mat`, `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `MatNorm()`, `NORM_1`,
+          `NORM_2`, `NORM_FROBENIUS`, `NORM_INFINITY`, `NORM_1_AND_2`
 E*/
 typedef enum {
   NORM_1         = 0,
@@ -172,72 +187,75 @@ PETSC_EXTERN const char *const NormTypes[];
 #define NORM_MAX NORM_INFINITY
 
 /*MC
-     NORM_1 - the one norm, ||v|| = sum_i | v_i |. ||A|| = max_j || v_*j ||, maximum column sum
+   NORM_1 - the one norm, $||v|| = \sum_i | v_i |$. $||A|| = \max_j || v_{*,j} ||$, maximum column sum
 
    Level: beginner
 
-.seealso: `NormType`, `MatNorm()`, `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `NORM_2`, `NORM_FROBENIUS`,
+.seealso: [](ch_vectors), `NormType`, `MatNorm()`, `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `NORM_2`, `NORM_FROBENIUS`,
           `NORM_INFINITY`, `NORM_1_AND_2`
-
 M*/
 
 /*MC
-     NORM_2 - the two norm, ||v|| = sqrt(sum_i |v_i|^2) (vectors only)
+   NORM_2 - the two norm, $||v|| = \sqrt{\sum_i |v_i|^2}$ (vectors only)
 
    Level: beginner
 
-.seealso: `NormType`, `MatNorm()`, `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `NORM_1`, `NORM_FROBENIUS`,
+.seealso: [](ch_vectors), `NormType`, `MatNorm()`, `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `NORM_1`, `NORM_FROBENIUS`,
           `NORM_INFINITY`, `NORM_1_AND_2`
-
 M*/
 
 /*MC
-     NORM_FROBENIUS - ||A|| = sqrt(sum_ij |A_ij|^2), same as `NORM_2` for vectors
+   NORM_FROBENIUS - $||A|| = \sqrt{\sum_{i,j} |A_{i,j}|^2}$, same as `NORM_2` for vectors
 
    Level: beginner
 
-.seealso: `NormType`, `MatNorm()`, `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `NORM_1`, `NORM_2`,
+.seealso: [](ch_vectors), `NormType`, `MatNorm()`, `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `NORM_1`, `NORM_2`,
           `NORM_INFINITY`, `NORM_1_AND_2`
-
 M*/
 
 /*MC
-     NORM_INFINITY - ||v|| = max_i |v_i|. ||A|| = max_i || v_i* ||, maximum row sum
+   NORM_INFINITY - $||v|| = \max_i |v_i|$. $||A|| = \max_i || v_{i,*} ||$, maximum row sum
 
    Level: beginner
 
-.seealso: `NormType`, `MatNorm()`, `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `NORM_1`, `NORM_2`,
+.seealso: [](ch_vectors), `NormType`, `MatNorm()`, `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `NORM_1`, `NORM_2`,
           `NORM_FROBENIUS`, `NORM_1_AND_2`
-
 M*/
 
 /*MC
-     NORM_1_AND_2 - computes both the 1 and 2 norm of a vector
+   NORM_1_AND_2 - computes both the 1 and 2 norm of a vector. The values are stored in two adjacent `PetscReal` memory locations
 
    Level: beginner
 
-.seealso: `NormType`, `MatNorm()`, `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `NORM_1`, `NORM_2`,
+.seealso: [](ch_vectors), `NormType`, `MatNorm()`, `VecNorm()`, `VecNormBegin()`, `VecNormEnd()`, `NORM_1`, `NORM_2`,
           `NORM_FROBENIUS`, `NORM_INFINITY`
-
 M*/
 
 /*MC
-     NORM_MAX - see `NORM_INFINITY`
+   NORM_MAX - see `NORM_INFINITY`
 
    Level: beginner
-
 M*/
 
 /*E
     ReductionType - determines what type of column reduction (one that is not a type of norm defined in `NormType`) to compute
 
+    Values:
++  `REDUCTION_SUM_REALPART`       - sum of real part of each matrix column
+.  `REDUCTION_SUM_IMAGINARYPART`  - sum of imaginary part of each matrix column
+.  `REDUCTION_MEAN_REALPART`      - arithmetic mean of real part of each matrix column
+-  `REDUCTION_MEAN_IMAGINARYPART` - arithmetic mean of imaginary part of each matrix column
+
     Level: beginner
 
-.seealso: `MatGetColumnReductions()`, `MatGetColumnNorms()`, `NormType`
+    Developer Note:
+    The constants defined in `ReductionType` MUST BE DISTINCT from those defined in `NormType`.
+   This is because `MatGetColumnReductions()` is used to compute both norms and other types of reductions,
+   and the constants defined in both `NormType` and `ReductionType` are used to designate the desired operation.
+
+.seealso: [](ch_vectors), `MatGetColumnReductions()`, `MatGetColumnNorms()`, `NormType`, `REDUCTION_SUM_REALPART`,
+          `REDUCTION_SUM_IMAGINARYPART`, `REDUCTION_MEAN_REALPART`, `REDUCTION_NORM_1`, `REDUCTION_NORM_2`, `REDUCTION_NORM_FROBENIUS`, `REDUCTION_NORM_INFINITY`
 E*/
-/* NOTE: The integer constants defined in ReductionType MUST BE DISTINCT from those defined in NormType.
- * This is because MatGetColumnReductions() is used to compute both norms and other types of reductions,
- * and the constants defined in both NormType and ReductionType are used to designate the desired operation. */
 typedef enum {
   REDUCTION_SUM_REALPART       = 10,
   REDUCTION_MEAN_REALPART      = 11,
@@ -246,43 +264,39 @@ typedef enum {
 } ReductionType;
 
 /*MC
-     REDUCTION_SUM_REALPART - sum of real part of matrix column
+   REDUCTION_SUM_REALPART - sum of real part of matrix column
 
    Level: beginner
 
-.seealso: `ReductionType`, `MatGetColumnReductions()`, `REDUCTION_SUM_IMAGINARYPART`, `REDUCTION_MEAN_REALPART`, `REDUCTION_NORM_1`,
+.seealso: [](ch_vectors), `ReductionType`, `MatGetColumnReductions()`, `REDUCTION_SUM_IMAGINARYPART`, `REDUCTION_MEAN_REALPART`, `REDUCTION_NORM_1`,
           `REDUCTION_NORM_2`, `REDUCTION_NORM_FROBENIUS`, `REDUCTION_NORM_INFINITY`
-
 M*/
 
 /*MC
-     REDUCTION_SUM_IMAGINARYPART - sum of imaginary part of matrix column
+   REDUCTION_SUM_IMAGINARYPART - sum of imaginary part of matrix column
 
    Level: beginner
 
-.seealso: `ReductionType`, `MatGetColumnReductions()`, `REDUCTION_SUM_REALPART`, `REDUCTION_MEAN_IMAGINARYPART`, `REDUCTION_NORM_1`,
+.seealso: [](ch_vectors), `ReductionType`, `MatGetColumnReductions()`, `REDUCTION_SUM_REALPART`, `REDUCTION_MEAN_IMAGINARYPART`, `REDUCTION_NORM_1`,
           `REDUCTION_NORM_2`, `REDUCTION_NORM_FROBENIUS`, `REDUCTION_NORM_INFINITY`
-
 M*/
 
 /*MC
-     REDUCTION_MEAN_REALPART - arithmetic mean of real part of matrix column
+   REDUCTION_MEAN_REALPART - arithmetic mean of real part of matrix column
 
    Level: beginner
 
-.seealso: `ReductionType`, `MatGetColumnReductions()`, `REDUCTION_MEAN_IMAGINARYPART`, `REDUCTION_SUM_REALPART`, `REDUCTION_NORM_1`,
+.seealso: [](ch_vectors), `ReductionType`, `MatGetColumnReductions()`, `REDUCTION_MEAN_IMAGINARYPART`, `REDUCTION_SUM_REALPART`, `REDUCTION_NORM_1`,
           `REDUCTION_NORM_2`, `REDUCTION_NORM_FROBENIUS`, `REDUCTION_NORM_INFINITY`
-
 M*/
 
 /*MC
-     REDUCTION_MEAN_IMAGINARYPART - arithmetic mean of imaginary part of matrix column
+   REDUCTION_MEAN_IMAGINARYPART - arithmetic mean of imaginary part of matrix column
 
    Level: beginner
 
-.seealso: `ReductionType`, `MatGetColumnReductions()`, `REDUCTION_MEAN_REALPART`, `REDUCTION_SUM_IMAGINARYPART`, `REDUCTION_NORM_1`,
+.seealso: [](ch_vectors), `ReductionType`, `MatGetColumnReductions()`, `REDUCTION_MEAN_REALPART`, `REDUCTION_SUM_IMAGINARYPART`, `REDUCTION_NORM_1`,
           `REDUCTION_NORM_2`, `REDUCTION_NORM_FROBENIUS`, `REDUCTION_NORM_INFINITY`
-
 M*/
 
 PETSC_EXTERN PetscErrorCode VecNorm(Vec, NormType, PetscReal *);
@@ -301,6 +315,7 @@ PETSC_EXTERN PetscErrorCode VecSwap(Vec, Vec);
 PETSC_EXTERN PetscErrorCode VecAXPY(Vec, PetscScalar, Vec);
 PETSC_EXTERN PetscErrorCode VecAXPBY(Vec, PetscScalar, PetscScalar, Vec);
 PETSC_EXTERN PetscErrorCode VecMAXPY(Vec, PetscInt, const PetscScalar[], Vec[]);
+PETSC_EXTERN PetscErrorCode VecMAXPBY(Vec, PetscInt, const PetscScalar[], PetscScalar, Vec[]);
 PETSC_EXTERN PetscErrorCode VecAYPX(Vec, PetscScalar, Vec);
 PETSC_EXTERN PetscErrorCode VecWAXPY(Vec, PetscScalar, Vec, Vec);
 PETSC_EXTERN PetscErrorCode VecAXPBYPCZ(Vec, PetscScalar, PetscScalar, PetscScalar, Vec, Vec);
@@ -365,10 +380,12 @@ PETSC_EXTERN PetscErrorCode VecSetValuesCOO(Vec, const PetscScalar[], InsertMode
    Not Collective
 
    Input Parameters:
-+  v - the vector
-.  row - the row location of the entry
++  v     - the vector
+.  row   - the row location of the entry
 .  value - the value to insert
--  mode - either `INSERT_VALUES` or `ADD_VALUES`
+-  mode  - either `INSERT_VALUES` or `ADD_VALUES`
+
+   Level: beginner
 
    Notes:
    For efficiency one should use `VecSetValues()` and set several or
@@ -379,9 +396,7 @@ PETSC_EXTERN PetscErrorCode VecSetValuesCOO(Vec, const PetscScalar[], InsertMode
 
    `VecSetValue()` uses 0-based indices in Fortran as well as in C.
 
-   Level: beginner
-
-.seealso: `VecSetValues()`, `VecAssemblyBegin()`, `VecAssemblyEnd()`, `VecSetValuesBlockedLocal()`, `VecSetValueLocal()`
+.seealso: [](ch_vectors), `VecSetValues()`, `VecAssemblyBegin()`, `VecAssemblyEnd()`, `VecSetValuesBlockedLocal()`, `VecSetValueLocal()`
 M*/
 static inline PetscErrorCode VecSetValue(Vec v, PetscInt i, PetscScalar va, InsertMode mode)
 {
@@ -397,6 +412,7 @@ PETSC_EXTERN PetscFunctionList VecList;
 PETSC_EXTERN PetscErrorCode    VecSetType(Vec, VecType);
 PETSC_EXTERN PetscErrorCode    VecGetType(Vec, VecType *);
 PETSC_EXTERN PetscErrorCode    VecRegister(const char[], PetscErrorCode (*)(Vec));
+PETSC_EXTERN PetscErrorCode    VecRegisterAll(void);
 
 PETSC_EXTERN PetscErrorCode VecScatterBegin(VecScatter, Vec, Vec, InsertMode, ScatterMode);
 PETSC_EXTERN PetscErrorCode VecScatterEnd(VecScatter, Vec, Vec, InsertMode, ScatterMode);
@@ -456,32 +472,6 @@ PETSC_EXTERN PetscErrorCode VecGetOwnershipRanges(Vec, const PetscInt *[]);
 PETSC_EXTERN PetscErrorCode VecSetLocalToGlobalMapping(Vec, ISLocalToGlobalMapping);
 PETSC_EXTERN PetscErrorCode VecSetValuesLocal(Vec, PetscInt, const PetscInt[], const PetscScalar[], InsertMode);
 
-PETSC_EXTERN PetscErrorCode VecCUDAGetArray(Vec, PetscScalar **);
-PETSC_EXTERN PetscErrorCode VecCUDARestoreArray(Vec, PetscScalar **);
-
-PETSC_EXTERN PetscErrorCode VecCUDAGetArrayRead(Vec, const PetscScalar **);
-PETSC_EXTERN PetscErrorCode VecCUDARestoreArrayRead(Vec, const PetscScalar **);
-
-PETSC_EXTERN PetscErrorCode VecCUDAGetArrayWrite(Vec, PetscScalar **);
-PETSC_EXTERN PetscErrorCode VecCUDARestoreArrayWrite(Vec, PetscScalar **);
-
-PETSC_EXTERN PetscErrorCode VecCUDAPlaceArray(Vec, const PetscScalar[]);
-PETSC_EXTERN PetscErrorCode VecCUDAReplaceArray(Vec, const PetscScalar[]);
-PETSC_EXTERN PetscErrorCode VecCUDAResetArray(Vec);
-
-PETSC_EXTERN PetscErrorCode VecHIPGetArray(Vec, PetscScalar **);
-PETSC_EXTERN PetscErrorCode VecHIPRestoreArray(Vec, PetscScalar **);
-
-PETSC_EXTERN PetscErrorCode VecHIPGetArrayRead(Vec, const PetscScalar **);
-PETSC_EXTERN PetscErrorCode VecHIPRestoreArrayRead(Vec, const PetscScalar **);
-
-PETSC_EXTERN PetscErrorCode VecHIPGetArrayWrite(Vec, PetscScalar **);
-PETSC_EXTERN PetscErrorCode VecHIPRestoreArrayWrite(Vec, PetscScalar **);
-
-PETSC_EXTERN PetscErrorCode VecHIPPlaceArray(Vec, const PetscScalar[]);
-PETSC_EXTERN PetscErrorCode VecHIPReplaceArray(Vec, const PetscScalar[]);
-PETSC_EXTERN PetscErrorCode VecHIPResetArray(Vec);
-
 PETSC_EXTERN PetscErrorCode VecViennaCLGetCLContext(Vec, PETSC_UINTPTR_T *);
 PETSC_EXTERN PetscErrorCode VecViennaCLGetCLQueue(Vec, PETSC_UINTPTR_T *);
 PETSC_EXTERN PetscErrorCode VecViennaCLGetCLMemRead(Vec, PETSC_UINTPTR_T *);
@@ -491,7 +481,7 @@ PETSC_EXTERN PetscErrorCode VecViennaCLGetCLMem(Vec, PETSC_UINTPTR_T *);
 PETSC_EXTERN PetscErrorCode VecViennaCLRestoreCLMem(Vec);
 
 /*MC
-   VecSetValueLocal - Set a single entry into a vector using the local numbering
+   VecSetValueLocal - Set a single entry into a vector using the local numbering, see `VecSetValuesLocal()`
 
    Synopsis:
    #include <petscvec.h>
@@ -500,28 +490,49 @@ PETSC_EXTERN PetscErrorCode VecViennaCLRestoreCLMem(Vec);
    Not Collective
 
    Input Parameters:
-+  v - the vector
-.  row - the row location of the entry
++  v     - the vector
+.  row   - the row location of the entry
 .  value - the value to insert
--  mode - either `INSERT_VALUES` or `ADD_VALUES`
-
-   Notes:
-   For efficiency one should use `VecSetValues()` and set several or
-   many values simultaneously if possible.
-
-   These values may be cached, so `VecAssemblyBegin()` and `VecAssemblyEnd()`
-   MUST be called after all calls to `VecSetValues()` have been completed.
-
-   `VecSetValues()` uses 0-based indices in Fortran as well as in C.
+-  mode  - either `INSERT_VALUES` or `ADD_VALUES`
 
    Level: beginner
 
-.seealso: `VecSetValues()`, `VecAssemblyBegin()`, `VecAssemblyEnd()`, `VecSetValuesBlockedLocal()`, `VecSetValue()`
+   Notes:
+   For efficiency one should use `VecSetValuesLocal()` and set several or
+   many values simultaneously if possible.
+
+   These values may be cached, so `VecAssemblyBegin()` and `VecAssemblyEnd()`
+   MUST be called after all calls to `VecSetValueLocal()` have been completed.
+
+   `VecSetValues()` uses 0-based indices in Fortran as well as in C.
+
+.seealso: [](ch_vectors), `VecSetValuesLocal()`, `VecSetValues()`, `VecAssemblyBegin()`, `VecAssemblyEnd()`, `VecSetValuesBlockedLocal()`, `VecSetValue()`
 M*/
 static inline PetscErrorCode VecSetValueLocal(Vec v, PetscInt i, PetscScalar va, InsertMode mode)
 {
   return VecSetValuesLocal(v, 1, &i, &va, mode);
 }
+
+/*MC
+   VecCheckAssembled - checks if values have been changed in the vector, by `VecSetValues()` or related routines,  but it has not been assembled
+
+   Synopsis:
+   #include <petscvec.h>
+   VecCheckAssembled(Vec v);
+
+   Not Collective
+
+   Input Parameter:
+.  v - the vector to check
+
+   Level: developer
+
+   Note:
+   After calls to `VecSetValues()` and related routines on must call ``VecAssemblyBegin()` and `VecAssemblyEnd()` before using the vector
+
+.seealso: [](ch_vectors), `Vec`, `VecSetValues()`, `VecAssemblyBegin()`, `VecAssemblyEnd()`, `MatAssemblyBegin()`, `MatAssemblyEnd()`
+M*/
+#define VecCheckAssembled(v) PetscCheck(v->stash.insertmode == NOT_SET_VALUES, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Not for unassembled vector, did you call VecAssemblyBegin()/VecAssemblyEnd()?")
 
 PETSC_EXTERN PetscErrorCode VecSetValuesBlockedLocal(Vec, PetscInt, const PetscInt[], const PetscScalar[], InsertMode);
 PETSC_EXTERN PetscErrorCode VecGetLocalToGlobalMapping(Vec, ISLocalToGlobalMapping *);
@@ -532,6 +543,7 @@ PETSC_EXTERN PetscErrorCode VecTDotBegin(Vec, Vec, PetscScalar *);
 PETSC_EXTERN PetscErrorCode VecTDotEnd(Vec, Vec, PetscScalar *);
 PETSC_EXTERN PetscErrorCode VecNormBegin(Vec, NormType, PetscReal *);
 PETSC_EXTERN PetscErrorCode VecNormEnd(Vec, NormType, PetscReal *);
+PETSC_EXTERN PetscErrorCode VecErrorWeightedNorms(Vec, Vec, Vec, NormType, PetscReal, Vec, PetscReal, Vec, PetscReal, PetscReal *, PetscInt *, PetscReal *, PetscInt *, PetscReal *, PetscInt *);
 
 PETSC_EXTERN PetscErrorCode VecMDotBegin(Vec, PetscInt, const Vec[], PetscScalar[]);
 PETSC_EXTERN PetscErrorCode VecMDotEnd(Vec, PetscInt, const Vec[], PetscScalar[]);
@@ -540,7 +552,7 @@ PETSC_EXTERN PetscErrorCode VecMTDotEnd(Vec, PetscInt, const Vec[], PetscScalar[
 PETSC_EXTERN PetscErrorCode PetscCommSplitReductionBegin(MPI_Comm);
 
 PETSC_EXTERN PetscErrorCode VecBindToCPU(Vec, PetscBool);
-PETSC_DEPRECATED_FUNCTION("Use VecBindToCPU (since v3.13)") static inline PetscErrorCode VecPinToCPU(Vec v, PetscBool flg)
+PETSC_DEPRECATED_FUNCTION(3, 13, 0, "VecBindToCPU()", ) static inline PetscErrorCode VecPinToCPU(Vec v, PetscBool flg)
 {
   return VecBindToCPU(v, flg);
 }
@@ -578,9 +590,9 @@ PETSC_EXTERN PetscErrorCode VecGetArrayWriteAndMemType(Vec, PetscScalar **, Pets
 PETSC_EXTERN PetscErrorCode VecRestoreArrayWriteAndMemType(Vec, PetscScalar **);
 
 /*@C
-   VecGetArrayPair - Accesses a pair of pointers for two vectors that may be common. When not common the first is read only
+   VecGetArrayPair - Accesses a pair of pointers for two vectors that may be common. When the vectors are not the same the first pointer is read only
 
-   Logically Collective
+   Logically Collective; No Fortran Support
 
    Input Parameters:
 +  x - the vector
@@ -592,10 +604,7 @@ PETSC_EXTERN PetscErrorCode VecRestoreArrayWriteAndMemType(Vec, PetscScalar **);
 
    Level: developer
 
-   Not available from Fortran
-
-.seealso: `VecGetArray()`, `VecGetArrayRead()`, `VecRestoreArrayPair()`
-
+.seealso: [](ch_vectors), `VecGetArray()`, `VecGetArrayRead()`, `VecRestoreArrayPair()`
 @*/
 static inline PetscErrorCode VecGetArrayPair(Vec x, Vec y, PetscScalar **xv, PetscScalar **yv)
 {
@@ -603,38 +612,33 @@ static inline PetscErrorCode VecGetArrayPair(Vec x, Vec y, PetscScalar **xv, Pet
   PetscCall(VecGetArray(y, yv));
   if (x == y) *xv = *yv;
   else PetscCall(VecGetArrayRead(x, (const PetscScalar **)xv));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   VecRestoreArrayPair - Returns a pair of pointers for two vectors that may be common. When not common the first is read only
+   VecRestoreArrayPair - Returns a pair of pointers for two vectors that may be common obtained with `VecGetArrayPair()`
 
-   Logically Collective
+   Logically Collective; No Fortran Support
 
    Input Parameters:
-+  x - the vector
--  y - the second vector
-
-   Output Parameters:
-+  xv - location to put pointer to the first array
++  x  - the vector
+.  y  - the second vector
+.  xv - location to put pointer to the first array
 -  yv - location to put pointer to the second array
 
    Level: developer
 
-   Not available from Fortran
-
-.seealso: `VecGetArray()`, `VecGetArrayRead()`, `VecGetArrayPair()`
-
+.seealso: [](ch_vectors), `VecGetArray()`, `VecGetArrayRead()`, `VecGetArrayPair()`
 @*/
 static inline PetscErrorCode VecRestoreArrayPair(Vec x, Vec y, PetscScalar **xv, PetscScalar **yv)
 {
   PetscFunctionBegin;
   PetscCall(VecRestoreArray(y, yv));
   if (x != y) PetscCall(VecRestoreArrayRead(x, (const PetscScalar **)xv));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-#if defined(PETSC_USE_DEBUG)
+#if PetscDefined(USE_DEBUG)
 PETSC_EXTERN PetscErrorCode  VecLockReadPush(Vec);
 PETSC_EXTERN PetscErrorCode  VecLockReadPop(Vec);
 PETSC_EXTERN PetscErrorCode  VecLockWriteSet(Vec, PetscBool);
@@ -652,32 +656,52 @@ static inline PetscErrorCode VecSetErrorIfLocked(Vec x, PetscInt arg)
 
     PetscCall(VecLockGetLocation(x, &file, &func, &line));
     PetscCall(PetscObjectGetName((PetscObject)x, &name));
-    SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Vector '%s' (argument #%" PetscInt_FMT ") was locked for %s access in %s() at %s:%d (line numbers only accurate to function begin)", name, arg, state > 0 ? "read-only" : "write-only", func ? func : "unknown_function", file ? file : "unknown file", line ? line : 0);
+    SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Vector '%s' (argument #%" PetscInt_FMT ") was locked for %s access in %s() at %s:%d (line numbers only accurate to function begin)", name, arg, state > 0 ? "read-only" : "write-only", func ? func : "unknown_function", file ? file : "unknown file", line);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* The three are deprecated */
-PETSC_EXTERN PETSC_DEPRECATED_FUNCTION("Use VecLockReadPush() (since version 3.11)") PetscErrorCode VecLockPush(Vec);
-PETSC_EXTERN PETSC_DEPRECATED_FUNCTION("Use VecLockReadPop() (since version 3.11)") PetscErrorCode VecLockPop(Vec);
-  #define VecLocked(x, arg) VecSetErrorIfLocked(x, arg) PETSC_DEPRECATED_MACRO("GCC warning \"Use VecSetErrorIfLocked() (since version 3.11)\"")
+PETSC_EXTERN PETSC_DEPRECATED_FUNCTION(3, 11, 0, "VecLockReadPush()", ) PetscErrorCode VecLockPush(Vec);
+PETSC_EXTERN PETSC_DEPRECATED_FUNCTION(3, 11, 0, "VecLockReadPop()", ) PetscErrorCode VecLockPop(Vec);
+  #define VecLocked(x, arg) VecSetErrorIfLocked(x, arg) PETSC_DEPRECATED_MACRO(3, 11, 0, "VecSetErrorIfLocked()", )
 #else
-  #define VecLockReadPush(x)          0
-  #define VecLockReadPop(x)           0
-  #define VecLockGet(x, s)            *(s) = 0
-  #define VecSetErrorIfLocked(x, arg) 0
-  #define VecLockWriteSet(x, flg)     0
+  #define VecLockReadPush(x)          PETSC_SUCCESS
+  #define VecLockReadPop(x)           PETSC_SUCCESS
+  #define VecLockGet(x, s)            (*(s) = 0, PETSC_SUCCESS)
+  #define VecSetErrorIfLocked(x, arg) PETSC_SUCCESS
+  #define VecLockWriteSet(x, flg)     PETSC_SUCCESS
   /* The three are deprecated */
-  #define VecLockPush(x)              0
-  #define VecLockPop(x)               0
-  #define VecLocked(x, arg)           0
+  #define VecLockPush(x)              PETSC_SUCCESS
+  #define VecLockPop(x)               PETSC_SUCCESS
+  #define VecLocked(x, arg)           PETSC_SUCCESS
 #endif
 
-/*
-    These numbers need to match the entries in
-  the function table in vecimpl.h
-*/
+/*E
+  VecOperation - Enumeration of overide-able methods in the `Vec` implementation function-table.
+
+  Values:
++ `VECOP_DUPLICATE`  - `VecDuplicate()`
+. `VECOP_SET`        - `VecSet()`
+. `VECOP_VIEW`       - `VecView()`
+. `VECOP_LOAD`       - `VecLoad()`
+. `VECOP_VIEWNATIVE` - `VecViewNative()`
+- `VECOP_LOADNATIVE` - `VecLoadNative()`
+
+  Level: advanced
+
+  Notes:
+  Some operations may serve as the implementation for other routines not listed above. For
+  example `VECOP_SET` can be used to simultaneously overriding the implementation used in
+  `VecSet()`, `VecSetInf()`, and `VecZeroEntries()`.
+
+  Entries to `VecOperation` are added as needed so if you do not see the operation listed which
+  you'd like to replace, please send mail to `petsc-maint@mcs.anl.gov`!
+
+.seealso: [](ch_vectors), `Vec`, `VecSetOperation()`
+E*/
 typedef enum {
   VECOP_DUPLICATE  = 0,
+  VECOP_SET        = 10,
   VECOP_VIEW       = 33,
   VECOP_LOAD       = 41,
   VECOP_VIEWNATIVE = 68,
@@ -728,16 +752,16 @@ PETSC_EXTERN PetscErrorCode PetscViewerMathematicaGetVector(PetscViewer, Vec);
 PETSC_EXTERN PetscErrorCode PetscViewerMathematicaPutVector(PetscViewer, Vec);
 
 /*S
-     Vecs - Collection of vectors where the data for the vectors is stored in
-            one contiguous memory
+   Vecs - Collection of vectors where the data for the vectors is stored in
+          one contiguous memory
 
    Level: advanced
 
    Notes:
-    Temporary construct for handling multiply right hand side solves
+   Temporary construct for handling multiply right hand side solves
 
-    This is faked by storing a single vector that has enough array space for
-    n vectors
+   This is faked by storing a single vector that has enough array space for
+   n vectors
 
 S*/
 struct _n_Vecs {
@@ -750,36 +774,18 @@ PETSC_EXTERN PetscErrorCode VecsCreateSeq(MPI_Comm, PetscInt, PetscInt, Vecs *);
 PETSC_EXTERN PetscErrorCode VecsCreateSeqWithArray(MPI_Comm, PetscInt, PetscInt, PetscScalar *, Vecs *);
 PETSC_EXTERN PetscErrorCode VecsDuplicate(Vecs, Vecs *);
 
-#if defined(PETSC_HAVE_VIENNACL)
+#if PetscDefined(HAVE_VIENNACL)
 typedef struct _p_PetscViennaCLIndices *PetscViennaCLIndices;
-PETSC_EXTERN PetscErrorCode             PetscViennaCLIndicesCreate(PetscInt, PetscInt *, PetscInt, PetscInt *, PetscViennaCLIndices *);
-PETSC_EXTERN PetscErrorCode             PetscViennaCLIndicesDestroy(PetscViennaCLIndices *);
 PETSC_EXTERN PetscErrorCode             VecViennaCLCopyToGPUSome_Public(Vec, PetscViennaCLIndices);
 PETSC_EXTERN PetscErrorCode             VecViennaCLCopyFromGPUSome_Public(Vec, PetscViennaCLIndices);
 PETSC_EXTERN PetscErrorCode             VecCreateSeqViennaCL(MPI_Comm, PetscInt, Vec *);
 PETSC_EXTERN PetscErrorCode             VecCreateMPIViennaCL(MPI_Comm, PetscInt, PetscInt, Vec *);
 #endif
-#if defined(PETSC_HAVE_CUDA) || defined(PETSC_HAVE_HIP)
+#if PetscDefined(HAVE_CUDA) || PetscDefined(HAVE_HIP)
 PETSC_EXTERN PetscErrorCode VecScatterInitializeForGPU(VecScatter, Vec);
 PETSC_EXTERN PetscErrorCode VecScatterFinalizeForGPU(VecScatter);
 #endif
-#if defined(PETSC_HAVE_CUDA)
-PETSC_EXTERN PetscErrorCode VecCreateSeqCUDA(MPI_Comm, PetscInt, Vec *);
-PETSC_EXTERN PetscErrorCode VecCreateSeqCUDAWithArray(MPI_Comm, PetscInt, PetscInt, const PetscScalar *, Vec *);
-PETSC_EXTERN PetscErrorCode VecCreateSeqCUDAWithArrays(MPI_Comm, PetscInt, PetscInt, const PetscScalar *, const PetscScalar *, Vec *);
-PETSC_EXTERN PetscErrorCode VecCreateMPICUDA(MPI_Comm, PetscInt, PetscInt, Vec *);
-PETSC_EXTERN PetscErrorCode VecCreateMPICUDAWithArray(MPI_Comm, PetscInt, PetscInt, PetscInt, const PetscScalar *, Vec *);
-PETSC_EXTERN PetscErrorCode VecCreateMPICUDAWithArrays(MPI_Comm, PetscInt, PetscInt, PetscInt, const PetscScalar *, const PetscScalar *, Vec *);
-#endif
-#if defined(PETSC_HAVE_HIP)
-PETSC_EXTERN PetscErrorCode VecCreateSeqHIP(MPI_Comm, PetscInt, Vec *);
-PETSC_EXTERN PetscErrorCode VecCreateSeqHIPWithArray(MPI_Comm, PetscInt, PetscInt, const PetscScalar *, Vec *);
-PETSC_EXTERN PetscErrorCode VecCreateSeqHIPWithArrays(MPI_Comm, PetscInt, PetscInt, const PetscScalar *, const PetscScalar *, Vec *);
-PETSC_EXTERN PetscErrorCode VecCreateMPIHIP(MPI_Comm, PetscInt, PetscInt, Vec *);
-PETSC_EXTERN PetscErrorCode VecCreateMPIHIPWithArray(MPI_Comm, PetscInt, PetscInt, PetscInt, const PetscScalar *, Vec *);
-PETSC_EXTERN PetscErrorCode VecCreateMPIHIPWithArrays(MPI_Comm, PetscInt, PetscInt, PetscInt, const PetscScalar *, const PetscScalar *, Vec *);
-#endif
-#if defined(PETSC_HAVE_KOKKOS_KERNELS)
+#if PetscDefined(HAVE_KOKKOS_KERNELS)
 PETSC_EXTERN PetscErrorCode VecCreateSeqKokkos(MPI_Comm, PetscInt, Vec *);
 PETSC_EXTERN PetscErrorCode VecCreateSeqKokkosWithArray(MPI_Comm, PetscInt, PetscInt, const PetscScalar *, Vec *);
 PETSC_EXTERN PetscErrorCode VecCreateMPIKokkos(MPI_Comm, PetscInt, PetscInt, Vec *);
@@ -794,14 +800,18 @@ PETSC_EXTERN PetscErrorCode VecCreateNest(MPI_Comm, PetscInt, IS *, Vec *, Vec *
 PETSC_EXTERN PetscErrorCode VecNestGetSize(Vec, PetscInt *);
 
 PETSC_EXTERN PetscErrorCode PetscOptionsGetVec(PetscOptions, const char[], const char[], Vec, PetscBool *);
-PETSC_EXTERN PetscErrorCode VecChop(Vec, PetscReal);
+PETSC_EXTERN PetscErrorCode VecFilter(Vec, PetscReal);
+PETSC_DEPRECATED_FUNCTION(3, 20, 0, "VecFilter()", ) static inline PetscErrorCode VecChop(Vec v, PetscReal tol)
+{
+  return VecFilter(v, tol);
+}
 
 PETSC_EXTERN PetscErrorCode VecGetLayout(Vec, PetscLayout *);
 PETSC_EXTERN PetscErrorCode VecSetLayout(Vec, PetscLayout);
 
 PETSC_EXTERN PetscErrorCode PetscSectionVecView(PetscSection, Vec, PetscViewer);
 PETSC_EXTERN PetscErrorCode VecGetValuesSection(Vec, PetscSection, PetscInt, PetscScalar **);
-PETSC_EXTERN PetscErrorCode VecSetValuesSection(Vec, PetscSection, PetscInt, PetscScalar[], InsertMode);
+PETSC_EXTERN PetscErrorCode VecSetValuesSection(Vec, PetscSection, PetscInt, const PetscScalar[], InsertMode);
 PETSC_EXTERN PetscErrorCode PetscSectionVecNorm(PetscSection, PetscSection, Vec, NormType, PetscReal[]);
 
 /*S
@@ -809,11 +819,19 @@ PETSC_EXTERN PetscErrorCode PetscSectionVecNorm(PetscSection, PetscSection, Vec,
               motivating application is the selection of cells for refinement or coarsening based on vector containing
               the values in an error indicator metric.
 
+  Values:
++  `VECTAGGERABSOLUTE` - "absolute" values are in a interval (box for complex values) of explicitly defined values
+.  `VECTAGGERRELATIVE` - "relative" values are in a interval (box for complex values) of values relative to the set of all values in the vector
+.  `VECTAGGERCDF`      - "cdf" values are in a relative range of the *cumulative distribution* of values in the vector
+.  `VECTAGGEROR`       - "or" values are in the union of other tags
+-  `VECTAGGERAND`      - "and" values are in the intersection of other tags
+
   Level: advanced
 
   Developer Note:
   Why not use a `DMLabel` or similar object
 
+.seealso: [](ch_vectors), `Vec`, `VecTaggerType`, `VecTaggerCreate()`
 S*/
 typedef struct _p_VecTagger *VecTagger;
 
@@ -821,22 +839,20 @@ typedef struct _p_VecTagger *VecTagger;
   VecTaggerType - String with the name of a `VecTagger` type
 
   Level: advanced
+
+.seealso: [](ch_vectors), `Vec`, `VecTagger`, `VecTaggerCreate()`
 J*/
 typedef const char *VecTaggerType;
-/* tag where the vector values are in a box of explicitly defined values */
 #define VECTAGGERABSOLUTE "absolute"
-/* tag where the vector values are in a box of values relative to the set of all values in the vector */
 #define VECTAGGERRELATIVE "relative"
-/* tag where the vector values are in a relative range of the *cumulative distribution* of values in the vector */
-#define VECTAGGERCDF "cdf"
-/* tag a vector as the union of other tags */
-#define VECTAGGEROR "or"
-/* tag a vector as the intersection of other tags */
-#define VECTAGGERAND "and"
+#define VECTAGGERCDF      "cdf"
+#define VECTAGGEROR       "or"
+#define VECTAGGERAND      "and"
 
 PETSC_EXTERN PetscClassId      VEC_TAGGER_CLASSID;
 PETSC_EXTERN PetscFunctionList VecTaggerList;
 PETSC_EXTERN PetscErrorCode    VecTaggerRegister(const char[], PetscErrorCode (*)(VecTagger));
+PETSC_EXTERN PetscErrorCode    VecTaggerRegisterAll(void);
 
 PETSC_EXTERN PetscErrorCode VecTaggerCreate(MPI_Comm, VecTagger *);
 PETSC_EXTERN PetscErrorCode VecTaggerSetBlockSize(VecTagger, PetscInt);
@@ -852,12 +868,12 @@ PETSC_EXTERN PetscErrorCode VecTaggerComputeIS(VecTagger, Vec, IS *, PetscBool *
 PETSC_EXTERN PetscErrorCode VecTaggerDestroy(VecTagger *);
 
 /*S
-   VecTaggerBox - A box range used to tag values.  For real scalars, this is just a closed interval; for complex scalars, the box is the closed region in the complex plane
-   such that real(min) <= real(z) <= real(max) and imag(min) <= imag(z) <= imag(max).  INF is an acceptable endpoint.
+   VecTaggerBox - A interval (box for complex numbers) range used to tag values.  For real scalars, this is just a closed interval; for complex scalars,
+   the box is the closed region in the complex plane such that real(min) <= real(z) <= real(max) and imag(min) <= imag(z) <= imag(max).  `INF` is an acceptable endpoint.
 
    Level: beginner
 
-.seealso: `VecTaggerComputeIntervals()`
+.seealso: [](ch_vectors), `Vec`, `VecTagger`, `VecTaggerType`, `VecTaggerCreate()`, `VecTaggerComputeIntervals()`
 S*/
 typedef struct {
   PetscScalar min;
@@ -876,11 +892,17 @@ PETSC_EXTERN PetscErrorCode VecTaggerCDFGetBox(VecTagger, const VecTaggerBox **)
 
 /*E
   VecTaggerCDFMethod - Determines what method is used to compute absolute values from cumulative distribution values (e.g., what value is the preimage of .95 in the cdf).
-  Relevant only in parallel: in serial it is directly computed.
+
+   Values:
++  `VECTAGGER_CDF_GATHER`    - gather results to MPI rank 0, perform the computation and broadcast the result
+-  `VECTAGGER_CDF_ITERATIVE` - compute the results on all ranks iteratively using `MPI_Allreduce()`
 
   Level: advanced
 
-.seealso: `VecTaggerCDFSetMethod()`, `VecTaggerCDFMethods`
+  Note:
+  Relevant only in parallel: in serial it is directly computed.
+
+.seealso: [](ch_vectors), `Vec`, `VecTagger`, `VecTaggerType`, `VecTaggerCreate()`, `VecTaggerCDFSetMethod()`, `VecTaggerCDFMethods`
 E*/
 typedef enum {
   VECTAGGER_CDF_GATHER,
@@ -907,7 +929,79 @@ PETSC_EXTERN PetscErrorCode VecTaggerFinalizePackage(void);
 /* This is an internal debug-only routine that should not be used by users */
 PETSC_SINGLE_LIBRARY_INTERN PetscErrorCode VecValidValues_Internal(Vec, PetscInt, PetscBool);
 #else
-  #define VecValidValues_Internal(...) 0
+  #define VecValidValues_Internal(...) PETSC_SUCCESS
 #endif /* PETSC_USE_DEBUG */
 
-#endif
+#define VEC_CUPM_NOT_CONFIGURED(impl) SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP_SYS, "Must configure PETSc with " PetscStringize(impl) " support to use %s", PETSC_FUNCTION_NAME)
+
+#if PetscDefined(HAVE_CUDA)
+  #define VEC_CUDA_DECL_OR_STUB(__decl__, ...) PETSC_EXTERN __decl__;
+#else
+  #define VEC_CUDA_DECL_OR_STUB(__decl__, ...) \
+    static inline __decl__ \
+    { \
+      __VA_ARGS__; \
+      VEC_CUPM_NOT_CONFIGURED(cuda); \
+    }
+#endif /* PETSC_HAVE_CUDA */
+
+/* extra underscore here to make it line up with the cuda versions */
+#if PetscDefined(HAVE_HIP)
+  #define VEC_HIP__DECL_OR_STUB(__decl__, ...) PETSC_EXTERN __decl__;
+#else
+  #define VEC_HIP__DECL_OR_STUB(__decl__, ...) \
+    static inline __decl__ \
+    { \
+      __VA_ARGS__; \
+      VEC_CUPM_NOT_CONFIGURED(hip); \
+    }
+#endif /* PETSC_HAVE_HIP */
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCreateSeqCUDA(MPI_Comm a, PetscInt b, Vec *c), (void)a, (void)b, (void)c)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecCreateSeqHIP(MPI_Comm a, PetscInt b, Vec *c), (void)a, (void)b, (void)c)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCreateSeqCUDAWithArray(MPI_Comm a, PetscInt b, PetscInt c, const PetscScalar *d, Vec *e), (void)a, (void)b, (void)c, (void)d, (void)e)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecCreateSeqHIPWithArray(MPI_Comm a, PetscInt b, PetscInt c, const PetscScalar *d, Vec *e), (void)a, (void)b, (void)c, (void)d, (void)e)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCreateSeqCUDAWithArrays(MPI_Comm a, PetscInt b, PetscInt c, const PetscScalar *d, const PetscScalar *e, Vec *f), (void)a, (void)b, (void)c, (void)d, (void)e, (void)f)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecCreateSeqHIPWithArrays(MPI_Comm a, PetscInt b, PetscInt c, const PetscScalar *d, const PetscScalar *e, Vec *f), (void)a, (void)b, (void)c, (void)d, (void)e, (void)f)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCreateMPICUDA(MPI_Comm a, PetscInt b, PetscInt c, Vec *d), (void)a, (void)b, (void)c, (void)d)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecCreateMPIHIP(MPI_Comm a, PetscInt b, PetscInt c, Vec *d), (void)a, (void)b, (void)c, (void)d)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCreateMPICUDAWithArray(MPI_Comm a, PetscInt b, PetscInt c, PetscInt d, const PetscScalar *e, Vec *f), (void)a, (void)b, (void)c, (void)d, (void)e, (void)f)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecCreateMPIHIPWithArray(MPI_Comm a, PetscInt b, PetscInt c, PetscInt d, const PetscScalar *e, Vec *f), (void)a, (void)b, (void)c, (void)d, (void)e, (void)f)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCreateMPICUDAWithArrays(MPI_Comm a, PetscInt b, PetscInt c, PetscInt d, const PetscScalar *e, const PetscScalar *f, Vec *g), (void)a, (void)b, (void)c, (void)d, (void)e, (void)f, (void)g)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecCreateMPIHIPWithArrays(MPI_Comm a, PetscInt b, PetscInt c, PetscInt d, const PetscScalar *e, const PetscScalar *f, Vec *g), (void)a, (void)b, (void)c, (void)d, (void)e, (void)f, (void)g)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCUDAGetArray(Vec a, PetscScalar **b), (void)a, (void)b)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecHIPGetArray(Vec a, PetscScalar **b), (void)a, (void)b)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCUDARestoreArray(Vec a, PetscScalar **b), (void)a, (void)b)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecHIPRestoreArray(Vec a, PetscScalar **b), (void)a, (void)b)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCUDAGetArrayRead(Vec a, const PetscScalar **b), (void)a, (void)b)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecHIPGetArrayRead(Vec a, const PetscScalar **b), (void)a, (void)b)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCUDARestoreArrayRead(Vec a, const PetscScalar **b), (void)a, (void)b)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecHIPRestoreArrayRead(Vec a, const PetscScalar **b), (void)a, (void)b)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCUDAGetArrayWrite(Vec a, PetscScalar **b), (void)a, (void)b)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecHIPGetArrayWrite(Vec a, PetscScalar **b), (void)a, (void)b)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCUDARestoreArrayWrite(Vec a, PetscScalar **b), (void)a, (void)b)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecHIPRestoreArrayWrite(Vec a, PetscScalar **b), (void)a, (void)b)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCUDAPlaceArray(Vec a, const PetscScalar b[]), (void)a, (void)b)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecHIPPlaceArray(Vec a, const PetscScalar b[]), (void)a, (void)b)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCUDAReplaceArray(Vec a, const PetscScalar b[]), (void)a, (void)b)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecHIPReplaceArray(Vec a, const PetscScalar b[]), (void)a, (void)b)
+
+VEC_CUDA_DECL_OR_STUB(PetscErrorCode VecCUDAResetArray(Vec a), (void)a)
+VEC_HIP__DECL_OR_STUB(PetscErrorCode VecHIPResetArray(Vec a), (void)a)
+
+#undef VEC_CUPM_NOT_CONFIGURED
+#undef VEC_CUDA_DECL_OR_STUB
+#undef VEC_HIP__DECL_OR_STUB

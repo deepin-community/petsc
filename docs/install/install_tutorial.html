@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Quick Start Tutorial &#8212; PETSc 3.18.6 documentation</title>
+    <title>Quick Start Tutorial &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -142,31 +143,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -293,31 +293,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -449,19 +448,19 @@ your machine):</p>
 <span class="gp">$ </span>make<span class="w"> </span>all<span class="w"> </span>check
 </pre></div>
 </div>
-<p>Don’t need Fortran? Use <code class="docutils literal notranslate"><span class="pre">--with-fortran-bindings=0</span></code> to reduce the build times. If you
+<p>Don’t need Fortran? Use <code class="docutils notranslate"><span class="pre">--with-fortran-bindings=0</span></code> to reduce the build times. If you
 are not using <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a> that use Fortran (for
 example, <a class="reference external" href="https://mumps-solver.org/">MUMPS</a> requires Fortran) you can use
-<code class="docutils literal notranslate"><span class="pre">--with-fc=0</span></code> for even faster build times.</p>
+<code class="docutils notranslate"><span class="pre">--with-fc=0</span></code> for even faster build times.</p>
 <div class="admonition-encounter-problems admonition">
 <p class="admonition-title">Encounter problems?</p>
 <ol class="arabic">
-<li><p>Read the error message from <code class="docutils literal notranslate"><span class="pre">configure</span></code>!</p></li>
-<li><p>Read help <code class="docutils literal notranslate"><span class="pre">./configure</span> <span class="pre">--help</span></code>.</p></li>
+<li><p>Read the error message from <code class="docutils notranslate"><span class="pre">configure</span></code>!</p></li>
+<li><p>Read help <code class="docutils notranslate"><span class="pre">./configure</span> <span class="pre">--help</span></code>.</p></li>
 <li><p>Refer to <a class="reference internal" href="install.html#doc-config-faq"><span class="std std-ref">configuration faq</span></a> (e.g. build PETSc without a
 Fortran compiler).</p></li>
 <li><dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">make</span></code> problems? Just copy/paste <code class="docutils literal notranslate"><span class="pre">make</span></code> command printed by the <code class="docutils literal notranslate"><span class="pre">configure</span></code></dt><dd><p>footer including any <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR</span></code> and <code class="docutils literal notranslate"><span class="pre">$PETSC_ARCH</span></code> options. It may look
+<dt><code class="docutils notranslate"><span class="pre">make</span></code> problems? Just copy/paste <code class="docutils notranslate"><span class="pre">make</span></code> command printed by the <code class="docutils notranslate"><span class="pre">configure</span></code></dt><dd><p>footer including any <code class="docutils notranslate"><span class="pre">$PETSC_DIR</span></code> and <code class="docutils notranslate"><span class="pre">$PETSC_ARCH</span></code> options. It may look
 similar to:</p>
 </dd>
 </dl>
@@ -472,7 +471,7 @@ similar to:</p>
 </pre></div>
 </div>
 </li>
-<li><p>Check the <a class="reference internal" href="../community/bugs.html#doc-creepycrawly"><span class="std std-ref">bug-reporting</span></a> section.</p></li>
+<li><p>Check the <a class="reference internal" href="../community/mailing.html#doc-creepycrawly"><span class="std std-ref">bug-reporting</span></a> section.</p></li>
 </ol>
 </div>
 <hr class="docutils" />
@@ -501,7 +500,7 @@ date:</p>
 <li><p>[OPTIONAL] <a class="reference external" href="https://git-scm.com/">git</a></p></li>
 </ul>
 <p>It is important to make sure that your compilers are correctly installed <a class="footnote-reference brackets" href="#id6" id="id3">2</a> (i.e. functional
-and in your <code class="docutils literal notranslate"><span class="pre">$PATH</span></code>). To test the compilers, run the following commands:</p>
+and in your <code class="docutils notranslate"><span class="pre">$PATH</span></code>). To test the compilers, run the following commands:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">printf</span><span class="w"> </span><span class="s1">&#39;#include&lt;stdio.h&gt;\nint main(){printf(&quot;cc OK!\\n&quot;);}&#39;</span><span class="w"> </span>&gt;<span class="w"> </span>t.c<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>cc<span class="w"> </span>t.c<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>./a.out<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>rm<span class="w"> </span>-f<span class="w"> </span>t.c<span class="w"> </span>a.out
 </pre></div>
 </div>
@@ -516,7 +515,7 @@ is always useful to test them on your own.</p>
 </pre></div>
 </div>
 </div>
-<p>If compilers are working, each command should print out <code class="docutils literal notranslate"><span class="pre">&lt;compiler_name&gt;</span> <span class="pre">OK!</span></code> on the command
+<p>If compilers are working, each command should print out <code class="docutils notranslate"><span class="pre">&lt;compiler_name&gt;</span> <span class="pre">OK!</span></code> on the command
 line.</p>
 </section>
 <section id="downloading-source">
@@ -566,7 +565,7 @@ should yield a similar output:</p>
 <section id="configuration">
 <span id="tut-install-config"></span><h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this heading">#</a></h2>
 <p>See <a class="reference internal" href="install.html#doc-config-faq"><span class="std std-ref">install documentation</span></a> for more details.</p>
-<p>Next, PETSc needs to be configured using <code class="docutils literal notranslate"><span class="pre">configure</span></code> for your system with your
+<p>Next, PETSc needs to be configured using <code class="docutils notranslate"><span class="pre">configure</span></code> for your system with your
 specific options. This is the stage where users can specify the exact parameters to
 customize their PETSc installation. Common configuration options are:</p>
 <ul class="simple">
@@ -591,16 +590,16 @@ installation in a similar manner with these options enabled.</p>
 </pre></div>
 </div>
 </div>
-<p>All PETSc options and flags follow the standard CLI formats <code class="docutils literal notranslate"><span class="pre">--option-string=&lt;value&gt;</span></code> or
-<code class="docutils literal notranslate"><span class="pre">--option-string</span></code>, where <code class="docutils literal notranslate"><span class="pre">&lt;value&gt;</span></code> is typically either <code class="docutils literal notranslate"><span class="pre">1</span></code> (for true) or <code class="docutils literal notranslate"><span class="pre">0</span></code> (for
+<p>All PETSc options and flags follow the standard CLI formats <code class="docutils notranslate"><span class="pre">--option-string=&lt;value&gt;</span></code> or
+<code class="docutils notranslate"><span class="pre">--option-string</span></code>, where <code class="docutils notranslate"><span class="pre">&lt;value&gt;</span></code> is typically either <code class="docutils notranslate"><span class="pre">1</span></code> (for true) or <code class="docutils notranslate"><span class="pre">0</span></code> (for
 false) or a directory path. Directory paths must be absolute (i.e. full path from the root
 directory of your machine), but do accept environment variables as input.</p>
-<p>From <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR</span></code> call the following <code class="docutils literal notranslate"><span class="pre">configure</span></code> command to configure PETSc as well
+<p>From <code class="docutils notranslate"><span class="pre">$PETSC_DIR</span></code> call the following <code class="docutils notranslate"><span class="pre">configure</span></code> command to configure PETSc as well
 as download and install <a class="reference external" href="https://www.mpich.org/">MPICH</a> and a <a class="reference external" href="https://www.netlib.org/lapack/lug/node11.html">BLAS/LAPACK</a> <a class="footnote-reference brackets" href="#blas" id="id4">3</a> <a class="reference external" href="https://bitbucket.org/petsc/pkg-fblaslapack/src/master/">reference implementation</a> on your system.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--download-mpich<span class="w"> </span>--download-fblaslapack
 </pre></div>
 </div>
-<p>PETSc will begin configuring and printing its progress. A successful <code class="docutils literal notranslate"><span class="pre">configure</span></code> will
+<p>PETSc will begin configuring and printing its progress. A successful <code class="docutils notranslate"><span class="pre">configure</span></code> will
 have the following general structure as its output:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>===============================================================================
           Configuring PETSc to compile on your system
@@ -665,13 +664,13 @@ xxx=========================================================================xxx
 </section>
 <section id="compilation">
 <span id="tut-install-compile"></span><h2>Compilation<a class="headerlink" href="#compilation" title="Permalink to this heading">#</a></h2>
-<p>After successfully configuring, build the binaries from source using the <code class="docutils literal notranslate"><span class="pre">make</span></code>
+<p>After successfully configuring, build the binaries from source using the <code class="docutils notranslate"><span class="pre">make</span></code>
 command. This stage may take a few minutes, and will consume a great deal of system
 resources as the PETSc is compiled in parallel.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>make<span class="w"> </span>all<span class="w"> </span>check
 </pre></div>
 </div>
-<p>A successful <code class="docutils literal notranslate"><span class="pre">make</span></code> will provide an output of the following structure:</p>
+<p>A successful <code class="docutils notranslate"><span class="pre">make</span></code> will provide an output of the following structure:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>-----------------------------------------
 PETSC_VERSION_RELEASE
 .
@@ -731,7 +730,7 @@ preferred package manager to update them. For example, for macOS see <a class="r
 <dd><p>The <a class="reference external" href="https://www.netlib.org/lapack/lug/node11.html">BLAS/LAPACK</a> package
 installed as part of this tutorial is a <a class="reference external" href="https://bitbucket.org/petsc/pkg-fblaslapack/src/master/">reference implementation</a> and a suitable starting
 point to get PETSc running, but is generally not as performant as more optimized
-libraries. See the <a class="reference internal" href="../docs/manual/blas-lapack.html#ch-blas-lapack-avail-libs"><span class="std std-ref">libaray guide</span></a> for further
+libraries. See the <a class="reference internal" href="../manual/blas-lapack.html#ch-blas-lapack-avail-libs"><span class="std std-ref">libaray guide</span></a> for further
 details.</p>
 </dd>
 </dl>
@@ -863,7 +862,7 @@ details.</p>
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -879,7 +878,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

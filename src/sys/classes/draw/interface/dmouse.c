@@ -1,29 +1,25 @@
-
-/*
-       Provides the calling sequences for all the basic PetscDraw routines.
-*/
 #include <petsc/private/drawimpl.h> /*I "petscdraw.h" I*/
 
 /*@
-    PetscDrawGetMouseButton - Returns location of mouse and which button was
-    pressed. Waits for button to be pressed.
+  PetscDrawGetMouseButton - Returns location of mouse and which button was
+  pressed. Waits for button to be pressed.
 
-    Collective
+  Collective
 
-    Input Parameter:
-.   draw - the window to be used
+  Input Parameter:
+. draw - the window to be used
 
-    Output Parameters:
-+   button - one of `PETSC_BUTTON_LEFT`, `PETSC_BUTTON_CENTER`, `PETSC_BUTTON_RIGHT`, `PETSC_BUTTON_WHEEL_UP`, `PETSC_BUTTON_WHEEL_DOWN`
-.   x_user - horizontal user coordinate of location (user may pass in NULL).
-.   y_user - vertical user coordinate of location (user may pass in NULL).
-.   x_phys - horizontal window coordinate (user may pass in NULL).
--   y_phys - vertical window coordinate (user may pass in NULL).
+  Output Parameters:
++ button - one of `PETSC_BUTTON_LEFT`, `PETSC_BUTTON_CENTER`, `PETSC_BUTTON_RIGHT`, `PETSC_BUTTON_WHEEL_UP`, `PETSC_BUTTON_WHEEL_DOWN`
+. x_user - horizontal user coordinate of location (user may pass in NULL).
+. y_user - vertical user coordinate of location (user may pass in NULL).
+. x_phys - horizontal window coordinate (user may pass in NULL).
+- y_phys - vertical window coordinate (user may pass in NULL).
 
-    Note:
-    Only processor 0 actually waits for the button to be pressed.
+  Note:
+  Only processor 0 actually waits for the button to be pressed.
 
-    Level: intermediate
+  Level: intermediate
 
 .seealso: `PetscDraw`, `PetscDrawButton`
 @*/
@@ -33,9 +29,9 @@ PetscErrorCode PetscDrawGetMouseButton(PetscDraw draw, PetscDrawButton *button, 
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
-  PetscValidPointer(button, 2);
+  PetscAssertPointer(button, 2);
   *button = PETSC_BUTTON_NONE;
-  if (!draw->ops->getmousebutton) PetscFunctionReturn(0);
+  if (!draw->ops->getmousebutton) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscUseTypeMethod(draw, getmousebutton, button, x_user, y_user, x_phys, y_phys);
 
@@ -49,5 +45,5 @@ PetscErrorCode PetscDrawGetMouseButton(PetscDraw draw, PetscDrawButton *button, 
   if (y_user) *y_user = bcast[1];
   if (x_phys) *x_phys = bcast[2];
   if (y_phys) *y_phys = bcast[3];
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

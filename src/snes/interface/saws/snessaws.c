@@ -6,19 +6,19 @@ typedef struct {
 } SNESMonitor_SAWs;
 
 /*@C
-   SNESMonitorSAWsCreate - create an SAWs monitor context for `SNES`
+  SNESMonitorSAWsCreate - create an SAWs monitor context for `SNES`
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  snes - `SNES` to monitor
+  Input Parameter:
+. snes - `SNES` to monitor
 
-   Output Parameter:
-.  ctx - context for monitor
+  Output Parameter:
+. ctx - context for monitor
 
-   Level: developer
+  Level: developer
 
-.seealso: `SNESSetMonitor()`, `SNES`, `SNESMonitorSAWs()`, `SNESMonitorSAWsDestroy()`
+.seealso: [](ch_snes), `SNESMonitorSet()`, `SNES`, `SNESMonitorSAWs()`, `SNESMonitorSAWsDestroy()`
 @*/
 PetscErrorCode SNESMonitorSAWsCreate(SNES snes, void **ctx)
 {
@@ -29,42 +29,42 @@ PetscErrorCode SNESMonitorSAWsCreate(SNES snes, void **ctx)
   mon->viewer = PETSC_VIEWER_SAWS_(PetscObjectComm((PetscObject)snes));
   PetscCheck(mon->viewer, PetscObjectComm((PetscObject)snes), PETSC_ERR_PLIB, "Cannot create SAWs default viewer");
   *ctx = (void *)mon;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   SNESMonitorSAWsDestroy - destroy a monitor context created with `SNESMonitorSAWsCreate()`
+  SNESMonitorSAWsDestroy - destroy a monitor context created with `SNESMonitorSAWsCreate()`
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  ctx - monitor context
+  Input Parameter:
+. ctx - monitor context
 
-   Level: developer
+  Level: developer
 
-.seealso: `SNESMonitorSAWsCreate()`
+.seealso: [](ch_snes), `SNESMonitorSAWsCreate()`
 @*/
 PetscErrorCode SNESMonitorSAWsDestroy(void **ctx)
 {
   PetscFunctionBegin;
   PetscCall(PetscFree(*ctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   SNESMonitorSAWs - monitor solution process of `SNES` using SAWs
+  SNESMonitorSAWs - monitor solution process of `SNES` using SAWs
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  snes   - iterative context
-.  n     - iteration number
-.  rnorm - 2-norm (preconditioned) residual value (may be estimated).
--  ctx -  `PetscViewer` of type `PETSCVIEWERSAWS`
+  Input Parameters:
++ snes  - iterative context
+. n     - iteration number
+. rnorm - 2-norm (preconditioned) residual value (may be estimated).
+- ctx   - `PetscViewer` of type `PETSCVIEWERSAWS`
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `PetscViewerSAWsOpen()`, `SNESMonitorSAWsDestroy()`, `SNESMonitorSAWsCreate()`
+.seealso: [](ch_snes), `PetscViewerSAWsOpen()`, `SNESMonitorSAWsDestroy()`, `SNESMonitorSAWsCreate()`
 @*/
 PetscErrorCode SNESMonitorSAWs(SNES snes, PetscInt n, PetscReal rnorm, void *ctx)
 {
@@ -79,5 +79,5 @@ PetscErrorCode SNESMonitorSAWs(SNES snes, PetscInt n, PetscReal rnorm, void *ctx
     PetscCallSAWs(SAWs_Register, ("/PETSc/snes_monitor_saws/rnorm", &snes->norm, 1, SAWs_READ, SAWs_DOUBLE));
     PetscCall(PetscSAWsBlock());
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

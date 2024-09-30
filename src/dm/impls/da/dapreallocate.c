@@ -6,7 +6,7 @@
   DMDASetPreallocationCenterDimension - Determine the topology used to determine adjacency
 
   Input Parameters:
-+ dm - The `DMDA` object
++ dm                - The `DMDA` object
 - preallocCenterDim - The dimension of points which connect adjacent entries
 
   Level: developer
@@ -18,7 +18,7 @@
      FVM++: Two points p and q are adjacent if q \in star(closure(p)), preallocCenterDim = 0
 .ve
 
-.seealso: `DM`, `DMDA`, `DMCreateMatrix()`, `DMDAPreallocateOperator()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMCreateMatrix()`, `DMDAPreallocateOperator()`
 @*/
 PetscErrorCode DMDASetPreallocationCenterDimension(DM dm, PetscInt preallocCenterDim)
 {
@@ -27,7 +27,7 @@ PetscErrorCode DMDASetPreallocationCenterDimension(DM dm, PetscInt preallocCente
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMDA);
   mesh->preallocCenterDim = preallocCenterDim;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -48,7 +48,7 @@ PetscErrorCode DMDASetPreallocationCenterDimension(DM dm, PetscInt preallocCente
      FVM++: Two points p and q are adjacent if q \in star(closure(p)), preallocCenterDim = 0
 .ve
 
-.seealso: `DM`, `DMDA`, `DMCreateMatrix()`, `DMDAPreallocateOperator()`, `DMDASetPreallocationCenterDimension()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMCreateMatrix()`, `DMDAPreallocateOperator()`, `DMDASetPreallocationCenterDimension()`
 @*/
 PetscErrorCode DMDAGetPreallocationCenterDimension(DM dm, PetscInt *preallocCenterDim)
 {
@@ -56,7 +56,7 @@ PetscErrorCode DMDAGetPreallocationCenterDimension(DM dm, PetscInt *preallocCent
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMDA);
-  PetscValidIntPointer(preallocCenterDim, 2);
+  PetscAssertPointer(preallocCenterDim, 2);
   *preallocCenterDim = mesh->preallocCenterDim;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

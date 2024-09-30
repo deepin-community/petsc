@@ -1,38 +1,38 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/impls/baij/seq/dgedi.c">Actual source code: dgedi.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/mat/impls/baij/seq/dgedi.c">Actual source code: dgedi.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:47:46+00:00">
+<meta name="date" content="2024-03-29T14:12:49+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
 <pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">              This file creating by running f2c</font>
+<a name="line3">  3: </a><font color="#B22222">            linpack. this version dated 08/14/78</font>
+<a name="line4">  4: </a><font color="#B22222">      cleve moler, university of new mexico, argonne national lab.</font>
 
-<a name="line2">  2: </a><font color="#B22222">/*</font>
-<a name="line3">  3: </a><font color="#B22222">              This file creating by running f2c</font>
-<a name="line4">  4: </a><font color="#B22222">            linpack. this version dated 08/14/78</font>
-<a name="line5">  5: </a><font color="#B22222">      cleve moler, university of new mexico, argonne national lab.</font>
+<a name="line6">  6: </a><font color="#B22222">      Computes the inverse of a matrix given its factors and pivots</font>
+<a name="line7">  7: </a><font color="#B22222">    calculated by PetscLINPACKgefa(). Performed in-place for an n by n</font>
+<a name="line8">  8: </a><font color="#B22222">    dense matrix.</font>
 
-<a name="line7">  7: </a><font color="#B22222">      Computes the inverse of a matrix given its factors and pivots</font>
-<a name="line8">  8: </a><font color="#B22222">    calculated by PetscLINPACKgefa(). Performed in-place for an n by n</font>
-<a name="line9">  9: </a><font color="#B22222">    dense matrix.</font>
+<a name="line10"> 10: </a><font color="#B22222">       Used by the sparse factorization routines in</font>
+<a name="line11"> 11: </a><font color="#B22222">     src/mat/impls/baij/seq</font>
 
-<a name="line11"> 11: </a><font color="#B22222">       Used by the sparse factorization routines in</font>
-<a name="line12"> 12: </a><font color="#B22222">     src/mat/impls/baij/seq</font>
+<a name="line13"> 13: </a><font color="#B22222">*/</font>
 
-<a name="line14"> 14: </a><font color="#B22222">*/</font>
+<a name="line15"> 15: </a>#include <A href="../../../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+<a name="line16"> 16: </a>#include <A href="../../../../../include/petsc/private/kernels/blockinvert.h.html">&lt;petsc/private/kernels/blockinvert.h&gt;</A>
 
-<a name="line16"> 16: </a>#include <A href="../../../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
-<a name="line17"> 17: </a>#include <A href="../../../../../include/petsc/private/kernels/blockinvert.h.html">&lt;petsc/private/kernels/blockinvert.h&gt;</A>
+<a name="line18"> 18: </a><strong><font color="#4169E1"><a name="PetscLINPACKgedi"></a>PETSC_INTERN <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLINPACKgedi(MatScalar *a, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *ipvt, MatScalar *work)</font></strong>
+<a name="line19"> 19: </a>{
+<a name="line20"> 20: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>   i__2, kb, kp1, nm1, i, j, k, l, ll, kn, knp1, jn1;
+<a name="line21"> 21: </a>  MatScalar *aa, *ax, *ay, tmp;
+<a name="line22"> 22: </a>  MatScalar  t;
 
-<a name="line19"> 19: </a><strong><font color="#4169E1"><a name="PetscLINPACKgedi"></a>PETSC_INTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLINPACKgedi(MatScalar *a, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *ipvt, MatScalar *work)</font></strong>
-<a name="line20"> 20: </a>{
-<a name="line21"> 21: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   i__2, kb, kp1, nm1, i, j, k, l, ll, kn, knp1, jn1;
-<a name="line22"> 22: </a>  MatScalar *aa, *ax, *ay, tmp;
-<a name="line23"> 23: </a>  MatScalar  t;
-
+<a name="line24"> 24: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
 <a name="line25"> 25: </a>  --work;
 <a name="line26"> 26: </a>  --ipvt;
 <a name="line27"> 27: </a>  a -= n + 1;
@@ -62,7 +62,7 @@
 <a name="line51"> 51: </a>  <font color="#B22222">/*    form inverse(u)*inverse(l) */</font>
 
 <a name="line53"> 53: </a>  nm1 = n - 1;
-<a name="line54"> 54: </a>  <font color="#4169E1">if</font> (nm1 &lt; 1) <font color="#4169E1">return</font> 0;
+<a name="line54"> 54: </a>  <font color="#4169E1">if</font> (nm1 &lt; 1) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line55"> 55: </a>  <font color="#4169E1">for</font> (kb = 1; kb &lt;= nm1; ++kb) {
 <a name="line56"> 56: </a>    k   = n - kb;
 <a name="line57"> 57: </a>    kn  = k * n;
@@ -89,7 +89,7 @@
 <a name="line78"> 78: </a>      }
 <a name="line79"> 79: </a>    }
 <a name="line80"> 80: </a>  }
-<a name="line81"> 81: </a>  <font color="#4169E1">return</font> 0;
+<a name="line81"> 81: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line82"> 82: </a>}
 </pre>
 </body>

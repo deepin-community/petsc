@@ -1,4 +1,3 @@
-
 !
 !  Include file for Fortran use of the DM package in PETSc
 !
@@ -11,6 +10,7 @@
 
 #define DMType character*(80)
 #define DMBoundaryType               PetscEnum
+#define DMBlockingType               PetscEnum
 #define DMPointLocationType          PetscEnum
 #define DMAdaptationType             PetscEnum
 #define DMAdaptFlag                  PetscEnum

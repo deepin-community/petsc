@@ -1,4 +1,3 @@
-
 /*
    Provides an interface to the ML smoothed Aggregation
    Note: Something non-obvious breaks -pc_mg_type ADDITIVE for parallel runs
@@ -102,7 +101,7 @@ static PetscErrorCode PetscML_comm(double p[], void *ML_data)
 
   PetscFunctionBegin;
   PetscCallMPI(MPI_Comm_size(PetscObjectComm((PetscObject)A), &size));
-  if (size == 1) PetscFunctionReturn(0);
+  if (size == 1) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(VecPlaceArray(ml->y, p));
   PetscCall(VecScatterBegin(a->Mvctx, ml->y, a->lvec, INSERT_VALUES, SCATTER_FORWARD));
@@ -111,7 +110,16 @@ static PetscErrorCode PetscML_comm(double p[], void *ML_data)
   PetscCall(VecGetArrayRead(a->lvec, &array));
   for (i = in_length; i < out_length; i++) p[i] = array[i - in_length];
   PetscCall(VecRestoreArrayRead(a->lvec, &array));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/*
+  Needed since ML expects an int (*)(double *, void *) but PetscErrorCode may be an
+  enum. Instead of modifying PetscML_comm() it is easier to just wrap it
+*/
+static int ML_PetscML_comm(double p[], void *ML_data)
+{
+  return (int)PetscML_comm(p, ML_data);
 }
 
 static int PetscML_matvec(ML_Operator *ML_data, int in_length, double p[], int out_length, double ap[])
@@ -135,7 +143,7 @@ static int PetscML_matvec(ML_Operator *ML_data, int in_length, double p[], int o
   PetscCall(MatMult(Aloc, ml->x, ml->y));
   PetscCall(VecResetArray(ml->x));
   PetscCall(VecResetArray(ml->y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatMult_ML(Mat A, Vec x, Vec y)
@@ -154,7 +162,7 @@ static PetscErrorCode MatMult_ML(Mat A, Vec x, Vec y)
   PetscStackCallExternalVoid("ML_Operator_Apply", ML_Operator_Apply(shell->mlmat, x_length, (PetscScalar *)xarray, y_length, yarray));
   PetscCall(VecRestoreArrayRead(x, &xarray));
   PetscCall(VecRestoreArray(y, &yarray));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* newtype is ignored since only handles one case */
@@ -223,7 +231,7 @@ static PetscErrorCode MatConvert_MPIAIJ_ML(Mat A, MatType newtype, MatReuse scal
   } else SETERRQ(PetscObjectComm((PetscObject)A), PETSC_ERR_ARG_WRONG, "Invalid MatReuse %d", (int)scall);
   PetscCall(MatSeqAIJRestoreArrayRead(mpimat->A, (const PetscScalar **)&aa));
   PetscCall(MatSeqAIJRestoreArrayRead(mpimat->B, (const PetscScalar **)&ba));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatDestroy_ML(Mat A)
@@ -233,7 +241,7 @@ static PetscErrorCode MatDestroy_ML(Mat A)
   PetscFunctionBegin;
   PetscCall(MatShellGetContext(A, &shell));
   PetscCall(PetscFree(shell));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatWrapML_SeqAIJ(ML_Operator *mlmat, MatReuse reuse, Mat *newmat)
@@ -267,7 +275,7 @@ static PetscErrorCode MatWrapML_SeqAIJ(ML_Operator *mlmat, MatReuse reuse, Mat *
     }
     PetscCall(MatAssemblyBegin(*newmat, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(*newmat, MAT_FINAL_ASSEMBLY));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   nz_max = PetscMax(1, mlmat->max_nz_per_row);
@@ -294,7 +302,7 @@ static PetscErrorCode MatWrapML_SeqAIJ(ML_Operator *mlmat, MatReuse reuse, Mat *
 
   PetscCall(PetscFree2(aa, aj));
   PetscCall(PetscFree(nnz));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatWrapML_SHELL(ML_Operator *mlmat, MatReuse reuse, Mat *newmat)
@@ -310,7 +318,7 @@ static PetscErrorCode MatWrapML_SHELL(ML_Operator *mlmat, MatReuse reuse, Mat *n
   if (reuse) {
     PetscCall(MatShellGetContext(*newmat, &shellctx));
     shellctx->mlmat = mlmat;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   MLcomm = mlmat->comm;
@@ -322,7 +330,7 @@ static PetscErrorCode MatWrapML_SHELL(ML_Operator *mlmat, MatReuse reuse, Mat *n
 
   shellctx->A     = *newmat;
   shellctx->mlmat = mlmat;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatWrapML_MPIAIJ(ML_Operator *mlmat, MatReuse reuse, Mat *newmat)
@@ -383,10 +391,9 @@ static PetscErrorCode MatWrapML_MPIAIJ(ML_Operator *mlmat, MatReuse reuse, Mat *
   *newmat = A;
 
   PetscCall(PetscFree2(aa, aj));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/* -------------------------------------------------------------------------- */
 /*
    PCSetCoordinates_ML
 
@@ -432,12 +439,11 @@ static PetscErrorCode PCSetCoordinates_ML(PC pc, PetscInt ndm, PetscInt a_nloc, 
       for (ii = 0; ii < ndm; ii++) pc_ml->coords[ii * nloc + kk] = coords[bs * kk * ndm + ii];
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/* -----------------------------------------------------------------------------*/
 extern PetscErrorCode PCReset_MG(PC);
-PetscErrorCode        PCReset_ML(PC pc)
+static PetscErrorCode PCReset_ML(PC pc)
 {
   PC_MG   *mg    = (PC_MG *)pc->data;
   PC_ML   *pc_ml = (PC_ML *)mg->innerctx;
@@ -481,9 +487,9 @@ PetscErrorCode        PCReset_ML(PC pc)
   pc_ml->dim  = 0;
   pc_ml->nloc = 0;
   PetscCall(PCReset_MG(pc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-/* -------------------------------------------------------------------------- */
+
 /*
    PCSetUp_ML - Prepares for the use of the ML preconditioner
                     by setting data structures and options.
@@ -500,7 +506,7 @@ PetscErrorCode        PCReset_ML(PC pc)
 extern PetscErrorCode PCSetFromOptions_MG(PC, PetscOptionItems *PetscOptionsObject);
 extern PetscErrorCode PCReset_MG(PC);
 
-PetscErrorCode PCSetUp_ML(PC pc)
+static PetscErrorCode PCSetUp_ML(PC pc)
 {
   PetscMPIInt      size;
   FineGridCtx     *PetscMLdata;
@@ -540,12 +546,13 @@ PetscErrorCode PCSetUp_ML(PC pc)
 
       PetscCall(PetscObjectBaseTypeCompare((PetscObject)A, MATSEQAIJ, &isSeq));
       PetscCall(PetscObjectBaseTypeCompare((PetscObject)A, MATMPIAIJ, &isMPI));
+      PetscCheck(isMPI || isSeq, PetscObjectComm((PetscObject)pc), PETSC_ERR_ARG_WRONG, "Matrix type '%s' cannot be used with ML. ML can only handle AIJ matrices.", ((PetscObject)A)->type_name);
       if (isMPI) {
         PetscCall(MatConvert_MPIAIJ_ML(A, NULL, MAT_INITIAL_MATRIX, &Aloc));
-      } else if (isSeq) {
+      } else {
         Aloc = A;
         PetscCall(PetscObjectReference((PetscObject)Aloc));
-      } else SETERRQ(PetscObjectComm((PetscObject)pc), PETSC_ERR_ARG_WRONG, "Matrix type '%s' cannot be used with ML. ML can only handle AIJ matrices.", ((PetscObject)A)->type_name);
+      }
 
       PetscCall(MatGetSize(Aloc, &m, &nlocal_allcols));
       PetscMLdata = pc_ml->PetscMLdata;
@@ -590,7 +597,7 @@ PetscErrorCode PCSetUp_ML(PC pc)
       PetscCall(KSPSetOperators(gridctx[fine_level].ksp, gridctx[level].A, gridctx[fine_level].A));
 
       PetscCall(PCSetUp_MG(pc));
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     } else {
       /* since ML can change the size of vectors/matrices at any level we must destroy everything */
       PetscCall(PCReset_ML(pc));
@@ -598,17 +605,17 @@ PetscErrorCode PCSetUp_ML(PC pc)
   }
 
   /* setup special features of PCML */
-  /*--------------------------------*/
   /* convert A to Aloc to be used by ML at fine grid */
   pc_ml->size = size;
   PetscCall(PetscObjectBaseTypeCompare((PetscObject)A, MATSEQAIJ, &isSeq));
   PetscCall(PetscObjectBaseTypeCompare((PetscObject)A, MATMPIAIJ, &isMPI));
+  PetscCheck(isMPI || isSeq, PetscObjectComm((PetscObject)pc), PETSC_ERR_ARG_WRONG, "Matrix type '%s' cannot be used with ML. ML can only handle AIJ matrices.", ((PetscObject)A)->type_name);
   if (isMPI) {
     PetscCall(MatConvert_MPIAIJ_ML(A, NULL, MAT_INITIAL_MATRIX, &Aloc));
-  } else if (isSeq) {
+  } else {
     Aloc = A;
     PetscCall(PetscObjectReference((PetscObject)Aloc));
-  } else SETERRQ(PetscObjectComm((PetscObject)pc), PETSC_ERR_ARG_WRONG, "Matrix type '%s' cannot be used with ML. ML can only handle AIJ matrices.", ((PetscObject)A)->type_name);
+  }
 
   /* create and initialize struct 'PetscMLdata' */
   PetscCall(PetscNew(&PetscMLdata));
@@ -649,7 +656,7 @@ PetscErrorCode PCSetUp_ML(PC pc)
   PetscStackCallExternalVoid("ML_Comm_Set_UsrComm", ML_Comm_Set_UsrComm(ml_object->comm, PetscObjectComm((PetscObject)A)));
   pc_ml->ml_object = ml_object;
   PetscStackCallExternalVoid("ML_Init_Amatrix", ML_Init_Amatrix(ml_object, 0, m, m, PetscMLdata));
-  PetscStackCallExternalVoid("ML_Set_Amatrix_Getrow", ML_Set_Amatrix_Getrow(ml_object, 0, PetscML_getrow, PetscML_comm, nlocal_allcols));
+  PetscStackCallExternalVoid("ML_Set_Amatrix_Getrow", ML_Set_Amatrix_Getrow(ml_object, 0, PetscML_getrow, ML_PetscML_comm, nlocal_allcols));
   PetscStackCallExternalVoid("ML_Set_Amatrix_Matvec", ML_Set_Amatrix_Matvec(ml_object, 0, PetscML_matvec));
 
   PetscStackCallExternalVoid("ML_Set_Symmetrize", ML_Set_Symmetrize(ml_object, pc_ml->Symmetrize ? ML_YES : ML_NO));
@@ -686,11 +693,11 @@ PetscErrorCode PCSetUp_ML(PC pc)
         for (j = 0; j < mlocal; j++) nullvec[(i + !!has_const) * mlocal + j] = v[j];
         PetscCall(VecRestoreArrayRead(vecs[i], &v));
       }
-      PetscStackCallExternalVoid("ML_Aggregate_Create", PetscCall(ML_Aggregate_Set_NullSpace(agg_object, bs, nvec + !!has_const, nullvec, mlocal)));
+      PetscStackCallExternalVoid("ML_Aggregate_Create", ML_Aggregate_Set_NullSpace(agg_object, bs, nvec + !!has_const, nullvec, mlocal));
       PetscCall(PetscFree(nullvec));
     } break;
     case PCML_NULLSPACE_BLOCK:
-      PetscStackCallExternalVoid("ML_Aggregate_Set_NullSpace", PetscCall(ML_Aggregate_Set_NullSpace(agg_object, bs, bs, 0, 0)));
+      PetscStackCallExternalVoid("ML_Aggregate_Set_NullSpace", ML_Aggregate_Set_NullSpace(agg_object, bs, bs, 0, 0));
       break;
     case PCML_NULLSPACE_SCALAR:
       break;
@@ -931,10 +938,9 @@ PetscErrorCode PCSetUp_ML(PC pc)
   /* setupcalled is set to 0 so that MG is setup from scratch */
   pc->setupcalled = 0;
   PetscCall(PCSetUp_MG(pc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/* -------------------------------------------------------------------------- */
 /*
    PCDestroy_ML - Destroys the private context for the ML preconditioner
    that was created with PCCreate_ML().
@@ -944,7 +950,7 @@ PetscErrorCode PCSetUp_ML(PC pc)
 
    Application Interface Routine: PCDestroy()
 */
-PetscErrorCode PCDestroy_ML(PC pc)
+static PetscErrorCode PCDestroy_ML(PC pc)
 {
   PC_MG *mg    = (PC_MG *)pc->data;
   PC_ML *pc_ml = (PC_ML *)mg->innerctx;
@@ -954,10 +960,10 @@ PetscErrorCode PCDestroy_ML(PC pc)
   PetscCall(PetscFree(pc_ml));
   PetscCall(PCDestroy_MG(pc));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCSetCoordinates_C", NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCSetFromOptions_ML(PC pc, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode PCSetFromOptions_ML(PC pc, PetscOptionItems *PetscOptionsObject)
 {
   PetscInt    indx, PrintLevel, partindx;
   const char *scheme[] = {"Uncoupled", "Coupled", "MIS", "METIS"};
@@ -1051,7 +1057,7 @@ PetscErrorCode PCSetFromOptions_ML(PC pc, PetscOptionItems *PetscOptionsObject)
     PetscCall(PetscOptionsReal("-pc_ml_AuxThreshold", "Auxiliary smoother drop tol", "None", pc_ml->AuxThreshold, &pc_ml->AuxThreshold, NULL));
   }
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1070,7 +1076,7 @@ PetscErrorCode PCSetFromOptions_ML(PC pc, PetscOptionItems *PetscOptionsObject)
 
    Options Database Keys:
    Multigrid options(inherited):
-+  -pc_mg_cycles <1> - 1 for V cycle, 2 for W-cycle (`MGSetCycles()`)
++  -pc_mg_cycle_type <v> - v for V cycle, w for W-cycle (`PCMGSetCycleType()`)
 .  -pc_mg_distinct_smoothup - Should one configure the up and down smoothers separately (`PCMGSetDistinctSmoothUp()`)
 -  -pc_mg_type <multiplicative> - (one of) additive multiplicative full kascade
 
@@ -1098,7 +1104,7 @@ PetscErrorCode PCSetFromOptions_ML(PC pc, PetscOptionItems *PetscOptionsObject)
    operators are computed by ML, with the matrices converted to PETSc matrices in `MATAIJ` format
    and the restriction/interpolation operators wrapped as PETSc shell matrices.
 
-.seealso: `PCCreate()`, `PCSetType()`, `PCType`, `PC`, `PCMGType`, `PCMG`, `PCHYPRE`, `PCGAMG`,
+.seealso: [](ch_ksp), `PCCreate()`, `PCSetType()`, `PCType`, `PC`, `PCMGType`, `PCMG`, `PCHYPRE`, `PCGAMG`,
           `PCMGSetLevels()`, `PCMGGetLevels()`, `PCMGSetType()`, `MPSetCycles()`, `PCMGSetDistinctSmoothUp()`,
           `PCMGGetCoarseSolve()`, `PCMGSetResidual()`, `PCMGSetInterpolation()`,
           `PCMGSetRestriction()`, `PCMGGetSmoother()`, `PCMGGetSmootherUp()`, `PCMGGetSmootherDown()`,
@@ -1155,5 +1161,5 @@ PETSC_EXTERN PetscErrorCode PCCreate_ML(PC pc)
   pc->ops->setup          = PCSetUp_ML;
   pc->ops->reset          = PCReset_ML;
   pc->ops->destroy        = PCDestroy_ML;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

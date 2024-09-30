@@ -29,9 +29,19 @@ extern void PetscRmPointer(void*);
 
 #include "petscsnes.h"
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define snesvigetactivesetis_ SNESVIGETACTIVESETIS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define snesvigetactivesetis_ snesvigetactivesetis
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define snesvisetvariablebounds_ SNESVISETVARIABLEBOUNDS
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define snesvisetvariablebounds_ snesvisetvariablebounds
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define snesvigetvariablebounds_ SNESVIGETVARIABLEBOUNDS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define snesvigetvariablebounds_ snesvigetvariablebounds
 #endif
 
 
@@ -39,12 +49,24 @@ extern void PetscRmPointer(void*);
 #if defined(__cplusplus)
 extern "C" {
 #endif
+PETSC_EXTERN void  snesvigetactivesetis_(SNES snes,Vec X,Vec F,IS *ISact, int *__ierr)
+{
+*__ierr = SNESVIGetActiveSetIS(
+	(SNES)PetscToPointer((snes) ),
+	(Vec)PetscToPointer((X) ),
+	(Vec)PetscToPointer((F) ),ISact);
+}
 PETSC_EXTERN void  snesvisetvariablebounds_(SNES snes,Vec xl,Vec xu, int *__ierr)
 {
 *__ierr = SNESVISetVariableBounds(
 	(SNES)PetscToPointer((snes) ),
 	(Vec)PetscToPointer((xl) ),
 	(Vec)PetscToPointer((xu) ));
+}
+PETSC_EXTERN void  snesvigetvariablebounds_(SNES snes,Vec *xl,Vec *xu, int *__ierr)
+{
+*__ierr = SNESVIGetVariableBounds(
+	(SNES)PetscToPointer((snes) ),xl,xu);
 }
 #if defined(__cplusplus)
 }

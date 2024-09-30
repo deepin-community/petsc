@@ -1,4 +1,3 @@
-
 /*
 Added at the request of Marc Garbey.
 
@@ -79,13 +78,11 @@ int main(int argc, char **argv)
   if (testsolver) {
     PetscCall(KSPGetSolution(ksp, &x));
     PetscCall(KSPGetRhs(ksp, &b));
-    KSPSetDMActive(ksp, PETSC_FALSE);
+    PetscCall(KSPSetDMActive(ksp, PETSC_FALSE));
     PetscCall(KSPSolve(ksp, b, x));
     {
-#if defined(PETSC_USE_LOG)
       PetscLogStage stage;
-#endif
-      PetscInt i, n = 20;
+      PetscInt      i, n = 20;
 
       PetscCall(PetscLogStageRegister("Solve only", &stage));
       PetscCall(PetscLogStagePush(stage));
@@ -131,7 +128,7 @@ PetscErrorCode ComputeRHS(KSP ksp, Vec b, void *ctx)
     PetscCall(MatNullSpaceRemove(nullspace, b));
     PetscCall(MatNullSpaceDestroy(&nullspace));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ComputeRho(PetscInt i, PetscInt j, PetscInt mx, PetscInt my, PetscReal centerRho, PetscReal *rho)
@@ -142,7 +139,7 @@ PetscErrorCode ComputeRho(PetscInt i, PetscInt j, PetscInt mx, PetscInt my, Pets
   } else {
     *rho = 1.0;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ComputeMatrix(KSP ksp, Mat J, Mat jac, void *ctx)
@@ -261,7 +258,7 @@ PetscErrorCode ComputeMatrix(KSP ksp, Mat J, Mat jac, void *ctx)
     PetscCall(MatSetNullSpace(J, nullspace));
     PetscCall(MatNullSpaceDestroy(&nullspace));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST
@@ -286,6 +283,19 @@ PetscErrorCode ComputeMatrix(KSP ksp, Mat J, Mat jac, void *ctx)
    test:
       suffix: 4
       args: -ksp_view -da_refine 2 -pc_type mg -pc_mg_distinct_smoothup -mg_levels_up_ksp_max_it 3 -mg_levels_ksp_max_it 4
+
+   testset:
+     suffix: aniso
+     args: -da_grid_x 10 -da_grid_y 2 -da_refine 2 -pc_type mg -ksp_monitor_short -mg_levels_ksp_max_it 6 -mg_levels_pc_type jacobi
+     test:
+       suffix: first
+       args: -mg_levels_ksp_chebyshev_kind first
+     test:
+       suffix: fourth
+       args: -mg_levels_ksp_chebyshev_kind fourth
+     test:
+       suffix: opt_fourth
+       args: -mg_levels_ksp_chebyshev_kind opt_fourth
 
    test:
       suffix: 5

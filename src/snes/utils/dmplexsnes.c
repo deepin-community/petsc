@@ -4,18 +4,24 @@
 #include <petsc/private/petscimpl.h>
 #include <petsc/private/petscfeimpl.h>
 
+#ifdef PETSC_HAVE_LIBCEED
+  #include <petscdmceed.h>
+  #include <petscdmplexceed.h>
+#endif
+
 static void pressure_Private(PetscInt dim, PetscInt Nf, PetscInt NfAux, const PetscInt uOff[], const PetscInt uOff_x[], const PetscScalar u[], const PetscScalar u_t[], const PetscScalar u_x[], const PetscInt aOff[], const PetscInt aOff_x[], const PetscScalar a[], const PetscScalar a_t[], const PetscScalar a_x[], PetscReal t, const PetscReal x[], PetscInt numConstants, const PetscScalar constants[], PetscScalar p[])
 {
   p[0] = u[uOff[1]];
 }
 
 /*
-  SNESCorrectDiscretePressure_Private - Add a vector in the nullspace to make the continuum integral of the pressure field equal to zero. This is normally used only to evaluate convergence rates for the pressure accurately.
+  SNESCorrectDiscretePressure_Private - Add a vector in the nullspace to make the continuum integral of the pressure field equal to zero.
+  This is normally used only to evaluate convergence rates for the pressure accurately.
 
   Collective
 
   Input Parameters:
-+ snes      - The SNES
++ snes      - The `SNES`
 . pfield    - The field number for pressure
 . nullspace - The pressure nullspace
 . u         - The solution vector
@@ -24,12 +30,12 @@ static void pressure_Private(PetscInt dim, PetscInt Nf, PetscInt NfAux, const Pe
   Output Parameter:
 . u         - The solution with a continuum pressure integral of zero
 
-  Notes:
-  If int(u) = a and int(n) = b, then int(u - a/b n) = a - a/b b = 0. We assume that the nullspace is a single vector given explicitly.
-
   Level: developer
 
-.seealso: `SNESConvergedCorrectPressure()`
+  Note:
+  If int(u) = a and int(n) = b, then int(u - a/b n) = a - a/b b = 0. We assume that the nullspace is a single vector given explicitly.
+
+.seealso: [](ch_snes), `SNESConvergedCorrectPressure()`
 */
 static PetscErrorCode SNESCorrectDiscretePressure_Private(SNES snes, PetscInt pfield, MatNullSpace nullspace, Vec u, void *ctx)
 {
@@ -61,38 +67,42 @@ static PetscErrorCode SNESCorrectDiscretePressure_Private(SNES snes, PetscInt pf
   PetscCheck(PetscAbsScalar(intc[pfield]) <= PETSC_SMALL, comm, PETSC_ERR_ARG_WRONG, "Continuum integral of pressure after correction: %g", (double)PetscRealPart(intc[pfield]));
 #endif
   PetscCall(PetscFree2(intc, intn));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   SNESConvergedCorrectPressure - Convergence test that adds a vector in the nullspace to make the continuum integral of the pressure field equal to zero.
-   This is normally used only to evaluate convergence rates for the pressure accurately. The convergence test itself just mimics `SNESConvergedDefault()`.
+  SNESConvergedCorrectPressure - The regular `SNES` convergence test that, up on convergence, adds a vector in the nullspace
+  to make the continuum integral of the pressure field equal to zero.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  snes - the `SNES` context
-.  it - the iteration (0 indicates before any Newton steps)
-.  xnorm - 2-norm of current iterate
-.  snorm - 2-norm of current step
-.  fnorm - 2-norm of function at current iterate
--  ctx   - Optional user context
+  Input Parameters:
++ snes  - the `SNES` context
+. it    - the iteration (0 indicates before any Newton steps)
+. xnorm - 2-norm of current iterate
+. gnorm - 2-norm of current step
+. f     - 2-norm of function at current iterate
+- ctx   - Optional user context
 
-   Output Parameter:
-.  reason  - `SNES_CONVERGED_ITERATING`, `SNES_CONVERGED_ITS`, or `SNES_DIVERGED_FNORM_NAN`
+  Output Parameter:
+. reason - `SNES_CONVERGED_ITERATING`, `SNES_CONVERGED_ITS`, or `SNES_DIVERGED_FNORM_NAN`
 
-   Notes:
-   In order to use this convergence test, you must set up several PETSc structures. First fields must be added to the `DM`, and a `PetscDS`
-   must be created with discretizations of those fields. We currently assume that the pressure field has index 1.
-   The pressure field must have a nullspace, likely created using the `DMSetNullSpaceConstructor()` interface.
-   Last we must be able to integrate the pressure over the domain, so the `DM` attached to the SNES `must` be a `DMPLEX` at this time.
+  Options Database Key:
+. -snes_convergence_test correct_pressure - see `SNESSetFromOptions()`
 
-   Options Database Key:
-.  -snes_convergence_test correct_pressure - see `SNESSetFromOptions()`
+  Level: advanced
 
-   Level: advanced
+  Notes:
+  In order to use this convergence test, you must set up several PETSc structures. First fields must be added to the `DM`, and a `PetscDS`
+  must be created with discretizations of those fields. We currently assume that the pressure field has index 1.
+  The pressure field must have a nullspace, likely created using the `DMSetNullSpaceConstructor()` interface.
+  Last we must be able to integrate the pressure over the domain, so the `DM` attached to the SNES `must` be a `DMPLEX` at this time.
 
-.seealso: `SNES`, `DM`, `SNESConvergedDefault()`, `SNESSetConvergenceTest()`, `DMSetNullSpaceConstructor()`, `DMSetNullSpaceConstructor()`
+  Developer Note:
+  This is a total misuse of the `SNES` convergence test handling system. It should be removed. Perhaps a `SNESSetPostSolve()` could
+  be constructed to handle this process.
+
+.seealso: [](ch_snes), `SNES`, `DM`, `SNESConvergedDefault()`, `SNESSetConvergenceTest()`, `DMSetNullSpaceConstructor()`
 @*/
 PetscErrorCode SNESConvergedCorrectPressure(SNES snes, PetscInt it, PetscReal xnorm, PetscReal gnorm, PetscReal f, SNESConvergedReason *reason, void *ctx)
 {
@@ -125,7 +135,7 @@ PetscErrorCode SNESConvergedCorrectPressure(SNES snes, PetscInt it, PetscReal xn
     PetscCall(MatGetNullSpace(J, &nullspace));
     PetscCall(SNESCorrectDiscretePressure_Private(snes, pfield, nullspace, u, ctx));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /************************** Interpolation *******************************/
@@ -152,7 +162,7 @@ static PetscErrorCode DMSNESConvertPlex(DM dm, DM *plex, PetscBool copy)
       PetscCall(PetscObjectReference((PetscObject)*plex));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -168,12 +178,12 @@ static PetscErrorCode DMSNESConvertPlex(DM dm, DM *plex, PetscBool copy)
 
   Level: beginner
 
-.seealso: `DMInterpolationInfo`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`, `DMInterpolationDestroy()`
+.seealso: [](ch_snes), `DM`, `DMInterpolationInfo`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`, `DMInterpolationDestroy()`
 @*/
 PetscErrorCode DMInterpolationCreate(MPI_Comm comm, DMInterpolationInfo *ctx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(ctx, 2);
+  PetscAssertPointer(ctx, 2);
   PetscCall(PetscNew(ctx));
 
   (*ctx)->comm   = comm;
@@ -183,13 +193,13 @@ PetscErrorCode DMInterpolationCreate(MPI_Comm comm, DMInterpolationInfo *ctx)
   (*ctx)->cells  = NULL;
   (*ctx)->n      = -1;
   (*ctx)->coords = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMInterpolationSetDim - Sets the spatial dimension for the interpolation context
 
-  Not collective
+  Not Collective
 
   Input Parameters:
 + ctx - the context
@@ -197,20 +207,20 @@ PetscErrorCode DMInterpolationCreate(MPI_Comm comm, DMInterpolationInfo *ctx)
 
   Level: intermediate
 
-.seealso: `DMInterpolationInfo`, `DMInterpolationGetDim()`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`
+.seealso: [](ch_snes), `DM`, `DMInterpolationInfo`, `DMInterpolationGetDim()`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`
 @*/
 PetscErrorCode DMInterpolationSetDim(DMInterpolationInfo ctx, PetscInt dim)
 {
   PetscFunctionBegin;
   PetscCheck(!(dim < 1) && !(dim > 3), ctx->comm, PETSC_ERR_ARG_OUTOFRANGE, "Invalid dimension for points: %" PetscInt_FMT, dim);
   ctx->dim = dim;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMInterpolationGetDim - Gets the spatial dimension for the interpolation context
 
-  Not collective
+  Not Collective
 
   Input Parameter:
 . ctx - the context
@@ -220,20 +230,20 @@ PetscErrorCode DMInterpolationSetDim(DMInterpolationInfo ctx, PetscInt dim)
 
   Level: intermediate
 
-.seealso: `DMInterpolationInfo`, `DMInterpolationSetDim()`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`
+.seealso: [](ch_snes), `DM`, `DMInterpolationInfo`, `DMInterpolationSetDim()`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`
 @*/
 PetscErrorCode DMInterpolationGetDim(DMInterpolationInfo ctx, PetscInt *dim)
 {
   PetscFunctionBegin;
-  PetscValidIntPointer(dim, 2);
+  PetscAssertPointer(dim, 2);
   *dim = ctx->dim;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMInterpolationSetDof - Sets the number of fields interpolated at a point for the interpolation context
 
-  Not collective
+  Not Collective
 
   Input Parameters:
 + ctx - the context
@@ -241,20 +251,20 @@ PetscErrorCode DMInterpolationGetDim(DMInterpolationInfo ctx, PetscInt *dim)
 
   Level: intermediate
 
-.seealso: `DMInterpolationInfo`, `DMInterpolationGetDof()`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`
+.seealso: [](ch_snes), `DM`, `DMInterpolationInfo`, `DMInterpolationGetDof()`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`
 @*/
 PetscErrorCode DMInterpolationSetDof(DMInterpolationInfo ctx, PetscInt dof)
 {
   PetscFunctionBegin;
   PetscCheck(dof >= 1, ctx->comm, PETSC_ERR_ARG_OUTOFRANGE, "Invalid number of components: %" PetscInt_FMT, dof);
   ctx->dof = dof;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMInterpolationGetDof - Gets the number of fields interpolated at a point for the interpolation context
 
-  Not collective
+  Not Collective
 
   Input Parameter:
 . ctx - the context
@@ -264,32 +274,32 @@ PetscErrorCode DMInterpolationSetDof(DMInterpolationInfo ctx, PetscInt dof)
 
   Level: intermediate
 
-.seealso: DMInterpolationInfo, `DMInterpolationSetDof()`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`
+.seealso: [](ch_snes), `DM`, `DMInterpolationInfo`, `DMInterpolationSetDof()`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`
 @*/
 PetscErrorCode DMInterpolationGetDof(DMInterpolationInfo ctx, PetscInt *dof)
 {
   PetscFunctionBegin;
-  PetscValidIntPointer(dof, 2);
+  PetscAssertPointer(dof, 2);
   *dof = ctx->dof;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMInterpolationAddPoints - Add points at which we will interpolate the fields
 
-  Not collective
+  Not Collective
 
   Input Parameters:
 + ctx    - the context
 . n      - the number of points
 - points - the coordinates for each point, an array of size n * dim
 
+  Level: intermediate
+
   Note:
   The coordinate information is copied.
 
-  Level: intermediate
-
-.seealso: `DMInterpolationInfo`, `DMInterpolationSetDim()`, `DMInterpolationEvaluate()`, `DMInterpolationCreate()`
+.seealso: [](ch_snes), `DM`, `DMInterpolationInfo`, `DMInterpolationSetDim()`, `DMInterpolationEvaluate()`, `DMInterpolationCreate()`
 @*/
 PetscErrorCode DMInterpolationAddPoints(DMInterpolationInfo ctx, PetscInt n, PetscReal points[])
 {
@@ -300,7 +310,7 @@ PetscErrorCode DMInterpolationAddPoints(DMInterpolationInfo ctx, PetscInt n, Pet
 
   PetscCall(PetscMalloc1(n * ctx->dim, &ctx->points));
   PetscCall(PetscArraycpy(ctx->points, points, n * ctx->dim));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -309,14 +319,14 @@ PetscErrorCode DMInterpolationAddPoints(DMInterpolationInfo ctx, PetscInt n, Pet
   Collective
 
   Input Parameters:
-+ ctx - the context
-. dm  - the `DM` for the function space used for interpolation
-. redundantPoints - If `PETSC_TRUE`, all processes are passing in the same array of points. Otherwise, points need to be communicated among processes.
++ ctx                 - the context
+. dm                  - the `DM` for the function space used for interpolation
+. redundantPoints     - If `PETSC_TRUE`, all processes are passing in the same array of points. Otherwise, points need to be communicated among processes.
 - ignoreOutsideDomain - If `PETSC_TRUE`, ignore points outside the domain, otherwise return an error
 
   Level: intermediate
 
-.seealso: DMInterpolationInfo, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`, `DMInterpolationCreate()`
+.seealso: [](ch_snes), `DM`, `DMInterpolationInfo`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`, `DMInterpolationCreate()`
 @*/
 PetscErrorCode DMInterpolationSetUp(DMInterpolationInfo ctx, DM dm, PetscBool redundantPoints, PetscBool ignoreOutsideDomain)
 {
@@ -427,7 +437,7 @@ PetscErrorCode DMInterpolationSetUp(DMInterpolationInfo ctx, DM dm, PetscBool re
   if ((void *)globalPointsScalar != (void *)globalPoints) PetscCall(PetscFree(globalPointsScalar));
   if (!redundantPoints) PetscCall(PetscFree3(globalPoints, counts, displs));
   PetscCall(PetscLayoutDestroy(&layout));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -439,23 +449,23 @@ PetscErrorCode DMInterpolationSetUp(DMInterpolationInfo ctx, DM dm, PetscBool re
 . ctx - the context
 
   Output Parameter:
-. coordinates  - the coordinates of interpolation points
+. coordinates - the coordinates of interpolation points
+
+  Level: intermediate
 
   Note:
   The local vector entries correspond to interpolation points lying on this process, according to the associated `DM`.
   This is a borrowed vector that the user should not destroy.
 
-  Level: intermediate
-
-.seealso: `DMInterpolationInfo`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`, `DMInterpolationCreate()`
+.seealso: [](ch_snes), `DM`, `DMInterpolationInfo`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`, `DMInterpolationCreate()`
 @*/
 PetscErrorCode DMInterpolationGetCoordinates(DMInterpolationInfo ctx, Vec *coordinates)
 {
   PetscFunctionBegin;
-  PetscValidPointer(coordinates, 2);
+  PetscAssertPointer(coordinates, 2);
   PetscCheck(ctx->coords, ctx->comm, PETSC_ERR_ARG_WRONGSTATE, "The interpolation context has not been setup.");
   *coordinates = ctx->coords;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -467,25 +477,25 @@ PetscErrorCode DMInterpolationGetCoordinates(DMInterpolationInfo ctx, Vec *coord
 . ctx - the context
 
   Output Parameter:
-. v  - a vector capable of holding the interpolated field values
+. v - a vector capable of holding the interpolated field values
+
+  Level: intermediate
 
   Note:
   This vector should be returned using `DMInterpolationRestoreVector()`.
 
-  Level: intermediate
-
-.seealso: `DMInterpolationInfo`, `DMInterpolationRestoreVector()`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`, `DMInterpolationCreate()`
+.seealso: [](ch_snes), `DM`, `DMInterpolationInfo`, `DMInterpolationRestoreVector()`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`, `DMInterpolationCreate()`
 @*/
 PetscErrorCode DMInterpolationGetVector(DMInterpolationInfo ctx, Vec *v)
 {
   PetscFunctionBegin;
-  PetscValidPointer(v, 2);
+  PetscAssertPointer(v, 2);
   PetscCheck(ctx->coords, ctx->comm, PETSC_ERR_ARG_WRONGSTATE, "The interpolation context has not been setup.");
   PetscCall(VecCreate(ctx->comm, v));
   PetscCall(VecSetSizes(*v, ctx->n * ctx->dof, PETSC_DECIDE));
   PetscCall(VecSetBlockSize(*v, ctx->dof));
   PetscCall(VecSetType(*v, VECSTANDARD));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -495,19 +505,19 @@ PetscErrorCode DMInterpolationGetVector(DMInterpolationInfo ctx, Vec *v)
 
   Input Parameters:
 + ctx - the context
-- v  - a vector capable of holding the interpolated field values
+- v   - a vector capable of holding the interpolated field values
 
   Level: intermediate
 
-.seealso: `DMInterpolationInfo`, `DMInterpolationGetVector()`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`, `DMInterpolationCreate()`
+.seealso: [](ch_snes), `DM`, `DMInterpolationInfo`, `DMInterpolationGetVector()`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`, `DMInterpolationCreate()`
 @*/
 PetscErrorCode DMInterpolationRestoreVector(DMInterpolationInfo ctx, Vec *v)
 {
   PetscFunctionBegin;
-  PetscValidPointer(v, 2);
+  PetscAssertPointer(v, 2);
   PetscCheck(ctx->coords, ctx->comm, PETSC_ERR_ARG_WRONGSTATE, "The interpolation context has not been setup.");
   PetscCall(VecDestroy(v));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode DMInterpolate_Segment_Private(DMInterpolationInfo ctx, DM dm, Vec xLocal, Vec v)
@@ -540,7 +550,7 @@ static inline PetscErrorCode DMInterpolate_Segment_Private(DMInterpolationInfo c
   }
   PetscCall(VecRestoreArray(v, &a));
   PetscCall(VecRestoreArrayRead(ctx->coords, &coords));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode DMInterpolate_Triangle_Private(DMInterpolationInfo ctx, DM dm, Vec xLocal, Vec v)
@@ -575,7 +585,7 @@ static inline PetscErrorCode DMInterpolate_Triangle_Private(DMInterpolationInfo 
   PetscCall(VecRestoreArray(v, &a));
   PetscCall(VecRestoreArrayRead(ctx->coords, &coords));
   PetscCall(PetscFree3(v0, J, invJ));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode DMInterpolate_Tetrahedron_Private(DMInterpolationInfo ctx, DM dm, Vec xLocal, Vec v)
@@ -611,7 +621,7 @@ static inline PetscErrorCode DMInterpolate_Tetrahedron_Private(DMInterpolationIn
   PetscCall(VecRestoreArray(v, &a));
   PetscCall(VecRestoreArrayRead(ctx->coords, &coords));
   PetscCall(PetscFree3(v0, J, invJ));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode QuadMap_Private(SNES snes, Vec Xref, Vec Xreal, void *ctx)
@@ -647,7 +657,7 @@ static inline PetscErrorCode QuadMap_Private(SNES snes, Vec Xref, Vec Xreal, voi
   PetscCall(PetscLogFlops(28));
   PetscCall(VecRestoreArrayRead(Xref, &ref));
   PetscCall(VecRestoreArray(Xreal, &real));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #include <petsc/private/dmimpl.h>
@@ -684,7 +694,7 @@ static inline PetscErrorCode QuadJacobian_Private(SNES snes, Vec Xref, Mat J, Ma
   PetscCall(VecRestoreArrayRead(Xref, &ref));
   PetscCall(MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode DMInterpolate_Quad_Private(DMInterpolationInfo ctx, DM dm, Vec xLocal, Vec v)
@@ -786,7 +796,7 @@ static inline PetscErrorCode DMInterpolate_Quad_Private(DMInterpolationInfo ctx,
   PetscCall(VecDestroy(&ref));
   PetscCall(VecDestroy(&real));
   PetscCall(MatDestroy(&J));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode HexMap_Private(SNES snes, Vec Xref, Vec Xreal, void *ctx)
@@ -855,7 +865,7 @@ static inline PetscErrorCode HexMap_Private(SNES snes, Vec Xref, Vec Xreal, void
   PetscCall(PetscLogFlops(114));
   PetscCall(VecRestoreArrayRead(Xref, &ref));
   PetscCall(VecRestoreArray(Xreal, &real));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode HexJacobian_Private(SNES snes, Vec Xref, Mat J, Mat M, void *ctx)
@@ -924,7 +934,7 @@ static inline PetscErrorCode HexJacobian_Private(SNES snes, Vec Xref, Mat J, Mat
   PetscCall(VecRestoreArrayRead(Xref, &ref));
   PetscCall(MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode DMInterpolate_Hex_Private(DMInterpolationInfo ctx, DM dm, Vec xLocal, Vec v)
@@ -1005,7 +1015,7 @@ static inline PetscErrorCode DMInterpolate_Hex_Private(DMInterpolationInfo ctx, 
   PetscCall(VecDestroy(&ref));
   PetscCall(VecDestroy(&real));
   PetscCall(MatDestroy(&J));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -1016,15 +1026,15 @@ static inline PetscErrorCode DMInterpolate_Hex_Private(DMInterpolationInfo ctx, 
 . dm  - The `DM`
 - x   - The local vector containing the field to be interpolated
 
-  Output Parameters:
-. v   - The vector containing the interpolated values
-
-  Note:
-  A suitable v can be obtained using `DMInterpolationGetVector()`.
+  Output Parameter:
+. v - The vector containing the interpolated values
 
   Level: beginner
 
-.seealso: `DMInterpolationInfo`, `DMInterpolationGetVector()`, `DMInterpolationAddPoints()`, `DMInterpolationCreate()`
+  Note:
+  A suitable `v` can be obtained using `DMInterpolationGetVector()`.
+
+.seealso: [](ch_snes), `DM`, `DMInterpolationInfo`, `DMInterpolationGetVector()`, `DMInterpolationAddPoints()`, `DMInterpolationCreate()`
 @*/
 PetscErrorCode DMInterpolationEvaluate(DMInterpolationInfo ctx, DM dm, Vec x, Vec v)
 {
@@ -1038,7 +1048,7 @@ PetscErrorCode DMInterpolationEvaluate(DMInterpolationInfo ctx, DM dm, Vec x, Ve
   PetscValidHeaderSpecific(v, VEC_CLASSID, 4);
   PetscCall(VecGetLocalSize(v, &n));
   PetscCheck(n == ctx->n * ctx->dof, ctx->comm, PETSC_ERR_ARG_SIZ, "Invalid input vector size %" PetscInt_FMT " should be %" PetscInt_FMT, n, ctx->n * ctx->dof);
-  if (!n) PetscFunctionReturn(0);
+  if (!n) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(DMGetDS(dm, &ds));
   if (ds) {
     useDS = PETSC_TRUE;
@@ -1124,7 +1134,7 @@ PetscErrorCode DMInterpolationEvaluate(DMInterpolationInfo ctx, DM dm, Vec x, Ve
       SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP, "No support for cell type %s", DMPolytopeTypes[PetscMax(0, PetscMin(ct, DM_NUM_POLYTOPES))]);
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -1137,18 +1147,18 @@ PetscErrorCode DMInterpolationEvaluate(DMInterpolationInfo ctx, DM dm, Vec x, Ve
 
   Level: beginner
 
-.seealso: `DMInterpolationInfo`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`, `DMInterpolationCreate()`
+.seealso: [](ch_snes), `DM`, `DMInterpolationInfo`, `DMInterpolationEvaluate()`, `DMInterpolationAddPoints()`, `DMInterpolationCreate()`
 @*/
 PetscErrorCode DMInterpolationDestroy(DMInterpolationInfo *ctx)
 {
   PetscFunctionBegin;
-  PetscValidPointer(ctx, 1);
+  PetscAssertPointer(ctx, 1);
   PetscCall(VecDestroy(&(*ctx)->coords));
   PetscCall(PetscFree((*ctx)->points));
   PetscCall(PetscFree((*ctx)->cells));
   PetscCall(PetscFree(*ctx));
   *ctx = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -1157,17 +1167,17 @@ PetscErrorCode DMInterpolationDestroy(DMInterpolationInfo *ctx)
   Collective
 
   Input Parameters:
-+ snes   - the `SNES` context
++ snes   - the `SNES` context, must have an attached `DM`
 . its    - iteration number
 . fgnorm - 2-norm of residual
-- vf  - `PetscViewerAndFormat` of `PetscViewerType` `PETSCVIEWERASCII`
+- vf     - `PetscViewerAndFormat` of `PetscViewerType` `PETSCVIEWERASCII`
+
+  Level: intermediate
 
   Note:
   This routine prints the residual norm at each iteration.
 
-  Level: intermediate
-
-.seealso: `SNES`, `SNESMonitorSet()`, `SNESMonitorDefault()`
+.seealso: [](ch_snes), `SNES`, `SNESMonitorSet()`, `SNESMonitorDefault()`
 @*/
 PetscErrorCode SNESMonitorFields(SNES snes, PetscInt its, PetscReal fgnorm, PetscViewerAndFormat *vf)
 {
@@ -1210,39 +1220,28 @@ PetscErrorCode SNESMonitorFields(SNES snes, PetscInt its, PetscReal fgnorm, Pets
   PetscCall(PetscViewerASCIISubtractTab(viewer, ((PetscObject)snes)->tablevel));
   PetscCall(PetscViewerPopFormat(viewer));
   PetscCall(PetscFree2(lnorms, norms));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /********************* Residual Computation **************************/
 
-PetscErrorCode DMPlexGetAllCells_Internal(DM plex, IS *cellIS)
-{
-  PetscInt depth;
-
-  PetscFunctionBegin;
-  PetscCall(DMPlexGetDepth(plex, &depth));
-  PetscCall(DMGetStratumIS(plex, "dim", depth, cellIS));
-  if (!*cellIS) PetscCall(DMGetStratumIS(plex, "depth", depth, cellIS));
-  PetscFunctionReturn(0);
-}
-
 /*@
-  DMPlexSNESComputeResidualFEM - Sums the local residual into vector F from the local input X using pointwise functions specified by the user
+  DMPlexSNESComputeResidualFEM - Sums the local residual into vector `F` from the local input `X` using pointwise functions specified by the user
 
   Input Parameters:
-+ dm - The mesh
-. X  - Local solution
++ dm   - The mesh
+. X    - Local solution
 - user - The user context
 
   Output Parameter:
-. F  - Local output vector
-
-  Note:
-  The residual is summed into F; the caller is responsible for using `VecZeroEntries()` or otherwise ensuring that any data in F is intentional.
+. F - Local output vector
 
   Level: developer
 
-.seealso: `DM`, `DMPlexComputeJacobianAction()`
+  Note:
+  The residual is summed into `F`; the caller is responsible for using `VecZeroEntries()` or otherwise ensuring that any data in `F` is intentional.
+
+.seealso: [](ch_snes), `DM`, `DMPLEX`, `DMPlexComputeJacobianAction()`
 @*/
 PetscErrorCode DMPlexSNESComputeResidualFEM(DM dm, Vec X, Vec F, void *user)
 {
@@ -1259,7 +1258,7 @@ PetscErrorCode DMPlexSNESComputeResidualFEM(DM dm, Vec X, Vec F, void *user)
     IS           cellIS;
     PetscFormKey key;
 
-    PetscCall(DMGetRegionNumDS(dm, s, &key.label, NULL, &ds));
+    PetscCall(DMGetRegionNumDS(dm, s, &key.label, NULL, &ds, NULL));
     key.value = 0;
     key.field = 0;
     key.part  = 0;
@@ -1279,10 +1278,28 @@ PetscErrorCode DMPlexSNESComputeResidualFEM(DM dm, Vec X, Vec F, void *user)
   }
   PetscCall(ISDestroy(&allcellIS));
   PetscCall(DMDestroy(&plex));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMSNESComputeResidual(DM dm, Vec X, Vec F, void *user)
+/*@
+  DMPlexSNESComputeResidualDS - Sums the local residual into vector `F` from the local input `X` using all pointwise functions with unique keys in the `PetscDS`
+
+  Input Parameters:
++ dm   - The mesh
+. X    - Local solution
+- user - The user context
+
+  Output Parameter:
+. F - Local output vector
+
+  Level: developer
+
+  Note:
+  The residual is summed into `F`; the caller is responsible for using `VecZeroEntries()` or otherwise ensuring that any data in `F` is intentional.
+
+.seealso: [](ch_snes), `DM`, `DMPLEX`, `DMPlexComputeJacobianAction()`
+@*/
+PetscErrorCode DMPlexSNESComputeResidualDS(DM dm, Vec X, Vec F, void *user)
 {
   DM       plex;
   IS       allcellIS;
@@ -1297,7 +1314,7 @@ PetscErrorCode DMSNESComputeResidual(DM dm, Vec X, Vec F, void *user)
     DMLabel label;
     IS      cellIS;
 
-    PetscCall(DMGetRegionNumDS(dm, s, &label, NULL, &ds));
+    PetscCall(DMGetRegionNumDS(dm, s, &label, NULL, &ds, NULL));
     {
       PetscWeakFormKind resmap[2] = {PETSC_WF_F0, PETSC_WF_F1};
       PetscWeakForm     wf;
@@ -1345,22 +1362,65 @@ PetscErrorCode DMSNESComputeResidual(DM dm, Vec X, Vec F, void *user)
   }
   PetscCall(ISDestroy(&allcellIS));
   PetscCall(DMDestroy(&plex));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+#ifdef PETSC_HAVE_LIBCEED
+PetscErrorCode DMPlexSNESComputeResidualCEED(DM dm, Vec locX, Vec locF, void *user)
+{
+  Ceed       ceed;
+  DMCeed     sd = dm->dmceed;
+  CeedVector clocX, clocF;
+
+  PetscFunctionBegin;
+  PetscCall(DMGetCeed(dm, &ceed));
+  PetscCheck(sd, PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_WRONGSTATE, "This DM has no CEED data. Call DMCeedCreate() before computing the residual.");
+  PetscCall(DMCeedComputeGeometry(dm, sd));
+
+  PetscCall(VecGetCeedVectorRead(locX, ceed, &clocX));
+  PetscCall(VecGetCeedVector(locF, ceed, &clocF));
+  PetscCallCEED(CeedOperatorApplyAdd(sd->op, clocX, clocF, CEED_REQUEST_IMMEDIATE));
+  PetscCall(VecRestoreCeedVectorRead(locX, &clocX));
+  PetscCall(VecRestoreCeedVector(locF, &clocF));
+
+  {
+    DM_Plex *mesh = (DM_Plex *)dm->data;
+
+    if (mesh->printFEM) {
+      PetscSection section;
+      Vec          locFbc;
+      PetscInt     pStart, pEnd, p, maxDof;
+      PetscScalar *zeroes;
+
+      PetscCall(DMGetLocalSection(dm, &section));
+      PetscCall(VecDuplicate(locF, &locFbc));
+      PetscCall(VecCopy(locF, locFbc));
+      PetscCall(PetscSectionGetChart(section, &pStart, &pEnd));
+      PetscCall(PetscSectionGetMaxDof(section, &maxDof));
+      PetscCall(PetscCalloc1(maxDof, &zeroes));
+      for (p = pStart; p < pEnd; ++p) PetscCall(VecSetValuesSection(locFbc, section, p, zeroes, INSERT_BC_VALUES));
+      PetscCall(PetscFree(zeroes));
+      PetscCall(DMPrintLocalVec(dm, "Residual", mesh->printTol, locFbc));
+      PetscCall(VecDestroy(&locFbc));
+    }
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+#endif
+
 /*@
-  DMPlexSNESComputeBoundaryFEM - Form the boundary values for the local input X
+  DMPlexSNESComputeBoundaryFEM - Form the boundary values for the local input `X`
 
   Input Parameters:
-+ dm - The mesh
++ dm   - The mesh
 - user - The user context
 
   Output Parameter:
-. X  - Local solution
+. X - Local solution
 
   Level: developer
 
-.seealso: `DMPLEX`, `DMPlexComputeJacobianAction()`
+.seealso: [](ch_snes), `DM`, `DMPLEX`, `DMPlexComputeJacobianAction()`
 @*/
 PetscErrorCode DMPlexSNESComputeBoundaryFEM(DM dm, Vec X, void *user)
 {
@@ -1370,11 +1430,11 @@ PetscErrorCode DMPlexSNESComputeBoundaryFEM(DM dm, Vec X, void *user)
   PetscCall(DMSNESConvertPlex(dm, &plex, PETSC_TRUE));
   PetscCall(DMPlexInsertBoundaryValues(plex, PETSC_TRUE, X, PETSC_MIN_REAL, NULL, NULL, NULL));
   PetscCall(DMDestroy(&plex));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMSNESComputeJacobianAction - Compute the action of the Jacobian J(X) on Y
+  DMSNESComputeJacobianAction - Compute the action of the Jacobian J(`X`) on `Y`
 
   Input Parameters:
 + dm   - The `DM`
@@ -1383,14 +1443,19 @@ PetscErrorCode DMPlexSNESComputeBoundaryFEM(DM dm, Vec X, void *user)
 - user - The user context
 
   Output Parameter:
-. F    - lcoal output vector
+. F - local output vector
 
   Level: developer
 
-  Notes:
+  Note:
   Users will typically use `DMSNESCreateJacobianMF()` followed by `MatMult()` instead of calling this routine directly.
 
-.seealso: `DM`, ``DMSNESCreateJacobianMF()`, `DMPlexSNESComputeResidualFEM()`
+  This only works with `DMPLEX`
+
+  Developer Note:
+  This should be called `DMPlexSNESComputeJacobianAction()`
+
+.seealso: [](ch_snes), `DM`, ``DMSNESCreateJacobianMF()`, `DMPlexSNESComputeResidualFEM()`
 @*/
 PetscErrorCode DMSNESComputeJacobianAction(DM dm, Vec X, Vec Y, Vec F, void *user)
 {
@@ -1407,7 +1472,7 @@ PetscErrorCode DMSNESComputeJacobianAction(DM dm, Vec X, Vec Y, Vec F, void *use
     DMLabel label;
     IS      cellIS;
 
-    PetscCall(DMGetRegionNumDS(dm, s, &label, NULL, &ds));
+    PetscCall(DMGetRegionNumDS(dm, s, &label, NULL, &ds, NULL));
     {
       PetscWeakFormKind jacmap[4] = {PETSC_WF_G0, PETSC_WF_G1, PETSC_WF_G2, PETSC_WF_G3};
       PetscWeakForm     wf;
@@ -1455,27 +1520,28 @@ PetscErrorCode DMSNESComputeJacobianAction(DM dm, Vec X, Vec Y, Vec F, void *use
   }
   PetscCall(ISDestroy(&allcellIS));
   PetscCall(DMDestroy(&plex));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexSNESComputeJacobianFEM - Form the local portion of the Jacobian matrix J at the local solution X using pointwise functions specified by the user.
+  DMPlexSNESComputeJacobianFEM - Form the local portion of the Jacobian matrix `Jac` at the local solution `X` using pointwise functions specified by the user.
 
   Input Parameters:
-+ dm - The mesh
-. X  - Local input vector
++ dm   - The `DM`
+. X    - Local input vector
 - user - The user context
 
-  Output Parameter:
-. Jac  - Jacobian matrix
+  Output Parameters:
++ Jac  - Jacobian matrix
+- JacP - approximate Jacobian from which the preconditioner will be built, often `Jac`
+
+  Level: developer
 
   Note:
   We form the residual one batch of elements at a time. This allows us to offload work onto an accelerator,
   like a GPU, or vectorize on a multicore machine.
 
-  Level: developer
-
-.seealso: `DMPLEX`, `Mat`
+.seealso: [](ch_snes), `DMPLEX`, `Mat`
 @*/
 PetscErrorCode DMPlexSNESComputeJacobianFEM(DM dm, Vec X, Mat Jac, Mat JacP, void *user)
 {
@@ -1493,7 +1559,7 @@ PetscErrorCode DMPlexSNESComputeJacobianFEM(DM dm, Vec X, Mat Jac, Mat JacP, voi
     IS           cellIS;
     PetscFormKey key;
 
-    PetscCall(DMGetRegionNumDS(dm, s, &key.label, NULL, &ds));
+    PetscCall(DMGetRegionNumDS(dm, s, &key.label, NULL, &ds, NULL));
     key.value = 0;
     key.field = 0;
     key.part  = 0;
@@ -1519,7 +1585,7 @@ PetscErrorCode DMPlexSNESComputeJacobianFEM(DM dm, Vec X, Mat Jac, Mat JacP, voi
   }
   PetscCall(ISDestroy(&allcellIS));
   PetscCall(DMDestroy(&plex));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 struct _DMSNESJacobianMFCtx {
@@ -1538,7 +1604,7 @@ static PetscErrorCode DMSNESJacobianMF_Destroy_Private(Mat A)
   PetscCall(DMDestroy(&ctx->dm));
   PetscCall(VecDestroy(&ctx->X));
   PetscCall(PetscFree(ctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMSNESJacobianMF_Mult_Private(Mat A, Vec Y, Vec Z)
@@ -1548,7 +1614,7 @@ static PetscErrorCode DMSNESJacobianMF_Mult_Private(Mat A, Vec Y, Vec Z)
   PetscFunctionBegin;
   PetscCall(MatShellGetContext(A, &ctx));
   PetscCall(DMSNESComputeJacobianAction(ctx->dm, ctx->X, Y, Z, ctx->ctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -1559,17 +1625,19 @@ static PetscErrorCode DMSNESJacobianMF_Mult_Private(Mat A, Vec Y, Vec Z)
   Input Parameters:
 + dm   - The `DM`
 . X    - The evaluation point for the Jacobian
-- user - A user context, or NULL
+- user - A user context, or `NULL`
 
   Output Parameter:
-. J    - The `Mat`
+. J - The `Mat`
 
   Level: advanced
 
-  Note:
-  Vec X is kept in `Mat` J, so updating X then updates the evaluation point.
+  Notes:
+  Vec `X` is kept in `J`, so updating `X` then updates the evaluation point.
 
-.seealso: `DM`, `DMSNESComputeJacobianAction()`
+  This only works for `DMPLEX`
+
+.seealso: [](ch_snes), `DM`, `SNES`, `DMSNESComputeJacobianAction()`
 @*/
 PetscErrorCode DMSNESCreateJacobianMF(DM dm, Vec X, void *user, Mat *J)
 {
@@ -1591,14 +1659,14 @@ PetscErrorCode DMSNESCreateJacobianMF(DM dm, Vec X, void *user, Mat *J)
   PetscCall(MatShellSetContext(*J, ctx));
   PetscCall(MatShellSetOperation(*J, MATOP_DESTROY, (void (*)(void))DMSNESJacobianMF_Destroy_Private));
   PetscCall(MatShellSetOperation(*J, MATOP_MULT, (void (*)(void))DMSNESJacobianMF_Mult_Private));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
      MatComputeNeumannOverlap - Computes an unassembled (Neumann) local overlapping Mat in nonlinear context.
 
    Input Parameters:
-+     X - SNES linearization point
++     X - `SNES` linearization point
 .     ovl - index set of overlapping subdomains
 
    Output Parameter:
@@ -1606,7 +1674,7 @@ PetscErrorCode DMSNESCreateJacobianMF(DM dm, Vec X, void *user, Mat *J)
 
    Level: intermediate
 
-.seealso: `DMCreateNeumannOverlap()`, `MATIS`, `PCHPDDMSetAuxiliaryMat()`
+.seealso: [](ch_snes), `DMCreateNeumannOverlap()`, `MATIS`, `PCHPDDMSetAuxiliaryMat()`
 */
 static PetscErrorCode MatComputeNeumannOverlap_Plex(Mat J, PetscReal t, Vec X, Vec X_t, PetscReal s, IS ovl, void *ctx)
 {
@@ -1651,30 +1719,39 @@ static PetscErrorCode MatComputeNeumannOverlap_Plex(Mat J, PetscReal t, Vec X, V
     PetscCall(MatISGetLocalMat(pJ, &locpJ));
     PetscCall(MatCopy(locpJ, J, SAME_NONZERO_PATTERN));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexSetSNESLocalFEM - Use `DMPLEX`'s internal FEM routines to compute `SNES` boundary values, residual, and Jacobian.
 
   Input Parameters:
-+ dm - The `DM` object
++ dm          - The `DM` object
 . boundaryctx - the user context that will be passed to pointwise evaluation of boundary values (see `PetscDSAddBoundary()`)
 . residualctx - the user context that will be passed to pointwise evaluation of finite element residual computations (see `PetscDSSetResidual()`)
 - jacobianctx - the user context that will be passed to pointwise evaluation of finite element Jacobian construction (see `PetscDSSetJacobian()`)
 
   Level: developer
 
-.seealso: `DMPLEX`, `SNES`
+.seealso: [](ch_snes), `DMPLEX`, `SNES`
 @*/
 PetscErrorCode DMPlexSetSNESLocalFEM(DM dm, void *boundaryctx, void *residualctx, void *jacobianctx)
 {
+  PetscBool useCeed;
+
   PetscFunctionBegin;
+  PetscCall(DMPlexGetUseCeed(dm, &useCeed));
   PetscCall(DMSNESSetBoundaryLocal(dm, DMPlexSNESComputeBoundaryFEM, boundaryctx));
-  PetscCall(DMSNESSetFunctionLocal(dm, DMPlexSNESComputeResidualFEM, residualctx));
+  if (useCeed) {
+#ifdef PETSC_HAVE_LIBCEED
+    PetscCall(DMSNESSetFunctionLocal(dm, DMPlexSNESComputeResidualCEED, residualctx));
+#else
+    SETERRQ(PetscObjectComm((PetscObject)dm), PETSC_ERR_SUP, "Cannot use CEED traversals without LibCEED. Rerun configure with --download-ceed");
+#endif
+  } else PetscCall(DMSNESSetFunctionLocal(dm, DMPlexSNESComputeResidualFEM, residualctx));
   PetscCall(DMSNESSetJacobianLocal(dm, DMPlexSNESComputeJacobianFEM, jacobianctx));
   PetscCall(PetscObjectComposeFunction((PetscObject)dm, "MatComputeNeumannOverlap_C", MatComputeNeumannOverlap_Plex));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -1687,15 +1764,18 @@ PetscErrorCode DMPlexSetSNESLocalFEM(DM dm, void *boundaryctx, void *residualctx
 . u    - a `DM` vector
 - tol  - A tolerance for the check, or -1 to print the results instead
 
-  Output Parameters:
-. error - An array which holds the discretization error in each field, or NULL
+  Output Parameter:
+. error - An array which holds the discretization error in each field, or `NULL`
+
+  Level: developer
 
   Note:
   The user must call `PetscDSSetExactSolution()` beforehand
 
-  Level: developer
+  Developer Note:
+  How is this related to `PetscConvEst`?
 
-.seealso: `PetscDSSetExactSolution()`, `DNSNESCheckFromOptions()`, `DMSNESCheckResidual()`, `DMSNESCheckJacobian()`, `PetscDSSetExactSolution()`
+.seealso: [](ch_snes), `PetscDSSetExactSolution()`, `DNSNESCheckFromOptions()`, `DMSNESCheckResidual()`, `DMSNESCheckJacobian()`
 @*/
 PetscErrorCode DMSNESCheckDiscretization(SNES snes, DM dm, PetscReal t, Vec u, PetscReal tol, PetscReal error[])
 {
@@ -1709,7 +1789,7 @@ PetscErrorCode DMSNESCheckDiscretization(SNES snes, DM dm, PetscReal t, Vec u, P
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   PetscValidHeaderSpecific(dm, DM_CLASSID, 2);
   PetscValidHeaderSpecific(u, VEC_CLASSID, 4);
-  if (error) PetscValidRealPointer(error, 6);
+  if (error) PetscAssertPointer(error, 6);
 
   PetscCall(DMComputeExactSolution(dm, t, u, NULL));
   PetscCall(VecViewFromOptions(u, NULL, "-vec_view"));
@@ -1728,7 +1808,7 @@ PetscErrorCode DMSNESCheckDiscretization(SNES snes, DM dm, PetscReal t, Vec u, P
       const PetscInt *fields;
       PetscInt        dsNf, f;
 
-      PetscCall(DMGetRegionNumDS(dm, s, &label, &fieldIS, &ds));
+      PetscCall(DMGetRegionNumDS(dm, s, &label, &fieldIS, &ds, NULL));
       PetscCall(PetscDSGetNumFields(ds, &dsNf));
       PetscCall(ISGetIndices(fieldIS, &fields));
       for (f = 0; f < dsNf; ++f) {
@@ -1763,7 +1843,7 @@ PetscErrorCode DMSNESCheckDiscretization(SNES snes, DM dm, PetscReal t, Vec u, P
     }
   }
   PetscCall(PetscFree3(exacts, ectxs, err));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -1776,11 +1856,11 @@ PetscErrorCode DMSNESCheckDiscretization(SNES snes, DM dm, PetscReal t, Vec u, P
 - tol  - A tolerance for the check, or -1 to print the results instead
 
   Output Parameter:
-. residual - The residual norm of the exact solution, or NULL
+. residual - The residual norm of the exact solution, or `NULL`
 
   Level: developer
 
-.seealso: `DNSNESCheckFromOptions()`, `DMSNESCheckDiscretization()`, `DMSNESCheckJacobian()`
+.seealso: [](ch_snes), `DNSNESCheckFromOptions()`, `DMSNESCheckDiscretization()`, `DMSNESCheckJacobian()`
 @*/
 PetscErrorCode DMSNESCheckResidual(SNES snes, DM dm, Vec u, PetscReal tol, PetscReal *residual)
 {
@@ -1792,7 +1872,7 @@ PetscErrorCode DMSNESCheckResidual(SNES snes, DM dm, Vec u, PetscReal tol, Petsc
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   PetscValidHeaderSpecific(dm, DM_CLASSID, 2);
   PetscValidHeaderSpecific(u, VEC_CLASSID, 3);
-  if (residual) PetscValidRealPointer(residual, 5);
+  if (residual) PetscAssertPointer(residual, 5);
   PetscCall(PetscObjectGetComm((PetscObject)snes, &comm));
   PetscCall(DMComputeExactSolution(dm, 0.0, u, NULL));
   PetscCall(VecDuplicate(u, &r));
@@ -1804,13 +1884,13 @@ PetscErrorCode DMSNESCheckResidual(SNES snes, DM dm, Vec u, PetscReal tol, Petsc
     *residual = res;
   } else {
     PetscCall(PetscPrintf(comm, "L_2 Residual: %g\n", (double)res));
-    PetscCall(VecChop(r, 1.0e-10));
+    PetscCall(VecFilter(r, 1.0e-10));
     PetscCall(PetscObjectSetName((PetscObject)r, "Initial Residual"));
     PetscCall(PetscObjectSetOptionsPrefix((PetscObject)r, "res_"));
     PetscCall(VecViewFromOptions(r, NULL, "-vec_view"));
   }
   PetscCall(VecDestroy(&r));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -1823,12 +1903,12 @@ PetscErrorCode DMSNESCheckResidual(SNES snes, DM dm, Vec u, PetscReal tol, Petsc
 - tol  - A tolerance for the check, or -1 to print the results instead
 
   Output Parameters:
-+ isLinear - Flag indicaing that the function looks linear, or NULL
-- convRate - The rate of convergence of the linear model, or NULL
++ isLinear - Flag indicaing that the function looks linear, or `NULL`
+- convRate - The rate of convergence of the linear model, or `NULL`
 
   Level: developer
 
-.seealso: `DNSNESCheckFromOptions()`, `DMSNESCheckDiscretization()`, `DMSNESCheckResidual()`
+.seealso: [](ch_snes), `DNSNESCheckFromOptions()`, `DMSNESCheckDiscretization()`, `DMSNESCheckResidual()`
 @*/
 PetscErrorCode DMSNESCheckJacobian(SNES snes, DM dm, Vec u, PetscReal tol, PetscBool *isLinear, PetscReal *convRate)
 {
@@ -1843,8 +1923,8 @@ PetscErrorCode DMSNESCheckJacobian(SNES snes, DM dm, Vec u, PetscReal tol, Petsc
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   PetscValidHeaderSpecific(dm, DM_CLASSID, 2);
   PetscValidHeaderSpecific(u, VEC_CLASSID, 3);
-  if (isLinear) PetscValidBoolPointer(isLinear, 5);
-  if (convRate) PetscValidRealPointer(convRate, 6);
+  if (isLinear) PetscAssertPointer(isLinear, 5);
+  if (convRate) PetscAssertPointer(convRate, 6);
   PetscCall(PetscObjectGetComm((PetscObject)snes, &comm));
   PetscCall(DMComputeExactSolution(dm, 0.0, u, NULL));
   /* Create and view matrices */
@@ -1904,7 +1984,7 @@ PetscErrorCode DMSNESCheckJacobian(SNES snes, DM dm, Vec u, PetscReal tol, Petsc
       PetscCall(VecAXPBYPCZ(rhat, -1.0, -h, 1.0, r, df));
       PetscCall(VecNorm(rhat, NORM_2, &errors[Nv]));
 
-      es[Nv] = PetscLog10Real(errors[Nv]);
+      es[Nv] = errors[Nv] == 0 ? -16.0 : PetscLog10Real(errors[Nv]);
       hs[Nv] = PetscLog10Real(h);
     }
     PetscCall(VecDestroy(&uhat));
@@ -1931,7 +2011,7 @@ PetscErrorCode DMSNESCheckJacobian(SNES snes, DM dm, Vec u, PetscReal tol, Petsc
     }
   }
   PetscCall(MatDestroy(&J));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMSNESCheck_Internal(SNES snes, DM dm, Vec u)
@@ -1940,7 +2020,7 @@ PetscErrorCode DMSNESCheck_Internal(SNES snes, DM dm, Vec u)
   PetscCall(DMSNESCheckDiscretization(snes, dm, 0.0, u, -1.0, NULL));
   PetscCall(DMSNESCheckResidual(snes, dm, u, -1.0, NULL));
   PetscCall(DMSNESCheckJacobian(snes, dm, u, -1.0, NULL, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -1950,10 +2030,12 @@ PetscErrorCode DMSNESCheck_Internal(SNES snes, DM dm, Vec u)
 + snes - the `SNES` object
 - u    - representative `SNES` vector
 
-  Note:
-  The user must call `PetscDSSetExactSolution()` beforehand
-
   Level: developer
+
+  Note:
+  The user must call `PetscDSSetExactSolution()` before this call
+
+.seealso: [](ch_snes), `SNES`, `DM`
 @*/
 PetscErrorCode DMSNESCheckFromOptions(SNES snes, Vec u)
 {
@@ -1963,11 +2045,11 @@ PetscErrorCode DMSNESCheckFromOptions(SNES snes, Vec u)
 
   PetscFunctionBegin;
   PetscCall(PetscOptionsHasName(((PetscObject)snes)->options, ((PetscObject)snes)->prefix, "-dmsnes_check", &check));
-  if (!check) PetscFunctionReturn(0);
+  if (!check) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(SNESGetDM(snes, &dm));
   PetscCall(VecDuplicate(u, &sol));
   PetscCall(SNESSetSolution(snes, sol));
   PetscCall(DMSNESCheck_Internal(snes, dm, sol));
   PetscCall(VecDestroy(&sol));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -8,17 +8,16 @@ sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 from collections import defaultdict
 
 AUTODIRS = set('ftn-auto ftn-custom f90-custom ftn-auto-interfaces'.split()) # Automatically recurse into these, if they exist
-SKIPDIRS = set('benchmarks build'.split())               # Skip these during the build
-NOWARNDIRS = set('tests tutorials'.split())              # Do not warn about mismatch in these
+SKIPDIRS = set('benchmarks build mex-scripts tests tutorials'.split())       # Skip these during the build
 
-def pathsplit(path):
+def pathsplit(pkg_dir, path):
     """Recursively split a path, returns a tuple"""
     stem, basename = os.path.split(path)
-    if stem == '':
+    if stem == '' or stem == pkg_dir:
         return (basename,)
-    if stem == path:            # fixed point, likely '/'
-        return (path,)
-    return pathsplit(stem) + (basename,)
+    if stem == path: # fixed point, likely '/'
+        return (None,)
+    return pathsplit(pkg_dir, stem) + (basename,)
 
 def getlangext(name):
     """Returns everything after the first . in the filename, including the ."""
@@ -41,9 +40,9 @@ class Mistakes(object):
         self.log = log
 
     def compareDirLists(self,root, mdirs, dirs):
-        if NOWARNDIRS.intersection(pathsplit(root)):
+        if SKIPDIRS.intersection(pathsplit(None, root)):
             return
-        smdirs = set(mdirs)
+        smdirs = set(mdirs).difference(AUTODIRS)
         sdirs  = set(dirs).difference(AUTODIRS)
         if not smdirs.issubset(sdirs):
             self.mistakes.append('%s/makefile contains a directory not on the filesystem: %r' % (root, sorted(smdirs - sdirs)))
@@ -56,22 +55,6 @@ class Mistakes(object):
                             'on filesystem ',sorted(sdirs),
                             'symmetric diff',sorted(smdirs.symmetric_difference(sdirs))))
 
-    def compareSourceLists(self, root, msources, files):
-        if NOWARNDIRS.intersection(pathsplit(root)):
-            return
-        smsources = set(msources)
-        ssources  = set(f for f in files if getlangext(f) in ['.c', '.kokkos.cxx','.cxx', '.cc', '.cu', '.cpp', '.F', '.F90', '.hip.cpp', '.sycl.cxx', 'raja.cxx'])
-        if not smsources.issubset(ssources):
-            self.mistakes.append('%s/makefile contains a file not on the filesystem: %r' % (root, sorted(smsources - ssources)))
-        if not self.verbose: return
-        if smsources != ssources:
-            from sys import stderr
-            stderr.write('Source mismatch at %s:\n\t%s: %r\n\t%s: %r\n\t%s: %r\n'
-                         % (root,
-                            'in makefile   ',sorted(smsources),
-                            'on filesystem ',sorted(ssources),
-                            'symmetric diff',sorted(smsources.symmetric_difference(ssources))))
-
     def summary(self):
         for m in self.mistakes:
             self.log.write(m + '\n')
@@ -83,8 +66,7 @@ def stripsplit(line):
 
 PetscPKGS = 'sys vec mat dm ksp snes ts tao'.split()
 # the key is actually the language suffix, it won't work for suffixes such as 'kokkos.cxx' so use an _ and replace the _ as needed with .
-LANGS = dict(kokkos_cxx='KOKKOS', c='C', cxx='CXX', cpp='CPP', cu='CU', F='F',
-             F90='F90', hip_cpp='HIP', sycl_cxx='SYCL', raja_cxx='RAJA')
+LANGS = dict(kokkos_cxx='KOKKOS', hip_cpp='HIP', sycl_cxx='SYCL', raja_cxx='RAJA', c='C', cxx='CXX', cpp='CPP', cu='CU', F='F', F90='F90')
 
 class debuglogger(object):
     def __init__(self, log):
@@ -126,7 +108,9 @@ class Petsc(object):
           self.pkg_arch = self.petsc_arch
         self.pkg_pkgs = PetscPKGS
         if pkg_pkgs is not None:
-          self.pkg_pkgs += list(set(pkg_pkgs.split(','))-set(self.pkg_pkgs))
+          if pkg_pkgs.find(',') > 0: npkgs = set(pkg_pkgs.split(','))
+          else: npkgs = set(pkg_pkgs.split(' '))
+          self.pkg_pkgs += list(npkgs - set(self.pkg_pkgs))
         self.read_conf()
         try:
             logging.basicConfig(filename=self.pkg_arch_path('lib',self.pkg_name,'conf', 'gmake.log'), level=logging.DEBUG)
@@ -169,7 +153,7 @@ class Petsc(object):
             f = self.pkg_arch_path('lib',self.pkg_name,'conf', self.pkg_name + 'variables')
             if os.path.isfile(f):
                 self.conf.update(parse_makefile(self.pkg_arch_path('lib',self.pkg_name,'conf', self.pkg_name + 'variables')))
-        self.have_fortran = int(self.conf.get('PETSC_HAVE_FORTRAN', '0'))
+        self.have_fortran = int(self.conf.get('PETSC_USE_FORTRAN_BINDINGS', '0'))
 
     def inconf(self, key, val):
         if key in ['package', 'function', 'define']:
@@ -185,48 +169,43 @@ class Petsc(object):
     def relpath(self, root, src):
         return os.path.relpath(os.path.join(root, src), self.pkg_dir)
 
-    def get_sources(self, makevars):
+    def get_sources_from_files(self, files):
         """Return dict {lang: list_of_source_files}"""
         source = dict()
         for lang, sourcelang in LANGS.items():
-            source[lang] = [f for f in makevars.get('SOURCE'+sourcelang,'').split() if f.endswith(lang.replace('_','.'))]
-
-            #source[lang] = [f for f in makevars.get('SOURCE'+sourcelang,'').split() if f.endswith(lang)]
-#SEK            source[lang] = [f for f in
-#SEK                            makevars.get('SOURCE'+sourcelang,'').split() if
-#SEK                            f.endswith(LANGSEXT[lang])]
+            source[lang] = [f for f in files if f.endswith('.'+lang.replace('_','.'))]
+            files = [f for f in files if not f.endswith('.'+lang.replace('_','.'))]
         return source
 
     def gen_pkg(self, pkg):
+        from itertools import chain
         pkgsrcs = dict()
         for lang in LANGS:
             pkgsrcs[lang] = []
-        for root, dirs, files in os.walk(os.path.join(self.pkg_dir, 'src', pkg)):
+        for root, dirs, files in chain.from_iterable(os.walk(path) for path in [os.path.join(self.pkg_dir, 'src', pkg),os.path.join(self.pkg_dir, self.pkg_arch, 'src', pkg)]):
+            if SKIPDIRS.intersection(pathsplit(self.pkg_dir, root)): continue
             dirs.sort()
             files.sort()
             makefile = os.path.join(root,'makefile')
-            if not os.path.exists(makefile):
-                dirs[:] = []
-                continue
-            with open(makefile) as mklines:
+            if os.path.isfile(makefile):
+              with open(makefile) as mklines:
                 conditions = set(tuple(stripsplit(line)) for line in mklines if line.startswith('#requires'))
-            if not all(self.inconf(key, val) for key, val in conditions):
+              if not all(self.inconf(key, val) for key, val in conditions):
                 dirs[:] = []
                 continue
-            makevars = parse_makefile(makefile)
-            mdirs = makevars.get('DIRS','').split() # Directories specified in the makefile
-            self.mistakes.compareDirLists(root, mdirs, dirs) # diagnostic output to find unused directories
-            candidates = set(mdirs).union(AUTODIRS).difference(SKIPDIRS)
-            dirs[:] = list(candidates.intersection(dirs))
+              makevars = parse_makefile(makefile)
+              mdirs = makevars.get('DIRS','').split() # Directories specified in the makefile
+              self.mistakes.compareDirLists(root, mdirs, dirs) # diagnostic output to find unused directories
+              candidates = set(mdirs).union(AUTODIRS).difference(SKIPDIRS)
+              dirs[:] = list(candidates.intersection(dirs))
             allsource = []
             def mkrel(src):
                 return self.relpath(root, src)
-            source = self.get_sources(makevars)
-            for lang, s in source.items():
-                pkgsrcs[lang] += [mkrel(t) for t in s]
-                allsource += s
-            self.mistakes.compareSourceLists(root, allsource, files) # Diagnostic output about unused source files
-            self.gendeps.append(self.relpath(root, 'makefile'))
+            if files:
+              source = self.get_sources_from_files(files)
+              for lang, s in source.items():
+                  pkgsrcs[lang] += [mkrel(t) for t in s]
+              if os.path.isfile(makefile): self.gendeps.append(self.relpath(root, 'makefile'))
         return pkgsrcs
 
     def gen_gnumake(self, fd):

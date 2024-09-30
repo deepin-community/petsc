@@ -12,6 +12,16 @@
        PetscQuadrature a ! PetscQuadrature
        PetscErrorCode z
        end subroutine PetscQuadratureDestroy
+      subroutine PetscQuadratureGetCellType(a,b,z)
+       PetscQuadrature a ! PetscQuadrature
+       DMPolytopeType b ! DMPolytopeType
+       PetscErrorCode z
+       end subroutine PetscQuadratureGetCellType
+      subroutine PetscQuadratureSetCellType(a,b,z)
+       PetscQuadrature a ! PetscQuadrature
+       DMPolytopeType b ! DMPolytopeType
+       PetscErrorCode z
+       end subroutine PetscQuadratureSetCellType
       subroutine PetscQuadratureGetOrder(a,b,z)
        PetscQuadrature a ! PetscQuadrature
        PetscInt b ! PetscInt
@@ -215,6 +225,20 @@
        PetscInt d ! PetscInt
        PetscErrorCode z
        end subroutine PetscDTBaryToIndex
+      subroutine PetscQuadratureComputePermutations(a,b,c,z)
+       import tIS
+       PetscQuadrature a ! PetscQuadrature
+       PetscInt b ! PetscInt
+       IS c (*) ! IS
+       PetscErrorCode z
+       end subroutine PetscQuadratureComputePermutations
+      subroutine PetscDTCreateDefaultQuadrature(a,b,c,d,z)
+       DMPolytopeType a ! DMPolytopeType
+       PetscInt b ! PetscInt
+       PetscQuadrature c ! PetscQuadrature
+       PetscQuadrature d ! PetscQuadrature
+       PetscErrorCode z
+       end subroutine PetscDTCreateDefaultQuadrature
       subroutine PetscDTAltVApply(a,b,c,d,e,z)
        PetscInt a ! PetscInt
        PetscInt b ! PetscInt
@@ -286,34 +310,6 @@
        PetscReal e ! PetscReal
        PetscErrorCode z
        end subroutine PetscDTAltVStar
-      subroutine PetscWeakFormCopy(a,b,z)
-       PetscWeakForm a ! PetscWeakForm
-       PetscWeakForm b ! PetscWeakForm
-       PetscErrorCode z
-       end subroutine PetscWeakFormCopy
-      subroutine PetscWeakFormClear(a,z)
-       PetscWeakForm a ! PetscWeakForm
-       PetscErrorCode z
-       end subroutine PetscWeakFormClear
-      subroutine PetscWeakFormGetNumFields(a,b,z)
-       PetscWeakForm a ! PetscWeakForm
-       PetscInt b ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscWeakFormGetNumFields
-      subroutine PetscWeakFormSetNumFields(a,b,z)
-       PetscWeakForm a ! PetscWeakForm
-       PetscInt b ! PetscInt
-       PetscErrorCode z
-       end subroutine PetscWeakFormSetNumFields
-      subroutine PetscWeakFormDestroy(a,z)
-       PetscWeakForm a ! PetscWeakForm
-       PetscErrorCode z
-       end subroutine PetscWeakFormDestroy
-      subroutine PetscWeakFormCreate(a,b,z)
-       MPI_Comm a ! MPI_Comm
-       PetscWeakForm b ! PetscWeakForm
-       PetscErrorCode z
-       end subroutine PetscWeakFormCreate
       subroutine PetscDSSetFromOptions(a,z)
        PetscDS a ! PetscDS
        PetscErrorCode z
@@ -347,6 +343,16 @@
        PetscInt b ! PetscInt
        PetscErrorCode z
        end subroutine PetscDSSetCoordinateDimension
+      subroutine PetscDSGetForceQuad(a,b,z)
+       PetscDS a ! PetscDS
+       PetscBool b ! PetscBool
+       PetscErrorCode z
+       end subroutine PetscDSGetForceQuad
+      subroutine PetscDSSetForceQuad(a,b,z)
+       PetscDS a ! PetscDS
+       PetscBool b ! PetscBool
+       PetscErrorCode z
+       end subroutine PetscDSSetForceQuad
       subroutine PetscDSIsCohesive(a,b,z)
        PetscDS a ! PetscDS
        PetscBool b ! PetscBool
@@ -678,3 +684,31 @@
        PetscReal c (*) ! PetscReal
        PetscErrorCode z
        end subroutine PetscPDFSampleConstant3D
+      subroutine PetscWeakFormCopy(a,b,z)
+       PetscWeakForm a ! PetscWeakForm
+       PetscWeakForm b ! PetscWeakForm
+       PetscErrorCode z
+       end subroutine PetscWeakFormCopy
+      subroutine PetscWeakFormClear(a,z)
+       PetscWeakForm a ! PetscWeakForm
+       PetscErrorCode z
+       end subroutine PetscWeakFormClear
+      subroutine PetscWeakFormGetNumFields(a,b,z)
+       PetscWeakForm a ! PetscWeakForm
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscWeakFormGetNumFields
+      subroutine PetscWeakFormSetNumFields(a,b,z)
+       PetscWeakForm a ! PetscWeakForm
+       PetscInt b ! PetscInt
+       PetscErrorCode z
+       end subroutine PetscWeakFormSetNumFields
+      subroutine PetscWeakFormDestroy(a,z)
+       PetscWeakForm a ! PetscWeakForm
+       PetscErrorCode z
+       end subroutine PetscWeakFormDestroy
+      subroutine PetscWeakFormCreate(a,b,z)
+       MPI_Comm a ! MPI_Comm
+       PetscWeakForm b ! PetscWeakForm
+       PetscErrorCode z
+       end subroutine PetscWeakFormCreate

@@ -5,37 +5,37 @@
 INTRODUCTION
 
 This source package is distributed in five binary packages: the shared
-libraries are in libpetsc-real3.18; header files, static libraries and important
-files for building examples are in libpetsc-real3.18-dev, this also sets up
-various alternatives links; debugging libraries are in libpetsc-real3.18-dbg;
+libraries are in libpetsc-real3.20; header files, static libraries and important
+files for building examples are in libpetsc-real3.20-dev, this also sets up
+various alternatives links; debugging libraries are in libpetsc-real3.20-dbg;
 extensive documentation and source code from "tests" and "tutorials"
-directories are in petsc3.18-doc.
+directories are in petsc3.20-doc.
 
 Standard packages are configured for real numbers.  Complex numbers are
 configured in the libpetsc-complex* packages. The preferred default
-configuration may be set using alternatives (petsc and libpetsc.so.3.18).
+configuration may be set using alternatives (petsc and libpetsc.so.3.20).
 
 The preferred PETSc installation is located at /usr/lib/petsc. This is a symlink
 to the actual installation, managed by Debian alternatives (see below). The
 standard installation is located at
   /usr/lib/petscdir/petsc<PETSC_VERSION>/<arch>-real
 e.g.
-  /usr/lib/petscdir/petsc3.18/x86_64-linux-gnu-real
+  /usr/lib/petscdir/petsc3.20/x86_64-linux-gnu-real
 
-Preferred minor patch versions of each major version (e.g. 3.18)
+Preferred minor patch versions of each major version (e.g. 3.20)
 are linked via
-  /usr/lib/petscdir/3.18
-(also, preferred versions of 3.18-real and 3.18-complex). These links are
+  /usr/lib/petscdir/3.20
+(also, preferred versions of 3.20-real and 3.20-complex). These links are
 controlled by alternatives.
 
-libpetsc.so is also controlled by alternatives (libpetsc.so.3.18)
+libpetsc.so is also controlled by alternatives (libpetsc.so.3.20)
 
 
-With libpetsc3.18-dev installed, you can build programs against it two ways:
+With libpetsc3.20-dev installed, you can build programs against it two ways:
 
      1. Standard build convention: use -I/usr/include/petsc for headers and
 	link to optimized libraries in /usr/lib, so your resulting binaries
-	will only depend on libpetsc3.18.0.
+	will only depend on libpetsc3.20.0.
      2. PETSc build convention: adapt a makefile from one of their tests or
 	tutorial directories and build with make PETSC_DIR=/usr/lib/petsc
      3. Use pkg-config (via /usr/lib/<arch>/pkgconfig/PETSC.pc).
@@ -46,10 +46,10 @@ dependencies.
 
 EXAMPLES
 
-For your testing convenience, petsc3.18-doc comes with the source code of
+For your testing convenience, petsc3.20-doc comes with the source code of
 the full PETSc test and tutorial suite.  Just do:
 
-	tar xzf /usr/share/doc/petsc3.18-doc/src.tar.gz
+	tar xzf /usr/share/doc/petsc3.20-doc/src.tar.gz
 
 then cd src, and use the PETSc build convention make command above with target
 testexamples or testfortran (add _uni to the target name for single-processor
@@ -66,14 +66,14 @@ promise I'll try to fix it.
 
 DEBUGGING LIBRARY
 
-With libpetsc-real3.18-dbg installed, a debug version is available at
-  /usr/lib/petscdir/petsc3.18/x86_64-linux-gnu-real-debug
+With libpetsc-real3.20-dbg installed, a debug version is available at
+  /usr/lib/petscdir/petsc3.20/x86_64-linux-gnu-real-debug
 
 This library includes unstripped symbols and also has internal PETSc debugging
 switched on. It may be accessed
 1) by setting PETSC_DIR
 2) via the pkg-config file in
-  /usr/lib/petscdir/petsc3.18/x86_64-linux-gnu-real-debug/lib/pkgconfig
+  /usr/lib/petscdir/petsc3.20/x86_64-linux-gnu-real-debug/lib/pkgconfig
 3) or by configuring as preferred alternative with update-alternatives.
 
 REPORTING BUGS and BUILDING FROM SOURCE
@@ -100,7 +100,7 @@ There are several ways to customize this package:
    Compaq compilers on an Alpha), do:
 
 	apt-get source petsc
-	cd petsc-3.18.0.dsfg1
+	cd petsc-3.20.0.dsfg1
 	fakeroot debian/rules PETSC_ARCH=linux_alpha_dec binary
 
    Note that this will only build architecture-dependent packages, and with
@@ -121,7 +121,7 @@ libpetsc<ext>.so
 Note that individual users can build against non-default installed versions of
 PETSc simply by setting the PETSC_DIR environment variable to the target
 directory instead of /usr/lib/petsc, for example to build against the lam
-version a user might set PETSC_DIR=/usr/lib/petscdir/petsc3.18/x86_64-linux-gnu-lam-real .
+version a user might set PETSC_DIR=/usr/lib/petscdir/petsc3.20/x86_64-linux-gnu-lam-real .
 
 NOTE ON SYMBOLIC LINKS THROUGH /etc/alternatives
 
@@ -144,15 +144,15 @@ there is more than one.
 
 When setting your preference for /usr/lib/petsc via "update-alternatives --config petsc",
 it is important for consistency to also update your preference for the 
-main shared library files provided by libpetsc-real3.18 or libpetsc-complex3.18.
-These alternative links are controlled by libpetsc.so.3.18:
+main shared library files provided by libpetsc-real3.20 or libpetsc-complex3.20.
+These alternative links are controlled by libpetsc.so.3.20:
 
-	update-alternatives --config libpetsc.so.3.18
+	update-alternatives --config libpetsc.so.3.20
 
-The preferred alternative for the major petsc version (e.g. 3.18) is linked in
-/usr/lib/petscdir/3.18 and set by
+The preferred alternative for the major petsc version (e.g. 3.20) is linked in
+/usr/lib/petscdir/3.20 and set by
 
-	update-alternatives --config petsc3.18
+	update-alternatives --config petsc3.20
 
 To maintain the consistency of the master and slave symlinks, it is very
 important that you use the Debian update-alternatives command, and do NOT
@@ -168,13 +168,13 @@ libpetsc_real.so
 libpetsc_complex.so
 	- set the default PETSc shared library with complex number support
 
-petsc3.18
-	- set the preferred version (real or complex, or debug) of PETSc 3.18
-	  (/usr/lib/petscdir/3.18)
+petsc3.20
+	- set the preferred version (real or complex, or debug) of PETSc 3.20
+	  (/usr/lib/petscdir/3.20)
 
-libpetsc.so.3.18
+libpetsc.so.3.20
 	- set the preferred version (real or complex) for the shared library 
-	  of PETSc 3.18
+	  of PETSc 3.20
 
 
 ===== 64-bit indexing =====

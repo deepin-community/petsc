@@ -32,7 +32,7 @@ The command line options include:\n\
 F*/
 
 /*
-      mpiexec -n 2 ./ex15 -snes_monitor -ksp_monitor log_summary
+      mpiexec -n 2 ./ex15 -snes_monitor -ksp_monitor log_view
 */
 
 /*
@@ -349,7 +349,7 @@ static PetscErrorCode FormInitialGuess(AppCtx *user, DM da, Vec X)
      Restore vector
   */
   PetscCall(DMDAVecRestoreArray(da, X, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -385,7 +385,7 @@ static PetscErrorCode FormRHS(AppCtx *user, DM da, Vec B)
     }
   }
   PetscCall(DMDAVecRestoreArray(da, B, &b));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscReal kappa(const AppCtx *ctx, PetscReal x, PetscReal y)
@@ -439,7 +439,7 @@ static PetscErrorCode FormFunctionLocal(DMDALocalInfo *info, PetscScalar **x, Pe
     }
   }
   PetscCall(PetscLogFlops(info->xm * info->ym * (72.0)));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -470,7 +470,7 @@ static PetscErrorCode FormFunctionPicardLocal(DMDALocalInfo *info, PetscScalar *
     }
   }
   PetscCall(PetscLogFlops(info->xm * info->ym * 2.0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -632,7 +632,7 @@ static PetscErrorCode FormJacobianLocal(DMDALocalInfo *info, PetscScalar **x, Ma
      matrix. If we do, it will generate an error.
   */
   if (user->jtype == JAC_NEWTON) PetscCall(PetscLogFlops(info->xm * info->ym * (131.0)));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /***********************************************************
@@ -649,7 +649,7 @@ PetscErrorCode PreCheckSetFromOptions(PreCheck precheck)
   PetscCall(PetscOptionsBool("-precheck_monitor", "Monitor choices made by precheck routine", "", flg, &flg, NULL));
   if (flg) PetscCall(PetscViewerASCIIOpen(precheck->comm, "stdout", &precheck->monitor));
   PetscOptionsEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -673,7 +673,7 @@ PetscErrorCode PreCheckFunction(SNESLineSearch linesearch, Vec X, Vec Y, PetscBo
   if (iter < 1) {
     PetscCall(VecCopy(Y, Ylast));
     *changed = PETSC_FALSE;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   PetscCall(VecDot(Y, Ylast, &dot));
@@ -696,17 +696,17 @@ PetscErrorCode PreCheckFunction(SNESLineSearch linesearch, Vec X, Vec Y, PetscBo
     *changed = PETSC_FALSE;
     if (precheck->monitor) PetscCall(PetscViewerASCIIPrintf(precheck->monitor, "Angle %g degrees exceeds threshold %g, no correction applied\n", (double)(theta * 180. / PETSC_PI), (double)precheck->angle));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PreCheckDestroy(PreCheck *precheck)
 {
   PetscFunctionBeginUser;
-  if (!*precheck) PetscFunctionReturn(0);
+  if (!*precheck) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(VecDestroy(&(*precheck)->Ylast));
   PetscCall(PetscViewerDestroy(&(*precheck)->monitor));
   PetscCall(PetscFree(*precheck));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PreCheckCreate(MPI_Comm comm, PreCheck *precheck)
@@ -716,7 +716,7 @@ PetscErrorCode PreCheckCreate(MPI_Comm comm, PreCheck *precheck)
 
   (*precheck)->comm  = comm;
   (*precheck)->angle = 10.; /* only active if angle is less than 10 degrees */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -812,7 +812,7 @@ x     Restore vector
     PetscCall(DMDAVecRestoreArrayRead(da, localB, &b));
     PetscCall(DMRestoreLocalVector(da, &localB));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST
@@ -844,6 +844,11 @@ x     Restore vector
    test:
       suffix: 4
       args: -snes_monitor_short -snes_type newtonls -npc_snes_type ngs -snes_npc_side left -da_grid_x 20 -da_grid_y 20 -p 1.3 -lambda 1 -ksp_monitor_short -pc_type none
+      requires: !single
+
+   test:
+      suffix: 5
+      args: -snes_monitor_short -snes_type newtontr -npc_snes_type ngs -snes_npc_side right -da_grid_x 20 -da_grid_y 20 -p 1.3 -lambda 1 -ksp_converged_reason -pc_type ilu
       requires: !single
 
    test:

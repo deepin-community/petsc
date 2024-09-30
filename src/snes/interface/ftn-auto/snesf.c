@@ -319,6 +319,11 @@ extern void PetscRmPointer(void*);
 #define snessettrustregiontolerance_ snessettrustregiontolerance
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define snesconverged_ SNESCONVERGED
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define snesconverged_ snesconverged
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define snesmonitor_ SNESMONITOR
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define snesmonitor_ snesmonitor
@@ -743,6 +748,11 @@ PETSC_EXTERN void  snessettrustregiontolerance_(SNES snes,PetscReal *tol, int *_
 {
 *__ierr = SNESSetTrustRegionTolerance(
 	(SNES)PetscToPointer((snes) ),*tol);
+}
+PETSC_EXTERN void  snesconverged_(SNES snes,PetscInt *it,PetscReal *xnorm,PetscReal *snorm,PetscReal *fnorm, int *__ierr)
+{
+*__ierr = SNESConverged(
+	(SNES)PetscToPointer((snes) ),*it,*xnorm,*snorm,*fnorm);
 }
 PETSC_EXTERN void  snesmonitor_(SNES snes,PetscInt *iter,PetscReal *rnorm, int *__ierr)
 {

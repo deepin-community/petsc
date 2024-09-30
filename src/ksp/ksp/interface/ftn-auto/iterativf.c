@@ -44,6 +44,16 @@ extern void PetscRmPointer(void*);
 #define kspgettotaliterations_ kspgettotaliterations
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define kspsetconvergednegativecurvature_ KSPSETCONVERGEDNEGATIVECURVATURE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define kspsetconvergednegativecurvature_ kspsetconvergednegativecurvature
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define kspgetconvergednegativecurvature_ KSPGETCONVERGEDNEGATIVECURVATURE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define kspgetconvergednegativecurvature_ kspgetconvergednegativecurvature
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define kspconvergeddefaultsetuirnorm_ KSPCONVERGEDDEFAULTSETUIRNORM
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define kspconvergeddefaultsetuirnorm_ kspconvergeddefaultsetuirnorm
@@ -57,6 +67,11 @@ extern void PetscRmPointer(void*);
 #define kspconvergeddefaultsetconvergedmaxits_ KSPCONVERGEDDEFAULTSETCONVERGEDMAXITS
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define kspconvergeddefaultsetconvergedmaxits_ kspconvergeddefaultsetconvergedmaxits
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define kspbuildresidualdefault_ KSPBUILDRESIDUALDEFAULT
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define kspbuildresidualdefault_ kspbuildresidualdefault
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define kspgetconvergedreason_ KSPGETCONVERGEDREASON
@@ -114,6 +129,16 @@ PETSC_EXTERN void  kspgettotaliterations_(KSP ksp,PetscInt *its, int *__ierr)
 *__ierr = KSPGetTotalIterations(
 	(KSP)PetscToPointer((ksp) ),its);
 }
+PETSC_EXTERN void  kspsetconvergednegativecurvature_(KSP ksp,PetscBool *flg, int *__ierr)
+{
+*__ierr = KSPSetConvergedNegativeCurvature(
+	(KSP)PetscToPointer((ksp) ),*flg);
+}
+PETSC_EXTERN void  kspgetconvergednegativecurvature_(KSP ksp,PetscBool *flg, int *__ierr)
+{
+*__ierr = KSPGetConvergedNegativeCurvature(
+	(KSP)PetscToPointer((ksp) ),flg);
+}
 PETSC_EXTERN void  kspconvergeddefaultsetuirnorm_(KSP ksp, int *__ierr)
 {
 *__ierr = KSPConvergedDefaultSetUIRNorm(
@@ -128,6 +153,13 @@ PETSC_EXTERN void  kspconvergeddefaultsetconvergedmaxits_(KSP ksp,PetscBool *flg
 {
 *__ierr = KSPConvergedDefaultSetConvergedMaxits(
 	(KSP)PetscToPointer((ksp) ),*flg);
+}
+PETSC_EXTERN void  kspbuildresidualdefault_(KSP ksp,Vec t,Vec v,Vec *V, int *__ierr)
+{
+*__ierr = KSPBuildResidualDefault(
+	(KSP)PetscToPointer((ksp) ),
+	(Vec)PetscToPointer((t) ),
+	(Vec)PetscToPointer((v) ),V);
 }
 PETSC_EXTERN void  kspgetconvergedreason_(KSP ksp,KSPConvergedReason *reason, int *__ierr)
 {
@@ -150,15 +182,15 @@ PETSC_EXTERN void  kspgetdm_(KSP ksp,DM *dm, int *__ierr)
 *__ierr = KSPGetDM(
 	(KSP)PetscToPointer((ksp) ),dm);
 }
-PETSC_EXTERN void  kspsetapplicationcontext_(KSP ksp,void*usrP, int *__ierr)
+PETSC_EXTERN void  kspsetapplicationcontext_(KSP ksp,void*ctx, int *__ierr)
 {
 *__ierr = KSPSetApplicationContext(
-	(KSP)PetscToPointer((ksp) ),usrP);
+	(KSP)PetscToPointer((ksp) ),ctx);
 }
-PETSC_EXTERN void  kspgetapplicationcontext_(KSP ksp,void*usrP, int *__ierr)
+PETSC_EXTERN void  kspgetapplicationcontext_(KSP ksp,void*ctx, int *__ierr)
 {
 *__ierr = KSPGetApplicationContext(
-	(KSP)PetscToPointer((ksp) ),usrP);
+	(KSP)PetscToPointer((ksp) ),ctx);
 }
 PETSC_EXTERN void  kspchecksolve_(KSP ksp,PC pc,Vec vec, int *__ierr)
 {

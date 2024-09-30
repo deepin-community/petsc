@@ -1,4 +1,3 @@
-
 #include <../src/mat/impls/baij/seq/baij.h>
 #include <../src/mat/impls/sbaij/seq/sbaij.h>
 
@@ -35,7 +34,7 @@ PetscErrorCode MatReorderingSeqSBAIJ(Mat A, IS perm)
   const PetscInt mbs = a->mbs;
 
   PetscFunctionBegin;
-  if (!mbs) PetscFunctionReturn(0);
+  if (!mbs) PetscFunctionReturn(PETSC_SUCCESS);
   SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP, "Matrix reordering is not supported for sbaij matrix. Use aij format");
 #if 0
   const PetscInt *rip,*riip;
@@ -143,6 +142,6 @@ PetscErrorCode MatReorderingSeqSBAIJ(Mat A, IS perm)
 
   PetscCall(PetscFree(nzr));
   PetscCall(PetscFree(r));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 #endif
 }

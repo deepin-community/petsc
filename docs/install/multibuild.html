@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Maintaining Your PETSc Installation(s) &#8212; PETSc 3.18.6 documentation</title>
+    <title>Maintaining Your PETSc Installation(s) &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -142,31 +143,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -293,31 +293,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -436,50 +435,50 @@
   <section id="maintaining-your-petsc-installation-s">
 <span id="doc-multi"></span><h1>Maintaining Your PETSc Installation(s)<a class="headerlink" href="#maintaining-your-petsc-installation-s" title="Permalink to this heading">#</a></h1>
 <p>Sometimes it is useful to have multiple concurrently built versions of PETSc installed,
-for example you may have a <code class="docutils literal notranslate"><span class="pre">arch-darwin-opt</span></code> and <code class="docutils literal notranslate"><span class="pre">arch-darwin-debug</span></code>. This would allow
+for example you may have a <code class="docutils notranslate"><span class="pre">arch-darwin-opt</span></code> and <code class="docutils notranslate"><span class="pre">arch-darwin-debug</span></code>. This would allow
 you to run a highly optimized performance version of your code and a debug version simply
-by changing the <code class="docutils literal notranslate"><span class="pre">$PETSC_ARCH</span></code> environment variable.</p>
+by changing the <code class="docutils notranslate"><span class="pre">$PETSC_ARCH</span></code> environment variable.</p>
 <section id="environmental-variables-petsc-dir-and-petsc-arch">
-<h2>Environmental Variables <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR</span></code> And <code class="docutils literal notranslate"><span class="pre">$PETSC_ARCH</span></code><a class="headerlink" href="#environmental-variables-petsc-dir-and-petsc-arch" title="Permalink to this heading">#</a></h2>
+<h2>Environmental Variables <code class="docutils notranslate"><span class="pre">$PETSC_DIR</span></code> And <code class="docutils notranslate"><span class="pre">$PETSC_ARCH</span></code><a class="headerlink" href="#environmental-variables-petsc-dir-and-petsc-arch" title="Permalink to this heading">#</a></h2>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>Applications completely providing their own makefiles do not need to use <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR</span></code>
-or <code class="docutils literal notranslate"><span class="pre">$PETSC_ARCH</span></code></p>
-<p><code class="docutils literal notranslate"><span class="pre">$PETSC_ARCH</span></code> is only needed for in-place installations. For out-of-place
+<p>Applications completely providing their own makefiles do not need to use <code class="docutils notranslate"><span class="pre">$PETSC_DIR</span></code>
+or <code class="docutils notranslate"><span class="pre">$PETSC_ARCH</span></code></p>
+<p><code class="docutils notranslate"><span class="pre">$PETSC_ARCH</span></code> is only needed for in-place installations. For out-of-place
 installations see <a class="reference internal" href="install.html#doc-config-install"><span class="std std-ref">documentation</span></a>.</p>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">$PETSC_DIR</span></code> and <code class="docutils literal notranslate"><span class="pre">$PETSC_ARCH</span></code> (in-place installs only) are used by the PETSc
+<p><code class="docutils notranslate"><span class="pre">$PETSC_DIR</span></code> and <code class="docutils notranslate"><span class="pre">$PETSC_ARCH</span></code> (in-place installs only) are used by the PETSc
 makefiles to indicate which directory and configuration of PETSc to use when compiling
 examples or application code. These variables can be set as environment variables or
 specified on the command line:</p>
 <ul>
-<li><p>Specify environment variable for bash (can be specified in <code class="docutils literal notranslate"><span class="pre">~/.bashrc</span></code> or
-<code class="docutils literal notranslate"><span class="pre">~/.bash_profile</span></code>):</p>
+<li><p>Specify environment variable for bash (can be specified in <code class="docutils notranslate"><span class="pre">~/.bashrc</span></code> or
+<code class="docutils notranslate"><span class="pre">~/.bash_profile</span></code>):</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">PETSC_DIR</span><span class="o">=</span>/absolute/path/to/petsc
 <span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">PETSC_ARCH</span><span class="o">=</span>linux-gnu-c-debug
 </pre></div>
 </div>
 </li>
-<li><p>Specify environment variable for csh/tcsh (can be specified in <code class="docutils literal notranslate"><span class="pre">~/.cshrc</span></code>):</p>
+<li><p>Specify environment variable for csh/tcsh (can be specified in <code class="docutils notranslate"><span class="pre">~/.cshrc</span></code>):</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>setenv<span class="w"> </span>PETSC_DIR<span class="w"> </span>/absolute/path/to/petsc
 <span class="gp">$ </span>setenv<span class="w"> </span>PETSC_ARCH<span class="w"> </span>linux-gnu-c-debug
 </pre></div>
 </div>
 </li>
 <li><p>Specify variable on commandline (bash) to build an example in
-<code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/src/ts/tutorials</span></code>:</p>
+<code class="docutils notranslate"><span class="pre">$PETSC_DIR/src/ts/tutorials</span></code>:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nv">PETSC_ARCH</span><span class="o">=</span>linux-gnu-c-debug<span class="w"> </span>make<span class="w"> </span><span class="nv">PETSC_DIR</span><span class="o">=</span>/absolute/path/to/petsc<span class="w"> </span>ex1
 </pre></div>
 </div>
 </li>
 </ul>
-<p><code class="docutils literal notranslate"><span class="pre">$PETSC_DIR</span></code> should point to the location of the PETSc installation. For out-of-place
-installations this is the <code class="docutils literal notranslate"><span class="pre">--prefix</span></code> location. For in-place installations it is the
-directory where you ran <code class="docutils literal notranslate"><span class="pre">configure</span></code>.</p>
+<p><code class="docutils notranslate"><span class="pre">$PETSC_DIR</span></code> should point to the location of the PETSc installation. For out-of-place
+installations this is the <code class="docutils notranslate"><span class="pre">--prefix</span></code> location. For in-place installations it is the
+directory where you ran <code class="docutils notranslate"><span class="pre">configure</span></code>.</p>
 </section>
 <section id="configure-caching">
 <span id="doc-multi-confcache"></span><h2>Configure Caching<a class="headerlink" href="#configure-caching" title="Permalink to this heading">#</a></h2>
-<p>The first time you build PETSc, you must first run <code class="docutils literal notranslate"><span class="pre">configure</span></code> which (among other
+<p>The first time you build PETSc, you must first run <code class="docutils notranslate"><span class="pre">configure</span></code> which (among other
 things) serves to identify key characteristics about the computing environment:</p>
 <ul class="simple">
 <li><p>The type of operating system</p></li>
@@ -489,33 +488,33 @@ things) serves to identify key characteristics about the computing environment:<
 <li><p>Whether your system supports certain instruction types (e.g. AVX)</p></li>
 <li><p>And more…</p></li>
 </ul>
-<p>While many things that <code class="docutils literal notranslate"><span class="pre">configure</span></code> must check are liable to change in between
-consecutive <code class="docutils literal notranslate"><span class="pre">configure</span></code> invocations, some things are very unlikely – if ever – to
-change. Hence <code class="docutils literal notranslate"><span class="pre">configure</span></code> can safely cache and reuse these values in subsequent
-<code class="docutils literal notranslate"><span class="pre">configure</span></code> runs, helping to speed up the lengthy process. A similar system is also used
+<p>While many things that <code class="docutils notranslate"><span class="pre">configure</span></code> must check are liable to change in between
+consecutive <code class="docutils notranslate"><span class="pre">configure</span></code> invocations, some things are very unlikely – if ever – to
+change. Hence <code class="docutils notranslate"><span class="pre">configure</span></code> can safely cache and reuse these values in subsequent
+<code class="docutils notranslate"><span class="pre">configure</span></code> runs, helping to speed up the lengthy process. A similar system is also used
 when determining whether to rebuild various packages installed through PETSc.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>While the caching system used by <code class="docutils literal notranslate"><span class="pre">configure</span></code> is very useful, it usually errs on
+<p>While the caching system used by <code class="docutils notranslate"><span class="pre">configure</span></code> is very useful, it usually errs on
 the side of caution. If a change has occurred in your system which could reasonably
-change how a package/program is compiled, <code class="docutils literal notranslate"><span class="pre">configure</span></code> will automatically rebuild this
+change how a package/program is compiled, <code class="docutils notranslate"><span class="pre">configure</span></code> will automatically rebuild this
 software for you.</p>
-<p>If you would like to enforce that <code class="docutils literal notranslate"><span class="pre">configure</span></code> does not use any cached values, you may
-use the <code class="docutils literal notranslate"><span class="pre">--force</span></code> option when configuring your PETSc installation:</p>
+<p>If you would like to enforce that <code class="docutils notranslate"><span class="pre">configure</span></code> does not use any cached values, you may
+use the <code class="docutils notranslate"><span class="pre">--force</span></code> option when configuring your PETSc installation:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--some-args<span class="w"> </span>--force
 </pre></div>
 </div>
-<p>Keep in mind however that this will only disable <code class="docutils literal notranslate"><span class="pre">configure</span></code>’s cache, not any other
+<p>Keep in mind however that this will only disable <code class="docutils notranslate"><span class="pre">configure</span></code>’s cache, not any other
 caching mechanism potentially in use, such as <a class="reference external" href="https://ccache.dev/">CCache</a>.</p>
 </div>
 <div class="yellow admonition">
 <p class="admonition-title">Caution</p>
-<p>If one still suspects malfeasance due to <code class="docutils literal notranslate"><span class="pre">configure</span></code> caching, or some corruption has
-occurred due to a faulty <code class="docutils literal notranslate"><span class="pre">configure</span></code> one may use the nuclear option
-<code class="docutils literal notranslate"><span class="pre">--with-clean</span></code>. This will <strong>permanently delete all build files, including installed
-packages</strong> under <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/$PETSC_ARCH</span></code> (effectively a “clean slate”) before
-runnning <code class="docutils literal notranslate"><span class="pre">configure</span></code>. The only thing preserved during this process is the
-<code class="docutils literal notranslate"><span class="pre">reconfigure</span></code> script:</p>
+<p>If one still suspects malfeasance due to <code class="docutils notranslate"><span class="pre">configure</span></code> caching, or some corruption has
+occurred due to a faulty <code class="docutils notranslate"><span class="pre">configure</span></code> one may use the nuclear option
+<code class="docutils notranslate"><span class="pre">--with-clean</span></code>. This will <strong>permanently delete all build files, including installed
+packages</strong> under <code class="docutils notranslate"><span class="pre">$PETSC_DIR/$PETSC_ARCH</span></code> (effectively a “clean slate”) before
+runnning <code class="docutils notranslate"><span class="pre">configure</span></code>. The only thing preserved during this process is the
+<code class="docutils notranslate"><span class="pre">reconfigure</span></code> script:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--many-args<span class="w"> </span>--with-clean
 </pre></div>
 </div>
@@ -524,17 +523,17 @@ runnning <code class="docutils literal notranslate"><span class="pre">configure<
 <section id="reconfigure">
 <h2>Reconfigure<a class="headerlink" href="#reconfigure" title="Permalink to this heading">#</a></h2>
 <p>For the reasons listed <a class="reference internal" href="#doc-multi-confcache"><span class="std std-ref">above</span></a>, the automatically generated
-<code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/$PETSC_ARCH/lib/petsc/conf/reconfigure-$PETSC_ARCH.py</span></code> (henceforth refered
-to simply as <code class="docutils literal notranslate"><span class="pre">reconfigure</span></code>) script is generated for you upon successfully finishing
-<code class="docutils literal notranslate"><span class="pre">configure</span></code>. <code class="docutils literal notranslate"><span class="pre">reconfigure</span></code> is a short-hand way of repeating your original
-<code class="docutils literal notranslate"><span class="pre">configure</span></code> invocation with the same arguments. In addition, <code class="docutils literal notranslate"><span class="pre">reconfigure</span></code> will also
-always explicitly define <code class="docutils literal notranslate"><span class="pre">PETSC_ARCH</span></code> within the <code class="docutils literal notranslate"><span class="pre">configure</span></code> arguments, so there is no
+<code class="docutils notranslate"><span class="pre">$PETSC_DIR/$PETSC_ARCH/lib/petsc/conf/reconfigure-$PETSC_ARCH.py</span></code> (henceforth refered
+to simply as <code class="docutils notranslate"><span class="pre">reconfigure</span></code>) script is generated for you upon successfully finishing
+<code class="docutils notranslate"><span class="pre">configure</span></code>. <code class="docutils notranslate"><span class="pre">reconfigure</span></code> is a short-hand way of repeating your original
+<code class="docutils notranslate"><span class="pre">configure</span></code> invocation with the same arguments. In addition, <code class="docutils notranslate"><span class="pre">reconfigure</span></code> will also
+always explicitly define <code class="docutils notranslate"><span class="pre">PETSC_ARCH</span></code> within the <code class="docutils notranslate"><span class="pre">configure</span></code> arguments, so there is no
 need to specificy which PETSc installation you wish to reconfigure.</p>
-<p>For example running the following <code class="docutils literal notranslate"><span class="pre">configure</span></code>:</p>
+<p>For example running the following <code class="docutils notranslate"><span class="pre">configure</span></code>:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--download-mpich<span class="w"> </span>--download-fblaslapack<span class="w"> </span>--with-debugging<span class="o">=</span><span class="m">1</span>
 </pre></div>
 </div>
-<p>Will result in the following <code class="docutils literal notranslate"><span class="pre">reconfigure</span></code>:</p>
+<p>Will result in the following <code class="docutils notranslate"><span class="pre">reconfigure</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/local/opt/python@3.9/bin/python3.9</span>
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
   <span class="kn">import</span> <span class="nn">sys</span>
@@ -550,19 +549,19 @@ need to specificy which PETSc installation you wish to reconfigure.</p>
   <span class="n">configure</span><span class="o">.</span><span class="n">petsc_configure</span><span class="p">(</span><span class="n">configure_options</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>In order to rerun this <code class="docutils literal notranslate"><span class="pre">configure</span></code> with the same arguments simply do:</p>
+<p>In order to rerun this <code class="docutils notranslate"><span class="pre">configure</span></code> with the same arguments simply do:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nv">$PETSC_DIR</span>/<span class="nv">$PETSC_ARCH</span>/lib/petsc/conf/reconfigure-<span class="nv">$PETSC_ARCH</span>.py
 </pre></div>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The <code class="docutils literal notranslate"><span class="pre">reconfigure</span></code> script also comes with one additional powerful tool, namely the
-ability to additively set new <code class="docutils literal notranslate"><span class="pre">configure</span></code> options, and also to change the values of
-previous <code class="docutils literal notranslate"><span class="pre">configure</span></code> options! This is particularly useful if one has a lot of
+<p>The <code class="docutils notranslate"><span class="pre">reconfigure</span></code> script also comes with one additional powerful tool, namely the
+ability to additively set new <code class="docutils notranslate"><span class="pre">configure</span></code> options, and also to change the values of
+previous <code class="docutils notranslate"><span class="pre">configure</span></code> options! This is particularly useful if one has a lot of
 <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a> installed through PETSc and would like
 to install another.</p>
-<p>One need only call <code class="docutils literal notranslate"><span class="pre">reconfigure</span></code>, supplying any additional command-line arguments as
-if it were the regular <code class="docutils literal notranslate"><span class="pre">configure</span></code>. Suppose one had an installation of PETSc with the following arguments (represented in the <code class="docutils literal notranslate"><span class="pre">reconfigure</span></code> script):</p>
+<p>One need only call <code class="docutils notranslate"><span class="pre">reconfigure</span></code>, supplying any additional command-line arguments as
+if it were the regular <code class="docutils notranslate"><span class="pre">configure</span></code>. Suppose one had an installation of PETSc with the following arguments (represented in the <code class="docutils notranslate"><span class="pre">reconfigure</span></code> script):</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="ch">#!/usr/local/opt/python@3.9/bin/python3.9</span>
 <span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
   <span class="kn">import</span> <span class="nn">sys</span>
@@ -582,12 +581,12 @@ if it were the regular <code class="docutils literal notranslate"><span class="p
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nv">$PETSC_DIR</span>/<span class="nv">$PETSC_ARCH</span>/lib/petsc/conf/reconfigure-<span class="nv">$PETSC_ARCH</span>.py<span class="w"> </span>--download-zlib
 </pre></div>
 </div>
-<p>Will install <a class="reference external" href="https://zlib.net/">zlib</a> into that <code class="docutils literal notranslate"><span class="pre">reconfigure</span></code>’s home
-<code class="docutils literal notranslate"><span class="pre">$PETSC_ARCH</span></code>.</p>
+<p>Will install <a class="reference external" href="https://zlib.net/">zlib</a> into that <code class="docutils notranslate"><span class="pre">reconfigure</span></code>’s home
+<code class="docutils notranslate"><span class="pre">$PETSC_ARCH</span></code>.</p>
 </div>
-<p>While it is automatically done for you the first time you <code class="docutils literal notranslate"><span class="pre">configure</span></code> and build PETSc,
-it is useful to symlink the <code class="docutils literal notranslate"><span class="pre">reconfigure</span></code> script for each <code class="docutils literal notranslate"><span class="pre">$PETSC_ARCH</span></code> that you
-intend to rebuild often into your <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR</span></code>:</p>
+<p>While it is automatically done for you the first time you <code class="docutils notranslate"><span class="pre">configure</span></code> and build PETSc,
+it is useful to symlink the <code class="docutils notranslate"><span class="pre">reconfigure</span></code> script for each <code class="docutils notranslate"><span class="pre">$PETSC_ARCH</span></code> that you
+intend to rebuild often into your <code class="docutils notranslate"><span class="pre">$PETSC_DIR</span></code>:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>ln<span class="w"> </span>-s<span class="w"> </span><span class="nv">$PETSC_DIR</span>/<span class="nv">$PETSC_ARCH</span>/lib/petsc/conf/reconfigure-<span class="nv">$PETSC_ARCH</span>.py<span class="w"> </span><span class="nv">$PETSC_DIR</span>/
 </pre></div>
 </div>
@@ -648,13 +647,13 @@ need to also do:</p>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#environmental-variables-petsc-dir-and-petsc-arch">
    Environmental Variables
-   <code class="docutils literal notranslate">
+   <code class="docutils notranslate">
     <span class="pre">
      $PETSC_DIR
     </span>
    </code>
    And
-   <code class="docutils literal notranslate">
+   <code class="docutils notranslate">
     <span class="pre">
      $PETSC_ARCH
     </span>
@@ -733,7 +732,7 @@ need to also do:</p>
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -749,7 +748,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

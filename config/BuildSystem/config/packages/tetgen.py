@@ -4,7 +4,7 @@ class Configure(config.package.Package):
   def __init__(self, framework):
     config.package.Package.__init__(self, framework)
     self.download     = ['http://www.tetgen.org/1.5/src/tetgen1.6.0.tar.gz',
-                         'http://ftp.mcs.anl.gov/pub/petsc/externalpackages/tetgen1.6.0.tar.gz']
+                         'https://web.cels.anl.gov/projects/petsc/download/externalpackages/tetgen1.6.0.tar.gz']
     self.liblist      = [['libtet.a']]
     self.includes     = ['tetgen.h']
     self.buildLanguage= 'Cxx'
@@ -23,7 +23,7 @@ class Configure(config.package.Package):
     import config.base
     import fileinput
 
-    libDir         = os.path.join(self.installDir, 'lib')
+    libDir         = self.libDir
     includeDir     = os.path.join(self.installDir, 'include')
     makeinc        = os.path.join(self.packageDir, 'make.inc')
     configheader   = os.path.join(self.packageDir, 'configureheader.h')

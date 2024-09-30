@@ -1,4 +1,3 @@
-
 static char help[] = "Solves a linear system in parallel with KSP. Modified from ex2.c \n\
                       Illustrate how to use external packages MUMPS, SUPERLU and STRUMPACK \n\
 Input parameters include:\n\
@@ -20,7 +19,7 @@ PetscErrorCode printMumpsMemoryInfo(Mat F)
   PetscCall(MatMumpsGetInfog(F, 17, &sumMem));
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "\n MUMPS INFOG(16) :: Max memory in MB = %" PetscInt_FMT, maxMem));
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "\n MUMPS INFOG(17) :: Sum memory in MB = %" PetscInt_FMT "\n", sumMem));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
@@ -43,12 +42,13 @@ int main(int argc, char **args)
 #if defined(PETSC_HAVE_STRUMPACK)
   PetscBool flg_strumpack = PETSC_FALSE;
 #endif
-  PetscScalar v;
-  PetscMPIInt rank, size;
-#if defined(PETSC_USE_LOG)
+  PetscScalar   v;
+  PetscMPIInt   rank, size;
   PetscLogStage stage;
-#endif
 
+#if defined(PETSC_HAVE_STRUMPACK) && defined(PETSC_HAVE_SLATE)
+  PETSC_MPI_THREAD_REQUIRED = MPI_THREAD_MULTIPLE;
+#endif
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &args, (char *)0, help));
   PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &rank));
@@ -125,27 +125,9 @@ int main(int argc, char **args)
   /* A is symmetric. Set symmetric flag to enable ICC/Cholesky preconditioner */
   PetscCall(MatSetOption(A, MAT_SYMMETRIC, PETSC_TRUE));
 
-  /*
-     Create parallel vectors.
-      - We form 1 vector from scratch and then duplicate as needed.
-      - When using VecCreate(), VecSetSizes and VecSetFromOptions()
-        in this example, we specify only the
-        vector's global dimension; the parallel partitioning is determined
-        at runtime.
-      - When solving a linear system, the vectors and matrices MUST
-        be partitioned accordingly.  PETSc automatically generates
-        appropriately partitioned matrices and vectors when MatCreate()
-        and VecCreate() are used with the same communicator.
-      - The user can alternatively specify the local vector and matrix
-        dimensions when more sophisticated partitioning is needed
-        (replacing the PETSC_DECIDE argument in the VecSetSizes() statement
-        below).
-  */
-  PetscCall(VecCreate(PETSC_COMM_WORLD, &u));
-  PetscCall(VecSetSizes(u, PETSC_DECIDE, m * n));
-  PetscCall(VecSetFromOptions(u));
-  PetscCall(VecDuplicate(u, &b));
-  PetscCall(VecDuplicate(b, &x));
+  /* Create parallel vectors */
+  PetscCall(MatCreateVecs(A, &u, &b));
+  PetscCall(VecDuplicate(u, &x));
 
   /*
      Set exact solution; then compute right-hand-side vector.
@@ -206,8 +188,23 @@ int main(int argc, char **args)
     PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERMUMPS));
     PetscCall(PCFactorSetUpMatSolverType(pc)); /* call MatGetFactor() to create F */
     PetscCall(PCFactorGetMatrix(pc, &F));
-
+    PetscCall(MatMumpsSetIcntl(F, 24, 1));
+    PetscCall(MatMumpsGetIcntl(F, 24, &ival));
+    PetscCheck(ival == 1, PetscObjectComm((PetscObject)F), PETSC_ERR_LIB, "ICNTL(24) = %" PetscInt_FMT " (!= 1)", ival);
+    PetscCall(MatMumpsSetCntl(F, 3, 1e-6));
+    PetscCall(MatMumpsGetCntl(F, 3, &val));
+    PetscCheck(PetscEqualReal(val, 1e-6), PetscObjectComm((PetscObject)F), PETSC_ERR_LIB, "CNTL(3) = %g (!= %g)", (double)val, 1e-6);
     if (flg_mumps) {
+      /* Zero the first and last rows in the rank, they should then show up in corresponding null pivot rows output via
+         MatMumpsGetNullPivots */
+      flg = PETSC_FALSE;
+      PetscCall(PetscOptionsGetBool(NULL, NULL, "-zero_first_and_last_rows", &flg, NULL));
+      if (flg) {
+        PetscInt rows[2];
+        rows[0] = Istart;   /* first row of the rank */
+        rows[1] = Iend - 1; /* last row of the rank */
+        PetscCall(MatZeroRows(A, 2, rows, 0.0, NULL, NULL));
+      }
       /* Get memory estimates from MUMPS' MatLUFactorSymbolic(), e.g. INFOG(16), INFOG(17).
          KSPSetUp() below will do nothing inside MatLUFactorSymbolic() */
       MatFactorInfo info;
@@ -223,10 +220,11 @@ int main(int argc, char **args)
     PetscCall(MatMumpsSetIcntl(F, icntl, ival));
 
     /* threshold for row pivot detection */
-    PetscCall(MatMumpsSetIcntl(F, 24, 1));
+    PetscCall(MatMumpsGetIcntl(F, 24, &ival));
+    PetscCheck(ival == 1, PetscObjectComm((PetscObject)F), PETSC_ERR_LIB, "ICNTL(24) = %" PetscInt_FMT " (!= 1)", ival);
     icntl = 3;
-    val   = 1.e-6;
-    PetscCall(MatMumpsSetCntl(F, icntl, val));
+    PetscCall(MatMumpsGetCntl(F, icntl, &val));
+    PetscCheck(PetscEqualReal(val, 1e-6), PetscObjectComm((PetscObject)F), PETSC_ERR_LIB, "CNTL(3) = %g (!= %g)", (double)val, 1e-6);
 
     /* compute determinant of A */
     PetscCall(MatMumpsSetIcntl(F, 33, 1));
@@ -275,16 +273,17 @@ int main(int argc, char **args)
     Note: runtime options
           '-pc_type lu/ilu \
            -pc_factor_mat_solver_type strumpack \
-           -mat_strumpack_reordering METIS \
+           -mat_strumpack_reordering GEOMETRIC \
+           -mat_strumpack_geometric_xyz n,m \
            -mat_strumpack_colperm 0 \
-           -mat_strumpack_hss_rel_tol 1.e-3 \
-           -mat_strumpack_hss_min_sep_size 50 \
-           -mat_strumpack_max_rank 100 \
+           -mat_strumpack_compression_rel_tol 1.e-3 \
+           -mat_strumpack_compression_min_sep_size 15 \
            -mat_strumpack_leaf_size 4'
        are equivalent to these procedural calls
 
-    We refer to the STRUMPACK-sparse manual, section 5, for more info on
-    how to tune the preconditioner.
+    We refer to the STRUMPACK manual for more info on
+    how to tune the preconditioner, see for instance:
+     https://portal.nersc.gov/project/sparse/strumpack/master/prec.html
   */
 #if defined(PETSC_HAVE_STRUMPACK)
   flg_ilu       = PETSC_FALSE;
@@ -302,27 +301,43 @@ int main(int argc, char **args)
     PetscCall(PCFactorSetMatSolverType(pc, MATSOLVERSTRUMPACK));
     PetscCall(PCFactorSetUpMatSolverType(pc)); /* call MatGetFactor() to create F */
     PetscCall(PCFactorGetMatrix(pc, &F));
-  #if defined(PETSC_HAVE_STRUMPACK)
-    /* Set the fill-reducing reordering.                              */
-    PetscCall(MatSTRUMPACKSetReordering(F, MAT_STRUMPACK_METIS));
+
+    /* Set the fill-reducing reordering, MAT_STRUMPACK_METIS is       */
+    /* always supported, but is sequential. Parallel alternatives are */
+    /* MAT_STRUMPACK_PARMETIS and MAT_STRUMPACK_PTSCOTCH, but         */
+    /* strumpack needs to be configured with support for these.       */
+    /*PetscCall(MatSTRUMPACKSetReordering(F, MAT_STRUMPACK_METIS));   */
+    /* However, since this is a problem on a regular grid, we can use */
+    /* a simple geometric nested dissection implementation, which     */
+    /* requires passing the grid dimensions to strumpack.             */
+    PetscCall(MatSTRUMPACKSetReordering(F, MAT_STRUMPACK_GEOMETRIC));
+    PetscCall(MatSTRUMPACKSetGeometricNxyz(F, n, m, PETSC_DECIDE));
+    /* These are optional, defaults are 1                             */
+    PetscCall(MatSTRUMPACKSetGeometricComponents(F, 1));
+    PetscCall(MatSTRUMPACKSetGeometricWidth(F, 1));
+
     /* Since this is a simple discretization, the diagonal is always  */
     /* nonzero, and there is no need for the extra MC64 permutation.  */
     PetscCall(MatSTRUMPACKSetColPerm(F, PETSC_FALSE));
-    /* The compression tolerance used when doing low-rank compression */
-    /* in the preconditioner. This is problem specific!               */
-    PetscCall(MatSTRUMPACKSetHSSRelTol(F, 1.e-3));
-    /* Set minimum matrix size for HSS compression to 15 in order to  */
-    /* demonstrate preconditioner on small problems. For performance  */
-    /* a value of say 500 is better.                                  */
-    PetscCall(MatSTRUMPACKSetHSSMinSepSize(F, 15));
-    /* You can further limit the fill in the preconditioner by        */
-    /* setting a maximum rank                                         */
-    PetscCall(MatSTRUMPACKSetHSSMaxRank(F, 100));
-    /* Set the size of the diagonal blocks (the leafs) in the HSS     */
-    /* approximation. The default value should be better for real     */
-    /* problems. This is mostly for illustration on a small problem.  */
-    PetscCall(MatSTRUMPACKSetHSSLeafSize(F, 4));
-  #endif
+
+    if (flg_ilu) {
+      /* The compression tolerance used when doing low-rank compression */
+      /* in the preconditioner. This is problem specific!               */
+      PetscCall(MatSTRUMPACKSetCompRelTol(F, 1.e-3));
+
+      /* Set a small minimum (dense) matrix size for compression to     */
+      /* demonstrate the preconditioner on small problems.              */
+      /* For performance the default value should be better.            */
+      /* This size corresponds to the size of separators in the graph.  */
+      /* For instance on an m x n mesh, the top level separator is of   */
+      /* size m (if m <= n)                                             */
+      /*PetscCall(MatSTRUMPACKSetCompMinSepSize(F,15));*/
+
+      /* Set the size of the diagonal blocks (the leafs) in the HSS     */
+      /* approximation. The default value should be better for real     */
+      /* problems. This is mostly for illustration on a small problem.  */
+      /*PetscCall(MatSTRUMPACKSetCompLeafSize(F,4));*/
+    }
   }
 #endif
 
@@ -363,18 +378,25 @@ int main(int argc, char **args)
 
 #if defined(PETSC_HAVE_MUMPS)
   if (flg_mumps || flg_mumps_ch) {
-    PetscInt  icntl, infog34;
+    PetscInt  icntl, infog34, num_null_pivots, *null_pivots;
     PetscReal cntl, rinfo12, rinfo13;
     icntl = 3;
     PetscCall(MatMumpsGetCntl(F, icntl, &cntl));
 
-    /* compute determinant */
+    /* compute determinant and check for any null pivots*/
     if (rank == 0) {
       PetscCall(MatMumpsGetInfog(F, 34, &infog34));
       PetscCall(MatMumpsGetRinfog(F, 12, &rinfo12));
       PetscCall(MatMumpsGetRinfog(F, 13, &rinfo13));
+      PetscCall(MatMumpsGetNullPivots(F, &num_null_pivots, &null_pivots));
       PetscCall(PetscPrintf(PETSC_COMM_SELF, "  Mumps row pivot threshold = %g\n", cntl));
       PetscCall(PetscPrintf(PETSC_COMM_SELF, "  Mumps determinant = (%g, %g) * 2^%" PetscInt_FMT " \n", (double)rinfo12, (double)rinfo13, infog34));
+      if (num_null_pivots > 0) {
+        PetscCall(PetscPrintf(PETSC_COMM_SELF, "  Mumps num of null pivots detected = %" PetscInt_FMT "\n", num_null_pivots));
+        PetscCall(PetscSortInt(num_null_pivots, null_pivots)); /* just make the printf deterministic */
+        for (j = 0; j < num_null_pivots; j++) PetscCall(PetscPrintf(PETSC_COMM_SELF, "  Mumps row with null pivots is = %" PetscInt_FMT "\n", null_pivots[j]));
+      }
+      PetscCall(PetscFree(null_pivots));
     }
   }
 #endif
@@ -453,8 +475,15 @@ int main(int argc, char **args)
       suffix: mumps_4
       nsize: 3
       requires: mumps !complex !single
-      args: -use_mumps_lu -m 50 -n 50 -use_mumps_lu -print_mumps_memory
+      args: -use_mumps_lu -m 50 -n 50 -print_mumps_memory
       output_file: output/ex52_4.out
+
+   test:
+      suffix: mumps_5
+      nsize: 3
+      requires: mumps !complex !single
+      args: -use_mumps_lu -m 50 -n 50 -zero_first_and_last_rows
+      output_file: output/ex52_5.out
 
    test:
       suffix: mumps_omp_2
@@ -480,44 +509,64 @@ int main(int argc, char **args)
       args: -use_mumps_ch -mat_type sbaij -mat_mumps_use_omp_threads
       output_file: output/ex52_1.out
 
-   test:
-      suffix: strumpack
+   testset:
+      suffix: strumpack_2
+      nsize: {{1 2}}
       requires: strumpack
       args: -use_strumpack_lu
       output_file: output/ex52_3.out
 
-   test:
-      suffix: strumpack_2
-      nsize: 2
-      requires: strumpack
-      args: -use_strumpack_lu
-      output_file: output/ex52_3.out
+      test:
+        suffix: aij
+        args: -mat_type aij
+
+      test:
+        requires: kokkos_kernels
+        suffix: kok
+        args: -mat_type aijkokkos
+
+      test:
+        requires: cuda
+        suffix: cuda
+        args: -mat_type aijcusparse
+
+      test:
+        requires: hip
+        suffix: hip
+        args: -mat_type aijhipsparse
 
    test:
       suffix: strumpack_ilu
+      nsize: {{1 2}}
       requires: strumpack
       args: -use_strumpack_ilu
       output_file: output/ex52_3.out
 
-   test:
-      suffix: strumpack_ilu_2
-      nsize: 2
-      requires: strumpack
-      args: -use_strumpack_ilu
-      output_file: output/ex52_3.out
-
-   test:
-      suffix: superlu
-      requires: superlu superlu_dist
-      args: -use_superlu_lu
-      output_file: output/ex52_2.out
-
-   test:
+   testset:
       suffix: superlu_dist
-      nsize: 2
+      nsize: {{1 2}}
       requires: superlu superlu_dist
       args: -use_superlu_lu
       output_file: output/ex52_2.out
+
+      test:
+        suffix: aij
+        args: -mat_type aij
+
+      test:
+        requires: kokkos_kernels
+        suffix: kok
+        args: -mat_type aijkokkos
+
+      test:
+        requires: cuda
+        suffix: cuda
+        args: -mat_type aijcusparse
+
+      test:
+        requires: hip
+        suffix: hip
+        args: -mat_type aijhipsparse
 
    test:
       suffix: superlu_ilu

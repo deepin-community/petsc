@@ -1,4 +1,3 @@
-
 #include <petsc/private/kspimpl.h>
 
 /*
@@ -12,7 +11,7 @@ static PetscErrorCode KSPSetUp_PIPECGRR(KSP ksp)
   PetscFunctionBegin;
   /* get work vectors needed by PIPECGRR */
   PetscCall(KSPSetWorkVecs(ksp, 9));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -94,7 +93,7 @@ static PetscErrorCode KSPSolve_PIPECGRR(KSP ksp)
   PetscCall(KSPMonitor(ksp, 0, dp));
   ksp->rnorm = dp;
   PetscCall((*ksp->converged)(ksp, 0, dp, &ksp->reason, ksp->cnvP)); /*  test for convergence  */
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(MatNorm(Amat, NORM_INFINITY, &Anorm));
   PetscCall(VecGetSize(B, &nsize));
@@ -167,7 +166,7 @@ static PetscErrorCode KSPSolve_PIPECGRR(KSP ksp)
       PetscCall(KSPLogResidualHistory(ksp, dp));
       PetscCall(KSPMonitor(ksp, i, dp));
       PetscCall((*ksp->converged)(ksp, i, dp, &ksp->reason, ksp->cnvP));
-      if (ksp->reason) PetscFunctionReturn(0);
+      if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
     }
 
     if (i == 0) {
@@ -236,11 +235,11 @@ static PetscErrorCode KSPSolve_PIPECGRR(KSP ksp)
 
   } while (i <= ksp->max_it);
   if (!ksp->reason) ksp->reason = KSP_DIVERGED_ITS;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-   KSPPIPECGRR - Pipelined conjugate gradient method with automated residual replacements. [](sec_pipelineksp)
+   KSPPIPECGRR - Pipelined conjugate gradient method with automated residual replacements {cite}`cools2018analyzing`. [](sec_pipelineksp)
 
    Level: intermediate
 
@@ -262,12 +261,7 @@ static PetscErrorCode KSPSolve_PIPECGRR(KSP ksp)
    Siegfried Cools, Universiteit Antwerpen, Dept. Mathematics & Computer Science,
    European FP7 Project on EXascale Algorithms and Advanced Computational Techniques (EXA2CT) / Research Foundation Flanders (FWO)
 
-   Reference:
-   S. Cools, E.F. Yetkin, E. Agullo, L. Giraud, W. Vanroose, "Analyzing the effect of local rounding error
-   propagation on the maximal attainable accuracy of the pipelined Conjugate Gradients method",
-   SIAM Journal on Matrix Analysis and Applications (SIMAX), 39(1):426--450, 2018.
-
-.seealso: [](chapter_ksp), [](doc_faq_pipelined), [](sec_pipelineksp), `KSPCreate()`, `KSPSetType()`, `KSPPIPECR`, `KSPGROPPCG`, `KSPPIPECG`, `KSPPGMRES`, `KSPCG`, `KSPPIPEBCGS`, `KSPCGUseSingleReduction()`
+.seealso: [](ch_ksp), [](doc_faq_pipelined), [](sec_pipelineksp), `KSPCreate()`, `KSPSetType()`, `KSPPIPECR`, `KSPGROPPCG`, `KSPPIPECG`, `KSPPGMRES`, `KSPCG`, `KSPPIPEBCGS`, `KSPCGUseSingleReduction()`
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_PIPECGRR(KSP ksp)
 {
@@ -284,5 +278,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_PIPECGRR(KSP ksp)
   ksp->ops->setfromoptions = NULL;
   ksp->ops->buildsolution  = KSPBuildSolutionDefault;
   ksp->ops->buildresidual  = KSPBuildResidualDefault;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

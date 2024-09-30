@@ -1,4 +1,3 @@
-
 #include <../src/ts/impls/implicit/glle/glle.h> /*I   "petscts.h"   I*/
 #include <petscdm.h>
 #include <petscblaslapack.h>
@@ -45,7 +44,7 @@ static PetscErrorCode TSGLLEGetVecs(TS ts, DM dm, Vec *Z, Vec *Ydotstage)
       PetscCall(DMGetNamedGlobalVector(dm, "TSGLLE_Ydot", Ydotstage));
     } else *Ydotstage = gl->Ydot[gl->stage];
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLERestoreVecs(TS ts, DM dm, Vec *Z, Vec *Ydotstage)
@@ -57,13 +56,13 @@ static PetscErrorCode TSGLLERestoreVecs(TS ts, DM dm, Vec *Z, Vec *Ydotstage)
   if (Ydotstage) {
     if (dm && dm != ts->dm) PetscCall(DMRestoreNamedGlobalVector(dm, "TSGLLE_Ydot", Ydotstage));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMCoarsenHook_TSGLLE(DM fine, DM coarse, void *ctx)
 {
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMRestrictHook_TSGLLE(DM fine, Mat restrct, Vec rscale, Mat inject, DM coarse, void *ctx)
@@ -78,13 +77,13 @@ static PetscErrorCode DMRestrictHook_TSGLLE(DM fine, Mat restrct, Vec rscale, Ma
   PetscCall(VecPointwiseMult(Ydot_c, rscale, Ydot_c));
   PetscCall(TSGLLERestoreVecs(ts, fine, NULL, &Ydot));
   PetscCall(TSGLLERestoreVecs(ts, coarse, NULL, &Ydot_c));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMSubDomainHook_TSGLLE(DM dm, DM subdm, void *ctx)
 {
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMSubDomainRestrictHook_TSGLLE(DM dm, VecScatter gscat, VecScatter lscat, DM subdm, void *ctx)
@@ -101,7 +100,7 @@ static PetscErrorCode DMSubDomainRestrictHook_TSGLLE(DM dm, VecScatter gscat, Ve
 
   PetscCall(TSGLLERestoreVecs(ts, dm, NULL, &Ydot));
   PetscCall(TSGLLERestoreVecs(ts, subdm, NULL, &Ydot_s));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLESchemeCreate(PetscInt p, PetscInt q, PetscInt r, PetscInt s, const PetscScalar *c, const PetscScalar *a, const PetscScalar *b, const PetscScalar *u, const PetscScalar *v, TSGLLEScheme *inscheme)
@@ -113,7 +112,7 @@ static PetscErrorCode TSGLLESchemeCreate(PetscInt p, PetscInt q, PetscInt r, Pet
   PetscCheck(p >= 1, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Scheme order must be positive");
   PetscCheck(r >= 1, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "At least one item must be carried between steps");
   PetscCheck(s >= 1, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "At least one stage is required");
-  PetscValidPointer(inscheme, 10);
+  PetscAssertPointer(inscheme, 10);
   *inscheme = NULL;
   PetscCall(PetscNew(&scheme));
   scheme->p = p;
@@ -281,7 +280,7 @@ static PetscErrorCode TSGLLESchemeCreate(PetscInt p, PetscInt q, PetscInt r, Pet
     if (r > 1 && v[1 * r + j] != 0.) scheme->fsal = PETSC_FALSE;
 
   *inscheme = scheme;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLESchemeDestroy(TSGLLEScheme sc)
@@ -290,7 +289,7 @@ static PetscErrorCode TSGLLESchemeDestroy(TSGLLEScheme sc)
   PetscCall(PetscFree5(sc->c, sc->a, sc->b, sc->u, sc->v));
   PetscCall(PetscFree6(sc->alpha, sc->beta, sc->gamma, sc->phi, sc->psi, sc->stage_error));
   PetscCall(PetscFree(sc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLEDestroy_Default(TS_GLLE *gl)
@@ -304,7 +303,7 @@ static PetscErrorCode TSGLLEDestroy_Default(TS_GLLE *gl)
   PetscCall(PetscFree(gl->schemes));
   gl->nschemes = 0;
   PetscCall(PetscMemzero(gl->type_name, sizeof(gl->type_name)));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLEViewTable_Private(PetscViewer viewer, PetscInt m, PetscInt n, const PetscScalar a[], const char name[])
@@ -324,7 +323,7 @@ static PetscErrorCode TSGLLEViewTable_Private(PetscViewer viewer, PetscInt m, Pe
       PetscCall(PetscViewerASCIIUseTabs(viewer, PETSC_TRUE));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLESchemeView(TSGLLEScheme sc, PetscBool view_details, PetscViewer viewer)
@@ -354,7 +353,7 @@ static PetscErrorCode TSGLLESchemeView(TSGLLEScheme sc, PetscBool view_details, 
     }
     PetscCall(PetscViewerASCIIPopTab(viewer));
   } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP, "Viewer type %s not supported", ((PetscObject)viewer)->type_name);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLEEstimateHigherMoments_Default(TSGLLEScheme sc, PetscReal h, Vec Ydot[], Vec Xold[], Vec hm[])
@@ -372,7 +371,7 @@ static PetscErrorCode TSGLLEEstimateHigherMoments_Default(TSGLLEScheme sc, Petsc
     PetscCall(VecMAXPY(hm[i], sc->s, phih, Ydot));
     PetscCall(VecMAXPY(hm[i], sc->r, &sc->psi[i * sc->r], Xold));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLECompleteStep_Rescale(TSGLLEScheme sc, PetscReal h, TSGLLEScheme next_sc, PetscReal next_h, Vec Ydot[], Vec Xold[], Vec X[])
@@ -391,7 +390,7 @@ static PetscErrorCode TSGLLECompleteStep_Rescale(TSGLLEScheme sc, PetscReal h, T
     for (j = 0; j < r; j++) vrow[j] = sc->v[i * r + j];
     PetscCall(VecMAXPY(X[i], r, vrow, Xold));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLECompleteStep_RescaleAndModify(TSGLLEScheme sc, PetscReal h, TSGLLEScheme next_sc, PetscReal next_h, Vec Ydot[], Vec Xold[], Vec X[])
@@ -425,7 +424,7 @@ static PetscErrorCode TSGLLECompleteStep_RescaleAndModify(TSGLLEScheme sc, Petsc
     for (j = 0; j < r; j++) vrow[j] = PetscPowRealInt(ratio, p + 1) * sc->psi[0 * r + j];
     PetscCall(VecMAXPY(X[r], r, vrow, Xold));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLECreate_IRKS(TS ts)
@@ -603,110 +602,108 @@ static PetscErrorCode TSGLLECreate_IRKS(TS ts)
     };
     PetscCall(TSGLLESchemeCreate(5, 5, 6, 6, c, *a, *b, *u, *v, &gl->schemes[gl->nschemes++]));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TSGLLESetType - sets the class of general linear method, `TSGLLE` to use for time-stepping
+  TSGLLESetType - sets the class of general linear method, `TSGLLE` to use for time-stepping
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  ts - the `TS` context
--  type - a method
+  Input Parameters:
++ ts   - the `TS` context
+- type - a method
 
-   Options Database Key:
-.  -ts_gl_type <type> - sets the method, use -help for a list of available method (e.g. irks)
+  Options Database Key:
+. -ts_gl_type <type> - sets the method, use -help for a list of available method (e.g. irks)
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-   See "petsc/include/petscts.h" for available methods (for instance)
+  Notes:
+  See "petsc/include/petscts.h" for available methods (for instance)
 .    TSGLLE_IRKS - Diagonally implicit methods with inherent Runge-Kutta stability (for stiff problems)
 
-   Normally, it is best to use the `TSSetFromOptions()` command and
-   then set the `TSGLLE` type from the options database rather than by using
-   this routine.  Using the options database provides the user with
-   maximum flexibility in evaluating the many different solvers.
-   The `TSGLLESetType()` routine is provided for those situations where it
-   is necessary to set the timestepping solver independently of the
-   command line or options database.  This might be the case, for example,
-   when the choice of solver changes during the execution of the
-   program, and the user's application is taking responsibility for
-   choosing the appropriate method.
+  Normally, it is best to use the `TSSetFromOptions()` command and then set the `TSGLLE` type
+  from the options database rather than by using this routine.  Using the options database
+  provides the user with maximum flexibility in evaluating the many different solvers.  The
+  `TSGLLESetType()` routine is provided for those situations where it is necessary to set the
+  timestepping solver independently of the command line or options database.  This might be the
+  case, for example, when the choice of solver changes during the execution of the program, and
+  the user's application is taking responsibility for choosing the appropriate method.
 
-.seealso: [](chapter_ts), `TS`, `TSGLLEType`, `TSGLLE`
+.seealso: [](ch_ts), `TS`, `TSGLLEType`, `TSGLLE`
 @*/
 PetscErrorCode TSGLLESetType(TS ts, TSGLLEType type)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts, TS_CLASSID, 1);
-  PetscValidCharPointer(type, 2);
+  PetscAssertPointer(type, 2);
   PetscTryMethod(ts, "TSGLLESetType_C", (TS, TSGLLEType), (ts, type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TSGLLESetAcceptType - sets the acceptance test for `TSGLLE`
+  TSGLLESetAcceptType - sets the acceptance test for `TSGLLE`
 
-   Time integrators that need to control error must have the option to reject a time step based on local error
-   estimates.  This function allows different schemes to be set.
+  Logically Collective
 
-   Logically Collective
+  Input Parameters:
++ ts   - the `TS` context
+- type - the type
 
-   Input Parameters:
-+  ts - the `TS` context
--  type - the type
+  Options Database Key:
+. -ts_gl_accept_type <type> - sets the method used to determine whether to accept or reject a step
 
-   Options Database Key:
-.  -ts_gl_accept_type <type> - sets the method used to determine whether to accept or reject a step
+  Level: intermediate
 
-   Level: intermediate
+  Notes:
+  Time integrators that need to control error must have the option to reject a time step based
+  on local error estimates. This function allows different schemes to be set.
 
-.seealso: [](chapter_ts), `TS`, `TSGLLE`, `TSGLLEAcceptRegister()`, `TSGLLEAdapt`
+.seealso: [](ch_ts), `TS`, `TSGLLE`, `TSGLLEAcceptRegister()`, `TSGLLEAdapt`
 @*/
 PetscErrorCode TSGLLESetAcceptType(TS ts, TSGLLEAcceptType type)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts, TS_CLASSID, 1);
-  PetscValidCharPointer(type, 2);
+  PetscAssertPointer(type, 2);
   PetscTryMethod(ts, "TSGLLESetAcceptType_C", (TS, TSGLLEAcceptType), (ts, type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TSGLLEGetAdapt - gets the `TSGLLEAdapt` object from the `TS`
+  TSGLLEGetAdapt - gets the `TSGLLEAdapt` object from the `TS`
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  ts - the `TS` context
+  Input Parameter:
+. ts - the `TS` context
 
-   Output Parameter:
-.  adapt - the `TSGLLEAdapt` context
+  Output Parameter:
+. adapt - the `TSGLLEAdapt` context
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   This allows the user set options on the `TSGLLEAdapt` object.  Usually it is better to do this using the options
-   database, so this function is rarely needed.
+  Note:
+  This allows the user set options on the `TSGLLEAdapt` object. Usually it is better to do this
+  using the options database, so this function is rarely needed.
 
-.seealso: [](chapter_ts), `TS`, `TSGLLE`, `TSGLLEAdapt`, `TSGLLEAdaptRegister()`
+.seealso: [](ch_ts), `TS`, `TSGLLE`, `TSGLLEAdapt`, `TSGLLEAdaptRegister()`
 @*/
 PetscErrorCode TSGLLEGetAdapt(TS ts, TSGLLEAdapt *adapt)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts, TS_CLASSID, 1);
-  PetscValidPointer(adapt, 2);
+  PetscAssertPointer(adapt, 2);
   PetscUseMethod(ts, "TSGLLEGetAdapt_C", (TS, TSGLLEAdapt *), (ts, adapt));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLEAccept_Always(TS ts, PetscReal tleft, PetscReal h, const PetscReal enorms[], PetscBool *accept)
 {
   PetscFunctionBegin;
   *accept = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLEUpdateWRMS(TS ts)
@@ -722,7 +719,7 @@ static PetscErrorCode TSGLLEUpdateWRMS(TS ts)
   for (i = 0; i < n; i++) w[i] = 1. / (gl->wrms_atol + gl->wrms_rtol * PetscAbsScalar(x[i]));
   PetscCall(VecRestoreArray(gl->X[0], &x));
   PetscCall(VecRestoreArray(gl->W, &w));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLEVecNormWRMS(TS ts, Vec X, PetscReal *nrm)
@@ -742,7 +739,7 @@ static PetscErrorCode TSGLLEVecNormWRMS(TS ts, Vec X, PetscReal *nrm)
   PetscCall(MPIU_Allreduce(&sum, &gsum, 1, MPIU_REAL, MPIU_SUM, PetscObjectComm((PetscObject)ts)));
   PetscCall(VecGetSize(gl->W, &N));
   *nrm = PetscSqrtReal(gsum / (1. * N));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLESetType_GLLE(TS ts, TSGLLEType type)
@@ -754,15 +751,15 @@ static PetscErrorCode TSGLLESetType_GLLE(TS ts, TSGLLEType type)
   PetscFunctionBegin;
   if (gl->type_name[0]) {
     PetscCall(PetscStrcmp(gl->type_name, type, &same));
-    if (same) PetscFunctionReturn(0);
+    if (same) PetscFunctionReturn(PETSC_SUCCESS);
     PetscCall((*gl->Destroy)(gl));
   }
 
   PetscCall(PetscFunctionListFind(TSGLLEList, type, &r));
-  PetscCheck(r, PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown TSGLLE type \"%s\" given", type);
+  PetscCheck(r, PetscObjectComm((PetscObject)ts), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown TSGLLE type \"%s\" given", type);
   PetscCall((*r)(ts));
-  PetscCall(PetscStrcpy(gl->type_name, type));
-  PetscFunctionReturn(0);
+  PetscCall(PetscStrncpy(gl->type_name, type, sizeof(gl->type_name)));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLESetAcceptType_GLLE(TS ts, TSGLLEAcceptType type)
@@ -772,10 +769,10 @@ static PetscErrorCode TSGLLESetAcceptType_GLLE(TS ts, TSGLLEAcceptType type)
 
   PetscFunctionBegin;
   PetscCall(PetscFunctionListFind(TSGLLEAcceptList, type, &r));
-  PetscCheck(r, PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown TSGLLEAccept type \"%s\" given", type);
+  PetscCheck(r, PetscObjectComm((PetscObject)ts), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown TSGLLEAccept type \"%s\" given", type);
   gl->Accept = r;
   PetscCall(PetscStrncpy(gl->accept_name, type, sizeof(gl->accept_name)));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLEGetAdapt_GLLE(TS ts, TSGLLEAdapt *adapt)
@@ -788,7 +785,7 @@ static PetscErrorCode TSGLLEGetAdapt_GLLE(TS ts, TSGLLEAdapt *adapt)
     PetscCall(PetscObjectIncrementTabLevel((PetscObject)gl->adapt, (PetscObject)ts, 1));
   }
   *adapt = gl->adapt;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLEChooseNextScheme(TS ts, PetscReal h, const PetscReal hmnorm[], PetscInt *next_scheme, PetscReal *next_h, PetscBool *finish)
@@ -819,7 +816,7 @@ static PetscErrorCode TSGLLEChooseNextScheme(TS ts, PetscReal h, const PetscReal
   *next_scheme = candidates[next_sc];
   PetscCall(PetscInfo(ts, "Adapt chose scheme %" PetscInt_FMT " (%" PetscInt_FMT ",%" PetscInt_FMT ",%" PetscInt_FMT ",%" PetscInt_FMT ") with step size %6.2e, finish=%s\n", *next_scheme, gl->schemes[*next_scheme]->p, gl->schemes[*next_scheme]->q,
                       gl->schemes[*next_scheme]->r, gl->schemes[*next_scheme]->s, (double)*next_h, PetscBools[*finish]));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSGLLEGetMaxSizes(TS ts, PetscInt *max_r, PetscInt *max_s)
@@ -829,7 +826,7 @@ static PetscErrorCode TSGLLEGetMaxSizes(TS ts, PetscInt *max_r, PetscInt *max_s)
   PetscFunctionBegin;
   *max_r = gl->schemes[gl->nschemes - 1]->r;
   *max_s = gl->schemes[gl->nschemes - 1]->s;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSSolve_GLLE(TS ts)
@@ -865,7 +862,7 @@ static PetscErrorCode TSSolve_GLLE(TS ts)
     if (snesreason < 0 && ts->max_snes_failures > 0 && ++ts->num_snes_failures >= ts->max_snes_failures) {
       ts->reason = TS_DIVERGED_NONLINEAR_SOLVE;
       PetscCall(PetscInfo(ts, "Step=%" PetscInt_FMT ", nonlinear solve solve failures %" PetscInt_FMT " greater than current TS allowed, stopping solve\n", ts->steps, ts->num_snes_failures));
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
   }
 
@@ -940,7 +937,7 @@ static PetscErrorCode TSSolve_GLLE(TS ts)
         if (snesreason < 0 && ts->max_snes_failures > 0 && ++ts->num_snes_failures >= ts->max_snes_failures) {
           ts->reason = TS_DIVERGED_NONLINEAR_SOLVE;
           PetscCall(PetscInfo(ts, "Step=%" PetscInt_FMT ", nonlinear solve solve failures %" PetscInt_FMT " greater than current TS allowed, stopping solve\n", ts->steps, ts->num_snes_failures));
-          PetscFunctionReturn(0);
+          PetscFunctionReturn(PETSC_SUCCESS);
         }
       }
 
@@ -1004,7 +1001,7 @@ static PetscErrorCode TSSolve_GLLE(TS ts)
     gl->current_scheme = next_scheme;
     ts->time_step      = next_h;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*------------------------------------------------------------*/
@@ -1026,7 +1023,7 @@ static PetscErrorCode TSReset_GLLE(TS ts)
     PetscCall(VecDestroy(&gl->Z));
   }
   gl->setupcalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSDestroy_GLLE(TS ts)
@@ -1045,7 +1042,7 @@ static PetscErrorCode TSDestroy_GLLE(TS ts)
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSGLLESetType_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSGLLESetAcceptType_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSGLLEGetAdapt_C", NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1067,7 +1064,7 @@ static PetscErrorCode SNESTSFormFunction_GLLE(SNES snes, Vec x, Vec f, TS ts)
   PetscCall(TSComputeIFunction(ts, gl->stage_time, x, Ydot, f, PETSC_FALSE));
   ts->dm = dmsave;
   PetscCall(TSGLLERestoreVecs(ts, dm, &Z, &Ydot));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESTSFormJacobian_GLLE(SNES snes, Vec x, Mat A, Mat B, TS ts)
@@ -1085,7 +1082,7 @@ static PetscErrorCode SNESTSFormJacobian_GLLE(SNES snes, Vec x, Mat A, Mat B, TS
   PetscCall(TSComputeIJacobian(ts, gl->stage_time, x, gl->Ydot[gl->stage], gl->scoeff / ts->time_step, A, B, PETSC_FALSE));
   ts->dm = dmsave;
   PetscCall(TSGLLERestoreVecs(ts, dm, &Z, &Ydot));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSSetUp_GLLE(TS ts)
@@ -1120,7 +1117,7 @@ static PetscErrorCode TSSetUp_GLLE(TS ts)
   PetscCall(TSGetDM(ts, &dm));
   PetscCall(DMCoarsenHookAdd(dm, DMCoarsenHook_TSGLLE, DMRestrictHook_TSGLLE, ts));
   PetscCall(DMSubDomainHookAdd(dm, DMSubDomainHook_TSGLLE, DMSubDomainRestrictHook_TSGLLE, ts));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /*------------------------------------------------------------*/
 
@@ -1150,7 +1147,7 @@ static PetscErrorCode TSSetFromOptions_GLLE(TS ts, PetscOptionItems *PetscOption
       PetscCall(PetscStrcmp(completef, "rescale-and-modify", &match2));
       if (match1) gl->CompleteStep = TSGLLECompleteStep_Rescale;
       else if (match2) gl->CompleteStep = TSGLLECompleteStep_RescaleAndModify;
-      else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "%s", completef);
+      else SETERRQ(PetscObjectComm((PetscObject)ts), PETSC_ERR_ARG_UNKNOWN_TYPE, "%s", completef);
     }
     {
       char type[256] = TSGLLEACCEPT_ALWAYS;
@@ -1164,7 +1161,7 @@ static PetscErrorCode TSSetFromOptions_GLLE(TS ts, PetscOptionItems *PetscOption
     }
   }
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSView_GLLE(TS ts, PetscViewer viewer)
@@ -1192,74 +1189,74 @@ static PetscErrorCode TSView_GLLE(TS ts, PetscViewer viewer)
     if (gl->View) PetscCall((*gl->View)(gl, viewer));
     PetscCall(PetscViewerASCIIPopTab(viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TSGLLERegister -  adds a `TSGLLE` implementation
+  TSGLLERegister -  adds a `TSGLLE` implementation
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  name_scheme - name of user-defined general linear scheme
--  routine_create - routine to create method context
+  Input Parameters:
++ sname    - name of user-defined general linear scheme
+- function - routine to create method context
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   `TSGLLERegister()` may be called multiple times to add several user-defined families.
+  Note:
+  `TSGLLERegister()` may be called multiple times to add several user-defined families.
 
-   Sample usage:
+  Example Usage:
 .vb
-   TSGLLERegister("my_scheme",MySchemeCreate);
+  TSGLLERegister("my_scheme", MySchemeCreate);
 .ve
 
-   Then, your scheme can be chosen with the procedural interface via
-$     TSGLLESetType(ts,"my_scheme")
-   or at runtime via the option
-$     -ts_gl_type my_scheme
+  Then, your scheme can be chosen with the procedural interface via
+$ TSGLLESetType(ts, "my_scheme")
+  or at runtime via the option
+$ -ts_gl_type my_scheme
 
-.seealso: [](chapter_ts), `TSGLLE`, `TSGLLEType`, `TSGLLERegisterAll()`
+.seealso: [](ch_ts), `TSGLLE`, `TSGLLEType`, `TSGLLERegisterAll()`
 @*/
 PetscErrorCode TSGLLERegister(const char sname[], PetscErrorCode (*function)(TS))
 {
   PetscFunctionBegin;
   PetscCall(TSGLLEInitializePackage());
   PetscCall(PetscFunctionListAdd(&TSGLLEList, sname, function));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TSGLLEAcceptRegister -  adds a `TSGLLE` acceptance scheme
+  TSGLLEAcceptRegister -  adds a `TSGLLE` acceptance scheme
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  name_scheme - name of user-defined acceptance scheme
--  routine_create - routine to create method context
+  Input Parameters:
++ sname    - name of user-defined acceptance scheme
+- function - routine to create method context
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   `TSGLLEAcceptRegister()` may be called multiple times to add several user-defined families.
+  Note:
+  `TSGLLEAcceptRegister()` may be called multiple times to add several user-defined families.
 
-   Sample usage:
+  Example Usage:
 .vb
-   TSGLLEAcceptRegister("my_scheme",MySchemeCreate);
+  TSGLLEAcceptRegister("my_scheme", MySchemeCreate);
 .ve
 
-   Then, your scheme can be chosen with the procedural interface via
-$     TSGLLESetAcceptType(ts,"my_scheme")
-   or at runtime via the option
-$     -ts_gl_accept_type my_scheme
+  Then, your scheme can be chosen with the procedural interface via
+$ TSGLLESetAcceptType(ts, "my_scheme")
+  or at runtime via the option
+$ -ts_gl_accept_type my_scheme
 
-.seealso: [](chapter_ts), `TSGLLE`, `TSGLLEType`, `TSGLLERegisterAll()`, `TSGLLEAcceptFunction`
+.seealso: [](ch_ts), `TSGLLE`, `TSGLLEType`, `TSGLLERegisterAll()`, `TSGLLEAcceptFunction`
 @*/
 PetscErrorCode TSGLLEAcceptRegister(const char sname[], TSGLLEAcceptFunction function)
 {
   PetscFunctionBegin;
   PetscCall(PetscFunctionListAdd(&TSGLLEAcceptList, sname, function));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -1269,17 +1266,17 @@ PetscErrorCode TSGLLEAcceptRegister(const char sname[], TSGLLEAcceptFunction fun
 
   Level: advanced
 
-.seealso: [](chapter_ts), `TSGLLE`, `TSGLLERegisterDestroy()`
+.seealso: [](ch_ts), `TSGLLE`, `TSGLLERegisterDestroy()`
 @*/
 PetscErrorCode TSGLLERegisterAll(void)
 {
   PetscFunctionBegin;
-  if (TSGLLERegisterAllCalled) PetscFunctionReturn(0);
+  if (TSGLLERegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   TSGLLERegisterAllCalled = PETSC_TRUE;
 
   PetscCall(TSGLLERegister(TSGLLE_IRKS, TSGLLECreate_IRKS));
   PetscCall(TSGLLEAcceptRegister(TSGLLEACCEPT_ALWAYS, TSGLLEAccept_Always));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -1288,16 +1285,16 @@ PetscErrorCode TSGLLERegisterAll(void)
 
   Level: developer
 
-.seealso: [](chapter_ts), `PetscInitialize()`, `TSInitializePackage()`, `TSGLLEFinalizePackage()`
+.seealso: [](ch_ts), `PetscInitialize()`, `TSInitializePackage()`, `TSGLLEFinalizePackage()`
 @*/
 PetscErrorCode TSGLLEInitializePackage(void)
 {
   PetscFunctionBegin;
-  if (TSGLLEPackageInitialized) PetscFunctionReturn(0);
+  if (TSGLLEPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   TSGLLEPackageInitialized = PETSC_TRUE;
   PetscCall(TSGLLERegisterAll());
   PetscCall(PetscRegisterFinalize(TSGLLEFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -1306,7 +1303,7 @@ PetscErrorCode TSGLLEInitializePackage(void)
 
   Level: developer
 
-.seealso: [](chapter_ts), `PetscFinalize()`, `TSGLLEInitializePackage()`, `TSInitializePackage()`
+.seealso: [](ch_ts), `PetscFinalize()`, `TSGLLEInitializePackage()`, `TSInitializePackage()`
 @*/
 PetscErrorCode TSGLLEFinalizePackage(void)
 {
@@ -1315,19 +1312,12 @@ PetscErrorCode TSGLLEFinalizePackage(void)
   PetscCall(PetscFunctionListDestroy(&TSGLLEAcceptList));
   TSGLLEPackageInitialized = PETSC_FALSE;
   TSGLLERegisterAllCalled  = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------ */
 /*MC
-      TSGLLE - DAE solver using implicit General Linear methods
-
-  These methods contain Runge-Kutta and multistep schemes as special cases.  These special cases have some fundamental
-  limitations.  For example, diagonally implicit Runge-Kutta cannot have stage order greater than 1 which limits their
-  applicability to very stiff systems.  Meanwhile, multistep methods cannot be A-stable for order greater than 2 and BDF
-  are not 0-stable for order greater than 6.  GL methods can be A- and L-stable with arbitrarily high stage order and
-  reliable error estimates for both 1 and 2 orders higher to facilitate adaptive step sizes and adaptive order schemes.
-  All this is possible while preserving a singly diagonally implicit structure.
+  TSGLLE - DAE solver using implicit General Linear methods {cite}`butcher_2007` {cite}`butcher2016numerical`
 
   Options Database Keys:
 +  -ts_gl_type <type> - the class of general linear method (irks)
@@ -1342,10 +1332,19 @@ PetscErrorCode TSGLLEFinalizePackage(void)
   Level: beginner
 
   Notes:
+  These methods contain Runge-Kutta and multistep schemes as special cases. These special cases
+  have some fundamental limitations. For example, diagonally implicit Runge-Kutta cannot have
+  stage order greater than 1 which limits their applicability to very stiff systems.
+  Meanwhile, multistep methods cannot be A-stable for order greater than 2 and BDF are not
+  0-stable for order greater than 6. GL methods can be A- and L-stable with arbitrarily high
+  stage order and reliable error estimates for both 1 and 2 orders higher to facilitate
+  adaptive step sizes and adaptive order schemes. All this is possible while preserving a
+  singly diagonally implicit structure.
+
   This integrator can be applied to DAE.
 
-  Diagonally implicit general linear (DIGL) methods are a generalization of diagonally implicit Runge-Kutta (DIRK).
-  They are represented by the tableau
+  Diagonally implicit general linear (DIGL) methods are a generalization of diagonally implicit
+  Runge-Kutta (DIRK). They are represented by the tableau
 
 .vb
   A  |  U
@@ -1353,61 +1352,62 @@ PetscErrorCode TSGLLEFinalizePackage(void)
   B  |  V
 .ve
 
-  combined with a vector c of abscissa.  "Diagonally implicit" means that A is lower triangular.
-  A step of the general method reads
+  combined with a vector c of abscissa. "Diagonally implicit" means that $A$ is lower
+  triangular. A step of the general method reads
 
-.vb
-  [ Y ] = [A  U] [  Y'   ]
+  $$
+  \begin{align*}
+  [ Y ] = [A  U] [  Y'   ] \\
   [X^k] = [B  V] [X^{k-1}]
-.ve
+  \end{align*}
+  $$
 
-  where Y is the multivector of stage values, Y' is the multivector of stage derivatives, X^k is the Nordsieck vector of
-  the solution at step k.  The Nordsieck vector consists of the first r moments of the solution, given by
+  where Y is the multivector of stage values, $Y'$ is the multivector of stage derivatives, $X^k$
+  is the Nordsieck vector of the solution at step $k$. The Nordsieck vector consists of the first
+  $r$ moments of the solution, given by
 
-.vb
+  $$
   X = [x_0,x_1,...,x_{r-1}] = [x, h x', h^2 x'', ..., h^{r-1} x^{(r-1)} ]
-.ve
+  $$
 
-  If A is lower triangular, we can solve the stages (Y,Y') sequentially
+  If $A$ is lower triangular, we can solve the stages $(Y, Y')$ sequentially
 
-.vb
-  y_i = h sum_{j=0}^{s-1} (a_ij y'_j) + sum_{j=0}^{r-1} u_ij x_j,    i=0,...,{s-1}
-.ve
+  $$
+  y_i = h \sum_{j=0}^{s-1} (a_{ij} y'_j) + \sum_{j=0}^{r-1} u_{ij} x_j, \, \,   i=0,...,{s-1}
+  $$
 
   and then construct the pieces to carry to the next step
 
-.vb
-  xx_i = h sum_{j=0}^{s-1} b_ij y'_j  + sum_{j=0}^{r-1} v_ij x_j,    i=0,...,{r-1}
-.ve
+  $$
+  xx_i = h \sum_{j=0}^{s-1} b_{ij} y'_j  + \sum_{j=0}^{r-1} v_{ij} x_j,  \, \,  i=0,...,{r-1}
+  $$
 
-  Note that when the equations are cast in implicit form, we are using the stage equation to define y'_i
-  in terms of y_i and known stuff (y_j for j<i and x_j for all j).
+  Note that when the equations are cast in implicit form, we are using the stage equation to
+  define $y'_i$ in terms of $y_i$ and known stuff ($y_j$ for $j<i$ and $x_j$ for all $j$).
 
   Error estimation
 
-  At present, the most attractive GL methods for stiff problems are singly diagonally implicit schemes which posses
-  Inherent Runge-Kutta Stability (`TSIRKS`).  These methods have r=s, the number of items passed between steps is equal to
-  the number of stages.  The order and stage-order are one less than the number of stages.  We use the error estimates
-  in the 2007 paper which provide the following estimates
+  At present, the most attractive GL methods for stiff problems are singly diagonally implicit
+  schemes which posses Inherent Runge-Kutta Stability (`TSIRKS`).  These methods have $r=s$, the
+  number of items passed between steps is equal to the number of stages.  The order and
+  stage-order are one less than the number of stages.  We use the error estimates in the 2007
+  paper which provide the following estimates
 
-.vb
-  h^{p+1} X^{(p+1)}          = phi_0^T Y' + [0 psi_0^T] Xold
-  h^{p+2} X^{(p+2)}          = phi_1^T Y' + [0 psi_1^T] Xold
-  h^{p+2} (dx'/dx) X^{(p+1)} = phi_2^T Y' + [0 psi_2^T] Xold
-.ve
+  $$
+  \begin{align*}
+  h^{p+1} X^{(p+1)}          = \phi_0^T Y' + [0 \psi_0^T] Xold \\
+  h^{p+2} X^{(p+2)}          = \phi_1^T Y' + [0 \psi_1^T] Xold \\
+  h^{p+2} (dx'/dx) X^{(p+1)} = \phi_2^T Y' + [0 \psi_2^T] Xold
+  \end{align*}
+  $$
 
-  These estimates are accurate to O(h^{p+3}).
+  These estimates are accurate to $ O(h^{p+3})$.
 
   Changing the step size
 
-  We use the generalized "rescale and modify" scheme, see equation (4.5) of the 2007 paper.
+  Uses the generalized "rescale and modify" scheme, see equation (4.5) of {cite}`butcher_2007`.
 
-  References:
-+ * - John Butcher and Z. Jackieweicz and W. Wright, On error propagation in general linear methods for
-  ordinary differential equations, Journal of Complexity, Vol 23, 2007.
-- * - John Butcher, Numerical methods for ordinary differential equations, second edition, Wiley, 2009.
-
-.seealso: [](chapter_ts), `TSCreate()`, `TS`, `TSSetType()`, `TSType`
+.seealso: [](ch_ts), `TSCreate()`, `TS`, `TSSetType()`, `TSType`
 M*/
 PETSC_EXTERN PetscErrorCode TSCreate_GLLE(TS ts)
 {
@@ -1443,5 +1443,5 @@ PETSC_EXTERN PetscErrorCode TSCreate_GLLE(TS ts)
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSGLLESetType_C", &TSGLLESetType_GLLE));
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSGLLESetAcceptType_C", &TSGLLESetAcceptType_GLLE));
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSGLLEGetAdapt_C", &TSGLLEGetAdapt_GLLE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

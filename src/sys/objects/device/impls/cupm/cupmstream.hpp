@@ -1,12 +1,10 @@
-#ifndef PETSC_CUPMSTREAM_HPP
-#define PETSC_CUPMSTREAM_HPP
+#pragma once
 
 #include <petsc/private/cupminterface.hpp>
 
 #include "../segmentedmempool.hpp"
 #include "cupmevent.hpp"
 
-#if defined(__cplusplus)
 namespace Petsc
 {
 
@@ -28,7 +26,7 @@ class CUPMStream : public StreamBase<CUPMStream<T>>, impl::Interface<T> {
   friend crtp_base_type;
 
 public:
-  PETSC_CUPM_INHERIT_INTERFACE_TYPEDEFS_USING(interface_type, T);
+  PETSC_CUPM_INHERIT_INTERFACE_TYPEDEFS_USING(T);
 
   using stream_type = cupmStream_t;
   using id_type     = typename crtp_base_type::id_type;
@@ -37,9 +35,9 @@ public:
 
   CUPMStream() noexcept = default;
 
-  PETSC_NODISCARD PetscErrorCode destroy() noexcept;
-  PETSC_NODISCARD PetscErrorCode create(flag_type) noexcept;
-  PETSC_NODISCARD PetscErrorCode change_type(PetscStreamType) noexcept;
+  PetscErrorCode destroy() noexcept;
+  PetscErrorCode create(flag_type) noexcept;
+  PetscErrorCode change_type(PetscStreamType) noexcept;
 
 private:
   stream_type stream_{};
@@ -48,10 +46,10 @@ private:
   PETSC_NODISCARD static id_type new_id_() noexcept;
 
   // CRTP implementations
-  PETSC_NODISCARD stream_type    get_stream_() const noexcept;
-  PETSC_NODISCARD id_type        get_id_() const noexcept;
-  PETSC_NODISCARD PetscErrorCode record_event_(event_type &) const noexcept;
-  PETSC_NODISCARD PetscErrorCode wait_for_(event_type &) const noexcept;
+  PETSC_NODISCARD const stream_type &get_stream_() const noexcept;
+  PETSC_NODISCARD id_type            get_id_() const noexcept;
+  PetscErrorCode                     record_event_(event_type &) const noexcept;
+  PetscErrorCode                     wait_for_(event_type &) const noexcept;
 };
 
 template <DeviceType T>
@@ -63,7 +61,7 @@ inline PetscErrorCode CUPMStream<T>::destroy() noexcept
     stream_ = cupmStream_t{};
     id_     = 0;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
@@ -77,11 +75,11 @@ inline PetscErrorCode CUPMStream<T>::create(flag_type flags) noexcept
       PetscCallCUPM(cupmStreamGetFlags(stream_, &current_flags));
       PetscCheck(flags == current_flags, PETSC_COMM_SELF, PETSC_ERR_GPU, "Current flags %u != requested flags %u for stream %d", current_flags, flags, id_);
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCallCUPM(cupmStreamCreateWithFlags(&stream_, flags));
   id_ = new_id_();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
@@ -97,11 +95,12 @@ inline PetscErrorCode CUPMStream<T>::change_type(PetscStreamType newtype) noexce
       flag_type flag;
 
       PetscCallCUPM(cupmStreamGetFlags(stream_, &flag));
-      if ((flag != preferred) || (cupmStreamQuery(stream_) != cupmSuccess)) PetscCall(destroy());
+      if (flag == preferred) PetscFunctionReturn(PETSC_SUCCESS);
+      PetscCall(destroy());
     }
     PetscCall(create(preferred));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
@@ -113,7 +112,7 @@ inline typename CUPMStream<T>::id_type CUPMStream<T>::new_id_() noexcept
 
 // CRTP implementations
 template <DeviceType T>
-inline typename CUPMStream<T>::stream_type CUPMStream<T>::get_stream_() const noexcept
+inline const typename CUPMStream<T>::stream_type &CUPMStream<T>::get_stream_() const noexcept
 {
   return stream_;
 }
@@ -129,7 +128,7 @@ inline PetscErrorCode CUPMStream<T>::record_event_(event_type &event) const noex
 {
   PetscFunctionBegin;
   PetscCall(event.record(stream_));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
@@ -137,7 +136,7 @@ inline PetscErrorCode CUPMStream<T>::wait_for_(event_type &event) const noexcept
 {
   PetscFunctionBegin;
   PetscCallCUPM(cupmStreamWaitEvent(stream_, event.get(), 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 } // namespace cupm
@@ -145,6 +144,3 @@ inline PetscErrorCode CUPMStream<T>::wait_for_(event_type &event) const noexcept
 } // namespace device
 
 } // namespace Petsc
-#endif // __cplusplus
-
-#endif // PETSC_CUPMSTREAM_HPP

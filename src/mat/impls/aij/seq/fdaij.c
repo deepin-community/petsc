@@ -35,6 +35,7 @@ PetscErrorCode MatFDColoringCreate_SeqXAIJ(Mat mat, ISColoring iscoloring, MatFD
     bs    = 1; /* only bs=1 is supported for SeqAIJ matrix */
     mem   = nz * (sizeof(PetscScalar) + sizeof(PetscInt)) + 3 * m * sizeof(PetscInt);
     bcols = (PetscInt)(0.5 * mem / (m * sizeof(PetscScalar)));
+    if (!bcols) bcols = 1;
     brows = 1000 / bcols;
     if (bcols > nis) bcols = nis;
     if (brows == 0 || brows > m) brows = m;
@@ -48,7 +49,7 @@ PetscErrorCode MatFDColoringCreate_SeqXAIJ(Mat mat, ISColoring iscoloring, MatFD
   c->rstart  = 0;
   c->ncolors = nis;
   c->ctype   = iscoloring->ctype;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -73,7 +74,7 @@ PetscErrorCode MatFDColoringSetUpBlocked_AIJ_Private(Mat mat, MatFDColoring c, P
   nbcols             = 0;
   color_start[bcols] = 0;
 
-  if (c->htype[0] == 'd') { /* ----  c->htype == 'ds', use MatEntry --------*/
+  if (c->htype[0] == 'd') { /*  c->htype == 'ds', use MatEntry */
     MatEntry *Jentry_new, *Jentry = c->matentry;
 
     PetscCall(PetscMalloc1(nz, &Jentry_new));
@@ -118,7 +119,7 @@ PetscErrorCode MatFDColoringSetUpBlocked_AIJ_Private(Mat mat, MatFDColoring c, P
     }
     PetscCall(PetscFree(Jentry));
     c->matentry = Jentry_new;
-  } else { /* ---------  c->htype == 'wp', use MatEntry2 ------------------*/
+  } else { /*  c->htype == 'wp', use MatEntry2 */
     MatEntry2 *Jentry2_new, *Jentry2 = c->matentry2;
 
     PetscCall(PetscMalloc1(nz, &Jentry2_new));
@@ -169,7 +170,7 @@ PetscErrorCode MatFDColoringSetUpBlocked_AIJ_Private(Mat mat, MatFDColoring c, P
   for (i = nbcols - 1; i > 0; i--) nrows_new[i] -= nrows_new[i - 1];
   PetscCall(PetscFree(c->nrows));
   c->nrows = nrows_new;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatFDColoringSetUp_SeqXAIJ(Mat mat, ISColoring iscoloring, MatFDColoring c)
@@ -295,5 +296,5 @@ PetscErrorCode MatFDColoringSetUp_SeqXAIJ(Mat mat, ISColoring iscoloring, MatFDC
 
   PetscCall(VecCreateGhost(PetscObjectComm((PetscObject)mat), mat->rmap->n, PETSC_DETERMINE, 0, NULL, &c->vscale));
   PetscCall(PetscInfo(c, "ncolors %" PetscInt_FMT ", brows %" PetscInt_FMT " and bcols %" PetscInt_FMT " are used.\n", c->ncolors, c->brows, c->bcols));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

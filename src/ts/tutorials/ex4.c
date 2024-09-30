@@ -1,4 +1,3 @@
-
 static char help[] = "Solves a simple time-dependent linear PDE (the heat equation).\n\
 Input parameters include:\n\
   -m <points>, where <points> = number of grid points\n\
@@ -292,6 +291,7 @@ PetscErrorCode InitialConditions(Vec u, AppCtx *appctx)
   PetscScalar *u_localptr, h = appctx->h;
   PetscInt     i, mybase, myend;
 
+  PetscFunctionBeginUser;
   /*
      Determine starting point of each processor's range of
      grid values.
@@ -329,7 +329,7 @@ PetscErrorCode InitialConditions(Vec u, AppCtx *appctx)
     PetscCall(VecView(u, PETSC_VIEWER_STDOUT_WORLD));
   }
 
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------------------------------------------------------- */
 /*
@@ -348,6 +348,7 @@ PetscErrorCode ExactSolution(PetscReal t, Vec solution, AppCtx *appctx)
   PetscScalar *s_localptr, h = appctx->h, ex1, ex2, sc1, sc2;
   PetscInt     i, mybase, myend;
 
+  PetscFunctionBeginUser;
   /*
      Determine starting and ending points of each processor's
      range of grid values
@@ -373,7 +374,7 @@ PetscErrorCode ExactSolution(PetscReal t, Vec solution, AppCtx *appctx)
      Restore vector
   */
   PetscCall(VecRestoreArray(solution, &s_localptr));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------------------------------------------------------- */
 /*
@@ -397,6 +398,7 @@ PetscErrorCode Monitor(TS ts, PetscInt step, PetscReal time, Vec u, void *ctx)
   AppCtx   *appctx = (AppCtx *)ctx; /* user-defined application context */
   PetscReal norm_2, norm_max;
 
+  PetscFunctionBeginUser;
   /*
      View a graph of the current iterate
   */
@@ -448,7 +450,7 @@ PetscErrorCode Monitor(TS ts, PetscInt step, PetscReal time, Vec u, void *ctx)
     PetscCall(VecView(appctx->solution, PETSC_VIEWER_STDOUT_WORLD));
   }
 
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */
@@ -487,6 +489,7 @@ PetscErrorCode RHSMatrixHeat(TS ts, PetscReal t, Vec X, Mat AA, Mat BB, void *ct
   PetscInt    i, mstart, mend, idx[3];
   PetscScalar v[3], stwo = -2. / (appctx->h * appctx->h), sone = -.5 * stwo;
 
+  PetscFunctionBeginUser;
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Compute entries for the locally owned part of the matrix
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -541,7 +544,7 @@ PetscErrorCode RHSMatrixHeat(TS ts, PetscReal t, Vec X, Mat AA, Mat BB, void *ct
   */
   PetscCall(MatSetOption(A, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
 
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode RHSFunctionHeat(TS ts, PetscReal t, Vec globalin, Vec globalout, void *ctx)
@@ -553,7 +556,7 @@ PetscErrorCode RHSFunctionHeat(TS ts, PetscReal t, Vec globalin, Vec globalout, 
   PetscCall(RHSMatrixHeat(ts, t, globalin, A, NULL, ctx));
   /* PetscCall(MatView(A,PETSC_VIEWER_STDOUT_WORLD)); */
   PetscCall(MatMult(A, globalin, globalout));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

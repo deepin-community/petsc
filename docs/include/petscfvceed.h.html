@@ -1,0 +1,25 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/include/petscfvceed.h">Actual source code: petscfvceed.h</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2024-03-29T14:12:26+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#pragma once</font>
+
+<a name="line3">  3: </a>#include <A href="petscfv.h.html">&lt;petscfv.h&gt;</A>
+
+<a name="line5">  5: </a><font color="#A020F0">#if defined(PETSC_HAVE_LIBCEED)</font>
+<a name="line6">  6: </a><font color="#A020F0">  #include &lt;ceed.h&gt;</font>
+
+<a name="line8">  8: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../manualpages/FV/PetscFVGetCeedBasis.html">PetscFVGetCeedBasis</a>(<a href="../manualpages/FV/PetscFV.html">PetscFV</a>, CeedBasis *)</font></strong>;
+<a name="line9">  9: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../manualpages/FV/PetscFVSetCeed.html">PetscFVSetCeed</a>(<a href="../manualpages/FV/PetscFV.html">PetscFV</a>, Ceed)</font></strong>;
+<a name="line10"> 10: </a><font color="#A020F0">#endif</font>
+</pre>
+</body>
+
+</html>

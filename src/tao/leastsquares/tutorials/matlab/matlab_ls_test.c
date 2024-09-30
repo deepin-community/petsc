@@ -32,7 +32,7 @@ static PetscErrorCode EvaluateResidual(Tao tao, Vec X, Vec F, void *ptr)
   PetscCall(PetscMatlabEngineEvaluate(user->mengine, "F = func(X);"));
   PetscCall(PetscObjectSetName((PetscObject)F, "F"));
   PetscCall(PetscMatlabEngineGet(user->mengine, (PetscObject)F));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode EvaluateJacobian(Tao tao, Vec X, Mat J, Mat JPre, void *ptr)
@@ -45,7 +45,7 @@ static PetscErrorCode EvaluateJacobian(Tao tao, Vec X, Mat J, Mat JPre, void *pt
   PetscCall(PetscMatlabEngineEvaluate(user->mengine, "J = jac(X);"));
   PetscCall(PetscObjectSetName((PetscObject)J, "J"));
   PetscCall(PetscMatlabEngineGet(user->mengine, (PetscObject)J));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoPounders(AppCtx *user)
@@ -58,9 +58,9 @@ static PetscErrorCode TaoPounders(AppCtx *user)
   PetscFunctionBegin;
 
   /* Set the values for the algorithm options we want to use */
-  sprintf(buf, "%d", user->npmax);
+  PetscCall(PetscSNPrintf(buf, PETSC_STATIC_ARRAY_LENGTH(buf), "%d", user->npmax));
   PetscCall(PetscOptionsSetValue(NULL, "-tao_pounders_npmax", buf));
-  sprintf(buf, "%5.4e", user->delta);
+  PetscCall(PetscSNPrintf(buf, PETSC_STATIC_ARRAY_LENGTH(buf), "%5.4e", user->delta));
   PetscCall(PetscOptionsSetValue(NULL, "-tao_pounders_delta", buf));
 
   /* Create the TAO objects and set the type */
@@ -93,7 +93,7 @@ static PetscErrorCode TaoPounders(AppCtx *user)
   PetscCall(VecDestroy(&X));
   PetscCall(VecDestroy(&F));
   PetscCall(TaoDestroy(&tao));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

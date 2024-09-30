@@ -95,6 +95,11 @@ extern void PetscRmPointer(void*);
 #define kspmatsolve_ kspmatsolve
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define kspmatsolvetranspose_ KSPMATSOLVETRANSPOSE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define kspmatsolvetranspose_ kspmatsolvetranspose
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define kspsetmatsolvebatchsize_ KSPSETMATSOLVEBATCHSIZE
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define kspsetmatsolvebatchsize_ kspsetmatsolvebatchsize
@@ -133,6 +138,16 @@ extern void PetscRmPointer(void*);
 #define kspsettolerances_ KSPSETTOLERANCES
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define kspsettolerances_ kspsettolerances
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define kspsetminimumiterations_ KSPSETMINIMUMITERATIONS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define kspsetminimumiterations_ kspsetminimumiterations
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define kspgetminimumiterations_ KSPGETMINIMUMITERATIONS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define kspgetminimumiterations_ kspgetminimumiterations
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define kspsetinitialguessnonzero_ KSPSETINITIALGUESSNONZERO
@@ -228,6 +243,11 @@ extern void PetscRmPointer(void*);
 #define kspseterrorhistory_ KSPSETERRORHISTORY
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define kspseterrorhistory_ kspseterrorhistory
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define kspcomputeconvergencerate_ KSPCOMPUTECONVERGENCERATE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define kspcomputeconvergencerate_ kspcomputeconvergencerate
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define kspsetdiagonalscale_ KSPSETDIAGONALSCALE
@@ -331,6 +351,13 @@ PETSC_EXTERN void  kspmatsolve_(KSP ksp,Mat B,Mat X, int *__ierr)
 	(Mat)PetscToPointer((B) ),
 	(Mat)PetscToPointer((X) ));
 }
+PETSC_EXTERN void  kspmatsolvetranspose_(KSP ksp,Mat B,Mat X, int *__ierr)
+{
+*__ierr = KSPMatSolveTranspose(
+	(KSP)PetscToPointer((ksp) ),
+	(Mat)PetscToPointer((B) ),
+	(Mat)PetscToPointer((X) ));
+}
 PETSC_EXTERN void  kspsetmatsolvebatchsize_(KSP ksp,PetscInt *bs, int *__ierr)
 {
 *__ierr = KSPSetMatSolveBatchSize(
@@ -370,6 +397,16 @@ PETSC_EXTERN void  kspsettolerances_(KSP ksp,PetscReal *rtol,PetscReal *abstol,P
 {
 *__ierr = KSPSetTolerances(
 	(KSP)PetscToPointer((ksp) ),*rtol,*abstol,*dtol,*maxits);
+}
+PETSC_EXTERN void  kspsetminimumiterations_(KSP ksp,PetscInt *minit, int *__ierr)
+{
+*__ierr = KSPSetMinimumIterations(
+	(KSP)PetscToPointer((ksp) ),*minit);
+}
+PETSC_EXTERN void  kspgetminimumiterations_(KSP ksp,PetscInt *minit, int *__ierr)
+{
+*__ierr = KSPGetMinimumIterations(
+	(KSP)PetscToPointer((ksp) ),minit);
 }
 PETSC_EXTERN void  kspsetinitialguessnonzero_(KSP ksp,PetscBool *flg, int *__ierr)
 {
@@ -466,6 +503,11 @@ PETSC_EXTERN void  kspseterrorhistory_(KSP ksp,PetscReal a[],PetscInt *na,PetscB
 {
 *__ierr = KSPSetErrorHistory(
 	(KSP)PetscToPointer((ksp) ),a,*na,*reset);
+}
+PETSC_EXTERN void  kspcomputeconvergencerate_(KSP ksp,PetscReal *cr,PetscReal *rRsq,PetscReal *ce,PetscReal *eRsq, int *__ierr)
+{
+*__ierr = KSPComputeConvergenceRate(
+	(KSP)PetscToPointer((ksp) ),cr,rRsq,ce,eRsq);
 }
 PETSC_EXTERN void  kspsetdiagonalscale_(KSP ksp,PetscBool *scale, int *__ierr)
 {

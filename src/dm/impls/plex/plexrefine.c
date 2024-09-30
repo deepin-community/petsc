@@ -7,19 +7,19 @@
 /*@
   DMPlexCreateProcessSF - Create an `PetscSF` which just has process connectivity
 
-  Collective on dm
+  Collective
 
   Input Parameters:
 + dm      - The `DM`
 - sfPoint - The `PetscSF` which encodes point connectivity
 
   Output Parameters:
-+ processRanks - A list of process neighbors, or NULL
-- sfProcess    - An `PetscSF` encoding the process connectivity, or NULL
++ processRanks - A list of process neighbors, or `NULL`
+- sfProcess    - An `PetscSF` encoding the process connectivity, or `NULL`
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `PetscSF`, `PetscSFCreate()`, `DMPlexCreateTwoSidedProcessSF()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `PetscSF`, `PetscSFCreate()`, `DMPlexCreateTwoSidedProcessSF()`
 @*/
 PetscErrorCode DMPlexCreateProcessSF(DM dm, PetscSF sfPoint, IS *processRanks, PetscSF *sfProcess)
 {
@@ -34,8 +34,8 @@ PetscErrorCode DMPlexCreateProcessSF(DM dm, PetscSF sfPoint, IS *processRanks, P
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscValidHeaderSpecific(sfPoint, PETSCSF_CLASSID, 2);
-  if (processRanks) PetscValidPointer(processRanks, 3);
-  if (sfProcess) PetscValidPointer(sfProcess, 4);
+  if (processRanks) PetscAssertPointer(processRanks, 3);
+  if (sfProcess) PetscAssertPointer(sfProcess, 4);
   PetscCallMPI(MPI_Comm_size(PetscObjectComm((PetscObject)dm), &size));
   PetscCall(PetscSFGetGraph(sfPoint, &numRoots, &numLeaves, &localPoints, &remotePoints));
   PetscCall(PetscMalloc1(numLeaves, &ranks));
@@ -59,13 +59,13 @@ PetscErrorCode DMPlexCreateProcessSF(DM dm, PetscSF sfPoint, IS *processRanks, P
     PetscCall(PetscSFSetFromOptions(*sfProcess));
     PetscCall(PetscSFSetGraph(*sfProcess, size, numLeaves, localPointsNew, PETSC_OWN_POINTER, remotePointsNew, PETSC_OWN_POINTER));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexCreateCoarsePointIS - Creates an `IS` covering the coarse `DM` chart with the fine points as data
 
-  Collective on dm
+  Collective
 
   Input Parameter:
 . dm - The coarse `DM`
@@ -75,7 +75,7 @@ PetscErrorCode DMPlexCreateProcessSF(DM dm, PetscSF sfPoint, IS *processRanks, P
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `IS`, `DMRefine()`, `DMPlexSetRefinementUniform()`, `DMPlexGetSubpointIS()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `IS`, `DMRefine()`, `DMPlexSetRefinementUniform()`, `DMPlexGetSubpointIS()`
 @*/
 PetscErrorCode DMPlexCreateCoarsePointIS(DM dm, IS *fpointIS)
 {
@@ -98,19 +98,19 @@ PetscErrorCode DMPlexCreateCoarsePointIS(DM dm, IS *fpointIS)
   }
   PetscCall(DMPlexTransformDestroy(&tr));
   PetscCall(ISCreateGeneral(PETSC_COMM_SELF, pEnd - pStart, fpoints, PETSC_OWN_POINTER, fpointIS));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMPlexSetTransformType - Set the transform type for uniform refinement
 
   Input Parameters:
-+ dm - The `DM`
++ dm   - The `DM`
 - type - The transform type for uniform refinement
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexTransformType`, `DMRefine()`, `DMPlexGetTransformType()`, `DMPlexSetRefinementUniform()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexTransformType`, `DMRefine()`, `DMPlexGetTransformType()`, `DMPlexSetRefinementUniform()`
 @*/
 PetscErrorCode DMPlexSetTransformType(DM dm, DMPlexTransformType type)
 {
@@ -118,10 +118,10 @@ PetscErrorCode DMPlexSetTransformType(DM dm, DMPlexTransformType type)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMPLEX);
-  if (type) PetscValidCharPointer(type, 2);
+  if (type) PetscAssertPointer(type, 2);
   PetscCall(PetscFree(mesh->transformType));
   PetscCall(PetscStrallocpy(type, &mesh->transformType));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -135,7 +135,7 @@ PetscErrorCode DMPlexSetTransformType(DM dm, DMPlexTransformType type)
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexTransformType`, `DMRefine()`, `DMPlexSetTransformType()`, `DMPlexGetRefinementUniform()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexTransformType`, `DMRefine()`, `DMPlexSetTransformType()`, `DMPlexGetRefinementUniform()`
 @*/
 PetscErrorCode DMPlexGetTransformType(DM dm, DMPlexTransformType *type)
 {
@@ -143,21 +143,21 @@ PetscErrorCode DMPlexGetTransformType(DM dm, DMPlexTransformType *type)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMPLEX);
-  PetscValidPointer(type, 2);
+  PetscAssertPointer(type, 2);
   *type = mesh->transformType;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexSetRefinementUniform - Set the flag for uniform refinement
 
   Input Parameters:
-+ dm - The `DM`
++ dm                - The `DM`
 - refinementUniform - The flag for uniform refinement
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMRefine()`, `DMPlexGetRefinementUniform()`, `DMPlexGetRefinementLimit()`, `DMPlexSetRefinementLimit()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMRefine()`, `DMPlexGetRefinementUniform()`, `DMPlexGetRefinementLimit()`, `DMPlexSetRefinementLimit()`
 @*/
 PetscErrorCode DMPlexSetRefinementUniform(DM dm, PetscBool refinementUniform)
 {
@@ -166,7 +166,7 @@ PetscErrorCode DMPlexSetRefinementUniform(DM dm, PetscBool refinementUniform)
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMPLEX);
   mesh->refinementUniform = refinementUniform;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -180,7 +180,7 @@ PetscErrorCode DMPlexSetRefinementUniform(DM dm, PetscBool refinementUniform)
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMRefine()`, `DMPlexSetRefinementUniform()`, `DMPlexGetRefinementLimit()`, `DMPlexSetRefinementLimit()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMRefine()`, `DMPlexSetRefinementUniform()`, `DMPlexGetRefinementLimit()`, `DMPlexSetRefinementLimit()`
 @*/
 PetscErrorCode DMPlexGetRefinementUniform(DM dm, PetscBool *refinementUniform)
 {
@@ -188,21 +188,21 @@ PetscErrorCode DMPlexGetRefinementUniform(DM dm, PetscBool *refinementUniform)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMPLEX);
-  PetscValidBoolPointer(refinementUniform, 2);
+  PetscAssertPointer(refinementUniform, 2);
   *refinementUniform = mesh->refinementUniform;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexSetRefinementLimit - Set the maximum cell volume for refinement
 
   Input Parameters:
-+ dm - The `DM`
++ dm              - The `DM`
 - refinementLimit - The maximum cell volume in the refined mesh
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMRefine()`, `DMPlexGetRefinementLimit()`, `DMPlexGetRefinementUniform()`, `DMPlexSetRefinementUniform()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMRefine()`, `DMPlexGetRefinementLimit()`, `DMPlexGetRefinementUniform()`, `DMPlexSetRefinementUniform()`
 @*/
 PetscErrorCode DMPlexSetRefinementLimit(DM dm, PetscReal refinementLimit)
 {
@@ -211,7 +211,7 @@ PetscErrorCode DMPlexSetRefinementLimit(DM dm, PetscReal refinementLimit)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   mesh->refinementLimit = refinementLimit;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -225,7 +225,7 @@ PetscErrorCode DMPlexSetRefinementLimit(DM dm, PetscReal refinementLimit)
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMRefine()`, `DMPlexSetRefinementLimit()`, `DMPlexGetRefinementUniform()`, `DMPlexSetRefinementUniform()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMRefine()`, `DMPlexSetRefinementLimit()`, `DMPlexGetRefinementUniform()`, `DMPlexSetRefinementUniform()`
 @*/
 PetscErrorCode DMPlexGetRefinementLimit(DM dm, PetscReal *refinementLimit)
 {
@@ -233,65 +233,63 @@ PetscErrorCode DMPlexGetRefinementLimit(DM dm, PetscReal *refinementLimit)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidRealPointer(refinementLimit, 2);
+  PetscAssertPointer(refinementLimit, 2);
   /* if (mesh->refinementLimit < 0) = getMaxVolume()/2.0; */
   *refinementLimit = mesh->refinementLimit;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*@
+/*@C
   DMPlexSetRefinementFunction - Set the function giving the maximum cell volume for refinement
 
   Input Parameters:
-+ dm - The `DM`
++ dm             - The `DM`
 - refinementFunc - Function giving the maximum cell volume in the refined mesh
 
-  Calling Sequence of refinementFunc:
-$ refinementFunc(coords, limit)
+  Calling Sequence of `refinementFunc`:
 + coords - Coordinates of the current point, usually a cell centroid
 - limit  - The maximum cell volume for a cell containing this point
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMRefine()`, `DMPlexGetRefinementFunction()`, `DMPlexGetRefinementUniform()`, `DMPlexSetRefinementUniform()`, `DMPlexGetRefinementLimit()`, `DMPlexSetRefinementLimit()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMRefine()`, `DMPlexGetRefinementFunction()`, `DMPlexGetRefinementUniform()`, `DMPlexSetRefinementUniform()`, `DMPlexGetRefinementLimit()`, `DMPlexSetRefinementLimit()`
 @*/
-PetscErrorCode DMPlexSetRefinementFunction(DM dm, PetscErrorCode (*refinementFunc)(const PetscReal[], PetscReal *))
+PetscErrorCode DMPlexSetRefinementFunction(DM dm, PetscErrorCode (*refinementFunc)(const PetscReal coords[], PetscReal *limit))
 {
   DM_Plex *mesh = (DM_Plex *)dm->data;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   mesh->refinementFunc = refinementFunc;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*@
+/*@C
   DMPlexGetRefinementFunction - Get the function giving the maximum cell volume for refinement
 
   Input Parameter:
-. dm - The DM
+. dm - The `DM`
 
   Output Parameter:
 . refinementFunc - Function giving the maximum cell volume in the refined mesh
 
-  Calling Sequence of refinementFunc:
-$  refinementFunc(coords, limit)
+  Calling Sequence of `refinementFunc`:
 + coords - Coordinates of the current point, usually a cell centroid
 - limit  - The maximum cell volume for a cell containing this point
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMRefine()`, `DMPlexSetRefinementFunction()`, `DMPlexGetRefinementUniform()`, `DMPlexSetRefinementUniform()`, `DMPlexGetRefinementLimit()`, `DMPlexSetRefinementLimit()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMRefine()`, `DMPlexSetRefinementFunction()`, `DMPlexGetRefinementUniform()`, `DMPlexSetRefinementUniform()`, `DMPlexGetRefinementLimit()`, `DMPlexSetRefinementLimit()`
 @*/
-PetscErrorCode DMPlexGetRefinementFunction(DM dm, PetscErrorCode (**refinementFunc)(const PetscReal[], PetscReal *))
+PetscErrorCode DMPlexGetRefinementFunction(DM dm, PetscErrorCode (**refinementFunc)(const PetscReal coords[], PetscReal *limit))
 {
   DM_Plex *mesh = (DM_Plex *)dm->data;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(refinementFunc, 2);
+  PetscAssertPointer(refinementFunc, 2);
   *refinementFunc = mesh->refinementFunc;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMRefine_Plex(DM dm, MPI_Comm comm, DM *rdm)
@@ -307,6 +305,7 @@ PetscErrorCode DMRefine_Plex(DM dm, MPI_Comm comm, DM *rdm)
     DMPlexTransformType trType;
     const char         *prefix;
     PetscOptions        options;
+    PetscBool           useCeed;
 
     PetscCall(DMPlexTransformCreate(PetscObjectComm((PetscObject)dm), &tr));
     PetscCall(DMPlexTransformSetDM(tr, dm));
@@ -322,10 +321,19 @@ PetscErrorCode DMRefine_Plex(DM dm, MPI_Comm comm, DM *rdm)
     PetscCall(PetscObjectViewFromOptions((PetscObject)tr, NULL, "-dm_plex_transform_view"));
     PetscCall(DMPlexTransformApply(tr, dm, rdm));
     PetscCall(DMPlexSetRegularRefinement(*rdm, PETSC_TRUE));
+    PetscCall(DMPlexGetUseCeed(dm, &useCeed));
+    PetscCall(DMPlexSetUseCeed(*rdm, useCeed));
+    PetscCall(DMSetMatType((*rdm), dm->mattype));
     PetscCall(DMCopyDisc(dm, *rdm));
     PetscCall(DMGetCoordinateDM(dm, &cdm));
     PetscCall(DMGetCoordinateDM(*rdm, &rcdm));
     PetscCall(DMCopyDisc(cdm, rcdm));
+    PetscCall(DMPlexGetUseCeed(cdm, &useCeed));
+    PetscCall(DMPlexSetUseCeed(rcdm, useCeed));
+    if (useCeed) {
+      PetscCall(DMPlexSetUseMatClosurePermutation(rcdm, PETSC_FALSE));
+      PetscCall(DMUseTensorOrder(rcdm, PETSC_TRUE));
+    }
     PetscCall(DMPlexTransformCreateDiscLabels(tr, *rdm));
     PetscCall(DMPlexTransformDestroy(&tr));
   } else {
@@ -336,14 +344,14 @@ PetscErrorCode DMRefine_Plex(DM dm, MPI_Comm comm, DM *rdm)
     ((DM_Plex *)(*rdm)->data)->printL2  = ((DM_Plex *)dm->data)->printL2;
   }
   PetscCall(DMViewFromOptions(dm, NULL, "-postref_dm_view"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMRefineHierarchy_Plex(DM dm, PetscInt nlevels, DM rdm[])
 {
   DM        cdm = dm;
   PetscInt  r;
-  PetscBool isUniform, localized;
+  PetscBool isUniform, localized, useCeed;
 
   PetscFunctionBegin;
   PetscCall(DMPlexGetRefinementUniform(dm, &isUniform));
@@ -363,10 +371,19 @@ PetscErrorCode DMRefineHierarchy_Plex(DM dm, PetscInt nlevels, DM rdm[])
       PetscCall(DMPlexTransformApply(tr, cdm, &rdm[r]));
       PetscCall(DMSetCoarsenLevel(rdm[r], cdm->leveldown));
       PetscCall(DMSetRefineLevel(rdm[r], cdm->levelup + 1));
+      PetscCall(DMSetMatType(rdm[r], dm->mattype));
+      PetscCall(DMPlexGetUseCeed(dm, &useCeed));
+      PetscCall(DMPlexSetUseCeed(rdm[r], useCeed));
       PetscCall(DMCopyDisc(cdm, rdm[r]));
       PetscCall(DMGetCoordinateDM(dm, &codm));
       PetscCall(DMGetCoordinateDM(rdm[r], &rcodm));
       PetscCall(DMCopyDisc(codm, rcodm));
+      PetscCall(DMPlexGetUseCeed(codm, &useCeed));
+      PetscCall(DMPlexSetUseCeed(rcodm, useCeed));
+      if (useCeed) {
+        PetscCall(DMPlexSetUseMatClosurePermutation(rcodm, PETSC_FALSE));
+        PetscCall(DMUseTensorOrder(rcodm, PETSC_TRUE));
+      }
       PetscCall(DMPlexTransformCreateDiscLabels(tr, rdm[r]));
       PetscCall(DMSetCoarseDM(rdm[r], cdm));
       PetscCall(DMPlexSetRegularRefinement(rdm[r], PETSC_TRUE));
@@ -380,6 +397,8 @@ PetscErrorCode DMRefineHierarchy_Plex(DM dm, PetscInt nlevels, DM rdm[])
   } else {
     for (r = 0; r < nlevels; ++r) {
       PetscCall(DMRefine(cdm, PetscObjectComm((PetscObject)dm), &rdm[r]));
+      PetscCall(DMPlexGetUseCeed(dm, &useCeed));
+      PetscCall(DMPlexSetUseCeed(rdm[r], useCeed));
       PetscCall(DMCopyDisc(cdm, rdm[r]));
       if (localized) PetscCall(DMLocalizeCoordinates(rdm[r]));
       PetscCall(DMSetCoarseDM(rdm[r], cdm));
@@ -390,5 +409,5 @@ PetscErrorCode DMRefineHierarchy_Plex(DM dm, PetscInt nlevels, DM rdm[])
       cdm = rdm[r];
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

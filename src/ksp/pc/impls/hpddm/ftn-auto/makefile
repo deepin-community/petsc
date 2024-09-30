@@ -1,15 +1,6 @@
 
-#requiresdefine   'PETSC_HAVE_FORTRAN'
-ALL: lib
-
-CFLAGS   =
-FFLAGS   =
-SOURCEC  = pchpddmf.c
-SOURCEF  =
-SOURCEH  = 
-DIRS     =
+#requiresdefine   'PETSC_USE_FORTRAN_BINDINGS'
+#requirespackage 'PETSC_HAVE_HPDDM'
+#requiresdefine  'PETSC_HAVE_DYNAMIC_LIBRARIES'
+#requiresdefine  'PETSC_USE_SHARED_LIBRARIES'
 LIBBASE   = libpetscksp
-LOCDIR    = src/ksp/pc/impls/hpddm/ftn-auto/
-include ${PETSC_DIR}/lib/petsc/conf/variables
-include ${PETSC_DIR}/lib/petsc/conf/rules
-include ${PETSC_DIR}/lib/petsc/conf/test

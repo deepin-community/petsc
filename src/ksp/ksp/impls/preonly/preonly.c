@@ -1,10 +1,9 @@
-
 #include <petsc/private/kspimpl.h>
 
 static PetscErrorCode KSPSetUp_PREONLY(KSP ksp)
 {
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSolve_PREONLY(KSP ksp)
@@ -15,19 +14,26 @@ static PetscErrorCode KSPSolve_PREONLY(KSP ksp)
   PetscFunctionBegin;
   PetscCall(PCGetDiagonalScale(ksp->pc, &diagonalscale));
   PetscCheck(!diagonalscale, PetscObjectComm((PetscObject)ksp), PETSC_ERR_SUP, "Krylov method %s does not support diagonal scaling", ((PetscObject)ksp)->type_name);
-  PetscCheck(ksp->guess_zero, PetscObjectComm((PetscObject)ksp), PETSC_ERR_USER, "Running KSP of preonly doesn't make sense with nonzero initial guess\n\
-               you probably want a KSP type of Richardson");
+  if (!ksp->guess_zero) {
+    PetscBool red;
+    PetscCall(PetscObjectTypeCompare((PetscObject)ksp->pc, PCREDISTRIBUTE, &red));
+    PetscCheck(red, PetscObjectComm((PetscObject)ksp), PETSC_ERR_USER, "KSP of type preonly (application of preconditioner only) doesn't make sense with nonzero initial guess\n\
+                you probably want a KSP of type Richardson");
+  }
   ksp->its = 0;
   PetscCall(KSP_PCApply(ksp, ksp->vec_rhs, ksp->vec_sol));
-  PetscCall(PCGetFailedReasonRank(ksp->pc, &pcreason));
-  /* Note: only some ranks may have this set; this may lead to problems if the caller assumes ksp->reason is set on all processes or just uses the result */
+
+  PetscCall(PCReduceFailedReason(ksp->pc));
+  PetscCall(PCGetFailedReason(ksp->pc, &pcreason));
   if (pcreason) {
+    PetscCheck(!ksp->errorifnotconverged, PetscObjectComm((PetscObject)ksp), PETSC_ERR_NOT_CONVERGED, "KSPSolve has not converged with PCFailedReason %s", PCFailedReasons[pcreason]);
     PetscCall(VecSetInf(ksp->vec_sol));
     ksp->reason = KSP_DIVERGED_PC_FAILED;
   } else {
     ksp->its    = 1;
     ksp->reason = KSP_CONVERGED_ITS;
   }
+
   if (ksp->numbermonitors) {
     Vec       v;
     PetscReal norm;
@@ -43,7 +49,7 @@ static PetscErrorCode KSPSolve_PREONLY(KSP ksp)
     PetscCall(VecDestroy(&v));
     PetscCall(KSPMonitor(ksp, 1, norm));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPMatSolve_PREONLY(KSP ksp, Mat B, Mat X)
@@ -57,7 +63,7 @@ static PetscErrorCode KSPMatSolve_PREONLY(KSP ksp, Mat B, Mat X)
   PetscCheck(ksp->guess_zero, PetscObjectComm((PetscObject)ksp), PETSC_ERR_USER, "Running KSP of preonly doesn't make sense with nonzero initial guess\n\
                you probably want a KSP type of Richardson");
   ksp->its = 0;
-  PetscCall(PCMatApply(ksp->pc, B, X));
+  PetscCall(KSP_PCMatApply(ksp, B, X));
   PetscCall(PCGetFailedReason(ksp->pc, &pcreason));
   /* Note: only some ranks may have this set; this may lead to problems if the caller assumes ksp->reason is set on all processes or just uses the result */
   if (pcreason) {
@@ -67,18 +73,34 @@ static PetscErrorCode KSPMatSolve_PREONLY(KSP ksp, Mat B, Mat X)
     ksp->its    = 1;
     ksp->reason = KSP_CONVERGED_ITS;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPPREONLY - This implements a method that applies ONLY the preconditioner exactly once.
-                  This may be used in inner iterations, where it is desired to
-                  allow multiple iterations as well as the "0-iteration" case. It is
-                  commonly used with the direct solver preconditioners like `PCLU` and `PCCHOLESKY`.
-                  There is an alias of `KSPNONE`.
+   KSPNONE - An alias for `KSPPREONLY`
 
    Options Database Key:
-.   -ksp_type preonly - use preconditioner only
+.   -ksp_type none - use a single application of the preconditioner only
+
+   Level: beginner
+
+   Note:
+   See `KSPPREONLY` for more details
+
+.seealso: [](ch_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSPPREONLY`, `KSP`, `KSPRICHARDSON`, `KSPCHEBYSHEV`, `KSPGetPC()`, `KSPSetInitialGuessNonzero()`,
+          `PCREDISTRIBUTE`, `PCRedistributeGetKSP()`, `KSPPREONLY`
+M*/
+
+/*MC
+   KSPPREONLY - This implements a method that applies ONLY the preconditioner exactly once.
+
+   This may be used in inner iterations, where it is desired to
+   allow multiple iterations as well as the "0-iteration" case. It is
+   commonly used with the direct solver preconditioners like `PCLU` and `PCCHOLESKY`.
+   There is an alias of this with the name `KSPNONE`.
+
+   Options Database Key:
+.   -ksp_type preonly - use a single application of the preconditioner only
 
    Level: beginner
 
@@ -88,11 +110,18 @@ static PetscErrorCode KSPMatSolve_PREONLY(KSP ksp, Mat B, Mat X)
 
    To apply multiple preconditioners in a simple iteration use `KSPRICHARDSON`
 
+   This `KSPType` cannot be used with the flag `-ksp_initial_guess_nonzero` or the call `KSPSetInitialGuessNonzero()` since it simply applies
+   the preconditioner to the given right-hand side during `KSPSolve()`. Except when the
+   `PCType` is `PCREDISTRIBUTE`; in that situation pass the nonzero initial guess flag with `-ksp_initial_guess_nonzero` or `KSPSetInitialGuessNonzero()`
+   both to the outer `KSP` (which is `KSPPREONLY`) and the inner `KSP` object obtained with `KSPGetPC()` followed by `PCRedistributedGetKSP()`
+   followed by `KSPSetInitialGuessNonzero()` or the option  `-redistribute_ksp_initial_guess_nonzero`.
+
    Developer Note:
    Even though this method does not use any norms, the user is allowed to set the `KSPNormType` to any value.
    This is so the users does not have to change `KSPNormType` options when they switch from other `KSP` methods to this one.
 
-.seealso: [](chapter_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPRICHARDSON`, `KSPCHEBYSHEV`
+.seealso: [](ch_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPRICHARDSON`, `KSPCHEBYSHEV`, `KSPGetPC()`, `KSPSetInitialGuessNonzero()`,
+          `PCREDISTRIBUTE`, `PCRedistributeGetKSP()`, `KSPNONE`
 M*/
 
 PETSC_EXTERN PetscErrorCode KSPCreate_PREONLY(KSP ksp)
@@ -115,5 +144,6 @@ PETSC_EXTERN PetscErrorCode KSPCreate_PREONLY(KSP ksp)
   ksp->ops->buildresidual  = KSPBuildResidualDefault;
   ksp->ops->setfromoptions = NULL;
   ksp->ops->view           = NULL;
-  PetscFunctionReturn(0);
+  ksp->guess_not_read      = PETSC_TRUE; // A KSP of preonly never needs to zero the input x since PC do not use an initial guess
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,4 +1,3 @@
-
 static char help[] = "Solves the nonlinear system, the Bratu (SFI - solid fuel ignition) problem in a 2D rectangular domain.\n\
 This example also illustrates the use of matrix coloring.  Runtime options include:\n\
   -par <parameter>, where <parameter> indicates the problem's nonlinearity\n\
@@ -68,7 +67,7 @@ int main(int argc, char **argv)
   PetscMPIInt   size;
   PetscReal     bratu_lambda_max = 6.81, bratu_lambda_min = 0., history[50];
   MatFDColoring fdcoloring;
-  PetscBool     matrix_free = PETSC_FALSE, flg, fd_coloring = PETSC_FALSE, use_convergence_test = PETSC_FALSE, pc = PETSC_FALSE;
+  PetscBool     matrix_free = PETSC_FALSE, flg, fd_coloring = PETSC_FALSE, use_convergence_test = PETSC_FALSE, pc = PETSC_FALSE, prunejacobian = PETSC_FALSE, null_appctx = PETSC_TRUE;
   KSP           ksp;
   PetscInt     *testarray;
 
@@ -90,6 +89,8 @@ int main(int argc, char **argv)
   PetscCheck(user.param < bratu_lambda_max && user.param > bratu_lambda_min, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Lambda is out of range");
   N = user.mx * user.my;
   PetscCall(PetscOptionsGetBool(NULL, NULL, "-use_convergence_test", &use_convergence_test, NULL));
+  PetscCall(PetscOptionsGetBool(NULL, NULL, "-prune_jacobian", &prunejacobian, NULL));
+  PetscCall(PetscOptionsGetBool(NULL, NULL, "-null_appctx", &null_appctx, NULL));
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Create nonlinear solver context
@@ -101,6 +102,9 @@ int main(int argc, char **argv)
     PetscCall(SNESSetType(snes, SNESNEWTONTR));
     PetscCall(SNESNewtonTRSetPostCheck(snes, postcheck, NULL));
   }
+
+  /* Test application context handling from Python */
+  if (!null_appctx) { PetscCall(SNESSetApplicationContext(snes, (void *)&user)); }
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Create vector data structures; set function evaluation routine
@@ -148,6 +152,15 @@ int main(int argc, char **argv)
   if (fd_coloring) {
     ISColoring  iscoloring;
     MatColoring mc;
+    if (prunejacobian) {
+      /* Initialize x with random nonzero values so that the nonzeros in the Jacobian
+         can better reflect the sparsity structure of the Jacobian. */
+      PetscRandom rctx;
+      PetscCall(PetscRandomCreate(PETSC_COMM_WORLD, &rctx));
+      PetscCall(PetscRandomSetInterval(rctx, 1.0, 2.0));
+      PetscCall(VecSetRandom(x, rctx));
+      PetscCall(PetscRandomDestroy(&rctx));
+    }
 
     /*
       This initializes the nonzero structure of the Jacobian. This is artificial
@@ -179,6 +192,7 @@ int main(int argc, char **argv)
     */
     PetscCall(SNESSetJacobian(snes, J, J, SNESComputeJacobianDefaultColor, fdcoloring));
     PetscCall(ISColoringDestroy(&iscoloring));
+    if (prunejacobian) PetscCall(SNESPruneJacobianColor(snes, J, J));
   }
   /*
      Set Jacobian matrix data structure and default Jacobian evaluation
@@ -279,6 +293,7 @@ PetscErrorCode FormInitialGuess(AppCtx *user, Vec X)
   PetscReal    lambda, temp1, temp, hx, hy;
   PetscScalar *x;
 
+  PetscFunctionBeginUser;
   mx     = user->mx;
   my     = user->my;
   lambda = user->param;
@@ -311,7 +326,7 @@ PetscErrorCode FormInitialGuess(AppCtx *user, Vec X)
      Restore vector
   */
   PetscCall(VecRestoreArray(X, &x));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -333,6 +348,7 @@ PetscErrorCode FormFunction(SNES snes, Vec X, Vec F, void *ptr)
   PetscScalar        ut, ub, ul, ur, u, uxx, uyy, sc, *f;
   const PetscScalar *x;
 
+  PetscFunctionBeginUser;
   mx     = user->mx;
   my     = user->my;
   lambda = user->param;
@@ -374,7 +390,7 @@ PetscErrorCode FormFunction(SNES snes, Vec X, Vec F, void *ptr)
   */
   PetscCall(VecRestoreArrayRead(X, &x));
   PetscCall(VecRestoreArray(F, &f));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -398,6 +414,7 @@ PetscErrorCode FormJacobian(SNES snes, Vec X, Mat J, Mat jac, void *ptr)
   const PetscScalar *x;
   PetscReal          hx, hy, hxdhy, hydhx;
 
+  PetscFunctionBeginUser;
   mx     = user->mx;
   my     = user->my;
   lambda = user->param;
@@ -452,26 +469,26 @@ PetscErrorCode FormJacobian(SNES snes, Vec X, Mat J, Mat jac, void *ptr)
     PetscCall(MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY));
   }
 
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ConvergenceTest(KSP ksp, PetscInt it, PetscReal nrm, KSPConvergedReason *reason, void *ctx)
 {
-  PetscFunctionBegin;
+  PetscFunctionBeginUser;
   *reason = KSP_CONVERGED_ITERATING;
   if (it > 1) {
     *reason = KSP_CONVERGED_ITS;
     PetscCall(PetscInfo(NULL, "User provided convergence test returning after 2 iterations\n"));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ConvergenceDestroy(void *ctx)
 {
-  PetscFunctionBegin;
+  PetscFunctionBeginUser;
   PetscCall(PetscInfo(NULL, "User provided convergence destroy called\n"));
   PetscCall(PetscFree(ctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode postcheck(SNES snes, Vec x, Vec y, Vec w, PetscBool *changed_y, PetscBool *changed_w, void *ctx)
@@ -479,13 +496,13 @@ PetscErrorCode postcheck(SNES snes, Vec x, Vec y, Vec w, PetscBool *changed_y, P
   PetscReal norm;
   Vec       tmp;
 
-  PetscFunctionBegin;
+  PetscFunctionBeginUser;
   PetscCall(VecDuplicate(x, &tmp));
   PetscCall(VecWAXPY(tmp, -1.0, x, w));
   PetscCall(VecNorm(tmp, NORM_2, &norm));
   PetscCall(VecDestroy(&tmp));
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Norm of search step %g\n", (double)norm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST
@@ -519,5 +536,20 @@ PetscErrorCode postcheck(SNES snes, Vec x, Vec y, Vec w, PetscBool *changed_y, P
    test:
       suffix: 4
       args: -pc -par 6.807 -snes_monitor -snes_converged_reason
+
+   test:
+      suffix: 5
+      args: -snes_monitor_short -mat_coloring_type sl -snes_fd_coloring -mx 8 -my 11 -ksp_gmres_cgs_refinement_type refine_always -prune_jacobian
+      output_file: output/ex1_3.out
+
+   test:
+      suffix: 6
+      args: -snes_monitor draw:image:testfile -viewer_view
+
+   test:
+      suffix: python
+      requires: petsc4py
+      args: -python -snes_type python -snes_python_type ex1.py:MySNES -snes_view -null_appctx {{0 1}separate output}
+      localrunfiles: ex1.py
 
 TEST*/

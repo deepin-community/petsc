@@ -1,4 +1,3 @@
-
 static char help[] = "VecView() with a DMDA1d vector and draw viewer.\n\n";
 
 #include <petscdm.h>
@@ -14,7 +13,7 @@ PetscErrorCode apply(void *ctx, PetscInt n, const PetscScalar *x, PetscScalar *y
     y[3 * i + 1] = x[i] * x[i];
     y[3 * i + 2] = x[i] * x[i] * x[i];
   }
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 int main(int argc, char **argv)

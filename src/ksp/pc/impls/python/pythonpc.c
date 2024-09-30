@@ -14,21 +14,21 @@
 
    Level: intermediate
 
-.seealso: `PC`, `PCSHELL`, `PCCreate()`, `PCSetType()`, `PCPYTHON`, `PetscPythonInitialize()`
+.seealso: [](ch_ksp), `PC`, `PCSHELL`, `PCCreate()`, `PCSetType()`, `PCPYTHON`, `PetscPythonInitialize()`
 @*/
 PetscErrorCode PCPythonSetType(PC pc, const char pyname[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
-  PetscValidCharPointer(pyname, 2);
+  PetscAssertPointer(pyname, 2);
   PetscTryMethod(pc, "PCPythonSetType_C", (PC, const char[]), (pc, pyname));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
    PCPythonGetType - Get the type of a `PC` object implemented in Python, a `PCPYTHON`.
 
-   Not collective
+   Not Collective
 
    Input Parameter:
 .  pc - the preconditioner (`PC`) context.
@@ -38,13 +38,13 @@ PetscErrorCode PCPythonSetType(PC pc, const char pyname[])
 
    Level: intermediate
 
-.seealso: `PC`, `PCSHELL`, `PCCreate()`, `PCSetType()`, `PCPYTHON`, `PetscPythonInitialize()`, `PCPythonSetType()`
+.seealso: [](ch_ksp), `PC`, `PCSHELL`, `PCCreate()`, `PCSetType()`, `PCPYTHON`, `PetscPythonInitialize()`, `PCPythonSetType()`
 @*/
 PetscErrorCode PCPythonGetType(PC pc, const char *pyname[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
-  PetscValidPointer(pyname, 2);
+  PetscAssertPointer(pyname, 2);
   PetscUseMethod(pc, "PCPythonGetType_C", (PC, const char *[]), (pc, pyname));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

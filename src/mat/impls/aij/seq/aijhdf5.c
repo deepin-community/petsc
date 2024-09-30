@@ -1,4 +1,3 @@
-
 #include <../src/mat/impls/aij/seq/aij.h>
 #include <petsc/private/isimpl.h>
 #include <petsc/private/vecimpl.h>
@@ -160,6 +159,6 @@ PetscErrorCode MatLoad_AIJ_HDF5(Mat mat, PetscViewer viewer)
   PetscCall(ISDestroy(&is_i));
   PetscCall(ISDestroy(&is_j));
   PetscCall(VecDestroy(&vec_a));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif

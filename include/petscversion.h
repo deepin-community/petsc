@@ -4,17 +4,17 @@
 
 #define PETSC_VERSION_RELEASE    1
 #define PETSC_VERSION_MAJOR      3
-#define PETSC_VERSION_MINOR      18
+#define PETSC_VERSION_MINOR      20
 #define PETSC_VERSION_SUBMINOR   6
-#define PETSC_RELEASE_DATE       "Sep 30, 2022"
-#define PETSC_VERSION_DATE       "Mar 30, 2023"
+#define PETSC_RELEASE_DATE       "Sep 28, 2023"
+#define PETSC_VERSION_DATE       "Mar 29, 2024"
 
 #if !defined(PETSC_VERSION_GIT)
-#define PETSC_VERSION_GIT        "v3.18.6"
+#define PETSC_VERSION_GIT        "v3.20.6"
 #endif
 
 #if !defined(PETSC_VERSION_DATE_GIT)
-#define PETSC_VERSION_DATE_GIT   "2023-03-30 10:36:48 -0500"
+#define PETSC_VERSION_DATE_GIT   "2024-03-29 08:58:17 -0500"
 #endif
 
 #define PETSC_VERSION_EQ(MAJOR,MINOR,SUBMINOR) \

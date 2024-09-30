@@ -37,7 +37,7 @@ static PetscErrorCode DMPlexCreatePartitionerGraph_Overlap(DM dm, PetscInt heigh
     }
     /* Broken in parallel */
     if (rank) PetscCheck(!*numVertices, PETSC_COMM_SELF, PETSC_ERR_SUP, "Parallel partitioning of uninterpolated meshes not supported");
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   /* Always use FVM adjacency to create partitioner graph */
   PetscCall(DMGetBasicAdjacency(dm, &useCone, &useClosure));
@@ -105,7 +105,7 @@ static PetscErrorCode DMPlexCreatePartitionerGraph_Overlap(DM dm, PetscInt heigh
   if (adjacency) {
     *adjacency = vAdj;
   } else PetscCall(PetscFree(vAdj));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCreatePartitionerGraph_Native(DM dm, PetscInt height, PetscInt *numVertices, PetscInt **offsets, PetscInt **adjacency, IS *globalNumbering)
@@ -139,7 +139,7 @@ static PetscErrorCode DMPlexCreatePartitionerGraph_Native(DM dm, PetscInt height
     }
     /* Broken in parallel */
     if (rank) PetscCheck(!*numVertices, PETSC_COMM_SELF, PETSC_ERR_SUP, "Parallel partitioning of uninterpolated meshes not supported");
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(DMGetPointSF(dm, &sfPoint));
   PetscCall(DMPlexGetHeightStratum(dm, height, &pStart, &pEnd));
@@ -310,7 +310,7 @@ static PetscErrorCode DMPlexCreatePartitionerGraph_Native(DM dm, PetscInt height
   PetscCall(PetscSectionDestroy(&section));
   PetscCall(ISRestoreIndices(cellNumbering, &cellNum));
   PetscCall(ISDestroy(&cellNumbering));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCreatePartitionerGraph_ViaMat(DM dm, PetscInt height, PetscInt *numVertices, PetscInt **offsets, PetscInt **adjacency, IS *globalNumbering)
@@ -340,7 +340,7 @@ static PetscErrorCode DMPlexCreatePartitionerGraph_ViaMat(DM dm, PetscInt height
     }
     /* Broken in parallel */
     if (rank) PetscCheck(!*numVertices, PETSC_COMM_SELF, PETSC_ERR_SUP, "Parallel partitioning of uninterpolated meshes not supported");
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   /* Interpolated and parallel case */
 
@@ -394,7 +394,7 @@ static PetscErrorCode DMPlexCreatePartitionerGraph_ViaMat(DM dm, PetscInt height
   PetscCall(MatSetSizes(conn, floc, cloc, M, N));
   PetscCall(MatSetType(conn, MATMPIAIJ));
   PetscCall(DMPlexGetMaxSizes(dm, NULL, &lm));
-  PetscCallMPI(MPI_Allreduce(&lm, &m, 1, MPIU_INT, MPI_SUM, PetscObjectComm((PetscObject)dm)));
+  PetscCall(MPIU_Allreduce(&lm, &m, 1, MPIU_INT, MPI_SUM, PetscObjectComm((PetscObject)dm)));
   PetscCall(MatMPIAIJSetPreallocation(conn, m, NULL, m, NULL));
 
   /* Assemble matrix */
@@ -471,17 +471,17 @@ static PetscErrorCode DMPlexCreatePartitionerGraph_ViaMat(DM dm, PetscInt height
   PetscCall(MatRestoreRowIJ(conn, 0, PETSC_FALSE, PETSC_FALSE, &m, &ii, &jj, &flg));
   PetscCheck(flg, PETSC_COMM_SELF, PETSC_ERR_PLIB, "No IJ format");
   PetscCall(MatDestroy(&conn));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMPlexCreatePartitionerGraph - Create a CSR graph of point connections for the partitioner
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm      - The mesh `DM`
-- height  - Height of the strata from which to construct the graph
++ dm     - The mesh `DM`
+- height - Height of the strata from which to construct the graph
 
   Output Parameters:
 + numVertices     - Number of vertices in the graph
@@ -489,7 +489,7 @@ static PetscErrorCode DMPlexCreatePartitionerGraph_ViaMat(DM dm, PetscInt height
 . adjacency       - Point connectivity in the graph
 - globalNumbering - A map from the local cell numbering to the global numbering used in "adjacency".  Negative indicates that the cell is a duplicate from another process.
 
-  Options Database Keys:
+  Options Database Key:
 . -dm_plex_csr_alg <mat,graph,overlap> - Choose the algorithm for computing the CSR graph
 
   Level: developer
@@ -498,7 +498,7 @@ static PetscErrorCode DMPlexCreatePartitionerGraph_ViaMat(DM dm, PetscInt height
   The user can control the definition of adjacency for the mesh using `DMSetAdjacency()`. They should choose the combination appropriate for the function
   representation on the mesh. If requested, globalNumbering needs to be destroyed by the caller; offsets and adjacency need to be freed with PetscFree().
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `PetscPartitionerGetType()`, `PetscPartitionerCreate()`, `DMSetAdjacency()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `PetscPartitionerGetType()`, `PetscPartitionerCreate()`, `DMSetAdjacency()`
 @*/
 PetscErrorCode DMPlexCreatePartitionerGraph(DM dm, PetscInt height, PetscInt *numVertices, PetscInt **offsets, PetscInt **adjacency, IS *globalNumbering)
 {
@@ -517,16 +517,16 @@ PetscErrorCode DMPlexCreatePartitionerGraph(DM dm, PetscInt height, PetscInt *nu
     PetscCall(DMPlexCreatePartitionerGraph_Overlap(dm, height, numVertices, offsets, adjacency, globalNumbering));
     break;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMPlexCreateNeighborCSR - Create a mesh graph (cell-cell adjacency) in parallel CSR format.
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm - The `DMPLEX`
++ dm         - The `DMPLEX`
 - cellHeight - The height of mesh points to treat as cells (default should be 0)
 
   Output Parameters:
@@ -539,7 +539,7 @@ PetscErrorCode DMPlexCreatePartitionerGraph(DM dm, PetscInt height, PetscInt *nu
   Note:
   This is suitable for input to a mesh partitioner like ParMetis.
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexCreate()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexCreate()`
 @*/
 PetscErrorCode DMPlexCreateNeighborCSR(DM dm, PetscInt cellHeight, PetscInt *numVertices, PetscInt **offsets, PetscInt **adjacency)
 {
@@ -560,7 +560,7 @@ PetscErrorCode DMPlexCreateNeighborCSR(DM dm, PetscInt cellHeight, PetscInt *num
     if (numVertices) *numVertices = 0;
     if (offsets) *offsets = NULL;
     if (adjacency) *adjacency = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   numCells  = cEnd - cStart;
   faceDepth = depth - cellHeight;
@@ -615,7 +615,7 @@ PetscErrorCode DMPlexCreateNeighborCSR(DM dm, PetscInt cellHeight, PetscInt *num
     if (numVertices) *numVertices = numCells;
     if (offsets) *offsets = off;
     if (adjacency) *adjacency = adj;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   /* Setup face recognition */
   if (faceDepth == 1) {
@@ -716,22 +716,22 @@ PetscErrorCode DMPlexCreateNeighborCSR(DM dm, PetscInt cellHeight, PetscInt *num
   if (numVertices) *numVertices = numCells;
   if (offsets) *offsets = off;
   if (adjacency) *adjacency = adj;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscPartitionerDMPlexPartition - Create a non-overlapping partition of the cells in the mesh
 
-  Collective on part
+  Collective
 
   Input Parameters:
-+ part    - The `PetscPartitioner`
-. targetSection - The `PetscSection` describing the absolute weight of each partition (can be NULL)
-- dm      - The mesh `DM`
++ part          - The `PetscPartitioner`
+. targetSection - The `PetscSection` describing the absolute weight of each partition (can be `NULL`)
+- dm            - The mesh `DM`
 
   Output Parameters:
-+ partSection     - The `PetscSection` giving the division of points by partition
-- partition       - The list of points by partition
++ partSection - The `PetscSection` giving the division of points by partition
+- partition   - The list of points by partition
 
   Level: developer
 
@@ -739,7 +739,7 @@ PetscErrorCode DMPlexCreateNeighborCSR(DM dm, PetscInt cellHeight, PetscInt *num
   If the `DM` has a local section associated, each point to be partitioned will be weighted by the total number of dofs identified
   by the section in the transitive closure of the point.
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `PetscPartitioner`, `PetscSection`, `DMPlexDistribute()`, `PetscPartitionerCreate()`, `PetscSectionCreate()`,
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `PetscPartitioner`, `PetscSection`, `DMPlexDistribute()`, `PetscPartitionerCreate()`, `PetscSectionCreate()`,
          `PetscSectionSetChart()`, `PetscPartitionerPartition()`
 @*/
 PetscErrorCode PetscPartitionerDMPlexPartition(PetscPartitioner part, DM dm, PetscSection targetSection, PetscSection partSection, IS *partition)
@@ -753,7 +753,7 @@ PetscErrorCode PetscPartitionerDMPlexPartition(PetscPartitioner part, DM dm, Pet
   PetscValidHeaderSpecific(dm, DM_CLASSID, 2);
   if (targetSection) PetscValidHeaderSpecific(targetSection, PETSC_SECTION_CLASSID, 3);
   PetscValidHeaderSpecific(partSection, PETSC_SECTION_CLASSID, 4);
-  PetscValidPointer(partition, 5);
+  PetscAssertPointer(partition, 5);
   PetscCall(PetscObjectTypeCompare((PetscObject)dm, DMPLEX, &isplex));
   PetscCheck(isplex, PetscObjectComm((PetscObject)dm), PETSC_ERR_SUP, "Not for type %s", ((PetscObject)dm)->type_name);
   PetscCallMPI(MPI_Comm_size(PetscObjectComm((PetscObject)part), &size));
@@ -769,7 +769,7 @@ PetscErrorCode PetscPartitionerDMPlexPartition(PetscPartitioner part, DM dm, Pet
     PetscCall(PetscMalloc1(cEnd - cStart, &points));
     for (c = cStart; c < cEnd; ++c) points[c] = c;
     PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)part), cEnd - cStart, points, PETSC_OWN_POINTER, partition));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (part->height == 0) {
     PetscInt  numVertices = 0;
@@ -866,13 +866,13 @@ PetscErrorCode PetscPartitionerDMPlexPartition(PetscPartitioner part, DM dm, Pet
     }
   } else SETERRQ(PetscObjectComm((PetscObject)part), PETSC_ERR_ARG_OUTOFRANGE, "Invalid height %" PetscInt_FMT " for points to partition", part->height);
   PetscCall(PetscSectionDestroy(&vertSection));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexGetPartitioner - Get the mesh partitioner
 
-  Not collective
+  Not Collective
 
   Input Parameter:
 . dm - The `DM`
@@ -885,7 +885,7 @@ PetscErrorCode PetscPartitionerDMPlexPartition(PetscPartitioner part, DM dm, Pet
   Note:
   This gets a borrowed reference, so the user should not destroy this `PetscPartitioner`.
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `PetscPartitioner`, `PetscSection`, `DMPlexDistribute()`, `DMPlexSetPartitioner()`, `PetscPartitionerDMPlexPartition()`, `PetscPartitionerCreate()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `PetscPartitioner`, `PetscSection`, `DMPlexDistribute()`, `DMPlexSetPartitioner()`, `PetscPartitionerDMPlexPartition()`, `PetscPartitionerCreate()`
 @*/
 PetscErrorCode DMPlexGetPartitioner(DM dm, PetscPartitioner *part)
 {
@@ -893,18 +893,18 @@ PetscErrorCode DMPlexGetPartitioner(DM dm, PetscPartitioner *part)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(part, 2);
+  PetscAssertPointer(part, 2);
   *part = mesh->partitioner;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexSetPartitioner - Set the mesh partitioner
 
-  logically collective on dm
+  logically Collective
 
   Input Parameters:
-+ dm - The `DM`
++ dm   - The `DM`
 - part - The partitioner
 
   Level: developer
@@ -912,7 +912,7 @@ PetscErrorCode DMPlexGetPartitioner(DM dm, PetscPartitioner *part)
   Note:
   Any existing `PetscPartitioner` will be destroyed.
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `PetscPartitioner`,`DMPlexDistribute()`, `DMPlexGetPartitioner()`, `PetscPartitionerCreate()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `PetscPartitioner`,`DMPlexDistribute()`, `DMPlexGetPartitioner()`, `PetscPartitionerCreate()`
 @*/
 PetscErrorCode DMPlexSetPartitioner(DM dm, PetscPartitioner part)
 {
@@ -924,7 +924,7 @@ PetscErrorCode DMPlexSetPartitioner(DM dm, PetscPartitioner part)
   PetscCall(PetscObjectReference((PetscObject)part));
   PetscCall(PetscPartitionerDestroy(&mesh->partitioner));
   mesh->partitioner = part;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexAddClosure_Private(DM dm, PetscHSetI ht, PetscInt point)
@@ -940,7 +940,7 @@ static PetscErrorCode DMPlexAddClosure_Private(DM dm, PetscHSetI ht, PetscInt po
     PetscCall(DMPlexGetConeSize(dm, point, &coneSize));
     for (c = 0; c < coneSize; c++) PetscCall(DMPlexAddClosure_Private(dm, ht, cone[c]));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_UNUSED static PetscErrorCode DMPlexAddClosure_Tree(DM dm, PetscHSetI ht, PetscInt point, PetscBool up, PetscBool down)
@@ -979,7 +979,7 @@ PETSC_UNUSED static PetscErrorCode DMPlexAddClosure_Tree(DM dm, PetscHSetI ht, P
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexAddClosureTree_Up_Private(DM dm, PetscHSetI ht, PetscInt point)
@@ -1002,7 +1002,7 @@ static PetscErrorCode DMPlexAddClosureTree_Up_Private(DM dm, PetscHSetI ht, Pets
       PetscCall(DMPlexAddClosureTree_Up_Private(dm, ht, cp));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexAddClosureTree_Down_Private(DM dm, PetscHSetI ht, PetscInt point)
@@ -1013,7 +1013,7 @@ static PetscErrorCode DMPlexAddClosureTree_Down_Private(DM dm, PetscHSetI ht, Pe
   PetscFunctionBeginHot;
   PetscCall(DMPlexGetTreeChildren(dm, point, &numChildren, &children));
   for (i = 0; i < numChildren; i++) PetscCall(PetscHSetIAdd(ht, children[i]));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexAddClosureTree_Private(DM dm, PetscHSetI ht, PetscInt point)
@@ -1028,7 +1028,7 @@ static PetscErrorCode DMPlexAddClosureTree_Private(DM dm, PetscHSetI ht, PetscIn
   PetscCall(DMPlexGetCone(dm, point, &cone));
   PetscCall(DMPlexGetConeSize(dm, point, &coneSize));
   for (c = 0; c < coneSize; c++) PetscCall(DMPlexAddClosureTree_Private(dm, ht, cone[c]));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMPlexClosurePoints_Private(DM dm, PetscInt numPoints, const PetscInt points[], IS *closureIS)
@@ -1064,19 +1064,19 @@ PetscErrorCode DMPlexClosurePoints_Private(DM dm, PetscInt numPoints, const Pets
   PetscCall(PetscHSetIDestroy(&ht));
   PetscCall(PetscSortInt(nelems, elems));
   PetscCall(ISCreateGeneral(PETSC_COMM_SELF, nelems, elems, PETSC_OWN_POINTER, closureIS));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexPartitionLabelClosure - Add the closure of all points to the partition label
 
   Input Parameters:
-+ dm     - The `DM`
-- label  - `DMLabel` assigning ranks to remote roots
++ dm    - The `DM`
+- label - `DMLabel` assigning ranks to remote roots
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMLabel`, `DMPlexPartitionLabelCreateSF()`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMLabel`, `DMPlexPartitionLabelCreateSF()`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
 @*/
 PetscErrorCode DMPlexPartitionLabelClosure(DM dm, DMLabel label)
 {
@@ -1101,19 +1101,19 @@ PetscErrorCode DMPlexPartitionLabelClosure(DM dm, DMLabel label)
   }
   PetscCall(ISRestoreIndices(rankIS, &ranks));
   PetscCall(ISDestroy(&rankIS));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexPartitionLabelAdjacency - Add one level of adjacent points to the partition label
 
   Input Parameters:
-+ dm     - The `DM`
-- label  - `DMLabel` assigning ranks to remote roots
++ dm    - The `DM`
+- label - `DMLabel` assigning ranks to remote roots
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMLabel`, `DMPlexPartitionLabelCreateSF()`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMLabel`, `DMPlexPartitionLabelCreateSF()`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
 @*/
 PetscErrorCode DMPlexPartitionLabelAdjacency(DM dm, DMLabel label)
 {
@@ -1143,15 +1143,15 @@ PetscErrorCode DMPlexPartitionLabelAdjacency(DM dm, DMLabel label)
   PetscCall(ISRestoreIndices(rankIS, &ranks));
   PetscCall(ISDestroy(&rankIS));
   PetscCall(PetscFree(adj));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexPartitionLabelPropagate - Propagate points in a partition label over the point `PetscSF`
 
   Input Parameters:
-+ dm     - The `DM`
-- label  - `DMLabel` assigning ranks to remote roots
++ dm    - The `DM`
+- label - `DMLabel` assigning ranks to remote roots
 
   Level: developer
 
@@ -1159,7 +1159,7 @@ PetscErrorCode DMPlexPartitionLabelAdjacency(DM dm, DMLabel label)
   This is required when generating multi-level overlaps to capture
   overlap points from non-neighbouring partitions.
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMLabel`, `DMPlexPartitionLabelCreateSF()`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMLabel`, `DMPlexPartitionLabelCreateSF()`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
 @*/
 PetscErrorCode DMPlexPartitionLabelPropagate(DM dm, DMLabel label)
 {
@@ -1205,7 +1205,7 @@ PetscErrorCode DMPlexPartitionLabelPropagate(DM dm, DMLabel label)
   PetscCall(ISRestoreIndices(rankIS, &ranks));
   PetscCall(ISDestroy(&rankIS));
   PetscCall(DMLabelDestroy(&lblRoots));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -1217,7 +1217,7 @@ PetscErrorCode DMPlexPartitionLabelPropagate(DM dm, DMLabel label)
 - processSF - A star forest mapping into the local index on each remote rank
 
   Output Parameter:
-. leafLabel - `DMLabel `assigning ranks to remote roots
+. leafLabel - `DMLabel` assigning ranks to remote roots
 
   Level: developer
 
@@ -1225,7 +1225,7 @@ PetscErrorCode DMPlexPartitionLabelPropagate(DM dm, DMLabel label)
   The rootLabel defines a send pattern by mapping local points to remote target ranks. The
   resulting leafLabel is a receiver mapping of remote roots to their parent rank.
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexPartitionLabelCreateSF()`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexPartitionLabelCreateSF()`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
 @*/
 PetscErrorCode DMPlexPartitionLabelInvert(DM dm, DMLabel rootLabel, PetscSF processSF, DMLabel leafLabel)
 {
@@ -1312,7 +1312,7 @@ PetscErrorCode DMPlexPartitionLabelInvert(DM dm, DMLabel rootLabel, PetscSF proc
       counter += rcounts[r];
     }
     if (counter > PETSC_MPI_INT_MAX) locOverflow = PETSC_TRUE;
-    PetscCallMPI(MPI_Allreduce(&locOverflow, &mpiOverflow, 1, MPIU_BOOL, MPI_LOR, comm));
+    PetscCall(MPIU_Allreduce(&locOverflow, &mpiOverflow, 1, MPIU_BOOL, MPI_LOR, comm));
     if (!mpiOverflow) {
       PetscCall(PetscInfo(dm, "Using Alltoallv for mesh distribution\n"));
       leafSize = (PetscInt)counter;
@@ -1352,7 +1352,7 @@ PetscErrorCode DMPlexPartitionLabelInvert(DM dm, DMLabel rootLabel, PetscSF proc
   PetscCall(PetscFree(rootPoints));
   PetscCall(PetscFree(leafPoints));
   PetscCall(PetscLogEventEnd(DMPLEX_PartLabelInvert, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -1363,14 +1363,14 @@ PetscErrorCode DMPlexPartitionLabelInvert(DM dm, DMLabel rootLabel, PetscSF proc
 - label - `DMLabel` assigning ranks to remote roots
 
   Output Parameter:
-. sf    - The star forest communication context encapsulating the defined mapping
+. sf - The star forest communication context encapsulating the defined mapping
 
   Level: developer
 
   Note:
   The incoming label is a receiver mapping of remote points to their parent rank.
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMLabel`, `PetscSF`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMLabel`, `PetscSF`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
 @*/
 PetscErrorCode DMPlexPartitionLabelCreateSF(DM dm, DMLabel label, PetscSF *sf)
 {
@@ -1436,7 +1436,7 @@ PetscErrorCode DMPlexPartitionLabelCreateSF(DM dm, DMLabel label, PetscSF *sf)
   PetscCall(PetscSFSetUp(*sf));
   PetscCall(ISDestroy(&neighborsIS));
   PetscCall(PetscLogEventEnd(DMPLEX_PartLabelCreateSF, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_PARMETIS)
@@ -1447,8 +1447,7 @@ PetscErrorCode DMPlexPartitionLabelCreateSF(DM dm, DMLabel label, PetscSF *sf)
  * when PETSc is built without ParMETIS. To avoid -Wunused-function, we take
  * them out in that case. */
 #if defined(PETSC_HAVE_PARMETIS)
-/*@C
-
+/*
   DMPlexRewriteSF - Rewrites the ownership of the `PetsSF` of a `DM` (in place).
 
   Input parameters:
@@ -1460,8 +1459,8 @@ PetscErrorCode DMPlexPartitionLabelCreateSF(DM dm, DMLabel label, PetscSF *sf)
 
   Level: developer
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMLabel`, `PetscSF`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
-@*/
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMLabel`, `PetscSF`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
+*/
 static PetscErrorCode DMPlexRewriteSF(DM dm, PetscInt n, PetscInt *pointsToRewrite, PetscInt *targetOwners, const PetscInt *degrees)
 {
   PetscInt           pStart, pEnd, i, j, counter, leafCounter, sumDegrees, nroots, nleafs;
@@ -1584,7 +1583,7 @@ static PetscErrorCode DMPlexRewriteSF(DM dm, PetscInt n, PetscInt *pointsToRewri
   PetscCall(PetscFree(newOwners));
   PetscCall(PetscFree(newNumbers));
   PetscCall(PetscFree(isLeaf));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexViewDistribution(MPI_Comm comm, PetscInt n, PetscInt skip, PetscInt *vtxwgt, PetscInt *part, PetscViewer viewer)
@@ -1600,7 +1599,7 @@ static PetscErrorCode DMPlexViewDistribution(MPI_Comm comm, PetscInt n, PetscInt
     if (part) distribution[part[i]] += vtxwgt[skip * i];
     else distribution[rank] += vtxwgt[skip * i];
   }
-  PetscCallMPI(MPI_Allreduce(MPI_IN_PLACE, distribution, size, MPIU_INT, MPI_SUM, comm));
+  PetscCall(MPIU_Allreduce(MPI_IN_PLACE, distribution, size, MPIU_INT, MPI_SUM, comm));
   min = distribution[0];
   max = distribution[0];
   sum = distribution[0];
@@ -1611,7 +1610,7 @@ static PetscErrorCode DMPlexViewDistribution(MPI_Comm comm, PetscInt n, PetscInt
   }
   PetscCall(PetscViewerASCIIPrintf(viewer, "Min: %" PetscInt_FMT ", Avg: %" PetscInt_FMT ", Max: %" PetscInt_FMT ", Balance: %f\n", min, sum / size, max, (max * 1. * size) / sum));
   PetscCall(PetscFree(distribution));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif
@@ -1619,24 +1618,24 @@ static PetscErrorCode DMPlexViewDistribution(MPI_Comm comm, PetscInt n, PetscInt
 /*@
   DMPlexRebalanceSharedPoints - Redistribute points in the plex that are shared in order to achieve better balancing. This routine updates the `PointSF` of the `DM` inplace.
 
-  Input parameters:
-+ dm               - The `DMPLEX` object.
-. entityDepth      - depth of the entity to balance (0 -> balance vertices).
-. useInitialGuess  - whether to use the current distribution as initial guess (only used by ParMETIS).
-- parallel         - whether to use ParMETIS and do the partition in parallel or whether to gather the graph onto a single process and use METIS.
+  Input Parameters:
++ dm              - The `DMPLEX` object.
+. entityDepth     - depth of the entity to balance (0 -> balance vertices).
+. useInitialGuess - whether to use the current distribution as initial guess (only used by ParMETIS).
+- parallel        - whether to use ParMETIS and do the partition in parallel or whether to gather the graph onto a single process and use METIS.
 
-  Output parameters:
-. success          - whether the graph partitioning was successful or not, optional. Unsuccessful simply means no change to the partitioning
+  Output Parameter:
+. success - whether the graph partitioning was successful or not, optional. Unsuccessful simply means no change to the partitioning
 
   Options Database Keys:
-+  -dm_plex_rebalance_shared_points_parmetis - Use ParMetis instead of Metis for the partitioner
-.  -dm_plex_rebalance_shared_points_use_initial_guess - Use current partition to bootstrap ParMetis partition
-.  -dm_plex_rebalance_shared_points_use_mat_partitioning - Use the MatPartitioning object to perform the partition, the prefix for those operations is -dm_plex_rebalance_shared_points_
--  -dm_plex_rebalance_shared_points_monitor - Monitor the shared points rebalance process
++ -dm_plex_rebalance_shared_points_parmetis             - Use ParMetis instead of Metis for the partitioner
+. -dm_plex_rebalance_shared_points_use_initial_guess    - Use current partition to bootstrap ParMetis partition
+. -dm_plex_rebalance_shared_points_use_mat_partitioning - Use the MatPartitioning object to perform the partition, the prefix for those operations is -dm_plex_rebalance_shared_points_
+- -dm_plex_rebalance_shared_points_monitor              - Monitor the shared points rebalance process
 
   Level: intermediate
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexDistribute()`, `DMPlexCreateOverlap()`
 @*/
 PetscErrorCode DMPlexRebalanceSharedPoints(DM dm, PetscInt entityDepth, PetscBool useInitialGuess, PetscBool parallel, PetscBool *success)
 {
@@ -1678,7 +1677,7 @@ PetscErrorCode DMPlexRebalanceSharedPoints(DM dm, PetscInt entityDepth, PetscBoo
   PetscCallMPI(MPI_Comm_size(comm, &size));
   if (size == 1) {
     if (success) *success = PETSC_TRUE;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (success) *success = PETSC_FALSE;
   PetscCallMPI(MPI_Comm_rank(comm, &rank));
@@ -1796,8 +1795,7 @@ PetscErrorCode DMPlexRebalanceSharedPoints(DM dm, PetscInt entityDepth, PetscBoo
   PetscCall(PetscMalloc1(ncon * nparts, &tpwgts));
   for (i = 0; i < ncon * nparts; i++) tpwgts[i] = 1. / (nparts);
   PetscCall(PetscMalloc1(ncon, &ubvec));
-  ubvec[0] = 1.05;
-  ubvec[1] = 1.05;
+  for (i = 0; i < ncon; i++) ubvec[i] = 1.05;
 
   PetscCall(PetscMalloc1(ncon * (1 + numNonExclusivelyOwned), &vtxwgt));
   if (ncon == 2) {
@@ -1809,7 +1807,7 @@ PetscErrorCode DMPlexRebalanceSharedPoints(DM dm, PetscInt entityDepth, PetscBoo
     }
   } else {
     PetscInt base, ms;
-    PetscCallMPI(MPI_Allreduce(&numExclusivelyOwned, &base, 1, MPIU_INT, MPIU_MAX, PetscObjectComm((PetscObject)dm)));
+    PetscCall(MPIU_Allreduce(&numExclusivelyOwned, &base, 1, MPIU_INT, MPI_MAX, PetscObjectComm((PetscObject)dm)));
     PetscCall(MatGetSize(A, &ms, NULL));
     ms -= size;
     base      = PetscMax(base, ms);
@@ -1942,9 +1940,9 @@ PetscErrorCode DMPlexRebalanceSharedPoints(DM dm, PetscInt entityDepth, PetscBoo
 
   /* Check if the renumbering worked (this can fail when ParMETIS gives fewer partitions than there are processes) */
   failed = (PetscInt)(part[0] != rank);
-  PetscCallMPI(MPI_Allreduce(&failed, &failedGlobal, 1, MPIU_INT, MPI_SUM, comm));
+  PetscCall(MPIU_Allreduce(&failed, &failedGlobal, 1, MPIU_INT, MPI_SUM, comm));
   if (failedGlobal > 0) {
-    PetscCheck(failedGlobal <= 0, comm, PETSC_ERR_LIB, "Metis/Parmetis returned a bad partion");
+    PetscCheck(failedGlobal <= 0, comm, PETSC_ERR_LIB, "Metis/Parmetis returned a bad partition");
     PetscCall(PetscFree(vtxwgt));
     PetscCall(PetscFree(toBalance));
     PetscCall(PetscFree(isLeaf));
@@ -1959,7 +1957,7 @@ PetscErrorCode DMPlexRebalanceSharedPoints(DM dm, PetscInt entityDepth, PetscBoo
       PetscCall(PetscViewerDestroy(&viewer));
     }
     PetscCall(PetscLogEventEnd(DMPLEX_RebalanceSharedPoints, dm, 0, 0, 0));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /* Check how well we did distributing points*/
@@ -2022,7 +2020,7 @@ PetscErrorCode DMPlexRebalanceSharedPoints(DM dm, PetscInt entityDepth, PetscBoo
   }
   if (success) *success = PETSC_TRUE;
   PetscCall(PetscLogEventEnd(DMPLEX_RebalanceSharedPoints, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 #else
   SETERRQ(PetscObjectComm((PetscObject)dm), PETSC_ERR_SUP, "Mesh partitioning needs external package support.\nPlease reconfigure with --download-parmetis.");
 #endif

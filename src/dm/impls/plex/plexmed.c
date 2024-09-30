@@ -10,19 +10,20 @@
 
   Collective
 
+  Input Parameters:
 + comm        - The MPI communicator
 . filename    - Name of the .med file
 - interpolate - Create faces and edges in the mesh
 
   Output Parameter:
-. dm  - The `DM` object representing the mesh
+. dm - The `DM` object representing the mesh
 
   Level: beginner
 
-  Reference:
+  References:
 . * -  https://www.salome-platform.org/user-section/about/med, http://docs.salome-platform.org/latest/MED_index.html
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexCreateFromFile()`, `DMPlexCreateGmsh()`, `DMPlexCreate()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexCreateFromFile()`, `DMPlexCreateGmsh()`, `DMPlexCreate()`
 @*/
 PetscErrorCode DMPlexCreateMedFromFile(MPI_Comm comm, const char filename[], PetscBool interpolate, DM *dm)
 {
@@ -332,13 +333,13 @@ PetscErrorCode DMPlexCreateMedFromFile(MPI_Comm comm, const char filename[], Pet
     PetscCall(PetscSectionDestroy(&facetSectionRemote));
     PetscCall(PetscSectionDestroy(&facetSectionIDsRemote));
   }
-  PetscCall(MEDfileClose(fileID));
+  PetscCallExternal(MEDfileClose, fileID);
   PetscCall(PetscFree(coordinates));
   PetscCall(PetscFree(cellList));
   PetscCall(PetscLayoutDestroy(&vLayout));
   PetscCall(PetscLayoutDestroy(&cLayout));
   PetscCall(PetscSFDestroy(&sfVertices));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 #else
   SETERRQ(comm, PETSC_ERR_SUP, "This method requires Med mesh reader support. Reconfigure using --download-med");
 #endif

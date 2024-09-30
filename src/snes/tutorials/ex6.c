@@ -1,4 +1,3 @@
-
 static char help[] = "Newton method to solve u'' + u^{2} = f, sequentially.\n\
 This example employs a user-defined reasonview routine.\n\n";
 
@@ -158,8 +157,10 @@ int main(int argc, char **argv)
 PetscErrorCode FormInitialGuess(Vec x)
 {
   PetscScalar pfive = .50;
+
+  PetscFunctionBeginUser;
   PetscCall(VecSet(x, pfive));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -187,6 +188,7 @@ PetscErrorCode FormFunction(SNES snes, Vec x, Vec f, void *ctx)
   PetscScalar       *ff, d;
   PetscInt           i, n;
 
+  PetscFunctionBeginUser;
   /*
      Get pointers to vector data.
        - For default PETSc vectors, VecGetArray() returns a pointer to
@@ -214,7 +216,7 @@ PetscErrorCode FormFunction(SNES snes, Vec x, Vec f, void *ctx)
   PetscCall(VecRestoreArrayRead(x, &xx));
   PetscCall(VecRestoreArray(f, &ff));
   PetscCall(VecRestoreArrayRead(g, &gg));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -237,6 +239,7 @@ PetscErrorCode FormJacobian(SNES snes, Vec x, Mat jac, Mat B, void *dummy)
   PetscScalar        A[3], d;
   PetscInt           i, n, j[3];
 
+  PetscFunctionBeginUser;
   /*
      Get pointer to vector data
   */
@@ -290,7 +293,7 @@ PetscErrorCode FormJacobian(SNES snes, Vec x, Mat jac, Mat B, void *dummy)
     PetscCall(MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY));
   }
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MySNESConvergedReasonView(SNES snes, void *ctx)
@@ -300,6 +303,7 @@ PetscErrorCode MySNESConvergedReasonView(SNES snes, void *ctx)
   SNESConvergedReason reason;
   const char         *strreason;
 
+  PetscFunctionBeginUser;
   PetscCall(SNESGetConvergedReason(snes, &reason));
   PetscCall(SNESGetConvergedReasonString(snes, &strreason));
   PetscCall(PetscViewerASCIIPrintf(viewer, "Customized SNES converged reason view\n"));
@@ -310,7 +314,7 @@ PetscErrorCode MySNESConvergedReasonView(SNES snes, void *ctx)
     PetscCall(PetscViewerASCIIPrintf(viewer, "Did not converge due to %s\n", strreason));
   }
   PetscCall(PetscViewerASCIISubtractTab(viewer, 1));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MyKSPConvergedReasonView(KSP ksp, void *ctx)
@@ -320,6 +324,7 @@ PetscErrorCode MyKSPConvergedReasonView(KSP ksp, void *ctx)
   KSPConvergedReason reason;
   const char        *reasonstr;
 
+  PetscFunctionBeginUser;
   PetscCall(KSPGetConvergedReason(ksp, &reason));
   PetscCall(KSPGetConvergedReasonString(ksp, &reasonstr));
   PetscCall(PetscViewerASCIIAddTab(viewer, 2));
@@ -331,7 +336,7 @@ PetscErrorCode MyKSPConvergedReasonView(KSP ksp, void *ctx)
     PetscCall(PetscViewerASCIIPrintf(viewer, "Did not converge due to %s\n", reasonstr));
   }
   PetscCall(PetscViewerASCIISubtractTab(viewer, 3));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

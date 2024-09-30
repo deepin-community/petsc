@@ -12,8 +12,6 @@ typedef struct {
   PetscReal *stp, *ytq;
 } Mat_LSR1;
 
-/*------------------------------------------------------------*/
-
 /*
   The solution method is adapted from Algorithm 8 of Erway and Marcia
   "On Solving Large-Scale Limited-Memory Quasi-Newton Equations"
@@ -64,10 +62,8 @@ static PetscErrorCode MatSolve_LMVMSR1(Mat B, Vec F, Vec dX)
     PetscCall(VecDot(lsr1->Q[i], F, &qtf));
     PetscCall(VecAXPY(dX, PetscRealPart(qtf) / lsr1->ytq[i], lsr1->Q[i]));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 /*
   The forward product is the matrix-free implementation of
@@ -120,10 +116,8 @@ static PetscErrorCode MatMult_LMVMSR1(Mat B, Vec X, Vec Z)
     PetscCall(VecDot(lsr1->P[i], X, &ptx));
     PetscCall(VecAXPY(Z, PetscRealPart(ptx) / lsr1->stp[i], lsr1->P[i]));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatUpdate_LMVMSR1(Mat B, Vec X, Vec F)
 {
@@ -133,7 +127,7 @@ static PetscErrorCode MatUpdate_LMVMSR1(Mat B, Vec X, Vec F)
   PetscScalar sktw;
 
   PetscFunctionBegin;
-  if (!lmvm->m) PetscFunctionReturn(0);
+  if (!lmvm->m) PetscFunctionReturn(PETSC_SUCCESS);
   if (lmvm->prev_set) {
     /* Compute the new (S = X - Xprev) and (Y = F - Fprev) vectors */
     PetscCall(VecAYPX(lmvm->Xprev, -1.0, X));
@@ -158,10 +152,8 @@ static PetscErrorCode MatUpdate_LMVMSR1(Mat B, Vec X, Vec F)
   PetscCall(VecCopy(X, lmvm->Xprev));
   PetscCall(VecCopy(F, lmvm->Fprev));
   lmvm->prev_set = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatCopy_LMVMSR1(Mat B, Mat M, MatStructure str)
 {
@@ -180,10 +172,8 @@ static PetscErrorCode MatCopy_LMVMSR1(Mat B, Mat M, MatStructure str)
     PetscCall(VecCopy(bctx->P[i], mctx->P[i]));
     PetscCall(VecCopy(bctx->Q[i], mctx->Q[i]));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatReset_LMVMSR1(Mat B, PetscBool destructive)
 {
@@ -200,10 +190,8 @@ static PetscErrorCode MatReset_LMVMSR1(Mat B, PetscBool destructive)
     lsr1->allocated = PETSC_FALSE;
   }
   PetscCall(MatReset_LMVM(B, destructive));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatAllocate_LMVMSR1(Mat B, Vec X, Vec F)
 {
@@ -221,10 +209,8 @@ static PetscErrorCode MatAllocate_LMVMSR1(Mat B, Vec X, Vec F)
     }
     lsr1->allocated = PETSC_TRUE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatDestroy_LMVMSR1(Mat B)
 {
@@ -241,10 +227,8 @@ static PetscErrorCode MatDestroy_LMVMSR1(Mat B)
   }
   PetscCall(PetscFree(lmvm->ctx));
   PetscCall(MatDestroy_LMVM(B));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatSetUp_LMVMSR1(Mat B)
 {
@@ -262,10 +246,8 @@ static PetscErrorCode MatSetUp_LMVMSR1(Mat B)
     }
     lsr1->allocated = PETSC_TRUE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 PetscErrorCode MatCreate_LMVMSR1(Mat B)
 {
@@ -292,41 +274,36 @@ PetscErrorCode MatCreate_LMVMSR1(Mat B)
   lmvm->ctx       = (void *)lsr1;
   lsr1->allocated = PETSC_FALSE;
   lsr1->needP = lsr1->needQ = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*------------------------------------------------------------*/
-
 /*@
-   MatCreateLMVMSR1 - Creates a limited-memory Symmetric-Rank-1 approximation
-   matrix used for a Jacobian. L-SR1 is symmetric by construction, but is not
-   guaranteed to be positive-definite.
+  MatCreateLMVMSR1 - Creates a limited-memory Symmetric-Rank-1 approximation
+  matrix used for a Jacobian. L-SR1 is symmetric by construction, but is not
+  guaranteed to be positive-definite.
 
-   The provided local and global sizes must match the solution and function vectors
-   used with `MatLMVMUpdate()` and `MatSolve()`. The resulting L-SR1 matrix will have
-   storage vectors allocated with `VecCreateSeq()` in serial and `VecCreateMPI()` in
-   parallel. To use the L-SR1 matrix with other vector types, the matrix must be
-   created using `MatCreate()` and `MatSetType()`, followed by `MatLMVMAllocate()`.
-   This ensures that the internal storage and work vectors are duplicated from the
-   correct type of vector.
+  To use the L-SR1 matrix with other vector types, the matrix must be
+  created using `MatCreate()` and `MatSetType()`, followed by `MatLMVMAllocate()`.
+  This ensures that the internal storage and work vectors are duplicated from the
+  correct type of vector.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  comm - MPI communicator
-.  n - number of local rows for storage vectors
--  N - global size of the storage vectors
+  Input Parameters:
++ comm - MPI communicator
+. n    - number of local rows for storage vectors
+- N    - global size of the storage vectors
 
-   Output Parameter:
-.  B - the matrix
+  Output Parameter:
+. B - the matrix
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   It is recommended that one use the `MatCreate()`, `MatSetType()` and/or `MatSetFromOptions()`
-   paradigm instead of this routine directly.
+  Note:
+  It is recommended that one use the `MatCreate()`, `MatSetType()` and/or `MatSetFromOptions()`
+  paradigm instead of this routine directly.
 
-.seealso: [](chapter_ksp), `MatCreate()`, `MATLMVM`, `MATLMVMSR1`, `MatCreateLMVMBFGS()`, `MatCreateLMVMDFP()`,
+.seealso: [](ch_ksp), `MatCreate()`, `MATLMVM`, `MATLMVMSR1`, `MatCreateLMVMBFGS()`, `MatCreateLMVMDFP()`,
           `MatCreateLMVMBrdn()`, `MatCreateLMVMBadBrdn()`, `MatCreateLMVMSymBrdn()`
 @*/
 PetscErrorCode MatCreateLMVMSR1(MPI_Comm comm, PetscInt n, PetscInt N, Mat *B)
@@ -336,5 +313,5 @@ PetscErrorCode MatCreateLMVMSR1(MPI_Comm comm, PetscInt n, PetscInt N, Mat *B)
   PetscCall(MatSetSizes(*B, n, n, N, N));
   PetscCall(MatSetType(*B, MATLMVMSR1));
   PetscCall(MatSetUp(*B));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

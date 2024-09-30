@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Developers &#8212; PETSc 3.18.6 documentation</title>
+    <title>Developers &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -52,7 +53,7 @@
     <link rel="shortcut icon" href="../_static/petsc_favicon.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Communication Channels for PETSc Developers" href="communication.html" />
+    <link rel="next" title="PETSc Developers Communication Channels" href="communication.html" />
     <link rel="prev" title="PETSc Development Team" href="../community/petsc_team.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="docsearch:language" content="en">
@@ -142,31 +143,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -293,31 +293,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -395,15 +394,20 @@
   </p>
   <div class="bd-toc-item navbar-nav">
     <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="communication.html">Communication Channels for PETSc Developers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to PETSc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="communication.html">PETSc Developers Communication Channels</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="contributing/index.html">Contributing to PETSc</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference internal" href="contributing/developingmr.html">Developing a Merge Request</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/submittingmr.html">Submitting a Merge Request</a></li>
+<li class="toctree-l2"><a class="reference internal" href="contributing/pipelines.html">GitLab CI Pipelines</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mrmanagement.html">Merge request management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">PETSc Development Environment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="style.html">PETSc Style and Usage Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="integration.html">Getting your code and documentation into PETSc</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pipelines.html">Working with Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="buildsystem.html">BuildSystem</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">PETSc Testing System</a></li>
 <li class="toctree-l1"><a class="reference internal" href="documentation.html">Developing PETSc Documentation</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="design.html">The Design of PETSc</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l1 has-children"><a class="reference internal" href="design.html">The Design of PETSc</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="kernel.html">The PETSc Kernel</a></li>
 <li class="toctree-l2"><a class="reference internal" href="objects.html">Basic Object Design and Implementation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="callbacks.html">How the Solvers Handle User Provided Callbacks</a></li>
@@ -447,11 +451,11 @@
 <p>Information for PETSc developers and those interested in contributing.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="communication.html">Communication Channels for PETSc Developers</a></li>
-<li class="toctree-l1"><a class="reference internal" href="contributing.html">Contributing to PETSc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="communication.html">PETSc Developers Communication Channels</a></li>
+<li class="toctree-l1"><a class="reference internal" href="contributing/index.html">Contributing to PETSc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="mrmanagement.html">Merge request management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="development.html">PETSc Development Environment</a></li>
 <li class="toctree-l1"><a class="reference internal" href="style.html">PETSc Style and Usage Guide</a></li>
-<li class="toctree-l1"><a class="reference internal" href="integration.html">Getting your code and documentation into PETSc</a></li>
-<li class="toctree-l1"><a class="reference internal" href="pipelines.html">Working with Pipelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="buildsystem.html">BuildSystem</a></li>
 <li class="toctree-l1"><a class="reference internal" href="testing.html">PETSc Testing System</a></li>
 <li class="toctree-l1"><a class="reference internal" href="documentation.html">Developing PETSc Documentation</a></li>
@@ -478,7 +482,7 @@
   <a class='right-next' id="next-link" href="communication.html" title="next page">
   <div class="prev-next-info">
       <p class="prev-next-subtitle">next</p>
-      <p class="prev-next-title">Communication Channels for PETSc Developers</p>
+      <p class="prev-next-title">PETSc Developers Communication Channels</p>
   </div>
   <i class="fa-solid fa-angle-right"></i>
   </a>
@@ -543,7 +547,7 @@
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -559,7 +563,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

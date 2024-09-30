@@ -1,0 +1,26 @@
+petsc4py.PETSc.PC.HPDDMCoarseCorrectionType
+===========================================
+
+.. autoclass:: petsc4py.PETSc.PC.HPDDMCoarseCorrectionType
+   :show-inheritance:
+
+   
+
+   
+
+   
+   .. rubric:: Attributes Summary
+   .. autosummary::
+   
+      ~petsc4py.PETSc.PC.HPDDMCoarseCorrectionType.ADDITIVE
+      ~petsc4py.PETSc.PC.HPDDMCoarseCorrectionType.BALANCED
+      ~petsc4py.PETSc.PC.HPDDMCoarseCorrectionType.DEFLATED
+
+   
+
+   
+   .. rubric:: Attributes Documentation
+   
+   .. autoattribute:: ADDITIVE
+   .. autoattribute:: BALANCED
+   .. autoattribute:: DEFLATED

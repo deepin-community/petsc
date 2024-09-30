@@ -43,6 +43,11 @@ extern void PetscRmPointer(void*);
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define petscsfcreatebymatchingindices_ petscsfcreatebymatchingindices
 #endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscsfmerge_ PETSCSFMERGE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscsfmerge_ petscsfmerge
+#endif
 
 
 /* Definitions of Fortran Wrapper routines */
@@ -66,6 +71,12 @@ PETSC_EXTERN void  petscsfcreatebymatchingindices_(PetscLayout layout,PetscInt *
 {
 *__ierr = PetscSFCreateByMatchingIndices(
 	(PetscLayout)PetscToPointer((layout) ),*numRootIndices,rootIndices,rootLocalIndices,*rootLocalOffset,*numLeafIndices,leafIndices,leafLocalIndices,*leafLocalOffset,sfA,sf);
+}
+PETSC_EXTERN void  petscsfmerge_(PetscSF sfa,PetscSF sfb,PetscSF *merged, int *__ierr)
+{
+*__ierr = PetscSFMerge(
+	(PetscSF)PetscToPointer((sfa) ),
+	(PetscSF)PetscToPointer((sfb) ),merged);
 }
 #if defined(__cplusplus)
 }

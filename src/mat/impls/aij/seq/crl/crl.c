@@ -1,4 +1,3 @@
-
 /*
   Defines a matrix-vector product for the MATSEQAIJCRL matrix class.
   This class is derived from the MATSEQAIJ class and retains the
@@ -11,7 +10,7 @@
 */
 #include <../src/mat/impls/aij/seq/crl/crl.h>
 
-PetscErrorCode MatDestroy_SeqAIJCRL(Mat A)
+static PetscErrorCode MatDestroy_SeqAIJCRL(Mat A)
 {
   Mat_AIJCRL *aijcrl = (Mat_AIJCRL *)A->spptr;
 
@@ -21,7 +20,7 @@ PetscErrorCode MatDestroy_SeqAIJCRL(Mat A)
   PetscCall(PetscFree(A->spptr));
   PetscCall(PetscObjectChangeTypeName((PetscObject)A, MATSEQAIJ));
   PetscCall(MatDestroy_SeqAIJ(A));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatDuplicate_AIJCRL(Mat A, MatDuplicateOption op, Mat *M)
@@ -29,7 +28,7 @@ PetscErrorCode MatDuplicate_AIJCRL(Mat A, MatDuplicateOption op, Mat *M)
   SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP, "Cannot duplicate AIJCRL matrices yet");
 }
 
-PetscErrorCode MatSeqAIJCRL_create_aijcrl(Mat A)
+static PetscErrorCode MatSeqAIJCRL_create_aijcrl(Mat A)
 {
   Mat_SeqAIJ  *a      = (Mat_SeqAIJ *)(A)->data;
   Mat_AIJCRL  *aijcrl = (Mat_AIJCRL *)A->spptr;
@@ -59,10 +58,10 @@ PetscErrorCode MatSeqAIJCRL_create_aijcrl(Mat A)
     }
   }
   PetscCall(PetscInfo(A, "Percentage of 0's introduced for vectorized multiply %g. Rmax= %" PetscInt_FMT "\n", 1.0 - ((double)a->nz) / ((double)(rmax * m)), rmax));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatAssemblyEnd_SeqAIJCRL(Mat A, MatAssemblyType mode)
+static PetscErrorCode MatAssemblyEnd_SeqAIJCRL(Mat A, MatAssemblyType mode)
 {
   Mat_SeqAIJ *a = (Mat_SeqAIJ *)A->data;
 
@@ -70,11 +69,11 @@ PetscErrorCode MatAssemblyEnd_SeqAIJCRL(Mat A, MatAssemblyType mode)
   a->inode.use = PETSC_FALSE;
 
   PetscCall(MatAssemblyEnd_SeqAIJ(A, mode));
-  if (mode == MAT_FLUSH_ASSEMBLY) PetscFunctionReturn(0);
+  if (mode == MAT_FLUSH_ASSEMBLY) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Now calculate the permutation and grouping information. */
   PetscCall(MatSeqAIJCRL_create_aijcrl(A));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #include <../src/mat/impls/aij/seq/crl/ftn-kernels/fmultcrl.h>
@@ -130,15 +129,11 @@ PetscErrorCode MatMult_AIJCRL(Mat A, Vec xx, Vec yy)
   #endif
     for (j = 0; j < m; j++) y[j] = y[j] + acols[ii + j] * x[icols[ii + j]];
   }
-  #if defined(PETSC_HAVE_CRAY_VECTOR)
-    #pragma _CRI ivdep
-  #endif
-
 #endif
   PetscCall(PetscLogFlops(2.0 * aijcrl->nz - m));
   PetscCall(VecRestoreArrayRead(xx, &x));
   PetscCall(VecRestoreArray(yy, &y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* MatConvert_SeqAIJ_SeqAIJCRL converts a SeqAIJ matrix into a
@@ -154,7 +149,7 @@ PETSC_INTERN PetscErrorCode MatConvert_SeqAIJ_SeqAIJCRL(Mat A, MatType type, Mat
   PetscFunctionBegin;
   if (reuse == MAT_INITIAL_MATRIX) PetscCall(MatDuplicate(A, MAT_COPY_VALUES, &B));
   PetscCall(PetscObjectTypeCompare((PetscObject)A, type, &sametype));
-  if (sametype) PetscFunctionReturn(0);
+  if (sametype) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(PetscNew(&aijcrl));
   B->spptr = (void *)aijcrl;
@@ -169,39 +164,35 @@ PETSC_INTERN PetscErrorCode MatConvert_SeqAIJ_SeqAIJCRL(Mat A, MatType type, Mat
   if (A->assembled) PetscCall(MatSeqAIJCRL_create_aijcrl(B));
   PetscCall(PetscObjectChangeTypeName((PetscObject)B, MATSEQAIJCRL));
   *newmat = B;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   MatCreateSeqAIJCRL - Creates a sparse matrix of type `MATSEQAIJCRL`.
-   This type inherits from `MATSEQAIJ`, but stores some additional
-   information that is used to allow better vectorization of
-   the matrix-vector product. At the cost of increased storage, the `MATSEQAIJ` formatted
-   matrix can be copied to a format in which pieces of the matrix are
-   stored in ELLPACK format, allowing the vectorized matrix multiply
-   routine to use stride-1 memory accesses.  As with the `MATSEQAIJ` type, it is
-   important to preallocate matrix storage in order to get good assembly
-   performance.
+  MatCreateSeqAIJCRL - Creates a sparse matrix of type `MATSEQAIJCRL`.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  comm - MPI communicator, set to `PETSC_COMM_SELF`
-.  m - number of rows
-.  n - number of columns
-.  nz - number of nonzeros per row (same for all rows)
--  nnz - array containing the number of nonzeros in the various rows
-         (possibly different for each row) or NULL
+  Input Parameters:
++ comm - MPI communicator, set to `PETSC_COMM_SELF`
+. m    - number of rows
+. n    - number of columns
+. nz   - number of nonzeros per row (same for all rows), ignored if `nnz` is given
+- nnz  - array containing the number of nonzeros in the various rows
+         (possibly different for each row) or `NULL`
 
-   Output Parameter:
-.  A - the matrix
+  Output Parameter:
+. A - the matrix
 
-   Note:
-   If nnz is given then nz is ignored
+  Level: intermediate
 
-   Level: intermediate
+  Notes:
+  This type inherits from `MATSEQAIJ`, but stores some additional information that is used to
+  allow better vectorization of the matrix-vector product. At the cost of increased storage,
+  the `MATSEQAIJ` formatted matrix can be copied to a format in which pieces of the matrix are
+  stored in ELLPACK format, allowing the vectorized matrix multiply routine to use stride-1
+  memory accesses.
 
-.seealso: `MatCreate()`, `MatCreateMPIAIJPERM()`, `MatSetValues()`
+.seealso: [](ch_matrices), `Mat`, `MatCreate()`, `MatCreateMPIAIJPERM()`, `MatSetValues()`
 @*/
 PetscErrorCode MatCreateSeqAIJCRL(MPI_Comm comm, PetscInt m, PetscInt n, PetscInt nz, const PetscInt nnz[], Mat *A)
 {
@@ -210,7 +201,7 @@ PetscErrorCode MatCreateSeqAIJCRL(MPI_Comm comm, PetscInt m, PetscInt n, PetscIn
   PetscCall(MatSetSizes(*A, m, n, m, n));
   PetscCall(MatSetType(*A, MATSEQAIJCRL));
   PetscCall(MatSeqAIJSetPreallocation_SeqAIJ(*A, nz, nnz));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode MatCreate_SeqAIJCRL(Mat A)
@@ -218,5 +209,5 @@ PETSC_EXTERN PetscErrorCode MatCreate_SeqAIJCRL(Mat A)
   PetscFunctionBegin;
   PetscCall(MatSetType(A, MATSEQAIJ));
   PetscCall(MatConvert_SeqAIJ_SeqAIJCRL(A, MATSEQAIJCRL, MAT_INPLACE_MATRIX, &A));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

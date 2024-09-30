@@ -1,13 +1,12 @@
-
 /* lourens.vanzanen@shell.com contributed the standard error estimates of the solution, Jul 25, 2006 */
 /* Bas van't Hof contributed the preconditioned aspects Feb 10, 2010 */
 
 #define SWAP(a, b, c) \
-  { \
+  do { \
     c = a; \
     a = b; \
     b = c; \
-  }
+  } while (0)
 
 #include <petsc/private/kspimpl.h> /*I "petscksp.h" I*/
 #include <petscdraw.h>
@@ -37,7 +36,7 @@ static PetscErrorCode VecSquare(Vec v)
   PetscCall(VecGetArray(v, &x));
   for (i = 0; i < n; i++) x[i] *= PetscConj(x[i]);
   PetscCall(VecRestoreArray(v, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSetUp_LSQR(KSP ksp)
@@ -63,7 +62,7 @@ static PetscErrorCode KSPSetUp_LSQR(KSP ksp)
   } else if (!lsqr->se_flg) {
     PetscCall(VecDestroy(&lsqr->se));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSolve_LSQR(KSP ksp)
@@ -117,7 +116,7 @@ static PetscErrorCode KSPSolve_LSQR(KSP ksp)
   PetscCall(KSPLogResidualHistory(ksp, rnorm));
   PetscCall(KSPMonitor(ksp, 0, rnorm));
   PetscCall((*ksp->converged)(ksp, 0, rnorm, &ksp->reason, ksp->cnvP));
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   beta = rnorm;
   PetscCall(VecScale(U, 1.0 / beta));
@@ -131,7 +130,7 @@ static PetscErrorCode KSPSolve_LSQR(KSP ksp)
     PetscCall(VecDotRealPart(V, Z, &alpha));
     if (alpha <= 0.0) {
       ksp->reason = KSP_DIVERGED_BREAKDOWN;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
     alpha = PetscSqrtReal(alpha);
     PetscCall(VecScale(Z, 1.0 / alpha));
@@ -232,10 +231,10 @@ static PetscErrorCode KSPSolve_LSQR(KSP ksp)
     PetscCall(VecSqrtAbs(lsqr->se));
     PetscCall(VecScale(lsqr->se, tmp));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPDestroy_LSQR(KSP ksp)
+static PetscErrorCode KSPDestroy_LSQR(KSP ksp)
 {
   KSP_LSQR *lsqr = (KSP_LSQR *)ksp->data;
 
@@ -250,24 +249,24 @@ PetscErrorCode KSPDestroy_LSQR(KSP ksp)
   PetscCall(PetscFree(ksp->data));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPLSQRMonitorResidual_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPLSQRMonitorResidualDrawLG_C", NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   KSPLSQRSetComputeStandardErrorVec - Compute a vector of standard error estimates during `KSPSolve()` for  `KSPLSQR`.
+  KSPLSQRSetComputeStandardErrorVec - Compute a vector of standard error estimates during `KSPSolve()` for  `KSPLSQR`.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  ksp   - iterative context
--  flg   - compute the vector of standard estimates or not
+  Input Parameters:
++ ksp - iterative context
+- flg - compute the vector of standard estimates or not
 
-   Level: intermediate
+  Level: intermediate
 
-   Developer Note:
-   Vaclav: I'm not sure whether this vector is useful for anything.
+  Developer Notes:
+  Vaclav: I'm not sure whether this vector is useful for anything.
 
-.seealso: [](chapter_ksp), `KSPSolve()`, `KSPLSQR`, `KSPLSQRGetStandardErrorVec()`
+.seealso: [](ch_ksp), `KSPSolve()`, `KSPLSQR`, `KSPLSQRGetStandardErrorVec()`
 @*/
 PetscErrorCode KSPLSQRSetComputeStandardErrorVec(KSP ksp, PetscBool flg)
 {
@@ -275,26 +274,26 @@ PetscErrorCode KSPLSQRSetComputeStandardErrorVec(KSP ksp, PetscBool flg)
 
   PetscFunctionBegin;
   lsqr->se_flg = flg;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   KSPLSQRSetExactMatNorm - Compute exact matrix norm instead of iteratively refined estimate.
+  KSPLSQRSetExactMatNorm - Compute exact matrix norm instead of iteratively refined estimate.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  ksp   - iterative context
--  flg   - compute exact matrix norm or not
+  Input Parameters:
++ ksp - iterative context
+- flg - compute exact matrix norm or not
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-   By default, flg = `PETSC_FALSE`. This is usually preferred to avoid possibly expensive computation of the norm.
-   For flg = `PETSC_TRUE`, we call `MatNorm`(Amat,`NORM_FROBENIUS`,&lsqr->anorm) which will work only for some types of explicitly assembled matrices.
-   This can affect convergence rate as `KSPLSQRConvergedDefault()` assumes different value of ||A|| used in normal equation stopping criterion.
+  Notes:
+  By default, `flg` = `PETSC_FALSE`. This is usually preferred to avoid possibly expensive computation of the norm.
+  For `flg` = `PETSC_TRUE`, we call `MatNorm`(Amat,`NORM_FROBENIUS`,&lsqr->anorm) which will work only for some types of explicitly assembled matrices.
+  This can affect convergence rate as `KSPLSQRConvergedDefault()` assumes different value of ||A|| used in normal equation stopping criterion.
 
-.seealso: [](chapter_ksp), `KSPSolve()`, `KSPLSQR`, `KSPLSQRGetNorms()`, `KSPLSQRConvergedDefault()`
+.seealso: [](ch_ksp), `KSPSolve()`, `KSPLSQR`, `KSPLSQRGetNorms()`, `KSPLSQRConvergedDefault()`
 @*/
 PetscErrorCode KSPLSQRSetExactMatNorm(KSP ksp, PetscBool flg)
 {
@@ -302,29 +301,29 @@ PetscErrorCode KSPLSQRSetExactMatNorm(KSP ksp, PetscBool flg)
 
   PetscFunctionBegin;
   lsqr->exact_norm = flg;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   KSPLSQRGetStandardErrorVec - Get vector of standard error estimates.
-   Only available if -ksp_lsqr_set_standard_error was set to true
-   or `KSPLSQRSetComputeStandardErrorVec`(ksp, `PETSC_TRUE`) was called.
-   Otherwise returns NULL.
+  KSPLSQRGetStandardErrorVec - Get vector of standard error estimates.
+  Only available if -ksp_lsqr_set_standard_error was set to true
+  or `KSPLSQRSetComputeStandardErrorVec`(ksp, `PETSC_TRUE`) was called.
+  Otherwise returns `NULL`.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-.  ksp   - iterative context
+  Input Parameter:
+. ksp - iterative context
 
-   Output Parameters:
-.  se - vector of standard estimates
+  Output Parameter:
+. se - vector of standard estimates
 
-   Level: intermediate
+  Level: intermediate
 
-   Developer Note:
-   Vaclav: I'm not sure whether this vector is useful for anything.
+  Developer Notes:
+  Vaclav: I'm not sure whether this vector is useful for anything.
 
-.seealso: [](chapter_ksp), `KSPSolve()`, `KSPLSQR`, `KSPLSQRSetComputeStandardErrorVec()`
+.seealso: [](ch_ksp), `KSPSolve()`, `KSPLSQR`, `KSPLSQRSetComputeStandardErrorVec()`
 @*/
 PetscErrorCode KSPLSQRGetStandardErrorVec(KSP ksp, Vec *se)
 {
@@ -332,31 +331,31 @@ PetscErrorCode KSPLSQRGetStandardErrorVec(KSP ksp, Vec *se)
 
   PetscFunctionBegin;
   *se = lsqr->se;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   KSPLSQRGetNorms - Get the norm estimates that `KSPLSQR` computes internally during `KSPSolve()`.
+  KSPLSQRGetNorms - Get the norm estimates that `KSPLSQR` computes internally during `KSPSolve()`.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  ksp   - iterative context
+  Input Parameter:
+. ksp - iterative context
 
-   Output Parameters:
-+  arnorm - good estimate of norm((A*inv(Pmat))'*r), where r = A*x - b, used in specific stopping criterion
--  anorm - poor estimate of norm(A*inv(Pmat),'fro') used in specific stopping criterion
+  Output Parameters:
++ arnorm - good estimate of $\|(A*Pmat^{-T})*r\|$, where $r = A*x - b$, used in specific stopping criterion
+- anorm  - poor estimate of $\|A*Pmat^{-T}\|_{frobenius}$ used in specific stopping criterion
 
-   Notes:
-   Output parameters are meaningful only after `KSPSolve()`.
+  Level: intermediate
 
-   These are the same quantities as normar and norma in MATLAB's `lsqr()`, whose output lsvec is a vector of normar / norma for all iterations.
+  Notes:
+  Output parameters are meaningful only after `KSPSolve()`.
 
-   If -ksp_lsqr_exact_mat_norm is set or `KSPLSQRSetExactMatNorm`(ksp, `PETSC_TRUE`) called, then anorm is the exact Frobenius norm.
+  These are the same quantities as normar and norma in MATLAB's `lsqr()`, whose output lsvec is a vector of normar / norma for all iterations.
 
-   Level: intermediate
+  If -ksp_lsqr_exact_mat_norm is set or `KSPLSQRSetExactMatNorm`(ksp, `PETSC_TRUE`) called, then anorm is the exact Frobenius norm.
 
-.seealso: [](chapter_ksp), `KSPSolve()`, `KSPLSQR`, `KSPLSQRSetExactMatNorm()`
+.seealso: [](ch_ksp), `KSPSolve()`, `KSPLSQR`, `KSPLSQRSetExactMatNorm()`
 @*/
 PetscErrorCode KSPLSQRGetNorms(KSP ksp, PetscReal *arnorm, PetscReal *anorm)
 {
@@ -365,10 +364,10 @@ PetscErrorCode KSPLSQRGetNorms(KSP ksp, PetscReal *arnorm, PetscReal *anorm)
   PetscFunctionBegin;
   if (arnorm) *arnorm = lsqr->arnorm;
   if (anorm) *anorm = lsqr->anorm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPLSQRMonitorResidual_LSQR(KSP ksp, PetscInt n, PetscReal rnorm, PetscViewerAndFormat *vf)
+static PetscErrorCode KSPLSQRMonitorResidual_LSQR(KSP ksp, PetscInt n, PetscReal rnorm, PetscViewerAndFormat *vf)
 {
   KSP_LSQR         *lsqr   = (KSP_LSQR *)ksp->data;
   PetscViewer       viewer = vf->viewer;
@@ -392,7 +391,7 @@ PetscErrorCode KSPLSQRMonitorResidual_LSQR(KSP ksp, PetscInt n, PetscReal rnorm,
   }
   PetscCall(PetscViewerASCIISubtractTab(viewer, tablevel));
   PetscCall(PetscViewerPopFormat(viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -411,19 +410,19 @@ PetscErrorCode KSPLSQRMonitorResidual_LSQR(KSP ksp, PetscInt n, PetscReal rnorm,
 
   Level: intermediate
 
-.seealso: [](chapter_ksp), `KSPLSQR`, `KSPMonitorSet()`, `KSPMonitorResidual()`, `KSPMonitorTrueResidualMaxNorm()`, `KSPLSQRMonitorResidualDrawLG()`
+.seealso: [](ch_ksp), `KSPLSQR`, `KSPMonitorSet()`, `KSPMonitorResidual()`, `KSPMonitorTrueResidualMaxNorm()`, `KSPLSQRMonitorResidualDrawLG()`
 @*/
 PetscErrorCode KSPLSQRMonitorResidual(KSP ksp, PetscInt n, PetscReal rnorm, PetscViewerAndFormat *vf)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 1);
-  PetscValidPointer(vf, 4);
+  PetscAssertPointer(vf, 4);
   PetscValidHeaderSpecific(vf->viewer, PETSC_VIEWER_CLASSID, 4);
   PetscTryMethod(ksp, "KSPLSQRMonitorResidual_C", (KSP, PetscInt, PetscReal, PetscViewerAndFormat *), (ksp, n, rnorm, vf));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPLSQRMonitorResidualDrawLG_LSQR(KSP ksp, PetscInt n, PetscReal rnorm, PetscViewerAndFormat *vf)
+static PetscErrorCode KSPLSQRMonitorResidualDrawLG_LSQR(KSP ksp, PetscInt n, PetscReal rnorm, PetscViewerAndFormat *vf)
 {
   KSP_LSQR          *lsqr   = (KSP_LSQR *)ksp->data;
   PetscViewer        viewer = vf->viewer;
@@ -448,7 +447,7 @@ PetscErrorCode KSPLSQRMonitorResidualDrawLG_LSQR(KSP ksp, PetscInt n, PetscReal 
     PetscCall(PetscDrawLGSave(lg));
   }
   PetscCall(PetscViewerPopFormat(viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -467,35 +466,35 @@ PetscErrorCode KSPLSQRMonitorResidualDrawLG_LSQR(KSP ksp, PetscInt n, PetscReal 
 
   Level: intermediate
 
-.seealso: [](chapter_ksp), `KSPLSQR`, `KSPMonitorSet()`, `KSPMonitorTrueResidual()`, `KSPLSQRMonitorResidual()`, `KSPLSQRMonitorResidualDrawLGCreate()`
+.seealso: [](ch_ksp), `KSPLSQR`, `KSPMonitorSet()`, `KSPMonitorTrueResidual()`, `KSPLSQRMonitorResidual()`, `KSPLSQRMonitorResidualDrawLGCreate()`
 @*/
 PetscErrorCode KSPLSQRMonitorResidualDrawLG(KSP ksp, PetscInt n, PetscReal rnorm, PetscViewerAndFormat *vf)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 1);
-  PetscValidPointer(vf, 4);
+  PetscAssertPointer(vf, 4);
   PetscValidHeaderSpecific(vf->viewer, PETSC_VIEWER_CLASSID, 4);
   PetscValidHeaderSpecific(vf->lg, PETSC_DRAWLG_CLASSID, 4);
   PetscTryMethod(ksp, "KSPLSQRMonitorResidualDrawLG_C", (KSP, PetscInt, PetscReal, PetscViewerAndFormat *), (ksp, n, rnorm, vf));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  KSPLSQRMonitorResidualDrawLGCreate - Creates the plotter for the `KSPLSQR` residual and normal equation residual norm
+  KSPLSQRMonitorResidualDrawLGCreate - Creates the line graph object for the `KSPLSQR` residual and normal equation residual norm
 
   Collective
 
   Input Parameters:
-+ viewer - The PetscViewer
++ viewer - The `PetscViewer`
 . format - The viewer format
 - ctx    - An optional user context
 
   Output Parameter:
-. vf    - The viewer context
+. vf - The `PetscViewerAndFormat`
 
   Level: intermediate
 
-.seealso: [](chapter_ksp), `KSPLSQR`, `KSPMonitorSet()`, `KSPLSQRMonitorResidual()`, `KSPLSQRMonitorResidualDrawLG()`
+.seealso: [](ch_ksp), `KSPLSQR`, `KSPMonitorSet()`, `KSPLSQRMonitorResidual()`, `KSPLSQRMonitorResidualDrawLG()`
 @*/
 PetscErrorCode KSPLSQRMonitorResidualDrawLGCreate(PetscViewer viewer, PetscViewerFormat format, void *ctx, PetscViewerAndFormat **vf)
 {
@@ -505,10 +504,10 @@ PetscErrorCode KSPLSQRMonitorResidualDrawLGCreate(PetscViewer viewer, PetscViewe
   PetscCall(PetscViewerAndFormatCreate(viewer, format, vf));
   (*vf)->data = ctx;
   PetscCall(KSPMonitorLGCreate(PetscObjectComm((PetscObject)viewer), NULL, NULL, "Log Residual Norm", 2, names, PETSC_DECIDE, PETSC_DECIDE, 400, 300, &(*vf)->lg));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPSetFromOptions_LSQR(KSP ksp, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode KSPSetFromOptions_LSQR(KSP ksp, PetscOptionItems *PetscOptionsObject)
 {
   KSP_LSQR *lsqr = (KSP_LSQR *)ksp->data;
 
@@ -518,10 +517,10 @@ PetscErrorCode KSPSetFromOptions_LSQR(KSP ksp, PetscOptionItems *PetscOptionsObj
   PetscCall(PetscOptionsBool("-ksp_lsqr_exact_mat_norm", "Compute exact matrix norm instead of iteratively refined estimate", "KSPLSQRSetExactMatNorm", lsqr->exact_norm, &lsqr->exact_norm, NULL));
   PetscCall(KSPMonitorSetFromOptions(ksp, "-ksp_lsqr_monitor", "lsqr_residual", NULL));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPView_LSQR(KSP ksp, PetscViewer viewer)
+static PetscErrorCode KSPView_LSQR(KSP ksp, PetscViewer viewer)
 {
   KSP_LSQR *lsqr = (KSP_LSQR *)ksp->data;
   PetscBool iascii;
@@ -542,38 +541,38 @@ PetscErrorCode KSPView_LSQR(KSP ksp, PetscViewer viewer)
       PetscCall(PetscViewerASCIIPrintf(viewer, "  using inexact matrix norm\n"));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   KSPLSQRConvergedDefault - Determines convergence of the `KSPLSQR` Krylov method.
+  KSPLSQRConvergedDefault - Determines convergence of the `KSPLSQR` Krylov method.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  ksp   - iterative context
-.  n     - iteration number
-.  rnorm - 2-norm residual value (may be estimated)
--  ctx - convergence context which must be created by `KSPConvergedDefaultCreate()`
+  Input Parameters:
++ ksp   - iterative context
+. n     - iteration number
+. rnorm - 2-norm residual value (may be estimated)
+- ctx   - convergence context which must have been created by `KSPConvergedDefaultCreate()`
 
-   reason is set to:
-+   positive - if the iteration has converged;
-.   negative - if residual norm exceeds divergence threshold;
--   0 - otherwise.
+  Output Parameter:
+. reason - the convergence reason
 
-   Notes:
-   `KSPConvergedDefault()` is called first to check for convergence in A*x=b.
-   If that does not determine convergence then checks convergence for the least squares problem, i.e. in min{|b-A*x|}.
-   Possible convergence for the least squares problem (which is based on the residual of the normal equations) are `KSP_CONVERGED_RTOL_NORMAL` norm
-   and `KSP_CONVERGED_ATOL_NORMAL`.
+  Level: advanced
 
-   `KSP_CONVERGED_RTOL_NORMAL` is returned if ||A'*r|| < rtol * ||A|| * ||r||.
-   Matrix norm ||A|| is iteratively refined estimate, see `KSPLSQRGetNorms()`.
-   This criterion is now largely compatible with that in MATLAB `lsqr()`.
+  Notes:
+  This is not called directly but rather is passed to `KSPSetConvergenceTest()`. It is used automatically by `KSPLSQR`
 
-   Level: intermediate
+  `KSPConvergedDefault()` is called first to check for convergence in $A*x=b$.
+  If that does not determine convergence then checks convergence for the least squares problem, i.e. in min{|b-A*x|}.
+  Possible convergence for the least squares problem (which is based on the residual of the normal equations) are `KSP_CONVERGED_RTOL_NORMAL` norm
+  and `KSP_CONVERGED_ATOL_NORMAL`.
 
-.seealso: [](chapter_ksp), `KSPLSQR`, `KSPSetConvergenceTest()`, `KSPSetTolerances()`, `KSPConvergedSkip()`, `KSPConvergedReason`, `KSPGetConvergedReason()`,
+  `KSP_CONVERGED_RTOL_NORMAL` is returned if $||A^T*r|| < rtol * ||A|| * ||r||$.
+  Matrix norm $||A||$ is iteratively refined estimate, see `KSPLSQRGetNorms()`.
+  This criterion is largely compatible with that in MATLAB `lsqr()`.
+
+.seealso: [](ch_ksp), `KSPLSQR`, `KSPSetConvergenceTest()`, `KSPSetTolerances()`, `KSPConvergedSkip()`, `KSPConvergedReason`, `KSPGetConvergedReason()`,
           `KSPConvergedDefaultSetUIRNorm()`, `KSPConvergedDefaultSetUMIRNorm()`, `KSPConvergedDefaultCreate()`, `KSPConvergedDefaultDestroy()`, `KSPConvergedDefault()`, `KSPLSQRGetNorms()`, `KSPLSQRSetExactMatNorm()`
 @*/
 PetscErrorCode KSPLSQRConvergedDefault(KSP ksp, PetscInt n, PetscReal rnorm, KSPConvergedReason *reason, void *ctx)
@@ -583,7 +582,7 @@ PetscErrorCode KSPLSQRConvergedDefault(KSP ksp, PetscInt n, PetscReal rnorm, KSP
   PetscFunctionBegin;
   /* check for convergence in A*x=b */
   PetscCall(KSPConvergedDefault(ksp, n, rnorm, reason, ctx));
-  if (!n || *reason) PetscFunctionReturn(0);
+  if (!n || *reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* check for convergence in min{|b-A*x|} */
   if (lsqr->arnorm < ksp->abstol) {
@@ -594,11 +593,11 @@ PetscErrorCode KSPLSQRConvergedDefault(KSP ksp, PetscInt n, PetscReal rnorm, KSP
                         (double)ksp->rtol, lsqr->exact_norm ? "exact" : "approx.", (double)lsqr->anorm, (double)rnorm, n));
     *reason = KSP_CONVERGED_RTOL_NORMAL;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPLSQR - Implements LSQR
+   KSPLSQR - Implements LSQR  {cite}`paige.saunders:lsqr`
 
    Options Database Keys:
 +   -ksp_lsqr_set_standard_error  - set standard error estimates of solution, see `KSPLSQRSetComputeStandardErrorVec()` and `KSPLSQRGetStandardErrorVec()`
@@ -608,30 +607,27 @@ PetscErrorCode KSPLSQRConvergedDefault(KSP ksp, PetscInt n, PetscReal rnorm, KSP
    Level: beginner
 
    Notes:
-     Supports non-square (rectangular) matrices.
+   Supports non-square (rectangular) matrices.
 
-     This variant, when applied with no preconditioning is identical to the original algorithm in exact arithmetic; however, in practice, with no preconditioning
-     due to inexact arithmetic, it can converge differently. Hence when no preconditioner is used (`PCType` `PCNONE`) it automatically reverts to the original algorithm.
+   This variant, when applied with no preconditioning is identical to the original algorithm in exact arithmetic; however, in practice, with no preconditioning
+   due to inexact arithmetic, it can converge differently. Hence when no preconditioner is used (`PCType` `PCNONE`) it automatically reverts to the original algorithm.
 
-     With the PETSc built-in preconditioners, such as `PCICC`, one should call `KSPSetOperators`(ksp,A,A'*A)) since the preconditioner needs to work
-     for the normal equations A'*A.
+   With the PETSc built-in preconditioners, such as `PCICC`, one should call `KSPSetOperators`(ksp,A,A'*A)) since the preconditioner needs to work
+   for the normal equations A'*A.
 
-     Supports only left preconditioning.
+   Supports only left preconditioning.
 
-     For least squares problems with nonzero residual A*x - b, there are additional convergence tests for the residual of the normal equations, A'*(b - Ax), see `KSPLSQRConvergedDefault()`.
+   For least squares problems with nonzero residual $A*x - b$, there are additional convergence tests for the residual of the normal equations, $A^T*(b - Ax)$, see `KSPLSQRConvergedDefault()`.
 
-     In exact arithmetic the LSQR method (with no preconditioning) is identical to the `KSPCG` algorithm applied to the normal equations.
-     The preconditioned variant was implemented by Bas van't Hof and is essentially a left preconditioning for the Normal Equations.
-     It appears the implementation with preconditioning tracks the true norm of the residual and uses that in the convergence test.
+   In exact arithmetic the LSQR method (with no preconditioning) is identical to the `KSPCG` algorithm applied to the normal equations.
+   The preconditioned variant was implemented by Bas van't Hof and is essentially a left preconditioning for the Normal Equations.
+   It appears the implementation with preconditioning tracks the true norm of the residual and uses that in the convergence test.
 
    Developer Note:
-    How is this related to the `KSPCGNE` implementation? One difference is that `KSPCGNE` applies
-    the preconditioner transpose times the preconditioner,  so one does not need to pass A'*A as the third argument to `KSPSetOperators()`.
+   How is this related to the `KSPCGNE` implementation? One difference is that `KSPCGNE` applies
+   the preconditioner transpose times the preconditioner,  so one does not need to pass $A^T*A$ as the third argument to `KSPSetOperators()`.
 
-   Reference:
-.  * - The original unpreconditioned algorithm can be found in Paige and Saunders, ACM Transactions on Mathematical Software, Vol 8, 1982.
-
-.seealso: [](chapter_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPSolve()`, `KSPLSQRConvergedDefault()`, `KSPLSQRSetComputeStandardErrorVec()`, `KSPLSQRGetStandardErrorVec()`, `KSPLSQRSetExactMatNorm()`, `KSPLSQRMonitorResidualDrawLGCreate()`, `KSPLSQRMonitorResidualDrawLG()`, `KSPLSQRMonitorResidual()`
+.seealso: [](ch_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPSolve()`, `KSPLSQRConvergedDefault()`, `KSPLSQRSetComputeStandardErrorVec()`, `KSPLSQRGetStandardErrorVec()`, `KSPLSQRSetExactMatNorm()`, `KSPLSQRMonitorResidualDrawLGCreate()`, `KSPLSQRMonitorResidualDrawLG()`, `KSPLSQRMonitorResidual()`
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_LSQR(KSP ksp)
 {
@@ -661,5 +657,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_LSQR(KSP ksp)
   PetscCall(KSPSetConvergenceTest(ksp, KSPLSQRConvergedDefault, ctx, KSPConvergedDefaultDestroy));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPLSQRMonitorResidual_C", KSPLSQRMonitorResidual_LSQR));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPLSQRMonitorResidualDrawLG_C", KSPLSQRMonitorResidualDrawLG_LSQR));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

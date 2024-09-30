@@ -1,4 +1,3 @@
-
 /*
   Code for manipulating distributed regular arrays in parallel.
 */
@@ -8,50 +7,34 @@
 
 PetscErrorCode DMCreateCoordinateDM_DA(DM dm, DM *cdm)
 {
+  const char *prefix;
+
   PetscFunctionBegin;
   PetscCall(DMDACreateCompatibleDMDA(dm, dm->dim, cdm));
-  PetscFunctionReturn(0);
-}
-
-PetscErrorCode DMCreateCoordinateField_DA(DM dm, DMField *field)
-{
-  PetscReal   gmin[3], gmax[3];
-  PetscScalar corners[24];
-  PetscInt    dim;
-  PetscInt    i, j;
-  DM          cdm;
-
-  PetscFunctionBegin;
-  PetscCall(DMGetDimension(dm, &dim));
-  /* TODO: this is wrong if coordinates are not rectilinear */
-  PetscCall(DMGetBoundingBox(dm, gmin, gmax));
-  for (i = 0; i < (1 << dim); i++) {
-    for (j = 0; j < dim; j++) corners[i * dim + j] = (i & (1 << j)) ? gmax[j] : gmin[j];
-  }
-  PetscCall(DMClone(dm, &cdm));
-  PetscCall(DMFieldCreateDA(cdm, dim, corners, field));
-  PetscCall(DMDestroy(&cdm));
-  PetscFunctionReturn(0);
+  PetscCall(PetscObjectGetOptionsPrefix((PetscObject)dm, &prefix));
+  PetscCall(PetscObjectSetOptionsPrefix((PetscObject)*cdm, prefix));
+  PetscCall(PetscObjectAppendOptionsPrefix((PetscObject)*cdm, "cdm_"));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDASetFieldName - Sets the names of individual field components in multicomponent
-   vectors associated with a `DMDA`.
+  DMDASetFieldName - Sets the names of individual field components in multicomponent
+  vectors associated with a `DMDA`.
 
-   Logically collective; name must contain a common value
+  Logically Collective; name must contain a common value
 
-   Input Parameters:
-+  da - the distributed array
-.  nf - field number for the `DMDA` (0, 1, ... dof-1), where dof indicates the
+  Input Parameters:
++ da   - the distributed array
+. nf   - field number for the `DMDA` (0, 1, ... dof-1), where dof indicates the
         number of degrees of freedom per node within the `DMDA`
--  names - the name of the field (component)
+- name - the name of the field (component)
 
   Level: intermediate
 
   Note:
-    It must be called after having called `DMSetUp()`.
+  It must be called after having called `DMSetUp()`.
 
-.seealso: `DM`, `DMDA`, `DMDAGetFieldName()`, `DMDASetCoordinateName()`, `DMDAGetCoordinateName()`, `DMDASetFieldNames()`, `DMSetUp()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAGetFieldName()`, `DMDASetCoordinateName()`, `DMDAGetCoordinateName()`, `DMDASetFieldNames()`, `DMSetUp()`
 @*/
 PetscErrorCode DMDASetFieldName(DM da, PetscInt nf, const char name[])
 {
@@ -63,26 +46,26 @@ PetscErrorCode DMDASetFieldName(DM da, PetscInt nf, const char name[])
   PetscCheck(dd->fieldname, PetscObjectComm((PetscObject)da), PETSC_ERR_ORDER, "You should call DMSetUp() first");
   PetscCall(PetscFree(dd->fieldname[nf]));
   PetscCall(PetscStrallocpy(name, &dd->fieldname[nf]));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDAGetFieldNames - Gets the name of each component in the vector associated with the `DMDA`
+  DMDAGetFieldNames - Gets the name of each component in the vector associated with the `DMDA`
 
-   Not collective; names will contain a common value
+  Not Collective; names will contain a common value; No Fortran Support
 
-   Input Parameter:
-.  dm - the `DMDA` object
+  Input Parameter:
+. da - the `DMDA` object
 
-   Output Parameter:
-.  names - the names of the components, final string is NULL, will have the same number of entries as the dof used in creating the `DMDA`
+  Output Parameter:
+. names - the names of the components, final string is `NULL`, will have the same number of entries as the dof used in creating the `DMDA`
 
-   Level: intermediate
+  Level: intermediate
 
-   Fortran Note:
-   Not supported from Fortran, use `DMDAGetFieldName()`
+  Fortran Note:
+  Use `DMDAGetFieldName()`
 
-.seealso: `DM`, `DMDA`, `DMDAGetFieldName()`, `DMDASetCoordinateName()`, `DMDAGetCoordinateName()`, `DMDASetFieldName()`, `DMDASetFieldNames()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAGetFieldName()`, `DMDASetCoordinateName()`, `DMDAGetCoordinateName()`, `DMDASetFieldName()`, `DMDASetFieldNames()`
 @*/
 PetscErrorCode DMDAGetFieldNames(DM da, const char *const **names)
 {
@@ -90,27 +73,27 @@ PetscErrorCode DMDAGetFieldNames(DM da, const char *const **names)
 
   PetscFunctionBegin;
   *names = (const char *const *)dd->fieldname;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDASetFieldNames - Sets the name of each component in the vector associated with the DMDA
+  DMDASetFieldNames - Sets the name of each component in the vector associated with the DMDA
 
-   Logically collective; names must contain a common value
+  Logically Collective; names must contain a common value; No Fortran Support
 
-   Input Parameters:
-+  dm - the `DMDA` object
--  names - the names of the components, final string must be NULL, must have the same number of entries as the dof used in creating the `DMDA`
+  Input Parameters:
++ da    - the `DMDA` object
+- names - the names of the components, final string must be `NULL`, must have the same number of entries as the dof used in creating the `DMDA`
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-    It must be called after having called `DMSetUp()`.
+  Note:
+  It must be called after having called `DMSetUp()`.
 
-   Fortran Note:
-   Not supported from Fortran, use `DMDASetFieldName()`
+  Fortran Note:
+  Use `DMDASetFieldName()`
 
-.seealso: `DM`, `DMDA`, `DMDAGetFieldName()`, `DMDASetCoordinateName()`, `DMDAGetCoordinateName()`, `DMDASetFieldName()`, `DMSetUp()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAGetFieldName()`, `DMDASetCoordinateName()`, `DMDAGetCoordinateName()`, `DMDASetFieldName()`, `DMSetUp()`
 @*/
 PetscErrorCode DMDASetFieldNames(DM da, const char *const *names)
 {
@@ -120,34 +103,34 @@ PetscErrorCode DMDASetFieldNames(DM da, const char *const *names)
 
   PetscFunctionBegin;
   PetscCheck(dd->fieldname, PetscObjectComm((PetscObject)da), PETSC_ERR_ORDER, "You should call DMSetUp() first");
-  while (names[nf++]) { };
+  while (names[nf++]) { }
   PetscCheck(nf == dd->w + 1, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Invalid number of fields %" PetscInt_FMT, nf - 1);
   PetscCall(PetscStrArrayallocpy(names, &fieldname));
   PetscCall(PetscStrArrayDestroy(&dd->fieldname));
   dd->fieldname = fieldname;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDAGetFieldName - Gets the names of individual field components in multicomponent
-   vectors associated with a `DMDA`.
+  DMDAGetFieldName - Gets the names of individual field components in multicomponent
+  vectors associated with a `DMDA`.
 
-   Not collective; name will contain a common value
+  Not Collective; name will contain a common value
 
-   Input Parameters:
-+  da - the distributed array
--  nf - field number for the `DMDA` (0, 1, ... dof-1), where dof indicates the
+  Input Parameters:
++ da - the distributed array
+- nf - field number for the `DMDA` (0, 1, ... dof-1), where dof indicates the
         number of degrees of freedom per node within the `DMDA`
 
-   Output Parameter:
-.  names - the name of the field (component)
+  Output Parameter:
+. name - the name of the field (component)
 
   Level: intermediate
 
   Note:
-    It must be called after having called `DMSetUp()`.
+  It must be called after having called `DMSetUp()`.
 
-.seealso: `DM`, `DMDA`, `DMDASetFieldName()`, `DMDASetCoordinateName()`, `DMDAGetCoordinateName()`, `DMSetUp()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDASetFieldName()`, `DMDASetCoordinateName()`, `DMDAGetCoordinateName()`, `DMSetUp()`
 @*/
 PetscErrorCode DMDAGetFieldName(DM da, PetscInt nf, const char **name)
 {
@@ -155,32 +138,29 @@ PetscErrorCode DMDAGetFieldName(DM da, PetscInt nf, const char **name)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(da, DM_CLASSID, 1, DMDA);
-  PetscValidPointer(name, 3);
+  PetscAssertPointer(name, 3);
   PetscCheck(nf >= 0 && nf < dd->w, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Invalid field number: %" PetscInt_FMT, nf);
   PetscCheck(dd->fieldname, PetscObjectComm((PetscObject)da), PETSC_ERR_ORDER, "You should call DMSetUp() first");
   *name = dd->fieldname[nf];
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDASetCoordinateName - Sets the name of the coordinate directions associated with a `DMDA`, for example "x" or "y"
+  DMDASetCoordinateName - Sets the name of the coordinate directions associated with a `DMDA`, for example "x" or "y"
 
-   Logically collective; name must contain a common value
+  Logically Collective; name must contain a common value; No Fortran Support
 
-   Input Parameters:
-+  dm - the `DMDA`
-.  nf - coordinate number for the DMDA (0, 1, ... dim-1),
--  name - the name of the coordinate
+  Input Parameters:
++ dm   - the `DMDA`
+. nf   - coordinate number for the `DMDA` (0, 1, ... dim-1),
+- name - the name of the coordinate
 
   Level: intermediate
 
   Note:
-    It must be called after having called `DMSetUp()`.
+  Must be called after having called `DMSetUp()`.
 
-  Fortran Note:
-  Not supported from Fortran
-
-.seealso: `DM`, `DMDA`, `DMDAGetCoordinateName()`, `DMDASetFieldName()`, `DMDAGetFieldName()`, `DMSetUp()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAGetCoordinateName()`, `DMDASetFieldName()`, `DMDAGetFieldName()`, `DMSetUp()`
 @*/
 PetscErrorCode DMDASetCoordinateName(DM dm, PetscInt nf, const char name[])
 {
@@ -192,30 +172,27 @@ PetscErrorCode DMDASetCoordinateName(DM dm, PetscInt nf, const char name[])
   PetscCheck(dd->coordinatename, PetscObjectComm((PetscObject)dm), PETSC_ERR_ORDER, "You should call DMSetUp() first");
   PetscCall(PetscFree(dd->coordinatename[nf]));
   PetscCall(PetscStrallocpy(name, &dd->coordinatename[nf]));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDAGetCoordinateName - Gets the name of a coordinate direction associated with a `DMDA`.
+  DMDAGetCoordinateName - Gets the name of a coordinate direction associated with a `DMDA`.
 
-   Not collective; name will contain a common value
+  Not Collective; name will contain a common value; No Fortran Support
 
-   Input Parameters:
-+  dm - the `DMDA`
--  nf -  number for the DMDA (0, 1, ... dim-1)
+  Input Parameters:
++ dm - the `DMDA`
+- nf - number for the `DMDA` (0, 1, ... dim-1)
 
-   Output Parameter:
-.  names - the name of the coordinate direction
+  Output Parameter:
+. name - the name of the coordinate direction
 
   Level: intermediate
 
   Note:
-    It must be called after having called `DMSetUp()`.
+  It must be called after having called `DMSetUp()`.
 
-  Fortran Note:
-  Not supported from Fortran
-
-.seealso: `DM`, `DMDA`, `DMDASetCoordinateName()`, `DMDASetFieldName()`, `DMDAGetFieldName()`, `DMSetUp()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDASetCoordinateName()`, `DMDASetFieldName()`, `DMDAGetFieldName()`, `DMSetUp()`
 @*/
 PetscErrorCode DMDAGetCoordinateName(DM dm, PetscInt nf, const char **name)
 {
@@ -223,40 +200,40 @@ PetscErrorCode DMDAGetCoordinateName(DM dm, PetscInt nf, const char **name)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMDA);
-  PetscValidPointer(name, 3);
+  PetscAssertPointer(name, 3);
   PetscCheck(nf >= 0 && nf < dm->dim, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Invalid coordinate number: %" PetscInt_FMT, nf);
   PetscCheck(dd->coordinatename, PetscObjectComm((PetscObject)dm), PETSC_ERR_ORDER, "You should call DMSetUp() first");
   *name = dd->coordinatename[nf];
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDAGetCorners - Returns the global (x,y,z) indices of the lower left
-   corner and size of the local region, excluding ghost points.
+  DMDAGetCorners - Returns the global (`x`,`y`,`z`) indices of the lower left
+  corner and size of the local region, excluding ghost points.
 
-   Not collective
+  Not Collective
 
-   Input Parameter:
-.  da - the distributed array
+  Input Parameter:
+. da - the distributed array
 
-   Output Parameters:
-+  x - the corner index for the first dimension
-.  y - the corner index for the second dimension (only used in 2D and 3D problems)
-.  z - the corner index for the third dimension (only used in 3D problems)
-.  m - the width in the first dimension
-.  n - the width in the second dimension (only used in 2D and 3D problems)
--  p - the width in the third dimension (only used in 3D problems)
+  Output Parameters:
++ x - the corner index for the first dimension
+. y - the corner index for the second dimension (only used in 2D and 3D problems)
+. z - the corner index for the third dimension (only used in 3D problems)
+. m - the width in the first dimension
+. n - the width in the second dimension (only used in 2D and 3D problems)
+- p - the width in the third dimension (only used in 3D problems)
 
   Level: beginner
 
-   Note:
-   The corner information is independent of the number of degrees of
-   freedom per node set with the `DMDACreateXX()` routine. Thus the x, y, z, and
-   m, n, p can be thought of as coordinates on a logical grid, where each
-   grid point has (potentially) several degrees of freedom.
-   Any of y, z, n, and p can be passed in as NULL if not needed.
+  Note:
+  The corner information is independent of the number of degrees of
+  freedom per node set with the `DMDACreateXX()` routine. Thus the `x`, `y`, `z`, and
+  `m`, `n`, `p` can be thought of as coordinates on a logical grid, where each
+  grid point has (potentially) several degrees of freedom.
+  Any of `y`, `z`, `n`, and `p` can be passed in as `NULL` if not needed.
 
-.seealso: `DM`, `DMDA`, `DMDAGetGhostCorners()`, `DMDAGetOwnershipRanges()`, `DMStagGetCorners()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAGetGhostCorners()`, `DMDAGetOwnershipRanges()`, `DMStagGetCorners()`
 @*/
 PetscErrorCode DMDAGetCorners(DM da, PetscInt *x, PetscInt *y, PetscInt *z, PetscInt *m, PetscInt *n, PetscInt *p)
 {
@@ -275,7 +252,7 @@ PetscErrorCode DMDAGetCorners(DM da, PetscInt *x, PetscInt *y, PetscInt *z, Pets
   if (m) *m = (dd->xe - dd->xs) / w;
   if (n) *n = (dd->ye - dd->ys);
   if (p) *p = (dd->ze - dd->zs);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMGetLocalBoundingIndices_DMDA(DM dm, PetscReal lmin[], PetscReal lmax[])
@@ -290,36 +267,38 @@ PetscErrorCode DMGetLocalBoundingIndices_DMDA(DM dm, PetscReal lmin[], PetscReal
   lmax[0] = info.xs + info.xm - 1;
   lmax[1] = info.ys + info.ym - 1;
   lmax[2] = info.zs + info.zm - 1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+// PetscClangLinter pragma ignore: -fdoc-*
 /*@
-   DMDAGetReducedDMDA - Deprecated; use DMDACreateCompatibleDMDA()
+  DMDAGetReducedDMDA - Deprecated; use DMDACreateCompatibleDMDA()
 
-   Level: deprecated
+  Level: deprecated
 @*/
 PetscErrorCode DMDAGetReducedDMDA(DM da, PetscInt nfields, DM *nda)
 {
   PetscFunctionBegin;
   PetscCall(DMDACreateCompatibleDMDA(da, nfields, nda));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   DMDACreateCompatibleDMDA - Creates a `DMDA` with the same layout but with fewer or more fields
+  DMDACreateCompatibleDMDA - Creates a `DMDA` with the same layout but with fewer or more fields
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  da - the distributed array
--  nfields - number of fields in new `DMDA`
+  Input Parameters:
++ da      - the distributed array
+- nfields - number of fields in new `DMDA`
 
-   Output Parameter:
-.  nda - the new `DMDA`
+  Output Parameter:
+. nda - the new `DMDA`
 
   Level: intermediate
 
-.seealso: `DM`, `DMDA`, `DMDAGetGhostCorners()`, `DMSetCoordinates()`, `DMDASetUniformCoordinates()`, `DMGetCoordinates()`, `DMDAGetGhostedCoordinates()`, `DMStagCreateCompatibleDMStag()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAGetGhostCorners()`, `DMSetCoordinates()`, `DMDASetUniformCoordinates()`, `DMGetCoordinates()`, `DMDAGetGhostedCoordinates()`,
+          `DMStagCreateCompatibleDMStag()`
 @*/
 PetscErrorCode DMDACreateCompatibleDMDA(DM da, PetscInt nfields, DM *nda)
 {
@@ -369,26 +348,26 @@ PetscErrorCode DMDACreateCompatibleDMDA(DM da, PetscInt nfields, DM *nda)
 
   (*nda)->levelup   = rl;
   (*nda)->leveldown = cl;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDAGetCoordinateArray - Gets an array containing the coordinates of the `DMDA`
+  DMDAGetCoordinateArray - Gets an array containing the coordinates of the `DMDA`
 
-   Not collective
+  Not Collective; No Fortran Support
 
-   Input Parameter:
-.  dm - the `DMDA`
+  Input Parameter:
+. dm - the `DMDA`
 
-   Output Parameter:
-.  xc - the coordinates
+  Output Parameter:
+. xc - the coordinates
 
   Level: intermediate
 
-  Fortran Note:
-  Not supported from Fortran
+  Note:
+  Use  `DMDARestoreCoordinateArray()` to return the array
 
-.seealso: `DM`, `DMDA`, `DMDASetCoordinateName()`, `DMDASetFieldName()`, `DMDAGetFieldName()`, `DMDARestoreCoordinateArray()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDASetCoordinateName()`, `DMDASetFieldName()`, `DMDAGetFieldName()`, `DMDARestoreCoordinateArray()`
 @*/
 PetscErrorCode DMDAGetCoordinateArray(DM dm, void *xc)
 {
@@ -400,24 +379,21 @@ PetscErrorCode DMDAGetCoordinateArray(DM dm, void *xc)
   PetscCall(DMGetCoordinates(dm, &x));
   PetscCall(DMGetCoordinateDM(dm, &cdm));
   PetscCall(DMDAVecGetArray(cdm, x, xc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDARestoreCoordinateArray - Sets an array containing the coordinates of the `DMDA`
+  DMDARestoreCoordinateArray - Returns an array containing the coordinates of the `DMDA` obtained with `DMDAGetCoordinateArray()`
 
-   Not collective
+  Not Collective; No Fortran Support
 
-   Input Parameters:
-+  dm - the `DMDA`
--  xc - the coordinates
+  Input Parameters:
++ dm - the `DMDA`
+- xc - the coordinates
 
   Level: intermediate
 
-  Fortran Note:
-  Not supported from Fortran
-
-.seealso: `DM`, `DMDA`, `DMDASetCoordinateName()`, `DMDASetFieldName()`, `DMDAGetFieldName()`, `DMDAGetCoordinateArray()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDASetCoordinateName()`, `DMDASetFieldName()`, `DMDAGetFieldName()`, `DMDAGetCoordinateArray()`
 @*/
 PetscErrorCode DMDARestoreCoordinateArray(DM dm, void *xc)
 {
@@ -429,5 +405,5 @@ PetscErrorCode DMDARestoreCoordinateArray(DM dm, void *xc)
   PetscCall(DMGetCoordinates(dm, &x));
   PetscCall(DMGetCoordinateDM(dm, &cdm));
   PetscCall(DMDAVecRestoreArray(cdm, x, xc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

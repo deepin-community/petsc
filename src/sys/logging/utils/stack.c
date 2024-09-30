@@ -1,10 +1,3 @@
-
-/*
-     This defines part of the private API for logging performance information. It is intended to be used only by the
-   PETSc PetscLog...() interface and not elsewhere, nor by users. Hence the prototypes for these functions are NOT
-   in the public PETSc include files.
-
-*/
 #include <petsc/private/logimpl.h> /*I    "petscsys.h"   I*/
 
 /*@C
@@ -22,10 +15,10 @@
 PetscErrorCode PetscIntStackDestroy(PetscIntStack stack)
 {
   PetscFunctionBegin;
-  PetscValidPointer(stack, 1);
+  PetscAssertPointer(stack, 1);
   PetscCall(PetscFree(stack->stack));
   PetscCall(PetscFree(stack));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -46,10 +39,10 @@ PetscErrorCode PetscIntStackDestroy(PetscIntStack stack)
 PetscErrorCode PetscIntStackEmpty(PetscIntStack stack, PetscBool *empty)
 {
   PetscFunctionBegin;
-  PetscValidPointer(stack, 1);
-  PetscValidBoolPointer(empty, 2);
+  PetscAssertPointer(stack, 1);
+  PetscAssertPointer(empty, 2);
   *empty = stack->top == -1 ? PETSC_TRUE : PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -70,10 +63,10 @@ PetscErrorCode PetscIntStackEmpty(PetscIntStack stack, PetscBool *empty)
 PetscErrorCode PetscIntStackTop(PetscIntStack stack, int *top)
 {
   PetscFunctionBegin;
-  PetscValidPointer(stack, 1);
-  PetscValidIntPointer(top, 2);
+  PetscAssertPointer(stack, 1);
+  PetscAssertPointer(top, 2);
   *top = stack->stack[stack->top];
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -92,13 +85,13 @@ PetscErrorCode PetscIntStackTop(PetscIntStack stack, int *top)
 PetscErrorCode PetscIntStackPush(PetscIntStack stack, int item)
 {
   PetscFunctionBegin;
-  PetscValidPointer(stack, 1);
+  PetscAssertPointer(stack, 1);
   if (++stack->top >= stack->max) {
     stack->max *= 2;
     PetscCall(PetscRealloc(stack->max * sizeof(*stack->stack), &stack->stack));
   }
   stack->stack[stack->top] = item;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -110,7 +103,7 @@ PetscErrorCode PetscIntStackPush(PetscIntStack stack, int item)
 . stack - The stack
 
   Output Parameter:
-. item  - The integer popped
+. item - The integer popped
 
   Level: developer
 
@@ -119,14 +112,14 @@ PetscErrorCode PetscIntStackPush(PetscIntStack stack, int item)
 PetscErrorCode PetscIntStackPop(PetscIntStack stack, int *item)
 {
   PetscFunctionBegin;
-  PetscValidPointer(stack, 1);
+  PetscAssertPointer(stack, 1);
   PetscCheck(stack->top != -1, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Stack is empty");
   if (item) {
-    PetscValidIntPointer(item, 2);
+    PetscAssertPointer(item, 2);
     PetscCall(PetscIntStackTop(stack, item));
   }
   --stack->top;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -144,12 +137,12 @@ PetscErrorCode PetscIntStackPop(PetscIntStack stack, int *item)
 PetscErrorCode PetscIntStackCreate(PetscIntStack *stack)
 {
   PetscFunctionBegin;
-  PetscValidPointer(stack, 1);
+  PetscAssertPointer(stack, 1);
   PetscCall(PetscNew(stack));
 
   (*stack)->top = -1;
   (*stack)->max = 128;
 
   PetscCall(PetscCalloc1((*stack)->max, &(*stack)->stack));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

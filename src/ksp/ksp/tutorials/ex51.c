@@ -1,4 +1,3 @@
-
 static char help[] = "This example solves a linear system in parallel with KSP.  The matrix\n\
 uses arbitrary order polynomials for finite elements on the unit square.  To test the parallel\n\
 matrix assembly, the matrix is intentionally laid out across processors\n\
@@ -236,7 +235,7 @@ static PetscErrorCode Form1DElementMass(PetscReal H, PetscInt P, PetscReal *gqn,
       for (k = 0; k < (P + 1); ++k) Me1D[indx] += H * gqw[k] * polyBasisFunc(P, i, gqn, gqn[k]) * polyBasisFunc(P, j, gqn, gqn[k]);
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */
@@ -255,7 +254,7 @@ static PetscErrorCode Form1DElementStiffness(PetscReal H, PetscInt P, PetscReal 
       for (k = 0; k < (P + 1); ++k) Ke1D[indx] += (1. / H) * gqw[k] * derivPolyBasisFunc(P, i, gqn, gqn[k]) * derivPolyBasisFunc(P, j, gqn, gqn[k]);
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */
@@ -279,7 +278,7 @@ static PetscErrorCode Form2DElementMass(PetscInt P, PetscScalar *Me1D, PetscScal
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */
@@ -303,7 +302,7 @@ static PetscErrorCode Form2DElementStiffness(PetscInt P, PetscScalar *Ke1D, Pets
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */
@@ -320,7 +319,7 @@ static PetscErrorCode FormNodalRhs(PetscInt P, PetscReal x, PetscReal y, PetscRe
       indx++;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */
@@ -337,7 +336,7 @@ static PetscErrorCode FormNodalSoln(PetscInt P, PetscReal x, PetscReal y, PetscR
       indx++;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */

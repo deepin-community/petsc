@@ -1,4 +1,3 @@
-
 #include <petsc/private/kspimpl.h> /*I "petscksp.h" I*/
 #include <petscdm.h>
 #include <petscblaslapack.h>
@@ -17,7 +16,7 @@ static PetscErrorCode MatCreateVecs_KSP(Mat A, Vec *X, Vec *Y)
   PetscCall(MatShellGetContext(A, &ctx));
   PetscCall(KSPGetOperators(ctx->ksp, &M, NULL));
   PetscCall(MatCreateVecs(M, X, Y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatMult_KSP(Mat A, Vec X, Vec Y)
@@ -27,32 +26,32 @@ static PetscErrorCode MatMult_KSP(Mat A, Vec X, Vec Y)
   PetscFunctionBegin;
   PetscCall(MatShellGetContext(A, &ctx));
   PetscCall(KSP_PCApplyBAorAB(ctx->ksp, X, Y, ctx->work));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*@
-    KSPComputeOperator - Computes the explicit preconditioned operator, including diagonal scaling and null
-    space removal if applicable.
+/*@C
+  KSPComputeOperator - Computes the explicit preconditioned operator, including diagonal scaling and null
+  space removal if applicable.
 
-    Collective
+  Collective
 
-    Input Parameters:
-+   ksp - the Krylov subspace context
--   mattype - the matrix type to be used
+  Input Parameters:
++ ksp     - the Krylov subspace context
+- mattype - the matrix type to be used
 
-    Output Parameter:
-.   mat - the explicit preconditioned operator
+  Output Parameter:
+. mat - the explicit preconditioned operator
 
-    Notes:
-    This computation is done by applying the operators to columns of the
-    identity matrix.
+  Level: advanced
 
-    Currently, this routine uses a dense matrix format for the output operator if mattype == NULL.
-    This routine is costly in general, and is recommended for use only with relatively small systems.
+  Notes:
+  This computation is done by applying the operators to columns of the
+  identity matrix.
 
-    Level: advanced
+  Currently, this routine uses a dense matrix format for the output operator if `mattype` is `NULL`.
+  This routine is costly in general, and is recommended for use only with relatively small systems.
 
-.seealso: [](chapter_ksp), `KSP`, `KSPSetOperators()`, `KSPComputeEigenvaluesExplicitly()`, `PCComputeOperator()`, `KSPSetDiagonalScale()`, `KSPSetNullSpace()`, `MatType`
+.seealso: [](ch_ksp), `KSP`, `KSPSetOperators()`, `KSPComputeEigenvaluesExplicitly()`, `PCComputeOperator()`, `KSPSetDiagonalScale()`, `KSPSetNullSpace()`, `MatType`
 @*/
 PetscErrorCode KSPComputeOperator(KSP ksp, MatType mattype, Mat *mat)
 {
@@ -62,7 +61,7 @@ PetscErrorCode KSPComputeOperator(KSP ksp, MatType mattype, Mat *mat)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 1);
-  PetscValidPointer(mat, 3);
+  PetscAssertPointer(mat, 3);
   PetscCall(KSPGetOperators(ksp, &A, NULL));
   PetscCall(MatGetLocalSize(A, &m, &n));
   PetscCall(MatGetSize(A, &M, &N));
@@ -74,39 +73,39 @@ PetscErrorCode KSPComputeOperator(KSP ksp, MatType mattype, Mat *mat)
   PetscCall(MatComputeOperator(Aksp, mattype, mat));
   PetscCall(VecDestroy(&ctx.work));
   PetscCall(MatDestroy(&Aksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   KSPComputeEigenvaluesExplicitly - Computes all of the eigenvalues of the
-   preconditioned operator using LAPACK.
+  KSPComputeEigenvaluesExplicitly - Computes all of the eigenvalues of the
+  preconditioned operator using LAPACK.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  ksp - iterative context obtained from `KSPCreate()`
--  n - size of arrays r and c
+  Input Parameters:
++ ksp  - iterative context obtained from `KSPCreate()`
+- nmax - size of arrays `r` and `c`
 
-   Output Parameters:
-+  r - real part of computed eigenvalues, provided by user with a dimension at least of n
--  c - complex part of computed eigenvalues, provided by user with a dimension at least of n
+  Output Parameters:
++ r - real part of computed eigenvalues, provided by user with a dimension at least of `n`
+- c - complex part of computed eigenvalues, provided by user with a dimension at least of `n`
 
-   Notes:
-   This approach is very slow but will generally provide accurate eigenvalue
-   estimates.  This routine explicitly forms a dense matrix representing
-   the preconditioned operator, and thus will run only for relatively small
-   problems, say n < 500.
+  Level: advanced
 
-   Many users may just want to use the monitoring routine
-   `KSPMonitorSingularValue()` (which can be set with option -ksp_monitor_singular_value)
-   to print the singular values at each iteration of the linear solve.
+  Notes:
+  This approach is very slow but will generally provide accurate eigenvalue
+  estimates.  This routine explicitly forms a dense matrix representing
+  the preconditioned operator, and thus will run only for relatively small
+  problems, say `n` < 500.
 
-   The preconditioner operator, rhs vector, solution vectors should be
-   set before this routine is called. i.e use `KSPSetOperators()`, `KSPSolve()`
+  Many users may just want to use the monitoring routine
+  `KSPMonitorSingularValue()` (which can be set with option -ksp_monitor_singular_value)
+  to print the singular values at each iteration of the linear solve.
 
-   Level: advanced
+  The preconditioner operator, rhs vector, and solution vectors should be
+  set before this routine is called. i.e use `KSPSetOperators()`, `KSPSolve()`
 
-.seealso: [](chapter_ksp), `KSP`, `KSPComputeEigenvalues()`, `KSPMonitorSingularValue()`, `KSPComputeExtremeSingularValues()`, `KSPSetOperators()`, `KSPSolve()`
+.seealso: [](ch_ksp), `KSP`, `KSPComputeEigenvalues()`, `KSPMonitorSingularValue()`, `KSPComputeExtremeSingularValues()`, `KSPSetOperators()`, `KSPSolve()`
 @*/
 PetscErrorCode KSPComputeEigenvaluesExplicitly(KSP ksp, PetscInt nmax, PetscReal r[], PetscReal c[])
 {
@@ -229,7 +228,7 @@ PetscErrorCode KSPComputeEigenvaluesExplicitly(KSP ksp, PetscInt nmax, PetscReal
     PetscCall(MatDenseRestoreArray(BA, &array));
   }
   PetscCall(MatDestroy(&BA));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PolyEval(PetscInt nroots, const PetscReal *r, const PetscReal *c, PetscReal x, PetscReal y, PetscReal *px, PetscReal *py)
@@ -246,7 +245,7 @@ static PetscErrorCode PolyEval(PetscInt nroots, const PetscReal *r, const PetscR
   }
   *px = rprod;
   *py = iprod;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #include <petscdraw.h>
@@ -262,7 +261,7 @@ PetscErrorCode KSPPlotEigenContours_Private(KSP ksp, PetscInt neig, const PetscR
 
   PetscFunctionBegin;
   PetscCallMPI(MPI_Comm_rank(PetscObjectComm((PetscObject)ksp), &rank));
-  if (rank) PetscFunctionReturn(0);
+  if (rank) PetscFunctionReturn(PETSC_SUCCESS);
   M    = 80;
   N    = 80;
   xmin = r[0];
@@ -308,5 +307,5 @@ PetscErrorCode KSPPlotEigenContours_Private(KSP ksp, PetscInt neig, const PetscR
   }
   PetscCall(PetscViewerDestroy(&viewer));
   PetscCall(PetscFree3(xloc, yloc, value));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

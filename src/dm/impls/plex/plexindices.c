@@ -6,7 +6,7 @@
   Not Collective
 
   Input Parameters:
-+ dm - The `DM`
++ dm      - The `DM`
 - section - The section describing the layout in the local vector, or NULL to use the default section
 
   Level: intermediate
@@ -14,7 +14,7 @@
   Note:
   This should greatly improve the performance of the closure operations, at the cost of additional memory.
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `PetscSection`, `DMPlexVecGetClosure()`, `DMPlexVecRestoreClosure()`, `DMPlexVecSetClosure()`, `DMPlexMatSetClosure()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `PetscSection`, `DMPlexVecGetClosure()`, `DMPlexVecRestoreClosure()`, `DMPlexVecSetClosure()`, `DMPlexMatSetClosure()`
 @*/
 PetscErrorCode DMPlexCreateClosureIndex(DM dm, PetscSection section)
 {
@@ -70,5 +70,5 @@ PetscErrorCode DMPlexCreateClosureIndex(DM dm, PetscSection section)
   PetscCall(PetscSectionSetClosureIndex(section, (PetscObject)dm, closureSection, closureIS));
   PetscCall(PetscSectionDestroy(&closureSection));
   PetscCall(ISDestroy(&closureIS));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

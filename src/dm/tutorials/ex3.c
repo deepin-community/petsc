@@ -1,4 +1,3 @@
-
 static char help[] = "Tests DMCreateInterpolation() for nonuniform DMDA coordinates.\n\n";
 
 #include <petscdm.h>
@@ -26,7 +25,7 @@ PetscErrorCode SetCoordinates1d(DM da)
   PetscCall(DMDAVecRestoreArrayRead(cda, local, &coorslocal));
   PetscCall(DMGlobalToLocalBegin(cda, global, INSERT_VALUES, local));
   PetscCall(DMGlobalToLocalEnd(cda, global, INSERT_VALUES, local));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SetCoordinates2d(DM da)
@@ -55,7 +54,7 @@ PetscErrorCode SetCoordinates2d(DM da)
 
   PetscCall(DMGlobalToLocalBegin(cda, global, INSERT_VALUES, local));
   PetscCall(DMGlobalToLocalEnd(cda, global, INSERT_VALUES, local));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SetCoordinates3d(DM da)
@@ -86,7 +85,7 @@ PetscErrorCode SetCoordinates3d(DM da)
   PetscCall(DMDAVecRestoreArrayRead(cda, local, &coorslocal));
   PetscCall(DMGlobalToLocalBegin(cda, global, INSERT_VALUES, local));
   PetscCall(DMGlobalToLocalEnd(cda, global, INSERT_VALUES, local));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

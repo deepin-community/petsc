@@ -49,19 +49,9 @@ extern void PetscRmPointer(void*);
 #define mataypx_ mataypx
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define matcomputeoperator_ MATCOMPUTEOPERATOR
+#define matfilter_ MATFILTER
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define matcomputeoperator_ matcomputeoperator
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define matcomputeoperatortranspose_ MATCOMPUTEOPERATORTRANSPOSE
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define matcomputeoperatortranspose_ matcomputeoperatortranspose
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define matchop_ MATCHOP
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define matchop_ matchop
+#define matfilter_ matfilter
 #endif
 
 
@@ -92,20 +82,10 @@ PETSC_EXTERN void  mataypx_(Mat Y,PetscScalar *a,Mat X,MatStructure *str, int *_
 	(Mat)PetscToPointer((Y) ),*a,
 	(Mat)PetscToPointer((X) ),*str);
 }
-PETSC_EXTERN void  matcomputeoperator_(Mat inmat,MatType *mattype,Mat *mat, int *__ierr)
+PETSC_EXTERN void  matfilter_(Mat A,PetscReal *tol,PetscBool *compress,PetscBool *keep, int *__ierr)
 {
-*__ierr = MatComputeOperator(
-	(Mat)PetscToPointer((inmat) ),*mattype,mat);
-}
-PETSC_EXTERN void  matcomputeoperatortranspose_(Mat inmat,MatType *mattype,Mat *mat, int *__ierr)
-{
-*__ierr = MatComputeOperatorTranspose(
-	(Mat)PetscToPointer((inmat) ),*mattype,mat);
-}
-PETSC_EXTERN void  matchop_(Mat A,PetscReal *tol, int *__ierr)
-{
-*__ierr = MatChop(
-	(Mat)PetscToPointer((A) ),*tol);
+*__ierr = MatFilter(
+	(Mat)PetscToPointer((A) ),*tol,*compress,*keep);
 }
 #if defined(__cplusplus)
 }

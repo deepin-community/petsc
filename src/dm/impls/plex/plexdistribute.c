@@ -5,18 +5,18 @@
   DMPlexSetAdjacencyUser - Define adjacency in the mesh using a user-provided callback
 
   Input Parameters:
-+ dm      - The DM object
-. user    - The user callback, may be NULL (to clear the callback)
-- ctx     - context for callback evaluation, may be NULL
++ dm   - The DM object
+. user - The user callback, may be `NULL` (to clear the callback)
+- ctx  - context for callback evaluation, may be `NULL`
 
   Level: advanced
 
   Notes:
-     The caller of DMPlexGetAdjacency may need to arrange that a large enough array is available for the adjacency.
+  The caller of `DMPlexGetAdjacency()` may need to arrange that a large enough array is available for the adjacency.
 
-     Any setting here overrides other configuration of DMPlex adjacency determination.
+  Any setting here overrides other configuration of `DMPLEX` adjacency determination.
 
-.seealso: `DMSetAdjacency()`, `DMPlexDistribute()`, `DMPlexPreallocateOperator()`, `DMPlexGetAdjacency()`, `DMPlexGetAdjacencyUser()`
+.seealso: `DMPLEX`, `DMSetAdjacency()`, `DMPlexDistribute()`, `DMPlexPreallocateOperator()`, `DMPlexGetAdjacency()`, `DMPlexGetAdjacencyUser()`
 @*/
 PetscErrorCode DMPlexSetAdjacencyUser(DM dm, PetscErrorCode (*user)(DM, PetscInt, PetscInt *, PetscInt[], void *), void *ctx)
 {
@@ -26,22 +26,22 @@ PetscErrorCode DMPlexSetAdjacencyUser(DM dm, PetscErrorCode (*user)(DM, PetscInt
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   mesh->useradjacency    = user;
   mesh->useradjacencyctx = ctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMPlexGetAdjacencyUser - get the user-defined adjacency callback
 
   Input Parameter:
-. dm      - The DM object
+. dm - The `DM` object
 
   Output Parameters:
-+ user    - The callback
-- ctx     - context for callback evaluation
++ user - The callback
+- ctx  - context for callback evaluation
 
   Level: advanced
 
-.seealso: `DMSetAdjacency()`, `DMPlexDistribute()`, `DMPlexPreallocateOperator()`, `DMPlexGetAdjacency()`, `DMPlexSetAdjacencyUser()`
+.seealso: `DMPLEX`, `DMSetAdjacency()`, `DMPlexDistribute()`, `DMPlexPreallocateOperator()`, `DMPlexGetAdjacency()`, `DMPlexSetAdjacencyUser()`
 @*/
 PetscErrorCode DMPlexGetAdjacencyUser(DM dm, PetscErrorCode (**user)(DM, PetscInt, PetscInt *, PetscInt[], void *), void **ctx)
 {
@@ -51,19 +51,19 @@ PetscErrorCode DMPlexGetAdjacencyUser(DM dm, PetscErrorCode (**user)(DM, PetscIn
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   if (user) *user = mesh->useradjacency;
   if (ctx) *ctx = mesh->useradjacencyctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexSetAdjacencyUseAnchors - Define adjacency in the mesh using the point-to-point constraints.
 
   Input Parameters:
-+ dm      - The DM object
++ dm         - The `DM` object
 - useAnchors - Flag to use the constraints.  If PETSC_TRUE, then constrained points are omitted from DMPlexGetAdjacency(), and their anchor points appear in their place.
 
   Level: intermediate
 
-.seealso: `DMGetAdjacency()`, `DMSetAdjacency()`, `DMPlexDistribute()`, `DMPlexPreallocateOperator()`, `DMPlexSetAnchors()`
+.seealso: `DMPLEX`, `DMGetAdjacency()`, `DMSetAdjacency()`, `DMPlexDistribute()`, `DMPlexPreallocateOperator()`, `DMPlexSetAnchors()`
 @*/
 PetscErrorCode DMPlexSetAdjacencyUseAnchors(DM dm, PetscBool useAnchors)
 {
@@ -72,21 +72,21 @@ PetscErrorCode DMPlexSetAdjacencyUseAnchors(DM dm, PetscBool useAnchors)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   mesh->useAnchors = useAnchors;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexGetAdjacencyUseAnchors - Query whether adjacency in the mesh uses the point-to-point constraints.
 
   Input Parameter:
-. dm      - The DM object
+. dm - The `DM` object
 
   Output Parameter:
 . useAnchors - Flag to use the closure.  If PETSC_TRUE, then constrained points are omitted from DMPlexGetAdjacency(), and their anchor points appear in their place.
 
   Level: intermediate
 
-.seealso: `DMPlexSetAdjacencyUseAnchors()`, `DMSetAdjacency()`, `DMGetAdjacency()`, `DMPlexDistribute()`, `DMPlexPreallocateOperator()`, `DMPlexSetAnchors()`
+.seealso: `DMPLEX`, `DMPlexSetAdjacencyUseAnchors()`, `DMSetAdjacency()`, `DMGetAdjacency()`, `DMPlexDistribute()`, `DMPlexPreallocateOperator()`, `DMPlexSetAnchors()`
 @*/
 PetscErrorCode DMPlexGetAdjacencyUseAnchors(DM dm, PetscBool *useAnchors)
 {
@@ -94,9 +94,9 @@ PetscErrorCode DMPlexGetAdjacencyUseAnchors(DM dm, PetscBool *useAnchors)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidBoolPointer(useAnchors, 2);
+  PetscAssertPointer(useAnchors, 2);
   *useAnchors = mesh->useAnchors;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexGetAdjacency_Cone_Internal(DM dm, PetscInt p, PetscInt *adjSize, PetscInt adj[])
@@ -122,7 +122,7 @@ static PetscErrorCode DMPlexGetAdjacency_Cone_Internal(DM dm, PetscInt p, PetscI
     }
   }
   *adjSize = numAdj;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexGetAdjacency_Support_Internal(DM dm, PetscInt p, PetscInt *adjSize, PetscInt adj[])
@@ -148,7 +148,7 @@ static PetscErrorCode DMPlexGetAdjacency_Support_Internal(DM dm, PetscInt p, Pet
     }
   }
   *adjSize = numAdj;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexGetAdjacency_Transitive_Internal(DM dm, PetscInt p, PetscBool useClosure, PetscInt *adjSize, PetscInt adj[])
@@ -173,7 +173,7 @@ static PetscErrorCode DMPlexGetAdjacency_Transitive_Internal(DM dm, PetscInt p, 
   }
   PetscCall(DMPlexRestoreTransitiveClosure(dm, p, useClosure, &starSize, &star));
   *adjSize = numAdj;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMPlexGetAdjacency_Internal(DM dm, PetscInt p, PetscBool useCone, PetscBool useTransitiveClosure, PetscBool useAnchors, PetscInt *adjSize, PetscInt *adj[])
@@ -254,28 +254,28 @@ PetscErrorCode DMPlexGetAdjacency_Internal(DM dm, PetscInt p, PetscBool useCone,
     *adjSize = numAdj;
     PetscCall(ISRestoreIndices(aIS, &anchors));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexGetAdjacency - Return all points adjacent to the given point
 
   Input Parameters:
-+ dm - The DM object
++ dm - The `DM` object
 - p  - The point
 
   Input/Output Parameters:
-+ adjSize - The maximum size of adj if it is non-NULL, or PETSC_DETERMINE;
++ adjSize - The maximum size of `adj` if it is non-`NULL`, or `PETSC_DETERMINE`;
             on output the number of adjacent points
-- adj - Either NULL so that the array is allocated, or an existing array with size adjSize;
+- adj     - Either `NULL` so that the array is allocated, or an existing array with size `adjSize`;
         on output contains the adjacent points
 
   Level: advanced
 
   Notes:
-    The user must PetscFree the adj array if it was not passed in.
+  The user must `PetscFree()` the `adj` array if it was not passed in.
 
-.seealso: `DMSetAdjacency()`, `DMPlexDistribute()`, `DMCreateMatrix()`, `DMPlexPreallocateOperator()`
+.seealso: `DMPLEX`, `DMSetAdjacency()`, `DMPlexDistribute()`, `DMCreateMatrix()`, `DMPlexPreallocateOperator()`
 @*/
 PetscErrorCode DMPlexGetAdjacency(DM dm, PetscInt p, PetscInt *adjSize, PetscInt *adj[])
 {
@@ -283,34 +283,34 @@ PetscErrorCode DMPlexGetAdjacency(DM dm, PetscInt p, PetscInt *adjSize, PetscInt
 
   PetscFunctionBeginHot;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidIntPointer(adjSize, 3);
-  PetscValidPointer(adj, 4);
+  PetscAssertPointer(adjSize, 3);
+  PetscAssertPointer(adj, 4);
   PetscCall(DMGetBasicAdjacency(dm, &useCone, &useClosure));
   PetscCall(DMPlexGetAdjacencyUseAnchors(dm, &useAnchors));
   PetscCall(DMPlexGetAdjacency_Internal(dm, p, useCone, useClosure, useAnchors, adjSize, adj));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexCreateTwoSidedProcessSF - Create an SF which just has process connectivity
+  DMPlexCreateTwoSidedProcessSF - Create an `PetscSF` which just has process connectivity
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm      - The DM
-. sfPoint - The PetscSF which encodes point connectivity
-. rootRankSection -
-. rootRanks -
-. leftRankSection -
-- leafRanks -
++ dm              - The `DM`
+. sfPoint         - The `PetscSF` which encodes point connectivity
+. rootRankSection - to be documented
+. rootRanks       - to be documented
+. leafRankSection - to be documented
+- leafRanks       - to be documented
 
   Output Parameters:
-+ processRanks - A list of process neighbors, or NULL
-- sfProcess    - An SF encoding the two-sided process connectivity, or NULL
++ processRanks - A list of process neighbors, or `NULL`
+- sfProcess    - An `PetscSF` encoding the two-sided process connectivity, or `NULL`
 
   Level: developer
 
-.seealso: `PetscSFCreate()`, `DMPlexCreateProcessSF()`
+.seealso: `DMPLEX`, `PetscSFCreate()`, `DMPlexCreateProcessSF()`
 @*/
 PetscErrorCode DMPlexCreateTwoSidedProcessSF(DM dm, PetscSF sfPoint, PetscSection rootRankSection, IS rootRanks, PetscSection leafRankSection, IS leafRanks, IS *processRanks, PetscSF *sfProcess)
 {
@@ -326,8 +326,8 @@ PetscErrorCode DMPlexCreateTwoSidedProcessSF(DM dm, PetscSF sfPoint, PetscSectio
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscValidHeaderSpecific(sfPoint, PETSCSF_CLASSID, 2);
-  if (processRanks) PetscValidPointer(processRanks, 7);
-  if (sfProcess) PetscValidPointer(sfProcess, 8);
+  if (processRanks) PetscAssertPointer(processRanks, 7);
+  if (sfProcess) PetscAssertPointer(sfProcess, 8);
   PetscCallMPI(MPI_Comm_size(PetscObjectComm((PetscObject)dm), &size));
   PetscCallMPI(MPI_Comm_rank(PetscObjectComm((PetscObject)dm), &rank));
   PetscCall(PetscSFGetGraph(sfPoint, NULL, &numLeaves, NULL, &remotePoints));
@@ -356,9 +356,9 @@ PetscErrorCode DMPlexCreateTwoSidedProcessSF(DM dm, PetscSF sfPoint, PetscSectio
   }
   PetscCall(ISRestoreIndices(leafRanks, &nranks));
   /* Compute leaf-to-root process connectivity */
-  for (l = 0; l < numLeaves; ++l) PetscBTSet(neighbors, remotePoints[l].rank);
+  for (l = 0; l < numLeaves; ++l) PetscCall(PetscBTSet(neighbors, remotePoints[l].rank));
   /* Calculate edges */
-  PetscBTClear(neighbors, rank);
+  PetscCall(PetscBTClear(neighbors, rank));
   for (proc = 0, numNeighbors = 0; proc < size; ++proc) {
     if (PetscBTLookup(neighbors, proc)) ++numNeighbors;
   }
@@ -383,16 +383,16 @@ PetscErrorCode DMPlexCreateTwoSidedProcessSF(DM dm, PetscSF sfPoint, PetscSectio
     PetscCall(PetscSFSetFromOptions(*sfProcess));
     PetscCall(PetscSFSetGraph(*sfProcess, size, numNeighbors, localPointsNew, PETSC_OWN_POINTER, remotePointsNew, PETSC_OWN_POINTER));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexDistributeOwnership - Compute owner information for shared points. This basically gets two-sided for an SF.
 
-  Collective on dm
+  Collective
 
   Input Parameter:
-. dm - The DM
+. dm - The `DM`
 
   Output Parameters:
 + rootSection - The number of leaves for a given root point
@@ -402,7 +402,7 @@ PetscErrorCode DMPlexCreateTwoSidedProcessSF(DM dm, PetscSF sfPoint, PetscSectio
 
   Level: developer
 
-.seealso: `DMPlexCreateOverlapLabel()`, `DMPlexDistribute()`, `DMPlexDistributeOverlap()`
+.seealso: `DMPLEX`, `DMPlexCreateOverlapLabel()`, `DMPlexDistribute()`, `DMPlexDistributeOverlap()`
 @*/
 PetscErrorCode DMPlexDistributeOwnership(DM dm, PetscSection rootSection, IS *rootrank, PetscSection leafSection, IS *leafrank)
 {
@@ -437,41 +437,16 @@ PetscErrorCode DMPlexDistributeOwnership(DM dm, PetscSection rootSection, IS *ro
   /* Distribute remote ranks to leaves */
   PetscCall(PetscObjectSetName((PetscObject)leafSection, "Leaf Section"));
   PetscCall(DMPlexDistributeFieldIS(dm, sfPoint, rootSection, *rootrank, leafSection, leafrank));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-#if 0
-static PetscErrorCode DMPlexCopyOverlapLabels(DM dm, DM ndm)
-{
-  DM_Plex *mesh  = (DM_Plex *) dm->data;
-  DM_Plex *nmesh = (DM_Plex *) ndm->data;
-
-  PetscFunctionBegin;
-  if (mesh->numOvLabels) {
-    const char *name;
-    PetscInt    l;
-
-    nmesh->numOvLabels = mesh->numOvLabels;
-    for (l = 0; l < mesh->numOvLabels; ++l) {
-      PetscCall(PetscObjectGetName((PetscObject) mesh->ovLabels[l], &name));
-      PetscCall(DMGetLabel(ndm, name, &nmesh->ovLabels[l]));
-      nmesh->ovValues[l] = mesh->ovValues[l];
-    }
-    PetscCall(PetscObjectGetName((PetscObject) mesh->ovExLabel, &name));
-    PetscCall(DMGetLabel(ndm, name, &nmesh->ovExLabel));
-    nmesh->ovExValue = mesh->ovExValue;
-  }
-  PetscFunctionReturn(0);
-}
-#endif
 
 /*@C
   DMPlexCreateOverlapLabel - Compute a label indicating what overlap points should be sent to new processes
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm          - The DM
++ dm          - The `DM`
 . levels      - Number of overlap levels
 . rootSection - The number of leaves for a given root point
 . rootrank    - The rank of each edge into the root point
@@ -479,11 +454,11 @@ static PetscErrorCode DMPlexCopyOverlapLabels(DM dm, DM ndm)
 - leafrank    - The rank of each process sharing a leaf point
 
   Output Parameter:
-. ovLabel     - DMLabel containing remote overlap contributions as point/rank pairings
+. ovLabel - `DMLabel` containing remote overlap contributions as point/rank pairings
 
   Level: developer
 
-.seealso: `DMPlexCreateOverlapLabelFromLabels()`, `DMPlexGetAdjacency()`, `DMPlexDistributeOwnership()`, `DMPlexDistribute()`
+.seealso: `DMPLEX`, `DMPlexCreateOverlapLabelFromLabels()`, `DMPlexGetAdjacency()`, `DMPlexDistributeOwnership()`, `DMPlexDistribute()`
 @*/
 PetscErrorCode DMPlexCreateOverlapLabel(DM dm, PetscInt levels, PetscSection rootSection, IS rootrank, PetscSection leafSection, IS leafrank, DMLabel *ovLabel)
 {
@@ -503,14 +478,14 @@ PetscErrorCode DMPlexCreateOverlapLabel(DM dm, PetscInt levels, PetscSection roo
   PetscCall(PetscObjectGetComm((PetscObject)dm, &comm));
   PetscCallMPI(MPI_Comm_size(comm, &size));
   PetscCallMPI(MPI_Comm_rank(comm, &rank));
-  if (size == 1) PetscFunctionReturn(0);
+  if (size == 1) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(DMGetPointSF(dm, &sfPoint));
   PetscCall(DMPlexGetChart(dm, &pStart, &pEnd));
   if (!levels) {
     /* Add owned points */
     PetscCall(DMLabelCreate(PETSC_COMM_SELF, "Overlap label", ovLabel));
     for (p = pStart; p < pEnd; ++p) PetscCall(DMLabelSetValue(*ovLabel, p, rank));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(PetscSectionGetChart(leafSection, &sStart, &sEnd));
   PetscCall(PetscSFGetGraph(sfPoint, NULL, &nleaves, &local, &remote));
@@ -583,7 +558,7 @@ PetscErrorCode DMPlexCreateOverlapLabel(DM dm, PetscInt levels, PetscSection roo
   }
   /* Clean up */
   PetscCall(DMLabelDestroy(&ovAdjByRank));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode HandlePoint_Private(DM dm, PetscInt p, PetscSection section, const PetscInt ranks[], PetscInt numExLabels, const DMLabel exLabel[], const PetscInt exValue[], DMLabel ovAdjByRank)
@@ -620,36 +595,36 @@ static PetscErrorCode HandlePoint_Private(DM dm, PetscInt p, PetscSection sectio
     }
     PetscCall(PetscFree(adj));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMPlexCreateOverlapLabelFromLabels - Compute a label indicating what overlap points should be sent to new processes
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm          - The DM
++ dm          - The `DM`
 . numLabels   - The number of labels to draw candidate points from
 . label       - An array of labels containing candidate points
 . value       - An array of label values marking the candidate points
 . numExLabels - The number of labels to use for exclusion
-. exLabel     - An array of labels indicating points to be excluded, or NULL
-. exValue     - An array of label values to be excluded, or NULL
+. exLabel     - An array of labels indicating points to be excluded, or `NULL`
+. exValue     - An array of label values to be excluded, or `NULL`
 . rootSection - The number of leaves for a given root point
 . rootrank    - The rank of each edge into the root point
 . leafSection - The number of processes sharing a given leaf point
 - leafrank    - The rank of each process sharing a leaf point
 
   Output Parameter:
-. ovLabel     - DMLabel containing remote overlap contributions as point/rank pairings
+. ovLabel - `DMLabel` containing remote overlap contributions as point/rank pairings
+
+  Level: developer
 
   Note:
   The candidate points are only added to the overlap if they are adjacent to a shared point
 
-  Level: developer
-
-.seealso: `DMPlexCreateOverlapLabel()`, `DMPlexGetAdjacency()`, `DMPlexDistributeOwnership()`, `DMPlexDistribute()`
+.seealso: `DMPLEX`, `DMPlexCreateOverlapLabel()`, `DMPlexGetAdjacency()`, `DMPlexDistributeOwnership()`, `DMPlexDistribute()`
 @*/
 PetscErrorCode DMPlexCreateOverlapLabelFromLabels(DM dm, PetscInt numLabels, const DMLabel label[], const PetscInt value[], PetscInt numExLabels, const DMLabel exLabel[], const PetscInt exValue[], PetscSection rootSection, IS rootrank, PetscSection leafSection, IS leafrank, DMLabel *ovLabel)
 {
@@ -669,7 +644,7 @@ PetscErrorCode DMPlexCreateOverlapLabelFromLabels(DM dm, PetscInt numLabels, con
   PetscCall(PetscObjectGetComm((PetscObject)dm, &comm));
   PetscCallMPI(MPI_Comm_size(comm, &size));
   PetscCallMPI(MPI_Comm_rank(comm, &rank));
-  if (size == 1) PetscFunctionReturn(0);
+  if (size == 1) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(DMGetPointSF(dm, &sfPoint));
   PetscCall(DMPlexGetChart(dm, &pStart, &pEnd));
   PetscCall(PetscSectionGetChart(leafSection, &sStart, &sEnd));
@@ -714,10 +689,10 @@ PetscErrorCode DMPlexCreateOverlapLabelFromLabels(DM dm, PetscInt numLabels, con
           }
         }
         /* Some leaves share a root with other leaves on different processes */
-        HandlePoint_Private(dm, p, leafSection, nrank, numExLabels, exLabel, exValue, ovAdjByRank);
+        PetscCall(HandlePoint_Private(dm, p, leafSection, nrank, numExLabels, exLabel, exValue, ovAdjByRank));
       }
       /* Roots are shared with leaves */
-      HandlePoint_Private(dm, p, rootSection, rrank, numExLabels, exLabel, exValue, ovAdjByRank);
+      PetscCall(HandlePoint_Private(dm, p, rootSection, rrank, numExLabels, exLabel, exValue, ovAdjByRank));
     }
     PetscCall(ISRestoreIndices(valIS, &points));
     PetscCall(ISDestroy(&valIS));
@@ -744,24 +719,24 @@ PetscErrorCode DMPlexCreateOverlapLabelFromLabels(DM dm, PetscInt numLabels, con
   }
   /* Clean up */
   PetscCall(DMLabelDestroy(&ovAdjByRank));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  DMPlexCreateOverlapMigrationSF - Create an SF describing the new mesh distribution to make the overlap described by the input SF
+  DMPlexCreateOverlapMigrationSF - Create a `PetscSF` describing the new mesh distribution to make the overlap described by the input `PetscSF`
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm          - The DM
-- overlapSF   - The SF mapping ghost points in overlap to owner points on other processes
++ dm        - The `DM`
+- overlapSF - The `PetscSF` mapping ghost points in overlap to owner points on other processes
 
   Output Parameter:
-. migrationSF - An SF that maps original points in old locations to points in new locations
+. migrationSF - A `PetscSF` that maps original points in old locations to points in new locations
 
   Level: developer
 
-.seealso: `DMPlexCreateOverlapLabel()`, `DMPlexDistributeOverlap()`, `DMPlexDistribute()`
+.seealso: `DMPLEX`, `DMPlexCreateOverlapLabel()`, `DMPlexDistributeOverlap()`, `DMPlexDistribute()`
 @*/
 PetscErrorCode DMPlexCreateOverlapMigrationSF(DM dm, PetscSF overlapSF, PetscSF *migrationSF)
 {
@@ -854,25 +829,25 @@ PetscErrorCode DMPlexCreateOverlapMigrationSF(DM dm, PetscSF overlapSF, PetscSF 
   PetscCall(PetscSFSetGraph(*migrationSF, pEnd - pStart, newLeaves, ilocal, PETSC_OWN_POINTER, iremote, PETSC_OWN_POINTER));
 
   PetscCall(PetscFree3(depthRecv, depthShift, depthIdx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexStratifyMigrationSF - Rearrange the leaves of a migration sf for stratification.
 
   Input Parameters:
-+ dm          - The DM
-- sf          - A star forest with non-ordered leaves, usually defining a DM point migration
++ dm - The DM
+- sf - A star forest with non-ordered leaves, usually defining a DM point migration
 
   Output Parameter:
 . migrationSF - A star forest with added leaf indirection that ensures the resulting DM is stratified
 
+  Level: developer
+
   Note:
   This lexicographically sorts by (depth, cellType)
 
-  Level: developer
-
-.seealso: `DMPlexPartitionLabelCreateSF()`, `DMPlexDistribute()`, `DMPlexDistributeOverlap()`
+.seealso: `DMPLEX`, `DMPlexPartitionLabelCreateSF()`, `DMPlexDistribute()`, `DMPlexDistributeOverlap()`
 @*/
 PetscErrorCode DMPlexStratifyMigrationSF(DM dm, PetscSF sf, PetscSF *migrationSF)
 {
@@ -979,27 +954,27 @@ PetscErrorCode DMPlexStratifyMigrationSF(DM dm, PetscSF sf, PetscSF *migrationSF
   PetscCall(PetscFree2(pointDepths, remoteDepths));
   PetscCall(PetscFree6(depthRecv, depthShift, depthIdx, ctRecv, ctShift, ctIdx));
   PetscCall(PetscLogEventEnd(DMPLEX_PartStratSF, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexDistributeField - Distribute field data to match a given PetscSF, usually the SF from mesh distribution
+  DMPlexDistributeField - Distribute field data to match a given `PetscSF`, usually the `PetscSF` from mesh distribution
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm - The DMPlex object
-. pointSF - The PetscSF describing the communication pattern
-. originalSection - The PetscSection for existing data layout
-- originalVec - The existing data in a local vector
++ dm              - The `DMPLEX` object
+. pointSF         - The `PetscSF` describing the communication pattern
+. originalSection - The `PetscSection` for existing data layout
+- originalVec     - The existing data in a local vector
 
   Output Parameters:
-+ newSection - The PetscSF describing the new data layout
-- newVec - The new data in a local vector
++ newSection - The `PetscSF` describing the new data layout
+- newVec     - The new data in a local vector
 
   Level: developer
 
-.seealso: `DMPlexDistribute()`, `DMPlexDistributeFieldIS()`, `DMPlexDistributeData()`
+.seealso: `DMPLEX`, `DMPlexDistribute()`, `DMPlexDistributeFieldIS()`, `DMPlexDistributeData()`
 @*/
 PetscErrorCode DMPlexDistributeField(DM dm, PetscSF pointSF, PetscSection originalSection, Vec originalVec, PetscSection newSection, Vec newVec)
 {
@@ -1025,27 +1000,27 @@ PetscErrorCode DMPlexDistributeField(DM dm, PetscSF pointSF, PetscSection origin
   PetscCall(VecRestoreArray(newVec, &newValues));
   PetscCall(VecRestoreArray(originalVec, &originalValues));
   PetscCall(PetscLogEventEnd(DMPLEX_DistributeField, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexDistributeFieldIS - Distribute field data to match a given PetscSF, usually the SF from mesh distribution
+  DMPlexDistributeFieldIS - Distribute field data to match a given `PetscSF`, usually the `PetscSF` from mesh distribution
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm - The DMPlex object
-. pointSF - The PetscSF describing the communication pattern
-. originalSection - The PetscSection for existing data layout
-- originalIS - The existing data
++ dm              - The `DMPLEX` object
+. pointSF         - The `PetscSF` describing the communication pattern
+. originalSection - The `PetscSection` for existing data layout
+- originalIS      - The existing data
 
   Output Parameters:
-+ newSection - The PetscSF describing the new data layout
-- newIS - The new data
++ newSection - The `PetscSF` describing the new data layout
+- newIS      - The new data
 
   Level: developer
 
-.seealso: `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexDistributeData()`
+.seealso: `DMPLEX`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexDistributeData()`
 @*/
 PetscErrorCode DMPlexDistributeFieldIS(DM dm, PetscSF pointSF, PetscSection originalSection, IS originalIS, PetscSection newSection, IS *newIS)
 {
@@ -1069,28 +1044,28 @@ PetscErrorCode DMPlexDistributeFieldIS(DM dm, PetscSF pointSF, PetscSection orig
   PetscCall(ISRestoreIndices(originalIS, &originalValues));
   PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)pointSF), fieldSize, newValues, PETSC_OWN_POINTER, newIS));
   PetscCall(PetscLogEventEnd(DMPLEX_DistributeField, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexDistributeData - Distribute field data to match a given PetscSF, usually the SF from mesh distribution
+  DMPlexDistributeData - Distribute field data to match a given `PetscSF`, usually the `PetscSF` from mesh distribution
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm - The DMPlex object
-. pointSF - The PetscSF describing the communication pattern
-. originalSection - The PetscSection for existing data layout
-. datatype - The type of data
-- originalData - The existing data
++ dm              - The `DMPLEX` object
+. pointSF         - The `PetscSF` describing the communication pattern
+. originalSection - The `PetscSection` for existing data layout
+. datatype        - The type of data
+- originalData    - The existing data
 
   Output Parameters:
-+ newSection - The PetscSection describing the new data layout
-- newData - The new data
++ newSection - The `PetscSection` describing the new data layout
+- newData    - The new data
 
   Level: developer
 
-.seealso: `DMPlexDistribute()`, `DMPlexDistributeField()`
+.seealso: `DMPLEX`, `DMPlexDistribute()`, `DMPlexDistributeField()`
 @*/
 PetscErrorCode DMPlexDistributeData(DM dm, PetscSF pointSF, PetscSection originalSection, MPI_Datatype datatype, void *originalData, PetscSection newSection, void **newData)
 {
@@ -1112,7 +1087,7 @@ PetscErrorCode DMPlexDistributeData(DM dm, PetscSF pointSF, PetscSection origina
   PetscCall(PetscSFBcastEnd(fieldSF, datatype, originalData, *newData, MPI_REPLACE));
   PetscCall(PetscSFDestroy(&fieldSF));
   PetscCall(PetscLogEventEnd(DMPLEX_DistributeData, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexDistributeCones(DM dm, PetscSF migrationSF, ISLocalToGlobalMapping original, ISLocalToGlobalMapping renumbering, DM dmParallel)
@@ -1195,7 +1170,7 @@ static PetscErrorCode DMPlexDistributeCones(DM dm, PetscSF migrationSF, ISLocalT
     PetscCall(DMPlexGetAdjacencyUseAnchors(dm, &useAnchors));
     PetscCall(DMPlexSetAdjacencyUseAnchors(dmParallel, useAnchors));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexDistributeCoordinates(DM dm, PetscSF migrationSF, DM dmParallel)
@@ -1257,7 +1232,7 @@ static PetscErrorCode DMPlexDistributeCoordinates(DM dm, PetscSF migrationSF, DM
     }
     PetscCall(PetscSectionDestroy(&newCoordSection));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexDistributeLabels(DM dm, PetscSF migrationSF, DM dmParallel)
@@ -1303,6 +1278,8 @@ static PetscErrorCode DMPlexDistributeLabels(DM dm, PetscSF migrationSF, DM dmPa
       /* Skip "depth" because it is recreated */
       PetscCall(PetscObjectGetName((PetscObject)label, &name));
       PetscCall(PetscStrcmp(name, "depth", &isDepth));
+    } else {
+      isDepth = PETSC_FALSE;
     }
     PetscCallMPI(MPI_Bcast(&isDepth, 1, MPIU_BOOL, 0, comm));
     if (isDepth && !sendDepth) continue;
@@ -1336,7 +1313,7 @@ static PetscErrorCode DMPlexDistributeLabels(DM dm, PetscSF migrationSF, DM dmPa
     PetscCall(DMLabelMakeAllInvalid_Internal(ctLabel));
   }
   PetscCall(PetscLogEventEnd(DMPLEX_DistributeLabels, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexDistributeSetupTree(DM dm, PetscSF migrationSF, ISLocalToGlobalMapping original, ISLocalToGlobalMapping renumbering, DM dmParallel)
@@ -1412,95 +1389,19 @@ static PetscErrorCode DMPlexDistributeSetupTree(DM dm, PetscSF migrationSF, ISLo
     PetscCall(PetscSFDestroy(&parentSF));
   }
   pmesh->useAnchors = mesh->useAnchors;
-  PetscFunctionReturn(0);
-}
-
-PETSC_UNUSED static PetscErrorCode DMPlexDistributeSF(DM dm, PetscSF migrationSF, DM dmParallel)
-{
-  PetscMPIInt rank, size;
-  MPI_Comm    comm;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidHeaderSpecific(dmParallel, DM_CLASSID, 3);
-
-  /* Create point SF for parallel mesh */
-  PetscCall(PetscLogEventBegin(DMPLEX_DistributeSF, dm, 0, 0, 0));
-  PetscCall(PetscObjectGetComm((PetscObject)dm, &comm));
-  PetscCallMPI(MPI_Comm_rank(comm, &rank));
-  PetscCallMPI(MPI_Comm_size(comm, &size));
-  {
-    const PetscInt *leaves;
-    PetscSFNode    *remotePoints, *rowners, *lowners;
-    PetscInt        numRoots, numLeaves, numGhostPoints = 0, p, gp, *ghostPoints;
-    PetscInt        pStart, pEnd;
-
-    PetscCall(DMPlexGetChart(dmParallel, &pStart, &pEnd));
-    PetscCall(PetscSFGetGraph(migrationSF, &numRoots, &numLeaves, &leaves, NULL));
-    PetscCall(PetscMalloc2(numRoots, &rowners, numLeaves, &lowners));
-    for (p = 0; p < numRoots; p++) {
-      rowners[p].rank  = -1;
-      rowners[p].index = -1;
-    }
-    PetscCall(PetscSFBcastBegin(migrationSF, MPIU_2INT, rowners, lowners, MPI_REPLACE));
-    PetscCall(PetscSFBcastEnd(migrationSF, MPIU_2INT, rowners, lowners, MPI_REPLACE));
-    for (p = 0; p < numLeaves; ++p) {
-      if (lowners[p].rank < 0 || lowners[p].rank == rank) { /* Either put in a bid or we know we own it */
-        lowners[p].rank  = rank;
-        lowners[p].index = leaves ? leaves[p] : p;
-      } else if (lowners[p].rank >= 0) { /* Point already claimed so flag so that MAXLOC does not listen to us */
-        lowners[p].rank  = -2;
-        lowners[p].index = -2;
-      }
-    }
-    for (p = 0; p < numRoots; p++) { /* Root must not participate in the rediction, flag so that MAXLOC does not use */
-      rowners[p].rank  = -3;
-      rowners[p].index = -3;
-    }
-    PetscCall(PetscSFReduceBegin(migrationSF, MPIU_2INT, lowners, rowners, MPI_MAXLOC));
-    PetscCall(PetscSFReduceEnd(migrationSF, MPIU_2INT, lowners, rowners, MPI_MAXLOC));
-    PetscCall(PetscSFBcastBegin(migrationSF, MPIU_2INT, rowners, lowners, MPI_REPLACE));
-    PetscCall(PetscSFBcastEnd(migrationSF, MPIU_2INT, rowners, lowners, MPI_REPLACE));
-    for (p = 0; p < numLeaves; ++p) {
-      PetscCheck(lowners[p].rank >= 0 && lowners[p].index >= 0, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Cell partition corrupt: point not claimed");
-      if (lowners[p].rank != rank) ++numGhostPoints;
-    }
-    PetscCall(PetscMalloc1(numGhostPoints, &ghostPoints));
-    PetscCall(PetscMalloc1(numGhostPoints, &remotePoints));
-    for (p = 0, gp = 0; p < numLeaves; ++p) {
-      if (lowners[p].rank != rank) {
-        ghostPoints[gp]        = leaves ? leaves[p] : p;
-        remotePoints[gp].rank  = lowners[p].rank;
-        remotePoints[gp].index = lowners[p].index;
-        ++gp;
-      }
-    }
-    PetscCall(PetscFree2(rowners, lowners));
-    PetscCall(PetscSFSetGraph((dmParallel)->sf, pEnd - pStart, numGhostPoints, ghostPoints, PETSC_OWN_POINTER, remotePoints, PETSC_OWN_POINTER));
-    PetscCall(PetscSFSetFromOptions((dmParallel)->sf));
-  }
-  {
-    PetscBool useCone, useClosure, useAnchors;
-
-    PetscCall(DMGetBasicAdjacency(dm, &useCone, &useClosure));
-    PetscCall(DMSetBasicAdjacency(dmParallel, useCone, useClosure));
-    PetscCall(DMPlexGetAdjacencyUseAnchors(dm, &useAnchors));
-    PetscCall(DMPlexSetAdjacencyUseAnchors(dmParallel, useAnchors));
-  }
-  PetscCall(PetscLogEventEnd(DMPLEX_DistributeSF, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexSetPartitionBalance - Should distribution of the DM attempt to balance the shared point partition?
+  DMPlexSetPartitionBalance - Should distribution of the `DM` attempt to balance the shared point partition?
 
   Input Parameters:
-+ dm - The DMPlex object
++ dm  - The `DMPLEX` object
 - flg - Balance the partition?
 
   Level: intermediate
 
-.seealso: `DMPlexDistribute()`, `DMPlexGetPartitionBalance()`
+.seealso: `DMPLEX`, `DMPlexDistribute()`, `DMPlexGetPartitionBalance()`
 @*/
 PetscErrorCode DMPlexSetPartitionBalance(DM dm, PetscBool flg)
 {
@@ -1508,21 +1409,21 @@ PetscErrorCode DMPlexSetPartitionBalance(DM dm, PetscBool flg)
 
   PetscFunctionBegin;
   mesh->partitionBalance = flg;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexGetPartitionBalance - Does distribution of the DM attempt to balance the shared point partition?
+  DMPlexGetPartitionBalance - Does distribution of the `DM` attempt to balance the shared point partition?
 
   Input Parameter:
-. dm - The DMPlex object
+. dm - The `DMPLEX` object
 
   Output Parameter:
 . flg - Balance the partition?
 
   Level: intermediate
 
-.seealso: `DMPlexDistribute()`, `DMPlexSetPartitionBalance()`
+.seealso: `DMPLEX`, `DMPlexDistribute()`, `DMPlexSetPartitionBalance()`
 @*/
 PetscErrorCode DMPlexGetPartitionBalance(DM dm, PetscBool *flg)
 {
@@ -1530,9 +1431,9 @@ PetscErrorCode DMPlexGetPartitionBalance(DM dm, PetscBool *flg)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidBoolPointer(flg, 2);
+  PetscAssertPointer(flg, 2);
   *flg = mesh->partitionBalance;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 typedef struct {
@@ -1560,22 +1461,22 @@ static void MPIAPI MaxLocCarry(void *in_, void *inout_, PetscMPIInt *len_, MPI_D
 }
 
 /*@C
-  DMPlexCreatePointSF - Build a point SF from an SF describing a point migration
+  DMPlexCreatePointSF - Build a point `PetscSF` from an `PetscSF` describing a point migration
 
   Input Parameters:
-+ dm          - The source DMPlex object
++ dm          - The source `DMPLEX` object
 . migrationSF - The star forest that describes the parallel point remapping
 - ownership   - Flag causing a vote to determine point ownership
 
   Output Parameter:
-. pointSF     - The star forest describing the point overlap in the remapped DM
-
-  Notes:
-  Output pointSF is guaranteed to have the array of local indices (leaves) sorted.
+. pointSF - The star forest describing the point overlap in the remapped `DM`
 
   Level: developer
 
-.seealso: `DMPlexDistribute()`, `DMPlexDistributeOverlap()`
+  Note:
+  Output `pointSF` is guaranteed to have the array of local indices (leaves) sorted.
+
+.seealso: `DMPLEX`, `PetscSF`, `DM`, `DMPlexDistribute()`, `DMPlexDistributeOverlap()`
 @*/
 PetscErrorCode DMPlexCreatePointSF(DM dm, PetscSF migrationSF, PetscBool ownership, PetscSF *pointSF)
 {
@@ -1687,24 +1588,24 @@ PetscErrorCode DMPlexCreatePointSF(DM dm, PetscSF migrationSF, PetscBool ownersh
   PetscCall(PetscFree2(rootNodes, leafNodes));
   PetscCall(PetscLogEventEnd(DMPLEX_CreatePointSF, dm, 0, 0, 0));
   if (PetscDefined(USE_DEBUG)) PetscCall(DMPlexCheckPointSF(dm, *pointSF, PETSC_FALSE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  DMPlexMigrate  - Migrates internal DM data over the supplied star forest
+  DMPlexMigrate  - Migrates internal `DM` data over the supplied star forest
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm       - The source DMPlex object
-- sf       - The star forest communication context describing the migration pattern
++ dm - The source `DMPLEX` object
+- sf - The star forest communication context describing the migration pattern
 
   Output Parameter:
-. targetDM - The target DMPlex object
+. targetDM - The target `DMPLEX` object
 
   Level: intermediate
 
-.seealso: `DMPlexDistribute()`, `DMPlexDistributeOverlap()`
+.seealso: `DMPLEX`, `PetscSF`, `DM`, `DMPlexDistribute()`, `DMPlexDistributeOverlap()`
 @*/
 PetscErrorCode DMPlexMigrate(DM dm, PetscSF sf, DM targetDM)
 {
@@ -1762,30 +1663,31 @@ PetscErrorCode DMPlexMigrate(DM dm, PetscSF sf, DM targetDM)
   PetscCall(ISLocalToGlobalMappingDestroy(&ltogOriginal));
   PetscCall(ISLocalToGlobalMappingDestroy(&ltogMigration));
   PetscCall(PetscLogEventEnd(DMPLEX_Migrate, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMPlexDistribute - Distributes the mesh and any associated sections.
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm  - The original DMPlex object
++ dm      - The original `DMPLEX` object
 - overlap - The overlap of partitions, 0 is the default
 
   Output Parameters:
-+ sf - The PetscSF used for point distribution, or NULL if not needed
-- dmParallel - The distributed DMPlex object
-
-  Note: If the mesh was not distributed, the output dmParallel will be NULL.
-
-  The user can control the definition of adjacency for the mesh using DMSetAdjacency(). They should choose the combination appropriate for the function
-  representation on the mesh.
++ sf         - The `PetscSF` used for point distribution, or `NULL` if not needed
+- dmParallel - The distributed `DMPLEX` object
 
   Level: intermediate
 
-.seealso: `DMPlexCreate()`, `DMSetAdjacency()`, `DMPlexGetOverlap()`
+  Note:
+  If the mesh was not distributed, the output `dmParallel` will be `NULL`.
+
+  The user can control the definition of adjacency for the mesh using `DMSetAdjacency()`. They should choose the combination appropriate for the function
+  representation on the mesh.
+
+.seealso: `DMPLEX`, `DM`, `DMPlexCreate()`, `DMSetAdjacency()`, `DMPlexGetOverlap()`
 @*/
 PetscErrorCode DMPlexDistribute(DM dm, PetscInt overlap, PetscSF *sf, DM *dmParallel)
 {
@@ -1802,15 +1704,15 @@ PetscErrorCode DMPlexDistribute(DM dm, PetscInt overlap, PetscSF *sf, DM *dmPara
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscValidLogicalCollectiveInt(dm, overlap, 2);
-  if (sf) PetscValidPointer(sf, 3);
-  PetscValidPointer(dmParallel, 4);
+  if (sf) PetscAssertPointer(sf, 3);
+  PetscAssertPointer(dmParallel, 4);
 
   if (sf) *sf = NULL;
   *dmParallel = NULL;
   PetscCall(PetscObjectGetComm((PetscObject)dm, &comm));
   PetscCallMPI(MPI_Comm_rank(comm, &rank));
   PetscCallMPI(MPI_Comm_size(comm, &size));
-  if (size == 1) PetscFunctionReturn(0);
+  if (size == 1) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(PetscLogEventBegin(DMPLEX_Distribute, dm, 0, 0, 0));
   /* Create cell partition */
@@ -1880,6 +1782,7 @@ PetscErrorCode DMPlexDistribute(DM dm, PetscInt overlap, PetscSF *sf, DM *dmPara
   PetscCall(DMPlexSetPartitionBalance(*dmParallel, balance));
   PetscCall(DMPlexCreatePointSF(*dmParallel, sfMigration, PETSC_TRUE, &sfPoint));
   PetscCall(DMSetPointSF(*dmParallel, sfPoint));
+  PetscCall(DMPlexMigrateIsoperiodicFaceSF_Internal(dm, *dmParallel, sfMigration));
   PetscCall(DMGetCoordinateDM(*dmParallel, &dmCoord));
   if (dmCoord) PetscCall(DMSetPointSF(dmCoord, sfPoint));
   if (flg) PetscCall(PetscSFView(sfPoint, NULL));
@@ -1964,27 +1867,21 @@ PetscErrorCode DMPlexDistribute(DM dm, PetscInt overlap, PetscSF *sf, DM *dmPara
   } else PetscCall(PetscSFDestroy(&sfMigration));
   PetscCall(PetscSFDestroy(&sfPoint));
   PetscCall(PetscLogEventEnd(DMPLEX_Distribute, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  DMPlexDistributeOverlap - Add partition overlap to a distributed non-overlapping DM.
+  DMPlexDistributeOverlap - Add partition overlap to a distributed non-overlapping `DM`.
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm  - The non-overlapping distributed DMPlex object
++ dm      - The non-overlapping distributed `DMPLEX` object
 - overlap - The overlap of partitions (the same on all ranks)
 
   Output Parameters:
-+ sf - The PetscSF used for point distribution
-- dmOverlap - The overlapping distributed DMPlex object, or NULL
-
-  Notes:
-  If the mesh was not distributed, the return value is NULL.
-
-  The user can control the definition of adjacency for the mesh using DMSetAdjacency(). They should choose the combination appropriate for the function
-  representation on the mesh.
++ sf        - The `PetscSF` used for point distribution
+- dmOverlap - The overlapping distributed `DMPLEX` object, or `NULL`
 
   Options Database Keys:
 + -dm_plex_overlap_labels <name1,name2,...> - List of overlap label names
@@ -1994,7 +1891,13 @@ PetscErrorCode DMPlexDistribute(DM dm, PetscInt overlap, PetscSF *sf, DM *dmPara
 
   Level: advanced
 
-.seealso: `DMPlexCreate()`, `DMSetAdjacency()`, `DMPlexDistribute()`, `DMPlexCreateOverlapLabel()`, `DMPlexGetOverlap()`
+  Notes:
+  If the mesh was not distributed, the return value is `NULL`.
+
+  The user can control the definition of adjacency for the mesh using `DMSetAdjacency()`. They should choose the combination appropriate for the function
+  representation on the mesh.
+
+.seealso: `DMPLEX`, `PetscSF`, `DM`, `DMPlexCreate()`, `DMSetAdjacency()`, `DMPlexDistribute()`, `DMPlexCreateOverlapLabel()`, `DMPlexGetOverlap()`
 @*/
 PetscErrorCode DMPlexDistributeOverlap(DM dm, PetscInt overlap, PetscSF *sf, DM *dmOverlap)
 {
@@ -2010,15 +1913,15 @@ PetscErrorCode DMPlexDistributeOverlap(DM dm, PetscInt overlap, PetscSF *sf, DM 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscValidLogicalCollectiveInt(dm, overlap, 2);
-  if (sf) PetscValidPointer(sf, 3);
-  PetscValidPointer(dmOverlap, 4);
+  if (sf) PetscAssertPointer(sf, 3);
+  PetscAssertPointer(dmOverlap, 4);
 
   if (sf) *sf = NULL;
   *dmOverlap = NULL;
   PetscCall(PetscObjectGetComm((PetscObject)dm, &comm));
   PetscCallMPI(MPI_Comm_size(comm, &size));
   PetscCallMPI(MPI_Comm_rank(comm, &rank));
-  if (size == 1) PetscFunctionReturn(0);
+  if (size == 1) PetscFunctionReturn(PETSC_SUCCESS);
   {
     // We need to get options for the _already_distributed mesh, so it must be done here
     PetscInt    overlap;
@@ -2027,7 +1930,7 @@ PetscErrorCode DMPlexDistributeOverlap(DM dm, PetscInt overlap, PetscSF *sf, DM 
 
     oldPrefix[0] = '\0';
     PetscCall(PetscObjectGetOptionsPrefix((PetscObject)dm, &prefix));
-    PetscCall(PetscStrcpy(oldPrefix, prefix));
+    PetscCall(PetscStrncpy(oldPrefix, prefix, sizeof(oldPrefix)));
     PetscCall(PetscObjectAppendOptionsPrefix((PetscObject)dm, "dist_"));
     PetscCall(DMPlexGetOverlap(dm, &overlap));
     PetscObjectOptionsBegin((PetscObject)dm);
@@ -2076,7 +1979,7 @@ PetscErrorCode DMPlexDistributeOverlap(DM dm, PetscInt overlap, PetscSF *sf, DM 
   if (sf) *sf = sfOverlap;
   else PetscCall(PetscSFDestroy(&sfOverlap));
   PetscCall(PetscLogEventEnd(DMPLEX_DistributeOverlap, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMPlexGetOverlap_Plex(DM dm, PetscInt *overlap)
@@ -2085,7 +1988,7 @@ PetscErrorCode DMPlexGetOverlap_Plex(DM dm, PetscInt *overlap)
 
   PetscFunctionBegin;
   *overlap = mesh->overlap;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMPlexSetOverlap_Plex(DM dm, DM dmSrc, PetscInt overlap)
@@ -2102,49 +2005,49 @@ PetscErrorCode DMPlexSetOverlap_Plex(DM dm, DM dmSrc, PetscInt overlap)
     meshSrc = (DM_Plex *)dmSrc->data;
     mesh->overlap += meshSrc->overlap;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexGetOverlap - Get the width of the cell overlap
 
-  Not collective
+  Not Collective
 
   Input Parameter:
-. dm   - The DM
+. dm - The `DM`
 
   Output Parameter:
 . overlap - the width of the cell overlap
 
   Level: intermediate
 
-.seealso: `DMPlexSetOverlap()`, `DMPlexDistribute()`
+.seealso: `DMPLEX`, `DMPlexSetOverlap()`, `DMPlexDistribute()`
 @*/
 PetscErrorCode DMPlexGetOverlap(DM dm, PetscInt *overlap)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidIntPointer(overlap, 2);
+  PetscAssertPointer(overlap, 2);
   PetscUseMethod(dm, "DMPlexGetOverlap_C", (DM, PetscInt *), (dm, overlap));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexSetOverlap - Set the width of the cell overlap
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+ dm      - The DM
-. dmSrc   - The DM that produced this one, or NULL
++ dm      - The `DM`
+. dmSrc   - The `DM` that produced this one, or `NULL`
 - overlap - the width of the cell overlap
-
-  Note:
-  The overlap from dmSrc is added to dm
 
   Level: intermediate
 
-.seealso: `DMPlexGetOverlap()`, `DMPlexDistribute()`
+  Note:
+  The overlap from `dmSrc` is added to `dm`
+
+.seealso: `DMPLEX`, `DMPlexGetOverlap()`, `DMPlexDistribute()`
 @*/
 PetscErrorCode DMPlexSetOverlap(DM dm, DM dmSrc, PetscInt overlap)
 {
@@ -2152,7 +2055,7 @@ PetscErrorCode DMPlexSetOverlap(DM dm, DM dmSrc, PetscInt overlap)
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscValidLogicalCollectiveInt(dm, overlap, 3);
   PetscTryMethod(dm, "DMPlexSetOverlap_C", (DM, DM, PetscInt), (dm, dmSrc, overlap));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMPlexDistributeSetDefault_Plex(DM dm, PetscBool dist)
@@ -2161,21 +2064,21 @@ PetscErrorCode DMPlexDistributeSetDefault_Plex(DM dm, PetscBool dist)
 
   PetscFunctionBegin;
   mesh->distDefault = dist;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexDistributeSetDefault - Set flag indicating whether the DM should be distributed by default
+  DMPlexDistributeSetDefault - Set flag indicating whether the `DM` should be distributed by default
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+ dm   - The DM
++ dm   - The `DM`
 - dist - Flag for distribution
 
   Level: intermediate
 
-.seealso: `DMPlexDistributeGetDefault()`, `DMPlexDistribute()`
+.seealso: `DMPLEX`, `DMPlexDistributeGetDefault()`, `DMPlexDistribute()`
 @*/
 PetscErrorCode DMPlexDistributeSetDefault(DM dm, PetscBool dist)
 {
@@ -2183,7 +2086,7 @@ PetscErrorCode DMPlexDistributeSetDefault(DM dm, PetscBool dist)
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscValidLogicalCollectiveBool(dm, dist, 2);
   PetscTryMethod(dm, "DMPlexDistributeSetDefault_C", (DM, PetscBool), (dm, dist));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMPlexDistributeGetDefault_Plex(DM dm, PetscBool *dist)
@@ -2192,49 +2095,49 @@ PetscErrorCode DMPlexDistributeGetDefault_Plex(DM dm, PetscBool *dist)
 
   PetscFunctionBegin;
   *dist = mesh->distDefault;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexDistributeGetDefault - Get flag indicating whether the DM should be distributed by default
+  DMPlexDistributeGetDefault - Get flag indicating whether the `DM` should be distributed by default
 
-  Not collective
+  Not Collective
 
   Input Parameter:
-. dm   - The DM
+. dm - The `DM`
 
   Output Parameter:
 . dist - Flag for distribution
 
   Level: intermediate
 
-.seealso: `DMPlexDistributeSetDefault()`, `DMPlexDistribute()`
+.seealso: `DMPLEX`, `DM`, `DMPlexDistributeSetDefault()`, `DMPlexDistribute()`
 @*/
 PetscErrorCode DMPlexDistributeGetDefault(DM dm, PetscBool *dist)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidBoolPointer(dist, 2);
+  PetscAssertPointer(dist, 2);
   PetscUseMethod(dm, "DMPlexDistributeGetDefault_C", (DM, PetscBool *), (dm, dist));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  DMPlexGetGatherDM - Get a copy of the DMPlex that gathers all points on the
+  DMPlexGetGatherDM - Get a copy of the `DMPLEX` that gathers all points on the
   root process of the original's communicator.
 
-  Collective on dm
+  Collective
 
   Input Parameter:
-. dm - the original DMPlex object
+. dm - the original `DMPLEX` object
 
   Output Parameters:
-+ sf - the PetscSF used for point distribution (optional)
-- gatherMesh - the gathered DM object, or NULL
++ sf         - the `PetscSF` used for point distribution (optional)
+- gatherMesh - the gathered `DM` object, or `NULL`
 
   Level: intermediate
 
-.seealso: `DMPlexDistribute()`, `DMPlexGetRedundantDM()`
+.seealso: `DMPLEX`, `DM`, `PetscSF`, `DMPlexDistribute()`, `DMPlexGetRedundantDM()`
 @*/
 PetscErrorCode DMPlexGetGatherDM(DM dm, PetscSF *sf, DM *gatherMesh)
 {
@@ -2244,12 +2147,12 @@ PetscErrorCode DMPlexGetGatherDM(DM dm, PetscSF *sf, DM *gatherMesh)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(gatherMesh, 3);
+  PetscAssertPointer(gatherMesh, 3);
   *gatherMesh = NULL;
   if (sf) *sf = NULL;
   comm = PetscObjectComm((PetscObject)dm);
   PetscCallMPI(MPI_Comm_size(comm, &size));
-  if (size == 1) PetscFunctionReturn(0);
+  if (size == 1) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(DMPlexGetPartitioner(dm, &oldPart));
   PetscCall(PetscObjectReference((PetscObject)oldPart));
   PetscCall(PetscPartitionerCreate(comm, &gatherPart));
@@ -2260,24 +2163,24 @@ PetscErrorCode DMPlexGetGatherDM(DM dm, PetscSF *sf, DM *gatherMesh)
   PetscCall(DMPlexSetPartitioner(dm, oldPart));
   PetscCall(PetscPartitionerDestroy(&gatherPart));
   PetscCall(PetscPartitionerDestroy(&oldPart));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  DMPlexGetRedundantDM - Get a copy of the DMPlex that is completely copied on each process.
+  DMPlexGetRedundantDM - Get a copy of the `DMPLEX` that is completely copied on each process.
 
-  Collective on dm
+  Collective
 
   Input Parameter:
-. dm - the original DMPlex object
+. dm - the original `DMPLEX` object
 
   Output Parameters:
-+ sf - the PetscSF used for point distribution (optional)
-- redundantMesh - the redundant DM object, or NULL
++ sf            - the `PetscSF` used for point distribution (optional)
+- redundantMesh - the redundant `DM` object, or `NULL`
 
   Level: intermediate
 
-.seealso: `DMPlexDistribute()`, `DMPlexGetGatherDM()`
+.seealso: `DMPLEX`, `DMPlexDistribute()`, `DMPlexGetGatherDM()`
 @*/
 PetscErrorCode DMPlexGetRedundantDM(DM dm, PetscSF *sf, DM *redundantMesh)
 {
@@ -2291,7 +2194,7 @@ PetscErrorCode DMPlexGetRedundantDM(DM dm, PetscSF *sf, DM *redundantMesh)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(redundantMesh, 3);
+  PetscAssertPointer(redundantMesh, 3);
   *redundantMesh = NULL;
   comm           = PetscObjectComm((PetscObject)dm);
   PetscCallMPI(MPI_Comm_size(comm, &size));
@@ -2299,10 +2202,10 @@ PetscErrorCode DMPlexGetRedundantDM(DM dm, PetscSF *sf, DM *redundantMesh)
     PetscCall(PetscObjectReference((PetscObject)dm));
     *redundantMesh = dm;
     if (sf) *sf = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(DMPlexGetGatherDM(dm, &gatherSF, &gatherDM));
-  if (!gatherDM) PetscFunctionReturn(0);
+  if (!gatherDM) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCallMPI(MPI_Comm_rank(comm, &rank));
   PetscCall(DMPlexGetChart(gatherDM, &pStart, &pEnd));
   numPoints = pEnd - pStart;
@@ -2336,28 +2239,28 @@ PetscErrorCode DMPlexGetRedundantDM(DM dm, PetscSF *sf, DM *redundantMesh)
   PetscCall(DMDestroy(&gatherDM));
   PetscCall(DMCopyDisc(dm, *redundantMesh));
   PetscCall(DMPlexCopy_Internal(dm, PETSC_TRUE, PETSC_FALSE, *redundantMesh));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexIsDistributed - Find out whether this DM is distributed, i.e. more than one rank owns some points.
+  DMPlexIsDistributed - Find out whether this `DM` is distributed, i.e. more than one rank owns some points.
 
   Collective
 
   Input Parameter:
-. dm      - The DM object
+. dm - The `DM` object
 
   Output Parameter:
-. distributed - Flag whether the DM is distributed
+. distributed - Flag whether the `DM` is distributed
 
   Level: intermediate
 
   Notes:
   This currently finds out whether at least two ranks have any DAG points.
-  This involves MPI_Allreduce() with one integer.
+  This involves `MPI_Allreduce()` with one integer.
   The result is currently not stashed so every call to this routine involves this global communication.
 
-.seealso: `DMPlexDistribute()`, `DMPlexGetOverlap()`, `DMPlexIsInterpolated()`
+.seealso: `DMPLEX`, `DMPlexDistribute()`, `DMPlexGetOverlap()`, `DMPlexIsInterpolated()`
 @*/
 PetscErrorCode DMPlexIsDistributed(DM dm, PetscBool *distributed)
 {
@@ -2367,36 +2270,36 @@ PetscErrorCode DMPlexIsDistributed(DM dm, PetscBool *distributed)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidBoolPointer(distributed, 2);
+  PetscAssertPointer(distributed, 2);
   PetscCall(PetscObjectGetComm((PetscObject)dm, &comm));
   PetscCallMPI(MPI_Comm_size(comm, &size));
   if (size == 1) {
     *distributed = PETSC_FALSE;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(DMPlexGetChart(dm, &pStart, &pEnd));
   count = (pEnd - pStart) > 0 ? 1 : 0;
-  PetscCallMPI(MPI_Allreduce(MPI_IN_PLACE, &count, 1, MPIU_INT, MPI_SUM, comm));
+  PetscCall(MPIU_Allreduce(MPI_IN_PLACE, &count, 1, MPIU_INT, MPI_SUM, comm));
   *distributed = count > 1 ? PETSC_TRUE : PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMPlexDistributionSetName - Set the name of the specific parallel distribution
 
   Input Parameters:
-+ dm   - The DM
++ dm   - The `DM`
 - name - The name of the specific parallel distribution
-
-  Note:
-  If distribution name is set when saving, DMPlexTopologyView() saves the plex's
-  parallel distribution (i.e., partition, ownership, and local ordering of points) under
-  this name. Conversely, if distribution name is set when loading, DMPlexTopologyLoad()
-  loads the parallel distribution stored in file under this name.
 
   Level: developer
 
-.seealso: `DMPlexDistributionGetName()`, `DMPlexTopologyView()`, `DMPlexTopologyLoad()`
+  Note:
+  If distribution name is set when saving, `DMPlexTopologyView()` saves the plex's
+  parallel distribution (i.e., partition, ownership, and local ordering of points) under
+  this name. Conversely, if distribution name is set when loading, `DMPlexTopologyLoad()`
+  loads the parallel distribution stored in file under this name.
+
+.seealso: `DMPLEX`, `DMPlexDistributionGetName()`, `DMPlexTopologyView()`, `DMPlexTopologyLoad()`
 @*/
 PetscErrorCode DMPlexDistributionSetName(DM dm, const char name[])
 {
@@ -2404,30 +2307,30 @@ PetscErrorCode DMPlexDistributionSetName(DM dm, const char name[])
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMPLEX);
-  if (name) PetscValidCharPointer(name, 2);
+  if (name) PetscAssertPointer(name, 2);
   PetscCall(PetscFree(mesh->distributionName));
   PetscCall(PetscStrallocpy(name, &mesh->distributionName));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMPlexDistributionGetName - Retrieve the name of the specific parallel distribution
 
   Input Parameter:
-. dm - The DM
+. dm - The `DM`
 
   Output Parameter:
 . name - The name of the specific parallel distribution
 
-  Note:
-  If distribution name is set when saving, DMPlexTopologyView() saves the plex's
-  parallel distribution (i.e., partition, ownership, and local ordering of points) under
-  this name. Conversely, if distribution name is set when loading, DMPlexTopologyLoad()
-  loads the parallel distribution stored in file under this name.
-
   Level: developer
 
-.seealso: `DMPlexDistributionSetName()`, `DMPlexTopologyView()`, `DMPlexTopologyLoad()`
+  Note:
+  If distribution name is set when saving, `DMPlexTopologyView()` saves the plex's
+  parallel distribution (i.e., partition, ownership, and local ordering of points) under
+  this name. Conversely, if distribution name is set when loading, `DMPlexTopologyLoad()`
+  loads the parallel distribution stored in file under this name.
+
+.seealso: `DMPLEX`, `DMPlexDistributionSetName()`, `DMPlexTopologyView()`, `DMPlexTopologyLoad()`
 @*/
 PetscErrorCode DMPlexDistributionGetName(DM dm, const char *name[])
 {
@@ -2435,7 +2338,7 @@ PetscErrorCode DMPlexDistributionGetName(DM dm, const char *name[])
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMPLEX);
-  PetscValidPointer(name, 2);
+  PetscAssertPointer(name, 2);
   *name = mesh->distributionName;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

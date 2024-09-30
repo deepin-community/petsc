@@ -1,4 +1,3 @@
-
 static char help[] = "Tests reusing MPI parallel matrices and MatGetValues().\n\
 To test the parallel matrix assembly, this example intentionally lays out\n\
 the matrix across processors differently from the way it is assembled.\n\
@@ -7,7 +6,7 @@ This example uses bilinear elements on the unit square.  Input arguments are:\n\
 
 #include <petscmat.h>
 
-int FormElementStiffness(PetscReal H, PetscScalar *Ke)
+PetscErrorCode FormElementStiffness(PetscReal H, PetscScalar *Ke)
 {
   PetscFunctionBegin;
   Ke[0]  = H / 6.0;
@@ -26,7 +25,7 @@ int FormElementStiffness(PetscReal H, PetscScalar *Ke)
   Ke[13] = H / 12.0;
   Ke[14] = -.125 * H;
   Ke[15] = H / 6.0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **args)

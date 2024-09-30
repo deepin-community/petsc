@@ -1,4 +1,3 @@
-
 /*
   Defines matrix-matrix product routines for pairs of MPIAIJ matrices
           C = A^T * B
@@ -8,7 +7,7 @@
 #include <../src/mat/impls/aij/mpi/mpiaij.h>
 #include <../src/mat/impls/dense/mpi/mpidense.h>
 
-PetscErrorCode MatDestroy_MPIDense_MatTransMatMult(void *data)
+static PetscErrorCode MatDestroy_MPIDense_MatTransMatMult(void *data)
 {
   Mat_MatTransMatMult *atb = (Mat_MatTransMatMult *)data;
 
@@ -17,7 +16,7 @@ PetscErrorCode MatDestroy_MPIDense_MatTransMatMult(void *data)
   PetscCall(VecDestroy(&atb->bt));
   PetscCall(VecDestroy(&atb->ct));
   PetscCall(PetscFree(atb));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatTransposeMatMultNumeric_MPIAIJ_MPIDense(Mat, Mat, Mat);
@@ -51,7 +50,7 @@ PETSC_INTERN PetscErrorCode MatTransposeMatMultSymbolic_MPIAIJ_MPIDense(Mat A, M
   C->product->destroy = MatDestroy_MPIDense_MatTransMatMult;
 
   C->ops->transposematmultnumeric = MatTransposeMatMultNumeric_MPIAIJ_MPIDense;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatTransposeMatMultNumeric_MPIAIJ_MPIDense(Mat A, Mat B, Mat C)
@@ -69,7 +68,7 @@ static PetscErrorCode MatTransposeMatMultNumeric_MPIAIJ_MPIDense(Mat A, Mat B, M
   if (!BN) {
     PetscCall(MatAssemblyBegin(C, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(C, MAT_FINAL_ASSEMBLY));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   bt = atb->bt;
   ct = atb->ct;
@@ -96,5 +95,5 @@ static PetscErrorCode MatTransposeMatMultNumeric_MPIAIJ_MPIDense(Mat A, Mat B, M
   PetscCall(MatDenseRestoreArray(C, &Carray));
   PetscCall(MatAssemblyBegin(C, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(C, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

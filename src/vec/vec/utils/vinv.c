@@ -1,29 +1,28 @@
-
 /*
      Some useful vector utility functions.
 */
 #include <../src/vec/vec/impls/mpi/pvecimpl.h> /*I "petscvec.h" I*/
 
 /*@
-   VecStrideSet - Sets a subvector of a vector defined
-   by a starting point and a stride with a given value
+  VecStrideSet - Sets a subvector of a vector defined
+  by a starting point and a stride with a given value
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  v - the vector
-.  start - starting point of the subvector (defined by a stride)
--  s - value to set for each entry in that subvector
+  Input Parameters:
++ v     - the vector
+. start - starting point of the subvector (defined by a stride)
+- s     - value to set for each entry in that subvector
 
-   Notes:
-   One must call VecSetBlockSize() before this routine to set the stride
-   information, or use a vector created from a multicomponent DMDA.
+  Level: advanced
 
-   This will only work if the desire subvector is a stride subvector
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   Level: advanced
+  This will only work if the desire subvector is a stride subvector
 
-.seealso: `VecNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideScale()`
+.seealso: `Vec`, `VecNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideScale()`
 @*/
 PetscErrorCode VecStrideSet(Vec v, PetscInt start, PetscScalar s)
 {
@@ -39,29 +38,29 @@ PetscErrorCode VecStrideSet(Vec v, PetscInt start, PetscScalar s)
   PetscCall(VecGetArray(v, &x));
   for (i = start; i < n; i += bs) x[i] = s;
   PetscCall(VecRestoreArray(v, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideScale - Scales a subvector of a vector defined
-   by a starting point and a stride.
+  VecStrideScale - Scales a subvector of a vector defined
+  by a starting point and a stride.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  v - the vector
-.  start - starting point of the subvector (defined by a stride)
--  scale - value to multiply each subvector entry by
+  Input Parameters:
++ v     - the vector
+. start - starting point of the subvector (defined by a stride)
+- scale - value to multiply each subvector entry by
 
-   Notes:
-   One must call VecSetBlockSize() before this routine to set the stride
-   information, or use a vector created from a multicomponent DMDA.
+  Level: advanced
 
-   This will only work if the desire subvector is a stride subvector
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   Level: advanced
+  This will only work if the desire subvector is a stride subvector
 
-.seealso: `VecNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideScale()`
+.seealso: `Vec`, `VecNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`
 @*/
 PetscErrorCode VecStrideScale(Vec v, PetscInt start, PetscScalar scale)
 {
@@ -77,38 +76,38 @@ PetscErrorCode VecStrideScale(Vec v, PetscInt start, PetscScalar scale)
   PetscCall(VecGetArray(v, &x));
   for (i = start; i < n; i += bs) x[i] *= scale;
   PetscCall(VecRestoreArray(v, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideNorm - Computes the norm of subvector of a vector defined
-   by a starting point and a stride.
+  VecStrideNorm - Computes the norm of subvector of a vector defined
+  by a starting point and a stride.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  v - the vector
-.  start - starting point of the subvector (defined by a stride)
--  ntype - type of norm, one of NORM_1, NORM_2, NORM_INFINITY
+  Input Parameters:
++ v     - the vector
+. start - starting point of the subvector (defined by a stride)
+- ntype - type of norm, one of `NORM_1`, `NORM_2`, `NORM_INFINITY`
 
-   Output Parameter:
-.  norm - the norm
+  Output Parameter:
+. nrm - the norm
 
-   Notes:
-   One must call VecSetBlockSize() before this routine to set the stride
-   information, or use a vector created from a multicomponent DMDA.
+  Level: advanced
 
-   If x is the array representing the vector x then this computes the norm
-   of the array (x[start],x[start+stride],x[start+2*stride], ....)
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   This is useful for computing, say the norm of the pressure variable when
-   the pressure is stored (interlaced) with other variables, say density etc.
+  If x is the array representing the vector x then this computes the norm
+  of the array (x[start],x[start+stride],x[start+2*stride], ....)
 
-   This will only work if the desire subvector is a stride subvector
+  This is useful for computing, say the norm of the pressure variable when
+  the pressure is stored (interlaced) with other variables, say density etc.
 
-   Level: advanced
+  This will only work if the desire subvector is a stride subvector
 
-.seealso: `VecNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`
+.seealso: `Vec`, `VecNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`
 @*/
 PetscErrorCode VecStrideNorm(Vec v, PetscInt start, NormType ntype, PetscReal *nrm)
 {
@@ -119,7 +118,7 @@ PetscErrorCode VecStrideNorm(Vec v, PetscInt start, NormType ntype, PetscReal *n
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
   PetscValidLogicalCollectiveEnum(v, ntype, 3);
-  PetscValidRealPointer(nrm, 4);
+  PetscAssertPointer(nrm, 4);
   PetscCall(VecGetLocalSize(v, &n));
   PetscCall(VecGetBlockSize(v, &bs));
   PetscCheck(start >= 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Negative start %" PetscInt_FMT, start);
@@ -143,37 +142,37 @@ PetscErrorCode VecStrideNorm(Vec v, PetscInt start, NormType ntype, PetscReal *n
     PetscCall(MPIU_Allreduce(&tnorm, nrm, 1, MPIU_REAL, MPIU_MAX, PetscObjectComm((PetscObject)v)));
   } else SETERRQ(PetscObjectComm((PetscObject)v), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown norm type");
   PetscCall(VecRestoreArrayRead(v, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideMax - Computes the maximum of subvector of a vector defined
-   by a starting point and a stride and optionally its location.
+  VecStrideMax - Computes the maximum of subvector of a vector defined
+  by a starting point and a stride and optionally its location.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  v - the vector
--  start - starting point of the subvector (defined by a stride)
+  Input Parameters:
++ v     - the vector
+- start - starting point of the subvector (defined by a stride)
 
-   Output Parameters:
-+  idex - the location where the maximum occurred  (pass NULL if not required)
--  nrm - the maximum value in the subvector
+  Output Parameters:
++ idex - the location where the maximum occurred  (pass `NULL` if not required)
+- nrm  - the maximum value in the subvector
 
-   Notes:
-   One must call VecSetBlockSize() before this routine to set the stride
-   information, or use a vector created from a multicomponent DMDA.
+  Level: advanced
 
-   If xa is the array representing the vector x, then this computes the max
-   of the array (xa[start],xa[start+stride],xa[start+2*stride], ....)
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   This is useful for computing, say the maximum of the pressure variable when
-   the pressure is stored (interlaced) with other variables, e.g., density, etc.
-   This will only work if the desire subvector is a stride subvector.
+  If xa is the array representing the vector x, then this computes the max
+  of the array (xa[start],xa[start+stride],xa[start+2*stride], ....)
 
-   Level: advanced
+  This is useful for computing, say the maximum of the pressure variable when
+  the pressure is stored (interlaced) with other variables, e.g., density, etc.
+  This will only work if the desire subvector is a stride subvector.
 
-.seealso: `VecMax()`, `VecStrideNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`
+.seealso: `Vec`, `VecMax()`, `VecStrideNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`
 @*/
 PetscErrorCode VecStrideMax(Vec v, PetscInt start, PetscInt *idex, PetscReal *nrm)
 {
@@ -183,7 +182,7 @@ PetscErrorCode VecStrideMax(Vec v, PetscInt start, PetscInt *idex, PetscReal *nr
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidRealPointer(nrm, 4);
+  PetscAssertPointer(nrm, 4);
   PetscCall(VecGetLocalSize(v, &n));
   PetscCall(VecGetBlockSize(v, &bs));
   PetscCheck(start >= 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Negative start %" PetscInt_FMT, start);
@@ -217,37 +216,37 @@ PetscErrorCode VecStrideMax(Vec v, PetscInt start, PetscInt *idex, PetscReal *nr
     *idex = out.i;
   }
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideMin - Computes the minimum of subvector of a vector defined
-   by a starting point and a stride and optionally its location.
+  VecStrideMin - Computes the minimum of subvector of a vector defined
+  by a starting point and a stride and optionally its location.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  v - the vector
--  start - starting point of the subvector (defined by a stride)
+  Input Parameters:
++ v     - the vector
+- start - starting point of the subvector (defined by a stride)
 
-   Output Parameters:
-+  idex - the location where the minimum occurred. (pass NULL if not required)
--  nrm - the minimum value in the subvector
+  Output Parameters:
++ idex - the location where the minimum occurred. (pass `NULL` if not required)
+- nrm  - the minimum value in the subvector
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   One must call VecSetBlockSize() before this routine to set the stride
-   information, or use a vector created from a multicomponent DMDA.
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   If xa is the array representing the vector x, then this computes the min
-   of the array (xa[start],xa[start+stride],xa[start+2*stride], ....)
+  If xa is the array representing the vector x, then this computes the min
+  of the array (xa[start],xa[start+stride],xa[start+2*stride], ....)
 
-   This is useful for computing, say the minimum of the pressure variable when
-   the pressure is stored (interlaced) with other variables, e.g., density, etc.
-   This will only work if the desire subvector is a stride subvector.
+  This is useful for computing, say the minimum of the pressure variable when
+  the pressure is stored (interlaced) with other variables, e.g., density, etc.
+  This will only work if the desire subvector is a stride subvector.
 
-.seealso: `VecMin()`, `VecStrideNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMax()`
+.seealso: `Vec`, `VecMin()`, `VecStrideNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMax()`
 @*/
 PetscErrorCode VecStrideMin(Vec v, PetscInt start, PetscInt *idex, PetscReal *nrm)
 {
@@ -257,7 +256,7 @@ PetscErrorCode VecStrideMin(Vec v, PetscInt start, PetscInt *idex, PetscReal *nr
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidRealPointer(nrm, 4);
+  PetscAssertPointer(nrm, 4);
   PetscCall(VecGetLocalSize(v, &n));
   PetscCall(VecGetBlockSize(v, &bs));
   PetscCheck(start >= 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Negative start %" PetscInt_FMT, start);
@@ -291,32 +290,32 @@ PetscErrorCode VecStrideMin(Vec v, PetscInt start, PetscInt *idex, PetscReal *nr
     *idex = out.i;
   }
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideSum - Computes the sum of subvector of a vector defined
-   by a starting point and a stride.
+  VecStrideSum - Computes the sum of subvector of a vector defined
+  by a starting point and a stride.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  v - the vector
--  start - starting point of the subvector (defined by a stride)
+  Input Parameters:
++ v     - the vector
+- start - starting point of the subvector (defined by a stride)
 
-   Output Parameter:
-.  sum - the sum
+  Output Parameter:
+. sum - the sum
 
-   Notes:
-   One must call `VecSetBlockSize()` before this routine to set the stride
-   information, or use a vector created from a multicomponent `DMDA`.
+  Level: advanced
 
-   If x is the array representing the vector x then this computes the sum
-   of the array (x[start],x[start+stride],x[start+2*stride], ....)
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   Level: advanced
+  If x is the array representing the vector x then this computes the sum
+  of the array (x[start],x[start+stride],x[start+2*stride], ....)
 
-.seealso: `VecSum()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`
+.seealso: `Vec`, `VecSum()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`
 @*/
 PetscErrorCode VecStrideSum(Vec v, PetscInt start, PetscScalar *sum)
 {
@@ -326,7 +325,7 @@ PetscErrorCode VecStrideSum(Vec v, PetscInt start, PetscScalar *sum)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidScalarPointer(sum, 3);
+  PetscAssertPointer(sum, 3);
   PetscCall(VecGetLocalSize(v, &n));
   PetscCall(VecGetBlockSize(v, &bs));
   PetscCheck(start >= 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Negative start %" PetscInt_FMT, start);
@@ -335,28 +334,28 @@ PetscErrorCode VecStrideSum(Vec v, PetscInt start, PetscScalar *sum)
   for (i = start; i < n; i += bs) local_sum += x[i];
   PetscCall(MPIU_Allreduce(&local_sum, sum, 1, MPIU_SCALAR, MPIU_SUM, PetscObjectComm((PetscObject)v)));
   PetscCall(VecRestoreArrayRead(v, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideScaleAll - Scales the subvectors of a vector defined
-   by a starting point and a stride.
+  VecStrideScaleAll - Scales the subvectors of a vector defined
+  by a starting point and a stride.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  v - the vector
--  scales - values to multiply each subvector entry by
+  Input Parameters:
++ v      - the vector
+- scales - values to multiply each subvector entry by
 
-   Notes:
-   One must call VecSetBlockSize() before this routine to set the stride
-   information, or use a vector created from a multicomponent DMDA.
+  Level: advanced
 
-   The dimension of scales must be the same as the vector block size
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   Level: advanced
+  The dimension of scales must be the same as the vector block size
 
-.seealso: `VecNorm()`, `VecStrideScale()`, `VecScale()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`
+.seealso: `Vec`, `VecNorm()`, `VecStrideScale()`, `VecScale()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`
 @*/
 PetscErrorCode VecStrideScaleAll(Vec v, const PetscScalar *scales)
 {
@@ -365,7 +364,7 @@ PetscErrorCode VecStrideScaleAll(Vec v, const PetscScalar *scales)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidScalarPointer(scales, 2);
+  PetscAssertPointer(scales, 2);
   PetscCall(VecGetLocalSize(v, &n));
   PetscCall(VecGetBlockSize(v, &bs));
   PetscCall(VecGetArray(v, &x));
@@ -374,36 +373,36 @@ PetscErrorCode VecStrideScaleAll(Vec v, const PetscScalar *scales)
     for (j = 0; j < bs; j++) x[i + j] *= scales[j];
   }
   PetscCall(VecRestoreArray(v, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideNormAll - Computes the norms of subvectors of a vector defined
-   by a starting point and a stride.
+  VecStrideNormAll - Computes the norms of subvectors of a vector defined
+  by a starting point and a stride.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  v - the vector
--  ntype - type of norm, one of NORM_1, NORM_2, NORM_INFINITY
+  Input Parameters:
++ v     - the vector
+- ntype - type of norm, one of `NORM_1`, `NORM_2`, `NORM_INFINITY`
 
-   Output Parameter:
-.  nrm - the norms
+  Output Parameter:
+. nrm - the norms
 
-   Notes:
-   One must call VecSetBlockSize() before this routine to set the stride
-   information, or use a vector created from a multicomponent DMDA.
+  Level: advanced
 
-   If x is the array representing the vector x then this computes the norm
-   of the array (x[start],x[start+stride],x[start+2*stride], ....) for each start < stride
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   The dimension of nrm must be the same as the vector block size
+  If x is the array representing the vector x then this computes the norm
+  of the array (x[start],x[start+stride],x[start+2*stride], ....) for each start < stride
 
-   This will only work if the desire subvector is a stride subvector
+  The dimension of nrm must be the same as the vector block size
 
-   Level: advanced
+  This will only work if the desire subvector is a stride subvector
 
-.seealso: `VecNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`
+.seealso: `Vec`, `VecNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`
 @*/
 PetscErrorCode VecStrideNormAll(Vec v, NormType ntype, PetscReal nrm[])
 {
@@ -415,7 +414,7 @@ PetscErrorCode VecStrideNormAll(Vec v, NormType ntype, PetscReal nrm[])
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
   PetscValidLogicalCollectiveEnum(v, ntype, 2);
-  PetscValidRealPointer(nrm, 3);
+  PetscAssertPointer(nrm, 3);
   PetscCall(VecGetLocalSize(v, &n));
   PetscCall(VecGetArrayRead(v, &x));
   PetscCall(PetscObjectGetComm((PetscObject)v, &comm));
@@ -456,34 +455,34 @@ PetscErrorCode VecStrideNormAll(Vec v, NormType ntype, PetscReal nrm[])
       }
     }
     PetscCall(MPIU_Allreduce(tnorm, nrm, bs, MPIU_REAL, MPIU_MAX, comm));
-  } else SETERRQ(comm, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown norm type");
+  } else SETERRQ(PetscObjectComm((PetscObject)v), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown norm type");
   PetscCall(VecRestoreArrayRead(v, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideMaxAll - Computes the maximums of subvectors of a vector defined
-   by a starting point and a stride and optionally its location.
+  VecStrideMaxAll - Computes the maximums of subvectors of a vector defined
+  by a starting point and a stride and optionally its location.
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  v - the vector
+  Input Parameter:
+. v - the vector
 
-   Output Parameters:
-+  index - the location where the maximum occurred (not supported, pass NULL,
+  Output Parameters:
++ idex - the location where the maximum occurred (not supported, pass `NULL`,
            if you need this, send mail to petsc-maint@mcs.anl.gov to request it)
--  nrm - the maximum values of each subvector
+- nrm  - the maximum values of each subvector
 
-   Notes:
-   One must call VecSetBlockSize() before this routine to set the stride
-   information, or use a vector created from a multicomponent DMDA.
+  Level: advanced
 
-   The dimension of nrm must be the same as the vector block size
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   Level: advanced
+  The dimension of nrm must be the same as the vector block size
 
-.seealso: `VecMax()`, `VecStrideNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`
+.seealso: `Vec`, `VecMax()`, `VecStrideNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`
 @*/
 PetscErrorCode VecStrideMaxAll(Vec v, PetscInt idex[], PetscReal nrm[])
 {
@@ -494,7 +493,7 @@ PetscErrorCode VecStrideMaxAll(Vec v, PetscInt idex[], PetscReal nrm[])
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidRealPointer(nrm, 3);
+  PetscAssertPointer(nrm, 3);
   PetscCheck(!idex, PETSC_COMM_SELF, PETSC_ERR_SUP, "No support yet for returning index; send mail to petsc-maint@mcs.anl.gov asking for it");
   PetscCall(VecGetLocalSize(v, &n));
   PetscCall(VecGetArrayRead(v, &x));
@@ -517,32 +516,32 @@ PetscErrorCode VecStrideMaxAll(Vec v, PetscInt idex[], PetscReal nrm[])
   PetscCall(MPIU_Allreduce(max, nrm, bs, MPIU_REAL, MPIU_MAX, comm));
 
   PetscCall(VecRestoreArrayRead(v, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideMinAll - Computes the minimum of subvector of a vector defined
-   by a starting point and a stride and optionally its location.
+  VecStrideMinAll - Computes the minimum of subvector of a vector defined
+  by a starting point and a stride and optionally its location.
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  v - the vector
+  Input Parameter:
+. v - the vector
 
-   Output Parameters:
-+  idex - the location where the minimum occurred (not supported, pass NULL,
+  Output Parameters:
++ idex - the location where the minimum occurred (not supported, pass `NULL`,
            if you need this, send mail to petsc-maint@mcs.anl.gov to request it)
--  nrm - the minimums of each subvector
+- nrm  - the minimums of each subvector
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   One must call VecSetBlockSize() before this routine to set the stride
-   information, or use a vector created from a multicomponent DMDA.
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   The dimension of nrm must be the same as the vector block size
+  The dimension of `nrm` must be the same as the vector block size
 
-.seealso: `VecMin()`, `VecStrideNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMax()`
+.seealso: `Vec`, `VecMin()`, `VecStrideNorm()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMax()`
 @*/
 PetscErrorCode VecStrideMinAll(Vec v, PetscInt idex[], PetscReal nrm[])
 {
@@ -553,7 +552,7 @@ PetscErrorCode VecStrideMinAll(Vec v, PetscInt idex[], PetscReal nrm[])
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidRealPointer(nrm, 3);
+  PetscAssertPointer(nrm, 3);
   PetscCheck(!idex, PETSC_COMM_SELF, PETSC_ERR_SUP, "No support yet for returning index; send mail to petsc-maint@mcs.anl.gov asking for it");
   PetscCall(VecGetLocalSize(v, &n));
   PetscCall(VecGetArrayRead(v, &x));
@@ -576,30 +575,30 @@ PetscErrorCode VecStrideMinAll(Vec v, PetscInt idex[], PetscReal nrm[])
   PetscCall(MPIU_Allreduce(min, nrm, bs, MPIU_REAL, MPIU_MIN, comm));
 
   PetscCall(VecRestoreArrayRead(v, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideSumAll - Computes the sums of subvectors of a vector defined by a stride.
+  VecStrideSumAll - Computes the sums of subvectors of a vector defined by a stride.
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  v - the vector
+  Input Parameter:
+. v - the vector
 
-   Output Parameter:
-.  sums - the sums
+  Output Parameter:
+. sums - the sums
 
-   Notes:
-   One must call `VecSetBlockSize()` before this routine to set the stride
-   information, or use a vector created from a multicomponent `DMDA`.
+  Level: advanced
 
-   If x is the array representing the vector x then this computes the sum
-   of the array (x[start],x[start+stride],x[start+2*stride], ....) for each start < stride
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   Level: advanced
+  If x is the array representing the vector x then this computes the sum
+  of the array (x[start],x[start+stride],x[start+2*stride], ....) for each start < stride
 
-.seealso: `VecSum()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`
+.seealso: `Vec`, `VecSum()`, `VecStrideGather()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`
 @*/
 PetscErrorCode VecStrideSumAll(Vec v, PetscScalar sums[])
 {
@@ -610,7 +609,7 @@ PetscErrorCode VecStrideSumAll(Vec v, PetscScalar sums[])
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidScalarPointer(sums, 2);
+  PetscAssertPointer(sums, 2);
   PetscCall(VecGetLocalSize(v, &n));
   PetscCall(VecGetArrayRead(v, &x));
   PetscCall(PetscObjectGetComm((PetscObject)v, &comm));
@@ -625,39 +624,39 @@ PetscErrorCode VecStrideSumAll(Vec v, PetscScalar sums[])
   PetscCall(MPIU_Allreduce(local_sums, sums, bs, MPIU_SCALAR, MPIU_SUM, comm));
 
   PetscCall(VecRestoreArrayRead(v, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*----------------------------------------------------------------------------------------------*/
 /*@
-   VecStrideGatherAll - Gathers all the single components from a multi-component vector into
-   separate vectors.
+  VecStrideGatherAll - Gathers all the single components from a multi-component vector into
+  separate vectors.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  v - the vector
--  addv - one of ADD_VALUES,INSERT_VALUES,MAX_VALUES
+  Input Parameters:
++ v    - the vector
+- addv - one of `ADD_VALUES`, `INSERT_VALUES`, `MAX_VALUES`
 
-   Output Parameter:
-.  s - the location where the subvectors are stored
+  Output Parameter:
+. s - the location where the subvectors are stored
 
-   Notes:
-   One must call VecSetBlockSize() before this routine to set the stride
-   information, or use a vector created from a multicomponent DMDA.
+  Level: advanced
 
-   If x is the array representing the vector x then this gathers
-   the arrays (x[start],x[start+stride],x[start+2*stride], ....)
-   for start=0,1,2,...bs-1
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   The parallel layout of the vector and the subvector must be the same;
-   i.e., nlocal of v = stride*(nlocal of s)
+  If x is the array representing the vector x then this gathers
+  the arrays (x[start],x[start+stride],x[start+2*stride], ....)
+  for start=0,1,2,...bs-1
 
-   Not optimized; could be easily
+  The parallel layout of the vector and the subvector must be the same;
+  i.e., nlocal of v = stride*(nlocal of s)
 
-   Level: advanced
+  Not optimized; could be easily
 
-.seealso: `VecStrideNorm()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideGather()`,
+.seealso: `Vec`, `VecStrideNorm()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideGather()`,
           `VecStrideScatterAll()`
 @*/
 PetscErrorCode VecStrideGatherAll(Vec v, Vec s[], InsertMode addv)
@@ -668,7 +667,7 @@ PetscErrorCode VecStrideGatherAll(Vec v, Vec s[], InsertMode addv)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidPointer(s, 2);
+  PetscAssertPointer(s, 2);
   PetscValidHeaderSpecific(*s, VEC_CLASSID, 2);
   PetscCall(VecGetLocalSize(v, &n));
   PetscCall(VecGetLocalSize(s[0], &n2));
@@ -715,41 +714,41 @@ PetscErrorCode VecStrideGatherAll(Vec v, Vec s[], InsertMode addv)
       jj += bss[j];
     }
 #endif
-  } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown insert type");
+  } else SETERRQ(PetscObjectComm((PetscObject)v), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown norm type");
 
   PetscCall(VecRestoreArrayRead(v, &x));
   for (i = 0; i < nv; i++) PetscCall(VecRestoreArray(s[i], &y[i]));
 
   PetscCall(PetscFree2(y, bss));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideScatterAll - Scatters all the single components from separate vectors into
-     a multi-component vector.
+  VecStrideScatterAll - Scatters all the single components from separate vectors into
+  a multi-component vector.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  s - the location where the subvectors are stored
--  addv - one of ADD_VALUES,INSERT_VALUES,MAX_VALUES
+  Input Parameters:
++ s    - the location where the subvectors are stored
+- addv - one of `ADD_VALUES`, `INSERT_VALUES`, `MAX_VALUES`
 
-   Output Parameter:
-.  v - the multicomponent vector
+  Output Parameter:
+. v - the multicomponent vector
 
-   Notes:
-   One must call VecSetBlockSize() before this routine to set the stride
-   information, or use a vector created from a multicomponent DMDA.
+  Level: advanced
 
-   The parallel layout of the vector and the subvector must be the same;
-   i.e., nlocal of v = stride*(nlocal of s)
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   Not optimized; could be easily
+  The parallel layout of the vector and the subvector must be the same;
+  i.e., nlocal of v = stride*(nlocal of s)
 
-   Level: advanced
+  Not optimized; could be easily
 
-.seealso: `VecStrideNorm()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideGather()`,
-          `VecStrideScatterAll()`
+.seealso: `Vec`, `VecStrideNorm()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideGather()`,
+
 @*/
 PetscErrorCode VecStrideScatterAll(Vec s[], Vec v, InsertMode addv)
 {
@@ -759,7 +758,7 @@ PetscErrorCode VecStrideScatterAll(Vec s[], Vec v, InsertMode addv)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 2);
-  PetscValidPointer(s, 1);
+  PetscAssertPointer(s, 1);
   PetscValidHeaderSpecific(*s, VEC_CLASSID, 1);
   PetscCall(VecGetLocalSize(v, &n));
   PetscCall(VecGetLocalSize(s[0], &n2));
@@ -806,43 +805,43 @@ PetscErrorCode VecStrideScatterAll(Vec s[], Vec v, InsertMode addv)
       jj += bss[j];
     }
 #endif
-  } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown insert type");
+  } else SETERRQ(PetscObjectComm((PetscObject)v), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown norm type");
 
   PetscCall(VecRestoreArray(v, &x));
   for (i = 0; i < nv; i++) PetscCall(VecRestoreArrayRead(s[i], &y[i]));
   PetscCall(PetscFree2(*(PetscScalar ***)&y, bss));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideGather - Gathers a single component from a multi-component vector into
-   another vector.
+  VecStrideGather - Gathers a single component from a multi-component vector into
+  another vector.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  v - the vector
-.  start - starting point of the subvector (defined by a stride)
--  addv - one of ADD_VALUES,INSERT_VALUES,MAX_VALUES
+  Input Parameters:
++ v     - the vector
+. start - starting point of the subvector (defined by a stride)
+- addv  - one of `ADD_VALUES`, `INSERT_VALUES`, `MAX_VALUES`
 
-   Output Parameter:
-.  s - the location where the subvector is stored
+  Output Parameter:
+. s - the location where the subvector is stored
 
-   Notes:
-   One must call VecSetBlockSize() before this routine to set the stride
-   information, or use a vector created from a multicomponent DMDA.
+  Level: advanced
 
-   If x is the array representing the vector x then this gathers
-   the array (x[start],x[start+stride],x[start+2*stride], ....)
+  Notes:
+  One must call `VecSetBlockSize()` before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   The parallel layout of the vector and the subvector must be the same;
-   i.e., nlocal of v = stride*(nlocal of s)
+  If x is the array representing the vector x then this gathers
+  the array (x[start],x[start+stride],x[start+2*stride], ....)
 
-   Not optimized; could be easily
+  The parallel layout of the vector and the subvector must be the same;
+  i.e., nlocal of v = stride*(nlocal of s)
 
-   Level: advanced
+  Not optimized; could be easily
 
-.seealso: `VecStrideNorm()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideGatherAll()`,
+.seealso: `Vec`, `VecStrideNorm()`, `VecStrideScatter()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideGatherAll()`,
           `VecStrideScatterAll()`
 @*/
 PetscErrorCode VecStrideGather(Vec v, PetscInt start, Vec s, InsertMode addv)
@@ -854,34 +853,34 @@ PetscErrorCode VecStrideGather(Vec v, PetscInt start, Vec s, InsertMode addv)
   PetscCheck(start < v->map->bs, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Start of stride subvector (%" PetscInt_FMT ") is too large for stride\n Have you set the vector blocksize (%" PetscInt_FMT ") correctly with VecSetBlockSize()?", start,
              v->map->bs);
   PetscUseTypeMethod(v, stridegather, start, s, addv);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideScatter - Scatters a single component from a vector into a multi-component vector.
+  VecStrideScatter - Scatters a single component from a vector into a multi-component vector.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  s - the single-component vector
-.  start - starting point of the subvector (defined by a stride)
--  addv - one of ADD_VALUES,INSERT_VALUES,MAX_VALUES
+  Input Parameters:
++ s     - the single-component vector
+. start - starting point of the subvector (defined by a stride)
+- addv  - one of `ADD_VALUES`, `INSERT_VALUES`, `MAX_VALUES`
 
-   Output Parameter:
-.  v - the location where the subvector is scattered (the multi-component vector)
+  Output Parameter:
+. v - the location where the subvector is scattered (the multi-component vector)
 
-   Notes:
-   One must call VecSetBlockSize() on the multi-component vector before this
-   routine to set the stride  information, or use a vector created from a multicomponent DMDA.
+  Level: advanced
 
-   The parallel layout of the vector and the subvector must be the same;
-   i.e., nlocal of v = stride*(nlocal of s)
+  Notes:
+  One must call `VecSetBlockSize()` on the multi-component vector before this
+  routine to set the stride  information, or use a vector created from a multicomponent `DMDA`.
 
-   Not optimized; could be easily
+  The parallel layout of the vector and the subvector must be the same;
+  i.e., nlocal of v = stride*(nlocal of s)
 
-   Level: advanced
+  Not optimized; could be easily
 
-.seealso: `VecStrideNorm()`, `VecStrideGather()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideGatherAll()`,
+.seealso: `Vec`, `VecStrideNorm()`, `VecStrideGather()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideGatherAll()`,
           `VecStrideScatterAll()`, `VecStrideSubSetScatter()`, `VecStrideSubSetGather()`
 @*/
 PetscErrorCode VecStrideScatter(Vec s, PetscInt start, Vec v, InsertMode addv)
@@ -893,36 +892,36 @@ PetscErrorCode VecStrideScatter(Vec s, PetscInt start, Vec v, InsertMode addv)
   PetscCheck(start < v->map->bs, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Start of stride subvector (%" PetscInt_FMT ") is too large for stride\n Have you set the vector blocksize (%" PetscInt_FMT ") correctly with VecSetBlockSize()?", start,
              v->map->bs);
   PetscCall((*v->ops->stridescatter)(s, start, v, addv));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideSubSetGather - Gathers a subset of components from a multi-component vector into
-   another vector.
+  VecStrideSubSetGather - Gathers a subset of components from a multi-component vector into
+  another vector.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  v - the vector
-.  nidx - the number of indices
-.  idxv - the indices of the components 0 <= idxv[0] ...idxv[nidx-1] < bs(v), they need not be sorted
-.  idxs - the indices of the components 0 <= idxs[0] ...idxs[nidx-1] < bs(s), they need not be sorted, may be null if nidx == bs(s) or is PETSC_DETERMINE
--  addv - one of ADD_VALUES,INSERT_VALUES,MAX_VALUES
+  Input Parameters:
++ v    - the vector
+. nidx - the number of indices
+. idxv - the indices of the components 0 <= idxv[0] ...idxv[nidx-1] < bs(v), they need not be sorted
+. idxs - the indices of the components 0 <= idxs[0] ...idxs[nidx-1] < bs(s), they need not be sorted, may be null if nidx == bs(s) or is `PETSC_DETERMINE`
+- addv - one of `ADD_VALUES`, `INSERT_VALUES`, `MAX_VALUES`
 
-   Output Parameter:
-.  s - the location where the subvector is stored
+  Output Parameter:
+. s - the location where the subvector is stored
 
-   Notes:
-   One must call VecSetBlockSize() on both vectors before this routine to set the stride
-   information, or use a vector created from a multicomponent DMDA.
+  Level: advanced
 
-   The parallel layout of the vector and the subvector must be the same;
+  Notes:
+  One must call `VecSetBlockSize()` on both vectors before this routine to set the stride
+  information, or use a vector created from a multicomponent `DMDA`.
 
-   Not optimized; could be easily
+  The parallel layout of the vector and the subvector must be the same;
 
-   Level: advanced
+  Not optimized; could be easily
 
-.seealso: `VecStrideNorm()`, `VecStrideScatter()`, `VecStrideGather()`, `VecStrideSubSetScatter()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideGatherAll()`,
+.seealso: `Vec`, `VecStrideNorm()`, `VecStrideScatter()`, `VecStrideGather()`, `VecStrideSubSetScatter()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideGatherAll()`,
           `VecStrideScatterAll()`
 @*/
 PetscErrorCode VecStrideSubSetGather(Vec v, PetscInt nidx, const PetscInt idxv[], const PetscInt idxs[], Vec s, InsertMode addv)
@@ -932,35 +931,35 @@ PetscErrorCode VecStrideSubSetGather(Vec v, PetscInt nidx, const PetscInt idxv[]
   PetscValidHeaderSpecific(s, VEC_CLASSID, 5);
   if (nidx == PETSC_DETERMINE) nidx = s->map->bs;
   PetscUseTypeMethod(v, stridesubsetgather, nidx, idxv, idxs, s, addv);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecStrideSubSetScatter - Scatters components from a vector into a subset of components of a multi-component vector.
+  VecStrideSubSetScatter - Scatters components from a vector into a subset of components of a multi-component vector.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  s - the smaller-component vector
-.  nidx - the number of indices in idx
-.  idxs - the indices of the components in the smaller-component vector, 0 <= idxs[0] ...idxs[nidx-1] < bs(s) they need not be sorted, may be null if nidx == bs(s) or is PETSC_DETERMINE
-.  idxv - the indices of the components in the larger-component vector, 0 <= idx[0] ...idx[nidx-1] < bs(v) they need not be sorted
--  addv - one of ADD_VALUES,INSERT_VALUES,MAX_VALUES
+  Input Parameters:
++ s    - the smaller-component vector
+. nidx - the number of indices in idx
+. idxs - the indices of the components in the smaller-component vector, 0 <= idxs[0] ...idxs[nidx-1] < bs(s) they need not be sorted, may be null if nidx == bs(s) or is `PETSC_DETERMINE`
+. idxv - the indices of the components in the larger-component vector, 0 <= idx[0] ...idx[nidx-1] < bs(v) they need not be sorted
+- addv - one of `ADD_VALUES`, `INSERT_VALUES`, `MAX_VALUES`
 
-   Output Parameter:
-.  v - the location where the subvector is into scattered (the multi-component vector)
+  Output Parameter:
+. v - the location where the subvector is into scattered (the multi-component vector)
 
-   Notes:
-   One must call VecSetBlockSize() on the vectors before this
-   routine to set the stride  information, or use a vector created from a multicomponent DMDA.
+  Level: advanced
 
-   The parallel layout of the vector and the subvector must be the same;
+  Notes:
+  One must call `VecSetBlockSize()` on the vectors before this
+  routine to set the stride  information, or use a vector created from a multicomponent `DMDA`.
 
-   Not optimized; could be easily
+  The parallel layout of the vector and the subvector must be the same;
 
-   Level: advanced
+  Not optimized; could be easily
 
-.seealso: `VecStrideNorm()`, `VecStrideGather()`, `VecStrideGather()`, `VecStrideSubSetGather()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideGatherAll()`,
+.seealso: `Vec`, `VecStrideNorm()`, `VecStrideGather()`, `VecStrideSubSetGather()`, `VecStrideMin()`, `VecStrideMax()`, `VecStrideGatherAll()`,
           `VecStrideScatterAll()`
 @*/
 PetscErrorCode VecStrideSubSetScatter(Vec s, PetscInt nidx, const PetscInt idxs[], const PetscInt idxv[], Vec v, InsertMode addv)
@@ -970,7 +969,7 @@ PetscErrorCode VecStrideSubSetScatter(Vec s, PetscInt nidx, const PetscInt idxs[
   PetscValidHeaderSpecific(v, VEC_CLASSID, 5);
   if (nidx == PETSC_DETERMINE) nidx = s->map->bs;
   PetscCall((*v->ops->stridesubsetscatter)(s, nidx, idxs, idxv, v, addv));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecStrideGather_Default(Vec v, PetscInt start, Vec s, InsertMode addv)
@@ -998,11 +997,11 @@ PetscErrorCode VecStrideGather_Default(Vec v, PetscInt start, Vec s, InsertMode 
   } else if (addv == MAX_VALUES) {
     for (i = 0; i < n; i++) y[i] = PetscMax(y[i], x[bs * i]);
 #endif
-  } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown insert type");
+  } else SETERRQ(PetscObjectComm((PetscObject)v), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown norm type");
 
   PetscCall(VecRestoreArrayRead(v, &x));
   PetscCall(VecRestoreArray(s, &y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecStrideScatter_Default(Vec s, PetscInt start, Vec v, InsertMode addv)
@@ -1030,11 +1029,11 @@ PetscErrorCode VecStrideScatter_Default(Vec s, PetscInt start, Vec v, InsertMode
   } else if (addv == MAX_VALUES) {
     for (i = 0; i < n; i++) x[bs * i] = PetscMax(y[i], x[bs * i]);
 #endif
-  } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown insert type");
+  } else SETERRQ(PetscObjectComm((PetscObject)s), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown norm type");
 
   PetscCall(VecRestoreArray(v, &x));
   PetscCall(VecRestoreArrayRead(s, &y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecStrideSubSetGather_Default(Vec v, PetscInt nidx, const PetscInt idxv[], const PetscInt idxs[], Vec s, InsertMode addv)
@@ -1094,11 +1093,11 @@ PetscErrorCode VecStrideSubSetGather_Default(Vec v, PetscInt nidx, const PetscIn
       }
     }
 #endif
-  } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown insert type");
+  } else SETERRQ(PetscObjectComm((PetscObject)v), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown norm type");
 
   PetscCall(VecRestoreArrayRead(v, &x));
   PetscCall(VecRestoreArray(s, &y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecStrideSubSetScatter_Default(Vec s, PetscInt nidx, const PetscInt idxs[], const PetscInt idxv[], Vec v, InsertMode addv)
@@ -1160,32 +1159,81 @@ PetscErrorCode VecStrideSubSetScatter_Default(Vec s, PetscInt nidx, const PetscI
       }
     }
 #endif
-  } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown insert type");
+  } else SETERRQ(PetscObjectComm((PetscObject)v), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown norm type");
 
   PetscCall(VecRestoreArray(v, &x));
   PetscCall(VecRestoreArrayRead(s, &y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+static PetscErrorCode VecApplyUnary_Private(Vec v, PetscDeviceContext dctx, const char async_name[], PetscErrorCode (*unary_op)(Vec), PetscScalar (*UnaryFunc)(PetscScalar))
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
+  PetscCall(VecSetErrorIfLocked(v, 1));
+  if (dctx) {
+    PetscErrorCode (*unary_op_async)(Vec, PetscDeviceContext);
+
+    PetscCall(PetscObjectQueryFunction((PetscObject)v, async_name, &unary_op_async));
+    if (unary_op_async) {
+      PetscCall((*unary_op_async)(v, dctx));
+      PetscFunctionReturn(PETSC_SUCCESS);
+    }
+  }
+  if (unary_op) {
+    PetscValidFunction(unary_op, 2);
+    PetscCall((*unary_op)(v));
+  } else {
+    PetscInt     n;
+    PetscScalar *x;
+
+    PetscValidFunction(UnaryFunc, 3);
+    PetscCall(VecGetLocalSize(v, &n));
+    PetscCall(VecGetArray(v, &x));
+    for (PetscInt i = 0; i < n; ++i) x[i] = UnaryFunc(x[i]);
+    PetscCall(VecRestoreArray(v, &x));
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+static PetscScalar ScalarReciprocal_Fn(PetscScalar x)
+{
+  const PetscScalar zero = 0.0;
+
+  return x == zero ? zero : ((PetscScalar)1.0) / x;
+}
+
+PetscErrorCode VecReciprocalAsync_Private(Vec v, PetscDeviceContext dctx)
+{
+  PetscFunctionBegin;
+  PetscCall(VecApplyUnary_Private(v, dctx, VecAsyncFnName(Reciprocal), v->ops->reciprocal, ScalarReciprocal_Fn));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecReciprocal_Default(Vec v)
 {
-  PetscInt     i, n;
-  PetscScalar *x;
-
   PetscFunctionBegin;
-  PetscCall(VecGetLocalSize(v, &n));
-  PetscCall(VecGetArray(v, &x));
-  for (i = 0; i < n; i++) {
-    if (x[i] != (PetscScalar)0.0) x[i] = (PetscScalar)1.0 / x[i];
-  }
-  PetscCall(VecRestoreArray(v, &x));
-  PetscFunctionReturn(0);
+  PetscCall(VecApplyUnary_Private(v, NULL, NULL, NULL, ScalarReciprocal_Fn));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+static PetscScalar ScalarExp_Fn(PetscScalar x)
+{
+  return PetscExpScalar(x);
+}
+
+PetscErrorCode VecExpAsync_Private(Vec v, PetscDeviceContext dctx)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
+  PetscCall(VecApplyUnary_Private(v, dctx, VecAsyncFnName(Exp), v->ops->exp, ScalarExp_Fn));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   VecExp - Replaces each component of a vector by e^x_i
 
-  Not collective
+  Not Collective
 
   Input Parameter:
 . v - The vector
@@ -1195,30 +1243,33 @@ PetscErrorCode VecReciprocal_Default(Vec v)
 
   Level: beginner
 
-.seealso: `VecLog()`, `VecAbs()`, `VecSqrtAbs()`, `VecReciprocal()`
+.seealso: `Vec`, `VecLog()`, `VecAbs()`, `VecSqrtAbs()`, `VecReciprocal()`
 
 @*/
 PetscErrorCode VecExp(Vec v)
 {
-  PetscScalar *x;
-  PetscInt     i, n;
+  PetscFunctionBegin;
+  PetscCall(VecExpAsync_Private(v, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
 
+static PetscScalar ScalarLog_Fn(PetscScalar x)
+{
+  return PetscLogScalar(x);
+}
+
+PetscErrorCode VecLogAsync_Private(Vec v, PetscDeviceContext dctx)
+{
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  if (v->ops->exp) PetscUseTypeMethod(v, exp);
-  else {
-    PetscCall(VecGetLocalSize(v, &n));
-    PetscCall(VecGetArray(v, &x));
-    for (i = 0; i < n; i++) x[i] = PetscExpScalar(x[i]);
-    PetscCall(VecRestoreArray(v, &x));
-  }
-  PetscFunctionReturn(0);
+  PetscCall(VecApplyUnary_Private(v, dctx, VecAsyncFnName(Log), v->ops->log, ScalarLog_Fn));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   VecLog - Replaces each component of a vector by log(x_i), the natural logarithm
 
-  Not collective
+  Not Collective
 
   Input Parameter:
 . v - The vector
@@ -1228,59 +1279,176 @@ PetscErrorCode VecExp(Vec v)
 
   Level: beginner
 
-.seealso: `VecExp()`, `VecAbs()`, `VecSqrtAbs()`, `VecReciprocal()`
+.seealso: `Vec`, `VecExp()`, `VecAbs()`, `VecSqrtAbs()`, `VecReciprocal()`
 
 @*/
 PetscErrorCode VecLog(Vec v)
 {
-  PetscScalar *x;
-  PetscInt     i, n;
+  PetscFunctionBegin;
+  PetscCall(VecLogAsync_Private(v, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
 
+static PetscScalar ScalarAbs_Fn(PetscScalar x)
+{
+  return PetscAbsScalar(x);
+}
+
+PetscErrorCode VecAbsAsync_Private(Vec v, PetscDeviceContext dctx)
+{
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  if (v->ops->log) PetscUseTypeMethod(v, log);
-  else {
-    PetscCall(VecGetLocalSize(v, &n));
-    PetscCall(VecGetArray(v, &x));
-    for (i = 0; i < n; i++) x[i] = PetscLogScalar(x[i]);
-    PetscCall(VecRestoreArray(v, &x));
-  }
-  PetscFunctionReturn(0);
+  PetscCall(VecApplyUnary_Private(v, dctx, VecAsyncFnName(Abs), v->ops->abs, ScalarAbs_Fn));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/*@
+  VecAbs - Replaces every element in a vector with its absolute value.
+
+  Logically Collective
+
+  Input Parameter:
+. v - the vector
+
+  Level: intermediate
+
+.seealso: `Vec`, `VecExp()`, `VecSqrtAbs()`, `VecReciprocal()`, `VecLog()`
+@*/
+PetscErrorCode VecAbs(Vec v)
+{
+  PetscFunctionBegin;
+  PetscCall(VecAbsAsync_Private(v, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+static PetscScalar ScalarConjugate_Fn(PetscScalar x)
+{
+  return PetscConj(x);
+}
+
+PetscErrorCode VecConjugateAsync_Private(Vec v, PetscDeviceContext dctx)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
+  if (PetscDefined(USE_COMPLEX)) PetscCall(VecApplyUnary_Private(v, dctx, VecAsyncFnName(Conjugate), v->ops->conjugate, ScalarConjugate_Fn));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/*@
+  VecConjugate - Conjugates a vector. That is, replace every entry in a vector with its complex conjugate
+
+  Logically Collective
+
+  Input Parameter:
+. x - the vector
+
+  Level: intermediate
+
+.seealso: [](ch_vectors), `Vec`, `VecSet()`
+@*/
+PetscErrorCode VecConjugate(Vec x)
+{
+  PetscFunctionBegin;
+  PetscCall(VecConjugateAsync_Private(x, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+static PetscScalar ScalarSqrtAbs_Fn(PetscScalar x)
+{
+  return PetscSqrtScalar(ScalarAbs_Fn(x));
+}
+
+PetscErrorCode VecSqrtAbsAsync_Private(Vec v, PetscDeviceContext dctx)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
+  PetscCall(VecApplyUnary_Private(v, dctx, VecAsyncFnName(SqrtAbs), v->ops->sqrt, ScalarSqrtAbs_Fn));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   VecSqrtAbs - Replaces each component of a vector by the square root of its magnitude.
 
-  Not collective
+  Not Collective
 
   Input Parameter:
 . v - The vector
 
-  Output Parameter:
-. v - The vector square root
-
   Level: beginner
 
-  Note: The actual function is sqrt(|x_i|)
+  Note:
+  The actual function is sqrt(|x_i|)
 
-.seealso: `VecLog()`, `VecExp()`, `VecReciprocal()`, `VecAbs()`
+.seealso: `Vec`, `VecLog()`, `VecExp()`, `VecReciprocal()`, `VecAbs()`
 
 @*/
 PetscErrorCode VecSqrtAbs(Vec v)
 {
-  PetscScalar *x;
-  PetscInt     i, n;
+  PetscFunctionBegin;
+  PetscCall(VecSqrtAbsAsync_Private(v, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
 
+static PetscScalar ScalarImaginaryPart_Fn(PetscScalar x)
+{
+  const PetscReal imag = PetscImaginaryPart(x);
+
+#if PetscDefined(USE_COMPLEX)
+  return PetscCMPLX(imag, 0.0);
+#else
+  return imag;
+#endif
+}
+
+/*@
+  VecImaginaryPart - Replaces a complex vector with its imginary part
+
+  Collective
+
+  Input Parameter:
+. v - the vector
+
+  Level: beginner
+
+.seealso: `Vec`, `VecNorm()`, `VecRealPart()`
+@*/
+PetscErrorCode VecImaginaryPart(Vec v)
+{
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  if (v->ops->sqrt) PetscUseTypeMethod(v, sqrt);
-  else {
-    PetscCall(VecGetLocalSize(v, &n));
-    PetscCall(VecGetArray(v, &x));
-    for (i = 0; i < n; i++) x[i] = PetscSqrtReal(PetscAbsScalar(x[i]));
-    PetscCall(VecRestoreArray(v, &x));
-  }
-  PetscFunctionReturn(0);
+  PetscCall(VecApplyUnary_Private(v, NULL, NULL, NULL, ScalarImaginaryPart_Fn));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+static PetscScalar ScalarRealPart_Fn(PetscScalar x)
+{
+  const PetscReal real = PetscRealPart(x);
+
+#if PetscDefined(USE_COMPLEX)
+  return PetscCMPLX(real, 0.0);
+#else
+  return real;
+#endif
+}
+
+/*@
+  VecRealPart - Replaces a complex vector with its real part
+
+  Collective
+
+  Input Parameter:
+. v - the vector
+
+  Level: beginner
+
+.seealso: `Vec`, `VecNorm()`, `VecImaginaryPart()`
+@*/
+PetscErrorCode VecRealPart(Vec v)
+{
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
+  PetscCall(VecApplyUnary_Private(v, NULL, NULL, NULL, ScalarRealPart_Fn));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -1298,23 +1466,21 @@ PetscErrorCode VecSqrtAbs(Vec v)
 
   Level: advanced
 
-  Notes:
-    conj(x) is the complex conjugate of x when x is complex
+  Note:
+  conj(x) is the complex conjugate of x when x is complex
 
-.seealso: `VecDot()`, `VecNorm()`, `VecDotBegin()`, `VecNormBegin()`, `VecDotEnd()`, `VecNormEnd()`
+.seealso: `Vec`, `VecDot()`, `VecNorm()`, `VecDotBegin()`, `VecNormBegin()`, `VecDotEnd()`, `VecNormEnd()`
 
 @*/
 PetscErrorCode VecDotNorm2(Vec s, Vec t, PetscScalar *dp, PetscReal *nm)
 {
-  const PetscScalar *sx, *tx;
-  PetscScalar        dpx = 0.0, nmx = 0.0, work[2], sum[2];
-  PetscInt           i, n;
+  PetscScalar work[] = {0.0, 0.0};
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(s, VEC_CLASSID, 1);
   PetscValidHeaderSpecific(t, VEC_CLASSID, 2);
-  PetscValidScalarPointer(dp, 3);
-  PetscValidRealPointer(nm, 4);
+  PetscAssertPointer(dp, 3);
+  PetscAssertPointer(nm, 4);
   PetscValidType(s, 1);
   PetscValidType(t, 2);
   PetscCheckSameTypeAndComm(s, 1, t, 2);
@@ -1323,82 +1489,83 @@ PetscErrorCode VecDotNorm2(Vec s, Vec t, PetscScalar *dp, PetscReal *nm)
 
   PetscCall(PetscLogEventBegin(VEC_DotNorm2, s, t, 0, 0));
   if (s->ops->dotnorm2) {
-    PetscUseTypeMethod(s, dotnorm2, t, dp, &dpx);
-    *nm = PetscRealPart(dpx);
+    PetscUseTypeMethod(s, dotnorm2, t, work, work + 1);
   } else {
+    const PetscScalar *sx, *tx;
+    PetscInt           n;
+
     PetscCall(VecGetLocalSize(s, &n));
     PetscCall(VecGetArrayRead(s, &sx));
     PetscCall(VecGetArrayRead(t, &tx));
+    for (PetscInt i = 0; i < n; ++i) {
+      const PetscScalar txconj = PetscConj(tx[i]);
 
-    for (i = 0; i < n; i++) {
-      dpx += sx[i] * PetscConj(tx[i]);
-      nmx += tx[i] * PetscConj(tx[i]);
+      work[0] += sx[i] * txconj;
+      work[1] += tx[i] * txconj;
     }
-    work[0] = dpx;
-    work[1] = nmx;
-
-    PetscCall(MPIU_Allreduce(work, sum, 2, MPIU_SCALAR, MPIU_SUM, PetscObjectComm((PetscObject)s)));
-    *dp = sum[0];
-    *nm = PetscRealPart(sum[1]);
-
     PetscCall(VecRestoreArrayRead(t, &tx));
     PetscCall(VecRestoreArrayRead(s, &sx));
+    PetscCall(MPIU_Allreduce(MPI_IN_PLACE, work, 2, MPIU_SCALAR, MPIU_SUM, PetscObjectComm((PetscObject)s)));
     PetscCall(PetscLogFlops(4.0 * n));
   }
   PetscCall(PetscLogEventEnd(VEC_DotNorm2, s, t, 0, 0));
-  PetscFunctionReturn(0);
+  *dp = work[0];
+  *nm = PetscRealPart(work[1]);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecSum - Computes the sum of all the components of a vector.
+  VecSum - Computes the sum of all the components of a vector.
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  v - the vector
+  Input Parameter:
+. v - the vector
 
-   Output Parameter:
-.  sum - the result
+  Output Parameter:
+. sum - the result
 
-   Level: beginner
+  Level: beginner
 
-.seealso: `VecMean()`, `VecNorm()`
+.seealso: `Vec`, `VecMean()`, `VecNorm()`
 @*/
 PetscErrorCode VecSum(Vec v, PetscScalar *sum)
 {
-  PetscInt           i, n;
-  const PetscScalar *x;
+  PetscScalar tmp = 0.0;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidScalarPointer(sum, 2);
-  *sum = 0.0;
+  PetscAssertPointer(sum, 2);
   if (v->ops->sum) {
-    PetscUseTypeMethod(v, sum, sum);
+    PetscUseTypeMethod(v, sum, &tmp);
   } else {
+    const PetscScalar *x;
+    PetscInt           n;
+
     PetscCall(VecGetLocalSize(v, &n));
     PetscCall(VecGetArrayRead(v, &x));
-    for (i = 0; i < n; i++) *sum += x[i];
+    for (PetscInt i = 0; i < n; ++i) tmp += x[i];
     PetscCall(VecRestoreArrayRead(v, &x));
   }
-  PetscCall(MPIU_Allreduce(MPI_IN_PLACE, sum, 1, MPIU_SCALAR, MPIU_SUM, PetscObjectComm((PetscObject)v)));
-  PetscFunctionReturn(0);
+  PetscCall(MPIU_Allreduce(MPI_IN_PLACE, &tmp, 1, MPIU_SCALAR, MPIU_SUM, PetscObjectComm((PetscObject)v)));
+  *sum = tmp;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecMean - Computes the arithmetic mean of all the components of a vector.
+  VecMean - Computes the arithmetic mean of all the components of a vector.
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  v - the vector
+  Input Parameter:
+. v - the vector
 
-   Output Parameter:
-.  mean - the result
+  Output Parameter:
+. mean - the result
 
-   Level: beginner
+  Level: beginner
 
-.seealso: `VecSum()`, `VecNorm()`
+.seealso: `Vec`, `VecSum()`, `VecNorm()`
 @*/
 PetscErrorCode VecMean(Vec v, PetscScalar *mean)
 {
@@ -1406,143 +1573,80 @@ PetscErrorCode VecMean(Vec v, PetscScalar *mean)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscValidScalarPointer(mean, 2);
+  PetscAssertPointer(mean, 2);
   PetscCall(VecGetSize(v, &n));
   PetscCall(VecSum(v, mean));
   *mean /= n;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*@
-   VecImaginaryPart - Replaces a complex vector with its imginary part
-
-   Collective
-
-   Input Parameter:
-.  v - the vector
-
-   Level: beginner
-
-.seealso: `VecNorm()`, `VecRealPart()`
-@*/
-PetscErrorCode VecImaginaryPart(Vec v)
+PetscErrorCode VecShiftAsync_Private(Vec v, PetscScalar shift, PetscDeviceContext dctx)
 {
-  PetscInt     i, n;
-  PetscScalar *x;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscCall(VecGetLocalSize(v, &n));
-  PetscCall(VecGetArray(v, &x));
-  for (i = 0; i < n; i++) x[i] = PetscImaginaryPart(x[i]);
-  PetscCall(VecRestoreArray(v, &x));
-  PetscFunctionReturn(0);
-}
-
-/*@
-   VecRealPart - Replaces a complex vector with its real part
-
-   Collective
-
-   Input Parameter:
-.  v - the vector
-
-   Level: beginner
-
-.seealso: `VecNorm()`, `VecImaginaryPart()`
-@*/
-PetscErrorCode VecRealPart(Vec v)
-{
-  PetscInt     i, n;
-  PetscScalar *x;
-
-  PetscFunctionBegin;
-  PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscCall(VecGetLocalSize(v, &n));
-  PetscCall(VecGetArray(v, &x));
-  for (i = 0; i < n; i++) x[i] = PetscRealPart(x[i]);
-  PetscCall(VecRestoreArray(v, &x));
-  PetscFunctionReturn(0);
-}
-
-/*@
-   VecShift - Shifts all of the components of a vector by computing
-   `x[i] = x[i] + shift`.
-
-   Logically Collective
-
-   Input Parameters:
-+  v - the vector
--  shift - the shift
-
-   Level: intermediate
-
-@*/
-PetscErrorCode VecShift(Vec v, PetscScalar shift)
-{
-  PetscInt     i, n;
-  PetscScalar *x;
+  PetscErrorCode (*shift_async)(Vec, PetscScalar, PetscDeviceContext) = NULL;
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
   PetscValidLogicalCollectiveScalar(v, shift, 2);
   PetscCall(VecSetErrorIfLocked(v, 1));
-  if (shift == 0.0) PetscFunctionReturn(0);
+  if (shift == (PetscScalar)0.0) PetscFunctionReturn(PETSC_SUCCESS);
 
-  if (v->ops->shift) PetscUseTypeMethod(v, shift, shift);
-  else {
+  if (dctx) {
+    PetscErrorCode (*shift_async)(Vec, PetscScalar, PetscDeviceContext);
+
+    PetscCall(PetscObjectQueryFunction((PetscObject)v, VecAsyncFnName(Shift), &shift_async));
+  }
+  if (shift_async) {
+    PetscCall((*shift_async)(v, shift, dctx));
+  } else if (v->ops->shift) {
+    PetscUseTypeMethod(v, shift, shift);
+  } else {
+    PetscInt     n;
+    PetscScalar *x;
+
     PetscCall(VecGetLocalSize(v, &n));
     PetscCall(VecGetArray(v, &x));
-    for (i = 0; i < n; i++) x[i] += shift;
+    for (PetscInt i = 0; i < n; ++i) x[i] += shift;
     PetscCall(VecRestoreArray(v, &x));
+    PetscCall(PetscLogFlops(n));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecAbs - Replaces every element in a vector with its absolute value.
+  VecShift - Shifts all of the components of a vector by computing
+  `x[i] = x[i] + shift`.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-.  v - the vector
+  Input Parameters:
++ v     - the vector
+- shift - the shift
 
-   Level: intermediate
+  Level: intermediate
 
+.seealso: `Vec`
 @*/
-PetscErrorCode VecAbs(Vec v)
+PetscErrorCode VecShift(Vec v, PetscScalar shift)
 {
-  PetscInt     i, n;
-  PetscScalar *x;
-
   PetscFunctionBegin;
-  PetscValidHeaderSpecific(v, VEC_CLASSID, 1);
-  PetscCall(VecSetErrorIfLocked(v, 1));
-
-  if (v->ops->abs) {
-    PetscUseTypeMethod(v, abs);
-  } else {
-    PetscCall(VecGetLocalSize(v, &n));
-    PetscCall(VecGetArray(v, &x));
-    for (i = 0; i < n; i++) x[i] = PetscAbsScalar(x[i]);
-    PetscCall(VecRestoreArray(v, &x));
-  }
-  PetscFunctionReturn(0);
+  PetscCall(VecShiftAsync_Private(v, shift, NULL));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   VecPermute - Permutes a vector in place using the given ordering.
 
   Input Parameters:
-+ vec   - The vector
-. order - The ordering
-- inv   - The flag for inverting the permutation
++ x   - The vector
+. row - The ordering
+- inv - The flag for inverting the permutation
 
   Level: beginner
 
-  Note: This function does not yet support parallel Index Sets with non-local permutations
+  Note:
+  This function does not yet support parallel Index Sets with non-local permutations
 
-.seealso: `MatPermute()`
+.seealso: `Vec`, `MatPermute()`
 @*/
 PetscErrorCode VecPermute(Vec x, IS row, PetscBool inv)
 {
@@ -1570,24 +1674,26 @@ PetscErrorCode VecPermute(Vec x, IS row, PetscBool inv)
   PetscCall(VecRestoreArrayRead(x, &array));
   PetscCall(ISRestoreIndices(row, &idx));
   PetscCall(VecReplaceArray(x, newArray));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecEqual - Compares two vectors. Returns true if the two vectors are either pointing to the same memory buffer,
-   or if the two vectors have the same local and global layout as well as bitwise equality of all entries.
-   Does NOT take round-off errors into account.
+  VecEqual - Compares two vectors. Returns true if the two vectors are either pointing to the same memory buffer,
+  or if the two vectors have the same local and global layout as well as bitwise equality of all entries.
+  Does NOT take round-off errors into account.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  vec1 - the first vector
--  vec2 - the second vector
+  Input Parameters:
++ vec1 - the first vector
+- vec2 - the second vector
 
-   Output Parameter:
-.  flg - PETSC_TRUE if the vectors are equal; PETSC_FALSE otherwise.
+  Output Parameter:
+. flg - `PETSC_TRUE` if the vectors are equal; `PETSC_FALSE` otherwise.
 
-   Level: intermediate
+  Level: intermediate
+
+.seealso: `Vec`
 @*/
 PetscErrorCode VecEqual(Vec vec1, Vec vec2, PetscBool *flg)
 {
@@ -1598,7 +1704,7 @@ PetscErrorCode VecEqual(Vec vec1, Vec vec2, PetscBool *flg)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(vec1, VEC_CLASSID, 1);
   PetscValidHeaderSpecific(vec2, VEC_CLASSID, 2);
-  PetscValidBoolPointer(flg, 3);
+  PetscAssertPointer(flg, 3);
   if (vec1 == vec2) *flg = PETSC_TRUE;
   else {
     PetscCall(VecGetSize(vec1, &N1));
@@ -1619,23 +1725,24 @@ PetscErrorCode VecEqual(Vec vec1, Vec vec2, PetscBool *flg)
     /* combine results from all processors */
     PetscCall(MPIU_Allreduce(&flg1, flg, 1, MPIU_BOOL, MPI_MIN, PetscObjectComm((PetscObject)vec1)));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecUniqueEntries - Compute the number of unique entries, and those entries
+  VecUniqueEntries - Compute the number of unique entries, and those entries
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  vec - the vector
+  Input Parameter:
+. vec - the vector
 
-   Output Parameters:
-+  n - The number of unique entries
--  e - The entries
+  Output Parameters:
++ n - The number of unique entries
+- e - The entries
 
-   Level: intermediate
+  Level: intermediate
 
+.seealso: `Vec`
 @*/
 PetscErrorCode VecUniqueEntries(Vec vec, PetscInt *n, PetscScalar **e)
 {
@@ -1647,7 +1754,7 @@ PetscErrorCode VecUniqueEntries(Vec vec, PetscInt *n, PetscScalar **e)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(vec, VEC_CLASSID, 1);
-  PetscValidIntPointer(n, 2);
+  PetscAssertPointer(n, 2);
   PetscCallMPI(MPI_Comm_size(PetscObjectComm((PetscObject)vec), &size));
   PetscCall(VecGetLocalSize(vec, &m));
   PetscCall(VecGetArrayRead(vec, &v));
@@ -1676,12 +1783,12 @@ PetscErrorCode VecUniqueEntries(Vec vec, PetscInt *n, PetscScalar **e)
   *n = displs[size];
   PetscCall(PetscSortRemoveDupsReal(n, (PetscReal *)vals));
   if (e) {
-    PetscValidPointer(e, 3);
+    PetscAssertPointer(e, 3);
     PetscCall(PetscMalloc1(*n, e));
     for (i = 0; i < *n; ++i) (*e)[i] = vals[i];
   }
   PetscCall(PetscFree2(vals, displs));
   PetscCall(PetscFree2(tmp, N));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 #endif
 }

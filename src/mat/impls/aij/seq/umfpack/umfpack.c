@@ -1,11 +1,10 @@
-
 /*
    Provides an interface to the UMFPACK sparse solver available through SuiteSparse version 4.2.1
 
    When build with PETSC_USE_64BIT_INDICES this will use Suitesparse_long as the
    integer type in UMFPACK, otherwise it will use int. This means
    all integers in this file as simply declared as PetscInt. Also it means
-   that one cannot use 64BIT_INDICES on 32bit machines [as Suitesparse_long is 32bit only]
+   that one cannot use 64BIT_INDICES on 32-bit pointer systems [as Suitesparse_long is 32-bit only]
 
 */
 #include <../src/mat/impls/aij/seq/aij.h>
@@ -104,7 +103,7 @@ static PetscErrorCode MatDestroy_UMFPACK(Mat A)
   PetscCall(MatDestroy(&lu->A));
   PetscCall(PetscObjectComposeFunction((PetscObject)A, "MatFactorGetSolverType_C", NULL));
   PetscCall(PetscFree(A->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSolve_UMFPACK_Private(Mat A, Vec b, Vec x, int uflag)
@@ -117,12 +116,11 @@ static PetscErrorCode MatSolve_UMFPACK_Private(Mat A, Vec b, Vec x, int uflag)
   static PetscBool   cite = PETSC_FALSE;
 
   PetscFunctionBegin;
-  if (!A->rmap->n) PetscFunctionReturn(0);
+  if (!A->rmap->n) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscCitationsRegister("@article{davis2004algorithm,\n  title={Algorithm 832: {UMFPACK} V4.3---An Unsymmetric-Pattern Multifrontal Method},\n  author={Davis, Timothy A},\n  journal={ACM Transactions on Mathematical Software (TOMS)},\n  "
                                    "volume={30},\n  number={2},\n  pages={196--199},\n  year={2004},\n  publisher={ACM}\n}\n",
                                    &cite));
   /* solve Ax = b by umfpack_*_wsolve */
-  /* ----------------------------------*/
 
   if (!lu->Wi) { /* first time, allocate working space for wsolve */
     PetscCall(PetscMalloc1(A->rmap->n, &lu->Wi));
@@ -144,7 +142,7 @@ static PetscErrorCode MatSolve_UMFPACK_Private(Mat A, Vec b, Vec x, int uflag)
 
   PetscCall(VecRestoreArrayRead(b, &ba));
   PetscCall(VecRestoreArray(x, &xa));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSolve_UMFPACK(Mat A, Vec b, Vec x)
@@ -152,7 +150,7 @@ static PetscErrorCode MatSolve_UMFPACK(Mat A, Vec b, Vec x)
   PetscFunctionBegin;
   /* We gave UMFPACK the algebraic transpose (because it assumes column alignment) */
   PetscCall(MatSolve_UMFPACK_Private(A, b, x, UMFPACK_Aat));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSolveTranspose_UMFPACK(Mat A, Vec b, Vec x)
@@ -160,7 +158,7 @@ static PetscErrorCode MatSolveTranspose_UMFPACK(Mat A, Vec b, Vec x)
   PetscFunctionBegin;
   /* We gave UMFPACK the algebraic transpose (because it assumes column alignment) */
   PetscCall(MatSolve_UMFPACK_Private(A, b, x, UMFPACK_A));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatLUFactorNumeric_UMFPACK(Mat F, Mat A, const MatFactorInfo *info)
@@ -171,9 +169,8 @@ static PetscErrorCode MatLUFactorNumeric_UMFPACK(Mat F, Mat A, const MatFactorIn
   PetscScalar *av = a->a;
 
   PetscFunctionBegin;
-  if (!A->rmap->n) PetscFunctionReturn(0);
+  if (!A->rmap->n) PetscFunctionReturn(PETSC_SUCCESS);
   /* numeric factorization of A' */
-  /* ----------------------------*/
 
   if (lu->flg == SAME_NONZERO_PATTERN && lu->Numeric) umfpack_UMF_free_numeric(&lu->Numeric);
 #if defined(PETSC_USE_COMPLEX)
@@ -196,7 +193,7 @@ static PetscErrorCode MatLUFactorNumeric_UMFPACK(Mat F, Mat A, const MatFactorIn
   lu->CleanUpUMFPACK     = PETSC_TRUE;
   F->ops->solve          = MatSolve_UMFPACK;
   F->ops->solvetranspose = MatSolveTranspose_UMFPACK;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatLUFactorSymbolic_UMFPACK(Mat F, Mat A, IS r, IS c, const MatFactorInfo *info)
@@ -214,7 +211,7 @@ static PetscErrorCode MatLUFactorSymbolic_UMFPACK(Mat F, Mat A, IS r, IS c, cons
 
   PetscFunctionBegin;
   (F)->ops->lufactornumeric = MatLUFactorNumeric_UMFPACK;
-  if (!n) PetscFunctionReturn(0);
+  if (!n) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Set options to F */
   PetscOptionsBegin(PetscObjectComm((PetscObject)F), ((PetscObject)F)->prefix, "UMFPACK Options", "Mat");
@@ -273,7 +270,7 @@ static PetscErrorCode MatLUFactorSymbolic_UMFPACK(Mat F, Mat A, IS r, IS c, cons
   if (r) {
     PetscCall(ISGetIndices(r, &ra));
     PetscCall(PetscMalloc1(m, &lu->perm_c));
-    /* we cannot simply memcpy on 64 bit archs */
+    /* we cannot simply memcpy on 64-bit archs */
     for (i = 0; i < m; i++) lu->perm_c[i] = ra[i];
     PetscCall(ISRestoreIndices(r, &ra));
   }
@@ -282,7 +279,6 @@ static PetscErrorCode MatLUFactorSymbolic_UMFPACK(Mat F, Mat A, IS r, IS c, cons
   if (lu->Control[UMFPACK_PRL] > 1) umfpack_UMF_report_control(lu->Control);
 
   /* symbolic factorization of A' */
-  /* ---------------------------------------------------------------------- */
   if (r) { /* use Petsc row ordering */
 #if !defined(PETSC_USE_COMPLEX)
     status = umfpack_UMF_qsymbolic(n, m, ai, aj, av, lu->perm_c, &lu->Symbolic, lu->Control, lu->Info);
@@ -306,7 +302,7 @@ static PetscErrorCode MatLUFactorSymbolic_UMFPACK(Mat F, Mat A, IS r, IS c, cons
 
   lu->flg            = DIFFERENT_NONZERO_PATTERN;
   lu->CleanUpUMFPACK = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatView_Info_UMFPACK(Mat A, PetscViewer viewer)
@@ -315,7 +311,7 @@ static PetscErrorCode MatView_Info_UMFPACK(Mat A, PetscViewer viewer)
 
   PetscFunctionBegin;
   /* check if matrix is UMFPACK type */
-  if (A->ops->solve != MatSolve_UMFPACK) PetscFunctionReturn(0);
+  if (A->ops->solve != MatSolve_UMFPACK) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(PetscViewerASCIIPrintf(viewer, "UMFPACK run parameters:\n"));
   /* Control parameters used by reporting routiones */
@@ -342,7 +338,7 @@ static PetscErrorCode MatView_Info_UMFPACK(Mat A, PetscViewer viewer)
 
   /* mat ordering */
   if (!lu->perm_c) PetscCall(PetscViewerASCIIPrintf(viewer, "  Control[UMFPACK_ORDERING]: %s (not using the PETSc ordering)\n", UmfpackOrderingTypes[(int)lu->Control[UMFPACK_ORDERING]]));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatView_UMFPACK(Mat A, PetscViewer viewer)
@@ -356,31 +352,31 @@ static PetscErrorCode MatView_UMFPACK(Mat A, PetscViewer viewer)
     PetscCall(PetscViewerGetFormat(viewer, &format));
     if (format == PETSC_VIEWER_ASCII_INFO) PetscCall(MatView_Info_UMFPACK(A, viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatFactorGetSolverType_seqaij_umfpack(Mat A, MatSolverType *type)
+static PetscErrorCode MatFactorGetSolverType_seqaij_umfpack(Mat A, MatSolverType *type)
 {
   PetscFunctionBegin;
   *type = MATSOLVERUMFPACK;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
   MATSOLVERUMFPACK = "umfpack" - A matrix type providing direct solvers, LU, for sequential matrices
   via the external package UMFPACK.
 
-  Use ./configure --download-suitesparse to install PETSc to use UMFPACK
+  Use `./configure --download-suitesparse` to install PETSc to use UMFPACK
 
-  Use -pc_type lu -pc_factor_mat_solver_type umfpack to use this direct solver
+  Use `-pc_type lu` `-pc_factor_mat_solver_type umfpack` to use this direct solver
 
   Consult UMFPACK documentation for more information about the Control parameters
   which correspond to the options database keys below.
 
   Options Database Keys:
-+ -mat_umfpack_ordering                - CHOLMOD, AMD, GIVEN, METIS, BEST, NONE
++ -mat_umfpack_ordering                - `CHOLMOD`, `AMD`, `GIVEN`, `METIS`, `BEST`, `NONE`
 . -mat_umfpack_prl                     - UMFPACK print level: Control[UMFPACK_PRL]
-. -mat_umfpack_strategy <AUTO>         - (choose one of) AUTO UNSYMMETRIC SYMMETRIC 2BY2
+. -mat_umfpack_strategy <AUTO>         - (choose one of) `AUTO`, `UNSYMMETRIC`, `SYMMETRIC 2BY2`
 . -mat_umfpack_dense_col <alpha_c>     - UMFPACK dense column threshold: Control[UMFPACK_DENSE_COL]
 . -mat_umfpack_dense_row <0.2>         - Control[UMFPACK_DENSE_ROW]
 . -mat_umfpack_amd_dense <10>          - Control[UMFPACK_AMD_DENSE]
@@ -397,9 +393,10 @@ PetscErrorCode MatFactorGetSolverType_seqaij_umfpack(Mat A, MatSolverType *type)
 
    Level: beginner
 
-   Note: UMFPACK is part of SuiteSparse http://faculty.cse.tamu.edu/davis/suitesparse.html
+   Note:
+   UMFPACK is part of SuiteSparse <http://faculty.cse.tamu.edu/davis/suitesparse.html>
 
-.seealso: `PCLU`, `MATSOLVERSUPERLU`, `MATSOLVERMUMPS`, `PCFactorSetMatSolverType()`, `MatSolverType`
+.seealso: [](ch_matrices), `Mat`, `PCLU`, `MATSOLVERSUPERLU`, `MATSOLVERMUMPS`, `PCFactorSetMatSolverType()`, `MatSolverType`
 M*/
 
 PETSC_EXTERN PetscErrorCode MatGetFactor_seqaij_umfpack(Mat A, MatFactorType ftype, Mat *F)
@@ -436,14 +433,13 @@ PETSC_EXTERN PetscErrorCode MatGetFactor_seqaij_umfpack(Mat A, MatFactorType fty
   PetscCall(PetscStrallocpy(MATORDERINGEXTERNAL, (char **)&B->preferredordering[MAT_FACTOR_LU]));
 
   /* initializations */
-  /* ------------------------------------------------*/
   /* get the default control parameters */
   umfpack_UMF_defaults(lu->Control);
-  lu->perm_c                  = NULL; /* use defaul UMFPACK col permutation */
+  lu->perm_c                  = NULL; /* use default UMFPACK col permutation */
   lu->Control[UMFPACK_IRSTEP] = 0;    /* max num of iterative refinement steps to attempt */
 
   *F = B;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_INTERN PetscErrorCode MatGetFactor_seqaij_cholmod(Mat, MatFactorType, Mat *);
@@ -461,5 +457,5 @@ PETSC_EXTERN PetscErrorCode MatSolverTypeRegister_SuiteSparse(void)
   PetscCall(MatSolverTypeRegister(MATSOLVERSPQR, MATSEQAIJ, MAT_FACTOR_QR, MatGetFactor_seqaij_spqr));
   if (!PetscDefined(USE_COMPLEX)) PetscCall(MatSolverTypeRegister(MATSOLVERSPQR, MATNORMAL, MAT_FACTOR_QR, MatGetFactor_seqaij_spqr));
   PetscCall(MatSolverTypeRegister(MATSOLVERSPQR, MATNORMALHERMITIAN, MAT_FACTOR_QR, MatGetFactor_seqaij_spqr));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

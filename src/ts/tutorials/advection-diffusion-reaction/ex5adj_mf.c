@@ -52,7 +52,7 @@ PetscErrorCode InitializeLambda(DM da, Vec lambda, PetscReal x, PetscReal y)
     l[j][i].v = 1.0;
     PetscCall(DMDAVecRestoreArray(da, lambda, &l));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MyRHSMatMultTranspose(Mat A_shell, Vec X, Vec Y)
@@ -111,7 +111,7 @@ static PetscErrorCode MyRHSMatMultTranspose(Mat A_shell, Vec X, Vec Y)
   PetscCall(DMDAVecRestoreArrayRead(da, mctx->U, &u));
   PetscCall(DMDAVecRestoreArray(da, Y, &y));
   PetscCall(DMRestoreLocalVector(da, &localX));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MyIMatMultTranspose(Mat A_shell, Vec X, Vec Y)
@@ -172,7 +172,7 @@ static PetscErrorCode MyIMatMultTranspose(Mat A_shell, Vec X, Vec Y)
   PetscCall(DMDAVecRestoreArrayRead(da, mctx->U, &u));
   PetscCall(DMDAVecRestoreArray(da, Y, &y));
   PetscCall(DMRestoreLocalVector(da, &localX));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MyIMatMult(Mat A_shell, Vec X, Vec Y)
@@ -233,7 +233,7 @@ static PetscErrorCode MyIMatMult(Mat A_shell, Vec X, Vec Y)
   PetscCall(DMDAVecRestoreArrayRead(da, mctx->U, &u));
   PetscCall(DMDAVecRestoreArray(da, Y, &y));
   PetscCall(DMRestoreLocalVector(da, &localX));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -246,9 +246,7 @@ int main(int argc, char **argv)
   Vec            lambda[1];
   PetscBool      forwardonly = PETSC_FALSE, implicitform = PETSC_TRUE, mf = PETSC_FALSE;
   PetscLogDouble v1, v2;
-#if defined(PETSC_USE_LOG)
-  PetscLogStage stage;
-#endif
+  PetscLogStage  stage;
 
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &argv, (char *)0, help));
@@ -263,7 +261,7 @@ int main(int argc, char **argv)
   appctx.gamma = .024;
   appctx.kappa = .06;
 
-  PetscLogStageRegister("MyAdjoint", &stage);
+  PetscCall(PetscLogStageRegister("MyAdjoint", &stage));
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Create distributed array (DMDA) to manage parallel grid and vectors
   - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -314,7 +312,7 @@ int main(int argc, char **argv)
     mctx.appctx = &appctx;
     PetscCall(VecDuplicate(x, &mctx.U));
     /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      Create matrix free context
+      Create matrix-free context
       - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
     PetscCall(DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, &dof, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE));
     PetscCall(DMDAGetCorners(da, NULL, NULL, NULL, &xm, &ym, NULL));
@@ -362,9 +360,9 @@ int main(int argc, char **argv)
     /*   Reset initial conditions for the adjoint integration */
     PetscCall(InitializeLambda(da, lambda[0], 0.5, 0.5));
     PetscCall(TSSetCostGradients(ts, 1, lambda, NULL));
-    PetscLogStagePush(stage);
+    PetscCall(PetscLogStagePush(stage));
     PetscCall(TSAdjointSolve(ts));
-    PetscLogStagePop();
+    PetscCall(PetscLogStagePop());
     PetscCall(VecDestroy(&lambda[0]));
   }
   PetscCall(PetscTime(&v2));
@@ -394,7 +392,7 @@ PetscErrorCode RHSJacobianShell(TS ts, PetscReal t, Vec U, Mat A, Mat BB, void *
   PetscFunctionBegin;
   PetscCall(MatShellGetContext(A, &mctx));
   PetscCall(VecCopy(U, mctx->U));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode IJacobianShell(TS ts, PetscReal t, Vec U, Vec Udot, PetscReal a, Mat A, Mat BB, void *ctx)
@@ -406,7 +404,7 @@ PetscErrorCode IJacobianShell(TS ts, PetscReal t, Vec U, Vec Udot, PetscReal a, 
   PetscCall(VecCopy(U, mctx->U));
   /* PetscCall(VecCopy(Udot,mctx->Udot)); */
   mctx->shift = a;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------- */
@@ -450,7 +448,7 @@ PetscErrorCode InitialConditions(DM da, Vec U)
      Restore vectors
   */
   PetscCall(DMDAVecRestoreArray(da, U, &u));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

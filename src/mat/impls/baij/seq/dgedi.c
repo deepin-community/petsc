@@ -1,4 +1,3 @@
-
 /*
               This file creating by running f2c
             linpack. this version dated 08/14/78
@@ -52,7 +51,7 @@ PETSC_INTERN PetscErrorCode PetscLINPACKgedi(MatScalar *a, PetscInt n, PetscInt 
   /*    form inverse(u)*inverse(l) */
 
   nm1 = n - 1;
-  if (nm1 < 1) PetscFunctionReturn(0);
+  if (nm1 < 1) PetscFunctionReturn(PETSC_SUCCESS);
   for (kb = 1; kb <= nm1; ++kb) {
     k   = n - kb;
     kn  = k * n;
@@ -79,5 +78,5 @@ PETSC_INTERN PetscErrorCode PetscLINPACKgedi(MatScalar *a, PetscInt n, PetscInt 
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

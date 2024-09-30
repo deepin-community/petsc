@@ -28,7 +28,7 @@ PetscErrorCode ISView_Binary(IS is, PetscViewer viewer)
   PetscCall(ISGetIndices(is, &iarray));
   PetscCall(PetscViewerBinaryWriteAll(viewer, iarray, n, s, N, PETSC_INT));
   PetscCall(ISRestoreIndices(is, &iarray));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_HDF5)
@@ -36,7 +36,7 @@ PetscErrorCode ISView_Binary(IS is, PetscViewer viewer)
      This should handle properly the cases where PetscInt is 32 or 64 and hsize_t is 32 or 64. These means properly casting with
    checks back and forth between the two types of variables.
 */
-PetscErrorCode ISLoad_HDF5(IS is, PetscViewer viewer)
+static PetscErrorCode ISLoad_HDF5(IS is, PetscViewer viewer)
 {
   hid_t       inttype; /* int type (H5T_NATIVE_INT or H5T_NATIVE_LLONG) */
   PetscInt   *ind;
@@ -52,11 +52,11 @@ PetscErrorCode ISLoad_HDF5(IS is, PetscViewer viewer)
   PetscCall(PetscObjectGetName((PetscObject)is, &isname));
   PetscCall(PetscViewerHDF5Load(viewer, isname, is->map, inttype, (void **)&ind));
   PetscCall(ISGeneralSetIndices(is, is->map->n, ind, PETSC_OWN_POINTER));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
-PetscErrorCode ISLoad_Binary(IS is, PetscViewer viewer)
+static PetscErrorCode ISLoad_Binary(IS is, PetscViewer viewer)
 {
   PetscBool   isgeneral, skipHeader;
   PetscInt    tr[2], rows, N, n, s, *idx;
@@ -97,7 +97,7 @@ PetscErrorCode ISLoad_Binary(IS is, PetscViewer viewer)
   PetscCall(PetscMalloc1(n, &idx));
   PetscCall(PetscViewerBinaryReadAll(viewer, idx, n, s, N, PETSC_INT));
   PetscCall(ISGeneralSetIndices(is, n, idx, PETSC_OWN_POINTER));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ISLoad_Default(IS is, PetscViewer viewer)
@@ -114,5 +114,5 @@ PetscErrorCode ISLoad_Default(IS is, PetscViewer viewer)
     PetscCall(ISLoad_HDF5(is, viewer));
 #endif
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

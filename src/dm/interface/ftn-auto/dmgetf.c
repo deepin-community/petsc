@@ -58,6 +58,16 @@ extern void PetscRmPointer(void*);
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmrestoreglobalvector_ dmrestoreglobalvector
 #endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmclearnamedglobalvectors_ DMCLEARNAMEDGLOBALVECTORS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmclearnamedglobalvectors_ dmclearnamedglobalvectors
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmclearnamedlocalvectors_ DMCLEARNAMEDLOCALVECTORS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmclearnamedlocalvectors_ dmclearnamedlocalvectors
+#endif
 
 
 /* Definitions of Fortran Wrapper routines */
@@ -93,6 +103,16 @@ PETSC_EXTERN void  dmrestoreglobalvector_(DM dm,Vec *g, int *__ierr)
 {
 *__ierr = DMRestoreGlobalVector(
 	(DM)PetscToPointer((dm) ),g);
+}
+PETSC_EXTERN void  dmclearnamedglobalvectors_(DM dm, int *__ierr)
+{
+*__ierr = DMClearNamedGlobalVectors(
+	(DM)PetscToPointer((dm) ));
+}
+PETSC_EXTERN void  dmclearnamedlocalvectors_(DM dm, int *__ierr)
+{
+*__ierr = DMClearNamedLocalVectors(
+	(DM)PetscToPointer((dm) ));
 }
 #if defined(__cplusplus)
 }

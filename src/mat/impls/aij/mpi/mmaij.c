@@ -1,4 +1,3 @@
-
 /*
    Support for the parallel AIJ matrix vector multiply
 */
@@ -15,9 +14,9 @@ PetscErrorCode MatSetUpMultiply_MPIAIJ(Mat mat)
   IS          from, to;
   Vec         gvec;
 #if defined(PETSC_USE_CTABLE)
-  PetscTable         gid1_lid1;
-  PetscTablePosition tpos;
-  PetscInt           gid, lid;
+  PetscHMapI    gid1_lid1 = NULL;
+  PetscHashIter tpos;
+  PetscInt      gid, lid;
 #else
   PetscInt N = mat->cmap->N, *indices;
 #endif
@@ -27,41 +26,43 @@ PetscErrorCode MatSetUpMultiply_MPIAIJ(Mat mat)
     PetscCheck(aij->B, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Missing B mat");
 #if defined(PETSC_USE_CTABLE)
     /* use a table */
-    PetscCall(PetscTableCreate(aij->B->rmap->n, mat->cmap->N + 1, &gid1_lid1));
+    PetscCall(PetscHMapICreateWithSize(aij->B->rmap->n, &gid1_lid1));
     for (i = 0; i < aij->B->rmap->n; i++) {
       for (j = 0; j < B->ilen[i]; j++) {
         PetscInt data, gid1 = aj[B->i[i] + j] + 1;
-        PetscCall(PetscTableFind(gid1_lid1, gid1, &data));
+        PetscCall(PetscHMapIGetWithDefault(gid1_lid1, gid1, 0, &data));
         if (!data) {
           /* one based table */
-          PetscCall(PetscTableAdd(gid1_lid1, gid1, ++ec, INSERT_VALUES));
+          PetscCall(PetscHMapISet(gid1_lid1, gid1, ++ec));
         }
       }
     }
     /* form array of columns we need */
     PetscCall(PetscMalloc1(ec, &garray));
-    PetscCall(PetscTableGetHeadPosition(gid1_lid1, &tpos));
-    while (tpos) {
-      PetscCall(PetscTableGetNext(gid1_lid1, &tpos, &gid, &lid));
+    PetscHashIterBegin(gid1_lid1, tpos);
+    while (!PetscHashIterAtEnd(gid1_lid1, tpos)) {
+      PetscHashIterGetKey(gid1_lid1, tpos, gid);
+      PetscHashIterGetVal(gid1_lid1, tpos, lid);
+      PetscHashIterNext(gid1_lid1, tpos);
       gid--;
       lid--;
       garray[lid] = gid;
     }
     PetscCall(PetscSortInt(ec, garray)); /* sort, and rebuild */
-    PetscCall(PetscTableRemoveAll(gid1_lid1));
-    for (i = 0; i < ec; i++) PetscCall(PetscTableAdd(gid1_lid1, garray[i] + 1, i + 1, INSERT_VALUES));
+    PetscCall(PetscHMapIClear(gid1_lid1));
+    for (i = 0; i < ec; i++) PetscCall(PetscHMapISet(gid1_lid1, garray[i] + 1, i + 1));
     /* compact out the extra columns in B */
     for (i = 0; i < aij->B->rmap->n; i++) {
       for (j = 0; j < B->ilen[i]; j++) {
         PetscInt gid1 = aj[B->i[i] + j] + 1;
-        PetscCall(PetscTableFind(gid1_lid1, gid1, &lid));
+        PetscCall(PetscHMapIGetWithDefault(gid1_lid1, gid1, 0, &lid));
         lid--;
         aj[B->i[i] + j] = lid;
       }
     }
     PetscCall(PetscLayoutDestroy(&aij->B->cmap));
     PetscCall(PetscLayoutCreateFromSizes(PetscObjectComm((PetscObject)aij->B), ec, ec, 1, &aij->B->cmap));
-    PetscCall(PetscTableDestroy(&gid1_lid1));
+    PetscCall(PetscHMapIDestroy(&gid1_lid1));
 #else
     /* Make an array as long as the number of columns */
     /* mark those columns that are in aij->B */
@@ -118,7 +119,7 @@ PetscErrorCode MatSetUpMultiply_MPIAIJ(Mat mat)
   PetscCall(ISDestroy(&from));
   PetscCall(ISDestroy(&to));
   PetscCall(VecDestroy(&gvec));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Disassemble the off-diag portion of the MPIAIJXxx matrix.
@@ -129,65 +130,67 @@ PetscErrorCode MatSetUpMultiply_MPIAIJ(Mat mat)
 */
 PetscErrorCode MatDisAssemble_MPIAIJ(Mat A)
 {
-  Mat_MPIAIJ        *aij  = (Mat_MPIAIJ *)A->data;
-  Mat                B    = aij->B, Bnew;
-  Mat_SeqAIJ        *Baij = (Mat_SeqAIJ *)B->data;
-  PetscInt           i, j, m = B->rmap->n, n = A->cmap->N, col, ct = 0, *garray = aij->garray, *nz;
-  PetscScalar        v;
-  const PetscScalar *ba;
+  Mat_MPIAIJ *aij = (Mat_MPIAIJ *)A->data;
+  Mat         B = aij->B, Bnew = NULL;
 
   PetscFunctionBegin;
   /* free stuff related to matrix-vec multiply */
   PetscCall(VecDestroy(&aij->lvec));
   if (aij->colmap) {
 #if defined(PETSC_USE_CTABLE)
-    PetscCall(PetscTableDestroy(&aij->colmap));
+    PetscCall(PetscHMapIDestroy(&aij->colmap));
 #else
     PetscCall(PetscFree(aij->colmap));
 #endif
   }
 
-  /* make sure that B is assembled so we can access its values */
-  PetscCall(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
-  PetscCall(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
+  if (B) {
+    Mat_SeqAIJ        *Baij = (Mat_SeqAIJ *)B->data;
+    PetscInt           i, j, m = B->rmap->n, n = A->cmap->N, col, ct = 0, *garray = aij->garray, *nz;
+    PetscScalar        v;
+    const PetscScalar *ba;
 
-  /* invent new B and copy stuff over */
-  PetscCall(PetscMalloc1(m + 1, &nz));
-  for (i = 0; i < m; i++) nz[i] = Baij->i[i + 1] - Baij->i[i];
-  PetscCall(MatCreate(PETSC_COMM_SELF, &Bnew));
-  PetscCall(MatSetSizes(Bnew, m, n, m, n)); /* Bnew now uses A->cmap->N as its col size */
-  PetscCall(MatSetBlockSizesFromMats(Bnew, A, A));
-  PetscCall(MatSetType(Bnew, ((PetscObject)B)->type_name));
-  PetscCall(MatSeqAIJSetPreallocation(Bnew, 0, nz));
+    /* make sure that B is assembled so we can access its values */
+    PetscCall(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
+    PetscCall(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
 
-  if (Baij->nonew >= 0) { /* Inherit insertion error options (if positive). */
-    ((Mat_SeqAIJ *)Bnew->data)->nonew = Baij->nonew;
-  }
+    /* invent new B and copy stuff over */
+    PetscCall(PetscMalloc1(m + 1, &nz));
+    for (i = 0; i < m; i++) nz[i] = Baij->i[i + 1] - Baij->i[i];
+    PetscCall(MatCreate(PETSC_COMM_SELF, &Bnew));
+    PetscCall(MatSetSizes(Bnew, m, n, m, n)); /* Bnew now uses A->cmap->N as its col size */
+    PetscCall(MatSetBlockSizesFromMats(Bnew, A, A));
+    PetscCall(MatSetType(Bnew, ((PetscObject)B)->type_name));
+    PetscCall(MatSeqAIJSetPreallocation(Bnew, 0, nz));
 
-  /*
-   Ensure that B's nonzerostate is monotonically increasing.
-   Or should this follow the MatSetValues() loop to preserve B's nonzerstate across a MatDisAssemble() call?
-   */
-  Bnew->nonzerostate = B->nonzerostate;
-
-  PetscCall(PetscFree(nz));
-  PetscCall(MatSeqAIJGetArrayRead(B, &ba));
-  for (i = 0; i < m; i++) {
-    for (j = Baij->i[i]; j < Baij->i[i + 1]; j++) {
-      col = garray[Baij->j[ct]];
-      v   = ba[ct++];
-      PetscCall(MatSetValues(Bnew, 1, &i, 1, &col, &v, B->insertmode));
+    if (Baij->nonew >= 0) { /* Inherit insertion error options (if positive). */
+      ((Mat_SeqAIJ *)Bnew->data)->nonew = Baij->nonew;
     }
-  }
-  PetscCall(MatSeqAIJRestoreArrayRead(B, &ba));
 
+    /*
+     Ensure that B's nonzerostate is monotonically increasing.
+     Or should this follow the MatSetValues() loop to preserve B's nonzerstate across a MatDisAssemble() call?
+     */
+    Bnew->nonzerostate = B->nonzerostate;
+
+    PetscCall(PetscFree(nz));
+    PetscCall(MatSeqAIJGetArrayRead(B, &ba));
+    for (i = 0; i < m; i++) {
+      for (j = Baij->i[i]; j < Baij->i[i + 1]; j++) {
+        col = garray[Baij->j[ct]];
+        v   = ba[ct++];
+        PetscCall(MatSetValues(Bnew, 1, &i, 1, &col, &v, B->insertmode));
+      }
+    }
+    PetscCall(MatSeqAIJRestoreArrayRead(B, &ba));
+    PetscCall(MatDestroy(&B));
+  }
   PetscCall(PetscFree(aij->garray));
-  PetscCall(MatDestroy(&B));
 
   aij->B           = Bnew;
   A->was_assembled = PETSC_FALSE;
   A->assembled     = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*      ugly stuff added for Glenn someday we should fix this up */
@@ -195,7 +198,7 @@ PetscErrorCode MatDisAssemble_MPIAIJ(Mat A)
 static PetscInt *auglyrmapd = NULL, *auglyrmapo = NULL; /* mapping from the local ordering to the "diagonal" and "off-diagonal" parts of the local matrix */
 static Vec       auglydd = NULL, auglyoo = NULL;        /* work vectors used to scale the two parts of the local matrix */
 
-PetscErrorCode MatMPIAIJDiagonalScaleLocalSetUp(Mat inA, Vec scale)
+static PetscErrorCode MatMPIAIJDiagonalScaleLocalSetUp(Mat inA, Vec scale)
 {
   Mat_MPIAIJ *ina = (Mat_MPIAIJ *)inA->data; /*access private part of matrix */
   PetscInt    i, n, nt, cstart, cend, no, *garray = ina->garray, *lindices;
@@ -239,16 +242,7 @@ PetscErrorCode MatMPIAIJDiagonalScaleLocalSetUp(Mat inA, Vec scale)
   }
   PetscCall(PetscFree(r_rmapo));
   PetscCall(VecCreateSeq(PETSC_COMM_SELF, nt, &auglyoo));
-  PetscFunctionReturn(0);
-}
-
-PetscErrorCode MatMPIAIJDiagonalScaleLocal(Mat A, Vec scale)
-{
-  /* This routine should really be abandoned as it duplicates MatDiagonalScaleLocal */
-
-  PetscFunctionBegin;
-  PetscTryMethod(A, "MatDiagonalScaleLocal_C", (Mat, Vec), (A, scale));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatDiagonalScaleLocal_MPIAIJ(Mat A, Vec scale)
@@ -277,5 +271,5 @@ PetscErrorCode MatDiagonalScaleLocal_MPIAIJ(Mat A, Vec scale)
   PetscCall(VecRestoreArray(auglyoo, &o));
   /* column scale "off-diagonal" portion of local matrix */
   PetscCall(MatDiagonalScale(a->B, NULL, auglyoo));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

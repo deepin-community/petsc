@@ -1,7 +1,6 @@
-
 #include <../src/ksp/ksp/impls/lcd/lcdimpl.h>
 
-PetscErrorCode KSPSetUp_LCD(KSP ksp)
+static PetscErrorCode KSPSetUp_LCD(KSP ksp)
 {
   KSP_LCD *lcd     = (KSP_LCD *)ksp->data;
   PetscInt restart = lcd->restart;
@@ -12,7 +11,7 @@ PetscErrorCode KSPSetUp_LCD(KSP ksp)
 
   PetscCall(VecDuplicateVecs(ksp->work[0], restart + 1, &lcd->P));
   PetscCall(VecDuplicateVecs(ksp->work[0], restart + 1, &lcd->Q));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*     KSPSolve_LCD - This routine actually applies the left conjugate
@@ -26,7 +25,7 @@ PetscErrorCode KSPSetUp_LCD(KSP ksp)
 .     its - number of iterations used
 
 */
-PetscErrorCode KSPSolve_LCD(KSP ksp)
+static PetscErrorCode KSPSolve_LCD(KSP ksp)
 {
   PetscInt    it, j, max_k;
   PetscScalar alfa, beta, num, den, mone;
@@ -69,9 +68,9 @@ PetscErrorCode KSPSolve_LCD(KSP ksp)
 
   /* test for convergence */
   PetscCall((*ksp->converged)(ksp, 0, rnorm, &ksp->reason, ksp->cnvP));
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
-  VecCopy(R, lcd->P[0]);
+  PetscCall(VecCopy(R, lcd->P[0]));
 
   while (!ksp->reason && ksp->its < ksp->max_it) {
     it = 0;
@@ -116,28 +115,28 @@ PetscErrorCode KSPSolve_LCD(KSP ksp)
   }
   if (ksp->its >= ksp->max_it && !ksp->reason) ksp->reason = KSP_DIVERGED_ITS;
   PetscCall(VecCopy(X, ksp->vec_sol));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /*
        KSPDestroy_LCD - Frees all memory space used by the Krylov method
 
 */
-PetscErrorCode KSPReset_LCD(KSP ksp)
+static PetscErrorCode KSPReset_LCD(KSP ksp)
 {
   KSP_LCD *lcd = (KSP_LCD *)ksp->data;
 
   PetscFunctionBegin;
   if (lcd->P) PetscCall(VecDestroyVecs(lcd->restart + 1, &lcd->P));
   if (lcd->Q) PetscCall(VecDestroyVecs(lcd->restart + 1, &lcd->Q));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPDestroy_LCD(KSP ksp)
+static PetscErrorCode KSPDestroy_LCD(KSP ksp)
 {
   PetscFunctionBegin;
   PetscCall(KSPReset_LCD(ksp));
   PetscCall(PetscFree(ksp->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -148,7 +147,7 @@ PetscErrorCode KSPDestroy_LCD(KSP ksp)
       flags that information should be printed here.
 
 */
-PetscErrorCode KSPView_LCD(KSP ksp, PetscViewer viewer)
+static PetscErrorCode KSPView_LCD(KSP ksp, PetscViewer viewer)
 {
   KSP_LCD  *lcd = (KSP_LCD *)ksp->data;
   PetscBool iascii;
@@ -159,14 +158,14 @@ PetscErrorCode KSPView_LCD(KSP ksp, PetscViewer viewer)
     PetscCall(PetscViewerASCIIPrintf(viewer, "  restart=%" PetscInt_FMT "\n", lcd->restart));
     PetscCall(PetscViewerASCIIPrintf(viewer, "  happy breakdown tolerance %g\n", (double)lcd->haptol));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
     KSPSetFromOptions_LCD - Checks the options database for options related to the
                             LCD method.
 */
-PetscErrorCode KSPSetFromOptions_LCD(KSP ksp, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode KSPSetFromOptions_LCD(KSP ksp, PetscOptionItems *PetscOptionsObject)
 {
   PetscBool flg;
   KSP_LCD  *lcd = (KSP_LCD *)ksp->data;
@@ -177,42 +176,27 @@ PetscErrorCode KSPSetFromOptions_LCD(KSP ksp, PetscOptionItems *PetscOptionsObje
   PetscCheck(!flg || lcd->restart >= 1, PetscObjectComm((PetscObject)ksp), PETSC_ERR_ARG_OUTOFRANGE, "Restart must be positive");
   PetscCall(PetscOptionsReal("-ksp_lcd_haptol", "Tolerance for exact convergence (happy ending)", "KSPLCDSetHapTol", lcd->haptol, &lcd->haptol, &flg));
   PetscCheck(!flg || lcd->haptol >= 0.0, PetscObjectComm((PetscObject)ksp), PETSC_ERR_ARG_OUTOFRANGE, "Tolerance must be non-negative");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPLCD -  Implements the LCD (left conjugate direction) method
+   KSPLCD -  Implements the LCD (left conjugate direction) method
 
    Options Database Keys:
-+   -ksp_lcd_restart - number of vectors conjugate
--   -ksp_lcd_haptol - tolerance for exact convergence (happing ending)
++  -ksp_lcd_restart - number of vectors conjugate
+-  -ksp_lcd_haptol - tolerance for exact convergence (happy ending)
 
    Level: beginner
 
-    Note:
-    Support only for left preconditioning
+   Notes:
+   Support only for left preconditioning
 
-    References:
-+   * - J.Y. Yuan, G.H.Golub, R.J. Plemmons, and W.A.G. Cecilio. Semiconjugate
-     direction methods for real positive definite system. BIT Numerical
-     Mathematics, 44(1),2004.
-.   * - Y. Dai and J.Y. Yuan. Study on semiconjugate direction methods for
-     nonsymmetric systems. International Journal for Numerical Methods in
-     Engineering, 60, 2004.
-.   * - L. Catabriga, A.L.G.A. Coutinho, and L.P.Franca. Evaluating the LCD
-     algorithm for solving linear systems of equations arising from implicit
-     SUPG formulation of compressible flows. International Journal for
-     Numerical Methods in Engineering, 60, 2004
--   * - L. Catabriga, A. M. P. Valli, B. Z. Melotti, L. M. Pessoa,
-     A. L. G. A. Coutinho, Performance of LCD iterative method in the finite
-     element and finite difference solution of convection diffusion
-     equations,  Communications in Numerical Methods in Engineering, (Early
-     View).
+   See {cite}`yuan2004semi`, {cite}`dai2004study`, {cite}`catabriga2004evaluating`, and {cite}`catabriga2006performance`
 
-  Contributed by:
-  Lucia Catabriga <luciac@ices.utexas.edu>
+   Contributed by:
+   Lucia Catabriga <luciac@ices.utexas.edu>
 
-.seealso: [](chapter_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`,
+.seealso: [](ch_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPCG`,
           `KSPCGSetType()`, `KSPLCDSetRestart()`, `KSPLCDSetHapTol()`
 M*/
 
@@ -240,5 +224,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_LCD(KSP ksp)
   ksp->ops->setfromoptions = KSPSetFromOptions_LCD;
   ksp->ops->buildsolution  = KSPBuildSolutionDefault;
   ksp->ops->buildresidual  = KSPBuildResidualDefault;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

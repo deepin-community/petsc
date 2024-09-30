@@ -1,4 +1,3 @@
-
 /*
    This is where the abstract matrix operations are defined that are
   used for finite difference computations of Jacobians using coloring.
@@ -16,7 +15,7 @@ PetscErrorCode MatFDColoringSetF(MatFDColoring fd, Vec F)
   } else {
     fd->fset = PETSC_FALSE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #include <petscdraw.h>
@@ -38,7 +37,7 @@ static PetscErrorCode MatFDColoringView_Draw_Zoom(PetscDraw draw, void *Aa)
       PetscCall(PetscDrawRectangle(draw, x, y, x + 1, y + 1, i + 1, i + 1, i + 1, i + 1));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatFDColoringView_Draw(MatFDColoring fd, PetscViewer viewer)
@@ -50,7 +49,7 @@ static PetscErrorCode MatFDColoringView_Draw(MatFDColoring fd, PetscViewer viewe
   PetscFunctionBegin;
   PetscCall(PetscViewerDrawGetDraw(viewer, 0, &draw));
   PetscCall(PetscDrawIsNull(draw, &isnull));
-  if (isnull) PetscFunctionReturn(0);
+  if (isnull) PetscFunctionReturn(PETSC_SUCCESS);
 
   xr = fd->N;
   yr = fd->M;
@@ -65,32 +64,32 @@ static PetscErrorCode MatFDColoringView_Draw(MatFDColoring fd, PetscViewer viewe
   PetscCall(PetscDrawZoom(draw, MatFDColoringView_Draw_Zoom, fd));
   PetscCall(PetscObjectCompose((PetscObject)fd, "Zoomviewer", NULL));
   PetscCall(PetscDrawSave(draw));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   MatFDColoringView - Views a finite difference coloring context.
+  MatFDColoringView - Views a finite difference coloring context.
 
-   Collective on c
+  Collective
 
-   Input  Parameters:
-+  c - the coloring context
--  viewer - visualization context
+  Input Parameters:
++ c      - the coloring context
+- viewer - visualization context
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-   The available visualization contexts include
+  Notes:
+  The available visualization contexts include
 +     `PETSC_VIEWER_STDOUT_SELF` - standard output (default)
 .     `PETSC_VIEWER_STDOUT_WORLD` - synchronized standard
-        output where only the first processor opens
-        the file.  All other processors send their
-        data to the first processor to print.
+  output where only the first processor opens
+  the file.  All other processors send their
+  data to the first processor to print.
 -     `PETSC_VIEWER_DRAW_WORLD` - graphical display of nonzero structure
 
-     Since PETSc uses only a small number of basic colors (currently 33), if the coloring
-   involves more than 33 then some seemingly identical colors are displayed making it look
-   like an illegal coloring. This is just a graphical artifact.
+  Since PETSc uses only a small number of basic colors (currently 33), if the coloring
+  involves more than 33 then some seemingly identical colors are displayed making it look
+  like an illegal coloring. This is just a graphical artifact.
 
 .seealso: `Mat`, `MatFDColoring`, `MatFDColoringCreate()`
 @*/
@@ -136,16 +135,24 @@ PetscErrorCode MatFDColoringView(MatFDColoring c, PetscViewer viewer)
     }
     PetscCall(PetscViewerFlush(viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatFDColoringSetParameters - Sets the parameters for the sparse approximation of
-   a Jacobian matrix using finite differences.
+  MatFDColoringSetParameters - Sets the parameters for the sparse approximation of
+  a Jacobian matrix using finite differences.
 
-   Logically Collective
+  Logically Collective
 
-   The Jacobian is estimated with the differencing approximation
+  Input Parameters:
++ matfd - the coloring context
+. error - relative error
+- umin  - minimum allowable u-value magnitude
+
+  Level: advanced
+
+  Note:
+  The Jacobian is estimated with the differencing approximation
 .vb
        F'(u)_{:,i} = [F(u+h*dx_{i}) - F(u)]/h where
        htype = 'ds':
@@ -157,13 +164,6 @@ PetscErrorCode MatFDColoringView(MatFDColoring c, PetscViewer viewer)
          h = error_rel * sqrt(1 + ||u||)
 .ve
 
-   Input Parameters:
-+  matfd - the coloring context
-.  error - relative error
--  umin - minimum allowable u-value magnitude
-
-   Level: advanced
-
 .seealso: `Mat`, `MatFDColoring`, `MatFDColoringCreate()`, `MatFDColoringSetFromOptions()`
 @*/
 PetscErrorCode MatFDColoringSetParameters(MatFDColoring matfd, PetscReal error, PetscReal umin)
@@ -172,22 +172,22 @@ PetscErrorCode MatFDColoringSetParameters(MatFDColoring matfd, PetscReal error, 
   PetscValidHeaderSpecific(matfd, MAT_FDCOLORING_CLASSID, 1);
   PetscValidLogicalCollectiveReal(matfd, error, 2);
   PetscValidLogicalCollectiveReal(matfd, umin, 3);
-  if (error != PETSC_DEFAULT) matfd->error_rel = error;
-  if (umin != PETSC_DEFAULT) matfd->umin = umin;
-  PetscFunctionReturn(0);
+  if (error != (PetscReal)PETSC_DEFAULT) matfd->error_rel = error;
+  if (umin != (PetscReal)PETSC_DEFAULT) matfd->umin = umin;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatFDColoringSetBlockSize - Sets block size for efficient inserting entries of Jacobian matrix.
+  MatFDColoringSetBlockSize - Sets block size for efficient inserting entries of Jacobian matrix.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  coloring - the coloring context
-.  brows - number of rows in the block
--  bcols - number of columns in the block
+  Input Parameters:
++ matfd - the coloring context
+. brows - number of rows in the block
+- bcols - number of columns in the block
 
-   Level: intermediate
+  Level: intermediate
 
 .seealso: `Mat`, `MatFDColoring`, `MatFDColoringCreate()`, `MatFDColoringSetFromOptions()`
 @*/
@@ -199,23 +199,23 @@ PetscErrorCode MatFDColoringSetBlockSize(MatFDColoring matfd, PetscInt brows, Pe
   PetscValidLogicalCollectiveInt(matfd, bcols, 3);
   if (brows != PETSC_DEFAULT) matfd->brows = brows;
   if (bcols != PETSC_DEFAULT) matfd->bcols = bcols;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatFDColoringSetUp - Sets up the internal data structures of matrix coloring context for the later use.
+  MatFDColoringSetUp - Sets up the internal data structures of matrix coloring context for the later use.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  mat - the matrix containing the nonzero structure of the Jacobian
-.  iscoloring - the coloring of the matrix; usually obtained with `MatGetColoring()` or `DMCreateColoring()`
--  color - the matrix coloring context
+  Input Parameters:
++ mat        - the matrix containing the nonzero structure of the Jacobian
+. iscoloring - the coloring of the matrix; usually obtained with `MatGetColoring()` or `DMCreateColoring()`
+- color      - the matrix coloring context
 
-   Level: beginner
+  Level: beginner
 
-   Notes:
-   When the coloring type is `IS_COLORING_LOCAL` the coloring is in the local ordering of the unknowns.
+  Notes:
+  When the coloring type is `IS_COLORING_LOCAL` the coloring is in the local ordering of the unknowns.
 
 .seealso: `Mat`, `MatFDColoring`, `MatFDColoringCreate()`, `MatFDColoringDestroy()`
 @*/
@@ -226,7 +226,7 @@ PetscErrorCode MatFDColoringSetUp(Mat mat, ISColoring iscoloring, MatFDColoring 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(mat, MAT_CLASSID, 1);
   PetscValidHeaderSpecific(color, MAT_FDCOLORING_CLASSID, 3);
-  if (color->setupcalled) PetscFunctionReturn(0);
+  if (color->setupcalled) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscObjectCompareId((PetscObject)mat, color->matid, &eq));
   PetscCheck(eq, PetscObjectComm((PetscObject)mat), PETSC_ERR_ARG_WRONG, "Matrix used with MatFDColoringSetUp() must be that used with MatFDColoringCreate()");
 
@@ -235,22 +235,22 @@ PetscErrorCode MatFDColoringSetUp(Mat mat, ISColoring iscoloring, MatFDColoring 
 
   color->setupcalled = PETSC_TRUE;
   PetscCall(PetscLogEventEnd(MAT_FDColoringSetUp, mat, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   MatFDColoringGetFunction - Gets the function to use for computing the Jacobian.
+  MatFDColoringGetFunction - Gets the function to use for computing the Jacobian.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  coloring - the coloring context
+  Input Parameter:
+. matfd - the coloring context
 
-   Output Parameters:
-+  f - the function
--  fctx - the optional user-defined function context
+  Output Parameters:
++ f    - the function
+- fctx - the optional user-defined function context
 
-   Level: intermediate
+  Level: intermediate
 
 .seealso: `Mat`, `MatFDColoring`, `MatFDColoringCreate()`, `MatFDColoringSetFunction()`, `MatFDColoringSetFromOptions()`
 @*/
@@ -260,32 +260,42 @@ PetscErrorCode MatFDColoringGetFunction(MatFDColoring matfd, PetscErrorCode (**f
   PetscValidHeaderSpecific(matfd, MAT_FDCOLORING_CLASSID, 1);
   if (f) *f = matfd->f;
   if (fctx) *fctx = matfd->fctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   MatFDColoringSetFunction - Sets the function to use for computing the Jacobian.
+  MatFDColoringSetFunction - Sets the function to use for computing the Jacobian.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  coloring - the coloring context
-.  f - the function
--  fctx - the optional user-defined function context
+  Input Parameters:
++ matfd - the coloring context
+. f     - the function
+- fctx  - the optional user-defined function context
 
-   Calling sequence of (*f) function:
-    For `SNES`:    PetscErrorCode (*f)(SNES,Vec,Vec,void*)
-    If not using `SNES`: PetscErrorCode (*f)(void *dummy,Vec,Vec,void*) and dummy is ignored
+  Level: advanced
 
-   Level: advanced
+  Note:
+  `f` has two possible calling configurations\:
+$ PetscErrorCode f(SNES snes, Vec in, Vec out, void *fctx)
++ snes - the nonlinear solver `SNES` object
+. in   - the location where the Jacobian is to be computed
+. out  - the location to put the computed function value
+- fctx - the function context
 
-   Note:
-    This function is usually used automatically by `SNES` (when one uses `SNESSetJacobian()` with the argument
-     `SNESComputeJacobianDefaultColor()`) and only needs to be used by someone computing a matrix via coloring directly by
-     calling `MatFDColoringApply()`
+  and
+$ PetscErrorCode f(void *dummy, Vec in, Vec out, void *fctx)
++ dummy - an unused parameter
+. in    - the location where the Jacobian is to be computed
+. out   - the location to put the computed function value
+- fctx  - the function context
 
-   Fortran Note:
-    In Fortran you must call `MatFDColoringSetFunction()` for a coloring object to
+  This function is usually used automatically by `SNES` (when one uses `SNESSetJacobian()` with the argument
+  `SNESComputeJacobianDefaultColor()`) and only needs to be used by someone computing a matrix via coloring directly by
+  calling `MatFDColoringApply()`
+
+  Fortran Notes:
+  In Fortran you must call `MatFDColoringSetFunction()` for a coloring object to
   be used without `SNES` or within the `SNES` solvers.
 
 .seealso: `Mat`, `MatFDColoring`, `MatFDColoringCreate()`, `MatFDColoringGetFunction()`, `MatFDColoringSetFromOptions()`
@@ -296,16 +306,16 @@ PetscErrorCode MatFDColoringSetFunction(MatFDColoring matfd, PetscErrorCode (*f)
   PetscValidHeaderSpecific(matfd, MAT_FDCOLORING_CLASSID, 1);
   matfd->f    = f;
   matfd->fctx = fctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatFDColoringSetFromOptions - Sets coloring finite difference parameters from
-   the options database.
+  MatFDColoringSetFromOptions - Sets coloring finite difference parameters from
+  the options database.
 
-   Collective
+  Collective
 
-   The Jacobian, F'(u), is estimated with the differencing approximation
+  The Jacobian, F'(u), is estimated with the differencing approximation
 .vb
        F'(u)_{:,i} = [F(u+h*dx_{i}) - F(u)]/h where
        h = error_rel*u[i]                 if  abs(u[i]) > umin
@@ -313,18 +323,18 @@ PetscErrorCode MatFDColoringSetFunction(MatFDColoring matfd, PetscErrorCode (*f)
        dx_{i} = (0, ... 1, .... 0)
 .ve
 
-   Input Parameter:
-.  coloring - the coloring context
+  Input Parameter:
+. matfd - the coloring context
 
-   Options Database Keys:
-+  -mat_fd_coloring_err <err> - Sets <err> (square root of relative error in the function)
-.  -mat_fd_coloring_umin <umin> - Sets umin, the minimum allowable u-value magnitude
-.  -mat_fd_type - "wp" or "ds" (see MATMFFD_WP or MATMFFD_DS)
-.  -mat_fd_coloring_view - Activates basic viewing
-.  -mat_fd_coloring_view ::ascii_info - Activates viewing info
--  -mat_fd_coloring_view draw - Activates drawing
+  Options Database Keys:
++ -mat_fd_coloring_err <err>         - Sets <err> (square root of relative error in the function)
+. -mat_fd_coloring_umin <umin>       - Sets umin, the minimum allowable u-value magnitude
+. -mat_fd_type                       - "wp" or "ds" (see MATMFFD_WP or MATMFFD_DS)
+. -mat_fd_coloring_view              - Activates basic viewing
+. -mat_fd_coloring_view ::ascii_info - Activates viewing info
+- -mat_fd_coloring_view draw         - Activates drawing
 
-    Level: intermediate
+  Level: intermediate
 
 .seealso: `Mat`, `MatFDColoring`, `MatFDColoringCreate()`, `MatFDColoringView()`, `MatFDColoringSetParameters()`
 @*/
@@ -355,27 +365,27 @@ PetscErrorCode MatFDColoringSetFromOptions(MatFDColoring matfd)
   /* process any options handlers added with PetscObjectAddOptionsHandler() */
   PetscCall(PetscObjectProcessOptionsHandlers((PetscObject)matfd, PetscOptionsObject));
   PetscOptionsEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   MatFDColoringSetType - Sets the approach for computing the finite difference parameter
+  MatFDColoringSetType - Sets the approach for computing the finite difference parameter
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  coloring - the coloring context
--  type - either `MATMFFD_WP` or `MATMFFD_DS`
+  Input Parameters:
++ matfd - the coloring context
+- type  - either `MATMFFD_WP` or `MATMFFD_DS`
 
-   Options Database Keys:
-.  -mat_fd_type - "wp" or "ds"
+  Options Database Key:
+. -mat_fd_type - "wp" or "ds"
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   It is goofy that the argument type is `MatMFFDType` since the `MatFDColoring` actually computes the matrix entries
-         but the process of computing the entries is the same as as with the `MATMFFD` operation so we should reuse the names instead of
-         introducing another one.
+  Note:
+  It is goofy that the argument type is `MatMFFDType` since the `MatFDColoring` actually computes the matrix entries
+  but the process of computing the entries is the same as as with the `MATMFFD` operation so we should reuse the names instead of
+  introducing another one.
 
 .seealso: `Mat`, `MatFDColoring`, `MatFDColoringCreate()`, `MatFDColoringView()`, `MatFDColoringSetParameters()`
 @*/
@@ -390,10 +400,10 @@ PetscErrorCode MatFDColoringSetType(MatFDColoring matfd, MatMFFDType type)
   if (type[0] == 'w' && type[1] == 'p') matfd->htype = "wp";
   else if (type[0] == 'd' && type[1] == 's') matfd->htype = "ds";
   else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Unknown finite differencing type %s", type);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatFDColoringViewFromOptions(MatFDColoring fd, const char prefix[], const char optionname[])
+static PetscErrorCode MatFDColoringViewFromOptions(MatFDColoring fd, const char prefix[], const char optionname[])
 {
   PetscBool         flg;
   PetscViewer       viewer;
@@ -411,23 +421,23 @@ PetscErrorCode MatFDColoringViewFromOptions(MatFDColoring fd, const char prefix[
     PetscCall(PetscViewerPopFormat(viewer));
     PetscCall(PetscViewerDestroy(&viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatFDColoringCreate - Creates a matrix coloring context for finite difference
-   computation of Jacobians.
+  MatFDColoringCreate - Creates a matrix coloring context for finite difference
+  computation of Jacobians.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  mat - the matrix containing the nonzero structure of the Jacobian
--  iscoloring - the coloring of the matrix; usually obtained with `MatColoringCreate()` or `DMCreateColoring()`
+  Input Parameters:
++ mat        - the matrix containing the nonzero structure of the Jacobian
+- iscoloring - the coloring of the matrix; usually obtained with `MatColoringCreate()` or `DMCreateColoring()`
 
-    Output Parameter:
-.   color - the new coloring context
+  Output Parameter:
+. color - the new coloring context
 
-    Level: intermediate
+  Level: intermediate
 
 .seealso: `Mat`, `MatFDColoring`, `MatFDColoringDestroy()`, `SNESComputeJacobianDefaultColor()`, `ISColoringCreate()`,
           `MatFDColoringSetFunction()`, `MatFDColoringSetFromOptions()`, `MatFDColoringApply()`,
@@ -470,19 +480,19 @@ PetscErrorCode MatFDColoringCreate(Mat mat, ISColoring iscoloring, MatFDColoring
   *color = c;
   PetscCall(PetscObjectCompose((PetscObject)mat, "SNESMatFDColoring", (PetscObject)c));
   PetscCall(PetscLogEventEnd(MAT_FDColoringCreate, mat, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-    MatFDColoringDestroy - Destroys a matrix coloring context that was created
-    via `MatFDColoringCreate()`.
+  MatFDColoringDestroy - Destroys a matrix coloring context that was created
+  via `MatFDColoringCreate()`.
 
-    Collective
+  Collective
 
-    Input Parameter:
-.   c - coloring context
+  Input Parameter:
+. c - coloring context
 
-    Level: intermediate
+  Level: intermediate
 
 .seealso: `Mat`, `MatFDColoring`, `MatFDColoringCreate()`
 @*/
@@ -492,10 +502,10 @@ PetscErrorCode MatFDColoringDestroy(MatFDColoring *c)
   MatFDColoring color = *c;
 
   PetscFunctionBegin;
-  if (!*c) PetscFunctionReturn(0);
+  if (!*c) PetscFunctionReturn(PETSC_SUCCESS);
   if (--((PetscObject)color)->refct > 0) {
     *c = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /* we do not free the column arrays since their entries are owned by the ISs in color->isa */
@@ -514,29 +524,29 @@ PetscErrorCode MatFDColoringDestroy(MatFDColoring *c)
   PetscCall(VecDestroy(&color->w2));
   PetscCall(VecDestroy(&color->w3));
   PetscCall(PetscHeaderDestroy(c));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-    MatFDColoringGetPerturbedColumns - Returns the indices of the columns that
-      that are currently being perturbed.
+  MatFDColoringGetPerturbedColumns - Returns the indices of the columns that
+  that are currently being perturbed.
 
-    Not Collective
+  Not Collective
 
-    Input Parameter:
-.   coloring - coloring context created with `MatFDColoringCreate()`
+  Input Parameter:
+. coloring - coloring context created with `MatFDColoringCreate()`
 
-    Output Parameters:
-+   n - the number of local columns being perturbed
--   cols - the column indices, in global numbering
+  Output Parameters:
++ n    - the number of local columns being perturbed
+- cols - the column indices, in global numbering
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   IF the matrix type is `MATBAIJ`, then the block column indices are returned
+  Note:
+  IF the matrix type is `MATBAIJ`, then the block column indices are returned
 
-   Fortran Note:
-   This routine has a different interface for Fortran
+  Fortran Notes:
+  This routine has a different interface for Fortran
 .vb
      #include <petsc/finclude/petscmat.h>
           use petscmat
@@ -559,28 +569,28 @@ PetscErrorCode MatFDColoringGetPerturbedColumns(MatFDColoring coloring, PetscInt
   } else {
     *n = 0;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-    MatFDColoringApply - Given a matrix for which a `MatFDColoring` context
-    has been created, computes the Jacobian for a function via finite differences.
+  MatFDColoringApply - Given a matrix for which a `MatFDColoring` context
+  has been created, computes the Jacobian for a function via finite differences.
 
-    Collective
+  Collective
 
-    Input Parameters:
-+   mat - location to store Jacobian
-.   coloring - coloring context created with `MatFDColoringCreate()`
-.   x1 - location at which Jacobian is to be computed
--   sctx - context required by function, if this is being used with the SNES solver then it is `SNES` object, otherwise it is null
+  Input Parameters:
++ J        - location to store Jacobian
+. coloring - coloring context created with `MatFDColoringCreate()`
+. x1       - location at which Jacobian is to be computed
+- sctx     - context required by function, if this is being used with the SNES solver then it is `SNES` object, otherwise it is null
 
-    Options Database Keys:
-+    -mat_fd_type - "wp" or "ds"  (see `MATMFFD_WP` or `MATMFFD_DS`)
-.    -mat_fd_coloring_view - Activates basic viewing or coloring
-.    -mat_fd_coloring_view draw - Activates drawing of coloring
--    -mat_fd_coloring_view ::ascii_info - Activates viewing of coloring info
+  Options Database Keys:
++ -mat_fd_type                       - "wp" or "ds"  (see `MATMFFD_WP` or `MATMFFD_DS`)
+. -mat_fd_coloring_view              - Activates basic viewing or coloring
+. -mat_fd_coloring_view draw         - Activates drawing of coloring
+- -mat_fd_coloring_view ::ascii_info - Activates viewing of coloring info
 
-    Level: intermediate
+  Level: intermediate
 
 .seealso: `Mat`, `MatFDColoring`, `MatFDColoringCreate()`, `MatFDColoringDestroy()`, `MatFDColoringView()`, `MatFDColoringSetFunction()`, `MatFDColoringSetValues()`
 @*/
@@ -605,5 +615,5 @@ PetscErrorCode MatFDColoringApply(Mat J, MatFDColoring coloring, Vec x1, void *s
     PetscCall(MatFDColoringViewFromOptions(coloring, NULL, "-mat_fd_coloring_view"));
     coloring->viewed = PETSC_TRUE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

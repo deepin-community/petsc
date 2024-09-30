@@ -1,4 +1,3 @@
-
 static char help[] = "Tests the multigrid code.  The input parameters are:\n\
   -x N              Use a mesh in the x direction of N.  \n\
   -c N              Use N V-cycles.  \n\
@@ -190,7 +189,7 @@ PetscErrorCode residual(Mat mat, Vec bb, Vec xx, Vec rr)
   PetscCall(VecRestoreArrayRead(bb, &b));
   PetscCall(VecRestoreArray(xx, &x));
   PetscCall(VecRestoreArray(rr, &r));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode amult(Mat mat, Vec xx, Vec yy)
@@ -209,7 +208,7 @@ PetscErrorCode amult(Mat mat, Vec xx, Vec yy)
   for (i = 1; i < n1; i++) y[i] = -x[i + 1] - x[i - 1] + 2.0 * x[i];
   PetscCall(VecRestoreArrayRead(xx, &x));
   PetscCall(VecRestoreArray(yy, &y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode apply_pc(PC pc, Vec bb, Vec xx)
@@ -240,7 +239,7 @@ PetscErrorCode gauss_seidel(PC pc, Vec bb, Vec xx, Vec w, PetscReal rtol, PetscR
   }
   PetscCall(VecRestoreArrayRead(bb, &b));
   PetscCall(VecRestoreArray(xx, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode jacobi_smoother(PC pc, Vec bb, Vec xx, Vec w, PetscReal rtol, PetscReal abstol, PetscReal dtol, PetscInt m, PetscBool guesszero, PetscInt *its, PCRichardsonConvergedReason *reason)
@@ -267,7 +266,7 @@ PetscErrorCode jacobi_smoother(PC pc, Vec bb, Vec xx, Vec w, PetscReal rtol, Pet
   PetscCall(VecRestoreArrayRead(bb, &b));
   PetscCall(VecRestoreArray(xx, &x));
   PetscCall(VecRestoreArray(w, &r));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /*
    We know for this application that yy  and zz are the same
@@ -292,7 +291,7 @@ PetscErrorCode interpolate(Mat mat, Vec xx, Vec yy, Vec zz)
   }
   PetscCall(VecRestoreArrayRead(xx, &x));
   PetscCall(VecRestoreArray(yy, &y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode restrct(Mat mat, Vec rr, Vec bb)
@@ -313,7 +312,7 @@ PetscErrorCode restrct(Mat mat, Vec rr, Vec bb)
   }
   PetscCall(VecRestoreArrayRead(rr, &r));
   PetscCall(VecRestoreArray(bb, &b));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode Create1dLaplacian(PetscInt n, Mat *mat)
@@ -334,7 +333,7 @@ PetscErrorCode Create1dLaplacian(PetscInt n, Mat *mat)
   }
   PetscCall(MatAssemblyBegin(*mat, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(*mat, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode CalculateRhs(Vec u)
@@ -350,7 +349,7 @@ PetscErrorCode CalculateRhs(Vec u)
     uu = 2.0 * h * h;
     PetscCall(VecSetValues(u, 1, &i, &uu, INSERT_VALUES));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode CalculateSolution(PetscInt n, Vec *solution)
@@ -367,7 +366,7 @@ PetscErrorCode CalculateSolution(PetscInt n, Vec *solution)
     uu = x * (1. - x);
     PetscCall(VecSetValues(*solution, 1, &i, &uu, INSERT_VALUES));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode CalculateError(Vec solution, Vec u, Vec r, PetscReal *e)
@@ -377,7 +376,7 @@ PetscErrorCode CalculateError(Vec solution, Vec u, Vec r, PetscReal *e)
   PetscCall(VecWAXPY(r, -1.0, u, solution));
   PetscCall(VecNorm(r, NORM_2, e));
   PetscCall(VecNorm(r, NORM_1, e + 1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

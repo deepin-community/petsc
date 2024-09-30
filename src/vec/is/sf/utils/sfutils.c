@@ -2,28 +2,28 @@
 #include <petsc/private/sectionimpl.h>
 
 /*@
-   PetscSFSetGraphLayout - Set a parallel star forest via global indices and a `PetscLayout`
+  PetscSFSetGraphLayout - Set a parallel star forest via global indices and a `PetscLayout`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  sf - star forest
-.  layout - `PetscLayout` defining the global space for roots
-.  nleaves - number of leaf vertices on the current process, each of these references a root on any process
-.  ilocal - locations of leaves in leafdata buffers, pass NULL for contiguous storage
-.  localmode - copy mode for ilocal
--  gremote - root vertices in global numbering corresponding to leaves in ilocal
+  Input Parameters:
++ sf        - star forest
+. layout    - `PetscLayout` defining the global space for roots
+. nleaves   - number of leaf vertices on the current process, each of these references a root on any process
+. ilocal    - locations of leaves in leafdata buffers, pass NULL for contiguous storage
+. localmode - copy mode for ilocal
+- gremote   - root vertices in global numbering corresponding to leaves in ilocal
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   Global indices must lie in [0, N) where N is the global size of layout.
-   Leaf indices in ilocal get sorted; this means the user-provided array gets sorted if localmode is `PETSC_OWN_POINTER`.
+  Note:
+  Global indices must lie in [0, N) where N is the global size of layout.
+  Leaf indices in ilocal get sorted; this means the user-provided array gets sorted if localmode is `PETSC_OWN_POINTER`.
 
-   Developer Note:
-   Local indices which are the identity permutation in the range [0,nleaves) are discarded as they
-   encode contiguous storage. In such case, if localmode is `PETSC_OWN_POINTER`, the memory is deallocated as it is not
-   needed
+  Developer Notes:
+  Local indices which are the identity permutation in the range [0,nleaves) are discarded as they
+  encode contiguous storage. In such case, if localmode is `PETSC_OWN_POINTER`, the memory is deallocated as it is not
+  needed
 
 .seealso: `PetscSF`, `PetscSFGetGraphLayout()`, `PetscSFCreate()`, `PetscSFView()`, `PetscSFSetGraph()`, `PetscSFGetGraph()`
 @*/
@@ -35,6 +35,7 @@ PetscErrorCode PetscSFSetGraphLayout(PetscSF sf, PetscLayout layout, PetscInt nl
   PetscSFNode    *remote;
 
   PetscFunctionBegin;
+  PetscCall(PetscLayoutSetUp(layout));
   PetscCall(PetscLayoutGetLocalSize(layout, &nroots));
   PetscCall(PetscLayoutGetRanges(layout, &range));
   PetscCall(PetscMalloc1(nleaves, &remote));
@@ -52,29 +53,29 @@ PetscErrorCode PetscSFSetGraphLayout(PetscSF sf, PetscLayout layout, PetscInt nl
     }
   }
   PetscCall(PetscSFSetGraph(sf, nroots, nleaves, ilocal, localmode, remote, PETSC_OWN_POINTER));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscSFGetGraphLayout - Get the global indices and `PetscLayout` that describe this star forest
+  PetscSFGetGraphLayout - Get the global indices and `PetscLayout` that describe this star forest
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  sf - star forest
+  Input Parameter:
+. sf - star forest
 
-   Output Parameters:
-+  layout - `PetscLayout` defining the global space for roots
-.  nleaves - number of leaf vertices on the current process, each of these references a root on any process
-.  ilocal - locations of leaves in leafdata buffers, or NULL for contiguous storage
--  gremote - root vertices in global numbering corresponding to leaves in ilocal
+  Output Parameters:
++ layout  - `PetscLayout` defining the global space for roots
+. nleaves - number of leaf vertices on the current process, each of these references a root on any process
+. ilocal  - locations of leaves in leafdata buffers, or NULL for contiguous storage
+- gremote - root vertices in global numbering corresponding to leaves in ilocal
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-   The outputs are such that passing them as inputs to `PetscSFSetGraphLayout()` would lead to the same star forest.
-   The outputs layout and gremote are freshly created each time this function is called,
-   so they need to be freed by user and cannot be qualified as const.
+  Notes:
+  The outputs are such that passing them as inputs to `PetscSFSetGraphLayout()` would lead to the same star forest.
+  The outputs layout and gremote are freshly created each time this function is called,
+  so they need to be freed by user and cannot be qualified as const.
 
 .seealso: `PetscSF`, `PetscSFSetGraphLayout()`, `PetscSFCreate()`, `PetscSFView()`, `PetscSFSetGraph()`, `PetscSFGetGraph()`
 @*/
@@ -100,15 +101,15 @@ PetscErrorCode PetscSFGetGraphLayout(PetscSF sf, PetscLayout *layout, PetscInt *
   if (nleaves) *nleaves = nl;
   if (layout) *layout = lt;
   else PetscCall(PetscLayoutDestroy(&lt));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscSFSetGraphSection - Sets the `PetscSF` graph encoding the parallel dof overlap based upon the `PetscSection` describing the data layout.
 
   Input Parameters:
-+ sf - The `PetscSF`
-. localSection - `PetscSection` describing the local data layout
++ sf            - The `PetscSF`
+. localSection  - `PetscSection` describing the local data layout
 - globalSection - `PetscSection` describing the global data layout
 
   Level: developer
@@ -195,7 +196,7 @@ PetscErrorCode PetscSFSetGraphSection(PetscSF sf, PetscSection localSection, Pet
   PetscCheck(l == nleaves, comm, PETSC_ERR_PLIB, "Iteration error, l %" PetscInt_FMT " != nleaves %" PetscInt_FMT, l, nleaves);
   PetscCall(PetscLayoutDestroy(&layout));
   PetscCall(PetscSFSetGraph(sf, nroots, nleaves, local, PETSC_OWN_POINTER, remote, PETSC_OWN_POINTER));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -204,14 +205,17 @@ PetscErrorCode PetscSFSetGraphSection(PetscSF sf, PetscSection localSection, Pet
   Collective
 
   Input Parameters:
-+ sf - The `PetscSF`
++ sf          - The `PetscSF`
 - rootSection - Section defined on root space
 
   Output Parameters:
 + remoteOffsets - root offsets in leaf storage, or NULL
-- leafSection - Section defined on the leaf space
+- leafSection   - Section defined on the leaf space
 
   Level: advanced
+
+  Fortran Notes:
+  In Fortran, use PetscSFDistributeSectionF90()
 
 .seealso: `PetscSF`, `PetscSFCreate()`
 @*/
@@ -340,7 +344,7 @@ PetscErrorCode PetscSFDistributeSection(PetscSF sf, PetscSection rootSection, Pe
   PetscCall(PetscSFDestroy(&embedSF));
   PetscCall(PetscFree(sub));
   PetscCall(PetscLogEventEnd(PETSCSF_DistSect, sf, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -358,6 +362,9 @@ PetscErrorCode PetscSFDistributeSection(PetscSF sf, PetscSection rootSection, Pe
 
   Level: developer
 
+  Fortran Notes:
+  In Fortran, use PetscSFCreateRemoteOffsetsF90()
+
 .seealso: `PetscSF`, `PetscSFCreate()`
 @*/
 PetscErrorCode PetscSFCreateRemoteOffsets(PetscSF sf, PetscSection rootSection, PetscSection leafSection, PetscInt **remoteOffsets)
@@ -370,7 +377,7 @@ PetscErrorCode PetscSFCreateRemoteOffsets(PetscSF sf, PetscSection rootSection, 
   PetscFunctionBegin;
   *remoteOffsets = NULL;
   PetscCall(PetscSFGetGraph(sf, &numRoots, NULL, NULL, NULL));
-  if (numRoots < 0) PetscFunctionReturn(0);
+  if (numRoots < 0) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscLogEventBegin(PETSCSF_RemoteOff, sf, 0, 0, 0));
   PetscCall(PetscSectionGetChart(rootSection, &rpStart, &rpEnd));
   PetscCall(PetscSectionGetChart(leafSection, &lpStart, &lpEnd));
@@ -384,7 +391,7 @@ PetscErrorCode PetscSFCreateRemoteOffsets(PetscSF sf, PetscSection rootSection, 
   PetscCall(PetscSFBcastEnd(embedSF, MPIU_INT, &rootSection->atlasOff[-rpStart], &(*remoteOffsets)[-lpStart], MPI_REPLACE));
   PetscCall(PetscSFDestroy(&embedSF));
   PetscCall(PetscLogEventEnd(PETSCSF_RemoteOff, sf, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -393,20 +400,23 @@ PetscErrorCode PetscSFCreateRemoteOffsets(PetscSF sf, PetscSection rootSection, 
   Collective
 
   Input Parameters:
-+ sf - The `PetscSF`
-. rootSection - Data layout of remote points for outgoing data (this is usually the serial section)
++ sf            - The `PetscSF`
+. rootSection   - Data layout of remote points for outgoing data (this is usually the serial section)
 . remoteOffsets - Offsets for point data on remote processes (these are offsets from the root section), or NULL
-- leafSection - Data layout of local points for incoming data  (this is the distributed section)
+- leafSection   - Data layout of local points for incoming data  (this is the distributed section)
 
-  Output Parameters:
-- sectionSF - The new `PetscSF`
+  Output Parameter:
+. sectionSF - The new `PetscSF`
 
   Level: advanced
 
-  Note:
+  Notes:
   Either rootSection or remoteOffsets can be specified
 
-.seealso:  `PetscSF`, `PetscSFCreate()`
+  Fortran Notes:
+  In Fortran, use PetscSFCreateSectionSFF90()
+
+.seealso: `PetscSF`, `PetscSFCreate()`
 @*/
 PetscErrorCode PetscSFCreateSectionSF(PetscSF sf, PetscSection rootSection, PetscInt remoteOffsets[], PetscSection leafSection, PetscSF *sectionSF)
 {
@@ -421,16 +431,16 @@ PetscErrorCode PetscSFCreateSectionSF(PetscSF sf, PetscSection rootSection, Pets
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sf, PETSCSF_CLASSID, 1);
-  PetscValidPointer(rootSection, 2);
-  /* Cannot check PetscValidIntPointer(remoteOffsets,3) because it can be NULL if sf does not reference any points in leafSection */
-  PetscValidPointer(leafSection, 4);
-  PetscValidPointer(sectionSF, 5);
+  PetscAssertPointer(rootSection, 2);
+  /* Cannot check PetscAssertPointer(remoteOffsets,3) because it can be NULL if sf does not reference any points in leafSection */
+  PetscAssertPointer(leafSection, 4);
+  PetscAssertPointer(sectionSF, 5);
   PetscCall(PetscObjectGetComm((PetscObject)sf, &comm));
   PetscCall(PetscSFCreate(comm, sectionSF));
   PetscCall(PetscSectionGetChart(leafSection, &lpStart, &lpEnd));
   PetscCall(PetscSectionGetStorageSize(rootSection, &numSectionRoots));
   PetscCall(PetscSFGetGraph(sf, &numRoots, &numPoints, &localPoints, &remotePoints));
-  if (numRoots < 0) PetscFunctionReturn(0);
+  if (numRoots < 0) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscLogEventBegin(PETSCSF_SectSF, sf, 0, 0, 0));
   for (i = 0; i < numPoints; ++i) {
     PetscInt localPoint = localPoints ? localPoints[i] : i;
@@ -465,22 +475,22 @@ PetscErrorCode PetscSFCreateSectionSF(PetscSF sf, PetscSection rootSection, Pets
   PetscCall(PetscSFSetGraph(*sectionSF, numSectionRoots, numIndices, localIndices, PETSC_OWN_POINTER, remoteIndices, PETSC_OWN_POINTER));
   PetscCall(PetscSFSetUp(*sectionSF));
   PetscCall(PetscLogEventEnd(PETSCSF_SectSF, sf, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscSFCreateFromLayouts - Creates a parallel star forest mapping two `PetscLayout` objects
+  PetscSFCreateFromLayouts - Creates a parallel star forest mapping two `PetscLayout` objects
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  rmap - `PetscLayout` defining the global root space
--  lmap - `PetscLayout` defining the global leaf space
+  Input Parameters:
++ rmap - `PetscLayout` defining the global root space
+- lmap - `PetscLayout` defining the global leaf space
 
-   Output Parameter:
-.  sf - The parallel star forest
+  Output Parameter:
+. sf - The parallel star forest
 
-   Level: intermediate
+  Level: intermediate
 
 .seealso: `PetscSF`, `PetscSFCreate()`, `PetscLayoutCreate()`, `PetscSFSetGraphLayout()`
 @*/
@@ -495,7 +505,7 @@ PetscErrorCode PetscSFCreateFromLayouts(PetscLayout rmap, PetscLayout lmap, Pets
   PetscMPIInt  flg;
 
   PetscFunctionBegin;
-  PetscValidPointer(sf, 3);
+  PetscAssertPointer(sf, 3);
   PetscCheck(rmap->setupcalled, rcomm, PETSC_ERR_ARG_WRONGSTATE, "Root layout not setup");
   PetscCheck(lmap->setupcalled, lcomm, PETSC_ERR_ARG_WRONGSTATE, "Leaf layout not setup");
   PetscCallMPI(MPI_Comm_compare(rcomm, lcomm, &flg));
@@ -513,7 +523,7 @@ PetscErrorCode PetscSFCreateFromLayouts(PetscLayout rmap, PetscLayout lmap, Pets
   }
   PetscCall(PetscSFSetGraph(*sf, nroots, nleaves, NULL, PETSC_OWN_POINTER, remote, PETSC_COPY_VALUES));
   PetscCall(PetscFree(remote));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* TODO: handle nooffprocentries like MatZeroRowsMapLocal_Private, since this code is the same */
@@ -573,7 +583,7 @@ PetscErrorCode PetscLayoutMapLocal(PetscLayout map, PetscInt N, const PetscInt i
   if (on) *on = len;
   if (oidxs) *oidxs = lidxs;
   if (ogidxs) *ogidxs = work;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -582,19 +592,19 @@ PetscErrorCode PetscLayoutMapLocal(PetscLayout map, PetscInt N, const PetscInt i
   Collective
 
   Input Parameters:
-+ layout - `PetscLayout` defining the global index space and the rank that brokers each index
-. numRootIndices - size of rootIndices
-. rootIndices - `PetscInt` array of global indices of which this process requests ownership
++ layout           - `PetscLayout` defining the global index space and the rank that brokers each index
+. numRootIndices   - size of rootIndices
+. rootIndices      - `PetscInt` array of global indices of which this process requests ownership
 . rootLocalIndices - root local index permutation (NULL if no permutation)
-. rootLocalOffset - offset to be added to root local indices
-. numLeafIndices - size of leafIndices
-. leafIndices - `PetscInt` array of global indices with which this process requires data associated
+. rootLocalOffset  - offset to be added to root local indices
+. numLeafIndices   - size of leafIndices
+. leafIndices      - `PetscInt` array of global indices with which this process requires data associated
 . leafLocalIndices - leaf local index permutation (NULL if no permutation)
-- leafLocalOffset - offset to be added to leaf local indices
+- leafLocalOffset  - offset to be added to leaf local indices
 
   Output Parameters:
 + sfA - star forest representing the communication pattern from the layout space to the leaf space (NULL if not needed)
-- sf - star forest representing the communication pattern from the root space to the leaf space
+- sf  - star forest representing the communication pattern from the root space to the leaf space
 
   Level: advanced
 
@@ -670,7 +680,7 @@ would build the following PetscSF
   If (leafIndices, leafLocalIndices, leafLocalOffset) == (rootIndices, rootLocalIndices, rootLocalOffset), the output
   star forest is almost identity, so will only include non-trivial part of the map.
 
-  Developer Note:
+  Developer Notes:
   Current approach of a process of the highest rank gaining the ownership may cause load imbalance; consider using
   hash(rank, root_local_index) as the bid for the ownership determination.
 
@@ -689,12 +699,12 @@ PetscErrorCode PetscSFCreateByMatchingIndices(PetscLayout layout, PetscInt numRo
   PetscBool flag;
 
   PetscFunctionBegin;
-  if (rootIndices) PetscValidIntPointer(rootIndices, 3);
-  if (rootLocalIndices) PetscValidIntPointer(rootLocalIndices, 4);
-  if (leafIndices) PetscValidIntPointer(leafIndices, 7);
-  if (leafLocalIndices) PetscValidIntPointer(leafLocalIndices, 8);
-  if (sfA) PetscValidPointer(sfA, 10);
-  PetscValidPointer(sf, 11);
+  if (rootIndices) PetscAssertPointer(rootIndices, 3);
+  if (rootLocalIndices) PetscAssertPointer(rootLocalIndices, 4);
+  if (leafIndices) PetscAssertPointer(leafIndices, 7);
+  if (leafLocalIndices) PetscAssertPointer(leafLocalIndices, 8);
+  if (sfA) PetscAssertPointer(sfA, 10);
+  PetscAssertPointer(sf, 11);
   PetscCheck(numRootIndices >= 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "numRootIndices (%" PetscInt_FMT ") must be non-negative", numRootIndices);
   PetscCheck(numLeafIndices >= 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "numLeafIndices (%" PetscInt_FMT ") must be non-negative", numLeafIndices);
   PetscCallMPI(MPI_Comm_size(comm, &size));
@@ -709,13 +719,13 @@ PetscErrorCode PetscSFCreateByMatchingIndices(PetscLayout layout, PetscInt numRo
   N1 = PETSC_MIN_INT;
   for (i = 0; i < numRootIndices; i++)
     if (rootIndices[i] > N1) N1 = rootIndices[i];
-  PetscCallMPI(MPI_Allreduce(MPI_IN_PLACE, &N1, 1, MPIU_INT, MPI_MAX, comm));
+  PetscCall(MPIU_Allreduce(MPI_IN_PLACE, &N1, 1, MPIU_INT, MPI_MAX, comm));
   PetscCheck(N1 < N, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "Max. root index (%" PetscInt_FMT ") out of layout range [0,%" PetscInt_FMT ")", N1, N);
   if (!flag) {
     N1 = PETSC_MIN_INT;
     for (i = 0; i < numLeafIndices; i++)
       if (leafIndices[i] > N1) N1 = leafIndices[i];
-    PetscCallMPI(MPI_Allreduce(MPI_IN_PLACE, &N1, 1, MPIU_INT, MPI_MAX, comm));
+    PetscCall(MPIU_Allreduce(MPI_IN_PLACE, &N1, 1, MPIU_INT, MPI_MAX, comm));
     PetscCheck(N1 < N, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "Max. leaf index (%" PetscInt_FMT ") out of layout range [0,%" PetscInt_FMT ")", N1, N);
   }
 #endif
@@ -774,5 +784,68 @@ PetscErrorCode PetscSFCreateByMatchingIndices(PetscLayout layout, PetscInt numRo
   PetscCall(PetscSFCreate(comm, sf));
   PetscCall(PetscSFSetFromOptions(*sf));
   PetscCall(PetscSFSetGraph(*sf, rootLocalOffset + numRootIndices, nleaves, ilocal, PETSC_OWN_POINTER, iremote, PETSC_OWN_POINTER));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/*@
+  PetscSFMerge - append/merge indices of `sfb` into `sfa`, with preference for `sfb`
+
+  Collective
+
+  Input Parameters:
++ sfa - default `PetscSF`
+- sfb - additional edges to add/replace edges in sfa
+
+  Output Parameter:
+. merged - new `PetscSF` with combined edges
+
+  Level: intermediate
+
+.seealso: `PetscSFCompose()`
+@*/
+PetscErrorCode PetscSFMerge(PetscSF sfa, PetscSF sfb, PetscSF *merged)
+{
+  PetscInt maxleaf;
+
+  PetscFunctionBegin;
+  PetscValidHeaderSpecific(sfa, PETSCSF_CLASSID, 1);
+  PetscValidHeaderSpecific(sfb, PETSCSF_CLASSID, 2);
+  PetscCheckSameComm(sfa, 1, sfb, 2);
+  PetscAssertPointer(merged, 3);
+  {
+    PetscInt aleaf, bleaf;
+    PetscCall(PetscSFGetLeafRange(sfa, NULL, &aleaf));
+    PetscCall(PetscSFGetLeafRange(sfb, NULL, &bleaf));
+    maxleaf = PetscMax(aleaf, bleaf) + 1; // One more than the last index
+  }
+  PetscInt          *clocal, aroots, aleaves, broots, bleaves;
+  PetscSFNode       *cremote;
+  const PetscInt    *alocal, *blocal;
+  const PetscSFNode *aremote, *bremote;
+  PetscCall(PetscMalloc2(maxleaf, &clocal, maxleaf, &cremote));
+  for (PetscInt i = 0; i < maxleaf; i++) clocal[i] = -1;
+  PetscCall(PetscSFGetGraph(sfa, &aroots, &aleaves, &alocal, &aremote));
+  PetscCall(PetscSFGetGraph(sfb, &broots, &bleaves, &blocal, &bremote));
+  PetscCheck(aroots == broots, PETSC_COMM_SELF, PETSC_ERR_ARG_INCOMP, "Both sfa and sfb must have the same root space");
+  for (PetscInt i = 0; i < aleaves; i++) {
+    PetscInt a = alocal ? alocal[i] : i;
+    clocal[a]  = a;
+    cremote[a] = aremote[i];
+  }
+  for (PetscInt i = 0; i < bleaves; i++) {
+    PetscInt b = blocal ? blocal[i] : i;
+    clocal[b]  = b;
+    cremote[b] = bremote[i];
+  }
+  PetscInt nleaves = 0;
+  for (PetscInt i = 0; i < maxleaf; i++) {
+    if (clocal[i] < 0) continue;
+    clocal[nleaves]  = clocal[i];
+    cremote[nleaves] = cremote[i];
+    nleaves++;
+  }
+  PetscCall(PetscSFCreate(PetscObjectComm((PetscObject)sfa), merged));
+  PetscCall(PetscSFSetGraph(*merged, aroots, nleaves, clocal, PETSC_COPY_VALUES, cremote, PETSC_COPY_VALUES));
+  PetscCall(PetscFree2(clocal, cremote));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

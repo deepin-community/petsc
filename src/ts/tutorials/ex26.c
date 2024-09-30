@@ -1,4 +1,3 @@
-
 static char help[] = "Transient nonlinear driven cavity in 2d.\n\
   \n\
 The 2D driven cavity problem is solved in a velocity-vorticity formulation.\n\
@@ -213,6 +212,7 @@ PetscErrorCode FormInitialSolution(TS ts, Vec X, AppCtx *user)
   PetscReal grashof, dx;
   Field   **x;
 
+  PetscFunctionBeginUser;
   grashof = user->grashof;
   PetscCall(TSGetDM(ts, &da));
   PetscCall(DMDAGetInfo(da, 0, &mx, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
@@ -251,7 +251,7 @@ PetscErrorCode FormInitialSolution(TS ts, Vec X, AppCtx *user)
      Restore vector
   */
   PetscCall(DMDAVecRestoreArray(da, X, &x));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode FormIFunctionLocal(DMDALocalInfo *info, PetscReal ptime, Field **x, Field **xdot, Field **f, void *ptr)
@@ -385,7 +385,7 @@ PetscErrorCode FormIFunctionLocal(DMDALocalInfo *info, PetscReal ptime, Field **
      Flop count (multiply-adds are counted as 2 operations)
   */
   PetscCall(PetscLogFlops(84.0 * info->ym * info->xm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

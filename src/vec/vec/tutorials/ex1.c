@@ -1,4 +1,3 @@
-
 static char help[] = "Basic vector routines.\n\n";
 
 /*
@@ -27,18 +26,6 @@ int main(int argc, char **argv)
      When using VecCreate(), VecSetSizes() and VecSetFromOptions(), the vector format
      (currently parallel, shared, or sequential) is determined at runtime.  Also, the
      parallel partitioning of the vector is determined by PETSc at runtime.
-
-     Routines for creating particular vector types directly are:
-        VecCreateSeq() - uniprocessor vector
-        VecCreateMPI() - distributed vector, where the user can
-                         determine the parallel partitioning
-        VecCreateShared() - parallel vector that uses shared memory
-                            (available only on the SGI); otherwise,
-                            is the same as VecCreateMPI()
-
-     With VecCreate(), VecSetSizes() and VecSetFromOptions() the option -vec_type mpi or
-     -vec_type shared causes the particular type of vector to be formed.
-
   */
   PetscCall(VecCreate(PETSC_COMM_WORLD, &x));
   PetscCall(VecSetSizes(x, PETSC_DECIDE, n));
@@ -132,6 +119,15 @@ int main(int argc, char **argv)
   if (v > -PETSC_SMALL && v < PETSC_SMALL) v = 0.0;
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "VecPointwiseMult %g\n", (double)v));
 
+  PetscCall(VecPointwiseDivide(w, x, y));
+  PetscCall(VecNorm(w, NORM_2, &norm));
+  v = norm - 9.0 * PetscSqrtReal((PetscReal)n);
+  if (v > -PETSC_SMALL && v < PETSC_SMALL) v = 0.0;
+  PetscCall(PetscPrintf(PETSC_COMM_WORLD, "VecPointwiseDivide %g\n", (double)v));
+
+  PetscCall(VecSetValue(y, 0, 0.0, INSERT_VALUES));
+  PetscCall(VecAssemblyBegin(y));
+  PetscCall(VecAssemblyEnd(y));
   PetscCall(VecPointwiseDivide(w, x, y));
   PetscCall(VecNorm(w, NORM_2, &norm));
   v = norm - 9.0 * PetscSqrtReal((PetscReal)n);

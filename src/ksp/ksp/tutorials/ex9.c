@@ -1,4 +1,3 @@
-
 static char help[] = "The solution of 2 different linear systems with different linear solvers.\n\
 Also, this example illustrates the repeated\n\
 solution of linear systems, while reusing matrix, vector, and solver data\n\
@@ -33,9 +32,7 @@ int main(int argc, char **args)
   PetscBool     flg = PETSC_FALSE, unsym = PETSC_TRUE;
   PetscScalar   v;
   PetscMPIInt   rank, size;
-#if defined(PETSC_USE_LOG)
   PetscLogStage stages[3];
-#endif
 
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &args, (char *)0, help));
@@ -412,6 +409,7 @@ PetscErrorCode CheckError(Vec u, Vec x, Vec b, PetscInt its, PetscReal tol, Pets
   PetscScalar none = -1.0;
   PetscReal   norm;
 
+  PetscFunctionBeginUser;
   PetscCall(PetscLogEventBegin(CHECK_ERROR, u, x, b, 0));
 
   /*
@@ -422,7 +420,7 @@ PetscErrorCode CheckError(Vec u, Vec x, Vec b, PetscInt its, PetscReal tol, Pets
   PetscCall(VecNorm(b, NORM_2, &norm));
   if (norm > tol) PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Norm of error %g, Iterations %" PetscInt_FMT "\n", (double)norm, its));
   PetscCall(PetscLogEventEnd(CHECK_ERROR, u, x, b, 0));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------- */
 /*
@@ -439,6 +437,7 @@ PetscErrorCode MyKSPMonitor(KSP ksp, PetscInt n, PetscReal rnorm, void *dummy)
 {
   Vec x;
 
+  PetscFunctionBeginUser;
   /*
      Build the solution vector
   */
@@ -455,7 +454,7 @@ PetscErrorCode MyKSPMonitor(KSP ksp, PetscInt n, PetscReal rnorm, void *dummy)
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "iteration %" PetscInt_FMT " solution vector:\n", n));
   PetscCall(VecView(x, PETSC_VIEWER_STDOUT_WORLD));
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "iteration %" PetscInt_FMT " KSP Residual norm %14.12e \n", n, (double)rnorm));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

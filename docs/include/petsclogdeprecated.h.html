@@ -1,0 +1,200 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/include/petsclogdeprecated.h">Actual source code: petsclogdeprecated.h</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2024-03-29T14:12:27+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#pragma once</font>
+
+<a name="line3">  3: </a>#include <A href="petsclog.h.html">&lt;petsclog.h&gt;</A>
+
+<a name="line5">  5: </a><font color="#B22222">/* SUBMANSEC = Profiling */</font>
+
+<a name="line7">  7: </a><font color="#B22222">/* These data structures are no longer used by any non-deprecated PETSc interface functions */</font>
+
+<a name="line9">  9: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line10"> 10: </a>  char        *name;
+<a name="line11"> 11: </a>  <a href="../manualpages/Sys/PetscClassId.html">PetscClassId</a> classid;
+<a name="line12"> 12: </a>} PetscClassRegInfo;
+
+<a name="line14"> 14: </a><font color="#4169E1">typedef struct _n_PetscClassRegLog *PetscClassRegLog;</font>
+<a name="line15"> 15: </a><font color="#4169E1"><a name="_n_PetscClassRegLog"></a>struct _n_PetscClassRegLog </font>{
+<a name="line16"> 16: </a>  int                numClasses;
+<a name="line17"> 17: </a>  int                maxClasses;
+<a name="line18"> 18: </a>  PetscClassRegInfo *classInfo;
+<a name="line19"> 19: </a>};
+
+<a name="line21"> 21: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line22"> 22: </a>  <a href="../manualpages/Sys/PetscClassId.html">PetscClassId</a>   id;
+<a name="line23"> 23: </a>  int            creations;
+<a name="line24"> 24: </a>  int            destructions;
+<a name="line25"> 25: </a>  <a href="../manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> mem;
+<a name="line26"> 26: </a>  <a href="../manualpages/Sys/PetscLogDouble.html">PetscLogDouble</a> descMem;
+<a name="line27"> 27: </a>} PetscClassPerfInfo;
+
+<a name="line29"> 29: </a><font color="#4169E1">typedef struct _n_PetscClassPerfLog *PetscClassPerfLog;</font>
+<a name="line30"> 30: </a><font color="#4169E1"><a name="_n_PetscClassPerfLog"></a>struct _n_PetscClassPerfLog </font>{
+<a name="line31"> 31: </a>  int                 numClasses;
+<a name="line32"> 32: </a>  int                 maxClasses;
+<a name="line33"> 33: </a>  PetscClassPerfInfo *classInfo;
+<a name="line34"> 34: </a>};
+
+<a name="line36"> 36: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line37"> 37: </a>  char        *name;
+<a name="line38"> 38: </a>  <a href="../manualpages/Sys/PetscClassId.html">PetscClassId</a> classid;
+<a name="line39"> 39: </a>  <a href="../manualpages/Sys/PetscBool.html">PetscBool</a>    collective;
+<a name="line40"> 40: </a><font color="#A020F0">#if defined(PETSC_HAVE_TAU_PERFSTUBS)</font>
+<a name="line41"> 41: </a>  void *timer;
+<a name="line42"> 42: </a><font color="#A020F0">#endif</font>
+<a name="line43"> 43: </a><font color="#A020F0">#if defined(PETSC_HAVE_MPE)</font>
+<a name="line44"> 44: </a>  int mpe_id_begin;
+<a name="line45"> 45: </a>  int mpe_id_end;
+<a name="line46"> 46: </a><font color="#A020F0">#endif</font>
+<a name="line47"> 47: </a>} PetscEventRegInfo;
+
+<a name="line49"> 49: </a><font color="#4169E1">typedef struct _n_PetscEventRegLog *PetscEventRegLog;</font>
+<a name="line50"> 50: </a><font color="#4169E1"><a name="_n_PetscEventRegLog"></a>struct _n_PetscEventRegLog </font>{
+<a name="line51"> 51: </a>  int                numEvents;
+<a name="line52"> 52: </a>  int                maxEvents;
+<a name="line53"> 53: </a>  PetscEventRegInfo *eventInfo; <font color="#B22222">/* The registration information for each event */</font>
+<a name="line54"> 54: </a>};
+
+<a name="line56"> 56: </a><font color="#4169E1">typedef struct _n_PetscEventPerfLog *PetscEventPerfLog;</font>
+<a name="line57"> 57: </a><font color="#4169E1"><a name="_n_PetscEventPerfLog"></a>struct _n_PetscEventPerfLog </font>{
+<a name="line58"> 58: </a>  int                 numEvents;
+<a name="line59"> 59: </a>  int                 maxEvents;
+<a name="line60"> 60: </a>  <a href="../manualpages/Profiling/PetscEventPerfInfo.html">PetscEventPerfInfo</a> *eventInfo;
+<a name="line61"> 61: </a>};
+
+<a name="line63"> 63: </a><font color="#4169E1"><a name="_PetscStageInfo"></a>typedef struct _PetscStageInfo </font>{
+<a name="line64"> 64: </a>  char              *name;
+<a name="line65"> 65: </a>  <a href="../manualpages/Sys/PetscBool.html">PetscBool</a>          used;
+<a name="line66"> 66: </a>  <a href="../manualpages/Profiling/PetscEventPerfInfo.html">PetscEventPerfInfo</a> perfInfo;
+<a name="line67"> 67: </a>  PetscClassPerfLog  classLog;
+<a name="line68"> 68: </a><font color="#A020F0">#if defined(PETSC_HAVE_TAU_PERFSTUBS)</font>
+<a name="line69"> 69: </a>  void *timer;
+<a name="line70"> 70: </a><font color="#A020F0">#endif</font>
+<a name="line71"> 71: </a>} PetscStageInfo;
+
+<a name="line73"> 73: </a><font color="#4169E1">typedef struct _n_PetscStageLog *PetscStageLog;</font>
+<a name="line74"> 74: </a><font color="#4169E1"><a name="_n_PetscStageLog"></a>struct _n_PetscStageLog </font>{
+<a name="line75"> 75: </a>  int              numStages;
+<a name="line76"> 76: </a>  int              maxStages;
+<a name="line77"> 77: </a>  PetscIntStack    stack;
+<a name="line78"> 78: </a>  int              curStage;
+<a name="line79"> 79: </a>  PetscStageInfo  *stageInfo;
+<a name="line80"> 80: </a>  PetscEventRegLog eventLog;
+<a name="line81"> 81: </a>  PetscClassRegLog classLog;
+<a name="line82"> 82: </a>};
+
+<a name="line84"> 84: </a>PETSC_DEPRECATED_OBJECT(3, 20, 0, <font color="#666666">"<a href="../manualpages/Profiling/PetscLogGetState.html">PetscLogGetState</a>()"</font>, <font color="#666666">"PetscStageLog is no longer used."</font>) PETSC_UNUSED static PetscStageLog petsc_stageLog = <a href="../manualpages/Sys/PETSC_NULLPTR.html">PETSC_NULLPTR</a>;
+
+<a name="line86"> 86: </a><font color="#B22222">/*@C</font>
+<a name="line87"> 87: </a><font color="#B22222">  <a href="../manualpages/Profiling/PetscLogGetStageLog.html">PetscLogGetStageLog</a> - Deprecated.</font>
+
+<a name="line89"> 89: </a><font color="#B22222">  Level: deprecated</font>
+
+<a name="line91"> 91: </a><font color="#B22222">  Note:</font>
+<a name="line92"> 92: </a><font color="#B22222">  PETSc performance logging and profiling is now split up between the logging state (`<a href="../manualpages/Profiling/PetscLogState.html">PetscLogState</a>`) and the log handler (`<a href="../manualpages/Profiling/PetscLogHandler.html">PetscLogHandler</a>`).</font>
+<a name="line93"> 93: </a><font color="#B22222">  The global logging state is obtained with `<a href="../manualpages/Profiling/PetscLogGetState.html">PetscLogGetState</a>()`; many log handlers may be used at once (`<a href="../manualpages/Profiling/PetscLogHandlerStart.html">PetscLogHandlerStart</a>()`) and the default log handler is not directly accessible.</font>
+
+<a name="line95"> 95: </a><font color="#B22222">.seealso: [](ch_profiling), `<a href="../manualpages/Profiling/PetscLogEventGetPerfInfo.html">PetscLogEventGetPerfInfo</a>()`</font>
+<a name="line96"> 96: </a><font color="#B22222">@*/</font>
+<a name="line97"> 97: </a>PETSC_DEPRECATED_FUNCTION(3, 20, 0, <font color="#666666">"<a href="../manualpages/Profiling/PetscLogGetState.html">PetscLogGetState</a>()"</font>, <font color="#666666">"PetscStageLog is no longer used."</font>) static inline <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../manualpages/Profiling/PetscLogGetStageLog.html">PetscLogGetStageLog</a>(PetscStageLog *s)
+<a name="line98"> 98: </a>{
+<a name="line99"> 99: </a>  *s = <a href="../manualpages/Sys/PETSC_NULLPTR.html">PETSC_NULLPTR</a>;
+<a name="line100">100: </a>  <font color="#4169E1">return</font> <a href="../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>;
+<a name="line101">101: </a>}
+
+<a name="line103">103: </a><font color="#B22222">/*@C</font>
+<a name="line104">104: </a><font color="#B22222">  <a href="../manualpages/Profiling/PetscStageLogGetCurrent.html">PetscStageLogGetCurrent</a> - Deprecated</font>
+
+<a name="line106">106: </a><font color="#B22222">  Level: deprecated</font>
+
+<a name="line108">108: </a><font color="#B22222">.seealso: [](ch_profiling)</font>
+<a name="line109">109: </a><font color="#B22222">@*/</font>
+<a name="line110">110: </a>PETSC_DEPRECATED_FUNCTION(3, 20, 0, <font color="#666666">"<a href="../manualpages/Profiling/PetscLogStateGetCurrentStage.html">PetscLogStateGetCurrentStage</a>()"</font>, <font color="#666666">"PetscStageLog is no longer used."</font>) static inline <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../manualpages/Profiling/PetscStageLogGetCurrent.html">PetscStageLogGetCurrent</a>(PetscStageLog a, int *b)
+<a name="line111">111: </a>{
+<a name="line112">112: </a>  (void)a;
+<a name="line113">113: </a>  *b = -1;
+<a name="line114">114: </a>  <font color="#4169E1">return</font> <a href="../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>;
+<a name="line115">115: </a>}
+
+<a name="line117">117: </a><font color="#B22222">/*@C</font>
+<a name="line118">118: </a><font color="#B22222">  <a href="../manualpages/Profiling/PetscStageLogGetEventPerfLog.html">PetscStageLogGetEventPerfLog</a> - Deprecated</font>
+
+<a name="line120">120: </a><font color="#B22222">  Level: deprecated</font>
+
+<a name="line122">122: </a><font color="#B22222">  Note:</font>
+<a name="line123">123: </a><font color="#B22222">  PETSc performance logging and profiling is now split up between the logging state (`<a href="../manualpages/Profiling/PetscLogState.html">PetscLogState</a>`) and the log handler (`<a href="../manualpages/Profiling/PetscLogHandler.html">PetscLogHandler</a>`).</font>
+<a name="line124">124: </a><font color="#B22222">  The global logging state is obtained with `<a href="../manualpages/Profiling/PetscLogGetState.html">PetscLogGetState</a>()`; many log handlers may be used at once (`<a href="../manualpages/Profiling/PetscLogHandlerStart.html">PetscLogHandlerStart</a>()`) and the default log handler is not directly accessible.</font>
+
+<a name="line126">126: </a><font color="#B22222">.seealso: [](ch_profiling)</font>
+<a name="line127">127: </a><font color="#B22222">@*/</font>
+<a name="line128">128: </a>PETSC_DEPRECATED_FUNCTION(3, 20, 0, <font color="#666666">"<a href="../manualpages/Profiling/PetscLogStateEventGetInfo.html">PetscLogStateEventGetInfo</a>()"</font>, <font color="#666666">"PetscStageLog is no longer used."</font>) static inline <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../manualpages/Profiling/PetscStageLogGetEventPerfLog.html">PetscStageLogGetEventPerfLog</a>(PetscStageLog a, int b, PetscEventPerfLog *c)
+<a name="line129">129: </a>{
+<a name="line130">130: </a>  (void)a;
+<a name="line131">131: </a>  (void)b;
+<a name="line132">132: </a>  *c = <a href="../manualpages/Sys/PETSC_NULLPTR.html">PETSC_NULLPTR</a>;
+<a name="line133">133: </a>  <font color="#4169E1">return</font> <a href="../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>;
+<a name="line134">134: </a>}
+
+<a name="line136">136: </a>PETSC_DEPRECATED_OBJECT(3, 20, 0, <font color="#666666">"<a href="../manualpages/Profiling/PetscLogLegacyCallbacksBegin.html">PetscLogLegacyCallbacksBegin</a>()"</font>, ) PETSC_UNUSED static <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*PetscLogPLB)(<a href="../manualpages/Profiling/PetscLogEvent.html">PetscLogEvent</a>, int, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>) = <a href="../manualpages/Sys/PETSC_NULLPTR.html">PETSC_NULLPTR</a>;
+<a name="line137">137: </a>PETSC_DEPRECATED_OBJECT(3, 20, 0, <font color="#666666">"<a href="../manualpages/Profiling/PetscLogLegacyCallbacksBegin.html">PetscLogLegacyCallbacksBegin</a>()"</font>, ) PETSC_UNUSED static <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*PetscLogPLE)(<a href="../manualpages/Profiling/PetscLogEvent.html">PetscLogEvent</a>, int, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>) = <a href="../manualpages/Sys/PETSC_NULLPTR.html">PETSC_NULLPTR</a>;
+<a name="line138">138: </a>PETSC_DEPRECATED_OBJECT(3, 20, 0, <font color="#666666">"<a href="../manualpages/Profiling/PetscLogLegacyCallbacksBegin.html">PetscLogLegacyCallbacksBegin</a>()"</font>, ) PETSC_UNUSED static <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*PetscLogPHC)(<a href="../manualpages/Sys/PetscObject.html">PetscObject</a>)                                                            = <a href="../manualpages/Sys/PETSC_NULLPTR.html">PETSC_NULLPTR</a>;
+<a name="line139">139: </a>PETSC_DEPRECATED_OBJECT(3, 20, 0, <font color="#666666">"<a href="../manualpages/Profiling/PetscLogLegacyCallbacksBegin.html">PetscLogLegacyCallbacksBegin</a>()"</font>, ) PETSC_UNUSED static <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*PetscLogPHD)(<a href="../manualpages/Sys/PetscObject.html">PetscObject</a>)                                                            = <a href="../manualpages/Sys/PETSC_NULLPTR.html">PETSC_NULLPTR</a>;
+
+<a name="line141">141: </a>PETSC_DEPRECATED_FUNCTION(3, 20, 0, <font color="#666666">"nothing"</font>, <font color="#666666">"PETSc does not guarantee a stack property of logging events."</font>) static inline <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogPushCurrentEvent_Internal(<a href="../manualpages/Profiling/PetscLogEvent.html">PetscLogEvent</a> e)
+<a name="line142">142: </a>{
+<a name="line143">143: </a>  (void)e;
+<a name="line144">144: </a>  <font color="#4169E1">return</font> <a href="../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>;
+<a name="line145">145: </a>}
+
+<a name="line147">147: </a>PETSC_DEPRECATED_FUNCTION(3, 20, 0, <font color="#666666">"nothing"</font>, <font color="#666666">"PETSc does not guarantee a stack property of logging events."</font>) static inline <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogPopCurrentEvent_Internal(void)
+<a name="line148">148: </a>{
+<a name="line149">149: </a>  <font color="#4169E1">return</font> <a href="../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>;
+<a name="line150">150: </a>}
+
+<a name="line152">152: </a><font color="#B22222">/*@C</font>
+<a name="line153">153: </a><font color="#B22222">  <a href="../manualpages/Profiling/PetscLogAllBegin.html">PetscLogAllBegin</a> - Equivalent to `<a href="../manualpages/Profiling/PetscLogDefaultBegin.html">PetscLogDefaultBegin</a>()`.</font>
+
+<a name="line155">155: </a><font color="#B22222">  Logically Collective on `<a href="../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>`</font>
+
+<a name="line157">157: </a><font color="#B22222">  Level: deprecated</font>
+
+<a name="line159">159: </a><font color="#B22222">  Note:</font>
+<a name="line160">160: </a><font color="#B22222">  In previous versions, PETSc's documentation stated that `<a href="../manualpages/Profiling/PetscLogAllBegin.html">PetscLogAllBegin</a>()` "Turns on extensive logging of objects and events," which was not actually true.</font>
+<a name="line161">161: </a><font color="#B22222">  The actual way to turn on extensive logging of objects and events was, and remains, to call `<a href="../manualpages/Profiling/PetscLogActions.html">PetscLogActions</a>()` and `<a href="../manualpages/Profiling/PetscLogObjects.html">PetscLogObjects</a>()`.</font>
+
+<a name="line163">163: </a><font color="#B22222">.seealso: [](ch_profiling), `<a href="../manualpages/Profiling/PetscLogDump.html">PetscLogDump</a>()`, `<a href="../manualpages/Profiling/PetscLogDefaultBegin.html">PetscLogDefaultBegin</a>()`, `<a href="../manualpages/Profiling/PetscLogActions.html">PetscLogActions</a>()`, `<a href="../manualpages/Profiling/PetscLogObjects.html">PetscLogObjects</a>()`</font>
+<a name="line164">164: </a><font color="#B22222">@*/</font>
+<a name="line165">165: </a>PETSC_DEPRECATED_FUNCTION(3, 20, 0, <font color="#666666">"<a href="../manualpages/Profiling/PetscLogDefaultBegin.html">PetscLogDefaultBegin</a>()"</font>, ) static inline <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../manualpages/Profiling/PetscLogAllBegin.html">PetscLogAllBegin</a>(void)
+<a name="line166">166: </a>{
+<a name="line167">167: </a>  <font color="#4169E1">return</font> <a href="../manualpages/Profiling/PetscLogDefaultBegin.html">PetscLogDefaultBegin</a>();
+<a name="line168">168: </a>}
+
+<a name="line170">170: </a><font color="#B22222">/*@C</font>
+<a name="line171">171: </a><font color="#B22222">  <a href="../manualpages/Profiling/PetscLogSet.html">PetscLogSet</a> - Deprecated.</font>
+
+<a name="line173">173: </a><font color="#B22222">  Level: deprecated</font>
+
+<a name="line175">175: </a><font color="#B22222">  Note:</font>
+<a name="line176">176: </a><font color="#B22222">  PETSc performance logging and profiling is now split up between the logging state (`<a href="../manualpages/Profiling/PetscLogState.html">PetscLogState</a>`) and the log handler (`<a href="../manualpages/Profiling/PetscLogHandler.html">PetscLogHandler</a>`).</font>
+<a name="line177">177: </a><font color="#B22222">  The global logging state is obtained with `<a href="../manualpages/Profiling/PetscLogGetState.html">PetscLogGetState</a>()`; many log handlers may be used at once (`<a href="../manualpages/Profiling/PetscLogHandlerStart.html">PetscLogHandlerStart</a>()`) and the default log handler is not directly accessible.</font>
+
+<a name="line179">179: </a><font color="#B22222">.seealso: [](ch_profiling), `<a href="../manualpages/Profiling/PetscLogEventGetPerfInfo.html">PetscLogEventGetPerfInfo</a>()`</font>
+<a name="line180">180: </a><font color="#B22222">@*/</font>
+<a name="line181">181: </a>PETSC_DEPRECATED_FUNCTION(3, 20, 0, <font color="#666666">"<a href="../manualpages/Profiling/PetscLogLegacyCallbacksBegin.html">PetscLogLegacyCallbacksBegin</a>()"</font>, )
+<a name="line182">182: </a><strong><font color="#4169E1"><a name="PetscLogSet"></a>static inline <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../manualpages/Profiling/PetscLogSet.html">PetscLogSet</a>(<a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*a)(int, int, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>), <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*b)(int, int, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../manualpages/Sys/PetscObject.html">PetscObject</a>))</font></strong>
+<a name="line183">183: </a>{
+<a name="line184">184: </a>  <font color="#4169E1">return</font> <a href="../manualpages/Profiling/PetscLogLegacyCallbacksBegin.html">PetscLogLegacyCallbacksBegin</a>(a, b, <a href="../manualpages/Sys/PETSC_NULLPTR.html">PETSC_NULLPTR</a>, <a href="../manualpages/Sys/PETSC_NULLPTR.html">PETSC_NULLPTR</a>);
+<a name="line185">185: </a>}
+</pre>
+</body>
+
+</html>

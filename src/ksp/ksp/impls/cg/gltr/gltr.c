@@ -1,4 +1,3 @@
-
 #include <../src/ksp/ksp/impls/cg/gltr/gltrimpl.h> /*I "petscksp.h" I*/
 #include <petscblaslapack.h>
 
@@ -9,49 +8,49 @@
 static const char *DType_Table[64] = {"preconditioned", "unpreconditioned"};
 
 /*@
-    KSPGLTRGetMinEig - Get minimum eigenvalue computed by `KSPGLTR`
+  KSPGLTRGetMinEig - Get minimum eigenvalue computed by `KSPGLTR`
 
-    Collective
+  Collective
 
-    Input Parameter:
-.   ksp   - the iterative context
+  Input Parameter:
+. ksp - the iterative context
 
-    Output Parameter:
-.   e_min - the minimum eigenvalue
+  Output Parameter:
+. e_min - the minimum eigenvalue
 
-    Level: advanced
+  Level: advanced
 
-.seealso: [](chapter_ksp), `KSPGLTR`, `KSPGLTRGetLambda()`
+.seealso: [](ch_ksp), `KSP`, `KSPGLTR`, `KSPGLTRGetLambda()`
 @*/
 PetscErrorCode KSPGLTRGetMinEig(KSP ksp, PetscReal *e_min)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 1);
   PetscUseMethod(ksp, "KSPGLTRGetMinEig_C", (KSP, PetscReal *), (ksp, e_min));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-    KSPGLTRGetLambda - Get the multiplier on the trust-region constraint when using `KSPGLTR`
-t
-    Not Collective
+  KSPGLTRGetLambda - Get the multiplier on the trust-region constraint when using `KSPGLTR`
 
-    Input Parameter:
-.   ksp    - the iterative context
+  Not Collective
 
-    Output Parameter:
-.   lambda - the multiplier
+  Input Parameter:
+. ksp - the iterative context
 
-    Level: advanced
+  Output Parameter:
+. lambda - the multiplier
 
-.seealso: [](chapter_ksp), `KSPGLTR`, `KSPGLTRGetMinEig()`
+  Level: advanced
+
+.seealso: [](ch_ksp), `KSP`, `KSPGLTR`, `KSPGLTRGetMinEig()`
 @*/
 PetscErrorCode KSPGLTRGetLambda(KSP ksp, PetscReal *lambda)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 1);
   PetscUseMethod(ksp, "KSPGLTRGetLambda_C", (KSP, PetscReal *), (ksp, lambda));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
@@ -171,7 +170,7 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
       cg->o_fcn = -cg->o_fcn;
       ++ksp->its;
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   if (rz < 0.0) {
@@ -206,7 +205,7 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
       cg->o_fcn = -cg->o_fcn;
       ++ksp->its;
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /***************************************************************************/
@@ -286,7 +285,7 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
       cg->o_fcn = -cg->o_fcn;
       ++ksp->its;
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /***************************************************************************/
@@ -370,7 +369,7 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
       cg->o_fcn = -cg->o_fcn;
       ++ksp->its;
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /***************************************************************************/
@@ -403,7 +402,7 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
       /* boundary of the trust region.                                       */
       /***********************************************************************/
 
-      ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
+      ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
       PetscCall(PetscInfo(ksp, "KSPCGSolve_GLTR: negative curvature: kappa=%g\n", (double)kappa));
 
       if (cg->radius && norm_p > 0.0) {
@@ -441,7 +440,7 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
       /* However, the full step goes beyond the trust region.                */
       /***********************************************************************/
 
-      ksp->reason = KSP_CONVERGED_CG_CONSTRAINED;
+      ksp->reason = KSP_CONVERGED_STEP_LENGTH;
       PetscCall(PetscInfo(ksp, "KSPCGSolve_GLTR: constrained step: radius=%g\n", (double)cg->radius));
 
       if (norm_p > 0.0) {
@@ -619,7 +618,7 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
       /* were indefinite.                                                    */
       /***********************************************************************/
 
-      ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
+      ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
       PetscCall(PetscInfo(ksp, "KSPCGSolve_GLTR: cg breakdown: kappa=%g\n", (double)kappa));
 
       if (cg->radius && norm_p > 0.0) {
@@ -654,16 +653,16 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
     /*************************************************************************/
     /* There is no radius.  Therefore, we cannot move along the boundary.    */
     /*************************************************************************/
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
-  if (KSP_CONVERGED_CG_NEG_CURVE != ksp->reason) {
+  if (KSP_CONVERGED_NEG_CURVE != ksp->reason) {
     /*************************************************************************/
     /* The method either converged to an interior point, hit the boundary of */
     /* the trust-region without encountering a direction of negative         */
     /* curvature or the iteration limit was reached.                         */
     /*************************************************************************/
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /***************************************************************************/
@@ -837,8 +836,8 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
     /*************************************************************************/
 
     PetscCall(PetscInfo(ksp, "KSPCGSolve_GLTR: failed to compute eigenvalue.\n"));
-    ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
-    PetscFunctionReturn(0);
+    ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   cg->e_min = e_valu[0];
@@ -884,8 +883,8 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
     /*************************************************************************/
 
     PetscCall(PetscInfo(ksp, "KSPCGSolve_GLTR: failed to compute step.\n"));
-    ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
-    PetscFunctionReturn(0);
+    ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   norm_t = 0.;
@@ -918,8 +917,8 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
         /*********************************************************************/
 
         PetscCall(PetscInfo(ksp, "KSPCGSolve_GLTR: failed to compute eigenvector.\n"));
-        ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
-        PetscFunctionReturn(0);
+        ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
 
       coef1 = 0.0;
@@ -998,8 +997,8 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
         /*********************************************************************/
 
         PetscCall(PetscInfo(ksp, "KSPCGSolve_GLTR: failed to compute step.\n"));
-        ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
-        PetscFunctionReturn(0);
+        ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
 
       /***********************************************************************/
@@ -1029,8 +1028,8 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
         /*********************************************************************/
 
         PetscCall(PetscInfo(ksp, "KSPCGSolve_GLTR: factorization failed.\n"));
-        ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
-        PetscFunctionReturn(0);
+        ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
 
       /***********************************************************************/
@@ -1049,8 +1048,8 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
         /*********************************************************************/
 
         PetscCall(PetscInfo(ksp, "KSPCGSolve_GLTR: failed to compute step.\n"));
-        ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
-        PetscFunctionReturn(0);
+        ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
 
       norm_t = 0.;
@@ -1068,8 +1067,8 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
       /***********************************************************************/
 
       PetscCall(PetscInfo(ksp, "KSPCGSolve_GLTR: failed to converge.\n"));
-      ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
-      PetscFunctionReturn(0);
+      ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
   }
 
@@ -1158,8 +1157,8 @@ static PetscErrorCode KSPCGSolve_GLTR(KSP ksp)
   /* Set the termination reason.                                             */
   /***************************************************************************/
 
-  ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
-  PetscFunctionReturn(0);
+  ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
+  PetscFunctionReturn(PETSC_SUCCESS);
 #endif
 }
 
@@ -1190,7 +1189,7 @@ static PetscErrorCode KSPCGSetUp_GLTR(KSP ksp)
   } else {
     PetscCall(PetscCalloc5(max_its, &cg->diag, max_its, &cg->offd, max_its, &cg->alpha, max_its, &cg->beta, max_its, &cg->norm_r));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGDestroy_GLTR(KSP ksp)
@@ -1198,28 +1197,15 @@ static PetscErrorCode KSPCGDestroy_GLTR(KSP ksp)
   KSPCG_GLTR *cg = (KSPCG_GLTR *)ksp->data;
 
   PetscFunctionBegin;
-  /***************************************************************************/
-  /* Free memory allocated for the data.                                     */
-  /***************************************************************************/
-
   PetscCall(PetscFree5(cg->diag, cg->offd, cg->alpha, cg->beta, cg->norm_r));
   if (cg->alloced) PetscCall(PetscFree2(cg->rwork, cg->iwork));
-
-  /***************************************************************************/
-  /* Clear composed functions                                                */
-  /***************************************************************************/
-
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPCGSetRadius_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPCGGetNormD_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPCGGetObjFcn_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPGLTRGetMinEig_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPGLTRGetLambda_C", NULL));
-
-  /***************************************************************************/
-  /* Destroy KSP object.                                                     */
-  /***************************************************************************/
   PetscCall(KSPDestroyDefault(ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGSetRadius_GLTR(KSP ksp, PetscReal radius)
@@ -1228,7 +1214,7 @@ static PetscErrorCode KSPCGSetRadius_GLTR(KSP ksp, PetscReal radius)
 
   PetscFunctionBegin;
   cg->radius = radius;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGGetNormD_GLTR(KSP ksp, PetscReal *norm_d)
@@ -1237,7 +1223,7 @@ static PetscErrorCode KSPCGGetNormD_GLTR(KSP ksp, PetscReal *norm_d)
 
   PetscFunctionBegin;
   *norm_d = cg->norm_d;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGGetObjFcn_GLTR(KSP ksp, PetscReal *o_fcn)
@@ -1246,7 +1232,7 @@ static PetscErrorCode KSPCGGetObjFcn_GLTR(KSP ksp, PetscReal *o_fcn)
 
   PetscFunctionBegin;
   *o_fcn = cg->o_fcn;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPGLTRGetMinEig_GLTR(KSP ksp, PetscReal *e_min)
@@ -1255,7 +1241,7 @@ static PetscErrorCode KSPGLTRGetMinEig_GLTR(KSP ksp, PetscReal *e_min)
 
   PetscFunctionBegin;
   *e_min = cg->e_min;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPGLTRGetLambda_GLTR(KSP ksp, PetscReal *lambda)
@@ -1264,7 +1250,7 @@ static PetscErrorCode KSPGLTRGetLambda_GLTR(KSP ksp, PetscReal *lambda)
 
   PetscFunctionBegin;
   *lambda = cg->lambda;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGSetFromOptions_GLTR(KSP ksp, PetscOptionItems *PetscOptionsObject)
@@ -1286,50 +1272,47 @@ static PetscErrorCode KSPCGSetFromOptions_GLTR(KSP ksp, PetscOptionItems *PetscO
   PetscCall(PetscOptionsInt("-ksp_cg_gltr_max_newton_its", "Maximum Newton Iters", "", cg->max_newton_its, &cg->max_newton_its, NULL));
 
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPGLTR -   Code to run conjugate gradient method subject to a constraint
-         on the solution norm.
+   KSPGLTR -   Code to run conjugate gradient method subject to a constraint on the solution norm, used within trust region methods {cite}`gould1999solving`
 
-   Options Database Keys:
-.      -ksp_cg_radius <r> - Trust Region Radius
+   Options Database Key:
+.  -ksp_cg_radius <r> - Trust Region Radius
 
    Level: developer
 
-  Notes:
-  Uses preconditioned conjugate gradient to compute
-  an approximate minimizer of the quadratic function
+   Notes:
+   Uses preconditioned conjugate gradient to compute  an approximate minimizer of the quadratic function
 
-            q(s) = g^T * s + .5 * s^T * H * s
+   $$
+   q(s) = g^T * s + .5 * s^T * H * s
+   $$
 
    subject to the trust region constraint
 
-            || s || <= delta,
+   $$
+   || s || \le delta,
+   $$
 
    where
-
+.vb
      delta is the trust region radius,
      g is the gradient vector,
      H is the Hessian approximation,
      M is the positive definite preconditioner matrix.
+.ve
 
    `KSPConvergedReason` may have the additional values
-.vb
-   KSP_CONVERGED_CG_NEG_CURVE if convergence is reached along a negative curvature direction,
-   KSP_CONVERGED_CG_CONSTRAINED if convergence is reached along a constrained step.
-.ve
++  `KSP_CONVERGED_NEG_CURVE` - if convergence is reached along a negative curvature direction,
+-  `KSP_CONVERGED_STEP_LENGTH` - if convergence is reached along a constrained step.
 
   The operator and the preconditioner supplied must be symmetric and positive definite.
 
   This is rarely used directly, it is used in Trust Region methods for nonlinear equations, `SNESNEWTONTR`
 
-  Reference:
-. * -  Gould, N. and Lucidi, S. and Roma, M. and Toint, P., Solving the Trust-Region Subproblem using the Lanczos Method,
-   SIAM Journal on Optimization, volume 9, number 2, 1999, 504-525
-
-.seealso: [](chapter_ksp), `KSPQCG`, `KSPNASH`, `KSPSTCG`, `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPCGSetRadius()`, `KSPCGGetNormD()`, `KSPCGGetObjFcn()`, `KSPGLTRGetMinEig()`, `KSPGLTRGetLambda()`, `KSPCG`
+.seealso: [](ch_ksp), `KSPQCG`, `KSPNASH`, `KSPSTCG`, `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPCGSetRadius()`, `KSPCGGetNormD()`, `KSPCGGetObjFcn()`, `KSPGLTRGetMinEig()`, `KSPGLTRGetLambda()`, `KSPCG`
 M*/
 
 PETSC_EXTERN PetscErrorCode KSPCreate_GLTR(KSP ksp)
@@ -1356,6 +1339,7 @@ PETSC_EXTERN PetscErrorCode KSPCreate_GLTR(KSP ksp)
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_PRECONDITIONED, PC_LEFT, 2));
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_NATURAL, PC_LEFT, 2));
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_NONE, PC_LEFT, 1));
+  PetscCall(KSPSetConvergedNegativeCurvature(ksp, PETSC_TRUE));
 
   /***************************************************************************/
   /* Sets the functions that are associated with this data structure         */
@@ -1375,5 +1359,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_GLTR(KSP ksp)
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPCGGetObjFcn_C", KSPCGGetObjFcn_GLTR));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPGLTRGetMinEig_C", KSPGLTRGetMinEig_GLTR));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPGLTRGetLambda_C", KSPGLTRGetLambda_GLTR));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

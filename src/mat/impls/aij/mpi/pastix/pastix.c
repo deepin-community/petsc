@@ -31,6 +31,13 @@ EXTERN_C_END
 
 #endif /* PETSC_USE_COMPLEX */
 
+#define PetscPastixCall(...) \
+  do { \
+    PetscCall(PetscFPTrapPush(PETSC_FP_TRAP_OFF)); \
+    PetscStackCallExternalVoid(PetscStringize(PASTIX_CALL), PASTIX_CALL(__VA_ARGS__)); \
+    PetscCall(PetscFPTrapPop()); \
+  } while (0)
+
 typedef PetscScalar PastixScalar;
 
 typedef struct Mat_Pastix_ {
@@ -70,7 +77,7 @@ extern PetscErrorCode MatDuplicate_Pastix(Mat, MatDuplicateOption, Mat *);
     row     - Row of each element of the matrix
     values  - Value of each element of the matrix
  */
-PetscErrorCode MatConvertToCSC(Mat A, PetscBool valOnly, PetscInt *n, PetscInt **colptr, PetscInt **row, PetscScalar **values)
+static PetscErrorCode MatConvertToCSC(Mat A, PetscBool valOnly, PetscInt *n, PetscInt **colptr, PetscInt **row, PetscScalar **values)
 {
   Mat_SeqAIJ  *aa      = (Mat_SeqAIJ *)A->data;
   PetscInt    *rowptr  = aa->i;
@@ -163,14 +170,14 @@ PetscErrorCode MatConvertToCSC(Mat A, PetscBool valOnly, PetscInt *n, PetscInt *
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
   Call clean step of PaStiX if lu->CleanUpPastix == true.
   Free the CSC matrix.
  */
-PetscErrorCode MatDestroy_Pastix(Mat A)
+static PetscErrorCode MatDestroy_Pastix(Mat A)
 {
   Mat_Pastix *lu = (Mat_Pastix *)A->data;
 
@@ -184,7 +191,7 @@ PetscErrorCode MatDestroy_Pastix(Mat A)
     lu->iparm[IPARM_START_TASK] = API_TASK_CLEAN;
     lu->iparm[IPARM_END_TASK]   = API_TASK_CLEAN;
 
-    PASTIX_CALL(&(lu->pastix_data), lu->pastix_comm, lu->n, lu->colptr, lu->row, (PastixScalar *)lu->val, lu->perm, lu->invp, (PastixScalar *)lu->rhs, lu->rhsnbr, lu->iparm, lu->dparm);
+    PetscPastixCall(&(lu->pastix_data), lu->pastix_comm, lu->n, lu->colptr, lu->row, (PastixScalar *)lu->val, lu->perm, lu->invp, (PastixScalar *)lu->rhs, lu->rhsnbr, lu->iparm, lu->dparm);
     PetscCheck(lu->iparm[IPARM_ERROR_NUMBER] == 0, PETSC_COMM_SELF, PETSC_ERR_LIB, "Error reported by PaStiX in destroy: iparm(IPARM_ERROR_NUMBER)=%" PetscInt_FMT, lu->iparm[IPARM_ERROR_NUMBER]);
     PetscCall(PetscFree(lu->colptr));
     PetscCall(PetscFree(lu->row));
@@ -195,7 +202,7 @@ PetscErrorCode MatDestroy_Pastix(Mat A)
   }
   PetscCall(PetscObjectComposeFunction((PetscObject)A, "MatFactorGetSolverType_C", NULL));
   PetscCall(PetscFree(A->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -203,7 +210,7 @@ PetscErrorCode MatDestroy_Pastix(Mat A)
   Call for Solve step.
   Scatter solution.
  */
-PetscErrorCode MatSolve_PaStiX(Mat A, Vec b, Vec x)
+static PetscErrorCode MatSolve_PaStiX(Mat A, Vec b, Vec x)
 {
   Mat_Pastix  *lu = (Mat_Pastix *)A->data;
   PetscScalar *array;
@@ -229,12 +236,11 @@ PetscErrorCode MatSolve_PaStiX(Mat A, Vec b, Vec x)
   }
 
   /* solve phase */
-  /*-------------*/
   lu->iparm[IPARM_START_TASK] = API_TASK_SOLVE;
   lu->iparm[IPARM_END_TASK]   = API_TASK_REFINE;
   lu->iparm[IPARM_RHS_MAKING] = API_RHS_B;
 
-  PASTIX_CALL(&(lu->pastix_data), lu->pastix_comm, lu->n, lu->colptr, lu->row, (PastixScalar *)lu->val, lu->perm, lu->invp, (PastixScalar *)lu->rhs, lu->rhsnbr, lu->iparm, lu->dparm);
+  PetscPastixCall(&(lu->pastix_data), lu->pastix_comm, lu->n, lu->colptr, lu->row, (PastixScalar *)lu->val, lu->perm, lu->invp, (PastixScalar *)lu->rhs, lu->rhsnbr, lu->iparm, lu->dparm);
   PetscCheck(lu->iparm[IPARM_ERROR_NUMBER] == 0, PETSC_COMM_SELF, PETSC_ERR_LIB, "Error reported by PaStiX in solve phase: lu->iparm[IPARM_ERROR_NUMBER] = %" PetscInt_FMT, lu->iparm[IPARM_ERROR_NUMBER]);
 
   if (lu->commSize == 1) {
@@ -247,14 +253,14 @@ PetscErrorCode MatSolve_PaStiX(Mat A, Vec b, Vec x)
     PetscCall(VecScatterBegin(lu->scat_sol, x_seq, x, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterEnd(lu->scat_sol, x_seq, x, INSERT_VALUES, SCATTER_FORWARD));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
   Numeric factorisation using PaStiX solver.
 
  */
-PetscErrorCode MatFactorNumeric_PaStiX(Mat F, Mat A, const MatFactorInfo *info)
+static PetscErrorCode MatFactorNumeric_PaStiX(Mat F, Mat A, const MatFactorInfo *info)
 {
   Mat_Pastix *lu = (Mat_Pastix *)(F)->data;
   Mat        *tseq;
@@ -286,7 +292,7 @@ PetscErrorCode MatFactorNumeric_PaStiX(Mat F, Mat A, const MatFactorInfo *info)
     lu->rhsnbr = 1;
 
     /* Call to set default pastix options */
-    PASTIX_CALL(&(lu->pastix_data), lu->pastix_comm, lu->n, lu->colptr, lu->row, (PastixScalar *)lu->val, lu->perm, lu->invp, (PastixScalar *)lu->rhs, lu->rhsnbr, lu->iparm, lu->dparm);
+    PetscPastixCall(&(lu->pastix_data), lu->pastix_comm, lu->n, lu->colptr, lu->row, (PastixScalar *)lu->val, lu->perm, lu->invp, (PastixScalar *)lu->rhs, lu->rhsnbr, lu->iparm, lu->dparm);
     PetscCheck(lu->iparm[IPARM_ERROR_NUMBER] == 0, PETSC_COMM_SELF, PETSC_ERR_LIB, "Error reported by PaStiX in MatFactorNumeric: iparm(IPARM_ERROR_NUMBER)=%" PetscInt_FMT, lu->iparm[IPARM_ERROR_NUMBER]);
 
     PetscOptionsBegin(PetscObjectComm((PetscObject)F), ((PetscObject)F)->prefix, "PaStiX Options", "Mat");
@@ -334,7 +340,6 @@ PetscErrorCode MatFactorNumeric_PaStiX(Mat F, Mat A, const MatFactorInfo *info)
     lu->iparm[IPARM_FACTORIZATION] = API_FACT_LU;
   }
 
-  /*----------------*/
   if (lu->matstruc == DIFFERENT_NONZERO_PATTERN) {
     if (!(isSeqAIJ || isSeqSBAIJ) && !lu->b_seq) {
       /* PaStiX only supports centralized rhs. Create scatter scat_rhs for repeated use in MatSolve() */
@@ -349,23 +354,23 @@ PetscErrorCode MatFactorNumeric_PaStiX(Mat F, Mat A, const MatFactorInfo *info)
     lu->iparm[IPARM_START_TASK] = API_TASK_ORDERING;
     lu->iparm[IPARM_END_TASK]   = API_TASK_NUMFACT;
 
-    PASTIX_CALL(&(lu->pastix_data), lu->pastix_comm, lu->n, lu->colptr, lu->row, (PastixScalar *)lu->val, lu->perm, lu->invp, (PastixScalar *)lu->rhs, lu->rhsnbr, lu->iparm, lu->dparm);
+    PetscPastixCall(&(lu->pastix_data), lu->pastix_comm, lu->n, lu->colptr, lu->row, (PastixScalar *)lu->val, lu->perm, lu->invp, (PastixScalar *)lu->rhs, lu->rhsnbr, lu->iparm, lu->dparm);
     PetscCheck(lu->iparm[IPARM_ERROR_NUMBER] == 0, PETSC_COMM_SELF, PETSC_ERR_LIB, "Error reported by PaStiX in analysis phase: iparm(IPARM_ERROR_NUMBER)=%" PetscInt_FMT, lu->iparm[IPARM_ERROR_NUMBER]);
   } else {
     lu->iparm[IPARM_START_TASK] = API_TASK_NUMFACT;
     lu->iparm[IPARM_END_TASK]   = API_TASK_NUMFACT;
-    PASTIX_CALL(&(lu->pastix_data), lu->pastix_comm, lu->n, lu->colptr, lu->row, (PastixScalar *)lu->val, lu->perm, lu->invp, (PastixScalar *)lu->rhs, lu->rhsnbr, lu->iparm, lu->dparm);
+    PetscPastixCall(&(lu->pastix_data), lu->pastix_comm, lu->n, lu->colptr, lu->row, (PastixScalar *)lu->val, lu->perm, lu->invp, (PastixScalar *)lu->rhs, lu->rhsnbr, lu->iparm, lu->dparm);
     PetscCheck(lu->iparm[IPARM_ERROR_NUMBER] == 0, PETSC_COMM_SELF, PETSC_ERR_LIB, "Error reported by PaStiX in analysis phase: iparm(IPARM_ERROR_NUMBER)=%" PetscInt_FMT, lu->iparm[IPARM_ERROR_NUMBER]);
   }
 
   (F)->assembled    = PETSC_TRUE;
   lu->matstruc      = SAME_NONZERO_PATTERN;
   lu->CleanUpPastix = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Note the Petsc r and c permutations are ignored */
-PetscErrorCode MatLUFactorSymbolic_AIJPASTIX(Mat F, Mat A, IS r, IS c, const MatFactorInfo *info)
+static PetscErrorCode MatLUFactorSymbolic_AIJPASTIX(Mat F, Mat A, IS r, IS c, const MatFactorInfo *info)
 {
   Mat_Pastix *lu = (Mat_Pastix *)F->data;
 
@@ -374,10 +379,10 @@ PetscErrorCode MatLUFactorSymbolic_AIJPASTIX(Mat F, Mat A, IS r, IS c, const Mat
   lu->iparm[IPARM_SYM]           = API_SYM_YES;
   lu->matstruc                   = DIFFERENT_NONZERO_PATTERN;
   F->ops->lufactornumeric        = MatFactorNumeric_PaStiX;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatCholeskyFactorSymbolic_SBAIJPASTIX(Mat F, Mat A, IS r, const MatFactorInfo *info)
+static PetscErrorCode MatCholeskyFactorSymbolic_SBAIJPASTIX(Mat F, Mat A, IS r, const MatFactorInfo *info)
 {
   Mat_Pastix *lu = (Mat_Pastix *)(F)->data;
 
@@ -386,10 +391,10 @@ PetscErrorCode MatCholeskyFactorSymbolic_SBAIJPASTIX(Mat F, Mat A, IS r, const M
   lu->iparm[IPARM_SYM]            = API_SYM_NO;
   lu->matstruc                    = DIFFERENT_NONZERO_PATTERN;
   (F)->ops->choleskyfactornumeric = MatFactorNumeric_PaStiX;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatView_PaStiX(Mat A, PetscViewer viewer)
+static PetscErrorCode MatView_PaStiX(Mat A, PetscViewer viewer)
 {
   PetscBool         iascii;
   PetscViewerFormat format;
@@ -408,31 +413,31 @@ PetscErrorCode MatView_PaStiX(Mat A, PetscViewer viewer)
       PetscCall(PetscPrintf(PETSC_COMM_SELF, "  Error :                        %g \n", lu->dparm[DPARM_RELATIVE_ERROR]));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
      MATSOLVERPASTIX  - A solver package providing direct solvers (LU) for distributed
   and sequential matrices via the external package PaStiX.
 
-  Use ./configure --download-pastix --download-ptscotch  to have PETSc installed with PasTiX
+  Use `./configure` `--download-pastix` `--download-ptscotch`  to have PETSc installed with PasTiX
 
-  Use -pc_type lu -pc_factor_mat_solver_type pastix to use this direct solver
+  Use `-pc_type lu` `-pc_factor_mat_solver_type pastix` to use this direct solver
 
   Options Database Keys:
-+ -mat_pastix_verbose   <0,1,2>   - print level
-- -mat_pastix_threadnbr <integer> - Set the thread number by MPI task.
++ -mat_pastix_verbose   <0,1,2>   - print level of information messages from PaStiX
+- -mat_pastix_threadnbr <integer> - Set the number of threads for each MPI process
 
   Notes:
     This only works for matrices with symmetric nonzero structure, if you pass it a matrix with
-   nonsymmetric structure PasTiX and hence PETSc return with an error.
+   nonsymmetric structure PasTiX, and hence, PETSc return with an error.
 
   Level: beginner
 
-.seealso: `PCFactorSetMatSolverType()`, `MatSolverType`, `MatGetFactor()`
+.seealso: [](ch_matrices), `Mat`, `PCFactorSetMatSolverType()`, `MatSolverType`, `MatGetFactor()`
 M*/
 
-PetscErrorCode MatGetInfo_PaStiX(Mat A, MatInfoType flag, MatInfo *info)
+static PetscErrorCode MatGetInfo_PaStiX(Mat A, MatInfoType flag, MatInfo *info)
 {
   Mat_Pastix *lu = (Mat_Pastix *)A->data;
 
@@ -447,14 +452,14 @@ PetscErrorCode MatGetInfo_PaStiX(Mat A, MatInfoType flag, MatInfo *info)
   info->fill_ratio_given  = 0;
   info->fill_ratio_needed = 0;
   info->factor_mallocs    = 0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatFactorGetSolverType_pastix(Mat A, MatSolverType *type)
 {
   PetscFunctionBegin;
   *type = MATSOLVERPASTIX;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -496,7 +501,7 @@ static PetscErrorCode MatGetFactor_seqaij_pastix(Mat A, MatFactorType ftype, Mat
   B->data               = (void *)pastix;
 
   *F = B;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatGetFactor_mpiaij_pastix(Mat A, MatFactorType ftype, Mat *F)
@@ -534,7 +539,7 @@ static PetscErrorCode MatGetFactor_mpiaij_pastix(Mat A, MatFactorType ftype, Mat
   B->data               = (void *)pastix;
 
   *F = B;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatGetFactor_seqsbaij_pastix(Mat A, MatFactorType ftype, Mat *F)
@@ -571,7 +576,7 @@ static PetscErrorCode MatGetFactor_seqsbaij_pastix(Mat A, MatFactorType ftype, M
   B->ops->destroy       = MatDestroy_Pastix;
   B->data               = (void *)pastix;
   *F                    = B;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatGetFactor_mpisbaij_pastix(Mat A, MatFactorType ftype, Mat *F)
@@ -608,7 +613,7 @@ static PetscErrorCode MatGetFactor_mpisbaij_pastix(Mat A, MatFactorType ftype, M
   B->data               = (void *)pastix;
 
   *F = B;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode MatSolverTypeRegister_Pastix(void)
@@ -618,5 +623,5 @@ PETSC_EXTERN PetscErrorCode MatSolverTypeRegister_Pastix(void)
   PetscCall(MatSolverTypeRegister(MATSOLVERPASTIX, MATSEQAIJ, MAT_FACTOR_LU, MatGetFactor_seqaij_pastix));
   PetscCall(MatSolverTypeRegister(MATSOLVERPASTIX, MATMPISBAIJ, MAT_FACTOR_CHOLESKY, MatGetFactor_mpisbaij_pastix));
   PetscCall(MatSolverTypeRegister(MATSOLVERPASTIX, MATSEQSBAIJ, MAT_FACTOR_CHOLESKY, MatGetFactor_seqsbaij_pastix));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

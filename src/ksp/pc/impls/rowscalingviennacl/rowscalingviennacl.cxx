@@ -1,9 +1,7 @@
-
 /*
    Include files needed for the ViennaCL row-scaling preconditioner:
      pcimpl.h - private include file intended for use by all preconditioners
 */
-#define PETSC_SKIP_SPINLOCK
 #define PETSC_SKIP_IMMINTRIN_H_CUDAWORKAROUND 1
 
 #include <petsc/private/pcimpl.h> /*I "petscpc.h" I*/
@@ -64,7 +62,7 @@ static PetscErrorCode PCSetUp_ROWSCALINGVIENNACL(PC pc)
   } catch (char *ex) {
     SETERRQ(PETSC_COMM_SELF, PETSC_ERR_LIB, "ViennaCL error: %s", ex);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -108,7 +106,7 @@ static PetscErrorCode PCApply_ROWSCALINGVIENNACL(PC pc, Vec x, Vec y)
   PetscCall(VecViennaCLRestoreArrayRead(x, &xarray));
   PetscCall(VecViennaCLRestoreArrayWrite(y, &yarray));
   PetscCall(PetscObjectStateIncrease((PetscObject)y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -137,7 +135,7 @@ static PetscErrorCode PCDestroy_ROWSCALINGVIENNACL(PC pc)
       Free the private data structure that was hanging off the PC
   */
   PetscCall(PetscFree(pc->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSetFromOptions_ROWSCALINGVIENNACL(PC pc, PetscOptionItems *PetscOptionsObject)
@@ -145,20 +143,17 @@ static PetscErrorCode PCSetFromOptions_ROWSCALINGVIENNACL(PC pc, PetscOptionItem
   PetscFunctionBegin;
   PetscOptionsHeadBegin(PetscOptionsObject, "ROWSCALINGVIENNACL options");
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     PCRowScalingViennaCL  - A diagonal preconditioner (scaling rows of matrices by their norm) that can be used via the CUDA, OpenCL, and OpenMP backends of ViennaCL
+  PCROWSCALINGVIENNACLL  - A diagonal preconditioner (scaling rows of matrices by their norm) that can be used via the CUDA,
+  OpenCL, and OpenMP backends of ViennaCL
 
-   Level: advanced
+  Level: advanced
 
-   Developer Note:
-   This `PCType` does not appear to be registered
-
-.seealso: `PCCreate()`, `PCSetType()`, `PCType`, `PC`
+.seealso: [](ch_ksp), `PCCreate()`, `PCSetType()`, `PCType`, `PC`
 M*/
-
 PETSC_EXTERN PetscErrorCode PCCreate_ROWSCALINGVIENNACL(PC pc)
 {
   PC_ROWSCALINGVIENNACL *rowscaling;
@@ -193,5 +188,5 @@ PETSC_EXTERN PetscErrorCode PCCreate_ROWSCALINGVIENNACL(PC pc)
   pc->ops->applyrichardson     = 0;
   pc->ops->applysymmetricleft  = 0;
   pc->ops->applysymmetricright = 0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

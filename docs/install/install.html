@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Configuring PETSc &#8212; PETSc 3.18.6 documentation</title>
+    <title>Configuring PETSc &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -142,31 +143,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -293,31 +293,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -443,32 +442,33 @@
 <div class="contents local topic" id="table-of-contents">
 <p class="topic-title">Table of Contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#common-example-usages" id="id8">Common Example Usages</a></p></li>
-<li><p><a class="reference internal" href="#compilers" id="id9">Compilers</a></p></li>
-<li><p><a class="reference internal" href="#external-packages" id="id10">External Packages</a></p></li>
-<li><p><a class="reference internal" href="#blas-lapack" id="id11">BLAS/LAPACK</a></p></li>
-<li><p><a class="reference internal" href="#mpi-problems-i-don-t-want-mpi" id="id12">MPI Problems/I Don’t Want MPI</a></p></li>
-<li><p><a class="reference internal" href="#installing-on-macos" id="id13">Installing On macOS</a></p></li>
-<li><p><a class="reference internal" href="#installation-location-in-place-or-out-of-place" id="id14">Installation Location: In-place or Out-of-place</a></p></li>
-<li><p><a class="reference internal" href="#installing-on-machine-requiring-cross-compiler-or-a-job-scheduler" id="id15">Installing On Machine Requiring Cross Compiler Or A Job Scheduler</a></p></li>
-<li><p><a class="reference internal" href="#installing-with-tau-instrumentation-package" id="id16">Installing With TAU Instrumentation Package</a></p></li>
-<li><p><a class="reference internal" href="#installing-petsc-to-use-gpus-and-accelerators" id="id17">Installing PETSc To Use GPUs And Accelerators</a></p></li>
-<li><p><a class="reference internal" href="#installing-on-large-scale-doe-systems" id="id18">Installing On Large Scale DOE Systems</a></p></li>
+<li><p><a class="reference internal" href="#common-example-usages" id="id10">Common Example Usages</a></p></li>
+<li><p><a class="reference internal" href="#compilers" id="id11">Compilers</a></p></li>
+<li><p><a class="reference internal" href="#external-packages" id="id12">External Packages</a></p></li>
+<li><p><a class="reference internal" href="#blas-lapack" id="id13">BLAS/LAPACK</a></p></li>
+<li><p><a class="reference internal" href="#mpi" id="id14">MPI</a></p></li>
+<li><p><a class="reference internal" href="#installing-on-macos" id="id15">Installing On macOS</a></p></li>
+<li><p><a class="reference internal" href="#installation-location-in-place-or-out-of-place" id="id16">Installation Location: In-place or Out-of-place</a></p></li>
+<li><p><a class="reference internal" href="#installing-on-machine-requiring-cross-compiler-or-a-job-scheduler" id="id17">Installing On Machine Requiring Cross Compiler Or A Job Scheduler</a></p></li>
+<li><p><a class="reference internal" href="#installing-with-tau-instrumentation-package" id="id18">Installing With TAU Instrumentation Package</a></p></li>
+<li><p><a class="reference internal" href="#installing-petsc-to-use-gpus-and-accelerators" id="id19">Installing PETSc To Use GPUs And Accelerators</a></p></li>
+<li><p><a class="reference internal" href="#installing-to-run-in-browser-with-emscripten" id="id20">Installing To Run in Browser with Emscripten</a></p></li>
+<li><p><a class="reference internal" href="#installing-on-large-scale-doe-systems" id="id21">Installing On Large Scale DOE Systems</a></p></li>
 </ul>
 </div>
 <section id="common-example-usages">
-<h2><a class="toc-backref" href="#id8">Common Example Usages</a><a class="headerlink" href="#common-example-usages" title="Permalink to this heading">#</a></h2>
+<h2><a class="toc-backref" href="#id10">Common Example Usages</a><a class="headerlink" href="#common-example-usages" title="Permalink to this heading">#</a></h2>
 <div class="admonition attention">
 <p class="admonition-title">Attention</p>
-<p>There are many example <code class="docutils literal notranslate"><span class="pre">configure</span></code> scripts at <code class="docutils literal notranslate"><span class="pre">config/examples/*.py</span></code>. These cover a
+<p>There are many example <code class="docutils notranslate"><span class="pre">configure</span></code> scripts at <code class="docutils notranslate"><span class="pre">config/examples/*.py</span></code>. These cover a
 wide variety of systems, and we use some of these scripts locally for testing. One can
 modify these files and run them in lieu of writing one yourself. For example:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./config/examples/arch-ci-osx-dbg.py
 </pre></div>
 </div>
-<p>If there is a system for which we do not yet have such a <code class="docutils literal notranslate"><span class="pre">configure</span></code> script and/or
+<p>If there is a system for which we do not yet have such a <code class="docutils notranslate"><span class="pre">configure</span></code> script and/or
 the script in the examples directory is outdated we welcome your feedback by submitting
-your recommendations to <a class="reference external" href="mailto:petsc-maint&#37;&#52;&#48;mcs&#46;anl&#46;gov">petsc-maint<span>&#64;</span>mcs<span>&#46;</span>anl<span>&#46;</span>gov</a>. See bug report <a class="reference internal" href="../community/bugs.html#doc-creepycrawly"><span class="std std-ref">documentation</span></a> for more information.</p>
+your recommendations to <a class="reference external" href="mailto:petsc-maint&#37;&#52;&#48;mcs&#46;anl&#46;gov">petsc-maint<span>&#64;</span>mcs<span>&#46;</span>anl<span>&#46;</span>gov</a>. See bug report <a class="reference internal" href="../community/mailing.html#doc-creepycrawly"><span class="std std-ref">documentation</span></a> for more information.</p>
 </div>
 <ul>
 <li><p>If you do not have a Fortran compiler or <a class="reference external" href="https://www.mpich.org/">MPICH</a> installed
@@ -483,8 +483,8 @@ locally (and want to use PETSc from C only).</p>
 </div>
 </li>
 <li><p>If <a class="reference external" href="https://www.netlib.org/lapack/lug/node11.html">BLAS/LAPACK</a>, MPI sources (in “-devel” packages in most Linux distributions) are already
-installed in default system/compiler locations and <code class="docutils literal notranslate"><span class="pre">mpicc</span></code>, <code class="docutils literal notranslate"><span class="pre">mpif90</span></code>, mpiexec are available
-via <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> - configure does not require any additional options.</p>
+installed in default system/compiler locations and <code class="docutils notranslate"><span class="pre">mpicc</span></code>, <code class="docutils notranslate"><span class="pre">mpif90</span></code>, mpiexec are available
+via <code class="docutils notranslate"><span class="pre">$PATH</span></code> - configure does not require any additional options.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure
 </pre></div>
 </div>
@@ -501,8 +501,8 @@ via <code class="docutils literal notranslate"><span class="pre">$PATH</span></c
 </ul>
 <div class="yellow admonition">
 <p class="admonition-title">Note</p>
-<p>Do not specify <code class="docutils literal notranslate"><span class="pre">--with-cc</span></code>, <code class="docutils literal notranslate"><span class="pre">--with-fc</span></code> etc for the above when using
-<code class="docutils literal notranslate"><span class="pre">--with-mpi-dir</span></code> - so that <code class="docutils literal notranslate"><span class="pre">mpicc</span></code>/ <code class="docutils literal notranslate"><span class="pre">mpif90</span></code> will be picked up from mpi-dir!</p>
+<p>Do not specify <code class="docutils notranslate"><span class="pre">--with-cc</span></code>, <code class="docutils notranslate"><span class="pre">--with-fc</span></code> etc for the above when using
+<code class="docutils notranslate"><span class="pre">--with-mpi-dir</span></code> - so that <code class="docutils notranslate"><span class="pre">mpicc</span></code>/ <code class="docutils notranslate"><span class="pre">mpif90</span></code> will be picked up from mpi-dir!</p>
 </div>
 <ul>
 <li><p>Build Complex version of PETSc (using c++ compiler):</p>
@@ -511,7 +511,7 @@ via <code class="docutils literal notranslate"><span class="pre">$PATH</span></c
 </div>
 </li>
 <li><p>Install 2 variants of PETSc, one with gnu, the other with Intel compilers. Specify
-different <code class="docutils literal notranslate"><span class="pre">$PETSC_ARCH</span></code> for each build. See multiple PETSc install <a class="reference internal" href="multibuild.html#doc-multi"><span class="std std-ref">documentation</span></a> for further recommendations:</p>
+different <code class="docutils notranslate"><span class="pre">$PETSC_ARCH</span></code> for each build. See multiple PETSc install <a class="reference internal" href="multibuild.html#doc-multi"><span class="std std-ref">documentation</span></a> for further recommendations:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span><span class="nv">PETSC_ARCH</span><span class="o">=</span>linux-gnu<span class="w"> </span>--with-cc<span class="o">=</span>gcc<span class="w"> </span>--with-cxx<span class="o">=</span>g++<span class="w"> </span>--with-fc<span class="o">=</span>gfortran<span class="w"> </span>--download-mpich
 <span class="gp">$ </span>make<span class="w"> </span><span class="nv">PETSC_ARCH</span><span class="o">=</span>linux-gnu<span class="w"> </span>all<span class="w"> </span><span class="nb">test</span>
 <span class="gp">$ </span>./configure<span class="w"> </span><span class="nv">PETSC_ARCH</span><span class="o">=</span>linux-gnu-intel<span class="w"> </span>--with-cc<span class="o">=</span>icc<span class="w"> </span>--with-cxx<span class="o">=</span>icpc<span class="w"> </span>--with-fc<span class="o">=</span>ifort<span class="w"> </span>--download-mpich<span class="w"> </span>--with-blaslapack-dir<span class="o">=</span>/usr/local/mkl
@@ -522,19 +522,19 @@ different <code class="docutils literal notranslate"><span class="pre">$PETSC_AR
 </ul>
 </section>
 <section id="compilers">
-<span id="doc-config-compilers"></span><h2><a class="toc-backref" href="#id9">Compilers</a><a class="headerlink" href="#compilers" title="Permalink to this heading">#</a></h2>
+<span id="doc-config-compilers"></span><h2><a class="toc-backref" href="#id11">Compilers</a><a class="headerlink" href="#compilers" title="Permalink to this heading">#</a></h2>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
 <p>If no compilers are specified - configure will automatically look for available MPI or
-regular compilers in the user’s <code class="docutils literal notranslate"><span class="pre">$PATH</span></code> in the following order:</p>
+regular compilers in the user’s <code class="docutils notranslate"><span class="pre">$PATH</span></code> in the following order:</p>
 <ol class="arabic simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">mpicc</span></code>/<code class="docutils literal notranslate"><span class="pre">mpicxx</span></code>/<code class="docutils literal notranslate"><span class="pre">mpif90</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gcc</span></code>/<code class="docutils literal notranslate"><span class="pre">g++</span></code>/<code class="docutils literal notranslate"><span class="pre">gfortran</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">cc</span></code>/<code class="docutils literal notranslate"><span class="pre">CC</span></code> etc..</p></li>
+<li><p><code class="docutils notranslate"><span class="pre">mpicc</span></code>/<code class="docutils notranslate"><span class="pre">mpicxx</span></code>/<code class="docutils notranslate"><span class="pre">mpif90</span></code></p></li>
+<li><p><code class="docutils notranslate"><span class="pre">gcc</span></code>/<code class="docutils notranslate"><span class="pre">g++</span></code>/<code class="docutils notranslate"><span class="pre">gfortran</span></code></p></li>
+<li><p><code class="docutils notranslate"><span class="pre">cc</span></code>/<code class="docutils notranslate"><span class="pre">CC</span></code> etc..</p></li>
 </ol>
 </div>
 <ul>
-<li><p>Specify compilers using the options <code class="docutils literal notranslate"><span class="pre">--with-cc</span></code>/<code class="docutils literal notranslate"><span class="pre">--with-cxx</span></code>/<code class="docutils literal notranslate"><span class="pre">--with-fc</span></code> for c,
+<li><p>Specify compilers using the options <code class="docutils notranslate"><span class="pre">--with-cc</span></code>/<code class="docutils notranslate"><span class="pre">--with-cxx</span></code>/<code class="docutils notranslate"><span class="pre">--with-fc</span></code> for c,
 c++, and fortran compilers respectively:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span>gcc<span class="w"> </span>--with-cxx<span class="o">=</span>g++<span class="w"> </span>--with-fc<span class="o">=</span>gfortran
 </pre></div>
@@ -543,20 +543,20 @@ c++, and fortran compilers respectively:</p>
 </ul>
 <div class="admonition important">
 <p class="admonition-title">Important</p>
-<p>It’s best to use MPI compilers as this will avoid the situation where MPI is compiled
-with one set of compilers (like <code class="docutils literal notranslate"><span class="pre">gcc</span></code>/<code class="docutils literal notranslate"><span class="pre">gfortran</span></code>) and the user specified incompatible
-compilers to PETSc (perhaps <code class="docutils literal notranslate"><span class="pre">icc</span></code>/<code class="docutils literal notranslate"><span class="pre">ifort</span></code>). This can be done by either specifying
-<code class="docutils literal notranslate"><span class="pre">--with-cc=mpicc</span></code> or <code class="docutils literal notranslate"><span class="pre">--with-mpi-dir</span></code> (and not <code class="docutils literal notranslate"><span class="pre">--with-cc=gcc</span></code>)</p>
+<p>It’s best to use MPI compiler wrappers <a class="footnote-reference brackets" href="#id7" id="id1">1</a>. This can be done by either specifying
+<code class="docutils notranslate"><span class="pre">--with-cc=mpicc</span></code> or <code class="docutils notranslate"><span class="pre">--with-mpi-dir</span></code> (and not <code class="docutils notranslate"><span class="pre">--with-cc=gcc</span></code>)</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span>mpicc<span class="w"> </span>--with-cxx<span class="o">=</span>mpicxx<span class="w"> </span>--with-fc<span class="o">=</span>mpif90
 </pre></div>
 </div>
-<p>or the following (but <strong>without</strong> <code class="docutils literal notranslate"><span class="pre">--with-cc=gcc</span></code>)</p>
+<p>or the following (but <strong>without</strong> <code class="docutils notranslate"><span class="pre">--with-cc=gcc</span></code>)</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-mpi-dir<span class="o">=</span>/opt/mpich2-1.1
 </pre></div>
 </div>
+<p>See <a class="reference internal" href="#doc-config-mpi"><span class="std std-ref">MPI</span></a> for details on how to select specific MPI compiler wrappers or the
+specific compiler used by the MPI compiler wrapper.</p>
 </div>
 <ul>
-<li><p>If a fortran compiler is not available or not needed - disable using:</p>
+<li><p>If a Fortran compiler is not available or not needed - disable using:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-fc<span class="o">=</span><span class="m">0</span>
 </pre></div>
 </div>
@@ -567,32 +567,32 @@ compilers to PETSc (perhaps <code class="docutils literal notranslate"><span cla
 </div>
 </li>
 </ul>
-<p><code class="docutils literal notranslate"><span class="pre">configure</span></code> defaults to building PETSc in debug mode. One can switch to optimized
-mode with the <code class="docutils literal notranslate"><span class="pre">configure</span></code> option <code class="docutils literal notranslate"><span class="pre">--with-debugging=0</span></code> (we suggest using a different
-<code class="docutils literal notranslate"><span class="pre">$PETSC_ARCH</span></code> for debug and optimized builds, for example arch-debug and arch-opt, this
+<p><code class="docutils notranslate"><span class="pre">configure</span></code> defaults to building PETSc in debug mode. One can switch to optimized
+mode with the <code class="docutils notranslate"><span class="pre">configure</span></code> option <code class="docutils notranslate"><span class="pre">--with-debugging=0</span></code> (we suggest using a different
+<code class="docutils notranslate"><span class="pre">$PETSC_ARCH</span></code> for debug and optimized builds, for example arch-debug and arch-opt, this
 way you can switch between debugging your code and running for performance by simply
-changing the value of <code class="docutils literal notranslate"><span class="pre">$PETSC_ARCH</span></code>). See multiple install <a class="reference internal" href="multibuild.html#doc-multi"><span class="std std-ref">documentation</span></a> for further details.</p>
+changing the value of <code class="docutils notranslate"><span class="pre">$PETSC_ARCH</span></code>). See multiple install <a class="reference internal" href="multibuild.html#doc-multi"><span class="std std-ref">documentation</span></a> for further details.</p>
 <p>Additionally one can specify more suitable optimization flags with the options
-<code class="docutils literal notranslate"><span class="pre">COPTFLAGS</span></code>, <code class="docutils literal notranslate"><span class="pre">FOPTFLAGS</span></code>, <code class="docutils literal notranslate"><span class="pre">CXXOPTFLAGS</span></code>. For example when using gnu compilers with
+<code class="docutils notranslate"><span class="pre">COPTFLAGS</span></code>, <code class="docutils notranslate"><span class="pre">FOPTFLAGS</span></code>, <code class="docutils notranslate"><span class="pre">CXXOPTFLAGS</span></code>. For example when using gnu compilers with
 corresponding optimization flags:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span>gcc<span class="w"> </span>--with-cxx<span class="o">=</span>g++<span class="w"> </span>--with-fc<span class="o">=</span>gfortran<span class="w"> </span>--with-debugging<span class="o">=</span><span class="m">0</span><span class="w"> </span><span class="nv">COPTFLAGS</span><span class="o">=</span><span class="s1">&#39;-O3 -march=native -mtune=native&#39;</span><span class="w"> </span><span class="nv">CXXOPTFLAGS</span><span class="o">=</span><span class="s1">&#39;-O3 -march=native -mtune=native&#39;</span><span class="w"> </span><span class="nv">FOPTFLAGS</span><span class="o">=</span><span class="s1">&#39;-O3 -march=native -mtune=native&#39;</span><span class="w"> </span>--download-mpich
 </pre></div>
 </div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p><code class="docutils literal notranslate"><span class="pre">configure</span></code> cannot detect compiler libraries for certain set of compilers. In this
-case one can specify additional system/compiler libraries using the <code class="docutils literal notranslate"><span class="pre">LIBS</span></code> option:</p>
+<p><code class="docutils notranslate"><span class="pre">configure</span></code> cannot detect compiler libraries for certain set of compilers. In this
+case one can specify additional system/compiler libraries using the <code class="docutils notranslate"><span class="pre">LIBS</span></code> option:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--LIBS<span class="o">=</span><span class="s1">&#39;-ldl /usr/lib/libm.a&#39;</span>
 </pre></div>
 </div>
 </div>
 </section>
 <section id="external-packages">
-<span id="doc-config-externalpack"></span><h2><a class="toc-backref" href="#id10">External Packages</a><a class="headerlink" href="#external-packages" title="Permalink to this heading">#</a></h2>
+<span id="doc-config-externalpack"></span><h2><a class="toc-backref" href="#id12">External Packages</a><a class="headerlink" href="#external-packages" title="Permalink to this heading">#</a></h2>
 <div class="yellow admonition">
 <p class="admonition-title">Note</p>
 <p><a class="reference external" href="https://www.netlib.org/lapack/lug/node11.html">BLAS/LAPACK</a> is the only <strong>required</strong> <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external package</span></a>
-(other than of course build tools such as compilers and <code class="docutils literal notranslate"><span class="pre">make</span></code>). PETSc may be built
+(other than of course build tools such as compilers and <code class="docutils notranslate"><span class="pre">make</span></code>). PETSc may be built
 and run without MPI support if processing only in serial.</p>
 <p>For any <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a> used with PETSc we highly
 recommend you have PETSc download and install the packages, rather than you installing
@@ -611,44 +611,44 @@ play nice with PETSc.</p></li>
 <p>PETSc provides interfaces to various <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a>.  One
 can optionally use external solvers like <a class="reference external" href="https://computing.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods">HYPRE</a>, <a class="reference external" href="https://mumps-solver.org/">MUMPS</a>, and others from within PETSc
 applications.</p>
-<p>PETSc <code class="docutils literal notranslate"><span class="pre">configure</span></code> has the ability to download and install these <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a>. Alternatively if these packages are already installed, then
-<code class="docutils literal notranslate"><span class="pre">configure</span></code> can detect and use them.</p>
+<p>PETSc <code class="docutils notranslate"><span class="pre">configure</span></code> has the ability to download and install these <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a>. Alternatively if these packages are already installed, then
+<code class="docutils notranslate"><span class="pre">configure</span></code> can detect and use them.</p>
 <p>If you are behind a firewall and cannot use a proxy for the downloads or have a very slow
-network, use the additional option <code class="docutils literal notranslate"><span class="pre">--with-packages-download-dir=/path/to/dir</span></code>. This
-will trigger <code class="docutils literal notranslate"><span class="pre">configure</span></code> to print the URLs of all the packages you must download. You
+network, use the additional option <code class="docutils notranslate"><span class="pre">--with-packages-download-dir=/path/to/dir</span></code>. This
+will trigger <code class="docutils notranslate"><span class="pre">configure</span></code> to print the URLs of all the packages you must download. You
 may then download the packages to some directory (do not uncompress or untar the files)
-and then point <code class="docutils literal notranslate"><span class="pre">configure</span></code> to these copies of the packages instead of trying to download
+and then point <code class="docutils notranslate"><span class="pre">configure</span></code> to these copies of the packages instead of trying to download
 them directly from the internet.</p>
-<p>The following modes can be used to download/install <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a> with <code class="docutils literal notranslate"><span class="pre">configure</span></code>.</p>
+<p>The following modes can be used to download/install <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a> with <code class="docutils notranslate"><span class="pre">configure</span></code>.</p>
 <ul>
-<li><p><code class="docutils literal notranslate"><span class="pre">--download-PACKAGENAME</span></code>: Download specified package and install it, enabling PETSc to
+<li><p><code class="docutils notranslate"><span class="pre">--download-PACKAGENAME</span></code>: Download specified package and install it, enabling PETSc to
 use this package. <strong>This is the recommended method to couple any external packages with PETSc</strong>:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--download-fblaslapack<span class="w"> </span>--download-mpich
 </pre></div>
 </div>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--download-PACKAGENAME=/path/to/PACKAGENAME.tar.gz</span></code>: If <code class="docutils literal notranslate"><span class="pre">configure</span></code> cannot
+<li><p><code class="docutils notranslate"><span class="pre">--download-PACKAGENAME=/path/to/PACKAGENAME.tar.gz</span></code>: If <code class="docutils notranslate"><span class="pre">configure</span></code> cannot
 automatically download the package (due to network/firewall issues), one can download
 the package by alternative means (perhaps wget, curl, or scp via some other
 machine). Once the tarfile is downloaded, the path to this file can be specified to
-configure with this option. <code class="docutils literal notranslate"><span class="pre">configure</span></code> will proceed to install this package and then
+configure with this option. <code class="docutils notranslate"><span class="pre">configure</span></code> will proceed to install this package and then
 configure PETSc with it:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--download-mpich<span class="o">=</span>/home/petsc/mpich2-1.0.4p1.tar.gz
 </pre></div>
 </div>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--with-PACKAGENAME-dir=/path/to/dir</span></code>: If the external package is already installed -
-specify its location to <code class="docutils literal notranslate"><span class="pre">configure</span></code> (it will attempt to detect and include relevant
+<li><p><code class="docutils notranslate"><span class="pre">--with-PACKAGENAME-dir=/path/to/dir</span></code>: If the external package is already installed -
+specify its location to <code class="docutils notranslate"><span class="pre">configure</span></code> (it will attempt to detect and include relevant
 library files from this location). Normally this corresponds to the top-level
 installation directory for the package:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-mpi-dir<span class="o">=</span>/home/petsc/software/mpich2-1.0.4p1
 </pre></div>
 </div>
 </li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--with-PACKAGENAME-include=/path/to/include/dir</span></code> and
-<code class="docutils literal notranslate"><span class="pre">--with-PACKAGENAME-lib=LIBRARYLIST</span></code>: Usually a package is defined completely by its
+<li><p><code class="docutils notranslate"><span class="pre">--with-PACKAGENAME-include=/path/to/include/dir</span></code> and
+<code class="docutils notranslate"><span class="pre">--with-PACKAGENAME-lib=LIBRARYLIST</span></code>: Usually a package is defined completely by its
 include file location and library list. If the package is already installed one can use
-these two options to specify the package to <code class="docutils literal notranslate"><span class="pre">configure</span></code>. For example:</p>
+these two options to specify the package to <code class="docutils notranslate"><span class="pre">configure</span></code>. For example:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-superlu-include<span class="o">=</span>/home/petsc/software/superlu/include<span class="w"> </span>--with-superlu-lib<span class="o">=</span>/home/petsc/software/superlu/lib/libsuperlu.a
 </pre></div>
 </div>
@@ -665,31 +665,31 @@ these two options to specify the package to <code class="docutils literal notran
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <ul class="simple">
-<li><p>Run <code class="docutils literal notranslate"><span class="pre">./configure</span> <span class="pre">--help</span></code> to get the list of <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a> and corresponding additional options (for example
-<code class="docutils literal notranslate"><span class="pre">--with-mpiexec</span></code> for <a class="reference external" href="https://www.mpich.org/">MPICH</a>).</p></li>
+<li><p>Run <code class="docutils notranslate"><span class="pre">./configure</span> <span class="pre">--help</span></code> to get the list of <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a> and corresponding additional options (for example
+<code class="docutils notranslate"><span class="pre">--with-mpiexec</span></code> for <a class="reference external" href="https://www.mpich.org/">MPICH</a>).</p></li>
 <li><p>Generally one would use either one of the above installation modes for any given
-package - and not mix these. (i.e combining <code class="docutils literal notranslate"><span class="pre">--with-mpi-dir</span></code> and
-<code class="docutils literal notranslate"><span class="pre">--with-mpi-include</span></code> etc. should be avoided).</p></li>
-<li><p>Some packages might not support certain options like <code class="docutils literal notranslate"><span class="pre">--download-PACKAGENAME</span></code> or
-<code class="docutils literal notranslate"><span class="pre">--with-PACKAGENAME-dir</span></code>. Architectures like Microsoft Windows might have issues
-with these options. In these cases, <code class="docutils literal notranslate"><span class="pre">--with-PACKAGENAME-include</span></code> and
-<code class="docutils literal notranslate"><span class="pre">--with-PACKAGENAME-lib</span></code> options should be preferred.</p></li>
+package - and not mix these. (i.e combining <code class="docutils notranslate"><span class="pre">--with-mpi-dir</span></code> and
+<code class="docutils notranslate"><span class="pre">--with-mpi-include</span></code> etc. should be avoided).</p></li>
+<li><p>Some packages might not support certain options like <code class="docutils notranslate"><span class="pre">--download-PACKAGENAME</span></code> or
+<code class="docutils notranslate"><span class="pre">--with-PACKAGENAME-dir</span></code>. Architectures like Microsoft Windows might have issues
+with these options. In these cases, <code class="docutils notranslate"><span class="pre">--with-PACKAGENAME-include</span></code> and
+<code class="docutils notranslate"><span class="pre">--with-PACKAGENAME-lib</span></code> options should be preferred.</p></li>
 </ul>
 </div>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--with-packages-build-dir=PATH</span></code>: By default, external packages will be unpacked and
-the build process is run in <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/$PETSC_ARCH/externalpackages</span></code>. However one
+<li><p><code class="docutils notranslate"><span class="pre">--with-packages-build-dir=PATH</span></code>: By default, external packages will be unpacked and
+the build process is run in <code class="docutils notranslate"><span class="pre">$PETSC_DIR/$PETSC_ARCH/externalpackages</span></code>. However one
 can choose a different location where these packages are unpacked and the build process
 is run.</p></li>
 </ul>
 </section>
 <section id="blas-lapack">
-<span id="doc-config-blaslapack"></span><h2><a class="toc-backref" href="#id11">BLAS/LAPACK</a><a class="headerlink" href="#blas-lapack" title="Permalink to this heading">#</a></h2>
-<p>These packages provide some basic numeric kernels used by PETSc. <code class="docutils literal notranslate"><span class="pre">configure</span></code> will
+<span id="doc-config-blaslapack"></span><h2><a class="toc-backref" href="#id13">BLAS/LAPACK</a><a class="headerlink" href="#blas-lapack" title="Permalink to this heading">#</a></h2>
+<p>These packages provide some basic numeric kernels used by PETSc. <code class="docutils notranslate"><span class="pre">configure</span></code> will
 automatically look for <a class="reference external" href="https://www.netlib.org/lapack/lug/node11.html">BLAS/LAPACK</a> in certain standard locations, on most systems you
-should not need to provide any information about <a class="reference external" href="https://www.netlib.org/lapack/lug/node11.html">BLAS/LAPACK</a> in the <code class="docutils literal notranslate"><span class="pre">configure</span></code>
+should not need to provide any information about <a class="reference external" href="https://www.netlib.org/lapack/lug/node11.html">BLAS/LAPACK</a> in the <code class="docutils notranslate"><span class="pre">configure</span></code>
 command.</p>
-<p>One can use the following options to let <code class="docutils literal notranslate"><span class="pre">configure</span></code> download/install <a class="reference external" href="https://www.netlib.org/lapack/lug/node11.html">BLAS/LAPACK</a>
+<p>One can use the following options to let <code class="docutils notranslate"><span class="pre">configure</span></code> download/install <a class="reference external" href="https://www.netlib.org/lapack/lug/node11.html">BLAS/LAPACK</a>
 automatically:</p>
 <ul>
 <li><p>When fortran compiler is present:</p>
@@ -697,7 +697,7 @@ automatically:</p>
 </pre></div>
 </div>
 </li>
-<li><p>Or when configuring without a Fortran compiler - i.e <code class="docutils literal notranslate"><span class="pre">--with-fc=0</span></code>:</p>
+<li><p>Or when configuring without a Fortran compiler - i.e <code class="docutils notranslate"><span class="pre">--with-fc=0</span></code>:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--download-f2cblaslapack
 </pre></div>
 </div>
@@ -712,74 +712,113 @@ automatically:</p>
 <section id="intel-mkl">
 <h3>Intel MKL<a class="headerlink" href="#intel-mkl" title="Permalink to this heading">#</a></h3>
 <p>Intel provides <a class="reference external" href="https://www.netlib.org/lapack/lug/node11.html">BLAS/LAPACK</a> via the <a class="reference external" href="https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/onemkl.html">MKL</a> library. One can specify it
-to PETSc <code class="docutils literal notranslate"><span class="pre">configure</span></code> with <code class="docutils literal notranslate"><span class="pre">--with-blaslapack-dir=$MKLROOT</span></code> or
-<code class="docutils literal notranslate"><span class="pre">--with-blaslapack-dir=/soft/com/packages/intel/13/079/mkl</span></code>.  If the above option does
+to PETSc <code class="docutils notranslate"><span class="pre">configure</span></code> with <code class="docutils notranslate"><span class="pre">--with-blaslapack-dir=$MKLROOT</span></code> or
+<code class="docutils notranslate"><span class="pre">--with-blaslapack-dir=/soft/com/packages/intel/13/079/mkl</span></code>.  If the above option does
 not work - one could determine the correct library list for your compilers using Intel
-<a class="reference external" href="https://software.intel.com/content/www/us/en/develop/articles/intel-mkl-link-line-advisor.html">MKL Link Line Advisor</a> and specify with the <code class="docutils literal notranslate"><span class="pre">configure</span></code> option
-<code class="docutils literal notranslate"><span class="pre">--with-blaslapack-lib</span></code></p>
+<a class="reference external" href="https://software.intel.com/content/www/us/en/develop/articles/intel-mkl-link-line-advisor.html">MKL Link Line Advisor</a> and specify with the <code class="docutils notranslate"><span class="pre">configure</span></code> option
+<code class="docutils notranslate"><span class="pre">--with-blaslapack-lib</span></code></p>
 </section>
 <section id="ibm-essl">
 <h3>IBM ESSL<a class="headerlink" href="#ibm-essl" title="Permalink to this heading">#</a></h3>
 <p>Sadly, IBM’s <a class="reference external" href="https://www.ibm.com/support/knowledgecenter/en/SSFHY8/essl_welcome.html">ESSL</a> does not have all the routines of <a class="reference external" href="https://www.netlib.org/lapack/lug/node11.html">BLAS/LAPACK</a> that some
 packages, such as <a class="reference external" href="https://portal.nersc.gov/project/sparse/superlu/">SuperLU</a> expect; in particular slamch, dlamch and xerbla. In this
-case instead of using <a class="reference external" href="https://www.ibm.com/support/knowledgecenter/en/SSFHY8/essl_welcome.html">ESSL</a> we suggest <code class="docutils literal notranslate"><span class="pre">--download-fblaslapack</span></code>. If you really want
+case instead of using <a class="reference external" href="https://www.ibm.com/support/knowledgecenter/en/SSFHY8/essl_welcome.html">ESSL</a> we suggest <code class="docutils notranslate"><span class="pre">--download-fblaslapack</span></code>. If you really want
 to use <a class="reference external" href="https://www.ibm.com/support/knowledgecenter/en/SSFHY8/essl_welcome.html">ESSL</a>, see <a class="reference external" href="https://www.pdc.kth.se/hpc-services">https://www.pdc.kth.se/hpc-services</a>.</p>
 </section>
 </section>
-<section id="mpi-problems-i-don-t-want-mpi">
-<span id="doc-config-mpi"></span><h2><a class="toc-backref" href="#id12">MPI Problems/I Don’t Want MPI</a><a class="headerlink" href="#mpi-problems-i-don-t-want-mpi" title="Permalink to this heading">#</a></h2>
+<section id="mpi">
+<span id="doc-config-mpi"></span><h2><a class="toc-backref" href="#id14">MPI</a><a class="headerlink" href="#mpi" title="Permalink to this heading">#</a></h2>
 <p>The Message Passing Interface (MPI) provides the parallel functionality for PETSc.</p>
-<p><code class="docutils literal notranslate"><span class="pre">configure</span></code> will automatically look for MPI compilers <code class="docutils literal notranslate"><span class="pre">mpicc</span></code>/<code class="docutils literal notranslate"><span class="pre">mpif90</span></code> etc and use
-them if found in your PATH. One can use the following options to let <code class="docutils literal notranslate"><span class="pre">configure</span></code>
-download/install MPI automatically:</p>
+<p>MPI might already be installed. IBM, Intel, NVIDIA, and Cray provide their own and Linux and macOS package
+managers also provide open-source versions called MPICH and Open MPI. If MPI is not already installed use
+the following options to let PETSc’s <code class="docutils notranslate"><span class="pre">configure</span></code> download and install MPI.</p>
 <ul>
 <li><p>For <a class="reference external" href="https://www.mpich.org/">MPICH</a>:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--download-mpich
 </pre></div>
 </div>
 </li>
-<li><p>For <a class="reference external" href="https://www.open-mpi.org/">OpenMPI</a>:</p>
+<li><p>For <a class="reference external" href="https://www.open-mpi.org/">Open MPI</a>:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--download-openmpi
 </pre></div>
 </div>
 </li>
-</ul>
-<section id="using-mpi-compilers">
-<h3>Using MPI Compilers<a class="headerlink" href="#using-mpi-compilers" title="Permalink to this heading">#</a></h3>
-<p>It’s best to install PETSc with MPI compiler wrappers (often called <code class="docutils literal notranslate"><span class="pre">mpicc</span></code>,
-<code class="docutils literal notranslate"><span class="pre">mpicxx</span></code>, <code class="docutils literal notranslate"><span class="pre">mpif90</span></code>) - this way, the SAME compilers used to build MPI are used to
-build PETSc. See the section on <a class="reference internal" href="#doc-config-compilers"><span class="std std-ref">compilers</span></a> above for more
-details.</p>
-<ul>
-<li><p>Vendor provided MPI might already be installed. IBM, Intel, NVIDIA, and Cray provide their own:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span>vendor_mpicc<span class="w"> </span>--with-fc<span class="o">=</span>vendor_mpif90
-</pre></div>
-</div>
-</li>
-<li><p>If using <a class="reference external" href="https://www.mpich.org/">MPICH</a> which is already installed (perhaps using myrinet/gm) then use
-(without specifying <code class="docutils literal notranslate"><span class="pre">--with-cc=gcc</span></code> etc. so that <code class="docutils literal notranslate"><span class="pre">configure</span></code> picks up <code class="docutils literal notranslate"><span class="pre">mpicc</span></code>
-from mpi-dir):</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$  </span>./configure<span class="w"> </span>--with-mpi-dir<span class="o">=</span>/absolute/path/to/mpich/install
-</pre></div>
-</div>
-</li>
-</ul>
-</section>
-<section id="installing-without-mpi">
-<h3>Installing Without MPI<a class="headerlink" href="#installing-without-mpi" title="Permalink to this heading">#</a></h3>
-<p>You can build (sequential) PETSc without MPI. This is useful for quickly installing PETSc:</p>
+<li><p>To not use MPI:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-mpi<span class="o">=</span><span class="m">0</span>
 </pre></div>
 </div>
-<p>However - if there is any MPI code in user application, then its best to install a full
-MPI implementation - even if the usage is currently limited to uniprocessor mode:</p>
-</section>
+</li>
+<li><p>To use an installed version of MPI</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span>mpicc<span class="w"> </span>--with-cxx<span class="o">=</span>mpicxx<span class="w"> </span>--with-fc<span class="o">=</span>mpif90
+</pre></div>
+</div>
+</li>
+<li><p>The Intel MPI library provides MPI compiler wrappers with compiler specific names.</p>
+<p>GNU compilers: <code class="docutils notranslate"><span class="pre">gcc</span></code>, <code class="docutils notranslate"><span class="pre">g++</span></code>, <code class="docutils notranslate"><span class="pre">gfortran</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span>mpigcc<span class="w"> </span>--with-cxx<span class="o">=</span>mpigxx<span class="w"> </span>--with-fc<span class="o">=</span>mpif90
+</pre></div>
+</div>
+<p>“Old” Intel compilers: <code class="docutils notranslate"><span class="pre">icc</span></code>, <code class="docutils notranslate"><span class="pre">icpc</span></code>, and <code class="docutils notranslate"><span class="pre">ifort</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span>mpiicc<span class="w"> </span>--with-cxx<span class="o">=</span>mpiicpc<span class="w"> </span>--with-fc<span class="o">=</span>mpiifort
+</pre></div>
+</div>
+<p>they might not work with some Intel MPI library versions. In those cases, use</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">I_MPI_CC</span><span class="o">=</span>icc<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">I_MPI_CXX</span><span class="o">=</span>icpc<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">I_MPI_F90</span><span class="o">=</span>ifort
+<span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span>mpicc<span class="w"> </span>--with-cxx<span class="o">=</span>mpicxx<span class="w"> </span>--with-fc<span class="o">=</span>mpif90
+</pre></div>
+</div>
+</li>
+<li><p>“New” oneAPI Intel compilers: <code class="docutils notranslate"><span class="pre">icx</span></code>, <code class="docutils notranslate"><span class="pre">icpx</span></code>, and <code class="docutils notranslate"><span class="pre">ifx</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span>mpiicx<span class="w"> </span>--with-cxx<span class="o">=</span>mpiicpx<span class="w"> </span>--with-fc<span class="o">=</span>mpiifx
+</pre></div>
+</div>
+<p>they might not work with some Intel MPI library versions. In those cases, use</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">I_MPI_CC</span><span class="o">=</span>icx<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">I_MPI_CXX</span><span class="o">=</span>icpx<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">I_MPI_F90</span><span class="o">=</span>ifx
+<span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span>mpicc<span class="w"> </span>--with-cxx<span class="o">=</span>mpicxx<span class="w"> </span>--with-fc<span class="o">=</span>mpif90
+</pre></div>
+</div>
+</li>
+<li><p>On Cray systems, after loading the appropriate MPI module, the regular compilers <code class="docutils notranslate"><span class="pre">cc</span></code>, <code class="docutils notranslate"><span class="pre">CC</span></code>, and <code class="docutils notranslate"><span class="pre">ftn</span></code>
+automatically become MPI compiler wrappers.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span>cc<span class="w"> </span>--with-cxx<span class="o">=</span>CC<span class="w"> </span>--with-fc<span class="o">=</span>ftn
+</pre></div>
+</div>
+</li>
+<li><p>Instead of providing the MPI compiler wrappers, one can provide the MPI installation directory, where the MPI compiler wrappers are available in the bin directory,
+(without additionally specifying <code class="docutils notranslate"><span class="pre">--with-cc</span></code> etc.) using</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$  </span>./configure<span class="w"> </span>--with-mpi-dir<span class="o">=</span>/absolute/path/to/mpi/install/directory
+</pre></div>
+</div>
+</li>
+<li><p>To control the compilers selected by <code class="docutils notranslate"><span class="pre">mpicc</span></code>, <code class="docutils notranslate"><span class="pre">mpicxx</span></code>, and <code class="docutils notranslate"><span class="pre">mpif90</span></code> one may use environmental
+variables appropriate for the MPI libraries. For Intel MPI, MPICH, and Open MPI they are</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">I_MPI_CC</span><span class="o">=</span>c_compiler<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">I_MPI_CXX</span><span class="o">=</span>c++_compiler<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">I_MPI_F90</span><span class="o">=</span>fortran_compiler
+<span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">MPICH_CC</span><span class="o">=</span>c_compiler<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">MPICH_CXX</span><span class="o">=</span>c++_compiler<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">MPICH_FC</span><span class="o">=</span>fortran_compiler
+<span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">OMPI_CC</span><span class="o">=</span>c_compiler<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">OMPI_CXX</span><span class="o">=</span>c++_compiler<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">export</span><span class="w"> </span><span class="nv">OMPI_FC</span><span class="o">=</span>fortran_compiler
+</pre></div>
+</div>
+<p>Then, use</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span>mpicc<span class="w"> </span>--with-fc<span class="o">=</span>mpif90<span class="w"> </span>--with-cxx<span class="o">=</span>mpicxx
+</pre></div>
+</div>
+<p>We recommend avoiding these environmental variables unless absolutely necessary.
+They are easy to forget or they may be set and then forgotten, thus resulting in unexpected behavior.</p>
+<p>And avoid using the syntax <code class="docutils notranslate"><span class="pre">--with-cc=&quot;mpicc</span> <span class="pre">-cc=icx&quot;</span></code> - this can break some builds (for example: external packages that use CMake)</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The Intel environmental variables <code class="docutils notranslate"><span class="pre">I_MPI_CC</span></code>, <code class="docutils notranslate"><span class="pre">I_MPI_CXX</span></code>, and <code class="docutils notranslate"><span class="pre">I_MPI_F90</span></code> also changing the
+behavior of the compiler-specific MPI compiler wrappers <code class="docutils notranslate"><span class="pre">mpigcc,</span> <span class="pre">``mpigxx</span></code>, <code class="docutils notranslate"><span class="pre">mpif90</span></code>, <code class="docutils notranslate"><span class="pre">mpiicx</span></code>,
+<code class="docutils notranslate"><span class="pre">mpiicpx</span></code>, <code class="docutils notranslate"><span class="pre">mpiifx</span></code>, <code class="docutils notranslate"><span class="pre">mpiicc</span></code>, <code class="docutils notranslate"><span class="pre">mpiicpc</span></code>, and <code class="docutils notranslate"><span class="pre">mpiifort</span></code>. These variables may be automatically
+set by certain modules. So one must be careful to ensure they are using the desired compilers.</p>
+</div>
+</li>
+</ul>
 <section id="installing-with-open-mpi-with-shared-mpi-libraries">
 <h3>Installing With Open MPI With Shared MPI Libraries<a class="headerlink" href="#installing-with-open-mpi-with-shared-mpi-libraries" title="Permalink to this heading">#</a></h3>
-<p><a class="reference external" href="https://www.open-mpi.org/">OpenMPI</a> defaults to building shared libraries for MPI. However, the binaries generated
-by MPI wrappers <code class="docutils literal notranslate"><span class="pre">mpicc</span></code>/<code class="docutils literal notranslate"><span class="pre">mpif90</span></code> etc. require <code class="docutils literal notranslate"><span class="pre">$LD_LIBRARY_PATH</span></code> to be set to the
+<p><a class="reference external" href="https://www.open-mpi.org/">Open MPI</a> defaults to building shared libraries for MPI. However, the binaries generated
+by MPI compiler wrappers <code class="docutils notranslate"><span class="pre">mpicc</span></code>/<code class="docutils notranslate"><span class="pre">mpif90</span></code> etc. require <code class="docutils notranslate"><span class="pre">$LD_LIBRARY_PATH</span></code> to be set to the
 location of these libraries.</p>
-<p>Due to this <a class="reference external" href="https://www.open-mpi.org/">OpenMPI</a> restriction one has to set <code class="docutils literal notranslate"><span class="pre">$LD_LIBRARY_PATH</span></code> correctly (per <a class="reference external" href="https://www.open-mpi.org/">OpenMPI</a> <a class="reference external" href="https://www.open-mpi.org/faq/?category=building">installation instructions</a>), before running PETSc <code class="docutils literal notranslate"><span class="pre">configure</span></code>. If you do not set this environmental variables you will get messages when running <code class="docutils literal notranslate"><span class="pre">configure</span></code> such as:</p>
+<p>Due to this <a class="reference external" href="https://www.open-mpi.org/">Open MPI</a> restriction one has to set <code class="docutils notranslate"><span class="pre">$LD_LIBRARY_PATH</span></code> correctly (per <a class="reference external" href="https://www.open-mpi.org/">Open MPI</a> <a class="reference external" href="https://www.open-mpi.org/faq/?category=building">installation instructions</a>), before running PETSc <code class="docutils notranslate"><span class="pre">configure</span></code>. If you do not set this environmental variables you will get messages when running <code class="docutils notranslate"><span class="pre">configure</span></code> such as:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>UNABLE to EXECUTE BINARIES for config/configure.py
 -------------------------------------------------------------------------------
 Cannot run executables created with C. If this machine uses a batch system
@@ -787,20 +826,20 @@ to submit jobs you will need to configure using/configure.py with the additional
 Otherwise there is problem with the compilers. Can you compile and run code with your C/C++ (and maybe Fortran) compilers?
 </pre></div>
 </div>
-<p>or when running a code compiled with <a class="reference external" href="https://www.open-mpi.org/">OpenMPI</a>:</p>
+<p>or when running a code compiled with <a class="reference external" href="https://www.open-mpi.org/">Open MPI</a>:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>error while loading shared libraries: libmpi.so.0: cannot open shared object file: No such file or directory
 </pre></div>
 </div>
 </section>
 </section>
 <section id="installing-on-macos">
-<span id="doc-macos-install"></span><h2><a class="toc-backref" href="#id13">Installing On macOS</a><a class="headerlink" href="#installing-on-macos" title="Permalink to this heading">#</a></h2>
-<p>For development on macOS we recommend installing <strong>both</strong> the Apple Xcode GUI development system (install from the Apple macOS store) and the Xcode Command Line tools <a class="footnote-reference brackets" href="#id6" id="id1">1</a> install with</p>
+<span id="doc-macos-install"></span><h2><a class="toc-backref" href="#id15">Installing On macOS</a><a class="headerlink" href="#installing-on-macos" title="Permalink to this heading">#</a></h2>
+<p>For development on macOS we recommend installing <strong>both</strong> the Apple Xcode GUI development system (install from the Apple macOS store) and the Xcode Command Line tools <a class="footnote-reference brackets" href="#id8" id="id2">2</a> install with</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>xcode-select<span class="w"> </span>--install
 </pre></div>
 </div>
-<p>The Apple compilers are <code class="docutils literal notranslate"><span class="pre">clang</span></code> and <code class="docutils literal notranslate"><span class="pre">clang++</span></code> <a class="footnote-reference brackets" href="#id7" id="id2">2</a>. Apple also provides <code class="docutils literal notranslate"><span class="pre">/usr/bin/gcc</span></code>, which is, confusingly, a wrapper to the <code class="docutils literal notranslate"><span class="pre">clang</span></code> compiler, not the GNU compiler.</p>
-<p>We also recommend installing the package manager <a class="reference external" href="https://brew.sh/">homebrew</a>.  To install <code class="docutils literal notranslate"><span class="pre">gfortran</span></code> one can use</p>
+<p>The Apple compilers are <code class="docutils notranslate"><span class="pre">clang</span></code> and <code class="docutils notranslate"><span class="pre">clang++</span></code> <a class="footnote-reference brackets" href="#id9" id="id3">3</a>. Apple also provides <code class="docutils notranslate"><span class="pre">/usr/bin/gcc</span></code>, which is, confusingly, a link to the <code class="docutils notranslate"><span class="pre">clang</span></code> compiler, not the GNU compiler.</p>
+<p>We also recommend installing the package manager <a class="reference external" href="https://brew.sh/">homebrew</a>.  To install <code class="docutils notranslate"><span class="pre">gfortran</span></code> one can use</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>brew<span class="w"> </span>update
 <span class="gp">$ </span>brew<span class="w"> </span>list<span class="w">            </span><span class="c1"># Show all packages installed through brew</span>
 <span class="gp">$ </span>brew<span class="w"> </span>upgrade<span class="w">         </span><span class="c1"># Update packages already installed through brew</span>
@@ -808,11 +847,11 @@ Otherwise there is problem with the compilers. Can you compile and run code with
 </pre></div>
 </div>
 <p>This installs gfortran, gcc, and g++  with the compiler names
-<code class="docutils literal notranslate"><span class="pre">gfortran-version</span></code> (also available as <code class="docutils literal notranslate"><span class="pre">gfortran</span></code>), <code class="docutils literal notranslate"><span class="pre">gcc-version</span></code> and <code class="docutils literal notranslate"><span class="pre">g++-version</span></code>, for example <code class="docutils literal notranslate"><span class="pre">gfortran-12</span></code>, <code class="docutils literal notranslate"><span class="pre">gcc-12</span></code>, and <code class="docutils literal notranslate"><span class="pre">g++-12</span></code>.</p>
+<code class="docutils notranslate"><span class="pre">gfortran-version</span></code> (also available as <code class="docutils notranslate"><span class="pre">gfortran</span></code>), <code class="docutils notranslate"><span class="pre">gcc-version</span></code> and <code class="docutils notranslate"><span class="pre">g++-version</span></code>, for example <code class="docutils notranslate"><span class="pre">gfortran-12</span></code>, <code class="docutils notranslate"><span class="pre">gcc-12</span></code>, and <code class="docutils notranslate"><span class="pre">g++-12</span></code>.</p>
 <p>After upgrading macOS, you generally need to update the Xcode GUI development system (using the standard Apple software update system),
-and the Xcode Command Line tools (run <code class="docutils literal notranslate"><span class="pre">xcode-select</span> <span class="pre">--install</span></code> again).</p>
-<p>Its best to update <code class="docutils literal notranslate"><span class="pre">brew</span></code> after all macOS or Xcode upgrades (use <code class="docutils literal notranslate"><span class="pre">brew</span> <span class="pre">upgrade</span></code>). Sometimes gfortran will not work correctly after an upgrade. If this happens
-it is best to reinstall all <code class="docutils literal notranslate"><span class="pre">brew</span></code> packages using, for example,</p>
+and the Xcode Command Line tools (run <code class="docutils notranslate"><span class="pre">xcode-select</span> <span class="pre">--install</span></code> again).</p>
+<p>Its best to update <code class="docutils notranslate"><span class="pre">brew</span></code> after all macOS or Xcode upgrades (use <code class="docutils notranslate"><span class="pre">brew</span> <span class="pre">upgrade</span></code>). Sometimes gfortran will not work correctly after an upgrade. If this happens
+it is best to reinstall all <code class="docutils notranslate"><span class="pre">brew</span></code> packages using, for example,</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>brew<span class="w"> </span>leaves<span class="w"> </span>&gt;<span class="w"> </span>leaves.lst<span class="w">      </span><span class="c1"># save packages list to re-install</span>
 <span class="gp">$ </span>emacs<span class="w"> </span>leaves.lst<span class="w">              </span><span class="c1"># edit leaves.lst to remove any un-needed pkgs</span>
 <span class="gp">$ </span>brew<span class="w"> </span>uninstall<span class="w"> </span><span class="sb">`</span>brew<span class="w"> </span>list<span class="sb">`</span><span class="w">    </span><span class="c1"># delete all installed packages</span>
@@ -823,33 +862,33 @@ it is best to reinstall all <code class="docutils literal notranslate"><span cla
 </div>
 </section>
 <section id="installation-location-in-place-or-out-of-place">
-<span id="doc-config-install"></span><h2><a class="toc-backref" href="#id14">Installation Location: In-place or Out-of-place</a><a class="headerlink" href="#installation-location-in-place-or-out-of-place" title="Permalink to this heading">#</a></h2>
+<span id="doc-config-install"></span><h2><a class="toc-backref" href="#id16">Installation Location: In-place or Out-of-place</a><a class="headerlink" href="#installation-location-in-place-or-out-of-place" title="Permalink to this heading">#</a></h2>
 <p>By default, PETSc does an in-place installation, meaning the libraries are kept in the
 same directories used to compile PETSc. This is particularly useful for those application
 developers who follow the PETSc git repository main or release branches since rebuilds
 for updates are very quick and painless.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The libraries and include files are located in <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/$PETSC_ARCH/lib</span></code> and
-<code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/$PETSC_ARCH/include</span></code></p>
+<p>The libraries and include files are located in <code class="docutils notranslate"><span class="pre">$PETSC_DIR/$PETSC_ARCH/lib</span></code> and
+<code class="docutils notranslate"><span class="pre">$PETSC_DIR/$PETSC_ARCH/include</span></code></p>
 </div>
 <section id="out-of-place-installation-with-prefix">
-<h3>Out-of-place Installation With <code class="docutils literal notranslate"><span class="pre">--prefix</span></code><a class="headerlink" href="#out-of-place-installation-with-prefix" title="Permalink to this heading">#</a></h3>
-<p>To install the libraries and include files in another location use the <code class="docutils literal notranslate"><span class="pre">--prefix</span></code> option</p>
+<h3>Out-of-place Installation With <code class="docutils notranslate"><span class="pre">--prefix</span></code><a class="headerlink" href="#out-of-place-installation-with-prefix" title="Permalink to this heading">#</a></h3>
+<p>To install the libraries and include files in another location use the <code class="docutils notranslate"><span class="pre">--prefix</span></code> option</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--prefix<span class="o">=</span>/home/userid/my-petsc-install<span class="w"> </span>--some-other-options
 </pre></div>
 </div>
-<p>The libraries and include files will be located in <code class="docutils literal notranslate"><span class="pre">/home/userid/my-petsc-install/lib</span></code>
-and <code class="docutils literal notranslate"><span class="pre">/home/userid/my-petsc-install/include</span></code>.</p>
+<p>The libraries and include files will be located in <code class="docutils notranslate"><span class="pre">/home/userid/my-petsc-install/lib</span></code>
+and <code class="docutils notranslate"><span class="pre">/home/userid/my-petsc-install/include</span></code>.</p>
 </section>
 <section id="installation-in-root-location-not-recommended-uncommon">
 <h3>Installation in Root Location, <strong>Not Recommended</strong> (Uncommon)<a class="headerlink" href="#installation-in-root-location-not-recommended-uncommon" title="Permalink to this heading">#</a></h3>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>One should never run <code class="docutils literal notranslate"><span class="pre">configure</span></code> or make on any package using root access. <strong>Do so at
+<p>One should never run <code class="docutils notranslate"><span class="pre">configure</span></code> or make on any package using root access. <strong>Do so at
 your own risk</strong>.</p>
 </div>
-<p>If one wants to install PETSc in a common system location like <code class="docutils literal notranslate"><span class="pre">/usr/local</span></code> or <code class="docutils literal notranslate"><span class="pre">/opt</span></code>
+<p>If one wants to install PETSc in a common system location like <code class="docutils notranslate"><span class="pre">/usr/local</span></code> or <code class="docutils notranslate"><span class="pre">/opt</span></code>
 that requires root access we suggest creating a directory for PETSc with user privileges,
 and then do the PETSc install as a <strong>regular/non-root</strong> user:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>sudo<span class="w"> </span>mkdir<span class="w"> </span>/opt/petsc
@@ -862,23 +901,23 @@ and then do the PETSc install as a <strong>regular/non-root</strong> user:</p>
 </div>
 </section>
 <section id="installs-for-package-managers-using-destdir-very-uncommon">
-<h3>Installs For Package Managers: Using <code class="docutils literal notranslate"><span class="pre">DESTDIR</span></code> (Very uncommon)<a class="headerlink" href="#installs-for-package-managers-using-destdir-very-uncommon" title="Permalink to this heading">#</a></h3>
+<h3>Installs For Package Managers: Using <code class="docutils notranslate"><span class="pre">DESTDIR</span></code> (Very uncommon)<a class="headerlink" href="#installs-for-package-managers-using-destdir-very-uncommon" title="Permalink to this heading">#</a></h3>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--prefix<span class="o">=</span>/opt/petsc/my-root-petsc-install
 <span class="gp">$ </span>make
 <span class="gp">$ </span>make<span class="w"> </span>install<span class="w"> </span><span class="nv">DESTDIR</span><span class="o">=</span>/tmp/petsc-pkg
 </pre></div>
 </div>
-<p>Package up <code class="docutils literal notranslate"><span class="pre">/tmp/petsc-pkg</span></code>. The package should then be installed at
-<code class="docutils literal notranslate"><span class="pre">/opt/petsc/my-root-petsc-install</span></code></p>
+<p>Package up <code class="docutils notranslate"><span class="pre">/tmp/petsc-pkg</span></code>. The package should then be installed at
+<code class="docutils notranslate"><span class="pre">/opt/petsc/my-root-petsc-install</span></code></p>
 </section>
 <section id="multiple-installs-using-prefix-see-destdir">
-<h3>Multiple Installs Using <code class="docutils literal notranslate"><span class="pre">--prefix</span></code> (See <code class="docutils literal notranslate"><span class="pre">DESTDIR</span></code>)<a class="headerlink" href="#multiple-installs-using-prefix-see-destdir" title="Permalink to this heading">#</a></h3>
-<p>Specify a different <code class="docutils literal notranslate"><span class="pre">--prefix</span></code> location for each configure of different options - at
+<h3>Multiple Installs Using <code class="docutils notranslate"><span class="pre">--prefix</span></code> (See <code class="docutils notranslate"><span class="pre">DESTDIR</span></code>)<a class="headerlink" href="#multiple-installs-using-prefix-see-destdir" title="Permalink to this heading">#</a></h3>
+<p>Specify a different <code class="docutils notranslate"><span class="pre">--prefix</span></code> location for each configure of different options - at
 configure time. For example:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--prefix<span class="o">=</span>/opt/petsc/petsc-3.18.0-mpich<span class="w"> </span>--with-mpi-dir<span class="o">=</span>/opt/mpich
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--prefix<span class="o">=</span>/opt/petsc/petsc-3.20.0-mpich<span class="w"> </span>--with-mpi-dir<span class="o">=</span>/opt/mpich
 <span class="gp">$ </span>make
 <span class="gp">$ </span>make<span class="w"> </span>install<span class="w"> </span><span class="o">[</span><span class="nv">DESTDIR</span><span class="o">=</span>/tmp/petsc-pkg<span class="o">]</span>
-<span class="gp">$ </span>./configure<span class="w"> </span>--prefix<span class="o">=</span>/opt/petsc/petsc-3.18.0-openmpi<span class="w"> </span>--with-mpi-dir<span class="o">=</span>/opt/openmpi
+<span class="gp">$ </span>./configure<span class="w"> </span>--prefix<span class="o">=</span>/opt/petsc/petsc-3.20.0-openmpi<span class="w"> </span>--with-mpi-dir<span class="o">=</span>/opt/openmpi
 <span class="gp">$ </span>make
 <span class="gp">$ </span>make<span class="w"> </span>install<span class="w"> </span><span class="o">[</span><span class="nv">DESTDIR</span><span class="o">=</span>/tmp/petsc-pkg<span class="o">]</span>
 </pre></div>
@@ -887,7 +926,7 @@ configure time. For example:</p>
 <section id="in-place-installation">
 <h3>In-place Installation<a class="headerlink" href="#in-place-installation" title="Permalink to this heading">#</a></h3>
 <p>The PETSc libraries and generated included files are placed in the sub-directory off the
-current directory <code class="docutils literal notranslate"><span class="pre">$PETSC_ARCH</span></code> which is either provided by the user with, for example:</p>
+current directory <code class="docutils notranslate"><span class="pre">$PETSC_ARCH</span></code> which is either provided by the user with, for example:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">PETSC_ARCH</span><span class="o">=</span>arch-debug
 <span class="gp">$ </span>./configure
 <span class="gp">$ </span>make
@@ -903,33 +942,33 @@ current directory <code class="docutils literal notranslate"><span class="pre">$
 <span class="gp">$ </span>make
 </pre></div>
 </div>
-<p>If not provided <code class="docutils literal notranslate"><span class="pre">configure</span></code> will generate a unique value automatically (for in-place non
-<code class="docutils literal notranslate"><span class="pre">--prefix</span></code> configurations only).</p>
+<p>If not provided <code class="docutils notranslate"><span class="pre">configure</span></code> will generate a unique value automatically (for in-place non
+<code class="docutils notranslate"><span class="pre">--prefix</span></code> configurations only).</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure
 <span class="gp">$ </span>make
 <span class="gp">$ </span>./configure<span class="w"> </span>--with-debugging<span class="o">=</span><span class="m">0</span>
 <span class="gp">$ </span>make
 </pre></div>
 </div>
-<p>Produces the directories (on an Apple MacOS machine) <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/arch-darwin-c-debug</span></code> and
-<code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/arch-darwin-c-opt</span></code>.</p>
+<p>Produces the directories (on an Apple macOS machine) <code class="docutils notranslate"><span class="pre">$PETSC_DIR/arch-darwin-c-debug</span></code> and
+<code class="docutils notranslate"><span class="pre">$PETSC_DIR/arch-darwin-c-opt</span></code>.</p>
 </section>
 </section>
 <section id="installing-on-machine-requiring-cross-compiler-or-a-job-scheduler">
-<h2><a class="toc-backref" href="#id15">Installing On Machine Requiring Cross Compiler Or A Job Scheduler</a><a class="headerlink" href="#installing-on-machine-requiring-cross-compiler-or-a-job-scheduler" title="Permalink to this heading">#</a></h2>
+<h2><a class="toc-backref" href="#id17">Installing On Machine Requiring Cross Compiler Or A Job Scheduler</a><a class="headerlink" href="#installing-on-machine-requiring-cross-compiler-or-a-job-scheduler" title="Permalink to this heading">#</a></h2>
 <p>On systems where you need to use a job scheduler or batch submission to run jobs use the
-<code class="docutils literal notranslate"><span class="pre">configure</span></code> option <code class="docutils literal notranslate"><span class="pre">--with-batch</span></code>. <strong>On such systems the make check option will not
+<code class="docutils notranslate"><span class="pre">configure</span></code> option <code class="docutils notranslate"><span class="pre">--with-batch</span></code>. <strong>On such systems the make check option will not
 work</strong>.</p>
 <ul class="simple">
 <li><p>You must first ensure you have loaded appropriate modules for the compilers etc that you
 wish to use. Often the compilers are provided automatically for you and you do not need
-to provide <code class="docutils literal notranslate"><span class="pre">--with-cc=XXX</span></code> etc. Consult with the documentation and local support for
+to provide <code class="docutils notranslate"><span class="pre">--with-cc=XXX</span></code> etc. Consult with the documentation and local support for
 such systems for information on these topics.</p></li>
-<li><p>On such systems you generally should not use <code class="docutils literal notranslate"><span class="pre">--with-blaslapack-dir</span></code> or
-<code class="docutils literal notranslate"><span class="pre">--download-fblaslapack</span></code> since the systems provide those automatically (sometimes
+<li><p>On such systems you generally should not use <code class="docutils notranslate"><span class="pre">--with-blaslapack-dir</span></code> or
+<code class="docutils notranslate"><span class="pre">--download-fblaslapack</span></code> since the systems provide those automatically (sometimes
 appropriate modules must be loaded first).</p></li>
-<li><p>Some package’s <code class="docutils literal notranslate"><span class="pre">--download-package</span></code> options do not work on these systems, for example
-<a class="reference external" href="https://www.hdfgroup.org/solutions/hdf5/">HDF5</a>. Thus you must use modules to load those packages and <code class="docutils literal notranslate"><span class="pre">--with-package</span></code> to
+<li><p>Some package’s <code class="docutils notranslate"><span class="pre">--download-package</span></code> options do not work on these systems, for example
+<a class="reference external" href="https://www.hdfgroup.org/solutions/hdf5/">HDF5</a>. Thus you must use modules to load those packages and <code class="docutils notranslate"><span class="pre">--with-package</span></code> to
 configure with the package.</p></li>
 <li><p>Since building <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a> on these systems is often
 troublesome and slow we recommend only installing PETSc with those configuration
@@ -937,7 +976,7 @@ packages that you need for your work, not extras.</p></li>
 </ul>
 </section>
 <section id="installing-with-tau-instrumentation-package">
-<span id="doc-config-tau"></span><h2><a class="toc-backref" href="#id16">Installing With TAU Instrumentation Package</a><a class="headerlink" href="#installing-with-tau-instrumentation-package" title="Permalink to this heading">#</a></h2>
+<span id="doc-config-tau"></span><h2><a class="toc-backref" href="#id18">Installing With TAU Instrumentation Package</a><a class="headerlink" href="#installing-with-tau-instrumentation-package" title="Permalink to this heading">#</a></h2>
 <p><a class="reference external" href="https://www.cs.uoregon.edu/research/tau/home.php">TAU</a> package and the prerequisite <a class="reference external" href="https://www.cs.uoregon.edu/research/pdt/home.php">PDT</a> packages need to be installed separately (perhaps with MPI). Now use tau_cc.sh as compiler to PETSc configure:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">TAU_MAKEFILE</span><span class="o">=</span>/home/balay/soft/linux64/tau-2.20.3/x86_64/lib/Makefile.tau-mpi-pdt
 <span class="gp">$ </span>./configure<span class="w"> </span><span class="nv">CC</span><span class="o">=</span>/home/balay/soft/linux64/tau-2.20.3/x86_64/bin/tau_cc.sh<span class="w"> </span>--with-fc<span class="o">=</span><span class="m">0</span><span class="w"> </span><span class="nv">PETSC_ARCH</span><span class="o">=</span>arch-tau
@@ -945,8 +984,8 @@ packages that you need for your work, not extras.</p></li>
 </div>
 </section>
 <section id="installing-petsc-to-use-gpus-and-accelerators">
-<span id="doc-config-accel"></span><h2><a class="toc-backref" href="#id17">Installing PETSc To Use GPUs And Accelerators</a><a class="headerlink" href="#installing-petsc-to-use-gpus-and-accelerators" title="Permalink to this heading">#</a></h2>
-<p>PETSc is able to take adavantage of GPU’s and certain accelerator libraries, however some require additional <code class="docutils literal notranslate"><span class="pre">configure</span></code> options.</p>
+<span id="doc-config-accel"></span><h2><a class="toc-backref" href="#id19">Installing PETSc To Use GPUs And Accelerators</a><a class="headerlink" href="#installing-petsc-to-use-gpus-and-accelerators" title="Permalink to this heading">#</a></h2>
+<p>PETSc is able to take adavantage of GPU’s and certain accelerator libraries, however some require additional <code class="docutils notranslate"><span class="pre">configure</span></code> options.</p>
 <section id="cuda">
 <span id="doc-config-accel-cuda"></span><h3><a class="reference external" href="https://developer.nvidia.com/cuda-toolkit">CUDA</a><a class="headerlink" href="#cuda" title="Permalink to this heading">#</a></h3>
 <div class="admonition important">
@@ -958,22 +997,22 @@ has a <a class="reference external" href="https://developer.nvidia.com/cuda-tool
 <p>On Microsoft Windows - Use either <a class="reference external" href="https://www.cygwin.com/">Cygwin</a> or <a class="reference external" href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">WSL</a> the latter of which is entirely untested right
 now. If you have experience with <a class="reference external" href="https://docs.microsoft.com/en-us/windows/wsl/install-win10">WSL</a> and/or have successfully built PETSc on Microsoft Windows
 for use with <a class="reference external" href="https://developer.nvidia.com/cuda-toolkit">CUDA</a> we welcome your input at <a class="reference external" href="mailto:petsc-maint&#37;&#52;&#48;mcs&#46;anl&#46;gov">petsc-maint<span>&#64;</span>mcs<span>&#46;</span>anl<span>&#46;</span>gov</a>. See the
-bug-reporting <a class="reference internal" href="../community/bugs.html#doc-creepycrawly"><span class="std std-ref">documentation</span></a> for more details.</p>
-<p>In most cases you need only pass the configure option <code class="docutils literal notranslate"><span class="pre">--with-cuda</span></code>; check
-<code class="docutils literal notranslate"><span class="pre">config/examples/arch-ci-linux-cuda-double.py</span></code> for example usage.</p>
+bug-reporting <a class="reference internal" href="../community/mailing.html#doc-creepycrawly"><span class="std std-ref">documentation</span></a> for more details.</p>
+<p>In most cases you need only pass the configure option <code class="docutils notranslate"><span class="pre">--with-cuda</span></code>; check
+<code class="docutils notranslate"><span class="pre">config/examples/arch-ci-linux-cuda-double.py</span></code> for example usage.</p>
 <p>CUDA build of PETSc currently works on Mac OS X, Linux, Microsoft Windows with <a class="reference external" href="https://www.cygwin.com/">Cygwin</a>.</p>
-<p>Examples that use CUDA have the suffix .cu; see <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/src/snes/tutorials/ex47.cu</span></code></p>
+<p>Examples that use CUDA have the suffix .cu; see <code class="docutils notranslate"><span class="pre">$PETSC_DIR/src/snes/tutorials/ex47.cu</span></code></p>
 </section>
 <section id="kokkos">
 <span id="doc-config-accel-kokkos"></span><h3><a class="reference external" href="https://github.com/kokkos/kokkos">Kokkos</a><a class="headerlink" href="#kokkos" title="Permalink to this heading">#</a></h3>
-<p>In most cases you need only pass the configure option <code class="docutils literal notranslate"><span class="pre">--download-kokkos</span></code> <code class="docutils literal notranslate"><span class="pre">--download-kokkos-kernels</span></code>
-and one of <code class="docutils literal notranslate"><span class="pre">--with-cuda</span></code>, <code class="docutils literal notranslate"><span class="pre">--with-openmp</span></code>, or <code class="docutils literal notranslate"><span class="pre">--with-pthread</span></code> (or nothing to use sequential
+<p>In most cases you need only pass the configure option <code class="docutils notranslate"><span class="pre">--download-kokkos</span></code> <code class="docutils notranslate"><span class="pre">--download-kokkos-kernels</span></code>
+and one of <code class="docutils notranslate"><span class="pre">--with-cuda</span></code>, <code class="docutils notranslate"><span class="pre">--with-openmp</span></code>, or <code class="docutils notranslate"><span class="pre">--with-pthread</span></code> (or nothing to use sequential
 <a class="reference external" href="https://github.com/kokkos/kokkos">Kokkos</a>). See the <a class="reference internal" href="#doc-config-accel-cuda"><span class="std std-ref">CUDA installation documenation</span></a>,
-<a class="reference internal" href="#doc-config-mpi"><span class="std std-ref">OpenMPI installation documentation</span></a> for further reference on their
+<a class="reference internal" href="#doc-config-mpi"><span class="std std-ref">Open MPI installation documentation</span></a> for further reference on their
 respective requirements.</p>
 <p>Examples that use <a class="reference external" href="https://github.com/kokkos/kokkos">Kokkos</a> at user-level have the suffix .kokkos.cxx; see
-<code class="docutils literal notranslate"><span class="pre">src/snes/tutorials/ex3k.kokkos.cxx</span></code>. More examples use <a class="reference external" href="https://github.com/kokkos/kokkos">Kokkos</a> through options database;
-search them with <code class="docutils literal notranslate"><span class="pre">grep</span> <span class="pre">-r</span> <span class="pre">-l</span> <span class="pre">&quot;requires:.*kokkos_kernels&quot;</span> <span class="pre">src/</span></code>.</p>
+<code class="docutils notranslate"><span class="pre">src/snes/tutorials/ex3k.kokkos.cxx</span></code>. More examples use <a class="reference external" href="https://github.com/kokkos/kokkos">Kokkos</a> through options database;
+search them with <code class="docutils notranslate"><span class="pre">grep</span> <span class="pre">-r</span> <span class="pre">-l</span> <span class="pre">&quot;requires:.*kokkos_kernels&quot;</span> <span class="pre">src/</span></code>.</p>
 </section>
 <section id="opencl-viennacl">
 <span id="doc-config-accel-opencl"></span><h3><a class="reference external" href="https://www.khronos.org/opencl/">OpenCL</a>/<a class="reference external" href="http://viennacl.sourceforge.net/">ViennaCL</a><a class="headerlink" href="#opencl-viennacl" title="Permalink to this heading">#</a></h3>
@@ -984,23 +1023,39 @@ directly. Package managers on Linux provide these headers through a package name
 available and do not need to be downloaded.</p>
 <p>Always make sure you have the latest GPU driver installed. There are several known issues
 with older driver versions.</p>
-<p>Run <code class="docutils literal notranslate"><span class="pre">configure</span></code> with <code class="docutils literal notranslate"><span class="pre">--download-viennacl</span></code>; check
-<code class="docutils literal notranslate"><span class="pre">config/examples/arch-ci-linux-viennacl.py</span></code> for example usage.</p>
+<p>Run <code class="docutils notranslate"><span class="pre">configure</span></code> with <code class="docutils notranslate"><span class="pre">--download-viennacl</span></code>; check
+<code class="docutils notranslate"><span class="pre">config/examples/arch-ci-linux-viennacl.py</span></code> for example usage.</p>
 <p><a class="reference external" href="https://www.khronos.org/opencl/">OpenCL</a>/<a class="reference external" href="http://viennacl.sourceforge.net/">ViennaCL</a> builds of PETSc currently work on Mac OS X, Linux, and Microsoft Windows.</p>
 </section>
 </section>
+<section id="installing-to-run-in-browser-with-emscripten">
+<span id="doc-emcc"></span><h2><a class="toc-backref" href="#id20">Installing To Run in Browser with Emscripten</a><a class="headerlink" href="#installing-to-run-in-browser-with-emscripten" title="Permalink to this heading">#</a></h2>
+<p>PETSc can be used to run applications in the browser using <a class="reference external" href="https://emscripten.org">https://emscripten.org</a>, see <a class="reference external" href="https://emscripten.org/docs/getting_started/downloads.html">https://emscripten.org/docs/getting_started/downloads.html</a>,
+for instructions on installing Emscripten. Run</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$  </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span>emcc<span class="w"> </span>--with-cxx<span class="o">=</span><span class="m">0</span><span class="w"> </span>--with-fc<span class="o">=</span><span class="m">0</span><span class="w"> </span>--with-ranlib<span class="o">=</span>emranlib<span class="w"> </span>--with-ar<span class="o">=</span>emar<span class="w"> </span>--with-shared-libraries<span class="o">=</span><span class="m">0</span><span class="w"> </span>--download-f2cblaslapack<span class="o">=</span><span class="m">1</span><span class="w"> </span>--with-mpi<span class="o">=</span><span class="m">0</span><span class="w"> </span>--with-batch
+</pre></div>
+</div>
+<p>Applications may be compiled with, for example,</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$  </span>make<span class="w"> </span>ex19.html
+</pre></div>
+</div>
+<p>The rule for linking may be found in <a class="reference external" href="../lib/petsc/conf/rules">lib/petsc/conf/rules</a></p>
+</section>
 <section id="installing-on-large-scale-doe-systems">
-<span id="doc-config-hpc"></span><h2><a class="toc-backref" href="#id18">Installing On Large Scale DOE Systems</a><a class="headerlink" href="#installing-on-large-scale-doe-systems" title="Permalink to this heading">#</a></h2>
+<span id="doc-config-hpc"></span><h2><a class="toc-backref" href="#id21">Installing On Large Scale DOE Systems</a><a class="headerlink" href="#installing-on-large-scale-doe-systems" title="Permalink to this heading">#</a></h2>
 <p>There are some notes on our <a class="reference external" href="https://gitlab.com/petsc/petsc/-/wikis/Installing-and-Running-on-Large-Scale-Systems">GitLab Wiki</a>
 which may be helpful in installing and running PETSc on large scale
-systems.  Also note the configuration examples in <code class="docutils literal notranslate"><span class="pre">config/examples</span></code>.</p>
+systems.  Also note the configuration examples in <code class="docutils notranslate"><span class="pre">config/examples</span></code>.</p>
 <p class="rubric">Footnotes</p>
 <dl class="footnote brackets">
-<dt class="label" id="id6"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dt class="label" id="id7"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>All MPI implementations provide convenience scripts for compiling MPI codes that internally call regular compilers, they are commonly named <code class="docutils notranslate"><span class="pre">mpicc</span></code>, <code class="docutils notranslate"><span class="pre">mpicxx</span></code>, and <code class="docutils notranslate"><span class="pre">mpif90</span></code>. We call these “MPI compiler wrappers”.</p>
+</dd>
+<dt class="label" id="id8"><span class="brackets"><a class="fn-backref" href="#id2">2</a></span></dt>
 <dd><p>The two packages provide slightly different (though largely overlapping) functionality which can only be fully used if both packages are installed.</p>
 </dd>
-<dt class="label" id="id7"><span class="brackets"><a class="fn-backref" href="#id2">2</a></span></dt>
-<dd><p>Apple provides customized <code class="docutils literal notranslate"><span class="pre">clang</span></code> and <code class="docutils literal notranslate"><span class="pre">clang++</span></code> for its system. To use the unmodified LLVM project <code class="docutils literal notranslate"><span class="pre">clang</span></code> and <code class="docutils literal notranslate"><span class="pre">clang++</span></code>
+<dt class="label" id="id9"><span class="brackets"><a class="fn-backref" href="#id3">3</a></span></dt>
+<dd><p>Apple provides customized <code class="docutils notranslate"><span class="pre">clang</span></code> and <code class="docutils notranslate"><span class="pre">clang++</span></code> for its system. To use the unmodified LLVM project <code class="docutils notranslate"><span class="pre">clang</span></code> and <code class="docutils notranslate"><span class="pre">clang++</span></code>
 install them with brew.</p>
 </dd>
 </dl>
@@ -1078,20 +1133,10 @@ install them with brew.</p>
   </ul>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#mpi-problems-i-don-t-want-mpi">
-   MPI Problems/I Don’t Want MPI
+  <a class="reference internal nav-link" href="#mpi">
+   MPI
   </a>
   <ul class="nav section-nav flex-column">
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#using-mpi-compilers">
-     Using MPI Compilers
-    </a>
-   </li>
-   <li class="toc-h3 nav-item toc-entry">
-    <a class="reference internal nav-link" href="#installing-without-mpi">
-     Installing Without MPI
-    </a>
-   </li>
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#installing-with-open-mpi-with-shared-mpi-libraries">
      Installing With Open MPI With Shared MPI Libraries
@@ -1112,7 +1157,7 @@ install them with brew.</p>
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#out-of-place-installation-with-prefix">
      Out-of-place Installation With
-     <code class="docutils literal notranslate">
+     <code class="docutils notranslate">
       <span class="pre">
        --prefix
       </span>
@@ -1131,7 +1176,7 @@ install them with brew.</p>
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#installs-for-package-managers-using-destdir-very-uncommon">
      Installs For Package Managers: Using
-     <code class="docutils literal notranslate">
+     <code class="docutils notranslate">
       <span class="pre">
        DESTDIR
       </span>
@@ -1142,13 +1187,13 @@ install them with brew.</p>
    <li class="toc-h3 nav-item toc-entry">
     <a class="reference internal nav-link" href="#multiple-installs-using-prefix-see-destdir">
      Multiple Installs Using
-     <code class="docutils literal notranslate">
+     <code class="docutils notranslate">
       <span class="pre">
        --prefix
       </span>
      </code>
      (See
-     <code class="docutils literal notranslate">
+     <code class="docutils notranslate">
       <span class="pre">
        DESTDIR
       </span>
@@ -1194,6 +1239,11 @@ install them with brew.</p>
     </a>
    </li>
   </ul>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#installing-to-run-in-browser-with-emscripten">
+   Installing To Run in Browser with Emscripten
+  </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#installing-on-large-scale-doe-systems">
@@ -1257,7 +1307,7 @@ install them with brew.</p>
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -1273,7 +1323,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

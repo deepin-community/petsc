@@ -329,6 +329,11 @@
        PetscSection c ! PetscSection
        PetscErrorCode z
        end subroutine PetscSectionCreateSubdomainSection
+      subroutine PetscSectionResetClosurePermutation(a,z)
+       import tPetscSection
+       PetscSection a ! PetscSection
+       PetscErrorCode z
+       end subroutine PetscSectionResetClosurePermutation
       subroutine PetscSectionReset(a,z)
        import tPetscSection
        PetscSection a ! PetscSection
@@ -439,7 +444,7 @@
        PetscErrorCode z
        end subroutine PetscSectionSymCopy
       subroutine PetscSectionSymDistribute(a,b,c,z)
-       import tPetscSectionSym,tPetscSF
+       import tPetscSF,tPetscSectionSym
        PetscSectionSym a ! PetscSectionSym
        PetscSF b ! PetscSF
        PetscSectionSym c ! PetscSectionSym

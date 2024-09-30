@@ -1,4 +1,3 @@
-
 static char help[] = "Tests sequential and parallel MatMatMult() and MatPtAP(), MatTransposeMatMult(), sequential MatMatTransposeMult(), MatRARt()\n\
 Input arguments are:\n\
   -f0 <input_file> -f1 <input_file> -f2 <input_file> -f3 <input_file> : file to load\n\n";
@@ -18,7 +17,7 @@ PetscErrorCode MatNormDifference(Mat A, Mat B, PetscReal *norm)
   PetscFunctionBegin;
   PetscCall(MatAXPY(B, -1.0, A, DIFFERENT_NONZERO_PATTERN));
   PetscCall(MatNorm(B, NORM_FROBENIUS, norm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **args)
@@ -272,7 +271,7 @@ int main(int argc, char **args)
     PetscCall(MatGetLocalSize(A, &m, &n));
 
     PN  = M / 2;
-    nzp = (PetscInt)(0.1 * PN + 1); /* num of nozeros in each row of P */
+    nzp = (PetscInt)(0.1 * PN + 1); /* num of nonzeros in each row of P */
     PetscCall(MatCreate(PETSC_COMM_WORLD, &P));
     PetscCall(MatSetSizes(P, PETSC_DECIDE, PETSC_DECIDE, N, PN));
     PetscCall(MatSetType(P, mattype));

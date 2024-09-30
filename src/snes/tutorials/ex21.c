@@ -1,4 +1,3 @@
-
 static const char help[] = "Solves PDE optimization problem using full-space method, treats state and adjoint variables separately.\n\n";
 
 #include <petscdm.h>
@@ -77,8 +76,8 @@ int main(int argc, char **argv)
   /* create graphics windows */
   PetscCall(PetscViewerDrawOpen(PETSC_COMM_WORLD, 0, "u - state variables", -1, -1, -1, -1, &user.u_viewer));
   PetscCall(PetscViewerDrawOpen(PETSC_COMM_WORLD, 0, "lambda - Lagrange multipliers", -1, -1, -1, -1, &user.lambda_viewer));
-  PetscCall(PetscViewerDrawOpen(PETSC_COMM_WORLD, 0, "fu - derivate w.r.t. state variables", -1, -1, -1, -1, &user.fu_viewer));
-  PetscCall(PetscViewerDrawOpen(PETSC_COMM_WORLD, 0, "flambda - derivate w.r.t. Lagrange multipliers", -1, -1, -1, -1, &user.flambda_viewer));
+  PetscCall(PetscViewerDrawOpen(PETSC_COMM_WORLD, 0, "fu - derivative w.r.t. state variables", -1, -1, -1, -1, &user.fu_viewer));
+  PetscCall(PetscViewerDrawOpen(PETSC_COMM_WORLD, 0, "flambda - derivative w.r.t. Lagrange multipliers", -1, -1, -1, -1, &user.flambda_viewer));
 
   /* create nonlinear solver */
   PetscCall(SNESCreate(PETSC_COMM_WORLD, &snes));
@@ -161,7 +160,7 @@ PetscErrorCode FormFunction(SNES snes, Vec U, Vec FU, void *dummy)
   PetscCall(DMCompositeGather(user->packer, INSERT_VALUES, FU, vfw, vfu, vflambda));
   PetscCall(DMCompositeRestoreLocalVectors(user->packer, &vw, &vu, &vlambda));
   PetscCall(DMCompositeRestoreLocalVectors(user->packer, &vfw, &vfu, &vflambda));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode Monitor(SNES snes, PetscInt its, PetscReal rnorm, void *dummy)
@@ -181,7 +180,7 @@ PetscErrorCode Monitor(SNES snes, PetscInt its, PetscReal rnorm, void *dummy)
   PetscCall(VecView(u, user->fu_viewer));
   PetscCall(VecView(lambda, user->flambda_viewer));
   PetscCall(DMCompositeRestoreAccess(user->packer, F, &w, &u, &lambda));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

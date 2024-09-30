@@ -3,25 +3,25 @@
 /*@
   DMPlexSetMigrationSF - Sets the `PetscSF` for migrating from a parent `DM` into this `DM`
 
-  Logically Collective on dm
+  Logically Collective
 
   Input Parameters:
-+ dm        - The `DM`
-- naturalSF - The `PetscSF`
++ dm          - The `DM`
+- migrationSF - The `PetscSF`
 
   Level: intermediate
 
   Note:
   It is necessary to call this in order to have `DMCreateSubDM()` or `DMCreateSuperDM()` build the Global-To-Natural map
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `PetscSF`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexCreateMigrationSF()`, `DMPlexGetMigrationSF()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `PetscSF`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexCreateMigrationSF()`, `DMPlexGetMigrationSF()`
 @*/
 PetscErrorCode DMPlexSetMigrationSF(DM dm, PetscSF migrationSF)
 {
   PetscFunctionBegin;
   dm->sfMigration = migrationSF;
   PetscCall(PetscObjectReference((PetscObject)migrationSF));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -30,32 +30,32 @@ PetscErrorCode DMPlexSetMigrationSF(DM dm, PetscSF migrationSF)
   Note Collective
 
   Input Parameter:
-. dm          - The `DM`
+. dm - The `DM`
 
   Output Parameter:
 . migrationSF - The `PetscSF`
 
   Level: intermediate
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `PetscSF`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexCreateMigrationSF()`, `DMPlexSetMigrationSF`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `PetscSF`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexCreateMigrationSF()`, `DMPlexSetMigrationSF`
 @*/
 PetscErrorCode DMPlexGetMigrationSF(DM dm, PetscSF *migrationSF)
 {
   PetscFunctionBegin;
   *migrationSF = dm->sfMigration;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexSetGlobalToNaturalSF - Sets the `PetscSF` for mapping Global `Vec` to the Natural `Vec`
 
   Input Parameters:
-+ dm          - The `DM`
-- naturalSF   - The `PetscSF`
++ dm        - The `DM`
+- naturalSF - The `PetscSF`
 
   Level: intermediate
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `PetscSF`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexCreateGlobalToNaturalSF()`, `DMPlexGetGlobaltoNaturalSF()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `PetscSF`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexCreateGlobalToNaturalSF()`, `DMPlexGetGlobaltoNaturalSF()`
 @*/
 PetscErrorCode DMPlexSetGlobalToNaturalSF(DM dm, PetscSF naturalSF)
 {
@@ -63,27 +63,27 @@ PetscErrorCode DMPlexSetGlobalToNaturalSF(DM dm, PetscSF naturalSF)
   dm->sfNatural = naturalSF;
   PetscCall(PetscObjectReference((PetscObject)naturalSF));
   dm->useNatural = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexGetGlobalToNaturalSF - Gets the `PetscSF` for mapping Global `Vec` to the Natural `Vec`
 
   Input Parameter:
-. dm          - The `DM`
+. dm - The `DM`
 
   Output Parameter:
-. naturalSF   - The `PetscSF`
+. naturalSF - The `PetscSF`
 
   Level: intermediate
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `PetscSF`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexCreateGlobalToNaturalSF()`, `DMPlexSetGlobaltoNaturalSF`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `PetscSF`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexCreateGlobalToNaturalSF()`, `DMPlexSetGlobaltoNaturalSF`
 @*/
 PetscErrorCode DMPlexGetGlobalToNaturalSF(DM dm, PetscSF *naturalSF)
 {
   PetscFunctionBegin;
   *naturalSF = dm->sfNatural;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -91,18 +91,18 @@ PetscErrorCode DMPlexGetGlobalToNaturalSF(DM dm, PetscSF *naturalSF)
 
   Input Parameters:
 + dm          - The redistributed `DM`
-. section     - The local `PetscSection` describing the `Vec` before the mesh was distributed, or NULL if not available
-- sfMigration - The `PetscSF` used to distribute the mesh, or NULL if it cannot be computed
+. section     - The local `PetscSection` describing the `Vec` before the mesh was distributed, or `NULL` if not available
+- sfMigration - The `PetscSF` used to distribute the mesh, or `NULL` if it cannot be computed
 
   Output Parameter:
-. sfNatural   - `PetscSF` for mapping the `Vec` in PETSc ordering to the canonical ordering
+. sfNatural - `PetscSF` for mapping the `Vec` in PETSc ordering to the canonical ordering
 
   Level: intermediate
 
   Note:
   This is not typically called by the user.
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `PetscSF`, `PetscSection`, `DMPlexDistribute()`, `DMPlexDistributeField()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `PetscSF`, `PetscSection`, `DMPlexDistribute()`, `DMPlexDistributeField()`
  @*/
 PetscErrorCode DMPlexCreateGlobalToNaturalSF(DM dm, PetscSection section, PetscSF sfMigration, PetscSF *sfNatural)
 {
@@ -118,7 +118,7 @@ PetscErrorCode DMPlexCreateGlobalToNaturalSF(DM dm, PetscSection section, PetscS
   if (!sfMigration) {
     /* If sfMigration is missing, sfNatural cannot be computed and is set to NULL */
     *sfNatural = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   } else if (!section) {
     /* If the sequential section is not provided (NULL), it is reconstructed from the parallel section */
     PetscSF      sfMigrationInv;
@@ -140,7 +140,7 @@ PetscErrorCode DMPlexCreateGlobalToNaturalSF(DM dm, PetscSection section, PetscS
   PetscCall(DMSetLocalSection(dm, sectionDist));
   /* If a sequential section is provided but no dof is affected, sfNatural cannot be computed and is set to NULL */
   PetscCall(PetscSectionGetStorageSize(sectionDist, &localSize));
-  PetscCallMPI(MPI_Allreduce(&localSize, &maxStorageSize, 1, MPI_INT, MPI_MAX, PetscObjectComm((PetscObject)dm)));
+  PetscCall(MPIU_Allreduce(&localSize, &maxStorageSize, 1, MPIU_INT, MPI_MAX, PetscObjectComm((PetscObject)dm)));
   if (maxStorageSize) {
     const PetscInt *leaves;
     PetscInt       *sortleaves, *indices;
@@ -201,38 +201,53 @@ PetscErrorCode DMPlexCreateGlobalToNaturalSF(DM dm, PetscSection section, PetscS
   PetscCall(PetscSectionDestroy(&sectionDist));
   PetscCall(PetscFree(remoteOffsets));
   if (destroyFlag) PetscCall(PetscSectionDestroy(&section));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexGlobalToNaturalBegin - Rearranges a global `Vec` in the natural order.
 
-  Collective on dm
+  Collective
 
   Input Parameters:
 + dm - The distributed `DMPLEX`
 - gv - The global `Vec`
 
-  Output Parameters:
-. nv - `Vec` in the canonical ordering distributed over all processors associated with gv
+  Output Parameter:
+. nv - `Vec` in the canonical ordering distributed over all processors associated with `gv`
 
   Level: intermediate
 
   Note:
   The user must call `DMSetUseNatural`(dm, `PETSC_TRUE`) before `DMPlexDistribute()`.
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `Vec`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexNaturalToGlobalBegin()`, `DMPlexGlobalToNaturalEnd()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `Vec`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexNaturalToGlobalBegin()`, `DMPlexGlobalToNaturalEnd()`
 @*/
 PetscErrorCode DMPlexGlobalToNaturalBegin(DM dm, Vec gv, Vec nv)
 {
   const PetscScalar *inarray;
   PetscScalar       *outarray;
+  MPI_Comm           comm;
   PetscMPIInt        size;
 
   PetscFunctionBegin;
   PetscCall(PetscLogEventBegin(DMPLEX_GlobalToNaturalBegin, dm, 0, 0, 0));
-  PetscCallMPI(MPI_Comm_size(PetscObjectComm((PetscObject)dm), &size));
+  PetscCall(PetscObjectGetComm((PetscObject)dm, &comm));
+  PetscCallMPI(MPI_Comm_size(comm, &size));
   if (dm->sfNatural) {
+    if (PetscDefined(USE_DEBUG)) {
+      PetscSection gs;
+      PetscInt     Nl, n;
+
+      PetscCall(PetscSFGetGraph(dm->sfNatural, NULL, &Nl, NULL, NULL));
+      PetscCall(VecGetLocalSize(nv, &n));
+      PetscCheck(n == Nl, comm, PETSC_ERR_ARG_INCOMP, "Natural vector local size %" PetscInt_FMT " != %" PetscInt_FMT " local size of natural section", n, Nl);
+
+      PetscCall(DMGetGlobalSection(dm, &gs));
+      PetscCall(PetscSectionGetConstrainedStorageSize(gs, &Nl));
+      PetscCall(VecGetLocalSize(gv, &n));
+      PetscCheck(n == Nl, comm, PETSC_ERR_ARG_INCOMP, "Global vector local size %" PetscInt_FMT " != %" PetscInt_FMT " local size of global section", n, Nl);
+    }
     PetscCall(VecGetArray(nv, &outarray));
     PetscCall(VecGetArrayRead(gv, &inarray));
     PetscCall(PetscSFBcastBegin(dm->sfNatural, MPIU_SCALAR, (PetscScalar *)inarray, outarray, MPI_REPLACE));
@@ -245,13 +260,13 @@ PetscErrorCode DMPlexGlobalToNaturalBegin(DM dm, Vec gv, Vec nv)
     SETERRQ(PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_WRONGSTATE, "DM global to natural SF was not created.\nYou must call DMSetUseNatural() before DMPlexDistribute().");
   }
   PetscCall(PetscLogEventEnd(DMPLEX_GlobalToNaturalBegin, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexGlobalToNaturalEnd - Rearranges a global `Vec` in the natural order.
 
-  Collective on dm
+  Collective
 
   Input Parameters:
 + dm - The distributed `DMPLEX`
@@ -265,7 +280,7 @@ PetscErrorCode DMPlexGlobalToNaturalBegin(DM dm, Vec gv, Vec nv)
   Note:
   The user must call `DMSetUseNatural`(dm, `PETSC_TRUE`) before `DMPlexDistribute()`.
 
- .seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `Vec`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexNaturalToGlobalBegin()`, `DMPlexGlobalToNaturalBegin()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `Vec`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexNaturalToGlobalBegin()`, `DMPlexGlobalToNaturalBegin()`
  @*/
 PetscErrorCode DMPlexGlobalToNaturalEnd(DM dm, Vec gv, Vec nv)
 {
@@ -288,19 +303,19 @@ PetscErrorCode DMPlexGlobalToNaturalEnd(DM dm, Vec gv, Vec nv)
     SETERRQ(PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_WRONGSTATE, "DM global to natural SF was not created.\nYou must call DMSetUseNatural() before DMPlexDistribute().");
   }
   PetscCall(PetscLogEventEnd(DMPLEX_GlobalToNaturalEnd, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexNaturalToGlobalBegin - Rearranges a `Vec` in the natural order to the Global order.
 
-  Collective on dm
+  Collective
 
   Input Parameters:
 + dm - The distributed `DMPLEX`
 - nv - The natural `Vec`
 
-  Output Parameters:
+  Output Parameter:
 . gv - The global `Vec`
 
   Level: intermediate
@@ -308,7 +323,7 @@ PetscErrorCode DMPlexGlobalToNaturalEnd(DM dm, Vec gv, Vec nv)
   Note:
   The user must call `DMSetUseNatural`(dm, `PETSC_TRUE`) before `DMPlexDistribute()`.
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `Vec`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexNaturalToGlobalBegin()`, `DMPlexGlobalToNaturalEnd()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `Vec`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexGlobalToNaturalEnd()`
 @*/
 PetscErrorCode DMPlexNaturalToGlobalBegin(DM dm, Vec nv, Vec gv)
 {
@@ -336,19 +351,19 @@ PetscErrorCode DMPlexNaturalToGlobalBegin(DM dm, Vec nv, Vec gv)
     SETERRQ(PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_WRONGSTATE, "DM global to natural SF was not created.\nYou must call DMSetUseNatural() before DMPlexDistribute().");
   }
   PetscCall(PetscLogEventEnd(DMPLEX_NaturalToGlobalBegin, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexNaturalToGlobalEnd - Rearranges a `Vec` in the natural order to the Global order.
 
-  Collective on dm
+  Collective
 
   Input Parameters:
 + dm - The distributed `DMPLEX`
 - nv - The natural `Vec`
 
-  Output Parameters:
+  Output Parameter:
 . gv - The global `Vec`
 
   Level: intermediate
@@ -356,7 +371,7 @@ PetscErrorCode DMPlexNaturalToGlobalBegin(DM dm, Vec nv, Vec gv)
   Note:
   The user must call `DMSetUseNatural`(dm, `PETSC_TRUE`) before `DMPlexDistribute()`.
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `Vec`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexNaturalToGlobalBegin()`, `DMPlexGlobalToNaturalBegin()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `Vec`, `DMPlexDistribute()`, `DMPlexDistributeField()`, `DMPlexNaturalToGlobalBegin()`, `DMPlexGlobalToNaturalBegin()`
  @*/
 PetscErrorCode DMPlexNaturalToGlobalEnd(DM dm, Vec nv, Vec gv)
 {
@@ -379,13 +394,13 @@ PetscErrorCode DMPlexNaturalToGlobalEnd(DM dm, Vec nv, Vec gv)
     SETERRQ(PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_WRONGSTATE, "DM global to natural SF was not created.\nYou must call DMSetUseNatural() before DMPlexDistribute().");
   }
   PetscCall(PetscLogEventEnd(DMPLEX_NaturalToGlobalEnd, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexCreateNaturalVector - Provide a `Vec` capable of holding the natural ordering and distribution.
 
-  Collective on dm
+  Collective
 
   Input Parameter:
 . dm - The distributed `DMPLEX`
@@ -398,7 +413,7 @@ PetscErrorCode DMPlexNaturalToGlobalEnd(DM dm, Vec nv, Vec gv)
   Note:
   The user must call `DMSetUseNatural`(dm, `PETSC_TRUE`) before `DMPlexDistribute()`.
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `Vec`, `DMPlexDistribute()`, `DMPlexNaturalToGlobalBegin()`, `DMPlexGlobalToNaturalBegin()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `Vec`, `DMPlexDistribute()`, `DMPlexNaturalToGlobalBegin()`, `DMPlexGlobalToNaturalBegin()`
  @*/
 PetscErrorCode DMPlexCreateNaturalVector(DM dm, Vec *nv)
 {
@@ -407,10 +422,18 @@ PetscErrorCode DMPlexCreateNaturalVector(DM dm, Vec *nv)
   PetscFunctionBegin;
   PetscCallMPI(MPI_Comm_size(PetscObjectComm((PetscObject)dm), &size));
   if (dm->sfNatural) {
-    PetscInt nleaves, bs;
+    PetscInt nleaves, bs, maxbs;
     Vec      v;
+
+    /*
+      Setting the natural vector block size.
+      We can't get it from a global vector because of constraints, and the block size in the local vector
+      may be inconsistent across processes, typically when some local vectors have size 0, their block size is set to 1
+    */
     PetscCall(DMGetLocalVector(dm, &v));
     PetscCall(VecGetBlockSize(v, &bs));
+    PetscCall(MPIU_Allreduce(&bs, &maxbs, 1, MPIU_INT, MPI_MAX, PetscObjectComm((PetscObject)dm)));
+    if (bs == 1 && maxbs > 1) bs = maxbs;
     PetscCall(DMRestoreLocalVector(dm, &v));
 
     PetscCall(PetscSFGetGraph(dm->sfNatural, NULL, &nleaves, NULL, NULL));
@@ -425,5 +448,5 @@ PetscErrorCode DMPlexCreateNaturalVector(DM dm, Vec *nv)
     PetscCheck(!dm->useNatural, PetscObjectComm((PetscObject)dm), PETSC_ERR_PLIB, "DM global to natural SF not present.\nIf DMPlexDistribute() was called and a section was defined, report to petsc-maint@mcs.anl.gov.");
     SETERRQ(PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_WRONGSTATE, "DM global to natural SF was not created.\nYou must call DMSetUseNatural() before DMPlexDistribute().");
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

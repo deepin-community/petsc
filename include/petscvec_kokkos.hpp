@@ -1,5 +1,4 @@
-#ifndef PETSCVEC_KOKKOS_HPP
-#define PETSCVEC_KOKKOS_HPP
+#pragma once
 
 #include <petscconf.h>
 
@@ -34,6 +33,8 @@
    Output Parameter:
 .  kv - the Kokkos View with a user-specified template parameter MemorySpace
 
+   Level: beginner
+
    Notes:
    If the vector is not of type `VECKOKKOS`, an error will be raised.
 
@@ -44,8 +45,6 @@
    One must return the View by a matching `VecRestoreKokkosView()` after finishing using the View. Currently, only two memory
    spaces are supported: Kokkos::HostSpace and Kokkos::DefaultExecutionSpace::memory_space.
    If needed, a memory copy will be internally called to copy the latest vector data to the specified memory space.
-
-   Level: beginner
 
 .seealso: `VecRestoreKokkosView()`, `VecRestoreArray()`, `VecGetKokkosViewWrite()`, `VecGetArrayRead()`, `VecGetArrays()`, `VecGetArrayF90()`, `VecGetArrayReadF90()`, `VecPlaceArray()`, `VecGetArray2d()`,
           `VecGetArrayPair()`, `VecRestoreArrayPair()`, `VecGetArrayWrite()`, `VecRestoreArrayWrite()`
@@ -69,11 +68,11 @@ PetscErrorCode VecGetKokkosView(Vec, Kokkos::View<PetscScalar *, MemorySpace> *)
 +  v  - the vector in type of `VECKOKKOS`
 -  kv - the Kokkos View with a user-specified template parameter MemorySpace
 
-   Notes:
+   Level: beginner
+
+   Note:
    If the vector is not of type `VECKOKKOS`, an error will be raised.
    The functions are similar to `VecRestoreArrayRead()` and `VecRestoreArray()` respectively. They are the counterpart of `VecGetKokkosView()`.
-
-   Level: beginner
 
 .seealso: `VecGetKokkosView()`, `VecRestoreKokkosViewWrite()`, `VecRestoreArray()`, `VecGetArrayRead()`, `VecGetArrays()`, `VecGetArrayF90()`, `VecGetArrayReadF90()`, `VecPlaceArray()`, `VecGetArray2d()`,
           `VecGetArrayPair()`, `VecRestoreArrayPair()`, `VecGetArrayWrite()`, `VecRestoreArrayWrite()`
@@ -81,7 +80,7 @@ PetscErrorCode VecGetKokkosView(Vec, Kokkos::View<PetscScalar *, MemorySpace> *)
 template <class MemorySpace>
 PetscErrorCode VecRestoreKokkosView(Vec, Kokkos::View<const PetscScalar *, MemorySpace> *)
 {
-  return 0;
+  return PETSC_SUCCESS;
 }
 template <class MemorySpace>
 PetscErrorCode VecRestoreKokkosView(Vec, Kokkos::View<PetscScalar *, MemorySpace> *);
@@ -101,6 +100,8 @@ PetscErrorCode VecRestoreKokkosView(Vec, Kokkos::View<PetscScalar *, MemorySpace
    Output Parameter:
 .  kv - the Kokkos View with a user-specified template parameter MemorySpace
 
+   Level: beginner
+
    Notes:
    If the vector is not of type `VECKOKKOS`, an error will be raised.
 
@@ -109,8 +110,6 @@ PetscErrorCode VecRestoreKokkosView(Vec, Kokkos::View<PetscScalar *, MemorySpace
    One must return the View by a matching `VecRestoreKokkosViewWrite()` after finishing using the View.
 
    Currently, only two memory spaces are supported: Kokkos::HostSpace and Kokkos::DefaultExecutionSpace::memory_space.
-
-   Level: beginner
 
 .seealso: `VecRestoreKokkosViewWrite()`, `VecRestoreKokkosView()`, `VecGetKokkosView()`, `VecRestoreArray()`, `VecGetArrayRead()`, `VecGetArrays()`, `VecGetArrayF90()`, `VecGetArrayReadF90()`, `VecPlaceArray()`, `VecGetArray2d()`,
           `VecGetArrayPair()`, `VecRestoreArrayPair()`, `VecGetArrayWrite()`, `VecRestoreArrayWrite()`
@@ -131,12 +130,12 @@ PetscErrorCode VecGetKokkosViewWrite(Vec, Kokkos::View<PetscScalar *, MemorySpac
 +  v  - the vector in type of `VECKOKKOS`
 -  kv - the Kokkos View with a user-specified template parameter MemorySpace
 
+   Level: beginner
+
    Notes:
    If the vector is not of type `VECKOKKOS`, an error will be raised.
 
    The function is similar to `VecRestoreArrayWrite()`. It is the counterpart of `VecGetKokkosViewWrite()`.
-
-   Level: beginner
 
 .seealso: `VecGetKokkosViewWrite()`, `VecGetKokkosView()`, `VecGetKokkosView()`, `VecRestoreArray()`, `VecGetArrayRead()`, `VecGetArrays()`, `VecGetArrayF90()`, `VecGetArrayReadF90()`, `VecPlaceArray()`, `VecGetArray2d()`,
           `VecGetArrayPair()`, `VecRestoreArrayPair()`, `VecGetArrayWrite()`, `VecRestoreArrayWrite()`
@@ -148,7 +147,5 @@ PetscErrorCode VecRestoreKokkosViewWrite(Vec, Kokkos::View<PetscScalar *, Memory
 static_assert(std::alignment_of<Kokkos::complex<PetscReal>>::value == std::alignment_of<std::complex<PetscReal>>::value,
               "Alignment of Kokkos::complex<PetscReal> and std::complex<PetscReal> mismatch. Reconfigure your Kokkos with -DKOKKOS_ENABLE_COMPLEX_ALIGN=OFF, or let PETSc install Kokkos for you with --download-kokkos --download-kokkos-kernels");
   #endif
-
-#endif
 
 #endif

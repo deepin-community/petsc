@@ -1,7 +1,5 @@
-Index: petsc/config/PETSc/options/sharedLibraries.py
-===================================================================
---- petsc.orig/config/PETSc/options/sharedLibraries.py	2023-06-11 21:50:21.512296246 +0200
-+++ petsc/config/PETSc/options/sharedLibraries.py	2023-06-11 21:50:21.500296131 +0200
+--- a/config/PETSc/options/sharedLibraries.py
++++ b/config/PETSc/options/sharedLibraries.py
 @@ -7,16 +7,20 @@
      self.headerPrefix = ''
      self.substPrefix  = ''
@@ -36,23 +34,8 @@ Index: petsc/config/PETSc/options/sharedLibraries.py
        # Linux is the default
        if self.setCompilers.isDarwin(self.log):
          self.addMakeRule('shared_arch','shared_darwin')
-Index: petsc/lib/petsc/conf/variables
-===================================================================
---- petsc.orig/lib/petsc/conf/variables	2023-06-11 21:50:21.512296246 +0200
-+++ petsc/lib/petsc/conf/variables	2023-06-11 21:50:21.500296131 +0200
-@@ -50,7 +50,7 @@
- #
- # Note that EXAMPLESALL is only used in the tutorial directories and SOURCED only in the non-tutorials and tests directories
- #
--LIBNAME     = ${INSTALL_LIB_DIR}/${LIBBASE}.${AR_LIB_SUFFIX}
-+LIBNAME     = ${INSTALL_LIB_DIR}/${LIBBASE}${PETSC_LIB_EXT}.${AR_LIB_SUFFIX}
- SOURCE      = `ls *.c *.cxx *.F *.F90 *.cu *.cpp           2> /dev/null`
- SOURCEALL   = `ls *.c *.cxx *.F *.F90 *.cu *.cpp *.h *.hpp 2> /dev/null`
- SOURCED     = `ls *.c *.cxx           *.cu *.cpp *.h *.hpp 2> /dev/null`
-Index: petsc/gmakefile
-===================================================================
---- petsc.orig/gmakefile	2023-06-11 21:50:21.512296246 +0200
-+++ petsc/gmakefile	2023-06-11 21:50:21.504296170 +0200
+--- a/gmakefile
++++ b/gmakefile
 @@ -27,14 +27,14 @@
  absbasename_all = $(basename $(basename $(basename $(basename $(abspath $(1))))))# arch/lib/libpetsc.so.3.8.0 -> /path/to/arch/lib/libpetsc
  sl_linker_args = $(call SL_LINKER_FUNCTION,$(call absbasename_all,$@),$(libpetsc_abi_version),$(libpetsc_lib_version))
@@ -76,8 +59,8 @@ Index: petsc/gmakefile
  
  ifeq ($(PETSC_WITH_EXTERNAL_LIB),)
    libpetscall_shared  := $(libpetscpkgs_shared)
-@@ -149,7 +149,7 @@
- 	$(if $(findstring win32fe lib,$(AR)),$(ARCHIVE_RECIPE_WIN32FE_LIB),$(if $(findstring yes,$(AR_ARGFILE)),$(if $(GMAKE4),$(ARCHIVE_RECIPE_ARGFILE),$(ARCHIVE_RECIPE_DEFAULT)),$(ARCHIVE_RECIPE_DEFAULT)))
+@@ -151,7 +151,7 @@
+ 	$(if $(findstring win_lib,$(AR)),$(ARCHIVE_RECIPE_WIN32FE_LIB),$(if $(findstring yes,$(AR_ARGFILE)),$(if $(GMAKE4),$(ARCHIVE_RECIPE_ARGFILE),$(ARCHIVE_RECIPE_DEFAULT)),$(ARCHIVE_RECIPE_DEFAULT)))
  
  # with-single-library=0
 -libpkg = $(foreach pkg, $1, $(LIBDIR)/libpetsc$(pkg).$(SL_LINKER_SUFFIX))
@@ -85,11 +68,9 @@ Index: petsc/gmakefile
  define pkg_template
    $(LIBDIR)/libpetsc$(1).$(AR_LIB_SUFFIX)  : $(call concatlang,$(1))
    $(call libname_function,$(LIBDIR)/libpetsc$(1)) : $(call concatlang,$(1))
-Index: petsc/config/PETSc/Configure.py
-===================================================================
---- petsc.orig/config/PETSc/Configure.py	2023-06-11 21:50:21.512296246 +0200
-+++ petsc/config/PETSc/Configure.py	2023-06-11 21:50:21.504296170 +0200
-@@ -69,6 +69,7 @@
+--- a/config/PETSc/Configure.py
++++ b/config/PETSc/Configure.py
+@@ -82,6 +82,7 @@
      self.dataFilesPath = framework.require('PETSc.options.dataFilesPath',self)
      self.scalartypes   = framework.require('PETSc.options.scalarTypes', self)
      self.indexTypes    = framework.require('PETSc.options.indexTypes',  self)
@@ -97,7 +78,7 @@ Index: petsc/config/PETSc/Configure.py
      self.languages     = framework.require('PETSc.options.languages',   self.setCompilers)
      self.indexTypes    = framework.require('PETSc.options.indexTypes',  self.compilers)
      self.types         = framework.require('config.types',              self)
-@@ -82,6 +83,10 @@
+@@ -95,6 +96,10 @@
      self.fortran       = framework.require('config.compilersFortran',   self)
      self.externalpackagesdir = framework.require('PETSc.options.externalpackagesdir',self)
  
@@ -108,7 +89,7 @@ Index: petsc/config/PETSc/Configure.py
      for utility in sorted(os.listdir(os.path.join('config','PETSc','options'))):
        self.registerPythonFile(utility,'PETSc.options')
  
-@@ -147,6 +152,10 @@
+@@ -160,6 +165,10 @@
  
    def DumpPkgconfig(self, petsc_pc):
      ''' Create a pkg-config file '''
@@ -119,7 +100,7 @@ Index: petsc/config/PETSc/Configure.py
      if not os.path.exists(os.path.join(self.petscdir.dir,self.arch.arch,'lib','pkgconfig')):
        os.makedirs(os.path.join(self.petscdir.dir,self.arch.arch,'lib','pkgconfig'))
      with open(os.path.join(self.petscdir.dir,self.arch.arch,'lib','pkgconfig',petsc_pc),'w') as fd:
-@@ -413,10 +422,17 @@
+@@ -428,10 +437,17 @@
            i.include = [i.include]
          includes.extend(i.include)
          self.addMakeMacro(i.PACKAGE.replace('-','_')+'_INCLUDE',self.headers.toStringNoDupes(i.include))
@@ -137,12 +118,13 @@ Index: petsc/config/PETSc/Configure.py
      self.complibs = self.compilers.flibs+self.compilers.cxxlibs+self.compilers.LIBS.split()
      self.PETSC_WITH_EXTERNAL_LIB = self.libraries.toStringNoDupes(['-L${PETSC_DIR}/${PETSC_ARCH}/lib', self.petsclib]+self.packagelibs+self.complibs)
      self.PETSC_EXTERNAL_LIB_BASIC = self.libraries.toStringNoDupes(self.packagelibs+self.complibs)
-@@ -435,15 +451,17 @@
+@@ -450,15 +466,18 @@
        self.addMakeMacro('PETSC_FC_INCLUDES_INSTALL',self.headers.toStringNoDupes(allincludes_install,modinc(allincludes_install)))
  
      self.addDefine('LIB_DIR','"'+os.path.join(self.installdir.dir,'lib')+'"')
 +    if self.petsclibExt:
 +      self.addMakeMacro('PETSC_LIB_EXT',self.petsclibExt)
++      self.addDefine('LIB_EXT','"'+self.petsclibExt+'"')
  
      if self.framework.argDB['with-single-library']:
        # overrides the values set in conf/variables
@@ -161,3 +143,48 @@ Index: petsc/config/PETSc/Configure.py
        self.addMakeMacro('PETSC_WITH_EXTERNAL_LIB',self.PETSC_WITH_EXTERNAL_LIB)
        self.addDefine('USE_SINGLE_LIBRARY', '1')
        if self.sharedlibraries.useShared:
+--- a/lib/petsc/conf/rules.doc
++++ b/lib/petsc/conf/rules.doc
+@@ -17,7 +17,7 @@
+ #
+ # Note that EXAMPLESALL is only used in the tutorial directories and SOURCED only in the non-tutorials and tests directories
+ #
+-LIBNAME     = ${INSTALL_LIB_DIR}/${LIBBASE}.${AR_LIB_SUFFIX}
++LIBNAME     = ${INSTALL_LIB_DIR}/${LIBBASE}${PETSC_LIB_EXT}.${AR_LIB_SUFFIX}
+ SOURCE      = `ls *.c *.cxx *.F *.F90 *.cu *.cpp           2> /dev/null`
+ SOURCEALL   = `ls *.c *.cxx *.F *.F90 *.cu *.cpp *.h *.hpp 2> /dev/null`
+ SOURCED     = `ls *.c *.cxx           *.cu *.cpp *.h *.hpp 2> /dev/null`
+--- a/src/sys/dll/reg.c
++++ b/src/sys/dll/reg.c
+@@ -20,12 +20,18 @@
+   PetscFunctionBegin;
+   PetscCall(PetscStrncpy(libs, "${PETSC_LIB_DIR}/libpetsc", sizeof(libs)));
+   PetscCall(PetscStrlcat(libs, name, sizeof(libs)));
++  #if defined(PETSC_LIB_EXT)
++  PetscCall(PetscStrlcat(libs, PETSC_LIB_EXT, sizeof(libs)));
++  #endif
+   PetscCall(PetscDLLibraryRetrieve(PETSC_COMM_WORLD, libs, dlib, 1024, found));
+   if (*found) {
+     PetscCall(PetscDLLibraryAppend(PETSC_COMM_WORLD, &PetscDLLibrariesLoaded, dlib));
+   } else {
+     PetscCall(PetscStrncpy(libs, "${PETSC_DIR}/${PETSC_ARCH}/lib/libpetsc", sizeof(libs)));
+     PetscCall(PetscStrlcat(libs, name, sizeof(libs)));
++    #if defined(PETSC_LIB_EXT)
++    PetscCall(PetscStrlcat(libs, PETSC_LIB_EXT, sizeof(libs)));
++    #endif
+     PetscCall(PetscDLLibraryRetrieve(PETSC_COMM_WORLD, libs, dlib, 1024, found));
+     if (*found) PetscCall(PetscDLLibraryAppend(PETSC_COMM_WORLD, &PetscDLLibrariesLoaded, dlib));
+   }
+--- a/src/ksp/ksp/tutorials/ex1.c
++++ b/src/ksp/ksp/tutorials/ex1.c
+@@ -178,6 +178,10 @@
+       args: -ksp_monitor_short -ksp_gmres_cgs_refinement_type refine_always
+ 
+    test:
++      suffix: library_preload
++      args: -ksp_monitor_short -ksp_gmres_cgs_refinement_type refine_always -library_preload
++
++   test:
+       suffix: 2
+       args: -pc_type sor -pc_sor_symmetric -ksp_monitor_short -ksp_gmres_cgs_refinement_type refine_always
+ 

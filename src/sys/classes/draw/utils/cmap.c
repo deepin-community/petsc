@@ -17,7 +17,7 @@ PetscErrorCode PetscDrawUtilitySetGamma(PetscReal g)
 {
   PetscFunctionBegin;
   Gamma = g;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline double PetscHlsHelper(double m1, double m2, double h)
@@ -66,7 +66,7 @@ static PetscErrorCode PetscDrawCmap_Hue(int mapsize, unsigned char R[], unsigned
     G[i] = (unsigned char)(255 * PetscMin(g, 1.0));
     B[i] = (unsigned char)(255 * PetscMin(b, 1.0));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawCmap_Gray(int mapsize, unsigned char R[], unsigned char G[], unsigned char B[])
@@ -74,7 +74,7 @@ static PetscErrorCode PetscDrawCmap_Gray(int mapsize, unsigned char R[], unsigne
   int i;
   PetscFunctionBegin;
   for (i = 0; i < mapsize; i++) R[i] = G[i] = B[i] = (unsigned char)((255.0 * i) / (mapsize - 1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawCmap_Jet(int mapsize, unsigned char R[], unsigned char G[], unsigned char B[])
@@ -120,7 +120,7 @@ static PetscErrorCode PetscDrawCmap_Jet(int mapsize, unsigned char R[], unsigned
     G[i] = (unsigned char)(255 * PetscMin(g, 1.0));
     B[i] = (unsigned char)(255 * PetscMin(b, 1.0));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawCmap_Hot(int mapsize, unsigned char R[], unsigned char G[], unsigned char B[])
@@ -156,7 +156,7 @@ static PetscErrorCode PetscDrawCmap_Hot(int mapsize, unsigned char R[], unsigned
     G[i] = (unsigned char)(255 * PetscMin(g, 1.0));
     B[i] = (unsigned char)(255 * PetscMin(b, 1.0));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawCmap_Bone(int mapsize, unsigned char R[], unsigned char G[], unsigned char B[])
@@ -173,7 +173,7 @@ static PetscErrorCode PetscDrawCmap_Bone(int mapsize, unsigned char R[], unsigne
     G[i]     = (unsigned char)(255 * PetscMin(g, 1.0));
     B[i]     = (unsigned char)(255 * PetscMin(b, 1.0));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #include "../src/sys/classes/draw/utils/cmap/coolwarm.h"
@@ -205,7 +205,7 @@ PetscErrorCode PetscDrawUtilitySetCmap(const char colormap[], int mapsize, unsig
 {
   int         i, j;
   const char *cmap_name_list[PETSC_STATIC_ARRAY_LENGTH(PetscDrawCmapTable)];
-  PetscInt    id = 0, count = (PetscInt)(sizeof(cmap_name_list) / sizeof(char *));
+  PetscInt    id = 0, count = PETSC_STATIC_ARRAY_LENGTH(cmap_name_list);
   PetscBool   reverse = PETSC_FALSE, brighten = PETSC_FALSE;
   PetscReal   beta = 0;
 
@@ -263,5 +263,5 @@ PetscErrorCode PetscDrawUtilitySetCmap(const char colormap[], int mapsize, unsig
       B[i]        = (unsigned char)(255 * PetscMin(b, (PetscReal)1.0));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

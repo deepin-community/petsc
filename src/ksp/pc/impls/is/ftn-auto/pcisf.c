@@ -43,6 +43,36 @@ extern void PetscRmPointer(void*);
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define pcissetsubdomainscalingfactor_ pcissetsubdomainscalingfactor
 #endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pcissetup_ PCISSETUP
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pcissetup_ pcissetup
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pcisreset_ PCISRESET
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pcisreset_ pcisreset
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pcisinitialize_ PCISINITIALIZE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pcisinitialize_ pcisinitialize
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pcisapplyschur_ PCISAPPLYSCHUR
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pcisapplyschur_ pcisapplyschur
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pcisscatterarrayntovecb_ PCISSCATTERARRAYNTOVECB
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pcisscatterarrayntovecb_ pcisscatterarrayntovecb
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pcisapplyinvschur_ PCISAPPLYINVSCHUR
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pcisapplyinvschur_ pcisapplyinvschur
+#endif
 
 
 /* Definitions of Fortran Wrapper routines */
@@ -64,6 +94,46 @@ PETSC_EXTERN void  pcissetsubdomainscalingfactor_(PC pc,PetscScalar *scal, int *
 {
 *__ierr = PCISSetSubdomainScalingFactor(
 	(PC)PetscToPointer((pc) ),*scal);
+}
+PETSC_EXTERN void  pcissetup_(PC pc,PetscBool *computematrices,PetscBool *computesolvers, int *__ierr)
+{
+*__ierr = PCISSetUp(
+	(PC)PetscToPointer((pc) ),*computematrices,*computesolvers);
+}
+PETSC_EXTERN void  pcisreset_(PC pc, int *__ierr)
+{
+*__ierr = PCISReset(
+	(PC)PetscToPointer((pc) ));
+}
+PETSC_EXTERN void  pcisinitialize_(PC pc, int *__ierr)
+{
+*__ierr = PCISInitialize(
+	(PC)PetscToPointer((pc) ));
+}
+PETSC_EXTERN void  pcisapplyschur_(PC pc,Vec v,Vec vec1_B,Vec vec2_B,Vec vec1_D,Vec vec2_D, int *__ierr)
+{
+*__ierr = PCISApplySchur(
+	(PC)PetscToPointer((pc) ),
+	(Vec)PetscToPointer((v) ),
+	(Vec)PetscToPointer((vec1_B) ),
+	(Vec)PetscToPointer((vec2_B) ),
+	(Vec)PetscToPointer((vec1_D) ),
+	(Vec)PetscToPointer((vec2_D) ));
+}
+PETSC_EXTERN void  pcisscatterarrayntovecb_(PC pc,PetscScalar *array_N,Vec v_B,InsertMode *imode,ScatterMode *smode, int *__ierr)
+{
+*__ierr = PCISScatterArrayNToVecB(
+	(PC)PetscToPointer((pc) ),array_N,
+	(Vec)PetscToPointer((v_B) ),*imode,*smode);
+}
+PETSC_EXTERN void  pcisapplyinvschur_(PC pc,Vec b,Vec x,Vec vec1_N,Vec vec2_N, int *__ierr)
+{
+*__ierr = PCISApplyInvSchur(
+	(PC)PetscToPointer((pc) ),
+	(Vec)PetscToPointer((b) ),
+	(Vec)PetscToPointer((x) ),
+	(Vec)PetscToPointer((vec1_N) ),
+	(Vec)PetscToPointer((vec2_N) ));
 }
 #if defined(__cplusplus)
 }

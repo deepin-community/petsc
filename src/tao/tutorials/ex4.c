@@ -12,7 +12,7 @@ typedef struct _UserCtx {
   PetscInt    m;       /* The row dimension of F */
   PetscInt    n;       /* The column dimension of F */
   PetscInt    matops;  /* Matrix format. 0 for stencil, 1 for random */
-  PetscInt    iter;    /* Numer of iterations for ADMM */
+  PetscInt    iter;    /* Number of iterations for ADMM */
   PetscReal   hStart;  /* Starting point for Taylor test */
   PetscReal   hFactor; /* Taylor test step factor */
   PetscReal   hMin;    /* Taylor test end goal */
@@ -42,15 +42,13 @@ static PetscErrorCode CreateRHS(UserCtx ctx)
   PetscCall(VecSetSizes(ctx->d, PETSC_DECIDE, ctx->m));
   PetscCall(VecSetFromOptions(ctx->d));
   PetscCall(VecSetRandom(ctx->d, ctx->rctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode CreateMatrix(UserCtx ctx)
 {
-  PetscInt Istart, Iend, i, j, Ii, gridN, I_n, I_s, I_e, I_w;
-#if defined(PETSC_USE_LOG)
+  PetscInt      Istart, Iend, i, j, Ii, gridN, I_n, I_s, I_e, I_w;
   PetscLogStage stage;
-#endif
 
   PetscFunctionBegin;
   /* build the matrix F in ctx */
@@ -96,7 +94,7 @@ static PetscErrorCode CreateMatrix(UserCtx ctx)
   /* Setup Hessian Workspace in same shape as W */
   PetscCall(MatDuplicate(ctx->W, MAT_DO_NOT_COPY_VALUES, &(ctx->Hm)));
   PetscCall(MatDuplicate(ctx->W, MAT_DO_NOT_COPY_VALUES, &(ctx->Hr)));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SetupWorkspace(UserCtx ctx)
@@ -107,7 +105,7 @@ static PetscErrorCode SetupWorkspace(UserCtx ctx)
   PetscCall(MatCreateVecs(ctx->F, &ctx->workLeft[0], &ctx->workRight[0]));
   for (i = 1; i < NWORKLEFT; i++) PetscCall(VecDuplicate(ctx->workLeft[0], &(ctx->workLeft[i])));
   for (i = 1; i < NWORKRIGHT; i++) PetscCall(VecDuplicate(ctx->workRight[0], &(ctx->workRight[i])));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode ConfigureContext(UserCtx ctx)
@@ -151,7 +149,7 @@ static PetscErrorCode ConfigureContext(UserCtx ctx)
   PetscCall(CreateMatrix(ctx));
   PetscCall(CreateRHS(ctx));
   PetscCall(SetupWorkspace(ctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DestroyContext(UserCtx *ctx)
@@ -168,7 +166,7 @@ static PetscErrorCode DestroyContext(UserCtx *ctx)
   for (i = 0; i < NWORKRIGHT; i++) PetscCall(VecDestroy(&((*ctx)->workRight[i])));
   PetscCall(PetscRandomDestroy(&((*ctx)->rctx)));
   PetscCall(PetscFree(*ctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* compute (1/2) * ||F x - d||^2 */
@@ -183,7 +181,7 @@ static PetscErrorCode ObjectiveMisfit(Tao tao, Vec x, PetscReal *J, void *_ctx)
   PetscCall(VecAXPY(y, -1., ctx->d));
   PetscCall(VecDot(y, y, J));
   *J *= 0.5;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* compute V = FTFx - FTd */
@@ -199,7 +197,7 @@ static PetscErrorCode GradientMisfit(Tao tao, Vec x, Vec V, void *_ctx)
   PetscCall(MatMult(ctx->W, x, FTFx));
   PetscCall(MatMultTranspose(ctx->F, ctx->d, FTd));
   PetscCall(VecWAXPY(V, -1., FTd, FTFx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* returns FTF */
@@ -210,7 +208,7 @@ static PetscErrorCode HessianMisfit(Tao tao, Vec x, Mat H, Mat Hpre, void *_ctx)
   PetscFunctionBegin;
   if (H != ctx->W) PetscCall(MatCopy(ctx->W, H, DIFFERENT_NONZERO_PATTERN));
   if (Hpre != ctx->W) PetscCall(MatCopy(ctx->W, Hpre, DIFFERENT_NONZERO_PATTERN));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* computes augment Lagrangian objective (with scaled dual):
@@ -235,7 +233,7 @@ static PetscErrorCode ObjectiveMisfitADMM(Tao tao, Vec x, PetscReal *J, void *_c
   PetscCall(VecDot(temp, temp, &workNorm));
   /* augment Lagrangian objective (with scaled dual): f(x) + 0.5 * mu ||x -z + u||^2 */
   *J = misfit + 0.5 * mu * workNorm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* computes FTFx - FTd  mu*(x - z + u) */
@@ -256,7 +254,7 @@ static PetscErrorCode GradientMisfitADMM(Tao tao, Vec x, Vec V, void *_ctx)
   PetscCall(VecAXPBYPCZ(temp, -1., 1., 1., z, u));
   /* V =  FTFx - FTd  mu*(x - z + u) */
   PetscCall(VecAXPY(V, mu, temp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* returns FTF + diag(mu) */
@@ -268,7 +266,7 @@ static PetscErrorCode HessianMisfitADMM(Tao tao, Vec x, Mat H, Mat Hpre, void *_
   PetscCall(MatCopy(ctx->W, H, DIFFERENT_NONZERO_PATTERN));
   PetscCall(MatShift(H, ctx->mu));
   if (Hpre != H) PetscCall(MatCopy(H, Hpre, DIFFERENT_NONZERO_PATTERN));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* computes || x ||_p (mult by 0.5 in case of NORM_2) */
@@ -282,7 +280,7 @@ static PetscErrorCode ObjectiveRegularization(Tao tao, Vec x, PetscReal *J, void
   PetscCall(VecNorm(x, ctx->p, &norm));
   if (ctx->p == NORM_2) norm = 0.5 * norm * norm;
   *J = ctx->alpha * norm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* NORM_2 Case: return x
@@ -302,7 +300,7 @@ static PetscErrorCode GradientRegularization(Tao tao, Vec x, Vec V, void *_ctx)
     PetscCall(VecShift(ctx->workRight[1], eps));
     PetscCall(VecPointwiseDivide(V, x, ctx->workRight[1]));
   } else SETERRQ(PetscObjectComm((PetscObject)tao), PETSC_ERR_ARG_OUTOFRANGE, "Example only works for NORM_1 and NORM_2");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* NORM_2 Case: returns diag(mu)
@@ -354,7 +352,7 @@ static PetscErrorCode HessianRegularization(Tao tao, Vec x, Mat H, Mat Hpre, voi
       PetscCall(MatDiagonalSet(Hpre, copy1, INSERT_VALUES));
     }
   } else SETERRQ(PetscObjectComm((PetscObject)tao), PETSC_ERR_ARG_OUTOFRANGE, "Example only works for NORM_1 and NORM_2");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* NORM_2 Case: 0.5 || x ||_2 + 0.5 * mu * ||x + u - z||^2
@@ -377,7 +375,7 @@ static PetscErrorCode ObjectiveRegularizationADMM(Tao tao, Vec z, PetscReal *J, 
   /* workNorm = ||x + u - z ||^2 */
   PetscCall(VecDot(temp, temp, &workNorm));
   *J = reg + 0.5 * mu * workNorm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* NORM_2 Case: x - mu*(x + u - z)
@@ -399,7 +397,7 @@ static PetscErrorCode GradientRegularizationADMM(Tao tao, Vec z, Vec V, void *_c
   /* temp = x + u -z */
   PetscCall(VecAXPBYPCZ(temp, 1., 1., -1., x, u));
   PetscCall(VecAXPY(V, -mu, temp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* NORM_2 Case: returns diag(mu)
@@ -422,7 +420,7 @@ static PetscErrorCode HessianRegularizationADMM(Tao tao, Vec x, Mat H, Mat Hpre,
     PetscCall(MatShift(H, ctx->mu));
     if (Hpre != H) PetscCall(MatShift(Hpre, ctx->mu));
   } else SETERRQ(PetscObjectComm((PetscObject)tao), PETSC_ERR_ARG_OUTOFRANGE, "Example only works for NORM_1 and NORM_2");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* NORM_2 Case : (1/2) * ||F x - d||^2 + 0.5 * || x ||_p
@@ -435,7 +433,7 @@ static PetscErrorCode ObjectiveComplete(Tao tao, Vec x, PetscReal *J, void *ctx)
   PetscCall(ObjectiveMisfit(tao, x, &Jm, ctx));
   PetscCall(ObjectiveRegularization(tao, x, &Jr, ctx));
   *J = Jm + Jr;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* NORM_2 Case: FTFx - FTd + x
@@ -448,7 +446,7 @@ static PetscErrorCode GradientComplete(Tao tao, Vec x, Vec V, void *ctx)
   PetscCall(GradientMisfit(tao, x, cntx->workRight[2], ctx));
   PetscCall(GradientRegularization(tao, x, cntx->workRight[3], ctx));
   PetscCall(VecWAXPY(V, 1, cntx->workRight[2], cntx->workRight[3]));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* NORM_2 Case: diag(mu) + FTF
@@ -464,7 +462,7 @@ static PetscErrorCode HessianComplete(Tao tao, Vec x, Mat H, Mat Hpre, void *ctx
   PetscCall(MatAXPY(H, 1., tempH, DIFFERENT_NONZERO_PATTERN));
   if (Hpre != H) PetscCall(MatCopy(H, Hpre, DIFFERENT_NONZERO_PATTERN));
   PetscCall(MatDestroy(&tempH));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoSolveADMM(UserCtx ctx, Vec x)
@@ -537,7 +535,7 @@ static PetscErrorCode TaoSolveADMM(UserCtx ctx, Vec x)
   PetscCall(VecCopy(xk, x));
   PetscCall(TaoDestroy(&tao1));
   PetscCall(TaoDestroy(&tao2));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Second order Taylor remainder convergence test */
@@ -589,7 +587,7 @@ static PetscErrorCode TaylorTest(UserCtx ctx, Tao tao, Vec x, PetscReal *C)
   PetscCall(VecDestroy(&dx));
   PetscCall(VecDestroy(&xhat));
   PetscCall(VecDestroy(&g));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

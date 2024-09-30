@@ -1,4 +1,3 @@
-
 /*
      Routines that call the kernel minpack coloring subroutines
 */
@@ -19,25 +18,10 @@ PETSC_INTERN PetscErrorCode MatFDColoringDegreeSequence_Minpack(PetscInt m, cons
   PetscCall(PetscMalloc1(m, &work));
   PetscCall(PetscMalloc1(m, seq));
 
-  MINPACKdegr(&m, cja, cia, rja, ria, *seq, work);
+  PetscCall(MINPACKdegr(&m, cja, cia, rja, ria, *seq, work));
 
   PetscCall(PetscFree(work));
-  PetscFunctionReturn(0);
-}
-
-/*
-    MatFDColoringMinimumNumberofColors_Private - For a given sparse
-        matrix computes the minimum number of colors needed.
-
-*/
-PetscErrorCode MatFDColoringMinimumNumberofColors_Private(PetscInt m, PetscInt *ia, PetscInt *minc)
-{
-  PetscInt i, c = 0;
-
-  PetscFunctionBegin;
-  for (i = 0; i < m; i++) c = PetscMax(c, ia[i + 1] - ia[i]);
-  *minc = c;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatColoringApply_SL(MatColoring mc, ISColoring *iscoloring)
@@ -77,10 +61,10 @@ static PetscErrorCode MatColoringApply_SL(MatColoring mc, ISColoring *iscoloring
 
   PetscCall(PetscMalloc2(n, &list, 4 * n, &work));
 
-  MINPACKslo(&n, cja, cia, rja, ria, seq, list, &clique, work, work + n, work + 2 * n, work + 3 * n);
+  PetscCall(MINPACKslo(&n, cja, cia, rja, ria, seq, list, &clique, work, work + n, work + 2 * n, work + 3 * n));
 
   PetscCall(PetscMalloc1(n, &coloring));
-  MINPACKseq(&n, cja, cia, rja, ria, list, coloring, &ncolors, work);
+  PetscCall(MINPACKseq(&n, cja, cia, rja, ria, list, coloring, &ncolors, work));
 
   PetscCall(PetscFree2(list, work));
   PetscCall(PetscFree(seq));
@@ -112,22 +96,18 @@ static PetscErrorCode MatColoringApply_SL(MatColoring mc, ISColoring *iscoloring
     PetscCall(ISColoringCreate(comm, nc, N_loc, colors_loc, PETSC_OWN_POINTER, iscoloring));
     PetscCall(ISColoringDestroy(&iscoloring_seq));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-  MATCOLORINGSL - implements the SL (smallest last) coloring routine
+  MATCOLORINGSL - implements the SL (smallest last) coloring routine {cite}`more:coloring`
 
    Level: beginner
 
    Notes:
-    Supports only distance two colorings (for computation of Jacobians)
+   Supports only distance two colorings (for computation of Jacobians/Hessians)
 
-          This is a sequential algorithm
-
-   References:
-.  * - TF Coleman and J More, "Estimation of sparse Jacobian matrices and graph coloring," SIAM Journal on Numerical Analysis, vol. 20, no. 1,
-   pp. 187-209, 1983.
+   This is a sequential algorithm
 
 .seealso: `MatColoringCreate()`, `MatColoring`, `MatColoringSetType()`, `MATCOLORINGGREEDY`, `MatColoringType`
 M*/
@@ -141,7 +121,7 @@ PETSC_EXTERN PetscErrorCode MatColoringCreate_SL(MatColoring mc)
   mc->ops->view           = NULL;
   mc->ops->destroy        = NULL;
   mc->ops->setfromoptions = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatColoringApply_LF(MatColoring mc, ISColoring *iscoloring)
@@ -183,9 +163,9 @@ static PetscErrorCode MatColoringApply_LF(MatColoring mc, ISColoring *iscoloring
 
   n1   = n - 1;
   none = -1;
-  MINPACKnumsrt(&n, &n1, seq, &none, list, work + 2 * n, work + n);
+  PetscCall(MINPACKnumsrt(&n, &n1, seq, &none, list, work + 2 * n, work + n));
   PetscCall(PetscMalloc1(n, &coloring));
-  MINPACKseq(&n, cja, cia, rja, ria, list, coloring, &ncolors, work);
+  PetscCall(MINPACKseq(&n, cja, cia, rja, ria, list, coloring, &ncolors, work));
 
   PetscCall(PetscFree2(list, work));
   PetscCall(PetscFree(seq));
@@ -219,22 +199,18 @@ static PetscErrorCode MatColoringApply_LF(MatColoring mc, ISColoring *iscoloring
     PetscCall(ISColoringCreate(comm, nc, N_loc, colors_loc, PETSC_OWN_POINTER, iscoloring));
     PetscCall(ISColoringDestroy(&iscoloring_seq));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-  MATCOLORINGLF - implements the LF (largest first) coloring routine
+  MATCOLORINGLF - implements the LF (largest first) coloring routine {cite}`more:coloring`
 
    Level: beginner
 
    Notes:
-    Supports only distance two colorings (for computation of Jacobians)
+   Supports only distance two colorings (for computation of Jacobians/Hessians)
 
-    This is a sequential algorithm
-
-   References:
-.  * - TF Coleman and J More, "Estimation of sparse Jacobian matrices and graph coloring," SIAM Journal on Numerical Analysis, vol. 20, no. 1,
-   pp. 187-209, 1983.
+   This is a sequential algorithm
 
 .seealso: `MatColoringTpe`, `MatColoringCreate()`, `MatColoring`, `MatColoringSetType()`, `MATCOLORINGGREEDY`, `MatColoringType`
 M*/
@@ -248,7 +224,7 @@ PETSC_EXTERN PetscErrorCode MatColoringCreate_LF(MatColoring mc)
   mc->ops->view           = NULL;
   mc->ops->destroy        = NULL;
   mc->ops->setfromoptions = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatColoringApply_ID(MatColoring mc, ISColoring *iscoloring)
@@ -288,10 +264,10 @@ static PetscErrorCode MatColoringApply_ID(MatColoring mc, ISColoring *iscoloring
 
   PetscCall(PetscMalloc2(n, &list, 4 * n, &work));
 
-  MINPACKido(&n, &n, cja, cia, rja, ria, seq, list, &clique, work, work + n, work + 2 * n, work + 3 * n);
+  PetscCall(MINPACKido(&n, &n, cja, cia, rja, ria, seq, list, &clique, work, work + n, work + 2 * n, work + 3 * n));
 
   PetscCall(PetscMalloc1(n, &coloring));
-  MINPACKseq(&n, cja, cia, rja, ria, list, coloring, &ncolors, work);
+  PetscCall(MINPACKseq(&n, cja, cia, rja, ria, list, coloring, &ncolors, work));
 
   PetscCall(PetscFree2(list, work));
   PetscCall(PetscFree(seq));
@@ -324,22 +300,18 @@ static PetscErrorCode MatColoringApply_ID(MatColoring mc, ISColoring *iscoloring
     PetscCall(ISColoringCreate(comm, nc, N_loc, colors_loc, PETSC_OWN_POINTER, iscoloring));
     PetscCall(ISColoringDestroy(&iscoloring_seq));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-  MATCOLORINGID - implements the ID (incidence degree) coloring routine
+  MATCOLORINGID - implements the ID (incidence degree) coloring routine {cite}`more:coloring`
 
    Level: beginner
 
    Notes:
-    Supports only distance two colorings (for computation of Jacobians)
+   Supports only distance two colorings (for computation of Jacobians/Hessians)
 
-          This is a sequential algorithm
-
-   References:
-.  * - TF Coleman and J More, "Estimation of sparse Jacobian matrices and graph coloring," SIAM Journal on Numerical Analysis, vol. 20, no. 1,
-   pp. 187-209, 1983.
+   This is a sequential algorithm
 
 .seealso: `MatColoringCreate()`, `MatColoring`, `MatColoringSetType()`, `MATCOLORINGGREEDY`, `MatColoringType`
 M*/
@@ -353,5 +325,5 @@ PETSC_EXTERN PetscErrorCode MatColoringCreate_ID(MatColoring mc)
   mc->ops->view           = NULL;
   mc->ops->destroy        = NULL;
   mc->ops->setfromoptions = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

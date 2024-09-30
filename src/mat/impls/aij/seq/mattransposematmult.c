@@ -1,4 +1,3 @@
-
 /*
   Defines matrix-matrix product routines for
           C = A^T * B and C = A * B^t
@@ -8,7 +7,7 @@
 #include <../src/mat/impls/aij/seq/aij.h> /*I "petscmat.h" I*/
 #include <../src/mat/impls/dense/seq/dense.h>
 
-PetscErrorCode MatDestroy_SeqDense_MatTransMatMult(void *data)
+static PetscErrorCode MatDestroy_SeqDense_MatTransMatMult(void *data)
 {
   Mat_MatTransMatMult *atb = (Mat_MatTransMatMult *)data;
 
@@ -17,7 +16,7 @@ PetscErrorCode MatDestroy_SeqDense_MatTransMatMult(void *data)
   PetscCall(VecDestroy(&atb->bt));
   PetscCall(VecDestroy(&atb->ct));
   PetscCall(PetscFree(atb));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatTMatTMultNumeric_SeqAIJ_SeqDense(Mat, Mat, Mat);
@@ -57,10 +56,10 @@ PETSC_INTERN PetscErrorCode MatTMatTMultSymbolic_SeqAIJ_SeqDense(Mat A, Mat B, P
   } else {
     C->ops->mattransposemultnumeric = MatTMatTMultNumeric_SeqAIJ_SeqDense;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatTMatTMultNumeric_SeqAIJ_SeqDense(Mat A, Mat B, Mat C)
+static PetscErrorCode MatTMatTMultNumeric_SeqAIJ_SeqDense(Mat A, Mat B, Mat C)
 {
   PetscInt             i, j, m = A->rmap->n, n = A->cmap->n, blda, clda;
   PetscInt             mdof = C->cmap->N;
@@ -127,5 +126,5 @@ PetscErrorCode MatTMatTMultNumeric_SeqAIJ_SeqDense(Mat A, Mat B, Mat C)
   }
   PetscCall(MatDenseRestoreArrayRead(B, &Barray));
   PetscCall(MatDenseRestoreArray(C, &Carray));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,4 +1,3 @@
-
 static char help[] = "Tests recovery from domain errors in MatMult() and PCApply()\n\n";
 
 /*
@@ -203,7 +202,7 @@ PetscErrorCode FormInitialGuess(AppCtx *user, DM da, Vec X)
      Restore vector
   */
   PetscCall(DMDAVecRestoreArray(da, X, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode FormFunctionLocal(DMDALocalInfo *info, Field **x, Field **f, void *ptr)
@@ -341,7 +340,7 @@ PetscErrorCode FormFunctionLocal(DMDALocalInfo *info, Field **x, Field **f, void
      Flop count (multiply-adds are counted as 2 operations)
   */
   PetscCall(PetscLogFlops(84.0 * info->ym * info->xm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatMult_MyShell(Mat A, Vec x, Vec y)
@@ -356,8 +355,10 @@ PetscErrorCode MatMult_MyShell(Mat A, Vec x, Vec y)
     PetscMPIInt rank;
     PetscCallMPI(MPI_Comm_rank(PetscObjectComm((PetscObject)A), &rank));
     if (rank == 0) PetscCall(VecSetInf(y));
+    PetscCall(VecAssemblyBegin(y));
+    PetscCall(VecAssemblyEnd(y));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatAssemblyEnd_MyShell(Mat A, MatAssemblyType tp)
@@ -367,7 +368,7 @@ PetscErrorCode MatAssemblyEnd_MyShell(Mat A, MatAssemblyType tp)
   PetscFunctionBegin;
   PetscCall(MatShellGetContext(A, &matshellctx));
   PetscCall(MatAssemblyEnd(matshellctx->Jmf, tp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCApply_MyShell(PC pc, Vec x, Vec y)
@@ -380,8 +381,10 @@ PetscErrorCode PCApply_MyShell(PC pc, Vec x, Vec y)
     PetscMPIInt rank;
     PetscCallMPI(MPI_Comm_rank(PetscObjectComm((PetscObject)pc), &rank));
     if (rank == 0) PetscCall(VecSetInf(y));
+    PetscCall(VecAssemblyBegin(y));
+    PetscCall(VecAssemblyEnd(y));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode SNESComputeJacobian_DMDA(SNES, Vec, Mat, Mat, void *);
@@ -393,7 +396,7 @@ PetscErrorCode SNESComputeJacobian_MyShell(SNES snes, Vec X, Mat A, Mat B, void 
   PetscFunctionBegin;
   PetscCall(SNESComputeJacobian_DMDA(snes, X, A, B, ctx));
   if (fail++ > 0) PetscCall(MatZeroEntries(A));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST
@@ -403,32 +406,32 @@ PetscErrorCode SNESComputeJacobian_MyShell(SNES snes, Vec X, Mat A, Mat B, void 
 
    test:
       suffix: 2
-      args: -snes_converged_reason -ksp_converged_reason -error_in_matmult
+      args: -snes_converged_reason -ksp_converged_reason -error_in_matmult -fp_trap 0
 
    test:
       suffix: 3
-      args: -snes_converged_reason -ksp_converged_reason -error_in_pcapply
+      args: -snes_converged_reason -ksp_converged_reason -error_in_pcapply -fp_trap 0
 
    test:
       suffix: 4
-      args: -snes_converged_reason -ksp_converged_reason -error_in_pcsetup
+      args: -snes_converged_reason -ksp_converged_reason -error_in_pcsetup -fp_trap 0
 
    test:
       suffix: 5
-      args: -snes_converged_reason -ksp_converged_reason -error_in_pcsetup -pc_type bjacobi
+      args: -snes_converged_reason -ksp_converged_reason -error_in_pcsetup -pc_type bjacobi -fp_trap 0
 
    test:
       suffix: 5_fieldsplit
-      args: -snes_converged_reason -ksp_converged_reason -error_in_pcsetup -pc_type fieldsplit
+      args: -snes_converged_reason -ksp_converged_reason -error_in_pcsetup -pc_type fieldsplit -fp_trap 0
       output_file: output/ex69_5.out
 
    test:
       suffix: 6
-      args: -snes_converged_reason -ksp_converged_reason -error_in_domainmf -snes_mf -pc_type none
+      args: -snes_converged_reason -ksp_converged_reason -error_in_domainmf -snes_mf -pc_type none -fp_trap 0
 
    test:
       suffix: 7
-      args: -snes_converged_reason -ksp_converged_reason -error_in_domain
+      args: -snes_converged_reason -ksp_converged_reason -error_in_domain -fp_trap 0
 
    test:
       suffix: 8

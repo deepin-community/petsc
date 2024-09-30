@@ -15,6 +15,7 @@ static PetscErrorCode PCKSPCreateKSP_KSP(PC pc)
 
   PetscFunctionBegin;
   PetscCall(KSPCreate(PetscObjectComm((PetscObject)pc), &jac->ksp));
+  PetscCall(KSPSetNestLevel(jac->ksp, pc->kspnestlevel));
   PetscCall(KSPSetErrorIfNotConverged(jac->ksp, pc->erroriffailure));
   PetscCall(PetscObjectIncrementTabLevel((PetscObject)jac->ksp, (PetscObject)pc, 1));
   PetscCall(PCGetOptionsPrefix(pc, &prefix));
@@ -25,7 +26,7 @@ static PetscErrorCode PCKSPCreateKSP_KSP(PC pc)
     PetscCall(KSPSetDM(jac->ksp, dm));
     PetscCall(KSPSetDMActive(jac->ksp, PETSC_FALSE));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApply_KSP(PC pc, Vec x, Vec y)
@@ -43,7 +44,7 @@ static PetscErrorCode PCApply_KSP(PC pc, Vec x, Vec y)
   PetscCall(KSPCheckSolve(jac->ksp, pc, y));
   PetscCall(KSPGetIterationNumber(jac->ksp, &its));
   jac->its += its;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCMatApply_KSP(PC pc, Mat X, Mat Y)
@@ -61,7 +62,7 @@ static PetscErrorCode PCMatApply_KSP(PC pc, Mat X, Mat Y)
   PetscCall(KSPCheckSolve(jac->ksp, pc, NULL));
   PetscCall(KSPGetIterationNumber(jac->ksp, &its));
   jac->its += its;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApplyTranspose_KSP(PC pc, Vec x, Vec y)
@@ -79,7 +80,7 @@ static PetscErrorCode PCApplyTranspose_KSP(PC pc, Vec x, Vec y)
   PetscCall(KSPCheckSolve(jac->ksp, pc, y));
   PetscCall(KSPGetIterationNumber(jac->ksp, &its));
   jac->its += its;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSetUp_KSP(PC pc)
@@ -96,7 +97,7 @@ static PetscErrorCode PCSetUp_KSP(PC pc)
   else mat = pc->pmat;
   PetscCall(KSPSetOperators(jac->ksp, mat, pc->pmat));
   PetscCall(KSPSetUp(jac->ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Default destroy, if it has never been setup */
@@ -106,7 +107,7 @@ static PetscErrorCode PCReset_KSP(PC pc)
 
   PetscFunctionBegin;
   PetscCall(KSPDestroy(&jac->ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCDestroy_KSP(PC pc)
@@ -118,7 +119,7 @@ static PetscErrorCode PCDestroy_KSP(PC pc)
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCKSPGetKSP_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCKSPSetKSP_C", NULL));
   PetscCall(PetscFree(pc->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCView_KSP(PC pc, PetscViewer viewer)
@@ -138,7 +139,7 @@ static PetscErrorCode PCView_KSP(PC pc, PetscViewer viewer)
   PetscCall(KSPView(jac->ksp, viewer));
   PetscCall(PetscViewerASCIIPopTab(viewer));
   if (iascii) PetscCall(PetscViewerASCIIPrintf(viewer, "  ---------------------------------\n"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCKSPSetKSP_KSP(PC pc, KSP ksp)
@@ -149,26 +150,26 @@ static PetscErrorCode PCKSPSetKSP_KSP(PC pc, KSP ksp)
   PetscCall(PetscObjectReference((PetscObject)ksp));
   PetscCall(KSPDestroy(&jac->ksp));
   jac->ksp = ksp;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCKSPSetKSP - Sets the `KSP` context for a `PCKSP`.
+  PCKSPSetKSP - Sets the `KSP` context for a `PCKSP`.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  ksp - the `KSP` solver
+  Input Parameters:
++ pc  - the preconditioner context
+- ksp - the `KSP` solver
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   The `PC` and the `KSP` must have the same communicator
+  Notes:
+  The `PC` and the `KSP` must have the same communicator
 
-   This would rarely be used, the standard usage is to call `PCKSPGetKSP()` and then change options on that `KSP`
+  This would rarely be used, the standard usage is to call `PCKSPGetKSP()` and then change options on that `KSP`
 
-.seealso: `PCKSP`, `PCKSPGetKSP()`
+.seealso: [](ch_ksp), `PCKSP`, `PCKSPGetKSP()`
 @*/
 PetscErrorCode PCKSPSetKSP(PC pc, KSP ksp)
 {
@@ -177,7 +178,7 @@ PetscErrorCode PCKSPSetKSP(PC pc, KSP ksp)
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 2);
   PetscCheckSameComm(pc, 1, ksp, 2);
   PetscTryMethod(pc, "PCKSPSetKSP_C", (PC, KSP), (pc, ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCKSPGetKSP_KSP(PC pc, KSP *ksp)
@@ -187,34 +188,34 @@ static PetscErrorCode PCKSPGetKSP_KSP(PC pc, KSP *ksp)
   PetscFunctionBegin;
   if (!jac->ksp) PetscCall(PCKSPCreateKSP_KSP(pc));
   *ksp = jac->ksp;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCKSPGetKSP - Gets the `KSP` context for a `PCKSP`.
+  PCKSPGetKSP - Gets the `KSP` context for a `PCKSP`.
 
-   Not Collective but ksp returned is parallel if pc was parallel
+  Not Collective but ksp returned is parallel if pc was parallel
 
-   Input Parameter:
-.  pc - the preconditioner context
+  Input Parameter:
+. pc - the preconditioner context
 
-   Output Parameter:
-.  ksp - the `KSP` solver
+  Output Parameter:
+. ksp - the `KSP` solver
 
-   Note:
-   If the `PC` is not a `PCKSP` object it raises an error
+  Note:
+  If the `PC` is not a `PCKSP` object it raises an error
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `PCKSP`, `PCKSPSetKSP()`
+.seealso: [](ch_ksp), `PCKSP`, `PCKSPSetKSP()`
 @*/
 PetscErrorCode PCKSPGetKSP(PC pc, KSP *ksp)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
-  PetscValidPointer(ksp, 2);
+  PetscAssertPointer(ksp, 2);
   PetscUseMethod(pc, "PCKSPGetKSP_C", (PC, KSP *), (pc, ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSetFromOptions_KSP(PC pc, PetscOptionItems *PetscOptionsObject)
@@ -225,7 +226,7 @@ static PetscErrorCode PCSetFromOptions_KSP(PC pc, PetscOptionItems *PetscOptions
   PetscOptionsHeadBegin(PetscOptionsObject, "PC KSP options");
   if (jac->ksp) PetscCall(KSPSetFromOptions(jac->ksp));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -254,7 +255,7 @@ static PetscErrorCode PCSetFromOptions_KSP(PC pc, PetscOptionItems *PetscOptions
     is not an efficient algorithm anyways and (2) implementing it for its > 1 would essentially require that we implement Richardson (reimplementing the
     Richardson code) inside the `PCApplyRichardson_PCKSP()` leading to duplicate code.
 
-.seealso: `PCCreate()`, `PCSetType()`, `PCType`, `PC`,
+.seealso: [](ch_ksp), `PCCreate()`, `PCSetType()`, `PCType`, `PC`,
           `PCSHELL`, `PCCOMPOSITE`, `PCSetUseAmat()`, `PCKSPGetKSP()`, `KSPFGMRES`, `KSPGCR`, `KSPFCG`
 M*/
 
@@ -278,5 +279,5 @@ PETSC_EXTERN PetscErrorCode PCCreate_KSP(PC pc)
 
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCKSPGetKSP_C", PCKSPGetKSP_KSP));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCKSPSetKSP_C", PCKSPSetKSP_KSP));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,4 +1,3 @@
-
 /*
    This provides a matrix that consists of Mats
 */
@@ -110,7 +109,7 @@ static PetscErrorCode MatSOR_BlockMat_Symmetric(Mat A, Vec bb, PetscReal omega, 
   }
   PetscCall(VecRestoreArray(xx, &x));
   PetscCall(VecRestoreArrayRead(a->workb, &b));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSOR_BlockMat(Mat A, Vec bb, PetscReal omega, MatSORType flag, PetscReal fshift, PetscInt its, PetscInt lits, Vec xx)
@@ -201,7 +200,7 @@ static PetscErrorCode MatSOR_BlockMat(Mat A, Vec bb, PetscReal omega, MatSORType
   }
   PetscCall(VecRestoreArray(xx, &x));
   PetscCall(VecRestoreArrayRead(bb, &b));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSetValues_BlockMat(Mat A, PetscInt m, const PetscInt im[], PetscInt n, const PetscInt in[], const PetscScalar v[], InsertMode is)
@@ -271,7 +270,7 @@ static PetscErrorCode MatSetValues_BlockMat(Mat A, PetscInt m, const PetscInt im
     }
     ailen[brow] = nrow;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatLoad_BlockMat(Mat newmat, PetscViewer viewer)
@@ -385,7 +384,7 @@ static PetscErrorCode MatLoad_BlockMat(Mat newmat, PetscViewer viewer)
   }
   PetscCall(MatAssemblyBegin(newmat, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(newmat, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatView_BlockMat(Mat A, PetscViewer viewer)
@@ -401,7 +400,7 @@ static PetscErrorCode MatView_BlockMat(Mat A, PetscViewer viewer)
     PetscCall(PetscViewerASCIIPrintf(viewer, "Nonzero block matrices = %" PetscInt_FMT " \n", a->nz));
     if (A->symmetric == PETSC_BOOL3_TRUE) PetscCall(PetscViewerASCIIPrintf(viewer, "Only upper triangular part of symmetric matrix is stored\n"));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatDestroy_BlockMat(Mat mat)
@@ -422,7 +421,7 @@ static PetscErrorCode MatDestroy_BlockMat(Mat mat)
   }
   PetscCall(MatSeqXAIJFreeAIJ(mat, (PetscScalar **)&bmat->a, &bmat->j, &bmat->i));
   PetscCall(PetscFree(mat->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatMult_BlockMat(Mat A, Vec x, Vec y)
@@ -457,10 +456,10 @@ static PetscErrorCode MatMult_BlockMat(Mat A, Vec x, Vec y)
   }
   PetscCall(VecRestoreArray(x, &xx));
   PetscCall(VecRestoreArray(y, &yy));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatMult_BlockMat_Symmetric(Mat A, Vec x, Vec y)
+static PetscErrorCode MatMult_BlockMat_Symmetric(Mat A, Vec x, Vec y)
 {
   Mat_BlockMat *bmat = (Mat_BlockMat *)A->data;
   PetscScalar  *xx, *yy;
@@ -506,25 +505,25 @@ PetscErrorCode MatMult_BlockMat_Symmetric(Mat A, Vec x, Vec y)
   }
   PetscCall(VecRestoreArray(x, &xx));
   PetscCall(VecRestoreArray(y, &yy));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatMultAdd_BlockMat(Mat A, Vec x, Vec y, Vec z)
 {
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatMultTranspose_BlockMat(Mat A, Vec x, Vec y)
 {
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatMultTransposeAdd_BlockMat(Mat A, Vec x, Vec y, Vec z)
 {
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -546,7 +545,7 @@ static PetscErrorCode MatMarkDiagonal_BlockMat(Mat A)
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatCreateSubMatrix_BlockMat(Mat A, IS isrow, IS iscol, MatReuse scall, Mat *B)
@@ -605,7 +604,7 @@ static PetscErrorCode MatCreateSubMatrix_BlockMat(Mat A, IS isrow, IS iscol, Mat
   PetscCall(MatAssemblyBegin(C, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(C, MAT_FINAL_ASSEMBLY));
   *B = C;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatAssemblyEnd_BlockMat(Mat A, MatAssemblyType mode)
@@ -616,7 +615,7 @@ static PetscErrorCode MatAssemblyEnd_BlockMat(Mat A, MatAssemblyType mode)
   Mat          *aa = a->a, *ap;
 
   PetscFunctionBegin;
-  if (mode == MAT_FLUSH_ASSEMBLY) PetscFunctionReturn(0);
+  if (mode == MAT_FLUSH_ASSEMBLY) PetscFunctionReturn(PETSC_SUCCESS);
 
   if (m) rmax = ailen[0]; /* determine row with most nonzeros */
   for (i = 1; i < m; i++) {
@@ -655,7 +654,7 @@ static PetscErrorCode MatAssemblyEnd_BlockMat(Mat A, MatAssemblyType mode)
   A->info.nz_unneeded = (double)fshift;
   a->rmax             = rmax;
   PetscCall(MatMarkDiagonal_BlockMat(A));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSetOption_BlockMat(Mat A, MatOption opt, PetscBool flg)
@@ -667,7 +666,7 @@ static PetscErrorCode MatSetOption_BlockMat(Mat A, MatOption opt, PetscBool flg)
   } else {
     PetscCall(PetscInfo(A, "Unused matrix option %s\n", MatOptions[opt]));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static struct _MatOps MatOps_Values = {MatSetValues_BlockMat,
@@ -820,40 +819,40 @@ static struct _MatOps MatOps_Values = {MatSetValues_BlockMat,
                                        NULL,
                                        NULL,
                                        NULL,
-                                       /*150*/ NULL};
+                                       /*150*/ NULL,
+                                       NULL};
 
 /*@C
-   MatBlockMatSetPreallocation - For good matrix assembly performance
-   the user should preallocate the matrix storage by setting the parameter nz
-   (or the array nnz).  By setting these parameters accurately, performance
-   during matrix assembly can be increased by more than a factor of 50.
+  MatBlockMatSetPreallocation - For good matrix assembly performance
+  the user should preallocate the matrix storage by setting the parameter nz
+  (or the array nnz).  By setting these parameters accurately, performance
+  during matrix assembly can be increased by more than a factor of 50.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  B - The matrix
-.  bs - size of each block in matrix
-.  nz - number of nonzeros per block row (same for all rows)
--  nnz - array containing the number of nonzeros in the various block rows
-         (possibly different for each row) or NULL
+  Input Parameters:
++ B   - The matrix
+. bs  - size of each block in matrix
+. nz  - number of nonzeros per block row (same for all rows)
+- nnz - array containing the number of nonzeros in the various block rows
+         (possibly different for each row) or `NULL`
 
-   Notes:
-     If nnz is given then nz is ignored
+  Level: intermediate
 
-   Specify the preallocated storage with either nz or nnz (not both).
-   Set nz = `PETSC_DEFAULT` and nnz = NULL for PETSc to control dynamic memory
-   allocation.  For large problems you MUST preallocate memory or you
-   will get TERRIBLE performance, see the users' manual chapter on matrices.
+  Notes:
+  If `nnz` is given then `nz` is ignored
 
-   Level: intermediate
+  Specify the preallocated storage with either `nz` or `nnz` (not both).
+  Set `nz` = `PETSC_DEFAULT` and `nnz` = `NULL` for PETSc to control dynamic memory
+  allocation.
 
-.seealso: `MatCreate()`, `MatCreateBlockMat()`, `MatSetValues()`
+.seealso: [](ch_matrices), `Mat`, `MatCreate()`, `MatCreateBlockMat()`, `MatSetValues()`
 @*/
 PetscErrorCode MatBlockMatSetPreallocation(Mat B, PetscInt bs, PetscInt nz, const PetscInt nnz[])
 {
   PetscFunctionBegin;
   PetscTryMethod(B, "MatBlockMatSetPreallocation_C", (Mat, PetscInt, PetscInt, const PetscInt[]), (B, bs, nz, nnz));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatBlockMatSetPreallocation_BlockMat(Mat A, PetscInt bs, PetscInt nz, PetscInt *nnz)
@@ -882,7 +881,7 @@ static PetscErrorCode MatBlockMatSetPreallocation_BlockMat(Mat A, PetscInt bs, P
   PetscCall(VecCreateSeqWithArray(PETSC_COMM_SELF, 1, bs, NULL, &bmat->middle));
   PetscCall(VecCreateSeq(PETSC_COMM_SELF, bs, &bmat->left));
 
-  if (!bmat->imax) { PetscCall(PetscMalloc2(A->rmap->n, &bmat->imax, A->rmap->n, &bmat->ilen)); }
+  if (!bmat->imax) PetscCall(PetscMalloc2(A->rmap->n, &bmat->imax, A->rmap->n, &bmat->ilen));
   if (PetscLikely(nnz)) {
     nz = 0;
     for (i = 0; i < A->rmap->n / A->rmap->bs; i++) {
@@ -907,7 +906,7 @@ static PetscErrorCode MatBlockMatSetPreallocation_BlockMat(Mat A, PetscInt bs, P
   bmat->maxnz         = nz;
   A->info.nz_unneeded = (double)bmat->maxnz;
   PetscCall(MatSetOption(A, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -916,7 +915,7 @@ static PetscErrorCode MatBlockMatSetPreallocation_BlockMat(Mat A, PetscInt bs, P
 
   Level: advanced
 
-.seealso: `MatCreateBlockMat()`
+.seealso: [](ch_matrices), `Mat`, `MatCreateBlockMat()`
 M*/
 
 PETSC_EXTERN PetscErrorCode MatCreate_BlockMat(Mat A)
@@ -925,45 +924,44 @@ PETSC_EXTERN PetscErrorCode MatCreate_BlockMat(Mat A)
 
   PetscFunctionBegin;
   PetscCall(PetscNew(&b));
-  A->data = (void *)b;
-  PetscCall(PetscMemcpy(A->ops, &MatOps_Values, sizeof(struct _MatOps)));
-
+  A->data         = (void *)b;
+  A->ops[0]       = MatOps_Values;
   A->assembled    = PETSC_TRUE;
   A->preallocated = PETSC_FALSE;
   PetscCall(PetscObjectChangeTypeName((PetscObject)A, MATBLOCKMAT));
 
   PetscCall(PetscObjectComposeFunction((PetscObject)A, "MatBlockMatSetPreallocation_C", MatBlockMatSetPreallocation_BlockMat));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   MatCreateBlockMat - Creates a new matrix in which each block contains a uniform-size sequential `Mat` object
+  MatCreateBlockMat - Creates a new matrix in which each block contains a uniform-size sequential `Mat` object
 
   Collective
 
-   Input Parameters:
-+  comm - MPI communicator
-.  m - number of rows
-.  n  - number of columns
-.  bs - size of each submatrix
-.  nz  - expected maximum number of nonzero blocks in row (use `PETSC_DEFAULT` if not known)
--  nnz - expected number of nonzers per block row if known (use NULL otherwise)
+  Input Parameters:
++ comm - MPI communicator
+. m    - number of rows
+. n    - number of columns
+. bs   - size of each submatrix
+. nz   - expected maximum number of nonzero blocks in row (use `PETSC_DEFAULT` if not known)
+- nnz  - expected number of nonzers per block row if known (use `NULL` otherwise)
 
-   Output Parameter:
-.  A - the matrix
+  Output Parameter:
+. A - the matrix
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-    Matrices of this type are nominally-sparse matrices in which each "entry" is a `Mat` object.  Each `Mat` must
-   have the same size and be sequential.  The local and global sizes must be compatible with this decomposition.
+  Notes:
+  Matrices of this type are nominally-sparse matrices in which each "entry" is a `Mat` object.  Each `Mat` must
+  have the same size and be sequential.  The local and global sizes must be compatible with this decomposition.
 
-   For matrices containing parallel submatrices and variable block sizes, see `MATNEST`.
+  For matrices containing parallel submatrices and variable block sizes, see `MATNEST`.
 
-   Developer Note:
-   I don't like the name, it is not `MATNESTMAT`
+  Developer Notes:
+  I don't like the name, it is not `MATNESTMAT`
 
-.seealso: `MATBLOCKMAT`, `MatCreateNest()`
+.seealso: [](ch_matrices), `Mat`, `MATBLOCKMAT`, `MatCreateNest()`
 @*/
 PetscErrorCode MatCreateBlockMat(MPI_Comm comm, PetscInt m, PetscInt n, PetscInt bs, PetscInt nz, PetscInt *nnz, Mat *A)
 {
@@ -972,5 +970,5 @@ PetscErrorCode MatCreateBlockMat(MPI_Comm comm, PetscInt m, PetscInt n, PetscInt
   PetscCall(MatSetSizes(*A, m, n, PETSC_DETERMINE, PETSC_DETERMINE));
   PetscCall(MatSetType(*A, MATBLOCKMAT));
   PetscCall(MatBlockMatSetPreallocation(*A, bs, nz, nnz));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

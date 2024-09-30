@@ -124,7 +124,7 @@ int main(int argc, char **argv)
     PetscCall(MatConvert(A, MATSEQAIJ, convert ? MAT_INITIAL_MATRIX : MAT_INPLACE_MATRIX, &E));
     PetscCall(MatSetOption(E, MAT_SYMMETRIC, PETSC_TRUE));
     for (PetscInt i = 0; i < ntype; ++i) {
-      char        *tmp;
+      char        *tmp = NULL;
       PetscInt    *ia_ptr, *ja_ptr, k;
       PetscScalar *a_ptr;
 #if defined(PETSC_HAVE_MKL_SPARSE_OPTIMIZE)
@@ -201,12 +201,10 @@ int main(int argc, char **argv)
       PetscCall(MatViewFromOptions(A, NULL, "-A_view"));
 
       for (k = 0; k < nN; ++k) {
-        MatType  Atype, Ctype;
-        PetscInt AM, AN, CM, CN, t;
-#if defined(PETSC_USE_LOG)
+        MatType       Atype, Ctype;
+        PetscInt      AM, AN, CM, CN, t;
         PetscLogStage stage, tstage;
         char          stage_s[256];
-#endif
 
         PetscCall(MatCreateDense(PETSC_COMM_WORLD, bs[j] * m, PETSC_DECIDE, bs[j] * M, N[k], NULL, &C));
         PetscCall(MatCreateDense(PETSC_COMM_WORLD, bs[j] * m, PETSC_DECIDE, bs[j] * M, N[k], NULL, &D));
@@ -226,7 +224,6 @@ int main(int argc, char **argv)
         PetscCall(MatGetSize(A, &AM, &AN));
         PetscCall(MatGetSize(C, &CM, &CN));
 
-#if defined(PETSC_USE_LOG)
         if (!maij || N[k] > 1) {
           PetscCall(PetscSNPrintf(stage_s, sizeof(stage_s), "type_%s-bs_%" PetscInt_FMT "-N_%02d", type[i], bs[j], (int)N[k]));
           PetscCall(PetscLogStageRegister(stage_s, &stage));
@@ -235,7 +232,6 @@ int main(int argc, char **argv)
           PetscCall(PetscSNPrintf(stage_s, sizeof(stage_s), "trans_type_%s-bs_%" PetscInt_FMT "-N_%02d", type[i], bs[j], (int)N[k]));
           PetscCall(PetscLogStageRegister(stage_s, &tstage));
         }
-#endif
         /* A*B */
         if (N[k] > 1) {
           if (!maij) {

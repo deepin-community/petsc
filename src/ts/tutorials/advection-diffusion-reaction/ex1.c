@@ -1,4 +1,3 @@
-
 static char help[] = "Nonlinear Reaction Problem from Chemistry.\n";
 
 /*F
@@ -79,7 +78,7 @@ PetscErrorCode IFunctionView(AppCtx *ctx, PetscViewer v)
 {
   PetscFunctionBegin;
   PetscCall(PetscViewerBinaryWrite(v, &ctx->k, 1, PETSC_SCALAR));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode IFunctionLoad(AppCtx **ctx, PetscViewer v)
@@ -87,7 +86,7 @@ PetscErrorCode IFunctionLoad(AppCtx **ctx, PetscViewer v)
   PetscFunctionBegin;
   PetscCall(PetscNew(ctx));
   PetscCall(PetscViewerBinaryRead(v, &(*ctx)->k, 1, NULL, PETSC_SCALAR));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -109,7 +108,7 @@ PetscErrorCode IFunction(TS ts, PetscReal t, Vec U, Vec Udot, Vec F, AppCtx *ctx
   PetscCall(VecRestoreArrayRead(U, &u));
   PetscCall(VecRestoreArrayRead(Udot, &udot));
   PetscCall(VecRestoreArrayWrite(F, &f));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -143,7 +142,7 @@ PetscErrorCode IJacobian(TS ts, PetscReal t, Vec U, Vec Udot, PetscReal a, Mat A
     PetscCall(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -165,7 +164,7 @@ static PetscErrorCode Solution(TS ts, PetscReal t, Vec U, AppCtx *ctx)
   u[2] = uinit[1] + uinit[2] - u[1];
   PetscCall(VecRestoreArrayWrite(U, &u));
   PetscCall(VecRestoreArrayRead(ctx->initialsolution, &uinit));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

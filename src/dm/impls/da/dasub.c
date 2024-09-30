@@ -5,30 +5,30 @@
 #include <petsc/private/dmdaimpl.h> /*I   "petscdmda.h"   I*/
 
 /*@
-   DMDAGetLogicalCoordinate - Returns a the i,j,k logical coordinate for the closest mesh point to a x,y,z point in the coordinates of the `DMDA`
+  DMDAGetLogicalCoordinate - Returns a the i,j,k logical coordinate for the closest mesh point to a `x`, `y`, `z` point in the coordinates of the `DMDA`
 
-   Collective on da
+  Collective
 
-   Input Parameters:
-+  da - the distributed array
-.  x  - the first physical coordinate
-.  y  - the second physical coordinate
--  z  - the third physical coordinate
+  Input Parameters:
++ da - the distributed array
+. x  - the first physical coordinate
+. y  - the second physical coordinate
+- z  - the third physical coordinate
 
-   Output Parameters:
-+  II - the first logical coordinate (-1 on processes that do not contain that point)
-.  JJ - the second logical coordinate (-1 on processes that do not contain that point)
-.  KK - the third logical coordinate (-1 on processes that do not contain that point)
-.  X  - (optional) the first coordinate of the located grid point
-.  Y  - (optional) the second coordinate of the located grid point
--  Z  - (optional) the third coordinate of the located grid point
+  Output Parameters:
++ II - the first logical coordinate (-1 on processes that do not contain that point)
+. JJ - the second logical coordinate (-1 on processes that do not contain that point)
+. KK - the third logical coordinate (-1 on processes that do not contain that point)
+. X  - (optional) the first coordinate of the located grid point
+. Y  - (optional) the second coordinate of the located grid point
+- Z  - (optional) the third coordinate of the located grid point
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   All processors that share the `DMDA` must call this with the same coordinate value
+  Note:
+  All processors that share the `DMDA` must call this with the same coordinate value
 
-.seealso: `DM`, `DMDA`
+.seealso: [](sec_struct), `DM`, `DMDA`
 @*/
 PetscErrorCode DMDAGetLogicalCoordinate(DM da, PetscScalar x, PetscScalar y, PetscScalar z, PetscInt *II, PetscInt *JJ, PetscInt *KK, PetscScalar *X, PetscScalar *Y, PetscScalar *Z)
 {
@@ -76,29 +76,29 @@ PetscErrorCode DMDAGetLogicalCoordinate(DM da, PetscScalar x, PetscScalar y, Pet
   PetscCallMPI(MPI_Bcast(X, 1, MPIU_SCALAR, root, PetscObjectComm((PetscObject)da)));
   PetscCallMPI(MPI_Bcast(Y, 1, MPIU_SCALAR, root, PetscObjectComm((PetscObject)da)));
   PetscCall(DMDAVecRestoreArrayRead(dacoors, coors, &c));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   DMDAGetRay - Returns a vector on process zero that contains a row or column of the values in a `DMDA` vector
+  DMDAGetRay - Returns a vector on process zero that contains a row or column of the values in a `DMDA` vector
 
-   Collective on da
+  Collective
 
-   Input Parameters:
-+  da - the distributed array
-.  dir - Cartesian direction, either `DM_X`, `DM_Y`, or `DM_Z`
--  gp - global grid point number in this direction
+  Input Parameters:
++ da  - the distributed array
+. dir - Cartesian direction, either `DM_X`, `DM_Y`, or `DM_Z`
+- gp  - global grid point number in this direction
 
-   Output Parameters:
-+  newvec - the new vector that can hold the values (size zero on all processes except process 0)
--  scatter - the `VecScatter` that will map from the original vector to the slice
+  Output Parameters:
++ newvec  - the new vector that can hold the values (size zero on all processes except MPI rank 0)
+- scatter - the `VecScatter` that will map from the original vector to the ray
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   All processors that share the `DMDA` must call this with the same gp value
+  Note:
+  All processors that share the `DMDA` must call this with the same `gp` value
 
-.seealso: `DM`, `DMDA`, `DMDirection`, `Vec`, `VecScatter`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDirection`, `Vec`, `VecScatter`
 @*/
 PetscErrorCode DMDAGetRay(DM da, DMDirection dir, PetscInt gp, Vec *newvec, VecScatter *scatter)
 {
@@ -165,39 +165,36 @@ PetscErrorCode DMDAGetRay(DM da, DMDirection dir, PetscInt gp, Vec *newvec, VecS
   PetscCall(VecScatterCreate(vec, is, *newvec, NULL, scatter));
   PetscCall(DMRestoreGlobalVector(da, &vec));
   PetscCall(ISDestroy(&is));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDAGetProcessorSubset - Returns a communicator consisting only of the
-   processors in a `DMDA` that own a particular global x, y, or z grid point
-   (corresponding to a logical plane in a 3D grid or a line in a 2D grid).
+  DMDAGetProcessorSubset - Returns a communicator consisting only of the
+  processors in a `DMDA` that own a particular global x, y, or z grid point
+  (corresponding to a logical plane in a 3D grid or a line in a 2D grid).
 
-   Collective on da
+  Collective; No Fortran Support
 
-   Input Parameters:
-+  da - the distributed array
-.  dir - Cartesian direction, either `DM_X`, `DM_Y`, or `DM_Z`
--  gp - global grid point number in this direction
+  Input Parameters:
++ da  - the distributed array
+. dir - Cartesian direction, either `DM_X`, `DM_Y`, or `DM_Z`
+- gp  - global grid point number in this direction
 
-   Output Parameter:
-.  comm - new communicator
+  Output Parameter:
+. comm - new communicator
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   All processors that share the `DMDA` must call this with the same gp value
+  Notes:
+  All processors that share the `DMDA` must call this with the same `gp` value
 
-   After use, comm should be freed with `MPI_Comm_free()`
+  After use, `comm` should be freed with `MPI_Comm_free()`
 
-   This routine is particularly useful to compute boundary conditions
-   or other application-specific calculations that require manipulating
-   sets of data throughout a logical plane of grid points.
+  This routine is particularly useful to compute boundary conditions
+  or other application-specific calculations that require manipulating
+  sets of data throughout a logical plane of grid points.
 
-   Fortran Note:
-   Not supported from Fortran
-
-.seealso: `DM`, `DMDA`, `DMDirection`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDirection`, `DM_X`, `DM_Y`, `DM_Z`, `DMDAGetProcessorSubsets()`
 @*/
 PetscErrorCode DMDAGetProcessorSubset(DM da, DMDirection dir, PetscInt gp, MPI_Comm *comm)
 {
@@ -227,12 +224,12 @@ PetscErrorCode DMDAGetProcessorSubset(DM da, DMDirection dir, PetscInt gp, MPI_C
   PetscCall(PetscMalloc2(size, &owners, size, &ranks));
   PetscCallMPI(MPI_Allgather(&flag, 1, MPIU_INT, owners, 1, MPIU_INT, PetscObjectComm((PetscObject)da)));
   ict = 0;
-  PetscCall(PetscInfo(da, "DMDAGetProcessorSubset: dim=%" PetscInt_FMT ", direction=%d, procs: ", da->dim, (int)dir));
+  PetscCall(PetscInfo(da, "DMDAGetProcessorSubset: dim=%" PetscInt_FMT ", direction=%d, procs: ", da->dim, (int)dir)); /* checkbadSource \n */
   for (i = 0; i < size; i++) {
     if (owners[i]) {
       ranks[ict] = i;
       ict++;
-      PetscCall(PetscInfo(da, "%" PetscInt_FMT " ", i));
+      PetscCall(PetscInfo(da, "%" PetscInt_FMT " ", i)); /* checkbadSource \n */
     }
   }
   PetscCall(PetscInfo(da, "\n"));
@@ -242,34 +239,31 @@ PetscErrorCode DMDAGetProcessorSubset(DM da, DMDirection dir, PetscInt gp, MPI_C
   PetscCallMPI(MPI_Group_free(&subgroup));
   PetscCallMPI(MPI_Group_free(&group));
   PetscCall(PetscFree2(owners, ranks));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDAGetProcessorSubsets - Returns communicators consisting only of the
-   processors in a `DMDA` adjacent in a particular dimension,
-   corresponding to a logical plane in a 3D grid or a line in a 2D grid.
+  DMDAGetProcessorSubsets - Returns communicators consisting only of the
+  processors in a `DMDA` adjacent in a particular dimension,
+  corresponding to a logical plane in a 3D grid or a line in a 2D grid.
 
-   Collective on da
+  Collective; No Fortran Support
 
-   Input Parameters:
-+  da - the distributed array
--  dir - Cartesian direction, either `DM_X`, `DM_Y`, or `DM_Z`
+  Input Parameters:
++ da  - the distributed array
+- dir - Cartesian direction, either `DM_X`, `DM_Y`, or `DM_Z`
 
-   Output Parameter:
-.  subcomm - new communicator
+  Output Parameter:
+. subcomm - new communicator
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   This routine is useful for distributing one-dimensional data in a tensor product grid.
+  Notes:
+  This routine is useful for distributing one-dimensional data in a tensor product grid.
 
-   After use, comm should be freed with` MPI_Comm_free()`
+  After use, `comm` should be freed with `MPI_Comm_free()`
 
-   Fortran Note:
-   Not supported from Fortran
-
-.seealso: `DM`, `DMDA`, `DMDirection`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDirection`, `DMDAGetProcessorSubset()`, `DM_X`, `DM_Y`, `DM_Z`
 @*/
 PetscErrorCode DMDAGetProcessorSubsets(DM da, DMDirection dir, MPI_Comm *subcomm)
 {
@@ -297,11 +291,11 @@ PetscErrorCode DMDAGetProcessorSubsets(DM da, DMDirection dir, MPI_Comm *subcomm
 
   PetscCall(PetscMalloc2(size, &firstPoints, size, &subgroupRanks));
   PetscCallMPI(MPI_Allgather(&firstPoint, 1, MPIU_INT, firstPoints, 1, MPIU_INT, comm));
-  PetscCall(PetscInfo(da, "DMDAGetProcessorSubset: dim=%" PetscInt_FMT ", direction=%d, procs: ", da->dim, (int)dir));
+  PetscCall(PetscInfo(da, "DMDAGetProcessorSubset: dim=%" PetscInt_FMT ", direction=%d, procs: ", da->dim, (int)dir)); /* checkbadSource \n */
   for (p = 0; p < size; ++p) {
     if (firstPoints[p] == firstPoint) {
       subgroupRanks[subgroupSize++] = p;
-      PetscCall(PetscInfo(da, "%" PetscInt_FMT " ", p));
+      PetscCall(PetscInfo(da, "%" PetscInt_FMT " ", p)); /* checkbadSource \n */
     }
   }
   PetscCall(PetscInfo(da, "\n"));
@@ -311,5 +305,5 @@ PetscErrorCode DMDAGetProcessorSubsets(DM da, DMDirection dir, MPI_Comm *subcomm
   PetscCallMPI(MPI_Group_free(&subgroup));
   PetscCallMPI(MPI_Group_free(&group));
   PetscCall(PetscFree2(firstPoints, subgroupRanks));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

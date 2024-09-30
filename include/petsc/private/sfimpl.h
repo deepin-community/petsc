@@ -1,5 +1,4 @@
-#ifndef SFIMPL_H
-#define SFIMPL_H
+#pragma once
 
 #include <petscvec.h>
 #include <petscsf.h>
@@ -102,7 +101,7 @@ struct _p_PetscSF {
   PetscInt       leafstart[2];     /* ... leafstart[0] and leafstart[1] respectively */
   PetscSFPackOpt leafpackopt[2];   /* Optimization plans to (un)pack leaves connected to remote roots, based on index patterns in rmine[]. NULL for no optimization */
   PetscSFPackOpt leafpackopt_d[2]; /* Copy of leafpackopt_d[] on device if needed */
-  PetscBool      leafdups[2];      /* Indices in rmine[] for self(0)/remote(1) communication have dups respectively? TRUE implies theads working on them in parallel may have data race. */
+  PetscBool      leafdups[2];      /* Indices in rmine[] for self(0)/remote(1) communication have dups respectively? TRUE implies threads working on them in parallel may have data race. */
 
   PetscInt       nleafreqs;            /* Number of MPI requests for leaves */
   PetscInt      *rremote;              /* Concatenated array holding remote indices referenced for each remote rank */
@@ -143,6 +142,10 @@ struct _p_PetscSF {
   PetscInt    *rootsigdisp_d; /* Copy of rootsigdisp[] on device */
   PetscMPIInt *ranks_d;       /* Copy of the remote part of (root) ranks[] on device */
   PetscInt    *roffset_d;     /* Copy of the remote part of roffset[] on device */
+#endif
+#if defined(PETSC_HAVE_MPIX_STREAM)
+  MPIX_Stream mpi_stream;
+  MPI_Comm    stream_comm; /* gpu stream aware MPI communicator */
 #endif
 };
 
@@ -206,11 +209,9 @@ PETSC_EXTERN PetscErrorCode PetscSFFree_Kokkos(PetscMemType, void *);
 #if defined(PETSC_HAVE_CUDA) || defined(PETSC_HAVE_KOKKOS) || defined(PETSC_HAVE_HIP)
   #define PetscSFMalloc(sf, mtype, sz, ptr) ((*(sf)->ops->Malloc)(mtype, sz, ptr))
   /* Free memory and set ptr to NULL when succeeded */
-  #define PetscSFFree(sf, mtype, ptr) ((ptr) && ((*(sf)->ops->Free)(mtype, ptr) || ((ptr) = NULL, 0)))
+  #define PetscSFFree(sf, mtype, ptr) ((PetscErrorCode)((ptr) && ((*(sf)->ops->Free)(mtype, ptr) || ((ptr) = NULL, PETSC_SUCCESS))))
 #else
   /* If pure host code, do with less indirection */
   #define PetscSFMalloc(sf, mtype, sz, ptr) PetscMalloc(sz, ptr)
   #define PetscSFFree(sf, mtype, ptr)       PetscFree(ptr)
-#endif
-
 #endif

@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/vec/vec/impls/seq/ftn-kernels/fxtimesy.F90">Actual source code: fxtimesy.F90</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/vec/vec/impls/seq/ftn-kernels/fxtimesy.F90">Actual source code: fxtimesy.F90</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:47:14+00:00">
+<meta name="date" content="2024-03-29T14:12:49+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -14,9 +14,9 @@
 
 <a name="line4">  4: </a>      subroutine Fortranxtimesy(x,y,z,n)
 <a name="line5">  5: </a>      implicit none
-<a name="line6">  6: </a>      <a href="../../../../..-kernels/../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>  x(*),y(*),z(*)
-<a name="line7">  7: </a>      <a href="../../../../..-kernels/../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n
-<a name="line8">  8: </a>      <a href="../../../../..-kernels/../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i
+<a name="line6">  6: </a>      <a href="../../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>  x(*),y(*),z(*)
+<a name="line7">  7: </a>      <a href="../../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> n
+<a name="line8">  8: </a>      <a href="../../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> i
 <a name="line9">  9: </a>      PETSC_AssertAlignx(16,x(1))
 <a name="line10"> 10: </a>      PETSC_AssertAlignx(16,y(1))
 <a name="line11"> 11: </a>      PETSC_AssertAlignx(16,z(1))
@@ -25,7 +25,6 @@
 <a name="line14"> 14: </a>  10  <font color="#4169E1">continue</font>
 <a name="line15"> 15: </a>      <font color="#4169E1">return</font>
 <a name="line16"> 16: </a>      end
-
 </pre>
 </body>
 

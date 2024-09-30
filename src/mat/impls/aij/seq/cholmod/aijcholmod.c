@@ -1,4 +1,3 @@
-
 #include <../src/mat/impls/aij/seq/aij.h>
 #include <../src/mat/impls/sbaij/seq/cholmod/cholmodimpl.h>
 
@@ -47,14 +46,14 @@ static PetscErrorCode MatWrapCholmod_seqaij(Mat A, PetscBool values, cholmod_spa
   C->dtype  = CHOLMOD_DOUBLE;
   C->sorted = 1;
   C->packed = 1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatFactorGetSolverType_seqaij_cholmod(Mat A, MatSolverType *type)
 {
   PetscFunctionBegin;
   *type = MATSOLVERCHOLMOD;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Almost a copy of MatGetFactor_seqsbaij_cholmod, yuck */
@@ -66,7 +65,11 @@ PETSC_INTERN PetscErrorCode MatGetFactor_seqaij_cholmod(Mat A, MatFactorType fty
 
   PetscFunctionBegin;
 #if defined(PETSC_USE_COMPLEX)
-  PetscCheck(A->hermitian == PETSC_BOOL3_TRUE, PetscObjectComm((PetscObject)A), PETSC_ERR_SUP, "Only for Hermitian matrices");
+  if (A->hermitian != PETSC_BOOL3_TRUE) {
+    PetscCall(PetscInfo(A, "Only for Hermitian matrices.\n"));
+    *F = NULL;
+    PetscFunctionReturn(PETSC_SUCCESS);
+  }
 #endif
   /* Create the factorization matrix F */
   PetscCall(MatCreate(PetscObjectComm((PetscObject)A), &B));
@@ -95,5 +98,5 @@ PETSC_INTERN PetscErrorCode MatGetFactor_seqaij_cholmod(Mat A, MatFactorType fty
   PetscCall(PetscStrallocpy(MATORDERINGEXTERNAL, (char **)&B->preferredordering[MAT_FACTOR_CHOLESKY]));
   PetscCall(CholmodStart(B));
   *F = B;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

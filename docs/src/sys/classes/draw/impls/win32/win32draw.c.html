@@ -1,66 +1,66 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/classes/draw/impls/win32/win32draw.c">Actual source code: win32draw.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/sys/classes/draw/impls/win32/win32draw.c">Actual source code: win32draw.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:46:49+00:00">
+<meta name="date" content="2024-03-29T14:12:26+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
 <pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../../../include/petsc/private/drawimpl.h.html">&lt;petsc/private/drawimpl.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="win32draw.h.html">&lt;../src/sys/classes/draw/impls/win32/win32draw.h&gt;</A>
 
-<a name="line2">  2: </a>#include <A href="../../../../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
-<a name="line3">  3: </a>#include <A href="../../../../../../include/petsc/private/drawimpl.h.html">&lt;petsc/private/drawimpl.h&gt;</A>
-<a name="line4">  4: </a>#include <A href="win32draw.h.html">&lt;../src/sys/classes/draw/impls/win32/win32draw.h&gt;</A>
+<a name="line5">  5: </a><strong><font color="#228B22">#define IDC_FOUR       109</font></strong>
+<a name="line6">  6: </a><strong><font color="#228B22">#define IDI_FOUR       107</font></strong>
+<a name="line7">  7: </a><strong><font color="#228B22">#define IDM_EXIT       105</font></strong>
+<a name="line8">  8: </a><strong><font color="#228B22">#define IDR_POPUP      103</font></strong>
+<a name="line9">  9: </a><strong><font color="#228B22">#define MAX_LOADSTRING 100</font></strong>
 
-<a name="line6">  6: </a><strong><font color="#228B22">#define IDC_FOUR       109</font></strong>
-<a name="line7">  7: </a><strong><font color="#228B22">#define IDI_FOUR       107</font></strong>
-<a name="line8">  8: </a><strong><font color="#228B22">#define IDM_EXIT       105</font></strong>
-<a name="line9">  9: </a><strong><font color="#228B22">#define IDR_POPUP      103</font></strong>
-<a name="line10"> 10: </a><strong><font color="#228B22">#define MAX_LOADSTRING 100</font></strong>
+<a name="line11"> 11: </a><font color="#A020F0">#if !defined(SelectPen)</font>
+<a name="line12"> 12: </a><strong><font color="#228B22">  #define SelectPen(hdc, hpen) ((HPEN)SelectObject((hdc), (HGDIOBJ)(HPEN)(hpen)))</font></strong>
+<a name="line13"> 13: </a><font color="#A020F0">#endif</font>
+<a name="line14"> 14: </a><font color="#A020F0">#if !defined(SelectFont)</font>
+<a name="line15"> 15: </a><strong><font color="#228B22">  #define SelectFont(hdc, hfont) ((HFONT)SelectObject((hdc), (HGDIOBJ)(HFONT)(hfont)))</font></strong>
+<a name="line16"> 16: </a><font color="#A020F0">#endif</font>
+<a name="line17"> 17: </a><font color="#A020F0">#if !defined(SelectBrush)</font>
+<a name="line18"> 18: </a><strong><font color="#228B22">  #define SelectBrush(hdc, hbrush) ((HBRUSH)SelectObject((hdc), (HGDIOBJ)(HBRUSH)(hbrush)))</font></strong>
+<a name="line19"> 19: </a><font color="#A020F0">#endif</font>
+<a name="line20"> 20: </a><font color="#A020F0">#if !defined(GetStockBrush)</font>
+<a name="line21"> 21: </a><strong><font color="#228B22">  #define GetStockBrush(i) ((HBRUSH)GetStockObject(i))</font></strong>
+<a name="line22"> 22: </a><font color="#A020F0">#endif</font>
 
-<a name="line12"> 12: </a><font color="#A020F0">#if !defined(SelectPen)</font>
-<a name="line13"> 13: </a><strong><font color="#228B22">  #define SelectPen(hdc, hpen) ((HPEN)SelectObject((hdc), (HGDIOBJ)(HPEN)(hpen)))</font></strong>
-<a name="line14"> 14: </a><font color="#A020F0">#endif</font>
-<a name="line15"> 15: </a><font color="#A020F0">#if !defined(SelectFont)</font>
-<a name="line16"> 16: </a><strong><font color="#228B22">  #define SelectFont(hdc, hfont) ((HFONT)SelectObject((hdc), (HGDIOBJ)(HFONT)(hfont)))</font></strong>
-<a name="line17"> 17: </a><font color="#A020F0">#endif</font>
-<a name="line18"> 18: </a><font color="#A020F0">#if !defined(SelectBrush)</font>
-<a name="line19"> 19: </a><strong><font color="#228B22">  #define SelectBrush(hdc, hbrush) ((HBRUSH)SelectObject((hdc), (HGDIOBJ)(HBRUSH)(hbrush)))</font></strong>
-<a name="line20"> 20: </a><font color="#A020F0">#endif</font>
-<a name="line21"> 21: </a><font color="#A020F0">#if !defined(GetStockBrush)</font>
-<a name="line22"> 22: </a><strong><font color="#228B22">  #define GetStockBrush(i) ((HBRUSH)GetStockObject(i))</font></strong>
-<a name="line23"> 23: </a><font color="#A020F0">#endif</font>
+<a name="line24"> 24: </a><strong><font color="#228B22">#define XTRANS(draw, win, x) (int)(((win)-&gt;w) * ((draw)-&gt;port_xl + (((x - (draw)-&gt;coor_xl) * ((draw)-&gt;port_xr - (draw)-&gt;port_xl)) / ((draw)-&gt;coor_xr - (draw)-&gt;coor_xl))))</font></strong>
+<a name="line25"> 25: </a><strong><font color="#228B22">#define YTRANS(draw, win, y) (int)(((win)-&gt;h) * (1.0 - (draw)-&gt;port_yl - (((y - (draw)-&gt;coor_yl) * ((draw)-&gt;port_yr - (draw)-&gt;port_yl)) / ((draw)-&gt;coor_yr - (draw)-&gt;coor_yl))))</font></strong>
 
-<a name="line25"> 25: </a><strong><font color="#228B22">#define XTRANS(draw, win, x) (int)(((win)-&gt;w) * ((draw)-&gt;port_xl + (((x - (draw)-&gt;coor_xl) * ((draw)-&gt;port_xr - (draw)-&gt;port_xl)) / ((draw)-&gt;coor_xr - (draw)-&gt;coor_xl))))</font></strong>
-<a name="line26"> 26: </a><strong><font color="#228B22">#define YTRANS(draw, win, y) (int)(((win)-&gt;h) * (1.0 - (draw)-&gt;port_yl - (((y - (draw)-&gt;coor_yl) * ((draw)-&gt;port_yr - (draw)-&gt;port_yl)) / ((draw)-&gt;coor_yr - (draw)-&gt;coor_yl))))</font></strong>
+<a name="line27"> 27: </a>HINSTANCE  hInst;
+<a name="line28"> 28: </a>HANDLE     g_hWindowListMutex = NULL;
+<a name="line29"> 29: </a>WindowNode WindowListHead     = NULL;
 
-<a name="line28"> 28: </a>HINSTANCE  hInst;
-<a name="line29"> 29: </a>HANDLE     g_hWindowListMutex = NULL;
-<a name="line30"> 30: </a>WindowNode WindowListHead     = NULL;
+<a name="line31"> 31: </a><font color="#B22222">/* Hard coded color hue until hue.c works with this */</font>
+<a name="line32"> 32: </a>unsigned char RedMap[]   = {255, 0, 255, 0, 0, 0, 255, 127, 34, 255, 238, 165, 255, 255, 190, 255, 255, 238, 0, 255, 105, 154, 135, 0, 0, 244, 152, 176, 220, 216, 50, 255};
+<a name="line33"> 33: </a>unsigned char GreenMap[] = {255, 0, 0, 255, 255, 0, 0, 255, 139, 165, 130, 42, 182, 127, 190, 255, 215, 162, 197, 246, 105, 205, 206, 100, 0, 164, 245, 224, 17, 191, 205, 240};
+<a name="line34"> 34: </a>unsigned char BlueMap[]  = {255, 0, 0, 0, 255, 255, 225, 212, 34, 0, 238, 42, 193, 80, 190, 0, 0, 173, 205, 143, 105, 50, 235, 0, 128, 96, 255, 230, 120, 216, 50, 245};
 
-<a name="line32"> 32: </a><font color="#B22222">/* Hard coded color hue until hue.c works with this */</font>
-<a name="line33"> 33: </a>unsigned char RedMap[]   = {255, 0, 255, 0, 0, 0, 255, 127, 34, 255, 238, 165, 255, 255, 190, 255, 255, 238, 0, 255, 105, 154, 135, 0, 0, 244, 152, 176, 220, 216, 50, 255};
-<a name="line34"> 34: </a>unsigned char GreenMap[] = {255, 0, 0, 255, 255, 0, 0, 255, 139, 165, 130, 42, 182, 127, 190, 255, 215, 162, 197, 246, 105, 205, 206, 100, 0, 164, 245, 224, 17, 191, 205, 240};
-<a name="line35"> 35: </a>unsigned char BlueMap[]  = {255, 0, 0, 0, 255, 255, 225, 212, 34, 0, 238, 42, 193, 80, 190, 0, 0, 173, 205, 143, 105, 50, 235, 0, 128, 96, 255, 230, 120, 216, 50, 245};
+<a name="line36"> 36: </a><font color="#B22222">/* Forward declarations of functions included in this code module: */</font>
+<a name="line37"> 37: </a><strong><font color="#4169E1">LRESULT CALLBACK      PetscWndProc(HWND, UINT, WPARAM, LPARAM)</font></strong>;
+<a name="line38"> 38: </a><strong><font color="#4169E1">static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TranslateColor_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a>, int)</font></strong>;
+<a name="line39"> 39: </a><strong><font color="#4169E1">static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> AverageColorRectangle_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a>, int, int, int, int)</font></strong>;
+<a name="line40"> 40: </a><strong><font color="#4169E1">static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> AverageColorTriangle_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a>, int, int, int)</font></strong>;
+<a name="line41"> 41: </a><strong><font color="#4169E1">static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> deletemouselist_Win32(WindowNode)</font></strong>;
+<a name="line42"> 42: </a><strong><font color="#4169E1">static void           OnPaint_Win32(HWND)</font></strong>;
+<a name="line43"> 43: </a><strong><font color="#4169E1">static void           OnDestroy_Win32(HWND)</font></strong>;
+<a name="line44"> 44: </a><strong><font color="#4169E1">static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MouseRecord_Win32(HWND, <a href="../../../../../../manualpages/Sys/PetscDrawButton.html">PetscDrawButton</a>)</font></strong>;
+<a name="line45"> 45: </a><strong><font color="#4169E1">static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawGetPopup_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a>, <a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> *)</font></strong>;
 
-<a name="line37"> 37: </a><font color="#B22222">/* Forward declarations of functions included in this code module: */</font>
-<a name="line38"> 38: </a><strong><font color="#4169E1">LRESULT CALLBACK      PetscWndProc(HWND, UINT, WPARAM, LPARAM)</font></strong>;
-<a name="line39"> 39: </a><strong><font color="#4169E1">static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TranslateColor_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>, int)</font></strong>;
-<a name="line40"> 40: </a><strong><font color="#4169E1">static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> AverageColorRectangle_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>, int, int, int, int)</font></strong>;
-<a name="line41"> 41: </a><strong><font color="#4169E1">static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> AverageColorTriangle_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>, int, int, int)</font></strong>;
-<a name="line42"> 42: </a><strong><font color="#4169E1">static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> deletemouselist_Win32(WindowNode)</font></strong>;
-<a name="line43"> 43: </a><strong><font color="#4169E1">static void           OnPaint_Win32(HWND)</font></strong>;
-<a name="line44"> 44: </a><strong><font color="#4169E1">static void           OnDestroy_Win32(HWND)</font></strong>;
-<a name="line45"> 45: </a><strong><font color="#4169E1">static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MouseRecord_Win32(HWND, <a href="../../../../..32/../docs/manualpages/Sys/PetscDrawButton.html">PetscDrawButton</a>)</font></strong>;
-<a name="line46"> 46: </a><strong><font color="#4169E1">static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawGetPopup_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a>, <a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> *)</font></strong>;
+<a name="line47"> 47: </a><strong><font color="#4169E1"><a name="PetscDrawSetDoubleBuffer_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawSetDoubleBuffer_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
+<a name="line48"> 48: </a>{
+<a name="line49"> 49: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line50"> 50: </a>  HDC              hdc     = GetDC(windraw-&gt;hWnd);
 
-<a name="line48"> 48: </a><strong><font color="#4169E1"><a name="PetscDrawSetDoubleBuffer_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawSetDoubleBuffer_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
-<a name="line49"> 49: </a>{
-<a name="line50"> 50: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line51"> 51: </a>  HDC              hdc     = GetDC(windraw-&gt;hWnd);
-
+<a name="line52"> 52: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
 <a name="line53"> 53: </a>  windraw-&gt;node-&gt;DoubleBuffer    = CreateCompatibleDC(hdc);
 <a name="line54"> 54: </a>  windraw-&gt;node-&gt;DoubleBufferBit = CreateCompatibleBitmap(hdc, windraw-&gt;w, windraw-&gt;h);
 <a name="line55"> 55: </a>  windraw-&gt;node-&gt;dbstore         = SelectObject(windraw-&gt;node-&gt;DoubleBuffer, windraw-&gt;node-&gt;DoubleBufferBit);
@@ -69,747 +69,723 @@
 <a name="line58"> 58: </a>  <font color="#B22222">/* Copy current buffer into second buffer and set window data as double buffered */</font>
 <a name="line59"> 59: </a>  BitBlt(windraw-&gt;node-&gt;DoubleBuffer, 0, 0, windraw-&gt;w, windraw-&gt;h, windraw-&gt;node-&gt;Buffer, 0, 0, SRCCOPY);
 
-<a name="line61"> 61: </a>  windraw-&gt;node-&gt;DoubleBuffered = <a href="../../../../..32/../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line61"> 61: </a>  windraw-&gt;node-&gt;DoubleBuffered = <a href="../../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
 <a name="line62"> 62: </a>  ReleaseDC(windraw-&gt;hWnd, hdc);
-<a name="line63"> 63: </a>  <font color="#4169E1">return</font> 0;
+<a name="line63"> 63: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line64"> 64: </a>}
 
-<a name="line66"> 66: </a><strong><font color="#4169E1"><a name="PetscDrawFlush_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawFlush_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
+<a name="line66"> 66: </a><strong><font color="#4169E1"><a name="PetscDrawFlush_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawFlush_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
 <a name="line67"> 67: </a>{
 <a name="line68"> 68: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
 <a name="line69"> 69: </a>  HDC              hdc     = GetDC(windraw-&gt;hWnd);
 
-<a name="line71"> 71: </a>  <font color="#B22222">/* flush double buffer into primary buffer */</font>
-<a name="line72"> 72: </a>  BitBlt(windraw-&gt;node-&gt;Buffer, 0, 0, windraw-&gt;w, windraw-&gt;h, windraw-&gt;node-&gt;DoubleBuffer, 0, 0, SRCCOPY);
-<a name="line73"> 73: </a>  <font color="#B22222">/* flush double buffer into window */</font>
-<a name="line74"> 74: </a>  BitBlt(hdc, 0, 0, windraw-&gt;w, windraw-&gt;h, windraw-&gt;node-&gt;DoubleBuffer, 0, 0, SRCCOPY);
-<a name="line75"> 75: </a>  ReleaseDC(windraw-&gt;hWnd, hdc);
-<a name="line76"> 76: </a>  <font color="#4169E1">return</font> 0;
-<a name="line77"> 77: </a>}
-
-<a name="line79"> 79: </a><strong><font color="#4169E1"><a name="deletemouselist_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> deletemouselist_Win32(WindowNode deletelist)</font></strong>
-<a name="line80"> 80: </a>{
-<a name="line81"> 81: </a>  <font color="#B22222">/* Called upon window close. Frees memory of linked list of stored mouse commands */</font>
-<a name="line82"> 82: </a>  MouseNode node;
-
-<a name="line84"> 84: </a>  <font color="#4169E1">while</font> (deletelist-&gt;MouseListHead) {
-<a name="line85"> 85: </a>    node = deletelist-&gt;MouseListHead;
-<a name="line86"> 86: </a>    <font color="#4169E1">if</font> (deletelist-&gt;MouseListHead-&gt;mnext) deletelist-&gt;MouseListHead = deletelist-&gt;MouseListHead-&gt;mnext;
-<a name="line87"> 87: </a>    <a href="../../../../..32/../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(node);
-<a name="line88"> 88: </a>  }
-<a name="line89"> 89: </a>  deletelist-&gt;MouseListHead = deletelist-&gt;MouseListTail = NULL;
-<a name="line90"> 90: </a>  <font color="#4169E1">if</font> (deletelist-&gt;wprev) deletelist-&gt;wprev-&gt;wnext = deletelist-&gt;wnext;
-<a name="line91"> 91: </a>  <font color="#4169E1">if</font> (deletelist-&gt;wnext) deletelist-&gt;wnext-&gt;wprev = deletelist-&gt;wprev;
-<a name="line92"> 92: </a>  <a href="../../../../..32/../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(deletelist);
-<a name="line93"> 93: </a>  <font color="#4169E1">return</font> 0;
-<a name="line94"> 94: </a>}
-
-<a name="line96"> 96: </a><strong><font color="#4169E1"><a name="PetscDrawGetMouseButton_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawGetMouseButton_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../..32/../docs/manualpages/Sys/PetscDrawButton.html">PetscDrawButton</a> *button, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *x_user, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *y_user, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *x_phys, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *y_phys)</font></strong>
-<a name="line97"> 97: </a>{
-<a name="line98"> 98: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line99"> 99: </a>  WindowNode       current;
-<a name="line100">100: </a>  MouseNode        node = 0;
-
-<a name="line102">102: </a>  <font color="#B22222">/* Make sure no other code is using the linked list at this moment */</font>
-<a name="line103">103: </a>  WaitForSingleObject(g_hWindowListMutex, INFINITE);
-<a name="line104">104: </a>  <font color="#B22222">/* Look for the node that matches the window you are using */</font>
-<a name="line105">105: </a>  current = WindowListHead;
-<a name="line106">106: </a>  <font color="#4169E1">while</font> (current) {
-<a name="line107">107: </a>    <font color="#4169E1">if</font> (current-&gt;hWnd == windraw-&gt;hWnd) {
-<a name="line108">108: </a>      current-&gt;IsGetMouseOn = TRUE;
-<a name="line109">109: </a>      <font color="#4169E1">break</font>;
-<a name="line110">110: </a>    } <font color="#4169E1">else</font> current = current-&gt;wnext;
-<a name="line111">111: </a>  }
-<a name="line112">112: </a>  <font color="#B22222">/* If no actions have occurred, wait for one */</font>
-<a name="line113">113: </a>  node = current-&gt;MouseListHead;
-<a name="line114">114: </a>  <font color="#4169E1">if</font> (!node) {
-<a name="line115">115: </a>    ReleaseMutex(g_hWindowListMutex);
-<a name="line116">116: </a>    WaitForSingleObject(current-&gt;event, INFINITE);
-<a name="line117">117: </a>    WaitForSingleObject(g_hWindowListMutex, INFINITE);
-<a name="line118">118: </a>  }
-<a name="line119">119: </a>  <font color="#B22222">/* once we have the information, assign the pointers to it */</font>
-<a name="line120">120: </a>  *button = current-&gt;MouseListHead-&gt;Button;
-<a name="line121">121: </a>  *x_user = current-&gt;MouseListHead-&gt;user.x;
-<a name="line122">122: </a>  *y_user = current-&gt;MouseListHead-&gt;user.y;
-<a name="line123">123: </a>  <font color="#B22222">/* optional arguments */</font>
-<a name="line124">124: </a>  <font color="#4169E1">if</font> (x_phys) *x_phys = current-&gt;MouseListHead-&gt;phys.x;
-<a name="line125">125: </a>  <font color="#4169E1">if</font> (y_phys) *y_phys = current-&gt;MouseListHead-&gt;phys.y;
-<a name="line126">126: </a>  <font color="#B22222">/* remove set of information from sub linked-list, delete the node */</font>
-<a name="line127">127: </a>  current-&gt;MouseListHead = current-&gt;MouseListHead-&gt;mnext;
-<a name="line128">128: </a>  <font color="#4169E1">if</font> (!current-&gt;MouseListHead) {
-<a name="line129">129: </a>    ResetEvent(current-&gt;event);
-<a name="line130">130: </a>    current-&gt;MouseListTail = NULL;
-<a name="line131">131: </a>  }
-<a name="line132">132: </a>  <font color="#4169E1">if</font> (node) <a href="../../../../..32/../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(node);
-
-<a name="line134">134: </a>  <font color="#B22222">/* Release mutex so that  other code can use</font>
-<a name="line135">135: </a><font color="#B22222">     the linked list now that we are done with it */</font>
-<a name="line136">136: </a>  ReleaseMutex(g_hWindowListMutex);
-<a name="line137">137: </a>  <font color="#4169E1">return</font> 0;
-<a name="line138">138: </a>}
-
-<a name="line140">140: </a><strong><font color="#4169E1"><a name="PetscDrawPause_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawPause_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
-<a name="line141">141: </a>{
-<a name="line142">142: </a>  <a href="../../../../..32/../docs/manualpages/Sys/PetscSleep.html">PetscSleep</a>(draw-&gt;pause);
-<a name="line143">143: </a>  <font color="#4169E1">return</font> 0;
-<a name="line144">144: </a>}
-
-<a name="line146">146: </a><strong><font color="#4169E1"><a name="TranslateColor_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TranslateColor_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, int color)</font></strong>
-<a name="line147">147: </a>{
-<a name="line148">148: </a>  <font color="#B22222">/* Maps single color value into the RGB colors in our tables */</font>
-<a name="line149">149: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line150">150: </a>  windraw-&gt;currentcolor    = RGB(RedMap[color], GreenMap[color], BlueMap[color]);
-<a name="line151">151: </a>  <font color="#4169E1">return</font> 0;
-<a name="line152">152: </a>}
-
-<a name="line154">154: </a><strong><font color="#4169E1"><a name="AverageColorRectangle_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> AverageColorRectangle_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, int c1, int c2, int c3, int c4)</font></strong>
-<a name="line155">155: </a>{
-<a name="line156">156: </a>  <font color="#B22222">/* Averages colors given at points of rectangle and sets color from color table</font>
-<a name="line157">157: </a><font color="#B22222">    will be changed once the color gradient problem is worked out */</font>
-<a name="line158">158: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line159">159: </a>  windraw-&gt;currentcolor    = RGB(((RedMap[c1] + RedMap[c2] + RedMap[c3] + RedMap[c4]) / 4), ((GreenMap[c1] + GreenMap[c2] + GreenMap[c3] + GreenMap[c4]) / 4), ((BlueMap[c1] + BlueMap[c2] + BlueMap[c3] + BlueMap[c4]) / 4));
-<a name="line160">160: </a>  <font color="#4169E1">return</font> 0;
-<a name="line161">161: </a>}
-
-<a name="line163">163: </a><strong><font color="#4169E1"><a name="AverageColorTriangle_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> AverageColorTriangle_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, int c1, int c2, int c3)</font></strong>
-<a name="line164">164: </a>{
-<a name="line165">165: </a>  <font color="#B22222">/* Averages colors given at points of rectangle and sets color from color table</font>
-<a name="line166">166: </a><font color="#B22222">    will be changed once the color gradient problem is worked out */</font>
-<a name="line167">167: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line168">168: </a>  windraw-&gt;currentcolor    = RGB((RedMap[c1] + RedMap[c2] + RedMap[c3]) / 3, (GreenMap[c1] + GreenMap[c2] + GreenMap[c3]) / 3, (BlueMap[c1] + BlueMap[c2] + BlueMap[c3]) / 3);
-<a name="line169">169: </a>  <font color="#4169E1">return</font> 0;
-<a name="line170">170: </a>}
-
-<a name="line172">172: </a><strong><font color="#4169E1"><a name="PetscDrawRectangle_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawRectangle_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> xl, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> yl, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> xr, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> yr, int c1, int c2, int c3, int c4)</font></strong>
-<a name="line173">173: </a>{
-<a name="line174">174: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line175">175: </a>  HBRUSH           hbrush;
-<a name="line176">176: </a>  RECT             rect;
-<a name="line177">177: </a>  int              x1, yone, x2, y2;
-<a name="line178">178: </a>  HDC              hdc;
-
-<a name="line180">180: </a>  x1   = XTRANS(draw, windraw, xl);
-<a name="line181">181: </a>  x2   = XTRANS(draw, windraw, xr);
-<a name="line182">182: </a>  yone = YTRANS(draw, windraw, yl);
-<a name="line183">183: </a>  y2   = YTRANS(draw, windraw, yr);
-<a name="line184">184: </a>  SetRect(&amp;rect, x1, y2, x2, yone);
-<a name="line185">185: </a>  <font color="#4169E1">if</font> (c1 == c2 &amp;&amp; c2 == c3 &amp;&amp; c3 == c4) TranslateColor_Win32(draw, c1);
-<a name="line186">186: </a>  <font color="#4169E1">else</font> AverageColorRectangle_Win32(draw, c1, c2, c3, c4);
-<a name="line187">187: </a>  hbrush = CreateSolidBrush(windraw-&gt;currentcolor);
-
-<a name="line189">189: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) hdc = windraw-&gt;node-&gt;DoubleBuffer;
-<a name="line190">190: </a>  <font color="#4169E1">else</font> hdc = windraw-&gt;node-&gt;Buffer;
-
-<a name="line192">192: </a>  FillRect(hdc, &amp;rect, hbrush);
-<a name="line193">193: </a>  <font color="#B22222">/* Forces a WM_PAINT message and erases background */</font>
-<a name="line194">194: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
-<a name="line195">195: </a>  UpdateWindow(windraw-&gt;hWnd);
-<a name="line196">196: </a>  <font color="#4169E1">return</font> 0;
-<a name="line197">197: </a>}
-
-<a name="line199">199: </a><strong><font color="#4169E1"><a name="PetscDrawLine_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawLine_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> xl, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> yl, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> xr, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> yr, int color)</font></strong>
-<a name="line200">200: </a>{
-<a name="line201">201: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line202">202: </a>  HPEN             hpen;
-<a name="line203">203: </a>  int              x1, yone, x2, y2;
-<a name="line204">204: </a>  HDC              hdc;
-
-<a name="line206">206: </a>  TranslateColor_Win32(draw, color);
-<a name="line207">207: </a>  x1   = XTRANS(draw, windraw, xl);
-<a name="line208">208: </a>  x2   = XTRANS(draw, windraw, xr);
-<a name="line209">209: </a>  yone = YTRANS(draw, windraw, yl);
-<a name="line210">210: </a>  y2   = YTRANS(draw, windraw, yr);
-<a name="line211">211: </a>  hpen = CreatePen(PS_SOLID, windraw-&gt;linewidth, windraw-&gt;currentcolor);
-<a name="line212">212: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) hdc = windraw-&gt;node-&gt;DoubleBuffer;
-<a name="line213">213: </a>  <font color="#4169E1">else</font> hdc = windraw-&gt;node-&gt;Buffer;
-
-<a name="line215">215: </a>  SelectPen(hdc, hpen);
-<a name="line216">216: </a>  MoveToEx(hdc, x1, yone, NULL);
-<a name="line217">217: </a>  LineTo(hdc, x2, y2);
-<a name="line218">218: </a>  <font color="#B22222">/* Forces a WM_PAINT message and erases background */</font>
-<a name="line219">219: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
-<a name="line220">220: </a>  UpdateWindow(windraw-&gt;hWnd);
-<a name="line221">221: </a>  <font color="#4169E1">return</font> 0;
-<a name="line222">222: </a>}
-
-<a name="line224">224: </a><strong><font color="#4169E1"><a name="PetscDrawLineSetWidth_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawLineSetWidth_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> width)</font></strong>
-<a name="line225">225: </a>{
-<a name="line226">226: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line227">227: </a>  int              averagesize, finalwidth;
-<a name="line228">228: </a>  RECT             rect;
-
-<a name="line230">230: </a>  GetClientRect(windraw-&gt;hWnd, &amp;rect);
-<a name="line231">231: </a>  averagesize = ((rect.right - rect.left) + (rect.bottom - rect.top)) / 2;
-<a name="line232">232: </a>  finalwidth  = (int)PetscFloorReal(averagesize * width);
-<a name="line233">233: </a>  <font color="#4169E1">if</font> (finalwidth &lt; 1) finalwidth = 1; <font color="#B22222">/* minimum size <a href="../../../../..32/../docs/manualpages/Draw/PetscDrawLine.html">PetscDrawLine</a> can except */</font>
-
-<a name="line235">235: </a>  windraw-&gt;linewidth = finalwidth;
-<a name="line236">236: </a>  <font color="#4169E1">return</font> 0;
-<a name="line237">237: </a>}
-
-<a name="line239">239: </a><strong><font color="#4169E1"><a name="PetscDrawLineGetWidth_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawLineGetWidth_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *width)</font></strong>
-<a name="line240">240: </a>{
-<a name="line241">241: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-
-<a name="line243">243: </a>  *width = (<a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a>)windraw-&gt;linewidth;
-<a name="line244">244: </a>  <font color="#4169E1">return</font> 0;
-<a name="line245">245: </a>}
-
-<a name="line247">247: </a><strong><font color="#4169E1"><a name="PetscDrawPoint_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawPoint_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> x, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> y, int color)</font></strong>
-<a name="line248">248: </a>{
-<a name="line249">249: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line250">250: </a>  HBRUSH           hbrush;
-<a name="line251">251: </a>  HRGN             hrgn;
-<a name="line252">252: </a>  int              radius;
-<a name="line253">253: </a>  int              x1, yone;
-<a name="line254">254: </a>  HDC              hdc;
-
-<a name="line256">256: </a>  TranslateColor_Win32(draw, color);
-<a name="line257">257: </a>  x1     = XTRANS(draw, windraw, x);
-<a name="line258">258: </a>  yone   = YTRANS(draw, windraw, y);
-<a name="line259">259: </a>  hbrush = CreateSolidBrush(windraw-&gt;currentcolor);
-<a name="line260">260: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) hdc = windraw-&gt;node-&gt;DoubleBuffer;
-<a name="line261">261: </a>  <font color="#4169E1">else</font> hdc = windraw-&gt;node-&gt;Buffer;
-
-<a name="line263">263: </a>  <font color="#B22222">/* desired size is one logical pixel so just turn it on */</font>
-<a name="line264">264: </a>  <font color="#4169E1">if</font> (windraw-&gt;pointdiameter == 1) SetPixelV(hdc, x1, yone, windraw-&gt;currentcolor);
-<a name="line265">265: </a>  <font color="#4169E1">else</font> {
-<a name="line266">266: </a>    <font color="#B22222">/* draw point around position determined */</font>
-<a name="line267">267: </a>    radius = windraw-&gt;pointdiameter / 2; <font color="#B22222">/* integer division */</font>
-<a name="line268">268: </a>    hrgn   = CreateEllipticRgn(x1 - radius, yone - radius, x1 + radius, yone + radius);
-<a name="line269">269: </a>    FillRgn(hdc, hrgn, hbrush);
-<a name="line270">270: </a>  }
-<a name="line271">271: </a>  <font color="#B22222">/* Forces a WM_PAINT and erases background */</font>
-<a name="line272">272: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
-<a name="line273">273: </a>  UpdateWindow(windraw-&gt;hWnd);
-<a name="line274">274: </a>  <font color="#4169E1">return</font> 0;
-<a name="line275">275: </a>}
-
-<a name="line277">277: </a><strong><font color="#4169E1"><a name="PetscDrawPointSetSize_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawPointSetSize_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> width)</font></strong>
-<a name="line278">278: </a>{
-<a name="line279">279: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line280">280: </a>  int              averagesize, diameter;
-<a name="line281">281: </a>  RECT             rect;
-
-<a name="line283">283: </a>  GetClientRect(windraw-&gt;hWnd, &amp;rect);
-<a name="line284">284: </a>  averagesize = ((rect.right - rect.left) + (rect.bottom - rect.top)) / 2;
-<a name="line285">285: </a>  diameter    = (int)PetscFloorReal(averagesize * width);
-<a name="line286">286: </a>  <font color="#4169E1">if</font> (diameter &lt; 1) diameter = 1;
-<a name="line287">287: </a>  windraw-&gt;pointdiameter = diameter;
-<a name="line288">288: </a>  <font color="#4169E1">return</font> 0;
-<a name="line289">289: </a>}
-
-<a name="line291">291: </a><strong><font color="#4169E1"><a name="PetscDrawString_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawString_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> x, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> y, int color, const char *text)</font></strong>
-<a name="line292">292: </a>{
-<a name="line293">293: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line294">294: </a>  RECT             r;
-<a name="line295">295: </a>  HFONT            hfont;
-<a name="line296">296: </a>  LOGFONT          logfont;
-<a name="line297">297: </a>  int              x1, yone;
-<a name="line298">298: </a>  HDC              hdc;
-
-<a name="line300">300: </a>  x1       = XTRANS(draw, windraw, x);
-<a name="line301">301: </a>  yone     = YTRANS(draw, windraw, y);
-<a name="line302">302: </a>  r.bottom = yone;
-<a name="line303">303: </a>  r.left   = x1;
-<a name="line304">304: </a>  r.right  = x1 + 1;
-<a name="line305">305: </a>  r.top    = yone + 1;
-
-<a name="line307">307: </a>  logfont.lfHeight         = windraw-&gt;stringheight;
-<a name="line308">308: </a>  logfont.lfWidth          = windraw-&gt;stringwidth;
-<a name="line309">309: </a>  logfont.lfEscapement     = 0;
-<a name="line310">310: </a>  logfont.lfOrientation    = 0;
-<a name="line311">311: </a>  logfont.lfCharSet        = 0;
-<a name="line312">312: </a>  logfont.lfClipPrecision  = 0;
-<a name="line313">313: </a>  logfont.lfItalic         = 0;
-<a name="line314">314: </a>  logfont.lfOutPrecision   = 0;
-<a name="line315">315: </a>  logfont.lfPitchAndFamily = DEFAULT_PITCH;
-<a name="line316">316: </a>  logfont.lfQuality        = DEFAULT_QUALITY;
-<a name="line317">317: </a>  logfont.lfStrikeOut      = 0;
-<a name="line318">318: </a>  logfont.lfUnderline      = 0;
-<a name="line319">319: </a>  logfont.lfWeight         = FW_NORMAL;
-
-<a name="line321">321: </a>  hfont = CreateFontIndirect(&amp;logfont);
-<a name="line322">322: </a>  TranslateColor_Win32(draw, color);
-<a name="line323">323: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) hdc = windraw-&gt;node-&gt;DoubleBuffer;
-<a name="line324">324: </a>  <font color="#4169E1">else</font> hdc = windraw-&gt;node-&gt;Buffer;
-
-<a name="line326">326: </a>  SelectFont(hdc, hfont);
-<a name="line327">327: </a>  SetTextColor(hdc, windraw-&gt;currentcolor);
-<a name="line328">328: </a>  DrawText(hdc, text, lstrlen(text), &amp;r, DT_NOCLIP);
-<a name="line329">329: </a>  DeleteObject(hfont);
-<a name="line330">330: </a>  <font color="#B22222">/* Forces a WM_PAINT message and erases background */</font>
-<a name="line331">331: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
-<a name="line332">332: </a>  UpdateWindow(windraw-&gt;hWnd);
-<a name="line333">333: </a>  <font color="#4169E1">return</font> 0;
-<a name="line334">334: </a>}
-
-<a name="line336">336: </a><strong><font color="#4169E1"><a name="PetscDrawStringVertical_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawStringVertical_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> x, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> y, int color, const char *text)</font></strong>
-<a name="line337">337: </a>{
-<a name="line338">338: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line339">339: </a>  RECT             r;
-<a name="line340">340: </a>  HFONT            hfont;
-<a name="line341">341: </a>  LOGFONT          logfont;
-<a name="line342">342: </a>  int              x1, yone;
-<a name="line343">343: </a>  HDC              hdc;
-
-<a name="line345">345: </a>  x1       = XTRANS(draw, windraw, x);
-<a name="line346">346: </a>  yone     = YTRANS(draw, windraw, y);
-<a name="line347">347: </a>  r.left   = x1;
-<a name="line348">348: </a>  r.bottom = yone + 30;
-<a name="line349">349: </a>  r.right  = x1 + 1;
-<a name="line350">350: </a>  r.top    = yone - 30;
-
-<a name="line352">352: </a>  logfont.lfEscapement     = 2700; <font color="#B22222">/* Causes verticle text drawing */</font>
-<a name="line353">353: </a>  logfont.lfHeight         = windraw-&gt;stringheight;
-<a name="line354">354: </a>  logfont.lfWidth          = windraw-&gt;stringwidth;
-<a name="line355">355: </a>  logfont.lfOrientation    = 0;
-<a name="line356">356: </a>  logfont.lfCharSet        = DEFAULT_CHARSET;
-<a name="line357">357: </a>  logfont.lfClipPrecision  = 0;
-<a name="line358">358: </a>  logfont.lfItalic         = 0;
-<a name="line359">359: </a>  logfont.lfOutPrecision   = 0;
-<a name="line360">360: </a>  logfont.lfPitchAndFamily = DEFAULT_PITCH;
-<a name="line361">361: </a>  logfont.lfQuality        = DEFAULT_QUALITY;
-<a name="line362">362: </a>  logfont.lfStrikeOut      = 0;
-<a name="line363">363: </a>  logfont.lfUnderline      = 0;
-<a name="line364">364: </a>  logfont.lfWeight         = FW_NORMAL;
-
-<a name="line366">366: </a>  hfont = CreateFontIndirect(&amp;logfont);
-<a name="line367">367: </a>  TranslateColor_Win32(draw, color);
-<a name="line368">368: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) hdc = windraw-&gt;node-&gt;DoubleBuffer;
-<a name="line369">369: </a>  <font color="#4169E1">else</font> hdc = windraw-&gt;node-&gt;Buffer;
-
-<a name="line371">371: </a>  SelectFont(hdc, hfont);
-<a name="line372">372: </a>  SetTextColor(hdc, windraw-&gt;currentcolor);
-<a name="line373">373: </a>  DrawText(hdc, text, lstrlen(text), &amp;r, DT_NOCLIP | DT_SINGLELINE);
-<a name="line374">374: </a>  DeleteObject(hfont);
-<a name="line375">375: </a>  <font color="#B22222">/* Forces a WM_PAINT message and erases background */</font>
-<a name="line376">376: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
-<a name="line377">377: </a>  UpdateWindow(windraw-&gt;hWnd);
-<a name="line378">378: </a>  <font color="#4169E1">return</font> 0;
-<a name="line379">379: </a>}
-
-<a name="line381">381: </a><strong><font color="#4169E1"><a name="PetscDrawStringSetSize_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawStringSetSize_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> width, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> height)</font></strong>
-<a name="line382">382: </a>{
-<a name="line383">383: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line384">384: </a>  int              w, h;
-
-<a name="line386">386: </a>  w = (int)((windraw-&gt;w) * width * (draw-&gt;port_xr - draw-&gt;port_xl) / (draw-&gt;coor_xr - draw-&gt;coor_xl));
-<a name="line387">387: </a>  h = (int)((windraw-&gt;h) * height * (draw-&gt;port_yr - draw-&gt;port_yl) / (draw-&gt;coor_yr - draw-&gt;coor_yl));
-<a name="line388">388: </a>  <font color="#4169E1">if</font> (h &lt; 1) h = 1;
-<a name="line389">389: </a>  <font color="#4169E1">if</font> (w &lt; 1) w = 1;
-<a name="line390">390: </a>  windraw-&gt;stringheight = h;
-<a name="line391">391: </a>  windraw-&gt;stringwidth  = w;
-<a name="line392">392: </a>  <font color="#4169E1">return</font> 0;
-<a name="line393">393: </a>}
-<a name="line394">394: </a><strong><font color="#4169E1"><a name="PetscDrawStringGetSize_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawStringGetSize_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *width, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> *height)</font></strong>
-<a name="line395">395: </a>{
-<a name="line396">396: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line397">397: </a>  double           scaleX  = (draw-&gt;coor_xr - draw-&gt;coor_xl) / (draw-&gt;w) * (draw-&gt;port_xr - draw-&gt;port_xl);
-<a name="line398">398: </a>  double           scaleY  = (draw-&gt;coor_yr - draw-&gt;coor_yl) / (draw-&gt;h) * (draw-&gt;port_yr - draw-&gt;port_yl);
-
-<a name="line400">400: </a>  <font color="#4169E1">if</font> (height) *height = (double)windraw-&gt;stringheight * scaleY;
-<a name="line401">401: </a>  <font color="#4169E1">if</font> (width) *width = (double)windraw-&gt;stringwidth * scaleX;
-<a name="line402">402: </a>  <font color="#4169E1">return</font> 0;
-<a name="line403">403: </a>}
-
-<a name="line405">405: </a><strong><font color="#4169E1"><a name="PetscDrawResizeWindow_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawResizeWindow_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, int w, int h)</font></strong>
-<a name="line406">406: </a>{
-<a name="line407">407: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line408">408: </a>  RECT             r;
-
-<a name="line410">410: </a>  GetWindowRect(windraw-&gt;hWnd, &amp;r);
-<a name="line411">411: </a>  MoveWindow(windraw-&gt;hWnd, r.left, r.top, (int)w, (int)h, TRUE);
-<a name="line412">412: </a>  <font color="#B22222">/* set all variable dealing with window dimensions */</font>
-<a name="line413">413: </a>  windraw-&gt;node-&gt;bitheight = windraw-&gt;h = draw-&gt;h = h;
-<a name="line414">414: </a>  windraw-&gt;node-&gt;bitwidth = windraw-&gt;w = draw-&gt;w = w;
-<a name="line415">415: </a>  <font color="#B22222">/* set up graphic buffers with the new size of window */</font>
-<a name="line416">416: </a>  SetBitmapDimensionEx(windraw-&gt;node-&gt;BufferBit, w, h, NULL);
-<a name="line417">417: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) SetBitmapDimensionEx(windraw-&gt;node-&gt;DoubleBufferBit, w, h, NULL);
-<a name="line418">418: </a>  windraw-&gt;haveresized = <a href="../../../../..32/../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line419">419: </a>  <font color="#4169E1">return</font> 0;
-<a name="line420">420: </a>}
-
-<a name="line422">422: </a><strong><font color="#4169E1"><a name="PetscDrawCheckResizedWindow_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawCheckResizedWindow_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
-<a name="line423">423: </a>{
-<a name="line424">424: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-
-<a name="line427">427: </a>  <font color="#4169E1">return</font> 0;
-<a name="line428">428: </a>}
-
-<a name="line430">430: </a><strong><font color="#4169E1"><a name="PetscDrawSetTitle_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawSetTitle_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, const char title[])</font></strong>
-<a name="line431">431: </a>{
-<a name="line432">432: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-
-<a name="line434">434: </a>  SetWindowText(windraw-&gt;hWnd, title);
-<a name="line435">435: </a>  <font color="#4169E1">return</font> 0;
-<a name="line436">436: </a>}
-
-<a name="line438">438: </a><strong><font color="#4169E1"><a name="PetscDrawClear_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawClear_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
-<a name="line439">439: </a>{
-<a name="line440">440: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-
-<a name="line442">442: </a>  <font color="#B22222">/* clear primary buffer */</font>
-<a name="line443">443: </a>  ExtFloodFill(windraw-&gt;node-&gt;Buffer, 0, 0, COLOR_WINDOW, FLOODFILLBORDER);
-<a name="line444">444: </a>  <font color="#B22222">/* if exists clear secondary buffer */</font>
-<a name="line445">445: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) ExtFloodFill(windraw-&gt;node-&gt;DoubleBuffer, 0, 0, COLOR_WINDOW, FLOODFILLBORDER);
-
-<a name="line447">447: </a>  <font color="#B22222">/* force WM_PAINT message so cleared buffer will show */</font>
-<a name="line448">448: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
-<a name="line449">449: </a>  UpdateWindow(windraw-&gt;hWnd);
-<a name="line450">450: </a>  <font color="#4169E1">return</font> 0;
-<a name="line451">451: </a>}
-
-<a name="line453">453: </a><strong><font color="#4169E1"><a name="PetscDrawTriangle_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawTriangle_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> x1, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> yone, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> x2, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> y2, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> x3, <a href="../../../../..32/../docs/manualpages/Sys/PetscReal.html">PetscReal</a> y3, int c1, int c2, int c3)</font></strong>
-<a name="line454">454: </a>{
-<a name="line455">455: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line456">456: </a>  HBRUSH           hbrush;
-<a name="line457">457: </a>  HPEN             hpen;
-<a name="line458">458: </a>  int              p1x, p1y, p2x, p2y, p3x, p3y;
-<a name="line459">459: </a>  HDC              bit;
-
-<a name="line461">461: </a>  AverageColorTriangle_Win32(draw, c1, c2, c3);
-<a name="line462">462: </a>  hbrush = CreateSolidBrush(windraw-&gt;currentcolor);
-<a name="line463">463: </a>  hpen   = CreatePen(PS_SOLID, 0, windraw-&gt;currentcolor);
-<a name="line464">464: </a>  p1x    = XTRANS(draw, windraw, x1);
-<a name="line465">465: </a>  p2x    = XTRANS(draw, windraw, x2);
-<a name="line466">466: </a>  p3x    = XTRANS(draw, windraw, x3);
-<a name="line467">467: </a>  p1y    = YTRANS(draw, windraw, yone);
-<a name="line468">468: </a>  p2y    = YTRANS(draw, windraw, y2);
-<a name="line469">469: </a>  p3y    = YTRANS(draw, windraw, y3);
-
-<a name="line471">471: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) bit = windraw-&gt;node-&gt;DoubleBuffer;
-<a name="line472">472: </a>  <font color="#4169E1">else</font> bit = windraw-&gt;node-&gt;Buffer;
-
-<a name="line474">474: </a>  BeginPath(bit);
-<a name="line475">475: </a>  MoveToEx(bit, p1x, p1y, NULL);
-<a name="line476">476: </a>  LineTo(bit, p2x, p2y);
-<a name="line477">477: </a>  LineTo(bit, p3x, p3y);
-<a name="line478">478: </a>  LineTo(bit, p1x, p1y);
-<a name="line479">479: </a>  EndPath(bit);
-<a name="line480">480: </a>  SelectPen(bit, hpen);
-<a name="line481">481: </a>  SelectBrush(bit, hbrush);
-<a name="line482">482: </a>  StrokeAndFillPath(bit);
-<a name="line483">483: </a>  <font color="#B22222">/* Forces a WM_PAINT message and erases background */</font>
-<a name="line484">484: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
-<a name="line485">485: </a>  UpdateWindow(windraw-&gt;hWnd);
-<a name="line486">486: </a>  <font color="#4169E1">return</font> 0;
-<a name="line487">487: </a>}
-
-<a name="line489">489: </a><strong><font color="#4169E1"><a name="PopMessageLoopThread_Win32"></a>void PopMessageLoopThread_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> popdraw)</font></strong>
-<a name="line490">490: </a>{
-<a name="line491">491: </a>  PetscDraw_Win32 *pop = (PetscDraw_Win32 *)popdraw-&gt;data;
-<a name="line492">492: </a>  MSG              msg;
-<a name="line493">493: </a>  HWND             hWnd           = NULL;
-<a name="line494">494: </a>  const char       PopClassName[] = <font color="#666666">"PETSc Window Pop Class"</font>;
-<a name="line495">495: </a>  RECT             r;
-<a name="line496">496: </a>  int              width, height;
-<a name="line497">497: </a>  WNDCLASSEX       myclass;
-<a name="line498">498: </a>  LPVOID           lpMsgBuf;
-
-<a name="line500">500: </a>  <font color="#B22222">/* initialize window class parameters */</font>
-<a name="line501">501: </a>  myclass.cbSize        = <font color="#4169E1">sizeof</font>(WNDCLASSEX);
-<a name="line502">502: </a>  myclass.style         = CS_OWNDC;
-<a name="line503">503: </a>  myclass.lpfnWndProc   = (WNDPROC)PetscWndProc;
-<a name="line504">504: </a>  myclass.cbClsExtra    = 0;
-<a name="line505">505: </a>  myclass.cbWndExtra    = 0;
-<a name="line506">506: </a>  myclass.hInstance     = NULL;
-<a name="line507">507: </a>  myclass.hIcon         = NULL;
-<a name="line508">508: </a>  myclass.hCursor       = LoadCursor(NULL, IDC_ARROW);
-<a name="line509">509: </a>  myclass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-<a name="line510">510: </a>  myclass.lpszMenuName  = NULL;
-<a name="line511">511: </a>  myclass.lpszClassName = PopClassName;
-<a name="line512">512: </a>  myclass.hIconSm       = NULL;
-
-<a name="line514">514: </a>  RegisterClassEx(&amp;myclass);
-
-<a name="line516">516: </a>  SetRect(&amp;r, 0, 0, 450, 450);
-
-<a name="line518">518: </a>  width  = (r.right - r.left) / 3;
-<a name="line519">519: </a>  height = (r.bottom - r.top) / 3;
-
-<a name="line521">521: </a>  hWnd   = CreateWindowEx(0, PopClassName, NULL, WS_POPUPWINDOW | WS_CAPTION, 0, 0, width, height, NULL, NULL, hInst, NULL);
-<a name="line522">522: </a>  pop-&gt;x = 0;
-<a name="line523">523: </a>  pop-&gt;y = 0;
-<a name="line524">524: </a>  pop-&gt;w = width;
-<a name="line525">525: </a>  pop-&gt;h = height;
-
-<a name="line527">527: </a>  <font color="#4169E1">if</font> (!hWnd) {
-<a name="line528">528: </a>    lpMsgBuf = (LPVOID) <font color="#666666">"Window Not Successfully Created"</font>;
-<a name="line529">529: </a>    MessageBox(NULL, (LPCTSTR)lpMsgBuf, <font color="#666666">"Error"</font>, MB_OK | MB_ICONINFORMATION);
-<a name="line530">530: </a>    LocalFree(lpMsgBuf);
-<a name="line531">531: </a>    exit(0);
-<a name="line532">532: </a>  }
-<a name="line533">533: </a>  pop-&gt;hWnd = hWnd;
-<a name="line534">534: </a>  <font color="#B22222">/* display and update new popup window */</font>
-<a name="line535">535: </a>  ShowWindow(pop-&gt;hWnd, SW_SHOWNORMAL);
-<a name="line536">536: </a>  UpdateWindow(pop-&gt;hWnd);
-<a name="line537">537: </a>  SetEvent(pop-&gt;hReadyEvent);
-
-<a name="line539">539: </a>  <font color="#4169E1">while</font> (GetMessage(&amp;msg, pop-&gt;hWnd, 0, 0)) {
-<a name="line540">540: </a>    TranslateMessage(&amp;msg);
-<a name="line541">541: </a>    DispatchMessage(&amp;msg);
-<a name="line542">542: </a>  }
-<a name="line543">543: </a>  <font color="#4169E1">return</font>;
-<a name="line544">544: </a>}
-
-<a name="line546">546: </a><strong><font color="#4169E1"><a name="PetscDrawDestroy_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawDestroy_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
-<a name="line547">547: </a>{
-<a name="line548">548: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-
-<a name="line550">550: </a>  SendMessage(windraw-&gt;hWnd, WM_DESTROY, 0, 0);
-<a name="line551">551: </a>  <a href="../../../../..32/../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(draw-&gt;data);
-<a name="line552">552: </a>  <font color="#4169E1">return</font> 0;
-<a name="line553">553: </a>}
-
-<a name="line555">555: </a><strong><font color="#4169E1"><a name="MessageLoopThread_Win32"></a>void MessageLoopThread_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
-<a name="line556">556: </a>{
-<a name="line557">557: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line558">558: </a>  MSG              msg;
-<a name="line559">559: </a>  HWND             hWnd        = NULL;
-<a name="line560">560: </a>  const char       classname[] = <font color="#666666">"PETSc Window Class"</font>;
-<a name="line561">561: </a>  WNDCLASSEX       wclass;
-<a name="line562">562: </a>  LPVOID           lpMsgBuf;
-
-<a name="line564">564: </a>  <font color="#B22222">/* initialize window class parameters */</font>
-<a name="line565">565: </a>  wclass.cbSize        = <font color="#4169E1">sizeof</font>(WNDCLASSEX);
-<a name="line566">566: </a>  wclass.style         = CS_SAVEBITS | CS_HREDRAW | CS_VREDRAW;
-<a name="line567">567: </a>  wclass.lpfnWndProc   = (WNDPROC)PetscWndProc;
-<a name="line568">568: </a>  wclass.cbClsExtra    = 0;
-<a name="line569">569: </a>  wclass.cbWndExtra    = 0;
-<a name="line570">570: </a>  wclass.hInstance     = NULL;
-<a name="line571">571: </a>  wclass.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
-<a name="line572">572: </a>  wclass.hCursor       = LoadCursor(NULL, IDC_ARROW);
-<a name="line573">573: </a>  wclass.hbrBackground = GetStockBrush(WHITE_BRUSH);
-<a name="line574">574: </a>  wclass.lpszMenuName  = NULL;
-<a name="line575">575: </a>  wclass.lpszClassName = classname;
-<a name="line576">576: </a>  wclass.hIconSm       = NULL;
-
-<a name="line578">578: </a>  RegisterClassEx(&amp;wclass);
-
-<a name="line580">580: </a>  hWnd = CreateWindowEx(0, classname, NULL, WS_OVERLAPPEDWINDOW, draw-&gt;x, draw-&gt;y, draw-&gt;w, draw-&gt;h, NULL, NULL, hInst, NULL);
-
-<a name="line582">582: </a>  <font color="#4169E1">if</font> (!hWnd) {
-<a name="line583">583: </a>    lpMsgBuf = (LPVOID) <font color="#666666">"Window Not Successfully Created"</font>;
-<a name="line584">584: </a>    MessageBox(NULL, (LPCTSTR)lpMsgBuf, <font color="#666666">"Error"</font>, MB_OK | MB_ICONINFORMATION);
-<a name="line585">585: </a>    LocalFree(lpMsgBuf);
-<a name="line586">586: </a>    exit(0);
+<a name="line71"> 71: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line72"> 72: </a>  <font color="#B22222">/* flush double buffer into primary buffer */</font>
+<a name="line73"> 73: </a>  BitBlt(windraw-&gt;node-&gt;Buffer, 0, 0, windraw-&gt;w, windraw-&gt;h, windraw-&gt;node-&gt;DoubleBuffer, 0, 0, SRCCOPY);
+<a name="line74"> 74: </a>  <font color="#B22222">/* flush double buffer into window */</font>
+<a name="line75"> 75: </a>  BitBlt(hdc, 0, 0, windraw-&gt;w, windraw-&gt;h, windraw-&gt;node-&gt;DoubleBuffer, 0, 0, SRCCOPY);
+<a name="line76"> 76: </a>  ReleaseDC(windraw-&gt;hWnd, hdc);
+<a name="line77"> 77: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line78"> 78: </a>}
+
+<a name="line80"> 80: </a><strong><font color="#4169E1"><a name="deletemouselist_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> deletemouselist_Win32(WindowNode deletelist)</font></strong>
+<a name="line81"> 81: </a>{
+<a name="line82"> 82: </a>  <font color="#B22222">/* Called upon window close. Frees memory of linked list of stored mouse commands */</font>
+<a name="line83"> 83: </a>  MouseNode node;
+
+<a name="line85"> 85: </a>  <font color="#4169E1">while</font> (deletelist-&gt;MouseListHead) {
+<a name="line86"> 86: </a>    node = deletelist-&gt;MouseListHead;
+<a name="line87"> 87: </a>    <font color="#4169E1">if</font> (deletelist-&gt;MouseListHead-&gt;mnext) deletelist-&gt;MouseListHead = deletelist-&gt;MouseListHead-&gt;mnext;
+<a name="line88"> 88: </a>    <a href="../../../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(node);
+<a name="line89"> 89: </a>  }
+<a name="line90"> 90: </a>  deletelist-&gt;MouseListHead = deletelist-&gt;MouseListTail = NULL;
+<a name="line91"> 91: </a>  <font color="#4169E1">if</font> (deletelist-&gt;wprev) deletelist-&gt;wprev-&gt;wnext = deletelist-&gt;wnext;
+<a name="line92"> 92: </a>  <font color="#4169E1">if</font> (deletelist-&gt;wnext) deletelist-&gt;wnext-&gt;wprev = deletelist-&gt;wprev;
+<a name="line93"> 93: </a>  <a href="../../../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(deletelist);
+<a name="line94"> 94: </a>  <font color="#4169E1">return</font> <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>;
+<a name="line95"> 95: </a>}
+
+<a name="line97"> 97: </a><strong><font color="#4169E1"><a name="PetscDrawGetMouseButton_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawGetMouseButton_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Sys/PetscDrawButton.html">PetscDrawButton</a> *button, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> *x_user, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> *y_user, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> *x_phys, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> *y_phys)</font></strong>
+<a name="line98"> 98: </a>{
+<a name="line99"> 99: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line100">100: </a>  WindowNode       current;
+<a name="line101">101: </a>  MouseNode        node = 0;
+
+<a name="line103">103: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line104">104: </a>  <font color="#B22222">/* Make sure no other code is using the linked list at this moment */</font>
+<a name="line105">105: </a>  WaitForSingleObject(g_hWindowListMutex, INFINITE);
+<a name="line106">106: </a>  <font color="#B22222">/* Look for the node that matches the window you are using */</font>
+<a name="line107">107: </a>  current = WindowListHead;
+<a name="line108">108: </a>  <font color="#4169E1">while</font> (current) {
+<a name="line109">109: </a>    <font color="#4169E1">if</font> (current-&gt;hWnd == windraw-&gt;hWnd) {
+<a name="line110">110: </a>      current-&gt;IsGetMouseOn = TRUE;
+<a name="line111">111: </a>      <font color="#4169E1">break</font>;
+<a name="line112">112: </a>    } <font color="#4169E1">else</font> current = current-&gt;wnext;
+<a name="line113">113: </a>  }
+<a name="line114">114: </a>  <font color="#B22222">/* If no actions have occurred, wait for one */</font>
+<a name="line115">115: </a>  node = current-&gt;MouseListHead;
+<a name="line116">116: </a>  <font color="#4169E1">if</font> (!node) {
+<a name="line117">117: </a>    ReleaseMutex(g_hWindowListMutex);
+<a name="line118">118: </a>    WaitForSingleObject(current-&gt;event, INFINITE);
+<a name="line119">119: </a>    WaitForSingleObject(g_hWindowListMutex, INFINITE);
+<a name="line120">120: </a>  }
+<a name="line121">121: </a>  <font color="#B22222">/* once we have the information, assign the pointers to it */</font>
+<a name="line122">122: </a>  *button = current-&gt;MouseListHead-&gt;Button;
+<a name="line123">123: </a>  *x_user = current-&gt;MouseListHead-&gt;user.x;
+<a name="line124">124: </a>  *y_user = current-&gt;MouseListHead-&gt;user.y;
+<a name="line125">125: </a>  <font color="#B22222">/* optional arguments */</font>
+<a name="line126">126: </a>  <font color="#4169E1">if</font> (x_phys) *x_phys = current-&gt;MouseListHead-&gt;phys.x;
+<a name="line127">127: </a>  <font color="#4169E1">if</font> (y_phys) *y_phys = current-&gt;MouseListHead-&gt;phys.y;
+<a name="line128">128: </a>  <font color="#B22222">/* remove set of information from sub linked-list, delete the node */</font>
+<a name="line129">129: </a>  current-&gt;MouseListHead = current-&gt;MouseListHead-&gt;mnext;
+<a name="line130">130: </a>  <font color="#4169E1">if</font> (!current-&gt;MouseListHead) {
+<a name="line131">131: </a>    ResetEvent(current-&gt;event);
+<a name="line132">132: </a>    current-&gt;MouseListTail = NULL;
+<a name="line133">133: </a>  }
+<a name="line134">134: </a>  <font color="#4169E1">if</font> (node) <a href="../../../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(node);
+
+<a name="line136">136: </a>  <font color="#B22222">/* Release mutex so that  other code can use</font>
+<a name="line137">137: </a><font color="#B22222">     the linked list now that we are done with it */</font>
+<a name="line138">138: </a>  ReleaseMutex(g_hWindowListMutex);
+<a name="line139">139: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line140">140: </a>}
+
+<a name="line142">142: </a><strong><font color="#4169E1"><a name="PetscDrawPause_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawPause_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
+<a name="line143">143: </a>{
+<a name="line144">144: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line145">145: </a>  <a href="../../../../../../manualpages/Sys/PetscSleep.html">PetscSleep</a>(draw-&gt;pause);
+<a name="line146">146: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line147">147: </a>}
+
+<a name="line149">149: </a><strong><font color="#4169E1"><a name="TranslateColor_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TranslateColor_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, int color)</font></strong>
+<a name="line150">150: </a>{
+<a name="line151">151: </a>  <font color="#B22222">/* Maps single color value into the RGB colors in our tables */</font>
+<a name="line152">152: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line153">153: </a>  windraw-&gt;currentcolor    = RGB(RedMap[color], GreenMap[color], BlueMap[color]);
+<a name="line154">154: </a>  <font color="#4169E1">return</font> <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>;
+<a name="line155">155: </a>}
+
+<a name="line157">157: </a><strong><font color="#4169E1"><a name="AverageColorRectangle_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> AverageColorRectangle_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, int c1, int c2, int c3, int c4)</font></strong>
+<a name="line158">158: </a>{
+<a name="line159">159: </a>  <font color="#B22222">/* Averages colors given at points of rectangle and sets color from color table</font>
+<a name="line160">160: </a><font color="#B22222">    will be changed once the color gradient problem is worked out */</font>
+<a name="line161">161: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line162">162: </a>  windraw-&gt;currentcolor    = RGB(((RedMap[c1] + RedMap[c2] + RedMap[c3] + RedMap[c4]) / 4), ((GreenMap[c1] + GreenMap[c2] + GreenMap[c3] + GreenMap[c4]) / 4), ((BlueMap[c1] + BlueMap[c2] + BlueMap[c3] + BlueMap[c4]) / 4));
+<a name="line163">163: </a>  <font color="#4169E1">return</font> <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>;
+<a name="line164">164: </a>}
+
+<a name="line166">166: </a><strong><font color="#4169E1"><a name="AverageColorTriangle_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> AverageColorTriangle_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, int c1, int c2, int c3)</font></strong>
+<a name="line167">167: </a>{
+<a name="line168">168: </a>  <font color="#B22222">/* Averages colors given at points of rectangle and sets color from color table</font>
+<a name="line169">169: </a><font color="#B22222">    will be changed once the color gradient problem is worked out */</font>
+<a name="line170">170: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line171">171: </a>  windraw-&gt;currentcolor    = RGB((RedMap[c1] + RedMap[c2] + RedMap[c3]) / 3, (GreenMap[c1] + GreenMap[c2] + GreenMap[c3]) / 3, (BlueMap[c1] + BlueMap[c2] + BlueMap[c3]) / 3);
+<a name="line172">172: </a>  <font color="#4169E1">return</font> <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>;
+<a name="line173">173: </a>}
+
+<a name="line175">175: </a><strong><font color="#4169E1"><a name="PetscDrawRectangle_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawRectangle_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> xl, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> yl, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> xr, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> yr, int c1, int c2, int c3, int c4)</font></strong>
+<a name="line176">176: </a>{
+<a name="line177">177: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line178">178: </a>  HBRUSH           hbrush;
+<a name="line179">179: </a>  RECT             rect;
+<a name="line180">180: </a>  int              x1, yone, x2, y2;
+<a name="line181">181: </a>  HDC              hdc;
+
+<a name="line183">183: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line184">184: </a>  x1   = XTRANS(draw, windraw, xl);
+<a name="line185">185: </a>  x2   = XTRANS(draw, windraw, xr);
+<a name="line186">186: </a>  yone = YTRANS(draw, windraw, yl);
+<a name="line187">187: </a>  y2   = YTRANS(draw, windraw, yr);
+<a name="line188">188: </a>  SetRect(&amp;rect, x1, y2, x2, yone);
+<a name="line189">189: </a>  <font color="#4169E1">if</font> (c1 == c2 &amp;&amp; c2 == c3 &amp;&amp; c3 == c4) TranslateColor_Win32(draw, c1);
+<a name="line190">190: </a>  <font color="#4169E1">else</font> AverageColorRectangle_Win32(draw, c1, c2, c3, c4);
+<a name="line191">191: </a>  hbrush = CreateSolidBrush(windraw-&gt;currentcolor);
+
+<a name="line193">193: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) hdc = windraw-&gt;node-&gt;DoubleBuffer;
+<a name="line194">194: </a>  <font color="#4169E1">else</font> hdc = windraw-&gt;node-&gt;Buffer;
+
+<a name="line196">196: </a>  FillRect(hdc, &amp;rect, hbrush);
+<a name="line197">197: </a>  <font color="#B22222">/* Forces a WM_PAINT message and erases background */</font>
+<a name="line198">198: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
+<a name="line199">199: </a>  UpdateWindow(windraw-&gt;hWnd);
+<a name="line200">200: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line201">201: </a>}
+
+<a name="line203">203: </a><strong><font color="#4169E1"><a name="PetscDrawLine_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawLine_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> xl, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> yl, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> xr, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> yr, int color)</font></strong>
+<a name="line204">204: </a>{
+<a name="line205">205: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line206">206: </a>  HPEN             hpen;
+<a name="line207">207: </a>  int              x1, yone, x2, y2;
+<a name="line208">208: </a>  HDC              hdc;
+
+<a name="line210">210: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line211">211: </a>  TranslateColor_Win32(draw, color);
+<a name="line212">212: </a>  x1   = XTRANS(draw, windraw, xl);
+<a name="line213">213: </a>  x2   = XTRANS(draw, windraw, xr);
+<a name="line214">214: </a>  yone = YTRANS(draw, windraw, yl);
+<a name="line215">215: </a>  y2   = YTRANS(draw, windraw, yr);
+<a name="line216">216: </a>  hpen = CreatePen(PS_SOLID, windraw-&gt;linewidth, windraw-&gt;currentcolor);
+<a name="line217">217: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) hdc = windraw-&gt;node-&gt;DoubleBuffer;
+<a name="line218">218: </a>  <font color="#4169E1">else</font> hdc = windraw-&gt;node-&gt;Buffer;
+
+<a name="line220">220: </a>  SelectPen(hdc, hpen);
+<a name="line221">221: </a>  MoveToEx(hdc, x1, yone, NULL);
+<a name="line222">222: </a>  LineTo(hdc, x2, y2);
+<a name="line223">223: </a>  <font color="#B22222">/* Forces a WM_PAINT message and erases background */</font>
+<a name="line224">224: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
+<a name="line225">225: </a>  UpdateWindow(windraw-&gt;hWnd);
+<a name="line226">226: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line227">227: </a>}
+
+<a name="line229">229: </a><strong><font color="#4169E1"><a name="PetscDrawLineSetWidth_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawLineSetWidth_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> width)</font></strong>
+<a name="line230">230: </a>{
+<a name="line231">231: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line232">232: </a>  int              averagesize, finalwidth;
+<a name="line233">233: </a>  RECT             rect;
+
+<a name="line235">235: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line236">236: </a>  GetClientRect(windraw-&gt;hWnd, &amp;rect);
+<a name="line237">237: </a>  averagesize = ((rect.right - rect.left) + (rect.bottom - rect.top)) / 2;
+<a name="line238">238: </a>  finalwidth  = (int)PetscFloorReal(averagesize * width);
+<a name="line239">239: </a>  <font color="#4169E1">if</font> (finalwidth &lt; 1) finalwidth = 1; <font color="#B22222">/* minimum size <a href="../../../../../../manualpages/Draw/PetscDrawLine.html">PetscDrawLine</a> can except */</font>
+
+<a name="line241">241: </a>  windraw-&gt;linewidth = finalwidth;
+<a name="line242">242: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line243">243: </a>}
+
+<a name="line245">245: </a><strong><font color="#4169E1"><a name="PetscDrawLineGetWidth_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawLineGetWidth_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> *width)</font></strong>
+<a name="line246">246: </a>{
+<a name="line247">247: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+
+<a name="line249">249: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line250">250: </a>  *width = (<a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a>)windraw-&gt;linewidth;
+<a name="line251">251: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line252">252: </a>}
+
+<a name="line254">254: </a><strong><font color="#4169E1"><a name="PetscDrawPoint_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawPoint_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> x, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> y, int color)</font></strong>
+<a name="line255">255: </a>{
+<a name="line256">256: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line257">257: </a>  HBRUSH           hbrush;
+<a name="line258">258: </a>  HRGN             hrgn;
+<a name="line259">259: </a>  int              radius;
+<a name="line260">260: </a>  int              x1, yone;
+<a name="line261">261: </a>  HDC              hdc;
+
+<a name="line263">263: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line264">264: </a>  TranslateColor_Win32(draw, color);
+<a name="line265">265: </a>  x1     = XTRANS(draw, windraw, x);
+<a name="line266">266: </a>  yone   = YTRANS(draw, windraw, y);
+<a name="line267">267: </a>  hbrush = CreateSolidBrush(windraw-&gt;currentcolor);
+<a name="line268">268: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) hdc = windraw-&gt;node-&gt;DoubleBuffer;
+<a name="line269">269: </a>  <font color="#4169E1">else</font> hdc = windraw-&gt;node-&gt;Buffer;
+
+<a name="line271">271: </a>  <font color="#B22222">/* desired size is one logical pixel so just turn it on */</font>
+<a name="line272">272: </a>  <font color="#4169E1">if</font> (windraw-&gt;pointdiameter == 1) SetPixelV(hdc, x1, yone, windraw-&gt;currentcolor);
+<a name="line273">273: </a>  <font color="#4169E1">else</font> {
+<a name="line274">274: </a>    <font color="#B22222">/* draw point around position determined */</font>
+<a name="line275">275: </a>    radius = windraw-&gt;pointdiameter / 2; <font color="#B22222">/* integer division */</font>
+<a name="line276">276: </a>    hrgn   = CreateEllipticRgn(x1 - radius, yone - radius, x1 + radius, yone + radius);
+<a name="line277">277: </a>    FillRgn(hdc, hrgn, hbrush);
+<a name="line278">278: </a>  }
+<a name="line279">279: </a>  <font color="#B22222">/* Forces a WM_PAINT and erases background */</font>
+<a name="line280">280: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
+<a name="line281">281: </a>  UpdateWindow(windraw-&gt;hWnd);
+<a name="line282">282: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line283">283: </a>}
+
+<a name="line285">285: </a><strong><font color="#4169E1"><a name="PetscDrawPointSetSize_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawPointSetSize_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> width)</font></strong>
+<a name="line286">286: </a>{
+<a name="line287">287: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line288">288: </a>  int              averagesize, diameter;
+<a name="line289">289: </a>  RECT             rect;
+
+<a name="line291">291: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line292">292: </a>  GetClientRect(windraw-&gt;hWnd, &amp;rect);
+<a name="line293">293: </a>  averagesize = ((rect.right - rect.left) + (rect.bottom - rect.top)) / 2;
+<a name="line294">294: </a>  diameter    = (int)PetscFloorReal(averagesize * width);
+<a name="line295">295: </a>  <font color="#4169E1">if</font> (diameter &lt; 1) diameter = 1;
+<a name="line296">296: </a>  windraw-&gt;pointdiameter = diameter;
+<a name="line297">297: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line298">298: </a>}
+
+<a name="line300">300: </a><strong><font color="#4169E1"><a name="PetscDrawString_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawString_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> x, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> y, int color, const char *text)</font></strong>
+<a name="line301">301: </a>{
+<a name="line302">302: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line303">303: </a>  RECT             r;
+<a name="line304">304: </a>  HFONT            hfont;
+<a name="line305">305: </a>  LOGFONT          logfont;
+<a name="line306">306: </a>  int              x1, yone;
+<a name="line307">307: </a>  HDC              hdc;
+
+<a name="line309">309: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line310">310: </a>  x1       = XTRANS(draw, windraw, x);
+<a name="line311">311: </a>  yone     = YTRANS(draw, windraw, y);
+<a name="line312">312: </a>  r.bottom = yone;
+<a name="line313">313: </a>  r.left   = x1;
+<a name="line314">314: </a>  r.right  = x1 + 1;
+<a name="line315">315: </a>  r.top    = yone + 1;
+
+<a name="line317">317: </a>  logfont.lfHeight         = windraw-&gt;stringheight;
+<a name="line318">318: </a>  logfont.lfWidth          = windraw-&gt;stringwidth;
+<a name="line319">319: </a>  logfont.lfEscapement     = 0;
+<a name="line320">320: </a>  logfont.lfOrientation    = 0;
+<a name="line321">321: </a>  logfont.lfCharSet        = 0;
+<a name="line322">322: </a>  logfont.lfClipPrecision  = 0;
+<a name="line323">323: </a>  logfont.lfItalic         = 0;
+<a name="line324">324: </a>  logfont.lfOutPrecision   = 0;
+<a name="line325">325: </a>  logfont.lfPitchAndFamily = DEFAULT_PITCH;
+<a name="line326">326: </a>  logfont.lfQuality        = DEFAULT_QUALITY;
+<a name="line327">327: </a>  logfont.lfStrikeOut      = 0;
+<a name="line328">328: </a>  logfont.lfUnderline      = 0;
+<a name="line329">329: </a>  logfont.lfWeight         = FW_NORMAL;
+
+<a name="line331">331: </a>  hfont = CreateFontIndirect(&amp;logfont);
+<a name="line332">332: </a>  TranslateColor_Win32(draw, color);
+<a name="line333">333: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) hdc = windraw-&gt;node-&gt;DoubleBuffer;
+<a name="line334">334: </a>  <font color="#4169E1">else</font> hdc = windraw-&gt;node-&gt;Buffer;
+
+<a name="line336">336: </a>  SelectFont(hdc, hfont);
+<a name="line337">337: </a>  SetTextColor(hdc, windraw-&gt;currentcolor);
+<a name="line338">338: </a>  DrawText(hdc, text, lstrlen(text), &amp;r, DT_NOCLIP);
+<a name="line339">339: </a>  DeleteObject(hfont);
+<a name="line340">340: </a>  <font color="#B22222">/* Forces a WM_PAINT message and erases background */</font>
+<a name="line341">341: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
+<a name="line342">342: </a>  UpdateWindow(windraw-&gt;hWnd);
+<a name="line343">343: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line344">344: </a>}
+
+<a name="line346">346: </a><strong><font color="#4169E1"><a name="PetscDrawStringVertical_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawStringVertical_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> x, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> y, int color, const char *text)</font></strong>
+<a name="line347">347: </a>{
+<a name="line348">348: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line349">349: </a>  RECT             r;
+<a name="line350">350: </a>  HFONT            hfont;
+<a name="line351">351: </a>  LOGFONT          logfont;
+<a name="line352">352: </a>  int              x1, yone;
+<a name="line353">353: </a>  HDC              hdc;
+
+<a name="line355">355: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line356">356: </a>  x1       = XTRANS(draw, windraw, x);
+<a name="line357">357: </a>  yone     = YTRANS(draw, windraw, y);
+<a name="line358">358: </a>  r.left   = x1;
+<a name="line359">359: </a>  r.bottom = yone + 30;
+<a name="line360">360: </a>  r.right  = x1 + 1;
+<a name="line361">361: </a>  r.top    = yone - 30;
+
+<a name="line363">363: </a>  logfont.lfEscapement     = 2700; <font color="#B22222">/* Causes vertical text drawing */</font>
+<a name="line364">364: </a>  logfont.lfHeight         = windraw-&gt;stringheight;
+<a name="line365">365: </a>  logfont.lfWidth          = windraw-&gt;stringwidth;
+<a name="line366">366: </a>  logfont.lfOrientation    = 0;
+<a name="line367">367: </a>  logfont.lfCharSet        = DEFAULT_CHARSET;
+<a name="line368">368: </a>  logfont.lfClipPrecision  = 0;
+<a name="line369">369: </a>  logfont.lfItalic         = 0;
+<a name="line370">370: </a>  logfont.lfOutPrecision   = 0;
+<a name="line371">371: </a>  logfont.lfPitchAndFamily = DEFAULT_PITCH;
+<a name="line372">372: </a>  logfont.lfQuality        = DEFAULT_QUALITY;
+<a name="line373">373: </a>  logfont.lfStrikeOut      = 0;
+<a name="line374">374: </a>  logfont.lfUnderline      = 0;
+<a name="line375">375: </a>  logfont.lfWeight         = FW_NORMAL;
+
+<a name="line377">377: </a>  hfont = CreateFontIndirect(&amp;logfont);
+<a name="line378">378: </a>  TranslateColor_Win32(draw, color);
+<a name="line379">379: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) hdc = windraw-&gt;node-&gt;DoubleBuffer;
+<a name="line380">380: </a>  <font color="#4169E1">else</font> hdc = windraw-&gt;node-&gt;Buffer;
+
+<a name="line382">382: </a>  SelectFont(hdc, hfont);
+<a name="line383">383: </a>  SetTextColor(hdc, windraw-&gt;currentcolor);
+<a name="line384">384: </a>  DrawText(hdc, text, lstrlen(text), &amp;r, DT_NOCLIP | DT_SINGLELINE);
+<a name="line385">385: </a>  DeleteObject(hfont);
+<a name="line386">386: </a>  <font color="#B22222">/* Forces a WM_PAINT message and erases background */</font>
+<a name="line387">387: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
+<a name="line388">388: </a>  UpdateWindow(windraw-&gt;hWnd);
+<a name="line389">389: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line390">390: </a>}
+
+<a name="line392">392: </a><strong><font color="#4169E1"><a name="PetscDrawStringSetSize_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawStringSetSize_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> width, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> height)</font></strong>
+<a name="line393">393: </a>{
+<a name="line394">394: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line395">395: </a>  int              w, h;
+
+<a name="line397">397: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line398">398: </a>  w = (int)((windraw-&gt;w) * width * (draw-&gt;port_xr - draw-&gt;port_xl) / (draw-&gt;coor_xr - draw-&gt;coor_xl));
+<a name="line399">399: </a>  h = (int)((windraw-&gt;h) * height * (draw-&gt;port_yr - draw-&gt;port_yl) / (draw-&gt;coor_yr - draw-&gt;coor_yl));
+<a name="line400">400: </a>  <font color="#4169E1">if</font> (h &lt; 1) h = 1;
+<a name="line401">401: </a>  <font color="#4169E1">if</font> (w &lt; 1) w = 1;
+<a name="line402">402: </a>  windraw-&gt;stringheight = h;
+<a name="line403">403: </a>  windraw-&gt;stringwidth  = w;
+<a name="line404">404: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line405">405: </a>}
+<a name="line406">406: </a><strong><font color="#4169E1"><a name="PetscDrawStringGetSize_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawStringGetSize_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> *width, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> *height)</font></strong>
+<a name="line407">407: </a>{
+<a name="line408">408: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line409">409: </a>  double           scaleX  = (draw-&gt;coor_xr - draw-&gt;coor_xl) / (draw-&gt;w) * (draw-&gt;port_xr - draw-&gt;port_xl);
+<a name="line410">410: </a>  double           scaleY  = (draw-&gt;coor_yr - draw-&gt;coor_yl) / (draw-&gt;h) * (draw-&gt;port_yr - draw-&gt;port_yl);
+
+<a name="line412">412: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line413">413: </a>  <font color="#4169E1">if</font> (height) *height = (double)windraw-&gt;stringheight * scaleY;
+<a name="line414">414: </a>  <font color="#4169E1">if</font> (width) *width = (double)windraw-&gt;stringwidth * scaleX;
+<a name="line415">415: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line416">416: </a>}
+
+<a name="line418">418: </a><strong><font color="#4169E1"><a name="PetscDrawResizeWindow_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawResizeWindow_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, int w, int h)</font></strong>
+<a name="line419">419: </a>{
+<a name="line420">420: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line421">421: </a>  RECT             r;
+
+<a name="line423">423: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line424">424: </a>  GetWindowRect(windraw-&gt;hWnd, &amp;r);
+<a name="line425">425: </a>  MoveWindow(windraw-&gt;hWnd, r.left, r.top, (int)w, (int)h, TRUE);
+<a name="line426">426: </a>  <font color="#B22222">/* set all variable dealing with window dimensions */</font>
+<a name="line427">427: </a>  windraw-&gt;node-&gt;bitheight = windraw-&gt;h = draw-&gt;h = h;
+<a name="line428">428: </a>  windraw-&gt;node-&gt;bitwidth = windraw-&gt;w = draw-&gt;w = w;
+<a name="line429">429: </a>  <font color="#B22222">/* set up graphic buffers with the new size of window */</font>
+<a name="line430">430: </a>  SetBitmapDimensionEx(windraw-&gt;node-&gt;BufferBit, w, h, NULL);
+<a name="line431">431: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) SetBitmapDimensionEx(windraw-&gt;node-&gt;DoubleBufferBit, w, h, NULL);
+<a name="line432">432: </a>  windraw-&gt;haveresized = <a href="../../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line433">433: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line434">434: </a>}
+
+<a name="line436">436: </a><strong><font color="#4169E1"><a name="PetscDrawCheckResizedWindow_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawCheckResizedWindow_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
+<a name="line437">437: </a>{
+<a name="line438">438: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+
+<a name="line440">440: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line441">441: </a>  <a href="../../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(windraw-&gt;haveresized != 1, <a href="../../../../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_SUP</a>, <font color="#666666">"No support for resizing windows on Microsoft Windows"</font>);
+<a name="line442">442: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line443">443: </a>}
+
+<a name="line445">445: </a><strong><font color="#4169E1"><a name="PetscDrawSetTitle_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawSetTitle_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, const char title[])</font></strong>
+<a name="line446">446: </a>{
+<a name="line447">447: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+
+<a name="line449">449: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line450">450: </a>  SetWindowText(windraw-&gt;hWnd, title);
+<a name="line451">451: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line452">452: </a>}
+
+<a name="line454">454: </a><strong><font color="#4169E1"><a name="PetscDrawClear_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawClear_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
+<a name="line455">455: </a>{
+<a name="line456">456: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+
+<a name="line458">458: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line459">459: </a>  <font color="#B22222">/* clear primary buffer */</font>
+<a name="line460">460: </a>  ExtFloodFill(windraw-&gt;node-&gt;Buffer, 0, 0, COLOR_WINDOW, FLOODFILLBORDER);
+<a name="line461">461: </a>  <font color="#B22222">/* if exists clear secondary buffer */</font>
+<a name="line462">462: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) ExtFloodFill(windraw-&gt;node-&gt;DoubleBuffer, 0, 0, COLOR_WINDOW, FLOODFILLBORDER);
+
+<a name="line464">464: </a>  <font color="#B22222">/* force WM_PAINT message so cleared buffer will show */</font>
+<a name="line465">465: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
+<a name="line466">466: </a>  UpdateWindow(windraw-&gt;hWnd);
+<a name="line467">467: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line468">468: </a>}
+
+<a name="line470">470: </a><strong><font color="#4169E1"><a name="PetscDrawTriangle_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawTriangle_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> x1, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> yone, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> x2, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> y2, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> x3, <a href="../../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> y3, int c1, int c2, int c3)</font></strong>
+<a name="line471">471: </a>{
+<a name="line472">472: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line473">473: </a>  HBRUSH           hbrush;
+<a name="line474">474: </a>  HPEN             hpen;
+<a name="line475">475: </a>  int              p1x, p1y, p2x, p2y, p3x, p3y;
+<a name="line476">476: </a>  HDC              bit;
+
+<a name="line478">478: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line479">479: </a>  AverageColorTriangle_Win32(draw, c1, c2, c3);
+<a name="line480">480: </a>  hbrush = CreateSolidBrush(windraw-&gt;currentcolor);
+<a name="line481">481: </a>  hpen   = CreatePen(PS_SOLID, 0, windraw-&gt;currentcolor);
+<a name="line482">482: </a>  p1x    = XTRANS(draw, windraw, x1);
+<a name="line483">483: </a>  p2x    = XTRANS(draw, windraw, x2);
+<a name="line484">484: </a>  p3x    = XTRANS(draw, windraw, x3);
+<a name="line485">485: </a>  p1y    = YTRANS(draw, windraw, yone);
+<a name="line486">486: </a>  p2y    = YTRANS(draw, windraw, y2);
+<a name="line487">487: </a>  p3y    = YTRANS(draw, windraw, y3);
+
+<a name="line489">489: </a>  <font color="#4169E1">if</font> (windraw-&gt;node-&gt;DoubleBuffered) bit = windraw-&gt;node-&gt;DoubleBuffer;
+<a name="line490">490: </a>  <font color="#4169E1">else</font> bit = windraw-&gt;node-&gt;Buffer;
+
+<a name="line492">492: </a>  BeginPath(bit);
+<a name="line493">493: </a>  MoveToEx(bit, p1x, p1y, NULL);
+<a name="line494">494: </a>  LineTo(bit, p2x, p2y);
+<a name="line495">495: </a>  LineTo(bit, p3x, p3y);
+<a name="line496">496: </a>  LineTo(bit, p1x, p1y);
+<a name="line497">497: </a>  EndPath(bit);
+<a name="line498">498: </a>  SelectPen(bit, hpen);
+<a name="line499">499: </a>  SelectBrush(bit, hbrush);
+<a name="line500">500: </a>  StrokeAndFillPath(bit);
+<a name="line501">501: </a>  <font color="#B22222">/* Forces a WM_PAINT message and erases background */</font>
+<a name="line502">502: </a>  InvalidateRect(windraw-&gt;hWnd, NULL, TRUE);
+<a name="line503">503: </a>  UpdateWindow(windraw-&gt;hWnd);
+<a name="line504">504: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line505">505: </a>}
+
+<a name="line507">507: </a><strong><font color="#4169E1"><a name="PetscDrawSetVisible_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawSetVisible_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> visible)</font></strong>
+<a name="line508">508: </a>{
+<a name="line509">509: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+
+<a name="line511">511: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line512">512: </a>  ShowWindow(windraw-&gt;hWnd, visible ? SW_SHOWNA : SW_HIDE);
+<a name="line513">513: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line514">514: </a>}
+
+<a name="line516">516: </a><strong><font color="#4169E1"><a name="PetscDrawDestroy_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawDestroy_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
+<a name="line517">517: </a>{
+<a name="line518">518: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+
+<a name="line520">520: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line521">521: </a>  SendMessage(windraw-&gt;hWnd, WM_DESTROY, 0, 0);
+<a name="line522">522: </a>  <a href="../../../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(draw-&gt;data);
+<a name="line523">523: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line524">524: </a>}
+
+<a name="line526">526: </a><strong><font color="#4169E1"><a name="MessageLoopThread_Win32"></a>static void MessageLoopThread_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
+<a name="line527">527: </a>{
+<a name="line528">528: </a>  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line529">529: </a>  MSG              msg;
+<a name="line530">530: </a>  HWND             hWnd        = NULL;
+<a name="line531">531: </a>  const char       classname[] = <font color="#666666">"PETSc Window Class"</font>;
+<a name="line532">532: </a>  WNDCLASSEX       wclass;
+<a name="line533">533: </a>  LPVOID           lpMsgBuf;
+
+<a name="line535">535: </a>  <font color="#B22222">/* initialize window class parameters */</font>
+<a name="line536">536: </a>  wclass.cbSize        = <font color="#4169E1">sizeof</font>(WNDCLASSEX);
+<a name="line537">537: </a>  wclass.style         = CS_SAVEBITS | CS_HREDRAW | CS_VREDRAW;
+<a name="line538">538: </a>  wclass.lpfnWndProc   = (WNDPROC)PetscWndProc;
+<a name="line539">539: </a>  wclass.cbClsExtra    = 0;
+<a name="line540">540: </a>  wclass.cbWndExtra    = 0;
+<a name="line541">541: </a>  wclass.hInstance     = NULL;
+<a name="line542">542: </a>  wclass.hIcon         = LoadIcon(NULL, IDI_APPLICATION);
+<a name="line543">543: </a>  wclass.hCursor       = LoadCursor(NULL, IDC_ARROW);
+<a name="line544">544: </a>  wclass.hbrBackground = GetStockBrush(WHITE_BRUSH);
+<a name="line545">545: </a>  wclass.lpszMenuName  = NULL;
+<a name="line546">546: </a>  wclass.lpszClassName = classname;
+<a name="line547">547: </a>  wclass.hIconSm       = NULL;
+
+<a name="line549">549: </a>  RegisterClassEx(&amp;wclass);
+
+<a name="line551">551: </a>  hWnd = CreateWindowEx(0, classname, NULL, WS_OVERLAPPEDWINDOW, draw-&gt;x, draw-&gt;y, draw-&gt;w, draw-&gt;h, NULL, NULL, hInst, NULL);
+
+<a name="line553">553: </a>  <font color="#4169E1">if</font> (!hWnd) {
+<a name="line554">554: </a>    lpMsgBuf = (LPVOID) <font color="#666666">"Window Not Successfully Created"</font>;
+<a name="line555">555: </a>    MessageBox(NULL, (LPCTSTR)lpMsgBuf, <font color="#666666">"Error"</font>, MB_OK | MB_ICONINFORMATION);
+<a name="line556">556: </a>    LocalFree(lpMsgBuf);
+<a name="line557">557: </a>    exit(0);
+<a name="line558">558: </a>  }
+<a name="line559">559: </a>  windraw-&gt;hWnd = hWnd;
+<a name="line560">560: </a>  <font color="#B22222">/* display and update new window */</font>
+<a name="line561">561: </a>  ShowWindow(hWnd, SW_SHOWNORMAL);
+<a name="line562">562: </a>  UpdateWindow(hWnd);
+<a name="line563">563: </a>  SetEvent(windraw-&gt;hReadyEvent);
+
+<a name="line565">565: </a>  <font color="#4169E1">while</font> (GetMessage(&amp;msg, hWnd, 0, 0)) {
+<a name="line566">566: </a>    TranslateMessage(&amp;msg);
+<a name="line567">567: </a>    DispatchMessage(&amp;msg);
+<a name="line568">568: </a>  }
+<a name="line569">569: </a>  <font color="#4169E1">return</font>;
+<a name="line570">570: </a>}
+
+<a name="line572">572: </a>static <font color="#4169E1">struct _PetscDrawOps</font> DvOps = {PetscDrawSetDoubleBuffer_Win32, PetscDrawFlush_Win32, PetscDrawLine_Win32, PetscDrawLineSetWidth_Win32, PetscDrawLineGetWidth_Win32, PetscDrawPoint_Win32, PetscDrawPointSetSize_Win32, PetscDrawString_Win32, PetscDrawStringVertical_Win32, PetscDrawStringSetSize_Win32, PetscDrawStringGetSize_Win32, 0, PetscDrawClear_Win32, PetscDrawRectangle_Win32, PetscDrawTriangle_Win32, 0, PetscDrawGetMouseButton_Win32, PetscDrawPause_Win32, 0, 0, PetscDrawGetPopup_Win32, PetscDrawSetTitle_Win32, PetscDrawCheckResizedWindow_Win32, PetscDrawResizeWindow_Win32, PetscDrawDestroy_Win32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, PetscDrawSetVisible_Win32};
+
+<a name="line574">574: </a><strong><font color="#4169E1"><a name="PetscDrawGetPopup_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawGetPopup_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> *popup)</font></strong>
+<a name="line575">575: </a>{
+<a name="line576">576: </a>  PetscDraw_Win32 *win = (PetscDraw_Win32 *)draw-&gt;data;
+<a name="line577">577: </a>  <a href="../../../../../../manualpages/Sys/PetscBool.html">PetscBool</a>        flg = <a href="../../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+
+<a name="line579">579: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line580">580: </a>  <a href="../../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../../manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(((<a href="../../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)draw)-&gt;options, ((<a href="../../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)draw)-&gt;prefix, <font color="#666666">"-draw_popup"</font>, &amp;flg, NULL));
+<a name="line581">581: </a>  <font color="#4169E1">if</font> (flg) {
+<a name="line582">582: </a>    <a href="../../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../../manualpages/Draw/PetscDrawCreate.html">PetscDrawCreate</a>(<a href="../../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)draw), NULL, NULL, win-&gt;x, win-&gt;y + win-&gt;h + 36, 220, 220, popup));
+<a name="line583">583: </a>    <a href="../../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../../manualpages/Draw/PetscDrawSetType.html">PetscDrawSetType</a>(*popup, PETSC_DRAW_WIN32));
+<a name="line584">584: </a>    draw-&gt;popup = *popup;
+<a name="line585">585: </a>  } <font color="#4169E1">else</font> {
+<a name="line586">586: </a>    *popup = NULL;
 <a name="line587">587: </a>  }
-<a name="line588">588: </a>  windraw-&gt;hWnd = hWnd;
-<a name="line589">589: </a>  <font color="#B22222">/* display and update new window */</font>
-<a name="line590">590: </a>  ShowWindow(hWnd, SW_SHOWNORMAL);
-<a name="line591">591: </a>  UpdateWindow(hWnd);
-<a name="line592">592: </a>  SetEvent(windraw-&gt;hReadyEvent);
+<a name="line588">588: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line589">589: </a>}
+<a name="line590">590: </a><strong><font color="#4169E1"><a name="PetscDrawCreate_Win32"></a>PETSC_EXTERN <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawCreate_Win32(<a href="../../../../../../manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
+<a name="line591">591: </a>{
+<a name="line592">592: </a>  PetscDraw_Win32 *windraw;
+<a name="line593">593: </a>  HANDLE           hThread = NULL;
+<a name="line594">594: </a>  WindowNode       newnode;
 
-<a name="line594">594: </a>  <font color="#4169E1">while</font> (GetMessage(&amp;msg, hWnd, 0, 0)) {
-<a name="line595">595: </a>    TranslateMessage(&amp;msg);
-<a name="line596">596: </a>    DispatchMessage(&amp;msg);
-<a name="line597">597: </a>  }
-<a name="line598">598: </a>  <font color="#4169E1">return</font>;
-<a name="line599">599: </a>}
+<a name="line596">596: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line597">597: </a>  <a href="../../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../../manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;windraw));
+<a name="line598">598: </a>  draw-&gt;data = windraw;
 
-<a name="line601">601: </a>static <font color="#4169E1">struct _PetscDrawOps</font> DvOps = {PetscDrawSetDoubleBuffer_Win32, PetscDrawFlush_Win32, PetscDrawLine_Win32, PetscDrawLineSetWidth_Win32, PetscDrawLineGetWidth_Win32, PetscDrawPoint_Win32, PetscDrawPointSetSize_Win32, PetscDrawString_Win32, PetscDrawStringVertical_Win32, PetscDrawStringSetSize_Win32, PetscDrawStringGetSize_Win32, 0, PetscDrawClear_Win32, PetscDrawRectangle_Win32, PetscDrawTriangle_Win32, 0, PetscDrawGetMouseButton_Win32, PetscDrawPause_Win32, 0, 0, PetscDrawGetPopup_Win32, PetscDrawSetTitle_Win32, PetscDrawCheckResizedWindow_Win32, PetscDrawResizeWindow_Win32, PetscDrawDestroy_Win32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+<a name="line600">600: </a>  <font color="#B22222">/* the following is temporary fix for initializing a global datastructure */</font>
+<a name="line601">601: </a>  <font color="#4169E1">if</font> (!g_hWindowListMutex) g_hWindowListMutex = CreateMutex(NULL, FALSE, NULL);
+<a name="line602">602: </a>  draw-&gt;ops[0] = DvOps;
 
-<a name="line603">603: </a><strong><font color="#4169E1"><a name="PetscDrawGetPopup_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawGetPopup_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw, <a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> *popup)</font></strong>
-<a name="line604">604: </a>{
-<a name="line605">605: </a>  PetscDraw_Win32 *win = (PetscDraw_Win32 *)draw-&gt;data;
-<a name="line606">606: </a>  <a href="../../../../..32/../docs/manualpages/Sys/PetscBool.html">PetscBool</a>        flg = <a href="../../../../..32/../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line604">604: </a>  windraw-&gt;hReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+<a name="line605">605: </a>  <font color="#B22222">/* makes call to MessageLoopThread to creat window and attach a thread */</font>
+<a name="line606">606: </a>  CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)MessageLoopThread_Win32, draw, 0, (LPDWORD)hThread);
+<a name="line607">607: </a>  CloseHandle(hThread);
+<a name="line608">608: </a>  WaitForSingleObject(windraw-&gt;hReadyEvent, INFINITE);
+<a name="line609">609: </a>  CloseHandle(windraw-&gt;hReadyEvent);
+<a name="line610">610: </a>  WaitForSingleObject(g_hWindowListMutex, INFINITE);
 
-<a name="line608">608: </a>  <a href="../../../../..32/../docs/manualpages/Sys/PetscOptionsGetBool.html">PetscOptionsGetBool</a>(((<a href="../../../../..32/../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)draw)-&gt;options, ((<a href="../../../../..32/../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)draw)-&gt;prefix, <font color="#666666">"-draw_popup"</font>, &amp;flg, NULL);
-<a name="line609">609: </a>  <font color="#4169E1">if</font> (flg) {
-<a name="line610">610: </a>    <a href="../../../../..32/../docs/manualpages/Draw/PetscDrawCreate.html">PetscDrawCreate</a>(<a href="../../../../..32/../docs/manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../..32/../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)draw), NULL, NULL, win-&gt;x, win-&gt;y + win-&gt;h + 36, 220, 220, popup);
-<a name="line611">611: </a>    <a href="../../../../..32/../docs/manualpages/Draw/PetscDrawSetType.html">PetscDrawSetType</a>(*popup, PETSC_DRAW_WIN32);
-<a name="line612">612: </a>    draw-&gt;popup = *popup;
-<a name="line613">613: </a>  } <font color="#4169E1">else</font> {
-<a name="line614">614: </a>    *popup = NULL;
-<a name="line615">615: </a>  }
-<a name="line616">616: </a>  <font color="#4169E1">return</font> 0;
-<a name="line617">617: </a>}
-<a name="line618">618: </a><strong><font color="#4169E1"><a name="PetscDrawCreate_Win32"></a>PETSC_EXTERN <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscDrawCreate_Win32(<a href="../../../../..32/../docs/manualpages/Draw/PetscDraw.html">PetscDraw</a> draw)</font></strong>
-<a name="line619">619: </a>{
-<a name="line620">620: </a>  PetscDraw_Win32 *windraw;
-<a name="line621">621: </a>  HANDLE           hThread = NULL;
-<a name="line622">622: </a>  WindowNode       newnode;
+<a name="line612">612: </a>  <a href="../../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../../manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;newnode));
+<a name="line613">613: </a>  newnode-&gt;MouseListHead = NULL;
+<a name="line614">614: </a>  newnode-&gt;MouseListTail = NULL;
+<a name="line615">615: </a>  newnode-&gt;wnext         = WindowListHead;
+<a name="line616">616: </a>  newnode-&gt;wprev         = NULL;
+<a name="line617">617: </a>  newnode-&gt;hWnd          = windraw-&gt;hWnd;
+<a name="line618">618: </a>  <font color="#4169E1">if</font> (WindowListHead) WindowListHead-&gt;wprev = newnode;
+<a name="line619">619: </a>  WindowListHead = newnode;
+<a name="line620">620: </a>  windraw-&gt;hdc   = GetDC(windraw-&gt;hWnd);
 
-<a name="line624">624: </a>  <a href="../../../../..32/../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;windraw);
-<a name="line625">625: </a>  draw-&gt;data = windraw;
+<a name="line622">622: </a>  windraw-&gt;stringheight  = 10;
+<a name="line623">623: </a>  windraw-&gt;stringwidth   = 6;
+<a name="line624">624: </a>  windraw-&gt;linewidth     = 1; <font color="#B22222">/* default pixel sizes of graphics until user changes them */</font>
+<a name="line625">625: </a>  windraw-&gt;pointdiameter = 1;
+<a name="line626">626: </a>  windraw-&gt;node          = newnode;
 
-<a name="line627">627: </a>  <font color="#B22222">/* the following is temporary fix for initializing a global datastructure */</font>
-<a name="line628">628: </a>  <font color="#4169E1">if</font> (!g_hWindowListMutex) g_hWindowListMutex = CreateMutex(NULL, FALSE, NULL);
-<a name="line629">629: </a>  <a href="../../../../..32/../docs/manualpages/Sys/PetscMemcpy.html">PetscMemcpy</a>(draw-&gt;ops, &amp;DvOps, <font color="#4169E1">sizeof</font>(DvOps));
+<a name="line628">628: </a>  windraw-&gt;x = draw-&gt;x;
+<a name="line629">629: </a>  windraw-&gt;y = draw-&gt;y;
+<a name="line630">630: </a>  windraw-&gt;w = newnode-&gt;bitwidth = draw-&gt;w;
+<a name="line631">631: </a>  windraw-&gt;h = newnode-&gt;bitheight = draw-&gt;h;
 
-<a name="line631">631: </a>  windraw-&gt;hReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-<a name="line632">632: </a>  <font color="#B22222">/* makes call to MessageLoopThread to creat window and attach a thread */</font>
-<a name="line633">633: </a>  CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)MessageLoopThread_Win32, draw, 0, (LPDWORD)hThread);
-<a name="line634">634: </a>  CloseHandle(hThread);
-<a name="line635">635: </a>  WaitForSingleObject(windraw-&gt;hReadyEvent, INFINITE);
-<a name="line636">636: </a>  CloseHandle(windraw-&gt;hReadyEvent);
-<a name="line637">637: </a>  WaitForSingleObject(g_hWindowListMutex, INFINITE);
+<a name="line633">633: </a>  <font color="#B22222">/* Create and initialize primary graphics buffer */</font>
+<a name="line634">634: </a>  newnode-&gt;Buffer    = CreateCompatibleDC(windraw-&gt;hdc);
+<a name="line635">635: </a>  newnode-&gt;BufferBit = CreateCompatibleBitmap(windraw-&gt;hdc, windraw-&gt;w, windraw-&gt;h);
+<a name="line636">636: </a>  newnode-&gt;store     = SelectObject(newnode-&gt;Buffer, newnode-&gt;BufferBit);
+<a name="line637">637: </a>  ExtFloodFill(newnode-&gt;Buffer, 0, 0, COLOR_WINDOW, FLOODFILLBORDER);
 
-<a name="line639">639: </a>  <a href="../../../../..32/../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;newnode);
-<a name="line640">640: </a>  newnode-&gt;MouseListHead = NULL;
-<a name="line641">641: </a>  newnode-&gt;MouseListTail = NULL;
-<a name="line642">642: </a>  newnode-&gt;wnext         = WindowListHead;
-<a name="line643">643: </a>  newnode-&gt;wprev         = NULL;
-<a name="line644">644: </a>  newnode-&gt;hWnd          = windraw-&gt;hWnd;
-<a name="line645">645: </a>  <font color="#4169E1">if</font> (WindowListHead) WindowListHead-&gt;wprev = newnode;
-<a name="line646">646: </a>  WindowListHead = newnode;
-<a name="line647">647: </a>  windraw-&gt;hdc   = GetDC(windraw-&gt;hWnd);
+<a name="line639">639: </a>  newnode-&gt;event          = CreateEvent(NULL, TRUE, FALSE, NULL);
+<a name="line640">640: </a>  newnode-&gt;DoubleBuffered = <a href="../../../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
 
-<a name="line649">649: </a>  windraw-&gt;stringheight  = 10;
-<a name="line650">650: </a>  windraw-&gt;stringwidth   = 6;
-<a name="line651">651: </a>  windraw-&gt;linewidth     = 1; <font color="#B22222">/* default pixel sizes of graphics until user changes them */</font>
-<a name="line652">652: </a>  windraw-&gt;pointdiameter = 1;
-<a name="line653">653: </a>  windraw-&gt;node          = newnode;
+<a name="line642">642: </a>  ReleaseDC(windraw-&gt;hWnd, windraw-&gt;hdc);
+<a name="line643">643: </a>  ReleaseMutex(g_hWindowListMutex);
+<a name="line644">644: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line645">645: </a>}
 
-<a name="line655">655: </a>  windraw-&gt;x = draw-&gt;x;
-<a name="line656">656: </a>  windraw-&gt;y = draw-&gt;y;
-<a name="line657">657: </a>  windraw-&gt;w = newnode-&gt;bitwidth = draw-&gt;w;
-<a name="line658">658: </a>  windraw-&gt;h = newnode-&gt;bitheight = draw-&gt;h;
+<a name="line647">647: </a><font color="#B22222">/* FUNCTION: PetscWndProc(HWND, unsigned, WORD, LONG)</font>
+<a name="line648">648: </a><font color="#B22222">   PURPOSE:  Processes messages for the main window.</font>
+<a name="line649">649: </a><font color="#B22222">   WM_COMMAND  - process the application menu</font>
+<a name="line650">650: </a><font color="#B22222">   WM_PAINT    - Paint the main window</font>
+<a name="line651">651: </a><font color="#B22222">   WM_DESTROY  - post a quit message and return */</font>
 
-<a name="line660">660: </a>  <font color="#B22222">/* Create and initialize primary graphics buffer */</font>
-<a name="line661">661: </a>  newnode-&gt;Buffer    = CreateCompatibleDC(windraw-&gt;hdc);
-<a name="line662">662: </a>  newnode-&gt;BufferBit = CreateCompatibleBitmap(windraw-&gt;hdc, windraw-&gt;w, windraw-&gt;h);
-<a name="line663">663: </a>  newnode-&gt;store     = SelectObject(newnode-&gt;Buffer, newnode-&gt;BufferBit);
-<a name="line664">664: </a>  ExtFloodFill(newnode-&gt;Buffer, 0, 0, COLOR_WINDOW, FLOODFILLBORDER);
+<a name="line653">653: </a><strong><font color="#4169E1"><a name="PetscWndProc"></a>LRESULT CALLBACK PetscWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)</font></strong>
+<a name="line654">654: </a>{
+<a name="line655">655: </a>  int wmId;
 
-<a name="line666">666: </a>  newnode-&gt;event          = CreateEvent(NULL, TRUE, FALSE, NULL);
-<a name="line667">667: </a>  newnode-&gt;DoubleBuffered = <a href="../../../../..32/../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line657">657: </a>  <font color="#4169E1">switch</font> (message) {
+<a name="line658">658: </a>    HANDLE_MSG(hWnd, WM_PAINT, OnPaint_Win32);
+<a name="line659">659: </a>    HANDLE_MSG(hWnd, WM_DESTROY, OnDestroy_Win32);
+<a name="line660">660: </a>  <font color="#4169E1">case</font> WM_COMMAND:
+<a name="line661">661: </a>    wmId = LOWORD(wParam);
+<a name="line662">662: </a>    <font color="#B22222">/* Parse the menu selections:*/</font>
+<a name="line663">663: </a>    <font color="#4169E1">switch</font> (wmId) {
+<a name="line664">664: </a>    <font color="#4169E1">case</font> IDM_EXIT:
+<a name="line665">665: </a>      DestroyWindow(hWnd);
+<a name="line666">666: </a>      <font color="#4169E1">break</font>;
+<a name="line667">667: </a><strong><font color="#FF0000">    default:</font></strong>
+<a name="line668">668: </a>      <font color="#4169E1">return</font> DefWindowProc(hWnd, message, wParam, lParam);
+<a name="line669">669: </a>    }
+<a name="line670">670: </a>    <font color="#4169E1">break</font>;
+<a name="line671">671: </a>  <font color="#4169E1">case</font> WM_LBUTTONUP:
+<a name="line672">672: </a>    MouseRecord_Win32(hWnd, <a href="../../../../../../manualpages/Sys/PetscDrawButton.html">PETSC_BUTTON_LEFT</a>);
+<a name="line673">673: </a>    <font color="#4169E1">break</font>;
+<a name="line674">674: </a>  <font color="#4169E1">case</font> WM_RBUTTONUP:
+<a name="line675">675: </a>    MouseRecord_Win32(hWnd, <a href="../../../../../../manualpages/Sys/PetscDrawButton.html">PETSC_BUTTON_RIGHT</a>);
+<a name="line676">676: </a>    <font color="#4169E1">break</font>;
+<a name="line677">677: </a>  <font color="#4169E1">case</font> WM_MBUTTONUP:
+<a name="line678">678: </a>    MouseRecord_Win32(hWnd, <a href="../../../../../../manualpages/Sys/PetscDrawButton.html">PETSC_BUTTON_CENTER</a>);
+<a name="line679">679: </a>    <font color="#4169E1">break</font>;
+<a name="line680">680: </a><strong><font color="#FF0000">  default:</font></strong>
+<a name="line681">681: </a>    <font color="#4169E1">return</font> DefWindowProc(hWnd, message, wParam, lParam);
+<a name="line682">682: </a>  }
+<a name="line683">683: </a>  <font color="#4169E1">return</font> 0;
+<a name="line684">684: </a>}
 
-<a name="line669">669: </a>  ReleaseDC(windraw-&gt;hWnd, windraw-&gt;hdc);
-<a name="line670">670: </a>  ReleaseMutex(g_hWindowListMutex);
-<a name="line671">671: </a>  <font color="#4169E1">return</font> 0;
-<a name="line672">672: </a>}
+<a name="line686">686: </a><strong><font color="#4169E1"><a name="OnPaint_Win32"></a>static void OnPaint_Win32(HWND hWnd)</font></strong>
+<a name="line687">687: </a>{
+<a name="line688">688: </a>  PAINTSTRUCT ps;
+<a name="line689">689: </a>  HDC         hdc;
+<a name="line690">690: </a>  WindowNode  current = NULL;
 
-<a name="line674">674: </a><font color="#B22222">/* FUNCTION: PetscWndProc(HWND, unsigned, WORD, LONG)</font>
-<a name="line675">675: </a><font color="#B22222">   PURPOSE:  Processes messages for the main window.</font>
-<a name="line676">676: </a><font color="#B22222">   WM_COMMAND  - process the application menu</font>
-<a name="line677">677: </a><font color="#B22222">   WM_PAINT    - Paint the main window</font>
-<a name="line678">678: </a><font color="#B22222">   WM_DESTROY  - post a quit message and return */</font>
+<a name="line692">692: </a>  InvalidateRect(hWnd, NULL, TRUE);
+<a name="line693">693: </a>  WaitForSingleObject(g_hWindowListMutex, INFINITE);
+<a name="line694">694: </a>  current = WindowListHead;
+<a name="line695">695: </a>  hdc     = BeginPaint(hWnd, &amp;ps);
 
-<a name="line680">680: </a><strong><font color="#4169E1"><a name="PetscWndProc"></a>LRESULT CALLBACK PetscWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)</font></strong>
-<a name="line681">681: </a>{
-<a name="line682">682: </a>  int wmId;
+<a name="line697">697: </a>  <font color="#4169E1">while</font> (current) {
+<a name="line698">698: </a>    <font color="#4169E1">if</font> (current-&gt;hWnd == hWnd) {
+<a name="line699">699: </a>      <font color="#B22222">/* flushes primary buffer to window */</font>
+<a name="line700">700: </a>      BitBlt(hdc, 0, 0, GetDeviceCaps(hdc, HORZRES), GetDeviceCaps(hdc, VERTRES), current-&gt;Buffer, 0, 0, SRCCOPY);
 
-<a name="line684">684: </a>  <font color="#4169E1">switch</font> (message) {
-<a name="line685">685: </a>    HANDLE_MSG(hWnd, WM_PAINT, OnPaint_Win32);
-<a name="line686">686: </a>    HANDLE_MSG(hWnd, WM_DESTROY, OnDestroy_Win32);
-<a name="line687">687: </a>  <font color="#4169E1">case</font> WM_COMMAND:
-<a name="line688">688: </a>    wmId = LOWORD(wParam);
-<a name="line689">689: </a>    <font color="#B22222">/* Parse the menu selections:*/</font>
-<a name="line690">690: </a>    <font color="#4169E1">switch</font> (wmId) {
-<a name="line691">691: </a>    <font color="#4169E1">case</font> IDM_EXIT:
-<a name="line692">692: </a>      DestroyWindow(hWnd);
-<a name="line693">693: </a>      <font color="#4169E1">break</font>;
-<a name="line694">694: </a><strong><font color="#FF0000">    default:</font></strong>
-<a name="line695">695: </a>      <font color="#4169E1">return</font> DefWindowProc(hWnd, message, wParam, lParam);
-<a name="line696">696: </a>    }
-<a name="line697">697: </a>    <font color="#4169E1">break</font>;
-<a name="line698">698: </a>  <font color="#4169E1">case</font> WM_LBUTTONUP:
-<a name="line699">699: </a>    MouseRecord_Win32(hWnd, <a href="../../../../..32/../docs/manualpages/Sys/PetscDrawButton.html">PETSC_BUTTON_LEFT</a>);
-<a name="line700">700: </a>    <font color="#4169E1">break</font>;
-<a name="line701">701: </a>  <font color="#4169E1">case</font> WM_RBUTTONUP:
-<a name="line702">702: </a>    MouseRecord_Win32(hWnd, <a href="../../../../..32/../docs/manualpages/Sys/PetscDrawButton.html">PETSC_BUTTON_RIGHT</a>);
-<a name="line703">703: </a>    <font color="#4169E1">break</font>;
-<a name="line704">704: </a>  <font color="#4169E1">case</font> WM_MBUTTONUP:
-<a name="line705">705: </a>    MouseRecord_Win32(hWnd, <a href="../../../../..32/../docs/manualpages/Sys/PetscDrawButton.html">PETSC_BUTTON_CENTER</a>);
-<a name="line706">706: </a>    <font color="#4169E1">break</font>;
-<a name="line707">707: </a><strong><font color="#FF0000">  default:</font></strong>
-<a name="line708">708: </a>    <font color="#4169E1">return</font> DefWindowProc(hWnd, message, wParam, lParam);
-<a name="line709">709: </a>  }
-<a name="line710">710: </a>  <font color="#4169E1">return</font> 0;
+<a name="line702">702: </a>      <font color="#B22222">/* StretchBlt(hdc,0,0,w,h,</font>
+<a name="line703">703: </a><font color="#B22222">        current-&gt;Buffer,0,0,current-&gt;bitwidth,current-&gt;bitheight,SRCCOPY); */</font>
+<a name="line704">704: </a>      <font color="#4169E1">break</font>;
+<a name="line705">705: </a>    }
+<a name="line706">706: </a>    current = current-&gt;wnext;
+<a name="line707">707: </a>  }
+<a name="line708">708: </a>  EndPaint(hWnd, &amp;ps);
+<a name="line709">709: </a>  ReleaseMutex(g_hWindowListMutex);
+<a name="line710">710: </a>  <font color="#4169E1">return</font>;
 <a name="line711">711: </a>}
 
-<a name="line713">713: </a><strong><font color="#4169E1"><a name="OnPaint_Win32"></a>static void OnPaint_Win32(HWND hWnd)</font></strong>
+<a name="line713">713: </a><strong><font color="#4169E1"><a name="MouseRecord_Win32"></a>static <a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MouseRecord_Win32(HWND hWnd, <a href="../../../../../../manualpages/Sys/PetscDrawButton.html">PetscDrawButton</a> button)</font></strong>
 <a name="line714">714: </a>{
-<a name="line715">715: </a>  PAINTSTRUCT ps;
-<a name="line716">716: </a>  HDC         hdc;
-<a name="line717">717: </a>  WindowNode  current = NULL;
+<a name="line715">715: </a>  <font color="#B22222">/* Called by all three mouse button actions</font>
+<a name="line716">716: </a><font color="#B22222">    Records needed mouse data in windows data structure */</font>
+<a name="line717">717: </a>  WindowNode current = NULL;
+<a name="line718">718: </a>  MouseNode  newnode;
+<a name="line719">719: </a>  POINT      mousepos;
 
-<a name="line719">719: </a>  InvalidateRect(hWnd, NULL, TRUE);
-<a name="line720">720: </a>  WaitForSingleObject(g_hWindowListMutex, INFINITE);
-<a name="line721">721: </a>  current = WindowListHead;
-<a name="line722">722: </a>  hdc     = BeginPaint(hWnd, &amp;ps);
+<a name="line721">721: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line722">722: </a>  WaitForSingleObject(g_hWindowListMutex, INFINITE);
+<a name="line723">723: </a>  current = WindowListHead;
+<a name="line724">724: </a>  <font color="#4169E1">if</font> (current-&gt;IsGetMouseOn == TRUE) {
+<a name="line725">725: </a>    SetEvent(current-&gt;event);
+<a name="line726">726: </a>    <font color="#4169E1">while</font> (current) {
+<a name="line727">727: </a>      <font color="#4169E1">if</font> (current-&gt;hWnd == hWnd) {
+<a name="line728">728: </a>        <a href="../../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../../manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;newnode));
+<a name="line729">729: </a>        newnode-&gt;Button = button;
+<a name="line730">730: </a>        GetCursorPos(&amp;mousepos);
+<a name="line731">731: </a>        newnode-&gt;user.x = mousepos.x;
+<a name="line732">732: </a>        newnode-&gt;user.y = mousepos.y;
+<a name="line733">733: </a>        ScreenToClient(hWnd, &amp;mousepos);
+<a name="line734">734: </a>        newnode-&gt;phys.x = mousepos.x;
+<a name="line735">735: </a>        newnode-&gt;phys.y = mousepos.y;
+<a name="line736">736: </a>        <font color="#4169E1">if</font> (!current-&gt;MouseListTail) {
+<a name="line737">737: </a>          current-&gt;MouseListHead = newnode;
+<a name="line738">738: </a>          current-&gt;MouseListTail = newnode;
+<a name="line739">739: </a>        } <font color="#4169E1">else</font> {
+<a name="line740">740: </a>          current-&gt;MouseListTail-&gt;mnext = newnode;
+<a name="line741">741: </a>          current-&gt;MouseListTail        = newnode;
+<a name="line742">742: </a>        }
+<a name="line743">743: </a>        newnode-&gt;mnext = NULL;
 
-<a name="line724">724: </a>  <font color="#4169E1">while</font> (current) {
-<a name="line725">725: </a>    <font color="#4169E1">if</font> (current-&gt;hWnd == hWnd) {
-<a name="line726">726: </a>      <font color="#B22222">/* flushes primary buffer to window */</font>
-<a name="line727">727: </a>      BitBlt(hdc, 0, 0, GetDeviceCaps(hdc, HORZRES), GetDeviceCaps(hdc, VERTRES), current-&gt;Buffer, 0, 0, SRCCOPY);
+<a name="line745">745: </a>        <font color="#4169E1">break</font>;
+<a name="line746">746: </a>      }
+<a name="line747">747: </a>      current = current-&gt;wnext;
+<a name="line748">748: </a>    }
+<a name="line749">749: </a>  }
+<a name="line750">750: </a>  ReleaseMutex(g_hWindowListMutex);
+<a name="line751">751: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line752">752: </a>}
 
-<a name="line729">729: </a>      <font color="#B22222">/* StretchBlt(hdc,0,0,w,h,</font>
-<a name="line730">730: </a><font color="#B22222">        current-&gt;Buffer,0,0,current-&gt;bitwidth,current-&gt;bitheight,SRCCOPY); */</font>
-<a name="line731">731: </a>      <font color="#4169E1">break</font>;
-<a name="line732">732: </a>    }
-<a name="line733">733: </a>    current = current-&gt;wnext;
-<a name="line734">734: </a>  }
-<a name="line735">735: </a>  EndPaint(hWnd, &amp;ps);
-<a name="line736">736: </a>  ReleaseMutex(g_hWindowListMutex);
-<a name="line737">737: </a>  <font color="#4169E1">return</font>;
-<a name="line738">738: </a>}
+<a name="line754">754: </a><strong><font color="#4169E1"><a name="OnDestroy_Win32"></a>static void OnDestroy_Win32(HWND hWnd)</font></strong>
+<a name="line755">755: </a>{
+<a name="line756">756: </a>  <font color="#B22222">/* searches linked list of window data and frees corresponding memory */</font>
+<a name="line757">757: </a>  WindowNode current;
 
-<a name="line740">740: </a><strong><font color="#4169E1"><a name="MouseRecord_Win32"></a>static <a href="../../../../..32/../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MouseRecord_Win32(HWND hWnd, <a href="../../../../..32/../docs/manualpages/Sys/PetscDrawButton.html">PetscDrawButton</a> button)</font></strong>
-<a name="line741">741: </a>{
-<a name="line742">742: </a>  <font color="#B22222">/* Called by all three mouse button actions</font>
-<a name="line743">743: </a><font color="#B22222">    Records needed mouse data in windows data structure */</font>
-<a name="line744">744: </a>  WindowNode current = NULL;
-<a name="line745">745: </a>  MouseNode  newnode;
-<a name="line746">746: </a>  POINT      mousepos;
+<a name="line759">759: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line760">760: </a>  WaitForSingleObject(g_hWindowListMutex, INFINITE);
+<a name="line761">761: </a>  current = WindowListHead;
 
-<a name="line748">748: </a>  WaitForSingleObject(g_hWindowListMutex, INFINITE);
-<a name="line749">749: </a>  current = WindowListHead;
-<a name="line750">750: </a>  <font color="#4169E1">if</font> (current-&gt;IsGetMouseOn == TRUE) {
-<a name="line751">751: </a>    SetEvent(current-&gt;event);
-<a name="line752">752: </a>    <font color="#4169E1">while</font> (current) {
-<a name="line753">753: </a>      <font color="#4169E1">if</font> (current-&gt;hWnd == hWnd) {
-<a name="line754">754: </a>        <a href="../../../../..32/../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;newnode);
-<a name="line755">755: </a>        newnode-&gt;Button = button;
-<a name="line756">756: </a>        GetCursorPos(&amp;mousepos);
-<a name="line757">757: </a>        newnode-&gt;user.x = mousepos.x;
-<a name="line758">758: </a>        newnode-&gt;user.y = mousepos.y;
-<a name="line759">759: </a>        ScreenToClient(hWnd, &amp;mousepos);
-<a name="line760">760: </a>        newnode-&gt;phys.x = mousepos.x;
-<a name="line761">761: </a>        newnode-&gt;phys.y = mousepos.y;
-<a name="line762">762: </a>        <font color="#4169E1">if</font> (!current-&gt;MouseListTail) {
-<a name="line763">763: </a>          current-&gt;MouseListHead = newnode;
-<a name="line764">764: </a>          current-&gt;MouseListTail = newnode;
-<a name="line765">765: </a>        } <font color="#4169E1">else</font> {
-<a name="line766">766: </a>          current-&gt;MouseListTail-&gt;mnext = newnode;
-<a name="line767">767: </a>          current-&gt;MouseListTail        = newnode;
-<a name="line768">768: </a>        }
-<a name="line769">769: </a>        newnode-&gt;mnext = NULL;
-
-<a name="line771">771: </a>        <font color="#4169E1">break</font>;
-<a name="line772">772: </a>      }
-<a name="line773">773: </a>      current = current-&gt;wnext;
-<a name="line774">774: </a>    }
-<a name="line775">775: </a>  }
-<a name="line776">776: </a>  ReleaseMutex(g_hWindowListMutex);
-<a name="line777">777: </a>  <font color="#4169E1">return</font> 0;
-<a name="line778">778: </a>}
-
-<a name="line780">780: </a><strong><font color="#4169E1"><a name="OnDestroy_Win32"></a>static void OnDestroy_Win32(HWND hWnd)</font></strong>
-<a name="line781">781: </a>{
-<a name="line782">782: </a>  <font color="#B22222">/* searches linked list of window data and frees corresponding memory */</font>
-<a name="line783">783: </a>  WindowNode current;
-
-<a name="line785">785: </a>  WaitForSingleObject(g_hWindowListMutex, INFINITE);
-<a name="line786">786: </a>  current = WindowListHead;
-
-<a name="line788">788: </a>  SetEvent(current-&gt;event);
-<a name="line789">789: </a>  <font color="#4169E1">while</font> (current) {
-<a name="line790">790: </a>    <font color="#4169E1">if</font> (current-&gt;hWnd == hWnd) {
-<a name="line791">791: </a>      <font color="#4169E1">if</font> (current-&gt;wprev) current-&gt;wprev-&gt;wnext = current-&gt;wnext;
-<a name="line792">792: </a>      <font color="#4169E1">else</font> WindowListHead = current-&gt;wnext;
-<a name="line793">793: </a>      <font color="#4169E1">if</font> (current-&gt;MouseListHead) deletemouselist_Win32(current);
-<a name="line794">794: </a>      <font color="#4169E1">else</font> <a href="../../../../..32/../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(current);
-<a name="line795">795: </a>      <font color="#4169E1">break</font>;
-<a name="line796">796: </a>    }
-<a name="line797">797: </a>    current = current-&gt;wnext;
-<a name="line798">798: </a>  }
-<a name="line799">799: </a>  ReleaseMutex(g_hWindowListMutex);
-<a name="line800">800: </a>  PostQuitMessage(0);
-<a name="line801">801: </a>  <font color="#4169E1">return</font>;
-<a name="line802">802: </a>}
+<a name="line763">763: </a>  SetEvent(current-&gt;event);
+<a name="line764">764: </a>  <font color="#4169E1">while</font> (current) {
+<a name="line765">765: </a>    <font color="#4169E1">if</font> (current-&gt;hWnd == hWnd) {
+<a name="line766">766: </a>      <font color="#4169E1">if</font> (current-&gt;wprev) current-&gt;wprev-&gt;wnext = current-&gt;wnext;
+<a name="line767">767: </a>      <font color="#4169E1">else</font> WindowListHead = current-&gt;wnext;
+<a name="line768">768: </a>      <font color="#4169E1">if</font> (current-&gt;MouseListHead) deletemouselist_Win32(current);
+<a name="line769">769: </a>      <font color="#4169E1">else</font> <a href="../../../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(current);
+<a name="line770">770: </a>      <font color="#4169E1">break</font>;
+<a name="line771">771: </a>    }
+<a name="line772">772: </a>    current = current-&gt;wnext;
+<a name="line773">773: </a>  }
+<a name="line774">774: </a>  ReleaseMutex(g_hWindowListMutex);
+<a name="line775">775: </a>  PostQuitMessage(0);
+<a name="line776">776: </a>  <a href="../../../../../../manualpages/Sys/PetscFunctionReturnVoid.html">PetscFunctionReturnVoid</a>();
+<a name="line777">777: </a>}
 </pre>
 </body>
 

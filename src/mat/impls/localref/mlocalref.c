@@ -1,4 +1,3 @@
-
 #include <petsc/private/matimpl.h> /*I "petscmat.h" I*/
 
 typedef struct {
@@ -39,13 +38,13 @@ static PetscErrorCode MatSetValuesBlockedLocal_LocalRef_Block(Mat A, PetscInt nr
   PetscInt      buf[4096], *irowm = NULL, *icolm; /* suppress maybe-uninitialized warning */
 
   PetscFunctionBegin;
-  if (!nrow || !ncol) PetscFunctionReturn(0);
+  if (!nrow || !ncol) PetscFunctionReturn(PETSC_SUCCESS);
   IndexSpaceGet(buf, nrow, ncol, irowm, icolm);
   PetscCall(ISLocalToGlobalMappingApplyBlock(A->rmap->mapping, nrow, irow, irowm));
   PetscCall(ISLocalToGlobalMappingApplyBlock(A->cmap->mapping, ncol, icol, icolm));
   PetscCall((*lr->SetValuesBlocked)(lr->Top, nrow, irowm, ncol, icolm, y, addv));
   IndexSpaceRestore(buf, nrow, ncol, irowm, icolm);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSetValuesBlockedLocal_LocalRef_Scalar(Mat A, PetscInt nrow, const PetscInt irow[], PetscInt ncol, const PetscInt icol[], const PetscScalar y[], InsertMode addv)
@@ -62,7 +61,7 @@ static PetscErrorCode MatSetValuesBlockedLocal_LocalRef_Scalar(Mat A, PetscInt n
   PetscCall(ISLocalToGlobalMappingApplyBlock(A->cmap->mapping, ncol * cbs, icolm, icolm));
   PetscCall((*lr->SetValues)(lr->Top, nrow * rbs, irowm, ncol * cbs, icolm, y, addv));
   IndexSpaceRestore(buf, nrow * rbs, ncol * cbs, irowm, icolm);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSetValuesLocal_LocalRef_Scalar(Mat A, PetscInt nrow, const PetscInt irow[], PetscInt ncol, const PetscInt icol[], const PetscScalar y[], InsertMode addv)
@@ -87,7 +86,7 @@ static PetscErrorCode MatSetValuesLocal_LocalRef_Scalar(Mat A, PetscInt nrow, co
   }
   PetscCall((*lr->SetValues)(lr->Top, nrow, irowm, ncol, icolm, y, addv));
   IndexSpaceRestore(buf, nrow, ncol, irowm, icolm);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Compose an IS with an ISLocalToGlobalMapping to map from IS source indices to global indices */
@@ -101,7 +100,7 @@ static PetscErrorCode ISL2GCompose(IS is, ISLocalToGlobalMapping ltog, ISLocalTo
   PetscFunctionBegin;
   PetscValidHeaderSpecific(is, IS_CLASSID, 1);
   PetscValidHeaderSpecific(ltog, IS_LTOGM_CLASSID, 2);
-  PetscValidPointer(cltog, 3);
+  PetscAssertPointer(cltog, 3);
   PetscCall(PetscObjectTypeCompare((PetscObject)is, ISBLOCK, &isblock));
   if (isblock) {
     PetscInt lbs;
@@ -116,7 +115,7 @@ static PetscErrorCode ISL2GCompose(IS is, ISLocalToGlobalMapping ltog, ISLocalTo
       PetscCall(ISLocalToGlobalMappingApplyBlock(ltog, m, idx, idxm));
       PetscCall(ISLocalToGlobalMappingCreate(PetscObjectComm((PetscObject)is), bs, m, idxm, PETSC_OWN_POINTER, cltog));
       PetscCall(ISBlockRestoreIndices(is, &idx));
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
   }
   PetscCall(ISGetLocalSize(is, &m));
@@ -130,7 +129,7 @@ static PetscErrorCode ISL2GCompose(IS is, ISLocalToGlobalMapping ltog, ISLocalTo
   }
   PetscCall(ISLocalToGlobalMappingCreate(PetscObjectComm((PetscObject)is), bs, m, idxm, PETSC_OWN_POINTER, cltog));
   PetscCall(ISRestoreIndices(is, &idx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode ISL2GComposeBlock(IS is, ISLocalToGlobalMapping ltog, ISLocalToGlobalMapping *cltog)
@@ -141,7 +140,7 @@ static PetscErrorCode ISL2GComposeBlock(IS is, ISLocalToGlobalMapping ltog, ISLo
   PetscFunctionBegin;
   PetscValidHeaderSpecific(is, IS_CLASSID, 1);
   PetscValidHeaderSpecific(ltog, IS_LTOGM_CLASSID, 2);
-  PetscValidPointer(cltog, 3);
+  PetscAssertPointer(cltog, 3);
   PetscCall(ISBlockGetLocalSize(is, &m));
   PetscCall(ISBlockGetIndices(is, &idx));
   PetscCall(ISLocalToGlobalMappingGetBlockSize(ltog, &bs));
@@ -153,39 +152,39 @@ static PetscErrorCode ISL2GComposeBlock(IS is, ISLocalToGlobalMapping ltog, ISLo
   }
   PetscCall(ISLocalToGlobalMappingCreate(PetscObjectComm((PetscObject)is), bs, m, idxm, PETSC_OWN_POINTER, cltog));
   PetscCall(ISBlockRestoreIndices(is, &idx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatDestroy_LocalRef(Mat B)
 {
   PetscFunctionBegin;
   PetscCall(PetscFree(B->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatCreateLocalRef - Gets a logical reference to a local submatrix, for use in assembly, that is to set values into the matrix
+  MatCreateLocalRef - Gets a logical reference to a local submatrix, for use in assembly, that is to set values into the matrix
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+ A - Full matrix, generally parallel
+  Input Parameters:
++ A     - full matrix, generally parallel
 . isrow - Local index set for the rows
 - iscol - Local index set for the columns
 
-   Output Parameter:
-. newmat - New serial Mat
+  Output Parameter:
+. newmat - new serial `Mat`
 
-   Level: developer
+  Level: developer
 
-   Notes:
-   Most will use `MatGetLocalSubMatrix()` which returns a real matrix corresponding to the local
-   block if it available, such as with matrix formats that store these blocks separately.
+  Notes:
+  Most will use `MatGetLocalSubMatrix()` which returns a real matrix corresponding to the local
+  block if it available, such as with matrix formats that store these blocks separately.
 
-   The new matrix forwards `MatSetValuesLocal()` and `MatSetValuesBlockedLocal()` to the global system.
-   In general, it does not define `MatMult()` or any other functions.  Local submatrices can be nested.
+  The new matrix forwards `MatSetValuesLocal()` and `MatSetValuesBlockedLocal()` to the global system.
+  In general, it does not define `MatMult()` or any other functions.  Local submatrices can be nested.
 
-.seealso: MATSUBMATRIX`, `MatCreateSubMatrixVirtual()`, `MatSetValuesLocal()`, `MatSetValuesBlockedLocal()`, `MatGetLocalSubMatrix()`, `MatCreateSubMatrix()`
+.seealso: [](ch_matrices), `Mat`, `MATSUBMATRIX`, `MatCreateSubMatrixVirtual()`, `MatSetValuesLocal()`, `MatSetValuesBlockedLocal()`, `MatGetLocalSubMatrix()`, `MatCreateSubMatrix()`
 @*/
 PetscErrorCode MatCreateLocalRef(Mat A, IS isrow, IS iscol, Mat *newmat)
 {
@@ -198,7 +197,7 @@ PetscErrorCode MatCreateLocalRef(Mat A, IS isrow, IS iscol, Mat *newmat)
   PetscValidHeaderSpecific(A, MAT_CLASSID, 1);
   PetscValidHeaderSpecific(isrow, IS_CLASSID, 2);
   PetscValidHeaderSpecific(iscol, IS_CLASSID, 3);
-  PetscValidPointer(newmat, 4);
+  PetscAssertPointer(newmat, 4);
   PetscCheck(A->rmap->mapping, PetscObjectComm((PetscObject)A), PETSC_ERR_ARG_WRONGSTATE, "Matrix must have local to global mapping provided before this call");
   *newmat = NULL;
 
@@ -273,5 +272,5 @@ PetscErrorCode MatCreateLocalRef(Mat A, IS isrow, IS iscol, Mat *newmat)
     }
   }
   *newmat = B;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -34,22 +34,8 @@
            local q-quadratic rate.
 
    The theory for the feasible version follows from the feasible descent
-   algorithm framework.
-
-   References:
-+  * - Billups, "Algorithms for Complementarity Problems and Generalized
-       Equations," Ph.D thesis, University of Wisconsin  Madison, 1995.
-.  * - De Luca, Facchinei, Kanzow, "A Semismooth Equation Approach to the
-       Solution of Nonlinear Complementarity Problems," Mathematical
-       Programming, 75, pages 407439, 1996.
-. * -  Ferris, Kanzow, Munson, "Feasible Descent Algorithms for Mixed
-       Complementarity Problems," Mathematical Programming, 86,
-       pages 475497, 1999.
-. * -  Fischer, "A Special Newton type Optimization Method," Optimization,
-       24, 1992
-- * -  Munson, Facchinei, Ferris, Fischer, Kanzow, "The Semismooth Algorithm
-       for Large Scale Complementarity Problems," Technical Report,
-       University of Wisconsin  Madison, 1999.
+   algorithm framework. See {cite}`billups:algorithms`, {cite}`deluca.facchinei.ea:semismooth`,
+   {cite}`ferris.kanzow.ea:feasible`, {cite}`fischer:special`, and {cite}`munson.facchinei.ea:semismooth`.
 */
 
 static PetscErrorCode TaoSetUp_ASFLS(Tao tao)
@@ -74,7 +60,7 @@ static PetscErrorCode TaoSetUp_ASFLS(Tao tao)
   asls->r2       = NULL;
   asls->r3       = NULL;
   asls->dxfree   = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode Tao_ASLS_FunctionGradient(TaoLineSearch ls, Vec X, PetscReal *fcn, Vec G, void *ptr)
@@ -94,7 +80,7 @@ static PetscErrorCode Tao_ASLS_FunctionGradient(TaoLineSearch ls, Vec X, PetscRe
   PetscCall(MatMultTranspose(tao->jacobian, asls->t1, G));
   PetscCall(VecPointwiseMult(asls->t1, asls->ff, asls->da));
   PetscCall(VecAXPY(G, 1.0, asls->t1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoDestroy_ASFLS(Tao tao)
@@ -119,7 +105,7 @@ static PetscErrorCode TaoDestroy_ASFLS(Tao tao)
   PetscCall(ISDestroy(&ssls->free));
   PetscCall(KSPDestroy(&tao->ksp));
   PetscCall(PetscFree(tao->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoSolve_ASFLS(Tao tao)
@@ -273,19 +259,23 @@ static PetscErrorCode TaoSolve_ASFLS(Tao tao)
     PetscCall(TaoLineSearchApply(tao->linesearch, tao->solution, &psi, asls->dpsi, tao->stepdirection, &t, &ls_reason));
     PetscCall(VecNorm(asls->dpsi, NORM_2, &ndpsi));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/* ---------------------------------------------------------- */
 /*MC
-   TAOASFLS - Active-set feasible linesearch algorithm for solving
-       complementarity constraints
+   TAOASFLS - Active-set feasible linesearch algorithm for solving complementarity constraints
 
    Options Database Keys:
 + -tao_ssls_delta - descent test fraction
-- -tao_ssls_rho - descent test power
+- -tao_ssls_rho   - descent test power
 
    Level: beginner
+
+   Note:
+   See {cite}`billups:algorithms`, {cite}`deluca.facchinei.ea:semismooth`,
+   {cite}`ferris.kanzow.ea:feasible`, {cite}`fischer:special`, and {cite}`munson.facchinei.ea:semismooth`.
+
+.seealso: `Tao`, `TaoType`, `TAOASILS`
 M*/
 PETSC_EXTERN PetscErrorCode TaoCreate_ASFLS(Tao tao)
 {
@@ -339,5 +329,5 @@ PETSC_EXTERN PetscErrorCode TaoCreate_ASFLS(Tao tao)
   if (!tao->gatol_changed) tao->gatol = 1.0e-16;
   if (!tao->fmin_changed) tao->fmin = 1.0e-8;
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

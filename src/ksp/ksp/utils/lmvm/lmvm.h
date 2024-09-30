@@ -1,5 +1,4 @@
-#ifndef __LMVM_H
-#define __LMVM_H
+#pragma once
 #include <petscksp.h>
 #include <petsc/private/matimpl.h>
 #include <petsc/private/vecimpl.h>
@@ -64,8 +63,7 @@ PETSC_INTERN PetscErrorCode MatView_LMVM(Mat, PetscViewer);
 PETSC_INTERN PetscErrorCode MatDestroy_LMVM(Mat);
 PETSC_INTERN PetscErrorCode MatCreate_LMVM(Mat);
 
-/* Create functions for derived LMVM types
-   NOTE: MatCreateXYZ() declarations for subtypes live under petsctao.h */
+/* Create functions for derived LMVM types */
 PETSC_EXTERN PetscErrorCode MatCreate_LMVMDFP(Mat);
 PETSC_EXTERN PetscErrorCode MatCreate_LMVMBFGS(Mat);
 PETSC_EXTERN PetscErrorCode MatCreate_LMVMSR1(Mat);
@@ -82,5 +80,3 @@ PETSC_INTERN PetscErrorCode MatSolve_LMVMBFGS(Mat, Vec, Vec);
 /* Mult functions for derived LMVM types (necessary only for DFP and BFGS for re-use under SymBrdn) */
 PETSC_INTERN PetscErrorCode MatMult_LMVMDFP(Mat, Vec, Vec);
 PETSC_INTERN PetscErrorCode MatMult_LMVMBFGS(Mat, Vec, Vec);
-
-#endif

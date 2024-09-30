@@ -1,4 +1,3 @@
-
 /*
     Factorization code for BAIJ format.
 */
@@ -76,7 +75,7 @@ PetscErrorCode MatSeqBAIJSetNumericFactorization(Mat fact, PetscBool natural)
       break;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatSeqBAIJSetNumericFactorization_inplace(Mat inA, PetscBool natural)
@@ -172,7 +171,7 @@ PetscErrorCode MatSeqBAIJSetNumericFactorization_inplace(Mat inA, PetscBool natu
       break;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -205,7 +204,7 @@ PetscErrorCode MatLUFactorSymbolic_SeqBAIJ(Mat B, Mat A, IS isrow, IS iscol, con
   PetscCheck(!missing, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Matrix is missing diagonal entry %" PetscInt_FMT, i);
 
   if (bs > 1) { /* check shifttype */
-    PetscCheck(info->shifttype != MAT_SHIFT_NONZERO && info->shifttype != MAT_SHIFT_POSITIVE_DEFINITE, PETSC_COMM_SELF, PETSC_ERR_SUP, "Only MAT_SHIFT_NONE and MAT_SHIFT_INBLOCKS are supported for BAIJ matrix");
+    PetscCheck(info->shifttype != (PetscReal)MAT_SHIFT_NONZERO && info->shifttype != (PetscReal)MAT_SHIFT_POSITIVE_DEFINITE, PETSC_COMM_SELF, PETSC_ERR_SUP, "Only MAT_SHIFT_NONE and MAT_SHIFT_INBLOCKS are supported for BAIJ matrix");
   }
 
   PetscCall(ISInvertPermutation(iscol, PETSC_DECIDE, &isicol));
@@ -337,10 +336,12 @@ PetscErrorCode MatLUFactorSymbolic_SeqBAIJ(Mat B, Mat A, IS isrow, IS iscol, con
   both_identity = (PetscBool)(row_identity && col_identity);
 
   PetscCall(MatSeqBAIJSetNumericFactorization(B, both_identity));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatLUFactorSymbolic_SeqBAIJ_inplace(Mat B, Mat A, IS isrow, IS iscol, const MatFactorInfo *info)
+#if 0
+// unused
+static PetscErrorCode MatLUFactorSymbolic_SeqBAIJ_inplace(Mat B, Mat A, IS isrow, IS iscol, const MatFactorInfo *info)
 {
   Mat_SeqBAIJ       *a = (Mat_SeqBAIJ *)A->data, *b;
   PetscInt           n = a->mbs, bs = A->rmap->bs, bs2 = a->bs2;
@@ -427,7 +428,7 @@ PetscErrorCode MatLUFactorSymbolic_SeqBAIJ_inplace(Mat B, Mat A, IS isrow, IS is
     current_space->local_used += nzi;
     current_space->local_remaining -= nzi;
   }
-#if defined(PETSC_USE_INFO)
+  #if defined(PETSC_USE_INFO)
   if (ai[n] != 0) {
     PetscReal af = ((PetscReal)bi[n]) / ((PetscReal)ai[n]);
     PetscCall(PetscInfo(A, "Reallocs %" PetscInt_FMT " Fill ratio:given %g needed %g\n", reallocs, (double)f, (double)af));
@@ -437,7 +438,7 @@ PetscErrorCode MatLUFactorSymbolic_SeqBAIJ_inplace(Mat B, Mat A, IS isrow, IS is
   } else {
     PetscCall(PetscInfo(A, "Empty matrix\n"));
   }
-#endif
+  #endif
 
   PetscCall(ISRestoreIndices(isrow, &r));
   PetscCall(ISRestoreIndices(isicol, &ic));
@@ -491,5 +492,6 @@ PetscErrorCode MatLUFactorSymbolic_SeqBAIJ_inplace(Mat B, Mat A, IS isrow, IS is
   both_identity = (PetscBool)(row_identity && col_identity);
 
   PetscCall(MatSeqBAIJSetNumericFactorization_inplace(B, both_identity));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
+#endif

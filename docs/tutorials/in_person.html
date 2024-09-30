@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>PETSc In-Person Tutorials &#8212; PETSc 3.18.6 documentation</title>
+    <title>In-Person Tutorials &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -52,8 +53,8 @@
     <link rel="shortcut icon" href="../_static/petsc_favicon.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Guide to PETSc Tutorial Examples, by Physics" href="guide_to_examples_by_physics.html" />
-    <link rel="prev" title="Tutorials" href="index.html" />
+    <link rel="next" title="petsc4py API" href="../petsc4py/index.html" />
+    <link rel="prev" title="Time, Accuracy, Speed Analysis (TAS)" href="performance/guide_to_TAS.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="docsearch:language" content="en">
   </head>
@@ -141,32 +142,34 @@
                     </li>
                 
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
-                        User-Guide
-                      </a>
-                    </li>
-                
-
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
-                      </a>
-                    </li>
-                
-
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="index.html">
                         Tutorials
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
+                      </a>
+                    </li>
+                
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -292,32 +292,34 @@
                     </li>
                 
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
-                        User-Guide
-                      </a>
-                    </li>
-                
-
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
-                      </a>
-                    </li>
-                
-
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="index.html">
                         Tutorials
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
+                      </a>
+                    </li>
+                
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -395,14 +394,11 @@
   </p>
   <div class="bd-toc-item navbar-nav">
     <ul class="current nav bd-sidenav">
-<li class="toctree-l1 current active"><a class="current reference internal" href="#">In-person tutorials</a></li>
-</ul>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="guide_to_examples_by_physics.html">Guide to PETSc Tutorial Examples, by Physics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="physics/guide_to_stokes.html">Guide to the Stokes Equations using Finite Elements in PETSc</a></li>
-<li class="toctree-l1"><a class="reference internal" href="meshing/guide_to_subsurface.html">Guide to the Meshing for Subsurface Flows in PETSc</a></li>
-<li class="toctree-l1"><a class="reference internal" href="performance/guide_to_TAS.html">Guide to PETSc Quick Start Tutorial on Time, Accuracy, Speed Analysis(TAS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="handson.html">Classic "Hands-on" tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_to_examples_by_physics.html">Tutorials, by Physics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="handson.html">Tutorials, by Mathematical Problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="meshing/guide_to_subsurface.html">Meshing for Subsurface Flows in PETSc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="performance/guide_to_TAS.html">Time, Accuracy, Speed Analysis (TAS)</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">In-Person Tutorials</a></li>
 </ul>
 
   </div>
@@ -434,16 +430,14 @@
             
             <article class="bd-article" role="main">
               
-  <section id="petsc-in-person-tutorials">
-<h1>PETSc In-Person Tutorials<a class="headerlink" href="#petsc-in-person-tutorials" title="Permalink to this heading">#</a></h1>
-<section id="upcoming-tutorials">
-<h2>Upcoming tutorials<a class="headerlink" href="#upcoming-tutorials" title="Permalink to this heading">#</a></h2>
+  <section id="in-person-tutorials">
+<h1>In-Person Tutorials<a class="headerlink" href="#in-person-tutorials" title="Permalink to this heading">#</a></h1>
+<p>Upcoming tutorials</p>
 <ul class="simple">
+<li><p><a class="reference internal" href="../community/meetings/2023/index.html#meeting"><span class="std std-ref">2023 Annual PETSc Meeting</span></a></p></li>
 <li><p>Please contact us at <a class="reference external" href="mailto:petsc-maint&#37;&#52;&#48;mcs&#46;anl&#46;gov">petsc-maint<span>&#64;</span>mcs<span>&#46;</span>anl<span>&#46;</span>gov</a> if you are interested in hosting a tutorial.</p></li>
 </ul>
-</section>
-<section id="previous-tutorials">
-<h2>Previous tutorials<a class="headerlink" href="#previous-tutorials" title="Permalink to this heading">#</a></h2>
+<p>Previous tutorials</p>
 <ul class="simple">
 <li><p>“PETSc with GPUs” at the <a class="reference external" href="https://geodynamics.hubzero.org/events/details/259">2022 CIG Developer’s Workshop</a> (<a class="reference external" href="https://gitlab.com/psanan/petsc-gpu-cig-2022-02-28">slides and source</a>).</p></li>
 <li><p>PETSc Tutorial at NASA Langley Research Center, March 2019 (Oana,
@@ -614,7 +608,6 @@ computer sessions, ICASE, NASA Langley Research Center, December,
 1996 (Bill, Barry, Lois, Satish)</p></li>
 </ul>
 </section>
-</section>
 
 
             </article>
@@ -624,17 +617,17 @@ computer sessions, ICASE, NASA Langley Research Center, December,
             <footer class="bd-footer-article">
                 <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-  <a class='left-prev' id="prev-link" href="index.html" title="previous page">
+  <a class='left-prev' id="prev-link" href="performance/guide_to_TAS.html" title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
           <p class="prev-next-subtitle">previous</p>
-          <p class="prev-next-title">Tutorials</p>
+          <p class="prev-next-title">Time, Accuracy, Speed Analysis (TAS)</p>
       </div>
   </a>
-  <a class='right-next' id="next-link" href="guide_to_examples_by_physics.html" title="next page">
+  <a class='right-next' id="next-link" href="../petsc4py/index.html" title="next page">
   <div class="prev-next-info">
       <p class="prev-next-subtitle">next</p>
-      <p class="prev-next-title">Guide to PETSc Tutorial Examples, by Physics</p>
+      <p class="prev-next-title">petsc4py API</p>
   </div>
   <i class="fa-solid fa-angle-right"></i>
   </a>
@@ -647,28 +640,6 @@ computer sessions, ICASE, NASA Langley Research Center, December,
           
             <div class="bd-sidebar-secondary bd-toc">
               
-<div class="toc-item">
-  
-<div class="tocsection onthispage">
-    <i class="fa-solid fa-list"></i> On this page
-</div>
-<nav id="bd-toc-nav" class="page-toc">
-    <ul class="visible nav section-nav flex-column">
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#upcoming-tutorials">
-   Upcoming tutorials
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#previous-tutorials">
-   Previous tutorials
-  </a>
- </li>
-</ul>
-
-</nav>
-</div>
-
 <div class="toc-item">
   
 <div id="searchbox"></div>
@@ -721,7 +692,7 @@ computer sessions, ICASE, NASA Langley Research Center, December,
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -737,7 +708,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

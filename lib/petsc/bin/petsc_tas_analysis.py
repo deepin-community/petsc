@@ -4,7 +4,6 @@ import os
 import sys
 import importlib
 import datetime as date
-import importlib
 
 # Check to ensure that the environmental variable PETSC_DIR has been assigned.
 # MPLCONFIGDIR is needed for matplotlib
@@ -626,7 +625,7 @@ def dataProces(cmdLineArgs, fileName):
                 luFactorMin.append(luFactorTempMin)
                 luFactorMean.append(totalLuFactor/nProcs)
 
-            #Calculats the growth rate of statistics between levels
+            #Calculates the growth rate of statistics between levels
             if level >= 1:
                 timeGrowthRate.append(meanTime[level]/meanTime[level-1])
                 flopGrowthRate.append(meanFlop[level]/meanFlop[level-1])
@@ -715,7 +714,7 @@ def getNfCSV(df):
     the values of the dofx columns, where x is an integer, from the row where
     Stage Name = ConvEst Refinement Level 0, Event Name = ConvEst Error, and Rank = 0 until it
     encounters -1.  The default convention is that each field from the problem has an entry in the error list with at most
-    8 fields.  If there are less thatn 8 fields those entries are set to -1.
+    8 fields.  If there are less than 8 fields those entries are set to -1.
 
     Example:
       A problem with 4 fields would have a list of the form [.01, .003, .2, .04, -1, -1, -1, -1]

@@ -1,11 +1,9 @@
 This changes the shared library name to a versioned one, with a symlink, and
 fixes the shared library out-of-date test accordingly.
 
-Index: petsc/lib/petsc/conf/rules
-===================================================================
---- petsc.orig/lib/petsc/conf/rules	2023-06-11 21:50:10.016186540 +0200
-+++ petsc/lib/petsc/conf/rules	2023-06-11 21:50:10.004186426 +0200
-@@ -444,8 +444,8 @@
+--- a/makefile
++++ b/makefile
+@@ -97,8 +97,8 @@
               echo ${RM} -rf ${INSTALL_LIB_DIR}/$${LIBNAME}.dylib.dSYM; \
  	     ${RM} -rf ${INSTALL_LIB_DIR}/$${LIBNAME}.dylib.dSYM; \
  	   fi; \

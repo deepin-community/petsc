@@ -25,7 +25,7 @@ class Device<T>::DeviceInternal {
   cupmDeviceProp_t dprop_{}; // cudaDeviceProp appears to be an actual struct, i.e. you can't
                              // initialize it with nullptr or NULL (i've tried)
 
-  PETSC_CXX_COMPAT_DECL(PetscErrorCode CUPMAwareMPI_(bool *));
+  static PetscErrorCode CUPMAwareMPI_(bool *) noexcept;
 
 public:
   // default constructor
@@ -33,10 +33,10 @@ public:
 
   // gather all relevant information for a particular device, a cupmDeviceProp_t is
   // usually sufficient here
-  PETSC_NODISCARD PetscErrorCode initialize() noexcept;
-  PETSC_NODISCARD PetscErrorCode configure() noexcept;
-  PETSC_NODISCARD PetscErrorCode view(PetscViewer) const noexcept;
-  PETSC_NODISCARD PetscErrorCode getattribute(PetscDeviceAttribute, void *) const noexcept;
+  PetscErrorCode initialize() noexcept;
+  PetscErrorCode configure() noexcept;
+  PetscErrorCode view(PetscViewer) const noexcept;
+  PetscErrorCode getattribute(PetscDeviceAttribute, void *) const noexcept;
 
   PETSC_NODISCARD auto id() const -> decltype(id_) { return id_; }
   PETSC_NODISCARD auto initialized() const -> decltype(devInitialized_) { return devInitialized_; }
@@ -50,7 +50,7 @@ template <DeviceType T>
 PetscErrorCode Device<T>::DeviceInternal::initialize() noexcept
 {
   PetscFunctionBegin;
-  if (initialized()) PetscFunctionReturn(0);
+  if (initialized()) PetscFunctionReturn(PETSC_SUCCESS);
   devInitialized_ = true;
   // need to do this BEFORE device has been set, although if the user
   // has already done this then we just ignore it
@@ -69,23 +69,23 @@ PetscErrorCode Device<T>::DeviceInternal::initialize() noexcept
     bool aware;
 
     PetscCall(CUPMAwareMPI_(&aware));
-    // For OpenMPI, we could do a compile time check with
+    // For Open MPI, we could do a compile time check with
     // "defined(PETSC_HAVE_OMPI_MAJOR_VERSION) && defined(MPIX_CUDA_AWARE_SUPPORT) &&
     // MPIX_CUDA_AWARE_SUPPORT" to see if it is CUDA-aware. However, recent versions of IBM
     // Spectrum MPI (e.g., 10.3.1) on Summit meet above conditions, but one has to use jsrun
     // --smpiargs=-gpu to really enable GPU-aware MPI. So we do the check at runtime with a
     // code that works only with GPU-aware MPI.
     if (PetscUnlikely(!aware)) {
-      (*PetscErrorPrintf)("PETSc is configured with GPU support, but your MPI is not GPU-aware. For better performance, please use a GPU-aware MPI.\n");
-      (*PetscErrorPrintf)("If you do not care, add option -use_gpu_aware_mpi 0. To not see the message again, add the option to your .petscrc, OR add it to the env var PETSC_OPTIONS.\n");
-      (*PetscErrorPrintf)("If you do care, for IBM Spectrum MPI on OLCF Summit, you may need jsrun --smpiargs=-gpu.\n");
-      (*PetscErrorPrintf)("For OpenMPI, you need to configure it --with-cuda (https://www.open-mpi.org/faq/?category=buildcuda)\n");
-      (*PetscErrorPrintf)("For MVAPICH2-GDR, you need to set MV2_USE_CUDA=1 (http://mvapich.cse.ohio-state.edu/userguide/gdr/)\n");
-      (*PetscErrorPrintf)("For Cray-MPICH, you need to set MPICH_RDMA_ENABLED_CUDA=1 (https://www.olcf.ornl.gov/tutorials/gpudirect-mpich-enabled-cuda/)\n");
+      PetscCall((*PetscErrorPrintf)("PETSc is configured with GPU support, but your MPI is not GPU-aware. For better performance, please use a GPU-aware MPI.\n"));
+      PetscCall((*PetscErrorPrintf)("If you do not care, add option -use_gpu_aware_mpi 0. To not see the message again, add the option to your .petscrc, OR add it to the env var PETSC_OPTIONS.\n"));
+      PetscCall((*PetscErrorPrintf)("If you do care, for IBM Spectrum MPI on OLCF Summit, you may need jsrun --smpiargs=-gpu.\n"));
+      PetscCall((*PetscErrorPrintf)("For Open MPI, you need to configure it --with-cuda (https://www.open-mpi.org/faq/?category=buildcuda)\n"));
+      PetscCall((*PetscErrorPrintf)("For MVAPICH2-GDR, you need to set MV2_USE_CUDA=1 (http://mvapich.cse.ohio-state.edu/userguide/gdr/)\n"));
+      PetscCall((*PetscErrorPrintf)("For Cray-MPICH, you need to set MPICH_GPU_SUPPORT_ENABLED=1 (man mpi to see manual of cray-mpich)\n"));
       PETSCABORT(PETSC_COMM_SELF, PETSC_ERR_LIB);
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
@@ -100,7 +100,7 @@ PetscErrorCode Device<T>::DeviceInternal::configure() noexcept
   // need to update the device properties
   PetscCallCUPM(cupmGetDeviceProperties(&dprop_, id_));
   PetscCall(PetscInfo(nullptr, "Configured device %d\n", id_));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
@@ -111,7 +111,7 @@ PetscErrorCode Device<T>::DeviceInternal::view(PetscViewer viewer) const noexcep
   PetscFunctionBegin;
   PetscAssert(initialized(), PETSC_COMM_SELF, PETSC_ERR_COR, "Device %d being viewed before it was initialized or configured", id());
   // we don't print device-specific info in CI-mode
-  if (PetscUnlikely(PetscCIEnabled)) PetscFunctionReturn(0);
+  if (PetscUnlikely(PetscCIEnabled)) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscObjectTypeCompare(PetscObjectCast(viewer), PETSCVIEWERASCII, &iascii));
   if (iascii) {
     MPI_Comm    comm;
@@ -142,7 +142,7 @@ PetscErrorCode Device<T>::DeviceInternal::view(PetscViewer viewer) const noexcep
     PetscCall(PetscViewerRestoreSubViewer(viewer, PETSC_COMM_SELF, &sviewer));
     PetscCall(PetscViewerFlush(viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
@@ -156,7 +156,7 @@ PetscErrorCode Device<T>::DeviceInternal::getattribute(PetscDeviceAttribute attr
   case PETSC_DEVICE_ATTR_MAX:
     break;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static std::jmp_buf cupmMPIAwareJumpBuffer;
@@ -165,26 +165,24 @@ static bool         cupmMPIAwareJumpBufferSet;
 // godspeed to anyone that attempts to call this function
 void SilenceVariableIsNotNeededAndWillNotBeEmittedWarning_ThisFunctionShouldNeverBeCalled()
 {
-  PETSCABORT(MPI_COMM_NULL, INT_MAX);
+  PETSCABORT(MPI_COMM_NULL, (PetscErrorCode)INT_MAX);
   if (cupmMPIAwareJumpBufferSet) (void)cupmMPIAwareJumpBuffer;
 }
 
 template <DeviceType T>
-PETSC_CXX_COMPAT_DEFN(PetscErrorCode Device<T>::DeviceInternal::CUPMAwareMPI_(bool *awareness))
+PetscErrorCode Device<T>::DeviceInternal::CUPMAwareMPI_(bool *awareness) noexcept
 {
-  constexpr int  bufSize           = 2;
-  constexpr int  hbuf[bufSize]     = {1, 0};
-  int           *dbuf              = nullptr;
-  constexpr auto bytes             = bufSize * sizeof(*dbuf);
-  const auto     cupmSignalHandler = [](int signal, void *ptr) -> PetscErrorCode {
+  constexpr int hbuf[]            = {1, 0};
+  int          *dbuf              = nullptr;
+  const auto    cupmSignalHandler = [](int signal, void *ptr) -> PetscErrorCode {
     if ((signal == SIGSEGV) && cupmMPIAwareJumpBufferSet) std::longjmp(cupmMPIAwareJumpBuffer, 1);
     return PetscSignalHandlerDefault(signal, ptr);
   };
 
   PetscFunctionBegin;
   *awareness = false;
-  PetscCallCUPM(cupmMalloc(reinterpret_cast<void **>(&dbuf), bytes));
-  PetscCallCUPM(cupmMemcpy(dbuf, hbuf, bytes, cupmMemcpyHostToDevice));
+  PetscCallCUPM(cupmMalloc(reinterpret_cast<void **>(&dbuf), sizeof(hbuf)));
+  PetscCallCUPM(cupmMemcpy(dbuf, hbuf, sizeof(hbuf), cupmMemcpyHostToDevice));
   PetscCallCUPM(cupmDeviceSynchronize());
   PetscCall(PetscPushSignalHandler(cupmSignalHandler, nullptr));
   cupmMPIAwareJumpBufferSet = true;
@@ -192,22 +190,22 @@ PETSC_CXX_COMPAT_DEFN(PetscErrorCode Device<T>::DeviceInternal::CUPMAwareMPI_(bo
   cupmMPIAwareJumpBufferSet = false;
   PetscCall(PetscPopSignalHandler());
   PetscCallCUPM(cupmFree(dbuf));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
 PetscErrorCode Device<T>::finalize_() noexcept
 {
   PetscFunctionBegin;
-  if (PetscUnlikely(!initialized_)) PetscFunctionReturn(0);
+  if (PetscUnlikely(!initialized_)) PetscFunctionReturn(PETSC_SUCCESS);
   for (auto &&device : devices_) device.reset();
   defaultDevice_ = PETSC_CUPM_DEVICE_NONE; // disabled by default
   initialized_   = false;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
-PETSC_CXX_COMPAT_DECL(PETSC_CONSTEXPR_14 const char *CUPM_VISIBLE_DEVICES())
+PETSC_NODISCARD static PETSC_CONSTEXPR_14 const char *CUPM_VISIBLE_DEVICES() noexcept
 {
   switch (T) {
   case DeviceType::CUDA:
@@ -228,7 +226,7 @@ PetscErrorCode Device<T>::initialize(MPI_Comm comm, PetscInt *defaultDeviceId, P
   int  ndev     = 0;
 
   PetscFunctionBegin;
-  if (initialized_) PetscFunctionReturn(0);
+  if (initialized_) PetscFunctionReturn(PETSC_SUCCESS);
   initialized_ = true;
   PetscCall(PetscRegisterFinalize(finalize_));
   PetscCall(base_type::PetscOptionDeviceAll(comm, initType, initId, initView));
@@ -237,12 +235,12 @@ PetscErrorCode Device<T>::initialize(MPI_Comm comm, PetscInt *defaultDeviceId, P
     initId.first = PETSC_CUPM_DEVICE_NONE;
   } else if (const auto cerr = cupmGetDeviceCount(&ndev)) {
     auto PETSC_UNUSED ignored = cupmGetLastError();
+
+    PetscCheck((initType.first != PETSC_DEVICE_INIT_EAGER) && !initView.first, comm, PETSC_ERR_USER_INPUT, "Cannot eagerly initialize %s, as doing so results in %s error %d (%s) : %s", cupmName(), cupmName(), static_cast<PetscErrorCode>(cerr), cupmGetErrorName(cerr), cupmGetErrorString(cerr));
     // we won't be initializing anything anyways
     initType.first = PETSC_DEVICE_INIT_NONE;
     // save the error code for later
     initId.first = -static_cast<decltype(initId.first)>(cerr);
-
-    PetscCheck((initType.first != PETSC_DEVICE_INIT_EAGER) && !initView.first, comm, PETSC_ERR_USER_INPUT, "Cannot eagerly initialize %s, as doing so results in %s error %d (%s) : %s", cupmName(), cupmName(), static_cast<PetscErrorCode>(cerr), cupmGetErrorName(cerr), cupmGetErrorString(cerr));
   }
 
   // check again for init type, since the device count may have changed it
@@ -271,7 +269,7 @@ PetscErrorCode Device<T>::initialize(MPI_Comm comm, PetscInt *defaultDeviceId, P
   *defaultDeviceId = initId.first;
   *defaultView     = initView.first;
   *defaultInitType = initType.first;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
@@ -289,7 +287,7 @@ PetscErrorCode Device<T>::init_device_id_(PetscInt *inid) const noexcept
   PetscAssert(id == devices_[id]->id(), PETSC_COMM_SELF, PETSC_ERR_PLIB, "Entry %" PetscInt_FMT " contains device with mismatching id %d", id, devices_[id]->id());
   PetscCall(devices_[id]->initialize());
   *inid = id;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
@@ -297,7 +295,7 @@ PetscErrorCode Device<T>::configure_device_(PetscDevice device) noexcept
 {
   PetscFunctionBegin;
   PetscCall(devices_[device->deviceId]->configure());
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
@@ -308,7 +306,7 @@ PetscErrorCode Device<T>::view_device_(PetscDevice device, PetscViewer viewer) n
   // it is being reconfigured
   PetscCall(devices_[device->deviceId]->configure());
   PetscCall(devices_[device->deviceId]->view(viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 template <DeviceType T>
@@ -316,7 +314,7 @@ PetscErrorCode Device<T>::get_attribute_(PetscInt id, PetscDeviceAttribute attr,
 {
   PetscFunctionBegin;
   PetscCall(devices_[id]->getattribute(attr, value));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 // explicitly instantiate the classes

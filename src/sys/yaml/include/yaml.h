@@ -610,7 +610,7 @@ yaml_document_delete(yaml_document_t *document);
  * @param[in]       document        A document object.
  * @param[in]       index           The node id.
  *
- * @returns the node objct or @c NULL if @c node_id is out of range.
+ * @returns the node object or @c NULL if @c node_id is out of range.
  */
 
 YAML_DECLARE(yaml_node_t *)
@@ -1024,7 +1024,7 @@ yaml_parser_delete(yaml_parser_t *parser);
  * Set a string input.
  *
  * Note that the @a input pointer must be valid while the @a parser object
- * exists.  The application is responsible for destroing @a input after
+ * exists.  The application is responsible for destroying @a input after
  * destroying the @a parser.
  *
  * @param[in,out]   parser  A parser object.

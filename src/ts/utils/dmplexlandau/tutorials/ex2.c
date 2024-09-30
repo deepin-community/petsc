@@ -116,14 +116,14 @@ static PetscReal CalculateE(PetscReal Tev, PetscReal n, PetscReal lnLambda, Pets
     double Ec, Ehat = *E, betath = PetscSqrtReal(2 * Tev * e / (m * c * c)), j0 = Ehat * 7 / (PetscSqrtReal(2) * 2) * PetscPowReal(betath, 3) * n * e * c;
     Ec = n * lnLambda * PetscPowReal(e, 3) / (4 * PETSC_PI * PetscPowReal(eps0, 2) * m * c * c);
     *E = Ec;
-    PetscPrintf(PETSC_COMM_WORLD, "CalculateE j0=%g Ec = %g\n", j0, Ec);
+    PetscCall(PetscPrintf(PETSC_COMM_WORLD, "CalculateE j0=%g Ec = %g\n", j0, Ec));
   } else {
     PetscReal Ed, vth;
     vth = PetscSqrtReal(8 * Tev * e / (m * PETSC_PI));
     Ed  = n * lnLambda * PetscPowReal(e, 3) / (4 * PETSC_PI * PetscPowReal(eps0, 2) * m * vth * vth);
     *E  = Ed;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscReal Spitzer(PetscReal m_e, PetscReal e, PetscReal Z, PetscReal epsilon0, PetscReal lnLam, PetscReal kTe_joules)
@@ -137,7 +137,7 @@ static PetscReal Spitzer(PetscReal m_e, PetscReal e, PetscReal Z, PetscReal epsi
 static PetscErrorCode testNone(TS ts, Vec X, PetscInt stepi, PetscReal time, PetscBool islast, LandauCtx *ctx, REctx *rectx)
 {
   PetscFunctionBeginUser;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*  */
@@ -198,10 +198,10 @@ static PetscErrorCode testSpitzer(TS ts, Vec X, PetscInt stepi, PetscReal time, 
   PetscCall(PetscDSSetConstants(prob, 1, &vz));
   PetscCall(PetscDSSetObjective(prob, 0, &f0_ve_shift));
   PetscCall(DMPlexComputeIntegralFEM(plexe, XsubArray[LAND_PACK_IDX(ctx->batch_view_idx, 0)], tt, NULL));
-  v        = ctx->n_0 * ctx->v_0 * PetscRealPart(tt[0]) / n_e;                                           /* remove number density to get velocity */
-  v2       = PetscSqr(v);                                                                                /* use real space: m^2 / s^2 */
-  Te_kev   = (v2 * ctx->masses[0] * PETSC_PI / 8) * kev_joul;                                            /* temperature in kev */
-  spit_eta = Spitzer(ctx->masses[0], -ctx->charges[0], Z, ctx->epsilon0, ctx->lnLam, Te_kev / kev_joul); /* kev --> J (kT) */
+  v        = ctx->n_0 * ctx->v_0 * PetscRealPart(tt[0]) / n_e;                                                   /* remove number density to get velocity */
+  v2       = PetscSqr(v);                                                                                        /* use real space: m^2 / s^2 */
+  Te_kev   = (v2 * ctx->masses[0] * PETSC_PI / 8) * kev_joul;                                                    /* temperature in kev */
+  spit_eta = Spitzer(ctx->masses[0], -ctx->charges[0], Z, ctx->epsilon0, ctx->lambdas[0][1], Te_kev / kev_joul); /* kev --> J (kT) */
   if (0) {
     PetscCall(DMGetDS(plexe, &prob));
     PetscCall(PetscDSSetConstants(prob, 1, q));
@@ -232,7 +232,7 @@ static PetscErrorCode testSpitzer(TS ts, Vec X, PetscInt stepi, PetscReal time, 
     PetscCheck(rectx->pulse_start != (time + 0.98 * dt), PETSC_COMM_WORLD, PETSC_ERR_ARG_WRONG, "Spitzer complete ratio=%g", (double)ratio);
   }
   old_ratio = ratio;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static const double ppp = 2;
@@ -306,7 +306,7 @@ static PetscErrorCode testStable(TS ts, Vec X, PetscInt stepi, PetscReal time, P
     PetscCall(VecDestroy(&rectx->X_0));
     rectx->X_0 = NULL;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode EInduction(Vec X, Vec X_t, PetscInt step, PetscReal time, LandauCtx *ctx, PetscReal *a_E)
@@ -332,21 +332,21 @@ static PetscErrorCode EInduction(Vec X, Vec X_t, PetscInt step, PetscReal time, 
   /* E induction */
   *a_E = -rectx->L * dJ_dt + rectx->Ez_initial;
   PetscCall(DMDestroy(&plex));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode EConstant(Vec X, Vec X_t, PetscInt step, PetscReal time, LandauCtx *ctx, PetscReal *a_E)
 {
   PetscFunctionBeginUser;
   *a_E = ctx->Ez;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode ENone(Vec X, Vec X_t, PetscInt step, PetscReal time, LandauCtx *ctx, PetscReal *a_E)
 {
   PetscFunctionBeginUser;
   *a_E = 0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------- */
@@ -402,7 +402,7 @@ static PetscErrorCode FormSource(TS ts, PetscReal ftime, Vec X_dummmy, Vec F, vo
     PetscCall(VecZeroEntries(F));
     rectx->current_rate = 0;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode Monitor(TS ts, PetscInt stepi, PetscReal time, Vec X, void *actx)
@@ -434,7 +434,7 @@ PetscErrorCode Monitor(TS ts, PetscInt stepi, PetscReal time, Vec X, void *actx)
       /* diagnostics + change E field with Sptizer (not just a monitor) */
       PetscCall(rectx->test(ts, X, stepi, time, reason ? PETSC_TRUE : PETSC_FALSE, ctx, rectx));
     } else {
-      PetscPrintf(PETSC_COMM_WORLD, "\t\t ERROR SKIP test spit ------\n");
+      PetscCall(PetscPrintf(PETSC_COMM_WORLD, "\t\t ERROR SKIP test spit ------\n"));
       rectx->plotting = PETSC_TRUE;
     }
     if (rectx->grid_view_idx != -1) {
@@ -445,12 +445,12 @@ PetscErrorCode Monitor(TS ts, PetscInt stepi, PetscReal time, Vec X, void *actx)
     }
     rectx->plotStep = stepi;
   } else {
-    if (rectx->plotting) PetscPrintf(PETSC_COMM_WORLD, " ERROR rectx->plotting=%s step %" PetscInt_FMT "\n", PetscBools[rectx->plotting], stepi);
+    if (rectx->plotting) PetscCall(PetscPrintf(PETSC_COMM_WORLD, " ERROR rectx->plotting=%s step %" PetscInt_FMT "\n", PetscBools[rectx->plotting], stepi));
     /* diagnostics + change E field with Sptizer (not just a monitor) - can we lag this? */
     PetscCall(rectx->test(ts, X, stepi, time, reason ? PETSC_TRUE : PETSC_FALSE, ctx, rectx));
   }
   /* parallel check that only works of all batches are identical */
-  if (reason && ctx->verbose > 3) {
+  if (reason && ctx->verbose > 3 && ctx->batch_sz > 1) {
     PetscReal   val, rval;
     PetscMPIInt rank;
     PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &rank));
@@ -473,7 +473,7 @@ PetscErrorCode Monitor(TS ts, PetscInt stepi, PetscReal time, Vec X, void *actx)
   }
   rectx->idx = 0;
   if (rectx->grid_view_idx != -1 || (reason && ctx->verbose > 3)) PetscCall(DMCompositeRestoreAccessArray(pack, X, ctx->num_grids * ctx->batch_sz, NULL, globXArray));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PreStep(TS ts)
@@ -495,7 +495,7 @@ PetscErrorCode PreStep(TS ts)
   PetscCall(TSGetStepNumber(ts, &stepi));
   /* update E */
   PetscCall(rectx->E(X, NULL, stepi, time, ctx, &ctx->Ez));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* model for source of non-ionized impurities, profile provided by model, in du/dt form in normalized units (tricky because n_0 is normalized with electrons) */
@@ -506,13 +506,13 @@ static PetscErrorCode stepSrc(PetscReal time, PetscReal *rho, LandauCtx *ctx)
   PetscFunctionBeginUser;
   if (time >= rectx->pulse_start) *rho = rectx->pulse_rate;
   else *rho = 0.;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 static PetscErrorCode zeroSrc(PetscReal time, PetscReal *rho, LandauCtx *ctx)
 {
   PetscFunctionBeginUser;
   *rho = 0.;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 static PetscErrorCode pulseSrc(PetscReal time, PetscReal *rho, LandauCtx *ctx)
 {
@@ -526,7 +526,7 @@ static PetscErrorCode pulseSrc(PetscReal time, PetscReal *rho, LandauCtx *ctx)
     *rho     = rectx->pulse_rate * x / (3 * rectx->pulse_width);
     if (!rectx->use_spitzer_eta) rectx->use_spitzer_eta = PETSC_TRUE; /* use it next time */
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef __FUNCT__
@@ -563,15 +563,15 @@ static PetscErrorCode ProcessREOptions(REctx *rectx, const LandauCtx *ctx, DM dm
   PetscCall(PetscFunctionListAdd(&plist, "step", &stepSrc));
   PetscCall(PetscFunctionListAdd(&plist, "none", &zeroSrc));
   PetscCall(PetscFunctionListAdd(&plist, "pulse", &pulseSrc));
-  PetscCall(PetscStrcpy(pname, "none"));
+  PetscCall(PetscStrncpy(pname, "none", sizeof(pname)));
   PetscCall(PetscFunctionListAdd(&testlist, "none", &testNone));
   PetscCall(PetscFunctionListAdd(&testlist, "spitzer", &testSpitzer));
   PetscCall(PetscFunctionListAdd(&testlist, "stable", &testStable));
-  PetscCall(PetscStrcpy(testname, "none"));
+  PetscCall(PetscStrncpy(testname, "none", sizeof(testname)));
   PetscCall(PetscFunctionListAdd(&elist, "none", &ENone));
   PetscCall(PetscFunctionListAdd(&elist, "induction", &EInduction));
   PetscCall(PetscFunctionListAdd(&elist, "constant", &EConstant));
-  PetscCall(PetscStrcpy(ename, "constant"));
+  PetscCall(PetscStrncpy(ename, "constant", sizeof(ename)));
 
   PetscOptionsBegin(PETSC_COMM_SELF, prefix, "Options for Runaway/seed electron model", "none");
   PetscCall(PetscOptionsReal("-ex2_plot_dt", "Plotting interval", "ex2.c", rectx->plotDt, &rectx->plotDt, NULL));
@@ -610,30 +610,26 @@ static PetscErrorCode ProcessREOptions(REctx *rectx, const LandauCtx *ctx, DM dm
   /* convert E from Connor-Hastie E_c units to real if doing Spitzer E */
   if (Connor_E) {
     PetscReal E = ctx->Ez, Tev = ctx->thermal_temps[0] * 8.621738e-5, n = ctx->n_0 * ctx->n[0];
-    CalculateE(Tev, n, ctx->lnLam, ctx->epsilon0, &E);
+    CalculateE(Tev, n, ctx->lambdas[0][1], ctx->epsilon0, &E);
     ((LandauCtx *)ctx)->Ez *= E;
   }
   PetscCall(DMDestroy(&dm_dummy));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
 {
-  DM         pack;
-  Vec        X;
-  PetscInt   dim = 2, nDMs;
-  TS         ts;
-  Mat        J;
-  PetscDS    prob;
-  LandauCtx *ctx;
-  REctx     *rectx;
-#if defined PETSC_USE_LOG
+  DM            pack;
+  Vec           X;
+  PetscInt      dim = 2, nDMs;
+  TS            ts;
+  Mat           J;
+  PetscDS       prob;
+  LandauCtx    *ctx;
+  REctx        *rectx;
+  PetscMPIInt   rank;
   PetscLogStage stage;
-#endif
-  PetscMPIInt rank;
-#if defined(PETSC_HAVE_THREADSAFETY)
-  double starttime, endtime;
-#endif
+
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &argv, NULL, help));
   PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &rank));
@@ -708,14 +704,7 @@ int main(int argc, char **argv)
   /* go */
   PetscCall(PetscLogStageRegister("Solve", &stage));
   ctx->stage = 0; // lets not use this stage
-#if defined(PETSC_HAVE_THREADSAFETY)
-  ctx->stage = 1; // not set with thread safety
-#endif
-  //PetscCall(TSSetSolution(ts,X));
   PetscCall(PetscLogStagePush(stage));
-#if defined(PETSC_HAVE_THREADSAFETY)
-  starttime = MPI_Wtime();
-#endif
 #if defined(PETSC_HAVE_CUDA_NVTX)
   nvtxRangePushA("ex2-TSSolve-warm");
 #endif
@@ -724,10 +713,6 @@ int main(int argc, char **argv)
   nvtxRangePop();
 #endif
   PetscCall(PetscLogStagePop());
-#if defined(PETSC_HAVE_THREADSAFETY)
-  endtime = MPI_Wtime();
-  ctx->times[LANDAU_EX2_TSSOLVE] += (endtime - starttime);
-#endif
   /* clean up */
   PetscCall(DMPlexLandauDestroyVelocitySpace(&pack));
   PetscCall(TSDestroy(&ts));
@@ -742,25 +727,40 @@ int main(int argc, char **argv)
   testset:
     requires: p4est !complex double defined(PETSC_USE_DMLANDAU_2D)
     output_file: output/ex2_0.out
-    args: -dm_landau_num_species_grid 1,1 -dm_landau_Ez 0 -petscspace_degree 3 -petscspace_poly_tensor 1 -dm_landau_type p4est -dm_landau_ion_masses 2 -dm_landau_ion_charges 1 -dm_landau_thermal_temps 5,5 -dm_landau_n 2,2 -dm_landau_n_0 5e19 -ts_monitor -snes_rtol 1.e-10 -snes_stol 1.e-14 -snes_monitor -snes_converged_reason -snes_max_it 10 -ts_type arkimex -ts_arkimex_type 1bee -ts_max_snes_failures -1 -ts_rtol 1e-3 -ts_dt 1.e-1 -ts_max_time 1 -ts_adapt_clip .5,1.25 -ts_max_steps 2 -ts_adapt_scale_solve_failed 0.75 -ts_adapt_time_step_increase_delay 5 -dm_landau_amr_levels_max 2,2 -ex2_impurity_source_type pulse -ex2_pulse_start_time 1e-1 -ex2_pulse_width_time 10 -ex2_pulse_rate 1e-2 -ex2_t_cold .05 -ex2_plot_dt 1e-1 -dm_refine 0 -dm_landau_gpu_assembly true -dm_landau_batch_size 2 -dm_landau_verbose 2
+    args: -dm_landau_num_species_grid 1,1 -dm_landau_Ez 0 -petscspace_degree 3 -petscspace_poly_tensor 1 -dm_landau_type p4est -dm_landau_ion_masses 2 -dm_landau_ion_charges 1 -dm_landau_thermal_temps 5,5 -dm_landau_n 2,2 -dm_landau_n_0 5e19 -ts_monitor -snes_rtol 1.e-9 -snes_stol 1.e-14 -snes_monitor -snes_converged_reason -snes_max_it 10 -ts_type arkimex -ts_arkimex_type 1bee -ts_max_snes_failures -1 -ts_rtol 1e-3 -ts_dt 1.e-2 -ts_max_time 1 -ts_adapt_clip .5,1.25 -ts_max_steps 2 -ts_adapt_scale_solve_failed 0.75 -ts_adapt_time_step_increase_delay 5 -dm_landau_amr_levels_max 2,2 -dm_landau_amr_re_levels 2 -dm_landau_re_radius 0 -ex2_impurity_source_type pulse -ex2_pulse_start_time 1e-1 -ex2_pulse_width_time 10 -ex2_pulse_rate 1e-2 -ex2_t_cold .05 -ex2_plot_dt 1e-1 -dm_refine 0 -dm_landau_gpu_assembly true -dm_landau_batch_size 2 -dm_landau_verbose 2 -dm_landau_domain_radius 5.,5.
     test:
       suffix: cpu
       args: -dm_landau_device_type cpu -ksp_type bicg -pc_type jacobi
     test:
       suffix: kokkos
-      requires: kokkos_kernels
+      requires: kokkos_kernels !defined(PETSC_HAVE_CUDA_CLANG) !defined(PETSC_HAVE_SYCL)
       args: -dm_landau_device_type kokkos -dm_mat_type aijkokkos -dm_vec_type kokkos -ksp_type bicg -pc_type jacobi
-    test:
-      suffix: cuda
-      requires: cuda
-      args: -dm_landau_device_type cuda -dm_mat_type aijcusparse -dm_vec_type cuda -mat_cusparse_use_cpu_solve -ksp_type bicg -pc_type jacobi
     test:
       suffix: kokkos_batch
       requires: kokkos_kernels
       args: -dm_landau_device_type kokkos -dm_mat_type aijkokkos -dm_vec_type kokkos -ksp_type preonly -pc_type bjkokkos -pc_bjkokkos_ksp_type bicg -pc_bjkokkos_pc_type jacobi
     test:
-      suffix: kokkos_batch_coo
-      requires: kokkos_kernels
-      args: -dm_landau_device_type kokkos -dm_mat_type aijkokkos -dm_vec_type kokkos -ksp_type preonly -pc_type bjkokkos -pc_bjkokkos_ksp_type bicg -pc_bjkokkos_pc_type jacobi -dm_landau_coo_assembly
+      suffix: kokkos_batch_tfqmr
+      requires: kokkos_kernels !defined(PETSC_HAVE_CUDA_CLANG) !defined(PETSC_HAVE_SYCL)
+      args: -dm_landau_device_type kokkos -dm_mat_type aijkokkos -dm_vec_type kokkos -ksp_type preonly -pc_type bjkokkos -pc_bjkokkos_ksp_type tfqmr -pc_bjkokkos_pc_type jacobi
+
+  test:
+    requires: !complex double defined(PETSC_USE_DMLANDAU_2D) !kokkos_kernels !cuda
+    suffix: single
+    nsize: 1
+    args: -dm_refine 2 -dm_landau_num_species_grid 1 -dm_landau_thermal_temps 1 -dm_landau_electron_shift 1.25 -petscspace_degree 3 -snes_converged_reason -ts_type beuler -ts_dt .1 -ex2_plot_dt .1 -ts_max_steps 1 -ex2_grid_view_idx 0 -ex2_dm_view -snes_rtol 1.e-13 -snes_stol 1.e-13 -dm_landau_verbose 2 -ex2_print_period 1 -ksp_type preonly -pc_type lu -dm_landau_device_type cpu -dm_landau_use_relativistic_corrections
+
+  testset:
+    requires: !complex double defined(PETSC_USE_DMLANDAU_2D)
+    nsize: 1
+    output_file: output/ex2_simplex.out
+    args: -dim 2 -dm_landau_num_species_grid 1,1 -petscspace_degree 2 -dm_landau_simplex -dm_landau_ion_masses 2 -dm_landau_ion_charges 1 -dm_landau_thermal_temps 2,1 -dm_landau_n 1,1 -snes_rtol 1e-15 -snes_stol 1e-15 -snes_monitor -ts_type beuler -snes_converged_reason -ts_exact_final_time stepover -ts_dt .1 -ts_max_steps 1 -ts_max_snes_failures -1 -ksp_type preonly -pc_type lu -dm_landau_verbose 2 -ex2_grid_view_idx 0 -ex2_dm_view -dm_refine 1 -ksp_type bicg -pc_type jacobi
+    test:
+      suffix: simplex
+      args: -dm_landau_device_type cpu
+    test:
+      suffix: simplexkokkos
+      requires: kokkos_kernels !defined(PETSC_HAVE_CUDA_CLANG) !defined(PETSC_HAVE_SYCL)
+      args: -dm_landau_device_type kokkos -dm_mat_type aijkokkos -dm_vec_type kokkos
 
 TEST*/

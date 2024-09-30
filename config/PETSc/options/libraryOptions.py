@@ -17,7 +17,7 @@ class Configure(config.base.Configure):
     help.addArgument('PETSc', '-with-log=<bool>',              nargs.ArgBool(None, 1, 'Activate logging code in PETSc'))
     help.addArgument('PETSc', '-with-threadsafety=<bool>',     nargs.ArgBool(None, 0, 'Allow individual threads in PETSc to call PETSc routines'))
     help.addArgument('PETSc', '-with-info=<bool>',             nargs.ArgBool(None, 1, 'Activate PetscInfo() (i.e. -info)  code in PETSc'))
-    help.addArgument('PETSc', '-with-ctable=<bool>',           nargs.ArgBool(None, 1, 'Activate CTABLE hashing for certain search functions - to conserve memory'))
+    help.addArgument('PETSc', '-with-ctable=<bool>',           nargs.ArgBool(None, 1, 'Use hash maps in certain places in PETSc, instead of non-memory-scalable arrays'))
     help.addArgument('PETSc', '-with-dmlandau-3d=<bool>',      nargs.ArgBool(None, 0, 'Enable full 3D DM Landau, default is 2.5D'))
     help.addArgument('PETSc', '-with-fortran-kernels=<bool>',  nargs.ArgBool(None, 0, 'Use Fortran for linear algebra kernels'))
     help.addArgument('PETSc', '-with-avx512-kernels=<bool>',   nargs.ArgBool(None, 1, 'Use AVX-512 intrinsics for linear algebra kernels when available'))
@@ -44,9 +44,6 @@ class Configure(config.base.Configure):
     else:
       self.useThreadSafety = 0
 
-    if self.useThreadSafety and self.framework.argDB['with-log']:
-      raise RuntimeError('Must use --with-log=0 with --with-threadsafety')
-
     if self.useThreadSafety and not ((self.sharedLibraries.useShared and self.setCompilers.dynamicLibraries) or self.framework.argDB['with-single-library']):
       raise RuntimeError('Must use --with-shared-libraries or --with-single-library with --with-threadsafety')
 
@@ -54,8 +51,6 @@ class Configure(config.base.Configure):
     self.addDefine('USE_LOG',   self.useLog)
 
     if self.compilerFlags.debugging:
-      if self.useThreadSafety:
-        raise RuntimeError('Must use --with-debugging=0 with --with-threadsafety')
       self.addDefine('USE_DEBUG',1)
     elif not config.setCompilers.Configure.isIBM(self.framework.getCompiler(), self.log):
       # IBM XLC version 12.1 (BG/Q and POWER) miscompiles PetscMalloc3()

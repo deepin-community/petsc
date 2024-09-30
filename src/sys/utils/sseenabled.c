@@ -1,4 +1,3 @@
-
 #include <petscsys.h> /*I "petscsys.h" I*/
 
 #if defined(PETSC_HAVE_SSE)
@@ -29,7 +28,7 @@ PetscErrorCode PetscSSEHardwareTest(PetscBool *flag)
       if (myedx & SSE_FEATURE_FLAG) *flag = PETSC_TRUE;
       else *flag = PETSC_FALSE;
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 }
 
@@ -65,7 +64,7 @@ PetscErrorCode PetscSSEOSEnabledTest_Linux(PetscBool *flag)
   } else wait(&status);
   if (!status) *flag = PETSC_TRUE;
   else *flag = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
   #else
@@ -80,7 +79,7 @@ PetscErrorCode PetscSSEOSEnabledTest_TRUE(PetscBool *flag)
 {
   PetscFunctionBegin;
   if (flag) *flag = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #else /* Not defined PETSC_HAVE_SSE */
@@ -88,42 +87,44 @@ PetscErrorCode PetscSSEOSEnabledTest_TRUE(PetscBool *flag)
   #define PetscSSEHardwareTest(arg)  PetscSSEEnabledTest_FALSE(arg)
   #define PetscSSEOSEnabledTest(arg) PetscSSEEnabledTest_FALSE(arg)
 
-PetscErrorCode PetscSSEEnabledTest_FALSE(PetscBool *flag)
+static PetscErrorCode PetscSSEEnabledTest_FALSE(PetscBool *flag)
 {
   PetscFunctionBegin;
   if (flag) *flag = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif /* defined PETSC_HAVE_SSE */
 
-/*@C
-     PetscSSEIsEnabled - Determines if Intel Streaming SIMD Extensions (SSE) to the x86 instruction
-     set can be used.  Some operating systems do not allow the use of these instructions despite
-     hardware availability.
-
-     Collective
-
-     Input Parameter:
-.    comm - the MPI Communicator
-
-     Output Parameters:
-+    lflag - Local Flag:  `PETSC_TRUE` if enabled in this process
--    gflag - Global Flag: `PETSC_TRUE` if enabled for all processes in comm
-
-     Note:
-     NULL can be specified for lflag or gflag if either of these values are not desired.
-
-     Options Database Keys:
-.    -disable_sse - Disable use of hand tuned Intel SSE implementations
-
-     Level: developer
-@*/
 static PetscBool petsc_sse_local_is_untested  = PETSC_TRUE;
 static PetscBool petsc_sse_enabled_local      = PETSC_FALSE;
 static PetscBool petsc_sse_global_is_untested = PETSC_TRUE;
 static PetscBool petsc_sse_enabled_global     = PETSC_FALSE;
-PetscErrorCode   PetscSSEIsEnabled(MPI_Comm comm, PetscBool *lflag, PetscBool *gflag)
+/*@C
+  PetscSSEIsEnabled - Determines if Intel Streaming SIMD Extensions (SSE) to the x86 instruction
+  set can be used.  Some operating systems do not allow the use of these instructions despite
+  hardware availability.
+
+  Collective
+
+  Input Parameter:
+. comm - the MPI Communicator
+
+  Output Parameters:
++ lflag - Local Flag  `PETSC_TRUE` if enabled in this process
+- gflag - Global Flag `PETSC_TRUE` if enabled for all processes in comm
+
+  Options Database Key:
+. -disable_sse - Disable use of hand tuned Intel SSE implementations
+
+  Level: developer
+
+  Note:
+  `NULL` can be specified for `lflag` or `gflag` if either of these values are not desired.
+
+.seealso: [](ch_profiling)
+@*/
+PetscErrorCode PetscSSEIsEnabled(MPI_Comm comm, PetscBool *lflag, PetscBool *gflag)
 {
   PetscBool disabled_option;
 
@@ -154,5 +155,5 @@ PetscErrorCode   PetscSSEIsEnabled(MPI_Comm comm, PetscBool *lflag, PetscBool *g
 
   if (lflag) *lflag = petsc_sse_enabled_local;
   if (gflag) *gflag = petsc_sse_enabled_global;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

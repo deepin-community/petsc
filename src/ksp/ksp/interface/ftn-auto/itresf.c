@@ -44,7 +44,6 @@ extern void PetscRmPointer(void*);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
 PETSC_EXTERN void  kspinitialresidual_(KSP ksp,Vec vsoln,Vec vt1,Vec vt2,Vec vres,Vec vb, int *__ierr)
 {
 *__ierr = KSPInitialResidual(

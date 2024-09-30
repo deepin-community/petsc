@@ -1,4 +1,3 @@
-
 static char help[] = "Tests `PetscGarbageKeySortedIntersect()`\n\n";
 
 #include <petscsys.h>
@@ -33,7 +32,7 @@ PetscErrorCode Fibonnaci(PetscInt64 **set, PetscInt n)
   PetscCall(PetscMalloc1(n + 1, set));
   (*set)[0] = (PetscInt64)n;
   for (ii = 0; ii < n; ii++) { (*set)[ii + 1] = fib[ii]; }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Populate a set with Square numbers */
@@ -45,7 +44,7 @@ PetscErrorCode Square(PetscInt64 **set, PetscInt n)
   PetscCall(PetscMalloc1(n + 1, set));
   (*set)[0] = (PetscInt64)n;
   for (ii = 1; ii < n + 1; ii++) { (*set)[ii] = ii * ii; }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Populate a set with Cube numbers */
@@ -57,7 +56,7 @@ PetscErrorCode Cube(PetscInt64 **set, PetscInt n)
   PetscCall(PetscMalloc1(n + 1, set));
   (*set)[0] = (PetscInt64)n;
   for (ii = 1; ii < n + 1; ii++) { (*set)[ii] = ii * ii * ii; }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Populate a set with numbers to sixth power */
@@ -69,7 +68,7 @@ PetscErrorCode Sixth(PetscInt64 **set, PetscInt n)
   PetscCall(PetscMalloc1(n + 1, set));
   (*set)[0] = (PetscInt64)n;
   for (ii = 1; ii < n + 1; ii++) { (*set)[ii] = ii * ii * ii * ii * ii * ii; }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Print out the contents of a set */
@@ -85,7 +84,7 @@ PetscErrorCode PrintSet(PetscInt64 *set)
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, text, set[ii]));
   }
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "]\n"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Check set equality */
@@ -95,8 +94,8 @@ PetscErrorCode AssertSetsEqual(PetscInt64 *set, PetscInt64 *true_set)
 
   PetscFunctionBeginUser;
   PetscAssert((set[0] == true_set[0]), PETSC_COMM_WORLD, PETSC_ERR_ARG_INCOMP, "Sets of different sizes");
-  for (ii = 1; ii < set[0] + 1; ii++) { PetscAssert((set[ii] == true_set[ii]), PETSC_COMM_WORLD, PETSC_ERR_ARG_INCOMP, "Sets are different"); }
-  PetscFunctionReturn(0);
+  for (ii = 1; ii < set[0] + 1; ii++) PetscAssert((set[ii] == true_set[ii]), PETSC_COMM_WORLD, PETSC_ERR_ARG_INCOMP, "Sets are different");
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when two enpty sets are passed */
@@ -122,7 +121,7 @@ PetscErrorCode test_empty_empty()
   PetscCall(PetscFree(set_a));
   PetscCall(PetscFree(set_b));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when seta is empty */
@@ -149,7 +148,7 @@ PetscErrorCode test_a_empty()
   PetscCall(PetscFree(set_a));
   PetscCall(PetscFree(set_b));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when setb is empty */
@@ -176,7 +175,7 @@ PetscErrorCode test_b_empty()
   PetscCall(PetscFree(set_a));
   PetscCall(PetscFree(set_b));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when both sets are identical */
@@ -208,7 +207,7 @@ PetscErrorCode test_identical()
   PetscCall(PetscFree(set_a));
   PetscCall(PetscFree(set_b));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when sets have no elements in common */
@@ -240,7 +239,7 @@ PetscErrorCode test_disjoint()
   PetscCall(PetscFree(set_a));
   PetscCall(PetscFree(set_b));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when sets only have one element in common */
@@ -273,7 +272,7 @@ PetscErrorCode test_single_common()
   PetscCall(PetscFree(set_a));
   PetscCall(PetscFree(set_b));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Specific test case flagged by PETSc issue #1247 */
@@ -302,7 +301,7 @@ PetscErrorCode test_issue_1247()
   PetscCall(PetscFree(set_a));
   PetscCall(PetscFree(set_b));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when seta is empty and setb is large */
@@ -326,7 +325,7 @@ PetscErrorCode test_empty_big()
   PetscCall(PetscFree(set_a));
   PetscCall(PetscFree(set_b));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when seta is small and setb is large */
@@ -354,7 +353,7 @@ PetscErrorCode test_small_big()
   PetscCall(PetscFree(set_a));
   PetscCall(PetscFree(set_b));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when seta is medium sized and setb is large */
@@ -376,7 +375,7 @@ PetscErrorCode test_moderate_big()
   PetscCall(PetscFree(set_a));
   PetscCall(PetscFree(set_b));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when seta and setb are large */
@@ -401,7 +400,7 @@ PetscErrorCode test_big_big()
   PetscCall(PetscFree(set_b));
   PetscCall(PetscFree(truth));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when setb is empty and setb is large */
@@ -425,7 +424,7 @@ PetscErrorCode test_big_empty()
   PetscCall(PetscFree(set_a));
   PetscCall(PetscFree(set_b));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when setb is small and setb is large */
@@ -453,7 +452,7 @@ PetscErrorCode test_big_small()
   PetscCall(PetscFree(set_a));
   PetscCall(PetscFree(set_b));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when setb is medium sized and setb is large */
@@ -475,7 +474,7 @@ PetscErrorCode test_big_moderate()
   PetscCall(PetscFree(set_a));
   PetscCall(PetscFree(set_b));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Tests functionality when seta and setb are large, in the opposite
@@ -501,7 +500,7 @@ PetscErrorCode test_big_big_reversed()
   PetscCall(PetscFree(set_b));
   PetscCall(PetscFree(truth));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Main executes the individual tests in a predefined order */
@@ -539,6 +538,6 @@ int main(int argc, char **argv)
 /*TEST
 
    test:
-     output_file: output/ex62.out
+     suffix: 0
 
 TEST*/

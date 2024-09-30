@@ -1,4 +1,3 @@
-
 #include <petsc/private/matimpl.h> /*I       "petscmat.h"   I*/
 
 PETSC_INTERN PetscErrorCode MatGetOrdering_Natural(Mat, MatOrderingType, IS *, IS *);
@@ -25,12 +24,12 @@ PETSC_INTERN PetscErrorCode MatGetOrdering_METISND(Mat, MatOrderingType, IS *, I
 
   Level: developer
 
-  Adding new methods:
+  Notes:
   To add a new method to the registry. Copy this routine and
   modify it to incorporate a call to `MatReorderRegister()` for
   the new method, after the current list.
 
-  Restricting the choices: To prevent all of the methods from being
+  To prevent all of the methods from being
   registered and thus save memory, copy this routine and comment out
   those orderigs you do not wish to include.  Make sure that the
   replacement routine is linked before libpetscmat.a.
@@ -40,7 +39,7 @@ PETSC_INTERN PetscErrorCode MatGetOrdering_METISND(Mat, MatOrderingType, IS *, I
 PetscErrorCode MatOrderingRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (MatOrderingRegisterAllCalled) PetscFunctionReturn(0);
+  if (MatOrderingRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   MatOrderingRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(MatOrderingRegister(MATORDERINGNATURAL, MatGetOrdering_Natural));
@@ -59,5 +58,5 @@ PetscErrorCode MatOrderingRegisterAll(void)
 #if defined(PETSC_HAVE_METIS)
   PetscCall(MatOrderingRegister(MATORDERINGMETISND, MatGetOrdering_METISND));
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

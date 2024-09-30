@@ -1,35 +1,35 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/impls/baij/seq/dgefa3.c">Actual source code: dgefa3.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/mat/impls/baij/seq/dgefa3.c">Actual source code: dgefa3.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:47:46+00:00">
+<meta name="date" content="2024-03-29T14:12:49+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
 <pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">     Inverts 3 by 3 matrix using gaussian elimination with partial pivoting.</font>
 
-<a name="line2">  2: </a><font color="#B22222">/*</font>
-<a name="line3">  3: </a><font color="#B22222">     Inverts 3 by 3 matrix using gaussian elimination with partial pivoting.</font>
+<a name="line4">  4: </a><font color="#B22222">       Used by the sparse factorization routines in</font>
+<a name="line5">  5: </a><font color="#B22222">     src/mat/impls/baij/seq</font>
 
-<a name="line5">  5: </a><font color="#B22222">       Used by the sparse factorization routines in</font>
-<a name="line6">  6: </a><font color="#B22222">     src/mat/impls/baij/seq</font>
+<a name="line7">  7: </a><font color="#B22222">       This is a combination of the Linpack routines</font>
+<a name="line8">  8: </a><font color="#B22222">    dgefa() and dgedi() specialized for a size of 3.</font>
 
-<a name="line8">  8: </a><font color="#B22222">       This is a combination of the Linpack routines</font>
-<a name="line9">  9: </a><font color="#B22222">    dgefa() and dgedi() specialized for a size of 3.</font>
+<a name="line10"> 10: </a><font color="#B22222">*/</font>
+<a name="line11"> 11: </a>#include <A href="../../../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
 
-<a name="line11"> 11: </a><font color="#B22222">*/</font>
-<a name="line12"> 12: </a>#include <A href="../../../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+<a name="line13"> 13: </a><strong><font color="#4169E1"><a name="PetscKernel_A_gets_inverse_A_3"></a>PETSC_EXTERN <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscKernel_A_gets_inverse_A_3(MatScalar *a, <a href="../../../../../manualpages/Sys/PetscReal.html">PetscReal</a> shift, <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> allowzeropivot, <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *zeropivotdetected)</font></strong>
+<a name="line14"> 14: </a>{
+<a name="line15"> 15: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>   i__2, i__3, kp1, j, k, l, ll, i, ipvt[3], kb, k3;
+<a name="line16"> 16: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>   k4, j3;
+<a name="line17"> 17: </a>  MatScalar *aa, *ax, *ay, work[9], stmp;
+<a name="line18"> 18: </a>  MatReal    tmp, max;
 
-<a name="line14"> 14: </a><strong><font color="#4169E1"><a name="PetscKernel_A_gets_inverse_A_3"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscKernel_A_gets_inverse_A_3(MatScalar *a, <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> shift, <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> allowzeropivot, <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *zeropivotdetected)</font></strong>
-<a name="line15"> 15: </a>{
-<a name="line16"> 16: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   i__2, i__3, kp1, j, k, l, ll, i, ipvt[3], kb, k3;
-<a name="line17"> 17: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   k4, j3;
-<a name="line18"> 18: </a>  MatScalar *aa, *ax, *ay, work[9], stmp;
-<a name="line19"> 19: </a>  MatReal    tmp, max;
-
-<a name="line21"> 21: </a>  <font color="#4169E1">if</font> (zeropivotdetected) *zeropivotdetected = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line20"> 20: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line21"> 21: </a>  <font color="#4169E1">if</font> (zeropivotdetected) *zeropivotdetected = <a href="../../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
 <a name="line22"> 22: </a>  shift = .333 * shift * (1.e-12 + PetscAbsScalar(a[0]) + PetscAbsScalar(a[4]) + PetscAbsScalar(a[8]));
 
 <a name="line24"> 24: </a>  <font color="#B22222">/* Parameter adjustments */</font>
@@ -58,9 +58,9 @@
 <a name="line47"> 47: </a>    <font color="#4169E1">if</font> (a[l + k3] == 0.0) {
 <a name="line48"> 48: </a>      <font color="#4169E1">if</font> (shift == 0.0) {
 <a name="line49"> 49: </a>        <font color="#4169E1">if</font> (allowzeropivot) {
-<a name="line50"> 50: </a>          <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(NULL, <font color="#666666">"Zero pivot, row %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, k - 1);
-<a name="line51"> 51: </a>          <font color="#4169E1">if</font> (zeropivotdetected) *zeropivotdetected = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line52"> 52: </a>        } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_MAT_LU_ZRPVT, <font color="#666666">"Zero pivot, row %"</font> PetscInt_FMT, k - 1);
+<a name="line50"> 50: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Profiling/PetscInfo.html">PetscInfo</a>(NULL, <font color="#666666">"Zero pivot, row %"</font> PetscInt_FMT <font color="#666666">"\n"</font>, k - 1));
+<a name="line51"> 51: </a>          <font color="#4169E1">if</font> (zeropivotdetected) *zeropivotdetected = <a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line52"> 52: </a>        } <font color="#4169E1">else</font> <a href="../../../../../manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_MAT_LU_ZRPVT</a>, <font color="#666666">"Zero pivot, row %"</font> PetscInt_FMT, k - 1);
 <a name="line53"> 53: </a>      } <font color="#4169E1">else</font> {
 <a name="line54"> 54: </a>        <font color="#B22222">/* Shift is applied to single diagonal entry */</font>
 <a name="line55"> 55: </a>        a[l + k3] = shift;
@@ -97,10 +97,10 @@
 <a name="line86"> 86: </a>  }
 <a name="line87"> 87: </a>  ipvt[2] = 3;
 <a name="line88"> 88: </a>  <font color="#4169E1">if</font> (a[12] == 0.0) {
-<a name="line89"> 89: </a>    <font color="#4169E1">if</font> (<a href="../../../../../docs/manualpages/Sys/PetscLikely.html">PetscLikely</a>(allowzeropivot)) {
-<a name="line90"> 90: </a>      <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(NULL, <font color="#666666">"Zero pivot, row 2\n"</font>);
-<a name="line91"> 91: </a>      <font color="#4169E1">if</font> (zeropivotdetected) *zeropivotdetected = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line92"> 92: </a>    } <font color="#4169E1">else</font> <a href="../../../../../docs/manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, PETSC_ERR_MAT_LU_ZRPVT, <font color="#666666">"Zero pivot, row 2"</font>);
+<a name="line89"> 89: </a>    <font color="#4169E1">if</font> (<a href="../../../../../manualpages/Sys/PetscLikely.html">PetscLikely</a>(allowzeropivot)) {
+<a name="line90"> 90: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Profiling/PetscInfo.html">PetscInfo</a>(NULL, <font color="#666666">"Zero pivot, row 2\n"</font>));
+<a name="line91"> 91: </a>      <font color="#4169E1">if</font> (zeropivotdetected) *zeropivotdetected = <a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line92"> 92: </a>    } <font color="#4169E1">else</font> <a href="../../../../../manualpages/Sys/SETERRQ.html">SETERRQ</a>(<a href="../../../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_MAT_LU_ZRPVT</a>, <font color="#666666">"Zero pivot, row 2"</font>);
 <a name="line93"> 93: </a>  }
 
 <a name="line95"> 95: </a>  <font color="#B22222">/* Now form the inverse */</font>
@@ -158,7 +158,7 @@
 <a name="line147">147: </a>      ay[2] = stmp;
 <a name="line148">148: </a>    }
 <a name="line149">149: </a>  }
-<a name="line150">150: </a>  <font color="#4169E1">return</font> 0;
+<a name="line150">150: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line151">151: </a>}
 </pre>
 </body>

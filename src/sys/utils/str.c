@@ -2,7 +2,6 @@
     We define the string operations here. The reason we just do not use
   the standard string routines in the PETSc code is that on some machines
   they are broken or have the wrong prototypes.
-
 */
 #include <petsc/private/petscimpl.h> /*I  "petscsys.h"   I*/
 #if defined(PETSC_HAVE_STRINGS_H)
@@ -10,30 +9,27 @@
 #endif
 
 /*@C
-   PetscStrToArray - Separates a string by a character (for example ' ' or '\n') and creates an array of strings
+  PetscStrToArray - Separates a string by a character (for example ' ' or '\n') and creates an array of strings
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Input Parameters:
-+  s - pointer to string
--  sp - separator character
+  Input Parameters:
++ s  - pointer to string
+- sp - separator character
 
-   Output Parameters:
-+   argc - the number of entries in the array
--   args - an array of the entries with a null at the end
+  Output Parameters:
++ argc - the number of entries in the array
+- args - an array of the entries with a `NULL` at the end
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-    this may be called before PetscInitialize() or after PetscFinalize()
+  Note:
+  This may be called before `PetscInitialize()` or after `PetscFinalize()`
 
-   Fortran Note:
-   Not for use in Fortran
+  Developer Notes:
+  Uses raw `malloc()` and does not call error handlers since this may be used before PETSc is initialized.
 
-   Developer Notes:
-   Uses raw `malloc()` and does not call error handlers since this may be used before PETSc is initialized.
-
-   Used to generate argc, args arguments passed to `MPI_Init()`
+  Used to generate argc, args arguments passed to `MPI_Init()`
 
 .seealso: `PetscStrToArrayDestroy()`, `PetscToken`, `PetscTokenCreate()`
 @*/
@@ -49,7 +45,7 @@ PetscErrorCode PetscStrToArray(const char s[], char sp, int *argc, char ***args)
   for (; n > 0; n--) { /* remove separator chars at the end - and will empty the string if all chars are separator chars */
     if (s[n - 1] != sp) break;
   }
-  if (!n) return 0;
+  if (!n) return PETSC_SUCCESS;
   for (i = 0; i < n; i++) {
     if (s[i] != sp) break;
   }
@@ -108,25 +104,22 @@ PetscErrorCode PetscStrToArray(const char s[], char sp, int *argc, char ***args)
       flg                   = PETSC_FALSE;
     }
   }
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 /*@C
-   PetscStrToArrayDestroy - Frees array created with `PetscStrToArray()`.
+  PetscStrToArrayDestroy - Frees array created with `PetscStrToArray()`.
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Output Parameters:
-+  argc - the number of arguments
--  args - the array of arguments
+  Output Parameters:
++ argc - the number of arguments
+- args - the array of arguments
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-    This may be called before `PetscInitialize()` or after `PetscFinalize()`
-
-   Fortran Note:
-   Not for use in Fortran
+  Note:
+  This may be called before `PetscInitialize()` or after `PetscFinalize()`
 
 .seealso: `PetscStrToArray()`
 @*/
@@ -134,98 +127,25 @@ PetscErrorCode PetscStrToArrayDestroy(int argc, char **args)
 {
   for (int i = 0; i < argc; ++i) free(args[i]);
   if (args) free(args);
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 /*@C
-   PetscStrlen - Gets length of a string
+  PetscStrArrayallocpy - Allocates space to hold a copy of an array of strings then copies the strings
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Input Parameters:
-.  s - pointer to string
+  Input Parameter:
+. list - pointer to array of strings (final string is a `NULL`)
 
-   Output Parameter:
-.  len - length in bytes
+  Output Parameter:
+. t - the copied array string
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   This routine is analogous to `strlen()`.
-
-   Null string returns a length of zero
-
-   Fortran Note:
-   Not for use in Fortran
-
-.seealso: `PetscStrallocpy()`
-@*/
-PetscErrorCode PetscStrlen(const char s[], size_t *len)
-{
-  PetscFunctionBegin;
-  *len = s ? strlen(s) : 0;
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrallocpy - Allocates space to hold a copy of a string then copies the string in the new space
-
-   Not Collective
-
-   Input Parameters:
-.  s - pointer to string
-
-   Output Parameter:
-.  t - the copied string
-
-   Level: intermediate
-
-   Notes:
-   Null string returns a new null string
-
-   If t has previously been allocated then that memory is lost, you may need to PetscFree()
-   the array before calling this routine.
-
-   Fortran Note:
-   Not for use in Fortran
-
-.seealso: `PetscStrArrayallocpy()`, `PetscStrcpy()`, `PetscStrNArrayallocpy()`
-@*/
-PetscErrorCode PetscStrallocpy(const char s[], char *t[])
-{
-  char *tmp = NULL;
-
-  PetscFunctionBegin;
-  if (s) {
-    size_t len;
-
-    PetscCall(PetscStrlen(s, &len));
-    PetscCall(PetscMalloc1(1 + len, &tmp));
-    PetscCall(PetscStrcpy(tmp, s));
-  }
-  *t = tmp;
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrArrayallocpy - Allocates space to hold a copy of an array of strings then copies the strings
-
-   Not Collective
-
-   Input Parameters:
-.  s - pointer to array of strings (final string is a null)
-
-   Output Parameter:
-.  t - the copied array string
-
-   Level: intermediate
-
-   Note:
-   If t has previously been allocated then that memory is lost, you may need to PetscStrArrayDestroy()
-   the array before calling this routine.
-
-   Fortran Note:
-   Not for use in Fortran
+  Note:
+  If `t` has previously been allocated then that memory is lost, you may need to `PetscStrArrayDestroy()`
+  the array before calling this routine.
 
 .seealso: `PetscStrallocpy()`, `PetscStrArrayDestroy()`, `PetscStrNArrayallocpy()`
 @*/
@@ -239,21 +159,18 @@ PetscErrorCode PetscStrArrayallocpy(const char *const *list, char ***t)
   PetscCall(PetscMalloc1(n + 1, t));
   for (PetscInt i = 0; i < n; i++) PetscCall(PetscStrallocpy(list[i], (*t) + i));
   (*t)[n] = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscStrArrayDestroy - Frees array of strings created with `PetscStrArrayallocpy()`.
+  PetscStrArrayDestroy - Frees array of strings created with `PetscStrArrayallocpy()`.
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Output Parameters:
-.   list - array of strings
+  Output Parameter:
+. list - array of strings
 
-   Level: intermediate
-
-   Fortran Note:
-    Not for use in Fortran
+  Level: intermediate
 
 .seealso: `PetscStrArrayallocpy()`
 @*/
@@ -262,31 +179,28 @@ PetscErrorCode PetscStrArrayDestroy(char ***list)
   PetscInt n = 0;
 
   PetscFunctionBegin;
-  if (!*list) PetscFunctionReturn(0);
+  if (!*list) PetscFunctionReturn(PETSC_SUCCESS);
   while ((*list)[n]) {
     PetscCall(PetscFree((*list)[n]));
     ++n;
   }
   PetscCall(PetscFree(*list));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscStrNArrayallocpy - Allocates space to hold a copy of an array of strings then copies the strings
+  PetscStrNArrayallocpy - Allocates space to hold a copy of an array of strings then copies the strings
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Input Parameters:
-+  n - the number of string entries
--  s - pointer to array of strings
+  Input Parameters:
++ n    - the number of string entries
+- list - pointer to array of strings
 
-   Output Parameter:
-.  t - the copied array string
+  Output Parameter:
+. t - the copied array string
 
-   Level: intermediate
-
-   Fortran Note:
-      Not for use in Fortran
+  Level: intermediate
 
 .seealso: `PetscStrallocpy()`, `PetscStrArrayallocpy()`, `PetscStrNArrayDestroy()`
 @*/
@@ -295,205 +209,49 @@ PetscErrorCode PetscStrNArrayallocpy(PetscInt n, const char *const *list, char *
   PetscFunctionBegin;
   PetscCall(PetscMalloc1(n, t));
   for (PetscInt i = 0; i < n; i++) PetscCall(PetscStrallocpy(list[i], (*t) + i));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscStrNArrayDestroy - Frees array of strings created with `PetscStrNArrayallocpy()`.
+  PetscStrNArrayDestroy - Frees array of strings created with `PetscStrNArrayallocpy()`.
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Output Parameters:
-+   n - number of string entries
--   list - array of strings
+  Output Parameters:
++ n    - number of string entries
+- list - array of strings
 
-   Level: intermediate
-
-   Fortran Note:
-    Not for use in Fortran
+  Level: intermediate
 
 .seealso: `PetscStrNArrayallocpy()`, `PetscStrArrayallocpy()`
 @*/
 PetscErrorCode PetscStrNArrayDestroy(PetscInt n, char ***list)
 {
   PetscFunctionBegin;
-  if (!*list) PetscFunctionReturn(0);
+  if (!*list) PetscFunctionReturn(PETSC_SUCCESS);
   for (PetscInt i = 0; i < n; i++) PetscCall(PetscFree((*list)[i]));
   PetscCall(PetscFree(*list));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscStrcpy - Copies a string
+  PetscBasename - returns a pointer to the last entry of a / or \ separated directory path
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Input Parameters:
-.  t - pointer to string
+  Input Parameter:
+. a - pointer to string
 
-   Output Parameter:
-.  s - the copied string
-
-   Level: intermediate
-
-   Notes:
-     Null string returns a string starting with zero
-
-     It is recommended you use `PetscStrncpy()` instead of this routine
-
-   Fortran Note:
-    Not for use in Fortran
-
-.seealso: `PetscStrncpy()`, `PetscStrcat()`, `PetscStrlcat()`, `PetscStrallocpy()`
-@*/
-
-PetscErrorCode PetscStrcpy(char s[], const char t[])
-{
-  PetscFunctionBegin;
-  if (t) {
-    PetscValidCharPointer(s, 1);
-    PetscValidCharPointer(t, 2);
-    strcpy(s, t);
-  } else if (s) s[0] = 0;
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrncpy - Copies a string up to a certain length
-
-   Not Collective
-
-   Input Parameters:
-+  t - pointer to string
--  n - the length to copy
-
-   Output Parameter:
-.  s - the copied string
-
-   Level: intermediate
-
-   Note:
-     Null string returns a string starting with zero
-
-     If the string that is being copied is of length n or larger then the entire string is not
-     copied and the final location of s is set to NULL. This is different then the behavior of
-     `strncpy()` which leaves s non-terminated if there is not room for the entire string.
-
-  Developers Note:
-  Should this be `PetscStrlcpy()` to reflect its behavior which is like `strlcpy()` not `strncpy()`
-
-.seealso: `PetscStrcpy()`, `PetscStrcat()`, `PetscStrlcat()`, `PetscStrallocpy()`
-@*/
-PetscErrorCode PetscStrncpy(char s[], const char t[], size_t n)
-{
-  PetscFunctionBegin;
-  if (s) PetscCheck(n, PETSC_COMM_SELF, PETSC_ERR_ARG_NULL, "Requires an output string of length at least 1 to hold the termination character");
-  if (t) {
-    PetscValidCharPointer(s, 1);
-    if (n > 1) {
-      strncpy(s, t, n - 1);
-      s[n - 1] = '\0';
-    } else {
-      s[0] = '\0';
-    }
-  } else if (s) s[0] = 0;
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrcat - Concatenates a string onto a given string
-
-   Not Collective
-
-   Input Parameters:
-+  s - string to be added to
--  t - pointer to string to be added to end
-
-   Level: intermediate
-
-   Note:
-    It is recommended you use `PetscStrlcat()` instead of this routine
-
-   Fortran Note:
-    Not for use in Fortran
-
-.seealso: `PetscStrcpy()`, `PetscStrncpy()`, `PetscStrlcat()`
-@*/
-PetscErrorCode PetscStrcat(char s[], const char t[])
-{
-  PetscFunctionBegin;
-  if (!t) PetscFunctionReturn(0);
-  PetscValidCharPointer(s, 1);
-  PetscValidCharPointer(t, 2);
-  strcat(s, t);
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrlcat - Concatenates a string onto a given string, up to a given length
-
-   Not Collective
-
-   Input Parameters:
-+  s - pointer to string to be added to at end
-.  t - string to be added
--  n - length of the original allocated string
-
-   Level: intermediate
-
-  Note:
-  Unlike the system call `strncat()`, the length passed in is the length of the
-  original allocated space, not the length of the left-over space. This is
-  similar to the BSD system call `strlcat()`.
-
-  Fortran Note:
-  Not for use in Fortran
-
-.seealso: `PetscStrcpy()`, `PetscStrncpy()`, `PetscStrcat()`
-@*/
-PetscErrorCode PetscStrlcat(char s[], const char t[], size_t n)
-{
-  size_t len;
-
-  PetscFunctionBegin;
-  if (!t) PetscFunctionReturn(0);
-  PetscValidCharPointer(s, 1);
-  PetscValidCharPointer(t, 2);
-  PetscCheck(n, PETSC_COMM_SELF, PETSC_ERR_ARG_SIZ, "String buffer length must be positive");
-  PetscCall(PetscStrlen(t, &len));
-  strncat(s, t, n - len);
-  s[n - 1] = 0;
-  PetscFunctionReturn(0);
-}
-
-void PetscStrcmpNoError(const char a[], const char b[], PetscBool *flg)
-{
-  if (!a && !b) *flg = PETSC_TRUE;
-  else if (!a || !b) *flg = PETSC_FALSE;
-  else *flg = strcmp(a, b) ? PETSC_FALSE : PETSC_TRUE;
-}
-
-/*@C
-   PetscBasename - returns a pointer to the last entry of a / or \ separated directory path
-
-   Not Collective
-
-   Input Parameter:
-.  a - pointer to string
-
-   Level: intermediate
-
-   Fortran Note:
-    Not for use in Fortran
+  Level: intermediate
 
 .seealso: `PetscStrgrt()`, `PetscStrncmp()`, `PetscStrcasecmp()`, `PetscStrrchr()`, `PetscStrcmp()`, `PetscStrstr()`,
           `PetscTokenCreate()`, `PetscStrToArray()`, `PetscStrInList()`
 @*/
 const char *PetscBasename(const char a[])
 {
-  const char *ptr;
+  const char *ptr = NULL;
 
-  if (PetscStrrchr(a, '/', (char **)&ptr)) ptr = NULL;
+  (void)PetscStrrchr(a, '/', (char **)&ptr);
   if (ptr == a) {
     if (PetscStrrchr(a, '\\', (char **)&ptr)) ptr = NULL;
   }
@@ -501,92 +259,22 @@ const char *PetscBasename(const char a[])
 }
 
 /*@C
-   PetscStrcmp - Compares two strings,
+  PetscStrcasecmp - Returns true if the two strings are the same
+  except possibly for case.
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Input Parameters:
-+  a - pointer to string first string
--  b - pointer to second string
+  Input Parameters:
++ a - pointer to first string
+- b - pointer to second string
 
-   Output Parameter:
-.  flg - `PETSC_TRUE` if the two strings are equal
+  Output Parameter:
+. t - if the two strings are the same
 
-   Level: intermediate
+  Level: intermediate
 
-   Fortran Note:
-    Not for use in Fortran
-
-.seealso: `PetscStrgrt()`, `PetscStrncmp()`, `PetscStrcasecmp()`
-@*/
-PetscErrorCode PetscStrcmp(const char a[], const char b[], PetscBool *flg)
-{
-  PetscFunctionBegin;
-  PetscValidBoolPointer(flg, 3);
-  if (!a && !b) *flg = PETSC_TRUE;
-  else if (!a || !b) *flg = PETSC_FALSE;
-  else *flg = (PetscBool)!strcmp(a, b);
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrgrt - If first string is greater than the second
-
-   Not Collective
-
-   Input Parameters:
-+  a - pointer to first string
--  b - pointer to second string
-
-   Output Parameter:
-.  flg - if the first string is greater
-
-   Note:
-    Null arguments are ok, a null string is considered smaller than
-    all others
-
-   Fortran Note:
-   Not for use in Fortran
-
-   Level: intermediate
-
-.seealso: `PetscStrcmp()`, `PetscStrncmp()`, `PetscStrcasecmp()`
-@*/
-PetscErrorCode PetscStrgrt(const char a[], const char b[], PetscBool *t)
-{
-  PetscFunctionBegin;
-  PetscValidBoolPointer(t, 3);
-  if (!a && !b) *t = PETSC_FALSE;
-  else if (a && !b) *t = PETSC_TRUE;
-  else if (!a && b) *t = PETSC_FALSE;
-  else {
-    PetscValidCharPointer(a, 1);
-    PetscValidCharPointer(b, 2);
-    *t = strcmp(a, b) > 0 ? PETSC_TRUE : PETSC_FALSE;
-  }
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrcasecmp - Returns true if the two strings are the same
-     except possibly for case.
-
-   Not Collective
-
-   Input Parameters:
-+  a - pointer to first string
--  b - pointer to second string
-
-   Output Parameter:
-.  flg - if the two strings are the same
-
-   Note:
-    Null arguments are ok
-
-   Fortran Note:
-   Not for use in Fortran
-
-   Level: intermediate
+  Note:
+  `NULL` arguments are ok
 
 .seealso: `PetscStrcmp()`, `PetscStrncmp()`, `PetscStrgrt()`
 @*/
@@ -595,7 +283,7 @@ PetscErrorCode PetscStrcasecmp(const char a[], const char b[], PetscBool *t)
   int c;
 
   PetscFunctionBegin;
-  PetscValidBoolPointer(t, 3);
+  PetscAssertPointer(t, 3);
   if (!a && !b) c = 0;
   else if (!a || !b) c = 1;
 #if defined(PETSC_HAVE_STRCASECMP)
@@ -605,6 +293,7 @@ PetscErrorCode PetscStrcasecmp(const char a[], const char b[], PetscBool *t)
 #else
   else {
     char *aa, *bb;
+
     PetscCall(PetscStrallocpy(a, &aa));
     PetscCall(PetscStrallocpy(b, &bb));
     PetscCall(PetscStrtolower(aa));
@@ -612,328 +301,44 @@ PetscErrorCode PetscStrcasecmp(const char a[], const char b[], PetscBool *t)
     PetscCall(PetscStrcmp(aa, bb, t));
     PetscCall(PetscFree(aa));
     PetscCall(PetscFree(bb));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 #endif
   *t = c ? PETSC_FALSE : PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscStrncmp - Compares two strings, up to a certain length
+  PetscStrendswithwhich - Determines if a string ends with one of several possible strings
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Input Parameters:
-+  a - pointer to first string
-.  b - pointer to second string
--  n - length to compare up to
+  Input Parameters:
++ a  - pointer to string
+- bs - strings to end with (last entry must be `NULL`)
 
-   Output Parameter:
-.  t - if the two strings are equal
+  Output Parameter:
+. cnt - the index of the string it ends with or the index of `NULL`
 
-   Level: intermediate
-
-   Fortran Note:
-    Not for use in Fortran
-
-.seealso: `PetscStrgrt()`, `PetscStrcmp()`, `PetscStrcasecmp()`
-@*/
-PetscErrorCode PetscStrncmp(const char a[], const char b[], size_t n, PetscBool *t)
-{
-  PetscFunctionBegin;
-  if (n) {
-    PetscValidCharPointer(a, 1);
-    PetscValidCharPointer(b, 2);
-  }
-  PetscValidBoolPointer(t, 4);
-  *t = strncmp(a, b, n) ? PETSC_FALSE : PETSC_TRUE;
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrchr - Locates first occurrence of a character in a string
-
-   Not Collective
-
-   Input Parameters:
-+  a - pointer to string
--  b - character
-
-   Output Parameter:
-.  c - location of occurrence, NULL if not found
-
-   Level: intermediate
-
-   Fortran Note:
-    Not for use in Fortran
-
-.seealso: `PetscStrrchr()`, `PetscTokenCreate()`, `PetscStrendswith()`, `PetscStrbeginsswith()`
-@*/
-PetscErrorCode PetscStrchr(const char a[], char b, char *c[])
-{
-  PetscFunctionBegin;
-  PetscValidCharPointer(a, 1);
-  PetscValidPointer(c, 3);
-  *c = (char *)strchr(a, b);
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrrchr - Locates one location past the last occurrence of a character in a string,
-      if the character is not found then returns entire string
-
-   Not Collective
-
-   Input Parameters:
-+  a - pointer to string
--  b - character
-
-   Output Parameter:
-.  tmp - location of occurrence, a if not found
-
-   Level: intermediate
-
-   Fortran Note:
-    Not for use in Fortran
-
-.seealso: `PetscStrchr()`, `PetscTokenCreate()`, `PetscStrendswith()`, `PetscStrbeginsswith()`
-@*/
-PetscErrorCode PetscStrrchr(const char a[], char b, char *tmp[])
-{
-  PetscFunctionBegin;
-  PetscValidCharPointer(a, 1);
-  PetscValidPointer(tmp, 3);
-  *tmp = (char *)strrchr(a, b);
-  if (!*tmp) *tmp = (char *)a;
-  else *tmp = *tmp + 1;
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrtolower - Converts string to lower case
-
-   Not Collective
-
-   Input Parameters:
-.  a - pointer to string
-
-   Level: intermediate
-
-   Fortran Note:
-    Not for use in Fortran
-
-.seealso: `PetscStrtoupper()`
-@*/
-PetscErrorCode PetscStrtolower(char a[])
-{
-  PetscFunctionBegin;
-  PetscValidCharPointer(a, 1);
-  while (*a) {
-    if (*a >= 'A' && *a <= 'Z') *a += 'a' - 'A';
-    a++;
-  }
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrtoupper - Converts string to upper case
-
-   Not Collective
-
-   Input Parameters:
-.  a - pointer to string
-
-   Level: intermediate
-
-   Fortran Note:
-    Not for use in Fortran
-
-.seealso: `PetscStrtolower()`
-@*/
-PetscErrorCode PetscStrtoupper(char a[])
-{
-  PetscFunctionBegin;
-  PetscValidCharPointer(a, 1);
-  while (*a) {
-    if (*a >= 'a' && *a <= 'z') *a += 'A' - 'a';
-    a++;
-  }
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrendswith - Determines if a string ends with a certain string
-
-   Not Collective
-
-   Input Parameters:
-+  a - pointer to string
--  b - string to endwith
-
-   Output Parameter:
-.  flg - `PETSC_TRUE` or `PETSC_FALSE`
-
-   Fortran Note:
-    Not for use in Fortran
-
-   Level: intermediate
-
-.seealso: `PetscStrendswithwhich()`, `PetscStrbeginswith()`, `PetscStrtoupper`, `PetscStrtolower()`, `PetscStrrchr()`, `PetscStrchr()`,
-          `PetscStrncmp()`, `PetscStrlen()`, `PetscStrncmp()`, `PetscStrcmp()`
-@*/
-PetscErrorCode PetscStrendswith(const char a[], const char b[], PetscBool *flg)
-{
-  char *test;
-
-  PetscFunctionBegin;
-  PetscValidBoolPointer(flg, 3);
-  *flg = PETSC_FALSE;
-  PetscCall(PetscStrrstr(a, b, &test));
-  if (test) {
-    size_t na, nb;
-
-    PetscCall(PetscStrlen(a, &na));
-    PetscCall(PetscStrlen(b, &nb));
-    if (a + na - nb == test) *flg = PETSC_TRUE;
-  }
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrbeginswith - Determines if a string begins with a certain string
-
-   Not Collective
-
-   Input Parameters:
-+  a - pointer to string
--  b - string to begin with
-
-   Output Parameter:
-.  flg - PETSC_TRUE or PETSC_FALSE
-
-   Fortran Note:
-    Not for use in Fortran
-
-   Level: intermediate
-
-.seealso: `PetscStrendswithwhich()`, `PetscStrendswith()`, `PetscStrtoupper`, `PetscStrtolower()`, `PetscStrrchr()`, `PetscStrchr()`,
-          `PetscStrncmp()`, `PetscStrlen()`, `PetscStrncmp()`, `PetscStrcmp()`
-@*/
-PetscErrorCode PetscStrbeginswith(const char a[], const char b[], PetscBool *flg)
-{
-  char *test;
-
-  PetscFunctionBegin;
-  PetscValidCharPointer(a, 1);
-  PetscValidCharPointer(b, 2);
-  PetscValidBoolPointer(flg, 3);
-  *flg = PETSC_FALSE;
-  PetscCall(PetscStrrstr(a, b, &test));
-  if (test && (test == a)) *flg = PETSC_TRUE;
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrendswithwhich - Determines if a string ends with one of several possible strings
-
-   Not Collective
-
-   Input Parameters:
-+  a - pointer to string
--  bs - strings to end with (last entry must be NULL)
-
-   Output Parameter:
-.  cnt - the index of the string it ends with or the index of NULL
-
-   Fortran Note:
-    Not for use in Fortran
-
-   Level: intermediate
+  Level: intermediate
 
 .seealso: `PetscStrbeginswithwhich()`, `PetscStrendswith()`, `PetscStrtoupper`, `PetscStrtolower()`, `PetscStrrchr()`, `PetscStrchr()`,
-          `PetscStrncmp()`, `PetscStrlen()`, `PetscStrncmp()`, `PetscStrcmp()`
+          `PetscStrncmp()`, `PetscStrlen()`, `PetscStrcmp()`
 @*/
 PetscErrorCode PetscStrendswithwhich(const char a[], const char *const *bs, PetscInt *cnt)
 {
   PetscFunctionBegin;
-  PetscValidPointer(bs, 2);
-  PetscValidIntPointer(cnt, 3);
+  PetscAssertPointer(bs, 2);
+  PetscAssertPointer(cnt, 3);
   *cnt = 0;
   while (bs[*cnt]) {
     PetscBool flg;
 
     PetscCall(PetscStrendswith(a, bs[*cnt], &flg));
-    if (flg) PetscFunctionReturn(0);
+    if (flg) PetscFunctionReturn(PETSC_SUCCESS);
     ++(*cnt);
   }
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrrstr - Locates last occurrence of string in another string
-
-   Not Collective
-
-   Input Parameters:
-+  a - pointer to string
--  b - string to find
-
-   Output Parameter:
-.  tmp - location of occurrence
-
-   Fortran Note:
-    Not for use in Fortran
-
-   Level: intermediate
-
-.seealso: `PetscStrbeginswithwhich()`, `PetscStrendswith()`, `PetscStrtoupper`, `PetscStrtolower()`, `PetscStrrchr()`, `PetscStrchr()`,
-          `PetscStrncmp()`, `PetscStrlen()`, `PetscStrncmp()`, `PetscStrcmp()`
-@*/
-PetscErrorCode PetscStrrstr(const char a[], const char b[], char *tmp[])
-{
-  const char *ltmp = NULL;
-
-  PetscFunctionBegin;
-  PetscValidCharPointer(a, 1);
-  PetscValidCharPointer(b, 2);
-  PetscValidPointer(tmp, 3);
-  while (a) {
-    a = (char *)strstr(a, b);
-    if (a) ltmp = a++;
-  }
-  *tmp = (char *)ltmp;
-  PetscFunctionReturn(0);
-}
-
-/*@C
-   PetscStrstr - Locates first occurrence of string in another string
-
-   Not Collective
-
-   Input Parameters:
-+  haystack - string to search
--  needle - string to find
-
-   Output Parameter:
-.  tmp - location of occurrence, is a NULL if the string is not found
-
-   Fortran Note:
-    Not for use in Fortran
-
-   Level: intermediate
-
-.seealso: `PetscStrbeginswithwhich()`, `PetscStrendswith()`, `PetscStrtoupper`, `PetscStrtolower()`, `PetscStrrchr()`, `PetscStrchr()`,
-          `PetscStrncmp()`, `PetscStrlen()`, `PetscStrncmp()`, `PetscStrcmp()`
-@*/
-PetscErrorCode PetscStrstr(const char haystack[], const char needle[], char *tmp[])
-{
-  PetscFunctionBegin;
-  PetscValidCharPointer(haystack, 1);
-  PetscValidCharPointer(needle, 2);
-  PetscValidPointer(tmp, 3);
-  *tmp = (char *)strstr(haystack, needle);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 struct _p_PetscToken {
@@ -943,46 +348,40 @@ struct _p_PetscToken {
 };
 
 /*@C
-   PetscTokenFind - Locates next "token" in a string
+  PetscTokenFind - Locates next "token" in a `PetscToken`
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Input Parameters:
-.  a - pointer to token
+  Input Parameter:
+. a - pointer to token
 
-   Output Parameter:
-.  result - location of occurrence, NULL if not found
+  Output Parameter:
+. result - location of occurrence, `NULL` if not found
 
-   Notes:
-     This version is different from the system version in that
-  it allows you to pass a read-only string into the function.
+  Level: intermediate
 
-     This version also treats all characters etc. inside a double quote "
-   as a single token.
+  Notes:
+  Treats all characters etc. inside a double quote "
+  as a single token.
 
-     For example if the separator character is + and the string is xxxx+y then the first fine will return a pointer to a null terminated xxxx and the
-   second will return a null terminated y
+  For example if the separator character is + and the string is xxxx+y then the first fine will return a pointer to a `NULL` terminated xxxx and the
+  second will return a `NULL` terminated y
 
-     If the separator character is + and the string is xxxx then the first and only token found will be a pointer to a null terminated xxxx
+  If the separator character is + and the string is xxxx then the first and only token found will be a pointer to a `NULL` terminated xxxx
 
-   Fortran Note:
-    Not for use in Fortran
-
-   Level: intermediate
-
-.seealso: `PetscTokenCreate()`, `PetscTokenDestroy()`
+.seealso: `PetscToken`, `PetscTokenCreate()`, `PetscTokenDestroy()`
 @*/
 PetscErrorCode PetscTokenFind(PetscToken a, char *result[])
 {
   char *ptr, token;
 
   PetscFunctionBegin;
-  PetscValidPointer(a, 1);
-  PetscValidPointer(result, 2);
+  PetscAssertPointer(a, 1);
+  PetscAssertPointer(result, 2);
   *result = ptr = a->current;
   if (ptr && !*ptr) {
     *result = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   token = a->token;
   if (ptr && (*ptr == '"')) {
@@ -1003,86 +402,77 @@ PetscErrorCode PetscTokenFind(PetscToken a, char *result[])
     }
     ptr++;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscTokenCreate - Creates a `PetscToken` used to find tokens in a string
+  PetscTokenCreate - Creates a `PetscToken` used to find tokens in a string
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Input Parameters:
-+  string - the string to look in
--  b - the separator character
+  Input Parameters:
++ a - the string to look in
+- b - the separator character
 
-   Output Parameter:
-.  t- the token object
+  Output Parameter:
+. t - the token object
 
-   Note:
-     This version is different from the system version in that
+  Level: intermediate
+
+  Note:
+  This version is different from the system version in that
   it allows you to pass a read-only string into the function.
 
-   Fortran Note:
-    Not for use in Fortran
-
-   Level: intermediate
-
-.seealso: `PetscTokenFind()`, `PetscTokenDestroy()`
+.seealso: `PetscToken`, `PetscTokenFind()`, `PetscTokenDestroy()`
 @*/
-PetscErrorCode PetscTokenCreate(const char a[], const char b, PetscToken *t)
+PetscErrorCode PetscTokenCreate(const char a[], char b, PetscToken *t)
 {
   PetscFunctionBegin;
-  PetscValidCharPointer(a, 1);
-  PetscValidPointer(t, 3);
+  PetscAssertPointer(a, 1);
+  PetscAssertPointer(t, 3);
   PetscCall(PetscNew(t));
   PetscCall(PetscStrallocpy(a, &(*t)->array));
 
   (*t)->current = (*t)->array;
   (*t)->token   = b;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscTokenDestroy - Destroys a `PetscToken`
+  PetscTokenDestroy - Destroys a `PetscToken`
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Input Parameters:
-.  a - pointer to token
+  Input Parameter:
+. a - pointer to token
 
-   Level: intermediate
+  Level: intermediate
 
-   Fortran Note:
-    Not for use in Fortran
-
-.seealso: `PetscTokenCreate()`, `PetscTokenFind()`
+.seealso: `PetscToken`, `PetscTokenCreate()`, `PetscTokenFind()`
 @*/
 PetscErrorCode PetscTokenDestroy(PetscToken *a)
 {
   PetscFunctionBegin;
-  if (!*a) PetscFunctionReturn(0);
+  if (!*a) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscFree((*a)->array));
   PetscCall(PetscFree(*a));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscStrInList - search for string in character-delimited list
+  PetscStrInList - search for a string in character-delimited list
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Input Parameters:
-+  str - the string to look for
-.  list - the list to search in
--  sep - the separator character
+  Input Parameters:
++ str  - the string to look for
+. list - the list to search in
+- sep  - the separator character
 
-   Output Parameter:
-.  found - whether str is in list
+  Output Parameter:
+. found - whether `str` is in `list`
 
-   Level: intermediate
-
-   Fortran Note:
-    Not for use in Fortran
+  Level: intermediate
 
 .seealso: `PetscTokenCreate()`, `PetscTokenFind()`, `PetscStrcmp()`
 @*/
@@ -1092,7 +482,7 @@ PetscErrorCode PetscStrInList(const char str[], const char list[], char sep, Pet
   char      *item;
 
   PetscFunctionBegin;
-  PetscValidBoolPointer(found, 4);
+  PetscAssertPointer(found, 4);
   *found = PETSC_FALSE;
   PetscCall(PetscTokenCreate(list, sep, &token));
   PetscCall(PetscTokenFind(token, &item));
@@ -1102,69 +492,65 @@ PetscErrorCode PetscStrInList(const char str[], const char list[], char sep, Pet
     PetscCall(PetscTokenFind(token, &item));
   }
   PetscCall(PetscTokenDestroy(&token));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscGetPetscDir - Gets the directory PETSc is installed in
+  PetscGetPetscDir - Gets the directory PETSc is installed in
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Output Parameter:
-.  dir - the directory
+  Output Parameter:
+. dir - the directory
 
-   Level: developer
+  Level: developer
 
-   Fortran Note:
-    Not for use in Fortran
-
+.seealso: `PetscGetArchType()`
 @*/
 PetscErrorCode PetscGetPetscDir(const char *dir[])
 {
   PetscFunctionBegin;
-  PetscValidPointer(dir, 1);
+  PetscAssertPointer(dir, 1);
   *dir = PETSC_DIR;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscStrreplace - Replaces substrings in string with other substrings
+  PetscStrreplace - Replaces substrings in string with other substrings
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Input Parameters:
-+   comm - `MPI_Comm` of processors that are processing the string
-.   aa - the string to look in
-.   b - the resulting copy of a with replaced strings (b can be the same as a)
--   len - the length of b
+  Input Parameters:
++ comm - `MPI_Comm` of processors that are processing the string
+. aa   - the string to look in
+. b    - the resulting copy of a with replaced strings (`b` can be the same as `a`)
+- len  - the length of `b`
 
-   Notes:
-      Replaces   ${PETSC_ARCH},${PETSC_DIR},${PETSC_LIB_DIR},${DISPLAY},
-      ${HOMEDIRECTORY},${WORKINGDIRECTORY},${USERNAME}, ${HOSTNAME} with appropriate values
-      as well as any environmental variables.
+  Level: developer
 
-      `PETSC_LIB_DIR` uses the environmental variable if it exists. `PETSC_ARCH` and `PETSC_DIR` use what
-      PETSc was built with and do not use environmental variables.
+  Notes:
+  Replaces ${PETSC_ARCH},${PETSC_DIR},${PETSC_LIB_DIR},${DISPLAY},
+      ${HOMEDIRECTORY},${WORKINGDIRECTORY},${USERNAME}, ${HOSTNAME}, ${PETSC_MAKE} with appropriate values
+  as well as any environmental variables.
 
-   Fortran Note:
-      Not for use in Fortran
+  `PETSC_LIB_DIR` uses the environmental variable if it exists. `PETSC_ARCH` and `PETSC_DIR` use what
+  PETSc was built with and do not use environmental variables.
 
-   Level: developer
-
+.seealso: `PetscStrcmp()`
 @*/
 PetscErrorCode PetscStrreplace(MPI_Comm comm, const char aa[], char b[], size_t len)
 {
   int           i = 0;
   size_t        l, l1, l2, l3;
-  char         *work, *par, *epar, env[1024], *tfree, *a = (char *)aa;
-  const char   *s[] = {"${PETSC_ARCH}", "${PETSC_DIR}", "${PETSC_LIB_DIR}", "${DISPLAY}", "${HOMEDIRECTORY}", "${WORKINGDIRECTORY}", "${USERNAME}", "${HOSTNAME}", NULL};
-  char         *r[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+  char         *work, *par, *epar = NULL, env[1024], *tfree, *a = (char *)aa;
+  const char   *s[] = {"${PETSC_ARCH}", "${PETSC_DIR}", "${PETSC_LIB_DIR}", "${DISPLAY}", "${HOMEDIRECTORY}", "${WORKINGDIRECTORY}", "${USERNAME}", "${HOSTNAME}", "${PETSC_MAKE}", NULL};
+  char         *r[] = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
   PetscBool     flag;
   static size_t DISPLAY_LENGTH = 265, USER_LENGTH = 256, HOST_LENGTH = 256;
 
   PetscFunctionBegin;
-  PetscValidCharPointer(aa, 2);
-  PetscValidCharPointer(b, 3);
+  PetscAssertPointer(aa, 2);
+  PetscAssertPointer(b, 3);
   if (aa == b) PetscCall(PetscStrallocpy(aa, (char **)&a));
   PetscCall(PetscMalloc1(len, &work));
 
@@ -1182,6 +568,7 @@ PetscErrorCode PetscStrreplace(MPI_Comm comm, const char aa[], char b[], size_t 
   PetscCall(PetscGetWorkingDirectory(r[5], PETSC_MAX_PATH_LEN));
   PetscCall(PetscGetUserName(r[6], USER_LENGTH));
   PetscCall(PetscGetHostName(r[7], HOST_LENGTH));
+  PetscCall(PetscStrallocpy(PETSC_OMAKE, &r[8]));
 
   /* replace that are in environment */
   PetscCall(PetscOptionsGetenv(comm, "PETSC_LIB_DIR", env, sizeof(env), &flag));
@@ -1236,27 +623,62 @@ PetscErrorCode PetscStrreplace(MPI_Comm comm, const char aa[], char b[], size_t 
   }
   PetscCall(PetscFree(work));
   if (aa == b) PetscCall(PetscFree(a));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscEListFind - searches list of strings for given string, using case insensitive matching
+  PetscStrcmpAny - Determines whether a string matches any of a list of strings.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  n - number of strings in
-.  list - list of strings to search
--  str - string to look for, empty string "" accepts default (first entry in list)
+  Input Parameters:
++ src - pointer to input the string
+- cmp - list of non-null and non-empty strings to be compared against, pass the empty string "" to terminate the list
 
-   Output Parameters:
-+  value - index of matching string (if found)
--  found - boolean indicating whether string was found (can be NULL)
+  Output Parameter:
+. match - `PETSC_TRUE` if the input string matches any in the list, else `PETSC_FALSE`
 
-   Fortran Note:
-   Not for use in Fortran
+  Level: intermediate
 
-   Level: advanced
+.seealso: `PetscStrcmp()`
+@*/
+PetscErrorCode PetscStrcmpAny(const char src[], PetscBool *match, const char cmp[], ...)
+{
+  va_list Argp;
+
+  PetscFunctionBegin;
+  PetscAssertPointer(match, 2);
+  *match = PETSC_FALSE;
+  if (!src) PetscFunctionReturn(PETSC_SUCCESS);
+  va_start(Argp, cmp);
+  while (cmp && cmp[0]) {
+    PetscBool found;
+    PetscCall(PetscStrcmp(src, cmp, &found));
+    if (found) {
+      *match = PETSC_TRUE;
+      break;
+    }
+    cmp = va_arg(Argp, const char *);
+  }
+  va_end(Argp);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/*@C
+  PetscEListFind - searches list of strings for given string, using case insensitive matching
+
+  Not Collective; No Fortran Support
+
+  Input Parameters:
++ n    - number of strings in
+. list - list of strings to search
+- str  - string to look for, empty string "" accepts default (first entry in list)
+
+  Output Parameters:
++ value - index of matching string (if found)
+- found - boolean indicating whether string was found (can be `NULL`)
+
+  Level: developer
 
 .seealso: `PetscEnumFind()`
 @*/
@@ -1264,7 +686,7 @@ PetscErrorCode PetscEListFind(PetscInt n, const char *const *list, const char *s
 {
   PetscFunctionBegin;
   if (found) {
-    PetscValidBoolPointer(found, 5);
+    PetscAssertPointer(found, 5);
     *found = PETSC_FALSE;
   }
   for (PetscInt i = 0; i < n; ++i) {
@@ -1277,26 +699,23 @@ PetscErrorCode PetscEListFind(PetscInt n, const char *const *list, const char *s
       break;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscEnumFind - searches enum list of strings for given string, using case insensitive matching
+  PetscEnumFind - searches enum list of strings for given string, using case insensitive matching
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Input Parameters:
-+  enumlist - list of strings to search, followed by enum name, then enum prefix, then NUL
--  str - string to look for
+  Input Parameters:
++ enumlist - list of strings to search, followed by enum name, then enum prefix, then `NULL`
+- str      - string to look for
 
-   Output Parameters:
-+  value - index of matching string (if found)
--  found - boolean indicating whether string was found (can be NULL)
+  Output Parameters:
++ value - index of matching string (if found)
+- found - boolean indicating whether string was found (can be `NULL`)
 
-   Fortran Note:
-   Not for use in Fortran
-
-   Level: advanced
+  Level: advanced
 
 .seealso: `PetscEListFind()`
 @*/
@@ -1306,29 +725,31 @@ PetscErrorCode PetscEnumFind(const char *const *enumlist, const char *str, Petsc
   PetscBool efound;
 
   PetscFunctionBegin;
-  PetscValidPointer(enumlist, 1);
+  PetscAssertPointer(enumlist, 1);
   while (enumlist[n++]) PetscCheck(n <= 50, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "List argument appears to be wrong or have more than 50 entries");
   PetscCheck(n >= 3, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "List argument must have at least two entries: typename and type prefix");
   n -= 3; /* drop enum name, prefix, and null termination */
   PetscCall(PetscEListFind(n, enumlist, str, &evalue, &efound));
   if (efound) {
-    PetscValidPointer(value, 3);
+    PetscAssertPointer(value, 3);
     *value = (PetscEnum)evalue;
   }
   if (found) {
-    PetscValidBoolPointer(found, 4);
+    PetscAssertPointer(found, 4);
     *found = efound;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   PetscCIFilename - returns the basename of a file name when the PETSc CI portable error output mode is enabled.
 
-  Not collective
+  Not Collective; No Fortran Support
 
   Input Parameter:
 . file - the file name
+
+  Level: developer
 
   Note:
   PETSc CI mode is a mode of running PETSc where output (both error and non-error) is made portable across all systems
@@ -1336,19 +757,17 @@ PetscErrorCode PetscEnumFind(const char *const *enumlist, const char *str, Petsc
 
   This mode is used for all tests in the test harness, it applies to both debug and optimized builds.
 
-  Use the option -petsc_ci to turn on PETSc CI mode. It changes certain output in non-error situations to be portable for
+  Use the option `-petsc_ci` to turn on PETSc CI mode. It changes certain output in non-error situations to be portable for
   all systems, mainly the output of options. It is passed to all PETSc programs automatically by the test harness.
 
   Always uses the Unix / as the file separate even on Microsoft Windows systems
 
-  The option -petsc_ci_portable_error_output attempts to output the same error messages on all systems for the test harness.
+  The option `-petsc_ci_portable_error_output` attempts to output the same error messages on all systems for the test harness.
   In particular the output of filenames and line numbers in PETSc stacks. This is to allow (limited) checking of PETSc
   error handling by the test harness. This options also causes PETSc to attempt to return an error code of 0 so that the test
   harness can process the output for differences in the usual manner as for successful runs. It should be provided to the test
   harness in the args: argument for specific examples. It will not necessarily produce portable output if different errors
   (or no errors) occur on a subset of the MPI ranks.
-
-  Level: developer
 
 .seealso: `PetscCILinenumber()`
 @*/
@@ -1361,15 +780,15 @@ const char *PetscCIFilename(const char *file)
 /*@C
   PetscCILinenumber - returns a line number except if `PetscCIEnablePortableErrorOutput` is set when it returns 0
 
-  Not collective
+  Not Collective; No Fortran Support
 
   Input Parameter:
 . linenumber - the initial line number
 
+  Level: developer
+
   Note:
   See `PetscCIFilename()` for details on usage
-
-  Level: developer
 
 .seealso: `PetscCIFilename()`
 @*/
@@ -1377,4 +796,63 @@ int PetscCILinenumber(int linenumber)
 {
   if (!PetscCIEnabledPortableErrorOutput) return linenumber;
   return 0;
+}
+
+/*@C
+  PetscStrcat - Concatenates a string onto a given string
+
+  Not Collective, No Fortran Support
+
+  Input Parameters:
++ s - string to be added to
+- t - pointer to string to be added to end
+
+  Level: deprecated (since 3.18.5)
+
+  Notes:
+  It is recommended you use `PetscStrlcat()` instead of this routine.
+
+.seealso: `PetscStrlcat()`
+@*/
+PetscErrorCode PetscStrcat(char s[], const char t[])
+{
+  PetscFunctionBegin;
+  if (!t) PetscFunctionReturn(PETSC_SUCCESS);
+  PetscAssertPointer(s, 1);
+  strcat(s, t);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/*@C
+  PetscStrcpy - Copies a string
+
+  Not Collective, No Fortran Support
+
+  Input Parameter:
+. t - pointer to string
+
+  Output Parameter:
+. s - the copied string
+
+  Level: deprecated (since 3.18.5)
+
+  Notes:
+  It is recommended you use `PetscStrncpy()` (equivalently `PetscArraycpy()` or
+  `PetscMemcpy()`) instead of this routine.
+
+  `NULL` strings returns a string starting with zero.
+
+.seealso: `PetscStrncpy()`
+@*/
+PetscErrorCode PetscStrcpy(char s[], const char t[])
+{
+  PetscFunctionBegin;
+  if (t) {
+    PetscAssertPointer(s, 1);
+    PetscAssertPointer(t, 2);
+    strcpy(s, t);
+  } else if (s) {
+    s[0] = '\0';
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
