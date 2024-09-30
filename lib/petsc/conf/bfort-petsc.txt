@@ -137,6 +137,7 @@ native    MatCUSPARSEStorageFormat
 native    MatCUSPARSEFormatOperation
 
 native    MatSTRUMPACKReordering
+native    MatSTRUMPACKCompressionType
 
 # petscpc.h
 nativeptr PC
@@ -181,6 +182,7 @@ native    SNESQNScaleType
 native    SNESNCGType
 native    SNESNGMRESRestartType
 native    SNESNGMRESSelectType
+native    SNESNewtonTRFallbackType
 
 # petscsnesfas.h
 native    SNESFASType

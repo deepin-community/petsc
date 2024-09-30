@@ -1,4 +1,3 @@
-
 /* qmdupd.f -- translated by f2c (version 19931217).*/
 
 #include <petscsys.h>
@@ -56,7 +55,7 @@ PetscErrorCode SPARSEPACKqmdupd(const PetscInt *xadj, const PetscInt *adjncy, co
   --adjncy;
   --xadj;
 
-  if (*nlist <= 0) PetscFunctionReturn(0);
+  if (*nlist <= 0) PetscFunctionReturn(PETSC_SUCCESS);
   deg0   = 0;
   nhdsze = 0;
   i__1   = *nlist;
@@ -77,7 +76,7 @@ PetscErrorCode SPARSEPACKqmdupd(const PetscInt *xadj, const PetscInt *adjncy, co
   }
   /*       MERGE INDISTINGUISHABLE NODES IN THE LIST BY*/
   /*       CALLING THE SUBROUTINE QMDMRG.*/
-  if (nhdsze > 0) SPARSEPACKqmdmrg(&xadj[1], &adjncy[1], &deg[1], &qsize[1], &qlink[1], &marker[1], &deg0, &nhdsze, &nbrhd[1], &rchset[1], &nbrhd[nhdsze + 1]);
+  if (nhdsze > 0) PetscCall(SPARSEPACKqmdmrg(&xadj[1], &adjncy[1], &deg[1], &qsize[1], &qlink[1], &marker[1], &deg0, &nhdsze, &nbrhd[1], &rchset[1], &nbrhd[nhdsze + 1]));
   /*       FIND THE NEW DEGREES OF THE NODES THAT HAVE NOT BEEN*/
   /*       MERGED.*/
   i__1 = *nlist;
@@ -86,7 +85,7 @@ PetscErrorCode SPARSEPACKqmdupd(const PetscInt *xadj, const PetscInt *adjncy, co
     mark = marker[node];
     if (mark > 1 || mark < 0) goto L600;
     marker[node] = 2;
-    SPARSEPACKqmdrch(&node, &xadj[1], &adjncy[1], &deg[1], &marker[1], &rchsze, &rchset[1], &nhdsze, &nbrhd[1]);
+    PetscCall(SPARSEPACKqmdrch(&node, &xadj[1], &adjncy[1], &deg[1], &marker[1], &rchsze, &rchset[1], &nhdsze, &nbrhd[1]));
     deg1 = deg0;
     if (rchsze <= 0) goto L400;
     i__2 = rchsze;
@@ -105,5 +104,5 @@ PetscErrorCode SPARSEPACKqmdupd(const PetscInt *xadj, const PetscInt *adjncy, co
     }
   L600:;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

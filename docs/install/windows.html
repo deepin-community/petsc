@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Installing PETSc On Microsoft Windows &#8212; PETSc 3.18.6 documentation</title>
+    <title>Installing PETSc On Microsoft Windows &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -142,31 +143,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -293,31 +293,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -443,7 +442,7 @@
 <section id="recommended-installation-methods">
 <h2>Recommended Installation Methods<a class="headerlink" href="#recommended-installation-methods" title="Permalink to this heading">#</a></h2>
 <p>The following configurations are much like regular Unix-like systems. Our regular
-(Unix-like) instructions should work with them. Most <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a> will also work. The <code class="docutils literal notranslate"><span class="pre">configure</span></code> option <code class="docutils literal notranslate"><span class="pre">--download-mpich</span></code>
+(Unix-like) instructions should work with them. Most <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a> will also work. The <code class="docutils notranslate"><span class="pre">configure</span></code> option <code class="docutils notranslate"><span class="pre">--download-mpich</span></code>
 should work for these systems. Note however that these <strong>do not</strong> support Microsoft/Intel
 Windows compilers; nor can you use MS-MPI, Intel-MPI or MPICH2).</p>
 <ul>
@@ -452,13 +451,13 @@ instructions below for installing Cygwin for PETSc.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Be sure to install the GNU compilers, and commons components, <strong>do not</strong> use the
-<code class="docutils literal notranslate"><span class="pre">win32fe</span></code> <a class="footnote-reference brackets" href="#win32" id="id1">1</a> script:</p>
+<code class="docutils notranslate"><span class="pre">win32fe</span></code> <a class="footnote-reference brackets" href="#win32" id="id1">1</a> script:</p>
 <ul class="simple">
 <li><p>python3</p></li>
 <li><p>make</p></li>
 <li><p>gcc-core gcc-g++ gcc-fortran</p></li>
 <li><p>liblapack-devel</p></li>
-<li><p>openmpi libopenmpi-devel</p></li>
+<li><p>openmpi libopenmpi-devel libhwloc-devel libevent-devel zlib-devel</p></li>
 </ul>
 </div>
 </li>
@@ -477,7 +476,7 @@ tutorials. Untested, let us know your experience.</p></li>
 <p>Microsoft Windows does not provide the same Unix shell environment as the other OSes. Also
 the default Microsoft/Intel compilers behave differently than other Unix compilers. So to
 install PETSc on Microsoft Windows - one has to install Cygwin (for the Unix environment)
-and use <code class="docutils literal notranslate"><span class="pre">win32fe</span></code> <a class="footnote-reference brackets" href="#win32" id="id2">1</a> (located at <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/lib/petsc/bin/win32fe</span></code>, to
+and use <code class="docutils notranslate"><span class="pre">win32fe</span></code> <a class="footnote-reference brackets" href="#win32" id="id2">1</a> (located at <code class="docutils notranslate"><span class="pre">$PETSC_DIR/lib/petsc/bin/win32fe</span></code>, to
 interface to Microsoft/Intel compilers).</p>
 <ol class="arabic">
 <li><p>Install Cygwin:</p>
@@ -504,27 +503,27 @@ do (from Cygwin terminal/bash-shell):</p>
 </li>
 <li><p>Setup Cygwin terminal/bash-shell with Working Compilers:</p>
 <p>We require the compilers to be setup properly in a Cygwin bash command shell, so that
-<code class="docutils literal notranslate"><span class="pre">cl</span> <span class="pre">foo.c</span></code> or <code class="docutils literal notranslate"><span class="pre">ifort</span> <span class="pre">foo.f</span></code> works from this shell. For example - if using VS2005 C
+<code class="docutils notranslate"><span class="pre">cl</span> <span class="pre">foo.c</span></code> or <code class="docutils notranslate"><span class="pre">ifort</span> <span class="pre">foo.f</span></code> works from this shell. For example - if using VS2005 C
 and Intel 10 Fortran one can do:</p>
 <ol class="arabic">
 <li><p>Start &gt; Programs &gt; Intel Software Development Tools &gt; Intel Fortran
-Compiler 10 &gt; Visual Fortran Build Environment (32bit or 64bit depending on
+Compiler 10 &gt; Visual Fortran Build Environment (32-bit or 64-bit depending on
 your usage). This should start a “dos cmd” shell.</p></li>
-<li><p>Within this shell - run Cygwin terminal/bash-shell <code class="docutils literal notranslate"><span class="pre">mintty.exe</span></code> as:</p>
+<li><p>Within this shell - run Cygwin terminal/bash-shell <code class="docutils notranslate"><span class="pre">mintty.exe</span></code> as:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>C:<span class="se">\c</span>ygwin<span class="se">\b</span>in<span class="se">\m</span>intty.exe
 </pre></div>
 </div>
 </li>
 <li><p>Verify if the compilers are useable (by running cl, ifort in this Cygwin
 terminal/bash-shell).</p></li>
-<li><p>Now run <code class="docutils literal notranslate"><span class="pre">configure</span></code> with <code class="docutils literal notranslate"><span class="pre">win32fe</span></code> <a class="footnote-reference brackets" href="#win32" id="id3">1</a> and then build the libraries with
+<li><p>Now run <code class="docutils notranslate"><span class="pre">configure</span></code> with <code class="docutils notranslate"><span class="pre">win32fe</span></code> <a class="footnote-reference brackets" href="#win32" id="id3">1</a> and then build the libraries with
 make (as per the usual instructions)</p></li>
 </ol>
 </li>
 </ol>
 <section id="example-configure-usage-with-microsoft-windows-compilers">
 <h3>Example Configure Usage With Microsoft Windows Compilers<a class="headerlink" href="#example-configure-usage-with-microsoft-windows-compilers" title="Permalink to this heading">#</a></h3>
-<p>Use <code class="docutils literal notranslate"><span class="pre">configure</span></code> with VC2005 C and Intel Fortran 10 (without MPI):</p>
+<p>Use <code class="docutils notranslate"><span class="pre">configure</span></code> with VC2005 C and Intel Fortran 10 (without MPI):</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span><span class="s1">&#39;win32fe cl&#39;</span><span class="w"> </span>--with-fc<span class="o">=</span><span class="s1">&#39;win32fe ifort&#39;</span><span class="w"> </span>--with-cxx<span class="o">=</span><span class="s1">&#39;win32fe cl&#39;</span><span class="w"> </span>--with-mpi<span class="o">=</span><span class="m">0</span><span class="w"> </span>--download-fblaslapack
 </pre></div>
 </div>
@@ -535,21 +534,21 @@ make (as per the usual instructions)</p></li>
 <section id="using-mpi">
 <h4>Using MPI<a class="headerlink" href="#using-mpi" title="Permalink to this heading">#</a></h4>
 <p>We support both MS-MPI [64-bit] and Intel MPI on Microsoft Windows (MPICH2 does not work,
-do not use it). For example usages, check <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/config/examples/arch-mswin*.py</span></code></p>
+do not use it). For example usages, check <code class="docutils notranslate"><span class="pre">$PETSC_DIR/config/examples/arch-mswin*.py</span></code></p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p><strong>Avoid spaces in $PATH</strong></p>
-<p>Its best to avoid spaces or similar special chars when specifying <code class="docutils literal notranslate"><span class="pre">configure</span></code> options. On
+<p>Its best to avoid spaces or similar special chars when specifying <code class="docutils notranslate"><span class="pre">configure</span></code> options. On
 Microsoft Windows - this usually affects specifying MPI or MKL. Microsoft Windows
 supports dos short form for dir names - so its best to use this notation. Cygwin
-tool <code class="docutils literal notranslate"><span class="pre">cygpath</span></code> can be used to get paths in this notation. For example:</p>
+tool <code class="docutils notranslate"><span class="pre">cygpath</span></code> can be used to get paths in this notation. For example:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>cygpath<span class="w"> </span>-u<span class="w"> </span><span class="sb">`</span>cygpath<span class="w"> </span>-ms<span class="w"> </span><span class="s1">&#39;/cygdrive/c/Program Files (x86)/Microsoft SDKs/MPI&#39;</span><span class="sb">`</span>
 <span class="go">/cygdrive/c/PROGRA~2/MICROS~2/MPI</span>
 <span class="gp">$ </span>cygpath<span class="w"> </span>-u<span class="w"> </span><span class="sb">`</span>cygpath<span class="w"> </span>-ms<span class="w"> </span><span class="s1">&#39;/cygdrive/c/Program Files (x86)/IntelSWTools/compilers_and_libraries/windows/mkl/lib/intel64&#39;</span><span class="sb">`</span>
 <span class="go">/cygdrive/c/PROGRA~2/INTELS~1/COMPIL~2/windows/mkl/lib/intel64</span>
 </pre></div>
 </div>
-<p>Then use in <code class="docutils literal notranslate"><span class="pre">configure</span></code> as follows:</p>
+<p>Then use in <code class="docutils notranslate"><span class="pre">configure</span></code> as follows:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>./configure<span class="w"> </span>--with-cc<span class="o">=</span><span class="s1">&#39;win32fe cl&#39;</span><span class="w"> </span>--with-fc<span class="o">=</span><span class="s1">&#39;win32fe ifort&#39;</span><span class="w"> </span>--with-cxx<span class="o">=</span><span class="s1">&#39;win32fe cl&#39;</span><span class="w"> </span><span class="se">\</span>
 --with-shared-libraries<span class="o">=</span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
 --with-mpi-include<span class="o">=</span><span class="s1">&#39;[/cygdrive/c/PROGRA~2/MICROS~2/MPI/Include,/cygdrive/c/PROGRA~2/MICROS~2/MPI/Include/x64]&#39;</span><span class="w"> </span><span class="se">\</span>
@@ -562,26 +561,26 @@ tool <code class="docutils literal notranslate"><span class="pre">cygpath</span>
 </section>
 <section id="external-packages">
 <h4>External Packages<a class="headerlink" href="#external-packages" title="Permalink to this heading">#</a></h4>
-<p>The <code class="docutils literal notranslate"><span class="pre">--download-package</span></code> option works with many <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a> on Microsoft Windows, but there may be some portability issues with others.
+<p>The <code class="docutils notranslate"><span class="pre">--download-package</span></code> option works with many <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a> on Microsoft Windows, but there may be some portability issues with others.
 Let us know your experience and we will either try to fix them or report them upstream.</p>
 </section>
 <section id="project-files">
 <h4>Project Files<a class="headerlink" href="#project-files" title="Permalink to this heading">#</a></h4>
 <p>We cannot provide Microsoft Visual Studio project files for users as they are specific to
-the <code class="docutils literal notranslate"><span class="pre">configure</span></code> options, location of <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a>,
+the <code class="docutils notranslate"><span class="pre">configure</span></code> options, location of <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a>,
 compiler versions etc. used for any given build of PETSc, so they are potentially
 different for each build of PETSc. So if you need a project file for use with PETSc -
 do the following.</p>
 <ol class="arabic">
 <li><p>Create an empty project file with one of the examples say
-<code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/src/ksp/ksp/tutorials/ex2.c</span></code></p></li>
+<code class="docutils notranslate"><span class="pre">$PETSC_DIR/src/ksp/ksp/tutorials/ex2.c</span></code></p></li>
 <li><p>Try compiling the example from Cygwin bash shell - using makefile - i.e.:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">cd</span><span class="w"> </span><span class="nv">$PETSC_DIR</span>/src/ksp/ksp/tutorials
 <span class="gp">$ </span>make<span class="w"> </span>ex2
 </pre></div>
 </div>
 </li>
-<li><p>If the above works - then make sure all the compiler/linker options used by <code class="docutils literal notranslate"><span class="pre">make</span></code>
+<li><p>If the above works - then make sure all the compiler/linker options used by <code class="docutils notranslate"><span class="pre">make</span></code>
 are also present in the project file in the correct notation.</p></li>
 <li><p>If errors - redo the above step. If all the options are correctly specified, the
 example should compile from MSDev.</p></li>
@@ -589,7 +588,7 @@ example should compile from MSDev.</p></li>
 </section>
 <section id="debugger">
 <h4>Debugger<a class="headerlink" href="#debugger" title="Permalink to this heading">#</a></h4>
-<p>Running PETSc probrams with <code class="docutils literal notranslate"><span class="pre">-start_in_debugger</span></code> is not supported on this platform, so debuggers will need to be initiated manually. Make sure your environment is properly configured to use the appropriate debugger for your compiler. The debuggers can be initiated using Microsoft Visual Studio 6:</p>
+<p>Running PETSc probrams with <code class="docutils notranslate"><span class="pre">-start_in_debugger</span></code> is not supported on this platform, so debuggers will need to be initiated manually. Make sure your environment is properly configured to use the appropriate debugger for your compiler. The debuggers can be initiated using Microsoft Visual Studio 6:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>msdev<span class="w"> </span>ex1.exe
 </pre></div>
 </div>
@@ -609,7 +608,7 @@ example should compile from MSDev.</p></li>
 </section>
 <section id="notes-on-using-other-systems-besides-cygwin-to-compile-with-microsoft-intel-compilers">
 <h3>Notes On Using Other Systems Besides Cygwin To Compile With Microsoft/Intel Compilers<a class="headerlink" href="#notes-on-using-other-systems-besides-cygwin-to-compile-with-microsoft-intel-compilers" title="Permalink to this heading">#</a></h3>
-<p>For any alternate system, we would have to redo <code class="docutils literal notranslate"><span class="pre">win32fe</span></code> <a class="footnote-reference brackets" href="#win32" id="id4">1</a> functionality for
+<p>For any alternate system, we would have to redo <code class="docutils notranslate"><span class="pre">win32fe</span></code> <a class="footnote-reference brackets" href="#win32" id="id4">1</a> functionality for
 that system. This includes:</p>
 <ul class="simple">
 <li><p>Marshal Unix type compiler options to Cl (Microsoft compiler).</p></li>
@@ -635,9 +634,9 @@ applications that are compatible with the Microsoft and Intel compilers.</p>
 <span class="go">/mingw64</span>
 </pre></div>
 </div>
-<p>If you see something else, e.g., <code class="docutils literal notranslate"><span class="pre">/clang64</span></code>, this is not the correct type
+<p>If you see something else, e.g., <code class="docutils notranslate"><span class="pre">/clang64</span></code>, this is not the correct type
 of shell, it may still work, but this is less tested. Then, update your
-installation using <code class="docutils literal notranslate"><span class="pre">pacman</span></code> (you may be asked to quit and re-open your shell).</p>
+installation using <code class="docutils notranslate"><span class="pre">pacman</span></code> (you may be asked to quit and re-open your shell).</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$  </span>pacman<span class="w"> </span>-Syu
 </pre></div>
 </div>
@@ -651,7 +650,7 @@ mingw-w64-x86_64-msmpi<span class="w"> </span>mingw-w64-x86_64-openblas<span cla
 </div>
 </li>
 <li><p>Configuring:</p>
-<p>The two difficulties here are: 1) make sure PETSc configure picks up the proper Python installation, as there are more than one available in a MSYS2 MinGW shell and 2) tell PETSc where is MS-MPI <code class="docutils literal notranslate"><span class="pre">mpiexec</span></code>. We also recommend not to use shared libraries as it is easier to create standalone binaries that way.</p>
+<p>The two difficulties here are: 1) make sure PETSc configure picks up the proper Python installation, as there are more than one available in a MSYS2 MinGW shell and 2) tell PETSc where is MS-MPI <code class="docutils notranslate"><span class="pre">mpiexec</span></code>. We also recommend not to use shared libraries as it is easier to create standalone binaries that way.</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$  </span>/usr/bin/python<span class="w"> </span>./configure<span class="w"> </span>--with-mpiexec<span class="o">=</span><span class="s1">&#39;/C/Program\ Files/Microsoft\ MPI/Bin/mpiexec&#39;</span><span class="w"> </span><span class="se">\</span>
 --with-shared-libraries<span class="o">=</span><span class="m">0</span>
 </pre></div>
@@ -661,10 +660,10 @@ mingw-w64-x86_64-msmpi<span class="w"> </span>mingw-w64-x86_64-openblas<span cla
 <p class="rubric">Footnotes</p>
 <dl class="footnote brackets">
 <dt class="label" id="win32"><span class="brackets">1</span><span class="fn-backref">(<a href="#id1">1</a>,<a href="#id2">2</a>,<a href="#id3">3</a>,<a href="#id4">4</a>)</span></dt>
-<dd><p>PETSc win32 front end (<code class="docutils literal notranslate"><span class="pre">win32fe</span></code>): This tool is used as a wrapper to Microsoft
+<dd><p>PETSc win32 front end (<code class="docutils notranslate"><span class="pre">win32fe</span></code>): This tool is used as a wrapper to Microsoft
 and Intel compilers and associated tools - to enable building PETSc libraries using
 Cygwin make and other Unix tools. For additional info, run
-<code class="docutils literal notranslate"><span class="pre">${PETSC_DIR}/lib/petsc/bin/win32/win32fe</span></code> without any options.</p>
+<code class="docutils notranslate"><span class="pre">${PETSC_DIR}/lib/petsc/bin/win32/win32fe</span></code> without any options.</p>
 </dd>
 </dl>
 </section>
@@ -814,7 +813,7 @@ Cygwin make and other Unix tools. For additional info, run
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -830,7 +829,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

@@ -101,7 +101,7 @@ static PetscErrorCode TaoSolve_NLS(Tao tao)
   PetscCall(TaoLogConvergenceHistory(tao, f, gnorm, 0.0, tao->ksp_its));
   PetscCall(TaoMonitor(tao, tao->niter, f, gnorm, 0.0, step));
   PetscUseTypeMethod(tao, convergencetest, tao->cnvP);
-  if (tao->reason != TAO_CONTINUE_ITERATING) PetscFunctionReturn(0);
+  if (tao->reason != TAO_CONTINUE_ITERATING) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Allocate the vectors needed for the BFGS approximation */
   PetscCall(KSPGetPC(tao->ksp, &pc));
@@ -225,7 +225,7 @@ static PetscErrorCode TaoSolve_NLS(Tao tao)
           PetscCall(TaoLogConvergenceHistory(tao, f, gnorm, 0.0, tao->ksp_its));
           PetscCall(TaoMonitor(tao, tao->niter, f, gnorm, 0.0, step));
           PetscUseTypeMethod(tao, convergencetest, tao->cnvP);
-          if (tao->reason != TAO_CONTINUE_ITERATING) PetscFunctionReturn(0);
+          if (tao->reason != TAO_CONTINUE_ITERATING) PetscFunctionReturn(PETSC_SUCCESS);
         }
       }
       tao->trust = PetscMax(tao->trust, max_radius);
@@ -325,9 +325,9 @@ static PetscErrorCode TaoSolve_NLS(Tao tao)
       ++nlsP->ksp_atol;
     } else if (KSP_CONVERGED_RTOL == ksp_reason) {
       ++nlsP->ksp_rtol;
-    } else if (KSP_CONVERGED_CG_CONSTRAINED == ksp_reason) {
+    } else if (KSP_CONVERGED_STEP_LENGTH == ksp_reason) {
       ++nlsP->ksp_ctol;
-    } else if (KSP_CONVERGED_CG_NEG_CURVE == ksp_reason) {
+    } else if (KSP_CONVERGED_NEG_CURVE == ksp_reason) {
       ++nlsP->ksp_negc;
     } else if (KSP_DIVERGED_DTOL == ksp_reason) {
       ++nlsP->ksp_dtol;
@@ -402,7 +402,7 @@ static PetscErrorCode TaoSolve_NLS(Tao tao)
       case KSP_DIVERGED_BREAKDOWN:
       case KSP_DIVERGED_INDEFINITE_MAT:
       case KSP_DIVERGED_INDEFINITE_PC:
-      case KSP_CONVERGED_CG_NEG_CURVE:
+      case KSP_CONVERGED_NEG_CURVE:
         /* Matrix or preconditioner is indefinite; increase perturbation */
         if (pert <= 0.0) {
           /* Initialize the perturbation */
@@ -688,7 +688,7 @@ static PetscErrorCode TaoSolve_NLS(Tao tao)
     PetscCall(TaoMonitor(tao, tao->niter, f, gnorm, 0.0, step));
     PetscUseTypeMethod(tao, convergencetest, tao->cnvP);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ---------------------------------------------------------- */
@@ -705,7 +705,7 @@ static PetscErrorCode TaoSetUp_NLS(Tao tao)
   if (!nlsP->Gold) PetscCall(VecDuplicate(tao->solution, &nlsP->Gold));
   nlsP->M        = NULL;
   nlsP->bfgs_pre = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*------------------------------------------------------------*/
@@ -722,7 +722,7 @@ static PetscErrorCode TaoDestroy_NLS(Tao tao)
   }
   PetscCall(KSPDestroy(&tao->ksp));
   PetscCall(PetscFree(tao->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*------------------------------------------------------------*/
@@ -782,7 +782,7 @@ static PetscErrorCode TaoSetFromOptions_NLS(Tao tao, PetscOptionItems *PetscOpti
   PetscOptionsHeadEnd();
   PetscCall(TaoLineSearchSetFromOptions(tao->linesearch));
   PetscCall(KSPSetFromOptions(tao->ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*------------------------------------------------------------*/
@@ -808,14 +808,14 @@ static PetscErrorCode TaoView_NLS(Tao tao, PetscViewer viewer)
     PetscCall(PetscViewerASCIIPrintf(viewer, "nls ksp othr: %" PetscInt_FMT "\n", nlsP->ksp_othr));
     PetscCall(PetscViewerASCIIPopTab(viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ---------------------------------------------------------- */
 /*MC
   TAONLS - Newton's method with linesearch for unconstrained minimization.
   At each iteration, the Newton line search method solves the symmetric
-  system of equations to obtain the step diretion dk:
+  system of equations to obtain the step direction dk:
               Hk dk = -gk
   a More-Thuente line search is applied on the direction dk to approximately
   solve
@@ -964,5 +964,5 @@ PETSC_EXTERN PetscErrorCode TaoCreate_NLS(Tao tao)
   PetscCall(KSPSetOptionsPrefix(tao->ksp, tao->hdr.prefix));
   PetscCall(KSPAppendOptionsPrefix(tao->ksp, "tao_nls_"));
   PetscCall(KSPSetType(tao->ksp, KSPSTCG));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

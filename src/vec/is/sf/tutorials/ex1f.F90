@@ -1,4 +1,3 @@
-
 !    Description: A star forest is a simple tree with one root and zero or more leaves.
 !    Many common communication patterns can be expressed as updates of rootdata using leafdata and vice-versa.
 !     This example creates a star forest, communicates values using the graph  views the graph, then destroys it.
@@ -22,6 +21,10 @@
       type(PetscSFNode), pointer :: gremote(:)
       PetscInt, pointer ::          gmine(:)
       PetscInt                      gnroots,gnleaves;
+
+      PetscInt                      niranks,nranks
+      PetscMPIInt, pointer ::       iranks(:), ranks(:)
+      PetscInt, pointer ::          ioffset(:),irootloc(:),roffset(:),rmine(:),rremote(:)
 
       PetscCallA(PetscInitialize(ierr))
       stride = 2
@@ -86,21 +89,34 @@
 !     Broadcast entries from rootdata to leafdata. Computation or other communication can be performed between the begin and end calls.
       PetscCallA(PetscSFBcastBegin(sf,MPIU_INTEGER,rootdata,leafdata,MPI_REPLACE,ierr))
       PetscCallA(PetscSFBcastEnd(sf,MPIU_INTEGER,rootdata,leafdata,MPI_REPLACE,ierr))
-      PetscCallA(PetscViewerASCIIPrintf(PETSC_VIEWER_STDOUT_WORLD,"## Bcast Rootdata\n",ierr))
+      PetscCallA(PetscViewerASCIIPrintf(PETSC_VIEWER_STDOUT_WORLD,'## Bcast Rootdata\n',ierr))
       PetscCallA(PetscIntView(nrootsalloc,rootdata,PETSC_VIEWER_STDOUT_WORLD,ierr))
-      PetscCallA(PetscViewerASCIIPrintf(PETSC_VIEWER_STDOUT_WORLD,"## Bcast Leafdata\n",ierr))
+      PetscCallA(PetscViewerASCIIPrintf(PETSC_VIEWER_STDOUT_WORLD,'## Bcast Leafdata\n',ierr))
       PetscCallA(PetscIntView(nleavesalloc,leafdata,PETSC_VIEWER_STDOUT_WORLD,ierr))
 
+!     Reduce entries from leafdata to rootdata. Computation or other communication can be performed between the begin and end calls.
+      PetscCallA(PetscSFReduceBegin(sf,MPIU_INTEGER,leafdata,rootdata,MPI_SUM,ierr))
+      PetscCallA(PetscSFReduceEnd(sf,MPIU_INTEGER,leafdata,rootdata,MPI_SUM,ierr))
+      PetscCallA(PetscViewerASCIIPrintf(PETSC_VIEWER_STDOUT_WORLD,'## Reduce Leafdata\n',ierr))
+      PetscCallA(PetscIntView(nleavesalloc,leafdata,PETSC_VIEWER_STDOUT_WORLD,ierr))
+      PetscCallA(PetscViewerASCIIPrintf(PETSC_VIEWER_STDOUT_WORLD,'## Reduce Rootdata\n',ierr))
+      PetscCallA(PetscIntView(nrootsalloc,rootdata,PETSC_VIEWER_STDOUT_WORLD,ierr))
+
       PetscCallA(PetscSFGetGraph(sf,gnroots,gnleaves,gmine,gremote,ierr))
-      if (gnleaves .ne. nleaves) then; SETERRA(PETSC_COMM_WORLD,PETSC_ERR_PLIB,'nleaves returned from PetscSFGetGraph() does not match that set with PetscSFSetGraph()'); endif
-         do i=1,nleaves
-         if (gmine(i) .ne. mine(i)) then; SETERRA(PETSC_COMM_WORLD,PETSC_ERR_PLIB,'Root from PetscSFGetGraph() does not match that set with PetscSFSetGraph()'); endif
+      PetscCheckA(gnleaves .eq. nleaves,PETSC_COMM_WORLD,PETSC_ERR_PLIB,'nleaves returned from PetscSFGetGraph() does not match that set with PetscSFSetGraph()')
+      do i=1,nleaves
+        PetscCheckA(gmine(i) .eq. mine(i),PETSC_COMM_WORLD,PETSC_ERR_PLIB,'Root from PetscSFGetGraph() does not match that set with PetscSFSetGraph()')
       enddo
       do i=1,nleaves
-         if (gremote(i)%index .ne. remote(i)%index) then; SETERRA(PETSC_COMM_WORLD,PETSC_ERR_PLIB,'Leaf from PetscSFGetGraph() does not match that set with PetscSFSetGraph()'); endif
+       PetscCheckA(gremote(i)%index .eq. remote(i)%index,PETSC_COMM_WORLD,PETSC_ERR_PLIB,'Leaf from PetscSFGetGraph() does not match that set with PetscSFSetGraph()')
       enddo
 
       deallocate(gremote)
+
+! Test PetscSFGet{Leaf,Root}Ranks
+      PetscCallA(PetscSFGetLeafRanks(sf,niranks,iranks,ioffset,irootloc,ierr))
+      PetscCallA(PetscSFGetRootRanks(sf,nranks,ranks,roffset,rmine,rremote,ierr))
+
 !    Clean storage for star forest.
       PetscCallA(PetscSFDestroy(sf,ierr))
 
@@ -116,7 +132,7 @@
       PetscCallA(PetscViewerPopFormat(PETSC_VIEWER_STDOUT_WORLD,ierr))
 
       PetscCallA(PetscSFGetGraph(sf,gnroots,gnleaves,gmine,gremote,ierr))
-      if (loc(gmine) .ne. loc(PETSC_NULL_INTEGER)) then; SETERRA(PETSC_COMM_WORLD,PETSC_ERR_PLIB,'Leaves from PetscSFGetGraph() not null as expected'); endif
+      PetscCheckA(loc(gmine) .eq. loc(PETSC_NULL_INTEGER),PETSC_COMM_WORLD,PETSC_ERR_PLIB,'Leaves from PetscSFGetGraph() not null as expected')
       deallocate(gremote)
       PetscCallA(PetscSFDestroy(sf,ierr))
       PetscCallA(PetscFinalize(ierr))

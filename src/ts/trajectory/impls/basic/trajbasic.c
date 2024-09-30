@@ -1,4 +1,3 @@
-
 #include <petsc/private/tsimpl.h> /*I "petscts.h"  I*/
 
 typedef struct {
@@ -44,7 +43,7 @@ static PetscErrorCode TSTrajectorySet_Basic(TSTrajectory tj, TS ts, PetscInt ste
       for (i = 0; i < ns; i++) PetscCall(MatView(S[i], tjbasic->viewer));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSTrajectorySetFromOptions_Basic(TSTrajectory tj, PetscOptionItems *PetscOptionsObject)
@@ -52,7 +51,7 @@ static PetscErrorCode TSTrajectorySetFromOptions_Basic(TSTrajectory tj, PetscOpt
   PetscFunctionBegin;
   PetscOptionsHeadBegin(PetscOptionsObject, "TS trajectory options for Basic type");
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSTrajectoryGet_Basic(TSTrajectory tj, TS ts, PetscInt stepnum, PetscReal *t)
@@ -95,7 +94,7 @@ static PetscErrorCode TSTrajectoryGet_Basic(TSTrajectory tj, TS ts, PetscInt ste
     }
   }
   PetscCall(PetscViewerDestroy(&viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode TSTrajectorySetUp_Basic(TSTrajectory tj, TS ts)
@@ -124,7 +123,7 @@ PetscErrorCode TSTrajectorySetUp_Basic(TSTrajectory tj, TS ts)
     }
   }
   PetscCall(PetscBarrier((PetscObject)tj));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSTrajectoryDestroy_Basic(TSTrajectory tj)
@@ -134,7 +133,7 @@ static PetscErrorCode TSTrajectoryDestroy_Basic(TSTrajectory tj)
   PetscFunctionBegin;
   PetscCall(PetscViewerDestroy(&tjbasic->viewer));
   PetscCall(PetscFree(tjbasic));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -148,7 +147,7 @@ static PetscErrorCode TSTrajectoryDestroy_Basic(TSTrajectory tj)
 
   Level: intermediate
 
-.seealso: [](chapter_ts), `TSTrajectoryCreate()`, `TS`, `TSTrajectory`, `TSTrajectorySetType()`, `TSTrajectorySetDirname()`, `TSTrajectorySetFile()`,
+.seealso: [](ch_ts), `TSTrajectoryCreate()`, `TS`, `TSTrajectory`, `TSTrajectorySetType()`, `TSTrajectorySetDirname()`, `TSTrajectorySetFile()`,
           `TSTrajectoryType`
 M*/
 PETSC_EXTERN PetscErrorCode TSTrajectoryCreate_Basic(TSTrajectory tj, TS ts)
@@ -169,5 +168,5 @@ PETSC_EXTERN PetscErrorCode TSTrajectoryCreate_Basic(TSTrajectory tj, TS ts)
   tj->ops->setup          = TSTrajectorySetUp_Basic;
   tj->ops->destroy        = TSTrajectoryDestroy_Basic;
   tj->ops->setfromoptions = TSTrajectorySetFromOptions_Basic;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

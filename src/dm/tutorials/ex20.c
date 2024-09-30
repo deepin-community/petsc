@@ -1,5 +1,4 @@
-
-static char help[] = "DMSwarm-PIC demonstator of inserting points into a cell DM \n\
+static char help[] = "DMSwarm-PIC demonstrator of inserting points into a cell DM \n\
 Options: \n\
 -mode {0,1} : 0 ==> DMDA, 1 ==> DMPLEX cell DM \n\
 -dim {2,3}  : spatial dimension\n";
@@ -78,7 +77,7 @@ PetscErrorCode pic_insert_DMDA(PetscInt dim)
   PetscCall(DMSwarmMigrate(swarm, PETSC_FALSE));
   PetscCall(DMDestroy(&celldm));
   PetscCall(DMDestroy(&swarm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode pic_insert_DMPLEX_with_cell_list(PetscInt dim)
@@ -201,7 +200,7 @@ PetscErrorCode pic_insert_DMPLEX_with_cell_list(PetscInt dim)
   PetscCall(DMView(swarm, PETSC_VIEWER_STDOUT_WORLD));
   PetscCall(DMDestroy(&celldm));
   PetscCall(DMDestroy(&swarm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode pic_insert_DMPLEX(PetscBool is_simplex, PetscInt dim)
@@ -270,7 +269,7 @@ PetscErrorCode pic_insert_DMPLEX(PetscBool is_simplex, PetscInt dim)
   PetscCall(DMView(swarm, PETSC_VIEWER_STDOUT_WORLD));
   PetscCall(DMDestroy(&celldm));
   PetscCall(DMDestroy(&swarm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **args)

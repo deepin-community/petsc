@@ -1,8 +1,6 @@
-Index: petsc/makefile
-===================================================================
---- petsc.orig/makefile	2022-10-30 13:51:28.588870414 +0100
-+++ petsc/makefile	2022-10-30 13:53:35.437841076 +0100
-@@ -162,8 +162,8 @@
+--- a/makefile
++++ b/makefile
+@@ -145,8 +145,8 @@
          fi;
  
  check_build:
@@ -13,7 +11,7 @@ Index: petsc/makefile
  	+@if [ ! "${MPI_IS_MPIUNI}" ]; then cd src/snes/tutorials >/dev/null; ${RUN_TEST} testex19_mpi; fi
  	+@if [ "${HYPRE_LIB}" != "" ] && [ "${PETSC_SCALAR}" = "real" ]; then \
            if [ "${CUDA_LIB}" != "" ]; then HYPRE_TEST=runex19_hypre_cuda; \
-@@ -174,7 +174,7 @@
+@@ -157,7 +157,7 @@
  	+@if [ "${CUDA_LIB}" != "" ]; then \
            cd src/snes/tutorials >/dev/null; ${RUN_TEST} runex19_cuda; \
          fi;
@@ -22,12 +20,12 @@ Index: petsc/makefile
            cd src/snes/tutorials >/dev/null; \
            if [ "${KOKKOS_KERNELS_LIB}" != "" ]  &&  [ "${PETSC_SCALAR}" = "real" ] && [ "${PETSC_PRECISION}" = "double" ]; then \
              ${RUN_TEST} runex3k_kokkos; \
-@@ -221,7 +221,7 @@
+@@ -204,7 +204,7 @@
             ${RUN_TEST} testex100; \
             ${RUN_TEST} clean-legacy; \
           fi;
--	+@grep -E "^#define PETSC_HAVE_FORTRAN 1" ${PETSCCONF_H} | tee .ftn.log > /dev/null; \
-+	+grep -E "^#define PETSC_HAVE_FORTRAN 1" ${PETSCCONF_H} | tee .ftn.log > /dev/null; \
+-	+@grep -E "^#define PETSC_USE_FORTRAN_BINDINGS 1" ${PETSCCONF_H} | tee .ftn.log > /dev/null; \
++	+grep -E "^#define PETSC_USE_FORTRAN_BINDINGS 1" ${PETSCCONF_H} | tee .ftn.log > /dev/null; \
           if test -s .ftn.log; then \
             cd src/snes/tutorials >/dev/null; \
             ${RUN_TEST} clean-legacy; \

@@ -33,14 +33,13 @@ static PetscErrorCode PCBDDCMatTransposeMatSolve_SeqDense(Mat A, Mat B, Mat X)
   PetscCall(PetscArraycpy(x, b, m * nrhs));
   PetscCall(MatDenseRestoreArrayRead(B, &b));
 
-  if (A->factortype == MAT_FACTOR_LU) {
-    PetscCallBLAS("LAPACKgetrs", LAPACKgetrs_("T", &m, &nrhs, mat->v, &mat->lda, mat->pivots, x, &m, &info));
-    PetscCheck(!info, PETSC_COMM_SELF, PETSC_ERR_LIB, "GETRS - Bad solve");
-  } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP, "Only LU factor supported");
+  PetscCheck(A->factortype == MAT_FACTOR_LU, PETSC_COMM_SELF, PETSC_ERR_SUP, "Only LU factor supported");
+  PetscCallBLAS("LAPACKgetrs", LAPACKgetrs_("T", &m, &nrhs, mat->v, &mat->lda, mat->pivots, x, &m, &info));
+  PetscCheck(!info, PETSC_COMM_SELF, PETSC_ERR_LIB, "GETRS - Bad solve");
 
   PetscCall(MatDenseRestoreArray(X, &x));
   PetscCall(PetscLogFlops(nrhs * (2.0 * m * m - m)));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCScalingExtension_Basic(PC pc, Vec local_interface_vector, Vec global_vector)
@@ -54,7 +53,7 @@ static PetscErrorCode PCBDDCScalingExtension_Basic(PC pc, Vec local_interface_ve
   PetscCall(VecSet(global_vector, 0.0));
   PetscCall(VecScatterBegin(pcis->global_to_B, pcbddc->work_scaling, global_vector, ADD_VALUES, SCATTER_REVERSE));
   PetscCall(VecScatterEnd(pcis->global_to_B, pcbddc->work_scaling, global_vector, ADD_VALUES, SCATTER_REVERSE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCScalingExtension_Deluxe(PC pc, Vec x, Vec y)
@@ -78,7 +77,7 @@ static PetscErrorCode PCBDDCScalingExtension_Deluxe(PC pc, Vec x, Vec y)
     PetscCall(VecRestoreArrayRead(pcis->D, &array_D));
     PetscCall(VecRestoreArrayRead(x, &array_x));
   }
-  /* sequential part : all problems and Schur applications collapsed into a single matrix vector multiplication or a matvec and a solve */
+  /* sequential part : all problems and Schur applications collapsed into a single matrix-vector multiplication or a matvec and a solve */
   if (deluxe_ctx->seq_mat) {
     PetscInt i;
     for (i = 0; i < deluxe_ctx->seq_n; i++) {
@@ -123,7 +122,7 @@ static PetscErrorCode PCBDDCScalingExtension_Deluxe(PC pc, Vec x, Vec y)
   /* put local boundary part in global vector */
   PetscCall(VecScatterBegin(pcis->global_to_B, pcbddc->work_scaling, y, ADD_VALUES, SCATTER_REVERSE));
   PetscCall(VecScatterEnd(pcis->global_to_B, pcbddc->work_scaling, y, ADD_VALUES, SCATTER_REVERSE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCBDDCScalingExtension(PC pc, Vec local_interface_vector, Vec global_vector)
@@ -136,7 +135,7 @@ PetscErrorCode PCBDDCScalingExtension(PC pc, Vec local_interface_vector, Vec glo
   PetscValidHeaderSpecific(global_vector, VEC_CLASSID, 3);
   PetscCheck(local_interface_vector != pcbddc->work_scaling, PETSC_COMM_SELF, PETSC_ERR_SUP, "Local vector cannot be pcbddc->work_scaling!");
   PetscUseMethod(pc, "PCBDDCScalingExtension_C", (PC, Vec, Vec), (pc, local_interface_vector, global_vector));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCScalingRestriction_Basic(PC pc, Vec global_vector, Vec local_interface_vector)
@@ -148,7 +147,7 @@ static PetscErrorCode PCBDDCScalingRestriction_Basic(PC pc, Vec global_vector, V
   PetscCall(VecScatterEnd(pcis->global_to_B, global_vector, local_interface_vector, INSERT_VALUES, SCATTER_FORWARD));
   /* Apply partition of unity */
   PetscCall(VecPointwiseMult(local_interface_vector, pcis->D, local_interface_vector));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCScalingRestriction_Deluxe(PC pc, Vec x, Vec y)
@@ -171,7 +170,7 @@ static PetscErrorCode PCBDDCScalingRestriction_Deluxe(PC pc, Vec x, Vec y)
     PetscCall(VecRestoreArrayRead(pcis->D, &array_D));
     PetscCall(VecRestoreArray(y, &array_y));
   }
-  /* sequential part : all problems and Schur applications collapsed into a single matrix vector multiplication or a matvec and a solve */
+  /* sequential part : all problems and Schur applications collapsed into a single matrix-vector multiplication or a matvec and a solve */
   if (deluxe_ctx->seq_mat) {
     PetscInt i;
     for (i = 0; i < deluxe_ctx->seq_n; i++) {
@@ -213,7 +212,7 @@ static PetscErrorCode PCBDDCScalingRestriction_Deluxe(PC pc, Vec x, Vec y)
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCBDDCScalingRestriction(PC pc, Vec global_vector, Vec local_interface_vector)
@@ -226,7 +225,7 @@ PetscErrorCode PCBDDCScalingRestriction(PC pc, Vec global_vector, Vec local_inte
   PetscValidHeaderSpecific(local_interface_vector, VEC_CLASSID, 3);
   PetscCheck(local_interface_vector != pcbddc->work_scaling, PETSC_COMM_SELF, PETSC_ERR_SUP, "Local vector cannot be pcbddc->work_scaling!");
   PetscUseMethod(pc, "PCBDDCScalingRestriction_C", (PC, Vec, Vec), (pc, global_vector, local_interface_vector));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCBDDCScalingSetUp(PC pc)
@@ -310,7 +309,7 @@ PetscErrorCode PCBDDCScalingSetUp(PC pc)
         PetscCall(VecAXPY(B0_Bv, -1.0, B0_Bv2));
         PetscCall(VecNorm(B0_Bv, NORM_INFINITY, &errorl));
       }
-      PetscCallMPI(MPI_Allreduce(&errorl, &error, 1, MPIU_REAL, MPI_SUM, PetscObjectComm((PetscObject)pc)));
+      PetscCall(MPIU_Allreduce(&errorl, &error, 1, MPIU_REAL, MPI_SUM, PetscObjectComm((PetscObject)pc)));
       PetscCall(PetscViewerASCIIPrintf(viewer, "Error benign extension %1.14e\n", (double)error));
     }
     PetscCall(VecAXPY(pcis->vec1_global, -1.0, vec2_global));
@@ -333,7 +332,7 @@ PetscErrorCode PCBDDCScalingSetUp(PC pc)
     PetscCall(VecDestroy(&B0_Bv));
     PetscCall(VecDestroy(&B0_Bv2));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCBDDCScalingDestroy(PC pc)
@@ -345,7 +344,7 @@ PetscErrorCode PCBDDCScalingDestroy(PC pc)
   PetscCall(VecDestroy(&pcbddc->work_scaling));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCBDDCScalingRestriction_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCBDDCScalingExtension_C", NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCScalingCreate_Deluxe(PC pc)
@@ -356,7 +355,7 @@ static PetscErrorCode PCBDDCScalingCreate_Deluxe(PC pc)
   PetscFunctionBegin;
   PetscCall(PetscNew(&deluxe_ctx));
   pcbddc->deluxe_ctx = deluxe_ctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCScalingDestroy_Deluxe(PC pc)
@@ -366,7 +365,7 @@ static PetscErrorCode PCBDDCScalingDestroy_Deluxe(PC pc)
   PetscFunctionBegin;
   PetscCall(PCBDDCScalingReset_Deluxe_Solvers(pcbddc->deluxe_ctx));
   PetscCall(PetscFree(pcbddc->deluxe_ctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCScalingReset_Deluxe_Solvers(PCBDDCDeluxeScaling deluxe_ctx)
@@ -386,7 +385,7 @@ static PetscErrorCode PCBDDCScalingReset_Deluxe_Solvers(PCBDDCDeluxeScaling delu
   PetscCall(PetscFree5(deluxe_ctx->seq_scctx, deluxe_ctx->seq_work1, deluxe_ctx->seq_work2, deluxe_ctx->seq_mat, deluxe_ctx->seq_mat_inv_sum));
   PetscCall(PetscFree(deluxe_ctx->workspace));
   deluxe_ctx->seq_n = 0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCScalingSetUp_Deluxe(PC pc)
@@ -439,7 +438,7 @@ static PetscErrorCode PCBDDCScalingSetUp_Deluxe(PC pc)
     deluxe_ctx->n_simple     = 0;
     deluxe_ctx->idx_simple_B = NULL;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCScalingSetUp_Deluxe_Private(PC pc)
@@ -454,7 +453,7 @@ static PetscErrorCode PCBDDCScalingSetUp_Deluxe_Private(PC pc)
 
   PetscFunctionBegin;
   PetscCheck(sub_schurs, PetscObjectComm((PetscObject)pc), PETSC_ERR_PLIB, "Missing PCBDDCSubSchurs");
-  if (!sub_schurs->n_subs) PetscFunctionReturn(0);
+  if (!sub_schurs->n_subs) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Allocate arrays for subproblems */
   if (!deluxe_ctx->seq_n) {
@@ -562,5 +561,5 @@ static PetscErrorCode PCBDDCScalingSetUp_Deluxe_Private(PC pc)
       PetscCall(KSPSetUp(deluxe_ctx->change[i]));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

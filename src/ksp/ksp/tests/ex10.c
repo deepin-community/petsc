@@ -1,4 +1,3 @@
-
 static char help[] = "Linear elastiticty with dimensions using 20 node serendipity elements.\n\
 This also demonstrates use of  block\n\
 diagonal data structure.  Input arguments are:\n\
@@ -163,7 +162,7 @@ PetscErrorCode GetElasticityMatrix(PetscInt m, Mat *newmat)
   PetscCall(MatNorm(*newmat, NORM_1, &norm));
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "matrix 1 norm = %g\n", (double)norm));
 
-  return 0;
+  return PETSC_SUCCESS;
 }
 /* -------------------------------------------------------------------- */
 PetscErrorCode AddElement(Mat mat, PetscInt r1, PetscInt r2, PetscReal **K, PetscInt h1, PetscInt h2)
@@ -188,7 +187,7 @@ PetscErrorCode AddElement(Mat mat, PetscInt r1, PetscInt r2, PetscReal **K, Pets
       }
     }
   }
-  return 0;
+  return PETSC_SUCCESS;
 }
 /* -------------------------------------------------------------------- */
 PetscReal N[20][64];         /* Interpolation function. */
@@ -212,7 +211,7 @@ PetscErrorCode Elastic20Stiff(PetscReal **Ke)
   PetscReal K[60][60], x, y, z, dx, dy, dz;
   PetscInt  i, j, k, l, Ii, J;
 
-  paulsetup20();
+  PetscCall(paulsetup20());
 
   x          = -1.0;
   y          = -1.0;
@@ -280,7 +279,7 @@ PetscErrorCode Elastic20Stiff(PetscReal **Ke)
   xyz[19][0] = x + 2. * dx;
   xyz[19][1] = y + 2. * dy;
   xyz[19][2] = z + 2. * dz;
-  paulintegrate20(K);
+  PetscCall(paulintegrate20(K));
 
   /* copy the stiffness from K into format used by Ke */
   for (i = 0; i < 81; i++) {
@@ -302,7 +301,7 @@ PetscErrorCode Elastic20Stiff(PetscReal **Ke)
   for (i = 0; i < 81; i++) {
     for (j = 0; j < i; j++) Ke[i][j] = (Ke[i][j] + Ke[j][i]) / 2.0;
   }
-  return 0;
+  return PETSC_SUCCESS;
 }
 /* -------------------------------------------------------------------- */
 /*
@@ -392,7 +391,7 @@ PetscErrorCode paulsetup20(void)
       }
     }
   }
-  return 0;
+  return PETSC_SUCCESS;
 }
 /* -------------------------------------------------------------------- */
 /*
@@ -490,7 +489,7 @@ PetscErrorCode paulintegrate20(PetscReal K[60][60])
       }
     }
   } /* end of loop over integration points */
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 /*TEST

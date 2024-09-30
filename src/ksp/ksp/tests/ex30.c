@@ -1,4 +1,3 @@
-
 static char help[] = "Reads a PETSc matrix and vector from a file and solves a linear system.\n\
 It is copied and intended to move dirty codes from ksp/tutorials/ex10.c and simplify ex10.c.\n\
   Input parameters include\n\
@@ -56,7 +55,7 @@ int main(int argc, char **args)
   */
   PetscCall(PetscOptionsGetString(NULL, NULL, "-f", file[0], sizeof(file[0]), &flg));
   if (flg) {
-    PetscCall(PetscStrcpy(file[1], file[0]));
+    PetscCall(PetscStrncpy(file[1], file[0], sizeof(file[1])));
     preload = PETSC_FALSE;
   } else {
     PetscCall(PetscOptionsGetString(NULL, NULL, "-f0", file[0], sizeof(file[0]), &flg));
@@ -310,7 +309,7 @@ int main(int argc, char **args)
       - KSPView() prints information about the linear solver.
     */
     if (table && ckrnorm) {
-      char       *matrixname, kspinfo[120];
+      char       *matrixname = NULL, kspinfo[120];
       PetscViewer viewer;
 
       /*

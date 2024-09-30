@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Acknowledgements &#8212; PETSc 3.18.6 documentation</title>
+    <title>Acknowledgements &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -142,31 +143,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -293,31 +293,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -433,33 +432,170 @@
             <article class="bd-article" role="main">
               
   <section id="acknowledgements">
-<h1>Acknowledgements<a class="headerlink" href="#acknowledgements" title="Permalink to this heading">#</a></h1>
-<p>We thank all PETSc users for their many suggestions, bug reports, and encouragement.</p>
-<p>Recent contributors to PETSc are listed in the <a class="reference external" href="https://gitlab.com/petsc/petsc">repository system</a></p>
+<span id="id1"></span><h1>Acknowledgements<a class="headerlink" href="#acknowledgements" title="Permalink to this heading">#</a></h1>
+<p>We thank all PETSc/Tao/petsc4py users for their many suggestions, bug reports, and encouragement.</p>
+<p>Recent contributors to PETSc are listed in the <a class="reference external" href="https://gitlab.com/petsc/petsc">repository system</a>. The history can be visualized at
+<a class="reference external" href="https://github.com/petsc/petsc/graphs/contributors">github.com/petsc/petsc/graphs/contributors</a>.</p>
 <p>Earlier contributors to PETSc that are not captured in the repository system include:</p>
 <ul class="simple">
-<li><p>Asbjorn Hoiland Aarrestad, (the explicit Runge-Kutta implementations).</p></li>
-<li><p>G. Anciaux and J. Roman, (the interfaces to the partitioning packages PTScotch, Chaco,
-and Party).</p></li>
-<li><p>Allison Baker, (the flexible GMRES and the LGMRES code).</p></li>
-<li><p>Chad Carroll, (the Win32 graphics).</p></li>
-<li><p>Ethan Coon, (the PetscBag and many bug fixes).</p></li>
-<li><p>Cameron Cooper, (portions of the VecScatter routines).</p></li>
-<li><p>Paulo Goldfeld, (the balancing Neumann-Neumann preconditioner).</p></li>
+<li><p>Asbjorn Hoiland Aarrestad, the explicit Runge-Kutta implementations, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/TS/TSRK.html">TSRK</a></span></code>.</p></li>
+<li><p>Guillaume Anciaux and Jose E. Roman, the interfaces to the partitioning packages PTScotch, Chaco, and Party.</p></li>
+<li><p>Allison Baker, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPFGMRES.html">KSPFGMRES</a></span></code> and <code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPLGMRES.html">KSPLGMRES</a></span></code>.</p></li>
+<li><p>Chad Carroll, the Win32 graphics.</p></li>
+<li><p>Ethan Coon, <cite>PetscBag</cite> and many bug fixes.</p></li>
+<li><p>Cameron Cooper, portions of <code class="docutils notranslate"><span class="pre"><a href="../manualpages/PetscSF/VecScatter.html">VecScatter</a></span></code> routines.</p></li>
+<li><p>Patrick Farrell and Florian Wechsung, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCPATCH.html">PCPATCH</a></span></code> and <code class="docutils notranslate"><span class="pre"><a href="../manualpages/SNES/SNESPATCH.html">SNESPATCH</a></span></code>.</p></li>
+<li><p>Paulo Goldfeld, early versions of the balancing Neumann-Neumann preconditioner <code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCNN.html">PCNN</a></span></code>.</p></li>
 <li><p>Matt Hille.</p></li>
-<li><p>Joel Malard, (the BICGStab(l) implementation).</p></li>
-<li><p>Paul Mullowney, (improvement enhancements to portions of the Nvidia GPU interface).</p></li>
-<li><p>Dave May, (Generalized Conjugate Residuals (GCR) implementation).</p></li>
-<li><p>Peter Mell, (portions of the DA routines).</p></li>
-<li><p>Richard Mills, (the AIJPERM matrix format for the Cray X1; universal F90 array
-interface; enhancements to IBCGS; the AIJMKL matrix subclass).</p></li>
-<li><p>Victor Minden, (the Nvidia GPU interface).</p></li>
-<li><p>Todd Munson, (the LUSOL interface as well as the specialized KSPNASH, KSPSTCG, and
-KSPGLTR Krylov solvers).</p></li>
-<li><p>Robert Scheichl, (the MINRES implementation).</p></li>
-<li><p>Karen Toonen, (designed and implemented much of the PETSc old web pages).</p></li>
-<li><p>Desire Nuentsa Wakam, (the deflated GMRES implementation).</p></li>
-<li><p>Liyang Xu, (the interface to PVODE, now Sundials/CVODE).</p></li>
+<li><p>Joel Malard, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPBCGS.html">KSPBCGS</a></span></code>.</p></li>
+<li><p>Paul Mullowney, enhancements to portions of the original CUDA GPU interface.</p></li>
+<li><p>Dave May, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPGCR.html">KSPGCR</a></span></code>.</p></li>
+<li><p>Peter Mell, portions of <code class="docutils notranslate"><span class="pre"><a href="../manualpages/DMDA/DMDA.html">DMDA</a></span></code> routines.</p></li>
+<li><p>Richard Mills, the <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJPERM.html">MATAIJPERM</a></span></code> matrix format for the Cray X1; universal F90 array
+interface; enhancements to <code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPIBCGS.html">KSPIBCGS</a></span></code>; the <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJMKL.html">MATAIJMKL</a></span></code> matrix subclass.</p></li>
+<li><p>Victor Minden, the original CUDA GPU interface.</p></li>
+<li><p>Todd Munson, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSOLVERLUSOL.html">MATSOLVERLUSOL</a></span></code> as well as <code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPNASH.html">KSPNASH</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPSTCG.html">KSPSTCG</a></span></code>, and
+<code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPGLTR.html">KSPGLTR</a></span></code>.</p></li>
+<li><p>Robert Scheichl, the original <code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPMINRES.html">KSPMINRES</a></span></code> implementation.</p></li>
+<li><p>Karen Toonen, designed and implemented most of the original PETSc web pages.</p></li>
+<li><p>Desire Nuentsa Wakam, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPDGMRES.html">KSPDGMRES</a></span></code>.</p></li>
+<li><p>Liyang Xu, the interface to PVODE (now Sundials/CVODE) <code class="docutils notranslate"><span class="pre"><a href="../manualpages/TS/TSSUNDIALS.html">TSSUNDIALS</a></span></code>.</p></li>
+</ul>
+<p>The Toolkit for Advanced Optimization (Tao) developers especially thank Jorge Moré
+for his leadership, vision, and effort on previous versions of Tao.  Tao has
+also benefited from the work of various researchers who have provided solvers, test problems,
+and interfaces. In particular, we acknowledge: Adam Denchfield, Elizabeth Dolan, Evan Gawlik,
+Michael Gertz, Xiang Huang, Lisa Grignon, Manojkumar Krishnan, Gabriel Lopez-Calva,
+Jarek Nieplocha, Boyana Norris, Hansol Suh, Stefan Wild, Limin Zhang, and
+Yurii Zinchenko.</p>
+<p>PETSc source code contains modified routines from the following public
+domain software packages:</p>
+<ul class="simple">
+<li><p>LINPACK - dense matrix factorization and solve; converted to C using
+<code class="docutils notranslate"><span class="pre">f2c</span></code> and then hand-optimized for small matrix sizes, for block
+matrix data structures;</p></li>
+<li><p>MINPACK - sequential matrix coloring routines for finite
+difference Jacobian evaluations; converted to C using <code class="docutils notranslate"><span class="pre">f2c</span></code>;</p></li>
+<li><p>SPARSPAK -  matrix reordering routines, converted to C
+using <code class="docutils notranslate"><span class="pre">f2c</span></code>;</p></li>
+<li><p>libtfs - the efficient, parallel direct solver developed by Henry
+Tufo and Paul Fischer for the direct solution of a coarse grid
+problem (a linear system with very few degrees of freedom per
+processor).</p></li>
+</ul>
+<p>PETSc interfaces to many external software packages including:</p>
+<ul>
+<li><p>BLAS and LAPACK - numerical linear algebra;</p></li>
+<li><div class="line-block">
+<div class="line">Chaco - A graph partitioning package;</div>
+<div class="line"><a class="reference external" href="http://www.cs.sandia.gov/CRF/chac.html">http://www.cs.sandia.gov/CRF/chac.html</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">Elemental - Jack Poulson’s parallel dense matrix solver package;</div>
+<div class="line"><a class="reference external" href="http://libelemental.org/">http://libelemental.org/</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">HDF5 - the data model, library, and file format for storing and
+managing data,</div>
+<div class="line"><a class="reference external" href="https://support.hdfgroup.org/HDF5/">https://support.hdfgroup.org/HDF5/</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">hypre - the LLNL preconditioner library;</div>
+<div class="line"><a class="reference external" href="https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods">https://computation.llnl.gov/projects/hypre-scalable-linear-solvers-multigrid-methods</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">LUSOL - sparse LU factorization code (part of MINOS) developed by
+Michael Saunders, Systems Optimization Laboratory, Stanford
+University;</div>
+<div class="line"><a class="reference external" href="http://www.sbsi-sol-optimize.com/">http://www.sbsi-sol-optimize.com/</a></div>
+</div>
+</li>
+<li><p>MATLAB</p></li>
+<li><div class="line-block">
+<div class="line">Metis/ParMeTiS -  parallel graph partitioner,</div>
+<div class="line"><a class="reference external" href="https://www-users.cs.umn.edu/~karypis/metis/">https://www-users.cs.umn.edu/~karypis/metis/</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">MUMPS -  MUltifrontal Massively Parallel sparse direct
+Solver developed by Patrick Amestoy, Iain Duff, Jacko Koster, and
+Jean-Yves L’Excellent;</div>
+<div class="line"><a class="reference external" href="https://mumps-solver.org/">https://mumps-solver.org/</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">Party - A graph partitioning package;</div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">PaStiX - Parallel sparse LU and Cholesky solvers;</div>
+<div class="line"><a class="reference external" href="http://pastix.gforge.inria.fr/">http://pastix.gforge.inria.fr/</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">PTScotch - A graph partitioning package;</div>
+<div class="line"><a class="reference external" href="http://www.labri.fr/Perso/~pelegrin/scotch/">http://www.labri.fr/Perso/~pelegrin/scotch/</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">SPAI - for parallel sparse approximate inverse preconditioning;</div>
+<div class="line"><a class="reference external" href="https://cccs.unibas.ch/lehre/software-packages/">https://cccs.unibas.ch/lehre/software-packages/</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">SuiteSparse - sequential sparse solvers, developed by
+Timothy A. Davis;</div>
+<div class="line"><a class="reference external" href="http://faculty.cse.tamu.edu/davis/suitesparse.html">http://faculty.cse.tamu.edu/davis/suitesparse.html</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">SUNDIALS/CVODE - (now an out-dated version), parallel ODE integrator;</div>
+<div class="line"><a class="reference external" href="https://computation.llnl.gov/projects/sundials">https://computation.llnl.gov/projects/sundials</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">SuperLU and SuperLU_Dist - the efficient sparse LU codes
+developed by Jim Demmel, Xiaoye S. Li, and John Gilbert;</div>
+<div class="line"><a class="reference external" href="https://crd-legacy.lbl.gov/~xiaoye/SuperLU">https://crd-legacy.lbl.gov/~xiaoye/SuperLU</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">STRUMPACK - the STRUctured Matrix Package;</div>
+<div class="line"><a class="reference external" href="https://portal.nersc.gov/project/sparse/strumpack/">https://portal.nersc.gov/project/sparse/strumpack/</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">Triangle and Tetgen - mesh generation packages;</div>
+<div class="line"><a class="reference external" href="https://www.cs.cmu.edu/~quake/triangle.html">https://www.cs.cmu.edu/~quake/triangle.html</a></div>
+<div class="line"><a class="reference external" href="http://wias-berlin.de/software/tetgen/">http://wias-berlin.de/software/tetgen/</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">Trilinos/ML - Sandia’s main multigrid preconditioning package;</div>
+<div class="line"><a class="reference external" href="https://trilinos.github.io/">https://trilinos.github.io/</a></div>
+</div>
+</li>
+<li><div class="line-block">
+<div class="line">Zoltan - graph partitioners from Sandia National Laboratory;</div>
+<div class="line"><a class="reference external" href="http://www.cs.sandia.gov/zoltan/">http://www.cs.sandia.gov/zoltan/</a></div>
+</div>
+</li>
+</ul>
+<p>These are all optional packages and do not need to be installed to use
+PETSc.</p>
+<p>PETSc software is developed and maintained using</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://git-scm.com/">Git</a> revision control system</p></li>
+</ul>
+<p>PETSc documentation has been generated using</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.sphinx-doc.org">https://www.sphinx-doc.org</a></p></li>
+<li><p><a class="reference external" href="http://wgropp.cs.illinois.edu/projects/software/sowing/">Sowing text processing tools developed by Bill Gropp</a></p></li>
+<li><p>c2html</p></li>
 </ul>
 </section>
 
@@ -546,7 +682,7 @@ KSPGLTR Krylov solvers).</p></li>
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -562,7 +698,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

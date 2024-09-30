@@ -58,16 +58,6 @@ extern void PetscRmPointer(void*);
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmplexgetrefinementlimit_ dmplexgetrefinementlimit
 #endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define dmplexsetrefinementfunction_ DMPLEXSETREFINEMENTFUNCTION
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define dmplexsetrefinementfunction_ dmplexsetrefinementfunction
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define dmplexgetrefinementfunction_ DMPLEXGETREFINEMENTFUNCTION
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define dmplexgetrefinementfunction_ dmplexgetrefinementfunction
-#endif
 
 
 /* Definitions of Fortran Wrapper routines */
@@ -104,16 +94,6 @@ PETSC_EXTERN void  dmplexgetrefinementlimit_(DM dm,PetscReal *refinementLimit, i
 {
 *__ierr = DMPlexGetRefinementLimit(
 	(DM)PetscToPointer((dm) ),refinementLimit);
-}
-PETSC_EXTERN void  dmplexsetrefinementfunction_(DM dm,PetscErrorCode (*refinementFunc)(const PetscReal[], PetscReal *), int *__ierr)
-{
-*__ierr = DMPlexSetRefinementFunction(
-	(DM)PetscToPointer((dm) ),refinementFunc);
-}
-PETSC_EXTERN void  dmplexgetrefinementfunction_(DM dm,PetscErrorCode (**refinementFunc)(const PetscReal[], PetscReal *), int *__ierr)
-{
-*__ierr = DMPlexGetRefinementFunction(
-	(DM)PetscToPointer((dm) ),refinementFunc);
 }
 #if defined(__cplusplus)
 }

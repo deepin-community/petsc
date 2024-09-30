@@ -9,7 +9,7 @@ static PetscErrorCode CreateMesh(MPI_Comm comm, DM *dm)
   PetscCall(DMSetType(*dm, DMPLEX));
   PetscCall(DMSetFromOptions(*dm));
   PetscCall(DMViewFromOptions(*dm, NULL, "-dm_view"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 // Label half of the cells
@@ -31,7 +31,7 @@ static PetscErrorCode CreateHalfCellsLabel(DM dm, PetscBool lower, DMLabel *labe
   }
   for (PetscInt c = cStartSub; c < cEndSub; ++c) PetscCall(DMLabelSetValue(*label, c, 1));
   PetscCall(DMPlexLabelComplete(dm, *label));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 // Label everything on the right half of the domain
@@ -57,7 +57,7 @@ static PetscErrorCode CreateHalfDomainLabel(DM dm, PetscBool lower, PetscReal he
     }
   }
   PetscCall(DMPlexLabelComplete(dm, *label));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 // Create a line of faces at a given x value
@@ -76,7 +76,7 @@ static PetscErrorCode CreateLineLabel(DM dm, PetscReal x, DMLabel *label)
     if (PetscAbsReal(centroid[0] - x) < PETSC_SMALL) PetscCall(DMLabelSetValue(*label, f, 1));
   }
   PetscCall(DMPlexLabelComplete(dm, *label));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode CreateVolumeSubmesh(DM dm, PetscBool domain, PetscBool lower, PetscReal height, DM *subdm)
@@ -92,7 +92,7 @@ static PetscErrorCode CreateVolumeSubmesh(DM dm, PetscBool domain, PetscBool low
   PetscCall(DMViewFromOptions(*subdm, NULL, "-dm_view"));
   PetscCall(DMPlexGetSubpointMap(*subdm, &map));
   PetscCall(PetscObjectViewFromOptions((PetscObject)map, NULL, "-map_view"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TestBoundaryField(DM dm)
@@ -129,7 +129,7 @@ static PetscErrorCode TestBoundaryField(DM dm)
   PetscCall(VecViewFromOptions(gv, NULL, "-vec_view"));
   PetscCall(VecDestroy(&gv));
   PetscCall(DMDestroy(&subdm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -168,6 +168,12 @@ int main(int argc, char **argv)
     args: -dm_coord_space 0 -sub_dm_plex_check_all \
           -dm_view ascii::ascii_info_detail -sub_dm_view ascii::ascii_info_detail -map_view
 
+  test:
+    suffix: 0_vtk
+    requires: triangle
+    args: -dm_coord_space 0 -sub_dm_plex_check_all \
+          -dm_view vtk: -sub_dm_view vtk: -map_view
+
   # These tests check that filtering is stable when boundary point ownership could change, so it needs 3 processes
   testset:
     nsize: 3
@@ -193,10 +199,20 @@ int main(int argc, char **argv)
       suffix: 3
       args: -domain -height 0.625
 
+  # This set tests that global numberings can be made when some strata are missing on a process
+  testset:
+    nsize: 3
+    args: -dm_plex_simplex 0 -dm_plex_box_faces 4,4 -petscpartitioner_type simple -sub_dm_distribute 0 \
+          -sub_dm_plex_check_all -sub_dm_view {{vtk:subdm.vtk: vtk:subdm.vtu :subdm.txt :subdm_d.txt:ascii_info_detail}}
+
+    test:
+      suffix: 3_vtk
+      args: -domain -height 0.625
+
   # This test checks whether filter can extract a lower-dimensional manifold and output a field on it
   testset:
-    args: -volume 0 -dm_plex_simplex 0 -sub_dm_view hdf5:subdm.h5 -vec_view hdf5:subdm.h5::append
     requires: hdf5
+    args: -volume 0 -dm_plex_simplex 0 -sub_dm_view hdf5:subdm.h5 -vec_view hdf5:subdm.h5::append
 
     test:
       suffix: surface_2d

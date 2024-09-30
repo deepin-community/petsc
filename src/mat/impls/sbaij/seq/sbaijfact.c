@@ -1,4 +1,3 @@
-
 #include <../src/mat/impls/baij/seq/baij.h>
 #include <../src/mat/impls/sbaij/seq/sbaij.h>
 #include <petsc/private/kernels/blockinvert.h>
@@ -15,22 +14,29 @@ PetscErrorCode MatGetInertia_SeqSBAIJ(Mat F, PetscInt *nneg, PetscInt *nzero, Pe
 
   nneg_tmp = 0;
   npos_tmp = 0;
-  for (i = 0; i < mbs; i++) {
-    if (PetscRealPart(dd[*fi]) > 0.0) npos_tmp++;
-    else if (PetscRealPart(dd[*fi]) < 0.0) nneg_tmp++;
-    fi++;
+  if (fi) {
+    for (i = 0; i < mbs; i++) {
+      if (PetscRealPart(dd[*fi]) > 0.0) npos_tmp++;
+      else if (PetscRealPart(dd[*fi]) < 0.0) nneg_tmp++;
+      fi++;
+    }
+  } else {
+    for (i = 0; i < mbs; i++) {
+      if (PetscRealPart(dd[fact->i[i]]) > 0.0) npos_tmp++;
+      else if (PetscRealPart(dd[fact->i[i]]) < 0.0) nneg_tmp++;
+    }
   }
   if (nneg) *nneg = nneg_tmp;
   if (npos) *npos = npos_tmp;
   if (nzero) *nzero = mbs - nneg_tmp - npos_tmp;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
   Symbolic U^T*D*U factorization for SBAIJ format. Modified from SSF of YSMP.
   Use Modified Sparse Row (MSR) storage for u and ju. See page 85, "Iterative Methods ..." by Saad.
 */
-PetscErrorCode MatCholeskyFactorSymbolic_SeqSBAIJ_MSR(Mat F, Mat A, IS perm, const MatFactorInfo *info)
+static PetscErrorCode MatCholeskyFactorSymbolic_SeqSBAIJ_MSR(Mat F, Mat A, IS perm, const MatFactorInfo *info)
 {
   Mat_SeqSBAIJ   *a = (Mat_SeqSBAIJ *)A->data, *b;
   const PetscInt *rip, *ai, *aj;
@@ -205,7 +211,7 @@ PetscErrorCode MatCholeskyFactorSymbolic_SeqSBAIJ_MSR(Mat F, Mat A, IS perm, con
     (F)->info.fill_ratio_needed = 0.0;
   }
   PetscCall(MatSeqSBAIJSetNumericFactorization_inplace(F, perm_identity));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /*
     Symbolic U^T*D*U factorization for SBAIJ format.
@@ -232,7 +238,7 @@ PetscErrorCode MatCholeskyFactorSymbolic_SeqSBAIJ(Mat fact, Mat A, IS perm, cons
   PetscCheck(!missing, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "Matrix is missing diagonal entry %" PetscInt_FMT, i);
   if (bs > 1) {
     PetscCall(MatCholeskyFactorSymbolic_SeqSBAIJ_inplace(fact, A, perm, info));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /* check whether perm is the identity mapping */
@@ -378,7 +384,7 @@ PetscErrorCode MatCholeskyFactorSymbolic_SeqSBAIJ(Mat fact, Mat A, IS perm, cons
   }
 #endif
   fact->ops->choleskyfactornumeric = MatCholeskyFactorNumeric_SeqSBAIJ_1_NaturalOrdering;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatCholeskyFactorSymbolic_SeqSBAIJ_inplace(Mat fact, Mat A, IS perm, const MatFactorInfo *info)
@@ -409,7 +415,7 @@ PetscErrorCode MatCholeskyFactorSymbolic_SeqSBAIJ_inplace(Mat fact, Mat A, IS pe
   */
   if (bs > 1) {
     PetscCall(MatCholeskyFactorSymbolic_SeqSBAIJ_MSR(fact, A, perm, info));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /* check whether perm is the identity mapping */
@@ -553,7 +559,7 @@ PetscErrorCode MatCholeskyFactorSymbolic_SeqSBAIJ_inplace(Mat fact, Mat A, IS pe
   }
 #endif
   PetscCall(MatSeqSBAIJSetNumericFactorization_inplace(fact, perm_identity));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatCholeskyFactorNumeric_SeqSBAIJ_N(Mat C, Mat A, const MatFactorInfo *info)
@@ -728,7 +734,7 @@ PetscErrorCode MatCholeskyFactorNumeric_SeqSBAIJ_N(Mat C, Mat A, const MatFactor
   C->preallocated = PETSC_TRUE;
 
   PetscCall(PetscLogFlops(1.3333 * bs * bs2 * b->mbs)); /* from inverting diagonal blocks */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatCholeskyFactorNumeric_SeqSBAIJ_N_NaturalOrdering(Mat C, Mat A, const MatFactorInfo *info)
@@ -856,7 +862,7 @@ PetscErrorCode MatCholeskyFactorNumeric_SeqSBAIJ_N_NaturalOrdering(Mat C, Mat A,
   C->preallocated        = PETSC_TRUE;
 
   PetscCall(PetscLogFlops(1.3333 * bs * bs2 * b->mbs)); /* from inverting diagonal blocks */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1038,7 +1044,7 @@ PetscErrorCode MatCholeskyFactorNumeric_SeqSBAIJ_2(Mat C, Mat A, const MatFactor
   C->preallocated        = PETSC_TRUE;
 
   PetscCall(PetscLogFlops(1.3333 * 8 * b->mbs)); /* from inverting diagonal blocks */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1180,7 +1186,7 @@ PetscErrorCode MatCholeskyFactorNumeric_SeqSBAIJ_2_NaturalOrdering(Mat C, Mat A,
   C->preallocated        = PETSC_TRUE;
 
   PetscCall(PetscLogFlops(1.3333 * 8 * b->mbs)); /* from inverting diagonal blocks */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1337,7 +1343,7 @@ PetscErrorCode MatCholeskyFactorNumeric_SeqSBAIJ_1_inplace(Mat C, Mat A, const M
       PetscCall(PetscInfo(A, "number of shiftpd tries %" PetscInt_FMT ", shift_amount %g\n", sctx.nshift, (double)sctx.shift_amount));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1492,7 +1498,7 @@ PetscErrorCode MatCholeskyFactorNumeric_SeqSBAIJ_1_NaturalOrdering(Mat B, Mat A,
       PetscCall(PetscInfo(A, "number of shift_inblocks applied %" PetscInt_FMT ", each shift_amount %g\n", sctx.nshift, (double)info->shiftamount));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatCholeskyFactorNumeric_SeqSBAIJ_1_NaturalOrdering_inplace(Mat C, Mat A, const MatFactorInfo *info)
@@ -1631,7 +1637,7 @@ PetscErrorCode MatCholeskyFactorNumeric_SeqSBAIJ_1_NaturalOrdering_inplace(Mat C
       PetscCall(PetscInfo(A, "number of shiftpd tries %" PetscInt_FMT ", shift_amount %g\n", sctx.nshift, (double)sctx.shift_amount));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatCholeskyFactor_SeqSBAIJ(Mat A, IS perm, const MatFactorInfo *info)
@@ -1647,5 +1653,5 @@ PetscErrorCode MatCholeskyFactor_SeqSBAIJ(Mat A, IS perm, const MatFactorInfo *i
   A->ops->solvetranspose = C->ops->solvetranspose;
 
   PetscCall(MatHeaderMerge(A, &C));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

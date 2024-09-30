@@ -1,22 +1,20 @@
-
 #include <../src/ksp/ksp/impls/rich/richardsonimpl.h> /*I "petscksp.h" I*/
 
 /*@
-    KSPRichardsonSetScale - Set the damping factor; if this routine is not called, the factor
-    defaults to 1.0.
+  KSPRichardsonSetScale - Set the damping factor; if this routine is not called, the factor defaults to 1.0.
 
-    Logically Collective
+  Logically Collective
 
-    Input Parameters:
-+   ksp - the iterative context
--   scale - the damping factor
+  Input Parameters:
++ ksp   - the iterative context
+- scale - the damping factor
 
-    Options Database Keys:
-. -ksp_richardson_self <scale> - Set the scale factor
+  Options Database Key:
+. -ksp_richardson_scale <scale> - Set the scale factor
 
-    Level: intermediate
+  Level: intermediate
 
- .seealso: [](chapter_ksp), `KSPRICHARDSON`, `KSPRichardsonSetSelfScale()`
+.seealso: [](ch_ksp), `KSPRICHARDSON`, `KSPRichardsonSetSelfScale()`
 @*/
 PetscErrorCode KSPRichardsonSetScale(KSP ksp, PetscReal scale)
 {
@@ -24,31 +22,31 @@ PetscErrorCode KSPRichardsonSetScale(KSP ksp, PetscReal scale)
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 1);
   PetscValidLogicalCollectiveReal(ksp, scale, 2);
   PetscTryMethod(ksp, "KSPRichardsonSetScale_C", (KSP, PetscReal), (ksp, scale));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-    KSPRichardsonSetSelfScale - Sets Richardson to automatically determine optimal scaling at each iteration to minimize the 2-norm of the
-       preconditioned residual
+  KSPRichardsonSetSelfScale - Sets Richardson to automatically determine optimal scaling at each iteration to minimize the 2-norm of the
+  preconditioned residual
 
-    Logically Collective
+  Logically Collective
 
-    Input Parameters:
-+   ksp - the iterative context
--   scale - `PETSC_TRUE` or the default of `PETSC_FALSE`
+  Input Parameters:
++ ksp   - the iterative context
+- scale - `PETSC_TRUE` or the default of `PETSC_FALSE`
 
-    Options Database Keys:
+  Options Database Key:
 . -ksp_richardson_self_scale - Use self-scaling
 
-    Level: intermediate
+  Level: intermediate
 
-    Note:
-    Requires two extra work vectors. Uses an extra `VecAXPY()` and `VecDotNorm2()` per iteration.
+  Note:
+  Requires two extra work vectors. Uses an extra `VecAXPY()` and `VecDotNorm2()` per iteration.
 
-    Developer Note:
-    Could also minimize the 2-norm of the true residual with one less work vector
+  Developer Note:
+  Could also minimize the 2-norm of the true residual with one less work vector
 
-.seealso: [](chapter_ksp), `KSPRICHARDSON`, `KSPRichardsonSetScale()`
+.seealso: [](ch_ksp), `KSPRICHARDSON`, `KSPRichardsonSetScale()`
 @*/
 PetscErrorCode KSPRichardsonSetSelfScale(KSP ksp, PetscBool scale)
 {
@@ -56,5 +54,5 @@ PetscErrorCode KSPRichardsonSetSelfScale(KSP ksp, PetscBool scale)
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 1);
   PetscValidLogicalCollectiveBool(ksp, scale, 2);
   PetscTryMethod(ksp, "KSPRichardsonSetSelfScale_C", (KSP, PetscBool), (ksp, scale));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

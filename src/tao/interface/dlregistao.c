@@ -7,13 +7,15 @@ static PetscBool TaoPackageInitialized = PETSC_FALSE;
   interface to the Tao package. It is called from `PetscFinalize()`.
 
   Level: developer
+
+.seealso: `TaoInitializePackage()`, `PetscFinalize()`, `TaoRegister()`, `TaoRegisterAll()`
 @*/
 PetscErrorCode TaoFinalizePackage(void)
 {
   PetscFunctionBegin;
   PetscCall(PetscFunctionListDestroy(&TaoList));
   TaoPackageInitialized = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -24,7 +26,7 @@ PetscErrorCode TaoFinalizePackage(void)
 
   Level: developer
 
-.seealso: `TaoCreate()`
+.seealso: `TaoCreate()`, `TaoFinalizePackage()`, `TaoRegister()`, `TaoRegisterAll()`
 @*/
 PetscErrorCode TaoInitializePackage(void)
 {
@@ -32,7 +34,7 @@ PetscErrorCode TaoInitializePackage(void)
   PetscBool opt, pkg;
 
   PetscFunctionBegin;
-  if (TaoPackageInitialized) PetscFunctionReturn(0);
+  if (TaoPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   TaoPackageInitialized = PETSC_TRUE;
   /* Register Classes */
   PetscCall(PetscClassIdRegister("Tao", &TAO_CLASSID));
@@ -61,7 +63,7 @@ PetscErrorCode TaoInitializePackage(void)
   }
   /* Register package finalizer */
   PetscCall(PetscRegisterFinalize(TaoFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_DYNAMIC_LIBRARIES)
@@ -80,6 +82,6 @@ PETSC_EXTERN PetscErrorCode PetscDLLibraryRegister_petsctao(void)
   PetscFunctionBegin;
   PetscCall(TaoInitializePackage());
   PetscCall(TaoLineSearchInitializePackage());
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif /* PETSC_HAVE_DYNAMIC_LIBRARIES */

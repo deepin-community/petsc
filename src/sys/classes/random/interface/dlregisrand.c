@@ -1,9 +1,9 @@
-
 #include <petsc/private/randomimpl.h>
 
 static PetscBool PetscRandomPackageInitialized = PETSC_FALSE;
+
 /*@C
-  PetscRandomFinalizePackage - This function destroys everything in the Petsc interface to the `PetscRandom` package. It is
+  PetscRandomFinalizePackage - This function frees everything in the `PetscRandom` package. It is
   called from `PetscFinalize()`.
 
   Level: developer
@@ -16,7 +16,7 @@ PetscErrorCode PetscRandomFinalizePackage(void)
   PetscCall(PetscFunctionListDestroy(&PetscRandomList));
   PetscRandomPackageInitialized = PETSC_FALSE;
   PetscRandomRegisterAllCalled  = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -34,7 +34,7 @@ PetscErrorCode PetscRandomInitializePackage(void)
   PetscBool opt, pkg;
 
   PetscFunctionBegin;
-  if (PetscRandomPackageInitialized) PetscFunctionReturn(0);
+  if (PetscRandomPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   PetscRandomPackageInitialized = PETSC_TRUE;
   /* Register Class */
   PetscCall(PetscClassIdRegister("PetscRandom", &PETSC_RANDOM_CLASSID));
@@ -55,5 +55,5 @@ PetscErrorCode PetscRandomInitializePackage(void)
   }
   /* Register package finalizer */
   PetscCall(PetscRegisterFinalize(PetscRandomFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,4 +1,3 @@
-
 #include <../src/ksp/pc/impls/factor/icc/icc.h> /*I "petscpc.h" I*/
 
 static PetscErrorCode PCSetUp_ICC(PC pc)
@@ -19,7 +18,7 @@ static PetscErrorCode PCSetUp_ICC(PC pc)
 
   PetscCall(MatSetErrorIfFailure(pc->pmat, pc->erroriffailure));
   if (!pc->setupcalled) {
-    if (!((PC_Factor *)icc)->fact) PetscCall(MatGetFactor(pc->pmat, ((PC_Factor *)icc)->solvertype, MAT_FACTOR_ICC, &((PC_Factor *)icc)->fact));
+    PetscCall(PCFactorSetUpMatSolverType(pc));
     PetscCall(MatFactorGetCanUseOrdering(((PC_Factor *)icc)->fact, &canuseordering));
     if (canuseordering) {
       PetscCall(PCFactorSetDefaultOrdering_Factor(pc));
@@ -27,9 +26,8 @@ static PetscErrorCode PCSetUp_ICC(PC pc)
     }
     PetscCall(MatICCFactorSymbolic(((PC_Factor *)icc)->fact, pc->pmat, perm, &((PC_Factor *)icc)->info));
   } else if (pc->flag != SAME_NONZERO_PATTERN) {
-    PetscBool canuseordering;
     PetscCall(MatDestroy(&((PC_Factor *)icc)->fact));
-    PetscCall(MatGetFactor(pc->pmat, ((PC_Factor *)icc)->solvertype, MAT_FACTOR_ICC, &((PC_Factor *)icc)->fact));
+    PetscCall(PCFactorSetUpMatSolverType(pc));
     PetscCall(MatFactorGetCanUseOrdering(((PC_Factor *)icc)->fact, &canuseordering));
     if (canuseordering) {
       PetscCall(PCFactorSetDefaultOrdering_Factor(pc));
@@ -46,7 +44,7 @@ static PetscErrorCode PCSetUp_ICC(PC pc)
   PetscCall(MatFactorGetError(((PC_Factor *)icc)->fact, &err));
   if (err) { /* FactorSymbolic() fails */
     pc->failedreason = (PCFailedReason)err;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   PetscCall(MatCholeskyFactorNumeric(((PC_Factor *)icc)->fact, pc->pmat, &((PC_Factor *)icc)->info));
@@ -61,7 +59,7 @@ static PetscErrorCode PCSetUp_ICC(PC pc)
     PetscCall(MatFactorGetSolverType(((PC_Factor *)icc)->fact, &solverpackage));
     PetscCall(PCFactorSetMatSolverType(pc, solverpackage));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCReset_ICC(PC pc)
@@ -70,7 +68,7 @@ static PetscErrorCode PCReset_ICC(PC pc)
 
   PetscFunctionBegin;
   PetscCall(MatDestroy(&((PC_Factor *)icc)->fact));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCDestroy_ICC(PC pc)
@@ -83,7 +81,7 @@ static PetscErrorCode PCDestroy_ICC(PC pc)
   PetscCall(PetscFree(((PC_Factor *)icc)->solvertype));
   PetscCall(PCFactorClearComposedFunctions(pc));
   PetscCall(PetscFree(pc->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApply_ICC(PC pc, Vec x, Vec y)
@@ -92,7 +90,7 @@ static PetscErrorCode PCApply_ICC(PC pc, Vec x, Vec y)
 
   PetscFunctionBegin;
   PetscCall(MatSolve(((PC_Factor *)icc)->fact, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCMatApply_ICC(PC pc, Mat X, Mat Y)
@@ -101,7 +99,7 @@ static PetscErrorCode PCMatApply_ICC(PC pc, Mat X, Mat Y)
 
   PetscFunctionBegin;
   PetscCall(MatMatSolve(((PC_Factor *)icc)->fact, X, Y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApplySymmetricLeft_ICC(PC pc, Vec x, Vec y)
@@ -110,7 +108,7 @@ static PetscErrorCode PCApplySymmetricLeft_ICC(PC pc, Vec x, Vec y)
 
   PetscFunctionBegin;
   PetscCall(MatForwardSolve(((PC_Factor *)icc)->fact, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApplySymmetricRight_ICC(PC pc, Vec x, Vec y)
@@ -119,7 +117,7 @@ static PetscErrorCode PCApplySymmetricRight_ICC(PC pc, Vec x, Vec y)
 
   PetscFunctionBegin;
   PetscCall(MatBackwardSolve(((PC_Factor *)icc)->fact, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSetFromOptions_ICC(PC pc, PetscOptionItems *PetscOptionsObject)
@@ -143,19 +141,19 @@ static PetscErrorCode PCSetFromOptions_ICC(PC pc, PetscOptionItems *PetscOptions
   }
   */
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 extern PetscErrorCode PCFactorSetDropTolerance_ILU(PC, PetscReal, PetscReal, PetscInt);
 
 /*MC
-     PCICC - Incomplete Cholesky factorization preconditioners.
+     PCICC - Incomplete Cholesky factorization preconditioners {cite}`chan1997approximate`
 
    Options Database Keys:
-+  -pc_factor_levels <k> - number of levels of fill for ICC(k)
-.  -pc_factor_in_place - only for ICC(0) with natural ordering, reuses the space of the matrix for
-                      its factorization (overwrites original matrix)
-.  -pc_factor_fill <nfill> - expected amount of fill in factored matrix compared to original matrix, nfill > 1
++  -pc_factor_levels <k>                                 - number of levels of fill for ICC(k)
+.  -pc_factor_in_place                                   - only for ICC(0) with natural ordering, reuses the space of the matrix for
+                                                         its factorization (overwrites original matrix)
+.  -pc_factor_fill <nfill>                               - expected amount of fill in factored matrix compared to original matrix, nfill > 1
 -  -pc_factor_mat_ordering_type <natural,nd,1wd,rcm,qmd> - set the row/column ordering of the factored matrix
 
    Level: beginner
@@ -165,17 +163,10 @@ extern PetscErrorCode PCFactorSetDropTolerance_ILU(PC, PetscReal, PetscReal, Pet
 
    For `MATSEQBAIJ` matrices this implements a point block ICC.
 
-   By default, the Manteuffel is applied (for matrices with block size 1). Call `PCFactorSetShiftType`(pc,`MAT_SHIFT_POSITIVE_DEFINITE`);
+   By default, the Manteuffel shift {cite}`manteuffel1979shifted` is applied, for matrices with block size 1 only. Call `PCFactorSetShiftType`(pc,`MAT_SHIFT_POSITIVE_DEFINITE`);
    to turn off the shift.
 
-   The Manteuffel shift is only implemented for matrices with block size 1
-
-   References:
-.  * - TONY F. CHAN AND HENK A. VAN DER VORST, Review article: APPROXIMATE AND INCOMPLETE FACTORIZATIONS,
-      Chapter in Parallel Numerical Algorithms, edited by D. Keyes, A. Semah, V. Venkatakrishnan, ICASE/LaRC Interdisciplinary Series in
-      Science and Engineering, Kluwer.
-
-.seealso: `PCCreate()`, `PCSetType()`, `PCType`, `PC`, `PCSOR`, `MatOrderingType`, `PCILU`, `PCLU`, `PCCHOLESKY`,
+.seealso: [](ch_ksp), `PCCreate()`, `PCSetType()`, `PCType`, `PC`, `PCSOR`, `MatOrderingType`, `PCILU`, `PCLU`, `PCCHOLESKY`,
           `PCFactorSetZeroPivot()`, `PCFactorSetShiftType()`, `PCFactorSetShiftAmount()`,
           `PCFactorSetFill()`, `PCFactorSetMatOrderingType()`, `PCFactorSetReuseOrdering()`,
           `PCFactorSetLevels()`
@@ -204,5 +195,5 @@ PETSC_EXTERN PetscErrorCode PCCreate_ICC(PC pc)
   pc->ops->view                = PCView_Factor;
   pc->ops->applysymmetricleft  = PCApplySymmetricLeft_ICC;
   pc->ops->applysymmetricright = PCApplySymmetricRight_ICC;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -19,7 +19,7 @@ static PetscErrorCode linear_u(PetscInt dim, PetscReal time, const PetscReal x[]
   PetscInt c;
 
   for (c = 0; c < Nc; ++c) u[c] = x[c];
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 static PetscErrorCode linear_p(PetscInt dim, PetscReal time, const PetscReal x[], PetscInt Nc, PetscScalar *u, void *ctx)
@@ -28,13 +28,13 @@ static PetscErrorCode linear_p(PetscInt dim, PetscReal time, const PetscReal x[]
 
   u[0] = 0.;
   for (d = 0; d < dim; ++d) u[0] += -0.5 * x[d] * x[d];
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 static PetscErrorCode linear_divu(PetscInt dim, PetscReal time, const PetscReal x[], PetscInt Nc, PetscScalar *u, void *ctx)
 {
   u[0] = dim;
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 /* fx_v are the residual functions for the equation \vec{u} = \grad{p}. f0_v is the term <v,u>.*/
@@ -112,7 +112,7 @@ static PetscErrorCode CreateMesh(MPI_Comm comm, UserCtx *user, DM *mesh)
   PetscCall(DMSetFromOptions(*mesh));
   PetscCall(DMSetApplicationContext(*mesh, user));
   PetscCall(DMViewFromOptions(*mesh, NULL, "-dm_view"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Setup the system of equations that we wish to solve */
@@ -140,13 +140,14 @@ static PetscErrorCode SetupProblem(DM dm, UserCtx *user)
 
   PetscCall(PetscDSSetExactSolution(ds, 0, linear_u, NULL));
   PetscCall(PetscDSSetExactSolution(ds, 1, linear_p, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Create the finite element spaces we will use for this system */
 static PetscErrorCode SetupDiscretization(DM mesh, DM mesh_sum, PetscErrorCode (*setup)(DM, UserCtx *), UserCtx *user)
 {
   DM        cdm = mesh, cdm_sum = mesh_sum;
+  PetscDS   ds;
   PetscFE   u, divu, u_sum, divu_sum;
   PetscInt  dim;
   PetscBool simplex;
@@ -154,6 +155,15 @@ static PetscErrorCode SetupDiscretization(DM mesh, DM mesh_sum, PetscErrorCode (
   PetscFunctionBegin;
   PetscCall(DMGetDimension(mesh, &dim));
   PetscCall(DMPlexIsSimplex(mesh, &simplex));
+
+  {
+    PetscBool force;
+    // Turn off automatic quadrature selection as a test
+    PetscCall(DMGetDS(mesh_sum, &ds));
+    PetscCall(PetscDSGetForceQuad(ds, &force));
+    if (force) PetscCall(PetscDSSetForceQuad(ds, PETSC_FALSE));
+  }
+
   /* Create FE objects and give them names so that options can be set from
    * command line. Each field gets 2 instances (i.e. velocity and velocity_sum)created twice so that we can compare between approaches. */
   PetscCall(PetscFECreateDefault(PetscObjectComm((PetscObject)mesh), dim, dim, simplex, "velocity_", -1, &u));
@@ -197,7 +207,7 @@ static PetscErrorCode SetupDiscretization(DM mesh, DM mesh_sum, PetscErrorCode (
   PetscCall(PetscFEDestroy(&divu_sum));
   PetscCall(DMDestroy(&cdm));
   PetscCall(DMDestroy(&cdm_sum));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

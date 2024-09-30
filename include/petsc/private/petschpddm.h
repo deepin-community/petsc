@@ -1,15 +1,10 @@
-#ifndef PETSCHPDDM_H
-#define PETSCHPDDM_H
+#pragma once
 
 #include <petsc/private/kspimpl.h>
 
 #define PETSC_KSPHPDDM_DEFAULT_PRECISION \
   (PetscDefined(USE_REAL_SINGLE) ? KSP_HPDDM_PRECISION_SINGLE : (PetscDefined(USE_REAL_DOUBLE) ? KSP_HPDDM_PRECISION_DOUBLE : (PetscDefined(USE_REAL___FLOAT128) ? KSP_HPDDM_PRECISION_QUADRUPLE : KSP_HPDDM_PRECISION_HALF)))
 #define PETSC_PCHPDDM_MAXLEVELS 9
-PETSC_EXTERN PetscLogEvent  PC_HPDDM_PtAP;
-PETSC_EXTERN PetscLogEvent  PC_HPDDM_PtBP;
-PETSC_EXTERN PetscLogEvent  PC_HPDDM_Next;
-PETSC_INTERN PetscErrorCode HPDDMLoadDL_Private(PetscBool *);
 
 namespace HPDDM
 {
@@ -39,7 +34,7 @@ struct PC_HPDDM {
   IS                          is;                                           /* global numbering of the auxiliary matrix */
   PetscInt                    N;                                            /* number of levels */
   PCHPDDMCoarseCorrectionType correction;                                   /* type of coarse correction */
-  PetscBool                   Neumann;                                      /* aux is the local Neumann matrix? */
+  PetscBool3                  Neumann;                                      /* aux is the local Neumann matrix? */
   PetscBool                   log_separate;                                 /* separate events for each level? */
   PetscBool                   share;                                        /* shared subdomain KSP between SLEPc and PETSc? */
   PetscBool                   deflation;                                    /* aux is the local deflation space? */
@@ -56,9 +51,22 @@ struct KSP_HPDDM {
   KSPHPDDMPrecision     precision;
 };
 
-PETSC_INTERN const char HPDDMCitation[];
-PETSC_INTERN PetscBool  HPDDMCite;
+typedef struct _n_Harmonic *Harmonic;
+struct _n_Harmonic {
+  KSP  ksp;
+  Mat *A;
+  Vec  v;
+  IS  *is;
+};
+
+PETSC_EXTERN PetscLogEvent  PC_HPDDM_PtAP;
+PETSC_EXTERN PetscLogEvent  PC_HPDDM_PtBP;
+PETSC_EXTERN PetscLogEvent  PC_HPDDM_Next;
+PETSC_INTERN PetscErrorCode HPDDMLoadDL_Private(PetscBool *);
+PETSC_INTERN const char     HPDDMCitation[];
+PETSC_INTERN PetscBool      HPDDMCite;
+#if PetscDefined(HAVE_CUDA) && PetscDefined(HAVE_HPDDM)
+PETSC_INTERN PetscErrorCode KSPSolve_HPDDM_CUDA_Private(KSP_HPDDM *, const PetscScalar *, PetscScalar *, PetscInt, MPI_Comm);
+#endif
 
 #include <HPDDM.hpp>
-
-#endif /* PETSCHPDDM_H */

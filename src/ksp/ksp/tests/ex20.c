@@ -1,4 +1,3 @@
-
 static char help[] = "Bilinear elements on the unit square for Laplacian.  To test the parallel\n\
 matrix assembly,the matrix is intentionally laid out across processors\n\
 differently from the way it is assembled.  Input arguments are:\n\
@@ -6,7 +5,7 @@ differently from the way it is assembled.  Input arguments are:\n\
 
 #include <petscksp.h>
 
-int FormElementStiffness(PetscReal H, PetscScalar *Ke)
+PetscErrorCode FormElementStiffness(PetscReal H, PetscScalar *Ke)
 {
   Ke[0]  = H / 6.0;
   Ke[1]  = -.125 * H;
@@ -24,7 +23,7 @@ int FormElementStiffness(PetscReal H, PetscScalar *Ke)
   Ke[13] = H / 12.0;
   Ke[14] = -.125 * H;
   Ke[15] = H / 6.0;
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 int main(int argc, char **args)

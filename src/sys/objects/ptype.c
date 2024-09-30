@@ -1,23 +1,23 @@
-
 /*
      Provides utility routines for manipulating any type of PETSc object.
 */
 #include <petscsys.h> /*I   "petscsys.h"    I*/
 
-const char *const PetscDataTypes[] = {"UNKNOWN", "DOUBLE", "COMPLEX", "LONG", "SHORT", "FLOAT", "CHAR", "LOGICAL", "ENUM", "BOOL", "LONGDOUBLE", "OBJECT", "FUNCTION", "STRING", "FP16", "STRUCT", "INT", "INT64", "PetscDataType", "PETSC_", NULL};
+const char *const PetscDataTypes[] = {"UNKNOWN",  "DOUBLE", "COMPLEX", "LONG",   "SHORT", "FLOAT", "CHAR",  "BIT_LOGICAL", "ENUM",          "BOOL",   "__FLOAT128", "OBJECT",
+                                      "FUNCTION", "STRING", "__FP16",  "STRUCT", "INT",   "INT64", "COUNT", "INT32",       "PetscDataType", "PETSC_", NULL};
 
 /*@C
-     PetscDataTypeToMPIDataType - Converts the PETSc name of a datatype to its MPI name.
+  PetscDataTypeToMPIDataType - Converts the `PetscDataType` name of a datatype to its `MPI_Datatype`
 
-   Not collective
+  Not Collective
 
-    Input Parameter:
-.     ptype - the PETSc datatype name (for example `PETSC_DOUBLE`)
+  Input Parameter:
+. ptype - the PETSc datatype name (for example `PETSC_DOUBLE`)
 
-    Output Parameter:
-.     mtype - the MPI datatype (for example `MPI_DOUBLE`, ...)
+  Output Parameter:
+. mtype - the MPI datatype (for example `MPI_DOUBLE`, ...)
 
-    Level: advanced
+  Level: advanced
 
 .seealso: `PetscDataType`, `PetscMPIDataTypeToPetscDataType()`
 @*/
@@ -40,6 +40,7 @@ PetscErrorCode PetscDataTypeToMPIDataType(PetscDataType ptype, MPI_Datatype *mty
   else if (ptype == PETSC_ENUM) *mtype = MPI_INT;
   else if (ptype == PETSC_BOOL) *mtype = MPI_INT;
   else if (ptype == PETSC_INT64) *mtype = MPIU_INT64;
+  else if (ptype == PETSC_INT32) *mtype = MPIU_INT32;
   else if (ptype == PETSC_FLOAT) *mtype = MPI_FLOAT;
   else if (ptype == PETSC_CHAR) *mtype = MPI_CHAR;
   else if (ptype == PETSC_BIT_LOGICAL) *mtype = MPI_BYTE;
@@ -49,23 +50,23 @@ PetscErrorCode PetscDataTypeToMPIDataType(PetscDataType ptype, MPI_Datatype *mty
   else if (ptype == PETSC___FP16) *mtype = MPIU___FP16;
 #endif
   else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Unknown PETSc datatype");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-     PetscMPIDataTypeToPetscDataType - Finds the PETSc name of a datatype from its MPI name
+  PetscMPIDataTypeToPetscDataType - Finds the `PetscDataType` name of a datatype from its `MPI_Datatype`
 
-   Not collective
+  Not Collective
 
-    Input Parameter:
-.     mtype - the MPI datatype (for example `MPI_DOUBLE`, ...)
+  Input Parameter:
+. mtype - the MPI datatype (for example `MPI_DOUBLE`, ...)
 
-    Output Parameter:
-.     ptype - the PETSc datatype name (for example `PETSC_DOUBLE`)
+  Output Parameter:
+. ptype - the PETSc datatype name (for example `PETSC_DOUBLE`)
 
-    Level: advanced
+  Level: advanced
 
-.seealso: `PetscDataType`, `PetscMPIDataTypeToPetscDataType()`
+.seealso: `PetscDataType`
 @*/
 PetscErrorCode PetscMPIDataTypeToPetscDataType(MPI_Datatype mtype, PetscDataType *ptype)
 {
@@ -75,6 +76,7 @@ PetscErrorCode PetscMPIDataTypeToPetscDataType(MPI_Datatype mtype, PetscDataType
   else if (mtype == MPI_INT) *ptype = PETSC_ENUM;
 #endif
   else if (mtype == MPIU_INT64) *ptype = PETSC_INT64;
+  else if (mtype == MPIU_INT32) *ptype = PETSC_INT32;
   else if (mtype == MPI_DOUBLE) *ptype = PETSC_DOUBLE;
 #if defined(PETSC_HAVE_COMPLEX)
   #if defined(PETSC_USE_REAL_SINGLE)
@@ -95,7 +97,7 @@ PetscErrorCode PetscMPIDataTypeToPetscDataType(MPI_Datatype mtype, PetscDataType
   else if (mtype == MPIU___FP16) *ptype = PETSC___FP16;
 #endif
   else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP, "Unhandled MPI datatype");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 typedef enum {
@@ -113,6 +115,7 @@ typedef enum {
   PETSC_ENUM_SIZE        = sizeof(PetscEnum),
   PETSC_BOOL_SIZE        = sizeof(PetscBool),
   PETSC_INT64_SIZE       = sizeof(PetscInt64),
+  PETSC_INT32_SIZE       = sizeof(PetscInt32),
   PETSC_BIT_LOGICAL_SIZE = sizeof(char)
 #if defined(PETSC_USE_REAL___FLOAT128)
     ,
@@ -124,17 +127,17 @@ typedef enum {
 } PetscDataTypeSize;
 
 /*@C
-     PetscDataTypeGetSize - Gets the size (in bytes) of a PETSc datatype
+  PetscDataTypeGetSize - Gets the size (in bytes) of a PETSc datatype
 
-   Not collective
+  Not Collective
 
-    Input Parameter:
-.     ptype - the PETSc datatype name (for example `PETSC_DOUBLE`)
+  Input Parameter:
+. ptype - the PETSc datatype name (for example `PETSC_DOUBLE`)
 
-    Output Parameter:
-.     size - the size in bytes (for example the size of `PETSC_DOUBLE` is 8)
+  Output Parameter:
+. size - the size in bytes (for example the size of `PETSC_DOUBLE` is 8)
 
-    Level: advanced
+  Level: advanced
 
 .seealso: `PetscDataType`, `PetscDataTypeToMPIDataType()`
 @*/
@@ -152,6 +155,7 @@ PetscErrorCode PetscDataTypeGetSize(PetscDataType ptype, size_t *size)
   else if (ptype == PETSC_ENUM) *size = PETSC_ENUM_SIZE;
   else if (ptype == PETSC_BOOL) *size = PETSC_BOOL_SIZE;
   else if (ptype == PETSC_INT64) *size = PETSC_INT64_SIZE;
+  else if (ptype == PETSC_INT32) *size = PETSC_INT32_SIZE;
   else if (ptype == PETSC_BIT_LOGICAL) *size = PETSC_BIT_LOGICAL_SIZE;
 #if defined(PETSC_USE_REAL___FLOAT128)
   else if (ptype == PETSC___FLOAT128) *size = PETSC___FLOAT128_SIZE;
@@ -159,22 +163,22 @@ PetscErrorCode PetscDataTypeGetSize(PetscDataType ptype, size_t *size)
   else if (ptype == PETSC___FP16) *size = PETSC___FP16_SIZE;
 #endif
   else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Unknown PETSc datatype");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-     PetscDataTypeFromString - Gets the enum value of a PETSc datatype represented as a string
+  PetscDataTypeFromString - Gets the enum value of a PETSc datatype represented as a string
 
-   Not collective
+  Not Collective
 
-    Input Parameter:
-.     name - the PETSc datatype name (for example, "double" or "real")
+  Input Parameter:
+. name - the PETSc datatype name (for example, "double" or "real")
 
-    Output Parameters:
-+    ptype - the enum value, only valid if found is `PETSC_TRUE`
--    found - the string matches one of the data types
+  Output Parameters:
++ ptype - the enum value, only valid if found is `PETSC_TRUE`
+- found - the string matches one of the data types
 
-    Level: advanced
+  Level: advanced
 
 .seealso: `PetscDataType`, `PetscDataTypeToMPIDataType()`, `PetscDataTypeGetSize()`
 @*/
@@ -195,5 +199,5 @@ PetscErrorCode PetscDataTypeFromString(const char *name, PetscDataType *ptype, P
       if (*found) *ptype = PETSC_REAL;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

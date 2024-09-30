@@ -1,4 +1,3 @@
-
 static char help[] = "Tests the use of MatZeroRows() for parallel matrices.\n\
 This example also tests the use of MatDuplicate() for both MPIAIJ and MPIBAIJ matrices";
 
@@ -115,6 +114,7 @@ PetscErrorCode TestMatZeroRows_Basic(Mat A, IS is, PetscScalar diag)
   PetscBool keepnonzeropattern;
 
   /* Now copy A into B, and test it with MatZeroRows() */
+  PetscFunctionBeginUser;
   PetscCall(MatDuplicate(A, MAT_COPY_VALUES, &B));
 
   PetscCall(PetscOptionsHasName(NULL, NULL, "-keep_nonzero_pattern", &keepnonzeropattern));
@@ -123,7 +123,7 @@ PetscErrorCode TestMatZeroRows_Basic(Mat A, IS is, PetscScalar diag)
   PetscCall(MatZeroRowsIS(B, is, diag, 0, 0));
   PetscCall(MatView(B, PETSC_VIEWER_STDOUT_WORLD));
   PetscCall(MatDestroy(&B));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode TestMatZeroRows_with_no_allocation(Mat A, IS is, PetscScalar diag)
@@ -131,6 +131,7 @@ PetscErrorCode TestMatZeroRows_with_no_allocation(Mat A, IS is, PetscScalar diag
   Mat B;
 
   /* Now copy A into B, and test it with MatZeroRows() */
+  PetscFunctionBeginUser;
   PetscCall(MatDuplicate(A, MAT_COPY_VALUES, &B));
   /* Set this flag after assembly. This way, it affects only MatZeroRows() */
   PetscCall(MatSetOption(B, MAT_NEW_NONZERO_ALLOCATION_ERR, PETSC_TRUE));
@@ -138,7 +139,7 @@ PetscErrorCode TestMatZeroRows_with_no_allocation(Mat A, IS is, PetscScalar diag
   PetscCall(MatZeroRowsIS(B, is, diag, 0, 0));
   PetscCall(MatView(B, PETSC_VIEWER_STDOUT_WORLD));
   PetscCall(MatDestroy(&B));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST
@@ -163,6 +164,13 @@ PetscErrorCode TestMatZeroRows_with_no_allocation(Mat A, IS is, PetscScalar diag
       suffix: 4
       nsize: 3
       args: -keep_nonzero_pattern -mat_type mpibaij -mat_block_size 3
+      filter: grep -v " MPI process"
+
+   test:
+      requires: !defined(PETSC_HAVE_THREADSAFETY)
+      suffix: 5
+      nsize: 3
+      args: -mat_type mpibaij -mat_block_size 3 -mat_view
       filter: grep -v " MPI process"
 
 TEST*/

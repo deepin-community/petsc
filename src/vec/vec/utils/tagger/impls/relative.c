@@ -1,4 +1,3 @@
-
 #include <petsc/private/vecimpl.h> /*I "petscvec.h" I*/
 #include "../src/vec/vec/utils/tagger/impls/simple.h"
 
@@ -52,7 +51,7 @@ static PetscErrorCode VecTaggerComputeBoxes_Relative(VecTagger tagger, Vec vec, 
   }
   *boxes = bxs;
   if (listed) *listed = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -62,7 +61,7 @@ static PetscErrorCode VecTaggerComputeBoxes_Relative(VecTagger tagger, Vec vec, 
 
   Input Parameters:
 + tagger - the VecTagger context
-- box - a blocksize list of VecTaggerBox boxes
+- box    - a blocksize list of VecTaggerBox boxes
 
   Level: advanced
 
@@ -72,7 +71,7 @@ PetscErrorCode VecTaggerRelativeSetBox(VecTagger tagger, VecTaggerBox *box)
 {
   PetscFunctionBegin;
   PetscCall(VecTaggerSetBox_Simple(tagger, box));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -94,7 +93,7 @@ PetscErrorCode VecTaggerRelativeGetBox(VecTagger tagger, const VecTaggerBox **bo
 {
   PetscFunctionBegin;
   PetscCall(VecTaggerGetBox_Simple(tagger, box));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_INTERN PetscErrorCode VecTaggerCreate_Relative(VecTagger tagger)
@@ -102,5 +101,5 @@ PETSC_INTERN PetscErrorCode VecTaggerCreate_Relative(VecTagger tagger)
   PetscFunctionBegin;
   PetscCall(VecTaggerCreate_Simple(tagger));
   tagger->ops->computeboxes = VecTaggerComputeBoxes_Relative;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,4 +1,3 @@
-
 #include <petscdraw.h>
 #include <petscviewer.h>
 #include <petsc/private/viewerimpl.h>
@@ -6,29 +5,29 @@
 static PetscBool PetscSysPackageInitialized = PETSC_FALSE;
 
 /*@C
-  PetscSysFinalizePackage - This function destroys everything in the PETSc created internally in the system library portion of PETSc.
+  PetscSysFinalizePackage - This function destroys everything in the system library portion of PETSc.
   It is called from `PetscFinalize()`.
 
   Level: developer
 
-.seealso: `PetscFinalize()`
+.seealso: `PetscSysInitializePackage()`, `PetscFinalize()`
 @*/
 PetscErrorCode PetscSysFinalizePackage(void)
 {
   PetscFunctionBegin;
   if (Petsc_Seq_keyval != MPI_KEYVAL_INVALID) PetscCallMPI(MPI_Comm_free_keyval(&Petsc_Seq_keyval));
   PetscSysPackageInitialized = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  PetscSysInitializePackage - This function initializes everything in the main Petsc package. It is called
-  from PetscDLLibraryRegister_petsc() when using dynamic libraries, and on the call to `PetscInitialize()`
+  PetscSysInitializePackage - This function initializes everything in the system library portion of PETSc. It is called
+  from `PetscDLLibraryRegister_petsc()` when using dynamic libraries, and in the call to `PetscInitialize()`
   when using shared or static libraries.
 
   Level: developer
 
-.seealso: `PetscInitialize()`
+.seealso: `PetscSysFinalizePackage()`, `PetscInitialize()`
 @*/
 PetscErrorCode PetscSysInitializePackage(void)
 {
@@ -36,7 +35,7 @@ PetscErrorCode PetscSysInitializePackage(void)
   PetscBool opt, pkg;
 
   PetscFunctionBegin;
-  if (PetscSysPackageInitialized) PetscFunctionReturn(0);
+  if (PetscSysPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   PetscSysPackageInitialized = PETSC_TRUE;
   /* Register Classes */
   PetscCall(PetscClassIdRegister("Object", &PETSC_OBJECT_CLASSID));
@@ -60,7 +59,7 @@ PetscErrorCode PetscSysInitializePackage(void)
     if (pkg) PetscCall(PetscLogEventExcludeClass(PETSC_SMALLEST_CLASSID));
   }
   PetscCall(PetscRegisterFinalize(PetscSysFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_DYNAMIC_LIBRARIES)
@@ -103,6 +102,6 @@ PETSC_EXTERN PetscErrorCode PetscDLLibraryRegister_petscsys(void)
   PetscCall(PetscDLLibraryRegister_petscsnes());
   PetscCall(PetscDLLibraryRegister_petscts());
   #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif /* PETSC_HAVE_DYNAMIC_LIBRARIES */

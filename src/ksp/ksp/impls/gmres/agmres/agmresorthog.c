@@ -2,19 +2,20 @@
 
 #include <../src/ksp/ksp/impls/gmres/agmres/agmresimpl.h>
 /*
- *  This file implements the RODDEC algorithm : its purpose is to orthogonalize a set of vectors distributed across several processes. These processes are organized in a virtual ring.
- * References : [1] Sidje, Roger B. Alternatives for parallel Krylov subspace basis computation. Numer. Linear Algebra Appl. 4 (1997), no. 4, 305-331
- *
- *
- * initial author R. B. SIDJE,
- * modified : G.-A Atenekeng-Kahou, 2008
- * modified : D. NUENTSA WAKAM, 2011
- *
- */
+  This file implements the RODDEC algorithm : its purpose is to orthogonalize a set of vectors distributed across several processes.
+  These processes are organized in a virtual ring.
+
+  References : [1] Sidje, Roger B. Alternatives for parallel Krylov subspace basis computation. Numer. Linear Algebra Appl. 4 (1997), no. 4, 305-331
+
+  initial author R. B. SIDJE,
+  modified : G.-A Atenekeng-Kahou, 2008
+  modified : D. NUENTSA WAKAM, 2011
+
+*/
 
 /*
- * Take the processes that own the vectors and Organize them on a virtual ring.
- */
+* Take the processes that own the vectors and organize them on a virtual ring.
+*/
 static PetscErrorCode KSPAGMRESRoddecGivens(PetscReal *, PetscReal *, PetscReal *, PetscInt);
 
 PetscErrorCode KSPAGMRESRoddecInitNeighboor(KSP ksp)
@@ -48,7 +49,7 @@ PetscErrorCode KSPAGMRESRoddecInitNeighboor(KSP ksp)
   agmres->size  = size;
   agmres->First = First;
   agmres->Last  = Last;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPAGMRESRoddecGivens(PetscReal *c, PetscReal *s, PetscReal *r, PetscInt make_r)
@@ -96,20 +97,20 @@ static PetscErrorCode KSPAGMRESRoddecGivens(PetscReal *c, PetscReal *s, PetscRea
       *s = PetscSqrtReal(1.e0 - (*c) * (*c));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
- * Compute the QR factorization of the Krylov basis vectors
- * Input :
- *  - the vectors are available in agmres->vecs (alias VEC_V)
- *  - nvec :  the number of vectors
- * Output :
- *  - agmres->Qloc : product of elementary reflectors for the QR of the (local part) of the vectors.
- *  - agmres->sgn :  Sign of the rotations
- *  - agmres->tloc : scalar factors of the elementary reflectors.
+  Compute the QR factorization of the Krylov basis vectors
+  Input :
+   - the vectors are available in agmres->vecs (alias VEC_V)
+   - nvec :  the number of vectors
+  Output :
+   - agmres->Qloc : product of elementary reflectors for the QR of the (local part) of the vectors.
+   - agmres->sgn :  Sign of the rotations
+   - agmres->tloc : scalar factors of the elementary reflectors.
 
- */
+*/
 PetscErrorCode KSPAGMRESRoddec(KSP ksp, PetscInt nvec)
 {
   KSP_AGMRES  *agmres = (KSP_AGMRES *)ksp->data;
@@ -219,17 +220,17 @@ PetscErrorCode KSPAGMRESRoddec(KSP ksp, PetscInt nvec)
    */
   PetscCallMPI(MPI_Bcast(agmres->Rloc, N * N, MPIU_SCALAR, Last, comm));
   PetscCall(PetscLogEventEnd(KSP_AGMRESRoddec, ksp, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
- *  Computes Out <-- Q * In where Q is the orthogonal matrix from AGMRESRoddec
- *  Input
- *   - Qloc, sgn, tloc, nvec (see AGMRESRoddec above)
- *   - In : input vector (size nvec)
- *  Output :
- *   - Out : Petsc vector (distributed as the basis vectors)
- */
+   Computes Out <-- Q * In where Q is the orthogonal matrix from AGMRESRoddec
+   Input
+    - Qloc, sgn, tloc, nvec (see AGMRESRoddec above)
+    - In : input vector (size nvec)
+   Output :
+    - Out : Petsc vector (distributed as the basis vectors)
+*/
 PetscErrorCode KSPAGMRESRodvec(KSP ksp, PetscInt nvec, PetscScalar *In, Vec Out)
 {
   KSP_AGMRES  *agmres = (KSP_AGMRES *)ksp->data;
@@ -306,5 +307,5 @@ PetscErrorCode KSPAGMRESRodvec(KSP ksp, PetscInt nvec, PetscScalar *In, Vec Out)
   }
   PetscCall(VecRestoreArray(Out, &zloc));
   PetscCall(PetscFree(y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

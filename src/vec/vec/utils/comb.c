@@ -1,4 +1,3 @@
-
 /*
       Split phase global vector reductions with support for combining the
    communication portion of several operations. Using MPI-1.1 support only
@@ -30,7 +29,7 @@ static PetscErrorCode MPIPetsc_Iallreduce(void *sendbuf, void *recvbuf, PetscMPI
   PetscCall(MPIU_Allreduce(sendbuf, recvbuf, count, datatype, op, comm));
   *request = MPI_REQUEST_NULL;
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscSplitReductionApply(PetscSplitReduction *);
@@ -58,7 +57,7 @@ static PetscErrorCode PetscSplitReductionCreate(MPI_Comm comm, PetscSplitReducti
 #endif
   /* always check for option; so that tests that run on systems without support don't warn about unhandled options */
   PetscCall(PetscOptionsGetBool(NULL, NULL, "-splitreduction_async", &(*sr)->async, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -81,7 +80,7 @@ PETSC_EXTERN void MPIAPI PetscSplitReduction_Local(void *in, void *out, PetscMPI
 
   PetscFunctionBegin;
   if (*datatype != MPIU_SCALAR_INT) {
-    (*PetscErrorPrintf)("Can only handle MPIU_SCALAR_INT data types");
+    PetscCallAbort(MPI_COMM_SELF, (*PetscErrorPrintf)("Can only handle MPIU_SCALAR_INT data types"));
     PETSCABORT(MPI_COMM_SELF, PETSC_ERR_ARG_WRONG);
   }
   for (i = 0; i < count; i++) {
@@ -89,7 +88,7 @@ PETSC_EXTERN void MPIAPI PetscSplitReduction_Local(void *in, void *out, PetscMPI
     else if (xin[i].i == PETSC_SR_REDUCE_MAX) xout[i].v = PetscMax(PetscRealPart(xout[i].v), PetscRealPart(xin[i].v));
     else if (xin[i].i == PETSC_SR_REDUCE_MIN) xout[i].v = PetscMin(PetscRealPart(xout[i].v), PetscRealPart(xin[i].v));
     else {
-      (*PetscErrorPrintf)("Reduction type input is not PETSC_SR_REDUCE_SUM, PETSC_SR_REDUCE_MAX, or PETSC_SR_REDUCE_MIN");
+      PetscCallAbort(MPI_COMM_SELF, (*PetscErrorPrintf)("Reduction type input is not PETSC_SR_REDUCE_SUM, PETSC_SR_REDUCE_MAX, or PETSC_SR_REDUCE_MIN"));
       PETSCABORT(MPI_COMM_SELF, PETSC_ERR_ARG_WRONG);
     }
   }
@@ -97,18 +96,19 @@ PETSC_EXTERN void MPIAPI PetscSplitReduction_Local(void *in, void *out, PetscMPI
 }
 
 /*@
-   PetscCommSplitReductionBegin - Begin an asynchronous split-mode reduction
+  PetscCommSplitReductionBegin - Begin an asynchronous split-mode reduction
 
-   Collective but not synchronizing
+  Collective but not synchronizing
 
-   Input Parameter:
-   comm - communicator on which split reduction has been queued
+  Input Parameter:
+. comm - communicator on which split reduction has been queued
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   Calling this function is optional when using split-mode reduction. On supporting hardware, calling this after all
-   VecXxxBegin() allows the reduction to make asynchronous progress before the result is needed (in VecXxxEnd()).
+  Note:
+  Calling this function is optional when using split-mode reduction. On supporting hardware,
+  calling this after all VecXxxBegin() allows the reduction to make asynchronous progress
+  before the result is needed (in VecXxxEnd()).
 
 .seealso: `VecNormBegin()`, `VecNormEnd()`, `VecDotBegin()`, `VecDotEnd()`, `VecTDotBegin()`, `VecTDotEnd()`, `VecMDotBegin()`, `VecMDotEnd()`, `VecMTDotBegin()`, `VecMTDotEnd()`
 @*/
@@ -117,6 +117,7 @@ PetscErrorCode PetscCommSplitReductionBegin(MPI_Comm comm)
   PetscSplitReduction *sr;
 
   PetscFunctionBegin;
+  if (PetscDefined(HAVE_THREADSAFETY)) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscSplitReductionGet(comm, &sr));
   PetscCheck(sr->numopsend <= 0, PETSC_COMM_SELF, PETSC_ERR_ORDER, "Cannot call this after VecxxxEnd() has been called");
   if (sr->async) { /* Bad reuse, setup code copied from PetscSplitReductionApply(). */
@@ -160,7 +161,7 @@ PetscErrorCode PetscCommSplitReductionBegin(MPI_Comm comm)
   } else {
     PetscCall(PetscSplitReductionApply(sr));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PetscSplitReductionEnd(PetscSplitReduction *sr)
@@ -185,7 +186,7 @@ PetscErrorCode PetscSplitReductionEnd(PetscSplitReduction *sr)
   default:
     break; /* everything is already done */
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -232,7 +233,7 @@ static PetscErrorCode PetscSplitReductionApply(PetscSplitReduction *sr)
   sr->state     = STATE_END;
   sr->numopsend = 0;
   PetscCall(PetscLogEventEnd(VEC_ReduceCommunication, 0, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -260,15 +261,15 @@ PetscErrorCode PetscSplitReductionExtend(PetscSplitReduction *sr)
   PetscCall(PetscArraycpy(sr->lvalues_mix, lvalues_mix, maxops));
   PetscCall(PetscArraycpy(sr->gvalues_mix, gvalues_mix, maxops));
   PetscCall(PetscFree6(lvalues, gvalues, reducetype, invecs, lvalues_mix, gvalues_mix));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PetscSplitReductionDestroy(PetscSplitReduction *sr)
+static PetscErrorCode PetscSplitReductionDestroy(PetscSplitReduction *sr)
 {
   PetscFunctionBegin;
   PetscCall(PetscFree6(sr->lvalues, sr->gvalues, sr->reducetype, sr->invecs, sr->lvalues_mix, sr->gvalues_mix));
   PetscCall(PetscFree(sr));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscMPIInt Petsc_Reduction_keyval = MPI_KEYVAL_INVALID;
@@ -280,12 +281,12 @@ PetscMPIInt Petsc_Reduction_keyval = MPI_KEYVAL_INVALID;
   The binding for the first argument changed from MPI 1.0 to 1.1; in 1.0
   it was MPI_Comm *comm.
 */
-PETSC_EXTERN PetscMPIInt MPIAPI Petsc_DelReduction(MPI_Comm comm, PetscMPIInt keyval, void *attr_val, void *extra_state)
+static PetscMPIInt MPIAPI Petsc_DelReduction(MPI_Comm comm, PETSC_UNUSED PetscMPIInt keyval, void *attr_val, PETSC_UNUSED void *extra_state)
 {
   PetscFunctionBegin;
   PetscCallMPI(PetscInfo(0, "Deleting reduction data in an MPI_Comm %ld\n", (long)comm));
   PetscCallMPI(PetscSplitReductionDestroy((PetscSplitReduction *)attr_val));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -298,6 +299,7 @@ PetscErrorCode PetscSplitReductionGet(MPI_Comm comm, PetscSplitReduction **sr)
   PetscMPIInt flag;
 
   PetscFunctionBegin;
+  PetscCheck(!PetscDefined(HAVE_THREADSAFETY), comm, PETSC_ERR_SUP, "PetscSplitReductionGet() is not thread-safe");
   if (Petsc_Reduction_keyval == MPI_KEYVAL_INVALID) {
     /*
        The calling sequence of the 2nd argument to this function changed
@@ -314,26 +316,26 @@ PetscErrorCode PetscSplitReductionGet(MPI_Comm comm, PetscSplitReduction **sr)
     PetscCallMPI(MPI_Comm_set_attr(comm, Petsc_Reduction_keyval, *sr));
     PetscCall(PetscInfo(0, "Putting reduction data in an MPI_Comm %ld\n", (long)comm));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ----------------------------------------------------------------------------------------------------*/
 
 /*@
-   VecDotBegin - Starts a split phase dot product computation.
+  VecDotBegin - Starts a split phase dot product computation.
 
-   Input Parameters:
-+   x - the first vector
-.   y - the second vector
--   result - where the result will go (can be NULL)
+  Input Parameters:
++ x      - the first vector
+. y      - the second vector
+- result - where the result will go (can be NULL)
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   Each call to VecDotBegin() should be paired with a call to VecDotEnd().
+  Notes:
+  Each call to `VecDotBegin()` should be paired with a call to `VecDotEnd()`.
 
-seealso: VecDotEnd(), VecNormBegin(), VecNormEnd(), VecNorm(), VecDot(), VecMDot(),
-         VecTDotBegin(), VecTDotEnd(), PetscCommSplitReductionBegin()
+.seealso: `VecDotEnd()`, `VecNormBegin()`, `VecNormEnd()`, `VecNorm()`, `VecDot()`, `VecMDot()`,
+          `VecTDotBegin()`, `VecTDotEnd()`, `PetscCommSplitReductionBegin()`
 @*/
 PetscErrorCode VecDotBegin(Vec x, Vec y, PetscScalar *result)
 {
@@ -344,6 +346,11 @@ PetscErrorCode VecDotBegin(Vec x, Vec y, PetscScalar *result)
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
   PetscValidHeaderSpecific(y, VEC_CLASSID, 2);
   PetscCall(PetscObjectGetComm((PetscObject)x, &comm));
+  if (PetscDefined(HAVE_THREADSAFETY)) {
+    PetscCheck(result, comm, PETSC_ERR_ARG_NULL, "result cannot be NULL when configuring --with-threadsafety");
+    PetscCall(VecDot(x, y, result));
+    PetscFunctionReturn(PETSC_SUCCESS);
+  }
   PetscCall(PetscSplitReductionGet(comm, &sr));
   PetscCheck(sr->state == STATE_BEGIN, PETSC_COMM_SELF, PETSC_ERR_ORDER, "Called before all VecxxxEnd() called");
   if (sr->numopsbegin >= sr->maxops) PetscCall(PetscSplitReductionExtend(sr));
@@ -352,25 +359,24 @@ PetscErrorCode VecDotBegin(Vec x, Vec y, PetscScalar *result)
   PetscCall(PetscLogEventBegin(VEC_ReduceArithmetic, 0, 0, 0, 0));
   PetscUseTypeMethod(x, dot_local, y, sr->lvalues + sr->numopsbegin++);
   PetscCall(PetscLogEventEnd(VEC_ReduceArithmetic, 0, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecDotEnd - Ends a split phase dot product computation.
+  VecDotEnd - Ends a split phase dot product computation.
 
-   Input Parameters:
-+  x - the first vector (can be NULL)
-.  y - the second vector (can be NULL)
--  result - where the result will go
+  Input Parameters:
++ x      - the first vector (can be `NULL`)
+. y      - the second vector (can be `NULL`)
+- result - where the result will go
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   Each call to VecDotBegin() should be paired with a call to VecDotEnd().
+  Notes:
+  Each call to `VecDotBegin()` should be paired with a call to `VecDotEnd()`.
 
 .seealso: `VecDotBegin()`, `VecNormBegin()`, `VecNormEnd()`, `VecNorm()`, `VecDot()`, `VecMDot()`,
           `VecTDotBegin()`, `VecTDotEnd()`, `PetscCommSplitReductionBegin()`
-
 @*/
 PetscErrorCode VecDotEnd(Vec x, Vec y, PetscScalar *result)
 {
@@ -378,6 +384,7 @@ PetscErrorCode VecDotEnd(Vec x, Vec y, PetscScalar *result)
   MPI_Comm             comm;
 
   PetscFunctionBegin;
+  if (PetscDefined(HAVE_THREADSAFETY)) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscObjectGetComm((PetscObject)x, &comm));
   PetscCall(PetscSplitReductionGet(comm, &sr));
   PetscCall(PetscSplitReductionEnd(sr));
@@ -396,25 +403,24 @@ PetscErrorCode VecDotEnd(Vec x, Vec y, PetscScalar *result)
     sr->numopsbegin = 0;
     sr->mix         = PETSC_FALSE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecTDotBegin - Starts a split phase transpose dot product computation.
+  VecTDotBegin - Starts a split phase transpose dot product computation.
 
-   Input Parameters:
-+  x - the first vector
-.  y - the second vector
--  result - where the result will go (can be NULL)
+  Input Parameters:
++ x      - the first vector
+. y      - the second vector
+- result - where the result will go (can be `NULL`)
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   Each call to VecTDotBegin() should be paired with a call to VecTDotEnd().
+  Notes:
+  Each call to `VecTDotBegin()` should be paired with a call to `VecTDotEnd()`.
 
 .seealso: `VecTDotEnd()`, `VecNormBegin()`, `VecNormEnd()`, `VecNorm()`, `VecDot()`, `VecMDot()`,
           `VecDotBegin()`, `VecDotEnd()`, `PetscCommSplitReductionBegin()`
-
 @*/
 PetscErrorCode VecTDotBegin(Vec x, Vec y, PetscScalar *result)
 {
@@ -423,6 +429,11 @@ PetscErrorCode VecTDotBegin(Vec x, Vec y, PetscScalar *result)
 
   PetscFunctionBegin;
   PetscCall(PetscObjectGetComm((PetscObject)x, &comm));
+  if (PetscDefined(HAVE_THREADSAFETY)) {
+    PetscCheck(result, comm, PETSC_ERR_ARG_NULL, "result cannot be NULL when configuring --with-threadsafety");
+    PetscCall(VecTDot(x, y, result));
+    PetscFunctionReturn(PETSC_SUCCESS);
+  }
   PetscCall(PetscSplitReductionGet(comm, &sr));
   PetscCheck(sr->state == STATE_BEGIN, PETSC_COMM_SELF, PETSC_ERR_ORDER, "Called before all VecxxxEnd() called");
   if (sr->numopsbegin >= sr->maxops) PetscCall(PetscSplitReductionExtend(sr));
@@ -431,24 +442,24 @@ PetscErrorCode VecTDotBegin(Vec x, Vec y, PetscScalar *result)
   PetscCall(PetscLogEventBegin(VEC_ReduceArithmetic, 0, 0, 0, 0));
   PetscUseTypeMethod(x, tdot_local, y, sr->lvalues + sr->numopsbegin++);
   PetscCall(PetscLogEventEnd(VEC_ReduceArithmetic, 0, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecTDotEnd - Ends a split phase transpose dot product computation.
+  VecTDotEnd - Ends a split phase transpose dot product computation.
 
-   Input Parameters:
-+  x - the first vector (can be NULL)
-.  y - the second vector (can be NULL)
--  result - where the result will go
+  Input Parameters:
++ x      - the first vector (can be `NULL`)
+. y      - the second vector (can be `NULL`)
+- result - where the result will go
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   Each call to VecTDotBegin() should be paired with a call to VecTDotEnd().
+  Notes:
+  Each call to `VecTDotBegin()` should be paired with a call to `VecTDotEnd()`.
 
-seealso: VecTDotBegin(), VecNormBegin(), VecNormEnd(), VecNorm(), VecDot(), VecMDot(),
-         VecDotBegin(), VecDotEnd()
+.seealso: `VecTDotBegin()`, `VecNormBegin()`, `VecNormEnd()`, `VecNorm()`, `VecDot()`, `VecMDot()`,
+          `VecDotBegin()`, `VecDotEnd()`
 @*/
 PetscErrorCode VecTDotEnd(Vec x, Vec y, PetscScalar *result)
 {
@@ -457,26 +468,25 @@ PetscErrorCode VecTDotEnd(Vec x, Vec y, PetscScalar *result)
       TDotEnd() is the same as DotEnd() so reuse the code
   */
   PetscCall(VecDotEnd(x, y, result));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* -------------------------------------------------------------------------*/
 
 /*@
-   VecNormBegin - Starts a split phase norm computation.
+  VecNormBegin - Starts a split phase norm computation.
 
-   Input Parameters:
-+  x - the first vector
-.  ntype - norm type, one of NORM_1, NORM_2, NORM_MAX, NORM_1_AND_2
--  result - where the result will go (can be NULL)
+  Input Parameters:
++ x      - the first vector
+. ntype  - norm type, one of `NORM_1`, `NORM_2`, `NORM_MAX`, `NORM_1_AND_2`
+- result - where the result will go (can be `NULL`)
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   Each call to VecNormBegin() should be paired with a call to VecNormEnd().
+  Notes:
+  Each call to `VecNormBegin()` should be paired with a call to `VecNormEnd()`.
 
 .seealso: `VecNormEnd()`, `VecNorm()`, `VecDot()`, `VecMDot()`, `VecDotBegin()`, `VecDotEnd()`, `PetscCommSplitReductionBegin()`
-
 @*/
 PetscErrorCode VecNormBegin(Vec x, NormType ntype, PetscReal *result)
 {
@@ -487,6 +497,12 @@ PetscErrorCode VecNormBegin(Vec x, NormType ntype, PetscReal *result)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
   PetscCall(PetscObjectGetComm((PetscObject)x, &comm));
+  if (PetscDefined(HAVE_THREADSAFETY)) {
+    PetscCheck(result, comm, PETSC_ERR_ARG_NULL, "result cannot be NULL when configuring --with-threadsafety");
+    PetscCall(PetscObjectStateIncrease((PetscObject)x)); // increase PetscObjectState to invalidate cached norms
+    PetscCall(VecNorm(x, ntype, result));
+    PetscFunctionReturn(PETSC_SUCCESS);
+  }
   PetscCall(PetscSplitReductionGet(comm, &sr));
   PetscCheck(sr->state == STATE_BEGIN, PETSC_COMM_SELF, PETSC_ERR_ORDER, "Called before all VecxxxEnd() called");
   if (sr->numopsbegin >= sr->maxops || (sr->numopsbegin == sr->maxops - 1 && ntype == NORM_1_AND_2)) PetscCall(PetscSplitReductionExtend(sr));
@@ -504,26 +520,25 @@ PetscErrorCode VecNormBegin(Vec x, NormType ntype, PetscReal *result)
     sr->reducetype[sr->numopsbegin] = PETSC_SR_REDUCE_SUM;
     sr->lvalues[sr->numopsbegin++]  = lresult[1];
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecNormEnd - Ends a split phase norm computation.
+  VecNormEnd - Ends a split phase norm computation.
 
-   Input Parameters:
-+  x - the first vector
-.  ntype - norm type, one of NORM_1, NORM_2, NORM_MAX, NORM_1_AND_2
--  result - where the result will go
+  Input Parameters:
++ x      - the first vector
+. ntype  - norm type, one of `NORM_1`, `NORM_2`, `NORM_MAX`, `NORM_1_AND_2`
+- result - where the result will go
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   Each call to VecNormBegin() should be paired with a call to VecNormEnd().
+  Notes:
+  Each call to `VecNormBegin()` should be paired with a call to `VecNormEnd()`.
 
-   The x vector is not allowed to be NULL, otherwise the vector would not have its correctly cached norm value
+  The `x` vector is not allowed to be `NULL`, otherwise the vector would not have its correctly cached norm value
 
 .seealso: `VecNormBegin()`, `VecNorm()`, `VecDot()`, `VecMDot()`, `VecDotBegin()`, `VecDotEnd()`, `PetscCommSplitReductionBegin()`
-
 @*/
 PetscErrorCode VecNormEnd(Vec x, NormType ntype, PetscReal *result)
 {
@@ -531,6 +546,7 @@ PetscErrorCode VecNormEnd(Vec x, NormType ntype, PetscReal *result)
   MPI_Comm             comm;
 
   PetscFunctionBegin;
+  if (PetscDefined(HAVE_THREADSAFETY)) PetscFunctionReturn(PETSC_SUCCESS);
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
   PetscCall(PetscObjectGetComm((PetscObject)x, &comm));
   PetscCall(PetscSplitReductionGet(comm, &sr));
@@ -553,7 +569,7 @@ PetscErrorCode VecNormEnd(Vec x, NormType ntype, PetscReal *result)
     sr->numopsend   = 0;
     sr->numopsbegin = 0;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -566,18 +582,18 @@ PetscErrorCode VecNormEnd(Vec x, NormType ntype, PetscReal *result)
 */
 
 /*@
-   VecMDotBegin - Starts a split phase multiple dot product computation.
+  VecMDotBegin - Starts a split phase multiple dot product computation.
 
-   Input Parameters:
-+   x - the first vector
-.   nv - number of vectors
-.   y - array of vectors
--   result - where the result will go (can be NULL)
+  Input Parameters:
++ x      - the first vector
+. nv     - number of vectors
+. y      - array of vectors
+- result - where the result will go (can be `NULL`)
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   Each call to VecMDotBegin() should be paired with a call to VecMDotEnd().
+  Notes:
+  Each call to `VecMDotBegin()` should be paired with a call to `VecMDotEnd()`.
 
 .seealso: `VecMDotEnd()`, `VecNormBegin()`, `VecNormEnd()`, `VecNorm()`, `VecDot()`, `VecMDot()`,
           `VecTDotBegin()`, `VecTDotEnd()`, `VecMTDotBegin()`, `VecMTDotEnd()`, `PetscCommSplitReductionBegin()`
@@ -590,6 +606,11 @@ PetscErrorCode VecMDotBegin(Vec x, PetscInt nv, const Vec y[], PetscScalar resul
 
   PetscFunctionBegin;
   PetscCall(PetscObjectGetComm((PetscObject)x, &comm));
+  if (PetscDefined(HAVE_THREADSAFETY)) {
+    PetscCheck(result, comm, PETSC_ERR_ARG_NULL, "result cannot be NULL when configuring --with-threadsafety");
+    PetscCall(VecMDot(x, nv, y, result));
+    PetscFunctionReturn(PETSC_SUCCESS);
+  }
   PetscCall(PetscSplitReductionGet(comm, &sr));
   PetscCheck(sr->state == STATE_BEGIN, PETSC_COMM_SELF, PETSC_ERR_ORDER, "Called before all VecxxxEnd() called");
   for (i = 0; i < nv; i++) {
@@ -601,28 +622,27 @@ PetscErrorCode VecMDotBegin(Vec x, PetscInt nv, const Vec y[], PetscScalar resul
   PetscUseTypeMethod(x, mdot_local, nv, y, sr->lvalues + sr->numopsbegin);
   PetscCall(PetscLogEventEnd(VEC_ReduceArithmetic, 0, 0, 0, 0));
   sr->numopsbegin += nv;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecMDotEnd - Ends a split phase multiple dot product computation.
+  VecMDotEnd - Ends a split phase multiple dot product computation.
 
-   Input Parameters:
-+   x - the first vector (can be NULL)
-.   nv - number of vectors
--   y - array of vectors (can be NULL)
+  Input Parameters:
++ x  - the first vector (can be `NULL`)
+. nv - number of vectors
+- y  - array of vectors (can be `NULL`)
 
-   Output Parameters:
-.   result - where the result will go
+  Output Parameter:
+. result - where the result will go
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   Each call to VecMDotBegin() should be paired with a call to VecMDotEnd().
+  Notes:
+  Each call to `VecMDotBegin()` should be paired with a call to `VecMDotEnd()`.
 
 .seealso: `VecMDotBegin()`, `VecNormBegin()`, `VecNormEnd()`, `VecNorm()`, `VecDot()`, `VecMDot()`,
           `VecTDotBegin()`, `VecTDotEnd()`, `VecMTDotBegin()`, `VecMTDotEnd()`, `PetscCommSplitReductionBegin()`
-
 @*/
 PetscErrorCode VecMDotEnd(Vec x, PetscInt nv, const Vec y[], PetscScalar result[])
 {
@@ -631,6 +651,7 @@ PetscErrorCode VecMDotEnd(Vec x, PetscInt nv, const Vec y[], PetscScalar result[
   PetscInt             i;
 
   PetscFunctionBegin;
+  if (PetscDefined(HAVE_THREADSAFETY)) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscObjectGetComm((PetscObject)x, &comm));
   PetscCall(PetscSplitReductionGet(comm, &sr));
   PetscCall(PetscSplitReductionEnd(sr));
@@ -648,26 +669,25 @@ PetscErrorCode VecMDotEnd(Vec x, PetscInt nv, const Vec y[], PetscScalar result[
     sr->numopsend   = 0;
     sr->numopsbegin = 0;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecMTDotBegin - Starts a split phase transpose multiple dot product computation.
+  VecMTDotBegin - Starts a split phase transpose multiple dot product computation.
 
-   Input Parameters:
-+  x - the first vector
-.  nv - number of vectors
-.  y - array of  vectors
--  result - where the result will go (can be NULL)
+  Input Parameters:
++ x      - the first vector
+. nv     - number of vectors
+. y      - array of  vectors
+- result - where the result will go (can be `NULL`)
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   Each call to VecMTDotBegin() should be paired with a call to VecMTDotEnd().
+  Notes:
+  Each call to `VecMTDotBegin()` should be paired with a call to `VecMTDotEnd()`.
 
 .seealso: `VecMTDotEnd()`, `VecNormBegin()`, `VecNormEnd()`, `VecNorm()`, `VecDot()`, `VecMDot()`,
           `VecDotBegin()`, `VecDotEnd()`, `VecMDotBegin()`, `VecMDotEnd()`, `PetscCommSplitReductionBegin()`
-
 @*/
 PetscErrorCode VecMTDotBegin(Vec x, PetscInt nv, const Vec y[], PetscScalar result[])
 {
@@ -677,6 +697,11 @@ PetscErrorCode VecMTDotBegin(Vec x, PetscInt nv, const Vec y[], PetscScalar resu
 
   PetscFunctionBegin;
   PetscCall(PetscObjectGetComm((PetscObject)x, &comm));
+  if (PetscDefined(HAVE_THREADSAFETY)) {
+    PetscCheck(result, comm, PETSC_ERR_ARG_NULL, "result cannot be NULL when configuring --with-threadsafety");
+    PetscCall(VecMTDot(x, nv, y, result));
+    PetscFunctionReturn(PETSC_SUCCESS);
+  }
   PetscCall(PetscSplitReductionGet(comm, &sr));
   PetscCheck(sr->state == STATE_BEGIN, PETSC_COMM_SELF, PETSC_ERR_ORDER, "Called before all VecxxxEnd() called");
   for (i = 0; i < nv; i++) {
@@ -688,24 +713,24 @@ PetscErrorCode VecMTDotBegin(Vec x, PetscInt nv, const Vec y[], PetscScalar resu
   PetscUseTypeMethod(x, mtdot_local, nv, y, sr->lvalues + sr->numopsbegin);
   PetscCall(PetscLogEventEnd(VEC_ReduceArithmetic, 0, 0, 0, 0));
   sr->numopsbegin += nv;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   VecMTDotEnd - Ends a split phase transpose multiple dot product computation.
+  VecMTDotEnd - Ends a split phase transpose multiple dot product computation.
 
-   Input Parameters:
-+  x - the first vector (can be NULL)
-.  nv - number of vectors
--  y - array of  vectors (can be NULL)
+  Input Parameters:
++ x  - the first vector (can be `NULL`)
+. nv - number of vectors
+- y  - array of  vectors (can be `NULL`)
 
-   Output Parameters:
-.  result - where the result will go
+  Output Parameter:
+. result - where the result will go
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   Each call to VecTDotBegin() should be paired with a call to VecTDotEnd().
+  Notes:
+  Each call to `VecTDotBegin()` should be paired with a call to `VecTDotEnd()`.
 
 .seealso: `VecMTDotBegin()`, `VecNormBegin()`, `VecNormEnd()`, `VecNorm()`, `VecDot()`, `VecMDot()`,
           `VecDotBegin()`, `VecDotEnd()`, `VecMDotBegin()`, `VecMDotEnd()`, `PetscCommSplitReductionBegin()`
@@ -717,5 +742,5 @@ PetscErrorCode VecMTDotEnd(Vec x, PetscInt nv, const Vec y[], PetscScalar result
       MTDotEnd() is the same as MDotEnd() so reuse the code
   */
   PetscCall(VecMDotEnd(x, nv, y, result));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

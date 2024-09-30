@@ -1,4 +1,3 @@
-
 /*
      This is a terrible way of doing "templates" in C.
 */
@@ -52,7 +51,7 @@ static PetscErrorCode PETSCMAPNAME(ISGlobalToLocalMappingApply)(ISLocalToGlobalM
     }
     if (nout) *nout = nf;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #undef PETSCMAPTYPE

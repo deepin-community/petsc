@@ -1,4 +1,3 @@
-
 #include <petsc/private/kspimpl.h>
 
 static PetscErrorCode KSPSetUp_TFQMR(KSP ksp)
@@ -6,7 +5,7 @@ static PetscErrorCode KSPSetUp_TFQMR(KSP ksp)
   PetscFunctionBegin;
   PetscCheck(ksp->pc_side != PC_SYMMETRIC, PetscObjectComm((PetscObject)ksp), PETSC_ERR_SUP, "no symmetric preconditioning for KSPTFQMR");
   PetscCall(KSPSetWorkVecs(ksp, 9));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSolve_TFQMR(KSP ksp)
@@ -41,9 +40,10 @@ static PetscErrorCode KSPSolve_TFQMR(KSP ksp)
   else ksp->rnorm = 0.0;
   ksp->its = 0;
   PetscCall(PetscObjectSAWsGrantAccess((PetscObject)ksp));
+  PetscCall(KSPLogResidualHistory(ksp, ksp->rnorm));
   PetscCall(KSPMonitor(ksp, 0, ksp->rnorm));
   PetscCall((*ksp->converged)(ksp, 0, ksp->rnorm, &ksp->reason, ksp->cnvP));
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Make the initial Rp == R */
   PetscCall(VecCopy(R, RP));
@@ -119,11 +119,11 @@ static PetscErrorCode KSPSolve_TFQMR(KSP ksp)
   if (i >= ksp->max_it) ksp->reason = KSP_DIVERGED_ITS;
 
   PetscCall(KSPUnwindPreconditioner(ksp, X, T));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPTFQMR - A transpose free QMR (quasi minimal residual),
+   KSPTFQMR - A transpose-free QMR (quasi minimal residual) {cite}`f:93`
 
    Level: beginner
 
@@ -134,10 +134,10 @@ static PetscErrorCode KSPSolve_TFQMR(KSP ksp)
    That is for left preconditioning it is a bound on the preconditioned residual and for right preconditioning
    it is a bound on the true residual.
 
-   References:
-.  * - Freund, 1993
+   The solver has a two-step inner iteration, each of which computes and updates to the solution and the residual norm.
+   Hence the values from `KSPGetResidualHistory()` and `KSPGetIterationNumber()` will differ.
 
-.seealso: [](chapter_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPTCQMR`
+.seealso: [](ch_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPTCQMR`
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_TFQMR(KSP ksp)
 {
@@ -155,5 +155,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_TFQMR(KSP ksp)
   ksp->ops->buildresidual  = KSPBuildResidualDefault;
   ksp->ops->setfromoptions = NULL;
   ksp->ops->view           = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

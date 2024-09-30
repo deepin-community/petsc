@@ -1,4 +1,3 @@
-
 static char help[] = "Augmenting PETSc profiling by add events.\n\
 Run this program with one of the\n\
 following options to generate logging information:  -log, -log_view,\n\
@@ -36,6 +35,7 @@ int main(int argc, char **argv)
   PetscCall(PetscLogEventBegin(USER_EVENT, 0, 0, 0, 0));
   icount = 0;
   for (i = 0; i < imax; i++) icount++;
+  (void)icount;
   PetscCall(PetscLogFlops(imax));
   PetscCall(PetscSleep(0.5));
   PetscCall(PetscLogEventEnd(USER_EVENT, 0, 0, 0, 0));

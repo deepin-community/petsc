@@ -44,11 +44,6 @@ extern void PetscRmPointer(void*);
 #define dmnetworksetnumsubnetworks_ dmnetworksetnumsubnetworks
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define dmnetworkaddsubnetwork_ DMNETWORKADDSUBNETWORK
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define dmnetworkaddsubnetwork_ dmnetworkaddsubnetwork
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmnetworklayoutsetup_ DMNETWORKLAYOUTSETUP
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmnetworklayoutsetup_ dmnetworklayoutsetup
@@ -57,6 +52,16 @@ extern void PetscRmPointer(void*);
 #define dmnetworkaddsharedvertices_ DMNETWORKADDSHAREDVERTICES
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmnetworkaddsharedvertices_ dmnetworkaddsharedvertices
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmnetworkgetnumvertices_ DMNETWORKGETNUMVERTICES
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmnetworkgetnumvertices_ dmnetworkgetnumvertices
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmnetworkgetnumedges_ DMNETWORKGETNUMEDGES
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmnetworkgetnumedges_ dmnetworkgetnumedges
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmnetworkgetvertexrange_ DMNETWORKGETVERTEXRANGE
@@ -194,11 +199,6 @@ PETSC_EXTERN void  dmnetworksetnumsubnetworks_(DM dm,PetscInt *nsubnet,PetscInt 
 *__ierr = DMNetworkSetNumSubNetworks(
 	(DM)PetscToPointer((dm) ),*nsubnet,*Nsubnet);
 }
-PETSC_EXTERN void  dmnetworkaddsubnetwork_(DM dm, char *name,PetscInt *ne,PetscInt edgelist[],PetscInt *netnum, int *__ierr, int cl0)
-{
-*__ierr = DMNetworkAddSubnetwork(
-	(DM)PetscToPointer((dm) ),name,*ne,edgelist,netnum);
-}
 PETSC_EXTERN void  dmnetworklayoutsetup_(DM dm, int *__ierr)
 {
 *__ierr = DMNetworkLayoutSetUp(
@@ -208,6 +208,16 @@ PETSC_EXTERN void  dmnetworkaddsharedvertices_(DM dm,PetscInt *anetnum,PetscInt 
 {
 *__ierr = DMNetworkAddSharedVertices(
 	(DM)PetscToPointer((dm) ),*anetnum,*bnetnum,*nsvtx,asvtx,bsvtx);
+}
+PETSC_EXTERN void  dmnetworkgetnumvertices_(DM dm,PetscInt *nVertices,PetscInt *NVertices, int *__ierr)
+{
+*__ierr = DMNetworkGetNumVertices(
+	(DM)PetscToPointer((dm) ),nVertices,NVertices);
+}
+PETSC_EXTERN void  dmnetworkgetnumedges_(DM dm,PetscInt *nEdges,PetscInt *NEdges, int *__ierr)
+{
+*__ierr = DMNetworkGetNumEdges(
+	(DM)PetscToPointer((dm) ),nEdges,NEdges);
 }
 PETSC_EXTERN void  dmnetworkgetvertexrange_(DM dm,PetscInt *vStart,PetscInt *vEnd, int *__ierr)
 {

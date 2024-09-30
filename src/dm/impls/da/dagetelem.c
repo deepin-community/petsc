@@ -1,4 +1,3 @@
-
 #include <petsc/private/dmdaimpl.h> /*I  "petscdmda.h"   I*/
 
 static PetscErrorCode DMDAGetElements_1D(DM dm, PetscInt *nel, PetscInt *nen, const PetscInt *e[])
@@ -32,7 +31,7 @@ static PetscErrorCode DMDAGetElements_1D(DM dm, PetscInt *nel, PetscInt *nen, co
   *nel = da->ne;
   *nen = da->nen;
   *e   = da->e;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMDAGetElements_2D(DM dm, PetscInt *nel, PetscInt *nen, const PetscInt *e[])
@@ -97,7 +96,7 @@ static PetscErrorCode DMDAGetElements_2D(DM dm, PetscInt *nel, PetscInt *nen, co
   *nel = da->ne;
   *nen = da->nen;
   *e   = da->e;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMDAGetElements_3D(DM dm, PetscInt *nel, PetscInt *nen, const PetscInt *e[])
@@ -176,26 +175,27 @@ static PetscErrorCode DMDAGetElements_3D(DM dm, PetscInt *nel, PetscInt *nen, co
   *nel = da->ne;
   *nen = da->nen;
   *e   = da->e;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   DMDAGetElementsCorners - Returns the global (x,y,z) indices of the lower left
-   corner of the non-overlapping decomposition identified by `DMDAGetElements()`
+  DMDAGetElementsCorners - Returns the global (x,y,z) indices of the lower left
+  corner of the non-overlapping decomposition identified by `DMDAGetElements()`
 
-    Not Collective
+  Not Collective
 
-   Input Parameter:
-.     da - the `DMDA` object
+  Input Parameter:
+. da - the `DMDA` object
 
-   Output Parameters:
-+     gx - the x index
-.     gy - the y index
--     gz - the z index
+  Output Parameters:
++ gx - the x index
+. gy - the y index
+- gz - the z index
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `DMDAGetElements()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `DMDAGetElements()`, `DMDAGetCorners()`, `DMDAGetGhostCorners()`, `DMDAGetElementsSizes()`,
+          `DMDAGetElementsCornersIS()`, `DMDARestoreElementsCornersIS()`
 @*/
 PetscErrorCode DMDAGetElementsCorners(DM da, PetscInt *gx, PetscInt *gy, PetscInt *gz)
 {
@@ -206,9 +206,9 @@ PetscErrorCode DMDAGetElementsCorners(DM da, PetscInt *gx, PetscInt *gy, PetscIn
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(da, DM_CLASSID, 1, DMDA);
-  if (gx) PetscValidIntPointer(gx, 2);
-  if (gy) PetscValidIntPointer(gy, 3);
-  if (gz) PetscValidIntPointer(gz, 4);
+  if (gx) PetscAssertPointer(gx, 2);
+  if (gy) PetscAssertPointer(gy, 3);
+  if (gz) PetscAssertPointer(gz, 4);
   PetscCall(PetscObjectTypeCompare((PetscObject)da, DMDA, &isda));
   PetscCheck(isda, PetscObjectComm((PetscObject)da), PETSC_ERR_USER, "Not for DM type %s", ((PetscObject)da)->type_name);
   PetscCall(DMDAGetCorners(da, &xs, &ys, &zs, NULL, NULL, NULL));
@@ -219,28 +219,28 @@ PetscErrorCode DMDAGetElementsCorners(DM da, PetscInt *gx, PetscInt *gy, PetscIn
   if (gx) *gx = xs;
   if (gy) *gy = ys;
   if (gz) *gz = zs;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-      DMDAGetElementsSizes - Gets the local number of elements per direction for the non-overlapping decomposition identified by `DMDAGetElements()`
+  DMDAGetElementsSizes - Gets the local number of elements per coordinate direction for the non-overlapping decomposition identified by `DMDAGetElements()`
 
-    Not Collective
+  Not Collective
 
-   Input Parameter:
-.     da - the `DMDA` object
+  Input Parameter:
+. da - the `DMDA` object
 
-   Output Parameters:
-+     mx - number of local elements in x-direction
-.     my - number of local elements in y-direction
--     mz - number of local elements in z-direction
+  Output Parameters:
++ mx - number of local elements in x-direction
+. my - number of local elements in y-direction
+- mz - number of local elements in z-direction
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-    It returns the same number of elements, irrespective of the `DMDAElementType`
+  Note:
+  It returns the same number of elements, irrespective of the `DMDAElementType`
 
-.seealso: `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `DMDAGetElements`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `DMDAGetElements()`, `DMDAGetElementsCorners()`
 @*/
 PetscErrorCode DMDAGetElementsSizes(DM da, PetscInt *mx, PetscInt *my, PetscInt *mz)
 {
@@ -252,9 +252,9 @@ PetscErrorCode DMDAGetElementsSizes(DM da, PetscInt *mx, PetscInt *my, PetscInt 
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(da, DM_CLASSID, 1, DMDA);
-  if (mx) PetscValidIntPointer(mx, 2);
-  if (my) PetscValidIntPointer(my, 3);
-  if (mz) PetscValidIntPointer(mz, 4);
+  if (mx) PetscAssertPointer(mx, 2);
+  if (my) PetscAssertPointer(my, 3);
+  if (mz) PetscAssertPointer(mz, 4);
   PetscCall(PetscObjectTypeCompare((PetscObject)da, DMDA, &isda));
   PetscCheck(isda, PetscObjectComm((PetscObject)da), PETSC_ERR_USER, "Not for DM type %s", ((PetscObject)da)->type_name);
   PetscCall(DMDAGetCorners(da, &xs, &ys, &zs, &xe, &ye, &ze));
@@ -278,23 +278,24 @@ PetscErrorCode DMDAGetElementsSizes(DM da, PetscInt *mx, PetscInt *my, PetscInt 
     if (mx) *mx = xe - xs - 1;
     break;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-      DMDASetElementType - Sets the element type to be returned by `DMDAGetElements()`
+  DMDASetElementType - Sets the element type to be returned by `DMDAGetElements()`
 
-    Not Collective
+  Not Collective
 
-   Input Parameter:
-.     da - the `DMDA` object
+  Input Parameter:
+. da - the `DMDA` object
 
-   Output Parameters:
-.     etype - the element type, currently either `DMDA_ELEMENT_P1` or `DMDA_ELEMENT_Q1`
+  Output Parameter:
+. etype - the element type, currently either `DMDA_ELEMENT_P1` or `DMDA_ELEMENT_Q1`
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `DM`, `DMDA`, `DMDAElementType`, `DMDAGetElementType()`, `DMDAGetElements()`, `DMDARestoreElements()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAElementType`, `DMDAGetElementType()`, `DMDAGetElements()`, `DMDARestoreElements()`,
+          `DMDA_ELEMENT_P1`, `DMDA_ELEMENT_Q1`
 @*/
 PetscErrorCode DMDASetElementType(DM da, DMDAElementType etype)
 {
@@ -305,7 +306,7 @@ PetscErrorCode DMDASetElementType(DM da, DMDAElementType etype)
   PetscValidHeaderSpecificType(da, DM_CLASSID, 1, DMDA);
   PetscValidLogicalCollectiveEnum(da, etype, 2);
   PetscCall(PetscObjectTypeCompare((PetscObject)da, DMDA, &isda));
-  if (!isda) PetscFunctionReturn(0);
+  if (!isda) PetscFunctionReturn(PETSC_SUCCESS);
   if (dd->elementtype != etype) {
     PetscCall(PetscFree(dd->e));
     PetscCall(ISDestroy(&dd->ecorners));
@@ -315,23 +316,24 @@ PetscErrorCode DMDASetElementType(DM da, DMDAElementType etype)
     dd->nen         = 0;
     dd->e           = NULL;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-      DMDAGetElementType - Gets the element type to be returned by `DMDAGetElements()`
+  DMDAGetElementType - Gets the element type to be returned by `DMDAGetElements()`
 
-    Not Collective
+  Not Collective
 
-   Input Parameter:
-.     da - the `DMDA` object
+  Input Parameter:
+. da - the `DMDA` object
 
-   Output Parameters:
-.     etype - the element type, currently either `DMDA_ELEMENT_P1` or `DMDA_ELEMENT_Q1`
+  Output Parameter:
+. etype - the element type, currently either `DMDA_ELEMENT_P1` or `DMDA_ELEMENT_Q1`
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `DMDAGetElements()`, `DMDARestoreElements()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `DMDAGetElements()`, `DMDARestoreElements()`,
+          `DMDA_ELEMENT_P1`, `DMDA_ELEMENT_Q1`
 @*/
 PetscErrorCode DMDAGetElementType(DM da, DMDAElementType *etype)
 {
@@ -340,40 +342,47 @@ PetscErrorCode DMDAGetElementType(DM da, DMDAElementType *etype)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(da, DM_CLASSID, 1, DMDA);
-  PetscValidPointer(etype, 2);
+  PetscAssertPointer(etype, 2);
   PetscCall(PetscObjectTypeCompare((PetscObject)da, DMDA, &isda));
   PetscCheck(isda, PetscObjectComm((PetscObject)da), PETSC_ERR_USER, "Not for DM type %s", ((PetscObject)da)->type_name);
   *etype = dd->elementtype;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-      DMDAGetElements - Gets an array containing the indices (in local coordinates)
-                 of all the local elements
+  DMDAGetElements - Gets an array containing the indices (in local coordinates)
+  of all the local elements
 
-    Not Collective
+  Not Collective
 
-   Input Parameter:
-.     dm - the `DMDA` object
+  Input Parameter:
+. dm - the `DMDA` object
 
-   Output Parameters:
-+     nel - number of local elements
-.     nen - number of element nodes
--     e - the local indices of the elements' vertices
+  Output Parameters:
++ nel - number of local elements
+. nen - number of nodes in each element (for example in one dimension it is 2, in two dimensions it is 3 (for `DMDA_ELEMENT_P1`) and 4
+        (for `DMDA_ELEMENT_Q1`)
+- e   - the local indices of the elements' vertices
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-     Call `DMDARestoreElements()` once you have finished accessing the elements.
+  Notes:
+  Call `DMDARestoreElements()` once you have finished accessing the elements.
 
-     Each process uniquely owns a subset of the elements. That is no element is owned by two or more processes.
+  Each process uniquely owns a subset of the elements. That is no element is owned by two or more processes.
 
-     If on each process you integrate over its owned elements and use `ADD_VALUES` in `Vec`/`MatSetValuesLocal()` then you'll obtain the correct result.
+  If on each process you integrate over its owned elements and use `ADD_VALUES` in `Vec`/`MatSetValuesLocal()` then you'll obtain the correct result.
 
-   Fortran Note:
-     Not supported in Fortran
+  Fortran Note:
+  Use
+.vb
+   PetscScalar, pointer :: e(:)
+.ve
+  to declare the element array
 
-.seealso: `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `VecSetValuesLocal()`, `MatSetValuesLocal()`, `DMGlobalToLocalBegin()`, `DMLocalToGlobalBegin()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `VecSetValuesLocal()`, `MatSetValuesLocal()`,
+          `DMGlobalToLocalBegin()`, `DMLocalToGlobalBegin()`, `DMDARestoreElements()`, `DMDA_ELEMENT_P1`, `DMDA_ELEMENT_Q1`, `DMDAGetElementsSizes()`,
+          `DMDAGetElementsCorners()`
 @*/
 PetscErrorCode DMDAGetElements(DM dm, PetscInt *nel, PetscInt *nen, const PetscInt *e[])
 {
@@ -383,9 +392,9 @@ PetscErrorCode DMDAGetElements(DM dm, PetscInt *nel, PetscInt *nen, const PetscI
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMDA);
-  PetscValidIntPointer(nel, 2);
-  PetscValidIntPointer(nen, 3);
-  PetscValidPointer(e, 4);
+  PetscAssertPointer(nel, 2);
+  PetscAssertPointer(nen, 3);
+  PetscAssertPointer(e, 4);
   PetscCall(PetscObjectTypeCompare((PetscObject)dm, DMDA, &isda));
   PetscCheck(isda, PetscObjectComm((PetscObject)dm), PETSC_ERR_USER, "Not for DM type %s", ((PetscObject)dm)->type_name);
   PetscCheck(dd->stencil_type != DMDA_STENCIL_STAR, PetscObjectComm((PetscObject)dm), PETSC_ERR_SUP, "DMDAGetElements() requires you use a stencil type of DMDA_STENCIL_BOX");
@@ -394,7 +403,7 @@ PetscErrorCode DMDAGetElements(DM dm, PetscInt *nel, PetscInt *nen, const PetscI
     *nel = dd->ne;
     *nen = dd->nen;
     *e   = dd->e;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (dim == -1) {
     *nel = 0;
@@ -407,27 +416,28 @@ PetscErrorCode DMDAGetElements(DM dm, PetscInt *nel, PetscInt *nen, const PetscI
   } else if (dim == 3) {
     PetscCall(DMDAGetElements_3D(dm, nel, nen, e));
   } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_CORRUPT, "DMDA dimension not 1, 2, or 3, it is %" PetscInt_FMT, dim);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-      DMDAGetSubdomainCornersIS - Gets an index set containing the corner indices (in local coordinates)
-                                 of the non-overlapping decomposition identified by `DMDAGetElements()`
+  DMDAGetSubdomainCornersIS - Gets an index set containing the corner indices (in local coordinates)
+  of the non-overlapping decomposition identified by `DMDAGetElements()`
 
-    Not Collective
+  Not Collective
 
-   Input Parameter:
-.     dm - the `DMDA` object
+  Input Parameter:
+. dm - the `DMDA` object
 
-   Output Parameters:
-.     is - the index set
+  Output Parameter:
+. is - the index set
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-    Call `DMDARestoreSubdomainCornersIS()` once you have finished accessing the index set.
+  Note:
+  Call `DMDARestoreSubdomainCornersIS()` once you have finished accessing the index set.
 
-.seealso: `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `DMDAGetElements()`, `DMDARestoreElementsCornersIS()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `DMDAGetElements()`, `DMDARestoreElementsCornersIS()`,
+          `DMDAGetElementsSizes()`, `DMDAGetElementsCorners()`
 @*/
 PetscErrorCode DMDAGetSubdomainCornersIS(DM dm, IS *is)
 {
@@ -436,7 +446,7 @@ PetscErrorCode DMDAGetSubdomainCornersIS(DM dm, IS *is)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMDA);
-  PetscValidPointer(is, 2);
+  PetscAssertPointer(is, 2);
   PetscCall(PetscObjectTypeCompare((PetscObject)dm, DMDA, &isda));
   PetscCheck(isda, PetscObjectComm((PetscObject)dm), PETSC_ERR_USER, "Not for DM type %s", ((PetscObject)dm)->type_name);
   PetscCheck(dd->stencil_type != DMDA_STENCIL_STAR, PetscObjectComm((PetscObject)dm), PETSC_ERR_SUP, "DMDAGetElement() requires you use a stencil type of DMDA_STENCIL_BOX");
@@ -448,55 +458,52 @@ PetscErrorCode DMDAGetSubdomainCornersIS(DM dm, IS *is)
     PetscCall(DMDARestoreElements(dm, &nel, &nen, &e));
   }
   *is = dd->ecorners;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-      DMDARestoreElements - Restores the array obtained with `DMDAGetElements()`
+  DMDARestoreElements - Restores the array obtained with `DMDAGetElements()`
 
-    Not Collective
+  Not Collective
 
-   Input Parameters:
-+     dm - the DM object
-.     nel - number of local elements
-.     nen - number of element nodes
--     e - the local indices of the elements' vertices
+  Input Parameters:
++ dm  - the `DM` object
+. nel - number of local elements
+. nen - number of nodes in each element
+- e   - the local indices of the elements' vertices
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   This restore signals the `DMDA` object that you no longer need access to the array information.
+  Note:
+  This restore signals the `DMDA` object that you no longer need access to the array information.
 
-   Fortran Note:
-   Not supported in Fortran
-
-.seealso: `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `DMDAGetElements()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `DMDAGetElements()`
 @*/
 PetscErrorCode DMDARestoreElements(DM dm, PetscInt *nel, PetscInt *nen, const PetscInt *e[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMDA);
-  PetscValidIntPointer(nel, 2);
-  PetscValidIntPointer(nen, 3);
-  PetscValidPointer(e, 4);
-  *nel = 0;
-  *nen = -1;
-  *e   = NULL;
-  PetscFunctionReturn(0);
+  PetscAssertPointer(nel, 2);
+  PetscAssertPointer(nen, 3);
+  PetscAssertPointer(e, 4);
+  if (nel) *nel = 0;
+  if (nen) *nen = -1;
+  if (e) *e = NULL;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-      DMDARestoreSubdomainCornersIS - Restores the `IS` obtained with `DMDAGetSubdomainCornersIS()`
+  DMDARestoreSubdomainCornersIS - Restores the `IS` obtained with `DMDAGetSubdomainCornersIS()`
 
-    Not Collective
+  Not Collective
 
-   Input Parameters:
-+     dm - the `DM` object
--     is - the index set
+  Input Parameters:
++ dm - the `DM` object
+- is - the index set
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `DMDAGetSubdomainCornersIS()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAElementType`, `DMDASetElementType()`, `DMDAGetSubdomainCornersIS()`
 @*/
 PetscErrorCode DMDARestoreSubdomainCornersIS(DM dm, IS *is)
 {
@@ -504,5 +511,5 @@ PetscErrorCode DMDARestoreSubdomainCornersIS(DM dm, IS *is)
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMDA);
   PetscValidHeaderSpecific(*is, IS_CLASSID, 2);
   *is = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

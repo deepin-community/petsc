@@ -216,7 +216,7 @@ class Configure(script.Script):
   def checkExecutable(self, dir, name):
     prog  = os.path.join(dir, name)
     # also strip any \ before spaces, braces, so that we can specify paths the way we want them in makefiles.
-    prog  = prog.replace('\ ',' ').replace('\(','(').replace('\)',')')
+    prog  = prog.replace(r'\ ',' ').replace(r'\(','(').replace(r'\)',')')
     found = 0
     self.logWrite('    Checking for program '+prog+'...')
     if os.path.isfile(prog) and os.access(prog, os.X_OK):
@@ -229,7 +229,7 @@ class Configure(script.Script):
   def getExecutable(self, names, path = [], getFullPath = 0, useDefaultPath = 0, resultName = '', setMakeMacro = 1):
     '''Search for an executable in the list names
        - Each name in the list is tried for each entry in the path until a name is located, then it stops
-       - If found, the path is stored in the variable "name", or "resultName" if given
+       - If found, the path is attached to self as an attribute named "name", or "resultName" if given
        - By default, a make macro "resultName" will hold the path'''
     found = 0
     if isinstance(names,str) and names.startswith('/'):
@@ -444,9 +444,14 @@ class Configure(script.Script):
       codeStr += '#include "conffix.h"\n'+includes
       if not body is None:
         if codeBegin is None:
-          codeBegin = '\nint main() {\n'
+          codeBegin = '\nint main(void) {\n'
         if codeEnd is None:
-          codeEnd   = ';\n  return 0;\n}\n'
+          if len(body) == 0:
+            codeEnd = '  return 0;\n}\n'
+          elif body.strip().endswith(';') or body.strip().endswith('}') or body.strip().endswith('\n#endif'):
+            codeEnd = '\n  return 0;\n}\n'
+          else:
+            codeEnd = ';\n  return 0;\n}\n'
         codeStr += codeBegin+body+codeEnd
     elif language == 'FC':
       if not includes is None and body is None:
@@ -518,8 +523,8 @@ class Configure(script.Script):
     '''Return the name of the argument which holds the preprocessor flags for the current language'''
     return self.getPreprocessorFlagsName(self.language[-1])
 
-  def filterCompileOutput(self, output,flag=''):
-    return self.framework.filterCompileOutput(output,flag=flag)
+  def filterCompileOutput(self, output, flag = '', filterAlways = 0):
+    return self.framework.filterCompileOutput(output, flag = flag, filterAlways = filterAlways)
 
   def outputCompile(self, includes = '', body = '', cleanup = 1, codeBegin = None, codeEnd = None):
     '''Return the error output from this compile and the return code'''
@@ -575,8 +580,8 @@ class Configure(script.Script):
     '''Return the name of the argument which holds the compiler flags for the current language'''
     return self.getCompilerFlagsName(self.language[-1], compilerOnly)
 
-  def filterLinkOutput(self, output):
-    return self.framework.filterLinkOutput(output)
+  def filterLinkOutput(self, output, filterAlways = 0):
+    return self.framework.filterLinkOutput(output, filterAlways = filterAlways)
 
   def outputLink(self, includes, body, cleanup = 1, codeBegin = None, codeEnd = None, shared = 0, linkLanguage=None, examineOutput=lambda ret,out,err:None,flag=''):
     import sys
@@ -625,8 +630,10 @@ class Configure(script.Script):
     return not (returnCode or len(output))
 
   def getLinkerFlagsName(language):
-    if language in ['C', 'CUDA', 'Cxx', 'FC', 'HIP', 'SYCL']:
+    if language in ['C', 'CUDA', 'Cxx', 'FC', 'HIP']:
       flagsArg = 'LDFLAGS'
+    elif language == 'SYCL':
+      flagsArg = 'SYCLC_LINKER_FLAGS' # refer to SYCL.py. I need standalone sycl linker flags in make macros, so I don't use LDFLAGS
     else:
       raise RuntimeError('Unknown language: '+language)
     return flagsArg

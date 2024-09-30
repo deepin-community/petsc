@@ -59,22 +59,22 @@ static PetscErrorCode PetscSectionVecView_ASCII(PetscSection s, Vec v, PetscView
   PetscCall(PetscViewerFlush(viewer));
   PetscCall(PetscViewerASCIIPopSynchronized(viewer));
   PetscCall(VecRestoreArray(v, &array));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscSectionVecView - View a vector, using the section to structure the values
 
-  Not collective
+  Not Collective
 
   Input Parameters:
-+ s      - the organizing PetscSection
-. v      - the Vec
-- viewer - the PetscViewer
++ s      - the organizing `PetscSection`
+. v      - the `Vec`
+- viewer - the `PetscViewer`
 
   Level: developer
 
-.seealso: `PetscSection`, `PetscSectionCreate()`, `VecSetValuesSection()`
+.seealso: `PetscSection`, `PetscViewer`, `PetscSectionCreate()`, `VecSetValuesSection()`
 @*/
 PetscErrorCode PetscSectionVecView(PetscSection s, Vec v, PetscViewer viewer)
 {
@@ -102,17 +102,17 @@ PetscErrorCode PetscSectionVecView(PetscSection s, Vec v, PetscViewer viewer)
       PetscCall(PetscSectionVecView_ASCII(s, v, viewer));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  VecGetValuesSection - Gets all the values associated with a given point, according to the section, in the given Vec
+  VecGetValuesSection - Gets all the values associated with a given point, according to the section, in the given `Vec`
 
-  Not collective
+  Not Collective
 
   Input Parameters:
-+ v - the Vec
-. s - the organizing PetscSection
++ v     - the `Vec`
+. s     - the organizing `PetscSection`
 - point - the point
 
   Output Parameter:
@@ -133,31 +133,30 @@ PetscErrorCode VecGetValuesSection(Vec v, PetscSection s, PetscInt point, PetscS
   PetscCall(VecGetArray(v, &baseArray));
   *values = &baseArray[s->atlasOff[p]];
   PetscCall(VecRestoreArray(v, &baseArray));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  VecSetValuesSection - Sets all the values associated with a given point, according to the section, in the given Vec
+  VecSetValuesSection - Sets all the values associated with a given point, according to the section, in the given `Vec`
 
-  Not collective
+  Not Collective
 
   Input Parameters:
-+ v - the Vec
-. s - the organizing PetscSection
-. point - the point
++ v      - the `Vec`
+. s      - the organizing `PetscSection`
+. point  - the point
 . values - the array of input values
-- mode - the insertion mode, either ADD_VALUES or INSERT_VALUES
+- mode   - the insertion mode, either `ADD_VALUES` or `INSERT_VALUES`
 
   Level: developer
 
-  Note: This is similar to MatSetValuesStencil(). The Fortran binding is
-$
+  Fortran Notes:
+  This is similar to `MatSetValuesStencil()`. The binding is
 $   VecSetValuesSectionF90(vec, section, point, values, mode, ierr)
-$
 
 .seealso: `PetscSection`, `PetscSectionCreate()`, `VecGetValuesSection()`
 @*/
-PetscErrorCode VecSetValuesSection(Vec v, PetscSection s, PetscInt point, PetscScalar values[], InsertMode mode)
+PetscErrorCode VecSetValuesSection(Vec v, PetscSection s, PetscInt point, const PetscScalar values[], InsertMode mode)
 {
   PetscScalar    *baseArray, *array;
   const PetscBool doInsert    = mode == INSERT_VALUES || mode == INSERT_ALL_VALUES || mode == INSERT_BC_VALUES ? PETSC_TRUE : PETSC_FALSE;
@@ -247,7 +246,7 @@ PetscErrorCode VecSetValuesSection(Vec v, PetscSection s, PetscInt point, PetscS
     }
   }
   PetscCall(VecRestoreArray(v, &baseArray));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PetscSectionGetField_Internal(PetscSection section, PetscSection sectionGlobal, Vec v, PetscInt field, PetscInt pStart, PetscInt pEnd, IS *is, Vec *subv)
@@ -285,7 +284,7 @@ PetscErrorCode PetscSectionGetField_Internal(PetscSection section, PetscSection 
   PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)v), subSize, subIndices, PETSC_OWN_POINTER, is));
   PetscCall(VecGetSubVector(v, *is, subv));
   PetscCall(VecSetBlockSize(*subv, Nc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PetscSectionRestoreField_Internal(PetscSection section, PetscSection sectionGlobal, Vec v, PetscInt field, PetscInt pStart, PetscInt pEnd, IS *is, Vec *subv)
@@ -293,7 +292,7 @@ PetscErrorCode PetscSectionRestoreField_Internal(PetscSection section, PetscSect
   PetscFunctionBegin;
   PetscCall(VecRestoreSubVector(v, *is, subv));
   PetscCall(ISDestroy(is));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -303,10 +302,10 @@ PetscErrorCode PetscSectionRestoreField_Internal(PetscSection section, PetscSect
 + s    - the local Section
 . gs   - the global section
 . x    - the vector
-- type - one of NORM_1, NORM_2, NORM_INFINITY.
+- type - one of `NORM_1`, `NORM_2`, `NORM_INFINITY`.
 
   Output Parameter:
-. val  - the array of norms
+. val - the array of norms
 
   Level: intermediate
 
@@ -320,7 +319,7 @@ PetscErrorCode PetscSectionVecNorm(PetscSection s, PetscSection gs, Vec x, NormT
   PetscValidHeaderSpecific(s, PETSC_SECTION_CLASSID, 1);
   PetscValidHeaderSpecific(gs, PETSC_SECTION_CLASSID, 2);
   PetscValidHeaderSpecific(x, VEC_CLASSID, 3);
-  PetscValidRealPointer(val, 5);
+  PetscAssertPointer(val, 5);
   PetscCall(PetscSectionGetNumFields(s, &Nf));
   if (Nf < 2) PetscCall(VecNorm(x, type, val));
   else {
@@ -334,5 +333,5 @@ PetscErrorCode PetscSectionVecNorm(PetscSection s, PetscSection gs, Vec x, NormT
       PetscCall(PetscSectionRestoreField_Internal(s, gs, x, f, pStart, pEnd, &is, &subv));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

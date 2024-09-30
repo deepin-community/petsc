@@ -1,11 +1,12 @@
 /*
   DMNetwork, for parallel unstructured network problems.
 */
-#ifndef PETSCDMNETWORK_H
-#define PETSCDMNETWORK_H
+#pragma once
 
 #include <petscdmplex.h>
 #include <petscviewer.h>
+
+/* SUBMANSEC = DMNetwork */
 
 #define ALL_COMPONENTS -1
 
@@ -23,6 +24,8 @@ PETSC_EXTERN PetscErrorCode DMNetworkLayoutSetUp(DM);
 PETSC_EXTERN PetscErrorCode DMNetworkRegisterComponent(DM, const char *, size_t, PetscInt *);
 PETSC_EXTERN PetscErrorCode DMNetworkGetVertexRange(DM, PetscInt *, PetscInt *);
 PETSC_EXTERN PetscErrorCode DMNetworkGetEdgeRange(DM, PetscInt *, PetscInt *);
+PETSC_EXTERN PetscErrorCode DMNetworkGetNumEdges(DM, PetscInt *, PetscInt *);
+PETSC_EXTERN PetscErrorCode DMNetworkGetNumVertices(DM, PetscInt *, PetscInt *);
 
 PETSC_EXTERN PetscErrorCode DMNetworkAddComponent(DM, PetscInt, PetscInt, void *, PetscInt);
 PETSC_EXTERN PetscErrorCode DMNetworkGetComponent(DM, PetscInt, PetscInt, PetscInt *, void **, PetscInt *);
@@ -82,4 +85,8 @@ PETSC_EXTERN PetscErrorCode DMNetworkMonitorPop(DMNetworkMonitor);
 PETSC_EXTERN PetscErrorCode DMNetworkMonitorAdd(DMNetworkMonitor, const char *, PetscInt, PetscInt, PetscInt, PetscInt, PetscReal, PetscReal, PetscReal, PetscReal, PetscBool);
 PETSC_EXTERN PetscErrorCode DMNetworkMonitorView(DMNetworkMonitor, Vec);
 
-#endif
+PETSC_EXTERN PetscErrorCode DMNetworkViewSetShowRanks(DM, PetscBool);
+PETSC_EXTERN PetscErrorCode DMNetworkViewSetViewRanks(DM, IS);
+PETSC_EXTERN PetscErrorCode DMNetworkViewSetShowGlobal(DM, PetscBool);
+PETSC_EXTERN PetscErrorCode DMNetworkViewSetShowVertices(DM, PetscBool);
+PETSC_EXTERN PetscErrorCode DMNetworkViewSetShowNumbering(DM, PetscBool);

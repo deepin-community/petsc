@@ -29,29 +29,29 @@
 #endif
 
 /*@
-   PetscMemoryGetCurrentUsage - Returns the current resident set size (memory used)
-   for the program.
+  PetscMemoryGetCurrentUsage - Returns the current resident set size (memory used)
+  for the program.
 
-   Not Collective
+  Not Collective
 
-   Output Parameter:
-.   mem - memory usage in bytes
+  Output Parameter:
+. mem - memory usage in bytes
 
-   Options Database Key:
-+  -memory_view - Print memory usage at end of run
-.  -log_view_memory - Display memory information for each logged event
--  -malloc_log - Activate logging of memory usage
+  Options Database Key:
++ -memory_view     - Print memory usage at end of run
+. -log_view_memory - Display memory information for each logged event
+- -malloc_view     - Print usage of `PetscMalloc()` in `PetscFinalize()`
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-   The memory usage reported here includes all Fortran arrays
-   (that may be used in application-defined sections of code).
-   This routine thus provides a more complete picture of memory
-   usage than `PetscMallocGetCurrentUsage()` for codes that employ Fortran with
-   hardwired arrays.
+  Notes:
+  The memory usage reported here includes all Fortran arrays
+  (that may be used in application-defined sections of code).
+  This routine thus provides a more complete picture of memory
+  usage than `PetscMallocGetCurrentUsage()` for codes that employ Fortran with
+  hardwired arrays.
 
-   This value generally never decreases during a run even if the application has freed much of its memory that it allocated
+  This value generally never decreases during a run even if the application has freed much of its memory that it allocated
 
 .seealso: `PetscMallocGetMaximumUsage()`, `PetscMemoryGetMaximumUsage()`, `PetscMallocGetCurrentUsage()`, `PetscMemorySetGetMaximumUsage()`, `PetscMemoryView()`
 @*/
@@ -76,7 +76,7 @@ PetscErrorCode PetscMemoryGetCurrentUsage(PetscLogDouble *mem)
   PetscFunctionBegin;
 #if defined(PETSC_USE_PROCFS_FOR_SIZE)
 
-  sprintf(proc, "/proc/%d", (int)getpid());
+  PetscCall(PetscSNPrintf(proc, PETSC_STATIC_ARRAY_LENGTH(proc), "/proc/%d", (int)getpid()));
   PetscCheck((fd = open(proc, O_RDONLY)) != -1, PETSC_COMM_SELF, PETSC_ERR_FILE_OPEN, "Unable to access system file %s to get memory usage data", file);
   PetscCheck(ioctl(fd, PIOCPSINFO, &prusage) != -1, PETSC_COMM_SELF, PETSC_ERR_FILE_READ, "Unable to access system file %s to get memory usage data", file);
   *mem = (PetscLogDouble)prusage.pr_byrssize;
@@ -87,7 +87,7 @@ PetscErrorCode PetscMemoryGetCurrentUsage(PetscLogDouble *mem)
   *mem = (PetscLogDouble)(8 * fd - 4294967296); /* 2^32 - upper bits */
 
 #elif defined(PETSC_USE_PROC_FOR_SIZE) && defined(PETSC_HAVE_GETPAGESIZE)
-  sprintf(proc, "/proc/%d/statm", (int)getpid());
+  PetscCall(PetscSNPrintf(proc, PETSC_STATIC_ARRAY_LENGTH(proc), "/proc/%d/statm", (int)getpid()));
   PetscCheck((file = fopen(proc, "r")), PETSC_COMM_SELF, PETSC_ERR_FILE_OPEN, "Unable to access system file %s to get memory usage data", proc);
   PetscCheck(fscanf(file, "%d %d", &mm, &rss) == 2, PETSC_COMM_SELF, PETSC_ERR_SYS, "Failed to read two integers (mm and rss) from %s", proc);
   *mem = ((PetscLogDouble)rss) * ((PetscLogDouble)getpagesize());
@@ -107,7 +107,7 @@ PetscErrorCode PetscMemoryGetCurrentUsage(PetscLogDouble *mem)
 #else
   *mem = 0.0;
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_INTERN PetscBool      PetscMemoryCollectMaximumUsage;
@@ -117,27 +117,27 @@ PetscBool      PetscMemoryCollectMaximumUsage = PETSC_FALSE;
 PetscLogDouble PetscMemoryMaximumUsage        = 0;
 
 /*@
-   PetscMemoryGetMaximumUsage - Returns the maximum resident set size (memory used)
-   for the program since it started (the high water mark).
+  PetscMemoryGetMaximumUsage - Returns the maximum resident set size (memory used)
+  for the program since it started (the high water mark).
 
-   Not Collective
+  Not Collective
 
-   Output Parameter:
-.   mem - memory usage in bytes
+  Output Parameter:
+. mem - memory usage in bytes
 
-   Options Database Key:
-+  -memory_view - Print memory usage at end of run
-.  -log_view_memory - Print memory information per event
--  -malloc_log - Activate logging of memory usage
+  Options Database Key:
++ -memory_view     - Print memory usage at end of run
+. -log_view_memory - Print memory information per event
+- -malloc_view     - Print usage of `PetscMalloc()` in `PetscFinalize()`
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   The memory usage reported here includes all Fortran arrays
-   (that may be used in application-defined sections of code).
-   This routine thus provides a more complete picture of memory
-   usage than `PetscMallocGetCurrentUsage()` for codes that employ Fortran with
-   hardwired arrays.
+  Note:
+  The memory usage reported here includes all Fortran arrays
+  (that may be used in application-defined sections of code).
+  This routine thus provides a more complete picture of memory
+  usage than `PetscMallocGetCurrentUsage()` for codes that employ Fortran with
+  hardwired arrays.
 
 .seealso: `PetscMallocGetMaximumUsage()`, `PetscMemoryGetCurrentUsage()`, `PetscMallocGetCurrentUsage()`,
           `PetscMemorySetGetMaximumUsage()`
@@ -147,21 +147,21 @@ PetscErrorCode PetscMemoryGetMaximumUsage(PetscLogDouble *mem)
   PetscFunctionBegin;
   PetscCheck(PetscMemoryCollectMaximumUsage, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "To use this function you must first call PetscMemorySetGetMaximumUsage()");
   *mem = PetscMemoryMaximumUsage;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscMemorySetGetMaximumUsage - Tells PETSc to monitor the maximum memory usage so that
-       `PetscMemoryGetMaximumUsage()` will work.
+  PetscMemorySetGetMaximumUsage - Tells PETSc to monitor the maximum memory usage so that
+  `PetscMemoryGetMaximumUsage()` will work.
 
-   Not Collective
+  Not Collective
 
-   Options Database Key:
-+  -memory_view - Print memory usage at end of run
-.  -log_view_memory - Print memory information per event
--  -malloc_log - Activate logging of memory usage
+  Options Database Key:
++ -memory_view     - Print memory usage at end of run
+. -log_view_memory - Print memory information per event
+- -malloc_view     - Print usage of `PetscMalloc()` in `PetscFinalize()`
 
-   Level: intermediate
+  Level: intermediate
 
 .seealso: `PetscMallocGetMaximumUsage()`, `PetscMemoryGetCurrentUsage()`, `PetscMallocGetCurrentUsage()`,
           `PetscMemoryGetMaximumUsage()`
@@ -170,5 +170,5 @@ PetscErrorCode PetscMemorySetGetMaximumUsage(void)
 {
   PetscFunctionBegin;
   PetscMemoryCollectMaximumUsage = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

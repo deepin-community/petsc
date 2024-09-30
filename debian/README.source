@@ -9,7 +9,7 @@ shared library.  You can do this with the ./configure option
    --shared-library-extension=<string>
    
 The given string as added to the standard library name and to the soname,
-e.g. changing libpetsc.so.3.18 to libpetsc<string>.so.3.18
+e.g. changing libpetsc.so.3.20 to libpetsc<string>.so.3.20
 
 The standard Debian build uses 
   --shared-library-extension=_real 
@@ -28,9 +28,9 @@ The preferred PETSc installation is linked to /usr/lib/petsc:
 and the corresponding preferred shared library is linked in
 /usr/lib/<arch> in a separately managed alternative link:
 
-  update-alternatives --config libpetsc.so.3.18
+  update-alternatives --config libpetsc.so.3.20
 
-(e.g. linking to libpetsc_real.so.3.18.0 or libpetsc_complex.so.3.18.0)
+(e.g. linking to libpetsc_real.so.3.20.0 or libpetsc_complex.so.3.20.0)
 
 The priorities of the alternatives used in automatic alternatives
 configuration are organised to prioritise the stripped over debug
@@ -42,7 +42,7 @@ therefore are:
 U is an upstream value and D and C are single digits
 i.e.
 
-  U = upstream version e.g. 3.18.0
+  U = upstream version e.g. 3.20.0
   
   D = stripped (D=7) or debug version (D=3)
   
@@ -61,7 +61,7 @@ when running build-time tests (dh_auto_test):
   /bin/sh: 4: [: -a: unexpected operator
 This happens when the build path contains a '+',
 e.g. from the DFSG version tag when the source dir is
-/build/petsc-3.18.0+dfsg1/.  The error occurs since '+' is used as the
+/build/petsc-3.20.0+dfsg1/.  The error occurs since '+' is used as the
 sed delimiter in the chk_petscdir rule in lib/petsc/conf/rules. It is
 probably safe to ignore this error (the PETSC_DIR warning being tested
 likely does not apply in this case).

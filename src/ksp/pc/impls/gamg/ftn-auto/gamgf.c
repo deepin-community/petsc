@@ -50,6 +50,11 @@ extern void PetscRmPointer(void*);
 #define pcgamgsetusesaesteig_ pcgamgsetusesaesteig
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pcgamgsetrecomputeesteig_ PCGAMGSETRECOMPUTEESTEIG
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pcgamgsetrecomputeesteig_ pcgamgsetrecomputeesteig
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define pcgamgseteigenvalues_ PCGAMGSETEIGENVALUES
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define pcgamgseteigenvalues_ pcgamgseteigenvalues
@@ -65,9 +70,9 @@ extern void PetscRmPointer(void*);
 #define pcgamgasmsetuseaggs_ pcgamgasmsetuseaggs
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define pcgamgsetuseparallelcoarsegridsolve_ PCGAMGSETUSEPARALLELCOARSEGRIDSOLVE
+#define pcgamgsetparallelcoarsegridsolve_ PCGAMGSETPARALLELCOARSEGRIDSOLVE
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define pcgamgsetuseparallelcoarsegridsolve_ pcgamgsetuseparallelcoarsegridsolve
+#define pcgamgsetparallelcoarsegridsolve_ pcgamgsetparallelcoarsegridsolve
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define pcgamgsetcpupincoarsegrids_ PCGAMGSETCPUPINCOARSEGRIDS
@@ -120,10 +125,15 @@ PETSC_EXTERN void  pcgamgsetrepartition_(PC pc,PetscBool *n, int *__ierr)
 *__ierr = PCGAMGSetRepartition(
 	(PC)PetscToPointer((pc) ),*n);
 }
-PETSC_EXTERN void  pcgamgsetusesaesteig_(PC pc,PetscBool *n, int *__ierr)
+PETSC_EXTERN void  pcgamgsetusesaesteig_(PC pc,PetscBool *b, int *__ierr)
 {
 *__ierr = PCGAMGSetUseSAEstEig(
-	(PC)PetscToPointer((pc) ),*n);
+	(PC)PetscToPointer((pc) ),*b);
+}
+PETSC_EXTERN void  pcgamgsetrecomputeesteig_(PC pc,PetscBool *b, int *__ierr)
+{
+*__ierr = PCGAMGSetRecomputeEstEig(
+	(PC)PetscToPointer((pc) ),*b);
 }
 PETSC_EXTERN void  pcgamgseteigenvalues_(PC pc,PetscReal *emax,PetscReal *emin, int *__ierr)
 {
@@ -140,9 +150,9 @@ PETSC_EXTERN void  pcgamgasmsetuseaggs_(PC pc,PetscBool *flg, int *__ierr)
 *__ierr = PCGAMGASMSetUseAggs(
 	(PC)PetscToPointer((pc) ),*flg);
 }
-PETSC_EXTERN void  pcgamgsetuseparallelcoarsegridsolve_(PC pc,PetscBool *flg, int *__ierr)
+PETSC_EXTERN void  pcgamgsetparallelcoarsegridsolve_(PC pc,PetscBool *flg, int *__ierr)
 {
-*__ierr = PCGAMGSetUseParallelCoarseGridSolve(
+*__ierr = PCGAMGSetParallelCoarseGridSolve(
 	(PC)PetscToPointer((pc) ),*flg);
 }
 PETSC_EXTERN void  pcgamgsetcpupincoarsegrids_(PC pc,PetscBool *flg, int *__ierr)

@@ -32,7 +32,7 @@ static PetscErrorCode PetscSFViewCustomLocals_Private(PetscSF sf, const PetscInt
   PetscCall(PetscViewerFlush(viewer));
   PetscCall(PetscViewerASCIIPopTab(viewer));
   PetscCall(PetscViewerASCIIPopSynchronized(viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
   test_char = test_all;
   PetscCall(PetscOptionsBool("-test_char", "Test signed char, unsigned char, and char", "", test_char, &test_char, NULL));
   mop = MPI_SUM;
-  PetscCall(PetscStrcpy(opstring, "sum"));
+  PetscCall(PetscStrncpy(opstring, "sum", sizeof(opstring)));
   PetscCall(PetscOptionsString("-test_op", "Designate which MPI_Op to use", "", opstring, opstring, sizeof(opstring), NULL));
   PetscCall(PetscStrcmp("sum", opstring, &strflg));
   if (strflg) mop = MPIU_SUM;

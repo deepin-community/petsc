@@ -1,4 +1,3 @@
-
 #include <petscdm.h>     /*I  "petscdm.h"  I*/
 #include <petscdmplex.h> /*I  "petscdmplex.h"  I*/
 #include <petsc/private/dmimpl.h>
@@ -31,9 +30,6 @@ PETSC_EXTERN PetscErrorCode DMCreate_Stag(DM);
 
   Not Collective
 
-  Input parameter:
-. path - The dynamic library path
-
   Level: advanced
 
 .seealso: `DMRegister()`, `DMRegisterDestroy()`
@@ -41,7 +37,7 @@ PETSC_EXTERN PetscErrorCode DMCreate_Stag(DM);
 PetscErrorCode DMRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (DMRegisterAllCalled) PetscFunctionReturn(0);
+  if (DMRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   DMRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(DMRegister(DMDA, DMCreate_DA));
@@ -63,7 +59,7 @@ PetscErrorCode DMRegisterAll(void)
 #endif
   PetscCall(DMRegister(DMPRODUCT, DMCreate_Product));
   PetscCall(DMRegister(DMSTAG, DMCreate_Stag));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #include <petscfe.h> /*I  "petscfe.h"  I*/
@@ -81,9 +77,6 @@ PETSC_EXTERN PetscErrorCode PetscSpaceCreate_WXY(PetscSpace);
 
   Not Collective
 
-  Input parameter:
-. path - The dynamic library path
-
   Level: advanced
 
 .seealso: `PetscSpaceRegister()`, `PetscSpaceRegisterDestroy()`
@@ -91,7 +84,7 @@ PETSC_EXTERN PetscErrorCode PetscSpaceCreate_WXY(PetscSpace);
 PetscErrorCode PetscSpaceRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (PetscSpaceRegisterAllCalled) PetscFunctionReturn(0);
+  if (PetscSpaceRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   PetscSpaceRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(PetscSpaceRegister(PETSCSPACEPOLYNOMIAL, PetscSpaceCreate_Polynomial));
@@ -101,21 +94,19 @@ PetscErrorCode PetscSpaceRegisterAll(void)
   PetscCall(PetscSpaceRegister(PETSCSPACEPOINT, PetscSpaceCreate_Point));
   PetscCall(PetscSpaceRegister(PETSCSPACESUBSPACE, PetscSpaceCreate_Subspace));
   PetscCall(PetscSpaceRegister(PETSCSPACEWXY, PetscSpaceCreate_WXY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode PetscDualSpaceCreate_Lagrange(PetscDualSpace);
 PETSC_EXTERN PetscErrorCode PetscDualSpaceCreate_Lagrange_BDM(PetscDualSpace);
 PETSC_EXTERN PetscErrorCode PetscDualSpaceCreate_Simple(PetscDualSpace);
 PETSC_EXTERN PetscErrorCode PetscDualSpaceCreate_Refined(PetscDualSpace);
+PETSC_EXTERN PetscErrorCode PetscDualSpaceCreate_Sum(PetscDualSpace);
 
 /*@C
   PetscDualSpaceRegisterAll - Registers all of the PetscDualSpace components in the PetscFE package.
 
   Not Collective
-
-  Input parameter:
-. path - The dynamic library path
 
   Level: advanced
 
@@ -124,14 +115,15 @@ PETSC_EXTERN PetscErrorCode PetscDualSpaceCreate_Refined(PetscDualSpace);
 PetscErrorCode PetscDualSpaceRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (PetscDualSpaceRegisterAllCalled) PetscFunctionReturn(0);
+  if (PetscDualSpaceRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   PetscDualSpaceRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(PetscDualSpaceRegister(PETSCDUALSPACELAGRANGE, PetscDualSpaceCreate_Lagrange));
   PetscCall(PetscDualSpaceRegister(PETSCDUALSPACEBDM, PetscDualSpaceCreate_Lagrange));
   PetscCall(PetscDualSpaceRegister(PETSCDUALSPACESIMPLE, PetscDualSpaceCreate_Simple));
   PetscCall(PetscDualSpaceRegister(PETSCDUALSPACEREFINED, PetscDualSpaceCreate_Refined));
-  PetscFunctionReturn(0);
+  PetscCall(PetscDualSpaceRegister(PETSCDUALSPACESUM, PetscDualSpaceCreate_Sum));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode PetscFECreate_Basic(PetscFE);
@@ -140,14 +132,12 @@ PETSC_EXTERN PetscErrorCode PetscFECreate_Composite(PetscFE);
 #if defined(PETSC_HAVE_OPENCL)
 PETSC_EXTERN PetscErrorCode PetscFECreate_OpenCL(PetscFE);
 #endif
+PETSC_EXTERN PetscErrorCode PetscFECreate_Vector(PetscFE);
 
 /*@C
   PetscFERegisterAll - Registers all of the PetscFE components in the PetscFE package.
 
   Not Collective
-
-  Input parameter:
-. path - The dynamic library path
 
   Level: advanced
 
@@ -156,7 +146,7 @@ PETSC_EXTERN PetscErrorCode PetscFECreate_OpenCL(PetscFE);
 PetscErrorCode PetscFERegisterAll(void)
 {
   PetscFunctionBegin;
-  if (PetscFERegisterAllCalled) PetscFunctionReturn(0);
+  if (PetscFERegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   PetscFERegisterAllCalled = PETSC_TRUE;
 
   PetscCall(PetscFERegister(PETSCFEBASIC, PetscFECreate_Basic));
@@ -164,7 +154,8 @@ PetscErrorCode PetscFERegisterAll(void)
 #if defined(PETSC_HAVE_OPENCL)
   PetscCall(PetscFERegister(PETSCFEOPENCL, PetscFECreate_OpenCL));
 #endif
-  PetscFunctionReturn(0);
+  PetscCall(PetscFERegister(PETSCFEVECTOR, PetscFECreate_Vector));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #include <petscfv.h> /*I  "petscfv.h"  I*/
 
@@ -182,9 +173,6 @@ PETSC_EXTERN PetscErrorCode PetscLimiterCreate_MC(PetscLimiter);
 
   Not Collective
 
-  Input parameter:
-. path - The dynamic library path
-
   Level: advanced
 
 .seealso: `PetscLimiterRegister()`, `PetscLimiterRegisterDestroy()`
@@ -192,7 +180,7 @@ PETSC_EXTERN PetscErrorCode PetscLimiterCreate_MC(PetscLimiter);
 PetscErrorCode PetscLimiterRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (PetscLimiterRegisterAllCalled) PetscFunctionReturn(0);
+  if (PetscLimiterRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   PetscLimiterRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(PetscLimiterRegister(PETSCLIMITERSIN, PetscLimiterCreate_Sin));
@@ -203,7 +191,7 @@ PetscErrorCode PetscLimiterRegisterAll(void)
   PetscCall(PetscLimiterRegister(PETSCLIMITERVANALBADA, PetscLimiterCreate_VanAlbada));
   PetscCall(PetscLimiterRegister(PETSCLIMITERSUPERBEE, PetscLimiterCreate_Superbee));
   PetscCall(PetscLimiterRegister(PETSCLIMITERMC, PetscLimiterCreate_MC));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode PetscFVCreate_Upwind(PetscFV);
@@ -214,9 +202,6 @@ PETSC_EXTERN PetscErrorCode PetscFVCreate_LeastSquares(PetscFV);
 
   Not Collective
 
-  Input parameter:
-. path - The dynamic library path
-
   Level: advanced
 
 .seealso: `PetscFVRegister()`, `PetscFVRegisterDestroy()`
@@ -224,12 +209,12 @@ PETSC_EXTERN PetscErrorCode PetscFVCreate_LeastSquares(PetscFV);
 PetscErrorCode PetscFVRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (PetscFVRegisterAllCalled) PetscFunctionReturn(0);
+  if (PetscFVRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   PetscFVRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(PetscFVRegister(PETSCFVUPWIND, PetscFVCreate_Upwind));
   PetscCall(PetscFVRegister(PETSCFVLEASTSQUARES, PetscFVCreate_LeastSquares));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #include <petscds.h> /*I  "petscds.h"  I*/
 
@@ -240,9 +225,6 @@ PETSC_EXTERN PetscErrorCode PetscDSCreate_Basic(PetscDS);
 
   Not Collective
 
-  Input parameter:
-. path - The dynamic library path
-
   Level: advanced
 
 .seealso: `PetscDSRegister()`, `PetscDSRegisterDestroy()`
@@ -250,9 +232,9 @@ PETSC_EXTERN PetscErrorCode PetscDSCreate_Basic(PetscDS);
 PetscErrorCode PetscDSRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (PetscDSRegisterAllCalled) PetscFunctionReturn(0);
+  if (PetscDSRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   PetscDSRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(PetscDSRegister(PETSCDSBASIC, PetscDSCreate_Basic));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

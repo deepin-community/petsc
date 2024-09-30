@@ -1,6 +1,4 @@
-
-#ifndef PETSCVIEWERHDF5_H
-#define PETSCVIEWERHDF5_H
+#pragma once
 
 #include <petscviewer.h>
 
@@ -12,9 +10,16 @@
     #define H5_VERSION_GE(a, b, c) 0
   #endif
 
+  // HDF5 1.13.0 switched from hsize_t being typedef'd to unsigned long long to being uint64_t and introduced the
+  // PRIuHSIZE macro for printing. Definition of PRIuHSIZE actually precedes the change of typedef in the Git history,
+  // though there was never a release with the old definitions. Nonetheless, the logic here will work any commit.
+  #if !defined(PRIuHSIZE)
+    #define PRIuHSIZE "llu"
+  #endif
+
 PETSC_EXTERN PetscErrorCode PetscViewerHDF5GetFileId(PetscViewer, hid_t *);
 
-  /* On 32 bit systems HDF5 is limited by size of integer, because hsize_t is defined as size_t */
+  /* On 32-bit systems HDF5 is limited by size of integer, because hsize_t is defined as size_t */
   #define PETSC_HDF5_INT_MAX (~(hsize_t)0)
 
   /* As per https://portal.hdfgroup.org/display/HDF5/Chunking+in+HDF5, max. chunk size is 4GB */
@@ -28,7 +33,7 @@ static inline PetscErrorCode PetscViewerHDF5PathIsRelative(const char path[], Pe
   *has = emptyIsRelative;
   PetscCall(PetscStrlen(path, &len));
   if (len) *has = (PetscBool)(path[0] != '/');
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode PetscHDF5IntCast(PetscInt a, hsize_t *b)
@@ -39,7 +44,7 @@ static inline PetscErrorCode PetscHDF5IntCast(PetscInt a, hsize_t *b)
   PetscCheck(a >= PETSC_HDF5_INT_MAX, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Array too long for HDF5");
   #endif
   *b = (hsize_t)(a);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 PETSC_EXTERN PetscErrorCode PetscDataTypeToHDF5DataType(PetscDataType, hid_t *);
 PETSC_EXTERN PetscErrorCode PetscHDF5DataTypeToPetscDataType(hid_t, PetscDataType *);
@@ -79,4 +84,3 @@ PETSC_EXTERN PetscErrorCode PetscViewerHDF5GetSPOutput(PetscViewer, PetscBool *)
 PETSC_EXTERN PetscErrorCode PetscViewerHDF5SetCollective(PetscViewer, PetscBool);
 PETSC_EXTERN PetscErrorCode PetscViewerHDF5GetCollective(PetscViewer, PetscBool *);
 #endif /* defined(PETSC_HAVE_HDF5) */
-#endif

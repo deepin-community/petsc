@@ -1,3 +1,111 @@
+petsc (3.20.6+dfsg1-3) unstable; urgency=medium
+
+  * build 64-bit petsc against scotch-int64 not scotch-long
+    to avoid 32-bit systems getting a mismatch between
+    SCOTCH_Num long int and PetscInt long long int.
+    The error reference to "long int" is a red herring, it's just int64
+  * libpetsc64-complex3.20-dev: fix alternatives link for
+    libpetsc64_complex.so (not libpets64c_complex.so)
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 22 Aug 2024 23:13:53 +0200
+
+petsc (3.20.6+dfsg1-2) unstable; urgency=medium
+
+  * configure 64-bit petsc to build against 64-bit (long) scotch.
+    - required for building with gcc-14, for which pointers to standard
+      SCOTCH_Num (int) are incompatible with pointers to 64-bit
+      PetscInt (declared as long int, not int64).
+    - provide lib path /usr/lib/$(DEB_HOST_MULTIARCH)/scotch-long as
+      explicit RUNPATH (-rpath) in the petsc64*.so shared libraries to
+      ensure the standard libptscotch.so build is not used at runtime.
+    - add lintian overrides (custom-library-search-path)
+      to acknowledge the intended explicit RUNPATHs
+    - Closes: #1075380.
+
+ -- Drew Parsons <dparsons@debian.org>  Wed, 21 Aug 2024 20:09:11 +0200
+
+petsc (3.20.6+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+  * Build-Depends: pkgconf not pkg-config
+  * add Depends: ${fortran:Depends} to -dev (and -dbg) packages
+  * drop dh_strip override, so the debug package is not treated as the
+    dbgsym symbols package of the main production package. The debug
+    build provides additional output that may be useful when designing
+    and profiling PETSc applications.
+  * specify in -dbg package descriptions that they are built using
+    --with-debugging=1
+  * add loong64 to the list of arches supporting 64-bit hypre.
+    Closes: #1060050.
+  * Standards-Version: 4.7.0
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 16 May 2024 21:51:32 +0200
+
+petsc (3.20.3+dfsg1-1exp1) experimental; urgency=medium
+
+  [ Francesco Ballarin ]
+  * New upstream version 3.20.3+dfsg1
+  * debian/watch now downloads from https://web.cels.anl.gov
+  * Refresh build-no-rpath.patch, clean-no-double-colon.patch,
+    lib-versions.patch, ptscotch_without_bison_MR5787.diff, soname_extension,
+    sprng-2.patch so that they apply without offset and fuzz.
+  * Refresh docs.patch with updated url of the PDF version of the PETSc
+    manual.
+  * Refresh label_tests.patch, nocleanup.patch, petscmatmod_split.patch which
+    failed to apply due to upstream changes.
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 12 Mar 2024 19:57:49 +0100
+
+petsc (3.19.6+dfsg1-2.2) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Fix extraneous X-Time64-Compat declarations.
+  * Fix substitution of soname in maintainer scripts.  Closes: #1065217.
+
+ -- Steve Langasek <vorlon@debian.org>  Sun, 03 Mar 2024 21:40:10 +0000
+
+petsc (3.19.6+dfsg1-2.1) unstable; urgency=medium
+
+  * Non-maintainer upload.
+  * Rename libraries for 64-bit time_t transition.  Closes: #1064332
+
+ -- Benjamin Drung <bdrung@debian.org>  Thu, 29 Feb 2024 20:22:10 +0000
+
+petsc (3.19.6+dfsg1-2) unstable; urgency=medium
+
+  * Update debian/patches/soname_extension to also add a define PETSC_LIB_EXT,
+    and use it when determining the name of the dynamic library to be loaded
+    with -library_preload.
+
+ -- Francesco Ballarin <francesco.ballarin@unicatt.it>  Sun, 21 Jan 2024 06:41:21 +0000
+
+petsc (3.19.6+dfsg1-1) unstable; urgency=medium
+
+  * New upstream release.
+    - applies debian patches fix_check_error_MR6616.diff and
+      pkgdir_not_petscdir_PR6434.diff
+  * dh_clean: remove pycache generated in lib/petsc/bin.
+    Closes: #1045544.
+
+ -- Drew Parsons <dparsons@debian.org>  Thu, 21 Dec 2023 10:05:19 +0100
+
+petsc (3.19.2+dfsg1-1exp2) experimental; urgency=medium
+
+  * debian patch pkgdir_not_petscdir_PR6434.diff applies upstream
+    PR6434 to fix SLEPc build.
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 04 Jul 2023 12:57:51 +0200
+
+petsc (3.19.2+dfsg1-1exp1) experimental; urgency=medium
+
+  * New upstream release.
+    - new ABI 3.19
+  * debian patch fix_check_error_MR6616.diff applies upstream MR6616
+    to fix problems with new handling of errors when running tests
+  * Use language_data.js from libjs-sphinxdoc with docs
+
+ -- Drew Parsons <dparsons@debian.org>  Tue, 20 Jun 2023 16:17:08 +0200
+
 petsc (3.18.6+dfsg1-1) unstable; urgency=medium
 
   * New upstream release.

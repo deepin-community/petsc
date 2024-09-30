@@ -227,7 +227,7 @@ PetscErrorCode FormInitialGuess(AppCtx *user, DM da, Vec X)
      Restore vector
   */
   PetscCall(DMDAVecRestoreArrayWrite(da, X, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode FormFunctionLocal(DMDALocalInfo *info, Field **x, Field **f, void *ptr)
@@ -359,7 +359,7 @@ PetscErrorCode FormFunctionLocal(DMDALocalInfo *info, Field **x, Field **f, void
      Flop count (multiply-adds are counted as 2 operations)
   */
   PetscCall(PetscLogFlops(84.0 * info->ym * info->xm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -635,7 +635,7 @@ PetscErrorCode NonlinearGS(SNES snes, Vec X, Vec B, void *ctx)
   PetscCall(PetscLogFlops(tot_its * (84.0 + 41.0 + 26.0)));
   PetscCall(DMRestoreLocalVector(da, &localX));
   if (B) PetscCall(DMRestoreLocalVector(da, &localB));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST
@@ -1025,6 +1025,20 @@ PetscErrorCode NonlinearGS(SNES snes, Vec X, Vec B, void *ctx)
       args: -da_grid_x 20 -da_grid_y 20 -pc_type lu -pc_factor_mat_solver_type superlu_dist -mat_superlu_dist_3d -mat_superlu_dist_d 2 -snes_view -snes_monitor -ksp_monitor
 
    test:
+      suffix: superlu_dist_2s
+      nsize: 2
+      requires: superlu_dist defined(PETSC_HAVE_SUPERLU_DIST_SINGLE)
+      args: -da_grid_x 20 -da_grid_y 20 -pc_type lu -pc_factor_mat_solver_type superlu_dist -pc_precision single
+      output_file: output/ex19_superlu.out
+
+   test:
+      suffix: superlu_dist_3ds
+      nsize: 4
+      requires: superlu_dist !defined(PETSCTEST_VALGRIND) defined(PETSC_HAVE_SUPERLU_DIST_SINGLE)
+      filter: grep -v iam | grep -v openMP
+      args: -da_grid_x 20 -da_grid_y 20 -pc_type lu -pc_factor_mat_solver_type superlu_dist -mat_superlu_dist_3d -mat_superlu_dist_d 2 -snes_view -snes_monitor -ksp_monitor -pc_precision single
+
+   test:
       suffix: superlu_equil
       requires: superlu
       args: -da_grid_x 20 -da_grid_y 20 -{snes,ksp}_monitor_short -pc_type lu -pc_factor_mat_solver_type superlu -mat_superlu_equil
@@ -1067,7 +1081,13 @@ PetscErrorCode NonlinearGS(SNES snes, Vec X, Vec B, void *ctx)
       suffix: tut_3
       nsize: 4
       requires: hypre !single !complex !defined(PETSC_HAVE_HYPRE_DEVICE)
-      args: -da_refine 5 -snes_monitor -ksp_monitor -snes_view -pc_type hypre
+      args: -da_refine 5 -snes_monitor -snes_converged_reason -pc_type hypre -dm_mat_type {{aij baij}}
+
+   test:
+      suffix: tut_3_seq
+      nsize: 1
+      requires: hypre !single !complex !defined(PETSC_HAVE_HYPRE_DEVICE)
+      args: -da_refine 1 -snes_monitor -snes_converged_reason -pc_type hypre -dm_mat_type {{seqaij mpiaij seqbaij mpibaij}}
 
    test:
       suffix: tut_8
@@ -1111,18 +1131,18 @@ PetscErrorCode NonlinearGS(SNES snes, Vec X, Vec B, void *ctx)
       suffix: cuda_1
       nsize: 1
       requires: cuda
-      args: -snes_monitor -dm_mat_type seqaijcusparse -dm_vec_type seqcuda -pc_type gamg -pc_gamg_esteig_ksp_max_it 10 -ksp_monitor -mg_levels_ksp_max_it 3
+      args: -snes_monitor -dm_mat_type seqaijcusparse -dm_vec_type seqcuda -pc_type gamg -pc_gamg_esteig_ksp_max_it 10 -ksp_monitor -mg_levels_ksp_max_it 3 -pc_gamg_mis_k_minimum_degree_ordering true
 
    test:
       suffix: cuda_2
       nsize: 3
       requires: cuda !single
-      args: -snes_monitor -dm_mat_type mpiaijcusparse -dm_vec_type mpicuda -pc_type gamg -pc_gamg_esteig_ksp_max_it 10 -ksp_monitor  -mg_levels_ksp_max_it 3
+      args: -snes_monitor -dm_mat_type mpiaijcusparse -dm_vec_type mpicuda -pc_type gamg -pc_gamg_esteig_ksp_max_it 10 -ksp_monitor  -mg_levels_ksp_max_it 3 -pc_gamg_mis_k_minimum_degree_ordering true
 
    test:
       suffix: cuda_dm_bind_below
       nsize: 2
-      requires: cuda
+      requires: cuda defined(PETSC_USE_LOG)
       args: -dm_mat_type aijcusparse -dm_vec_type cuda -da_refine 3 -pc_type mg -mg_levels_ksp_type chebyshev -mg_levels_pc_type jacobi -log_view -pc_mg_log -dm_bind_below 10000
       filter: awk "/Level/ {print \$NF}"
 
@@ -1172,7 +1192,7 @@ PetscErrorCode NonlinearGS(SNES snes, Vec X, Vec B, void *ctx)
 
    test:
      suffix: logviewmemory
-     requires: defined(PETSC_USE_LOG) !defined(PETSCTEST_VALGRIND)
+     requires: defined(PETSC_USE_LOG) !defined(PETSC_HAVE_THREADSAFETY)
      args: -log_view -log_view_memory -da_refine 4
      filter: grep MatFDColorSetUp | wc -w | xargs  -I % sh -c "expr % \> 21"
 
@@ -1207,6 +1227,19 @@ PetscErrorCode NonlinearGS(SNES snes, Vec X, Vec B, void *ctx)
       nsize: 1
       requires: !defined(PETSC_USE_64BIT_INDICES) !defined(PETSCTEST_VALGRIND)
       args: -da_refine 100 -petsc_ci_portable_error_output -error_output_stdout
-      filter: grep -E -v "(options_left|memory block|leaked context|not freed before MPI_Finalize|Could be the program crashed)"
+      filter: grep -E -v "(memory block|leaked context|not freed before MPI_Finalize|Could be the program crashed)"
+
+   testset:
+      requires: hpddm cuda
+      args: -snes_monitor -ksp_converged_reason -ksp_type hpddm -pc_type jacobi -dm_mat_type aijcusparse -dm_vec_type cuda
+      test:
+        suffix: hpddm_cuda
+        filter: sed -e "s/Linear solve converged due to CONVERGED_RTOL iterations 15/Linear solve converged due to CONVERGED_RTOL iterations 14/g"
+        args: -ksp_hpddm_type {{gmres gcrodr}separate output} -ksp_hpddm_precision {{single double}shared output}
+      test:
+        suffix: hpddm_cuda_right
+        filter: sed -e "s/Linear solve converged due to CONVERGED_RTOL iterations 15/Linear solve converged due to CONVERGED_RTOL iterations 14/g"
+        args: -ksp_hpddm_type gcrodr -ksp_pc_side right
+        output_file: output/ex19_hpddm_cuda_ksp_hpddm_type-gcrodr.out
 
 TEST*/

@@ -1,4 +1,3 @@
-
 static char help[] = "Basic equation for generator stability analysis.\n";
 
 /*F
@@ -49,7 +48,7 @@ PetscErrorCode PostStepFunction(TS ts)
   PetscCall(VecGetArrayRead(U, &u));
   PetscCall(PetscPrintf(PETSC_COMM_SELF, "delta(%3.2f) = %8.7f\n", (double)t, (double)u[0]));
   PetscCall(VecRestoreArrayRead(U, &u));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -72,7 +71,7 @@ static PetscErrorCode RHSFunction(TS ts, PetscReal t, Vec U, Vec F, AppCtx *ctx)
 
   PetscCall(VecRestoreArrayRead(U, &u));
   PetscCall(VecRestoreArray(F, &f));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -103,7 +102,7 @@ static PetscErrorCode RHSJacobian(TS ts, PetscReal t, Vec U, Mat A, Mat B, AppCt
     PetscCall(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode RHSJacobianP(TS ts, PetscReal t, Vec X, Mat A, void *ctx0)
@@ -118,7 +117,7 @@ static PetscErrorCode RHSJacobianP(TS ts, PetscReal t, Vec X, Mat A, void *ctx0)
   PetscCall(MatSetValues(A, 2, row, 1, col, &J[0][0], INSERT_VALUES));
   PetscCall(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode CostIntegrand(TS ts, PetscReal t, Vec U, Vec R, AppCtx *ctx)
@@ -132,7 +131,7 @@ static PetscErrorCode CostIntegrand(TS ts, PetscReal t, Vec U, Vec R, AppCtx *ct
   r[0] = ctx->c * PetscPowScalarInt(PetscMax(0., u[0] - ctx->u_s), ctx->beta);
   PetscCall(VecRestoreArray(R, &r));
   PetscCall(VecRestoreArrayRead(U, &u));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DRDUJacobianTranspose(TS ts, PetscReal t, Vec U, Mat DRDU, Mat B, AppCtx *ctx)
@@ -148,7 +147,7 @@ static PetscErrorCode DRDUJacobianTranspose(TS ts, PetscReal t, Vec U, Mat DRDU,
   PetscCall(MatSetValues(DRDU, 1, row, 1, col, ru, INSERT_VALUES));
   PetscCall(MatAssemblyBegin(DRDU, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(DRDU, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DRDPJacobianTranspose(TS ts, PetscReal t, Vec U, Mat DRDP, AppCtx *ctx)
@@ -157,7 +156,7 @@ static PetscErrorCode DRDPJacobianTranspose(TS ts, PetscReal t, Vec U, Mat DRDP,
   PetscCall(MatZeroEntries(DRDP));
   PetscCall(MatAssemblyBegin(DRDP, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(DRDP, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ComputeSensiP(Vec lambda, Vec mu, AppCtx *ctx)
@@ -172,7 +171,7 @@ PetscErrorCode ComputeSensiP(Vec lambda, Vec mu, AppCtx *ctx)
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "\n sensitivity wrt parameter pm: %.7f \n", (double)sensip));
   PetscCall(VecRestoreArrayRead(lambda, &x));
   PetscCall(VecRestoreArrayRead(mu, &y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -282,6 +281,8 @@ int main(int argc, char **argv)
   PetscCall(TSSetRHSFunction(quadts, NULL, (TSRHSFunction)CostIntegrand, &ctx));
   PetscCall(TSSetRHSJacobian(quadts, DRDU, DRDU, (TSRHSJacobian)DRDUJacobianTranspose, &ctx));
   PetscCall(TSSetRHSJacobianP(quadts, DRDP, (TSRHSJacobianP)DRDPJacobianTranspose, &ctx));
+  PetscCall(TSSetCostGradients(ts, 1, lambda, mu));
+  PetscCall(TSSetRHSJacobianP(ts, Jacp, RHSJacobianP, &ctx));
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Set initial conditions
@@ -304,7 +305,6 @@ int main(int argc, char **argv)
   PetscCall(VecGetArray(mu[0], &x_ptr));
   x_ptr[0] = -1.0;
   PetscCall(VecRestoreArray(mu[0], &x_ptr));
-  PetscCall(TSSetCostGradients(ts, 1, lambda, mu));
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Set solver options
@@ -347,9 +347,6 @@ int main(int argc, char **argv)
   PetscCall(VecGetArray(mu[0], &x_ptr));
   x_ptr[0] = -1.0;
   PetscCall(VecRestoreArray(mu[0], &x_ptr));
-
-  /*   Set RHS JacobianP */
-  PetscCall(TSSetRHSJacobianP(ts, Jacp, RHSJacobianP, &ctx));
 
   PetscCall(TSAdjointSolve(ts));
 

@@ -34,6 +34,11 @@ extern void PetscRmPointer(void*);
 #define matlrcgetmats_ matlrcgetmats
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define matlrcsetmats_ MATLRCSETMATS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define matlrcsetmats_ matlrcsetmats
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define matcreatelrc_ MATCREATELRC
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define matcreatelrc_ matcreatelrc
@@ -48,6 +53,15 @@ PETSC_EXTERN void  matlrcgetmats_(Mat N,Mat *A,Mat *U,Vec *c,Mat *V, int *__ierr
 {
 *__ierr = MatLRCGetMats(
 	(Mat)PetscToPointer((N) ),A,U,c,V);
+}
+PETSC_EXTERN void  matlrcsetmats_(Mat N,Mat A,Mat U,Vec c,Mat V, int *__ierr)
+{
+*__ierr = MatLRCSetMats(
+	(Mat)PetscToPointer((N) ),
+	(Mat)PetscToPointer((A) ),
+	(Mat)PetscToPointer((U) ),
+	(Vec)PetscToPointer((c) ),
+	(Mat)PetscToPointer((V) ));
 }
 PETSC_EXTERN void  matcreatelrc_(Mat A,Mat U,Vec c,Mat V,Mat *N, int *__ierr)
 {

@@ -1,4 +1,3 @@
-
 /*
    This provides a matrix that applies a VecScatter to a vector.
 */
@@ -11,19 +10,19 @@ typedef struct {
 } Mat_Scatter;
 
 /*@
-    MatScatterGetVecScatter - Returns the user-provided scatter set with `MatScatterSetVecScatter()` in a `MATSCATTER` matrix
+  MatScatterGetVecScatter - Returns the user-provided scatter set with `MatScatterSetVecScatter()` in a `MATSCATTER` matrix
 
-    Not Collective, but not cannot use scatter if not used collectively on `Mat`
+  Logically Collective
 
-    Input Parameter:
-.   mat - the matrix, should have been created with MatCreateScatter() or have type `MATSCATTER`
+  Input Parameter:
+. mat - the matrix, should have been created with MatCreateScatter() or have type `MATSCATTER`
 
-    Output Parameter:
-.   scatter - the scatter context
+  Output Parameter:
+. scatter - the scatter context
 
-    Level: intermediate
+  Level: intermediate
 
-.seealso: `MATSCATTER`, `MatCreateScatter()`, `MatScatterSetVecScatter()`, `MATSCATTER`
+.seealso: [](ch_matrices), `Mat`, `MATSCATTER`, `MatCreateScatter()`, `MatScatterSetVecScatter()`
 @*/
 PetscErrorCode MatScatterGetVecScatter(Mat mat, VecScatter *scatter)
 {
@@ -31,23 +30,23 @@ PetscErrorCode MatScatterGetVecScatter(Mat mat, VecScatter *scatter)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(mat, MAT_CLASSID, 1);
-  PetscValidPointer(scatter, 2);
+  PetscAssertPointer(scatter, 2);
   mscatter = (Mat_Scatter *)mat->data;
   *scatter = mscatter->scatter;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatDestroy_Scatter(Mat mat)
+static PetscErrorCode MatDestroy_Scatter(Mat mat)
 {
   Mat_Scatter *scatter = (Mat_Scatter *)mat->data;
 
   PetscFunctionBegin;
   PetscCall(VecScatterDestroy(&scatter->scatter));
   PetscCall(PetscFree(mat->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatMult_Scatter(Mat A, Vec x, Vec y)
+static PetscErrorCode MatMult_Scatter(Mat A, Vec x, Vec y)
 {
   Mat_Scatter *scatter = (Mat_Scatter *)A->data;
 
@@ -56,10 +55,10 @@ PetscErrorCode MatMult_Scatter(Mat A, Vec x, Vec y)
   PetscCall(VecZeroEntries(y));
   PetscCall(VecScatterBegin(scatter->scatter, x, y, ADD_VALUES, SCATTER_FORWARD));
   PetscCall(VecScatterEnd(scatter->scatter, x, y, ADD_VALUES, SCATTER_FORWARD));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatMultAdd_Scatter(Mat A, Vec x, Vec y, Vec z)
+static PetscErrorCode MatMultAdd_Scatter(Mat A, Vec x, Vec y, Vec z)
 {
   Mat_Scatter *scatter = (Mat_Scatter *)A->data;
 
@@ -68,10 +67,10 @@ PetscErrorCode MatMultAdd_Scatter(Mat A, Vec x, Vec y, Vec z)
   if (z != y) PetscCall(VecCopy(y, z));
   PetscCall(VecScatterBegin(scatter->scatter, x, z, ADD_VALUES, SCATTER_FORWARD));
   PetscCall(VecScatterEnd(scatter->scatter, x, z, ADD_VALUES, SCATTER_FORWARD));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatMultTranspose_Scatter(Mat A, Vec x, Vec y)
+static PetscErrorCode MatMultTranspose_Scatter(Mat A, Vec x, Vec y)
 {
   Mat_Scatter *scatter = (Mat_Scatter *)A->data;
 
@@ -80,10 +79,10 @@ PetscErrorCode MatMultTranspose_Scatter(Mat A, Vec x, Vec y)
   PetscCall(VecZeroEntries(y));
   PetscCall(VecScatterBegin(scatter->scatter, x, y, ADD_VALUES, SCATTER_REVERSE));
   PetscCall(VecScatterEnd(scatter->scatter, x, y, ADD_VALUES, SCATTER_REVERSE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatMultTransposeAdd_Scatter(Mat A, Vec x, Vec y, Vec z)
+static PetscErrorCode MatMultTransposeAdd_Scatter(Mat A, Vec x, Vec y, Vec z)
 {
   Mat_Scatter *scatter = (Mat_Scatter *)A->data;
 
@@ -92,7 +91,7 @@ PetscErrorCode MatMultTransposeAdd_Scatter(Mat A, Vec x, Vec y, Vec z)
   if (z != y) PetscCall(VecCopy(y, z));
   PetscCall(VecScatterBegin(scatter->scatter, x, z, ADD_VALUES, SCATTER_REVERSE));
   PetscCall(VecScatterEnd(scatter->scatter, x, z, ADD_VALUES, SCATTER_REVERSE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static struct _MatOps MatOps_Values = {NULL,
@@ -245,14 +244,15 @@ static struct _MatOps MatOps_Values = {NULL,
                                        NULL,
                                        NULL,
                                        NULL,
-                                       /*150*/ NULL};
+                                       /*150*/ NULL,
+                                       NULL};
 
 /*MC
-   MATSCATTER - MATSCATTER = "scatter" - A matrix type that simply applies a `VecScatterBegin()` and `VecScatterEnd()`
+   MATSCATTER - "scatter" - A matrix type that simply applies a `VecScatterBegin()` and `VecScatterEnd()` to perform `MatMult()`
 
   Level: advanced
 
-.seealso: ``MATSCATTER`, MatCreateScatter()`, `MatScatterSetVecScatter()`, `MatScatterGetVecScatter()`
+.seealso: [](ch_matrices), `Mat`, `MATSCATTER`, MatCreateScatter()`, `MatScatterSetVecScatter()`, `MatScatterGetVecScatter()`
 M*/
 
 PETSC_EXTERN PetscErrorCode MatCreate_Scatter(Mat A)
@@ -260,7 +260,7 @@ PETSC_EXTERN PetscErrorCode MatCreate_Scatter(Mat A)
   Mat_Scatter *b;
 
   PetscFunctionBegin;
-  PetscCall(PetscMemcpy(A->ops, &MatOps_Values, sizeof(struct _MatOps)));
+  A->ops[0] = MatOps_Values;
   PetscCall(PetscNew(&b));
 
   A->data = (void *)b;
@@ -272,23 +272,23 @@ PETSC_EXTERN PetscErrorCode MatCreate_Scatter(Mat A)
   A->preallocated = PETSC_FALSE;
 
   PetscCall(PetscObjectChangeTypeName((PetscObject)A, MATSCATTER));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #include <petsc/private/sfimpl.h>
 /*@C
-   MatCreateScatter - Creates a new matrix of `MatType` `MATSCATTER`, based on a VecScatter
+  MatCreateScatter - Creates a new matrix of `MatType` `MATSCATTER`, based on a VecScatter
 
   Collective
 
-   Input Parameters:
-+  comm - MPI communicator
--  scatter - a `VecScatter`
+  Input Parameters:
++ comm    - MPI communicator
+- scatter - a `VecScatter`
 
-   Output Parameter:
-.  A - the matrix
+  Output Parameter:
+. A - the matrix
 
-   Level: intermediate
+  Level: intermediate
 
    PETSc requires that matrices and vectors being used for certain
    operations are partitioned accordingly.  For example, when
@@ -299,11 +299,11 @@ PETSC_EXTERN PetscErrorCode MatCreate_Scatter(Mat A)
    required for use of the matrix interface routines, even though
    the scatter matrix may not actually be physically partitioned.
 
-  Developer Note:
-   This directly accesses information inside the `VecScatter` associated with the matrix-vector product
-   for this matrix. This is not desirable..
+  Developer Notes:
+  This directly accesses information inside the `VecScatter` associated with the matrix-vector product
+  for this matrix. This is not desirable..
 
-.seealso: `MatScatterSetVecScatter()`, `MatScatterGetVecScatter()`, `MATSCATTER`
+.seealso: [](ch_matrices), `Mat`, `MatScatterSetVecScatter()`, `MatScatterGetVecScatter()`, `MATSCATTER`
 @*/
 PetscErrorCode MatCreateScatter(MPI_Comm comm, VecScatter scatter, Mat *A)
 {
@@ -313,21 +313,21 @@ PetscErrorCode MatCreateScatter(MPI_Comm comm, VecScatter scatter, Mat *A)
   PetscCall(MatSetType(*A, MATSCATTER));
   PetscCall(MatScatterSetVecScatter(*A, scatter));
   PetscCall(MatSetUp(*A));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-    MatScatterSetVecScatter - sets the scatter that the matrix is to apply as its linear operator in a `MATSCATTER`
+  MatScatterSetVecScatter - sets the scatter that the matrix is to apply as its linear operator in a `MATSCATTER`
 
-   Collective
+  Logically Collective
 
-    Input Parameters:
-+   mat - the `MATSCATTER` matrix
--   scatter - the scatter context create with `VecScatterCreate()`
+  Input Parameters:
++ mat     - the `MATSCATTER` matrix
+- scatter - the scatter context create with `VecScatterCreate()`
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `MATSCATTER`, `MatCreateScatter()`, `MATSCATTER`
+.seealso: [](ch_matrices), `Mat`, `MATSCATTER`, `MatCreateScatter()`
 @*/
 PetscErrorCode MatScatterSetVecScatter(Mat mat, VecScatter scatter)
 {
@@ -344,5 +344,5 @@ PetscErrorCode MatScatterSetVecScatter(Mat mat, VecScatter scatter)
   PetscCall(VecScatterDestroy(&mscatter->scatter));
 
   mscatter->scatter = scatter;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

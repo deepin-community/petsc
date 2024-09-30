@@ -89,7 +89,6 @@ PETSC_EXTERN void  ksppipegcrsetmmax_(KSP ksp,PetscInt *mmax, int *__ierr)
 *__ierr = KSPPIPEGCRSetMmax(
 	(KSP)PetscToPointer((ksp) ),*mmax);
 }
-
 PETSC_EXTERN void  ksppipegcrgetmmax_(KSP ksp,PetscInt *mmax, int *__ierr)
 {
 *__ierr = KSPPIPEGCRGetMmax(

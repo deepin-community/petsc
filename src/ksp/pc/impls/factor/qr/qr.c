@@ -1,4 +1,3 @@
-
 /*
    Defines a direct QR factorization preconditioner for any Mat implementation
    Note: this need not be considered a preconditioner since it supplies
@@ -29,7 +28,7 @@ static PetscErrorCode PCSetUp_QR(PC pc)
       PetscCall(MatFactorGetError(pc->pmat, &err));
       if (err) { /* Factor() fails */
         pc->failedreason = (PCFailedReason)err;
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
     }
     ((PC_Factor *)dir)->fact = pc->pmat;
@@ -51,7 +50,7 @@ static PetscErrorCode PCSetUp_QR(PC pc)
     PetscCall(MatFactorGetError(((PC_Factor *)dir)->fact, &err));
     if (err) { /* FactorSymbolic() fails */
       pc->failedreason = (PCFailedReason)err;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
 
     PetscCall(MatQRFactorNumeric(((PC_Factor *)dir)->fact, pc->pmat, &((PC_Factor *)dir)->info));
@@ -67,7 +66,7 @@ static PetscErrorCode PCSetUp_QR(PC pc)
     PetscCall(MatFactorGetSolverType(((PC_Factor *)dir)->fact, &solverpackage));
     PetscCall(PCFactorSetMatSolverType(pc, solverpackage));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCReset_QR(PC pc)
@@ -77,7 +76,7 @@ static PetscErrorCode PCReset_QR(PC pc)
   PetscFunctionBegin;
   if (!dir->hdr.inplace && ((PC_Factor *)dir)->fact) PetscCall(MatDestroy(&((PC_Factor *)dir)->fact));
   PetscCall(ISDestroy(&dir->col));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCDestroy_QR(PC pc)
@@ -90,7 +89,7 @@ static PetscErrorCode PCDestroy_QR(PC pc)
   PetscCall(PetscFree(((PC_Factor *)dir)->solvertype));
   PetscCall(PCFactorClearComposedFunctions(pc));
   PetscCall(PetscFree(pc->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApply_QR(PC pc, Vec x, Vec y)
@@ -101,7 +100,7 @@ static PetscErrorCode PCApply_QR(PC pc, Vec x, Vec y)
   PetscFunctionBegin;
   fact = dir->hdr.inplace ? pc->pmat : ((PC_Factor *)dir)->fact;
   PetscCall(MatSolve(fact, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCMatApply_QR(PC pc, Mat X, Mat Y)
@@ -112,7 +111,7 @@ static PetscErrorCode PCMatApply_QR(PC pc, Mat X, Mat Y)
   PetscFunctionBegin;
   fact = dir->hdr.inplace ? pc->pmat : ((PC_Factor *)dir)->fact;
   PetscCall(MatMatSolve(fact, X, Y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApplyTranspose_QR(PC pc, Vec x, Vec y)
@@ -123,7 +122,7 @@ static PetscErrorCode PCApplyTranspose_QR(PC pc, Vec x, Vec y)
   PetscFunctionBegin;
   fact = dir->hdr.inplace ? pc->pmat : ((PC_Factor *)dir)->fact;
   PetscCall(MatSolveTranspose(fact, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -136,7 +135,7 @@ static PetscErrorCode PCApplyTranspose_QR(PC pc, Vec x, Vec y)
    not need a Krylov method (i.e. you can use -ksp_type preonly, or
    `KSPSetType`(ksp,`KSPPREONLY`) for the Krylov method
 
-.seealso: `PCCreate()`, `PCSetType()`, `PCType`, `PC`, `PCSVD`,
+.seealso: [](ch_ksp), `PCCreate()`, `PCSetType()`, `PCType`, `PC`, `PCSVD`,
           `PCILU`, `PCLU`, `PCCHOLESKY`, `PCICC`, `PCFactorSetReuseOrdering()`, `PCFactorSetReuseFill()`, `PCFactorGetMatrix()`,
           `PCFactorSetFill()`, `PCFactorSetUseInPlace()`, `PCFactorSetMatOrderingType()`, `PCFactorSetColumnPivot()`,
           `PCFactorSetPivotingInBlocks()`, `PCFactorSetShiftType()`, `PCFactorSetShiftAmount()`
@@ -162,5 +161,5 @@ PETSC_EXTERN PetscErrorCode PCCreate_QR(PC pc)
   pc->ops->setfromoptions  = PCSetFromOptions_Factor;
   pc->ops->view            = PCView_Factor;
   pc->ops->applyrichardson = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

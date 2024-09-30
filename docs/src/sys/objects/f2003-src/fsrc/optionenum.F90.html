@@ -1,61 +1,101 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/objects/f2003-src/fsrc/optionenum.F90">Actual source code: optionenum.F90</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/sys/objects/f2003-src/fsrc/optionenum.F90">Actual source code: optionenum.F90</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:46:57+00:00">
+<meta name="date" content="2024-03-29T14:12:58+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
 <pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#include </font><font color="#666666">"petsc/finclude/petscsys.h"</font><font color="#A020F0"></font>
 
-<a name="line2">  2: </a><font color="#A020F0">#include </font><font color="#666666">"petsc/finclude/petscsys.h"</font><font color="#A020F0"></font>
+<a name="line3">  3: </a><font color="#A020F0">#if defined(_WIN32) &amp;&amp; defined(PETSC_USE_SHARED_LIBRARIES)</font>
+<a name="line4">  4: </a>!DEC$ ATTRIBUTES DLLEXPORT::<a href="../../../../../manualpages/Sys/PetscOptionsGetEnum.html">PetscOptionsGetEnum</a>
+<a name="line5">  5: </a><font color="#A020F0">#endif</font>
 
-<a name="line4">  4: </a><font color="#A020F0">#if defined(_WIN32) &amp;&amp; defined(PETSC_USE_SHARED_LIBRARIES)</font>
-<a name="line5">  5: </a>!DEC$ ATTRIBUTES DLLEXPORT::<a href="../../..2003-../../docs/manualpages/Sys/PetscOptionsGetEnum.html">PetscOptionsGetEnum</a>
-<a name="line6">  6: </a><font color="#A020F0">#endif</font>
+<a name="line7">  7: </a><strong><font color="#4169E1"><a name="PetscOptionsGetEnum"></a>Subroutine <a href="../../../../../manualpages/Sys/PetscOptionsGetEnum.html">PetscOptionsGetEnum</a>(po,pre,name,FArray,opt,set,ierr)</font></strong>
+<a name="line8">  8: </a>  use,intrinsic :: iso_c_binding
+<a name="line9">  9: </a>  use petscsysdef
+<a name="line10"> 10: </a>  implicit none
 
-<a name="line8">  8: </a>      Subroutine <a href="../../..2003-../../docs/manualpages/Sys/PetscOptionsGetEnum.html">PetscOptionsGetEnum</a>(po,pre,name,FArray,opt,set,ierr)
-<a name="line9">  9: </a>      use,intrinsic :: iso_c_binding
-<a name="line10"> 10: </a>      use petscsysdef
-<a name="line11"> 11: </a>      implicit none
+<a name="line12"> 12: </a>  character(*)                pre,name
+<a name="line13"> 13: </a>  character(*)                FArray(*)
+<a name="line14"> 14: </a>  <a href="../../../../../manualpages/Sys/PetscEnum.html">PetscEnum</a>                   :: opt
+<a name="line15"> 15: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a>                   :: set
+<a name="line16"> 16: </a>  PetscOptions                :: po
+<a name="line17"> 17: </a>  <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>,intent(out)  :: ierr
 
-<a name="line13"> 13: </a>      character(*)                pre,name
-<a name="line14"> 14: </a>      character(*)                FArray(*)
-<a name="line15"> 15: </a>      <a href="../../..2003-../../docs/manualpages/Sys/PetscEnum.html">PetscEnum</a>                   :: opt
-<a name="line16"> 16: </a>      <a href="../../..2003-../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>                   :: set
-<a name="line17"> 17: </a>      PetscOptions                :: po
-<a name="line18"> 18: </a>      <a href="../../..2003-../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>,intent(out)  :: ierr
+<a name="line19"> 19: </a>  Type(C_Ptr),Dimension(:),Pointer :: CArray
+<a name="line20"> 20: </a>  character(kind=c_char),pointer   :: nullc =&gt; null()
+<a name="line21"> 21: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>   :: i,Len
+<a name="line22"> 22: </a>  Character(kind=C_char,len=99),Dimension(:),Pointer::list1
 
-<a name="line20"> 20: </a>      Type(C_Ptr),Dimension(:),Pointer :: CArray
-<a name="line21"> 21: </a>      character(kind=c_char),pointer   :: nullc =&gt; null()
-<a name="line22"> 22: </a>      <a href="../../..2003-../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>   :: i,Len
-<a name="line23"> 23: </a>      Character(kind=C_char,len=99),Dimension(:),Pointer::list1
+<a name="line24"> 24: </a>  Len=0
+<a name="line25"> 25: </a>  <font color="#4169E1">do</font> i=1,100
+<a name="line26"> 26: </a>    <font color="#4169E1">if</font> (len_trim(Farray(i)) .eq. 0) then
+<a name="line27"> 27: </a>      Len = i-1
+<a name="line28"> 28: </a>      <font color="#4169E1">goto</font> 100
+<a name="line29"> 29: </a>    endif
+<a name="line30"> 30: </a>  enddo
+<a name="line31"> 31: </a>100  <font color="#4169E1">continue</font>
 
-<a name="line25"> 25: </a>      Len=0
-<a name="line26"> 26: </a>      <font color="#4169E1">do</font> i=1,100
-<a name="line27"> 27: </a>        <font color="#4169E1">if</font> (len_trim(Farray(i)) .eq. 0) then
-<a name="line28"> 28: </a>          Len = i-1
-<a name="line29"> 29: </a>          <font color="#4169E1">goto</font> 100
-<a name="line30"> 30: </a>        endif
-<a name="line31"> 31: </a>      enddo
-<a name="line32"> 32: </a> 100  <font color="#4169E1">continue</font>
+<a name="line33"> 33: </a>  Allocate(list1(Len),stat=ierr)
+<a name="line34"> 34: </a>  <font color="#4169E1">if</font> (ierr .ne. 0) <font color="#4169E1">return</font>
+<a name="line35"> 35: </a>  Allocate(CArray(Len+1),stat=ierr)
+<a name="line36"> 36: </a>  <font color="#4169E1">if</font> (ierr .ne. 0) <font color="#4169E1">return</font>
+<a name="line37"> 37: </a>  <font color="#4169E1">do</font> i=1,Len
+<a name="line38"> 38: </a>      list1(i) = trim(FArray(i))//C_NULL_CHAR
+<a name="line39"> 39: </a>      CArray(i) = c_loc(list1(i))
+<a name="line40"> 40: </a>  enddo
 
-<a name="line34"> 34: </a>      Allocate(list1(Len),stat=ierr)
-<a name="line35"> 35: </a>      <font color="#4169E1">if</font> (ierr .ne. 0) <font color="#4169E1">return</font>
-<a name="line36"> 36: </a>      Allocate(CArray(Len+1),stat=ierr)
-<a name="line37"> 37: </a>      <font color="#4169E1">if</font> (ierr .ne. 0) <font color="#4169E1">return</font>
-<a name="line38"> 38: </a>      <font color="#4169E1">do</font> i=1,Len
-<a name="line39"> 39: </a>         list1(i) = trim(FArray(i))//C_NULL_CHAR
-<a name="line40"> 40: </a>      enddo
+<a name="line42"> 42: </a>  CArray(Len+1) = c_loc(nullc)
+<a name="line43"> 43: </a>  call PetscOptionsGetEnumPrivate(po,pre,name,CArray,opt,set,ierr)
+<a name="line44"> 44: </a>  DeAllocate(CArray)
+<a name="line45"> 45: </a>  DeAllocate(list1)
+<a name="line46"> 46: </a><strong><font color="#4169E1"><a name="PetscOptionsEnum"></a>End Subroutine</font></strong>
 
-<a name="line42"> 42: </a>      CArray = (/(c_loc(list1(i)),i=1,Len),c_loc(nullc)/)
-<a name="line43"> 43: </a>      call PetscOptionsGetEnumPrivate(po,pre,name,CArray,opt,set,ierr)
-<a name="line44"> 44: </a>      DeAllocate(CArray)
-<a name="line45"> 45: </a>      DeAllocate(list1)
-<a name="line46"> 46: </a>      End Subroutine
+<a name="line48"> 48: </a><strong><font color="#4169E1">Subroutine <a href="../../../../../manualpages/Sys/PetscOptionsEnum.html">PetscOptionsEnum</a>(opt,text,man,Flist,curr,ivalue,set,ierr)</font></strong>
+<a name="line49"> 49: </a>  use,intrinsic :: iso_c_binding
+<a name="line50"> 50: </a>  use petscsysdef
+<a name="line51"> 51: </a>  implicit none
 
+<a name="line53"> 53: </a>  character(*)                opt,text,man
+<a name="line54"> 54: </a>  character(*)                Flist(*)
+<a name="line55"> 55: </a>  <a href="../../../../../manualpages/Sys/PetscEnum.html">PetscEnum</a>                   :: curr,ivalue
+<a name="line56"> 56: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a>                   :: set
+<a name="line57"> 57: </a>  <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>,intent(out)  :: ierr
+
+<a name="line59"> 59: </a>  Type(C_Ptr),Dimension(:),Pointer :: CArray
+<a name="line60"> 60: </a>  character(kind=c_char),pointer   :: nullc =&gt; null()
+<a name="line61"> 61: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>   :: i,Len
+<a name="line62"> 62: </a>  Character(kind=C_char,len=99),Dimension(:),Pointer::list1
+
+<a name="line64"> 64: </a>  Len=0
+<a name="line65"> 65: </a>  <font color="#4169E1">do</font> i=1,100
+<a name="line66"> 66: </a>    <font color="#4169E1">if</font> (len_trim(Flist(i)) .eq. 0) then
+<a name="line67"> 67: </a>      Len = i-1
+<a name="line68"> 68: </a>      <font color="#4169E1">goto</font> 100
+<a name="line69"> 69: </a>    endif
+<a name="line70"> 70: </a>  enddo
+<a name="line71"> 71: </a>100  <font color="#4169E1">continue</font>
+
+<a name="line73"> 73: </a>  Allocate(list1(Len),stat=ierr)
+<a name="line74"> 74: </a>  <font color="#4169E1">if</font> (ierr .ne. 0) <font color="#4169E1">return</font>
+<a name="line75"> 75: </a>  Allocate(CArray(Len+1),stat=ierr)
+<a name="line76"> 76: </a>  <font color="#4169E1">if</font> (ierr .ne. 0) <font color="#4169E1">return</font>
+<a name="line77"> 77: </a>  <font color="#4169E1">do</font> i=1,Len
+<a name="line78"> 78: </a>      list1(i) = trim(Flist(i))//C_NULL_CHAR
+<a name="line79"> 79: </a>      CArray(i) = c_loc(list1(i))
+<a name="line80"> 80: </a>  enddo
+
+<a name="line82"> 82: </a>  CArray(Len+1) = c_loc(nullc)
+<a name="line83"> 83: </a>  call PetscOptionsEnumPrivate(opt,text,man,CArray,curr,ivalue,set,ierr)
+
+<a name="line85"> 85: </a>  DeAllocate(CArray)
+<a name="line86"> 86: </a>  DeAllocate(list1)
+<a name="line87"> 87: </a>End Subroutine <a href="../../../../../manualpages/Sys/PetscOptionsEnum.html">PetscOptionsEnum</a>
 </pre>
 </body>
 

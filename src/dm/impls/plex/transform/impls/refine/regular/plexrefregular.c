@@ -1,6 +1,7 @@
 #include <petsc/private/dmplextransformimpl.h> /*I "petscdmplextransform.h" I*/
 
-/* Regular Refinement of Hybrid Meshes
+/*
+   Regular Refinement of Hybrid Meshes
 
    We would like to express regular refinement as a small set of rules that can be applied on every point of the Plex
    to automatically generate a refined Plex. In fact, we would like these rules to be general enough to encompass other
@@ -20,7 +21,7 @@
   DMPlexRefineRegularGetAffineFaceTransforms - Gets the affine map from the reference face cell to each face in the given cell
 
   Input Parameters:
-+ cr - The DMPlexCellRefiner object
++ tr - The `DMPlexTransform` object
 - ct - The cell type
 
   Output Parameters:
@@ -30,13 +31,16 @@
 . invJ - The inverse Jacobian for each face
 - detJ - The determinant of the Jacobian for each face
 
-  Note: The Jacobian and inverse Jacboian will be rectangular, and the inverse is really a generalized inverse.
-$         v0 + j x_face = x_cell
-$    invj (x_cell - v0) = x_face
-
   Level: developer
 
-.seealso: `DMPlexCellRefinerGetAffineTransforms()`, `Create()`
+  Note:
+  The Jacobian and inverse Jacobian will be rectangular, and the inverse is really a generalized inverse.
+.vb
+    v0 + j x_face = x_cell
+    invj (x_cell - v0) = x_face
+.ve
+
+.seealso: `DMPLEX`, `DM`, `DMPlexTransform`, `DMPolytopeType`, `DMPlexCellRefinerGetAffineTransforms()`
 @*/
 PetscErrorCode DMPlexRefineRegularGetAffineFaceTransforms(DMPlexTransform tr, DMPolytopeType ct, PetscInt *Nf, PetscReal *v0[], PetscReal *J[], PetscReal *invJ[], PetscReal *detJ[])
 {
@@ -79,7 +83,7 @@ PetscErrorCode DMPlexRefineRegularGetAffineFaceTransforms(DMPlexTransform tr, DM
    invJ[Nf][dc][df]: 4 x 2 x 1
    detJ[Nf]:         4
    */
-  static PetscReal quad_v0[]   = {0.0, -1.0, 1.0, 0.0, 0.0, 1.0 - 1.0, 0.0};
+  static PetscReal quad_v0[]   = {0.0, -1.0, 1.0, 0.0, 0.0, 1.0, -1.0, 0.0};
   static PetscReal quad_J[]    = {1.0, 0.0, 0.0, 1.0, -1.0, 0.0, 0.0, -1.0};
   static PetscReal quad_invJ[] = {1.0, 0.0, 0.0, 1.0, -1.0, 0.0, 0.0, -1.0};
   static PetscReal quad_detJ[] = {1.0, 1.0, 1.0, 1.0};
@@ -103,14 +107,14 @@ PetscErrorCode DMPlexRefineRegularGetAffineFaceTransforms(DMPlexTransform tr, DM
   default:
     SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "Unsupported polytope type %s", DMPolytopeTypes[ct]);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexRefineRegularGetAffineTransforms - Gets the affine map from the reference cell to each subcell
 
   Input Parameters:
-+ cr - The DMPlexCellRefiner object
++ tr - The `DMPlexTransform` object
 - ct - The cell type
 
   Output Parameters:
@@ -121,7 +125,7 @@ PetscErrorCode DMPlexRefineRegularGetAffineFaceTransforms(DMPlexTransform tr, DM
 
   Level: developer
 
-.seealso: `DMPlexRefineRegularGetAffineFaceTransforms()`, `DMPLEXREFINEREGULAR`
+.seealso: `DMPLEX`, `DM`, `DMPlexTransform`, `DMPolytopeType`, `DMPlexRefineRegularGetAffineFaceTransforms()`, `DMPLEXREFINEREGULAR`
 @*/
 PetscErrorCode DMPlexRefineRegularGetAffineTransforms(DMPlexTransform tr, DMPolytopeType ct, PetscInt *Nc, PetscReal *v0[], PetscReal *J[], PetscReal *invJ[])
 {
@@ -248,7 +252,7 @@ PetscErrorCode DMPlexRefineRegularGetAffineTransforms(DMPlexTransform tr, DMPoly
   default:
     SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "Unsupported polytope type %s", DMPolytopeTypes[ct]);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if 0
@@ -279,7 +283,7 @@ static PetscErrorCode DMPlexCellRefinerGetCellVertices_Regular(DMPlexCellRefiner
     case DM_POLYTOPE_HEXAHEDRON:    *Nv = 27; *subcellV = hex_v;  break;
     default: SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP, "No subcell vertices for cell type %s", DMPolytopeTypes[ct]);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCellRefinerGetSubcellVertices_Regular(DMPlexCellRefiner cr, DMPolytopeType ct, DMPolytopeType rct, PetscInt r, PetscInt *Nv, PetscInt *subcellV[])
@@ -302,7 +306,7 @@ static PetscErrorCode DMPlexCellRefinerGetSubcellVertices_Regular(DMPlexCellRefi
     case DM_POLYTOPE_HEXAHEDRON:    *Nv = 8; *subcellV = &hex_v[r*(*Nv)];  break;
     default: SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP, "No subcell vertices for cell type %s", DMPolytopeTypes[ct]);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
@@ -322,13 +326,13 @@ static PetscErrorCode DMPlexTransformView_Regular(DMPlexTransform tr, PetscViewe
   } else {
     SETERRQ(PetscObjectComm((PetscObject)tr), PETSC_ERR_SUP, "Viewer type %s not yet supported for DMPlexTransform writing", ((PetscObject)viewer)->type_name);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexTransformSetUp_Regular(DMPlexTransform tr)
 {
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexTransformDestroy_Regular(DMPlexTransform tr)
@@ -337,7 +341,7 @@ static PetscErrorCode DMPlexTransformDestroy_Regular(DMPlexTransform tr)
 
   PetscFunctionBegin;
   PetscCall(PetscFree(f));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMPlexTransformGetSubcellOrientation_Regular(DMPlexTransform tr, DMPolytopeType sct, PetscInt sp, PetscInt so, DMPolytopeType tct, PetscInt r, PetscInt o, PetscInt *rnew, PetscInt *onew)
@@ -433,7 +437,7 @@ PetscErrorCode DMPlexTransformGetSubcellOrientation_Regular(DMPlexTransform tr, 
   PetscFunctionBeginHot;
   *rnew = r;
   *onew = o;
-  if (!so) PetscFunctionReturn(0);
+  if (!so) PetscFunctionReturn(PETSC_SUCCESS);
   switch (sct) {
   case DM_POLYTOPE_POINT:
     break;
@@ -591,7 +595,7 @@ PetscErrorCode DMPlexTransformGetSubcellOrientation_Regular(DMPlexTransform tr, 
   default:
     SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP, "Unsupported cell type %s", DMPolytopeTypes[sct]);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMPlexTransformCellRefine_Regular(DMPlexTransform tr, DMPolytopeType source, PetscInt p, PetscInt *rt, PetscInt *Nt, DMPolytopeType *target[], PetscInt *size[], PetscInt *cone[], PetscInt *ornt[])
@@ -1204,7 +1208,7 @@ PetscErrorCode DMPlexTransformCellRefine_Regular(DMPlexTransform tr, DMPolytopeT
   default:
     SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "No refinement strategy for %s", DMPolytopeTypes[source]);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexTransformInitialize_Regular(DMPlexTransform tr)
@@ -1213,10 +1217,11 @@ static PetscErrorCode DMPlexTransformInitialize_Regular(DMPlexTransform tr)
   tr->ops->view                  = DMPlexTransformView_Regular;
   tr->ops->setup                 = DMPlexTransformSetUp_Regular;
   tr->ops->destroy               = DMPlexTransformDestroy_Regular;
+  tr->ops->setdimensions         = DMPlexTransformSetDimensions_Internal;
   tr->ops->celltransform         = DMPlexTransformCellRefine_Regular;
   tr->ops->getsubcellorientation = DMPlexTransformGetSubcellOrientation_Regular;
   tr->ops->mapcoordinates        = DMPlexTransformMapCoordinatesBarycenter_Internal;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode DMPlexTransformCreate_Regular(DMPlexTransform tr)
@@ -1229,5 +1234,5 @@ PETSC_EXTERN PetscErrorCode DMPlexTransformCreate_Regular(DMPlexTransform tr)
   tr->data = f;
 
   PetscCall(DMPlexTransformInitialize_Regular(tr));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

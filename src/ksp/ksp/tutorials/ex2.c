@@ -1,4 +1,3 @@
-
 static char help[] = "Solves a linear system in parallel with KSP.\n\
 Input parameters include:\n\
   -view_exact_sol   : write exact solution vector to stdout\n\
@@ -356,10 +355,12 @@ int main(int argc, char **args)
 
    test:
       suffix: pipecg2
+      requires: !defined(PETSC_HAVE_THREADSAFETY)
       args: -ksp_monitor_short -ksp_type pipecg2 -m 9 -n 9 -ksp_norm_type {{preconditioned unpreconditioned natural}}
 
    test:
       suffix: pipecg2_2
+      requires: !defined(PETSC_HAVE_THREADSAFETY)
       nsize: 4
       args: -ksp_monitor_short -ksp_type pipecg2 -m 15 -n 9 -ksp_norm_type {{preconditioned unpreconditioned natural}}
 
@@ -387,5 +388,11 @@ int main(int argc, char **args)
       suffix: symmetric_pc2
       nsize: 1
       args: -ksp_monitor -ksp_type gmres -pc_type bjacobi -sub_pc_type icc -ksp_pc_side symmetric -pc_bjacobi_blocks 2
+
+   test:
+      suffix: help
+      requires: !hpddm !complex !kokkos_kernels !amgx !ml !spai !hypre !viennacl !parms !h2opus !metis !parmetis !superlu_dist !mkl_sparse_optimize !mkl_sparse !mkl_pardiso !mkl_cpardiso !cuda !hip defined(PETSC_USE_LOG) defined(PETSC_USE_INFO) cxx
+      nsize: 1
+      args: -ksp_monitor -help -petsc_ci_portable_error_output -error_output_stdout
 
  TEST*/

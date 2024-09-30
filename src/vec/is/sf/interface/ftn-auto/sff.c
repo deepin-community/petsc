@@ -162,10 +162,10 @@ PETSC_EXTERN void  petscsfcomposeinverse_(PetscSF sfA,PetscSF sfB,PetscSF *sfBA,
 	(PetscSF)PetscToPointer((sfA) ),
 	(PetscSF)PetscToPointer((sfB) ),sfBA);
 }
-PETSC_EXTERN void  petscsfconcatenate_(MPI_Fint * comm,PetscInt *nsfs,PetscSF sfs[],PetscBool *shareRoots,PetscInt leafOffsets[],PetscSF *newsf, int *__ierr)
+PETSC_EXTERN void  petscsfconcatenate_(MPI_Fint * comm,PetscInt *nsfs,PetscSF sfs[],PetscSFConcatenateRootMode *rootMode,PetscInt leafOffsets[],PetscSF *newsf, int *__ierr)
 {
 *__ierr = PetscSFConcatenate(
-	MPI_Comm_f2c(*(comm)),*nsfs,sfs,*shareRoots,leafOffsets,newsf);
+	MPI_Comm_f2c(*(comm)),*nsfs,sfs,*rootMode,leafOffsets,newsf);
 }
 #if defined(__cplusplus)
 }

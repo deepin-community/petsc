@@ -45,24 +45,24 @@ typedef struct {
 } TS_IRK;
 
 /*@C
-   TSIRKTableauCreate - create the tableau for `TSIRK` and provide the entries
+  TSIRKTableauCreate - create the tableau for `TSIRK` and provide the entries
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  ts - timestepping context
-.  nstages - number of stages, this is the dimension of the matrices below
-.  A - stage coefficients (dimension nstages*nstages, row-major)
-.  b - step completion table (dimension nstages)
-.  c - abscissa (dimension nstages)
-.  binterp - coefficients of the interpolation formula (dimension nstages)
-.  A_inv - inverse of A (dimension nstages*nstages, row-major)
-.  A_inv_rowsum - row sum of the inverse of A (dimension nstages)
--  I_s - identity matrix (dimension nstages*nstages)
+  Input Parameters:
++ ts           - timestepping context
+. nstages      - number of stages, this is the dimension of the matrices below
+. A            - stage coefficients (dimension nstages*nstages, row-major)
+. b            - step completion table (dimension nstages)
+. c            - abscissa (dimension nstages)
+. binterp      - coefficients of the interpolation formula (dimension nstages)
+. A_inv        - inverse of A (dimension nstages*nstages, row-major)
+. A_inv_rowsum - row sum of the inverse of A (dimension nstages)
+- I_s          - identity matrix (dimension nstages*nstages)
 
-   Level: advanced
+  Level: advanced
 
-.seealso: [](chapter_ts), `TSIRK`, `TSIRKRegister()`
+.seealso: [](ch_ts), `TSIRK`, `TSIRKRegister()`
 @*/
 PetscErrorCode TSIRKTableauCreate(TS ts, PetscInt nstages, const PetscReal *A, const PetscReal *b, const PetscReal *c, const PetscReal *binterp, const PetscScalar *A_inv, const PetscScalar *A_inv_rowsum, const PetscScalar *I_s)
 {
@@ -81,7 +81,7 @@ PetscErrorCode TSIRKTableauCreate(TS ts, PetscInt nstages, const PetscReal *A, c
   if (A_inv) PetscCall(PetscArraycpy(tab->A_inv, A_inv, PetscSqr(nstages)));
   if (A_inv_rowsum) PetscCall(PetscArraycpy(tab->A_inv_rowsum, A_inv_rowsum, nstages));
   if (I_s) PetscCall(PetscArraycpy(tab->I_s, I_s, PetscSqr(nstages)));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Arrays should be freed with PetscFree3(A,b,c) */
@@ -153,41 +153,41 @@ static PetscErrorCode TSIRKCreate_Gauss(TS ts)
   PetscCall(TSIRKTableauCreate(ts, nstages, gauss_A_real, gauss_b, gauss_c, NULL, gauss_A_inv, gauss_A_inv_rowsum, I_s));
   PetscCall(PetscFree3(gauss_A_real, gauss_b, gauss_c));
   PetscCall(PetscFree4(gauss_A, gauss_A_inv, gauss_A_inv_rowsum, I_s));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TSIRKRegister -  adds a `TSIRK` implementation
+  TSIRKRegister -  adds a `TSIRK` implementation
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  sname - name of user-defined IRK scheme
--  function - function to create method context
+  Input Parameters:
++ sname    - name of user-defined IRK scheme
+- function - function to create method context
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   `TSIRKRegister()` may be called multiple times to add several user-defined families.
+  Note:
+  `TSIRKRegister()` may be called multiple times to add several user-defined families.
 
-   Sample usage:
+  Example Usage:
 .vb
-   TSIRKRegister("my_scheme",MySchemeCreate);
+   TSIRKRegister("my_scheme", MySchemeCreate);
 .ve
 
-   Then, your scheme can be chosen with the procedural interface via
-$     TSIRKSetType(ts,"my_scheme")
-   or at runtime via the option
+  Then, your scheme can be chosen with the procedural interface via
+$     TSIRKSetType(ts, "my_scheme")
+  or at runtime via the option
 $     -ts_irk_type my_scheme
 
-.seealso: [](chapter_ts), `TSIRK`, `TSIRKRegisterAll()`
+.seealso: [](ch_ts), `TSIRK`, `TSIRKRegisterAll()`
 @*/
 PetscErrorCode TSIRKRegister(const char sname[], PetscErrorCode (*function)(TS))
 {
   PetscFunctionBegin;
   PetscCall(TSIRKInitializePackage());
   PetscCall(PetscFunctionListAdd(&TSIRKList, sname, function));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -197,32 +197,32 @@ PetscErrorCode TSIRKRegister(const char sname[], PetscErrorCode (*function)(TS))
 
   Level: advanced
 
-.seealso: [](chapter_ts), `TSIRK`, `TSIRKRegisterDestroy()`
+.seealso: [](ch_ts), `TSIRK`, `TSIRKRegisterDestroy()`
 @*/
 PetscErrorCode TSIRKRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (TSIRKRegisterAllCalled) PetscFunctionReturn(0);
+  if (TSIRKRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   TSIRKRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(TSIRKRegister(TSIRKGAUSS, TSIRKCreate_Gauss));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TSIRKRegisterDestroy - Frees the list of schemes that were registered by `TSIRKRegister()`.
+  TSIRKRegisterDestroy - Frees the list of schemes that were registered by `TSIRKRegister()`.
 
-   Not Collective
+  Not Collective
 
-   Level: advanced
+  Level: advanced
 
-.seealso: [](chapter_ts), `TSIRK`, `TSIRKRegister()`, `TSIRKRegisterAll()`
+.seealso: [](ch_ts), `TSIRK`, `TSIRKRegister()`, `TSIRKRegisterAll()`
 @*/
 PetscErrorCode TSIRKRegisterDestroy(void)
 {
   PetscFunctionBegin;
   TSIRKRegisterAllCalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -231,16 +231,16 @@ PetscErrorCode TSIRKRegisterDestroy(void)
 
   Level: developer
 
-.seealso: [](chapter_ts), `TSIRK`, `PetscInitialize()`, `TSIRKFinalizePackage()`, `TSInitializePackage()`
+.seealso: [](ch_ts), `TSIRK`, `PetscInitialize()`, `TSIRKFinalizePackage()`, `TSInitializePackage()`
 @*/
 PetscErrorCode TSIRKInitializePackage(void)
 {
   PetscFunctionBegin;
-  if (TSIRKPackageInitialized) PetscFunctionReturn(0);
+  if (TSIRKPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   TSIRKPackageInitialized = PETSC_TRUE;
   PetscCall(TSIRKRegisterAll());
   PetscCall(PetscRegisterFinalize(TSIRKFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -249,14 +249,14 @@ PetscErrorCode TSIRKInitializePackage(void)
 
   Level: developer
 
-.seealso: [](chapter_ts), `TSIRK`, `PetscFinalize()`, `TSIRKFinalizePackage()`, `TSInitializePackage()`
+.seealso: [](ch_ts), `TSIRK`, `PetscFinalize()`, `TSInitializePackage()`
 @*/
 PetscErrorCode TSIRKFinalizePackage(void)
 {
   PetscFunctionBegin;
   PetscCall(PetscFunctionListDestroy(&TSIRKList));
   TSIRKPackageInitialized = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -287,7 +287,7 @@ static PetscErrorCode TSEvaluateStep_IRK(TS ts, PetscInt order, Vec U, PetscBool
   PetscCall(VecCopy(ts->vec_sol, U));
   for (j = 0; j < irk->nstages; j++) w[j] = h * tab->b[j];
   PetscCall(VecMAXPY(U, irk->nstages, w, YdotI));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSRollBack_IRK(TS ts)
@@ -296,7 +296,7 @@ static PetscErrorCode TSRollBack_IRK(TS ts)
 
   PetscFunctionBegin;
   PetscCall(VecCopy(irk->U0, ts->vec_sol));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSStep_IRK(TS ts)
@@ -355,7 +355,7 @@ static PetscErrorCode TSStep_IRK(TS ts)
       PetscCall(PetscInfo(ts, "Step=%" PetscInt_FMT ", step rejections %" PetscInt_FMT " greater than current TS allowed, stopping solve\n", ts->steps, rejections));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSInterpolate_IRK(TS ts, PetscReal itime, Vec U)
@@ -388,7 +388,7 @@ static PetscErrorCode TSInterpolate_IRK(TS ts, PetscReal itime, Vec U)
     for (i = 0; i < nstages; i++) bt[i] += h * B[i * pinterp + j] * tt;
   }
   PetscCall(VecMAXPY(U, nstages, bt, irk->YdotI));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSIRKTableauReset(TS ts)
@@ -397,10 +397,10 @@ static PetscErrorCode TSIRKTableauReset(TS ts)
   IRKTableau tab = irk->tableau;
 
   PetscFunctionBegin;
-  if (!tab) PetscFunctionReturn(0);
+  if (!tab) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscFree3(tab->A, tab->A_inv, tab->I_s));
   PetscCall(PetscFree4(tab->b, tab->c, tab->binterp, tab->A_inv_rowsum));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSReset_IRK(TS ts)
@@ -419,7 +419,7 @@ static PetscErrorCode TSReset_IRK(TS ts)
   PetscCall(VecDestroy(&irk->U));
   PetscCall(VecDestroy(&irk->U0));
   PetscCall(MatDestroy(&irk->TJ));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSIRKGetVecs(TS ts, DM dm, Vec *U)
@@ -432,7 +432,7 @@ static PetscErrorCode TSIRKGetVecs(TS ts, DM dm, Vec *U)
       PetscCall(DMGetNamedGlobalVector(dm, "TSIRK_U", U));
     } else *U = irk->U;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSIRKRestoreVecs(TS ts, DM dm, Vec *U)
@@ -441,7 +441,7 @@ static PetscErrorCode TSIRKRestoreVecs(TS ts, DM dm, Vec *U)
   if (U) {
     if (dm && dm != ts->dm) PetscCall(DMRestoreNamedGlobalVector(dm, "TSIRK_U", U));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -477,7 +477,7 @@ static PetscErrorCode SNESTSFormFunction_IRK(SNES snes, Vec ZC, Vec FC, TS ts)
   PetscCall(VecStrideScatterAll(YdotI, FC, INSERT_VALUES));
   ts->dm = dmsave;
   PetscCall(TSIRKRestoreVecs(ts, dm, &U));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -514,13 +514,13 @@ static PetscErrorCode SNESTSFormJacobian_IRK(SNES snes, Vec ZC, Mat JC, Mat JCpr
     PetscCall(MatKAIJRestoreS(JC, &S));
   } else SETERRQ(PetscObjectComm((PetscObject)ts), PETSC_ERR_SUP, "TSIRK %s does not support implicit formula", irk->method_name); /* TODO: need the mass matrix for DAE  */
   ts->dm = dmsave;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMCoarsenHook_TSIRK(DM fine, DM coarse, void *ctx)
 {
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMRestrictHook_TSIRK(DM fine, Mat restrct, Vec rscale, Mat inject, DM coarse, void *ctx)
@@ -535,13 +535,13 @@ static PetscErrorCode DMRestrictHook_TSIRK(DM fine, Mat restrct, Vec rscale, Mat
   PetscCall(VecPointwiseMult(U_c, rscale, U_c));
   PetscCall(TSIRKRestoreVecs(ts, fine, &U));
   PetscCall(TSIRKRestoreVecs(ts, coarse, &U_c));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMSubDomainHook_TSIRK(DM dm, DM subdm, void *ctx)
 {
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMSubDomainRestrictHook_TSIRK(DM dm, VecScatter gscat, VecScatter lscat, DM subdm, void *ctx)
@@ -558,7 +558,7 @@ static PetscErrorCode DMSubDomainRestrictHook_TSIRK(DM dm, VecScatter gscat, Vec
 
   PetscCall(TSIRKRestoreVecs(ts, dm, &U));
   PetscCall(TSIRKRestoreVecs(ts, subdm, &U_c));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSSetUp_IRK(TS ts)
@@ -600,7 +600,7 @@ static PetscErrorCode TSSetUp_IRK(TS ts)
   }
   PetscCall(SNESSetJacobian(ts->snes, irk->TJ, irk->TJ, SNESTSFormJacobian, ts));
   PetscCall(VecDestroy(&R));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSSetFromOptions_IRK(TS ts, PetscOptionItems *PetscOptionsObject)
@@ -619,7 +619,7 @@ static PetscErrorCode TSSetFromOptions_IRK(TS ts, PetscOptionItems *PetscOptions
     }
   }
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSView_IRK(TS ts, PetscViewer viewer)
@@ -642,7 +642,7 @@ static PetscErrorCode TSView_IRK(TS ts, PetscViewer viewer)
     PetscCall(PetscFormatRealArray(buf, sizeof(buf), "% 8.6f", PetscSqr(irk->nstages), tab->A));
     PetscCall(PetscViewerASCIIPrintf(viewer, "  A coefficients       A = %s\n", buf));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSLoad_IRK(TS ts, PetscViewer viewer)
@@ -658,101 +658,101 @@ static PetscErrorCode TSLoad_IRK(TS ts, PetscViewer viewer)
   /* function and Jacobian context for SNES when used with TS is always ts object */
   PetscCall(SNESSetFunction(snes, NULL, NULL, ts));
   PetscCall(SNESSetJacobian(snes, NULL, NULL, NULL, ts));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   TSIRKSetType - Set the type of `TSIRK` scheme to use
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+  ts - timestepping context
--  irktype - type of `TSIRK` scheme
++ ts      - timestepping context
+- irktype - type of `TSIRK` scheme
 
   Options Database Key:
-.  -ts_irk_type <gauss> - set irk type
+. -ts_irk_type <gauss> - set irk type
 
   Level: intermediate
 
-.seealso: [](chapter_ts), `TSIRKGetType()`, `TSIRK`, `TSIRKType`, `TSIRKGAUSS`
+.seealso: [](ch_ts), `TSIRKGetType()`, `TSIRK`, `TSIRKType`, `TSIRKGAUSS`
 @*/
 PetscErrorCode TSIRKSetType(TS ts, TSIRKType irktype)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts, TS_CLASSID, 1);
-  PetscValidCharPointer(irktype, 2);
+  PetscAssertPointer(irktype, 2);
   PetscTryMethod(ts, "TSIRKSetType_C", (TS, TSIRKType), (ts, irktype));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   TSIRKGetType - Get the type of `TSIRK` IMEX scheme being used
 
-  Logically collective
+  Logically Collective
 
   Input Parameter:
-.  ts - timestepping context
+. ts - timestepping context
 
   Output Parameter:
-.  irktype - type of `TSIRK` IMEX scheme
+. irktype - type of `TSIRK` IMEX scheme
 
   Level: intermediate
 
-.seealso: [](chapter_ts), `TSIRKGetType()`, `TSIRK`, `TSIRKType`, `TSIRKGAUSS`
+.seealso: [](ch_ts), `TSIRK`, `TSIRKType`, `TSIRKGAUSS`
 @*/
 PetscErrorCode TSIRKGetType(TS ts, TSIRKType *irktype)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts, TS_CLASSID, 1);
   PetscUseMethod(ts, "TSIRKGetType_C", (TS, TSIRKType *), (ts, irktype));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   TSIRKSetNumStages - Set the number of stages of `TSIRK` scheme to use
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+  ts - timestepping context
--  nstages - number of stages of `TSIRK` scheme
++ ts      - timestepping context
+- nstages - number of stages of `TSIRK` scheme
 
   Options Database Key:
-.  -ts_irk_nstages <int> - set number of stages
+. -ts_irk_nstages <int> - set number of stages
 
   Level: intermediate
 
-.seealso: [](chapter_ts), `TSIRKGetNumStages()`, `TSIRK`
+.seealso: [](ch_ts), `TSIRKGetNumStages()`, `TSIRK`
 @*/
 PetscErrorCode TSIRKSetNumStages(TS ts, PetscInt nstages)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts, TS_CLASSID, 1);
   PetscTryMethod(ts, "TSIRKSetNumStages_C", (TS, PetscInt), (ts, nstages));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   TSIRKGetNumStages - Get the number of stages of `TSIRK` scheme
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+  ts - timestepping context
--  nstages - number of stages of `TSIRK` scheme
++ ts      - timestepping context
+- nstages - number of stages of `TSIRK` scheme
 
   Level: intermediate
 
-.seealso: [](chapter_ts), `TSIRKSetNumStages()`, `TSIRK`
+.seealso: [](ch_ts), `TSIRKSetNumStages()`, `TSIRK`
 @*/
 PetscErrorCode TSIRKGetNumStages(TS ts, PetscInt *nstages)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts, TS_CLASSID, 1);
-  PetscValidIntPointer(nstages, 2);
+  PetscAssertPointer(nstages, 2);
   PetscTryMethod(ts, "TSIRKGetNumStages_C", (TS, PetscInt *), (ts, nstages));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSIRKGetType_IRK(TS ts, TSIRKType *irktype)
@@ -761,7 +761,7 @@ static PetscErrorCode TSIRKGetType_IRK(TS ts, TSIRKType *irktype)
 
   PetscFunctionBegin;
   *irktype = irk->method_name;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSIRKSetType_IRK(TS ts, TSIRKType irktype)
@@ -775,10 +775,10 @@ static PetscErrorCode TSIRKSetType_IRK(TS ts, TSIRKType irktype)
     PetscCall(TSIRKTableauReset(ts));
   }
   PetscCall(PetscFunctionListFind(TSIRKList, irktype, &irkcreate));
-  PetscCheck(irkcreate, PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown TSIRK type \"%s\" given", irktype);
+  PetscCheck(irkcreate, PetscObjectComm((PetscObject)ts), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown TSIRK type \"%s\" given", irktype);
   PetscCall((*irkcreate)(ts));
   PetscCall(PetscStrallocpy(irktype, &irk->method_name));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSIRKSetNumStages_IRK(TS ts, PetscInt nstages)
@@ -788,7 +788,7 @@ static PetscErrorCode TSIRKSetNumStages_IRK(TS ts, PetscInt nstages)
   PetscFunctionBegin;
   PetscCheck(nstages > 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "input argument, %" PetscInt_FMT ", out of range", nstages);
   irk->nstages = nstages;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSIRKGetNumStages_IRK(TS ts, PetscInt *nstages)
@@ -796,9 +796,9 @@ static PetscErrorCode TSIRKGetNumStages_IRK(TS ts, PetscInt *nstages)
   TS_IRK *irk = (TS_IRK *)ts->data;
 
   PetscFunctionBegin;
-  PetscValidIntPointer(nstages, 2);
+  PetscAssertPointer(nstages, 2);
   *nstages = irk->nstages;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSDestroy_IRK(TS ts)
@@ -814,7 +814,7 @@ static PetscErrorCode TSDestroy_IRK(TS ts)
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSIRKGetType_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSIRKSetNumStages_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSIRKGetNumStages_C", NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -829,7 +829,7 @@ static PetscErrorCode TSDestroy_IRK(TS ts)
   when using s stages. The default method uses three stages and thus has an order of six. The number of stages (thus order) can be set with
   -ts_irk_nstages or `TSIRKSetNumStages()`.
 
-.seealso: [](chapter_ts), `TSCreate()`, `TS`, `TSSetType()`, `TSIRKSetType()`, `TSIRKGetType()`, `TSIRKGAUSS`, `TSIRKRegister()`, `TSIRKSetNumStages()`, `TSType`
+.seealso: [](ch_ts), `TSCreate()`, `TS`, `TSSetType()`, `TSIRKSetType()`, `TSIRKGetType()`, `TSIRKGAUSS`, `TSIRKRegister()`, `TSIRKSetNumStages()`, `TSType`
 M*/
 PETSC_EXTERN PetscErrorCode TSCreate_IRK(TS ts)
 {
@@ -864,5 +864,5 @@ PETSC_EXTERN PetscErrorCode TSCreate_IRK(TS ts)
   PetscCall(PetscNew(&irk->tableau));
   irk->nstages = 3;
   PetscCall(TSIRKSetType(ts, TSIRKDefault));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

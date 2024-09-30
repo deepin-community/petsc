@@ -1,4 +1,6 @@
-#define PETSC_SKIP_COMPLEX
+#if !defined(PETSC_SKIP_COMPLEX)
+  #define PETSC_SKIP_COMPLEX
+#endif
 #include <petscsys.h>
 
 #if defined(PETSC_HAVE_CXXABI_H)
@@ -18,7 +20,7 @@ PetscErrorCode PetscDemangleSymbol(const char mangledName[], char **name)
     if (status == -2) {
       /* Mangled name is not a valid name under the C++ ABI mangling rules */
       PetscCall(PetscStrallocpy(mangledName, name));
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_LIB, "Demangling failed for symbol %s", mangledName);
   }
   PetscCall(PetscStrallocpy(newname, name));
@@ -26,5 +28,5 @@ PetscErrorCode PetscDemangleSymbol(const char mangledName[], char **name)
 #else
   PetscCall(PetscStrallocpy(mangledName, name));
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

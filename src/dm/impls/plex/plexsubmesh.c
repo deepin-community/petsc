@@ -19,7 +19,7 @@ static PetscErrorCode DMPlexCellIsHybrid_Internal(DM dm, PetscInt p, PetscBool *
     *isHybrid = PETSC_FALSE;
     break;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexGetTensorPrismBounds_Internal(DM dm, PetscInt dim, PetscInt *cStart, PetscInt *cEnd)
@@ -42,22 +42,40 @@ static PetscErrorCode DMPlexGetTensorPrismBounds_Internal(DM dm, PetscInt dim, P
     if (*cStart < 0) PetscCall(DMLabelGetStratumBounds(ctLabel, DM_POLYTOPE_QUAD_PRISM_TENSOR, cStart, cEnd));
     break;
   default:
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexMarkBoundaryFaces_Internal(DM dm, PetscInt val, PetscInt cellHeight, DMLabel label)
 {
-  PetscInt fStart, fEnd, f;
+  PetscSF         sf;
+  const PetscInt *rootdegree, *leaves;
+  PetscInt        overlap, Nr = -1, Nl, pStart, fStart, fEnd;
 
   PetscFunctionBegin;
+  PetscCall(DMGetPointSF(dm, &sf));
+  PetscCall(DMPlexGetOverlap(dm, &overlap));
+  if (sf && !overlap) PetscCall(PetscSFGetGraph(sf, &Nr, &Nl, &leaves, NULL));
+  if (Nr > 0) {
+    PetscCall(PetscSFComputeDegreeBegin(sf, &rootdegree));
+    PetscCall(PetscSFComputeDegreeEnd(sf, &rootdegree));
+  } else rootdegree = NULL;
+  PetscCall(DMPlexGetChart(dm, &pStart, NULL));
   PetscCall(DMPlexGetHeightStratum(dm, cellHeight + 1, &fStart, &fEnd));
-  for (f = fStart; f < fEnd; ++f) {
-    PetscInt supportSize;
+  for (PetscInt f = fStart; f < fEnd; ++f) {
+    PetscInt supportSize, loc = -1;
 
     PetscCall(DMPlexGetSupportSize(dm, f, &supportSize));
     if (supportSize == 1) {
+      /* Do not mark faces which are shared, meaning
+           they are  present in the pointSF, or
+           they have rootdegree > 0
+         since they presumably have cells on the other side */
+      if (Nr > 0) {
+        PetscCall(PetscFindInt(f, Nl, leaves, &loc));
+        if (rootdegree[f - pStart] || loc >= 0) continue;
+      }
       if (val < 0) {
         PetscInt *closure = NULL;
         PetscInt  clSize, cl, cval;
@@ -76,7 +94,7 @@ static PetscErrorCode DMPlexMarkBoundaryFaces_Internal(DM dm, PetscInt val, Pets
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -85,15 +103,18 @@ static PetscErrorCode DMPlexMarkBoundaryFaces_Internal(DM dm, PetscInt val, Pets
   Not Collective
 
   Input Parameters:
-+ dm - The original DM
-- val - The marker value, or PETSC_DETERMINE to use some value in the closure (or 1 if none are found)
++ dm  - The original `DM`
+- val - The marker value, or `PETSC_DETERMINE` to use some value in the closure (or 1 if none are found)
 
   Output Parameter:
-. label - The DMLabel marking boundary faces with the given value
+. label - The `DMLabel` marking boundary faces with the given value
 
   Level: developer
 
-.seealso: `DMLabelCreate()`, `DMCreateLabel()`
+  Note:
+  This function will use the point `PetscSF` from the input `DM` to exclude points on the partition boundary from being marked, unless the partition overlap is greater than zero. If you also wish to mark the partition boundary, you can use `DMSetPointSF()` to temporarily set it to `NULL`, and then reset it to the original object after the call.
+
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMLabelCreate()`, `DMCreateLabel()`
 @*/
 PetscErrorCode DMPlexMarkBoundaryFaces(DM dm, PetscInt val, DMLabel label)
 {
@@ -104,7 +125,7 @@ PetscErrorCode DMPlexMarkBoundaryFaces(DM dm, PetscInt val, DMLabel label)
   PetscCall(DMPlexIsInterpolated(dm, &flg));
   PetscCheck(flg == DMPLEX_INTERPOLATED_FULL, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "DM is not fully interpolated on this rank");
   PetscCall(DMPlexMarkBoundaryFaces_Internal(dm, val, 0, label));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexLabelComplete_Internal(DM dm, DMLabel label, PetscBool completeCells)
@@ -183,54 +204,56 @@ static PetscErrorCode DMPlexLabelComplete_Internal(DM dm, DMLabel label, PetscBo
     PetscCall(ISDestroy(&valueIS));
     PetscCall(DMLabelDestroy(&lblRoots));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexLabelComplete - Starting with a label marking points on a surface, we add the transitive closure to the surface
 
   Input Parameters:
-+ dm - The DM
-- label - A DMLabel marking the surface points
++ dm    - The `DM`
+- label - A `DMLabel` marking the surface points
 
   Output Parameter:
-. label - A DMLabel marking all surface points in the transitive closure
+. label - A `DMLabel` marking all surface points in the transitive closure
 
   Level: developer
 
-.seealso: `DMPlexLabelCohesiveComplete()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexLabelCohesiveComplete()`
 @*/
 PetscErrorCode DMPlexLabelComplete(DM dm, DMLabel label)
 {
   PetscFunctionBegin;
   PetscCall(DMPlexLabelComplete_Internal(dm, label, PETSC_TRUE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexLabelAddCells - Starting with a label marking points on a surface, we add a cell for each point
 
   Input Parameters:
-+ dm - The DM
-- label - A DMLabel marking the surface points
++ dm    - The `DM`
+- label - A `DMLabel` marking the surface points
 
   Output Parameter:
-. label - A DMLabel incorporating cells
+. label - A `DMLabel` incorporating cells
 
   Level: developer
 
-  Note: The cells allow FEM boundary conditions to be applied using the cell geometry
+  Note:
+  The cells allow FEM boundary conditions to be applied using the cell geometry
 
-.seealso: `DMPlexLabelAddFaceCells()`, `DMPlexLabelComplete()`, `DMPlexLabelCohesiveComplete()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexLabelAddFaceCells()`, `DMPlexLabelComplete()`, `DMPlexLabelCohesiveComplete()`
 @*/
 PetscErrorCode DMPlexLabelAddCells(DM dm, DMLabel label)
 {
   IS              valueIS;
   const PetscInt *values;
-  PetscInt        numValues, v, cStart, cEnd;
+  PetscInt        numValues, v, csStart, csEnd, chStart, chEnd;
 
   PetscFunctionBegin;
-  PetscCall(DMPlexGetSimplexOrBoxCells(dm, 0, &cStart, &cEnd));
+  PetscCall(DMPlexGetSimplexOrBoxCells(dm, 0, &csStart, &csEnd));
+  PetscCall(DMPlexGetHeightStratum(dm, 0, &chStart, &chEnd));
   PetscCall(DMLabelGetNumValues(label, &numValues));
   PetscCall(DMLabelGetValueIS(label, &valueIS));
   PetscCall(ISGetIndices(valueIS, &values));
@@ -243,8 +266,20 @@ PetscErrorCode DMPlexLabelAddCells(DM dm, DMLabel label)
     PetscCall(DMLabelGetStratumIS(label, values[v], &pointIS));
     PetscCall(ISGetIndices(pointIS, &points));
     for (p = 0; p < numPoints; ++p) {
-      PetscInt *closure = NULL;
-      PetscInt  closureSize, cl;
+      const PetscInt point   = points[p];
+      PetscInt      *closure = NULL;
+      PetscInt       closureSize, cl, h, pStart, pEnd, cStart, cEnd;
+
+      // If the point is a hybrid, allow hybrid cells
+      PetscCall(DMPlexGetPointHeight(dm, point, &h));
+      PetscCall(DMPlexGetSimplexOrBoxCells(dm, h, &pStart, &pEnd));
+      if (point >= pStart && point < pEnd) {
+        cStart = csStart;
+        cEnd   = csEnd;
+      } else {
+        cStart = chStart;
+        cEnd   = chEnd;
+      }
 
       PetscCall(DMPlexGetTransitiveClosure(dm, points[p], PETSC_FALSE, &closureSize, &closure));
       for (cl = closureSize - 1; cl > 0; --cl) {
@@ -261,24 +296,25 @@ PetscErrorCode DMPlexLabelAddCells(DM dm, DMLabel label)
   }
   PetscCall(ISRestoreIndices(valueIS, &values));
   PetscCall(ISDestroy(&valueIS));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexLabelAddFaceCells - Starting with a label marking faces on a surface, we add a cell for each face
 
   Input Parameters:
-+ dm - The DM
-- label - A DMLabel marking the surface points
++ dm    - The `DM`
+- label - A `DMLabel` marking the surface points
 
   Output Parameter:
-. label - A DMLabel incorporating cells
+. label - A `DMLabel` incorporating cells
 
   Level: developer
 
-  Note: The cells allow FEM boundary conditions to be applied using the cell geometry
+  Note:
+  The cells allow FEM boundary conditions to be applied using the cell geometry
 
-.seealso: `DMPlexLabelAddCells()`, `DMPlexLabelComplete()`, `DMPlexLabelCohesiveComplete()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexLabelAddCells()`, `DMPlexLabelComplete()`, `DMPlexLabelCohesiveComplete()`
 @*/
 PetscErrorCode DMPlexLabelAddFaceCells(DM dm, DMLabel label)
 {
@@ -321,24 +357,25 @@ PetscErrorCode DMPlexLabelAddFaceCells(DM dm, DMLabel label)
   }
   PetscCall(ISRestoreIndices(valueIS, &values));
   PetscCall(ISDestroy(&valueIS));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexLabelClearCells - Remove cells from a label
 
   Input Parameters:
-+ dm - The DM
-- label - A DMLabel marking surface points and their adjacent cells
++ dm    - The `DM`
+- label - A `DMLabel` marking surface points and their adjacent cells
 
   Output Parameter:
-. label - A DMLabel without cells
+. label - A `DMLabel` without cells
 
   Level: developer
 
-  Note: This undoes DMPlexLabelAddCells() or DMPlexLabelAddFaceCells()
+  Note:
+  This undoes `DMPlexLabelAddCells()` or `DMPlexLabelAddFaceCells()`
 
-.seealso: `DMPlexLabelComplete()`, `DMPlexLabelCohesiveComplete()`, `DMPlexLabelAddCells()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexLabelComplete()`, `DMPlexLabelCohesiveComplete()`, `DMPlexLabelAddCells()`
 @*/
 PetscErrorCode DMPlexLabelClearCells(DM dm, DMLabel label)
 {
@@ -369,7 +406,7 @@ PetscErrorCode DMPlexLabelClearCells(DM dm, DMLabel label)
   }
   PetscCall(ISRestoreIndices(valueIS, &values));
   PetscCall(ISDestroy(&valueIS));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* take (oldEnd, added) pairs, ordered by height and convert them to (oldstart, newstart) pairs, ordered by ascending
@@ -408,7 +445,7 @@ static inline PetscErrorCode DMPlexShiftPointSetUp_Internal(PetscInt depth, Pets
     off += depthShift[2 * d + 1];
     depthShift[2 * d + 1] = depthShift[2 * d] + off;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* depthShift is a list of (old, new) pairs */
@@ -444,7 +481,7 @@ static PetscErrorCode DMPlexShiftSizes_Internal(DM dm, PetscInt depthShift[], DM
 
   PetscFunctionBegin;
   PetscCall(DMPlexGetDepth(dm, &depth));
-  if (depth < 0) PetscFunctionReturn(0);
+  if (depth < 0) PetscFunctionReturn(PETSC_SUCCESS);
   /* Step 1: Expand chart */
   PetscCall(DMPlexGetChart(dm, &pStart, &pEnd));
   pEnd = DMPlexShiftPoint_Internal(pEnd, depth, depthShift);
@@ -476,7 +513,7 @@ static PetscErrorCode DMPlexShiftSizes_Internal(DM dm, PetscInt depthShift[], DM
       PetscCall(DMPlexSetCellType(dmNew, newp, ct));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexShiftPoints_Internal(DM dm, PetscInt depthShift[], DM dmNew)
@@ -486,7 +523,7 @@ static PetscErrorCode DMPlexShiftPoints_Internal(DM dm, PetscInt depthShift[], D
 
   PetscFunctionBegin;
   PetscCall(DMPlexGetDepth(dm, &depth));
-  if (depth < 0) PetscFunctionReturn(0);
+  if (depth < 0) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(DMPlexGetMaxSizes(dm, &maxConeSize, &maxSupportSize));
   PetscCall(DMPlexGetMaxSizes(dmNew, &maxConeSizeNew, &maxSupportSizeNew));
   PetscCall(PetscMalloc1(PetscMax(PetscMax(maxConeSize, maxSupportSize), PetscMax(maxConeSizeNew, maxSupportSizeNew)), &newpoints));
@@ -510,7 +547,7 @@ static PetscErrorCode DMPlexShiftPoints_Internal(DM dm, PetscInt depthShift[], D
     PetscCall(DMPlexSetSupport(dmNew, newp, newpoints));
   }
   PetscCall(PetscFree(newpoints));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexShiftCoordinates_Internal(DM dm, PetscInt depthShift[], DM dmNew)
@@ -585,7 +622,7 @@ static PetscErrorCode DMPlexShiftCoordinates_Internal(DM dm, PetscInt depthShift
   PetscCall(VecRestoreArray(newCoordinates, &newCoords));
   PetscCall(VecDestroy(&newCoordinates));
   PetscCall(PetscSectionDestroy(&newCoordSection));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexShiftSF_Single(DM dm, PetscInt depthShift[], PetscSF sf, PetscSF sfNew)
@@ -616,7 +653,7 @@ static PetscErrorCode DMPlexShiftSF_Single(DM dm, PetscInt depthShift[], PetscSF
     PetscCall(PetscFree2(newLocation, newRemoteLocation));
     PetscCall(PetscSFSetGraph(sfNew, numRoots + totShift, numLeaves, glocalPoints, PETSC_OWN_POINTER, gremotePoints, PETSC_OWN_POINTER));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexShiftSF_Internal(DM dm, PetscInt depthShift[], DM dmNew)
@@ -639,7 +676,7 @@ static PetscErrorCode DMPlexShiftSF_Internal(DM dm, PetscInt depthShift[], DM dm
     PetscCall(DMGetNaturalSF(dmNew, &sfNatNew));
     PetscCall(DMPlexShiftSF_Single(dm, depthShift, sfNat, sfNatNew));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexShiftLabels_Internal(DM dm, PetscInt depthShift[], DM dmNew)
@@ -690,7 +727,7 @@ static PetscErrorCode DMPlexShiftLabels_Internal(DM dm, PetscInt depthShift[], D
     PetscCall(ISRestoreIndices(valueIS, &values));
     PetscCall(ISDestroy(&valueIS));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCreateVTKLabel_Internal(DM dm, PetscBool createGhostLabel, DM dmNew)
@@ -742,7 +779,7 @@ static PetscErrorCode DMPlexCreateVTKLabel_Internal(DM dm, PetscBool createGhost
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexShiftTree_Internal(DM dm, PetscInt depthShift[], DM dmNew)
@@ -797,7 +834,7 @@ static PetscErrorCode DMPlexShiftTree_Internal(DM dm, PetscInt depthShift[], DM 
     PetscCall(PetscFree2(parentsShifted, childIDsShifted));
     PetscCall(PetscSectionDestroy(&pSecShifted));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexConstructGhostCells_Internal(DM dm, DMLabel label, PetscInt *numGhostCells, DM gdm)
@@ -917,27 +954,28 @@ static PetscErrorCode DMPlexConstructGhostCells_Internal(DM dm, DMLabel label, P
   PetscCall(DMGetPeriodicity(dm, &maxCell, &Lstart, &L));
   PetscCall(DMSetPeriodicity(gdm, maxCell, Lstart, L));
   if (numGhostCells) *numGhostCells = Ng;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMPlexConstructGhostCells - Construct ghost cells which connect to every boundary face
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm - The original DM
-- labelName - The label specifying the boundary faces, or "Face Sets" if this is NULL
++ dm        - The original `DM`
+- labelName - The label specifying the boundary faces, or "Face Sets" if this is `NULL`
 
   Output Parameters:
-+ numGhostCells - The number of ghost cells added to the DM
-- dmGhosted - The new DM
-
-  Note: If no label exists of that name, one will be created marking all boundary faces
++ numGhostCells - The number of ghost cells added to the `DM`
+- dmGhosted     - The new `DM`
 
   Level: developer
 
-.seealso: `DMCreate()`
+  Note:
+  If no label exists of that name, one will be created marking all boundary faces
+
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMCreate()`
 @*/
 PetscErrorCode DMPlexConstructGhostCells(DM dm, const char labelName[], PetscInt *numGhostCells, DM *dmGhosted)
 {
@@ -949,8 +987,8 @@ PetscErrorCode DMPlexConstructGhostCells(DM dm, const char labelName[], PetscInt
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  if (numGhostCells) PetscValidIntPointer(numGhostCells, 3);
-  PetscValidPointer(dmGhosted, 4);
+  if (numGhostCells) PetscAssertPointer(numGhostCells, 3);
+  PetscAssertPointer(dmGhosted, 4);
   PetscCall(DMCreate(PetscObjectComm((PetscObject)dm), &gdm));
   PetscCall(DMSetType(gdm, DMPLEX));
   PetscCall(DMGetDimension(dm, &dim));
@@ -970,7 +1008,7 @@ PetscErrorCode DMPlexConstructGhostCells(DM dm, const char labelName[], PetscInt
   gdm->setfromoptionscalled = dm->setfromoptionscalled;
   if (numGhostCells) *numGhostCells = Ng;
   *dmGhosted = gdm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DivideCells_Private(DM dm, DMLabel label, DMPlexPointQueue queue)
@@ -1038,7 +1076,7 @@ static PetscErrorCode DivideCells_Private(DM dm, DMLabel label, DMPlexPointQueue
     PetscCall(DMPlexRestoreTransitiveClosure(dm, cell, PETSC_TRUE, &closureSize, &closure));
   }
   PetscCall(PetscFree2(pStart, pEnd));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 typedef struct {
@@ -1060,7 +1098,7 @@ static PetscErrorCode divideCell(DMLabel label, PetscInt p, PetscInt val, void *
     PetscCall(DMLabelSetValue(label, support[s], cval));
     PetscCall(DMPlexPointQueueEnqueue(div->queue, support[s]));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Mark cells by label propagation */
@@ -1108,7 +1146,7 @@ static PetscErrorCode DMPlexLabelFaultHalo(DM dm, DMLabel faultLabel)
   }
   PetscCall(DMLabelPropagateEnd(faultLabel, pointSF));
   PetscCall(DMPlexPointQueueDestroy(&queue));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1739,6 +1777,7 @@ static PetscErrorCode DMPlexConstructCohesiveCells_Internal(DM dm, DMLabel label
     PetscCall(ISRestoreIndices(pIS, &points));
     PetscCall(ISDestroy(&pIS));
   }
+  PetscCall(DMPlexReorderCohesiveSupports(sdm));
   /* Step 7: Coordinates */
   PetscCall(DMPlexShiftCoordinates_Internal(dm, depthShift, sdm));
   PetscCall(DMGetCoordinateSection(sdm, &coordSection));
@@ -1811,25 +1850,25 @@ static PetscErrorCode DMPlexConstructCohesiveCells_Internal(DM dm, DMLabel label
   PetscCall(PetscFree3(coneNew, coneONew, supportNew));
   PetscCall(PetscFree5(depthMax, depthEnd, depthShift, pMaxNew, numHybridPointsOld));
   PetscCall(PetscFree7(splitIS, unsplitIS, numSplitPoints, numUnsplitPoints, numHybridPoints, splitPoints, unsplitPoints));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMPlexConstructCohesiveCells - Construct cohesive cells which split the face along an internal interface
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm - The original DM
-- label - The label specifying the boundary faces (this could be auto-generated)
++ dm    - The original `DM`
+- label - The `DMLabel` specifying the boundary faces (this could be auto-generated)
 
   Output Parameters:
-+ splitLabel - The label containing the split points, or NULL if no output is desired
-- dmSplit - The new DM
++ splitLabel - The `DMLabel` containing the split points, or `NULL` if no output is desired
+- dmSplit    - The new `DM`
 
   Level: developer
 
-.seealso: `DMCreate()`, `DMPlexLabelCohesiveComplete()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMCreate()`, `DMPlexLabelCohesiveComplete()`
 @*/
 PetscErrorCode DMPlexConstructCohesiveCells(DM dm, DMLabel label, DMLabel splitLabel, DM *dmSplit)
 {
@@ -1838,7 +1877,7 @@ PetscErrorCode DMPlexConstructCohesiveCells(DM dm, DMLabel label, DMLabel splitL
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(dmSplit, 4);
+  PetscAssertPointer(dmSplit, 4);
   PetscCall(DMCreate(PetscObjectComm((PetscObject)dm), &sdm));
   PetscCall(DMSetType(sdm, DMPLEX));
   PetscCall(DMGetDimension(dm, &dim));
@@ -1852,7 +1891,7 @@ PetscErrorCode DMPlexConstructCohesiveCells(DM dm, DMLabel label, DMLabel splitL
     SETERRQ(PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_OUTOFRANGE, "Cannot construct cohesive cells for dimension %" PetscInt_FMT, dim);
   }
   *dmSplit = sdm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Returns the side of the surface for a given cell with a face on the surface */
@@ -1894,7 +1933,7 @@ static PetscErrorCode GetSurfaceSide_Static(DM dm, DM subdm, PetscInt numSubpoin
     }
   }
   PetscCheck(c != coneSize, PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_WRONG, "Cell %" PetscInt_FMT " in split face %" PetscInt_FMT " support does not have it in the cone", cell, face);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode CheckFaultEdge_Private(DM dm, DMLabel label)
@@ -1911,7 +1950,7 @@ static PetscErrorCode CheckFaultEdge_Private(DM dm, DMLabel label)
   if (!facePosIS || !faceNegIS) {
     PetscCall(ISDestroy(&facePosIS));
     PetscCall(ISDestroy(&faceNegIS));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(ISExpand(facePosIS, faceNegIS, &dimIS));
   PetscCall(ISDestroy(&facePosIS));
@@ -1977,7 +2016,7 @@ static PetscErrorCode CheckFaultEdge_Private(DM dm, DMLabel label)
   }
   PetscCall(ISRestoreIndices(dimIS, &points));
   PetscCall(ISDestroy(&dimIS));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -1985,21 +2024,22 @@ static PetscErrorCode CheckFaultEdge_Private(DM dm, DMLabel label)
   to complete the surface
 
   Input Parameters:
-+ dm     - The DM
-. label  - A DMLabel marking the surface
-. blabel - A DMLabel marking the vertices on the boundary which will not be duplicated, or NULL to find them automatically
-. bvalue - Value of DMLabel marking the vertices on the boundary
++ dm     - The `DM`
+. label  - A `DMLabel` marking the surface
+. blabel - A `DMLabel` marking the vertices on the boundary which will not be duplicated, or `NULL` to find them automatically
+. bvalue - Value of `DMLabel` marking the vertices on the boundary
 . flip   - Flag to flip the submesh normal and replace points on the other side
-- subdm  - The subDM associated with the label, or NULL
+- subdm  - The `DM` associated with the label, or `NULL`
 
   Output Parameter:
-. label - A DMLabel marking all surface points
-
-  Note: The vertices in blabel are called "unsplit" in the terminology from hybrid cell creation.
+. label - A `DMLabel` marking all surface points
 
   Level: developer
 
-.seealso: `DMPlexConstructCohesiveCells()`, `DMPlexLabelComplete()`
+  Note:
+  The vertices in blabel are called "unsplit" in the terminology from hybrid cell creation.
+
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexConstructCohesiveCells()`, `DMPlexLabelComplete()`
 @*/
 PetscErrorCode DMPlexLabelCohesiveComplete(DM dm, DMLabel label, DMLabel blabel, PetscInt bvalue, PetscBool flip, DM subdm)
 {
@@ -2181,21 +2221,21 @@ divide:
   if (subpointIS) PetscCall(ISRestoreIndices(subpointIS, &subpoints));
   PetscCall(DMPlexLabelFaultHalo(dm, label));
   PetscCall(CheckFaultEdge_Private(dm, label));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Check that no cell have all vertices on the fault */
-PetscErrorCode DMPlexCheckValidSubmesh_Private(DM dm, DMLabel label, DM subdm)
+static PetscErrorCode DMPlexCheckValidSubmesh_Private(DM dm, DMLabel label, DM subdm)
 {
   IS              subpointIS;
   const PetscInt *dmpoints;
   PetscInt        defaultValue, cStart, cEnd, c, vStart, vEnd;
 
   PetscFunctionBegin;
-  if (!label) PetscFunctionReturn(0);
+  if (!label) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(DMLabelGetDefaultValue(label, &defaultValue));
   PetscCall(DMPlexGetSubpointIS(subdm, &subpointIS));
-  if (!subpointIS) PetscFunctionReturn(0);
+  if (!subpointIS) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(DMPlexGetHeightStratum(subdm, 0, &cStart, &cEnd));
   PetscCall(DMPlexGetDepthStratum(dm, 0, &vStart, &vEnd));
   PetscCall(ISGetIndices(subpointIS, &dmpoints));
@@ -2224,27 +2264,30 @@ PetscErrorCode DMPlexCheckValidSubmesh_Private(DM dm, DMLabel label, DM subdm)
     }
   }
   PetscCall(ISRestoreIndices(subpointIS, &dmpoints));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexCreateHybridMesh - Create a mesh with hybrid cells along an internal interface
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm - The original DM
-. label - The label specifying the interface vertices
++ dm      - The original `DM`
+. label   - The label specifying the interface vertices
 . bdlabel - The optional label specifying the interface boundary vertices
 - bdvalue - Value of optional label specifying the interface boundary vertices
 
   Output Parameters:
-+ hybridLabel - The label fully marking the interface, or NULL if no output is desired
-. splitLabel - The label containing the split points, or NULL if no output is desired
-. dmInterface - The new interface DM, or NULL
-- dmHybrid - The new DM with cohesive cells
++ hybridLabel - The label fully marking the interface, or `NULL` if no output is desired
+. splitLabel  - The label containing the split points, or `NULL` if no output is desired
+. dmInterface - The new interface `DM`, or `NULL`
+- dmHybrid    - The new `DM` with cohesive cells
 
-  Note: The hybridLabel indicates what parts of the original mesh impinged on the division surface. For points
+  Level: developer
+
+  Note:
+  The hybridLabel indicates what parts of the original mesh impinged on the division surface. For points
   directly on the division surface, they are labeled with their dimension, so an edge 7 on the division surface would be
   7 (1) in hybridLabel. For points that impinge from the positive side, they are labeled with 100+dim, so an edge 6 with
   one vertex 3 on the surface would be 6 (101) and 3 (0) in hybridLabel. If an edge 9 from the negative side of the
@@ -2254,12 +2297,10 @@ PetscErrorCode DMPlexCheckValidSubmesh_Private(DM dm, DMLabel label, DM subdm)
   mesh. The label value is $\pm 100+dim$ for each point. For example, if two edges 10 and 14 in the hybrid resulting from
   splitting an edge in the original mesh, you would have 10 (101) and 14 (-101) in the splitLabel.
 
-  The dmInterface is a DM built from the original division surface. It has a label which can be retrieved using
-  DMPlexGetSubpointMap() which maps each point back to the point in the surface of the original mesh.
+  The dmInterface is a `DM` built from the original division surface. It has a label which can be retrieved using
+  `DMPlexGetSubpointMap()` which maps each point back to the point in the surface of the original mesh.
 
-  Level: developer
-
-.seealso: `DMPlexConstructCohesiveCells()`, `DMPlexLabelCohesiveComplete()`, `DMPlexGetSubpointMap()`, `DMCreate()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexConstructCohesiveCells()`, `DMPlexLabelCohesiveComplete()`, `DMPlexGetSubpointMap()`, `DMCreate()`
 @*/
 PetscErrorCode DMPlexCreateHybridMesh(DM dm, DMLabel label, DMLabel bdlabel, PetscInt bdvalue, DMLabel *hybridLabel, DMLabel *splitLabel, DM *dmInterface, DM *dmHybrid)
 {
@@ -2269,12 +2310,12 @@ PetscErrorCode DMPlexCreateHybridMesh(DM dm, DMLabel label, DMLabel bdlabel, Pet
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  if (label) PetscValidPointer(label, 2);
-  if (bdlabel) PetscValidPointer(bdlabel, 3);
-  if (hybridLabel) PetscValidPointer(hybridLabel, 5);
-  if (splitLabel) PetscValidPointer(splitLabel, 6);
-  if (dmInterface) PetscValidPointer(dmInterface, 7);
-  PetscValidPointer(dmHybrid, 8);
+  if (label) PetscAssertPointer(label, 2);
+  if (bdlabel) PetscAssertPointer(bdlabel, 3);
+  if (hybridLabel) PetscAssertPointer(hybridLabel, 5);
+  if (splitLabel) PetscAssertPointer(splitLabel, 6);
+  if (dmInterface) PetscAssertPointer(dmInterface, 7);
+  PetscAssertPointer(dmHybrid, 8);
   PetscCall(DMGetDimension(dm, &dim));
   PetscCall(DMPlexCreateSubmesh(dm, label, 1, PETSC_FALSE, &idm));
   PetscCall(DMPlexCheckValidSubmesh_Private(dm, label, idm));
@@ -2287,8 +2328,8 @@ PetscErrorCode DMPlexCreateHybridMesh(DM dm, DMLabel label, DMLabel bdlabel, Pet
     char        sname[PETSC_MAX_PATH_LEN];
 
     PetscCall(PetscObjectGetName((PetscObject)hlabel, &name));
-    PetscCall(PetscStrncpy(sname, name, PETSC_MAX_PATH_LEN));
-    PetscCall(PetscStrcat(sname, " split"));
+    PetscCall(PetscStrncpy(sname, name, sizeof(sname)));
+    PetscCall(PetscStrlcat(sname, " split", sizeof(sname)));
     PetscCall(DMLabelCreate(PETSC_COMM_SELF, sname, &slabel));
   }
   PetscCall(DMPlexLabelCohesiveComplete(dm, hlabel, bdlabel, bdvalue, PETSC_FALSE, idm));
@@ -2309,7 +2350,7 @@ PetscErrorCode DMPlexCreateHybridMesh(DM dm, DMLabel label, DMLabel bdlabel, Pet
     PetscCall(DMPlexGetCellTypeLabel(*dmHybrid, &ctLabel));
     PetscCall(DMSetLabel(cdm, ctLabel));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Here we need the explicit assumption that:
@@ -2386,7 +2427,7 @@ static PetscErrorCode DMPlexMarkSubmesh_Uninterpolated(DM dm, DMLabel vertexLabe
   if (subvertexIS) PetscCall(ISRestoreIndices(subvertexIS, &subvertices));
   PetscCall(ISDestroy(&subvertexIS));
   PetscCall(PetscFree2(pStart, pEnd));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexMarkSubmesh_Interpolated(DM dm, DMLabel vertexLabel, PetscInt value, PetscBool markedFaces, DMLabel subpointMap, DM subdm)
@@ -2470,7 +2511,7 @@ static PetscErrorCode DMPlexMarkSubmesh_Interpolated(DM dm, DMLabel vertexLabel,
   if (subvertexIS) PetscCall(ISRestoreIndices(subvertexIS, &subvertices));
   PetscCall(ISDestroy(&subvertexIS));
   PetscCall(PetscFree2(pStart, pEnd));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexMarkCohesiveSubmesh_Uninterpolated(DM dm, PetscBool hasLagrange, const char labelname[], PetscInt value, DMLabel subpointMap, PetscInt *numFaces, PetscInt *nFV, PetscInt *subCells[], DM subdm)
@@ -2486,7 +2527,7 @@ static PetscErrorCode DMPlexMarkCohesiveSubmesh_Uninterpolated(DM dm, PetscBool 
   *subCells = NULL;
   PetscCall(DMGetDimension(dm, &dim));
   PetscCall(DMPlexGetTensorPrismBounds_Internal(dm, dim, &cMax, &cEnd));
-  if (cMax < 0) PetscFunctionReturn(0);
+  if (cMax < 0) PetscFunctionReturn(PETSC_SUCCESS);
   if (label) {
     for (c = cMax; c < cEnd; ++c) {
       PetscInt val;
@@ -2502,7 +2543,7 @@ static PetscErrorCode DMPlexMarkCohesiveSubmesh_Uninterpolated(DM dm, PetscBool 
     PetscCall(DMPlexGetConeSize(dm, cMax, &coneSize));
   }
   PetscCall(PetscMalloc1(*numFaces * 2, subCells));
-  if (!(*numFaces)) PetscFunctionReturn(0);
+  if (!(*numFaces)) PetscFunctionReturn(PETSC_SUCCESS);
   *nFV = hasLagrange ? coneSize / 3 : coneSize / 2;
   for (c = cMax; c < cEnd; ++c) {
     const PetscInt *cells;
@@ -2527,7 +2568,7 @@ static PetscErrorCode DMPlexMarkCohesiveSubmesh_Uninterpolated(DM dm, PetscBool 
     PetscCall(DMPlexRestoreJoin(dm, *nFV, cone, &numCells, &cells));
     /* Positive face is not included */
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexMarkCohesiveSubmesh_Interpolated(DM dm, DMLabel label, PetscInt value, DMLabel subpointMap, DM subdm)
@@ -2538,7 +2579,7 @@ static PetscErrorCode DMPlexMarkCohesiveSubmesh_Interpolated(DM dm, DMLabel labe
   PetscFunctionBegin;
   PetscCall(DMGetDimension(dm, &dim));
   PetscCall(DMPlexGetTensorPrismBounds_Internal(dm, dim, &cMax, &cEnd));
-  if (cMax < 0) PetscFunctionReturn(0);
+  if (cMax < 0) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscMalloc2(dim + 1, &pStart, dim + 1, &pEnd));
   for (d = 0; d <= dim; ++d) PetscCall(DMPlexGetDepthStratum(dm, d, &pStart[d], &pEnd[d]));
   for (c = cMax; c < cEnd; ++c) {
@@ -2579,7 +2620,7 @@ static PetscErrorCode DMPlexMarkCohesiveSubmesh_Interpolated(DM dm, DMLabel labe
     }
   }
   PetscCall(PetscFree2(pStart, pEnd));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexGetFaceOrientation(DM dm, PetscInt cell, PetscInt numCorners, PetscInt indices[], PetscInt oppositeVertex, PetscInt origVertices[], PetscInt faceVertices[], PetscBool *posOriented)
@@ -2660,7 +2701,7 @@ static PetscErrorCode DMPlexGetFaceOrientation(DM dm, PetscInt cell, PetscInt nu
     }
     PetscCheck(found, comm, PETSC_ERR_ARG_WRONG, "Invalid tri crossface");
     if (posOriented) *posOriented = PETSC_TRUE;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   } else if (cellDim == 2 && numCorners == 9) {
     /* Quadratic quad (I hate this) */
     /* Edges are determined by the first 2 vertices (corners of edges) */
@@ -2701,7 +2742,7 @@ static PetscErrorCode DMPlexGetFaceOrientation(DM dm, PetscInt cell, PetscInt nu
     }
     PetscCheck(found, comm, PETSC_ERR_ARG_WRONG, "Invalid quad crossface");
     if (posOriented) *posOriented = PETSC_TRUE;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   } else if (cellDim == 3 && numCorners == 8) {
     /* Hexes
        A hex is two oriented quads with the normal of the first
@@ -2756,7 +2797,7 @@ static PetscErrorCode DMPlexGetFaceOrientation(DM dm, PetscInt cell, PetscInt nu
     }
     PetscCheck(found, comm, PETSC_ERR_ARG_WRONG, "Invalid hex crossface");
     if (posOriented) *posOriented = PETSC_TRUE;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   } else if (cellDim == 3 && numCorners == 10) {
     /* Quadratic tet */
     /* Faces are determined by the first 3 vertices (corners of faces) */
@@ -2797,7 +2838,7 @@ static PetscErrorCode DMPlexGetFaceOrientation(DM dm, PetscInt cell, PetscInt nu
     }
     PetscCheck(found, comm, PETSC_ERR_ARG_WRONG, "Invalid tet crossface");
     if (posOriented) *posOriented = PETSC_TRUE;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   } else if (cellDim == 3 && numCorners == 27) {
     /* Quadratic hexes (I hate this)
        A hex is two oriented quads with the normal of the first
@@ -2852,7 +2893,7 @@ static PetscErrorCode DMPlexGetFaceOrientation(DM dm, PetscInt cell, PetscInt nu
     }
     PetscCheck(found, comm, PETSC_ERR_ARG_WRONG, "Invalid hex crossface");
     if (posOriented) *posOriented = PETSC_TRUE;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   } else SETERRQ(comm, PETSC_ERR_ARG_WRONG, "Unknown cell type for faceOrientation().");
   if (!posOrient) {
     if (debug) PetscCall(PetscPrintf(comm, "  Reversing initial face orientation\n"));
@@ -2862,14 +2903,14 @@ static PetscErrorCode DMPlexGetFaceOrientation(DM dm, PetscInt cell, PetscInt nu
     for (f = 0; f < faceSize; ++f) faceVertices[f] = origVertices[f];
   }
   if (posOriented) *posOriented = posOrient;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexGetOrientedFace - Given a cell and a face, as a set of vertices, return the oriented face, as a set of vertices,
   in faceVertices. The orientation is such that the face normal points out of the cell
 
-  Not collective
+  Not Collective
 
   Input Parameters:
 + dm           - The original mesh
@@ -2882,11 +2923,11 @@ static PetscErrorCode DMPlexGetFaceOrientation(DM dm, PetscInt cell, PetscInt nu
 
   Output Parameters:
 + faceVertices - The face vertices properly oriented
-- posOriented  - PETSC_TRUE if the face was oriented with outward normal
+- posOriented  - `PETSC_TRUE` if the face was oriented with outward normal
 
   Level: developer
 
-.seealso: `DMPlexGetCone()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexGetCone()`
 @*/
 PetscErrorCode DMPlexGetOrientedFace(DM dm, PetscInt cell, PetscInt faceSize, const PetscInt face[], PetscInt numCorners, PetscInt indices[], PetscInt origVertices[], PetscInt faceVertices[], PetscBool *posOriented)
 {
@@ -2915,26 +2956,26 @@ PetscErrorCode DMPlexGetOrientedFace(DM dm, PetscInt cell, PetscInt faceSize, co
     }
   }
   PetscCall(DMPlexGetFaceOrientation(dm, cell, numCorners, indices, oppositeVertex, origVertices, faceVertices, posOriented));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
   DMPlexInsertFace_Internal - Puts a face into the mesh
 
-  Not collective
+  Not Collective
 
   Input Parameters:
-  + dm              - The DMPlex
+  + dm              - The `DMPLEX`
   . numFaceVertex   - The number of vertices in the face
-  . faceVertices    - The vertices in the face for dm
+  . faceVertices    - The vertices in the face for `dm`
   . subfaceVertices - The vertices in the face for subdm
-  . numCorners      - The number of vertices in the cell
-  . cell            - A cell in dm containing the face
+  . numCorners      - The number of vertices in the `cell`
+  . cell            - A cell in `dm` containing the face
   . subcell         - A cell in subdm containing the face
   . firstFace       - First face in the mesh
   - newFacePoint    - Next face in the mesh
 
-  Output Parameters:
+  Output Parameter:
   . newFacePoint - Contains next face point number on input, updated on output
 
   Level: developer
@@ -3015,7 +3056,7 @@ static PetscErrorCode DMPlexInsertFace_Internal(DM dm, DM subdm, PetscInt numFac
 #else
   PetscCall(DMRestoreWorkArray(subdm, 1, MPIU_INT, (void **)&faces));
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCreateSubmesh_Uninterpolated(DM dm, DMLabel vertexLabel, PetscInt value, DM subdm)
@@ -3033,7 +3074,6 @@ static PetscErrorCode DMPlexCreateSubmesh_Uninterpolated(DM dm, DMLabel vertexLa
   /* Create subpointMap which marks the submesh */
   PetscCall(DMLabelCreate(PETSC_COMM_SELF, "subpoint_map", &subpointMap));
   PetscCall(DMPlexSetSubpointMap(subdm, subpointMap));
-  PetscCall(DMLabelDestroy(&subpointMap));
   if (vertexLabel) PetscCall(DMPlexMarkSubmesh_Uninterpolated(dm, vertexLabel, value, subpointMap, &numSubFaces, &nFV, subdm));
   /* Setup chart */
   PetscCall(DMLabelGetStratumSize(subpointMap, 0, &numSubVertices));
@@ -3051,6 +3091,7 @@ static PetscErrorCode DMPlexCreateSubmesh_Uninterpolated(DM dm, DMLabel vertexLa
   for (c = 0; c < numSubCells; ++c) PetscCall(DMPlexSetConeSize(subdm, c, 1));
   for (f = firstSubFace; f < firstSubFace + numSubFaces; ++f) PetscCall(DMPlexSetConeSize(subdm, f, nFV));
   PetscCall(DMSetUp(subdm));
+  PetscCall(DMLabelDestroy(&subpointMap));
   /* Create face cones */
   PetscCall(DMPlexGetDepthStratum(dm, 0, &vStart, &vEnd));
   PetscCall(DMPlexGetMaxSizes(dm, &maxConeSize, NULL));
@@ -3140,7 +3181,7 @@ static PetscErrorCode DMPlexCreateSubmesh_Uninterpolated(DM dm, DMLabel vertexLa
   PetscCall(ISDestroy(&subvertexIS));
   if (subcellIS) PetscCall(ISRestoreIndices(subcellIS, &subCells));
   PetscCall(ISDestroy(&subcellIS));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* TODO: Fix this to properly propagate up error conditions it may find */
@@ -3219,7 +3260,7 @@ static PetscErrorCode DMPlexFilterLabels_Internal(DM dm, const PetscInt numSubPo
     PetscCall(ISRestoreIndices(valueIS, &values));
     PetscCall(ISDestroy(&valueIS));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCreateSubmeshGeneric_Interpolated(DM dm, DMLabel label, PetscInt value, PetscBool markedFaces, PetscBool isCohesive, PetscInt cellHeight, DM subdm)
@@ -3285,7 +3326,7 @@ static PetscErrorCode DMPlexCreateSubmeshGeneric_Interpolated(DM dm, DMLabel lab
     PetscInt lsdim;
     for (lsdim = dim; lsdim >= 0; --lsdim)
       if (numSubPoints[lsdim]) break;
-    PetscCall(MPI_Allreduce(&lsdim, &sdim, 1, MPIU_INT, MPIU_MAX, comm));
+    PetscCall(MPIU_Allreduce(&lsdim, &sdim, 1, MPIU_INT, MPI_MAX, comm));
     PetscCall(DMSetDimension(subdm, sdim));
     PetscCall(DMSetCoordinateDim(subdm, cdim));
   }
@@ -3542,33 +3583,34 @@ static PetscErrorCode DMPlexCreateSubmeshGeneric_Interpolated(DM dm, DMLabel lab
     PetscCall(ISDestroy(&subpointIS[d]));
   }
   PetscCall(PetscFree4(numSubPoints, firstSubPoint, subpointIS, subpoints));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCreateSubmesh_Interpolated(DM dm, DMLabel vertexLabel, PetscInt value, PetscBool markedFaces, DM subdm)
 {
   PetscFunctionBegin;
   PetscCall(DMPlexCreateSubmeshGeneric_Interpolated(dm, vertexLabel, value, markedFaces, PETSC_FALSE, 1, subdm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexCreateSubmesh - Extract a hypersurface from the mesh using vertices defined by a label
 
   Input Parameters:
-+ dm           - The original mesh
-. vertexLabel  - The DMLabel marking points contained in the surface
-. value        - The label value to use
-- markedFaces  - PETSC_TRUE if surface faces are marked in addition to vertices, PETSC_FALSE if only vertices are marked
++ dm          - The original mesh
+. vertexLabel - The `DMLabel` marking points contained in the surface
+. value       - The label value to use
+- markedFaces - `PETSC_TRUE` if surface faces are marked in addition to vertices, `PETSC_FALSE` if only vertices are marked
 
   Output Parameter:
 . subdm - The surface mesh
 
-  Note: This function produces a DMLabel mapping original points in the submesh to their depth. This can be obtained using DMPlexGetSubpointMap().
-
   Level: developer
 
-.seealso: `DMPlexGetSubpointMap()`, `DMGetLabel()`, `DMLabelSetValue()`
+  Note:
+  This function produces a `DMLabel` mapping original points in the submesh to their depth. This can be obtained using `DMPlexGetSubpointMap()`.
+
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexGetSubpointMap()`, `DMGetLabel()`, `DMLabelSetValue()`
 @*/
 PetscErrorCode DMPlexCreateSubmesh(DM dm, DMLabel vertexLabel, PetscInt value, PetscBool markedFaces, DM *subdm)
 {
@@ -3577,7 +3619,7 @@ PetscErrorCode DMPlexCreateSubmesh(DM dm, DMLabel vertexLabel, PetscInt value, P
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(subdm, 5);
+  PetscAssertPointer(subdm, 5);
   PetscCall(DMGetDimension(dm, &dim));
   PetscCall(DMCreate(PetscObjectComm((PetscObject)dm), subdm));
   PetscCall(DMSetType(*subdm, DMPLEX));
@@ -3592,7 +3634,7 @@ PetscErrorCode DMPlexCreateSubmesh(DM dm, DMLabel vertexLabel, PetscInt value, P
     PetscCall(DMPlexCreateSubmesh_Uninterpolated(dm, vertexLabel, value, *subdm));
   }
   PetscCall(DMPlexCopy_Internal(dm, PETSC_TRUE, PETSC_TRUE, *subdm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCreateCohesiveSubmesh_Uninterpolated(DM dm, PetscBool hasLagrange, const char label[], PetscInt value, DM subdm)
@@ -3610,7 +3652,6 @@ static PetscErrorCode DMPlexCreateCohesiveSubmesh_Uninterpolated(DM dm, PetscBoo
   /* Create subpointMap which marks the submesh */
   PetscCall(DMLabelCreate(PETSC_COMM_SELF, "subpoint_map", &subpointMap));
   PetscCall(DMPlexSetSubpointMap(subdm, subpointMap));
-  PetscCall(DMLabelDestroy(&subpointMap));
   PetscCall(DMPlexMarkCohesiveSubmesh_Uninterpolated(dm, hasLagrange, label, value, subpointMap, &numSubFaces, &nFV, &subCells, subdm));
   /* Setup chart */
   PetscCall(DMLabelGetStratumSize(subpointMap, 0, &numSubVertices));
@@ -3626,6 +3667,7 @@ static PetscErrorCode DMPlexCreateCohesiveSubmesh_Uninterpolated(DM dm, PetscBoo
   for (c = 0; c < numSubCells; ++c) PetscCall(DMPlexSetConeSize(subdm, c, 1));
   for (f = firstSubFace; f < firstSubFace + numSubFaces; ++f) PetscCall(DMPlexSetConeSize(subdm, f, nFV));
   PetscCall(DMSetUp(subdm));
+  PetscCall(DMLabelDestroy(&subpointMap));
   /* Create face cones */
   PetscCall(DMPlexGetMaxSizes(dm, &maxConeSize, NULL));
   PetscCall(DMGetWorkArray(subdm, maxConeSize, MPIU_INT, (void **)&subface));
@@ -3798,7 +3840,7 @@ static PetscErrorCode DMPlexCreateCohesiveSubmesh_Uninterpolated(DM dm, PetscBoo
   if (subvertexIS) PetscCall(ISRestoreIndices(subvertexIS, &subVertices));
   PetscCall(ISDestroy(&subvertexIS));
   PetscCall(PetscFree(subCells));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCreateCohesiveSubmesh_Interpolated(DM dm, const char labelname[], PetscInt value, DM subdm)
@@ -3808,26 +3850,27 @@ static PetscErrorCode DMPlexCreateCohesiveSubmesh_Interpolated(DM dm, const char
   PetscFunctionBegin;
   if (labelname) PetscCall(DMGetLabel(dm, labelname, &label));
   PetscCall(DMPlexCreateSubmeshGeneric_Interpolated(dm, label, value, PETSC_FALSE, PETSC_TRUE, 1, subdm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  DMPlexCreateCohesiveSubmesh - Extract from a mesh with cohesive cells the hypersurface defined by one face of the cells. Optionally, a Label can be given to restrict the cells.
+  DMPlexCreateCohesiveSubmesh - Extract from a mesh with cohesive cells the hypersurface defined by one face of the cells. Optionally, a label can be given to restrict the cells.
 
   Input Parameters:
 + dm          - The original mesh
 . hasLagrange - The mesh has Lagrange unknowns in the cohesive cells
-. label       - A label name, or NULL
-- value  - A label value
+. label       - A label name, or `NULL`
+- value       - A label value
 
   Output Parameter:
 . subdm - The surface mesh
 
-  Note: This function produces a DMLabel mapping original points in the submesh to their depth. This can be obtained using DMPlexGetSubpointMap().
-
   Level: developer
 
-.seealso: `DMPlexGetSubpointMap()`, `DMPlexCreateSubmesh()`
+  Note:
+  This function produces a `DMLabel` mapping original points in the submesh to their depth. This can be obtained using `DMPlexGetSubpointMap()`.
+
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexGetSubpointMap()`, `DMPlexCreateSubmesh()`
 @*/
 PetscErrorCode DMPlexCreateCohesiveSubmesh(DM dm, PetscBool hasLagrange, const char label[], PetscInt value, DM *subdm)
 {
@@ -3835,7 +3878,7 @@ PetscErrorCode DMPlexCreateCohesiveSubmesh(DM dm, PetscBool hasLagrange, const c
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(subdm, 5);
+  PetscAssertPointer(subdm, 5);
   PetscCall(DMGetDimension(dm, &dim));
   PetscCall(DMPlexGetDepth(dm, &depth));
   PetscCall(DMCreate(PetscObjectComm((PetscObject)dm), subdm));
@@ -3849,7 +3892,60 @@ PetscErrorCode DMPlexCreateCohesiveSubmesh(DM dm, PetscBool hasLagrange, const c
     PetscCall(DMPlexCreateCohesiveSubmesh_Uninterpolated(dm, hasLagrange, label, value, *subdm));
   }
   PetscCall(DMPlexCopy_Internal(dm, PETSC_TRUE, PETSC_TRUE, *subdm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+/*@
+  DMPlexReorderCohesiveSupports - Ensure that face supports for cohesive end caps are ordered
+
+  Not Collective
+
+  Input Parameter:
+. dm - The `DM` containing cohesive cells
+
+  Level: developer
+
+  Note:
+  For the negative size (first) face, the cohesive cell should be first in the support, and for
+  the positive side (second) face, the cohesive cell should be second in the support.
+
+.seealso: `DMPlexConstructCohesiveCells()`, `DMPlexCreateCohesiveSubmesh()`
+@*/
+PetscErrorCode DMPlexReorderCohesiveSupports(DM dm)
+{
+  PetscInt dim, cStart, cEnd;
+
+  PetscFunctionBegin;
+  PetscCall(DMGetDimension(dm, &dim));
+  PetscCall(DMPlexGetTensorPrismBounds_Internal(dm, dim, &cStart, &cEnd));
+  for (PetscInt c = cStart; c < cEnd; ++c) {
+    const PetscInt *cone;
+    PetscInt        coneSize;
+
+    PetscCall(DMPlexGetConeSize(dm, c, &coneSize));
+    PetscCall(DMPlexGetCone(dm, c, &cone));
+    PetscCheck(coneSize >= 2, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Hybrid cell %" PetscInt_FMT " cone size %" PetscInt_FMT " must be >= 2", c, coneSize);
+    for (PetscInt s = 0; s < 2; ++s) {
+      const PetscInt *supp;
+      PetscInt        suppSize, newsupp[2];
+
+      PetscCall(DMPlexGetSupportSize(dm, cone[s], &suppSize));
+      PetscCall(DMPlexGetSupport(dm, cone[s], &supp));
+      if (suppSize == 2) {
+        /* Reorder hybrid end cap support */
+        if (supp[s] == c) {
+          newsupp[0] = supp[1];
+          newsupp[1] = supp[0];
+        } else {
+          newsupp[0] = supp[0];
+          newsupp[1] = supp[1];
+        }
+        PetscCheck(newsupp[1 - s] == c, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Hybrid end cap %" PetscInt_FMT " support entry %" PetscInt_FMT " != %" PetscInt_FMT " hybrid cell", cone[s], newsupp[1 - s], c);
+        PetscCall(DMPlexSetSupport(dm, cone[s], newsupp));
+      }
+    }
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -3857,18 +3953,18 @@ PetscErrorCode DMPlexCreateCohesiveSubmesh(DM dm, PetscBool hasLagrange, const c
 
   Input Parameters:
 + dm        - The original mesh
-. cellLabel - The DMLabel marking cells contained in the new mesh
+. cellLabel - The `DMLabel` marking cells contained in the new mesh
 - value     - The label value to use
 
   Output Parameter:
 . subdm - The new mesh
 
-  Notes:
-  This function produces a `DMLabel` mapping original points in the submesh to their depth. This can be obtained using `DMPlexGetSubpointMap()`.
-
   Level: developer
 
-.seealso: `DMPlexGetSubpointMap()`, `DMGetLabel()`, `DMLabelSetValue()`, `DMPlexCreateSubmesh()`
+  Note:
+  This function produces a `DMLabel` mapping original points in the submesh to their depth. This can be obtained using `DMPlexGetSubpointMap()`.
+
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexGetSubpointMap()`, `DMGetLabel()`, `DMLabelSetValue()`, `DMPlexCreateSubmesh()`
 @*/
 PetscErrorCode DMPlexFilter(DM dm, DMLabel cellLabel, PetscInt value, DM *subdm)
 {
@@ -3876,7 +3972,7 @@ PetscErrorCode DMPlexFilter(DM dm, DMLabel cellLabel, PetscInt value, DM *subdm)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(subdm, 4);
+  PetscAssertPointer(subdm, 4);
   PetscCall(DMGetDimension(dm, &dim));
   PetscCall(DMCreate(PetscObjectComm((PetscObject)dm), subdm));
   PetscCall(DMSetType(*subdm, DMPLEX));
@@ -3906,43 +4002,44 @@ PetscErrorCode DMPlexFilter(DM dm, DMLabel cellLabel, PetscInt value, DM *subdm)
     PetscCall(MPIU_Allreduce(&hasSubcell, &ghasSubcell, 1, MPIU_BOOL, MPI_LOR, PetscObjectComm((PetscObject)dm)));
     if (ghasSubcell) PetscCall(DMPlexSetOverlap(*subdm, NULL, 1));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexGetSubpointMap - Returns a DMLabel with point dimension as values
+  DMPlexGetSubpointMap - Returns a `DMLabel` with point dimension as values
 
   Input Parameter:
-. dm - The submesh DM
+. dm - The submesh `DM`
 
   Output Parameter:
-. subpointMap - The DMLabel of all the points from the original mesh in this submesh, or NULL if this is not a submesh
+. subpointMap - The `DMLabel` of all the points from the original mesh in this submesh, or `NULL` if this is not a submesh
 
   Level: developer
 
-.seealso: `DMPlexCreateSubmesh()`, `DMPlexGetSubpointIS()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexCreateSubmesh()`, `DMPlexGetSubpointIS()`
 @*/
 PetscErrorCode DMPlexGetSubpointMap(DM dm, DMLabel *subpointMap)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(subpointMap, 2);
+  PetscAssertPointer(subpointMap, 2);
   *subpointMap = ((DM_Plex *)dm->data)->subpointMap;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexSetSubpointMap - Sets the DMLabel with point dimension as values
+  DMPlexSetSubpointMap - Sets the `DMLabel` with point dimension as values
 
   Input Parameters:
-+ dm - The submesh DM
-- subpointMap - The DMLabel of all the points from the original mesh in this submesh
-
-  Note: Should normally not be called by the user, since it is set in DMPlexCreateSubmesh()
++ dm          - The submesh `DM`
+- subpointMap - The `DMLabel` of all the points from the original mesh in this submesh
 
   Level: developer
 
-.seealso: `DMPlexCreateSubmesh()`, `DMPlexGetSubpointIS()`
+  Note:
+  Should normally not be called by the user, since it is set in `DMPlexCreateSubmesh()`
+
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexCreateSubmesh()`, `DMPlexGetSubpointIS()`
 @*/
 PetscErrorCode DMPlexSetSubpointMap(DM dm, DMLabel subpointMap)
 {
@@ -3955,7 +4052,7 @@ PetscErrorCode DMPlexSetSubpointMap(DM dm, DMLabel subpointMap)
   mesh->subpointMap = subpointMap;
   PetscCall(PetscObjectReference((PetscObject)mesh->subpointMap));
   PetscCall(DMLabelDestroy(&tmp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCreateSubpointIS_Internal(DM dm, IS *subpointIS)
@@ -4013,23 +4110,24 @@ static PetscErrorCode DMPlexCreateSubpointIS_Internal(DM dm, IS *subpointIS)
     PetscCall(ISCreateGeneral(PETSC_COMM_SELF, pEnd, points, PETSC_OWN_POINTER, subpointIS));
     PetscCall(PetscObjectStateGet((PetscObject)spmap, &mesh->subpointState));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMPlexGetSubpointIS - Returns an IS covering the entire subdm chart with the original points as data
+  DMPlexGetSubpointIS - Returns an `IS` covering the entire subdm chart with the original points as data
 
   Input Parameter:
-. dm - The submesh DM
+. dm - The submesh `DM`
 
   Output Parameter:
-. subpointIS - The IS of all the points from the original mesh in this submesh, or NULL if this is not a submesh
-
-  Note: This IS is guaranteed to be sorted by the construction of the submesh
+. subpointIS - The `IS` of all the points from the original mesh in this submesh, or `NULL` if this is not a submesh
 
   Level: developer
 
-.seealso: `DMPlexCreateSubmesh()`, `DMPlexGetSubpointMap()`
+  Note:
+  This `IS` is guaranteed to be sorted by the construction of the submesh
+
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexCreateSubmesh()`, `DMPlexGetSubpointMap()`
 @*/
 PetscErrorCode DMPlexGetSubpointIS(DM dm, IS *subpointIS)
 {
@@ -4039,27 +4137,27 @@ PetscErrorCode DMPlexGetSubpointIS(DM dm, IS *subpointIS)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(subpointIS, 2);
+  PetscAssertPointer(subpointIS, 2);
   PetscCall(DMPlexGetSubpointMap(dm, &spmap));
   PetscCall(PetscObjectStateGet((PetscObject)spmap, &state));
   if (state != mesh->subpointState || !mesh->subpointIS) PetscCall(DMPlexCreateSubpointIS_Internal(dm, &mesh->subpointIS));
   *subpointIS = mesh->subpointIS;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMGetEnclosureRelation - Get the relationship between dmA and dmB
+  DMGetEnclosureRelation - Get the relationship between `dmA` and `dmB`
 
   Input Parameters:
-+ dmA - The first DM
-- dmB - The second DM
++ dmA - The first `DM`
+- dmB - The second `DM`
 
   Output Parameter:
-. rel - The relation of dmA to dmB
+. rel - The relation of `dmA` to `dmB`
 
   Level: intermediate
 
-.seealso: `DMGetEnclosurePoint()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMGetEnclosurePoint()`
 @*/
 PetscErrorCode DMGetEnclosureRelation(DM dmA, DM dmB, DMEnclosureType *rel)
 {
@@ -4068,14 +4166,14 @@ PetscErrorCode DMGetEnclosureRelation(DM dmA, DM dmB, DMEnclosureType *rel)
   PetscInt pStartA, pEndA, pStartB, pEndB, NpA, NpB;
 
   PetscFunctionBegin;
-  PetscValidPointer(rel, 3);
+  PetscAssertPointer(rel, 3);
   *rel = DM_ENC_NONE;
-  if (!dmA || !dmB) PetscFunctionReturn(0);
+  if (!dmA || !dmB) PetscFunctionReturn(PETSC_SUCCESS);
   PetscValidHeaderSpecific(dmA, DM_CLASSID, 1);
   PetscValidHeaderSpecific(dmB, DM_CLASSID, 2);
   if (dmA == dmB) {
     *rel = DM_ENC_EQUALITY;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(DMConvert(dmA, DMPLEX, &plexA));
   PetscCall(DMConvert(dmB, DMPLEX, &plexB));
@@ -4102,24 +4200,24 @@ PetscErrorCode DMGetEnclosureRelation(DM dmA, DM dmB, DMEnclosureType *rel)
 end:
   PetscCall(DMDestroy(&plexA));
   PetscCall(DMDestroy(&plexB));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMGetEnclosurePoint - Get the point pA in dmA which corresponds to the point pB in dmB
+  DMGetEnclosurePoint - Get the point `pA` in `dmA` which corresponds to the point `pB` in `dmB`
 
   Input Parameters:
-+ dmA   - The first DM
-. dmB   - The second DM
-. etype - The type of enclosure relation that dmA has to dmB
-- pB    - A point of dmB
++ dmA   - The first `DM`
+. dmB   - The second `DM`
+. etype - The type of enclosure relation that `dmA` has to `dmB`
+- pB    - A point of `dmB`
 
   Output Parameter:
-. pA    - The corresponding point of dmA
+. pA - The corresponding point of `dmA`
 
   Level: intermediate
 
-.seealso: `DMGetEnclosureRelation()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMGetEnclosureRelation()`
 @*/
 PetscErrorCode DMGetEnclosurePoint(DM dmA, DM dmB, DMEnclosureType etype, PetscInt pB, PetscInt *pA)
 {
@@ -4164,5 +4262,5 @@ PetscErrorCode DMGetEnclosurePoint(DM dmA, DM dmB, DMEnclosureType etype, PetscI
   default:
     SETERRQ(PetscObjectComm((PetscObject)dmA), PETSC_ERR_ARG_OUTOFRANGE, "Invalid enclosure type %d", (int)etype);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -6,7 +6,9 @@ static char help[] = "Artificial test to check that snes->domainerror is being r
 
   ------------------------------------------------------------------------- */
 
-#define PETSC_SKIP_COMPLEX
+#if !defined(PETSC_SKIP_COMPLEX)
+  #define PETSC_SKIP_COMPLEX
+#endif
 #include <petscsnes.h>
 
 typedef struct {
@@ -76,7 +78,7 @@ PetscErrorCode UserFunction(SNES snes, Vec X, Vec F, void *ptr)
   const PetscScalar *x;
 
   half = 0.5;
-
+  PetscFunctionBeginUser;
   PetscCall(VecGetSize(X, &N));
   PetscCall(VecGetArrayRead(X, &x));
   PetscCall(VecGetArray(F, &f));
@@ -97,7 +99,7 @@ PetscErrorCode UserFunction(SNES snes, Vec X, Vec F, void *ptr)
   }
   PetscCall(VecRestoreArrayRead(X, &x));
   PetscCall(VecRestoreArray(F, &f));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -109,6 +111,7 @@ PetscErrorCode UserJacobian(SNES snes, Vec X, Mat J, Mat jac, void *ptr)
   const PetscScalar *x;
   PetscScalar        v;
 
+  PetscFunctionBeginUser;
   PetscCall(VecGetSize(X, &N));
   PetscCall(VecGetArrayRead(X, &x));
 
@@ -127,7 +130,7 @@ PetscErrorCode UserJacobian(SNES snes, Vec X, Mat J, Mat jac, void *ptr)
     PetscCall(MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY));
   }
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

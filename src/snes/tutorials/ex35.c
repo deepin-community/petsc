@@ -1,7 +1,6 @@
 static const char help[] = "-Laplacian u = b as a nonlinear problem.\n\n";
 
 /*
-
     The linear and nonlinear versions of these should give almost identical results on this problem
 
     Richardson
@@ -40,7 +39,6 @@ static const char help[] = "-Laplacian u = b as a nonlinear problem.\n\n";
 
           n levels:
             -da_refine n  -fas_coarse_snes_type newtonls -fas_coarse_pc_type lu -fas_coarse_ksp_type preonly
-
 */
 
 /*
@@ -152,7 +150,7 @@ PetscErrorCode MyComputeFunction(SNES snes, Vec x, Vec F, void *ctx)
     PetscCall(DMSetApplicationContextDestroy(dm, (PetscErrorCode(*)(void **))MatDestroy));
   }
   PetscCall(MatMult(J, x, F));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MyComputeJacobian(SNES snes, Vec x, Mat J, Mat Jp, void *ctx)
@@ -162,7 +160,7 @@ PetscErrorCode MyComputeJacobian(SNES snes, Vec x, Mat J, Mat Jp, void *ctx)
   PetscFunctionBeginUser;
   PetscCall(SNESGetDM(snes, &dm));
   PetscCall(FormMatrix(dm, Jp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode FormMatrix(DM da, Mat jac)
@@ -236,7 +234,7 @@ PetscErrorCode FormMatrix(DM da, Mat jac)
      matrix. If we do, it will generate an error.
   */
   PetscCall(MatSetOption(jac, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------- */
@@ -311,7 +309,7 @@ PetscErrorCode NonlinearGS(SNES snes, Vec X)
     PetscCall(DMLocalToGlobalEnd(da, localX, INSERT_VALUES, X));
   }
   PetscCall(DMRestoreLocalVector(da, &localX));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

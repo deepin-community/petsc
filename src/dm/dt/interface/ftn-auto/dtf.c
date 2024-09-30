@@ -44,6 +44,16 @@ extern void PetscRmPointer(void*);
 #define petscquadraturedestroy_ petscquadraturedestroy
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscquadraturegetcelltype_ PETSCQUADRATUREGETCELLTYPE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscquadraturegetcelltype_ petscquadraturegetcelltype
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscquadraturesetcelltype_ PETSCQUADRATURESETCELLTYPE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscquadraturesetcelltype_ petscquadraturesetcelltype
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define petscquadraturegetorder_ PETSCQUADRATUREGETORDER
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define petscquadraturegetorder_ petscquadraturegetorder
@@ -173,6 +183,16 @@ extern void PetscRmPointer(void*);
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define petscdtbarytoindex_ petscdtbarytoindex
 #endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscquadraturecomputepermutations_ PETSCQUADRATURECOMPUTEPERMUTATIONS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscquadraturecomputepermutations_ petscquadraturecomputepermutations
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscdtcreatedefaultquadrature_ PETSCDTCREATEDEFAULTQUADRATURE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscdtcreatedefaultquadrature_ petscdtcreatedefaultquadrature
+#endif
 
 
 /* Definitions of Fortran Wrapper routines */
@@ -192,6 +212,16 @@ PETSC_EXTERN void  petscquadratureduplicate_(PetscQuadrature q,PetscQuadrature *
 PETSC_EXTERN void  petscquadraturedestroy_(PetscQuadrature *q, int *__ierr)
 {
 *__ierr = PetscQuadratureDestroy(q);
+}
+PETSC_EXTERN void  petscquadraturegetcelltype_(PetscQuadrature q,DMPolytopeType *ct, int *__ierr)
+{
+*__ierr = PetscQuadratureGetCellType(
+	(PetscQuadrature)PetscToPointer((q) ),ct);
+}
+PETSC_EXTERN void  petscquadraturesetcelltype_(PetscQuadrature q,DMPolytopeType *ct, int *__ierr)
+{
+*__ierr = PetscQuadratureSetCellType(
+	(PetscQuadrature)PetscToPointer((q) ),*ct);
 }
 PETSC_EXTERN void  petscquadraturegetorder_(PetscQuadrature q,PetscInt *order, int *__ierr)
 {
@@ -305,6 +335,15 @@ PETSC_EXTERN void  petscdtindextobary_(PetscInt *len,PetscInt *sum,PetscInt *ind
 PETSC_EXTERN void  petscdtbarytoindex_(PetscInt *len,PetscInt *sum, PetscInt coord[],PetscInt *index, int *__ierr)
 {
 *__ierr = PetscDTBaryToIndex(*len,*sum,coord,index);
+}
+PETSC_EXTERN void  petscquadraturecomputepermutations_(PetscQuadrature quad,PetscInt *Np,IS *perm[], int *__ierr)
+{
+*__ierr = PetscQuadratureComputePermutations(
+	(PetscQuadrature)PetscToPointer((quad) ),Np,perm);
+}
+PETSC_EXTERN void  petscdtcreatedefaultquadrature_(DMPolytopeType *ct,PetscInt *qorder,PetscQuadrature *q,PetscQuadrature *fq, int *__ierr)
+{
+*__ierr = PetscDTCreateDefaultQuadrature(*ct,*qorder,q,fq);
 }
 #if defined(__cplusplus)
 }

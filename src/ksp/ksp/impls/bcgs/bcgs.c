@@ -1,4 +1,3 @@
-
 #include <../src/ksp/ksp/impls/bcgs/bcgsimpl.h> /*I  "petscksp.h"  I*/
 
 PetscErrorCode KSPSetFromOptions_BCGS(KSP ksp, PetscOptionItems *PetscOptionsObject)
@@ -6,14 +5,14 @@ PetscErrorCode KSPSetFromOptions_BCGS(KSP ksp, PetscOptionItems *PetscOptionsObj
   PetscFunctionBegin;
   PetscOptionsHeadBegin(PetscOptionsObject, "KSP BCGS Options");
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode KSPSetUp_BCGS(KSP ksp)
 {
   PetscFunctionBegin;
   PetscCall(KSPSetWorkVecs(ksp, 6));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode KSPSolve_BCGS(KSP ksp)
@@ -58,7 +57,7 @@ PetscErrorCode KSPSolve_BCGS(KSP ksp)
   PetscCall((*ksp->converged)(ksp, 0, dp, &ksp->reason, ksp->cnvP));
   if (ksp->reason) {
     if (bcgs->guess) PetscCall(VecAXPY(X, 1.0, bcgs->guess));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /* Make the initial Rp == R */
@@ -140,7 +139,7 @@ PetscErrorCode KSPSolve_BCGS(KSP ksp)
 
   PetscCall(KSPUnwindPreconditioner(ksp, X, T));
   if (bcgs->guess) PetscCall(VecAXPY(X, 1.0, bcgs->guess));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode KSPBuildSolution_BCGS(KSP ksp, Vec v, Vec *V)
@@ -160,7 +159,7 @@ PetscErrorCode KSPBuildSolution_BCGS(KSP ksp, Vec v, Vec *V)
       *V = v;
     } else *V = ksp->vec_sol;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode KSPReset_BCGS(KSP ksp)
@@ -169,7 +168,7 @@ PetscErrorCode KSPReset_BCGS(KSP ksp)
 
   PetscFunctionBegin;
   PetscCall(VecDestroy(&cg->guess));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode KSPDestroy_BCGS(KSP ksp)
@@ -177,11 +176,11 @@ PetscErrorCode KSPDestroy_BCGS(KSP ksp)
   PetscFunctionBegin;
   PetscCall(KSPReset_BCGS(ksp));
   PetscCall(KSPDestroyDefault(ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPBCGS - Implements the BiCGStab (Stabilized version of Biconjugate Gradient) method.
+   KSPBCGS - Implements the BiCGStab (Stabilized version of Biconjugate Gradient) method {cite}`vorst92`
 
    Level: beginner
 
@@ -192,10 +191,7 @@ PetscErrorCode KSPDestroy_BCGS(KSP ksp)
 
    See `KSPFBCGS`, `KSPFBCGSR`, and `KSPPIPEBCGS` for flexible and pipelined versions of the algorithm
 
-   Reference:
-.  * - van der Vorst, SIAM J. Sci. Stat. Comput., 1992.
-
-.seealso: [](chapter_ksp), `KSPFBCGS`, `KSPFBCGSR`, `KSPPIPEBCGS`, `KSPBCGSL`, `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPBICG`, `KSPBCGSL`, `KSPFBICG`, `KSPQMRCGS`, `KSPSetPCSide()`
+.seealso: [](ch_ksp), `KSPFBCGS`, `KSPFBCGSR`, `KSPPIPEBCGS`, `KSPBCGSL`, `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPBICG`, `KSPBCGSL`, `KSPFBICG`, `KSPQMRCGS`, `KSPSetPCSide()`
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_BCGS(KSP ksp)
 {
@@ -217,5 +213,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_BCGS(KSP ksp)
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_UNPRECONDITIONED, PC_RIGHT, 2));
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_NONE, PC_LEFT, 1));
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_NONE, PC_RIGHT, 1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

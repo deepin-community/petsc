@@ -1,4 +1,3 @@
-
 static char help[] = "Solves a simple time-dependent linear PDE (the heat equation).\n\
 Input parameters include:\n\
   -m <points>, where <points> = number of grid points\n\
@@ -255,6 +254,7 @@ PetscErrorCode InitialConditions(Vec u, AppCtx *appctx)
   PetscScalar *u_localptr;
   PetscInt     i;
 
+  PetscFunctionBeginUser;
   /*
     Get a pointer to vector data.
     - For default PETSc vectors, VecGetArray() returns a pointer to
@@ -283,7 +283,7 @@ PetscErrorCode InitialConditions(Vec u, AppCtx *appctx)
   */
   if (appctx->debug) PetscCall(VecView(u, PETSC_VIEWER_STDOUT_SELF));
 
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------------------------------------------------------- */
 /*
@@ -302,6 +302,7 @@ PetscErrorCode ExactSolution(PetscReal t, Vec solution, AppCtx *appctx)
   PetscScalar *s_localptr, h = appctx->h, ex1, ex2, sc1, sc2;
   PetscInt     i;
 
+  PetscFunctionBeginUser;
   /*
      Get a pointer to vector data.
   */
@@ -321,7 +322,7 @@ PetscErrorCode ExactSolution(PetscReal t, Vec solution, AppCtx *appctx)
      Restore vector
   */
   PetscCall(VecRestoreArray(solution, &s_localptr));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------------------------------------------------------- */
 /*
@@ -348,6 +349,7 @@ PetscErrorCode Monitor(TS ts, PetscInt step, PetscReal crtime, Vec u, void *ctx)
   PetscReal norm_2, norm_max, dt, dttol;
   PetscBool flg;
 
+  PetscFunctionBeginUser;
   /*
      View a graph of the current iterate
   */
@@ -401,7 +403,7 @@ PetscErrorCode Monitor(TS ts, PetscInt step, PetscReal crtime, Vec u, void *ctx)
     PetscCall(VecView(appctx->solution, PETSC_VIEWER_STDOUT_SELF));
   }
 
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------------------------------------------------------- */
 /*
@@ -432,6 +434,7 @@ PetscErrorCode RHSMatrixHeat(TS ts, PetscReal t, Vec X, Mat AA, Mat BB, void *ct
   PetscInt    i, idx[3];
   PetscScalar v[3], stwo = -2. / (appctx->h * appctx->h), sone = -.5 * stwo;
 
+  PetscFunctionBeginUser;
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Compute entries for the locally owned part of the matrix
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -480,7 +483,7 @@ PetscErrorCode RHSMatrixHeat(TS ts, PetscReal t, Vec X, Mat AA, Mat BB, void *ct
   */
   PetscCall(MatSetOption(A, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
 
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------------------------------------------------------- */
 /*
@@ -496,13 +499,14 @@ PetscErrorCode MyBCRoutine(TS ts, PetscReal t, Vec f, void *ctx)
   PetscInt     m      = appctx->m;
   PetscScalar *fa;
 
+  PetscFunctionBeginUser;
   PetscCall(VecGetArray(f, &fa));
   fa[0]     = 0.0;
   fa[m - 1] = 1.0;
   PetscCall(VecRestoreArray(f, &fa));
   PetscCall(PetscPrintf(PETSC_COMM_SELF, "t=%g\n", (double)t));
 
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

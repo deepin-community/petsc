@@ -1,11 +1,10 @@
-
 /*
    Provides an interface to the KLUv1.2 sparse solver
 
    When build with PETSC_USE_64BIT_INDICES this will use SuiteSparse_long as the
    integer type in KLU, otherwise it will use int. This means
    all integers in this file are simply declared as PetscInt. Also it means
-   that KLU SuiteSparse_long version MUST be built with 64 bit integers when used.
+   that KLU SuiteSparse_long version MUST be built with 64-bit integers when used.
 
 */
 #include <../src/mat/impls/aij/seq/aij.h>
@@ -105,7 +104,7 @@ static PetscErrorCode MatDestroy_KLU(Mat A)
   }
   PetscCall(PetscObjectComposeFunction((PetscObject)A, "MatFactorGetSolverType_C", NULL));
   PetscCall(PetscFree(A->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSolveTranspose_KLU(Mat A, Vec b, Vec x)
@@ -116,13 +115,12 @@ static PetscErrorCode MatSolveTranspose_KLU(Mat A, Vec b, Vec x)
 
   PetscFunctionBegin;
   /* KLU uses a column major format, solve Ax = b by klu_*_solve */
-  /* ----------------------------------*/
   PetscCall(VecCopy(b, x)); /* klu_solve stores the solution in rhs */
   PetscCall(VecGetArray(x, &xa));
   status = klu_K_solve(lu->Symbolic, lu->Numeric, A->rmap->n, 1, (PetscReal *)xa, &lu->Common);
   PetscCheck(status == 1, PETSC_COMM_SELF, PETSC_ERR_LIB, "KLU Solve failed");
   PetscCall(VecRestoreArray(x, &xa));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatSolve_KLU(Mat A, Vec b, Vec x)
@@ -133,7 +131,6 @@ static PetscErrorCode MatSolve_KLU(Mat A, Vec b, Vec x)
 
   PetscFunctionBegin;
   /* KLU uses a column major format, solve A^Tx = b by klu_*_tsolve */
-  /* ----------------------------------*/
   PetscCall(VecCopy(b, x)); /* klu_solve stores the solution in rhs */
   PetscCall(VecGetArray(x, &xa));
 #if defined(PETSC_USE_COMPLEX)
@@ -144,7 +141,7 @@ static PetscErrorCode MatSolve_KLU(Mat A, Vec b, Vec x)
 #endif
   PetscCheck(status == 1, PETSC_COMM_SELF, PETSC_ERR_LIB, "KLU Solve failed");
   PetscCall(VecRestoreArray(x, &xa));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatLUFactorNumeric_KLU(Mat F, Mat A, const MatFactorInfo *info)
@@ -156,7 +153,6 @@ static PetscErrorCode MatLUFactorNumeric_KLU(Mat F, Mat A, const MatFactorInfo *
 
   PetscFunctionBegin;
   /* numeric factorization of A' */
-  /* ----------------------------*/
 
   if (lu->flg == SAME_NONZERO_PATTERN && lu->Numeric) klu_K_free_numeric(&lu->Numeric, &lu->Common);
   lu->Numeric = klu_K_factor(ai, aj, (PetscReal *)av, lu->Symbolic, &lu->Common);
@@ -166,7 +162,7 @@ static PetscErrorCode MatLUFactorNumeric_KLU(Mat F, Mat A, const MatFactorInfo *
   lu->CleanUpKLU         = PETSC_TRUE;
   F->ops->solve          = MatSolve_KLU;
   F->ops->solvetranspose = MatSolveTranspose_KLU;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatLUFactorSymbolic_KLU(Mat F, Mat A, IS r, IS c, const MatFactorInfo *info)
@@ -181,7 +177,7 @@ static PetscErrorCode MatLUFactorSymbolic_KLU(Mat F, Mat A, IS r, IS c, const Ma
     PetscCall(ISGetIndices(r, &ra));
     PetscCall(ISGetIndices(c, &ca));
     PetscCall(PetscMalloc2(m, &lu->perm_r, n, &lu->perm_c));
-    /* we cannot simply memcpy on 64 bit archs */
+    /* we cannot simply memcpy on 64-bit archs */
     for (i = 0; i < m; i++) lu->perm_r[i] = ra[i];
     for (i = 0; i < n; i++) lu->perm_c[i] = ca[i];
     PetscCall(ISRestoreIndices(r, &ra));
@@ -189,7 +185,6 @@ static PetscErrorCode MatLUFactorSymbolic_KLU(Mat F, Mat A, IS r, IS c, const Ma
   }
 
   /* symbolic factorization of A' */
-  /* ---------------------------------------------------------------------- */
   if (r) {
     lu->PetscMatOrdering = PETSC_TRUE;
     lu->Symbolic         = klu_K_analyze_given(n, ai, aj, lu->perm_c, lu->perm_r, &lu->Common);
@@ -201,7 +196,7 @@ static PetscErrorCode MatLUFactorSymbolic_KLU(Mat F, Mat A, IS r, IS c, const Ma
   lu->flg                   = DIFFERENT_NONZERO_PATTERN;
   lu->CleanUpKLU            = PETSC_TRUE;
   (F)->ops->lufactornumeric = MatLUFactorNumeric_KLU;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatView_Info_KLU(Mat A, PetscViewer viewer)
@@ -222,7 +217,7 @@ static PetscErrorCode MatView_Info_KLU(Mat A, PetscViewer viewer)
   if (!lu->PetscMatOrdering) PetscCall(PetscViewerASCIIPrintf(viewer, "  Ordering: %s (not using the PETSc ordering)\n", KluOrderingTypes[(int)lu->Common.ordering]));
   /* matrix row scaling */
   PetscCall(PetscViewerASCIIPrintf(viewer, "  Matrix row scaling: %s\n", scale[(int)lu->Common.scale]));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatView_KLU(Mat A, PetscViewer viewer)
@@ -236,37 +231,38 @@ static PetscErrorCode MatView_KLU(Mat A, PetscViewer viewer)
     PetscCall(PetscViewerGetFormat(viewer, &format));
     if (format == PETSC_VIEWER_ASCII_INFO) PetscCall(MatView_Info_KLU(A, viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatFactorGetSolverType_seqaij_klu(Mat A, MatSolverType *type)
+static PetscErrorCode MatFactorGetSolverType_seqaij_klu(Mat A, MatSolverType *type)
 {
   PetscFunctionBegin;
   *type = MATSOLVERKLU;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
   MATSOLVERKLU = "klu" - A matrix type providing direct solvers, LU, for sequential matrices
   via the external package KLU.
 
-  ./configure --download-suitesparse to install PETSc to use KLU
+  `./configure --download-suitesparse` to install PETSc to use KLU
 
-  Use -pc_type lu -pc_factor_mat_solver_type klu to use this direct solver
+  Use `-pc_type lu` `-pc_factor_mat_solver_type klu` to use this direct solver
 
   Consult KLU documentation for more information on the options database keys below.
 
   Options Database Keys:
 + -mat_klu_pivot_tol <0.001>                  - Partial pivoting tolerance
 . -mat_klu_use_btf <1>                        - Use BTF preordering
-. -mat_klu_ordering <AMD>                     - KLU reordering scheme to reduce fill-in (choose one of) AMD COLAMD PETSC
-- -mat_klu_row_scale <NONE>                   - Matrix row scaling (choose one of) NONE SUM MAX
-
-   Note: KLU is part of SuiteSparse http://faculty.cse.tamu.edu/davis/suitesparse.html
+. -mat_klu_ordering <AMD>                     - KLU reordering scheme to reduce fill-in (choose one of) `AMD`, `COLAMD`, `PETSC`
+- -mat_klu_row_scale <NONE>                   - Matrix row scaling (choose one of) `NONE`, `SUM`, `MAX`
 
    Level: beginner
 
-.seealso: `PCLU`, `MATSOLVERUMFPACK`, `MATSOLVERCHOLMOD`, `PCFactorSetMatSolverType()`, `MatSolverType`
+   Note:
+   KLU is part of SuiteSparse <http://faculty.cse.tamu.edu/davis/suitesparse.html>
+
+.seealso: [](ch_matrices), `Mat`, `PCLU`, `MATSOLVERUMFPACK`, `MATSOLVERCHOLMOD`, `PCFactorSetMatSolverType()`, `MatSolverType`
 M*/
 
 PETSC_INTERN PetscErrorCode MatGetFactor_seqaij_klu(Mat A, MatFactorType ftype, Mat *F)
@@ -303,7 +299,6 @@ PETSC_INTERN PetscErrorCode MatGetFactor_seqaij_klu(Mat A, MatFactorType ftype, 
   PetscCall(PetscStrallocpy(MATORDERINGEXTERNAL, (char **)&B->preferredordering[MAT_FACTOR_LU]));
 
   /* initializations */
-  /* ------------------------------------------------*/
   /* get the default control parameters */
   status = klu_K_defaults(&lu->Common);
   PetscCheck(status > 0, PETSC_COMM_SELF, PETSC_ERR_LIB, "KLU Initialization failed");
@@ -322,5 +317,5 @@ PETSC_INTERN PetscErrorCode MatGetFactor_seqaij_klu(Mat A, MatFactorType ftype, 
   PetscCall(PetscOptionsEList("-mat_klu_row_scale", "Matrix row scaling", "None", scale, 3, scale[0], &idx, &flg));
   PetscOptionsEnd();
   *F = B;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

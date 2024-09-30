@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Tutorials &#8212; PETSc 3.18.6 documentation</title>
+    <title>Tutorials &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -52,7 +53,7 @@
     <link rel="shortcut icon" href="../_static/petsc_favicon.png"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="PETSc In-Person Tutorials" href="in_person.html" />
+    <link rel="next" title="Tutorials, by Physics" href="guide_to_examples_by_physics.html" />
     <link rel="prev" title="License" href="../install/license.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="docsearch:language" content="en">
@@ -141,32 +142,34 @@
                     </li>
                 
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
-                        User-Guide
-                      </a>
-                    </li>
-                
-
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
-                      </a>
-                    </li>
-                
-
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="#">
                         Tutorials
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
+                      </a>
+                    </li>
+                
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -292,32 +292,34 @@
                     </li>
                 
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
-                        User-Guide
-                      </a>
-                    </li>
-                
-
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
-                      </a>
-                    </li>
-                
-
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="#">
                         Tutorials
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
+                        User-Guide
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
+                      </a>
+                    </li>
+                
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -395,14 +394,11 @@
   </p>
   <div class="bd-toc-item navbar-nav">
     <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="in_person.html">In-person tutorials</a></li>
-</ul>
-<ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="guide_to_examples_by_physics.html">Guide to PETSc Tutorial Examples, by Physics</a></li>
-<li class="toctree-l1"><a class="reference internal" href="physics/guide_to_stokes.html">Guide to the Stokes Equations using Finite Elements in PETSc</a></li>
-<li class="toctree-l1"><a class="reference internal" href="meshing/guide_to_subsurface.html">Guide to the Meshing for Subsurface Flows in PETSc</a></li>
-<li class="toctree-l1"><a class="reference internal" href="performance/guide_to_TAS.html">Guide to PETSc Quick Start Tutorial on Time, Accuracy, Speed Analysis(TAS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="handson.html">Classic "Hands-on" tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="guide_to_examples_by_physics.html">Tutorials, by Physics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="handson.html">Tutorials, by Mathematical Problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="meshing/guide_to_subsurface.html">Meshing for Subsurface Flows in PETSc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="performance/guide_to_TAS.html">Time, Accuracy, Speed Analysis (TAS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="in_person.html">In-Person Tutorials</a></li>
 </ul>
 
   </div>
@@ -436,23 +432,11 @@
               
   <section id="tutorials">
 <h1>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this heading">#</a></h1>
+<p>This page provides connections to PETSc tutorial examples by type of physics being modeled,
+discretization technique being used, solvers used, etc.</p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="in_person.html">In-person tutorials</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="in_person.html#upcoming-tutorials">Upcoming tutorials</a></li>
-<li class="toctree-l2"><a class="reference internal" href="in_person.html#previous-tutorials">Previous tutorials</a></li>
-</ul>
-</li>
-</ul>
-</div>
-<p>PETSc has many tutorial examples, found in <code class="docutils literal notranslate"><span class="pre">tutorials/</span></code>
-directories throughout the <code class="docutils literal notranslate"><span class="pre">src/</span></code> tree. Since these do not have informative
-names and vary greatly in their complexity and level of internal documentation,
-this page provides guides to connect the tutorial examples to particular physics,
-discretizations, solvers, etc. that you might be interested in.</p>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="guide_to_examples_by_physics.html">Guide to PETSc Tutorial Examples, by Physics</a><ul>
+<li class="toctree-l1"><a class="reference internal" href="guide_to_examples_by_physics.html">Tutorials, by Physics</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="guide_to_examples_by_physics.html#poisson">Poisson</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guide_to_examples_by_physics.html#elastostatics">Elastostatics</a></li>
 <li class="toctree-l2"><a class="reference internal" href="guide_to_examples_by_physics.html#stokes">Stokes</a></li>
@@ -461,30 +445,36 @@ discretizations, solvers, etc. that you might be interested in.</p>
 <li class="toctree-l2"><a class="reference internal" href="guide_to_examples_by_physics.html#navier-stokes">Navier-Stokes</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="physics/guide_to_stokes.html">Guide to the Stokes Equations using Finite Elements in PETSc</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="physics/guide_to_stokes.html#equation-definition">Equation Definition</a></li>
-<li class="toctree-l2"><a class="reference internal" href="physics/guide_to_stokes.html#mms-solutions">MMS Solutions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="physics/guide_to_stokes.html#dealing-with-parameters">Dealing with Parameters</a></li>
-<li class="toctree-l2"><a class="reference internal" href="physics/guide_to_stokes.html#investigating-convergence">Investigating convergence</a></li>
-<li class="toctree-l2"><a class="reference internal" href="physics/guide_to_stokes.html#bibliography">Bibliography</a></li>
+<li class="toctree-l1"><a class="reference internal" href="handson.html">Tutorials, by Mathematical Problem</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="handson.html#linear-elliptic-pde-on-a-2d-grid">Linear elliptic PDE on a 2D grid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="handson.html#nonlinear-ode-arising-from-a-time-dependent-one-dimensional-pde">Nonlinear ODE arising from a time-dependent one-dimensional PDE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="handson.html#nonlinear-pde-on-a-structured-grid">Nonlinear PDE on a structured grid</a></li>
+<li class="toctree-l2"><a class="reference internal" href="handson.html#nonlinear-time-dependent-pde-on-unstructured-grid">Nonlinear time dependent PDE on unstructured grid</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="meshing/guide_to_subsurface.html">Guide to the Meshing for Subsurface Flows in PETSc</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="meshing/guide_to_subsurface.html#reading-the-ascii-output">Reading the ASCII Output</a></li>
-<li class="toctree-l2"><a class="reference internal" href="meshing/guide_to_subsurface.html#refinement-of-simplex-meshes">Refinement of Simplex Meshes</a></li>
-</ul>
-</li>
-<li class="toctree-l1"><a class="reference internal" href="performance/guide_to_TAS.html">Guide to PETSc Quick Start Tutorial on Time, Accuracy, Speed Analysis(TAS)</a></li>
-<li class="toctree-l1"><a class="reference internal" href="handson.html">Classic &quot;Hands-on&quot; tutorials</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="handson.html#example-1-linear-poisson-equation-on-a-2d-grid">Example 1: Linear Poisson equation on a 2D grid</a></li>
-<li class="toctree-l2"><a class="reference internal" href="handson.html#example-2-nonlinear-ode-arising-from-a-time-dependent-one-dimensional-pde">Example 2: Nonlinear ODE arising from a time-dependent one dimensional PDE</a></li>
-<li class="toctree-l2"><a class="reference internal" href="handson.html#example-3-nonlinear-pde-on-a-structured-grid">Example 3: Nonlinear PDE on a structured grid</a></li>
-<li class="toctree-l2"><a class="reference internal" href="handson.html#example-4-linear-stokes-type-pde-on-a-structured-grid">Example 4: Linear Stokes-type PDE on a structured grid</a></li>
-<li class="toctree-l2"><a class="reference internal" href="handson.html#example-5-nonlinear-time-dependent-pde-on-unstructured-grid">Example 5: Nonlinear time dependent PDE on Unstructured Grid</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="meshing/guide_to_subsurface.html">Meshing for Subsurface Flows in PETSc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="performance/guide_to_TAS.html">Time, Accuracy, Speed Analysis (TAS)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="in_person.html">In-Person Tutorials</a></li>
 </ul>
 </div>
+<p>In addition, PETSc has many additionally poorly curated tutorial examples, found in the <code class="docutils notranslate"><span class="pre">tutorials/</span></code>
+directories throughout the PETSc <code class="docutils notranslate"><span class="pre">src/</span></code> tree.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="../src/ksp/ksp/tutorials/index.html">Linear problems</a></p></li>
+<li><p><a class="reference external" href="../src/snes/tutorials/index.html">Nonlinear problems</a></p></li>
+<li><p><a class="reference external" href="../src/ts/tutorials/index.html">Time integration</a></p></li>
+<li><p>Optimization</p>
+<ul>
+<li><p><a class="reference external" href="../src/tao/leastsquares/tutorials/index.html">Least-squares</a> (Manual: <a class="reference internal" href="../manual/tao.html#sec-tao-leastsquares"><span class="std std-ref">Nonlinear Least-Squares</span></a>)</p></li>
+<li><p><a class="reference external" href="../src/tao/quadratic/tutorials/index.html">Quadratic</a>  (Manual: <a class="reference internal" href="../manual/tao.html#sec-tao-quadratic"><span class="std std-ref">Quadratic Solvers</span></a>)</p></li>
+<li><p><a class="reference external" href="../src/tao/unconstrained/tutorials/index.html">Unconstrained</a> (Manual: <a class="reference internal" href="../manual/tao.html#sec-tao-unconstrained"><span class="std std-ref">Unconstrained Minimization</span></a>)</p></li>
+<li><p><a class="reference external" href="../src/tao/bound/tutorials/index.html">Bound</a> (Manual: <a class="reference internal" href="../manual/tao.html#sec-tao-bound"><span class="std std-ref">Bound-Constrained Optimization</span></a>)</p></li>
+<li><p><a class="reference external" href="../src/tao/constrained/tutorials/index.html">Constrained</a> (Manual: <a class="reference internal" href="../manual/tao.html#sec-tao-constrained"><span class="std std-ref">Generally Constrained Solvers</span></a>)</p></li>
+<li><p><a class="reference external" href="../src/tao/complementarity/tutorials/index.html">Complementarity</a> (Manual: <a class="reference internal" href="../manual/tao.html#sec-tao-complementary"><span class="std std-ref">Complementarity</span></a>)</p></li>
+<li><p><a class="reference external" href="../src/tao/pde_constrained/tutorials/index.html">PDE constrained</a> (Manual: <a class="reference internal" href="../manual/tao.html#sec-tao-pde-constrained"><span class="std std-ref">PDE-constrained Optimization</span></a>)</p></li>
+</ul>
+</li>
+</ul>
 </section>
 
 
@@ -502,10 +492,10 @@ discretizations, solvers, etc. that you might be interested in.</p>
           <p class="prev-next-title">License</p>
       </div>
   </a>
-  <a class='right-next' id="next-link" href="in_person.html" title="next page">
+  <a class='right-next' id="next-link" href="guide_to_examples_by_physics.html" title="next page">
   <div class="prev-next-info">
       <p class="prev-next-subtitle">next</p>
-      <p class="prev-next-title">PETSc In-Person Tutorials</p>
+      <p class="prev-next-title">Tutorials, by Physics</p>
   </div>
   <i class="fa-solid fa-angle-right"></i>
   </a>
@@ -570,7 +560,7 @@ discretizations, solvers, etc. that you might be interested in.</p>
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -586,7 +576,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

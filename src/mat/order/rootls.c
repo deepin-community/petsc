@@ -1,4 +1,3 @@
-
 /* rootls.f -- translated by f2c (version 19931217).*/
 
 #include <petscsys.h>
@@ -82,5 +81,5 @@ L200:
     node       = ls[i];
     mask[node] = 1;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

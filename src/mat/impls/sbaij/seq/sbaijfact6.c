@@ -1,4 +1,3 @@
-
 #include <../src/mat/impls/sbaij/seq/sbaij.h>
 #include <petsc/private/kernels/blockinvert.h>
 
@@ -227,5 +226,5 @@ PetscErrorCode MatCholeskyFactorNumeric_SeqSBAIJ_4(Mat C, Mat A, const MatFactor
   C->preallocated        = PETSC_TRUE;
 
   PetscCall(PetscLogFlops(1.3333 * 64 * b->mbs)); /* from inverting diagonal blocks */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

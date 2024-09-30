@@ -5,20 +5,21 @@
 
 /*@C
   DMMoabGenerateHierarchy - Generate a multi-level uniform refinement hierarchy
-  by succesively refining a coarse mesh, already defined in the DM object
+  by succesively refining a coarse mesh, already defined in the `DM` object
   provided by the user.
 
   Collective
 
   Input Parameter:
-. dmb  - The DMMoab object
+. dm - The `DMMOAB` object
 
   Output Parameters:
-+ nlevels   - The number of levels of refinement needed to generate the hierarchy
-- ldegrees  - The degree of refinement at each level in the hierarchy
++ nlevels  - The number of levels of refinement needed to generate the hierarchy
+- ldegrees - The degree of refinement at each level in the hierarchy
 
   Level: beginner
 
+.seealso: `DMMoabCreate()`
 @*/
 PetscErrorCode DMMoabGenerateHierarchy(DM dm, PetscInt nlevels, PetscInt *ldegrees)
 {
@@ -76,25 +77,25 @@ PetscErrorCode DMMoabGenerateHierarchy(DM dm, PetscInt nlevels, PetscInt *ldegre
 
   hsets.clear();
   if (!ldegrees) PetscCall(PetscFree(pdegrees));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*@C
-  DMRefineHierarchy_Moab - Generate a multi-level DM hierarchy
+// PetscClangLinter pragma ignore: -fdoc-*
+/*
+  DMRefineHierarchy_Moab - Generate a multi-level `DM` hierarchy
   by succesively refining a coarse mesh.
 
   Collective
 
   Input Parameter:
-. dm  - The DMMoab object
+. dm - The `DMMOAB` object
 
   Output Parameters:
-+ nlevels   - The number of levels of refinement needed to generate the hierarchy
-- dmf  - The DM objects after successive refinement of the hierarchy
++ nlevels - The number of levels of refinement needed to generate the hierarchy
+- dmf     - The DM objects after successive refinement of the hierarchy
 
   Level: beginner
-
-@*/
+*/
 PETSC_EXTERN PetscErrorCode DMRefineHierarchy_Moab(DM dm, PetscInt nlevels, DM dmf[])
 {
   PetscInt i;
@@ -103,25 +104,25 @@ PETSC_EXTERN PetscErrorCode DMRefineHierarchy_Moab(DM dm, PetscInt nlevels, DM d
 
   PetscCall(DMRefine(dm, PetscObjectComm((PetscObject)dm), &dmf[0]));
   for (i = 1; i < nlevels; i++) PetscCall(DMRefine(dmf[i - 1], PetscObjectComm((PetscObject)dm), &dmf[i]));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*@C
-  DMCoarsenHierarchy_Moab - Generate a multi-level DM hierarchy
+// PetscClangLinter pragma ignore: -fdoc-*
+/*
+  DMCoarsenHierarchy_Moab - Generate a multi-level `DM` hierarchy
   by succesively coarsening a refined mesh.
 
   Collective
 
   Input Parameter:
-. dm  - The DMMoab object
+. dm - The `DMMOAB` object
 
   Output Parameters:
-+ nlevels   - The number of levels of refinement needed to generate the hierarchy
-- dmc  - The DM objects after successive coarsening of the hierarchy
++ nlevels - The number of levels of refinement needed to generate the hierarchy
+- dmc     - The `DM` objects after successive coarsening of the hierarchy
 
   Level: beginner
-
-@*/
+*/
 PETSC_EXTERN PetscErrorCode DMCoarsenHierarchy_Moab(DM dm, PetscInt nlevels, DM dmc[])
 {
   PetscInt i;
@@ -130,29 +131,29 @@ PETSC_EXTERN PetscErrorCode DMCoarsenHierarchy_Moab(DM dm, PetscInt nlevels, DM 
 
   PetscCall(DMCoarsen(dm, PetscObjectComm((PetscObject)dm), &dmc[0]));
   for (i = 1; i < nlevels; i++) PetscCall(DMCoarsen(dmc[i - 1], PetscObjectComm((PetscObject)dm), &dmc[i]));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode DMMoab_Compute_NNZ_From_Connectivity(DM, PetscInt *, PetscInt *, PetscInt *, PetscInt *, PetscBool);
 
-/*@C
+// PetscClangLinter pragma ignore: -fdoc-*
+/*
   DMCreateInterpolation_Moab - Generate the interpolation operators to transform
   operators (matrices, vectors) from parent level to child level as defined by
-  the DM inputs provided by the user.
+  the `DM` inputs provided by the user.
 
   Collective
 
   Input Parameters:
-+ dm1  - The DMMoab object
-- dm2  - the second, finer DMMoab object
++ dmp - The `DMMOAB` object
+- dmc - the second, finer `DMMOAB` object
 
   Output Parameters:
-+ interpl  - The interpolation operator for transferring data between the levels
-- vec      - The scaling vector (optional)
++ interpl - The interpolation operator for transferring data between the levels
+- vec     - The scaling vector (optional)
 
   Level: developer
-
-@*/
+*/
 PETSC_EXTERN PetscErrorCode DMCreateInterpolation_Moab(DM dmp, DM dmc, Mat *interpl, Vec *vec)
 {
   DM_Moab        *dmbp, *dmbc;
@@ -177,7 +178,7 @@ PETSC_EXTERN PetscErrorCode DMCreateInterpolation_Moab(DM dmp, DM dmc, Mat *inte
   // Columns = Parent DoFs ;  Rows = Child DoFs
   // Interpolation matrix: \sum_{i=1}^P Owned(Child) * (Owned(Parent) + Ghosted(Parent))
   // Size: nlsizc * nlghsizp
-  PetscInfo(NULL, "Creating interpolation matrix %" PetscInt_FMT " X %" PetscInt_FMT " to apply transformation between levels %" PetscInt_FMT " -> %" PetscInt_FMT ".\n", ngsizc, nlghsizp, dmbp->hlevel, dmbc->hlevel);
+  PetscCall(PetscInfo(NULL, "Creating interpolation matrix %" PetscInt_FMT " X %" PetscInt_FMT " to apply transformation between levels %" PetscInt_FMT " -> %" PetscInt_FMT ".\n", ngsizc, nlghsizp, dmbp->hlevel, dmbc->hlevel));
 
   PetscCall(DMGetDimension(dmp, &dim));
 
@@ -234,7 +235,7 @@ PETSC_EXTERN PetscErrorCode DMCreateInterpolation_Moab(DM dmp, DM dmc, Mat *inte
     nnz[tc] = std::min(nlsizp, nnz[tc]);
     onz[tc] = std::min(ngsizp - nlsizp, onz[tc]);
 
-    PetscInfo(NULL, "  %d: NNZ = %d, ONZ = %d\n", tc, nnz[tc], onz[tc]);
+    PetscCall(PetscInfo(NULL, "  %d: NNZ = %d, ONZ = %d\n", tc, nnz[tc], onz[tc]));
 
     innz = (innz < nnz[tc] ? nnz[tc] : innz);
     ionz = (ionz < onz[tc] ? onz[tc] : ionz);
@@ -327,7 +328,7 @@ PETSC_EXTERN PetscErrorCode DMCreateInterpolation_Moab(DM dmp, DM dmc, Mat *inte
 
     /* Compute the actual interpolation weights when projecting solution/residual between levels */
     if (use_consistent_bases) {
-      /* Use the cached values of natural parameteric coordinates and basis pre-evaluated.
+      /* Use the cached values of natural parametric coordinates and basis pre-evaluated.
          We are making an assumption here that UMR used in GMG to generate the hierarchy uses
          the same template for all elements; This will fail for mixed element meshes (TRI/QUAD).
 
@@ -373,26 +374,26 @@ PETSC_EXTERN PetscErrorCode DMCreateInterpolation_Moab(DM dmp, DM dmc, Mat *inte
   if (vec) *vec = NULL;
   PetscCall(MatAssemblyBegin(*interpl, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(*interpl, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*@C
+// PetscClangLinter pragma ignore: -fdoc-*
+/*
   DMCreateInjection_Moab - Generate a multi-level uniform refinement hierarchy
-  by succesively refining a coarse mesh, already defined in the DM object
+  by succesively refining a coarse mesh, already defined in the `DM` object
   provided by the user.
 
   Collective
 
   Input Parameter:
-. dmb  - The DMMoab object
+. dmb  - The `DMMOAB` object
 
   Output Parameters:
 + nlevels   - The number of levels of refinement needed to generate the hierarchy
 - ldegrees  - The degree of refinement at each level in the hierarchy
 
   Level: beginner
-
-@*/
+*/
 PETSC_EXTERN PetscErrorCode DMCreateInjection_Moab(DM dm1, DM dm2, VecScatter *ctx)
 {
   //DM_Moab        *dmmoab;
@@ -402,8 +403,8 @@ PETSC_EXTERN PetscErrorCode DMCreateInjection_Moab(DM dm1, DM dm2, VecScatter *c
   PetscValidHeaderSpecific(dm2, DM_CLASSID, 2);
   //dmmoab = (DM_Moab*)(dm1)->data;
 
-  PetscPrintf(PETSC_COMM_WORLD, "[DMCreateInjection_Moab] :: Placeholder\n");
-  PetscFunctionReturn(0);
+  PetscCall(PetscPrintf(PETSC_COMM_WORLD, "[DMCreateInjection_Moab] :: Placeholder\n"));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMMoab_UMR_Private(DM dm, MPI_Comm comm, PetscBool refine, DM *dmref)
@@ -415,13 +416,15 @@ static PetscErrorCode DMMoab_UMR_Private(DM dm, MPI_Comm comm, PetscBool refine,
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(dmref, 4);
+  PetscAssertPointer(dmref, 4);
 
   if ((dmb->hlevel == dmb->nhlevels && refine) || (dmb->hlevel == 0 && !refine)) {
-    if (dmb->hlevel + 1 > dmb->nhlevels && refine) PetscInfo(NULL, "Invalid multigrid refinement hierarchy level specified (%" PetscInt_FMT "). MOAB UMR max levels = %" PetscInt_FMT ". Creating a NULL object.\n", dmb->hlevel + 1, dmb->nhlevels);
-    if (dmb->hlevel - 1 < 0 && !refine) PetscInfo(NULL, "Invalid multigrid coarsen hierarchy level specified (%" PetscInt_FMT "). Creating a NULL object.\n", dmb->hlevel - 1);
-    *dmref = PETSC_NULL;
-    PetscFunctionReturn(0);
+    if (dmb->hlevel + 1 > dmb->nhlevels && refine) {
+      PetscCall(PetscInfo(NULL, "Invalid multigrid refinement hierarchy level specified (%" PetscInt_FMT "). MOAB UMR max levels = %" PetscInt_FMT ". Creating a NULL object.\n", dmb->hlevel + 1, dmb->nhlevels));
+    }
+    if (dmb->hlevel - 1 < 0 && !refine) PetscCall(PetscInfo(NULL, "Invalid multigrid coarsen hierarchy level specified (%" PetscInt_FMT "). Creating a NULL object.\n", dmb->hlevel - 1));
+    *dmref = NULL;
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   PetscCall(DMMoabCreate(PetscObjectComm((PetscObject)dm), &dm2));
@@ -453,8 +456,8 @@ static PetscErrorCode DMMoab_UMR_Private(DM dm, MPI_Comm comm, PetscBool refine,
   dd2->numFields         = dmb->numFields;
   dd2->rw_dbglevel       = dmb->rw_dbglevel;
   dd2->partition_by_rank = dmb->partition_by_rank;
-  PetscCall(PetscStrcpy(dd2->extra_read_options, dmb->extra_read_options));
-  PetscCall(PetscStrcpy(dd2->extra_write_options, dmb->extra_write_options));
+  PetscCall(PetscStrncpy(dd2->extra_read_options, dmb->extra_read_options, sizeof(dd2->extra_read_options)));
+  PetscCall(PetscStrncpy(dd2->extra_write_options, dmb->extra_write_options, sizeof(dd2->extra_write_options)));
   dd2->read_mode  = dmb->read_mode;
   dd2->write_mode = dmb->write_mode;
 
@@ -486,60 +489,62 @@ static PetscErrorCode DMMoab_UMR_Private(DM dm, MPI_Comm comm, PetscBool refine,
   PetscCall(DMSetUp(dm2));
 
   *dmref = dm2;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*@C
+// PetscClangLinter pragma ignore: -fdoc-*
+/*
   DMRefine_Moab - Generate a multi-level uniform refinement hierarchy
-  by succesively refining a coarse mesh, already defined in the DM object
+  by succesively refining a coarse mesh, already defined in the `DM` object
   provided by the user.
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm  - The DMMoab object
-- comm - the communicator to contain the new DM object (or MPI_COMM_NULL)
++ dm   - The `DMMOAB` object
+- comm - the communicator to contain the new DM object (or `MPI_COMM_NULL`)
 
   Output Parameter:
-. dmf - the refined DM, or NULL
-
-  Note: If no refinement was done, the return value is NULL
+. dmf - the refined `DM`, or `NULL`
 
   Level: developer
 
-@*/
+  Note:
+  If no refinement was done, the return value is `NULL`
+*/
 PETSC_EXTERN PetscErrorCode DMRefine_Moab(DM dm, MPI_Comm comm, DM *dmf)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
 
   PetscCall(DMMoab_UMR_Private(dm, comm, PETSC_TRUE, dmf));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*@C
+// PetscClangLinter pragma ignore: -fdoc-*
+/*
   DMCoarsen_Moab - Generate a multi-level uniform refinement hierarchy
-  by succesively refining a coarse mesh, already defined in the DM object
+  by succesively refining a coarse mesh, already defined in the `DM` object
   provided by the user.
 
-  Collective on dm
+  Collective
 
   Input Parameters:
-+ dm  - The DMMoab object
-- comm - the communicator to contain the new DM object (or MPI_COMM_NULL)
++ dm   - The `DMMOAB` object
+- comm - the communicator to contain the new `DM` object (or `MPI_COMM_NULL`)
 
   Output Parameter:
-. dmf - the coarsened DM, or NULL
-
-  Note: If no coarsening was done, the return value is NULL
+. dmc - the coarsened `DM`, or `NULL`
 
   Level: developer
 
-@*/
+  Note:
+  If no coarsening was done, the return value is `NULL`
+*/
 PETSC_EXTERN PetscErrorCode DMCoarsen_Moab(DM dm, MPI_Comm comm, DM *dmc)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscCall(DMMoab_UMR_Private(dm, comm, PETSC_FALSE, dmc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

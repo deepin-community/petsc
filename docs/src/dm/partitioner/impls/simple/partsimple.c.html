@@ -1,284 +1,298 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/partitioner/impls/simple/partsimple.c">Actual source code: partsimple.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/dm/partitioner/impls/simple/partsimple.c">Actual source code: partsimple.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:48:53+00:00">
+<meta name="date" content="2024-03-29T14:13:11+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
 <pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../include/petscvec.h.html">&lt;petscvec.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../../include/petsc/private/partitionerimpl.h.html">&lt;petsc/private/partitionerimpl.h&gt;</A>
 
-<a name="line2">  2: </a>#include <A href="../../../../../include/petscvec.h.html">&lt;petscvec.h&gt;</A>
-<a name="line3">  3: </a>#include <A href="../../../../../include/petsc/private/partitionerimpl.h.html">&lt;petsc/private/partitionerimpl.h&gt;</A>
+<a name="line4">  4: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
+<a name="line5">  5: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> useGrid;        <font color="#B22222">/* Flag to use a grid layout */</font>
+<a name="line6">  6: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>  gridDim;        <font color="#B22222">/* The grid dimension */</font>
+<a name="line7">  7: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>  nodeGrid[3];    <font color="#B22222">/* Dimension of node grid */</font>
+<a name="line8">  8: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>  processGrid[3]; <font color="#B22222">/* Dimension of local process grid on each node */</font>
+<a name="line9">  9: </a>} PetscPartitioner_Simple;
 
-<a name="line5">  5: </a><font color="#4169E1">typedef</font> <font color="#4169E1">struct</font> {
-<a name="line6">  6: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> useGrid;        <font color="#B22222">/* Flag to use a grid layout */</font>
-<a name="line7">  7: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  gridDim;        <font color="#B22222">/* The grid dimension */</font>
-<a name="line8">  8: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  nodeGrid[3];    <font color="#B22222">/* Dimension of node grid */</font>
-<a name="line9">  9: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  processGrid[3]; <font color="#B22222">/* Dimension of local process grid on each node */</font>
-<a name="line10"> 10: </a>} PetscPartitioner_Simple;
-
-<a name="line12"> 12: </a><strong><font color="#4169E1"><a name="PetscPartitionerDestroy_Simple"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerDestroy_Simple(<a href="../../../../../docs/manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part)</font></strong>
-<a name="line13"> 13: </a>{
-<a name="line14"> 14: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(part-&gt;data);
-<a name="line15"> 15: </a>  <font color="#4169E1">return</font> 0;
+<a name="line11"> 11: </a><strong><font color="#4169E1"><a name="PetscPartitionerDestroy_Simple"></a>static <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerDestroy_Simple(<a href="../../../../../manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part)</font></strong>
+<a name="line12"> 12: </a>{
+<a name="line13"> 13: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line14"> 14: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(part-&gt;data));
+<a name="line15"> 15: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line16"> 16: </a>}
 
-<a name="line18"> 18: </a><strong><font color="#4169E1"><a name="PetscPartitionerView_Simple_ASCII"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerView_Simple_ASCII(<a href="../../../../../docs/manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line18"> 18: </a><strong><font color="#4169E1"><a name="PetscPartitionerView_Simple_ASCII"></a>static <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerView_Simple_ASCII(<a href="../../../../../manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part, <a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
 <a name="line19"> 19: </a>{
-<a name="line20"> 20: </a>  <font color="#4169E1">return</font> 0;
-<a name="line21"> 21: </a>}
+<a name="line20"> 20: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line21"> 21: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line22"> 22: </a>}
 
-<a name="line23"> 23: </a><strong><font color="#4169E1"><a name="PetscPartitionerView_Simple"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerView_Simple(<a href="../../../../../docs/manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
-<a name="line24"> 24: </a>{
-<a name="line25"> 25: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> iascii;
+<a name="line24"> 24: </a><strong><font color="#4169E1"><a name="PetscPartitionerView_Simple"></a>static <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerView_Simple(<a href="../../../../../manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part, <a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a> viewer)</font></strong>
+<a name="line25"> 25: </a>{
+<a name="line26"> 26: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> iascii;
 
-<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../docs/manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii);
-<a name="line30"> 30: </a>  <font color="#4169E1">if</font> (iascii) PetscPartitionerView_Simple_ASCII(part, viewer);
-<a name="line31"> 31: </a>  <font color="#4169E1">return</font> 0;
-<a name="line32"> 32: </a>}
+<a name="line28"> 28: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line31"> 31: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectTypeCompare.html">PetscObjectTypeCompare</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)viewer, <a href="../../../../../manualpages/Viewer/PETSCVIEWERASCII.html">PETSCVIEWERASCII</a>, &amp;iascii));
+<a name="line32"> 32: </a>  <font color="#4169E1">if</font> (iascii) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscPartitionerView_Simple_ASCII(part, viewer));
+<a name="line33"> 33: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line34"> 34: </a>}
 
-<a name="line34"> 34: </a><strong><font color="#4169E1"><a name="PetscPartitionerSetFromOptions_Simple"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerSetFromOptions_Simple(<a href="../../../../../docs/manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part, PetscOptionItems *PetscOptionsObject)</font></strong>
-<a name="line35"> 35: </a>{
-<a name="line36"> 36: </a>  PetscPartitioner_Simple *p = (PetscPartitioner_Simple *)part-&gt;data;
-<a name="line37"> 37: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                 num, i;
-<a name="line38"> 38: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>                flg;
+<a name="line36"> 36: </a><strong><font color="#4169E1"><a name="PetscPartitionerSetFromOptions_Simple"></a>static <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerSetFromOptions_Simple(<a href="../../../../../manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part, PetscOptionItems *PetscOptionsObject)</font></strong>
+<a name="line37"> 37: </a>{
+<a name="line38"> 38: </a>  PetscPartitioner_Simple *p = (PetscPartitioner_Simple *)part-&gt;data;
+<a name="line39"> 39: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>                 num, i;
+<a name="line40"> 40: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a>                flg;
 
-<a name="line40"> 40: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; 3; ++i) p-&gt;processGrid[i] = p-&gt;nodeGrid[i] = 1;
-<a name="line41"> 41: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"<a href="../../../../../docs/manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> Simple Options"</font>);
-<a name="line42"> 42: </a>  num = 3;
-<a name="line43"> 43: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsIntArray.html">PetscOptionsIntArray</a>(<font color="#666666">"-petscpartitioner_simple_node_grid"</font>, <font color="#666666">"Number of nodes in each dimension"</font>, <font color="#666666">""</font>, p-&gt;nodeGrid, &amp;num, &amp;flg);
-<a name="line44"> 44: </a>  <font color="#4169E1">if</font> (flg) {
-<a name="line45"> 45: </a>    p-&gt;useGrid = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line46"> 46: </a>    p-&gt;gridDim = num;
-<a name="line47"> 47: </a>  }
-<a name="line48"> 48: </a>  num = 3;
-<a name="line49"> 49: </a>  <a href="../../../../../docs/manualpages/Sys/PetscOptionsIntArray.html">PetscOptionsIntArray</a>(<font color="#666666">"-petscpartitioner_simple_process_grid"</font>, <font color="#666666">"Number of local processes in each dimension for a given node"</font>, <font color="#666666">""</font>, p-&gt;processGrid, &amp;num, &amp;flg);
-<a name="line50"> 50: </a>  <font color="#4169E1">if</font> (flg) {
-<a name="line51"> 51: </a>    p-&gt;useGrid = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line52"> 52: </a>    <font color="#4169E1">if</font> (p-&gt;gridDim &lt; 0) p-&gt;gridDim = num;
-<a name="line54"> 54: </a>  }
-<a name="line55"> 55: </a>  PetscOptionsHeadEnd();
-<a name="line56"> 56: </a>  <font color="#4169E1">return</font> 0;
-<a name="line57"> 57: </a>}
+<a name="line42"> 42: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line43"> 43: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; 3; ++i) p-&gt;processGrid[i] = p-&gt;nodeGrid[i] = 1;
+<a name="line44"> 44: </a>  <a href="../../../../../manualpages/Sys/PetscOptionsHeadBegin.html">PetscOptionsHeadBegin</a>(PetscOptionsObject, <font color="#666666">"<a href="../../../../../manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> Simple Options"</font>);
+<a name="line45"> 45: </a>  num = 3;
+<a name="line46"> 46: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscOptionsIntArray.html">PetscOptionsIntArray</a>(<font color="#666666">"-petscpartitioner_simple_node_grid"</font>, <font color="#666666">"Number of nodes in each dimension"</font>, <font color="#666666">""</font>, p-&gt;nodeGrid, &amp;num, &amp;flg));
+<a name="line47"> 47: </a>  <font color="#4169E1">if</font> (flg) {
+<a name="line48"> 48: </a>    p-&gt;useGrid = <a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line49"> 49: </a>    p-&gt;gridDim = num;
+<a name="line50"> 50: </a>  }
+<a name="line51"> 51: </a>  num = 3;
+<a name="line52"> 52: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscOptionsIntArray.html">PetscOptionsIntArray</a>(<font color="#666666">"-petscpartitioner_simple_process_grid"</font>, <font color="#666666">"Number of local processes in each dimension for a given node"</font>, <font color="#666666">""</font>, p-&gt;processGrid, &amp;num, &amp;flg));
+<a name="line53"> 53: </a>  <font color="#4169E1">if</font> (flg) {
+<a name="line54"> 54: </a>    p-&gt;useGrid = <a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line55"> 55: </a>    <font color="#4169E1">if</font> (p-&gt;gridDim &lt; 0) p-&gt;gridDim = num;
+<a name="line56"> 56: </a>    <font color="#4169E1">else</font> <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(p-&gt;gridDim == num, <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)part), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_INCOMP</a>, <font color="#666666">"Process grid dimension %"</font> PetscInt_FMT <font color="#666666">" != %"</font> PetscInt_FMT <font color="#666666">" node grid dimension"</font>, num, p-&gt;gridDim);
+<a name="line57"> 57: </a>  }
+<a name="line58"> 58: </a>  <a href="../../../../../manualpages/Sys/PetscOptionsHeadEnd.html">PetscOptionsHeadEnd</a>();
+<a name="line59"> 59: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line60"> 60: </a>}
 
-<a name="line59"> 59: </a><strong><font color="#4169E1"><a name="PetscPartitionerPartition_Simple_Grid"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerPartition_Simple_Grid(<a href="../../../../../docs/manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nparts, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> numVertices, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> start[], <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> adjacency[], <a href="../../../../../docs/manualpages/PetscSection/PetscSection.html">PetscSection</a> vertSection, <a href="../../../../../docs/manualpages/PetscSection/PetscSection.html">PetscSection</a> targetSection, <a href="../../../../../docs/manualpages/PetscSection/PetscSection.html">PetscSection</a> partSection, <a href="../../../../../docs/manualpages/IS/IS.html">IS</a> *partition)</font></strong>
-<a name="line60"> 60: </a>{
-<a name="line61"> 61: </a>  PetscPartitioner_Simple *p     = (PetscPartitioner_Simple *)part-&gt;data;
-<a name="line62"> 62: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          *nodes = p-&gt;nodeGrid;
-<a name="line63"> 63: </a>  const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>          *procs = p-&gt;processGrid;
-<a name="line64"> 64: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                *cellproc, *offsets, cells[3] = {1, 1, 1}, pcells[3] = {1, 1, 1};
-<a name="line65"> 65: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                 Np = 1, Nr, np, nk, nj, ni, pk, pj, pi, ck, cj, ci, i;
-<a name="line66"> 66: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>                 comm;
-<a name="line67"> 67: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>              size;
+<a name="line62"> 62: </a><strong><font color="#4169E1"><a name="PetscPartitionerPartition_Simple_Grid"></a>static <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerPartition_Simple_Grid(<a href="../../../../../manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> nparts, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> numVertices, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> start[], <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> adjacency[], <a href="../../../../../manualpages/PetscSection/PetscSection.html">PetscSection</a> vertSection, <a href="../../../../../manualpages/PetscSection/PetscSection.html">PetscSection</a> targetSection, <a href="../../../../../manualpages/PetscSection/PetscSection.html">PetscSection</a> partSection, <a href="../../../../../manualpages/IS/IS.html">IS</a> *partition)</font></strong>
+<a name="line63"> 63: </a>{
+<a name="line64"> 64: </a>  PetscPartitioner_Simple *p     = (PetscPartitioner_Simple *)part-&gt;data;
+<a name="line65"> 65: </a>  const <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>          *nodes = p-&gt;nodeGrid;
+<a name="line66"> 66: </a>  const <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>          *procs = p-&gt;processGrid;
+<a name="line67"> 67: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>                *cellproc, *offsets, cells[3] = {1, 1, 1}, pcells[3] = {1, 1, 1};
+<a name="line68"> 68: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>                 Np = 1, Nr, np, nk, nj, ni, pk, pj, pi, ck, cj, ci, i;
+<a name="line69"> 69: </a>  <a href="../../../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a>                 comm;
+<a name="line70"> 70: </a>  <a href="../../../../../manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>              size;
 
-<a name="line69"> 69: </a>  <font color="#4169E1">if</font> (vertSection) <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(part, <font color="#666666">"<a href="../../../../../docs/manualpages/DM/PETSCPARTITIONERSIMPLE.html">PETSCPARTITIONERSIMPLE</a> ignores vertex weights when using grid partition\n"</font>);
-<a name="line70"> 70: </a>  <font color="#4169E1">if</font> (targetSection) <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(part, <font color="#666666">"<a href="../../../../../docs/manualpages/DM/PETSCPARTITIONERSIMPLE.html">PETSCPARTITIONERSIMPLE</a> ignores partition weights when using grid partition\n"</font>);
-<a name="line71"> 71: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)part, &amp;comm);
-<a name="line72"> 72: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
-<a name="line73"> 73: </a>  <font color="#B22222">/* Check grid */</font>
-<a name="line74"> 74: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; 3; ++i) Np *= nodes[i] * procs[i];
-<a name="line78"> 78: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; p-&gt;gridDim; ++i) cells[i] = nodes[i] * procs[i];
-<a name="line79"> 79: </a>  Nr = numVertices / nparts;
-<a name="line80"> 80: </a>  <font color="#4169E1">while</font> (Nr &gt; 1) {
-<a name="line81"> 81: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; p-&gt;gridDim; ++i) {
-<a name="line82"> 82: </a>      cells[i] *= 2;
-<a name="line83"> 83: </a>      Nr /= 2;
-<a name="line84"> 84: </a>    }
-<a name="line85"> 85: </a>  }
-<a name="line87"> 87: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; p-&gt;gridDim; ++i) {
-<a name="line89"> 89: </a>    pcells[i] = cells[i] / (nodes[i] * procs[i]);
-<a name="line90"> 90: </a>  }
-<a name="line91"> 91: </a>  <font color="#B22222">/* Compute sizes */</font>
-<a name="line92"> 92: </a>  <font color="#4169E1">for</font> (np = 0; np &lt; nparts; ++np) <a href="../../../../../docs/manualpages/PetscSection/PetscSectionSetDof.html">PetscSectionSetDof</a>(partSection, np, numVertices / nparts);
-<a name="line93"> 93: </a>  <a href="../../../../../docs/manualpages/PetscSection/PetscSectionSetUp.html">PetscSectionSetUp</a>(partSection);
-<a name="line94"> 94: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(nparts, &amp;offsets);
-<a name="line95"> 95: </a>  <font color="#4169E1">for</font> (np = 0; np &lt; nparts; ++np) <a href="../../../../../docs/manualpages/PetscSection/PetscSectionGetOffset.html">PetscSectionGetOffset</a>(partSection, np, &amp;offsets[np]);
-<a name="line96"> 96: </a>  <font color="#4169E1">if</font> (!numVertices) pcells[0] = pcells[1] = pcells[2] = 0;
-<a name="line97"> 97: </a>  <font color="#B22222">/* Compute partition */</font>
-<a name="line98"> 98: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(numVertices, &amp;cellproc);
-<a name="line99"> 99: </a>  <font color="#4169E1">for</font> (nk = 0; nk &lt; nodes[2]; ++nk) {
-<a name="line100">100: </a>    <font color="#4169E1">for</font> (nj = 0; nj &lt; nodes[1]; ++nj) {
-<a name="line101">101: </a>      <font color="#4169E1">for</font> (ni = 0; ni &lt; nodes[0]; ++ni) {
-<a name="line102">102: </a>        const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nid = (nk * nodes[1] + nj) * nodes[0] + ni;
+<a name="line72"> 72: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line73"> 73: </a>  <font color="#4169E1">if</font> (vertSection) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Profiling/PetscInfo.html">PetscInfo</a>(part, <font color="#666666">"<a href="../../../../../manualpages/DM/PETSCPARTITIONERSIMPLE.html">PETSCPARTITIONERSIMPLE</a> ignores vertex weights when using grid partition\n"</font>));
+<a name="line74"> 74: </a>  <font color="#4169E1">if</font> (targetSection) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Profiling/PetscInfo.html">PetscInfo</a>(part, <font color="#666666">"<a href="../../../../../manualpages/DM/PETSCPARTITIONERSIMPLE.html">PETSCPARTITIONERSIMPLE</a> ignores partition weights when using grid partition\n"</font>));
+<a name="line75"> 75: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)part, &amp;comm));
+<a name="line76"> 76: </a>  <a href="../../../../../manualpages/Sys/PetscCallMPI.html">PetscCallMPI</a>(<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size));
+<a name="line77"> 77: </a>  <font color="#B22222">/* Check grid */</font>
+<a name="line78"> 78: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; 3; ++i) Np *= nodes[i] * procs[i];
+<a name="line79"> 79: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(nparts == Np, comm, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_INCOMP</a>, <font color="#666666">"Number of partitions %"</font> PetscInt_FMT <font color="#666666">" != %"</font> PetscInt_FMT <font color="#666666">" grid size"</font>, nparts, Np);
+<a name="line80"> 80: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(nparts == size, comm, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_INCOMP</a>, <font color="#666666">"Number of partitions %"</font> PetscInt_FMT <font color="#666666">" != %d processes"</font>, nparts, size);
+<a name="line81"> 81: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(numVertices % nparts == 0, comm, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_INCOMP</a>, <font color="#666666">"Number of cells %"</font> PetscInt_FMT <font color="#666666">" is not divisible by number of partitions %"</font> PetscInt_FMT, numVertices, nparts);
+<a name="line82"> 82: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; p-&gt;gridDim; ++i) cells[i] = nodes[i] * procs[i];
+<a name="line83"> 83: </a>  Nr = numVertices / nparts;
+<a name="line84"> 84: </a>  <font color="#4169E1">while</font> (Nr &gt; 1) {
+<a name="line85"> 85: </a>    <font color="#4169E1">for</font> (i = 0; i &lt; p-&gt;gridDim; ++i) {
+<a name="line86"> 86: </a>      cells[i] *= 2;
+<a name="line87"> 87: </a>      Nr /= 2;
+<a name="line88"> 88: </a>    }
+<a name="line89"> 89: </a>  }
+<a name="line90"> 90: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(!numVertices || Nr == 1, <a href="../../../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_INCOMP</a>, <font color="#666666">"Odd number of cells %"</font> PetscInt_FMT <font color="#666666">". Must be nprocs*2^k"</font>, numVertices);
+<a name="line91"> 91: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; p-&gt;gridDim; ++i) {
+<a name="line92"> 92: </a>    <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(cells[i] % (nodes[i] * procs[i]) == 0, <a href="../../../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_INCOMP</a>, <font color="#666666">"dir %"</font> PetscInt_FMT <font color="#666666">". Number of cells (%"</font> PetscInt_FMT <font color="#666666">") mod number of processors %"</font> PetscInt_FMT, i, cells[i], nodes[i] * procs[i]);
+<a name="line93"> 93: </a>    pcells[i] = cells[i] / (nodes[i] * procs[i]);
+<a name="line94"> 94: </a>  }
+<a name="line95"> 95: </a>  <font color="#B22222">/* Compute sizes */</font>
+<a name="line96"> 96: </a>  <font color="#4169E1">for</font> (np = 0; np &lt; nparts; ++np) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/PetscSection/PetscSectionSetDof.html">PetscSectionSetDof</a>(partSection, np, numVertices / nparts));
+<a name="line97"> 97: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/PetscSection/PetscSectionSetUp.html">PetscSectionSetUp</a>(partSection));
+<a name="line98"> 98: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(nparts, &amp;offsets));
+<a name="line99"> 99: </a>  <font color="#4169E1">for</font> (np = 0; np &lt; nparts; ++np) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/PetscSection/PetscSectionGetOffset.html">PetscSectionGetOffset</a>(partSection, np, &amp;offsets[np]));
+<a name="line100">100: </a>  <font color="#4169E1">if</font> (!numVertices) pcells[0] = pcells[1] = pcells[2] = 0;
+<a name="line101">101: </a>  <font color="#B22222">/* Compute partition */</font>
+<a name="line102">102: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(numVertices, &amp;cellproc));
+<a name="line103">103: </a>  <font color="#4169E1">for</font> (nk = 0; nk &lt; nodes[2]; ++nk) {
+<a name="line104">104: </a>    <font color="#4169E1">for</font> (nj = 0; nj &lt; nodes[1]; ++nj) {
+<a name="line105">105: </a>      <font color="#4169E1">for</font> (ni = 0; ni &lt; nodes[0]; ++ni) {
+<a name="line106">106: </a>        const <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> nid = (nk * nodes[1] + nj) * nodes[0] + ni;
 
-<a name="line104">104: </a>        <font color="#4169E1">for</font> (pk = 0; pk &lt; procs[2]; ++pk) {
-<a name="line105">105: </a>          <font color="#4169E1">for</font> (pj = 0; pj &lt; procs[1]; ++pj) {
-<a name="line106">106: </a>            <font color="#4169E1">for</font> (pi = 0; pi &lt; procs[0]; ++pi) {
-<a name="line107">107: </a>              const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> pid = ((nid * procs[2] + pk) * procs[1] + pj) * procs[0] + pi;
+<a name="line108">108: </a>        <font color="#4169E1">for</font> (pk = 0; pk &lt; procs[2]; ++pk) {
+<a name="line109">109: </a>          <font color="#4169E1">for</font> (pj = 0; pj &lt; procs[1]; ++pj) {
+<a name="line110">110: </a>            <font color="#4169E1">for</font> (pi = 0; pi &lt; procs[0]; ++pi) {
+<a name="line111">111: </a>              const <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> pid = ((nid * procs[2] + pk) * procs[1] + pj) * procs[0] + pi;
 
-<a name="line109">109: </a>              <font color="#B22222">/* Assume that cells are originally numbered lexicographically */</font>
-<a name="line110">110: </a>              <font color="#4169E1">for</font> (ck = 0; ck &lt; pcells[2]; ++ck) {
-<a name="line111">111: </a>                <font color="#4169E1">for</font> (cj = 0; cj &lt; pcells[1]; ++cj) {
-<a name="line112">112: </a>                  <font color="#4169E1">for</font> (ci = 0; ci &lt; pcells[0]; ++ci) {
-<a name="line113">113: </a>                    const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> cid = (((nk * procs[2] + pk) * pcells[2] + ck) * cells[1] + ((nj * procs[1] + pj) * pcells[1] + cj)) * cells[0] + (ni * procs[0] + pi) * pcells[0] + ci;
+<a name="line113">113: </a>              <font color="#B22222">/* Assume that cells are originally numbered lexicographically */</font>
+<a name="line114">114: </a>              <font color="#4169E1">for</font> (ck = 0; ck &lt; pcells[2]; ++ck) {
+<a name="line115">115: </a>                <font color="#4169E1">for</font> (cj = 0; cj &lt; pcells[1]; ++cj) {
+<a name="line116">116: </a>                  <font color="#4169E1">for</font> (ci = 0; ci &lt; pcells[0]; ++ci) {
+<a name="line117">117: </a>                    const <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> cid = (((nk * procs[2] + pk) * pcells[2] + ck) * cells[1] + ((nj * procs[1] + pj) * pcells[1] + cj)) * cells[0] + (ni * procs[0] + pi) * pcells[0] + ci;
 
-<a name="line115">115: </a>                    cellproc[offsets[pid]++] = cid;
-<a name="line116">116: </a>                  }
-<a name="line117">117: </a>                }
-<a name="line118">118: </a>              }
-<a name="line119">119: </a>            }
-<a name="line120">120: </a>          }
-<a name="line121">121: </a>        }
-<a name="line122">122: </a>      }
-<a name="line123">123: </a>    }
-<a name="line124">124: </a>  }
-<a name="line126">126: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(offsets);
-<a name="line127">127: </a>  <a href="../../../../../docs/manualpages/IS/ISCreateGeneral.html">ISCreateGeneral</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, numVertices, cellproc, <a href="../../../../../docs/manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, partition);
-<a name="line128">128: </a>  <font color="#4169E1">return</font> 0;
-<a name="line129">129: </a>}
+<a name="line119">119: </a>                    cellproc[offsets[pid]++] = cid;
+<a name="line120">120: </a>                  }
+<a name="line121">121: </a>                }
+<a name="line122">122: </a>              }
+<a name="line123">123: </a>            }
+<a name="line124">124: </a>          }
+<a name="line125">125: </a>        }
+<a name="line126">126: </a>      }
+<a name="line127">127: </a>    }
+<a name="line128">128: </a>  }
+<a name="line129">129: </a>  <font color="#4169E1">for</font> (np = 1; np &lt; nparts; ++np) <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(offsets[np] - offsets[np - 1] == numVertices / nparts, <a href="../../../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_INCOMP</a>, <font color="#666666">"Offset %"</font> PetscInt_FMT <font color="#666666">" != %"</font> PetscInt_FMT <font color="#666666">" partition size"</font>, offsets[np], numVertices / nparts);
+<a name="line130">130: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(offsets));
+<a name="line131">131: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/IS/ISCreateGeneral.html">ISCreateGeneral</a>(<a href="../../../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, numVertices, cellproc, <a href="../../../../../manualpages/Sys/PetscCopyMode.html">PETSC_OWN_POINTER</a>, partition));
+<a name="line132">132: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line133">133: </a>}
 
-<a name="line131">131: </a><strong><font color="#4169E1"><a name="PetscPartitionerPartition_Simple"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerPartition_Simple(<a href="../../../../../docs/manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> nparts, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> numVertices, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> start[], <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> adjacency[], <a href="../../../../../docs/manualpages/PetscSection/PetscSection.html">PetscSection</a> vertSection, <a href="../../../../../docs/manualpages/PetscSection/PetscSection.html">PetscSection</a> targetSection, <a href="../../../../../docs/manualpages/PetscSection/PetscSection.html">PetscSection</a> partSection, <a href="../../../../../docs/manualpages/IS/IS.html">IS</a> *partition)</font></strong>
-<a name="line132">132: </a>{
-<a name="line133">133: </a>  PetscPartitioner_Simple *p = (PetscPartitioner_Simple *)part-&gt;data;
-<a name="line134">134: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>                 comm;
-<a name="line135">135: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>                 np, *tpwgts = NULL, sumw = 0, numVerticesGlobal = 0;
-<a name="line136">136: </a>  <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>              size;
+<a name="line135">135: </a><strong><font color="#4169E1"><a name="PetscPartitionerPartition_Simple"></a>static <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerPartition_Simple(<a href="../../../../../manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> nparts, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> numVertices, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> start[], <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> adjacency[], <a href="../../../../../manualpages/PetscSection/PetscSection.html">PetscSection</a> vertSection, <a href="../../../../../manualpages/PetscSection/PetscSection.html">PetscSection</a> targetSection, <a href="../../../../../manualpages/PetscSection/PetscSection.html">PetscSection</a> partSection, <a href="../../../../../manualpages/IS/IS.html">IS</a> *partition)</font></strong>
+<a name="line136">136: </a>{
+<a name="line137">137: </a>  PetscPartitioner_Simple *p = (PetscPartitioner_Simple *)part-&gt;data;
+<a name="line138">138: </a>  <a href="../../../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a>                 comm;
+<a name="line139">139: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>                 np, *tpwgts = NULL, sumw = 0, numVerticesGlobal = 0;
+<a name="line140">140: </a>  <a href="../../../../../manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>              size;
 
-<a name="line138">138: </a>  <font color="#4169E1">if</font> (p-&gt;useGrid) {
-<a name="line139">139: </a>    PetscPartitionerPartition_Simple_Grid(part, nparts, numVertices, start, adjacency, vertSection, targetSection, partSection, partition);
-<a name="line140">140: </a>    <font color="#4169E1">return</font> 0;
-<a name="line141">141: </a>  }
-<a name="line142">142: </a>  <font color="#4169E1">if</font> (vertSection) <a href="../../../../../docs/manualpages/Profiling/PetscInfo.html">PetscInfo</a>(part, <font color="#666666">"<a href="../../../../../docs/manualpages/DM/PETSCPARTITIONERSIMPLE.html">PETSCPARTITIONERSIMPLE</a> ignores vertex weights\n"</font>);
-<a name="line143">143: </a>  <a href="../../../../../docs/manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>)part, &amp;comm);
-<a name="line144">144: </a>  <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size);
-<a name="line145">145: </a>  <font color="#4169E1">if</font> (targetSection) {
-<a name="line146">146: </a>    <a href="../../../../../docs/manualpages/Sys/MPIU_Allreduce.html">MPIU_Allreduce</a>(&amp;numVertices, &amp;numVerticesGlobal, 1, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_SUM, comm);
-<a name="line147">147: </a>    <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(nparts, &amp;tpwgts);
-<a name="line148">148: </a>    <font color="#4169E1">for</font> (np = 0; np &lt; nparts; ++np) {
-<a name="line149">149: </a>      <a href="../../../../../docs/manualpages/PetscSection/PetscSectionGetDof.html">PetscSectionGetDof</a>(targetSection, np, &amp;tpwgts[np]);
-<a name="line150">150: </a>      sumw += tpwgts[np];
-<a name="line151">151: </a>    }
-<a name="line152">152: </a>    <font color="#4169E1">if</font> (sumw) {
-<a name="line153">153: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> m, mp;
-<a name="line154">154: </a>      <font color="#4169E1">for</font> (np = 0; np &lt; nparts; ++np) tpwgts[np] = (tpwgts[np] * numVerticesGlobal) / sumw;
-<a name="line155">155: </a>      <font color="#4169E1">for</font> (np = 0, m = -1, mp = 0, sumw = 0; np &lt; nparts; ++np) {
-<a name="line156">156: </a>        <font color="#4169E1">if</font> (m &lt; tpwgts[np]) {
-<a name="line157">157: </a>          m  = tpwgts[np];
-<a name="line158">158: </a>          mp = np;
-<a name="line159">159: </a>        }
-<a name="line160">160: </a>        sumw += tpwgts[np];
-<a name="line161">161: </a>      }
-<a name="line162">162: </a>      <font color="#4169E1">if</font> (sumw != numVerticesGlobal) tpwgts[mp] += numVerticesGlobal - sumw;
-<a name="line163">163: </a>    }
-<a name="line164">164: </a>    <font color="#4169E1">if</font> (!sumw) <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tpwgts);
-<a name="line165">165: </a>  }
+<a name="line142">142: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line143">143: </a>  <font color="#4169E1">if</font> (p-&gt;useGrid) {
+<a name="line144">144: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscPartitionerPartition_Simple_Grid(part, nparts, numVertices, start, adjacency, vertSection, targetSection, partSection, partition));
+<a name="line145">145: </a>    <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line146">146: </a>  }
+<a name="line147">147: </a>  <font color="#4169E1">if</font> (vertSection) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Profiling/PetscInfo.html">PetscInfo</a>(part, <font color="#666666">"<a href="../../../../../manualpages/DM/PETSCPARTITIONERSIMPLE.html">PETSCPARTITIONERSIMPLE</a> ignores vertex weights\n"</font>));
+<a name="line148">148: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscObjectGetComm.html">PetscObjectGetComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)part, &amp;comm));
+<a name="line149">149: </a>  <a href="../../../../../manualpages/Sys/PetscCallMPI.html">PetscCallMPI</a>(<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_size.html#MPI_Comm_size">MPI_Comm_size</a>(comm, &amp;size));
+<a name="line150">150: </a>  <font color="#4169E1">if</font> (targetSection) {
+<a name="line151">151: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/MPIU_Allreduce.html">MPIU_Allreduce</a>(&amp;numVertices, &amp;numVerticesGlobal, 1, <a href="../../../../../manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, MPI_SUM, comm));
+<a name="line152">152: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(nparts, &amp;tpwgts));
+<a name="line153">153: </a>    <font color="#4169E1">for</font> (np = 0; np &lt; nparts; ++np) {
+<a name="line154">154: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/PetscSection/PetscSectionGetDof.html">PetscSectionGetDof</a>(targetSection, np, &amp;tpwgts[np]));
+<a name="line155">155: </a>      sumw += tpwgts[np];
+<a name="line156">156: </a>    }
+<a name="line157">157: </a>    <font color="#4169E1">if</font> (sumw) {
+<a name="line158">158: </a>      <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> m, mp;
+<a name="line159">159: </a>      <font color="#4169E1">for</font> (np = 0; np &lt; nparts; ++np) tpwgts[np] = (tpwgts[np] * numVerticesGlobal) / sumw;
+<a name="line160">160: </a>      <font color="#4169E1">for</font> (np = 0, m = -1, mp = 0, sumw = 0; np &lt; nparts; ++np) {
+<a name="line161">161: </a>        <font color="#4169E1">if</font> (m &lt; tpwgts[np]) {
+<a name="line162">162: </a>          m  = tpwgts[np];
+<a name="line163">163: </a>          mp = np;
+<a name="line164">164: </a>        }
+<a name="line165">165: </a>        sumw += tpwgts[np];
+<a name="line166">166: </a>      }
+<a name="line167">167: </a>      <font color="#4169E1">if</font> (sumw != numVerticesGlobal) tpwgts[mp] += numVerticesGlobal - sumw;
+<a name="line168">168: </a>    }
+<a name="line169">169: </a>    <font color="#4169E1">if</font> (!sumw) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(tpwgts));
+<a name="line170">170: </a>  }
 
-<a name="line167">167: </a>  <a href="../../../../../docs/manualpages/IS/ISCreateStride.html">ISCreateStride</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, numVertices, 0, 1, partition);
-<a name="line168">168: </a>  <font color="#4169E1">if</font> (size == 1) {
-<a name="line169">169: </a>    <font color="#4169E1">if</font> (tpwgts) {
-<a name="line170">170: </a>      <font color="#4169E1">for</font> (np = 0; np &lt; nparts; ++np) <a href="../../../../../docs/manualpages/PetscSection/PetscSectionSetDof.html">PetscSectionSetDof</a>(partSection, np, tpwgts[np]);
-<a name="line171">171: </a>    } <font color="#4169E1">else</font> {
-<a name="line172">172: </a>      <font color="#4169E1">for</font> (np = 0; np &lt; nparts; ++np) <a href="../../../../../docs/manualpages/PetscSection/PetscSectionSetDof.html">PetscSectionSetDof</a>(partSection, np, numVertices / nparts + ((numVertices % nparts) &gt; np));
-<a name="line173">173: </a>    }
-<a name="line174">174: </a>  } <font color="#4169E1">else</font> {
-<a name="line175">175: </a>    <font color="#4169E1">if</font> (tpwgts) {
-<a name="line176">176: </a>      <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>          v;
-<a name="line177">177: </a>      <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *array;
-<a name="line178">178: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>     st, j;
-<a name="line179">179: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>  rank;
+<a name="line172">172: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/IS/ISCreateStride.html">ISCreateStride</a>(<a href="../../../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, numVertices, 0, 1, partition));
+<a name="line173">173: </a>  <font color="#4169E1">if</font> (size == 1) {
+<a name="line174">174: </a>    <font color="#4169E1">if</font> (tpwgts) {
+<a name="line175">175: </a>      <font color="#4169E1">for</font> (np = 0; np &lt; nparts; ++np) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/PetscSection/PetscSectionSetDof.html">PetscSectionSetDof</a>(partSection, np, tpwgts[np]));
+<a name="line176">176: </a>    } <font color="#4169E1">else</font> {
+<a name="line177">177: </a>      <font color="#4169E1">for</font> (np = 0; np &lt; nparts; ++np) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/PetscSection/PetscSectionSetDof.html">PetscSectionSetDof</a>(partSection, np, numVertices / nparts + ((numVertices % nparts) &gt; np)));
+<a name="line178">178: </a>    }
+<a name="line179">179: </a>  } <font color="#4169E1">else</font> {
+<a name="line180">180: </a>    <font color="#4169E1">if</font> (tpwgts) {
+<a name="line181">181: </a>      <a href="../../../../../manualpages/Vec/Vec.html">Vec</a>          v;
+<a name="line182">182: </a>      <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *array;
+<a name="line183">183: </a>      <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>     st, j;
+<a name="line184">184: </a>      <a href="../../../../../manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a>  rank;
 
-<a name="line181">181: </a>      <a href="../../../../../docs/manualpages/Vec/VecCreate.html">VecCreate</a>(comm, &amp;v);
-<a name="line182">182: </a>      <a href="../../../../../docs/manualpages/Vec/VecSetSizes.html">VecSetSizes</a>(v, numVertices, numVerticesGlobal);
-<a name="line183">183: </a>      <a href="../../../../../docs/manualpages/Vec/VecSetType.html">VecSetType</a>(v, <a href="../../../../../docs/manualpages/Vec/VECSTANDARD.html">VECSTANDARD</a>);
-<a name="line184">184: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
-<a name="line185">185: </a>      <font color="#4169E1">for</font> (np = 0, st = 0; np &lt; nparts; ++np) {
-<a name="line186">186: </a>        <font color="#4169E1">if</font> (rank == np || (rank == size - 1 &amp;&amp; size &lt; nparts &amp;&amp; np &gt;= size)) {
-<a name="line187">187: </a>          <font color="#4169E1">for</font> (j = 0; j &lt; tpwgts[np]; j++) <a href="../../../../../docs/manualpages/Vec/VecSetValue.html">VecSetValue</a>(v, st + j, np, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
-<a name="line188">188: </a>        }
-<a name="line189">189: </a>        st += tpwgts[np];
-<a name="line190">190: </a>      }
-<a name="line191">191: </a>      <a href="../../../../../docs/manualpages/Vec/VecAssemblyBegin.html">VecAssemblyBegin</a>(v);
-<a name="line192">192: </a>      <a href="../../../../../docs/manualpages/Vec/VecAssemblyEnd.html">VecAssemblyEnd</a>(v);
-<a name="line193">193: </a>      <a href="../../../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(v, &amp;array);
-<a name="line194">194: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; numVertices; ++j) <a href="../../../../../docs/manualpages/PetscSection/PetscSectionAddDof.html">PetscSectionAddDof</a>(partSection, <a href="../../../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(array[j]), 1);
-<a name="line195">195: </a>      <a href="../../../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(v, &amp;array);
-<a name="line196">196: </a>      <a href="../../../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;v);
-<a name="line197">197: </a>    } <font color="#4169E1">else</font> {
-<a name="line198">198: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
-<a name="line199">199: </a>      <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>    nvGlobal, *offsets, myFirst, myLast;
+<a name="line186">186: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecCreate.html">VecCreate</a>(comm, &amp;v));
+<a name="line187">187: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecSetSizes.html">VecSetSizes</a>(v, numVertices, numVerticesGlobal));
+<a name="line188">188: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecSetType.html">VecSetType</a>(v, <a href="../../../../../manualpages/Vec/VECSTANDARD.html">VECSTANDARD</a>));
+<a name="line189">189: </a>      <a href="../../../../../manualpages/Sys/PetscCallMPI.html">PetscCallMPI</a>(<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank));
+<a name="line190">190: </a>      <font color="#4169E1">for</font> (np = 0, st = 0; np &lt; nparts; ++np) {
+<a name="line191">191: </a>        <font color="#4169E1">if</font> (rank == np || (rank == size - 1 &amp;&amp; size &lt; nparts &amp;&amp; np &gt;= size)) {
+<a name="line192">192: </a>          <font color="#4169E1">for</font> (j = 0; j &lt; tpwgts[np]; j++) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecSetValue.html">VecSetValue</a>(v, st + j, np, <a href="../../../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>));
+<a name="line193">193: </a>        }
+<a name="line194">194: </a>        st += tpwgts[np];
+<a name="line195">195: </a>      }
+<a name="line196">196: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecAssemblyBegin.html">VecAssemblyBegin</a>(v));
+<a name="line197">197: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecAssemblyEnd.html">VecAssemblyEnd</a>(v));
+<a name="line198">198: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecGetArray.html">VecGetArray</a>(v, &amp;array));
+<a name="line199">199: </a>      <font color="#4169E1">for</font> (j = 0; j &lt; numVertices; ++j) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/PetscSection/PetscSectionAddDof.html">PetscSectionAddDof</a>(partSection, <a href="../../../../../manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(array[j]), 1));
+<a name="line200">200: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(v, &amp;array));
+<a name="line201">201: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;v));
+<a name="line202">202: </a>    } <font color="#4169E1">else</font> {
+<a name="line203">203: </a>      <a href="../../../../../manualpages/Sys/PetscMPIInt.html">PetscMPIInt</a> rank;
+<a name="line204">204: </a>      <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>    nvGlobal, *offsets, myFirst, myLast;
 
-<a name="line201">201: </a>      <a href="../../../../../docs/manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(size + 1, &amp;offsets);
-<a name="line202">202: </a>      offsets[0] = 0;
-<a name="line203">203: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allgather.html#MPI_Allgather">MPI_Allgather</a>(&amp;numVertices, 1, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, &amp;offsets[1], 1, <a href="../../../../../docs/manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, comm);
-<a name="line204">204: </a>      <font color="#4169E1">for</font> (np = 2; np &lt;= size; np++) offsets[np] += offsets[np - 1];
-<a name="line205">205: </a>      nvGlobal = offsets[size];
-<a name="line206">206: </a>      <a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank);
-<a name="line207">207: </a>      myFirst = offsets[rank];
-<a name="line208">208: </a>      myLast  = offsets[rank + 1] - 1;
-<a name="line209">209: </a>      <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(offsets);
-<a name="line210">210: </a>      <font color="#4169E1">if</font> (numVertices) {
-<a name="line211">211: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> firstPart = 0, firstLargePart = 0;
-<a name="line212">212: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> lastPart = 0, lastLargePart = 0;
-<a name="line213">213: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> rem    = nvGlobal % nparts;
-<a name="line214">214: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> pSmall = nvGlobal / nparts;
-<a name="line215">215: </a>        <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> pBig   = nvGlobal / nparts + 1;
+<a name="line206">206: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscMalloc1.html">PetscMalloc1</a>(size + 1, &amp;offsets));
+<a name="line207">207: </a>      offsets[0] = 0;
+<a name="line208">208: </a>      <a href="../../../../../manualpages/Sys/PetscCallMPI.html">PetscCallMPI</a>(<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Allgather.html#MPI_Allgather">MPI_Allgather</a>(&amp;numVertices, 1, <a href="../../../../../manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, &amp;offsets[1], 1, <a href="../../../../../manualpages/Sys/MPIU_INT.html">MPIU_INT</a>, comm));
+<a name="line209">209: </a>      <font color="#4169E1">for</font> (np = 2; np &lt;= size; np++) offsets[np] += offsets[np - 1];
+<a name="line210">210: </a>      nvGlobal = offsets[size];
+<a name="line211">211: </a>      <a href="../../../../../manualpages/Sys/PetscCallMPI.html">PetscCallMPI</a>(<a href="http://www.mpich.org/static/docs/latest/www3/MPI_Comm_rank.html#MPI_Comm_rank">MPI_Comm_rank</a>(comm, &amp;rank));
+<a name="line212">212: </a>      myFirst = offsets[rank];
+<a name="line213">213: </a>      myLast  = offsets[rank + 1] - 1;
+<a name="line214">214: </a>      <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(offsets));
+<a name="line215">215: </a>      <font color="#4169E1">if</font> (numVertices) {
+<a name="line216">216: </a>        <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> firstPart = 0, firstLargePart = 0;
+<a name="line217">217: </a>        <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> lastPart = 0, lastLargePart = 0;
+<a name="line218">218: </a>        <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> rem    = nvGlobal % nparts;
+<a name="line219">219: </a>        <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> pSmall = nvGlobal / nparts;
+<a name="line220">220: </a>        <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> pBig   = nvGlobal / nparts + 1;
 
-<a name="line217">217: </a>        <font color="#4169E1">if</font> (rem) {
-<a name="line218">218: </a>          firstLargePart = myFirst / pBig;
-<a name="line219">219: </a>          lastLargePart  = myLast / pBig;
+<a name="line222">222: </a>        <font color="#4169E1">if</font> (rem) {
+<a name="line223">223: </a>          firstLargePart = myFirst / pBig;
+<a name="line224">224: </a>          lastLargePart  = myLast / pBig;
 
-<a name="line221">221: </a>          <font color="#4169E1">if</font> (firstLargePart &lt; rem) {
-<a name="line222">222: </a>            firstPart = firstLargePart;
-<a name="line223">223: </a>          } <font color="#4169E1">else</font> {
-<a name="line224">224: </a>            firstPart = rem + (myFirst - (rem * pBig)) / pSmall;
-<a name="line225">225: </a>          }
-<a name="line226">226: </a>          <font color="#4169E1">if</font> (lastLargePart &lt; rem) {
-<a name="line227">227: </a>            lastPart = lastLargePart;
+<a name="line226">226: </a>          <font color="#4169E1">if</font> (firstLargePart &lt; rem) {
+<a name="line227">227: </a>            firstPart = firstLargePart;
 <a name="line228">228: </a>          } <font color="#4169E1">else</font> {
-<a name="line229">229: </a>            lastPart = rem + (myLast - (rem * pBig)) / pSmall;
+<a name="line229">229: </a>            firstPart = rem + (myFirst - (rem * pBig)) / pSmall;
 <a name="line230">230: </a>          }
-<a name="line231">231: </a>        } <font color="#4169E1">else</font> {
-<a name="line232">232: </a>          firstPart = myFirst / (nvGlobal / nparts);
-<a name="line233">233: </a>          lastPart  = myLast / (nvGlobal / nparts);
-<a name="line234">234: </a>        }
+<a name="line231">231: </a>          <font color="#4169E1">if</font> (lastLargePart &lt; rem) {
+<a name="line232">232: </a>            lastPart = lastLargePart;
+<a name="line233">233: </a>          } <font color="#4169E1">else</font> {
+<a name="line234">234: </a>            lastPart = rem + (myLast - (rem * pBig)) / pSmall;
+<a name="line235">235: </a>          }
+<a name="line236">236: </a>        } <font color="#4169E1">else</font> {
+<a name="line237">237: </a>          firstPart = myFirst / (nvGlobal / nparts);
+<a name="line238">238: </a>          lastPart  = myLast / (nvGlobal / nparts);
+<a name="line239">239: </a>        }
 
-<a name="line236">236: </a>        <font color="#4169E1">for</font> (np = firstPart; np &lt;= lastPart; np++) {
-<a name="line237">237: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> PartStart = np * (nvGlobal / nparts) + <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(nvGlobal % nparts, np);
-<a name="line238">238: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> PartEnd   = (np + 1) * (nvGlobal / nparts) + <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(nvGlobal % nparts, np + 1);
+<a name="line241">241: </a>        <font color="#4169E1">for</font> (np = firstPart; np &lt;= lastPart; np++) {
+<a name="line242">242: </a>          <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> PartStart = np * (nvGlobal / nparts) + <a href="../../../../../manualpages/Sys/PetscMin.html">PetscMin</a>(nvGlobal % nparts, np);
+<a name="line243">243: </a>          <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> PartEnd   = (np + 1) * (nvGlobal / nparts) + <a href="../../../../../manualpages/Sys/PetscMin.html">PetscMin</a>(nvGlobal % nparts, np + 1);
 
-<a name="line240">240: </a>          PartStart = <a href="../../../../../docs/manualpages/Sys/PetscMax.html">PetscMax</a>(PartStart, myFirst);
-<a name="line241">241: </a>          PartEnd   = <a href="../../../../../docs/manualpages/Sys/PetscMin.html">PetscMin</a>(PartEnd, myLast + 1);
-<a name="line242">242: </a>          <a href="../../../../../docs/manualpages/PetscSection/PetscSectionSetDof.html">PetscSectionSetDof</a>(partSection, np, PartEnd - PartStart);
-<a name="line243">243: </a>        }
-<a name="line244">244: </a>      }
-<a name="line245">245: </a>    }
-<a name="line246">246: </a>  }
-<a name="line247">247: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(tpwgts);
-<a name="line248">248: </a>  <font color="#4169E1">return</font> 0;
-<a name="line249">249: </a>}
+<a name="line245">245: </a>          PartStart = <a href="../../../../../manualpages/Sys/PetscMax.html">PetscMax</a>(PartStart, myFirst);
+<a name="line246">246: </a>          PartEnd   = <a href="../../../../../manualpages/Sys/PetscMin.html">PetscMin</a>(PartEnd, myLast + 1);
+<a name="line247">247: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/PetscSection/PetscSectionSetDof.html">PetscSectionSetDof</a>(partSection, np, PartEnd - PartStart));
+<a name="line248">248: </a>        }
+<a name="line249">249: </a>      }
+<a name="line250">250: </a>    }
+<a name="line251">251: </a>  }
+<a name="line252">252: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(tpwgts));
+<a name="line253">253: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line254">254: </a>}
 
-<a name="line251">251: </a><strong><font color="#4169E1"><a name="PetscPartitionerInitialize_Simple"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerInitialize_Simple(<a href="../../../../../docs/manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part)</font></strong>
-<a name="line252">252: </a>{
-<a name="line253">253: </a>  part-&gt;noGraph             = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line254">254: </a>  part-&gt;ops-&gt;view           = PetscPartitionerView_Simple;
-<a name="line255">255: </a>  part-&gt;ops-&gt;setfromoptions = PetscPartitionerSetFromOptions_Simple;
-<a name="line256">256: </a>  part-&gt;ops-&gt;destroy        = PetscPartitionerDestroy_Simple;
-<a name="line257">257: </a>  part-&gt;ops-&gt;partition      = PetscPartitionerPartition_Simple;
-<a name="line258">258: </a>  <font color="#4169E1">return</font> 0;
-<a name="line259">259: </a>}
+<a name="line256">256: </a><strong><font color="#4169E1"><a name="PetscPartitionerInitialize_Simple"></a>static <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerInitialize_Simple(<a href="../../../../../manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part)</font></strong>
+<a name="line257">257: </a>{
+<a name="line258">258: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line259">259: </a>  part-&gt;noGraph             = <a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line260">260: </a>  part-&gt;ops-&gt;view           = PetscPartitionerView_Simple;
+<a name="line261">261: </a>  part-&gt;ops-&gt;setfromoptions = PetscPartitionerSetFromOptions_Simple;
+<a name="line262">262: </a>  part-&gt;ops-&gt;destroy        = PetscPartitionerDestroy_Simple;
+<a name="line263">263: </a>  part-&gt;ops-&gt;partition      = PetscPartitionerPartition_Simple;
+<a name="line264">264: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line265">265: </a>}
 
-<a name="line261">261: </a><font color="#B22222">/*MC</font>
-<a name="line262">262: </a><font color="#B22222">  <a href="../../../../../docs/manualpages/DM/PETSCPARTITIONERSIMPLE.html">PETSCPARTITIONERSIMPLE</a> = "simple" - A <a href="../../../../../docs/manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> object</font>
+<a name="line267">267: </a><font color="#B22222">/*MC</font>
+<a name="line268">268: </a><font color="#B22222">  <a href="../../../../../manualpages/DM/PETSCPARTITIONERSIMPLE.html">PETSCPARTITIONERSIMPLE</a> = "simple" - A <a href="../../../../../manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> object</font>
 
-<a name="line264">264: </a><font color="#B22222">  Level: intermediate</font>
+<a name="line270">270: </a><font color="#B22222">  Level: intermediate</font>
 
-<a name="line266">266: </a><font color="#B22222">.seealso: `<a href="../../../../../docs/manualpages/MatOrderings/PetscPartitionerType.html">PetscPartitionerType</a>`, `<a href="../../../../../docs/manualpages/DM/PetscPartitionerCreate.html">PetscPartitionerCreate</a>()`, `<a href="../../../../../docs/manualpages/DM/PetscPartitionerSetType.html">PetscPartitionerSetType</a>()`</font>
-<a name="line267">267: </a><font color="#B22222">M*/</font>
+<a name="line272">272: </a><font color="#B22222">.seealso: `<a href="../../../../../manualpages/MatOrderings/PetscPartitionerType.html">PetscPartitionerType</a>`, `<a href="../../../../../manualpages/DM/PetscPartitionerCreate.html">PetscPartitionerCreate</a>()`, `<a href="../../../../../manualpages/DM/PetscPartitionerSetType.html">PetscPartitionerSetType</a>()`</font>
+<a name="line273">273: </a><font color="#B22222">M*/</font>
 
-<a name="line269">269: </a><strong><font color="#4169E1"><a name="PetscPartitionerCreate_Simple"></a>PETSC_EXTERN <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerCreate_Simple(<a href="../../../../../docs/manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part)</font></strong>
-<a name="line270">270: </a>{
-<a name="line271">271: </a>  PetscPartitioner_Simple *p;
+<a name="line275">275: </a><strong><font color="#4169E1"><a name="PetscPartitionerCreate_Simple"></a>PETSC_EXTERN <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscPartitionerCreate_Simple(<a href="../../../../../manualpages/MatOrderings/PetscPartitioner.html">PetscPartitioner</a> part)</font></strong>
+<a name="line276">276: </a>{
+<a name="line277">277: </a>  PetscPartitioner_Simple *p;
 
-<a name="line274">274: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;p);
-<a name="line275">275: </a>  p-&gt;gridDim = -1;
-<a name="line276">276: </a>  part-&gt;data = p;
+<a name="line279">279: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line281">281: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscNew.html">PetscNew</a>(&amp;p));
+<a name="line282">282: </a>  p-&gt;gridDim = -1;
+<a name="line283">283: </a>  part-&gt;data = p;
 
-<a name="line278">278: </a>  PetscPartitionerInitialize_Simple(part);
-<a name="line279">279: </a>  <font color="#4169E1">return</font> 0;
-<a name="line280">280: </a>}
+<a name="line285">285: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(PetscPartitionerInitialize_Simple(part));
+<a name="line286">286: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line287">287: </a>}
 </pre>
 </body>
 

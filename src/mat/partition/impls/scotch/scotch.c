@@ -1,4 +1,3 @@
-
 #include <../src/mat/impls/adj/mpi/mpiadj.h> /*I "petscmat.h" I*/
 
 EXTERN_C_BEGIN
@@ -15,22 +14,22 @@ typedef struct {
 } MatPartitioning_PTScotch;
 
 /*@
-   MatPartitioningPTScotchSetImbalance - Sets the value of the load imbalance
-   ratio to be used during strategy selection.
+  MatPartitioningPTScotchSetImbalance - Sets the value of the load imbalance
+  ratio to be used during strategy selection.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  part - the partitioning context
--  imb  - the load imbalance ratio
+  Input Parameters:
++ part - the partitioning context
+- imb  - the load imbalance ratio
 
-   Options Database Key:
-.  -mat_partitioning_ptscotch_imbalance <imb> - set load imbalance ratio
+  Options Database Key:
+. -mat_partitioning_ptscotch_imbalance <imb> - set load imbalance ratio
 
-   Note:
-   Must be in the range [0,1]. The default value is 0.01.
+  Note:
+  Must be in the range [0,1]. The default value is 0.01.
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `MATPARTITIONINGSCOTCH`, `MatPartitioningPTScotchSetStrategy()`, `MatPartitioningPTScotchGetImbalance()`
 @*/
@@ -40,10 +39,10 @@ PetscErrorCode MatPartitioningPTScotchSetImbalance(MatPartitioning part, PetscRe
   PetscValidHeaderSpecific(part, MAT_PARTITIONING_CLASSID, 1);
   PetscValidLogicalCollectiveReal(part, imb, 2);
   PetscTryMethod(part, "MatPartitioningPTScotchSetImbalance_C", (MatPartitioning, PetscReal), (part, imb));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningPTScotchSetImbalance_PTScotch(MatPartitioning part, PetscReal imb)
+static PetscErrorCode MatPartitioningPTScotchSetImbalance_PTScotch(MatPartitioning part, PetscReal imb)
 {
   MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part->data;
 
@@ -53,22 +52,22 @@ PetscErrorCode MatPartitioningPTScotchSetImbalance_PTScotch(MatPartitioning part
     PetscCheck(imb >= 0.0 && imb <= 1.0, PetscObjectComm((PetscObject)part), PETSC_ERR_ARG_OUTOFRANGE, "Illegal value of imb. Must be in range [0,1]");
     scotch->imbalance = (double)imb;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatPartitioningPTScotchGetImbalance - Gets the value of the load imbalance
-   ratio used during strategy selection.
+  MatPartitioningPTScotchGetImbalance - Gets the value of the load imbalance
+  ratio used during strategy selection.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  part - the partitioning context
+  Input Parameter:
+. part - the partitioning context
 
-   Output Parameter:
-.  imb  - the load imbalance ratio
+  Output Parameter:
+. imb - the load imbalance ratio
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `MATPARTITIONINGSCOTCH`, `MatPartitioningPTScotchSetImbalance()`
 @*/
@@ -76,28 +75,28 @@ PetscErrorCode MatPartitioningPTScotchGetImbalance(MatPartitioning part, PetscRe
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(part, MAT_PARTITIONING_CLASSID, 1);
-  PetscValidRealPointer(imb, 2);
+  PetscAssertPointer(imb, 2);
   PetscUseMethod(part, "MatPartitioningPTScotchGetImbalance_C", (MatPartitioning, PetscReal *), (part, imb));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningPTScotchGetImbalance_PTScotch(MatPartitioning part, PetscReal *imb)
+static PetscErrorCode MatPartitioningPTScotchGetImbalance_PTScotch(MatPartitioning part, PetscReal *imb)
 {
   MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part->data;
 
   PetscFunctionBegin;
   *imb = scotch->imbalance;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatPartitioningPTScotchSetStrategy - Sets the strategy to be used in PTScotch.
+  MatPartitioningPTScotchSetStrategy - Sets the strategy to be used in PTScotch.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  part - the partitioning context
--  strategy - the strategy, one of
+  Input Parameters:
++ part     - the partitioning context
+- strategy - the strategy, one of
 .vb
      MP_PTSCOTCH_DEFAULT     - Default behavior
      MP_PTSCOTCH_QUALITY     - Prioritize quality over speed
@@ -107,13 +106,13 @@ PetscErrorCode MatPartitioningPTScotchGetImbalance_PTScotch(MatPartitioning part
      MP_PTSCOTCH_SCALABILITY - Favor scalability as much as possible
 .ve
 
-   Options Database Key:
-.  -mat_partitioning_ptscotch_strategy [quality,speed,balance,safety,scalability] - strategy
+  Options Database Key:
+. -mat_partitioning_ptscotch_strategy [quality,speed,balance,safety,scalability] - strategy
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   The default is `MP_SCOTCH_QUALITY`. See the PTScotch documentation for more information.
+  Note:
+  The default is `MP_SCOTCH_QUALITY`. See the PTScotch documentation for more information.
 
 .seealso: `MATPARTITIONINGSCOTCH`, `MatPartitioningPTScotchSetImbalance()`, `MatPartitioningPTScotchGetStrategy()`
 @*/
@@ -123,10 +122,10 @@ PetscErrorCode MatPartitioningPTScotchSetStrategy(MatPartitioning part, MPPTScot
   PetscValidHeaderSpecific(part, MAT_PARTITIONING_CLASSID, 1);
   PetscValidLogicalCollectiveEnum(part, strategy, 2);
   PetscTryMethod(part, "MatPartitioningPTScotchSetStrategy_C", (MatPartitioning, MPPTScotchStrategyType), (part, strategy));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningPTScotchSetStrategy_PTScotch(MatPartitioning part, MPPTScotchStrategyType strategy)
+static PetscErrorCode MatPartitioningPTScotchSetStrategy_PTScotch(MatPartitioning part, MPPTScotchStrategyType strategy)
 {
   MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part->data;
 
@@ -151,21 +150,21 @@ PetscErrorCode MatPartitioningPTScotchSetStrategy_PTScotch(MatPartitioning part,
     scotch->strategy = SCOTCH_STRATDEFAULT;
     break;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatPartitioningPTScotchGetStrategy - Gets the strategy used in PTScotch.
+  MatPartitioningPTScotchGetStrategy - Gets the strategy used in PTScotch.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  part - the partitioning context
+  Input Parameter:
+. part - the partitioning context
 
-   Output Parameter:
-.  strategy - the strategy
+  Output Parameter:
+. strategy - the strategy
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `MATPARTITIONINGSCOTCH`, `MatPartitioningPTScotchSetStrategy()`
 @*/
@@ -173,12 +172,12 @@ PetscErrorCode MatPartitioningPTScotchGetStrategy(MatPartitioning part, MPPTScot
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(part, MAT_PARTITIONING_CLASSID, 1);
-  PetscValidPointer(strategy, 2);
+  PetscAssertPointer(strategy, 2);
   PetscUseMethod(part, "MatPartitioningPTScotchGetStrategy_C", (MatPartitioning, MPPTScotchStrategyType *), (part, strategy));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningPTScotchGetStrategy_PTScotch(MatPartitioning part, MPPTScotchStrategyType *strategy)
+static PetscErrorCode MatPartitioningPTScotchGetStrategy_PTScotch(MatPartitioning part, MPPTScotchStrategyType *strategy)
 {
   MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part->data;
 
@@ -203,10 +202,10 @@ PetscErrorCode MatPartitioningPTScotchGetStrategy_PTScotch(MatPartitioning part,
     *strategy = MP_PTSCOTCH_DEFAULT;
     break;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningView_PTScotch(MatPartitioning part, PetscViewer viewer)
+static PetscErrorCode MatPartitioningView_PTScotch(MatPartitioning part, PetscViewer viewer)
 {
   MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part->data;
   PetscBool                 isascii;
@@ -238,10 +237,10 @@ PetscErrorCode MatPartitioningView_PTScotch(MatPartitioning part, PetscViewer vi
     PetscCall(PetscViewerASCIIPrintf(viewer, "  Strategy=%s\n", str));
     PetscCall(PetscViewerASCIIPrintf(viewer, "  Load imbalance ratio=%g\n", scotch->imbalance));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningSetFromOptions_PTScotch(MatPartitioning part, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode MatPartitioningSetFromOptions_PTScotch(MatPartitioning part, PetscOptionItems *PetscOptionsObject)
 {
   PetscBool                 flag;
   PetscReal                 r;
@@ -256,7 +255,7 @@ PetscErrorCode MatPartitioningSetFromOptions_PTScotch(MatPartitioning part, Pets
   PetscCall(PetscOptionsReal("-mat_partitioning_ptscotch_imbalance", "Load imbalance ratio", "MatPartitioningPTScotchSetImbalance", scotch->imbalance, &r, &flag));
   if (flag) PetscCall(MatPartitioningPTScotchSetImbalance(part, r));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatPartitioningApply_PTScotch_Private(MatPartitioning part, PetscBool useND, IS *partitioning)
@@ -359,22 +358,22 @@ static PetscErrorCode MatPartitioningApply_PTScotch_Private(MatPartitioning part
       SCOTCH_Dmapping mappdat;
       SCOTCH_Strat    stradat;
 
-      PetscCall(SCOTCH_dgraphInit(&grafdat, comm));
-      PetscCall(SCOTCH_dgraphBuild(&grafdat, 0, vertlocnbr, vertlocnbr, adj->i, adj->i + 1, veloloctab, NULL, edgelocnbr, edgelocnbr, adj->j, NULL, edloloctab));
+      PetscCallExternal(SCOTCH_dgraphInit, &grafdat, comm);
+      PetscCallExternal(SCOTCH_dgraphBuild, &grafdat, 0, vertlocnbr, vertlocnbr, adj->i, adj->i + 1, veloloctab, NULL, edgelocnbr, edgelocnbr, adj->j, NULL, edloloctab);
 
-      if (PetscDefined(USE_DEBUG)) PetscCall(SCOTCH_dgraphCheck(&grafdat));
+      if (PetscDefined(USE_DEBUG)) PetscCallExternal(SCOTCH_dgraphCheck, &grafdat);
 
-      PetscCall(SCOTCH_archInit(&archdat));
-      PetscCall(SCOTCH_stratInit(&stradat));
-      PetscCall(SCOTCH_stratDgraphMapBuild(&stradat, scotch->strategy, nparts, nparts, scotch->imbalance));
+      PetscCallExternal(SCOTCH_archInit, &archdat);
+      PetscCallExternal(SCOTCH_stratInit, &stradat);
+      PetscCallExternal(SCOTCH_stratDgraphMapBuild, &stradat, scotch->strategy, nparts, nparts, scotch->imbalance);
 
       if (velotab) {
-        PetscCall(SCOTCH_archCmpltw(&archdat, nparts, velotab));
+        PetscCallExternal(SCOTCH_archCmpltw, &archdat, nparts, velotab);
       } else {
-        PetscCall(SCOTCH_archCmplt(&archdat, nparts));
+        PetscCallExternal(SCOTCH_archCmplt, &archdat, nparts);
       }
-      PetscCall(SCOTCH_dgraphMapInit(&grafdat, &mappdat, &archdat, locals));
-      PetscCall(SCOTCH_dgraphMapCompute(&grafdat, &mappdat, &stradat));
+      PetscCallExternal(SCOTCH_dgraphMapInit, &grafdat, &mappdat, &archdat, locals);
+      PetscCallExternal(SCOTCH_dgraphMapCompute, &grafdat, &mappdat, &stradat);
 
       SCOTCH_dgraphMapExit(&grafdat, &mappdat);
       SCOTCH_archExit(&archdat);
@@ -385,19 +384,19 @@ static PetscErrorCode MatPartitioningApply_PTScotch_Private(MatPartitioning part
       SCOTCH_Graph grafdat;
       SCOTCH_Strat stradat;
 
-      PetscCall(SCOTCH_graphInit(&grafdat));
-      PetscCall(SCOTCH_graphBuild(&grafdat, 0, vertlocnbr, adj->i, adj->i + 1, veloloctab, NULL, edgelocnbr, adj->j, edloloctab));
-      if (PetscDefined(USE_DEBUG)) PetscCall(SCOTCH_graphCheck(&grafdat));
-      PetscCall(SCOTCH_stratInit(&stradat));
-      PetscCall(SCOTCH_stratGraphMapBuild(&stradat, scotch->strategy, nparts, scotch->imbalance));
+      PetscCallExternal(SCOTCH_graphInit, &grafdat);
+      PetscCallExternal(SCOTCH_graphBuild, &grafdat, 0, vertlocnbr, adj->i, adj->i + 1, veloloctab, NULL, edgelocnbr, adj->j, edloloctab);
+      if (PetscDefined(USE_DEBUG)) PetscCallExternal(SCOTCH_graphCheck, &grafdat);
+      PetscCallExternal(SCOTCH_stratInit, &stradat);
+      PetscCallExternal(SCOTCH_stratGraphMapBuild, &stradat, scotch->strategy, nparts, scotch->imbalance);
       if (velotab) {
         SCOTCH_Arch archdat;
-        PetscCall(SCOTCH_archInit(&archdat));
-        PetscCall(SCOTCH_archCmpltw(&archdat, nparts, velotab));
-        PetscCall(SCOTCH_graphMap(&grafdat, &archdat, &stradat, locals));
+        PetscCallExternal(SCOTCH_archInit, &archdat);
+        PetscCallExternal(SCOTCH_archCmpltw, &archdat, nparts, velotab);
+        PetscCallExternal(SCOTCH_graphMap, &grafdat, &archdat, &stradat, locals);
         SCOTCH_archExit(&archdat);
       } else {
-        PetscCall(SCOTCH_graphPart(&grafdat, nparts, &stradat, locals));
+        PetscCallExternal(SCOTCH_graphPart, &grafdat, nparts, &stradat, locals);
       }
       SCOTCH_stratExit(&stradat);
       SCOTCH_graphExit(&grafdat);
@@ -432,24 +431,24 @@ static PetscErrorCode MatPartitioningApply_PTScotch_Private(MatPartitioning part
   }
 
   if (!flg) PetscCall(MatDestroy(&mat));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningApply_PTScotch(MatPartitioning part, IS *partitioning)
+static PetscErrorCode MatPartitioningApply_PTScotch(MatPartitioning part, IS *partitioning)
 {
   PetscFunctionBegin;
   PetscCall(MatPartitioningApply_PTScotch_Private(part, PETSC_FALSE, partitioning));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningApplyND_PTScotch(MatPartitioning part, IS *partitioning)
+static PetscErrorCode MatPartitioningApplyND_PTScotch(MatPartitioning part, IS *partitioning)
 {
   PetscFunctionBegin;
   PetscCall(MatPartitioningApply_PTScotch_Private(part, PETSC_TRUE, partitioning));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatPartitioningDestroy_PTScotch(MatPartitioning part)
+static PetscErrorCode MatPartitioningDestroy_PTScotch(MatPartitioning part)
 {
   MatPartitioning_PTScotch *scotch = (MatPartitioning_PTScotch *)part->data;
 
@@ -460,19 +459,16 @@ PetscErrorCode MatPartitioningDestroy_PTScotch(MatPartitioning part)
   PetscCall(PetscObjectComposeFunction((PetscObject)part, "MatPartitioningPTScotchGetImbalance_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)part, "MatPartitioningPTScotchSetStrategy_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)part, "MatPartitioningPTScotchGetStrategy_C", NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-   MATPARTITIONINGPTSCOTCH - Creates a partitioning context that uses the external package SCOTCH.
+   MATPARTITIONINGPTSCOTCH - Creates a partitioning context that uses the external package SCOTCH <http://www.labri.fr/perso/pelegrin/scotch/>.
 
    Level: beginner
 
-   Note:
-    See http://www.labri.fr/perso/pelegrin/scotch/
-
 .seealso: `MatPartitioningSetType()`, `MatPartitioningType`, `MatPartitioningPTScotchSetImbalance()`, `MatPartitioningPTScotchGetImbalance()`,
-          `MatPartitioningPTScotchSetStrategy()`, `MatPartitioningPTScotchGetStrategy()`
+          `MatPartitioningPTScotchSetStrategy()`, `MatPartitioningPTScotchGetStrategy()`, `MatPartitioning`
 M*/
 
 PETSC_EXTERN PetscErrorCode MatPartitioningCreate_PTScotch(MatPartitioning part)
@@ -496,5 +492,5 @@ PETSC_EXTERN PetscErrorCode MatPartitioningCreate_PTScotch(MatPartitioning part)
   PetscCall(PetscObjectComposeFunction((PetscObject)part, "MatPartitioningPTScotchGetImbalance_C", MatPartitioningPTScotchGetImbalance_PTScotch));
   PetscCall(PetscObjectComposeFunction((PetscObject)part, "MatPartitioningPTScotchSetStrategy_C", MatPartitioningPTScotchSetStrategy_PTScotch));
   PetscCall(PetscObjectComposeFunction((PetscObject)part, "MatPartitioningPTScotchGetStrategy_C", MatPartitioningPTScotchGetStrategy_PTScotch));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

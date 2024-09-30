@@ -1,15 +1,3 @@
 
-#requiresdefine   'PETSC_HAVE_FORTRAN'
-ALL: lib
-
-CFLAGS   =
-FFLAGS   =
-SOURCEC  = pff.c
-SOURCEF  =
-SOURCEH  = 
-DIRS     =
+#requiresdefine   'PETSC_USE_FORTRAN_BINDINGS'
 LIBBASE   = libpetscvec
-LOCDIR    = src/vec/pf/interface/ftn-auto/
-include ${PETSC_DIR}/lib/petsc/conf/variables
-include ${PETSC_DIR}/lib/petsc/conf/rules
-include ${PETSC_DIR}/lib/petsc/conf/test

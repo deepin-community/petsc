@@ -181,7 +181,7 @@ class generateExamples(Petsc):
   def getLanguage(self,srcfile):
     """
     Based on the source, determine associated language as found in gmakegen.LANGS
-    Can we just return srcext[1:\] now?
+    Can we just return srcext[1:] now?
     """
     langReq=None
     srcext = getlangext(srcfile)
@@ -291,9 +291,9 @@ class generateExamples(Petsc):
     argStr=re.sub('{{(.*?)}}',"",argStr)
     argStr=re.sub('-'," ",argStr)
     for digit in string.digits: argStr=re.sub(digit," ",argStr)
-    argStr=re.sub("\.","",argStr)
+    argStr=re.sub(r"\.","",argStr)
     argStr=re.sub(",","",argStr)
-    argStr=re.sub('\+',' ',argStr)
+    argStr=re.sub(r'\+',' ',argStr)
     argStr=re.sub(' +',' ',argStr)  # Remove repeated white space
     return argStr.strip()
 
@@ -391,6 +391,7 @@ class generateExamples(Petsc):
       subst['mpiexec']='petsc_mpiexec_valgrind ' + self.conf['MPIEXEC']
     else:
       subst['mpiexec']=self.conf['MPIEXEC']
+    subst['mpiexec_tail']=self.conf['MPIEXEC_TAIL']
     subst['pkg_name']=self.pkg_name
     subst['pkg_dir']=self.pkg_dir
     subst['pkg_arch']=self.petsc_arch
@@ -443,6 +444,11 @@ class generateExamples(Petsc):
     cmdLines=""
 
     # MPI is the default -- but we have a few odd commands
+    if subst['temporaries']:
+      if '*' in subst['temporaries']:
+        raise RuntimeError('{}/{}: list of temporary files to remove may not include wildcards'.format(subst['srcdir'], subst['execname']))
+      cmd=cmdindnt+self._substVars(subst,example_template.preclean)
+      cmdLines+=cmd+"\n"
     if not subst['command']:
       cmd=cmdindnt+self._substVars(subst,example_template.mpitest)
     else:
@@ -720,6 +726,16 @@ class generateExamples(Petsc):
         isNull=False
         if requirement.startswith("!"):
           requirement=requirement[1:]; isNull=True
+        # 32-bit vs 64-bit pointers
+        if requirement == "64bitptr":
+          if self.conf['PETSC_SIZEOF_VOID_P']==8:
+            if isNull:
+              testDict['SKIP'].append("not 64bit-ptr required")
+              continue
+            continue  # Success
+          elif not isNull:
+            testDict['SKIP'].append("64bit-ptr required")
+            continue
         # Precision requirement for reals
         if requirement in self.precision_types:
           if self.conf['PETSC_PRECISION']==requirement:
@@ -840,6 +856,7 @@ class generateExamples(Petsc):
       for root in dataDict:
         relroot=self.srcrelpath(root)
         pkg=relroot.split("/")[1]
+        if not pkg in self.sources: continue
         fh.write(relroot+"\n")
         allSrcs=[]
         for lang in LANGS: allSrcs+=self.sources[pkg][lang]['srcs']
@@ -869,8 +886,6 @@ class generateExamples(Petsc):
      the examples based on the metadata contained in the source files
     """
     debug=False
-    # Use examplesAnalyze to get what the makefles think are sources
-    #self.examplesAnalyze(root,dirs,files,anlzDict)
 
     data = {}
     for exfile in files:

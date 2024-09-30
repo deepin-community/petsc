@@ -1,10 +1,8 @@
+#pragma once
 
-#ifndef _KSPIMPL_H
-  #define _KSPIMPL_H
-
-  #include <petscksp.h>
-  #include <petscds.h>
-  #include <petsc/private/petscimpl.h>
+#include <petscksp.h>
+#include <petscds.h>
+#include <petsc/private/petscimpl.h>
 
 /* SUBMANSEC = KSP */
 
@@ -65,13 +63,13 @@ struct _p_KSPGuess {
 PETSC_EXTERN PetscErrorCode KSPGuessCreate_Fischer(KSPGuess);
 PETSC_EXTERN PetscErrorCode KSPGuessCreate_POD(KSPGuess);
 
-  /*
+/*
      Maximum number of monitors you can run with a single KSP
 */
-  #define MAXKSPMONITORS    5
-  #define MAXKSPREASONVIEWS 5
+#define MAXKSPMONITORS    5
+#define MAXKSPREASONVIEWS 5
 typedef enum {
-  KSP_SETUP_NEW,
+  KSP_SETUP_NEW = 0,
   KSP_SETUP_NEWMATRIX,
   KSP_SETUP_NEWRHS
 } KSPSetUpStage;
@@ -86,8 +84,10 @@ struct _p_KSP {
   PetscBool dmActive; /* KSP should use DM for computing operators */
   /*------------------------- User parameters--------------------------*/
   PetscInt  max_it; /* maximum number of iterations */
+  PetscInt  min_it; /* minimum number of iterations */
   KSPGuess  guess;
   PetscBool guess_zero,                                  /* flag for whether initial guess is 0 */
+    guess_not_read,                                      /* guess is not read, does not need to be zeroed */
     calc_sings,                                          /* calculate extreme Singular Values */
     calc_ritz,                                           /* calculate (harmonic) Ritz pairs */
     guess_knoll;                                         /* use initial guess of PCApply(ksp->B,b */
@@ -181,14 +181,17 @@ struct _p_KSP {
   Vec       diagonal;   /* 1/sqrt(diag of matrix) */
   Vec       truediagonal;
 
+  /* Allow declaring convergence when negative curvature is detected */
+  PetscBool converged_neg_curve;
+
   PetscInt  setfromoptionscalled;
   PetscBool skippcsetfromoptions; /* if set then KSPSetFromOptions() does not call PCSetFromOptions() */
-
-  PetscViewer eigviewer; /* Viewer where computed eigenvalues are displayed */
 
   PetscErrorCode (*presolve)(KSP, Vec, Vec, void *);
   PetscErrorCode (*postsolve)(KSP, Vec, Vec, void *);
   void *prectx, *postctx;
+
+  PetscInt nestlevel; /* how many levels of nesting does the KSP have */
 };
 
 typedef struct { /* dummy data structure used in KSPMonitorDynamicTolerance() */
@@ -209,7 +212,7 @@ static inline PetscErrorCode KSPLogResidualHistory(KSP ksp, PetscReal norm)
   PetscCall(PetscObjectSAWsTakeAccess((PetscObject)ksp));
   if (ksp->res_hist && ksp->res_hist_max > ksp->res_hist_len) ksp->res_hist[ksp->res_hist_len++] = norm;
   PetscCall(PetscObjectSAWsGrantAccess((PetscObject)ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode KSPLogErrorHistory(KSP ksp)
@@ -244,7 +247,7 @@ static inline PetscErrorCode KSPLogErrorHistory(KSP ksp)
     ksp->err_hist[ksp->err_hist_len++] = error;
   }
   PetscCall(PetscObjectSAWsGrantAccess((PetscObject)ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscScalar KSPNoisyHash_Private(PetscInt xx)
@@ -253,7 +256,7 @@ static inline PetscScalar KSPNoisyHash_Private(PetscInt xx)
   x              = ((x >> 16) ^ x) * 0x45d9f3b;
   x              = ((x >> 16) ^ x) * 0x45d9f3b;
   x              = ((x >> 16) ^ x);
-  return (PetscScalar)((PetscInt64)x - 2147483648) * 5.e-10; /* center around zero, scaled about -1. to 1.*/
+  return (PetscScalar)(((PetscInt64)x - 2147483648) * 5.e-10); /* center around zero, scaled about -1. to 1.*/
 }
 
 static inline PetscErrorCode KSPSetNoisy_Private(Vec v)
@@ -267,7 +270,7 @@ static inline PetscErrorCode KSPSetNoisy_Private(Vec v)
   PetscCall(VecGetArrayWrite(v, &a));
   for (PetscInt i = 0; i < n; ++i) a[i] = KSPNoisyHash_Private(i + istart);
   PetscCall(VecRestoreArrayWrite(v, &a));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_INTERN PetscErrorCode KSPSetUpNorms_Private(KSP, PetscBool, KSPNormType *, PCSide *);
@@ -320,7 +323,7 @@ static inline PetscErrorCode KSP_RemoveNullSpace(KSP ksp, Vec y)
     PetscCall(MatGetNullSpace(A, &nullsp));
     if (nullsp) PetscCall(MatNullSpaceRemove(nullsp, y));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode KSP_RemoveNullSpaceTranspose(KSP ksp, Vec y)
@@ -334,7 +337,7 @@ static inline PetscErrorCode KSP_RemoveNullSpaceTranspose(KSP ksp, Vec y)
     PetscCall(MatGetTransposeNullSpace(A, &nullsp));
     if (nullsp) PetscCall(MatNullSpaceRemove(nullsp, y));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode KSP_MatMult(KSP ksp, Mat A, Vec x, Vec y)
@@ -342,7 +345,7 @@ static inline PetscErrorCode KSP_MatMult(KSP ksp, Mat A, Vec x, Vec y)
   PetscFunctionBegin;
   if (ksp->transpose_solve) PetscCall(MatMultTranspose(A, x, y));
   else PetscCall(MatMult(A, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode KSP_MatMultTranspose(KSP ksp, Mat A, Vec x, Vec y)
@@ -350,7 +353,7 @@ static inline PetscErrorCode KSP_MatMultTranspose(KSP ksp, Mat A, Vec x, Vec y)
   PetscFunctionBegin;
   if (ksp->transpose_solve) PetscCall(MatMult(A, x, y));
   else PetscCall(MatMultTranspose(A, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode KSP_MatMultHermitianTranspose(KSP ksp, Mat A, Vec x, Vec y)
@@ -367,7 +370,7 @@ static inline PetscErrorCode KSP_MatMultHermitianTranspose(KSP ksp, Mat A, Vec x
     PetscCall(VecDestroy(&w));
     PetscCall(VecConjugate(y));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode KSP_PCApply(KSP ksp, Vec x, Vec y)
@@ -380,7 +383,7 @@ static inline PetscErrorCode KSP_PCApply(KSP ksp, Vec x, Vec y)
     PetscCall(PCApply(ksp->pc, x, y));
     PetscCall(KSP_RemoveNullSpace(ksp, y));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode KSP_PCApplyTranspose(KSP ksp, Vec x, Vec y)
@@ -393,7 +396,7 @@ static inline PetscErrorCode KSP_PCApplyTranspose(KSP ksp, Vec x, Vec y)
     PetscCall(PCApplyTranspose(ksp->pc, x, y));
     PetscCall(KSP_RemoveNullSpaceTranspose(ksp, y));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode KSP_PCApplyHermitianTranspose(KSP ksp, Vec x, Vec y)
@@ -403,7 +406,31 @@ static inline PetscErrorCode KSP_PCApplyHermitianTranspose(KSP ksp, Vec x, Vec y
   PetscCall(KSP_PCApplyTranspose(ksp, x, y));
   PetscCall(VecConjugate(x));
   PetscCall(VecConjugate(y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+static inline PetscErrorCode KSP_PCMatApply(KSP ksp, Mat X, Mat Y)
+{
+  PetscFunctionBegin;
+  if (ksp->transpose_solve) {
+    PetscBool flg;
+    PetscCall(PetscObjectTypeCompareAny((PetscObject)ksp->pc, &flg, PCNONE, PCICC, PCCHOLESKY, ""));
+    PetscCheck(flg, PetscObjectComm((PetscObject)ksp), PETSC_ERR_SUP, "PCMatApplyTranspose() not yet implemented for nonsymmetric PC");
+  }
+  PetscCall(PCMatApply(ksp->pc, X, Y));
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+static inline PetscErrorCode KSP_PCMatApplyTranspose(KSP ksp, Mat X, Mat Y)
+{
+  PetscFunctionBegin;
+  if (!ksp->transpose_solve) {
+    PetscBool flg;
+    PetscCall(PetscObjectTypeCompareAny((PetscObject)ksp->pc, &flg, PCNONE, PCICC, PCCHOLESKY, ""));
+    PetscCheck(flg, PetscObjectComm((PetscObject)ksp), PETSC_ERR_SUP, "PCMatApplyTranspose() not yet implemented for nonsymmetric PC");
+  }
+  PetscCall(PCMatApply(ksp->pc, X, Y));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode KSP_PCApplyBAorAB(KSP ksp, Vec x, Vec y, Vec w)
@@ -416,7 +443,7 @@ static inline PetscErrorCode KSP_PCApplyBAorAB(KSP ksp, Vec x, Vec y, Vec w)
     PetscCall(PCApplyBAorAB(ksp->pc, ksp->pc_side, x, y, w));
     PetscCall(KSP_RemoveNullSpace(ksp, y));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static inline PetscErrorCode KSP_PCApplyBAorABTranspose(KSP ksp, Vec x, Vec y, Vec w)
@@ -424,7 +451,7 @@ static inline PetscErrorCode KSP_PCApplyBAorABTranspose(KSP ksp, Vec x, Vec y, V
   PetscFunctionBegin;
   if (ksp->transpose_solve) PetscCall(PCApplyBAorAB(ksp->pc, ksp->pc_side, x, y, w));
   else PetscCall(PCApplyBAorABTranspose(ksp->pc, ksp->pc_side, x, y, w));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscLogEvent KSP_GMRESOrthogonalization;
@@ -440,11 +467,12 @@ PETSC_EXTERN PetscLogEvent KSP_Solve_FS_L;
 PETSC_EXTERN PetscLogEvent KSP_Solve_FS_U;
 PETSC_EXTERN PetscLogEvent KSP_SolveTranspose;
 PETSC_EXTERN PetscLogEvent KSP_MatSolve;
+PETSC_EXTERN PetscLogEvent KSP_MatSolveTranspose;
 
 PETSC_INTERN PetscErrorCode MatGetSchurComplement_Basic(Mat, IS, IS, IS, IS, MatReuse, Mat *, MatSchurComplementAinvType, MatReuse, Mat *);
 PETSC_INTERN PetscErrorCode PCPreSolveChangeRHS(PC, PetscBool *);
 
-  /*MC
+/*MC
    KSPCheckDot - Checks if the result of a dot product used by the corresponding `KSP` contains Inf or NaN. These indicate that the previous
       application of the preconditioner generated an error. Sets a `KSPConvergedReason` and returns if the `PC` set a `PCFailedReason`.
 
@@ -459,35 +487,33 @@ PETSC_INTERN PetscErrorCode PCPreSolveChangeRHS(PC, PetscBool *);
    Level: developer
 
    Developer Notes:
-   Used to manage returning from `KSP` solvers whose preconditioners have failed, possibly only a subset of MPI ranks, in some way
+   Used to manage returning from `KSP` solvers collectively whose preconditioners have failed, possibly only a subset of MPI processes, in some way
 
    It uses the fact that `KSP` piggy-backs the collectivity of certain error conditions on the results of norms and inner products.
 
-.seealso: `PCFailedReason`, `KSPConvergedReason`, `PCGetFailedReasonRank()`, `KSP`, `KSPCreate()`, `KSPSetType()`, `KSP`, `KSPCheckNorm()`, `KSPCheckSolve()`
+.seealso: `PCFailedReason`, `KSPConvergedReason`, `PCGetFailedReasonRank()`, `KSP`, `KSPCreate()`, `KSPSetType()`, `KSP`, `KSPCheckNorm()`, `KSPCheckSolve()`,
+          `KSPSetErrorIfNotConverged()`
 M*/
-  #define KSPCheckDot(ksp, beta) \
-    do { \
-      if (PetscIsInfOrNanScalar(beta)) { \
-        PetscCheck(!ksp->errorifnotconverged, PetscObjectComm((PetscObject)ksp), PETSC_ERR_NOT_CONVERGED, "KSPSolve has not converged due to Nan or Inf inner product"); \
-        { \
-          PCFailedReason pcreason; \
-          PetscInt       sendbuf, recvbuf; \
-          PetscCall(PCGetFailedReasonRank(ksp->pc, &pcreason)); \
-          sendbuf = (PetscInt)pcreason; \
-          PetscCallMPI(MPI_Allreduce(&sendbuf, &recvbuf, 1, MPIU_INT, MPI_MAX, PetscObjectComm((PetscObject)ksp))); \
-          if (recvbuf) { \
-            PetscCall(PCSetFailedReason(ksp->pc, (PCFailedReason)recvbuf)); \
-            ksp->reason = KSP_DIVERGED_PC_FAILED; \
-            PetscCall(VecSetInf(ksp->vec_sol)); \
-          } else { \
-            ksp->reason = KSP_DIVERGED_NANORINF; \
-          } \
-          PetscFunctionReturn(0); \
+#define KSPCheckDot(ksp, beta) \
+  do { \
+    if (PetscIsInfOrNanScalar(beta)) { \
+      PetscCheck(!ksp->errorifnotconverged, PetscObjectComm((PetscObject)ksp), PETSC_ERR_NOT_CONVERGED, "KSPSolve has not converged due to Nan or Inf inner product"); \
+      { \
+        PCFailedReason pcreason; \
+        PetscCall(PCReduceFailedReason(ksp->pc)); \
+        PetscCall(PCGetFailedReasonRank(ksp->pc, &pcreason)); \
+        if (pcreason) { \
+          ksp->reason = KSP_DIVERGED_PC_FAILED; \
+          PetscCall(VecSetInf(ksp->vec_sol)); \
+        } else { \
+          ksp->reason = KSP_DIVERGED_NANORINF; \
         } \
+        PetscFunctionReturn(PETSC_SUCCESS); \
       } \
-    } while (0)
+    } \
+  } while (0)
 
-  /*MC
+/*MC
    KSPCheckNorm - Checks if the result of a norm used by the corresponding `KSP` contains `inf` or `NaN`. These indicate that the previous
       application of the preconditioner generated an error. Sets a `KSPConvergedReason` and returns if the `PC` set a `PCFailedReason`.
 
@@ -502,38 +528,33 @@ M*/
    Level: developer
 
    Developer Notes:
-   Used to manage returning from `KSP` solvers whose preconditioners have failed, possibly only a subset of MPI ranks, in some way.
+   Used to manage returning from `KSP` solvers collectively whose preconditioners have failed, possibly only a subset of MPI processes, in some way.
 
    It uses the fact that `KSP` piggy-backs the collectivity of certain error conditions on the results of norms and inner products.
 
-.seealso: `PCFailedReason`, `KSPConvergedReason`, `PCGetFailedReasonRank()`, `KSP`, `KSPCreate()`, `KSPSetType()`, `KSP`, `KSPCheckDot()`, `KSPCheckSolve()`
+.seealso: `PCFailedReason`, `KSPConvergedReason`, `PCGetFailedReasonRank()`, `KSP`, `KSPCreate()`, `KSPSetType()`, `KSP`, `KSPCheckDot()`, `KSPCheckSolve()`,
+          `KSPSetErrorIfNotConverged()`
 M*/
-  #define KSPCheckNorm(ksp, beta) \
-    do { \
-      if (PetscIsInfOrNanReal(beta)) { \
-        PetscCheck(!ksp->errorifnotconverged, PetscObjectComm((PetscObject)ksp), PETSC_ERR_NOT_CONVERGED, "KSPSolve has not converged due to Nan or Inf norm"); \
-        { \
-          PCFailedReason pcreason; \
-          PetscInt       sendbuf, recvbuf; \
-          PetscCall(PCGetFailedReasonRank(ksp->pc, &pcreason)); \
-          sendbuf = (PetscInt)pcreason; \
-          PetscCallMPI(MPI_Allreduce(&sendbuf, &recvbuf, 1, MPIU_INT, MPI_MAX, PetscObjectComm((PetscObject)ksp))); \
-          if (recvbuf) { \
-            PetscCall(PCSetFailedReason(ksp->pc, (PCFailedReason)recvbuf)); \
-            ksp->reason = KSP_DIVERGED_PC_FAILED; \
-            PetscCall(VecSetInf(ksp->vec_sol)); \
-            ksp->rnorm = beta; \
-          } else { \
-            PetscCall(PCSetFailedReason(ksp->pc, PC_NOERROR)); \
-            ksp->reason = KSP_DIVERGED_NANORINF; \
-            ksp->rnorm  = beta; \
-          } \
-          PetscFunctionReturn(0); \
+#define KSPCheckNorm(ksp, beta) \
+  do { \
+    if (PetscIsInfOrNanReal(beta)) { \
+      PetscCheck(!ksp->errorifnotconverged, PetscObjectComm((PetscObject)ksp), PETSC_ERR_NOT_CONVERGED, "KSPSolve has not converged due to Nan or Inf norm"); \
+      { \
+        PCFailedReason pcreason; \
+        PetscCall(PCReduceFailedReason(ksp->pc)); \
+        PetscCall(PCGetFailedReasonRank(ksp->pc, &pcreason)); \
+        if (pcreason) { \
+          ksp->reason = KSP_DIVERGED_PC_FAILED; \
+          PetscCall(VecSetInf(ksp->vec_sol)); \
+          ksp->rnorm = beta; \
+        } else { \
+          ksp->reason = KSP_DIVERGED_NANORINF; \
+          ksp->rnorm  = beta; \
         } \
+        PetscFunctionReturn(PETSC_SUCCESS); \
       } \
-    } while (0)
-
-#endif
+    } \
+  } while (0)
 
 PETSC_INTERN PetscErrorCode KSPMonitorMakeKey_Internal(const char[], PetscViewerType, PetscViewerFormat, char[]);
 PETSC_INTERN PetscErrorCode KSPMonitorRange_Private(KSP, PetscInt, PetscReal *);

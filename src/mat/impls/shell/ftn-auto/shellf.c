@@ -39,11 +39,6 @@ extern void PetscRmPointer(void*);
 #define matshellsetcontext_ matshellsetcontext
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define matshellsetcontextdestroy_ MATSHELLSETCONTEXTDESTROY
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define matshellsetcontextdestroy_ matshellsetcontextdestroy
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define matshellsetmanagescalingshifts_ MATSHELLSETMANAGESCALINGSHIFTS
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define matshellsetmanagescalingshifts_ matshellsetmanagescalingshifts
@@ -68,11 +63,6 @@ PETSC_EXTERN void  matshellsetcontext_(Mat mat,void*ctx, int *__ierr)
 {
 *__ierr = MatShellSetContext(
 	(Mat)PetscToPointer((mat) ),ctx);
-}
-PETSC_EXTERN void  matshellsetcontextdestroy_(Mat mat,PetscErrorCode (*f)(void *), int *__ierr)
-{
-*__ierr = MatShellSetContextDestroy(
-	(Mat)PetscToPointer((mat) ),f);
 }
 PETSC_EXTERN void  matshellsetmanagescalingshifts_(Mat A, int *__ierr)
 {

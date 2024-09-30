@@ -3,7 +3,7 @@
 
 #include "petsc/finclude/petscts.h"
 
-#define Tao PetscFortranAddr
+#define Tao type(tTao)
 #define TaoLineSearch PetscFortranAddr
 #define TaoConvergedReason PetscEnum
 #define TaoType character*(80)
@@ -11,6 +11,7 @@
 #define TaoADMMUpdateType PetscEnum
 #define TaoADMMRegularizerType PetscEnum
 #define TaoALMMType PetscEnum
+#define TaoBNCGType PetscEnum
 
 #define TAOLMVM     'lmvm'
 #define TAONLS      'nls'
@@ -45,5 +46,6 @@
 #define TAOADMM     'admm'
 #define TAOALMM     'almm'
 #define TAOPYTHON   'python'
+#define TAOSNES     'snes'
 
 #endif

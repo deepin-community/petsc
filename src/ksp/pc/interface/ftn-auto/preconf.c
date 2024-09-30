@@ -64,6 +64,16 @@ extern void PetscRmPointer(void*);
 #define pcgetuseamat_ pcgetuseamat
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pcsetkspnestlevel_ PCSETKSPNESTLEVEL
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pcsetkspnestlevel_ pcsetkspnestlevel
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pcgetkspnestlevel_ PCGETKSPNESTLEVEL
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pcgetkspnestlevel_ pcgetkspnestlevel
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define pccreate_ PCCREATE
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define pccreate_ pccreate
@@ -134,6 +144,11 @@ extern void PetscRmPointer(void*);
 #define pcgetfailedreasonrank_ pcgetfailedreasonrank
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pcreducefailedreason_ PCREDUCEFAILEDREASON
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pcreducefailedreason_ pcreducefailedreason
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define pcsetup_ PCSETUP
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define pcsetup_ pcsetup
@@ -177,11 +192,6 @@ extern void PetscRmPointer(void*);
 #define pcpostsolve_ PCPOSTSOLVE
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define pcpostsolve_ pcpostsolve
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define pccomputeoperator_ PCCOMPUTEOPERATOR
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define pccomputeoperator_ pccomputeoperator
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define pcsetcoordinates_ PCSETCOORDINATES
@@ -243,6 +253,16 @@ PETSC_EXTERN void  pcgetuseamat_(PC pc,PetscBool *flg, int *__ierr)
 {
 *__ierr = PCGetUseAmat(
 	(PC)PetscToPointer((pc) ),flg);
+}
+PETSC_EXTERN void  pcsetkspnestlevel_(PC pc,PetscInt *level, int *__ierr)
+{
+*__ierr = PCSetKSPNestLevel(
+	(PC)PetscToPointer((pc) ),*level);
+}
+PETSC_EXTERN void  pcgetkspnestlevel_(PC pc,PetscInt *level, int *__ierr)
+{
+*__ierr = PCGetKSPNestLevel(
+	(PC)PetscToPointer((pc) ),level);
 }
 PETSC_EXTERN void  pccreate_(MPI_Fint * comm,PC *newpc, int *__ierr)
 {
@@ -333,6 +353,11 @@ PETSC_EXTERN void  pcgetfailedreasonrank_(PC pc,PCFailedReason *reason, int *__i
 *__ierr = PCGetFailedReasonRank(
 	(PC)PetscToPointer((pc) ),reason);
 }
+PETSC_EXTERN void  pcreducefailedreason_(PC pc, int *__ierr)
+{
+*__ierr = PCReduceFailedReason(
+	(PC)PetscToPointer((pc) ));
+}
 PETSC_EXTERN void  pcsetup_(PC pc, int *__ierr)
 {
 *__ierr = PCSetUp(
@@ -381,11 +406,6 @@ PETSC_EXTERN void  pcpostsolve_(PC pc,KSP ksp, int *__ierr)
 *__ierr = PCPostSolve(
 	(PC)PetscToPointer((pc) ),
 	(KSP)PetscToPointer((ksp) ));
-}
-PETSC_EXTERN void  pccomputeoperator_(PC pc,MatType *mattype,Mat *mat, int *__ierr)
-{
-*__ierr = PCComputeOperator(
-	(PC)PetscToPointer((pc) ),*mattype,mat);
 }
 PETSC_EXTERN void  pcsetcoordinates_(PC pc,PetscInt *dim,PetscInt *nloc,PetscReal coords[], int *__ierr)
 {

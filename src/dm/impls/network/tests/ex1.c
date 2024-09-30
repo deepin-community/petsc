@@ -36,7 +36,7 @@ PetscErrorCode CreateStarGraphEdgeList(PetscInt k, PetscBool directin, PetscInt 
       (*edgelist)[2 * i + 1] = i + 1;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -50,7 +50,7 @@ all edges and vertices, aselectable number of dofs on vertices and edges. Intend
 . k          - order of the star graph (number of edges)
 . directin   - if true direction of edges is towards the center vertex, otherwise they are directed out of the center vertex
 
-  Output Parameters:
+  Output Parameter:
 . newdm       - The created and distributed simple Star Graph
 */
 PetscErrorCode CreateSimpleStarGraph(MPI_Comm comm, PetscInt numdofvert, PetscInt numdofedge, PetscInt k, PetscBool directin, DM *newdm)
@@ -86,7 +86,7 @@ PetscErrorCode CreateSimpleStarGraph(MPI_Comm comm, PetscInt numdofvert, PetscIn
   PetscCall(PetscFree2(compedge, compvert));
   PetscCall(DMNetworkDistribute(&dm, 0));
   *newdm = dm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

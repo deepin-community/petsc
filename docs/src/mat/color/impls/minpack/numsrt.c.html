@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/color/impls/minpack/numsrt.c">Actual source code: numsrt.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/mat/color/impls/minpack/numsrt.c">Actual source code: numsrt.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:48:17+00:00">
+<meta name="date" content="2024-03-29T14:12:26+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -13,13 +13,13 @@
 
 <a name="line3">  3: </a>#include <A href="color.h.html">&lt;../src/mat/color/impls/minpack/color.h&gt;</A>
 
-<a name="line5">  5: </a><strong><font color="#4169E1"><a name="MINPACKnumsrt"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MINPACKnumsrt(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *n, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *nmax, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *num, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *mode, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *idex, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *last, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> *next)</font></strong>
+<a name="line5">  5: </a><strong><font color="#4169E1"><a name="MINPACKnumsrt"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> MINPACKnumsrt(<a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *n, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *nmax, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *num, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *mode, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *idex, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *last, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *next)</font></strong>
 <a name="line6">  6: </a>{
 <a name="line7">  7: </a>  <font color="#B22222">/* System generated locals */</font>
-<a name="line8">  8: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i__1, i__2;
+<a name="line8">  8: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> i__1, i__2;
 
 <a name="line10"> 10: </a>  <font color="#B22222">/* Local variables */</font>
-<a name="line11"> 11: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> jinc, i, j, k, l, jl, ju;
+<a name="line11"> 11: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> jinc, i, j, k, l, jl, ju;
 
 <a name="line13"> 13: </a>  <font color="#B22222">/*     Given a sequence of integers, this subroutine groups */</font>
 <a name="line14"> 14: </a>  <font color="#B22222">/*     together those indices with the same sequence value */</font>
@@ -65,47 +65,48 @@
 <a name="line54"> 54: </a>  <font color="#B22222">/*     Thomas F. Coleman, Burton S. Garbow, Jorge J. More' */</font>
 
 <a name="line56"> 56: </a>  <font color="#B22222">/* Parameter adjustments */</font>
-<a name="line57"> 57: </a>  --next;
-<a name="line58"> 58: </a>  --idex;
-<a name="line59"> 59: </a>  --num;
+<a name="line57"> 57: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line58"> 58: </a>  --next;
+<a name="line59"> 59: </a>  --idex;
+<a name="line60"> 60: </a>  --num;
 
-<a name="line61"> 61: </a>  i__1 = *nmax;
-<a name="line62"> 62: </a>  <font color="#4169E1">for</font> (i = 0; i &lt;= i__1; ++i) last[i] = 0;
+<a name="line62"> 62: </a>  i__1 = *nmax;
+<a name="line63"> 63: </a>  <font color="#4169E1">for</font> (i = 0; i &lt;= i__1; ++i) last[i] = 0;
 
-<a name="line64"> 64: </a>  i__1 = *n;
-<a name="line65"> 65: </a>  <font color="#4169E1">for</font> (k = 1; k &lt;= i__1; ++k) {
-<a name="line66"> 66: </a>    l       = num[k];
-<a name="line67"> 67: </a>    next[k] = last[l];
-<a name="line68"> 68: </a>    last[l] = k;
-<a name="line69"> 69: </a>  }
-<a name="line70"> 70: </a>  <font color="#4169E1">if</font> (!*mode) <font color="#4169E1">return</font> 0;
+<a name="line65"> 65: </a>  i__1 = *n;
+<a name="line66"> 66: </a>  <font color="#4169E1">for</font> (k = 1; k &lt;= i__1; ++k) {
+<a name="line67"> 67: </a>    l       = num[k];
+<a name="line68"> 68: </a>    next[k] = last[l];
+<a name="line69"> 69: </a>    last[l] = k;
+<a name="line70"> 70: </a>  }
+<a name="line71"> 71: </a>  <font color="#4169E1">if</font> (!*mode) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 
-<a name="line72"> 72: </a>  <font color="#B22222">/*     Store the pointers to the sorted array in index. */</font>
+<a name="line73"> 73: </a>  <font color="#B22222">/*     Store the pointers to the sorted array in index. */</font>
 
-<a name="line74"> 74: </a>  i = 1;
-<a name="line75"> 75: </a>  <font color="#4169E1">if</font> (*mode &gt; 0) {
-<a name="line76"> 76: </a>    jl   = 0;
-<a name="line77"> 77: </a>    ju   = *nmax;
-<a name="line78"> 78: </a>    jinc = 1;
-<a name="line79"> 79: </a>  } <font color="#4169E1">else</font> {
-<a name="line80"> 80: </a>    jl   = *nmax;
-<a name="line81"> 81: </a>    ju   = 0;
-<a name="line82"> 82: </a>    jinc = -1;
-<a name="line83"> 83: </a>  }
-<a name="line84"> 84: </a>  i__1 = ju;
-<a name="line85"> 85: </a>  i__2 = jinc;
-<a name="line86"> 86: </a>  <font color="#4169E1">for</font> (j = jl; i__2 &lt; 0 ? j &gt;= i__1 : j &lt;= i__1; j += i__2) {
-<a name="line87"> 87: </a>    k = last[j];
-<a name="line88"> 88: </a><strong><font color="#FF0000">  L30:</font></strong>
-<a name="line89"> 89: </a>    <font color="#4169E1">if</font> (!k) <font color="#4169E1">goto</font> L40;
-<a name="line90"> 90: </a>    idex[i] = k;
-<a name="line91"> 91: </a>    ++i;
-<a name="line92"> 92: </a>    k = next[k];
-<a name="line93"> 93: </a>    <font color="#4169E1">goto</font> L30;
-<a name="line94"> 94: </a><strong><font color="#FF0000">  L40:</font></strong>;
-<a name="line95"> 95: </a>  }
-<a name="line96"> 96: </a>  <font color="#4169E1">return</font> 0;
-<a name="line97"> 97: </a>}
+<a name="line75"> 75: </a>  i = 1;
+<a name="line76"> 76: </a>  <font color="#4169E1">if</font> (*mode &gt; 0) {
+<a name="line77"> 77: </a>    jl   = 0;
+<a name="line78"> 78: </a>    ju   = *nmax;
+<a name="line79"> 79: </a>    jinc = 1;
+<a name="line80"> 80: </a>  } <font color="#4169E1">else</font> {
+<a name="line81"> 81: </a>    jl   = *nmax;
+<a name="line82"> 82: </a>    ju   = 0;
+<a name="line83"> 83: </a>    jinc = -1;
+<a name="line84"> 84: </a>  }
+<a name="line85"> 85: </a>  i__1 = ju;
+<a name="line86"> 86: </a>  i__2 = jinc;
+<a name="line87"> 87: </a>  <font color="#4169E1">for</font> (j = jl; i__2 &lt; 0 ? j &gt;= i__1 : j &lt;= i__1; j += i__2) {
+<a name="line88"> 88: </a>    k = last[j];
+<a name="line89"> 89: </a><strong><font color="#FF0000">  L30:</font></strong>
+<a name="line90"> 90: </a>    <font color="#4169E1">if</font> (!k) <font color="#4169E1">goto</font> L40;
+<a name="line91"> 91: </a>    idex[i] = k;
+<a name="line92"> 92: </a>    ++i;
+<a name="line93"> 93: </a>    k = next[k];
+<a name="line94"> 94: </a>    <font color="#4169E1">goto</font> L30;
+<a name="line95"> 95: </a><strong><font color="#FF0000">  L40:</font></strong>;
+<a name="line96"> 96: </a>  }
+<a name="line97"> 97: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line98"> 98: </a>}
 </pre>
 </body>
 

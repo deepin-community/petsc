@@ -11,12 +11,12 @@ static PetscBool KSPMatRegisterAllCalled = PETSC_FALSE;
 
   Level: advanced
 
-.seealso: [](chapter_ksp), `Mat`, `MatRegister()`, `MatRegisterAll()`, `KSPInitializePackage()`
+.seealso: [](ch_ksp), `Mat`, `MatRegister()`, `MatRegisterAll()`, `KSPInitializePackage()`
 @*/
 PetscErrorCode KSPMatRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (KSPMatRegisterAllCalled) PetscFunctionReturn(0);
+  if (KSPMatRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   KSPMatRegisterAllCalled = PETSC_TRUE;
   PetscCall(MatRegister(MATSCHURCOMPLEMENT, MatCreate_SchurComplement));
   PetscCall(MatRegister(MATLMVMDFP, MatCreate_LMVMDFP));
@@ -27,5 +27,5 @@ PetscErrorCode KSPMatRegisterAll(void)
   PetscCall(MatRegister(MATLMVMSYMBROYDEN, MatCreate_LMVMSymBrdn));
   PetscCall(MatRegister(MATLMVMSYMBADBROYDEN, MatCreate_LMVMSymBadBrdn));
   PetscCall(MatRegister(MATLMVMDIAGBROYDEN, MatCreate_LMVMDiagBrdn));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -55,7 +55,7 @@ static PetscErrorCode KSPSetUp_PIPELCG(KSP ksp)
   PetscCall(PetscCalloc1(2, &plcg->alpha));
   PetscCall(PetscCalloc1(l, &plcg->sigma));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPReset_PIPELCG(KSP ksp)
@@ -70,7 +70,7 @@ static PetscErrorCode KSPReset_PIPELCG(KSP ksp)
   PetscCall(VecDestroyVecs(3, &plcg->U));
   PetscCall(VecDestroyVecs(3, &plcg->V));
   PetscCall(VecDestroyVecs(3 * (l - 1) + 1, &plcg->Q));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPDestroy_PIPELCG(KSP ksp)
@@ -78,7 +78,7 @@ static PetscErrorCode KSPDestroy_PIPELCG(KSP ksp)
   PetscFunctionBegin;
   PetscCall(KSPReset_PIPELCG(ksp));
   PetscCall(KSPDestroyDefault(ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSetFromOptions_PIPELCG(KSP ksp, PetscOptionItems *PetscOptionsObject)
@@ -97,7 +97,7 @@ static PetscErrorCode KSPSetFromOptions_PIPELCG(KSP ksp, PetscOptionItems *Petsc
   PetscCall(PetscOptionsBool("-ksp_pipelcg_monitor", "Output information on restarts when they occur? (default: 0)", "", plcg->show_rstrt, &plcg->show_rstrt, &flag));
   if (!flag) plcg->show_rstrt = PETSC_FALSE;
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MPIPetsc_Iallreduce(void *sendbuf, void *recvbuf, PetscMPIInt count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm, MPI_Request *request)
@@ -109,7 +109,7 @@ static PetscErrorCode MPIPetsc_Iallreduce(void *sendbuf, void *recvbuf, PetscMPI
   PetscCall(MPIU_Allreduce(sendbuf, recvbuf, count, datatype, op, comm));
   *request = MPI_REQUEST_NULL;
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPView_PIPELCG(KSP ksp, PetscViewer viewer)
@@ -129,7 +129,7 @@ static PetscErrorCode KSPView_PIPELCG(KSP ksp, PetscViewer viewer)
     PetscCall(PetscViewerStringSPrintf(viewer, "  Minimal eigenvalue estimate %g\n", (double)plcg->lmin));
     PetscCall(PetscViewerStringSPrintf(viewer, "  Maximal eigenvalue estimate %g\n", (double)plcg->lmax));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSolve_InnerLoop_PIPELCG(KSP ksp)
@@ -152,9 +152,7 @@ static PetscErrorCode KSPSolve_InnerLoop_PIPELCG(KSP ksp)
   PetscCall(PCGetOperators(ksp->pc, &A, &Pmat));
 
   for (it = 0; it < max_it + l; ++it) {
-    /* ----------------------------------- */
     /* Multiplication  z_{it+1} =  Az_{it} */
-    /* ----------------------------------- */
     /* Shift the U vector pointers */
     temp = U[2];
     for (i = 2; i > 0; i--) U[i] = U[i - 1];
@@ -175,9 +173,7 @@ static PetscErrorCode KSPSolve_InnerLoop_PIPELCG(KSP ksp)
       PetscCall(KSP_PCApply(ksp, U[0], Z[0]));
     }
 
-    /* ----------------------------------- */
     /* Adjust the G matrix */
-    /* ----------------------------------- */
     if (it >= l) {
       if (it == l) {
         /* MPI_Wait for G(0,0),scale V0 and Z and U and Q vectors with 1/beta */
@@ -235,9 +231,7 @@ static PetscErrorCode KSPSolve_InnerLoop_PIPELCG(KSP ksp)
         delta(it - l) = (G(it - l + 1, it - l + 1) * delta(it - 2 * l)) / G(it - l, it - l);
       }
 
-      /* -------------------------------------------------- */
       /* Recursively compute the next V, Q, Z and U vectors */
-      /* -------------------------------------------------- */
       /* Shift the V vector pointers */
       temp = V[2];
       for (i = 2; i > 0; i--) V[i] = V[i - 1];
@@ -294,9 +288,7 @@ static PetscErrorCode KSPSolve_InnerLoop_PIPELCG(KSP ksp)
       PetscCall(VecScale(U[0], 1.0 / delta(it - l)));
     }
 
-    /* ---------------------------------------- */
     /* Compute and communicate the dot products */
-    /* ---------------------------------------- */
     if (it < l) {
       for (j = 0; j < it + 2; ++j) { PetscCall((*U[0]->ops->dot_local)(U[0], Z[l - j], &G(j, it + 1))); /* dot-products (U[0],Z[j]) */ }
       PetscCall(MPIPetsc_Iallreduce(MPI_IN_PLACE, &G(0, it + 1), it + 2, MPIU_SCALAR, MPIU_SUM, comm, &req(it + 1)));
@@ -308,9 +300,7 @@ static PetscErrorCode KSPSolve_InnerLoop_PIPELCG(KSP ksp)
       PetscCall(MPIPetsc_Iallreduce(MPI_IN_PLACE, &G(it - l + 1, it + 1), l + 1, MPIU_SCALAR, MPIU_SUM, comm, &req(it + 1)));
     }
 
-    /* ----------------------------------------- */
     /* Compute solution vector and residual norm */
-    /* ----------------------------------------- */
     if (it >= l) {
       if (it == l) {
         if (ksp->its != 0) ++ksp->its;
@@ -346,7 +336,7 @@ static PetscErrorCode KSPSolve_InnerLoop_PIPELCG(KSP ksp)
       }
     }
   } /* End inner for loop */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSolve_ReInitData_PIPELCG(KSP ksp)
@@ -364,7 +354,7 @@ static PetscErrorCode KSPSolve_ReInitData_PIPELCG(KSP ksp)
     delta(j) = 0.0;
     for (i = 0; i < (2 * l + 1); ++i) G_noshift(i, j) = 0.0;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -434,11 +424,12 @@ static PetscErrorCode KSPSolve_PIPELCG(KSP ksp)
   PetscCall(PetscFree(plcg->gamma));
   PetscCall(PetscFree(plcg->delta));
   PetscCall(PetscFree(plcg->req));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-    KSPPIPELCG - Deep pipelined (length l) Conjugate Gradient method. This method has only a single non-blocking global
+    KSPPIPELCG - Deep pipelined (length l) Conjugate Gradient method {cite}`cornelis2018communication` and {cite}`cools2019numerically`.
+    This method has only a single non-blocking global
     reduction per iteration, compared to 2 blocking reductions for standard `KSPCG`. The reduction is overlapped by the
     matrix-vector product and preconditioner application of the next l iterations. The pipeline length l is a parameter
     of the method. [](sec_pipelineksp)
@@ -448,16 +439,6 @@ static PetscErrorCode KSPSolve_PIPELCG(KSP ksp)
 .   -ksp_pipelcg_lmin - approximation to the smallest eigenvalue of the preconditioned operator (default: 0.0)
 .   -ksp_pipelcg_lmax - approximation to the largest eigenvalue of the preconditioned operator (default: 0.0)
 -   -ksp_pipelcg_monitor - output where/why the method restarts when a sqrt breakdown occurs
-
-    Level: advanced
-
-    Notes:
-    MPI configuration may be necessary for reductions to make asynchronous progress, which is important for
-    performance of pipelined methods. See [](doc_faq_pipelined)
-
-    Contributed by:
-    Siegfried Cools, University of Antwerp, Dept. Mathematics and Computer Science,
-    funded by Flemish Research Foundation (FWO) grant number 12H4617N.
 
     Example usage:
 .vb
@@ -469,15 +450,17 @@ static PetscErrorCode KSPSolve_PIPELCG(KSP ksp)
            -ksp_pipelcg_lmin 0.0 -ksp_pipelcg_lmax 2.0 -ksp_pipelcg_monitor -log_view
 .ve
 
-    References:
-+   * - J. Cornelis, S. Cools and W. Vanroose,
-        "The Communication-Hiding Conjugate Gradient Method with Deep Pipelines"
-        Submitted to SIAM Journal on Scientific Computing (SISC), 2018.
--   * - S. Cools, J. Cornelis and W. Vanroose,
-        "Numerically Stable Recurrence Relations for the Communication Hiding Pipelined Conjugate Gradient Method"
-        Submitted to IEEE Transactions on Parallel and Distributed Systems, 2019.
+    Level: advanced
 
-.seealso: [](chapter_ksp), [](sec_pipelineksp), [](doc_faq_pipelined), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSPCG`, `KSPPIPECG`, `KSPPIPECGRR`, `KSPPGMRES`,
+    Notes:
+    MPI configuration may be necessary for reductions to make asynchronous progress, which is important for
+    performance of pipelined methods. See [](doc_faq_pipelined)
+
+    Contributed by:
+    Siegfried Cools, University of Antwerp, Dept. Mathematics and Computer Science,
+    funded by Flemish Research Foundation (FWO) grant number 12H4617N.
+
+.seealso: [](ch_ksp), [](sec_pipelineksp), [](doc_faq_pipelined), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSPCG`, `KSPPIPECG`, `KSPPIPECGRR`, `KSPPGMRES`,
           `KSPPIPEBCGS`, `KSPSetPCSide()`, `KSPGROPPCG`
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_PIPELCG(KSP ksp)
@@ -499,5 +482,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_PIPELCG(KSP ksp)
   ksp->ops->setfromoptions = KSPSetFromOptions_PIPELCG;
   ksp->ops->buildsolution  = KSPBuildSolutionDefault;
   ksp->ops->buildresidual  = KSPBuildResidualDefault;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

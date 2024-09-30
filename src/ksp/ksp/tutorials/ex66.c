@@ -6,7 +6,7 @@
        forcing function f = -cos(m*pi*x)*cos(n*pi*y),
        Periodic boundary conditions
          p(x=0) = p(x=1)
-       Neuman boundary conditions
+       Neumann boundary conditions
          dp/dy = 0 for y = 0, y = 1.
 
        This example uses the DM_BOUNDARY_MIRROR to implement the Neumann boundary conditions, see the manual pages for DMBoundaryType
@@ -92,7 +92,7 @@ PetscErrorCode ComputeRHS(KSP ksp, Vec b, void *ctx)
   PetscCall(MatNullSpaceCreate(PETSC_COMM_WORLD, PETSC_TRUE, 0, 0, &nullspace));
   PetscCall(MatNullSpaceRemove(nullspace, b));
   PetscCall(MatNullSpaceDestroy(&nullspace));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ComputeJacobian(KSP ksp, Mat J, Mat jac, void *ctx)
@@ -139,7 +139,7 @@ PetscErrorCode ComputeJacobian(KSP ksp, Mat J, Mat jac, void *ctx)
   PetscCall(MatNullSpaceCreate(PETSC_COMM_WORLD, PETSC_TRUE, 0, 0, &nullspace));
   PetscCall(MatSetNullSpace(J, nullspace));
   PetscCall(MatNullSpaceDestroy(&nullspace));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

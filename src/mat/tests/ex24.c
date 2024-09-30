@@ -1,4 +1,3 @@
-
 static char help[] = "Tests the different MatColoring implementations and ISColoringTestValid() \n\
                       Modified from the code contributed by Ali Berk Kahraman. \n\n";
 #include <petscmat.h>
@@ -19,7 +18,7 @@ PetscErrorCode FormJacobian(Mat A)
   }
   PetscCall(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char *argv[])

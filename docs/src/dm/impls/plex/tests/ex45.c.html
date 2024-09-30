@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/plex/tests/ex45.c">Actual source code: ex45.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/dm/impls/plex/tests/ex45.c">Actual source code: ex45.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:48:30+00:00">
+<meta name="date" content="2024-03-29T14:12:58+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -15,15 +15,16 @@
 
 <a name="line5">  5: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
 <a name="line6">  6: </a>{
-<a name="line7">  7: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a> dm;
+<a name="line7">  7: </a>  <a href="../../../../../manualpages/DM/DM.html">DM</a> dm;
 
-<a name="line10"> 10: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help);
-<a name="line11"> 11: </a>  <a href="../../../../../docs/manualpages/DM/DMCreate.html">DMCreate</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;dm);
-<a name="line12"> 12: </a>  <a href="../../../../../docs/manualpages/DM/DMSetType.html">DMSetType</a>(dm, <a href="../../../../../docs/manualpages/DMPlex/DMPLEX.html">DMPLEX</a>);
-<a name="line13"> 13: </a>  <a href="../../../../../docs/manualpages/DM/DMSetFromOptions.html">DMSetFromOptions</a>(dm);
-<a name="line14"> 14: </a>  <a href="../../../../../docs/manualpages/DM/DMViewFromOptions.html">DMViewFromOptions</a>(dm, NULL, <font color="#666666">"-dm_view"</font>);
-<a name="line15"> 15: </a>  <a href="../../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dm);
-<a name="line16"> 16: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line9">  9: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBeginUser.html">PetscFunctionBeginUser</a>;
+<a name="line10"> 10: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help));
+<a name="line11"> 11: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMCreate.html">DMCreate</a>(<a href="../../../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;dm));
+<a name="line12"> 12: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMSetType.html">DMSetType</a>(dm, <a href="../../../../../manualpages/DMPlex/DMPLEX.html">DMPLEX</a>));
+<a name="line13"> 13: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMSetFromOptions.html">DMSetFromOptions</a>(dm));
+<a name="line14"> 14: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMViewFromOptions.html">DMViewFromOptions</a>(dm, NULL, <font color="#666666">"-dm_view"</font>));
+<a name="line15"> 15: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dm));
+<a name="line16"> 16: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscFinalize.html">PetscFinalize</a>());
 <a name="line17"> 17: </a>  <font color="#4169E1">return</font> 0;
 <a name="line18"> 18: </a>}
 

@@ -1,4 +1,3 @@
-
 /*
       Defines a preconditioner that can consist of a collection of PCs
 */
@@ -58,7 +57,7 @@ static PetscErrorCode PCApply_Composite_Multiplicative(PC pc, Vec x, Vec y)
       PetscCall(VecAXPY(y, 1.0, jac->work1));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApplyTranspose_Composite_Multiplicative(PC pc, Vec x, Vec y)
@@ -93,13 +92,13 @@ static PetscErrorCode PCApplyTranspose_Composite_Multiplicative(PC pc, Vec x, Ve
       PetscCall(VecAXPY(y, 1.0, jac->work1));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
     This is very special for a matrix of the form alpha I + R + S
-where first preconditioner is built from alpha I + S and second from
-alpha I + R
+    where first preconditioner is built from alpha I + S and second from
+    alpha I + R
 */
 static PetscErrorCode PCApply_Composite_Special(PC pc, Vec x, Vec y)
 {
@@ -116,7 +115,7 @@ static PetscErrorCode PCApply_Composite_Special(PC pc, Vec x, Vec y)
 
   PetscCall(PCApply(next->pc, x, jac->work1));
   PetscCall(PCApply(next->next->pc, jac->work1, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApply_Composite_Additive(PC pc, Vec x, Vec y)
@@ -140,7 +139,7 @@ static PetscErrorCode PCApply_Composite_Additive(PC pc, Vec x, Vec y)
     PetscCall(PCApply(next->pc, x, jac->work1));
     PetscCall(VecAXPY(y, 1.0, jac->work1));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApplyTranspose_Composite_Additive(PC pc, Vec x, Vec y)
@@ -156,7 +155,7 @@ static PetscErrorCode PCApplyTranspose_Composite_Additive(PC pc, Vec x, Vec y)
     PetscCall(PCApplyTranspose(next->pc, x, jac->work1));
     PetscCall(VecAXPY(y, 1.0, jac->work1));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSetUp_Composite(PC pc)
@@ -173,7 +172,23 @@ static PetscErrorCode PCSetUp_Composite(PC pc)
     if (!next->pc->mat) PetscCall(PCSetOperators(next->pc, pc->mat, pc->pmat));
     next = next->next;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+static PetscErrorCode PCSetUpOnBlocks_Composite(PC pc)
+{
+  PC_Composite    *jac  = (PC_Composite *)pc->data;
+  PC_CompositeLink next = jac->head;
+  PCFailedReason   reason;
+
+  PetscFunctionBegin;
+  while (next) {
+    PetscCall(PCSetUp(next->pc));
+    PetscCall(PCGetFailedReasonRank(next->pc, &reason));
+    if (reason) pc->failedreason = reason;
+    next = next->next;
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCReset_Composite(PC pc)
@@ -188,7 +203,7 @@ static PetscErrorCode PCReset_Composite(PC pc)
   }
   PetscCall(VecDestroy(&jac->work1));
   PetscCall(VecDestroy(&jac->work2));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCDestroy_Composite(PC pc)
@@ -212,7 +227,7 @@ static PetscErrorCode PCDestroy_Composite(PC pc)
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCCompositeGetPC_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCCompositeSpecialSetAlpha_C", NULL));
   PetscCall(PetscFree(pc->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSetFromOptions_Composite(PC pc, PetscOptionItems *PetscOptionsObject)
@@ -241,7 +256,7 @@ static PetscErrorCode PCSetFromOptions_Composite(PC pc, PetscOptionItems *PetscO
     PetscCall(PCSetFromOptions(next->pc));
     next = next->next;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCView_Composite(PC pc, PetscViewer viewer)
@@ -266,7 +281,7 @@ static PetscErrorCode PCView_Composite(PC pc, PetscViewer viewer)
     PetscCall(PetscViewerASCIIPopTab(viewer));
     PetscCall(PetscViewerASCIIPrintf(viewer, "---------------------------------\n"));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCCompositeSpecialSetAlpha_Composite(PC pc, PetscScalar alpha)
@@ -275,7 +290,7 @@ static PetscErrorCode PCCompositeSpecialSetAlpha_Composite(PC pc, PetscScalar al
 
   PetscFunctionBegin;
   jac->alpha = alpha;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCCompositeSetType_Composite(PC pc, PCCompositeType type)
@@ -294,7 +309,7 @@ static PetscErrorCode PCCompositeSetType_Composite(PC pc, PCCompositeType type)
     pc->ops->applytranspose = NULL;
   } else SETERRQ(PetscObjectComm((PetscObject)pc), PETSC_ERR_ARG_WRONG, "Unknown composite preconditioner type");
   jac->type = type;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCCompositeGetType_Composite(PC pc, PCCompositeType *type)
@@ -303,7 +318,7 @@ static PetscErrorCode PCCompositeGetType_Composite(PC pc, PCCompositeType *type)
 
   PetscFunctionBegin;
   *type = jac->type;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCCompositeAddPC_Composite(PC pc, PC subpc)
@@ -338,7 +353,7 @@ static PetscErrorCode PCCompositeAddPC_Composite(PC pc, PC subpc)
   PetscCall(PetscSNPrintf(newprefix, 20, "sub_%d_", (int)cnt));
   PetscCall(PCAppendOptionsPrefix(subpc, newprefix));
   PetscCall(PetscObjectReference((PetscObject)subpc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCCompositeAddPCType_Composite(PC pc, PCType type)
@@ -352,7 +367,7 @@ static PetscErrorCode PCCompositeAddPCType_Composite(PC pc, PCType type)
   /* type is set after prefix, because some methods may modify prefix, e.g. pcksp */
   PetscCall(PCSetType(subpc, type));
   PetscCall(PCDestroy(&subpc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCCompositeGetNumberPC_Composite(PC pc, PetscInt *n)
@@ -368,7 +383,7 @@ static PetscErrorCode PCCompositeGetNumberPC_Composite(PC pc, PetscInt *n)
     next = next->next;
     (*n)++;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCCompositeGetPC_Composite(PC pc, PetscInt n, PC *subpc)
@@ -385,24 +400,24 @@ static PetscErrorCode PCCompositeGetPC_Composite(PC pc, PetscInt n, PC *subpc)
     next = next->next;
   }
   *subpc = next->pc;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCCompositeSetType - Sets the type of composite preconditioner.
+  PCCompositeSetType - Sets the type of composite preconditioner.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  type - `PC_COMPOSITE_ADDITIVE` (default), `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SPECIAL`
+  Input Parameters:
++ pc   - the preconditioner context
+- type - `PC_COMPOSITE_ADDITIVE` (default), `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SPECIAL`
 
-   Options Database Key:
-.  -pc_composite_type <type: one of multiplicative, additive, special> - Sets composite preconditioner type
+  Options Database Key:
+. -pc_composite_type <type: one of multiplicative, additive, special> - Sets composite preconditioner type
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `PCCOMPOSITE`, `PC_COMPOSITE_ADDITIVE`, `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SPECIAL`, `PCCompositeType`,
+.seealso: [](ch_ksp), `PCCOMPOSITE`, `PC_COMPOSITE_ADDITIVE`, `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SPECIAL`, `PCCompositeType`,
           `PCCompositeGetType()`
 @*/
 PetscErrorCode PCCompositeSetType(PC pc, PCCompositeType type)
@@ -411,23 +426,23 @@ PetscErrorCode PCCompositeSetType(PC pc, PCCompositeType type)
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscValidLogicalCollectiveEnum(pc, type, 2);
   PetscTryMethod(pc, "PCCompositeSetType_C", (PC, PCCompositeType), (pc, type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCCompositeGetType - Gets the type of composite preconditioner.
+  PCCompositeGetType - Gets the type of composite preconditioner.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameter:
-.  pc - the preconditioner context
+  Input Parameter:
+. pc - the preconditioner context
 
-   Output Parameter:
-.  type - `PC_COMPOSITE_ADDITIVE` (default), `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SPECIAL`
+  Output Parameter:
+. type - `PC_COMPOSITE_ADDITIVE` (default), `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SPECIAL`
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `PCCOMPOSITE`, `PC_COMPOSITE_ADDITIVE`, `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SPECIAL`, `PCCompositeType`,
+.seealso: [](ch_ksp), `PCCOMPOSITE`, `PC_COMPOSITE_ADDITIVE`, `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SPECIAL`, `PCCompositeType`,
           `PCCompositeSetType()`
 @*/
 PetscErrorCode PCCompositeGetType(PC pc, PCCompositeType *type)
@@ -435,22 +450,22 @@ PetscErrorCode PCCompositeGetType(PC pc, PCCompositeType *type)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscUseMethod(pc, "PCCompositeGetType_C", (PC, PCCompositeType *), (pc, type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCCompositeSpecialSetAlpha - Sets alpha for the special composite preconditioner, `PC_COMPOSITE_SPECIAL`,
-     for alphaI + R + S
+  PCCompositeSpecialSetAlpha - Sets alpha for the special composite preconditioner, `PC_COMPOSITE_SPECIAL`,
+  for $\alpha I + R + S$
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  alpha - scale on identity
+  Input Parameters:
++ pc    - the preconditioner context
+- alpha - scale on identity
 
-   Level: Developer
+  Level: developer
 
-.seealso: `PCCOMPOSITE`, `PC_COMPOSITE_ADDITIVE`, `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SPECIAL`, `PCCompositeType`,
+.seealso: [](ch_ksp), `PCCOMPOSITE`, `PC_COMPOSITE_ADDITIVE`, `PC_COMPOSITE_MULTIPLICATIVE`, `PC_COMPOSITE_SPECIAL`, `PCCompositeType`,
           `PCCompositeSetType()`, `PCCompositeGetType()`
 @*/
 PetscErrorCode PCCompositeSpecialSetAlpha(PC pc, PetscScalar alpha)
@@ -459,7 +474,7 @@ PetscErrorCode PCCompositeSpecialSetAlpha(PC pc, PetscScalar alpha)
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscValidLogicalCollectiveScalar(pc, alpha, 2);
   PetscTryMethod(pc, "PCCompositeSpecialSetAlpha_C", (PC, PetscScalar), (pc, alpha));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -468,19 +483,19 @@ PetscErrorCode PCCompositeSpecialSetAlpha(PC pc, PetscScalar alpha)
   Collective
 
   Input Parameters:
-+ pc - the preconditioner context
++ pc   - the preconditioner context
 - type - the type of the new preconditioner
 
   Level: intermediate
 
-.seealso: `PCCOMPOSITE`, `PCCompositeAddPC()`, `PCCompositeGetNumberPC()`
+.seealso: [](ch_ksp), `PCCOMPOSITE`, `PCCompositeAddPC()`, `PCCompositeGetNumberPC()`
 @*/
 PetscErrorCode PCCompositeAddPCType(PC pc, PCType type)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscTryMethod(pc, "PCCompositeAddPCType_C", (PC, PCType), (pc, type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -492,9 +507,9 @@ PetscErrorCode PCCompositeAddPCType(PC pc, PCType type)
 + pc    - the preconditioner context
 - subpc - the new preconditioner
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCCOMPOSITE`, `PCCompositeAddPCType()`, `PCCompositeGetNumberPC()`
+.seealso: [](ch_ksp), `PCCOMPOSITE`, `PCCompositeAddPCType()`, `PCCompositeGetNumberPC()`
 @*/
 PetscErrorCode PCCompositeAddPC(PC pc, PC subpc)
 {
@@ -502,60 +517,60 @@ PetscErrorCode PCCompositeAddPC(PC pc, PC subpc)
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscValidHeaderSpecific(subpc, PC_CLASSID, 2);
   PetscTryMethod(pc, "PCCompositeAddPC_C", (PC, PC), (pc, subpc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCCompositeGetNumberPC - Gets the number of `PC` objects in the composite `PC`.
+  PCCompositeGetNumberPC - Gets the number of `PC` objects in the composite `PC`.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  pc - the preconditioner context
+  Input Parameter:
+. pc - the preconditioner context
 
-   Output Parameter:
-.  num - the number of sub pcs
+  Output Parameter:
+. num - the number of sub pcs
 
-   Level: Developer
+  Level: developer
 
-.seealso: `PCCOMPOSITE`, `PCCompositeGetPC()`, `PCCompositeAddPC()`, `PCCompositeAddPCType()`
+.seealso: [](ch_ksp), `PCCOMPOSITE`, `PCCompositeGetPC()`, `PCCompositeAddPC()`, `PCCompositeAddPCType()`
 @*/
 PetscErrorCode PCCompositeGetNumberPC(PC pc, PetscInt *num)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
-  PetscValidIntPointer(num, 2);
+  PetscAssertPointer(num, 2);
   PetscUseMethod(pc, "PCCompositeGetNumberPC_C", (PC, PetscInt *), (pc, num));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCCompositeGetPC - Gets one of the `PC` objects in the composite `PC`.
+  PCCompositeGetPC - Gets one of the `PC` objects in the composite `PC`.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  pc - the preconditioner context
--  n - the number of the pc requested
+  Input Parameters:
++ pc - the preconditioner context
+- n  - the number of the pc requested
 
-   Output Parameter:
-.  subpc - the PC requested
+  Output Parameter:
+. subpc - the PC requested
 
-   Level: intermediate
+  Level: intermediate
 
-    Note:
-    To use a different operator to construct one of the inner preconditioners first call `PCCompositeGetPC()`, then
-    call `PCSetOperators()` on that `PC`.
+  Note:
+  To use a different operator to construct one of the inner preconditioners first call `PCCompositeGetPC()`, then
+  call `PCSetOperators()` on that `PC`.
 
-.seealso: `PCCOMPOSITE`, `PCCompositeAddPCType()`, `PCCompositeGetNumberPC()`, `PCSetOperators()`
+.seealso: [](ch_ksp), `PCCOMPOSITE`, `PCCompositeAddPCType()`, `PCCompositeGetNumberPC()`, `PCSetOperators()`
 @*/
 PetscErrorCode PCCompositeGetPC(PC pc, PetscInt n, PC *subpc)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
-  PetscValidPointer(subpc, 3);
+  PetscAssertPointer(subpc, 3);
   PetscUseMethod(pc, "PCCompositeGetPC_C", (PC, PetscInt, PC *), (pc, n, subpc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -563,8 +578,8 @@ PetscErrorCode PCCompositeGetPC(PC pc, PetscInt n, PC *subpc)
 
    Options Database Keys:
 +  -pc_composite_type <type: one of multiplicative, additive, symmetric_multiplicative, special> - Sets composite preconditioner type
-.  -pc_use_amat - activates `PCSetUseAmat()`
--  -pc_composite_pcs - <pc0,pc1,...> list of PCs to compose
+.  -pc_use_amat                                                                                  - activates `PCSetUseAmat()`
+-  -pc_composite_pcs                                                                             - <pc0,pc1,...> list of PCs to compose
 
    Level: intermediate
 
@@ -576,7 +591,7 @@ PetscErrorCode PCCompositeGetPC(PC pc, PetscInt n, PC *subpc)
    To use a different operator to construct one of the inner preconditioners first call `PCCompositeGetPC()`, then
    call `PCSetOperators()` on that `PC`.
 
-.seealso: `PCCreate()`, `PCSetType()`, `PCType`, `PC`,
+.seealso: [](ch_ksp), `PCCreate()`, `PCSetType()`, `PCType`, `PC`,
           `PCSHELL`, `PCKSP`, `PCCompositeSetType()`, `PCCompositeSpecialSetAlpha()`, `PCCompositeAddPCType()`,
           `PCCompositeGetPC()`, `PCSetUseAmat()`, `PCCompositeAddPC()`, `PCCompositeGetNumberPC()`
 M*/
@@ -591,6 +606,7 @@ PETSC_EXTERN PetscErrorCode PCCreate_Composite(PC pc)
   pc->ops->apply           = PCApply_Composite_Additive;
   pc->ops->applytranspose  = PCApplyTranspose_Composite_Additive;
   pc->ops->setup           = PCSetUp_Composite;
+  pc->ops->setuponblocks   = PCSetUpOnBlocks_Composite;
   pc->ops->reset           = PCReset_Composite;
   pc->ops->destroy         = PCDestroy_Composite;
   pc->ops->setfromoptions  = PCSetFromOptions_Composite;
@@ -610,5 +626,5 @@ PETSC_EXTERN PetscErrorCode PCCreate_Composite(PC pc)
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCCompositeGetNumberPC_C", PCCompositeGetNumberPC_Composite));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCCompositeGetPC_C", PCCompositeGetPC_Composite));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCCompositeSpecialSetAlpha_C", PCCompositeSpecialSetAlpha_Composite));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

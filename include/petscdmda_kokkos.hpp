@@ -1,5 +1,4 @@
-#ifndef PETSCDMDA_KOKKOS_HPP
-#define PETSCDMDA_KOKKOS_HPP
+#pragma once
 
 #include <petscvec_kokkos.hpp>
 #include <petscdmda.h>
@@ -25,7 +24,7 @@
    PetscErrorCode DMDAVecGetKokkosOffsetView(DM da,Vec v,Kokkos::Experimental::OffsetView<PetscScalar***,Kokkos::LayoutRight,MemorySpace>* kv);
    PetscErrorCode DMDAVecGetKokkosOffsetViewWrite(DM da,Vec v,Kokkos::Experimental::OffsetView<PetscScalar***,Kokkos::LayoutRight,MemorySpace>* kv);
 
-   Logically collective
+   Logically Collective
 
    Input Parameters:
 +  da - the distributed array
@@ -153,17 +152,17 @@ PetscErrorCode DMDAVecGetKokkosOffsetViewWrite(DM, Vec, Kokkos::Experimental::Of
    PetscErrorCode DMDAVecRestoreKokkosOffsetView(DM da,Vec v,Kokkos::Experimental::OffsetView<PetscScalar***,Kokkos::LayoutRight,MemorySpace>* kv);
    PetscErrorCode DMDAVecRestoreKokkosOffsetViewWrite(DM da,Vec v,Kokkos::Experimental::OffsetView<PetscScalar***,Kokkos::LayoutRight,MemorySpace>* kv);
 
-   Logically collective
+   Logically Collective
 
    Input Parameters:
 +  da - the distributed array
 .  v - the vector, either a vector the same size as one obtained with `DMCreateGlobalVector()` or `DMCreateLocalVector()`
 -  kv - the Kokkos OffsetView with a user-specified template parameter MemorySpace
 
+  Level: intermediate
+
    Note:
     If the vector is not of type `VECKOKKOS`, an error will be raised.
-
-  Level: intermediate
 
 .seealso: `DMDAVecGetKokkosOffsetView()`, `DMDAGetGhostCorners()`, `DMDAGetCorners()`, `VecGetArray()`, `VecRestoreArray()`, `DMDAVecRestoreArray()`, `DMDAVecRestoreArrayDOF()`
           `DMDAVecGetArrayDOF()`, `DMDAVecGetArrayWrite()`, `DMDAVecRestoreArrayWrite()`, `DMDAVecGetArrayRead()`, `DMDAVecRestoreArrayRead()`,
@@ -205,7 +204,7 @@ PetscErrorCode DMDAVecRestoreKokkosOffsetViewWrite(DM, Vec, Kokkos::Experimental
    PetscErrorCode DMDAVecGetKokkosOffsetViewDOF(DM da,Vec v,Kokkos::Experimental::OffsetView<PetscScalar****,Kokkos::LayoutRight,MemorySpace>* kv);
    PetscErrorCode DMDAVecGetKokkosOffsetViewDOFWrite(DM da,Vec v,Kokkos::Experimental::OffsetView<PetscScalar****,Kokkos::LayoutRight,MemorySpace>* kv);
 
-   Logically collective
+   Logically Collective
 
    Input Parameters:
 +  da - the distributed array
@@ -317,17 +316,17 @@ PetscErrorCode DMDAVecGetKokkosOffsetViewDOFWrite(DM, Vec, Kokkos::Experimental:
    PetscErrorCode DMDAVecRestoreKokkosOffsetViewDOF(DM da,Vec v,Kokkos::Experimental::OffsetView<PetscScalar****,Kokkos::LayoutRight,MemorySpace>* kv);
    PetscErrorCode DMDAVecRestoreKokkosOffsetViewDOFWrite(DM da,Vec v,Kokkos::Experimental::OffsetView<PetscScalar****,Kokkos::LayoutRight,MemorySpace>* kv);
 
-   Logically collective
+   Logically Collective
 
    Input Parameters:
 +  da - the distributed array
 .  v - the vector, either a vector the same size as one obtained with `DMCreateGlobalVector()` or `DMCreateLocalVector()`
 -  kv - the Kokkos OffsetView with a user-specified template parameter MemorySpace
 
+  Level: intermediate
+
    Note:
     If the vector is not of type `VECKOKKOS`, an error will be raised.
-
-  Level: intermediate
 
 .seealso: `DMDAVecGetKokkosOffsetViewDOF()`, `DMDAVecGetKokkosOffsetView()`, `DMDAGetGhostCorners()`, `DMDAGetCorners()`, `VecGetArray()`, `VecRestoreArray()`, `DMDAVecRestoreArray()`, `DMDAVecRestoreArrayDOF()`
           `DMDAVecGetArrayDOF()`, `DMDAVecGetArrayWrite()`, `DMDAVecRestoreArrayWrite()`, `DMDAVecGetArrayRead()`, `DMDAVecRestoreArrayRead()`,
@@ -353,6 +352,4 @@ template <class MemorySpace>
 PetscErrorCode DMDAVecRestoreKokkosOffsetViewDOF(DM, Vec, Kokkos::Experimental::OffsetView<PetscScalar ****, Kokkos::LayoutRight, MemorySpace> *);
 template <class MemorySpace>
 PetscErrorCode DMDAVecRestoreKokkosOffsetViewDOFWrite(DM, Vec, Kokkos::Experimental::OffsetView<PetscScalar ****, Kokkos::LayoutRight, MemorySpace> *);
-#endif
-
 #endif

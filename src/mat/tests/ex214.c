@@ -1,4 +1,3 @@
-
 static char help[] = "Tests MatMatSolve() and MatMatTransposeSolve() for computing inv(A) with MUMPS.\n\
 Example: mpiexec -n <np> ./ex214 -displ \n\n";
 
@@ -87,7 +86,7 @@ int main(int argc, char **args)
   PetscCall(MatSetRandom(C, rand));
   PetscCall(MatDuplicate(C, MAT_DO_NOT_COPY_VALUES, &X));
 
-  PetscCall(PetscStrcpy(solver, MATSOLVERMUMPS));
+  PetscCall(PetscStrncpy(solver, MATSOLVERMUMPS, sizeof(solver)));
   if (rank == 0 && displ) PetscCall(PetscPrintf(PETSC_COMM_SELF, "Solving with %s: nrhs %" PetscInt_FMT ", size mat %" PetscInt_FMT " x %" PetscInt_FMT "\n", solver, nrhs, M, N));
 
   for (test = 0; test < 2; test++) {
@@ -156,7 +155,7 @@ int main(int argc, char **args)
      thus user must create spRHST=spRHS^T and call MatMatTransposeSolve() */
     PetscCall(MatCreate(PETSC_COMM_WORLD, &spRHST));
     if (rank == 0) {
-      /* MUMPS requirs RHS be centralized on the host! */
+      /* MUMPS requires RHS be centralized on the host! */
       PetscCall(MatSetSizes(spRHST, nrhs, M, PETSC_DECIDE, PETSC_DECIDE));
     } else {
       PetscCall(MatSetSizes(spRHST, 0, 0, PETSC_DECIDE, PETSC_DECIDE));

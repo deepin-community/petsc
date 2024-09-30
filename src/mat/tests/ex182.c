@@ -96,9 +96,9 @@ int main(int argc, char **argv)
    test:
      suffix: 9
      nsize: 1
-     requires: defined(PETSC_USE_INFO)
+     requires: defined(PETSC_USE_INFO) !defined(PETSC_HAVE_THREADSAFETY)
      args: -info ex182info:sys
-     filter: grep -h -ve Running -ve MPI_Comm -ve Initialize -ve communicator -ve HostName -ve PetscDetermineInitialFPTrap -ve libpetscbamg "ex182info.0" | sort -b
+     filter: grep -h -ve Running -ve MPI_Comm -ve Initialize -ve communicator -ve HostName -ve PetscSetFPTrap -ve PetscDetermineInitialFPTrap -ve libpetscbamg "ex182info.0" | sort -b
 
    test:
      suffix: 10
@@ -117,9 +117,9 @@ int main(int argc, char **argv)
    test:
      suffix: 12
      nsize: 2
-     requires: defined(PETSC_USE_INFO)
+     requires: defined(PETSC_USE_INFO) !defined(PETSC_HAVE_THREADSAFETY)
      args: -info ex182info:sys,mat
-     filter: grep -h -ve Running -ve MPI_Comm -ve Initialize -ve communicator -ve HostName -ve PetscDetermineInitialFPTrap -ve libpetscbamg "ex182info.1" | sort -b
+     filter: grep -h -ve Running -ve MPI_Comm -ve Initialize -ve communicator -ve HostName -ve PetscSetFPTrap -ve PetscDetermineInitialFPTrap -ve libpetscbamg "ex182info.1" | sort -b
 
    test:
      suffix: 13
@@ -133,13 +133,13 @@ int main(int argc, char **argv)
      nsize: 2
      requires: defined(PETSC_USE_INFO)
      args: -info ex182info::~self
-     filter: grep -h -ve Running -ve MPI_Comm -ve Initialize -ve communicator -ve HostName -ve PetscDetermineInitialFPTrap "ex182info.1" | sort -b
+     filter: grep -h -ve Running -ve MPI_Comm -ve Initialize -ve communicator -ve HostName -ve PetscSetFPTrap -ve PetscDetermineInitialFPTrap "ex182info.1" | sort -b
 
    test:
      suffix: 15
      nsize: 2
-     requires: defined(PETSC_USE_INFO)
+     requires: defined(PETSC_USE_INFO) !defined(PETSC_HAVE_THREADSAFETY)
      args: -info ex182info::self
-     filter: grep -h -ve Running -ve MPI_Comm -ve Initialize -ve communicator -ve HostName -ve PetscDetermineInitialFPTrap -ve libpetscbamg "ex182info.1" | sort -b
+     filter: grep -h -ve Running -ve MPI_Comm -ve Initialize -ve communicator -ve HostName -ve PetscSetFPTrap -ve PetscDetermineInitialFPTrap -ve libpetscbamg "ex182info.1" | sort -b
 
 TEST*/

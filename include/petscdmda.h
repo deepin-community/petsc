@@ -1,5 +1,4 @@
-#ifndef PETSCDMDA_H
-#define PETSCDMDA_H
+#pragma once
 
 #include <petscdm.h>
 #include <petscdmdatypes.h>
@@ -11,23 +10,27 @@
 
 /*MC
      DMDA_STENCIL_STAR - "Star"-type stencil. In logical grid coordinates, only (i,j,k), (i+s,j,k), (i,j+s,k),
-                       (i,j,k+s) are in the stencil  NOT, for example, (i+s,j+s,k)
+                         (i,j,k+s) are in the stencil  NOT, for example, (i+s,j+s,k)
 
      Level: beginner
 
-     Determines what ghost point values are brought over to each process; in this case the "corner" values are not
+     Note:
+     Determines what ghost point values are brought over to each process in `DMGlobalToLocalBegin()`/ `DMGlobalToLocalEnd()`; in this case the "corner" values are not
      brought over and hence should not be accessed locally
 
-.seealso: `DMDA_STENCIL_BOX`, `DMDAStencilType`, `DMDASetStencilType()`
+.seealso: [](ch_dmbase), `DMDA`, `DMDA_STENCIL_BOX`, `DMDAStencilType`, `DMDASetStencilType()`
 M*/
 
 /*MC
      DMDA_STENCIL_BOX - "Box"-type stencil. In logical grid coordinates, any of (i,j,k), (i+s,j+r,k+t) may
-                      be in the stencil.
+                        be in the stencil.
 
      Level: beginner
 
-.seealso: `DMDA_STENCIL_STAR`, `DMDAStencilType`, `DMDASetStencilType()`
+     Note:
+     Determines what ghost point values are brought over to each process in `DMGlobalToLocalBegin()`/ `DMGlobalToLocalEnd()`
+
+.seealso: [](ch_dmbase), `DMDA`, `DMDA_STENCIL_STAR`, `DMDAStencilType`, `DMDASetStencilType()`
 M*/
 
 PETSC_EXTERN PetscErrorCode DMDASetInterpolationType(DM, DMDAInterpolationType);
@@ -56,11 +59,11 @@ PETSC_EXTERN PetscErrorCode DMDAGlobalToNaturalBegin(DM, Vec, InsertMode, Vec);
 PETSC_EXTERN PetscErrorCode DMDAGlobalToNaturalEnd(DM, Vec, InsertMode, Vec);
 PETSC_EXTERN PetscErrorCode DMDANaturalToGlobalBegin(DM, Vec, InsertMode, Vec);
 PETSC_EXTERN PetscErrorCode DMDANaturalToGlobalEnd(DM, Vec, InsertMode, Vec);
-PETSC_DEPRECATED_FUNCTION("Use DMLocalToLocalBegin() (since version 3.5)") static inline PetscErrorCode DMDALocalToLocalBegin(DM dm, Vec g, InsertMode mode, Vec l)
+PETSC_DEPRECATED_FUNCTION(3, 5, 0, "DMLocalToLocalBegin()", ) static inline PetscErrorCode DMDALocalToLocalBegin(DM dm, Vec g, InsertMode mode, Vec l)
 {
   return DMLocalToLocalBegin(dm, g, mode, l);
 }
-PETSC_DEPRECATED_FUNCTION("Use DMLocalToLocalEnd() (since version 3.5)") static inline PetscErrorCode DMDALocalToLocalEnd(DM dm, Vec g, InsertMode mode, Vec l)
+PETSC_DEPRECATED_FUNCTION(3, 5, 0, "DMLocalToLocalEnd()", ) static inline PetscErrorCode DMDALocalToLocalEnd(DM dm, Vec g, InsertMode mode, Vec l)
 {
   return DMLocalToLocalEnd(dm, g, mode, l);
 }
@@ -90,7 +93,7 @@ PETSC_EXTERN PetscErrorCode DMDAGetLogicalCoordinate(DM, PetscScalar, PetscScala
 PETSC_EXTERN PetscErrorCode DMDAMapCoordsToPeriodicDomain(DM, PetscScalar *, PetscScalar *);
 
 PETSC_EXTERN PetscErrorCode DMDACreateCompatibleDMDA(DM, PetscInt, DM *);
-PETSC_EXTERN                PETSC_DEPRECATED_FUNCTION("Use DMDACreateCompatibleDMDA()  (since version 3.10)") PetscErrorCode DMDAGetReducedDMDA(DM, PetscInt, DM *);
+PETSC_EXTERN PETSC_DEPRECATED_FUNCTION(3, 10, 0, "DMDACreateCompatibleDMDA()", ) PetscErrorCode DMDAGetReducedDMDA(DM, PetscInt, DM *);
 
 PETSC_EXTERN PetscErrorCode DMDASetFieldName(DM, PetscInt, const char[]);
 PETSC_EXTERN PetscErrorCode DMDAGetFieldName(DM, PetscInt, const char **);
@@ -141,8 +144,6 @@ PETSC_EXTERN PetscErrorCode DMDACreatePatchIS(DM, MatStencil *, MatStencil *, IS
 /*MC
       DMDACoor2d - Structure for holding 2d (x and y) coordinates when working with `DMDA`
 
-    Level: intermediate
-
     Synopsis:
 .vb
       DMDACoor2d **coors;
@@ -162,7 +163,9 @@ PETSC_EXTERN PetscErrorCode DMDACreatePatchIS(DM, MatStencil *, MatStencil *, IS
       DMDAVecRestoreArray(dac,vcoors,&coors);
 .ve
 
-.seealso: `DMDACoor3d`, `DMDAVecRestoreArray()`, `DMDAVecGetArray()`, `DMGetCoordinateDM()`, `DMGetCoordinates()`
+    Level: intermediate
+
+.seealso: [](ch_dmbase), `DMDA`, `DMDACoor3d`, `DMDAVecRestoreArray()`, `DMDAVecGetArray()`, `DMGetCoordinateDM()`, `DMGetCoordinates()`
 M*/
 typedef struct {
   PetscScalar x, y;
@@ -170,8 +173,6 @@ typedef struct {
 
 /*MC
       DMDACoor3d - Structure for holding 3d (x, y and z) coordinates  coordinates when working with `DMDA`
-
-    Level: intermediate
 
     Synopsis:
 .vb
@@ -194,7 +195,9 @@ typedef struct {
       DMDAVecRestoreArray(dac,vcoors,&coors);
 .ve
 
-.seealso: `DMDACoor2d`, `DMDAVecRestoreArray()`, `DMDAVecGetArray()`, `DMGetCoordinateDM()`, `DMGetCoordinates()`
+    Level: intermediate
+
+.seealso: [](ch_dmbase), `DMDA`, `DMDACoor2d`, `DMDAVecRestoreArray()`, `DMDAVecGetArray()`, `DMGetCoordinateDM()`, `DMGetCoordinates()`
 M*/
 typedef struct {
   PetscScalar x, y, z;
@@ -203,7 +206,6 @@ typedef struct {
 PETSC_EXTERN PetscErrorCode DMDAGetLocalInfo(DM, DMDALocalInfo *);
 
 PETSC_EXTERN PetscErrorCode MatRegisterDAAD(void);
-PETSC_EXTERN PetscErrorCode MatCreateDAAD(DM, Mat *);
 PETSC_EXTERN PetscErrorCode MatCreateSeqUSFFT(Vec, DM, Mat *);
 
 PETSC_EXTERN PetscErrorCode DMDASetGetMatrix(DM, PetscErrorCode (*)(DM, Mat *));
@@ -224,12 +226,7 @@ PETSC_EXTERN PetscErrorCode DMDAGetNumVertices(DM, PetscInt *, PetscInt *, Petsc
 PETSC_EXTERN PetscErrorCode DMDAGetNumFaces(DM, PetscInt *, PetscInt *, PetscInt *, PetscInt *, PetscInt *, PetscInt *);
 PETSC_EXTERN PetscErrorCode DMDAGetHeightStratum(DM, PetscInt, PetscInt *, PetscInt *);
 PETSC_EXTERN PetscErrorCode DMDAGetDepthStratum(DM, PetscInt, PetscInt *, PetscInt *);
-PETSC_EXTERN PetscErrorCode DMDAComputeCellGeometryFEM(DM, PetscInt, PetscQuadrature, PetscReal[], PetscReal[], PetscReal[], PetscReal[]);
-PETSC_EXTERN PetscErrorCode DMDAGetTransitiveClosure(DM, PetscInt, PetscBool, PetscInt *, PetscInt **);
-PETSC_EXTERN PetscErrorCode DMDARestoreTransitiveClosure(DM, PetscInt, PetscBool, PetscInt *, PetscInt **);
 PETSC_EXTERN PetscErrorCode DMDAConvertToCell(DM, MatStencil, PetscInt *);
 PETSC_EXTERN PetscErrorCode DMDASetVertexCoordinates(DM, PetscReal, PetscReal, PetscReal, PetscReal, PetscReal, PetscReal);
 PETSC_EXTERN PetscErrorCode DMDASetPreallocationCenterDimension(DM, PetscInt);
 PETSC_EXTERN PetscErrorCode DMDAGetPreallocationCenterDimension(DM, PetscInt *);
-
-#endif

@@ -28,6 +28,17 @@
        PetscInt b ! PetscInt
        PetscErrorCode z
        end subroutine PetscSpacePTrimmedGetFormDegree
+      subroutine PetscSpaceCreateSubspace(a,b,c,d,e,f,g,h,z)
+       PetscSpace a ! PetscSpace
+       PetscDualSpace b ! PetscDualSpace
+       PetscReal c ! PetscReal
+       PetscReal d ! PetscReal
+       PetscReal e ! PetscReal
+       PetscReal f ! PetscReal
+       PetscCopyMode g ! PetscCopyMode
+       PetscSpace h ! PetscSpace
+       PetscErrorCode z
+       end subroutine PetscSpaceCreateSubspace
       subroutine PetscSpaceSumGetNumSubspaces(a,b,z)
        PetscSpace a ! PetscSpace
        PetscInt b ! PetscInt
@@ -60,6 +71,18 @@
        PetscSpace c ! PetscSpace
        PetscErrorCode z
        end subroutine PetscSpaceSumSetSubspace
+      subroutine PetscSpaceSumSetInterleave(a,b,c,z)
+       PetscSpace a ! PetscSpace
+       PetscBool b ! PetscBool
+       PetscBool c ! PetscBool
+       PetscErrorCode z
+       end subroutine PetscSpaceSumSetInterleave
+      subroutine PetscSpaceSumGetInterleave(a,b,c,z)
+       PetscSpace a ! PetscSpace
+       PetscBool b ! PetscBool
+       PetscBool c ! PetscBool
+       PetscErrorCode z
+       end subroutine PetscSpaceSumGetInterleave
       subroutine PetscSpaceTensorSetNumSubspaces(a,b,z)
        PetscSpace a ! PetscSpace
        PetscInt b ! PetscInt

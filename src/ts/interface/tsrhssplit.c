@@ -12,22 +12,22 @@ static PetscErrorCode TSRHSSplitGetRHSSplit(TS ts, const char splitname[], TS_RH
     if (found) break;
     *isplit = (*isplit)->next;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TSRHSSplitSetIS - Set the index set for the specified split
+  TSRHSSplitSetIS - Set the index set for the specified split
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  ts        - the `TS` context obtained from `TSCreate()`
-.  splitname - name of this split, if NULL the number of the split is used
--  is        - the index set for part of the solution vector
+  Input Parameters:
++ ts        - the `TS` context obtained from `TSCreate()`
+. splitname - name of this split, if `NULL` the number of the split is used
+- is        - the index set for part of the solution vector
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: [](chapter_ts), `TS`, `IS`, `TSRHSSplitGetIS()`
+.seealso: [](ch_ts), `TS`, `IS`, `TSRHSSplitGetIS()`
 @*/
 PetscErrorCode TSRHSSplitSetIS(TS ts, const char splitname[], IS is)
 {
@@ -58,24 +58,24 @@ PetscErrorCode TSRHSSplitSetIS(TS ts, const char splitname[], IS is)
     next->next = newsplit;
   }
   ts->num_rhs_splits++;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TSRHSSplitGetIS - Retrieves the elements for a split as an `IS`
+  TSRHSSplitGetIS - Retrieves the elements for a split as an `IS`
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  ts        - the `TS` context obtained from `TSCreate()`
--  splitname - name of this split
+  Input Parameters:
++ ts        - the `TS` context obtained from `TSCreate()`
+- splitname - name of this split
 
-   Output Parameters:
--  is        - the index set for part of the solution vector
+  Output Parameter:
+. is - the index set for part of the solution vector
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: [](chapter_ts), `TS`, `IS`, `TSRHSSplitSetIS()`
+.seealso: [](ch_ts), `TS`, `IS`, `TSRHSSplitSetIS()`
 @*/
 PetscErrorCode TSRHSSplitGetIS(TS ts, const char splitname[], IS *is)
 {
@@ -87,32 +87,24 @@ PetscErrorCode TSRHSSplitGetIS(TS ts, const char splitname[], IS *is)
   /* look up the split */
   PetscCall(TSRHSSplitGetRHSSplit(ts, splitname, &isplit));
   if (isplit) *is = isplit->is;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TSRHSSplitSetRHSFunction - Set the split right-hand-side functions.
+  TSRHSSplitSetRHSFunction - Set the split right-hand-side functions.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  ts        - the `TS` context obtained from `TSCreate()`
-.  splitname - name of this split
-.  r         - vector to hold the residual (or NULL to have it created internally)
-.  rhsfunc   - the RHS function evaluation routine
--  ctx       - user-defined context for private data for the split function evaluation routine (may be NULL)
+  Input Parameters:
++ ts        - the `TS` context obtained from `TSCreate()`
+. splitname - name of this split
+. r         - vector to hold the residual (or `NULL` to have it created internally)
+. rhsfunc   - the RHS function evaluation routine
+- ctx       - user-defined context for private data for the split function evaluation routine (may be `NULL`)
 
- Calling sequence of fun:
-$  rhsfunc(TS ts,PetscReal t,Vec u,Vec f,ctx);
+  Level: intermediate
 
-+  t    - time at step/stage being solved
-.  u    - state vector
-.  f    - function vector
--  ctx  - [optional] user-defined context for matrix evaluation routine (may be NULL)
-
- Level: beginner
-
-.seealso: [](chapter_ts), `TS`, `IS`, `TSRHSSplitSetIS()`
+.seealso: [](ch_ts), `TS`, `TSRHSFunction`, `IS`, `TSRHSSplitSetIS()`
 @*/
 PetscErrorCode TSRHSSplitSetRHSFunction(TS ts, const char splitname[], Vec r, TSRHSFunction rhsfunc, void *ctx)
 {
@@ -148,24 +140,24 @@ PetscErrorCode TSRHSSplitSetRHSFunction(TS ts, const char splitname[], Vec r, TS
 
   PetscCall(TSSetRHSFunction(isplit->ts, r, rhsfunc, ctx));
   PetscCall(VecDestroy(&ralloc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TSRHSSplitGetSubTS - Get the sub-`TS` by split name.
+  TSRHSSplitGetSubTS - Get the sub-`TS` by split name.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameter:
-.  ts - the `TS` context obtained from `TSCreate()`
+  Input Parameter:
+. ts - the `TS` context obtained from `TSCreate()`
 
-   Output Parameters:
-+  splitname - the number of the split
--  subts - the array of `TS` contexts
+  Output Parameters:
++ splitname - the number of the split
+- subts     - the sub-`TS`
 
-   Level: advanced
+  Level: advanced
 
-.seealso: [](chapter_ts), `TS`, `IS`, `TSGetRHSSplitFunction()`
+.seealso: [](ch_ts), `TS`, `IS`, `TSGetRHSSplitFunction()`
 @*/
 PetscErrorCode TSRHSSplitGetSubTS(TS ts, const char splitname[], TS *subts)
 {
@@ -173,33 +165,33 @@ PetscErrorCode TSRHSSplitGetSubTS(TS ts, const char splitname[], TS *subts)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts, TS_CLASSID, 1);
-  PetscValidPointer(subts, 3);
+  PetscAssertPointer(subts, 3);
   *subts = NULL;
   /* look up the split */
   PetscCall(TSRHSSplitGetRHSSplit(ts, splitname, &isplit));
   if (isplit) *subts = isplit->ts;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TSRHSSplitGetSubTSs - Get an array of all sub-`TS` contexts.
+  TSRHSSplitGetSubTSs - Get an array of all sub-`TS` contexts.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameter:
-.  ts - the `TS` context obtained from `TSCreate()`
+  Input Parameter:
+. ts - the `TS` context obtained from `TSCreate()`
 
-   Output Parameters:
-+  n - the number of splits
--  subksp - the array of `TS` contexts
+  Output Parameters:
++ n     - the number of splits
+- subts - the array of `TS` contexts
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   After `TSRHSSplitGetSubTS()` the array of `TS`s is to be freed by the user with `PetscFree()`
-   (not the `TS` just the array that contains them).
+  Note:
+  After `TSRHSSplitGetSubTS()` the array of `TS`s is to be freed by the user with `PetscFree()`
+  (not the `TS` in the array just the array that contains them).
 
-.seealso: [](chapter_ts), `TS`, `IS`, `TSGetRHSSplitFunction()`
+.seealso: [](ch_ts), `TS`, `IS`, `TSGetRHSSplitFunction()`
 @*/
 PetscErrorCode TSRHSSplitGetSubTSs(TS ts, PetscInt *n, TS *subts[])
 {
@@ -216,5 +208,5 @@ PetscErrorCode TSRHSSplitGetSubTSs(TS ts, PetscInt *n, TS *subts[])
     }
   }
   if (n) *n = ts->num_rhs_splits;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

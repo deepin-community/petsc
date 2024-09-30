@@ -1,6 +1,7 @@
 static char help[] = "Tests MatCreateDenseCUDA(), MatDenseCUDAPlaceArray(), MatDenseCUDAReplaceArray(), MatDenseCUDAResetArray()\n";
 
 #include <petscmat.h>
+#include <petscpkg_version.h>
 
 static PetscErrorCode MatMult_S(Mat S, Vec x, Vec y)
 {
@@ -9,7 +10,7 @@ static PetscErrorCode MatMult_S(Mat S, Vec x, Vec y)
   PetscFunctionBeginUser;
   PetscCall(MatShellGetContext(S, &A));
   PetscCall(MatMult(A, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscBool test_cusparse_transgen = PETSC_FALSE;
@@ -25,7 +26,7 @@ static PetscErrorCode MatMultTranspose_S(Mat S, Vec x, Vec y)
   /* alternate transgen true and false to test code logic */
   PetscCall(MatSetOption(A, MAT_FORM_EXPLICIT_TRANSPOSE, test_cusparse_transgen));
   test_cusparse_transgen = (PetscBool)!test_cusparse_transgen;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -33,9 +34,17 @@ int main(int argc, char **argv)
   Mat          A, B, C, S;
   Vec          t, v;
   PetscScalar *vv, *aa;
-  PetscInt     n = 30, k = 6, l = 0, i, Istart, Iend, nloc, bs, test = 1;
-  PetscBool    flg, reset, use_shell = PETSC_FALSE;
-  VecType      vtype;
+  // We met a mysterious cudaErrorMisalignedAddress error on some systems with cuda-12.0,1 but not
+  // with prior cuda-11.2,3,7,8 versions. Making nloc an even number somehow 'fixes' the problem.
+  // See more at https://gitlab.com/petsc/petsc/-/merge_requests/6225
+#if PETSC_PKG_CUDA_VERSION_GE(12, 0, 0)
+  PetscInt n = 32;
+#else
+  PetscInt n = 30;
+#endif
+  PetscInt  k = 6, l = 0, i, Istart, Iend, nloc, bs, test = 1;
+  PetscBool flg, reset, use_shell = PETSC_FALSE;
+  VecType   vtype;
 
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &argv, (char *)0, help));
@@ -102,11 +111,10 @@ int main(int argc, char **argv)
     reset = PETSC_FALSE;
     break;
   }
-  PetscCall(VecCUDARestoreArray(v, &vv));
 
   /* Test MatMatMult */
   if (use_shell) {
-    /* we could have called the general convertor below, but we explicit set the operations
+    /* we could have called the general converter below, but we explicitly set the operations
        ourselves to test MatProductSymbolic_X_Dense, MatProductNumeric_X_Dense code */
     /* PetscCall(MatConvert(A,MATSHELL,MAT_INITIAL_MATRIX,&S)); */
     PetscCall(MatCreateShell(PetscObjectComm((PetscObject)v), nloc, nloc, n, n, A, &S));
@@ -142,16 +150,16 @@ int main(int argc, char **argv)
   PetscCall(MatDestroy(&S));
 
   /* finished using B */
-  PetscCall(MatDenseCUDAGetArray(B, &aa));
+  PetscCall(MatDenseGetArrayAndMemType(B, &aa, NULL));
   PetscCheck(vv == aa - l * nloc, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Wrong array");
-  PetscCall(MatDenseCUDARestoreArray(B, &aa));
+  PetscCall(MatDenseRestoreArrayAndMemType(B, &aa));
   if (reset) PetscCall(MatDenseCUDAResetArray(B));
   PetscCall(VecCUDARestoreArray(v, &vv));
 
   if (test == 1) {
-    PetscCall(MatDenseCUDAGetArray(B, &aa));
+    PetscCall(MatDenseGetArrayAndMemType(B, &aa, NULL));
     PetscCheck(!aa, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Expected a null pointer");
-    PetscCall(MatDenseCUDARestoreArray(B, &aa));
+    PetscCall(MatDenseRestoreArrayAndMemType(B, &aa));
   }
 
   /* free work space */

@@ -1,20 +1,23 @@
-
-/*
-       Provides the calling sequences for all the basic PetscDraw routines.
-*/
 #include <petsc/private/drawimpl.h> /*I "petscdraw.h" I*/
 
 /*@
-   PetscDrawTriangle - draws a triangle  onto a drawable.
+  PetscDrawTriangle - draws a triangle  onto a drawable.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  draw - the drawing context
-.  x1,y1,x2,y2,x3,y3 - the coordinates of the vertices
--  c1,c2,c3 - the colors of the three vertices in the same order as the xi,yi
+  Input Parameters:
++ draw - the drawing context
+. x1   - coordinate of the first vertex
+. y_1  - coordinate of the first vertex
+. x2   - coordinate of the second vertex
+. y2   - coordinate of the second vertex
+. x3   - coordinate of the third vertex
+. y3   - coordinate of the third vertex
+. c1   - color of the first vertex
+. c2   - color of the second vertex
+- c3   - color of the third vertext
 
-   Level: beginner
+  Level: beginner
 
 .seealso: `PetscDraw`, `PetscDrawLine()`, `PetscDrawRectangle()`, `PetscDrawEllipse()`, `PetscDrawMarker()`, `PetscDrawPoint()`, `PetscDrawArrow()`
 @*/
@@ -23,23 +26,23 @@ PetscErrorCode PetscDrawTriangle(PetscDraw draw, PetscReal x1, PetscReal y_1, Pe
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
   PetscUseTypeMethod(draw, triangle, x1, y_1, x2, y2, x3, y3, c1, c2, c3);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscDrawScalePopup - draws a contour scale window.
+  PetscDrawScalePopup - draws a contour scale window.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  popup - the window (often a window obtained via `PetscDrawGetPopup()`
-.  min - minimum value being plotted
--  max - maximum value being plotted
+  Input Parameters:
++ popup - the window (often a window obtained via `PetscDrawGetPopup()`
+. min   - minimum value being plotted
+- max   - maximum value being plotted
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-    All processors that share the draw MUST call this routine
+  Note:
+  All processors that share the draw MUST call this routine
 
 .seealso: `PetscDraw`, `PetscDrawGetPopup()`, `PetscDrawTensorContour()`
 @*/
@@ -52,10 +55,10 @@ PetscErrorCode PetscDrawScalePopup(PetscDraw popup, PetscReal min, PetscReal max
   char        string[32];
 
   PetscFunctionBegin;
-  if (!popup) PetscFunctionReturn(0);
+  if (!popup) PetscFunctionReturn(PETSC_SUCCESS);
   PetscValidHeaderSpecific(popup, PETSC_DRAW_CLASSID, 1);
   PetscCall(PetscDrawIsNull(popup, &isnull));
-  if (isnull) PetscFunctionReturn(0);
+  if (isnull) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCallMPI(MPI_Comm_rank(PetscObjectComm((PetscObject)popup), &rank));
 
   PetscCall(PetscDrawCheckResizedWindow(popup));
@@ -80,7 +83,7 @@ PetscErrorCode PetscDrawScalePopup(PetscDraw popup, PetscReal min, PetscReal max
   PetscDrawCollectiveEnd(popup);
   PetscCall(PetscDrawFlush(popup));
   PetscCall(PetscDrawSave(popup));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 typedef struct {
@@ -100,26 +103,27 @@ static PetscErrorCode PetscDrawTensorContour_Zoom(PetscDraw win, void *dctx)
     for (i = 0; i < ctx->m; i++) PetscCall(PetscDrawLine(win, ctx->x[i], ctx->y[0], ctx->x[i], ctx->y[ctx->n - 1], PETSC_DRAW_BLACK));
     for (i = 0; i < ctx->n; i++) PetscCall(PetscDrawLine(win, ctx->x[0], ctx->y[i], ctx->x[ctx->m - 1], ctx->y[i], PETSC_DRAW_BLACK));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscDrawTensorContour - draws a contour plot for a two-dimensional array
+  PetscDrawTensorContour - draws a contour plot for a two-dimensional array
 
-   Collective on draw, but draw must be sequential
+  Collective, but `draw` must be sequential
 
-   Input Parameters:
-+   draw  - the draw context
-.   m,n   - the global number of mesh points in the x and y directions
-.   xi,yi - the locations of the global mesh points (optional, use NULL
-            to indicate uniform spacing on [0,1])
--   V     - the values
+  Input Parameters:
++ draw - the draw context
+. m    - the number of local mesh points in the x direction
+. n    - the number of local mesh points in the y direction
+. xi   - the locations of the global mesh points in the horizontal direction (optional, use `NULL` to indicate uniform spacing on [0,1])
+. yi   - the locations of the global mesh points in the vertical direction (optional, use `NULL` to indicate uniform spacing on [0,1])
+- v    - the values
 
-   Options Database Keys:
-+  -draw_x_shared_colormap - Indicates use of private colormap
--  -draw_contour_grid - draws grid contour
+  Options Database Keys:
++ -draw_x_shared_colormap - Indicates use of private colormap
+- -draw_contour_grid      - draws grid contour
 
-   Level: intermediate
+  Level: intermediate
 
 .seealso: `PetscDraw`, `PetscDrawTensorContourPatch()`, `PetscDrawScalePopup()`
 @*/
@@ -136,7 +140,7 @@ PetscErrorCode PetscDrawTensorContour(PetscDraw draw, int m, int n, const PetscR
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
   PetscCall(PetscDrawIsNull(draw, &isnull));
-  if (isnull) PetscFunctionReturn(0);
+  if (isnull) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCallMPI(MPI_Comm_size(PetscObjectComm((PetscObject)draw), &size));
   PetscCheck(size <= 1, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "May only be used with single processor PetscDraw");
   PetscCheck(N > 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "n %d and m %d must be positive", m, n);
@@ -182,30 +186,33 @@ PetscErrorCode PetscDrawTensorContour(PetscDraw draw, int m, int n, const PetscR
 
   if (!xin) PetscCall(PetscFree(ctx.x));
   if (!yin) PetscCall(PetscFree(ctx.y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscDrawTensorContourPatch - draws a rectangular patch of a contour plot
-   for a two-dimensional array.
+  PetscDrawTensorContourPatch - draws a rectangular patch of a contour plot
+  for a two-dimensional array.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  draw - the draw context
-.  m,n - the number of local mesh points in the x and y direction
-.  x,y - the locations of the local mesh points
-.  min,max - the minimum and maximum value in the entire contour
--  v - the data
+  Input Parameters:
++ draw - the draw context
+. m    - the number of local mesh points in the x direction
+. n    - the number of local mesh points in the y direction
+. x    - the horizontal locations of the local mesh points
+. y    - the vertical locations of the local mesh points
+. min  - the minimum value in the entire contour
+. max  - the maximum value in the entire contour
+- v    - the data
 
-   Options Database Keys:
-.  -draw_x_shared_colormap - Activates private colormap
+  Options Database Key:
+. -draw_x_shared_colormap - Activates private colormap
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   This is a lower level support routine, usually the user will call
-   `PetscDrawTensorContour()`.
+  Note:
+  This is a lower level support routine, usually the user will call
+  `PetscDrawTensorContour()`.
 
 .seealso: `PetscDraw`, `PetscDrawTensorContour()`
 @*/
@@ -236,5 +243,5 @@ PetscErrorCode PetscDrawTensorContourPatch(PetscDraw draw, int m, int n, PetscRe
       PetscCall(PetscDrawTriangle(draw, x1, y_1, x3, y3, x4, y4, c1, c3, c4));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

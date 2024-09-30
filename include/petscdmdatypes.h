@@ -1,5 +1,4 @@
-#ifndef PETSCDMDATYPES_H
-#define PETSCDMDATYPES_H
+#pragma once
 
 #include <petscdmtypes.h>
 
@@ -7,11 +6,11 @@
 
 /*E
     DMDAStencilType - Determines if the stencil extends only along the coordinate directions, or also
-      to the northeast, northwest etc
+                      to the northeast, northwest etc
 
    Level: beginner
 
-.seealso: `DMDACreate1d()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMDACreate()`, `DMDASetStencilType()`
+.seealso: [](ch_dmbase), `DMDA`, `DMDA_STENCIL_BOX`, `DMDA_STENCIL_STAR`,`DMDACreate1d()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMDACreate()`, `DMDASetStencilType()`
 E*/
 typedef enum {
   DMDA_STENCIL_STAR,
@@ -20,11 +19,11 @@ typedef enum {
 
 /*E
     DMDAInterpolationType - Defines the type of interpolation that will be returned by
-       `DMCreateInterpolation()`.
+                            `DMCreateInterpolation()`.
 
    Level: beginner
 
-.seealso: `DMDACreate1d()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMCreateInterpolation()`, `DMDASetInterpolationType()`, `DMDACreate()`
+.seealso: [](ch_dmbase), `DMDA`, `DMDACreate1d()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMCreateInterpolation()`, `DMDASetInterpolationType()`, `DMDACreate()`
 E*/
 typedef enum {
   DMDA_Q0,
@@ -32,12 +31,12 @@ typedef enum {
 } DMDAInterpolationType;
 
 /*E
-    DMDAElementType - Defines the type of elements that will be returned by
-       `DMDAGetElements()`
+   DMDAElementType - Defines the type of elements that will be returned by
+                     `DMDAGetElements()`
 
    Level: beginner
 
-.seealso: `DMDACreate1d()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMCreateInterpolation()`, `DMDASetInterpolationType()`,
+.seealso: [](ch_dmbase), `DMDA`, `DMDACreate1d()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMCreateInterpolation()`, `DMDASetInterpolationType()`,
           `DMDASetElementType()`, `DMDAGetElements()`, `DMDARestoreElements()`, `DMDACreate()`
 E*/
 typedef enum {
@@ -46,19 +45,22 @@ typedef enum {
 } DMDAElementType;
 
 /*S
-     DMDALocalInfo - C struct that contains information about a structured grid and a processors logical
-              location in it.
+  DMDALocalInfo - C struct that contains information about a structured grid and a processes logical
+                  location in it.
 
-   Level: beginner
+  Level: beginner
 
-  Fortran Notes - This should be declared as
+  Fortran Note:
+  This should be declared as
 $    `DMDALocalInfo` :: info(DMDA_LOCAL_INFO_SIZE)
      and the entries accessed via
-$    info(DMDA_LOCAL_INFO_DIM)
-$    info(DMDA_LOCAL_INFO_DOF) etc.
+.vb
+    info(DMDA_LOCAL_INFO_DIM)
+    info(DMDA_LOCAL_INFO_DOF) etc.
+.ve
    The entries bx,by,bz, st, and da are not accessible from Fortran.
 
-.seealso: `DMDACreate1d()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMDestroy()`, `DM`, `DMDAGetLocalInfo()`, `DMDAGetInfo()`
+.seealso: [](ch_dmbase), `DMDA`, `DMDACreate1d()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMDestroy()`, `DM`, `DMDAGetLocalInfo()`, `DMDAGetInfo()`
 S*/
 typedef struct {
   PetscInt        dim, dof, sw;
@@ -71,5 +73,3 @@ typedef struct {
   DMDAStencilType st;
   DM              da;
 } DMDALocalInfo;
-
-#endif

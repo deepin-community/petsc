@@ -1,15 +1,4 @@
 
-#requiresdefine   'PETSC_HAVE_FORTRAN'
-ALL: lib
-
-CFLAGS   =
-FFLAGS   =
-SOURCEC  = characteristicf.c
-SOURCEF  =
-SOURCEH  = 
-DIRS     =
+#requiresdefine   'PETSC_USE_FORTRAN_BINDINGS'
+#requiresscalar    real
 LIBBASE   = libpetscts
-LOCDIR    = src/ts/characteristic/interface/ftn-auto/
-include ${PETSC_DIR}/lib/petsc/conf/variables
-include ${PETSC_DIR}/lib/petsc/conf/rules
-include ${PETSC_DIR}/lib/petsc/conf/test

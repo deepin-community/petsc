@@ -1,5 +1,4 @@
-#ifndef PETSC_PREPROCESSOR_MACROS_H
-#define PETSC_PREPROCESSOR_MACROS_H
+#pragma once
 
 #include <petscconf.h>
 #include <petscconf_poison.h> /* for PetscDefined() error checking */
@@ -65,8 +64,8 @@ void assert_never_put_petsc_headers_inside_an_extern_c(double);
   #define PETSC_RESTRICT restrict
 #endif
 
-#define PETSC_INLINE        PETSC_DEPRECATED_MACRO("GCC warning \"PETSC_INLINE is deprecated (since version 3.17)\"") inline
-#define PETSC_STATIC_INLINE PETSC_DEPRECATED_MACRO("GCC warning \"PETSC_STATIC_INLINE is deprecated (since version 3.17)\"") static inline
+#define PETSC_INLINE        PETSC_DEPRECATED_MACRO(3, 17, 0, "inline", ) inline
+#define PETSC_STATIC_INLINE PETSC_DEPRECATED_MACRO(3, 17, 0, "static inline", ) static inline
 
 #if defined(_WIN32) && defined(PETSC_USE_SHARED_LIBRARIES) /* For Win32 shared libraries */
   #define PETSC_DLLEXPORT __declspec(dllexport)
@@ -106,9 +105,15 @@ void assert_never_put_petsc_headers_inside_an_extern_c(double);
 #endif
 
 #if defined(PETSC_USE_SINGLE_LIBRARY)
-  #define PETSC_SINGLE_LIBRARY_INTERN PETSC_INTERN
+  #define PETSC_SINGLE_LIBRARY_VISIBILITY_INTERNAL PETSC_VISIBILITY_INTERNAL
+  #define PETSC_SINGLE_LIBRARY_INTERN              PETSC_INTERN
 #else
-  #define PETSC_SINGLE_LIBRARY_INTERN PETSC_EXTERN
+  #define PETSC_SINGLE_LIBRARY_VISIBILITY_INTERNAL PETSC_VISIBILITY_PUBLIC
+  #define PETSC_SINGLE_LIBRARY_INTERN              PETSC_EXTERN
+#endif
+
+#if !defined(__has_feature)
+  #define __has_feature(x) 0
 #endif
 
 /*MC
@@ -120,6 +125,8 @@ void assert_never_put_petsc_headers_inside_an_extern_c(double);
 
   Input Parameter:
 . name - The name of the attribute to test
+
+  Level: intermediate
 
   Notes:
   name should be identical to what you might pass to the __attribute__ declaration itself --
@@ -152,10 +159,8 @@ void assert_never_put_petsc_headers_inside_an_extern_c(double);
   }
 .ve
 
-  Level: intermediate
-
 .seealso: `PetscHasBuiltin()`, `PetscDefined()`, `PetscLikely()`, `PetscUnlikely()`,
-`PETSC_ATTRIBUTE_FORMAT`
+`PETSC_ATTRIBUTE_FORMAT`, `PETSC_ATTRIBUTE_MAY_ALIAS`
 M*/
 #if !defined(__has_attribute)
   #define __has_attribute(x) 0
@@ -171,6 +176,8 @@ M*/
 
   Input Parameter:
 . name - the name of the builtin routine
+
+  Level: intermediate
 
   Notes:
   Evaluates to `1` if the builtin is supported and `0` otherwise. Note the term "evaluates"
@@ -199,8 +206,6 @@ M*/
     bar();
   }
 .ve
-
-  Level: intermediate
 
 .seealso: `PetscHasAttribute()`, `PetscAssume()`
 M*/
@@ -257,6 +262,8 @@ M*/
 + strIdx   - The (1-indexed) location of the format string in the argument list
 - vaArgIdx - The (1-indexed) location of the first formattable argument in the argument list
 
+  Level: developer
+
   Notes:
   This function attribute causes the compiler to issue warnings when the format specifier does
   not match the type of the variable that will be formatted, or when there exists a mismatch
@@ -264,7 +271,7 @@ M*/
   macro if your compiler does not support format specifier checking (though this is
   exceeedingly rare).
 
-  Both strIdx and vaArgIdx must be compile-time constant integer literals and cannot have the
+  Both `strIdx` and `vaArgIdx` must be compile-time constant integer literals and cannot have the
   same value.
 
   The arguments to be formatted (and therefore checked by the compiler) must be "contiguous" in
@@ -286,8 +293,6 @@ M*/
   my_printf(NULL,"%d %g",x,y); // OK
 .ve
 
-  Level: developer
-
 .seealso: `PETSC_ATTRIBUTE_COLD`, `PetscHasAttribute()`
 M*/
 #if PetscHasAttribute(format) && !defined(PETSC_SKIP_ATTRIBUTE_FORMAT)
@@ -299,6 +304,8 @@ M*/
 /*MC
   PETSC_ATTRIBUTE_COLD - Indicate to the compiler that a function is very unlikely to be
   executed
+
+  Level: intermediate
 
   Notes:
   The marked function is often optimized for size rather than speed and may be grouped alongside
@@ -317,8 +324,6 @@ M*/
   }
 .ve
 
-  Level: intermediate
-
 .seealso: `PetscUnlikely()`, `PetscUnlikelyDebug()`, `PetscLikely()`, `PetscLikelyDebug()`,
           `PetscUnreachable()`, `PETSC_ATTRIBUTE_FORMAT`
 M*/
@@ -331,12 +336,39 @@ M*/
 #endif
 
 /*MC
+  PETSC_ATTRIBUTE_MAY_ALIAS - Indicate to the compiler that a type is not
+  subjected to type-based alias analysis, but is instead assumed to be able to
+  alias any other type of objects
+
+  Example Usage:
+.vb
+  typedef PetscScalar PetscScalarAlias PETSC_ATTRIBUTE_MAY_ALIAS;
+
+  PetscReal        *pointer;
+  PetscScalarAlias *other_pointer = reinterpret_cast<PetscScalarAlias *>(pointer);
+.ve
+
+  Level: advanced
+
+.seealso: `PetscHasAttribute()`
+M*/
+#if PetscHasAttribute(may_alias) && !defined(PETSC_SKIP_ATTRIBUTE_MAY_ALIAS)
+  #define PETSC_ATTRIBUTE_MAY_ALIAS __attribute__((may_alias))
+#else
+  #define PETSC_ATTRIBUTE_MAY_ALIAS
+#endif
+
+/*MC
   PETSC_NULLPTR - Standard way of indicating a null value or pointer
 
+  No Fortran Support
+
+  Level: beginner
+
   Notes:
-  Equivalent to NULL in C source, and nullptr in C++ source. Note that for the purposes of
+  Equivalent to `NULL` in C source, and `nullptr` in C++ source. Note that for the purposes of
   interoperability between C and C++, setting a pointer to `PETSC_NULLPTR` in C++ is functonially
-  equivalent to setting the same pointer to NULL in C. That is to say that the following
+  equivalent to setting the same pointer to `NULL` in C. That is to say that the following
   expressions are equivalent\:
 
 .vb
@@ -356,12 +388,9 @@ M*/
   PETSC_NULLPTR == NULL
 .ve
 
-  Fortran Notes:
-  Not available in Fortran
-
   Example Usage:
 .vb
-  // may be used in place of '\0' or other such teminators in the definition of char arrays
+  // may be used in place of '\0' or other such terminators in the definition of char arrays
   const char *const MyEnumTypes[] = {
     "foo",
     "bar",
@@ -376,11 +405,9 @@ M*/
 .ve
 
   Developer Notes:
-  `PETSC_NULLPTR` must be used in place of NULL in all C++ source files. Using NULL in source
+  `PETSC_NULLPTR` must be used in place of `NULL` in all C++ source files. Using `NULL` in source
   files compiled with a C++ compiler may lead to unexpected side-effects in function overload
   resolution and/or compiler warnings.
-
-  Level: beginner
 
 .seealso: `PETSC_CONSTEXPR_14`, `PETSC_NODISCARD`
 M*/
@@ -388,14 +415,15 @@ M*/
 /*MC
   PETSC_CONSTEXPR_14 - C++14 constexpr
 
+  No Fortran Support
+
+  Level: beginner
+
   Notes:
-  Equivalent to constexpr when using a C++ compiler that supports C++14. Expands to nothing
+  Equivalent to `constexpr` when using a C++ compiler that supports C++14. Expands to nothing
   if the C++ compiler does not support C++14 or when not compiling with a C++ compiler. Note
   that this cannot be used in cases where an empty expansion would result in invalid code. It
   is safe to use this in C source files.
-
-  Fortran Notes:
-  Not available in Fortran
 
   Example Usage:
 .vb
@@ -410,21 +438,26 @@ M*/
   }
 .ve
 
-  Level: beginner
-
 .seealso: `PETSC_NULLPTR`, `PETSC_NODISCARD`
 M*/
 
 /*MC
   PETSC_NODISCARD - Mark the return value of a function as non-discardable
 
+  Not available in Fortran
+
+  Level: beginner
+
   Notes:
   Hints to the compiler that the return value of a function must be captured. A diagnostic may
-  (but is not required) be emitted if the value is discarded. It is safe to use this in C
-  and C++ source files.
+  (but is not required to) be emitted if the value is discarded. It is safe to use this in both
+  C and C++ source files.
 
-  Fortran Notes:
-  Not available in Fortran
+  In this context "captured" means assigning the return value of a function to a named
+  variable or casting it to `void`. Between the two, assigning to a named variable is the most
+  portable way of silencing any warnings, since `PETSC_NODISCARD` may expand to GCC's
+  `__attribute__((warn_unused_result))` which will still emit warnings when casting results to
+  `void`.
 
   Example Usage:
 .vb
@@ -441,25 +474,24 @@ M*/
     return n <= 1 ? 1 : (n * factorial(n - 1));
   }
 
-  auto x = factorial(10); // OK, capturing return value
   factorial(10);          // Warning: ignoring return value of function declared 'nodiscard'
+  auto x = factorial(10); // OK, capturing return value
+  (void)factorial(10);    // Maybe OK, casting to void
+  auto y = factorial(10); // OK, capturing in y (and casting y to void to silence
+  (void)y;                // set-but-not-used warnings)
 
-  auto f = Foo(x); // OK, capturing constructed object
   Foo(x);          // Warning: Ignoring temporary created by a constructor declared 'nodiscard'
+  auto f = Foo(x); // OK, capturing constructed object
+  (void)Foo(x);    // Maybe OK, casting to void
+  auto g = Foo(x); // OK, capturing in g (and casting g to void to silence set-but-not-used
+  (void)g;         // warnings)
 .ve
-
-  Developer Notes:
-  It is highly recommended if not downright required that any PETSc routines written in C++
-  returning a PetscErrorCode be marked `PETSC_NODISCARD`. Ignoring the return value of PETSc
-  routines is not supported; unhandled errors may leave PETSc in an unrecoverable state.
-
-  Level: beginner
 
 .seealso: `PETSC_NULLPTR`, `PETSC_CONSTEXPR_14`
 M*/
 
 /* C++11 features */
-#if defined(__cplusplus)
+#if defined(__cplusplus) || (PETSC_C_VERSION >= 23)
   #define PETSC_NULLPTR nullptr
 #else
   #define PETSC_NULLPTR NULL
@@ -474,16 +506,16 @@ M*/
 
 /* C++17 features */
 #if PETSC_CPP_VERSION >= 17
-  #define PETSC_NODISCARD    [[nodiscard]]
   #define PETSC_CONSTEXPR_17 constexpr
 #else
-  #if PetscHasAttribute(warn_unused_result)
-    #define PETSC_NODISCARD __attribute__((warn_unused_result))
-  #endif
   #define PETSC_CONSTEXPR_17
 #endif
 
-#ifndef PETSC_NODISCARD
+#if (PETSC_CPP_VERSION >= 17) || (PETSC_C_VERSION >= 23)
+  #define PETSC_NODISCARD [[nodiscard]]
+#elif PetscHasAttribute(warn_unused_result)
+  #define PETSC_NODISCARD __attribute__((warn_unused_result))
+#else
   #define PETSC_NODISCARD
 #endif
 
@@ -504,14 +536,14 @@ M*/
   #include <petscmacros.h>
   bool PetscUnlikely(bool cond)
 
-  Not Collective
+  Not Collective; No Fortran Support
 
   Input Parameter:
 . cond - Boolean expression
 
-  Notes:
-  Not available from fortran.
+  Level: advanced
 
+  Note:
   This returns the same truth value, it is only a hint to compilers that the result of cond is
   unlikely to be true.
 
@@ -524,8 +556,6 @@ M*/
   }
 .ve
 
-  Level: advanced
-
 .seealso: `PetscLikely()`, `PetscUnlikelyDebug()`, `PetscCall()`, `PetscDefined()`, `PetscHasAttribute()`,
           `PETSC_ATTRIBUTE_COLD`
 M*/
@@ -537,14 +567,14 @@ M*/
   #include <petscmacros.h>
   bool PetscLikely(bool cond)
 
-  Not Collective
+  Not Collective; No Fortran Support
 
   Input Parameter:
 . cond - Boolean expression
 
-  Notes:
-  Not available from fortran.
+  Level: advanced
 
+  Note:
   This returns the same truth value, it is only a hint to compilers that the result of cond is
   likely to be true.
 
@@ -556,8 +586,6 @@ M*/
     bar(); // cold path
   }
 .ve
-
-  Level: advanced
 
 .seealso: `PetscUnlikely()`, `PetscDefined()`, `PetscHasAttribute()`
           `PETSC_ATTRIBUTE_COLD`
@@ -577,7 +605,9 @@ M*/
   #include <petscmacros.h>
   void PetscUnreachable(void)
 
-  Notes:
+  Level: advanced
+
+  Note:
   Indicates to the compiler (usually via some built-in) that a particular code path is always
   unreachable. Behavior is undefined if this function is ever executed, the user can expect an
   unceremonious crash.
@@ -604,11 +634,12 @@ M*/
   }
 .ve
 
-  Level: advanced
-
 .seealso: `SETERRABORT()`, `PETSCABORT()`, `PETSC_ATTRIBUTE_COLD`, `PetscAssume()`
 M*/
-#if defined(__GNUC__)
+#if PETSC_CPP_VERSION >= 23
+  #include <utility>
+  #define PetscUnreachable() std::unreachable()
+#elif defined(__GNUC__)
   /* GCC 4.8+, Clang, Intel and other compilers compatible with GCC (-std=c++0x or above) */
   #define PetscUnreachable() __builtin_unreachable()
 #elif defined(_MSC_VER) /* MSVC */
@@ -626,6 +657,8 @@ M*/
 
   Input Parameter:
 . cond - Boolean expression
+
+  Level: advanced
 
   Notes:
   If supported by the compiler, `cond` is used to inform the optimizer of an invariant
@@ -682,11 +715,11 @@ M*/
   - ignore `PetscAssume()` altogether and emit the correct path of `x += 10`
   - reformat the primary disk partition
 
-  Level: advanced
-
 .seealso: `PetscAssert()`
 M*/
-#if defined(_MSC_VER) // msvc
+#if PETSC_CPP_VERSION >= 23
+  #define PetscAssume(...) [[assume(__VA_ARGS__)]]
+#elif defined(_MSC_VER) // msvc
   #define PetscAssume(...) __assume(__VA_ARGS__)
 #elif defined(__clang__) && PetscHasBuiltin(__builtin_assume) // clang
   #define PetscAssume(...) \
@@ -718,7 +751,7 @@ M*/
   // }
   //
   // Here gcc would (if just using builtin_expect()) emit 2 calls to bar(). Note we still have
-  // cond "tested" in the condition, but this is done to silence set-but-unused variable warnings
+  // cond "tested" in the condition, but this is done to silence unused-but-set variable warnings
   #define PetscAssume(...) \
     do { \
       if (0 && (__VA_ARGS__)) PetscUnreachable(); \
@@ -749,17 +782,19 @@ M*/
   #include <petscmacros.h>
   const char* PetscStringize(x)
 
+  No Fortran Support
+
   Input Parameter:
 . x - The token you would like to stringize
 
   Output Parameter:
-. <return-value> - The string representation of x
+. <return-value> - The string representation of `x`
 
-  Notes:
-  Not available from Fortran.
+  Level: beginner
 
-  PetscStringize() expands x before stringizing it, if you do not wish to do so, use
-  PetscStringize_() instead.
+  Note:
+  `PetscStringize()` expands `x` before stringizing it, if you do not wish to do so, use
+  `PetscStringize_()` instead.
 
   Example Usage:
 .vb
@@ -774,8 +809,6 @@ M*/
   PetscStringize_(foo) -> "foo"
 .ve
 
-  Level: beginner
-
 .seealso: `PetscConcat()`, `PetscExpandToNothing()`, `PetscExpand()`
 M*/
 #define PetscStringize_(...) #__VA_ARGS__
@@ -788,14 +821,16 @@ M*/
   #include <petscmacros.h>
   <macro-expansion> PetscConcat(x, y)
 
+  No Fortran Support
+
   Input Parameters:
 + x - First token
 - y - Second token
 
-  Notes:
-  Not available from Fortran.
+  Level: beginner
 
-  PetscConcat() will expand both arguments before pasting them together, use PetscConcat_()
+  Note:
+  `PetscConcat()` will expand both arguments before pasting them together, use `PetscConcat_()`
   if you don't want to expand them.
 
   Example usage:
@@ -806,8 +841,6 @@ M*/
   PetscConcat(HELLO,there)  -> hellothere
   PetscConcat_(HELLO,there) -> HELLOthere
 .ve
-
-  Level: beginner
 
 .seealso: `PetscStringize()`, `PetscExpand()`
 M*/
@@ -824,22 +857,25 @@ M*/
   #include <petscmacros.h>
   int PetscCompl(b)
 
+  No Fortran Support
+
   Input Parameter:
 . b - Preprocessor variable, must expand to either integer literal 0 or 1
 
   Output Parameter:
 . <return-value> - Either integer literal 0 or 1
 
-  Notes:
-  Not available from Fortran.
+  Level: beginner
 
+  Notes:
   Expands to integer literal 0 if b expands to 1, or integer literal 1 if b expands to
   0. Behaviour is undefined if b expands to anything else. PetscCompl() will expand its
   argument before returning the complement.
 
-  This macro can be useful for negating PetscDefined() inside macros e.g.
-
-$ #define PETSC_DONT_HAVE_FOO PetscCompl(PetscDefined(HAVE_FOO))
+  This macro can be useful for negating `PetscDefined()` inside macros e.g.
+.vb
+  #define PETSC_DONT_HAVE_FOO PetscCompl(PetscDefined(HAVE_FOO))
+.ve
 
   Example usage:
 .vb
@@ -851,19 +887,18 @@ $ #define PETSC_DONT_HAVE_FOO PetscCompl(PetscDefined(HAVE_FOO))
   PetscCompl(MY_VAR) -> 1
 .ve
 
-  Level: beginner
-
 .seealso: `PetscConcat()`, `PetscDefined()`
 M*/
 #define PetscCompl(b) PetscConcat_(PETSC_INTERNAL_COMPL_, PetscExpand(b))
 
-#if !defined(PETSC_SKIP_VARIADIC_MACROS)
-  /*MC
+/*MC
   PetscDefined - Determine whether a boolean macro is defined
 
   Synopsis:
   #include <petscmacros.h>
   int PetscDefined(def)
+
+  No Fortran Support
 
   Input Parameter:
 . def - PETSc-style preprocessor variable (without PETSC_ prepended!)
@@ -871,10 +906,9 @@ M*/
   Output Parameter:
 . <return-value> - Either integer literal 0 or 1
 
-  Notes:
-  Not available from Fortran, requires variadic macro support, definition is disabled by
-  defining `PETSC_SKIP_VARIADIC_MACROS`.
+  Level: intermediate
 
+  Notes:
   `PetscDefined()` returns 1 if and only if "PETSC_ ## def" is defined (but empty) or defined to
   integer literal 1. In all other cases, `PetscDefined()` returns integer literal 0. Therefore
   this macro should not be used if its argument may be defined to a non-empty value other than
@@ -882,8 +916,9 @@ M*/
 
   The prefix "PETSC_" is automatically prepended to def. To avoid prepending "PETSC_", say to
   add custom checks in user code, one should use `PetscDefined_()`.
-
-$ #define FooDefined(d) PetscDefined_(PetscConcat(FOO_,d))
+.vb
+  #define FooDefined(d) PetscDefined_(PetscConcat(FOO_, d))
+.ve
 
   Developer Notes:
   Getting something that works in C and CPP for an arg that may or may not be defined is
@@ -930,21 +965,19 @@ $ #define FooDefined(d) PetscDefined_(PetscConcat(FOO_,d))
   #endif
 .ve
 
-  Level: intermediate
-
 .seealso: `PetscHasAttribute()`, `PetscUnlikely()`, `PetscLikely()`, `PetscConcat()`,
           `PetscExpandToNothing()`, `PetscCompl()`
 M*/
-  #define PetscDefined_arg_1                                    shift,
-  #define PetscDefined_arg_                                     shift,
-  #define PetscDefined__take_second_expanded(ignored, val, ...) val
-  #define PetscDefined__take_second_expand(args)                PetscDefined__take_second_expanded args
-  #define PetscDefined__take_second(...)                        PetscDefined__take_second_expand((__VA_ARGS__))
-  #define PetscDefined__(arg1_or_junk)                          PetscDefined__take_second(arg1_or_junk 1, 0, at_)
-  #define PetscDefined_(value)                                  PetscDefined__(PetscConcat_(PetscDefined_arg_, value))
-  #define PetscDefined(def)                                     PetscDefined_(PetscConcat(PETSC_, def))
+#define PetscDefined_arg_1                                    shift,
+#define PetscDefined_arg_                                     shift,
+#define PetscDefined__take_second_expanded(ignored, val, ...) val
+#define PetscDefined__take_second_expand(args)                PetscDefined__take_second_expanded args
+#define PetscDefined__take_second(...)                        PetscDefined__take_second_expand((__VA_ARGS__))
+#define PetscDefined__(arg1_or_junk)                          PetscDefined__take_second(arg1_or_junk 1, 0, at_)
+#define PetscDefined_(value)                                  PetscDefined__(PetscConcat_(PetscDefined_arg_, value))
+#define PetscDefined(def)                                     PetscDefined_(PetscConcat(PETSC_, def))
 
-  /*MC
+/*MC
   PetscUnlikelyDebug - Hints the compiler that the given condition is usually false, eliding
   the check in optimized mode
 
@@ -952,18 +985,17 @@ M*/
   #include <petscmacros.h>
   bool PetscUnlikelyDebug(bool cond)
 
-  Not Collective
+  Not Collective; No Fortran Support
 
-  Input Parameters:
+  Input Parameter:
 . cond - Boolean expression
 
-  Notes:
-  Not available from Fortran, requires variadic macro support, definition is disabled by
-  defining `PETSC_SKIP_VARIADIC_MACROS`.
+  Level: advanced
 
-  This returns the same truth value, it is only a hint to compilers that the result of cond is
+  Note:
+  This returns the same truth value, it is only a hint to compilers that the result of `cond` is
   likely to be false. When PETSc is compiled in optimized mode this will always return
-  false. Additionally, cond is guaranteed to not be evaluated when PETSc is compiled in
+  false. Additionally, `cond` is guaranteed to not be evaluated when PETSc is compiled in
   optimized mode.
 
   Example usage:
@@ -992,42 +1024,41 @@ M*/
   }
 .ve
 
-  Level: advanced
-
 .seealso: `PetscUnlikely()`, `PetscLikely()`, `PetscCall()`, `SETERRQ`
 M*/
-  #define PetscUnlikelyDebug(cond) (PetscDefined(USE_DEBUG) && PetscUnlikely(cond))
+#define PetscUnlikelyDebug(cond) (PetscDefined(USE_DEBUG) && PetscUnlikely(cond))
 
-  #if defined(PETSC_CLANG_STATIC_ANALYZER)
-    // silence compiler warnings when using -pedantic, this is only used by the linter and it cares
-    // not what ISO C allows
-    #define PetscMacroReturns_(retexpr, ...) \
-      __extension__({ \
-        __VA_ARGS__; \
-        retexpr; \
-      })
-  #else
-    #define PetscMacroReturns_(retexpr, ...) \
+#if defined(PETSC_CLANG_STATIC_ANALYZER)
+  // silence compiler warnings when using -pedantic, this is only used by the linter and it cares
+  // not what ISO C allows
+  #define PetscMacroReturns_(retexpr, ...) \
+    __extension__({ \
+      __VA_ARGS__; \
       retexpr; \
-      do { \
-        __VA_ARGS__; \
-      } while (0)
-  #endif
+    })
+#else
+  #define PetscMacroReturns_(retexpr, ...) \
+    retexpr; \
+    do { \
+      __VA_ARGS__; \
+    } while (0)
+#endif
 
-  /*MC
-  PetscExpandToNothing - Expands to absolutely nothing at all
+/*MC
+  PetscExpandToNothing - Expands to absolutely nothing
 
   Synopsis:
   #include <petscmacros.h>
   void PetscExpandToNothing(...)
 
+  No Fortran Support
+
   Input Parameter:
 . __VA_ARGS__ - Anything at all
 
-  Notes:
-  Not available from Fortran, requires variadic macro support, definition is disabled by
-  defining `PETSC_SKIP_VARIADIC_MACROS`.
+  Level: beginner
 
+  Note:
   Must have at least 1 parameter.
 
   Example usage:
@@ -1035,13 +1066,11 @@ M*/
   PetscExpandToNothing(a,b,c) -> *nothing*
 .ve
 
-  Level: beginner
-
 .seealso: `PetscConcat()`, `PetscDefined()`, `PetscStringize()`, `PetscExpand()`
 M*/
-  #define PetscExpandToNothing(...)
+#define PetscExpandToNothing(...)
 
-  /*MC
+/*MC
   PetscMacroReturns - Define a macro body that returns a value
 
   Synopsis:
@@ -1051,6 +1080,8 @@ M*/
   Input Parameters:
 + retexpr     - The value or expression that the macro should return
 - __VA_ARGS__ - The body of the macro
+
+  Level: intermediate
 
   Notes:
   Due to limitations of the C-preprocessor retexpr cannot depend on symbols declared in the
@@ -1111,22 +1142,47 @@ M*/
   int z = MY_COMPLEX_RETEXPR_MACRO_2(); // OK, y = 0, x = 20
 .ve
 
-  Level: intermediate
-
 .seealso: `PetscExpand()`, `PetscConcat()`, `PetscStringize()`
 M*/
-  #define PetscMacroReturns(retexpr, ...) PetscMacroReturns_(retexpr, __VA_ARGS__)
+#define PetscMacroReturns(retexpr, ...) PetscMacroReturns_(retexpr, __VA_ARGS__)
 
-  #define PetscMacroReturnStandard(...) PetscMacroReturns(0, __VA_ARGS__)
-
-#endif /* !PETSC_SKIP_VARIADIC_MACROS */
+#define PetscMacroReturnStandard(...) PetscMacroReturns(PETSC_SUCCESS, __VA_ARGS__)
 
 /*MC
   PETSC_STATIC_ARRAY_LENGTH - Return the length of a static array
 
+  Synopsis:
+  #include <petscmacros.h>
+  size_t PETSC_STATIC_ARRAY_LENGTH(a)
+
+  Input Parameter:
+. a - a static array of any type
+
+  Output Parameter:
+. <return-value> -  the length of the array
+
+  Example:
+.vb
+  PetscInt a[22];
+  size_t sa = PETSC_STATIC_ARRAY_LENGTH(a)
+.ve
+  `sa` will have a value of 22
+
   Level: intermediate
 M*/
-#define PETSC_STATIC_ARRAY_LENGTH(a) (sizeof(a) / sizeof((a)[0]))
+#if PETSC_CPP_VERSION >= 14
+  #include <cstddef>
+  #include <type_traits>
+
+template <typename T>
+static inline constexpr std::size_t PETSC_STATIC_ARRAY_LENGTH(const T &) noexcept
+{
+  static_assert(std::is_array<T>::value, "");
+  return std::extent<T, std::rank<T>::value - 1>::value;
+}
+#else
+  #define PETSC_STATIC_ARRAY_LENGTH(...) (sizeof(__VA_ARGS__) / sizeof(__VA_ARGS__)[0])
+#endif
 
 /*
   These macros allow extracting out the first argument or all but the first argument from a macro __VAR_ARGS__ INSIDE another macro.
@@ -1153,4 +1209,77 @@ M*/
 #define PETSC_REST_HELPER(qty, ...)  PETSC_REST_HELPER2(qty, __VA_ARGS__)
 #define PETSC_REST_ARG(...)          PETSC_REST_HELPER(PETSC_NUM(__VA_ARGS__), __VA_ARGS__)
 
-#endif /* PETSC_PREPROCESSOR_MACROS_H */
+#define PETSC_PRAGMA_DIAGNOSTIC_IGNORED_BEGIN_(name, ...) \
+  _Pragma(PetscStringize(name diagnostic push)) \
+  _Pragma(PetscStringize(name diagnostic ignored __VA_ARGS__))
+
+#define PETSC_PRAGMA_DIAGNOSTIC_IGNORED_END_(name) _Pragma(PetscStringize(name diagnostic pop))
+
+#if defined(__clang__)
+  #define PETSC_PRAGMA_DIAGNOSTIC_IGNORED_BEGIN(...) PETSC_PRAGMA_DIAGNOSTIC_IGNORED_BEGIN_(clang, __VA_ARGS__)
+  #define PETSC_PRAGMA_DIAGNOSTIC_IGNORED_END()      PETSC_PRAGMA_DIAGNOSTIC_IGNORED_END_(clang)
+#elif defined(__GNUC__) || defined(__GNUG__)
+  // gcc >= 4.6.0
+  #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) >= 40600
+    #define PETSC_PRAGMA_DIAGNOSTIC_IGNORED_BEGIN(...) PETSC_PRAGMA_DIAGNOSTIC_IGNORED_BEGIN_(GCC, __VA_ARGS__)
+    #define PETSC_PRAGMA_DIAGNOSTIC_IGNORED_END()      PETSC_PRAGMA_DIAGNOSTIC_IGNORED_END_(GCC)
+  #endif
+#endif
+
+#ifndef PETSC_PRAGMA_DIAGNOSTIC_IGNORED_BEGIN
+  #define PETSC_PRAGMA_DIAGNOSTIC_IGNORED_BEGIN(...)
+  #define PETSC_PRAGMA_DIAGNOSTIC_IGNORED_END(...)
+  // only undefine these if they are not used
+  #undef PETSC_PRAGMA_DIAGNOSTIC_IGNORED_BEGIN_
+  #undef PETSC_PRAGMA_DIAGNOSTIC_IGNORED_END_
+#endif
+
+/* OpenMP support */
+#if defined(_OPENMP)
+  #if defined(_MSC_VER)
+    #define PetscPragmaOMP(...) __pragma(__VA_ARGS__)
+  #else
+    #define PetscPragmaOMP(...) _Pragma(PetscStringize(omp __VA_ARGS__))
+  #endif
+#endif
+
+#ifndef PetscPragmaOMP
+  #define PetscPragmaOMP(...)
+#endif
+
+/* PetscPragmaSIMD - from CeedPragmaSIMD */
+#if defined(__NEC__)
+  #define PetscPragmaSIMD _Pragma("_NEC ivdep")
+#elif defined(__INTEL_COMPILER) && !defined(_WIN32)
+  #define PetscPragmaSIMD _Pragma("vector")
+#elif defined(__GNUC__)
+  #if __GNUC__ >= 5 && !defined(__PGI)
+    #define PetscPragmaSIMD _Pragma("GCC ivdep")
+  #endif
+#elif defined(_OPENMP) && _OPENMP >= 201307
+  #define PetscPragmaSIMD PetscPragmaOMP(simd)
+#elif defined(PETSC_HAVE_CRAY_VECTOR)
+  #define PetscPragmaSIMD _Pragma("_CRI ivdep")
+#endif
+
+#ifndef PetscPragmaSIMD
+  #define PetscPragmaSIMD
+#endif
+
+#include <petsc/private/petscadvancedmacros.h>
+
+#define PetscConcat6_(a, b, c, d, e, f) a##b##c##d##e##f
+#define PetscConcat6(a, b, c, d, e, f)  PetscConcat6_(a, b, c, d, e, f)
+
+#define PETSC_DEPRECATED_IDENTIFIER_(__PETSC_DEPRECATION_MACRO__, __SILENCE_MACRO__, major, minor, subminor, replacement, ...) \
+  PetscIfPetscDefined(__SILENCE_MACRO__, PetscExpandToNothing, \
+                      __PETSC_DEPRECATION_MACRO__)(PetscStringize(Use replacement (since version major.minor.subminor) instead. Silence this warning (as well as all others for this version) by defining PetscConcat_(PETSC_, __SILENCE_MACRO__). __VA_ARGS__))
+
+#define PETSC_DEPRECATED_IDENTIFIER(__PETSC_DEPRECATION_MACRO__, major, minor, subminor, ...) \
+  PETSC_DEPRECATED_IDENTIFIER_(__PETSC_DEPRECATION_MACRO__, PetscConcat6(SILENCE_DEPRECATION_WARNINGS_, major, _, minor, _, subminor), major, minor, subminor, __VA_ARGS__)
+
+#define PETSC_DEPRECATED_OBJECT(major, minor, subminor, replacement, ...)   PETSC_DEPRECATED_IDENTIFIER(PETSC_DEPRECATED_OBJECT_BASE, major, minor, subminor, replacement, __VA_ARGS__)
+#define PETSC_DEPRECATED_FUNCTION(major, minor, subminor, replacement, ...) PETSC_DEPRECATED_IDENTIFIER(PETSC_DEPRECATED_FUNCTION_BASE, major, minor, subminor, replacement, __VA_ARGS__)
+#define PETSC_DEPRECATED_TYPEDEF(major, minor, subminor, replacement, ...)  PETSC_DEPRECATED_IDENTIFIER(PETSC_DEPRECATED_TYPEDEF_BASE, major, minor, subminor, replacement, __VA_ARGS__)
+#define PETSC_DEPRECATED_ENUM(major, minor, subminor, replacement, ...)     PETSC_DEPRECATED_IDENTIFIER(PETSC_DEPRECATED_ENUM_BASE, major, minor, subminor, replacement, __VA_ARGS__)
+#define PETSC_DEPRECATED_MACRO(major, minor, subminor, replacement, ...)    PETSC_DEPRECATED_IDENTIFIER(PETSC_DEPRECATED_MACRO_BASE, major, minor, subminor, replacement, __VA_ARGS__)

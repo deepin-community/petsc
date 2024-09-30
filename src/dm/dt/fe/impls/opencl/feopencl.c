@@ -1,4 +1,6 @@
 #include <petsc/private/petscfeimpl.h> /*I "petscfe.h" I*/
+#include <petsc/private/loghandlerimpl.h>
+#include <../src/sys/logging/handler/impls/default/logdefault.h>
 
 #if defined(PETSC_HAVE_OPENCL)
 
@@ -12,7 +14,7 @@ static PetscErrorCode PetscFEDestroy_OpenCL(PetscFE fem)
   PetscCall(clReleaseContext(ocl->ctx_id));
   ocl->ctx_id = 0;
   PetscCall(PetscFree(ocl));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
   #define PetscCallSTR(err) \
@@ -430,7 +432,7 @@ static PetscErrorCode PetscFEOpenCLGenerateIntegrationCode(PetscFE fem, char **s
                                   "  return;\n"
                                   "}\n",
                                   &count));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscFEOpenCLGetIntegrationKernel(PetscFE fem, PetscBool useAux, cl_program *ocl_prog, cl_kernel *ocl_kernel)
@@ -460,7 +462,7 @@ static PetscErrorCode PetscFEOpenCLGetIntegrationKernel(PetscFE fem, PetscBool u
   }
   PetscCall(PetscFree(buffer));
   *ocl_kernel = clCreateKernel(*ocl_prog, "integrateElementQuadrature", &err);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscFEOpenCLCalculateGrid(PetscFE fem, PetscInt N, PetscInt blockSize, size_t *x, size_t *y, size_t *z)
@@ -476,25 +478,25 @@ static PetscErrorCode PetscFEOpenCLCalculateGrid(PetscFE fem, PetscInt N, PetscI
     if (*x * *y == (size_t)Nblocks) break;
   }
   PetscCheck(*x * *y == (size_t)Nblocks, PETSC_COMM_SELF, PETSC_ERR_ARG_SIZ, "Could not find partition for %" PetscInt_FMT " with block size %" PetscInt_FMT, N, blockSize);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscFEOpenCLLogResidual(PetscFE fem, PetscLogDouble time, PetscLogDouble flops)
 {
-  PetscFE_OpenCL   *ocl = (PetscFE_OpenCL *)fem->data;
-  PetscStageLog     stageLog;
-  PetscEventPerfLog eventLog = NULL;
-  int               stage;
+  PetscLogHandler h;
 
   PetscFunctionBegin;
-  PetscCall(PetscLogGetStageLog(&stageLog));
-  PetscCall(PetscStageLogGetCurrent(stageLog, &stage));
-  PetscCall(PetscStageLogGetEventPerfLog(stageLog, stage, &eventLog));
-  /* Log performance info */
-  eventLog->eventInfo[ocl->residualEvent].count++;
-  eventLog->eventInfo[ocl->residualEvent].time += time;
-  eventLog->eventInfo[ocl->residualEvent].flops += flops;
-  PetscFunctionReturn(0);
+  PetscCall(PetscLogGetDefaultHandler(&h));
+  if (h) {
+    PetscEventPerfInfo *eventInfo;
+    PetscFE_OpenCL     *ocl = (PetscFE_OpenCL *)fem->data;
+
+    PetscCall(PetscLogHandlerGetEventPerfInfo(h, PETSC_DEFAULT, ocl->residualEvent, &eventInfo));
+    eventInfo->count++;
+    eventInfo->time += time;
+    eventInfo->flops += flops;
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscFEIntegrateResidual_OpenCL(PetscDS prob, PetscFormKey key, PetscInt Ne, PetscFEGeom *cgeom, const PetscScalar coefficients[], const PetscScalar coefficients_t[], PetscDS probAux, const PetscScalar coefficientsAux[], PetscReal t, PetscScalar elemVec[])
@@ -544,7 +546,7 @@ static PetscErrorCode PetscFEIntegrateResidual_OpenCL(PetscDS prob, PetscFormKey
   ocl = (PetscFE_OpenCL *)fem->data;
   if (!Ne) {
     PetscCall(PetscFEOpenCLLogResidual(fem, 0.0, 0.0));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(PetscFEGetSpatialDimension(fem, &dim));
   PetscCall(PetscFEGetQuadrature(fem, &q));
@@ -561,7 +563,7 @@ static PetscErrorCode PetscFEIntegrateResidual_OpenCL(PetscDS prob, PetscFormKey
   /* Calculate layout */
   if (Ne % (N_cb * N_bc)) { /* Remainder cells */
     PetscCall(PetscFEIntegrateResidual_Basic(prob, key, Ne, cgeom, coefficients, coefficients_t, probAux, coefficientsAux, t, elemVec));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(PetscFEOpenCLCalculateGrid(fem, Ne, N_cb * N_bc, &x, &y, &z));
   local_work_size[0]  = N_bc * N_comp;
@@ -728,7 +730,7 @@ static PetscErrorCode PetscFEIntegrateResidual_OpenCL(PetscDS prob, PetscFormKey
   PetscCall(clReleaseMemObject(o_elemVec));
   PetscCall(clReleaseKernel(ocl_kernel));
   PetscCall(clReleaseProgram(ocl_prog));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_INTERN PetscErrorCode PetscFESetUp_Basic(PetscFE);
@@ -747,7 +749,7 @@ static PetscErrorCode PetscFEInitialize_OpenCL(PetscFE fem)
   fem->ops->integratebdresidual     = NULL /* PetscFEIntegrateBdResidual_OpenCL */;
   fem->ops->integratejacobianaction = NULL /* PetscFEIntegrateJacobianAction_OpenCL */;
   fem->ops->integratejacobian       = PetscFEIntegrateJacobian_Basic;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -793,7 +795,7 @@ PETSC_EXTERN PetscErrorCode PetscFECreate_OpenCL(PetscFE fem)
   ocl->op = LAPLACIAN;
 
   PetscCall(PetscFEInitialize_OpenCL(fem));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -814,7 +816,7 @@ PetscErrorCode PetscFEOpenCLSetRealType(PetscFE fem, PetscDataType realType)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(fem, PETSCFE_CLASSID, 1);
   ocl->realType = realType;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -836,9 +838,9 @@ PetscErrorCode PetscFEOpenCLGetRealType(PetscFE fem, PetscDataType *realType)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(fem, PETSCFE_CLASSID, 1);
-  PetscValidPointer(realType, 2);
+  PetscAssertPointer(realType, 2);
   *realType = ocl->realType;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif /* PETSC_HAVE_OPENCL */

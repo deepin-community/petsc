@@ -1,4 +1,3 @@
-
 static char help[] = "Tests DMLocalToLocalxxx() for DMDA.\n\n";
 
 #include <petscdmda.h>
@@ -70,7 +69,7 @@ int main(int argc, char **argv)
   PetscCall(PetscOptionsGetBool(NULL, NULL, "-save", &flg, NULL));
   if (flg) {
     PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &rank));
-    sprintf(filename, "local.%d", rank);
+    PetscCall(PetscSNPrintf(filename, PETSC_STATIC_ARRAY_LENGTH(filename), "local.%d", rank));
     PetscCall(PetscViewerASCIIOpen(PETSC_COMM_SELF, filename, &viewer));
     PetscCall(PetscViewerASCIIGetPointer(viewer, &file));
     PetscCall(VecView(local, viewer));
@@ -81,7 +80,7 @@ int main(int argc, char **argv)
 
   PetscCall(VecAXPY(local_copy, -1.0, local));
   PetscCall(VecNorm(local_copy, NORM_MAX, &work));
-  PetscCallMPI(MPI_Allreduce(&work, &norm, 1, MPIU_REAL, MPIU_MAX, PETSC_COMM_WORLD));
+  PetscCall(MPIU_Allreduce(&work, &norm, 1, MPIU_REAL, MPIU_MAX, PETSC_COMM_WORLD));
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Norm of difference %g should be zero\n", (double)norm));
 
   PetscCall(VecDestroy(&local_copy));

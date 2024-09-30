@@ -1,4 +1,3 @@
-
 static char help[] = "Tests PetscGetFullPath().\n\n";
 
 #include <petscsys.h>
@@ -13,7 +12,7 @@ PetscErrorCode path_to_unix(char filein[])
   for (i = 0; i < n; i++) {
     if (filein[i] == '\\') filein[i] = '/';
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

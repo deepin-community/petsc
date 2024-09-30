@@ -25,7 +25,7 @@ static PetscErrorCode SNESLineSearchApply_Basic(SNESLineSearch linesearch)
 
   /* postcheck */
   PetscCall(SNESLineSearchPostCheck(linesearch, X, Y, W, &changed_y, &changed_w));
-  if (changed_y) {
+  if (changed_y && !changed_w) {
     PetscCall(VecWAXPY(W, -lambda, Y, X));
     if (linesearch->ops->viproject) PetscCall((*linesearch->ops->viproject)(snes, W));
   }
@@ -34,7 +34,7 @@ static PetscErrorCode SNESLineSearchApply_Basic(SNESLineSearch linesearch)
     PetscCall(SNESGetFunctionDomainError(snes, &domainerror));
     if (domainerror) {
       PetscCall(SNESLineSearchSetReason(linesearch, SNES_LINESEARCH_FAILED_DOMAIN));
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
   }
 
@@ -57,7 +57,7 @@ static PetscErrorCode SNESLineSearchApply_Basic(SNESLineSearch linesearch)
 
   /* copy the solution over */
   PetscCall(VecCopy(W, X));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -77,7 +77,7 @@ static PetscErrorCode SNESLineSearchApply_Basic(SNESLineSearch linesearch)
 
    Level: advanced
 
-.seealso: `SNES`, `SNESLineSearch`, `SNESLineSearchType`, `SNESLineSearchCreate()`, `SNESLineSearchSetType()`, `SNESLineSearchSetDamping()`, `SNESLineSearchSetComputeNorms()`
+.seealso: [](ch_snes), `SNES`, `SNESLineSearch`, `SNESLineSearchType`, `SNESGetLineSearch()`, `SNESLineSearchCreate()`, `SNESLineSearchSetType()`, `SNESLineSearchSetDamping()`, `SNESLineSearchSetComputeNorms()`
 M*/
 PETSC_EXTERN PetscErrorCode SNESLineSearchCreate_Basic(SNESLineSearch linesearch)
 {
@@ -88,5 +88,5 @@ PETSC_EXTERN PetscErrorCode SNESLineSearchCreate_Basic(SNESLineSearch linesearch
   linesearch->ops->reset          = NULL;
   linesearch->ops->view           = NULL;
   linesearch->ops->setup          = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

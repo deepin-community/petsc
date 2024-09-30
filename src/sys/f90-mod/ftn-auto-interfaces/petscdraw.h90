@@ -8,6 +8,18 @@
        PetscBool b ! PetscBool
        PetscErrorCode z
        end subroutine PetscDrawIsNull
+      subroutine PetscDrawClear(a,z)
+       PetscDraw a ! PetscDraw
+       PetscErrorCode z
+       end subroutine PetscDrawClear
+      subroutine PetscDrawBOP(a,z)
+       PetscDraw a ! PetscDraw
+       PetscErrorCode z
+       end subroutine PetscDrawBOP
+      subroutine PetscDrawEOP(a,z)
+       PetscDraw a ! PetscDraw
+       PetscErrorCode z
+       end subroutine PetscDrawEOP
       subroutine PetscDrawSetCoordinates(a,b,c,d,e,z)
        PetscDraw a ! PetscDraw
        PetscReal b ! PetscReal
@@ -33,6 +45,10 @@
        integer f ! int
        PetscErrorCode z
        end subroutine PetscDrawEllipse
+      subroutine PetscDrawFlush(a,z)
+       PetscDraw a ! PetscDraw
+       PetscErrorCode z
+       end subroutine PetscDrawFlush
       subroutine PetscDrawGetBoundingBox(a,b,c,d,e,z)
        PetscDraw a ! PetscDraw
        PetscReal b ! PetscReal
@@ -108,65 +124,6 @@
        PetscDrawMarkerType b ! PetscDrawMarkerType
        PetscErrorCode z
        end subroutine PetscDrawGetMarkerType
-      subroutine PetscDrawPoint(a,b,c,d,z)
-       PetscDraw a ! PetscDraw
-       PetscReal b ! PetscReal
-       PetscReal c ! PetscReal
-       integer d ! int
-       PetscErrorCode z
-       end subroutine PetscDrawPoint
-      subroutine PetscDrawPointPixel(a,b,c,d,z)
-       PetscDraw a ! PetscDraw
-       integer b ! int
-       integer c ! int
-       integer d ! int
-       PetscErrorCode z
-       end subroutine PetscDrawPointPixel
-      subroutine PetscDrawPointSetSize(a,b,z)
-       PetscDraw a ! PetscDraw
-       PetscReal b ! PetscReal
-       PetscErrorCode z
-       end subroutine PetscDrawPointSetSize
-      subroutine PetscDrawRectangle(a,b,c,d,e,f,g,h,i,z)
-       PetscDraw a ! PetscDraw
-       PetscReal b ! PetscReal
-       PetscReal c ! PetscReal
-       PetscReal d ! PetscReal
-       PetscReal e ! PetscReal
-       integer f ! int
-       integer g ! int
-       integer h ! int
-       integer i ! int
-       PetscErrorCode z
-       end subroutine PetscDrawRectangle
-      subroutine PetscDrawStringSetSize(a,b,c,z)
-       PetscDraw a ! PetscDraw
-       PetscReal b ! PetscReal
-       PetscReal c ! PetscReal
-       PetscErrorCode z
-       end subroutine PetscDrawStringSetSize
-      subroutine PetscDrawStringGetSize(a,b,c,z)
-       PetscDraw a ! PetscDraw
-       PetscReal b ! PetscReal
-       PetscReal c ! PetscReal
-       PetscErrorCode z
-       end subroutine PetscDrawStringGetSize
-      subroutine PetscDrawClear(a,z)
-       PetscDraw a ! PetscDraw
-       PetscErrorCode z
-       end subroutine PetscDrawClear
-      subroutine PetscDrawBOP(a,z)
-       PetscDraw a ! PetscDraw
-       PetscErrorCode z
-       end subroutine PetscDrawBOP
-      subroutine PetscDrawEOP(a,z)
-       PetscDraw a ! PetscDraw
-       PetscErrorCode z
-       end subroutine PetscDrawEOP
-      subroutine PetscDrawFlush(a,z)
-       PetscDraw a ! PetscDraw
-       PetscErrorCode z
-       end subroutine PetscDrawFlush
       subroutine PetscDrawGetMouseButton(a,b,c,d,e,f,z)
        PetscDraw a ! PetscDraw
        PetscDrawButton b ! PetscDrawButton
@@ -190,6 +147,25 @@
        PetscReal b ! PetscReal
        PetscErrorCode z
        end subroutine PetscDrawGetPause
+      subroutine PetscDrawPoint(a,b,c,d,z)
+       PetscDraw a ! PetscDraw
+       PetscReal b ! PetscReal
+       PetscReal c ! PetscReal
+       integer d ! int
+       PetscErrorCode z
+       end subroutine PetscDrawPoint
+      subroutine PetscDrawPointPixel(a,b,c,d,z)
+       PetscDraw a ! PetscDraw
+       integer b ! int
+       integer c ! int
+       integer d ! int
+       PetscErrorCode z
+       end subroutine PetscDrawPointPixel
+      subroutine PetscDrawPointSetSize(a,b,z)
+       PetscDraw a ! PetscDraw
+       PetscReal b ! PetscReal
+       PetscErrorCode z
+       end subroutine PetscDrawPointSetSize
       subroutine PetscDrawResizeWindow(a,b,c,z)
        PetscDraw a ! PetscDraw
        integer b ! int
@@ -223,6 +199,18 @@
        PetscDraw a ! PetscDraw
        PetscErrorCode z
        end subroutine PetscDrawSetFromOptions
+      subroutine PetscDrawRectangle(a,b,c,d,e,f,g,h,i,z)
+       PetscDraw a ! PetscDraw
+       PetscReal b ! PetscReal
+       PetscReal c ! PetscReal
+       PetscReal d ! PetscReal
+       PetscReal e ! PetscReal
+       integer f ! int
+       integer g ! int
+       integer h ! int
+       integer i ! int
+       PetscErrorCode z
+       end subroutine PetscDrawRectangle
       subroutine PetscDrawSave(a,z)
        PetscDraw a ! PetscDraw
        PetscErrorCode z
@@ -231,6 +219,18 @@
        PetscDraw a ! PetscDraw
        PetscErrorCode z
        end subroutine PetscDrawSaveMovie
+      subroutine PetscDrawStringSetSize(a,b,c,z)
+       PetscDraw a ! PetscDraw
+       PetscReal b ! PetscReal
+       PetscReal c ! PetscReal
+       PetscErrorCode z
+       end subroutine PetscDrawStringSetSize
+      subroutine PetscDrawStringGetSize(a,b,c,z)
+       PetscDraw a ! PetscDraw
+       PetscReal b ! PetscReal
+       PetscReal c ! PetscReal
+       PetscErrorCode z
+       end subroutine PetscDrawStringGetSize
       subroutine PetscDrawTriangle(a,b,c,d,e,f,g,h,i,j,z)
        PetscDraw a ! PetscDraw
        PetscReal b ! PetscReal
@@ -281,6 +281,47 @@
        PetscDraw a ! PetscDraw
        PetscErrorCode z
        end subroutine PetscDrawSplitViewPort
+      subroutine PetscDrawAxisCreate(a,b,z)
+       PetscDraw a ! PetscDraw
+       PetscDrawAxis b ! PetscDrawAxis
+       PetscErrorCode z
+       end subroutine PetscDrawAxisCreate
+      subroutine PetscDrawAxisDestroy(a,z)
+       PetscDrawAxis a ! PetscDrawAxis
+       PetscErrorCode z
+       end subroutine PetscDrawAxisDestroy
+      subroutine PetscDrawAxisSetColors(a,b,c,d,z)
+       PetscDrawAxis a ! PetscDrawAxis
+       integer b ! int
+       integer c ! int
+       integer d ! int
+       PetscErrorCode z
+       end subroutine PetscDrawAxisSetColors
+      subroutine PetscDrawAxisSetLimits(a,b,c,d,e,z)
+       PetscDrawAxis a ! PetscDrawAxis
+       PetscReal b ! PetscReal
+       PetscReal c ! PetscReal
+       PetscReal d ! PetscReal
+       PetscReal e ! PetscReal
+       PetscErrorCode z
+       end subroutine PetscDrawAxisSetLimits
+      subroutine PetscDrawAxisGetLimits(a,b,c,d,e,z)
+       PetscDrawAxis a ! PetscDrawAxis
+       PetscReal b ! PetscReal
+       PetscReal c ! PetscReal
+       PetscReal d ! PetscReal
+       PetscReal e ! PetscReal
+       PetscErrorCode z
+       end subroutine PetscDrawAxisGetLimits
+      subroutine PetscDrawAxisSetHoldLimits(a,b,z)
+       PetscDrawAxis a ! PetscDrawAxis
+       PetscBool b ! PetscBool
+       PetscErrorCode z
+       end subroutine PetscDrawAxisSetHoldLimits
+      subroutine PetscDrawAxisDraw(a,z)
+       PetscDrawAxis a ! PetscDrawAxis
+       PetscErrorCode z
+       end subroutine PetscDrawAxisDraw
       subroutine PetscDrawBarDraw(a,z)
        PetscDrawBar a ! PetscDrawBar
        PetscErrorCode z
@@ -506,44 +547,3 @@
        PetscDrawLG a ! PetscDrawLG
        PetscErrorCode z
        end subroutine PetscDrawLGSetFromOptions
-      subroutine PetscDrawAxisCreate(a,b,z)
-       PetscDraw a ! PetscDraw
-       PetscDrawAxis b ! PetscDrawAxis
-       PetscErrorCode z
-       end subroutine PetscDrawAxisCreate
-      subroutine PetscDrawAxisDestroy(a,z)
-       PetscDrawAxis a ! PetscDrawAxis
-       PetscErrorCode z
-       end subroutine PetscDrawAxisDestroy
-      subroutine PetscDrawAxisSetColors(a,b,c,d,z)
-       PetscDrawAxis a ! PetscDrawAxis
-       integer b ! int
-       integer c ! int
-       integer d ! int
-       PetscErrorCode z
-       end subroutine PetscDrawAxisSetColors
-      subroutine PetscDrawAxisSetLimits(a,b,c,d,e,z)
-       PetscDrawAxis a ! PetscDrawAxis
-       PetscReal b ! PetscReal
-       PetscReal c ! PetscReal
-       PetscReal d ! PetscReal
-       PetscReal e ! PetscReal
-       PetscErrorCode z
-       end subroutine PetscDrawAxisSetLimits
-      subroutine PetscDrawAxisGetLimits(a,b,c,d,e,z)
-       PetscDrawAxis a ! PetscDrawAxis
-       PetscReal b ! PetscReal
-       PetscReal c ! PetscReal
-       PetscReal d ! PetscReal
-       PetscReal e ! PetscReal
-       PetscErrorCode z
-       end subroutine PetscDrawAxisGetLimits
-      subroutine PetscDrawAxisSetHoldLimits(a,b,z)
-       PetscDrawAxis a ! PetscDrawAxis
-       PetscBool b ! PetscBool
-       PetscErrorCode z
-       end subroutine PetscDrawAxisSetHoldLimits
-      subroutine PetscDrawAxisDraw(a,z)
-       PetscDrawAxis a ! PetscDrawAxis
-       PetscErrorCode z
-       end subroutine PetscDrawAxisDraw

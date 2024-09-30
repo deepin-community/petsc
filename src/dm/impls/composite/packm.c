@@ -1,4 +1,3 @@
-
 #include <../src/dm/impls/composite/packimpl.h> /*I  "petscdmcomposite.h"  I*/
 
 static PetscErrorCode DMCreateMatrix_Composite_Nest(DM dm, Mat *J)
@@ -38,7 +37,7 @@ static PetscErrorCode DMCreateMatrix_Composite_Nest(DM dm, Mat *J)
     if (submats[i]) PetscCall(MatDestroy(&submats[i]));
   }
   PetscCall(PetscFree(submats));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMCreateMatrix_Composite_AIJ(DM dm, Mat *J)
@@ -78,7 +77,7 @@ static PetscErrorCode DMCreateMatrix_Composite_AIJ(DM dm, Mat *J)
     PetscCall(PetscFree2(values, indices));
     PetscCall(MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   PetscCallMPI(MPI_Comm_rank(PetscObjectComm((PetscObject)dm), &rank));
@@ -122,7 +121,7 @@ static PetscErrorCode DMCreateMatrix_Composite_AIJ(DM dm, Mat *J)
   PetscCall(MatSeqAIJSetPreallocation(*J, 0, dnz));
   MatPreallocateEnd(dnz, onz);
 
-  if (dm->prealloc_only) PetscFunctionReturn(0);
+  if (dm->prealloc_only) PetscFunctionReturn(PETSC_SUCCESS);
 
   next = com->next;
   while (next) {
@@ -164,7 +163,7 @@ static PetscErrorCode DMCreateMatrix_Composite_AIJ(DM dm, Mat *J)
   }
   PetscCall(MatAssemblyBegin(*J, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(*J, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateMatrix_Composite(DM dm, Mat *J)
@@ -182,5 +181,5 @@ PetscErrorCode DMCreateMatrix_Composite(DM dm, Mat *J)
   PetscCall(DMGetLocalToGlobalMapping(dm, &ltogmap));
   PetscCall(MatSetLocalToGlobalMapping(*J, ltogmap, ltogmap));
   PetscCall(MatSetDM(*J, dm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

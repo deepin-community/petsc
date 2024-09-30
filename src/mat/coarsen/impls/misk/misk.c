@@ -8,7 +8,6 @@
 #define MIS_REMOVED        -3
 #define MIS_IS_SELECTED(s) (s >= 0)
 
-/* ********************************************************************** */
 /* edge for priority queue */
 typedef struct edge_tag {
   PetscReal weight;
@@ -31,10 +30,9 @@ static PetscErrorCode PetscCoarsenDataView_private(PetscCoarsenData *agg_lists, 
     }
     if (pos2) PetscCall(PetscViewerASCIISynchronizedPrintf(viewer, "\n"));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/* -------------------------------------------------------------------------- */
 /*
   MatCoarsenApply_MISK_private - parallel heavy edge matching
 
@@ -56,7 +54,7 @@ static PetscErrorCode MatCoarsenApply_MISK_private(IS perm, const PetscInt misk,
   PetscFunctionBegin;
   PetscValidHeaderSpecific(perm, IS_CLASSID, 1);
   PetscValidHeaderSpecific(Gmat, MAT_CLASSID, 3);
-  PetscValidPointer(a_locals_llist, 4);
+  PetscAssertPointer(a_locals_llist, 4);
   PetscCheck(misk < 5 && misk > 0, PETSC_COMM_SELF, PETSC_ERR_SUP, "too many/few levels: %d", (int)misk);
   PetscCall(PetscObjectBaseTypeCompare((PetscObject)Gmat, MATMPIAIJ, &isMPI));
   PetscCall(PetscObjectGetComm((PetscObject)Gmat, &comm));
@@ -124,8 +122,8 @@ static PetscErrorCode MatCoarsenApply_MISK_private(IS perm, const PetscInt misk,
     /* set index into cmpressed row 'lid_cprowID' */
     if (matB) {
       for (ix = 0; ix < matB->compressedrow.nrows; ix++) {
-        lid              = matB->compressedrow.rindex[ix];
-        lid_cprowID[lid] = ix;
+        lid = matB->compressedrow.rindex[ix];
+        if (lid >= 0) lid_cprowID[lid] = ix;
       }
     }
     /* MIS */
@@ -300,7 +298,7 @@ static PetscErrorCode MatCoarsenApply_MISK_private(IS perm, const PetscInt misk,
   }
   PetscCall(MatTranspose(Rtot, MAT_INPLACE_MATRIX, &Rtot)); // R now
   PetscCall(MatViewFromOptions(Rtot, NULL, "-misk_aggregation_view"));
-  /* make aggregates with Rtot - could use Rtot directly in theory but have to go through the aggrate list data structure */
+  /* make aggregates with Rtot - could use Rtot directly in theory but have to go through the aggregate list data structure */
   {
     PetscInt          Istart, Iend, ncols, NN, MM, jj = 0, max_osz = 0;
     const PetscInt    nloc = Gmat->rmap->n;
@@ -344,7 +342,7 @@ static PetscErrorCode MatCoarsenApply_MISK_private(IS perm, const PetscInt misk,
     PetscCall(PetscCDSetMat(agg_lists, mat));
   }
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -369,7 +367,7 @@ static PetscErrorCode MatCoarsenApply_MISK(MatCoarsen coarse)
   } else {
     PetscCall(MatCoarsenApply_MISK_private(coarse->perm, (PetscInt)k, mat, &coarse->agg_lists));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatCoarsenView_MISK(MatCoarsen coarse, PetscViewer viewer)
@@ -387,7 +385,7 @@ static PetscErrorCode MatCoarsenView_MISK(MatCoarsen coarse, PetscViewer viewer)
     PetscCall(PetscViewerFlush(viewer));
     PetscCall(PetscViewerASCIIPopSynchronized(viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatCoarsenSetFromOptions_MISK(MatCoarsen coarse, PetscOptionItems *PetscOptionsObject)
@@ -399,7 +397,7 @@ static PetscErrorCode MatCoarsenSetFromOptions_MISK(MatCoarsen coarse, PetscOpti
   PetscCall(PetscOptionsInt("-mat_coarsen_misk_distance", "k distance for MIS", "", k, &k, &flg));
   if (flg) coarse->subctx = (void *)(size_t)k;
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -420,22 +418,22 @@ PETSC_EXTERN PetscErrorCode MatCoarsenCreate_MISK(MatCoarsen coarse)
   coarse->ops->view           = MatCoarsenView_MISK;
   coarse->subctx              = (void *)(size_t)1;
   coarse->ops->setfromoptions = MatCoarsenSetFromOptions_MISK;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatCoarsenMISKSetDistance - the distance to be used by MISK
+  MatCoarsenMISKSetDistance - the distance to be used by MISK
 
-   Collective
+  Collective
 
-   Input Parameters:
-+   coarsen - the coarsen
--   k - the distance
+  Input Parameters:
++ crs - the coarsen
+- k   - the distance
 
-   Options Database Key:
-.   -mat_coarsen_misk_distance <k> - distance for MIS
+  Options Database Key:
+. -mat_coarsen_misk_distance <k> - distance for MIS
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `MATCOARSENMISK`, `MatCoarsen`, `MatCoarseSetFromOptions()`, `MatCoarsenSetType()`, `MatCoarsenRegister()`, `MatCoarsenCreate()`,
           `MatCoarsenDestroy()`, `MatCoarsenSetAdjacency()`, `MatCoarsenMISKGetDistance()`
@@ -445,29 +443,29 @@ PetscErrorCode MatCoarsenMISKSetDistance(MatCoarsen crs, PetscInt k)
 {
   PetscFunctionBegin;
   crs->subctx = (void *)(size_t)k;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   MatCoarsenMISKGetDistance - gets the distance to be used by MISK
+  MatCoarsenMISKGetDistance - gets the distance to be used by MISK
 
-   Collective
+  Collective
 
-   Input Parameter:
-.   coarsen - the coarsen
+  Input Parameter:
+. crs - the coarsen
 
-   Output Parameter:
-.   k - the distance
+  Output Parameter:
+. k - the distance
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `MATCOARSENMISK`, `MatCoarsen`, `MatCoarseSetFromOptions()`, `MatCoarsenSetType()`, `MatCoarsenRegister()`, `MatCoarsenCreate()`,
-          `MatCoarsenDestroy()`, `MatCoarsenSetAdjacency()`, `MatCoarsenMISKGetDistance()`
-          `MatCoarsenGetData()`
+.seealso: `MATCOARSENMISK`, `MatCoarsen`, `MatCoarseSetFromOptions()`, `MatCoarsenSetType()`,
+`MatCoarsenRegister()`, `MatCoarsenCreate()`, `MatCoarsenDestroy()`,
+`MatCoarsenSetAdjacency()`, `MatCoarsenGetData()`
 @*/
 PetscErrorCode MatCoarsenMISKGetDistance(MatCoarsen crs, PetscInt *k)
 {
   PetscFunctionBegin;
   *k = (PetscInt)(size_t)crs->subctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

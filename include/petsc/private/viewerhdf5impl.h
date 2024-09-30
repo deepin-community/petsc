@@ -1,5 +1,4 @@
-#ifndef __VIEWERHDF5IMPL_H
-#define __VIEWERHDF5IMPL_H
+#pragma once
 
 #if defined(H5_VERSION)
   #error "viewerhdf5impl.h must be included *before* any other HDF5 headers"
@@ -48,7 +47,7 @@ typedef struct {
   PetscFileMode             btype;
   hid_t                     file_id;
   hid_t                     dxpl_id;         /* H5P_DATASET_XFER property list controlling raw data transfer (read/write). Properties are modified using H5Pset_dxpl_* functions. */
-  PetscBool                 timestepping;    /* Flag to indicate whether objects are stored by tiem index */
+  PetscBool                 timestepping;    /* Flag to indicate whether objects are stored by time index */
   PetscInt                  timestep;        /* The time index to look for an object at */
   PetscBool                 defTimestepping; /* Default if timestepping attribute is not found. Support for legacy files with no timestepping attribute */
   PetscViewerHDF5GroupList *groups;
@@ -57,8 +56,7 @@ typedef struct {
   PetscBool                 horizontal;     /* store column vectors as blocks (needed for MATDENSE I/O) */
 } PetscViewer_HDF5;
 
-PETSC_EXTERN PetscErrorCode PetscViewerHDF5CheckTimestepping_Internal(PetscViewer, const char[]); /* currently used in src/dm/impls/da/gr2.c so needs to be extern */
-PETSC_INTERN PetscErrorCode PetscViewerHDF5GetGroup_Internal(PetscViewer, const char *[]);
+PETSC_SINGLE_LIBRARY_INTERN PetscErrorCode PetscViewerHDF5CheckTimestepping_Internal(PetscViewer, const char[]); /* currently used in src/dm/impls/da/gr2.c so needs to be extern */
 
   /* DMPlex-specific support */
   #define DMPLEX_STORAGE_VERSION_READING_KEY "_dm_plex_storage_version_reading"
@@ -69,7 +67,6 @@ static inline PetscErrorCode PetscViewerHDF5ResetAttachedDMPlexStorageVersion(Pe
   PetscFunctionBegin;
   PetscCall(PetscObjectCompose((PetscObject)v, DMPLEX_STORAGE_VERSION_READING_KEY, NULL));
   PetscCall(PetscObjectCompose((PetscObject)v, DMPLEX_STORAGE_VERSION_WRITING_KEY, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-#endif
 #endif

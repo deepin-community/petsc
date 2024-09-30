@@ -9,18 +9,18 @@ const char *const PetscBuildTwoSidedTypes[] = {"ALLREDUCE", "IBARRIER", "REDSCAT
 static PetscBuildTwoSidedType _twosided_type = PETSC_BUILDTWOSIDED_NOTSET;
 
 /*@
-   PetscCommBuildTwoSidedSetType - set algorithm to use when building two-sided communication
+  PetscCommBuildTwoSidedSetType - set algorithm to use when building two-sided communication
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  comm - `PETSC_COMM_WORLD`
--  twosided - algorithm to use in subsequent calls to `PetscCommBuildTwoSided()`
+  Input Parameters:
++ comm     - `PETSC_COMM_WORLD`
+- twosided - algorithm to use in subsequent calls to `PetscCommBuildTwoSided()`
 
-   Level: developer
+  Level: developer
 
-   Note:
-   This option is currently global, but could be made per-communicator.
+  Note:
+  This option is currently global, but could be made per-communicator.
 
 .seealso: `PetscCommBuildTwoSided()`, `PetscCommBuildTwoSidedGetType()`, `PetscBuildTwoSidedType`
 @*/
@@ -35,19 +35,19 @@ PetscErrorCode PetscCommBuildTwoSidedSetType(MPI_Comm comm, PetscBuildTwoSidedTy
     PetscCheck(-b2[0] == b2[1], comm, PETSC_ERR_ARG_WRONG, "Enum value must be same on all processes");
   }
   _twosided_type = twosided;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscCommBuildTwoSidedGetType - get algorithm used when building two-sided communication
+  PetscCommBuildTwoSidedGetType - get algorithm used when building two-sided communication
 
-   Logically Collective
+  Logically Collective
 
-   Output Parameters:
-+  comm - communicator on which to query algorithm
--  twosided - algorithm to use for `PetscCommBuildTwoSided()`
+  Output Parameters:
++ comm     - communicator on which to query algorithm
+- twosided - algorithm to use for `PetscCommBuildTwoSided()`
 
-   Level: developer
+  Level: developer
 
 .seealso: `PetscCommBuildTwoSided()`, `PetscCommBuildTwoSidedSetType()`, `PetscBuildTwoSidedType`
 @*/
@@ -66,7 +66,7 @@ PetscErrorCode PetscCommBuildTwoSidedGetType(MPI_Comm comm, PetscBuildTwoSidedTy
     PetscCall(PetscOptionsGetEnum(NULL, NULL, "-build_twosided", PetscBuildTwoSidedTypes, (PetscEnum *)&_twosided_type, NULL));
   }
   *twosided = _twosided_type;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_MPI_NONBLOCKING_COLLECTIVES)
@@ -126,7 +126,7 @@ static PetscErrorCode PetscCommBuildTwoSided_Ibarrier(MPI_Comm comm, PetscMPIInt
   PetscCall(PetscSegBufferExtractAlloc(segdata, fromdata));
   PetscCall(PetscSegBufferDestroy(&segdata));
   PetscCall(PetscCommDestroy(&comm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
@@ -135,7 +135,7 @@ static PetscErrorCode PetscCommBuildTwoSided_Allreduce(MPI_Comm comm, PetscMPIIn
   PetscMPIInt       size, rank, *iflags, nrecvs, tag, *franks, i, flg;
   MPI_Aint          lb, unitbytes;
   char             *tdata, *fdata;
-  MPI_Request      *reqs, *sendreqs;
+  MPI_Request      *reqs, *sendreqs = NULL;
   MPI_Status       *statuses;
   PetscCommCounter *counter;
 
@@ -160,7 +160,7 @@ static PetscErrorCode PetscCommBuildTwoSided_Allreduce(MPI_Comm comm, PetscMPIIn
   PetscCall(PetscMalloc(nrecvs * count * unitbytes, &fdata));
   tdata = (char *)todata;
   PetscCall(PetscMalloc2(nto + nrecvs, &reqs, nto + nrecvs, &statuses));
-  sendreqs = reqs + nrecvs;
+  if (nto) sendreqs = reqs + nrecvs;
   for (i = 0; i < nrecvs; i++) PetscCallMPI(MPI_Irecv((void *)(fdata + count * unitbytes * i), count, dtype, MPI_ANY_SOURCE, tag, comm, reqs + i));
   for (i = 0; i < nto; i++) PetscCallMPI(MPI_Isend((void *)(tdata + count * unitbytes * i), count, dtype, toranks[i], tag, comm, sendreqs + i));
   PetscCallMPI(MPI_Waitall(nto + nrecvs, reqs, statuses));
@@ -172,7 +172,7 @@ static PetscErrorCode PetscCommBuildTwoSided_Allreduce(MPI_Comm comm, PetscMPIIn
   *nfrom             = nrecvs;
   *fromranks         = franks;
   *(void **)fromdata = fdata;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_MPI_REDUCE_SCATTER_BLOCK)
@@ -216,42 +216,39 @@ static PetscErrorCode PetscCommBuildTwoSided_RedScatter(MPI_Comm comm, PetscMPII
   *nfrom             = nrecvs;
   *fromranks         = franks;
   *(void **)fromdata = fdata;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
 /*@C
-   PetscCommBuildTwoSided - discovers communicating ranks given one-sided information, moving constant-sized data in the process (often message lengths)
+  PetscCommBuildTwoSided - discovers communicating ranks given one-sided information, moving constant-sized data in the process (often message lengths)
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  comm - communicator
-.  count - number of entries to send/receive (must match on all ranks)
-.  dtype - datatype to send/receive from each rank (must match on all ranks)
-.  nto - number of ranks to send data to
-.  toranks - ranks to send to (array of length nto)
--  todata - data to send to each rank (packed)
+  Input Parameters:
++ comm    - communicator
+. count   - number of entries to send/receive (must match on all ranks)
+. dtype   - datatype to send/receive from each rank (must match on all ranks)
+. nto     - number of ranks to send data to
+. toranks - ranks to send to (array of length nto)
+- todata  - data to send to each rank (packed)
 
-   Output Parameters:
-+  nfrom - number of ranks receiving messages from
-.  fromranks - ranks receiving messages from (length nfrom; caller should `PetscFree()`)
--  fromdata - packed data from each rank, each with count entries of type dtype (length nfrom, caller responsible for `PetscFree()`)
+  Output Parameters:
++ nfrom     - number of ranks receiving messages from
+. fromranks - ranks receiving messages from (length `nfrom`, caller should `PetscFree()`)
+- fromdata  - packed data from each rank, each with count entries of type dtype (length nfrom, caller responsible for `PetscFree()`)
 
-   Level: developer
+  Options Database Key:
+. -build_twosided <allreduce|ibarrier|redscatter> - algorithm to set up two-sided communication. Default is allreduce for communicators with <= 1024 ranks,
+                                                    otherwise ibarrier.
 
-   Options Database Key:
-.  -build_twosided <allreduce|ibarrier|redscatter> - algorithm to set up two-sided communication. Default is allreduce for communicators with <= 1024 ranks, otherwise ibarrier.
+  Level: developer
 
-   Notes:
-   This memory-scalable interface is an alternative to calling `PetscGatherNumberOfMessages()` and
-   `PetscGatherMessageLengths()`, possibly with a subsequent round of communication to send other constant-size data.
+  Notes:
+  This memory-scalable interface is an alternative to calling `PetscGatherNumberOfMessages()` and
+  `PetscGatherMessageLengths()`, possibly with a subsequent round of communication to send other constant-size data, see {cite}`hoeflersiebretlumsdaine10`.
 
-   Basic data types as well as contiguous types are supported, but non-contiguous (e.g., strided) types are not.
-
-   References:
-.  * - Hoefler, Siebert and Lumsdaine, The MPI_Ibarrier implementation uses the algorithm in
-   Scalable communication protocols for dynamic sparse data exchange, 2010.
+  Basic data types as well as contiguous types are supported, but non-contiguous (e.g., strided) types are not.
 
 .seealso: `PetscGatherNumberOfMessages()`, `PetscGatherMessageLengths()`, `PetscCommBuildTwoSidedSetType()`, `PetscCommBuildTwoSidedType`
 @*/
@@ -286,7 +283,7 @@ PetscErrorCode PetscCommBuildTwoSided(MPI_Comm comm, PetscMPIInt count, MPI_Data
     SETERRQ(comm, PETSC_ERR_PLIB, "Unknown method for building two-sided communication");
   }
   PetscCall(PetscLogEventEnd(PETSC_BuildTwoSided, 0, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscCommBuildTwoSidedFReq_Reference(MPI_Comm comm, PetscMPIInt count, MPI_Datatype dtype, PetscMPIInt nto, const PetscMPIInt *toranks, const void *todata, PetscMPIInt *nfrom, PetscMPIInt **fromranks, void *fromdata, PetscMPIInt ntags, MPI_Request **toreqs, MPI_Request **fromreqs, PetscErrorCode (*send)(MPI_Comm, const PetscMPIInt[], PetscMPIInt, PetscMPIInt, void *, MPI_Request[], void *), PetscErrorCode (*recv)(MPI_Comm, const PetscMPIInt[], PetscMPIInt, void *, MPI_Request[], void *), void *ctx)
@@ -323,7 +320,7 @@ static PetscErrorCode PetscCommBuildTwoSidedFReq_Reference(MPI_Comm comm, PetscM
   PetscCall(PetscCommDestroy(&comm));
   *toreqs   = sendreq;
   *fromreqs = recvreq;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_MPI_NONBLOCKING_COLLECTIVES)
@@ -404,43 +401,39 @@ static PetscErrorCode PetscCommBuildTwoSidedFReq_Ibarrier(MPI_Comm comm, PetscMP
   PetscCall(PetscFree(sendreqs));
   PetscCall(PetscFree(tags));
   PetscCall(PetscCommDestroy(&comm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
 /*@C
-   PetscCommBuildTwoSidedF - discovers communicating ranks given one-sided information, calling user-defined functions during rendezvous
+  PetscCommBuildTwoSidedF - discovers communicating ranks given one-sided information, calling user-defined functions during rendezvous
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  comm - communicator
-.  count - number of entries to send/receive in initial rendezvous (must match on all ranks)
-.  dtype - datatype to send/receive from each rank (must match on all ranks)
-.  nto - number of ranks to send data to
-.  toranks - ranks to send to (array of length nto)
-.  todata - data to send to each rank (packed)
-.  ntags - number of tags needed by send/recv callbacks
-.  send - callback invoked on sending process when ready to send primary payload
-.  recv - callback invoked on receiving process after delivery of rendezvous message
--  ctx - context for callbacks
+  Input Parameters:
++ comm    - communicator
+. count   - number of entries to send/receive in initial rendezvous (must match on all ranks)
+. dtype   - datatype to send/receive from each rank (must match on all ranks)
+. nto     - number of ranks to send data to
+. toranks - ranks to send to (array of length nto)
+. todata  - data to send to each rank (packed)
+. ntags   - number of tags needed by send/recv callbacks
+. send    - callback invoked on sending process when ready to send primary payload
+. recv    - callback invoked on receiving process after delivery of rendezvous message
+- ctx     - context for callbacks
 
-   Output Parameters:
-+  nfrom - number of ranks receiving messages from
-.  fromranks - ranks receiving messages from (length nfrom; caller should `PetscFree()`)
--  fromdata - packed data from each rank, each with count entries of type dtype (length nfrom, caller responsible for `PetscFree()`)
+  Output Parameters:
++ nfrom     - number of ranks receiving messages from
+. fromranks - ranks receiving messages from (length nfrom; caller should `PetscFree()`)
+- fromdata  - packed data from each rank, each with count entries of type dtype (length nfrom, caller responsible for `PetscFree()`)
 
-   Level: developer
+  Level: developer
 
-   Notes:
-   This memory-scalable interface is an alternative to calling `PetscGatherNumberOfMessages()` and
-   `PetscGatherMessageLengths()`, possibly with a subsequent round of communication to send other data.
+  Notes:
+  This memory-scalable interface is an alternative to calling `PetscGatherNumberOfMessages()` and
+  `PetscGatherMessageLengths()`, possibly with a subsequent round of communication to send other data, {cite}`hoeflersiebretlumsdaine10`.
 
-   Basic data types as well as contiguous types are supported, but non-contiguous (e.g., strided) types are not.
-
-   References:
-.  * - Hoefler, Siebert and Lumsdaine, The MPI_Ibarrier implementation uses the algorithm in
-   Scalable communication protocols for dynamic sparse data exchange, 2010.
+  Basic data types as well as contiguous types are supported, but non-contiguous (e.g., strided) types are not.
 
 .seealso: `PetscCommBuildTwoSided()`, `PetscCommBuildTwoSidedFReq()`, `PetscGatherNumberOfMessages()`, `PetscGatherMessageLengths()`
 @*/
@@ -454,44 +447,40 @@ PetscErrorCode PetscCommBuildTwoSidedF(MPI_Comm comm, PetscMPIInt count, MPI_Dat
   PetscCallMPI(MPI_Waitall(*nfrom * ntags, fromreqs, MPI_STATUSES_IGNORE));
   PetscCall(PetscFree(toreqs));
   PetscCall(PetscFree(fromreqs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscCommBuildTwoSidedFReq - discovers communicating ranks given one-sided information, calling user-defined functions during rendezvous, returns requests
+  PetscCommBuildTwoSidedFReq - discovers communicating ranks given one-sided information, calling user-defined functions during rendezvous, returns requests
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  comm - communicator
-.  count - number of entries to send/receive in initial rendezvous (must match on all ranks)
-.  dtype - datatype to send/receive from each rank (must match on all ranks)
-.  nto - number of ranks to send data to
-.  toranks - ranks to send to (array of length nto)
-.  todata - data to send to each rank (packed)
-.  ntags - number of tags needed by send/recv callbacks
-.  send - callback invoked on sending process when ready to send primary payload
-.  recv - callback invoked on receiving process after delivery of rendezvous message
--  ctx - context for callbacks
+  Input Parameters:
++ comm    - communicator
+. count   - number of entries to send/receive in initial rendezvous (must match on all ranks)
+. dtype   - datatype to send/receive from each rank (must match on all ranks)
+. nto     - number of ranks to send data to
+. toranks - ranks to send to (array of length nto)
+. todata  - data to send to each rank (packed)
+. ntags   - number of tags needed by send/recv callbacks
+. send    - callback invoked on sending process when ready to send primary payload
+. recv    - callback invoked on receiving process after delivery of rendezvous message
+- ctx     - context for callbacks
 
-   Output Parameters:
-+  nfrom - number of ranks receiving messages from
-.  fromranks - ranks receiving messages from (length nfrom; caller should `PetscFree()`)
-.  fromdata - packed data from each rank, each with count entries of type dtype (length nfrom, caller responsible for `PetscFree()`)
-.  toreqs - array of nto*ntags sender requests (caller must wait on these, then `PetscFree()`)
--  fromreqs - array of nfrom*ntags receiver requests (caller must wait on these, then `PetscFree()`)
+  Output Parameters:
++ nfrom     - number of ranks receiving messages from
+. fromranks - ranks receiving messages from (length nfrom; caller should `PetscFree()`)
+. fromdata  - packed data from each rank, each with count entries of type dtype (length nfrom, caller responsible for `PetscFree()`)
+. toreqs    - array of nto*ntags sender requests (caller must wait on these, then `PetscFree()`)
+- fromreqs  - array of nfrom*ntags receiver requests (caller must wait on these, then `PetscFree()`)
 
-   Level: developer
+  Level: developer
 
-   Notes:
-   This memory-scalable interface is an alternative to calling `PetscGatherNumberOfMessages()` and
-   `PetscGatherMessageLengths()`, possibly with a subsequent round of communication to send other data.
+  Notes:
+  This memory-scalable interface is an alternative to calling `PetscGatherNumberOfMessages()` and
+  `PetscGatherMessageLengths()`, possibly with a subsequent round of communication to send other data, {cite}`hoeflersiebretlumsdaine10`.
 
-   Basic data types as well as contiguous types are supported, but non-contiguous (e.g., strided) types are not.
-
-   References:
-.  * - Hoefler, Siebert and Lumsdaine, The MPI_Ibarrier implementation uses the algorithm in
-   Scalable communication protocols for dynamic sparse data exchange, 2010.
+  Basic data types as well as contiguous types are supported, but non-contiguous (e.g., strided) types are not.
 
 .seealso: `PetscCommBuildTwoSided()`, `PetscCommBuildTwoSidedF()`, `PetscGatherNumberOfMessages()`, `PetscGatherMessageLengths()`
 @*/
@@ -525,5 +514,5 @@ PetscErrorCode PetscCommBuildTwoSidedFReq(MPI_Comm comm, PetscMPIInt count, MPI_
   }
   PetscCall((*f)(comm, count, dtype, nto, toranks, todata, nfrom, fromranks, fromdata, ntags, toreqs, fromreqs, send, recv, ctx));
   PetscCall(PetscLogEventEnd(PETSC_BuildTwoSidedF, 0, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

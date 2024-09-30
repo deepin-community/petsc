@@ -29,9 +29,9 @@ extern void PetscRmPointer(void*);
 
 #include "petscvec.h"
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define vecchop_ VECCHOP
+#define vecfilter_ VECFILTER
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define vecchop_ vecchop
+#define vecfilter_ vecfilter
 #endif
 
 
@@ -39,9 +39,9 @@ extern void PetscRmPointer(void*);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-PETSC_EXTERN void  vecchop_(Vec v,PetscReal *tol, int *__ierr)
+PETSC_EXTERN void  vecfilter_(Vec v,PetscReal *tol, int *__ierr)
 {
-*__ierr = VecChop(
+*__ierr = VecFilter(
 	(Vec)PetscToPointer((v) ),*tol);
 }
 #if defined(__cplusplus)

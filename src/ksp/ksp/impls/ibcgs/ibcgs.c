@@ -1,4 +1,3 @@
-
 #include <petsc/private/kspimpl.h>
 #include <petsc/private/vecimpl.h>
 
@@ -10,7 +9,7 @@ static PetscErrorCode KSPSetUp_IBCGS(KSP ksp)
   PetscCall(PCGetDiagonalScale(ksp->pc, &diagonalscale));
   PetscCheck(!diagonalscale, PetscObjectComm((PetscObject)ksp), PETSC_ERR_SUP, "Krylov method %s does not support diagonal scaling", ((PetscObject)ksp)->type_name);
   PetscCall(KSPSetWorkVecs(ksp, 9));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -44,7 +43,7 @@ static PetscErrorCode KSPSolve_IBCGS(KSP ksp)
 #if defined(PETSC_HAVE_MPI_LONG_DOUBLE) && !defined(PETSC_USE_COMPLEX) && (defined(PETSC_USE_REAL_SINGLE) || defined(PETSC_USE_REAL_DOUBLE))
   /* Because of possible instabilities in the algorithm (as indicated by different residual histories for the same problem
      on the same number of processes  with different runs) we support computing the inner products using Intel's 80 bit arithmetic
-     rather than just 64 bit. Thus we copy our double precision values into long doubles (hoping this keeps the 16 extra bits)
+     rather than just 64-bit. Thus we copy our double precision values into long doubles (hoping this keeps the 16 extra bits)
      and tell MPI to do its ALlreduces with MPI_LONG_DOUBLE.
 
      Note for developers that does not effect the code. Intel's long double is implemented by storing the 80 bits of extended double
@@ -120,7 +119,7 @@ static PetscErrorCode KSPSolve_IBCGS(KSP ksp)
   }
   PetscCall(KSPMonitor(ksp, 0, rnorm));
   PetscCall((*ksp->converged)(ksp, 0, rnorm, &ksp->reason, ksp->cnvP));
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(VecCopy(Rn_1, R0));
 
@@ -161,7 +160,7 @@ static PetscErrorCode KSPSolve_IBCGS(KSP ksp)
     if (taun == 0.0) {
       PetscCheck(!ksp->errorifnotconverged, PetscObjectComm((PetscObject)ksp), PETSC_ERR_NOT_CONVERGED, "KSPSolve has not converged due to taun is zero, iteration %" PetscInt_FMT, ksp->its);
       ksp->reason = KSP_DIVERGED_NANORINF;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
     alphan = rhon / taun;
     PetscCall(PetscLogFlops(15.0));
@@ -249,12 +248,12 @@ static PetscErrorCode KSPSolve_IBCGS(KSP ksp)
     if (kappan == 0.0) {
       PetscCheck(!ksp->errorifnotconverged, PetscObjectComm((PetscObject)ksp), PETSC_ERR_NOT_CONVERGED, "KSPSolve has not converged due to kappan is zero, iteration %" PetscInt_FMT, ksp->its);
       ksp->reason = KSP_DIVERGED_NANORINF;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
     if (thetan == 0.0) {
       PetscCheck(!ksp->errorifnotconverged, PetscObjectComm((PetscObject)ksp), PETSC_ERR_NOT_CONVERGED, "KSPSolve has not converged due to thetan is zero, iteration %" PetscInt_FMT, ksp->its);
       ksp->reason = KSP_DIVERGED_NANORINF;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
     omegan = thetan / kappan;
     sigman = gamman - omegan * etan;
@@ -286,7 +285,7 @@ static PetscErrorCode KSPSolve_IBCGS(KSP ksp)
     PetscCall((*ksp->converged)(ksp, ksp->its, rnorm, &ksp->reason, ksp->cnvP));
     if (ksp->reason) {
       PetscCall(KSPUnwindPreconditioner(ksp, Xn, Tn));
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
 
     /* un = A*rn */
@@ -303,12 +302,12 @@ static PetscErrorCode KSPSolve_IBCGS(KSP ksp)
   }
   if (ksp->its >= ksp->max_it) ksp->reason = KSP_DIVERGED_ITS;
   PetscCall(KSPUnwindPreconditioner(ksp, Xn, Tn));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPIBCGS - Implements the IBiCGStab (Improved Stabilized version of BiConjugate Gradient) method
-            in an alternative form to have only a single global reduction operation instead of the usual 3 (or 4)
+   KSPIBCGS - Implements the IBiCGStab (Improved Stabilized version of BiConjugate Gradient) method {cite}`yang:brent:2002`
+   in an alternative form to have only a single global reduction operation instead of the usual 3 (or 4)
 
    Level: beginner
 
@@ -327,12 +326,7 @@ static PetscErrorCode KSPSolve_IBCGS(KSP ksp)
 
    This is not supported for complex numbers.
 
-   Reference:
-   The Improved BiCGStab Method for Large and Sparse Unsymmetric Linear Systems on Parallel Distributed Memory
-                     Architectures. L. T. Yang and R. Brent, Proceedings of the Fifth International Conference on Algorithms and
-                     Architectures for Parallel Processing, 2002, IEEE.
-
-.seealso: [](chapter_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPBICG`, `KSPBCGSL`, `KSPIBCGS`, `KSPSetLagNorm()`
+.seealso: [](ch_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPBICG`, `KSPBCGSL`, `KSPIBCGS`, `KSPSetLagNorm()`
 M*/
 
 PETSC_EXTERN PetscErrorCode KSPCreate_IBCGS(KSP ksp)
@@ -353,6 +347,6 @@ PETSC_EXTERN PetscErrorCode KSPCreate_IBCGS(KSP ksp)
 #if defined(PETSC_USE_COMPLEX)
   SETERRQ(PetscObjectComm((PetscObject)ksp), PETSC_ERR_SUP, "This is not supported for complex numbers");
 #else
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 #endif
 }

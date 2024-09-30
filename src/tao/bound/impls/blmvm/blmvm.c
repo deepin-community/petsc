@@ -27,7 +27,7 @@ static PetscErrorCode TaoSolve_BLMVM(Tao tao)
   PetscCall(TaoLogConvergenceHistory(tao, f, gnorm, 0.0, tao->ksp_its));
   PetscCall(TaoMonitor(tao, tao->niter, f, gnorm, 0.0, stepsize));
   PetscUseTypeMethod(tao, convergencetest, tao->cnvP);
-  if (tao->reason != TAO_CONTINUE_ITERATING) PetscFunctionReturn(0);
+  if (tao->reason != TAO_CONTINUE_ITERATING) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Set counter for gradient/reset steps */
   if (!blmP->recycle) {
@@ -112,7 +112,7 @@ static PetscErrorCode TaoSolve_BLMVM(Tao tao)
     PetscCall(TaoMonitor(tao, tao->niter, f, gnorm, 0.0, stepsize));
     PetscUseTypeMethod(tao, convergencetest, tao->cnvP);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoSetup_BLMVM(Tao tao)
@@ -131,7 +131,7 @@ static PetscErrorCode TaoSetup_BLMVM(Tao tao)
 
   /* If the user has set a matrix to solve as the initial H0, set the options prefix here, and set up the KSP */
   if (blmP->H0) PetscCall(MatLMVMSetJ0(blmP->M, blmP->H0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ---------------------------------------------------------- */
@@ -146,9 +146,9 @@ static PetscErrorCode TaoDestroy_BLMVM(Tao tao)
     PetscCall(VecDestroy(&blmP->Gold));
   }
   PetscCall(MatDestroy(&blmP->M));
-  if (blmP->H0) PetscObjectDereference((PetscObject)blmP->H0);
+  if (blmP->H0) PetscCall(PetscObjectDereference((PetscObject)blmP->H0));
   PetscCall(PetscFree(tao->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*------------------------------------------------------------*/
@@ -166,7 +166,7 @@ static PetscErrorCode TaoSetFromOptions_BLMVM(Tao tao, PetscOptionItems *PetscOp
   PetscCall(MatSetFromOptions(blmP->M));
   PetscCall(MatIsSPDKnown(blmP->M, &is_set, &is_spd));
   PetscCheck(is_set && is_spd, PetscObjectComm((PetscObject)tao), PETSC_ERR_ARG_INCOMP, "LMVM matrix must be symmetric positive-definite");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*------------------------------------------------------------*/
@@ -183,7 +183,7 @@ static PetscErrorCode TaoView_BLMVM(Tao tao, PetscViewer viewer)
     PetscCall(MatView(lmP->M, viewer));
     PetscCall(PetscViewerPopFormat(viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoComputeDual_BLMVM(Tao tao, Vec DXL, Vec DXU)
@@ -204,19 +204,21 @@ static PetscErrorCode TaoComputeDual_BLMVM(Tao tao, Vec DXL, Vec DXU)
   PetscCall(VecCopy(blm->unprojected_gradient, DXU));
   PetscCall(VecAXPY(DXU, -1.0, tao->gradient));
   PetscCall(VecAXPY(DXU, 1.0, DXL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ---------------------------------------------------------- */
 /*MC
   TAOBLMVM - Bounded limited memory variable metric is a quasi-Newton method
          for nonlinear minimization with bound constraints. It is an extension
-         of TAOLMVM
+         of `TAOLMVM`
 
-  Options Database Keys:
-.     -tao_lmm_recycle - enable recycling of LMVM information between subsequent TaoSolve calls
+  Options Database Key:
+.     -tao_lmm_recycle - enable recycling of LMVM information between subsequent `TaoSolve()` calls
 
   Level: beginner
+
+.seealso: `Tao`, `TAOLMVM`, `TAOBLMVM`, `TaoLMVMGetH0()`, `TaoLMVMGetH0KSP()`
 M*/
 PETSC_EXTERN PetscErrorCode TaoCreate_BLMVM(Tao tao)
 {
@@ -249,17 +251,19 @@ PETSC_EXTERN PetscErrorCode TaoCreate_BLMVM(Tao tao)
   PetscCall(MatCreate(((PetscObject)tao)->comm, &blmP->M));
   PetscCall(MatSetType(blmP->M, MATLMVMBFGS));
   PetscCall(PetscObjectIncrementTabLevel((PetscObject)blmP->M, (PetscObject)tao, 1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  TaoLMVMRecycle - Enable/disable recycling of the QN history between subsequent TaoSolve calls.
+  TaoLMVMRecycle - Enable/disable recycling of the QN history between subsequent `TaoSolve()` calls.
 
   Input Parameters:
-+  tao  - the Tao solver context
--  flg - Boolean flag for recycling (PETSC_TRUE or PETSC_FALSE)
++ tao - the `Tao` solver context
+- flg - Boolean flag for recycling (`PETSC_TRUE` or `PETSC_FALSE`)
 
   Level: intermediate
+
+.seealso: `Tao`, `TAOLMVM`, `TAOBLMVM`
 @*/
 PetscErrorCode TaoLMVMRecycle(Tao tao, PetscBool flg)
 {
@@ -277,19 +281,19 @@ PetscErrorCode TaoLMVMRecycle(Tao tao, PetscBool flg)
     blmP          = (TAO_BLMVM *)tao->data;
     blmP->recycle = flg;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   TaoLMVMSetH0 - Set the initial Hessian for the QN approximation
 
   Input Parameters:
-+  tao  - the Tao solver context
--  H0 - Mat object for the initial Hessian
++ tao - the `Tao` solver context
+- H0  - `Mat` object for the initial Hessian
 
   Level: advanced
 
-.seealso: `TaoLMVMGetH0()`, `TaoLMVMGetH0KSP()`
+.seealso: `Tao`, `TAOLMVM`, `TAOBLMVM`, `TaoLMVMGetH0()`, `TaoLMVMGetH0KSP()`
 @*/
 PetscErrorCode TaoLMVMSetH0(Tao tao, Mat H0)
 {
@@ -309,21 +313,21 @@ PetscErrorCode TaoLMVMSetH0(Tao tao, Mat H0)
     PetscCall(PetscObjectReference((PetscObject)H0));
     blmP->H0 = H0;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   TaoLMVMGetH0 - Get the matrix object for the QN initial Hessian
 
-  Input Parameters:
-.  tao  - the Tao solver context
+  Input Parameter:
+. tao - the `Tao` solver context
 
-  Output Parameters:
-.  H0 - Mat object for the initial Hessian
+  Output Parameter:
+. H0 - `Mat` object for the initial Hessian
 
   Level: advanced
 
-.seealso: `TaoLMVMSetH0()`, `TaoLMVMGetH0KSP()`
+.seealso: `Tao`, `TAOLMVM`, `TAOBLMVM`, `TaoLMVMSetH0()`, `TaoLMVMGetH0KSP()`
 @*/
 PetscErrorCode TaoLMVMGetH0(Tao tao, Mat *H0)
 {
@@ -343,21 +347,21 @@ PetscErrorCode TaoLMVMGetH0(Tao tao, Mat *H0)
     M    = blmP->M;
   } else SETERRQ(PetscObjectComm((PetscObject)tao), PETSC_ERR_ARG_WRONG, "This routine applies to TAO_LMVM and TAO_BLMVM.");
   PetscCall(MatLMVMGetJ0(M, H0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   TaoLMVMGetH0KSP - Get the iterative solver for applying the inverse of the QN initial Hessian
 
-  Input Parameters:
-.  tao  - the Tao solver context
+  Input Parameter:
+. tao - the `Tao` solver context
 
-  Output Parameters:
-.  ksp - KSP solver context for the initial Hessian
+  Output Parameter:
+. ksp - `KSP` solver context for the initial Hessian
 
   Level: advanced
 
-.seealso: `TaoLMVMGetH0()`, `TaoLMVMGetH0KSP()`
+.seealso: `Tao`, `TAOLMVM`, `TAOBLMVM`, `TaoLMVMGetH0()`
 @*/
 PetscErrorCode TaoLMVMGetH0KSP(Tao tao, KSP *ksp)
 {
@@ -377,5 +381,5 @@ PetscErrorCode TaoLMVMGetH0KSP(Tao tao, KSP *ksp)
     M    = blmP->M;
   } else SETERRQ(PetscObjectComm((PetscObject)tao), PETSC_ERR_ARG_WRONG, "This routine applies to TAO_LMVM and TAO_BLMVM.");
   PetscCall(MatLMVMGetJ0KSP(M, ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

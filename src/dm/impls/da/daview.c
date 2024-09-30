@@ -1,4 +1,3 @@
-
 /*
   Code for manipulating distributed regular arrays in parallel.
 */
@@ -36,7 +35,7 @@ PetscErrorCode DMView_DA_Matlab(DM da, PetscViewer viewer)
     PetscCall(PetscObjectName((PetscObject)da));
     PetscCall(PetscViewerMatlabPutVariable(viewer, ((PetscObject)da)->name, mx));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
@@ -73,7 +72,7 @@ PetscErrorCode DMView_DA_Binary(DM da, PetscViewer viewer)
 
   /* save the coordinates if they exist to disk (in the natural ordering) */
   if (coordinates) PetscCall(VecView(coordinates, viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMView_DA_VTK(DM da, PetscViewer viewer)
@@ -106,38 +105,38 @@ PetscErrorCode DMView_DA_VTK(DM da, PetscViewer viewer)
     PetscCall(PetscViewerPopFormat(viewer));
     PetscCall(VecDestroy(&natural));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDAGetInfo - Gets information about a given distributed array.
+  DMDAGetInfo - Gets information about a given distributed array.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  da - the distributed array
+  Input Parameter:
+. da - the distributed array
 
-   Output Parameters:
-+  dim      - dimension of the distributed array (1, 2, or 3)
-.  M        - global dimension in first direction of the array
-.  N        - global dimension in second direction of the array
-.  P        - global dimension in third direction of the array
-.  m        - corresponding number of procs in first dimension
-.  n        - corresponding number of procs in second dimension
-.  p        - corresponding number of procs in third dimension
-.  dof      - number of degrees of freedom per node
-.  s        - stencil width
-.  bx       - type of ghost nodes at boundary in first dimension
-.  by       - type of ghost nodes at boundary in second dimension
-.  bz       - type of ghost nodes at boundary in third dimension
--  st       - stencil type, either `DMDA_STENCIL_STAR` or `DMDA_STENCIL_BOX`
+  Output Parameters:
++ dim - dimension of the distributed array (1, 2, or 3)
+. M   - global dimension in first direction of the array
+. N   - global dimension in second direction of the array
+. P   - global dimension in third direction of the array
+. m   - corresponding number of procs in first dimension
+. n   - corresponding number of procs in second dimension
+. p   - corresponding number of procs in third dimension
+. dof - number of degrees of freedom per node
+. s   - stencil width
+. bx  - type of ghost nodes at boundary in first dimension
+. by  - type of ghost nodes at boundary in second dimension
+. bz  - type of ghost nodes at boundary in third dimension
+- st  - stencil type, either `DMDA_STENCIL_STAR` or `DMDA_STENCIL_BOX`
 
-   Level: beginner
+  Level: beginner
 
-   Note:
-   Use NULL (NULL_INTEGER in Fortran) in place of any output parameter that is not of interest.
+  Note:
+  Use `NULL` (`PETSC_NULL_INTEGER` in Fortran) in place of any output parameter that is not of interest.
 
-.seealso: `DM`, `DMDA`, `DMView()`, `DMDAGetCorners()`, `DMDAGetLocalInfo()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMView()`, `DMDAGetCorners()`, `DMDAGetLocalInfo()`
 @*/
 PetscErrorCode DMDAGetInfo(DM da, PetscInt *dim, PetscInt *M, PetscInt *N, PetscInt *P, PetscInt *m, PetscInt *n, PetscInt *p, PetscInt *dof, PetscInt *s, DMBoundaryType *bx, DMBoundaryType *by, DMBoundaryType *bz, DMDAStencilType *st)
 {
@@ -167,26 +166,26 @@ PetscErrorCode DMDAGetInfo(DM da, PetscInt *dim, PetscInt *M, PetscInt *N, Petsc
   if (by) *by = dd->by;
   if (bz) *bz = dd->bz;
   if (st) *st = dd->stencil_type;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDAGetLocalInfo - Gets information about a given distributed array and this processors location in it
+  DMDAGetLocalInfo - Gets information about a given distributed array and this processors location in it
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  da - the distributed array
+  Input Parameter:
+. da - the distributed array
 
-   Output Parameters:
-.  dainfo - structure containing the information
+  Output Parameters:
+. info - structure containing the information
 
-   Level: beginner
+  Level: beginner
 
-   Note:
-    See `DMDALocalInfo` for the information that is returned
+  Note:
+  See `DMDALocalInfo` for the information that is returned
 
-.seealso: `DM`, `DMDA`, `DMDAGetInfo()`, `DMDAGetCorners()`, `DMDALocalInfo`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAGetInfo()`, `DMDAGetCorners()`, `DMDALocalInfo`
 @*/
 PetscErrorCode DMDAGetLocalInfo(DM da, DMDALocalInfo *info)
 {
@@ -195,7 +194,7 @@ PetscErrorCode DMDAGetLocalInfo(DM da, DMDALocalInfo *info)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(da, DM_CLASSID, 1, DMDA);
-  PetscValidPointer(info, 2);
+  PetscAssertPointer(info, 2);
   info->da  = da;
   info->dim = da->dim;
   if (dd->Mo < 0) info->mx = dd->M;
@@ -229,5 +228,5 @@ PetscErrorCode DMDAGetLocalInfo(DM da, DMDALocalInfo *info)
   info->gym = (dd->Ye - dd->Ys);
   info->gzs = dd->Zs + dd->zo;
   info->gzm = (dd->Ze - dd->Zs);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

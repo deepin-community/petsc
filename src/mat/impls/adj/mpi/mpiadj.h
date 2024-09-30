@@ -1,6 +1,5 @@
+#pragma once
 
-#ifndef MPIADJ_H
-#define MPIADJ_H
 #include <petsc/private/matimpl.h>
 #include <petsc/private/hashsetij.h>
 
@@ -29,5 +28,3 @@ typedef struct {
   PetscScalar *rowvalues;       /* scalar work space for MatGetRow() */
   PetscInt     rowvalues_alloc;
 } Mat_MPIAdj;
-
-#endif

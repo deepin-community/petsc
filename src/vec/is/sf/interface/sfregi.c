@@ -17,18 +17,18 @@ PetscFunctionList PetscSFList;
 PetscBool         PetscSFRegisterAllCalled;
 
 /*@C
-   PetscSFRegisterAll - Registers all the `PetscSF` communication implementations
+  PetscSFRegisterAll - Registers all the `PetscSF` communication implementations
 
-   Not Collective
+  Not Collective
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `PetscSF`, `PetscSFRegister()`, `PetscSFRegisterDestroy()`
 @*/
 PetscErrorCode PetscSFRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (PetscSFRegisterAllCalled) PetscFunctionReturn(0);
+  if (PetscSFRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   PetscSFRegisterAllCalled = PETSC_TRUE;
   PetscCall(PetscSFRegister(PETSCSFBASIC, PetscSFCreate_Basic));
 #if defined(PETSC_HAVE_MPI_WIN_CREATE)
@@ -42,39 +42,39 @@ PetscErrorCode PetscSFRegisterAll(void)
 #if defined(PETSC_HAVE_MPI_NEIGHBORHOOD_COLLECTIVES)
   PetscCall(PetscSFRegister(PETSCSFNEIGHBOR, PetscSFCreate_Neighbor));
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   PetscSFRegister  - Adds an implementation of the `PetscSF` communication protocol.
 
-   Not collective
+  Not Collective
 
-   Input Parameters:
-+  name - name of a new user-defined implementation
--  create - routine to create method context
+  Input Parameters:
++ name   - name of a new user-defined implementation
+- create - routine to create method context
 
-   Sample usage:
+  Example Usage:
 .vb
-   PetscSFRegister("my_impl",MyImplCreate);
+   PetscSFRegister("my_impl", MyImplCreate);
 .ve
 
-   Then, this implementation can be chosen with the procedural interface via
-$     PetscSFSetType(sf,"my_impl")
-   or at runtime via the option
+  Then, this implementation can be chosen with the procedural interface via
+$     PetscSFSetType(sf, "my_impl")
+  or at runtime via the option
 $     -sf_type my_impl
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   `PetscSFRegister()` may be called multiple times to add several user-defined implementations.
+  Note:
+  `PetscSFRegister()` may be called multiple times to add several user-defined implementations.
 
-.seealso: `PetscSF`, `PetscSFRegisterAll()`, `PetscSFInitializePackage()`
+.seealso: `PetscSF`, `PetscSFType`, `PetscSFRegisterAll()`, `PetscSFInitializePackage()`
 @*/
 PetscErrorCode PetscSFRegister(const char name[], PetscErrorCode (*create)(PetscSF))
 {
   PetscFunctionBegin;
   PetscCall(PetscSFInitializePackage());
   PetscCall(PetscFunctionListAdd(&PetscSFList, name, create));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

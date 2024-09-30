@@ -4,14 +4,14 @@
 #include <petsc/private/drawimpl.h> /*I "petscdraw.h" I*/
 
 /*@
-   PetscDrawFlush - Flushes graphical output.
+  PetscDrawFlush - Flushes graphical output.
 
-   Collective
+  Collective
 
-   Input Parameters:
-.  draw - the drawing context
+  Input Parameter:
+. draw - the drawing context
 
-   Level: beginner
+  Level: beginner
 
 .seealso: `PetscDraw`, `PetscDrawClear()`
 @*/
@@ -21,5 +21,5 @@ PetscErrorCode PetscDrawFlush(PetscDraw draw)
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
   PetscTryTypeMethod(draw, flush);
   if (draw->saveonflush) PetscCall(PetscDrawSave(draw));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

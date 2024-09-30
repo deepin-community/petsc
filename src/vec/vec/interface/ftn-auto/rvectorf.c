@@ -119,6 +119,11 @@ extern void PetscRmPointer(void*);
 #define vecmaxpy_ vecmaxpy
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define vecmaxpby_ VECMAXPBY
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define vecmaxpby_ vecmaxpby
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define vecconcatenate_ VECCONCATENATE
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define vecconcatenate_ vecconcatenate
@@ -294,6 +299,11 @@ PETSC_EXTERN void  vecmaxpy_(Vec y,PetscInt *nv, PetscScalar alpha[],Vec x[], in
 {
 *__ierr = VecMAXPY(
 	(Vec)PetscToPointer((y) ),*nv,alpha,x);
+}
+PETSC_EXTERN void  vecmaxpby_(Vec y,PetscInt *nv, PetscScalar alpha[],PetscScalar *beta,Vec x[], int *__ierr)
+{
+*__ierr = VecMAXPBY(
+	(Vec)PetscToPointer((y) ),*nv,alpha,*beta,x);
 }
 PETSC_EXTERN void  vecconcatenate_(PetscInt *nx, Vec X[],Vec *Y,IS *x_is[], int *__ierr)
 {

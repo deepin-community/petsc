@@ -22,14 +22,14 @@ static PetscErrorCode DMVecCreateTagName_Moab_Private(moab::Interface *mbiface, 
   Collective
 
   Input Parameters:
-+ dm              - The DMMoab object being set
-. tag             - If non-zero, block size will be taken from the tag size
-. range           - If non-empty, Vec corresponds to these entities, otherwise to the entities set on the DMMoab
-. is_global_vec   - If true, this is a local representation of the Vec (including ghosts in parallel), otherwise a truly parallel one
-- destroy_tag     - If true, MOAB tag is destroyed with Vec, otherwise it is left on MOAB
++ dm            - The DMMoab object being set
+. tag           - If non-zero, block size will be taken from the tag size
+. range         - If non-empty, Vec corresponds to these entities, otherwise to the entities set on the DMMoab
+. is_global_vec - If true, this is a local representation of the Vec (including ghosts in parallel), otherwise a truly parallel one
+- destroy_tag   - If true, MOAB tag is destroyed with Vec, otherwise it is left on MOAB
 
   Output Parameter:
-. vec             - The created vector
+. vec - The created vector
 
   Level: beginner
 
@@ -41,7 +41,7 @@ PetscErrorCode DMMoabCreateVector(DM dm, moab::Tag tag, const moab::Range *range
   PetscCheck(tag || (range && !range->empty()), PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "Both tag and range cannot be null.");
 
   PetscCall(DMCreateVector_Moab_Private(dm, tag, range, is_global_vec, destroy_tag, vec));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -63,21 +63,21 @@ PetscErrorCode DMMoabGetVecTag(Vec vec, moab::Tag *tag)
   Vec_MOAB      *vmoab;
 
   PetscFunctionBegin;
-  PetscValidPointer(tag, 2);
+  PetscAssertPointer(tag, 2);
 
   /* Get the MOAB private data */
   PetscCall(PetscObjectQuery((PetscObject)vec, "MOABData", (PetscObject *)&moabdata));
   PetscCall(PetscContainerGetPointer(moabdata, (void **)&vmoab));
 
   *tag = vmoab->tag;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMMoabGetVecRange - Get the MOAB entities associated with this Vec
 
   Input Parameter:
-. vec   - Vec being queried
+. vec - Vec being queried
 
   Output Parameter:
 . range - Entities associated with this Vec. NULL if vec is a native PETSc Vec.
@@ -92,14 +92,14 @@ PetscErrorCode DMMoabGetVecRange(Vec vec, moab::Range *range)
   Vec_MOAB      *vmoab;
 
   PetscFunctionBegin;
-  PetscValidPointer(range, 2);
+  PetscAssertPointer(range, 2);
 
   /* Get the MOAB private data handle */
   PetscCall(PetscObjectQuery((PetscObject)vec, "MOABData", (PetscObject *)&moabdata));
   PetscCall(PetscContainerGetPointer(moabdata, (void **)&vmoab));
 
   *range = *vmoab->tag_range;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -108,11 +108,11 @@ PetscErrorCode DMMoabGetVecRange(Vec vec, moab::Range *range)
   Collective
 
   Input Parameters:
-+ dm              - The DMMoab object being set
-- vec             - The Vector whose underlying data is requested
++ dm  - The DMMoab object being set
+- vec - The Vector whose underlying data is requested
 
   Output Parameter:
-. array           - The local data array
+. array - The local data array
 
   Level: intermediate
 
@@ -132,7 +132,7 @@ PetscErrorCode DMMoabVecGetArray(DM dm, Vec vec, void *array)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscValidHeaderSpecific(vec, VEC_CLASSID, 2);
-  PetscValidPointer(array, 3);
+  PetscAssertPointer(array, 3);
   dmmoab = (DM_Moab *)dm->data;
 
   /* Get the Vec_MOAB struct for the original vector */
@@ -181,7 +181,7 @@ PetscErrorCode DMMoabVecGetArray(DM dm, Vec vec, void *array)
       //(*varray)[dmmoab->llmap[dmmoab->lidmap[((PetscInt)*iter-dmmoab->seqstart)]*dmmoab->numFields+f]]=marray[i];
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -190,9 +190,9 @@ PetscErrorCode DMMoabVecGetArray(DM dm, Vec vec, void *array)
   Collective
 
   Input Parameters:
-+ dm              - The DMMoab object being set
-. vec             - The Vector whose underlying data is requested
-- array           - The local data array
++ dm    - The DMMoab object being set
+. vec   - The Vector whose underlying data is requested
+- array - The local data array
 
   Level: intermediate
 
@@ -212,7 +212,7 @@ PetscErrorCode DMMoabVecRestoreArray(DM dm, Vec vec, void *array)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscValidHeaderSpecific(vec, VEC_CLASSID, 2);
-  PetscValidPointer(array, 3);
+  PetscAssertPointer(array, 3);
   dmmoab = (DM_Moab *)dm->data;
 
   /* Get the Vec_MOAB struct for the original vector */
@@ -260,7 +260,7 @@ PetscErrorCode DMMoabVecRestoreArray(DM dm, Vec vec, void *array)
 #endif
     PetscCall(PetscFree(*varray));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -269,11 +269,11 @@ PetscErrorCode DMMoabVecRestoreArray(DM dm, Vec vec, void *array)
   Collective
 
   Input Parameters:
-+ dm              - The DMMoab object being set
-- vec             - The Vector whose underlying data is requested
++ dm  - The DMMoab object being set
+- vec - The Vector whose underlying data is requested
 
   Output Parameter:
-. array           - The local data array
+. array - The local data array
 
   Level: intermediate
 
@@ -293,7 +293,7 @@ PetscErrorCode DMMoabVecGetArrayRead(DM dm, Vec vec, void *array)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscValidHeaderSpecific(vec, VEC_CLASSID, 2);
-  PetscValidPointer(array, 3);
+  PetscAssertPointer(array, 3);
   dmmoab = (DM_Moab *)dm->data;
 
   /* Get the Vec_MOAB struct for the original vector */
@@ -340,7 +340,7 @@ PetscErrorCode DMMoabVecGetArrayRead(DM dm, Vec vec, void *array)
       //(*varray)[dmmoab->llmap[dmmoab->lidmap[((PetscInt)*iter-dmmoab->seqstart)]*dmmoab->numFields+f]]=marray[i];
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -349,9 +349,9 @@ PetscErrorCode DMMoabVecGetArrayRead(DM dm, Vec vec, void *array)
   Collective
 
   Input Parameters:
-+ dm              - The DMMoab object being set
-. vec             - The Vector whose underlying data is requested
-- array           - The local data array
++ dm    - The DMMoab object being set
+. vec   - The Vector whose underlying data is requested
+- array - The local data array
 
   Level: intermediate
 
@@ -366,7 +366,7 @@ PetscErrorCode DMMoabVecRestoreArrayRead(DM dm, Vec vec, void *array)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscValidHeaderSpecific(vec, VEC_CLASSID, 2);
-  PetscValidPointer(array, 3);
+  PetscAssertPointer(array, 3);
 
   /* Get the Vec_MOAB struct for the original vector */
   PetscCall(PetscObjectQuery((PetscObject)vec, "MOABData", (PetscObject *)&moabdata));
@@ -390,10 +390,10 @@ PetscErrorCode DMMoabVecRestoreArrayRead(DM dm, Vec vec, void *array)
     /* Nothing to do but just free the memory allocated before */
     PetscCall(PetscFree(*varray));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMCreateVector_Moab_Private(DM dm, moab::Tag tag, const moab::Range *userrange, PetscBool is_global_vec, PetscBool destroy_tag, Vec *vec)
+static PetscErrorCode DMCreateVector_Moab_Private(DM dm, moab::Tag tag, const moab::Range *userrange, PetscBool is_global_vec, PetscBool destroy_tag, Vec *vec)
 {
   moab::ErrorCode    merr;
   PetscBool          is_newtag;
@@ -524,7 +524,7 @@ PetscErrorCode DMCreateVector_Moab_Private(DM dm, moab::Tag tag, const moab::Ran
 
   /* set the DM reference to the vector */
   PetscCall(VecSetDM(*vec, dm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*  DMVecCreateTagName_Moab_Private
@@ -541,7 +541,7 @@ PetscErrorCode DMCreateVector_Moab_Private(DM dm, moab::Tag tag, const moab::Ran
 #ifdef MOAB_HAVE_MPI
 PetscErrorCode DMVecCreateTagName_Moab_Private(moab::Interface *mbiface, moab::ParallelComm *pcomm, char **tag_name)
 #else
-PetscErrorCode DMVecCreateTagName_Moab_Private(moab::Interface *mbiface, char **tag_name)
+static PetscErrorCode DMVecCreateTagName_Moab_Private(moab::Interface *mbiface, char **tag_name)
 #endif
 {
   moab::ErrorCode mberr;
@@ -576,7 +576,7 @@ PetscErrorCode DMVecCreateTagName_Moab_Private(moab::Interface *mbiface, char **
   PetscCall(PetscSNPrintf(*tag_name, PETSC_MAX_PATH_LEN - 1, "%s_%" PetscInt_FMT, PVEC_PREFIX, global_n));
   mberr = mbiface->tag_set_data(indexTag, &rootset, 1, (const void *)&global_n);
   MBERRNM(mberr);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode DMCreateGlobalVector_Moab(DM dm, Vec *gvec)
@@ -585,9 +585,9 @@ PETSC_EXTERN PetscErrorCode DMCreateGlobalVector_Moab(DM dm, Vec *gvec)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(gvec, 2);
+  PetscAssertPointer(gvec, 2);
   PetscCall(DMCreateVector_Moab_Private(dm, NULL, dmmoab->vowned, PETSC_TRUE, PETSC_TRUE, gvec));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode DMCreateLocalVector_Moab(DM dm, Vec *lvec)
@@ -596,12 +596,12 @@ PETSC_EXTERN PetscErrorCode DMCreateLocalVector_Moab(DM dm, Vec *lvec)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
-  PetscValidPointer(lvec, 2);
+  PetscAssertPointer(lvec, 2);
   PetscCall(DMCreateVector_Moab_Private(dm, NULL, dmmoab->vlocal, PETSC_FALSE, PETSC_TRUE, lvec));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMVecDuplicate_Moab(Vec x, Vec *y)
+static PetscErrorCode DMVecDuplicate_Moab(Vec x, Vec *y)
 {
   DM             dm;
   PetscContainer moabdata;
@@ -609,7 +609,7 @@ PetscErrorCode DMVecDuplicate_Moab(Vec x, Vec *y)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(x, VEC_CLASSID, 1);
-  PetscValidPointer(y, 2);
+  PetscAssertPointer(y, 2);
 
   /* Get the Vec_MOAB struct for the original vector */
   PetscCall(PetscObjectQuery((PetscObject)x, "MOABData", (PetscObject *)&moabdata));
@@ -620,10 +620,10 @@ PetscErrorCode DMVecDuplicate_Moab(Vec x, Vec *y)
 
   PetscCall(DMCreateVector_Moab_Private(dm, NULL, vmoab->tag_range, vmoab->is_global_vec, PETSC_TRUE, y));
   PetscCall(VecSetDM(*y, dm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMVecUserDestroy_Moab(void *user)
+static PetscErrorCode DMVecUserDestroy_Moab(void *user)
 {
   Vec_MOAB       *vmoab = (Vec_MOAB *)user;
   moab::ErrorCode merr;
@@ -641,7 +641,7 @@ PetscErrorCode DMVecUserDestroy_Moab(void *user)
   vmoab->pcomm = NULL;
 #endif
   PetscCall(PetscFree(vmoab));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode DMGlobalToLocalBegin_Moab(DM dm, Vec g, InsertMode mode, Vec l)
@@ -650,7 +650,7 @@ PETSC_EXTERN PetscErrorCode DMGlobalToLocalBegin_Moab(DM dm, Vec g, InsertMode m
 
   PetscFunctionBegin;
   PetscCall(VecScatterBegin(dmmoab->ltog_sendrecv, g, l, mode, SCATTER_REVERSE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode DMGlobalToLocalEnd_Moab(DM dm, Vec g, InsertMode mode, Vec l)
@@ -659,7 +659,7 @@ PETSC_EXTERN PetscErrorCode DMGlobalToLocalEnd_Moab(DM dm, Vec g, InsertMode mod
 
   PetscFunctionBegin;
   PetscCall(VecScatterEnd(dmmoab->ltog_sendrecv, g, l, mode, SCATTER_REVERSE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode DMLocalToGlobalBegin_Moab(DM dm, Vec l, InsertMode mode, Vec g)
@@ -668,7 +668,7 @@ PETSC_EXTERN PetscErrorCode DMLocalToGlobalBegin_Moab(DM dm, Vec l, InsertMode m
 
   PetscFunctionBegin;
   PetscCall(VecScatterBegin(dmmoab->ltog_sendrecv, l, g, mode, SCATTER_FORWARD));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode DMLocalToGlobalEnd_Moab(DM dm, Vec l, InsertMode mode, Vec g)
@@ -677,5 +677,5 @@ PETSC_EXTERN PetscErrorCode DMLocalToGlobalEnd_Moab(DM dm, Vec l, InsertMode mod
 
   PetscFunctionBegin;
   PetscCall(VecScatterEnd(dmmoab->ltog_sendrecv, l, g, mode, SCATTER_FORWARD));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

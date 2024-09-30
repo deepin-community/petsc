@@ -1,0 +1,73 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/sys/objects/ftn-custom/zinheritf.c">Actual source code: zinheritf.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2024-03-29T14:12:59+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#B22222">/*</font>
+<a name="line2">  2: </a><font color="#B22222">  This file contains Fortran stubs for Options routines.</font>
+<a name="line3">  3: </a><font color="#B22222">  These are not generated automatically since they require passing strings</font>
+<a name="line4">  4: </a><font color="#B22222">  between Fortran and C.</font>
+<a name="line5">  5: </a><font color="#B22222">*/</font>
+
+<a name="line7">  7: </a>#include <A href="../../../../include/petsc/private/fortranimpl.h.html">&lt;petsc/private/fortranimpl.h&gt;</A>
+
+<a name="line9">  9: </a><font color="#A020F0">#if defined(PETSC_HAVE_FORTRAN_CAPS)</font>
+<a name="line10"> 10: </a><strong><font color="#228B22">  #define petscobjectcompose_      PETSCOBJECTCOMPOSE</font></strong>
+<a name="line11"> 11: </a><strong><font color="#228B22">  #define petscobjectquery_        PETSCOBJECTQUERY</font></strong>
+<a name="line12"> 12: </a><strong><font color="#228B22">  #define petscobjectreference_    PETSCOBJECTREFERENCE</font></strong>
+<a name="line13"> 13: </a><strong><font color="#228B22">  #define petscobjectdereference_  PETSCOBJECTDEREFERENCE</font></strong>
+<a name="line14"> 14: </a><strong><font color="#228B22">  #define petscobjectgetreference_ PETSCOBJECTGETREFERENCE</font></strong>
+<a name="line15"> 15: </a><font color="#A020F0">#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE)</font>
+<a name="line16"> 16: </a><strong><font color="#228B22">  #define petscobjectcompose_      petscobjectcompose</font></strong>
+<a name="line17"> 17: </a><strong><font color="#228B22">  #define petscobjectquery_        petscobjectquery</font></strong>
+<a name="line18"> 18: </a><strong><font color="#228B22">  #define petscobjectreference_    petscobjectreference</font></strong>
+<a name="line19"> 19: </a><strong><font color="#228B22">  #define petscobjectdereference_  petscobjectdereference</font></strong>
+<a name="line20"> 20: </a><strong><font color="#228B22">  #define petscobjectgetreference_ petscobjectgetreference</font></strong>
+<a name="line21"> 21: </a><font color="#A020F0">#endif</font>
+
+<a name="line23"> 23: </a><font color="#B22222">/* ---------------------------------------------------------------------*/</font>
+
+<a name="line25"> 25: </a><strong><font color="#4169E1"><a name="petscobjectcompose_"></a>PETSC_EXTERN void petscobjectcompose_(<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a> *obj, char *name, <a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a> *ptr, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len)</font></strong>
+<a name="line26"> 26: </a>{
+<a name="line27"> 27: </a>  char *n1;
+
+<a name="line29"> 29: </a>  FIXCHAR(name, len, n1);
+<a name="line30"> 30: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscObjectCompose.html">PetscObjectCompose</a>(*obj, n1, *ptr);
+<a name="line31"> 31: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line32"> 32: </a>  FREECHAR(name, n1);
+<a name="line33"> 33: </a>}
+
+<a name="line35"> 35: </a><strong><font color="#4169E1"><a name="petscobjectquery_"></a>PETSC_EXTERN void petscobjectquery_(<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a> *obj, char *name, <a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a> *ptr, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len)</font></strong>
+<a name="line36"> 36: </a>{
+<a name="line37"> 37: </a>  char *n1;
+
+<a name="line39"> 39: </a>  FIXCHAR(name, len, n1);
+<a name="line40"> 40: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscObjectQuery.html">PetscObjectQuery</a>(*obj, n1, ptr);
+<a name="line41"> 41: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line42"> 42: </a>  FREECHAR(name, n1);
+<a name="line43"> 43: </a>}
+
+<a name="line45"> 45: </a><strong><font color="#4169E1"><a name="petscobjectreference_"></a>PETSC_EXTERN void petscobjectreference_(<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a> *obj, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr)</font></strong>
+<a name="line46"> 46: </a>{
+<a name="line47"> 47: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscObjectReference.html">PetscObjectReference</a>(*obj);
+<a name="line48"> 48: </a>}
+
+<a name="line50"> 50: </a><strong><font color="#4169E1"><a name="petscobjectdereference_"></a>PETSC_EXTERN void petscobjectdereference_(<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a> *obj, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr)</font></strong>
+<a name="line51"> 51: </a>{
+<a name="line52"> 52: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscObjectDereference.html">PetscObjectDereference</a>(*obj);
+<a name="line53"> 53: </a>}
+
+<a name="line55"> 55: </a><strong><font color="#4169E1"><a name="petscobjectgetreference_"></a>PETSC_EXTERN void petscobjectgetreference_(<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a> *obj, <a href="../../../../manualpages/Sys/PetscInt.html">PetscInt</a> *ref, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr)</font></strong>
+<a name="line56"> 56: </a>{
+<a name="line57"> 57: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscObjectGetReference.html">PetscObjectGetReference</a>(*obj, ref);
+<a name="line58"> 58: </a>}
+</pre>
+</body>
+
+</html>

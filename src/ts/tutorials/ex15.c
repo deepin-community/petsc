@@ -1,4 +1,3 @@
-
 static char help[] = "Time-dependent PDE in 2d. Modified from ex13.c for illustrating how to solve DAEs. \n";
 /*
    u_t = uxx + uyy
@@ -236,7 +235,7 @@ PetscErrorCode FormIFunction(TS ts, PetscReal t, Vec U, Vec Udot, Vec F, void *c
   PetscCall(DMDAVecRestoreArray(da, Udot, &udot));
   PetscCall(DMRestoreLocalVector(da, &localU));
   PetscCall(PetscLogFlops(11.0 * ym * xm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */
@@ -330,7 +329,7 @@ PetscErrorCode FormIJacobian(TS ts, PetscReal t, Vec U, Vec Udot, PetscReal a, M
     PetscCall(PetscPrintf(PetscObjectComm((PetscObject)Jpre), "Jpre:\n"));
     PetscCall(MatView(Jpre, PETSC_VIEWER_STDOUT_WORLD));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------- */
@@ -368,7 +367,7 @@ PetscErrorCode FormInitialSolution(Vec U, void *ptr)
 
   /* Restore vectors */
   PetscCall(DMDAVecRestoreArray(da, U, &u));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

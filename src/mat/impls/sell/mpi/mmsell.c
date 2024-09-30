@@ -27,7 +27,7 @@ PetscErrorCode MatDisAssemble_MPISELL(Mat A)
   PetscCall(VecScatterDestroy(&sell->Mvctx));
   if (sell->colmap) {
 #if defined(PETSC_USE_CTABLE)
-    PetscCall(PetscTableDestroy(&sell->colmap));
+    PetscCall(PetscHMapIDestroy(&sell->colmap));
 #else
     PetscCall(PetscFree(sell->colmap));
 #endif
@@ -53,11 +53,11 @@ PetscErrorCode MatDisAssemble_MPISELL(Mat A)
    */
   Bnew->nonzerostate = B->nonzerostate;
 
-  totalslices = B->rmap->n / 8 + ((B->rmap->n & 0x07) ? 1 : 0); /* floor(n/8) */
-  for (i = 0; i < totalslices; i++) {                           /* loop over slices */
-    for (j = Bsell->sliidx[i], row = 0; j < Bsell->sliidx[i + 1]; j++, row = ((row + 1) & 0x07)) {
-      isnonzero = (PetscBool)((j - Bsell->sliidx[i]) / 8 < Bsell->rlen[8 * i + row]);
-      if (isnonzero) PetscCall(MatSetValue(Bnew, 8 * i + row, sell->garray[Bsell->colidx[j]], Bsell->val[j], B->insertmode));
+  totalslices = PetscCeilInt(B->rmap->n, Bsell->sliceheight);
+  for (i = 0; i < totalslices; i++) { /* loop over slices */
+    for (j = Bsell->sliidx[i], row = 0; j < Bsell->sliidx[i + 1]; j++, row = (row + 1) % Bsell->sliceheight) {
+      isnonzero = (PetscBool)((j - Bsell->sliidx[i]) / Bsell->sliceheight < Bsell->rlen[Bsell->sliceheight * i + row]);
+      if (isnonzero) { PetscCall(MatSetValue(Bnew, Bsell->sliceheight * i + row, sell->garray[Bsell->colidx[j]], Bsell->val[j], B->insertmode)); }
     }
   }
 
@@ -67,7 +67,7 @@ PetscErrorCode MatDisAssemble_MPISELL(Mat A)
   sell->B          = Bnew;
   A->was_assembled = PETSC_FALSE;
   A->assembled     = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatSetUpMultiply_MPISELL(Mat mat)
@@ -79,54 +79,55 @@ PetscErrorCode MatSetUpMultiply_MPISELL(Mat mat)
   Vec          gvec;
   PetscBool    isnonzero;
 #if defined(PETSC_USE_CTABLE)
-  PetscTable         gid1_lid1;
-  PetscTablePosition tpos;
-  PetscInt           gid, lid;
+  PetscHMapI    gid1_lid1 = NULL;
+  PetscHashIter tpos;
+  PetscInt      gid, lid;
 #else
   PetscInt N = mat->cmap->N, *indices;
 #endif
 
   PetscFunctionBegin;
-  totalslices = sell->B->rmap->n / 8 + ((sell->B->rmap->n & 0x07) ? 1 : 0); /* floor(n/8) */
+  totalslices = PetscCeilInt(sell->B->rmap->n, B->sliceheight);
 
   /* ec counts the number of columns that contain nonzeros */
 #if defined(PETSC_USE_CTABLE)
   /* use a table */
-  PetscCall(PetscTableCreate(sell->B->rmap->n, mat->cmap->N + 1, &gid1_lid1));
+  PetscCall(PetscHMapICreateWithSize(sell->B->rmap->n, &gid1_lid1));
   for (i = 0; i < totalslices; i++) { /* loop over slices */
     for (j = B->sliidx[i]; j < B->sliidx[i + 1]; j++) {
-      isnonzero = (PetscBool)((j - B->sliidx[i]) / 8 < B->rlen[(i << 3) + (j & 0x07)]);
+      isnonzero = (PetscBool)((j - B->sliidx[i]) / B->sliceheight < B->rlen[i * B->sliceheight + j % B->sliceheight]);
       if (isnonzero) { /* check the mask bit */
         PetscInt data, gid1 = bcolidx[j] + 1;
-        PetscCall(PetscTableFind(gid1_lid1, gid1, &data));
-        if (!data) {
-          /* one based table */
-          PetscCall(PetscTableAdd(gid1_lid1, gid1, ++ec, INSERT_VALUES));
-        }
+
+        PetscCall(PetscHMapIGetWithDefault(gid1_lid1, gid1, 0, &data));
+        /* one based table */
+        if (!data) PetscCall(PetscHMapISet(gid1_lid1, gid1, ++ec));
       }
     }
   }
 
   /* form array of columns we need */
   PetscCall(PetscMalloc1(ec, &garray));
-  PetscCall(PetscTableGetHeadPosition(gid1_lid1, &tpos));
-  while (tpos) {
-    PetscCall(PetscTableGetNext(gid1_lid1, &tpos, &gid, &lid));
+  PetscHashIterBegin(gid1_lid1, tpos);
+  while (!PetscHashIterAtEnd(gid1_lid1, tpos)) {
+    PetscHashIterGetKey(gid1_lid1, tpos, gid);
+    PetscHashIterGetVal(gid1_lid1, tpos, lid);
+    PetscHashIterNext(gid1_lid1, tpos);
     gid--;
     lid--;
     garray[lid] = gid;
   }
   PetscCall(PetscSortInt(ec, garray)); /* sort, and rebuild */
-  PetscCall(PetscTableRemoveAll(gid1_lid1));
-  for (i = 0; i < ec; i++) PetscCall(PetscTableAdd(gid1_lid1, garray[i] + 1, i + 1, INSERT_VALUES));
+  PetscCall(PetscHMapIClear(gid1_lid1));
+  for (i = 0; i < ec; i++) PetscCall(PetscHMapISet(gid1_lid1, garray[i] + 1, i + 1));
 
   /* compact out the extra columns in B */
   for (i = 0; i < totalslices; i++) { /* loop over slices */
     for (j = B->sliidx[i]; j < B->sliidx[i + 1]; j++) {
-      isnonzero = (PetscBool)((j - B->sliidx[i]) / 8 < B->rlen[(i << 3) + (j & 0x07)]);
+      isnonzero = (PetscBool)((j - B->sliidx[i]) / B->sliceheight < B->rlen[i * B->sliceheight + j % B->sliceheight]);
       if (isnonzero) {
         PetscInt gid1 = bcolidx[j] + 1;
-        PetscCall(PetscTableFind(gid1_lid1, gid1, &lid));
+        PetscCall(PetscHMapIGetWithDefault(gid1_lid1, gid1, 0, &lid));
         lid--;
         bcolidx[j] = lid;
       }
@@ -134,14 +135,14 @@ PetscErrorCode MatSetUpMultiply_MPISELL(Mat mat)
   }
   PetscCall(PetscLayoutDestroy(&sell->B->cmap));
   PetscCall(PetscLayoutCreateFromSizes(PetscObjectComm((PetscObject)sell->B), ec, ec, 1, &sell->B->cmap));
-  PetscCall(PetscTableDestroy(&gid1_lid1));
+  PetscCall(PetscHMapIDestroy(&gid1_lid1));
 #else
   /* Make an array as long as the number of columns */
   PetscCall(PetscCalloc1(N, &indices));
   /* mark those columns that are in sell->B */
   for (i = 0; i < totalslices; i++) { /* loop over slices */
     for (j = B->sliidx[i]; j < B->sliidx[i + 1]; j++) {
-      isnonzero = (PetscBool)((j - B->sliidx[i]) / 8 < B->rlen[(i << 3) + (j & 0x07)]);
+      isnonzero = (PetscBool)((j - B->sliidx[i]) / B->sliceheight < B->rlen[i * B->sliceheight + j % B->sliceheight]);
       if (isnonzero) {
         if (!indices[bcolidx[j]]) ec++;
         indices[bcolidx[j]] = 1;
@@ -162,7 +163,7 @@ PetscErrorCode MatSetUpMultiply_MPISELL(Mat mat)
   /* compact out the extra columns in B */
   for (i = 0; i < totalslices; i++) { /* loop over slices */
     for (j = B->sliidx[i]; j < B->sliidx[i + 1]; j++) {
-      isnonzero = (PetscBool)((j - B->sliidx[i]) / 8 < B->rlen[(i << 3) + (j & 0x07)]);
+      isnonzero = (PetscBool)((j - B->sliidx[i]) / B->sliceheight < B->rlen[i * B->sliceheight + j % B->sliceheight]);
       if (isnonzero) bcolidx[j] = indices[bcolidx[j]];
     }
   }
@@ -189,14 +190,14 @@ PetscErrorCode MatSetUpMultiply_MPISELL(Mat mat)
   PetscCall(ISDestroy(&from));
   PetscCall(ISDestroy(&to));
   PetscCall(VecDestroy(&gvec));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*      ugly stuff added for Glenn someday we should fix this up */
 static PetscInt *auglyrmapd = NULL, *auglyrmapo = NULL; /* mapping from the local ordering to the "diagonal" and "off-diagonal" parts of the local matrix */
 static Vec       auglydd = NULL, auglyoo = NULL;        /* work vectors used to scale the two parts of the local matrix */
 
-PetscErrorCode MatMPISELLDiagonalScaleLocalSetUp(Mat inA, Vec scale)
+static PetscErrorCode MatMPISELLDiagonalScaleLocalSetUp(Mat inA, Vec scale)
 {
   Mat_MPISELL *ina = (Mat_MPISELL *)inA->data; /*access private part of matrix */
   PetscInt     i, n, nt, cstart, cend, no, *garray = ina->garray, *lindices;
@@ -239,7 +240,7 @@ PetscErrorCode MatMPISELLDiagonalScaleLocalSetUp(Mat inA, Vec scale)
   }
   PetscCall(PetscFree(r_rmapo));
   PetscCall(VecCreateSeq(PETSC_COMM_SELF, nt, &auglyoo));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatDiagonalScaleLocal_MPISELL(Mat A, Vec scale)
@@ -265,5 +266,5 @@ PetscErrorCode MatDiagonalScaleLocal_MPISELL(Mat A, Vec scale)
   PetscCall(VecRestoreArray(auglyoo, &o));
   /* column scale "off-diagonal" portion of local matrix */
   PetscCall(MatDiagonalScale(a->B, NULL, auglyoo));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

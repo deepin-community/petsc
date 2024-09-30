@@ -25,7 +25,7 @@ PetscErrorCode PetscViewerHDF5CheckTimestepping_Internal(PetscViewer viewer, con
     PetscCall(PetscViewerHDF5GetGroup(viewer, NULL, &group));
     SETERRQ(PetscObjectComm((PetscObject)viewer), PETSC_ERR_FILE_UNEXPECTED, "Dataset %s/%s stored with timesteps? %s Timestepping pushed? %s", group, name, PetscBools[timestepping], PetscBools[hdf5->timestepping]);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscViewerHDF5ReadInitialize_Private(PetscViewer viewer, const char name[], HDF5ReadCtx *ctx)
@@ -45,7 +45,7 @@ static PetscErrorCode PetscViewerHDF5ReadInitialize_Private(PetscViewer viewer, 
     PetscCall(PetscViewerHDF5HasAttribute(viewer, name, "MATLAB_class", &hdf5->horizontal));
   }
   *ctx = h;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscViewerHDF5ReadFinalize_Private(PetscViewer viewer, HDF5ReadCtx *ctx)
@@ -59,7 +59,7 @@ static PetscErrorCode PetscViewerHDF5ReadFinalize_Private(PetscViewer viewer, HD
   PetscCallHDF5(H5Dclose, (h->dataset));
   PetscCall(PetscFree((*ctx)->dims));
   PetscCall(PetscFree(*ctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscViewerHDF5ReadSizes_Private(PetscViewer viewer, HDF5ReadCtx ctx, PetscBool setup, PetscLayout *map_)
@@ -101,7 +101,7 @@ static PetscErrorCode PetscViewerHDF5ReadSizes_Private(PetscViewer viewer, HDF5R
   }
   PetscCheck(ctx->lenInd <= ctx->bsInd, PetscObjectComm((PetscObject)viewer), PETSC_ERR_PLIB, "Calculated block dimension index = %d < %d = length dimension index.", ctx->bsInd, ctx->lenInd);
   PetscCheck(ctx->bsInd <= ctx->rdim - 1, PetscObjectComm((PetscObject)viewer), PETSC_ERR_FILE_UNEXPECTED, "Calculated block dimension index = %d > %d = total number of dimensions - 1.", ctx->bsInd, ctx->rdim - 1);
-  PetscCheck(!ctx->complexVal || ctx->dims[ctx->complexInd] == 2, PETSC_COMM_SELF, PETSC_ERR_FILE_UNEXPECTED, "Complex numbers must have exactly 2 parts (%llu)", ctx->dims[ctx->complexInd]);
+  PetscCheck(!ctx->complexVal || ctx->dims[ctx->complexInd] == 2, PETSC_COMM_SELF, PETSC_ERR_FILE_UNEXPECTED, "Complex numbers must have exactly 2 parts (%" PRIuHSIZE ")", ctx->dims[ctx->complexInd]);
 
   if (hdf5->horizontal) {
     PetscInt t;
@@ -132,7 +132,7 @@ static PetscErrorCode PetscViewerHDF5ReadSizes_Private(PetscViewer viewer, HDF5R
     PetscCall(PetscLayoutSetSize(map, N));
   } else PetscCheck(map->N == N, PetscObjectComm((PetscObject)viewer), PETSC_ERR_FILE_UNEXPECTED, "Global size of array in file is %" PetscInt_FMT ", not %" PetscInt_FMT " as expected", N, map->N);
   if (setup) PetscCall(PetscLayoutSetUp(map));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscViewerHDF5ReadSelectHyperslab_Private(PetscViewer viewer, HDF5ReadCtx ctx, PetscLayout map, hid_t *memspace)
@@ -167,7 +167,7 @@ static PetscErrorCode PetscViewerHDF5ReadSelectHyperslab_Private(PetscViewer vie
   PetscCallHDF5Return(*memspace, H5Screate_simple, (ctx->rdim, count, NULL));
   PetscCallHDF5(H5Sselect_hyperslab, (ctx->dataspace, H5S_SELECT_SET, offset, NULL, count, NULL));
   PetscCall(PetscFree2(count, offset));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscViewerHDF5ReadArray_Private(PetscViewer viewer, HDF5ReadCtx h, hid_t datatype, hid_t memspace, void *arr)
@@ -176,23 +176,25 @@ static PetscErrorCode PetscViewerHDF5ReadArray_Private(PetscViewer viewer, HDF5R
 
   PetscFunctionBegin;
   PetscCallHDF5(H5Dread, (h->dataset, datatype, memspace, h->dataspace, hdf5->dxpl_id, arr));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   PetscViewerHDF5Load - Read a raw array from the `PETSCVIEWERHDF5` dataset.
 
+  Collective; No Fortran Support
+
   Input Parameters:
-+ viewer   - The HDF5 viewer
++ viewer   - The `PETSCVIEWERHDF5` viewer
 . name     - The dataset name
 - datatype - The HDF5 datatype of the items in the dataset
 
   Input/Output Parameter:
-. map      - The layout which specifies array partitioning, on output the
+. map - The layout which specifies array partitioning, on output the
              set up layout (with global size and blocksize according to dataset)
 
   Output Parameter:
-. newarr   - The partitioned array, a memory image of the given dataset
+. newarr - The partitioned array, a memory image of the given dataset
 
   Level: developer
 
@@ -203,10 +205,8 @@ static PetscErrorCode PetscViewerHDF5ReadArray_Private(PetscViewer viewer, HDF5R
 
   This name is relative to the current group returned by `PetscViewerHDF5OpenGroup()`.
 
-  Fortran Note:
-  This routine is not available in Fortran.
-
-.seealso: `PetscViewer`, `PETSCVIEWERHDF5`, `PetscViewerHDF5Open()`, `PetscViewerHDF5PushGroup()`, `PetscViewerHDF5OpenGroup()`, `PetscViewerHDF5ReadSizes()`, `VecLoad()`, `ISLoad()`
+.seealso: `PetscViewer`, `PETSCVIEWERHDF5`, `PetscViewerHDF5Open()`, `PetscViewerHDF5PushGroup()`, `PetscViewerHDF5OpenGroup()`, `PetscViewerHDF5ReadSizes()`,
+          `VecLoad()`, `ISLoad()`
 @*/
 PetscErrorCode PetscViewerHDF5Load(PetscViewer viewer, const char *name, PetscLayout map, hid_t datatype, void **newarr)
 {
@@ -245,19 +245,19 @@ PetscErrorCode PetscViewerHDF5Load(PetscViewer viewer, const char *name, PetscLa
   PetscCall(PetscViewerHDF5ReadFinalize_Private(viewer, &h));
   PetscCall(PetscFree(group));
   *newarr = arr;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
- PetscViewerHDF5ReadSizes - Read block size and global size of a `Vec` or `IS` stored in an HDF5 file.
+  PetscViewerHDF5ReadSizes - Read block size and global size of a `Vec` or `IS` stored in an HDF5 file.
 
   Input Parameters:
-+ viewer - The HDF5 viewer
++ viewer - The `PETSCVIEWERHDF5` viewer
 - name   - The dataset name
 
   Output Parameters:
-+ bs     - block size
-- N      - global size
++ bs - block size
+- N  - global size
 
   Level: advanced
 
@@ -282,7 +282,7 @@ PetscErrorCode PetscViewerHDF5ReadSizes(PetscViewer viewer, const char name[], P
   if (bs) *bs = map->bs;
   if (N) *N = map->N;
   PetscCall(PetscLayoutDestroy(&map));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif /* defined(PETSC_HAVE_HDF5) */

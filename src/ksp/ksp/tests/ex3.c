@@ -1,4 +1,3 @@
-
 static char help[] = "Bilinear elements on the unit square for Laplacian.  To test the parallel\n\
 matrix assembly, the matrix is intentionally laid out across processors\n\
 differently from the way it is assembled.  Input arguments are:\n\
@@ -8,7 +7,7 @@ differently from the way it is assembled.  Input arguments are:\n\
 
 #include <petscksp.h>
 
-int FormElementStiffness(PetscReal H, PetscScalar *Ke)
+PetscErrorCode FormElementStiffness(PetscReal H, PetscScalar *Ke)
 {
   PetscFunctionBeginUser;
   Ke[0]  = H / 6.0;
@@ -27,16 +26,17 @@ int FormElementStiffness(PetscReal H, PetscScalar *Ke)
   Ke[13] = H / 12.0;
   Ke[14] = -.125 * H;
   Ke[15] = H / 6.0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-int FormElementRhs(PetscReal x, PetscReal y, PetscReal H, PetscScalar *r)
+
+PetscErrorCode FormElementRhs(PetscReal x, PetscReal y, PetscReal H, PetscScalar *r)
 {
   PetscFunctionBeginUser;
   r[0] = 0.;
   r[1] = 0.;
   r[2] = 0.;
   r[3] = 0.0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **args)
@@ -207,5 +207,10 @@ int main(int argc, char **args)
       suffix: chebyest
       args: -ksp_est_view -ksp_type chebyshev -ksp_chebyshev_esteig
       filter:  sed -e "s/Iterations 19/Iterations 20/g"
+
+    test:
+      suffix: gamg_provided_not_ok
+      filter: grep -v "variant HERMITIAN"
+      args: -pc_type gamg -mg_levels_pc_type sor -mg_levels_esteig_ksp_type cg -ksp_view
 
 TEST*/

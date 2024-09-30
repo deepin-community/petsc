@@ -269,6 +269,11 @@ extern void PetscRmPointer(void*);
 #define petscsectioncreatesubdomainsection_ petscsectioncreatesubdomainsection
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscsectionresetclosurepermutation_ PETSCSECTIONRESETCLOSUREPERMUTATION
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscsectionresetclosurepermutation_ petscsectionresetclosurepermutation
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define petscsectionreset_ PETSCSECTIONRESET
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define petscsectionreset_ petscsectionreset
@@ -621,6 +626,11 @@ PETSC_EXTERN void  petscsectioncreatesubdomainsection_(PetscSection s,IS subpoin
 *__ierr = PetscSectionCreateSubdomainSection(
 	(PetscSection)PetscToPointer((s) ),
 	(IS)PetscToPointer((subpointMap) ),subs);
+}
+PETSC_EXTERN void  petscsectionresetclosurepermutation_(PetscSection section, int *__ierr)
+{
+*__ierr = PetscSectionResetClosurePermutation(
+	(PetscSection)PetscToPointer((section) ));
 }
 PETSC_EXTERN void  petscsectionreset_(PetscSection s, int *__ierr)
 {

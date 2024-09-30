@@ -30,11 +30,6 @@ extern void PetscRmPointer(void*);
 #include "petscdmplex.h"
 #include "petscmat.h"
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define dmplexgetordering_ DMPLEXGETORDERING
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define dmplexgetordering_ dmplexgetordering
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmplexgetordering1d_ DMPLEXGETORDERING1D
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmplexgetordering1d_ dmplexgetordering1d
@@ -60,12 +55,6 @@ extern void PetscRmPointer(void*);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-PETSC_EXTERN void  dmplexgetordering_(DM dm,MatOrderingType *otype,DMLabel label,IS *perm, int *__ierr)
-{
-*__ierr = DMPlexGetOrdering(
-	(DM)PetscToPointer((dm) ),*otype,
-	(DMLabel)PetscToPointer((label) ),perm);
-}
 PETSC_EXTERN void  dmplexgetordering1d_(DM dm,IS *perm, int *__ierr)
 {
 *__ierr = DMPlexGetOrdering1D(

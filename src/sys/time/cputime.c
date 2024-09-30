@@ -1,4 +1,3 @@
-
 /*
   This is to allow one to measure CPU time usage of their job,
   NOT real time usage. Do not use this for reported timings, speedup etc.
@@ -28,7 +27,7 @@ PetscErrorCode PetscGetCPUTime(PetscLogDouble *t)
   PetscFunctionBegin;
   times(&temp);
   *t = ((double)temp.tms_utime) / ((double)CLOCKS_PER_SEC);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #elif defined(PETSC_HAVE_CLOCK)
@@ -39,7 +38,7 @@ PetscErrorCode PetscGetCPUTime(PetscLogDouble *t)
 {
   PetscFunctionBegin;
   *t = ((double)clock()) / ((double)CLOCKS_PER_SEC);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #else
@@ -87,7 +86,7 @@ PetscErrorCode PetscGetCPUTime(PetscLogDouble *t)
   foo  = temp.ru_utime.tv_sec;  /* seconds */
   foo1 = temp.ru_utime.tv_usec; /* uSecs */
   *t   = foo + foo1 * 1.0e-6;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif

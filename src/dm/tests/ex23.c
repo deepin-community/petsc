@@ -1,4 +1,3 @@
-
 static char help[] = "Tests VecView()/VecLoad() for DMDA vectors (this tests DMDAGlobalToNatural()).\n\n";
 
 #include <petscdm.h>
@@ -127,7 +126,7 @@ int main(int argc, char **argv)
 /*TEST
 
    test:
-      nsize: {{1  3}}
+      nsize: {{1 3}}
       args: -one -dof {{1 2 3}} -stencil_type {{0 1}}
 
    test:

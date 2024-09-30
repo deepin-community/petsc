@@ -1,10 +1,9 @@
-
 /*
   Code for interpolating between grids represented by DMDAs
 */
 
 /*
-      For linear elements there are two branches of code to compute the interpolation. They should compute the same results but may not. The "new version" does
+   For linear elements there are two branches of code to compute the interpolation. They should compute the same results but may not. The "new version" does
    not work for periodic domains, the old does. Change NEWVERSION to 1 to compile in the new version. Eventually when we are sure the two produce identical results
    we will remove/merge the new version. Based on current tests, these both produce the same results. We are leaving NEWVERSION for now in the code since some
    consider it cleaner, but old version is turned on since it handles periodic case.
@@ -31,13 +30,13 @@ static PetscErrorCode ConvertToAIJ(MatType intype, MatType *outtype)
     PetscCall(PetscStrbeginswith(intype, types[i], &flg));
     if (flg) {
       *outtype = intype;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMCreateInterpolation_DA_1D_Q1(DM dac, DM daf, Mat *A)
+static PetscErrorCode DMCreateInterpolation_DA_1D_Q1(DM dac, DM daf, Mat *A)
 {
   PetscInt               i, i_start, m_f, Mx;
   const PetscInt        *idx_f, *idx_c;
@@ -171,10 +170,10 @@ PetscErrorCode DMCreateInterpolation_DA_1D_Q1(DM dac, DM daf, Mat *A)
   PetscCall(MatAssemblyEnd(mat, MAT_FINAL_ASSEMBLY));
   PetscCall(MatCreateMAIJ(mat, dof, A));
   PetscCall(MatDestroy(&mat));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMCreateInterpolation_DA_1D_Q0(DM dac, DM daf, Mat *A)
+static PetscErrorCode DMCreateInterpolation_DA_1D_Q0(DM dac, DM daf, Mat *A)
 {
   PetscInt               i, i_start, m_f, Mx;
   const PetscInt        *idx_f, *idx_c;
@@ -257,10 +256,10 @@ PetscErrorCode DMCreateInterpolation_DA_1D_Q0(DM dac, DM daf, Mat *A)
   PetscCall(MatCreateMAIJ(mat, dof, A));
   PetscCall(MatDestroy(&mat));
   PetscCall(PetscLogFlops(5.0 * m_f));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMCreateInterpolation_DA_2D_Q1(DM dac, DM daf, Mat *A)
+static PetscErrorCode DMCreateInterpolation_DA_2D_Q1(DM dac, DM daf, Mat *A)
 {
   PetscInt               i, j, i_start, j_start, m_f, n_f, Mx, My, dof;
   const PetscInt        *idx_c, *idx_f;
@@ -486,13 +485,13 @@ PetscErrorCode DMCreateInterpolation_DA_2D_Q1(DM dac, DM daf, Mat *A)
   PetscCall(MatAssemblyEnd(mat, MAT_FINAL_ASSEMBLY));
   PetscCall(MatCreateMAIJ(mat, dof, A));
   PetscCall(MatDestroy(&mat));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
        Contributed by Andrei Draganescu <aidraga@sandia.gov>
 */
-PetscErrorCode DMCreateInterpolation_DA_2D_Q0(DM dac, DM daf, Mat *A)
+static PetscErrorCode DMCreateInterpolation_DA_2D_Q0(DM dac, DM daf, Mat *A)
 {
   PetscInt               i, j, i_start, j_start, m_f, n_f, Mx, My, dof;
   const PetscInt        *idx_c, *idx_f;
@@ -611,13 +610,13 @@ PetscErrorCode DMCreateInterpolation_DA_2D_Q0(DM dac, DM daf, Mat *A)
   PetscCall(MatCreateMAIJ(mat, dof, A));
   PetscCall(MatDestroy(&mat));
   PetscCall(PetscLogFlops(13.0 * m_f * n_f));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
        Contributed by Jianming Yang <jianming-yang@uiowa.edu>
 */
-PetscErrorCode DMCreateInterpolation_DA_3D_Q0(DM dac, DM daf, Mat *A)
+static PetscErrorCode DMCreateInterpolation_DA_3D_Q0(DM dac, DM daf, Mat *A)
 {
   PetscInt               i, j, l, i_start, j_start, l_start, m_f, n_f, p_f, Mx, My, Mz, dof;
   const PetscInt        *idx_c, *idx_f;
@@ -749,10 +748,10 @@ PetscErrorCode DMCreateInterpolation_DA_3D_Q0(DM dac, DM daf, Mat *A)
   PetscCall(MatCreateMAIJ(mat, dof, A));
   PetscCall(MatDestroy(&mat));
   PetscCall(PetscLogFlops(13.0 * m_f * n_f * p_f));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMCreateInterpolation_DA_3D_Q1(DM dac, DM daf, Mat *A)
+static PetscErrorCode DMCreateInterpolation_DA_3D_Q1(DM dac, DM daf, Mat *A)
 {
   PetscInt               i, j, i_start, j_start, m_f, n_f, Mx, My, dof, l;
   const PetscInt        *idx_c, *idx_f;
@@ -1028,7 +1027,7 @@ PetscErrorCode DMCreateInterpolation_DA_3D_Q1(DM dac, DM daf, Mat *A)
 
   PetscCall(MatCreateMAIJ(mat, dof, A));
   PetscCall(MatDestroy(&mat));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateInterpolation_DA(DM dac, DM daf, Mat *A, Vec *scale)
@@ -1041,8 +1040,8 @@ PetscErrorCode DMCreateInterpolation_DA(DM dac, DM daf, Mat *A, Vec *scale)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dac, DM_CLASSID, 1);
   PetscValidHeaderSpecific(daf, DM_CLASSID, 2);
-  PetscValidPointer(A, 3);
-  if (scale) PetscValidPointer(scale, 4);
+  PetscAssertPointer(A, 3);
+  if (scale) PetscAssertPointer(scale, 4);
 
   PetscCall(DMDAGetInfo(dac, &dimc, &Mc, &Nc, &Pc, &mc, &nc, &pc, &dofc, &sc, &bxc, &byc, &bzc, &stc));
   PetscCall(DMDAGetInfo(daf, &dimf, &Mf, &Nf, &Pf, &mf, &nf, &pf, &doff, &sf, &bxf, &byf, &bzf, &stf));
@@ -1073,10 +1072,10 @@ PetscErrorCode DMCreateInterpolation_DA(DM dac, DM daf, Mat *A, Vec *scale)
     } else SETERRQ(PetscObjectComm((PetscObject)daf), PETSC_ERR_SUP, "No support for this DMDA dimension %" PetscInt_FMT " for interpolation type %d", dimc, (int)ddc->interptype);
   }
   if (scale) PetscCall(DMCreateInterpolationScale((DM)dac, (DM)daf, *A, scale));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMCreateInjection_DA_1D(DM dac, DM daf, VecScatter *inject)
+static PetscErrorCode DMCreateInjection_DA_1D(DM dac, DM daf, VecScatter *inject)
 {
   PetscInt               i, i_start, m_f, Mx, dof;
   const PetscInt        *idx_f;
@@ -1129,10 +1128,10 @@ PetscErrorCode DMCreateInjection_DA_1D(DM dac, DM daf, VecScatter *inject)
   PetscCall(DMRestoreGlobalVector(dac, &vecc));
   PetscCall(DMRestoreGlobalVector(daf, &vecf));
   PetscCall(ISDestroy(&isf));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMCreateInjection_DA_2D(DM dac, DM daf, VecScatter *inject)
+static PetscErrorCode DMCreateInjection_DA_2D(DM dac, DM daf, VecScatter *inject)
 {
   PetscInt               i, j, i_start, j_start, m_f, n_f, Mx, My, dof;
   const PetscInt        *idx_c, *idx_f;
@@ -1199,10 +1198,10 @@ PetscErrorCode DMCreateInjection_DA_2D(DM dac, DM daf, VecScatter *inject)
   PetscCall(DMRestoreGlobalVector(dac, &vecc));
   PetscCall(DMRestoreGlobalVector(daf, &vecf));
   PetscCall(ISDestroy(&isf));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMCreateInjection_DA_3D(DM dac, DM daf, VecScatter *inject)
+static PetscErrorCode DMCreateInjection_DA_3D(DM dac, DM daf, VecScatter *inject)
 {
   PetscInt               i, j, k, i_start, j_start, k_start, m_f, n_f, p_f, Mx, My, Mz;
   PetscInt               m_ghost, n_ghost, p_ghost, m_ghost_c, n_ghost_c, p_ghost_c;
@@ -1289,7 +1288,7 @@ PetscErrorCode DMCreateInjection_DA_3D(DM dac, DM daf, VecScatter *inject)
   PetscCall(DMRestoreGlobalVector(dac, &vecc));
   PetscCall(DMRestoreGlobalVector(daf, &vecf));
   PetscCall(ISDestroy(&isf));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateInjection_DA(DM dac, DM daf, Mat *mat)
@@ -1302,7 +1301,7 @@ PetscErrorCode DMCreateInjection_DA(DM dac, DM daf, Mat *mat)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dac, DM_CLASSID, 1);
   PetscValidHeaderSpecific(daf, DM_CLASSID, 2);
-  PetscValidPointer(mat, 3);
+  PetscAssertPointer(mat, 3);
 
   PetscCall(DMDAGetInfo(dac, &dimc, &Mc, &Nc, &Pc, &mc, &nc, &pc, &dofc, &sc, &bxc, &byc, &bzc, &stc));
   PetscCall(DMDAGetInfo(daf, &dimf, &Mf, &Nf, &Pf, &mf, &nf, &pf, &doff, &sf, &bxf, &byf, &bzf, &stf));
@@ -1324,13 +1323,14 @@ PetscErrorCode DMCreateInjection_DA(DM dac, DM daf, Mat *mat)
   }
   PetscCall(MatCreateScatter(PetscObjectComm((PetscObject)inject), inject, mat));
   PetscCall(VecScatterDestroy(&inject));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+// PetscClangLinter pragma ignore: -fdoc-*
 /*@
-   DMCreateAggregates - Deprecated, see DMDACreateAggregates.
+  DMCreateAggregates - Deprecated, see DMDACreateAggregates.
 
-   Level: intermediate
+  Level: intermediate
 @*/
 PetscErrorCode DMCreateAggregates(DM dac, DM daf, Mat *mat)
 {
@@ -1338,26 +1338,26 @@ PetscErrorCode DMCreateAggregates(DM dac, DM daf, Mat *mat)
 }
 
 /*@
-   DMDACreateAggregates - Gets the aggregates that map between
-   grids associated with two `DMDA`
+  DMDACreateAggregates - Gets the aggregates that map between
+  grids associated with two `DMDA`
 
-   Collective on dmc
+  Collective
 
-   Input Parameters:
-+  dmc - the coarse grid `DMDA`
--  dmf - the fine grid `DMDA`
+  Input Parameters:
++ dac - the coarse grid `DMDA`
+- daf - the fine grid `DMDA`
 
-   Output Parameters:
-.  rest - the restriction matrix (transpose of the projection matrix)
+  Output Parameter:
+. rest - the restriction matrix (transpose of the projection matrix)
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   This routine is not used by PETSc.
-   It is not clear what its use case is and it may be removed in a future release.
-   Users should contact petsc-maint@mcs.anl.gov if they plan to use it.
+  Note:
+  This routine is not used by PETSc.
+  It is not clear what its use case is and it may be removed in a future release.
+  Users should contact petsc-maint@mcs.anl.gov if they plan to use it.
 
-.seealso: `DMRefine()`, `DMCreateInjection()`, `DMCreateInterpolation()`
+.seealso: [](sec_struct), `DMRefine()`, `DMCreateInjection()`, `DMCreateInterpolation()`
 @*/
 PetscErrorCode DMDACreateAggregates(DM dac, DM daf, Mat *rest)
 {
@@ -1384,7 +1384,7 @@ PetscErrorCode DMDACreateAggregates(DM dac, DM daf, Mat *rest)
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dac, DM_CLASSID, 1, DMDA);
   PetscValidHeaderSpecificType(daf, DM_CLASSID, 2, DMDA);
-  PetscValidPointer(rest, 3);
+  PetscAssertPointer(rest, 3);
 
   PetscCall(DMDAGetInfo(dac, &dimc, &Mc, &Nc, &Pc, &mc, &nc, &pc, &dofc, &sc, &bxc, &byc, &bzc, &stc));
   PetscCall(DMDAGetInfo(daf, &dimf, &Mf, &Nf, &Pf, &mf, &nf, &pf, &doff, &sf, &bxf, &byf, &bzf, &stf));
@@ -1464,5 +1464,5 @@ PetscErrorCode DMDACreateAggregates(DM dac, DM daf, Mat *rest)
   PetscCall(PetscFree2(one_vec, fine_nodes));
   PetscCall(MatAssemblyBegin(*rest, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(*rest, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

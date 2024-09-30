@@ -4,17 +4,18 @@ import os
 class Configure(config.package.GNUPackage):
   def __init__(self, framework):
     config.package.GNUPackage.__init__(self, framework)
-    self.version         = '2.25.0'
+    self.version         = '2.29.0'
     self.minversion      = '2.14'
     self.versionname     = 'HYPRE_RELEASE_VERSION'
     self.versioninclude  = 'HYPRE_config.h'
     self.requiresversion = 1
     self.gitcommit       = 'v'+self.version
+    # self.gitcommit       = '5e0bf05b42d856022d0a4d5c9294dfbe64cd5675' # master, june-20-2023
     self.download        = ['git://https://github.com/hypre-space/hypre','https://github.com/hypre-space/hypre/archive/'+self.gitcommit+'.tar.gz']
     self.functions       = ['HYPRE_IJMatrixCreate']
     self.includes        = ['HYPRE.h']
     self.liblist         = [['libHYPRE.a']]
-    self.license         = 'https://computation.llnl.gov/casc/linear_solvers/sls_hypre.html'
+    self.buildLanguages  = ['C','Cxx']
     # Per hypre users guide section 7.5 - install manually on windows for MS compilers.
     self.precisions        = ['double']
     # HYPRE is supposed to work with complex number
@@ -48,8 +49,6 @@ class Configure(config.package.GNUPackage):
   def formGNUConfigureArgs(self):
     self.packageDir = os.path.join(self.packageDir,'src')
     args = config.package.GNUPackage.formGNUConfigureArgs(self)
-    if not hasattr(self.compilers, 'CXX'):
-      raise RuntimeError('Error: Hypre requires C++ compiler. None specified')
     if not hasattr(self.compilers, 'FC'):
       args.append('--disable-fortran')
     if self.mpi.include:
@@ -114,7 +113,7 @@ class Configure(config.package.GNUPackage):
       if not hasharch:
         if not 'with-hypre-gpu-arch' in self.framework.clArgDB:
           if hasattr(self.cuda,'cudaArch'):
-            args.append('--with-gpu-arch=' + self.cuda.cudaArch)
+            args.append('--with-gpu-arch="' + ' '.join(self.cuda.cudaArchList()) + '"')
           else:
             args.append('--with-gpu-arch=70') # default
         else:
@@ -122,7 +121,7 @@ class Configure(config.package.GNUPackage):
       self.pushLanguage('CUDA')
       cucc = self.getCompiler()
       devflags += ' '.join(('','-expt-extended-lambda',stdflag,'-x','cu',''))
-      devflags += self.getCompilerFlags() + ' ' + self.setCompilers.CUDAPPFLAGS + ' ' + self.mpi.includepaths+ ' ' + self.headers.toString(self.dinclude)
+      devflags += self.updatePackageCUDAFlags(self.getCompilerFlags()) + ' ' + self.setCompilers.CUDAPPFLAGS + ' ' + self.mpi.includepaths+ ' ' + self.headers.toString(self.dinclude)
       self.popLanguage()
     elif self.openmp.found:
       args.append('--with-openmp')
@@ -175,7 +174,7 @@ class Configure(config.package.GNUPackage):
     # configure:2911: result:
     # configure:2915: error: invalid value of canonical host
     if 'MSYSTEM' in os.environ and os.environ['MSYSTEM'].endswith('64'):
-      args.append('--build=x86_64-linux-gnu --host=x86_64-linux-gnu')
+      args.append('--host=x86_64-linux-gnu')
 
     return args
 

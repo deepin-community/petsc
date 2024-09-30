@@ -1,0 +1,40 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/include/petsc/private/loghandlerimpl.h">Actual source code: loghandlerimpl.h</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2024-03-29T14:12:34+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a><font color="#A020F0">#pragma once</font>
+
+<a name="line3">  3: </a>#include <A href="petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
+
+<a name="line5">  5: </a><font color="#4169E1">typedef struct _PetscLogHandlerOps *PetscLogHandlerOps;</font>
+<a name="line6">  6: </a><font color="#4169E1"><a name="_PetscLogHandlerOps"></a>struct _PetscLogHandlerOps </font>{
+<a name="line7">  7: </a>  <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*destroy)(<a href="../../../manualpages/Profiling/PetscLogHandler.html">PetscLogHandler</a>);
+<a name="line8">  8: </a>  <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*eventbegin)(<a href="../../../manualpages/Profiling/PetscLogHandler.html">PetscLogHandler</a>, <a href="../../../manualpages/Profiling/PetscLogEvent.html">PetscLogEvent</a>, <a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>);
+<a name="line9">  9: </a>  <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*eventend)(<a href="../../../manualpages/Profiling/PetscLogHandler.html">PetscLogHandler</a>, <a href="../../../manualpages/Profiling/PetscLogEvent.html">PetscLogEvent</a>, <a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>, <a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>);
+<a name="line10"> 10: </a>  <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*eventsync)(<a href="../../../manualpages/Profiling/PetscLogHandler.html">PetscLogHandler</a>, <a href="../../../manualpages/Profiling/PetscLogEvent.html">PetscLogEvent</a>, <a href="../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a>);
+<a name="line11"> 11: </a>  <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*objectcreate)(<a href="../../../manualpages/Profiling/PetscLogHandler.html">PetscLogHandler</a>, <a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>);
+<a name="line12"> 12: </a>  <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*objectdestroy)(<a href="../../../manualpages/Profiling/PetscLogHandler.html">PetscLogHandler</a>, <a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>);
+<a name="line13"> 13: </a>  <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*stagepush)(<a href="../../../manualpages/Profiling/PetscLogHandler.html">PetscLogHandler</a>, <a href="../../../manualpages/Profiling/PetscLogStage.html">PetscLogStage</a>);
+<a name="line14"> 14: </a>  <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*stagepop)(<a href="../../../manualpages/Profiling/PetscLogHandler.html">PetscLogHandler</a>, <a href="../../../manualpages/Profiling/PetscLogStage.html">PetscLogStage</a>);
+<a name="line15"> 15: </a>  <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*view)(<a href="../../../manualpages/Profiling/PetscLogHandler.html">PetscLogHandler</a>, <a href="../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a>);
+<a name="line16"> 16: </a>};
+
+<a name="line18"> 18: </a><font color="#4169E1"><a name="_p_PetscLogHandler"></a>struct _p_PetscLogHandler </font>{
+<a name="line19"> 19: </a>  PETSCHEADER(<font color="#4169E1">struct _PetscLogHandlerOps</font>);
+<a name="line20"> 20: </a>  <a href="../../../manualpages/Profiling/PetscLogState.html">PetscLogState</a> state;
+<a name="line21"> 21: </a>  void         *data;
+<a name="line22"> 22: </a>};
+
+<a name="line24"> 24: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogHandlerPackageInitialize(void)</font></strong>;
+<a name="line25"> 25: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscLogHandlerLogObjectState_Internal(<a href="../../../manualpages/Profiling/PetscLogHandler.html">PetscLogHandler</a>, <a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>, const char *, va_list)</font></strong>;
+</pre>
+</body>
+
+</html>

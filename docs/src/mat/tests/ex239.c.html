@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/tests/ex239.c">Actual source code: ex239.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/mat/tests/ex239.c">Actual source code: ex239.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:48:07+00:00">
+<meta name="date" content="2024-03-29T14:13:19+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -16,25 +16,27 @@
 <a name="line5">  5: </a>#include <A href="../../../include/petscmat.h.html">&lt;petscmat.h&gt;</A>
 <a name="line6">  6: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
 <a name="line7">  7: </a>{
-<a name="line8">  8: </a>  <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>  global_size = 100;
-<a name="line9">  9: </a>  <a href="../../../docs/manualpages/Mat/Mat.html">Mat</a>       cuda_matrix;
-<a name="line10"> 10: </a>  <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>       input, output;
-<a name="line11"> 11: </a>  <a href="../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>;
-<a name="line12"> 12: </a>  <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> nrm  = 1;
+<a name="line8">  8: </a>  <a href="../../../manualpages/Sys/PetscInt.html">PetscInt</a>  global_size = 100;
+<a name="line9">  9: </a>  <a href="../../../manualpages/Mat/Mat.html">Mat</a>       cuda_matrix;
+<a name="line10"> 10: </a>  <a href="../../../manualpages/Vec/Vec.html">Vec</a>       input, output;
+<a name="line11"> 11: </a>  <a href="../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a>  comm = <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>;
+<a name="line12"> 12: </a>  <a href="../../../manualpages/Sys/PetscReal.html">PetscReal</a> nrm  = 1;
 
-<a name="line15"> 15: </a>  <a href="../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help);
-<a name="line16"> 16: </a>  <a href="../../../docs/manualpages/Mat/MatCreateDenseCUDA.html">MatCreateDenseCUDA</a>(comm, global_size, global_size, global_size, global_size, NULL, &amp;cuda_matrix);
+<a name="line14"> 14: </a>  <a href="../../../manualpages/Sys/PetscFunctionBeginUser.html">PetscFunctionBeginUser</a>;
+<a name="line15"> 15: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help));
+<a name="line16"> 16: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Mat/MatCreateDenseCUDA.html">MatCreateDenseCUDA</a>(comm, global_size, global_size, global_size, global_size, NULL, &amp;cuda_matrix));
 
-<a name="line18"> 18: </a>  <a href="../../../docs/manualpages/Vec/VecCreateSeqCUDA.html">VecCreateSeqCUDA</a>(comm, global_size, &amp;input);
-<a name="line19"> 19: </a>  <a href="../../../docs/manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(input, &amp;output);
-<a name="line20"> 20: </a>  <a href="../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(input, 1.);
-<a name="line21"> 21: </a>  <a href="../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(output, 2.);
-<a name="line22"> 22: </a>  <a href="../../../docs/manualpages/Mat/MatMult.html">MatMult</a>(cuda_matrix, input, output);
-<a name="line23"> 23: </a>  <a href="../../../docs/manualpages/Vec/VecNorm.html">VecNorm</a>(output, <a href="../../../docs/manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;nrm);
-<a name="line25"> 25: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;input);
-<a name="line26"> 26: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;output);
-<a name="line27"> 27: </a>  <a href="../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;cuda_matrix);
-<a name="line28"> 28: </a>  <a href="../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line18"> 18: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecCreateSeqCUDA.html">VecCreateSeqCUDA</a>(comm, global_size, &amp;input));
+<a name="line19"> 19: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecDuplicate.html">VecDuplicate</a>(input, &amp;output));
+<a name="line20"> 20: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecSet.html">VecSet</a>(input, 1.));
+<a name="line21"> 21: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecSet.html">VecSet</a>(output, 2.));
+<a name="line22"> 22: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Mat/MatMult.html">MatMult</a>(cuda_matrix, input, output));
+<a name="line23"> 23: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecNorm.html">VecNorm</a>(output, <a href="../../../manualpages/Vec/NORM_2.html">NORM_2</a>, &amp;nrm));
+<a name="line24"> 24: </a>  <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(nrm &lt;= PETSC_SMALL, <a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_PLIB</a>, <font color="#666666">"PETSc generated wrong result. Should be 0, but is %g"</font>, (double)nrm);
+<a name="line25"> 25: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;input));
+<a name="line26"> 26: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;output));
+<a name="line27"> 27: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;cuda_matrix));
+<a name="line28"> 28: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscFinalize.html">PetscFinalize</a>());
 <a name="line29"> 29: </a>  <font color="#4169E1">return</font> 0;
 <a name="line30"> 30: </a>}
 

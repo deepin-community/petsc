@@ -1,5 +1,5 @@
 !
-! Test the workaround for a bug in OpenMPI-2.1.1 on Ubuntu 18.04.2
+! Test the workaround for a bug in Open MPI 2.1.1 on Ubuntu 18.04.2
 ! See https://lists.mcs.anl.gov/pipermail/petsc-dev/2019-July/024803.html
 !
 ! Contributed-by:       Fabian Jakub  <Fabian.Jakub@physik.uni-muenchen.de>
@@ -31,7 +31,7 @@ program main
   !print *,myid, 'xv1d', xv1d, ':', xv1d
   PetscCallA(VecRestoreArrayF90(gVec, xv1d, ierr))
 
-  PetscCallA(PetscObjectViewFromOptions(gVec, PETSC_NULL_VEC, "-show_gVec", ierr))
+  PetscCallA(PetscObjectViewFromOptions(gVec, PETSC_NULL_VEC, '-show_gVec', ierr))
 
   PetscCallA(VecDestroy(gVec, ierr))
   PetscCallA(DMDestroy(da, ierr))
@@ -44,4 +44,3 @@ end program
 !      nsize: 9
 !      args: -show_gVec
 !TEST*/
-

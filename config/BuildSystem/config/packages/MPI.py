@@ -34,10 +34,13 @@ class Configure(config.package.Package):
                              ['libmpi.a','liblam.a']]
     liblist_msmpi         = [[os.path.join('amd64','msmpifec.lib'),os.path.join('amd64','msmpi.lib')],
                              [os.path.join('i386','msmpifec.lib'),os.path.join('i386','msmpi.lib')],
+                             [os.path.join('x64','msmpifec.lib'),os.path.join('x64','msmpi.lib')],
+                             [os.path.join('x86','msmpifec.lib'),os.path.join('x86','msmpi.lib')],
                              ['msmpi.lib']]
     liblist_other         = [['libmpich.a','libpthread.a'],['libmpi++.a','libmpi.a']]
     liblist_single        = [['libmpi.a'],['libmpich.a'],['mpi.lib'],['mpich2.lib'],['mpich.lib'],
-                             [os.path.join('amd64','msmpi.lib')],[os.path.join('i386','msmpi.lib')]]
+                             [os.path.join('amd64','msmpi.lib')],[os.path.join('i386','msmpi.lib')],
+                             [os.path.join('x64','msmpi.lib')],[os.path.join('x86','msmpi.lib')]]
     self.liblist          = liblist_mpich + liblist_lam + liblist_msmpi + liblist_other + liblist_single
     # defaults to --with-mpi=yes
     self.required         = 1
@@ -49,6 +52,7 @@ class Configure(config.package.Package):
     self.commc2f          = 0
     self.needBatchMPI     = 1
     self.alternativedownload = 'mpich'
+    self.haveReduceLocal  = 0
     # support MPI-3 process shared memory
     self.support_mpi3_shm = 0
     # support MPI-3 non-blocking collectives
@@ -66,6 +70,7 @@ class Configure(config.package.Package):
     config.package.Package.setupHelp(self,help)
     import nargs
     help.addArgument('MPI', '-with-mpiexec=<prog>',                              nargs.Arg(None, None, 'The utility used to launch MPI jobs. (should support "-n <np>" option)'))
+    help.addArgument('MPI', '-with-mpiexec-tail=<prog>',                         nargs.Arg(None, None, 'The utility you want to put at the very end of "mpiexec -n <np> ..." and right before your executable to launch MPI jobs.'))
     help.addArgument('MPI', '-with-mpi-compilers=<bool>',                        nargs.ArgBool(None, 1, 'Try to use the MPI compilers, e.g. mpicc'))
     help.addArgument('MPI', '-known-mpi-shared-libraries=<bool>',                nargs.ArgBool(None, None, 'Indicates the MPI libraries are shared (the usual test will be skipped)'))
     help.addArgument('MPI', '-with-mpi-f90module-visibility=<bool>',             nargs.ArgBool(None, 1, 'Indicates the MPI f90 module is available via petsc module. When disabled, mpi_f08 can be used from user code'))
@@ -84,6 +89,7 @@ class Configure(config.package.Package):
   def __str__(self):
     output  = config.package.Package.__str__(self)
     if self.mpiexec: output  += '  mpiexec: '+self.mpiexec+'\n'
+    if self.mpiexec_tail: output  += '  mpiexec_tail: '+self.mpiexec_tail+'\n'
     if self.mpi_pkg: output  += '  Implementation: '+self.mpi_pkg+'\n'
     if hasattr(self,'includepaths'):
       output  += '  MPI C++ include paths: '+ self.includepaths+'\n'
@@ -93,7 +99,7 @@ class Configure(config.package.Package):
   def generateLibList(self, directory):
     if self.setCompilers.usedMPICompilers:
       self.liblist = []
-      self.libdir  = ''
+      self.libDirs = ['']
     return config.package.Package.generateLibList(self,directory)
 
   # search many obscure locations for MPI
@@ -185,6 +191,17 @@ shared libraries and run with --known-mpi-shared-libraries=1')
     #  raise RuntimeError('Shared libraries cannot be built using MPI provided.\nEither reconfigure with --with-shared-libraries=0 or rebuild MPI with shared library support')
     return
 
+  def configureMPIEXEC_TAIL(self):
+    '''Checking for location of mpiexec_tail'''
+    if 'with-mpiexec-tail' in self.argDB:
+      self.argDB['with-mpiexec-tail'] = os.path.expanduser(self.argDB['with-mpiexec-tail'])
+      # If found, the call below defines a make macro MPIEXEC_TAIL with full path
+      if not self.getExecutable(self.argDB['with-mpiexec-tail'], getFullPath=1, resultName = 'mpiexec_tail'):
+        raise RuntimeError('Invalid mpiexec-tail specified: '+str(self.argDB['with-mpiexec-tail']))
+    else:
+      self.mpiexec_tail =''
+      self.addMakeMacro('MPIEXEC_TAIL', '')
+
   def configureMPIEXEC(self):
     '''Checking for location of mpiexec'''
     mpiexecargs = ''
@@ -235,7 +252,7 @@ shared libraries and run with --known-mpi-shared-libraries=1')
           raise RuntimeError('Could not locate MPIEXEC - please specify --with-mpiexec option')
       # Support for spaces and () in executable names; also needs to handle optional arguments at the end
       # TODO: This support for spaces and () should be moved to core BuildSystem
-      self.mpiexec = self.mpiexec.replace(' ', '\\ ').replace('(', '\\(').replace(')', '\\)').replace('\ -',' -')
+      self.mpiexec = self.mpiexec.replace(' ', r'\\ ').replace('(', r'\\(').replace(')', r'\\)').replace(r'\ -',' -')
       if (hasattr(self, 'ompi_major_version') and int(self.ompi_major_version) >= 3):
         (out, err, ret) = Configure.executeShellCommand(self.mpiexec+' -help all', checkCommand = noCheck, timeout = 60, log = self.log, threads = 1)
         if out.find('--oversubscribe') >=0:
@@ -265,13 +282,13 @@ shared libraries and run with --known-mpi-shared-libraries=1')
       self.logWrite('Unable to run '+self.mpiexec+' with option "-n 1 printenv"\nThis could be ok, some MPI implementations such as SGI produce a non-zero status with non-MPI programs\n'+out+err)
     else:
       if out.find('MPIR_CVAR_CH3') > -1:
-        if hasattr(self,'ompi_major_version'): raise RuntimeError("Your libraries are from OpenMPI but it appears your mpiexec is from MPICH");
+        if hasattr(self,'ompi_major_version'): raise RuntimeError("Your libraries are from Open MPI but it appears your mpiexec is from MPICH");
         self.addDefine('HAVE_MPIEXEC_ENVIRONMENTAL_VARIABLE', 'MPIR_CVAR_CH3')
       elif  out.find('MPIR_CVAR_CH3') > -1:
-        if hasattr(self,'ompi_major_version'): raise RuntimeError("Your libraries are from OpenMPI but it appears your mpiexec is from MPICH");
+        if hasattr(self,'ompi_major_version'): raise RuntimeError("Your libraries are from Open MPI but it appears your mpiexec is from MPICH");
         self.addDefine('HAVE_MPIEXEC_ENVIRONMENTAL_VARIABLE', 'MPICH')
       elif out.find('OMPI_COMM_WORLD_SIZE') > -1:
-        if hasattr(self,'mpich_numversion'): raise RuntimeError("Your libraries are from MPICH but it appears your mpiexec is from OpenMPI");
+        if hasattr(self,'mpich_numversion'): raise RuntimeError("Your libraries are from MPICH but it appears your mpiexec is from Open MPI");
         self.addDefine('HAVE_MPIEXEC_ENVIRONMENTAL_VARIABLE', 'OMP')
     if hasattr(self,'isNecMPI'):
       (out, err, ret) = Configure.executeShellCommand(self.mpiexec+' -n 1 -V /usr/bin/true', checkCommand = noCheck, timeout = 120, threads = 1, log = self.log)
@@ -333,7 +350,7 @@ shared libraries and run with --known-mpi-shared-libraries=1')
                 self.logPrint("Exception: while running ping skipping ping check\n")
 
               if not hostnameworks:
-                # Note: host may not work on MacOS, this is normal
+                # Note: host may not work on macOS, this is normal
                 self.getExecutable('host')
                 if hasattr(self,'host'):
                   try:
@@ -493,7 +510,7 @@ Unable to run hostname to check the network')
       self.addDefine('HAVE_MPI_NEIGHBORHOOD_COLLECTIVES',1)
     cuda_aware = 0
     if hasattr(self, 'ompi_major_version'):
-      openmpi_cuda_test = '#include<mpi.h>\n #include <mpi-ext.h>\n #if defined(MPIX_CUDA_AWARE_SUPPORT) && MPIX_CUDA_AWARE_SUPPORT\n #else\n #error This OpenMPI is not CUDA-aware\n #endif\n'
+      openmpi_cuda_test = '#include<mpi.h>\n #include <mpi-ext.h>\n #if defined(MPIX_CUDA_AWARE_SUPPORT) && MPIX_CUDA_AWARE_SUPPORT\n #else\n #error This Open MPI is not CUDA-aware\n #endif\n'
       if self.checkCompile(openmpi_cuda_test):
         cuda_aware = 1
     elif hasattr(self, 'mpich_numversion'):
@@ -533,12 +550,60 @@ Unable to run hostname to check the network')
       if (MPI_Recv_c(buf,count,MPI_INT,source,tag,MPI_COMM_WORLD,&stat)) return 1;
       if (MPI_Recv_init_c(buf,count,MPI_INT,source,tag,MPI_COMM_WORLD,&req)) return 1;
       if (MPI_Irecv_c(buf,count,MPI_INT,source,tag,MPI_COMM_WORLD,&req)) return 1;
-    '''):
+      if (MPI_Neighbor_alltoallv_c(0,0,0,MPI_INT,0,0,0,MPI_INT,MPI_COMM_WORLD)) return 1;
+      if (MPI_Ineighbor_alltoallv_c(0,0,0,MPI_INT,0,0,0,MPI_INT,MPI_COMM_WORLD,&req)) return 1;
+    ''' + ('if (MPI_Reduce_local_c(0,0,0,MPI_INT,MPI_SUM)) return 1;\n' if self.haveReduceLocal == 1 else '')):
       self.addDefine('HAVE_MPI_LARGE_COUNT', 1)
 
     self.compilers.CPPFLAGS = oldFlags
     self.compilers.LIBS = oldLibs
     self.logWrite(self.framework.restoreLog())
+    return
+
+  def configureMPIX(self):
+    '''Check for experimental functions added by MPICH or Open MPI as MPIX'''
+    # mpich-4.2 has a bug fix (PR6454). Without it, we could not use MPIX stream
+    if (hasattr(self, 'mpich_numversion') and int(self.mpich_numversion) >= 40200000):
+      oldFlags = self.compilers.CPPFLAGS
+      oldLibs  = self.compilers.LIBS
+      self.compilers.CPPFLAGS += ' '+self.headers.toString(self.include)
+      self.compilers.LIBS = self.libraries.toString(self.lib)+' '+self.compilers.LIBS
+      self.framework.saveLog()
+      if self.checkLink('#include <mpi.h>\n',
+      '''
+        MPI_Info    info ;
+        // cudaStream_t stream;
+        int         stream; // use a fake type instead as we don't want this check to depend on CUDA
+        MPI_Comm    stream_comm ;
+        MPIX_Stream mpi_stream ;
+        MPI_Request req;
+        MPI_Status  stat;
+        int         sbuf[1]={0},rbuf[1]={0},count=1,dest=1,source=0,tag=0;
+
+        MPI_Info_create (&info);
+        MPI_Info_set(info, "type", "cudaStream_t");
+        MPIX_Info_set_hex(info, "value", &stream, sizeof(stream));
+        MPIX_Stream_create(info, &mpi_stream );
+        MPIX_Stream_comm_create(MPI_COMM_WORLD, mpi_stream, &stream_comm);
+        MPIX_Isend_enqueue(sbuf,count,MPI_INT,dest,tag,stream_comm,&req);
+        MPIX_Irecv_enqueue(rbuf,count,MPI_INT,source,tag,stream_comm,&req);
+        MPIX_Allreduce_enqueue(sbuf,rbuf,count,MPI_INT,MPI_SUM,stream_comm);
+        MPIX_Wait_enqueue(&req, &stat);
+      '''):
+        self.addDefine('HAVE_MPIX_STREAM', 1)
+
+      if self.checkLink('#include <mpi.h>\n',
+      '''
+        MPI_Comm comm = MPI_COMM_WORLD; // fake
+        MPIX_Threadcomm_start(comm);
+        MPIX_Threadcomm_finish(comm);
+        MPIX_Threadcomm_free(&comm);
+      '''):
+        self.addDefine('HAVE_MPIX_THREADCOMM', 1)
+
+      self.compilers.CPPFLAGS = oldFlags
+      self.compilers.LIBS = oldLibs
+      self.logWrite(self.framework.restoreLog())
     return
 
   def configureMPITypes(self):
@@ -565,6 +630,7 @@ Unable to run hostname to check the network')
     self.mpiexec = '${PETSC_DIR}/lib/petsc/bin/petsc-mpiexec.uni'
     self.mpiexecseq = '${PETSC_DIR}/lib/petsc/bin/petsc-mpiexec.uni'
     self.addMakeMacro('MPIEXEC','${PETSC_DIR}/lib/petsc/bin/petsc-mpiexec.uni')
+    self.executeTest(self.configureMPIEXEC_TAIL)
     self.framework.saveLog()
     self.framework.addDefine('MPI_Type_create_struct(count,lens,displs,types,newtype)', 'MPI_Type_struct((count),(lens),(displs),(types),(newtype))')
     self.framework.addDefine('MPI_Comm_create_errhandler(p_err_fun,p_errhandler)', 'MPI_Errhandler_create((p_err_fun),(p_errhandler))')
@@ -573,16 +639,17 @@ Unable to run hostname to check the network')
     self.commf2c = 1
     self.commc2f = 1
     self.usingMPIUni = 1
+    self.found = 1
     self.version = 'PETSc MPIUNI uniprocessor MPI replacement'
     self.executeTest(self.PetscArchMPICheck)
     return
 
   def checkDownload(self):
-    '''Check if we should download MPICH or OpenMPI'''
+    '''Check if we should download MPICH or Open MPI'''
     if 'download-mpi' in self.argDB and self.argDB['download-mpi']:
       raise RuntimeError('Option --download-mpi does not exist! Use --download-mpich or --download-openmpi instead.')
     if self.argDB['download-mpich'] and self.argDB['download-openmpi']:
-      raise RuntimeError('Cannot install more than one of OpenMPI or  MPICH for a single configuration. \nUse different PETSC_ARCH if you want to be able to switch between two')
+      raise RuntimeError('Cannot install more than one of Open MPI or  MPICH for a single configuration. \nUse different PETSC_ARCH if you want to be able to switch between two')
     return None
 
   def SGIMPICheck(self):
@@ -673,7 +740,7 @@ Unable to run hostname to check the network')
     if self.checkCompile(mpich_test):
       buf = self.outputPreprocess(mpich_test)
       try:
-        mpich_numversion = re.compile('\nconst char *mpich_ver ='+HASHLINESPACE+'"([\.0-9]+)"'+HASHLINESPACE+';').search(buf).group(1)
+        mpich_numversion = re.compile('\nconst char *mpich_ver ='+HASHLINESPACE+r'"([\.0-9]+)"'+HASHLINESPACE+';').search(buf).group(1)
         self.addDefine('HAVE_'+MPICHPKG+'_VERSION',mpich_numversion)
         MPI_VER  = '  '+MPICHPKG+'_VERSION: '+mpich_numversion
       except:
@@ -703,7 +770,7 @@ Unable to run hostname to check the network')
       self.isNecMPI = 1
       self.addDefine('HAVE_NECMPI',1)
 
-    # IBM Spectrum MPI is derived from OpenMPI, we do not yet have specific tests for it
+    # IBM Spectrum MPI is derived from Open MPI, we do not yet have specific tests for it
     # https://www.ibm.com/us-en/marketplace/spectrum-mpi
     openmpi_test = '#include <mpi.h>\nint ompi_major = OMPI_MAJOR_VERSION;\nint ompi_minor = OMPI_MINOR_VERSION;\nint ompi_release = OMPI_RELEASE_VERSION;\n'
     if self.checkCompile(openmpi_test):
@@ -721,7 +788,7 @@ Unable to run hostname to check the network')
         self.mpi_pkg_version = '  OMPI_VERSION: '+ompi_major_version+'.'+ompi_minor_version+'.'+ompi_release_version+'\n'
         MPI_VER = '  OMPI_VERSION: '+ompi_major_version+'.'+ompi_minor_version+'.'+ompi_release_version
       except:
-        self.logPrint('Unable to parse OpenMPI version from header. Probably a buggy preprocessor')
+        self.logPrint('Unable to parse Open MPI version from header. Probably a buggy preprocessor')
     if MPI_VER:
       self.compilers.CPPFLAGS = oldFlags
       self.mpi_pkg_version = MPI_VER+'\n'
@@ -734,7 +801,7 @@ Unable to run hostname to check the network')
       msmpi_version = 'unknown'
       self.addDefine('HAVE_MSMPI',1) # flag we have MSMPI since we need to disable broken components
       try:
-        msmpi_version = re.compile('\nchar msmpi_hex\[\] = '+HASHLINESPACE+'\"([a-zA-Z0-9_]*)\"'+HASHLINESPACE+';').search(buf).group(1)
+        msmpi_version = re.compile('\n'+r'char msmpi_hex\[\] = '+HASHLINESPACE+'\"([a-zA-Z0-9_]*)\"'+HASHLINESPACE+';').search(buf).group(1)
         MPI_VER = '  MSMPI_VERSION: '+msmpi_version
         self.addDefine('HAVE_MSMPI_VERSION',msmpi_version)
       except:
@@ -878,7 +945,9 @@ You may need to set the environmental variable HWLOC_COMPONENTS to -x86 to preve
     self.executeTest(self.configureMPI2) #depends on checkMPIDistro
     self.executeTest(self.configureMPI3) #depends on checkMPIDistro
     self.executeTest(self.configureMPI4)
+    self.executeTest(self.configureMPIX)
     self.executeTest(self.configureMPIEXEC)
+    self.executeTest(self.configureMPIEXEC_TAIL)
     self.executeTest(self.configureMPITypes)
     self.executeTest(self.SGIMPICheck)
     self.executeTest(self.CxxMPICheck)

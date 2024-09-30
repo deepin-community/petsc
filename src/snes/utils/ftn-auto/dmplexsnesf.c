@@ -35,6 +35,11 @@ extern void PetscRmPointer(void*);
 #define dmplexsnescomputeresidualfem_ dmplexsnescomputeresidualfem
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmplexsnescomputeresidualds_ DMPLEXSNESCOMPUTERESIDUALDS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmplexsnescomputeresidualds_ dmplexsnescomputeresidualds
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmplexsnescomputeboundaryfem_ DMPLEXSNESCOMPUTEBOUNDARYFEM
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmplexsnescomputeboundaryfem_ dmplexsnescomputeboundaryfem
@@ -68,6 +73,13 @@ extern "C" {
 PETSC_EXTERN void  dmplexsnescomputeresidualfem_(DM dm,Vec X,Vec F,void*user, int *__ierr)
 {
 *__ierr = DMPlexSNESComputeResidualFEM(
+	(DM)PetscToPointer((dm) ),
+	(Vec)PetscToPointer((X) ),
+	(Vec)PetscToPointer((F) ),user);
+}
+PETSC_EXTERN void  dmplexsnescomputeresidualds_(DM dm,Vec X,Vec F,void*user, int *__ierr)
+{
+*__ierr = DMPlexSNESComputeResidualDS(
 	(DM)PetscToPointer((dm) ),
 	(Vec)PetscToPointer((X) ),
 	(Vec)PetscToPointer((F) ),user);

@@ -40,11 +40,6 @@ extern void PetscRmPointer(void*);
 #define dmplexcomputeprojection3dto2d_ dmplexcomputeprojection3dto2d
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define dmplexcomputegeometryfem_ DMPLEXCOMPUTEGEOMETRYFEM
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define dmplexcomputegeometryfem_ dmplexcomputegeometryfem
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmplexcomputegeometryfvm_ DMPLEXCOMPUTEGEOMETRYFVM
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmplexcomputegeometryfvm_ dmplexcomputegeometryfvm
@@ -84,11 +79,6 @@ PETSC_EXTERN void  dmplexfindvertices_(DM dm,Vec coordinates,PetscReal *eps,IS *
 PETSC_EXTERN void  dmplexcomputeprojection3dto2d_(PetscInt *coordSize,PetscScalar coords[],PetscReal R[], int *__ierr)
 {
 *__ierr = DMPlexComputeProjection3Dto2D(*coordSize,coords,R);
-}
-PETSC_EXTERN void  dmplexcomputegeometryfem_(DM dm,Vec *cellgeom, int *__ierr)
-{
-*__ierr = DMPlexComputeGeometryFEM(
-	(DM)PetscToPointer((dm) ),cellgeom);
 }
 PETSC_EXTERN void  dmplexcomputegeometryfvm_(DM dm,Vec *cellgeom,Vec *facegeom, int *__ierr)
 {

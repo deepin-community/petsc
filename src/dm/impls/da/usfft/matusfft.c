@@ -16,18 +16,19 @@ typedef struct {
   DM        resampleDa; /* the Battle-Lemarie interpolant DMDA */
   Vec       resample;   /* Vec of samples, one per dof per sample point */
   fftw_plan p_forward, p_backward;
-  unsigned  p_flag; /* planner flags, FFTW_ESTIMATE,FFTW_MEASURE, FFTW_PATIENT, FFTW_EXHAUSTIVE */
+  unsigned  p_flag; /* planner flags, FFTW_ESTIMATE, FFTW_MEASURE, FFTW_PATIENT, FFTW_EXHAUSTIVE */
 } Mat_USFFT;
 
-PetscErrorCode MatApply_USFFT_Private(Mat A, fftw_plan *plan, int direction, Vec x, Vec y)
-{
 #if 0
+static PetscErrorCode MatApply_USFFT_Private(Mat A, fftw_plan *plan, int direction, Vec x, Vec y)
+{
+  #if 0
   PetscScalar    *r_array, *y_array;
   Mat_USFFT* = (Mat_USFFT*)(A->data);
-#endif
+  #endif
 
   PetscFunctionBegin;
-#if 0
+  #if 0
   /* resample x to usfft->resample */
   PetscCall(MatResample_USFFT_Private(A, x));
 
@@ -36,12 +37,12 @@ PetscErrorCode MatApply_USFFT_Private(Mat A, fftw_plan *plan, int direction, Vec
   PetscCall(VecGetArray(y,&y_array));
   if (!*plan) { /* create a plan then execute it*/
     if (usfft->dof == 1) {
-  #if defined(PETSC_DEBUG_USFFT)
+    #if defined(PETSC_DEBUG_USFFT)
       PetscCall(PetscPrintf(PetscObjectComm((PetscObject)A), "direction = %d, usfft->ndim = %d\n", direction, usfft->ndim));
       for (int ii = 0; ii < usfft->ndim; ++ii) {
         PetscCall(PetscPrintf(PetscObjectComm((PetscObject)A), "usfft->outdim[%d] = %d\n", ii, usfft->outdim[ii]));
       }
-  #endif
+    #endif
 
       switch (usfft->dim) {
       case 1:
@@ -73,18 +74,17 @@ PetscErrorCode MatApply_USFFT_Private(Mat A, fftw_plan *plan, int direction, Vec
   }
   PetscCall(VecRestoreArray(y,&y_array));
   PetscCall(VecRestoreArray(x,&x_array));
-#endif
-  PetscFunctionReturn(0);
+  #endif
+  PetscFunctionReturn(PETSC_SUCCESS);
 } /* MatApply_USFFT_Private() */
 
-#if 0
 PetscErrorCode MatUSFFT_ProjectOnBattleLemarie_Private(Vec x,double *r)
 /* Project onto the Battle-Lemarie function centered around r */
 {
   PetscScalar    *x_array, *y_array;
 
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 } /* MatUSFFT_ProjectOnBattleLemarie_Private() */
 
 PetscErrorCode MatInterpolate_USFFT_Private(Vec x,Vec y)
@@ -92,7 +92,7 @@ PetscErrorCode MatInterpolate_USFFT_Private(Vec x,Vec y)
   PetscScalar    *x_array, *y_array;
 
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 } /* MatInterpolate_USFFT_Private() */
 
 PetscErrorCode MatMult_SeqUSFFT(Mat A,Vec x,Vec y)
@@ -102,7 +102,7 @@ PetscErrorCode MatMult_SeqUSFFT(Mat A,Vec x,Vec y)
   PetscFunctionBegin;
   /* NB: for now we use outdim for both x and y; this will change once a full USFFT is implemented */
   PetscCall(MatApply_USFFT_Private(A, &usfft->p_forward, FFTW_FORWARD, x,y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatMultTranspose_SeqUSFFT(Mat A,Vec x,Vec y)
@@ -112,7 +112,7 @@ PetscErrorCode MatMultTranspose_SeqUSFFT(Mat A,Vec x,Vec y)
   PetscFunctionBegin;
   /* NB: for now we use outdim for both x and y; this will change once a full USFFT is implemented */
   PetscCall(MatApply_USFFT_Private(usfft, &usfft->p_backward, FFTW_BACKWARD, x,y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatDestroy_SeqUSFFT(Mat A)
@@ -126,7 +126,7 @@ PetscErrorCode MatDestroy_SeqUSFFT(Mat A)
   PetscCall(PetscFree(usfft->outdim));
   PetscCall(PetscFree(usfft));
   PetscCall(PetscObjectChangeTypeName((PetscObject)A,0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -136,10 +136,10 @@ PetscErrorCode MatDestroy_SeqUSFFT(Mat A)
    Collective
 
    Input Parameter:
-.   da - geometry of the domain encoded by a `DMDA`
+.  da - geometry of the domain encoded by a `DMDA`
 
    Output Parameter:
-.   A  - the matrix
+.  A  - the matrix
 
   Options Database Key:
 . -mat_usfft_plannerflags - set the FFTW planner flags
@@ -230,7 +230,7 @@ PetscErrorCode  MatCreateSeqUSFFT(Vec sampleCoords, DMDA freqDA, Mat *A)
   PetscCall(PetscOptionsEList("-mat_usfft_fftw_plannerflags","Planner Flags","None",p_flags,4,p_flags[0],&p_flag,&flg));
   if (flg) usfft->p_flag = (unsigned)p_flag;
   PetscOptionsEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 } /* MatCreateSeqUSFFT() */
 
 #endif

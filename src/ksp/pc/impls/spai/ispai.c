@@ -1,4 +1,3 @@
-
 /*
    3/99 Modified by Stephen Barnard to support SPAI version 3.0
 */
@@ -17,7 +16,9 @@
    3) fix to set the block size based on the matrix block size
 
 */
-#define PETSC_SKIP_COMPLEX /* since spai uses I which conflicts with some complex implementations */
+#if !defined(PETSC_SKIP_COMPLEX)
+  #define PETSC_SKIP_COMPLEX /* since spai uses I which conflicts with some complex implementations */
+#endif
 
 #include <petsc/private/pcimpl.h> /*I "petscpc.h" I*/
 #include <../src/ksp/pc/impls/spai/petscspai.h>
@@ -31,10 +32,8 @@ EXTERN_C_BEGIN
 #include <matrix.h>
 EXTERN_C_END
 
-extern PetscErrorCode ConvertMatToMatrix(MPI_Comm, Mat, Mat, matrix **);
-extern PetscErrorCode ConvertMatrixToMat(MPI_Comm, matrix *, Mat *);
-extern PetscErrorCode ConvertVectorToVec(MPI_Comm, vector *, Vec *);
-extern PetscErrorCode MM_to_PETSC(char *, char *, char *);
+static PetscErrorCode ConvertMatToMatrix(MPI_Comm, Mat, Mat, matrix **);
+static PetscErrorCode ConvertMatrixToMat(MPI_Comm, matrix *, Mat *);
 
 typedef struct {
   matrix *B;  /* matrix in SPAI format */
@@ -88,14 +87,14 @@ static PetscErrorCode PCSetUp_SPAI(PC pc)
   /* int    verbose    */ /* verbose == 0 specifies that SPAI is silent
                               verbose == 1 prints timing and matrix statistics */
 
-  PetscCall(bspai(ispai->B, &ispai->M, stdout, ispai->epsilon, ispai->nbsteps, ispai->max, ispai->maxnew, ispai->block_size, ispai->cache_size, ispai->verbose));
+  PetscCallExternal(bspai, ispai->B, &ispai->M, stdout, ispai->epsilon, ispai->nbsteps, ispai->max, ispai->maxnew, ispai->block_size, ispai->cache_size, ispai->verbose);
 
   PetscCall(ConvertMatrixToMat(PetscObjectComm((PetscObject)pc), ispai->M, &ispai->PM));
 
   /* free the SPAI matrices */
   sp_free_matrix(ispai->B);
   sp_free_matrix(ispai->M);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApply_SPAI(PC pc, Vec xx, Vec y)
@@ -105,7 +104,7 @@ static PetscErrorCode PCApply_SPAI(PC pc, Vec xx, Vec y)
   PetscFunctionBegin;
   /* Now using PETSc's multiply */
   PetscCall(MatMult(ispai->PM, xx, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCMatApply_SPAI(PC pc, Mat X, Mat Y)
@@ -115,7 +114,7 @@ static PetscErrorCode PCMatApply_SPAI(PC pc, Mat X, Mat Y)
   PetscFunctionBegin;
   /* Now using PETSc's multiply */
   PetscCall(MatMatMult(ispai->PM, X, MAT_REUSE_MATRIX, PETSC_DEFAULT, &Y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCDestroy_SPAI(PC pc)
@@ -134,7 +133,7 @@ static PetscErrorCode PCDestroy_SPAI(PC pc)
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCSPAISetCacheSize_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCSPAISetVerbose_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCSPAISetSp_C", NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCView_SPAI(PC pc, PetscViewer viewer)
@@ -154,7 +153,7 @@ static PetscErrorCode PCView_SPAI(PC pc, PetscViewer viewer)
     PetscCall(PetscViewerASCIIPrintf(viewer, "    verbose %d\n", ispai->verbose));
     PetscCall(PetscViewerASCIIPrintf(viewer, "    sp %d\n", ispai->sp));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSPAISetEpsilon_SPAI(PC pc, PetscReal epsilon1)
@@ -163,7 +162,7 @@ static PetscErrorCode PCSPAISetEpsilon_SPAI(PC pc, PetscReal epsilon1)
 
   PetscFunctionBegin;
   ispai->epsilon = (double)epsilon1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSPAISetNBSteps_SPAI(PC pc, PetscInt nbsteps1)
@@ -172,7 +171,7 @@ static PetscErrorCode PCSPAISetNBSteps_SPAI(PC pc, PetscInt nbsteps1)
 
   PetscFunctionBegin;
   ispai->nbsteps = (int)nbsteps1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* added 1/7/99 g.h. */
@@ -182,7 +181,7 @@ static PetscErrorCode PCSPAISetMax_SPAI(PC pc, PetscInt max1)
 
   PetscFunctionBegin;
   ispai->max = (int)max1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSPAISetMaxNew_SPAI(PC pc, PetscInt maxnew1)
@@ -191,7 +190,7 @@ static PetscErrorCode PCSPAISetMaxNew_SPAI(PC pc, PetscInt maxnew1)
 
   PetscFunctionBegin;
   ispai->maxnew = (int)maxnew1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSPAISetBlockSize_SPAI(PC pc, PetscInt block_size1)
@@ -200,7 +199,7 @@ static PetscErrorCode PCSPAISetBlockSize_SPAI(PC pc, PetscInt block_size1)
 
   PetscFunctionBegin;
   ispai->block_size = (int)block_size1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSPAISetCacheSize_SPAI(PC pc, PetscInt cache_size)
@@ -209,7 +208,7 @@ static PetscErrorCode PCSPAISetCacheSize_SPAI(PC pc, PetscInt cache_size)
 
   PetscFunctionBegin;
   ispai->cache_size = (int)cache_size;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSPAISetVerbose_SPAI(PC pc, PetscInt verbose)
@@ -218,7 +217,7 @@ static PetscErrorCode PCSPAISetVerbose_SPAI(PC pc, PetscInt verbose)
 
   PetscFunctionBegin;
   ispai->verbose = (int)verbose;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSPAISetSp_SPAI(PC pc, PetscInt sp)
@@ -227,181 +226,182 @@ static PetscErrorCode PCSPAISetSp_SPAI(PC pc, PetscInt sp)
 
   PetscFunctionBegin;
   ispai->sp = (int)sp;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PCSPAISetEpsilon -- Set the tolerance for the `PCSPAI` preconditioner
 
   Input Parameters:
-+ pc - the preconditioner
-- eps - epsilon (default .4)
-
-  Note:
-    Espilon must be between 0 and 1. It controls the
-                 quality of the approximation of M to the inverse of
-                 A. Higher values of epsilon lead to more work, more
-                 fill, and usually better preconditioners. In many
-                 cases the best choice of epsilon is the one that
-                 divides the total solution time equally between the
-                 preconditioner and the solver.
++ pc       - the preconditioner
+- epsilon1 - the tolerance (default .4)
 
   Level: intermediate
 
-.seealso: `PCSPAI`, `PCSetType()`
+  Note:
+  `espilon1` must be between 0 and 1. It controls the
+  quality of the approximation of M to the inverse of
+  A. Higher values of `epsilon1` lead to more work, more
+  fill, and usually better preconditioners. In many
+  cases the best choice of `epsilon1` is the one that
+  divides the total solution time equally between the
+  preconditioner and the solver.
+
+.seealso: [](ch_ksp), `PCSPAI`, `PCSetType()`
   @*/
 PetscErrorCode PCSPAISetEpsilon(PC pc, PetscReal epsilon1)
 {
   PetscFunctionBegin;
   PetscTryMethod(pc, "PCSPAISetEpsilon_C", (PC, PetscReal), (pc, epsilon1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PCSPAISetNBSteps - set maximum number of improvement steps per row in
-        the `PCSPAI` preconditioner
+  the `PCSPAI` preconditioner
 
   Input Parameters:
-+ pc - the preconditioner
-- n - number of steps (default 5)
++ pc       - the preconditioner
+- nbsteps1 - number of steps (default 5)
 
   Note:
-    `PCSPAI` constructs to approximation to every column of
-                 the exact inverse of A in a series of improvement
-                 steps. The quality of the approximation is determined
-                 by epsilon. If an approximation achieving an accuracy
-                 of epsilon is not obtained after ns steps, SPAI simply
-                 uses the best approximation constructed so far.
+  `PCSPAI` constructs to approximation to every column of
+  the exact inverse of A in a series of improvement
+  steps. The quality of the approximation is determined
+  by epsilon. If an approximation achieving an accuracy
+  of epsilon is not obtained after `nbsteps1` steps, `PCSPAI` simply
+  uses the best approximation constructed so far.
 
   Level: intermediate
 
-.seealso: `PCSPAI`, `PCSetType()`, `PCSPAISetMaxNew()`
+.seealso: [](ch_ksp), `PCSPAI`, `PCSetType()`, `PCSPAISetMaxNew()`
 @*/
 PetscErrorCode PCSPAISetNBSteps(PC pc, PetscInt nbsteps1)
 {
   PetscFunctionBegin;
   PetscTryMethod(pc, "PCSPAISetNBSteps_C", (PC, PetscInt), (pc, nbsteps1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* added 1/7/99 g.h. */
 /*@
-  PCSPAISetMax - set the size of various working buffers in
-        the `PCSPAI` preconditioner
+  PCSPAISetMax - set the size of various working buffers in the `PCSPAI` preconditioner
 
   Input Parameters:
-+ pc - the preconditioner
-- n - size (default is 5000)
++ pc   - the preconditioner
+- max1 - size (default is 5000)
 
   Level: intermediate
 
-.seealso: `PCSPAI`, `PCSetType()`
+.seealso: [](ch_ksp), `PCSPAI`, `PCSetType()`
 @*/
 PetscErrorCode PCSPAISetMax(PC pc, PetscInt max1)
 {
   PetscFunctionBegin;
   PetscTryMethod(pc, "PCSPAISetMax_C", (PC, PetscInt), (pc, max1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  PCSPAISetMaxNew - set maximum number of new nonzero candidates per step
-   in `PCSPAI` preconditioner
+  PCSPAISetMaxNew - set maximum number of new nonzero candidates per step in the `PCSPAI` preconditioner
 
   Input Parameters:
-+ pc - the preconditioner
-- n - maximum number (default 5)
++ pc      - the preconditioner
+- maxnew1 - maximum number (default 5)
 
   Level: intermediate
 
-.seealso: `PCSPAI`, `PCSetType()`, `PCSPAISetNBSteps()`
+.seealso: [](ch_ksp), `PCSPAI`, `PCSetType()`, `PCSPAISetNBSteps()`
 @*/
 PetscErrorCode PCSPAISetMaxNew(PC pc, PetscInt maxnew1)
 {
   PetscFunctionBegin;
   PetscTryMethod(pc, "PCSPAISetMaxNew_C", (PC, PetscInt), (pc, maxnew1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PCSPAISetBlockSize - set the block size for the `PCSPAI` preconditioner
 
   Input Parameters:
-+ pc - the preconditioner
-- n - block size (default 1)
-
-  Notes:
-    A block
-                 size of 1 treats A as a matrix of scalar elements. A
-                 block size of s > 1 treats A as a matrix of sxs
-                 blocks. A block size of 0 treats A as a matrix with
-                 variable sized blocks, which are determined by
-                 searching for dense square diagonal blocks in A.
-                 This can be very effective for finite-element
-                 matrices.
-
-                 SPAI will convert A to block form, use a block
-                 version of the preconditioner algorithm, and then
-                 convert the result back to scalar form.
-
-                 In many cases the a block-size parameter other than 1
-                 can lead to very significant improvement in
-                 performance.
++ pc          - the preconditioner
+- block_size1 - block size (default 1)
 
   Level: intermediate
 
-.seealso: `PCSPAI`, `PCSetType()`
+  Notes:
+  A block
+  size of 1 treats A as a matrix of scalar elements. A
+  block size of s > 1 treats A as a matrix of sxs
+  blocks. A block size of 0 treats A as a matrix with
+  variable sized blocks, which are determined by
+  searching for dense square diagonal blocks in A.
+  This can be very effective for finite-element
+  matrices.
+
+  SPAI will convert A to block form, use a block
+  version of the preconditioner algorithm, and then
+  convert the result back to scalar form.
+
+  In many cases the a block-size parameter other than 1
+  can lead to very significant improvement in
+  performance.
+
+  Developer Note:
+  This preconditioner could use the matrix block size as the default block size to use
+
+.seealso: [](ch_ksp), `PCSPAI`, `PCSetType()`
 @*/
 PetscErrorCode PCSPAISetBlockSize(PC pc, PetscInt block_size1)
 {
   PetscFunctionBegin;
   PetscTryMethod(pc, "PCSPAISetBlockSize_C", (PC, PetscInt), (pc, block_size1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PCSPAISetCacheSize - specify cache size in the `PCSPAI` preconditioner
 
   Input Parameters:
-+ pc - the preconditioner
-- n -  cache size {0,1,2,3,4,5} (default 5)
-
-  Note:
-    `PCSPAI` uses a hash table to cache messages and avoid
-                 redundant communication. If suggest always using
-                 5. This parameter is irrelevant in the serial
-                 version.
++ pc         - the preconditioner
+- cache_size - cache size {0,1,2,3,4,5} (default 5)
 
   Level: intermediate
 
-.seealso: `PCSPAI`, `PCSetType()`
+  Note:
+  `PCSPAI` uses a hash table to cache messages and avoid
+  redundant communication. If suggest always using
+  5. This parameter is irrelevant in the serial
+  version.
+
+.seealso: [](ch_ksp), `PCSPAI`, `PCSetType()`
 @*/
 PetscErrorCode PCSPAISetCacheSize(PC pc, PetscInt cache_size)
 {
   PetscFunctionBegin;
   PetscTryMethod(pc, "PCSPAISetCacheSize_C", (PC, PetscInt), (pc, cache_size));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PCSPAISetVerbose - verbosity level for the `PCSPAI` preconditioner
 
   Input Parameters:
-+ pc - the preconditioner
-- n - level (default 1)
-
-  Note:
-    print parameters, timings and matrix statistics
++ pc      - the preconditioner
+- verbose - level (default 1)
 
   Level: intermediate
 
-.seealso: `PCSPAI`, `PCSetType()`
+  Note:
+  Prints parameters, timings and matrix statistics
+
+.seealso: [](ch_ksp), `PCSPAI`, `PCSetType()`
 @*/
 PetscErrorCode PCSPAISetVerbose(PC pc, PetscInt verbose)
 {
   PetscFunctionBegin;
   PetscTryMethod(pc, "PCSPAISetVerbose_C", (PC, PetscInt), (pc, verbose));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -409,25 +409,25 @@ PetscErrorCode PCSPAISetVerbose(PC pc, PetscInt verbose)
 
   Input Parameters:
 + pc - the preconditioner
-- n - 0 or 1
-
-  Note:
-    If A has a symmetric nonzero pattern use -sp 1 to
-                 improve performance by eliminating some communication
-                 in the parallel version. Even if A does not have a
-                 symmetric nonzero pattern -sp 1 may well lead to good
-                 results, but the code will not follow the published
-                 SPAI algorithm exactly.
+- sp - 0 or 1
 
   Level: intermediate
 
-.seealso: `PCSPAI`, `PCSetType()`
+  Note:
+  If A has a symmetric nonzero pattern use `sp` 1 to
+  improve performance by eliminating some communication
+  in the parallel version. Even if A does not have a
+  symmetric nonzero pattern `sp` 1 may well lead to good
+  results, but the code will not follow the published
+  SPAI algorithm exactly.
+
+.seealso: [](ch_ksp), `PCSPAI`, `PCSetType()`
 @*/
 PetscErrorCode PCSPAISetSp(PC pc, PetscInt sp)
 {
   PetscFunctionBegin;
   PetscTryMethod(pc, "PCSPAISetSp_C", (PC, PetscInt), (pc, sp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSetFromOptions_SPAI(PC pc, PetscOptionItems *PetscOptionsObject)
@@ -457,20 +457,20 @@ static PetscErrorCode PCSetFromOptions_SPAI(PC pc, PetscOptionItems *PetscOption
   PetscCall(PetscOptionsInt("-pc_spai_sp", "", "PCSPAISetSp", ispai->sp, &sp, &flg));
   if (flg) PetscCall(PCSPAISetSp(pc, sp));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-   PCSPAI - Use the Sparse Approximate Inverse method
+   PCSPAI - Use the Sparse Approximate Inverse method {cite}`gh97`
 
    Options Database Keys:
-+  -pc_spai_epsilon <eps> - set tolerance
-.  -pc_spai_nbstep <n> - set nbsteps
-.  -pc_spai_max <m> - set max
-.  -pc_spai_max_new <m> - set maxnew
-.  -pc_spai_block_size <n> - set block size
-.  -pc_spai_cache_size <n> - set cache size
-.  -pc_spai_sp <m> - set sp
++  -pc_spai_epsilon <eps>            - set tolerance
+.  -pc_spai_nbstep <n>               - set nbsteps
+.  -pc_spai_max <m>                  - set max
+.  -pc_spai_max_new <m>              - set maxnew
+.  -pc_spai_block_size <n>           - set block size
+.  -pc_spai_cache_size <n>           - set cache size
+.  -pc_spai_sp <m>                   - set sp
 -  -pc_spai_set_verbose <true,false> - verbose output
 
    Level: beginner
@@ -478,10 +478,7 @@ static PetscErrorCode PCSetFromOptions_SPAI(PC pc, PetscOptionItems *PetscOption
    Note:
     This only works with `MATAIJ` matrices.
 
-   References:
- . * -  Grote and Barnard (SIAM J. Sci. Comput.; vol 18, nr 3)
-
-.seealso: `PCCreate()`, `PCSetType()`, `PCType`, `PC`,
+.seealso: [](ch_ksp), `PCCreate()`, `PCSetType()`, `PCType`, `PC`,
           `PCSPAISetEpsilon()`, `PCSPAISetMax()`, `PCSPAISetMaxNew()`, `PCSPAISetBlockSize()`,
           `PCSPAISetVerbose()`, `PCSPAISetSp()`, `PCSPAISetNBSteps()`, `PCSPAISetCacheSize()`
 M*/
@@ -521,13 +518,13 @@ PETSC_EXTERN PetscErrorCode PCCreate_SPAI(PC pc)
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCSPAISetCacheSize_C", PCSPAISetCacheSize_SPAI));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCSPAISetVerbose_C", PCSPAISetVerbose_SPAI));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCSPAISetSp_C", PCSPAISetSp_SPAI));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
    Converts from a PETSc matrix to an SPAI matrix
 */
-PetscErrorCode ConvertMatToMatrix(MPI_Comm comm, Mat A, Mat AT, matrix **B)
+static PetscErrorCode ConvertMatToMatrix(MPI_Comm comm, Mat A, Mat AT, matrix **B)
 {
   matrix                  *M;
   int                      i, j, col;
@@ -643,7 +640,7 @@ PetscErrorCode ConvertMatToMatrix(MPI_Comm comm, Mat A, Mat AT, matrix **B)
   order_pointers(M);
   M->maxnz = calc_maxnz(M);
   *B       = M;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -651,7 +648,7 @@ PetscErrorCode ConvertMatToMatrix(MPI_Comm comm, Mat A, Mat AT, matrix **B)
    This assumes that the SPAI matrix B is stored in
    COMPRESSED-ROW format.
 */
-PetscErrorCode ConvertMatrixToMat(MPI_Comm comm, matrix *B, Mat *PB)
+static PetscErrorCode ConvertMatrixToMat(MPI_Comm comm, matrix *B, Mat *PB)
 {
   PetscMPIInt size, rank;
   int         m, n, M, N;
@@ -698,50 +695,10 @@ PetscErrorCode ConvertMatrixToMat(MPI_Comm comm, matrix *B, Mat *PB)
       PetscCall(MatSetValues(*PB, 1, &global_row, 1, &global_col, &val, ADD_VALUES));
     }
   }
-
   PetscCall(PetscFree(d_nnz));
   PetscCall(PetscFree(o_nnz));
 
   PetscCall(MatAssemblyBegin(*PB, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(*PB, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
-}
-
-/*
-   Converts from an SPAI vector v  to a PETSc vec Pv.
-*/
-PetscErrorCode ConvertVectorToVec(MPI_Comm comm, vector *v, Vec *Pv)
-{
-  PetscMPIInt size, rank;
-  int         m, M, i, *mnls, *start_indices, *global_indices;
-
-  PetscFunctionBegin;
-  PetscCallMPI(MPI_Comm_size(comm, &size));
-  PetscCallMPI(MPI_Comm_rank(comm, &rank));
-
-  m = v->mnl;
-  M = v->n;
-
-  PetscCall(VecCreateMPI(comm, m, M, Pv));
-
-  PetscCall(PetscMalloc1(size, &mnls));
-  PetscCallMPI(MPI_Allgather(&v->mnl, 1, MPI_INT, mnls, 1, MPI_INT, comm));
-
-  PetscCall(PetscMalloc1(size, &start_indices));
-
-  start_indices[0] = 0;
-  for (i = 1; i < size; i++) start_indices[i] = start_indices[i - 1] + mnls[i - 1];
-
-  PetscCall(PetscMalloc1(v->mnl, &global_indices));
-  for (i = 0; i < v->mnl; i++) global_indices[i] = start_indices[rank] + i;
-
-  PetscCall(PetscFree(mnls));
-  PetscCall(PetscFree(start_indices));
-
-  PetscCall(VecSetValues(*Pv, v->mnl, global_indices, v->v, INSERT_VALUES));
-  PetscCall(VecAssemblyBegin(*Pv));
-  PetscCall(VecAssemblyEnd(*Pv));
-
-  PetscCall(PetscFree(global_indices));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

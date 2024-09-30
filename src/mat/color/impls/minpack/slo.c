@@ -1,5 +1,4 @@
-
-/* slo.f -- translated by f2c (version of 25 March 1992  12:58:56).*/
+/* slo.f -- translated by f2c (version of 25 March 1992  12:58:56). */
 
 #include <../src/mat/color/impls/minpack/color.h>
 
@@ -209,5 +208,5 @@ L80:
 
   i__1 = *n;
   for (jp = 1; jp <= i__1; ++jp) list[jp] = iwa2[jp];
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

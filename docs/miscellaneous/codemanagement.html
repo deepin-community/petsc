@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Code Management &#8212; PETSc 3.18.6 documentation</title>
+    <title>Code Management &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -141,31 +142,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -193,9 +196,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -292,31 +292,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -344,9 +346,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -443,13 +442,13 @@ tremendously.</p>
 EDIT-COMPILE-LINK-RUN. We often see users working in a single window
 with a cycle such as:</p>
 <ul class="simple">
-<li><p>Edit a file with <code class="docutils literal notranslate"><span class="pre">emacs</span></code> or <code class="docutils literal notranslate"><span class="pre">vim</span></code>.</p></li>
-<li><p>Exit <code class="docutils literal notranslate"><span class="pre">emacs</span></code> or <code class="docutils literal notranslate"><span class="pre">vim</span></code>.</p></li>
-<li><p>Run <code class="docutils literal notranslate"><span class="pre">make</span></code> and see some error messages.</p></li>
-<li><p>Start <code class="docutils literal notranslate"><span class="pre">emacs</span></code> or <code class="docutils literal notranslate"><span class="pre">vim</span></code> and try to fix the errors; often starting
+<li><p>Edit a file with <code class="docutils notranslate"><span class="pre">emacs</span></code> or <code class="docutils notranslate"><span class="pre">vim</span></code>.</p></li>
+<li><p>Exit <code class="docutils notranslate"><span class="pre">emacs</span></code> or <code class="docutils notranslate"><span class="pre">vim</span></code>.</p></li>
+<li><p>Run <code class="docutils notranslate"><span class="pre">make</span></code> and see some error messages.</p></li>
+<li><p>Start <code class="docutils notranslate"><span class="pre">emacs</span></code> or <code class="docutils notranslate"><span class="pre">vim</span></code> and try to fix the errors; often starting
 the editor hides the error messages so that users cannot remember all
 of them and thus do not fix all the compiler errors.</p></li>
-<li><p>Run <code class="docutils literal notranslate"><span class="pre">make</span></code> generating a bunch of object (.o) files.</p></li>
+<li><p>Run <code class="docutils notranslate"><span class="pre">make</span></code> generating a bunch of object (.o) files.</p></li>
 <li><p>Link the executable (which also removes the .o files). Users may
 delete the .o files because they anticipate compiling the next time
 on a different machine that uses a different compiler.</p></li>
@@ -462,16 +461,16 @@ different directories for editing, compiling, and running.</p>
 <section id="several-easy-ways-to-improve-the-cycle">
 <h2>Several easy ways to improve the cycle<a class="headerlink" href="#several-easy-ways-to-improve-the-cycle" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">emacs</span></code> and <code class="docutils literal notranslate"><span class="pre">vim</span></code> have a feature to allow the user to compile
+<li><p><code class="docutils notranslate"><span class="pre">emacs</span></code> and <code class="docutils notranslate"><span class="pre">vim</span></code> have a feature to allow the user to compile
 using make and have the editor automatically jump to the line of
 source code where the compiler detects an error, even when not
 currently editing the erroneous file.</p></li>
-<li><p>The etags feature of <code class="docutils literal notranslate"><span class="pre">emacs</span></code> or tags feature of <code class="docutils literal notranslate"><span class="pre">vim</span></code> enables one
+<li><p>The etags feature of <code class="docutils notranslate"><span class="pre">emacs</span></code> or tags feature of <code class="docutils notranslate"><span class="pre">vim</span></code> enables one
 to search quickly through a group of user-defined source files
 (and/or PETSc source files) regardless of the directory in which they
 are located. <a class="reference external" href="http://www.gnu.org/s/global">GNU Global</a> is a richer
 alternative to etags.</p></li>
-<li><p>Also, <code class="docutils literal notranslate"><span class="pre">emacs</span></code> and <code class="docutils literal notranslate"><span class="pre">vim</span></code> easily enable:</p>
+<li><p>Also, <code class="docutils notranslate"><span class="pre">emacs</span></code> and <code class="docutils notranslate"><span class="pre">vim</span></code> easily enable:</p>
 <ul>
 <li><p>editing files that reside in any directory and retaining one’s
 place within each of them</p></li>
@@ -480,8 +479,8 @@ into the editor</p></li>
 </ul>
 </li>
 </ul>
-<p>You might consider using <code class="docutils literal notranslate"><span class="pre">Microsoft</span> <span class="pre">Visual</span> <span class="pre">Studio</span></code>, <code class="docutils literal notranslate"><span class="pre">Eclipse</span></code> or
-other advanced software development systems. See the <a class="reference internal" href="../docs/manual/other.html#sec-developer-environments"><span class="std std-ref">Users Manual</span></a>.</p>
+<p>You might consider using <code class="docutils notranslate"><span class="pre">Microsoft</span> <span class="pre">Visual</span> <span class="pre">Studio</span></code>, <code class="docutils notranslate"><span class="pre">Eclipse</span></code> or
+other advanced software development systems. See the <a class="reference internal" href="../manual/other.html#sec-developer-environments"><span class="std std-ref">Users Manual</span></a>.</p>
 </section>
 <section id="debugging">
 <h2>Debugging<a class="headerlink" href="#debugging" title="Permalink to this heading">#</a></h2>
@@ -491,7 +490,7 @@ For debugging parallel runs we suggest <strong>Totalview</strong> if it is avail
 on your machine. Otherwise, you can run each process in a separate
 debugger; this is not the same as using a parallel debugger, but in most
 cases it is not so bad. The PETSc run-time options
-<code class="docutils literal notranslate"><span class="pre">-start_in_debugger</span></code> [-display xdisplay:0] will open separate windows
+<code class="docutils notranslate"><span class="pre">-start_in_debugger</span></code> [-display xdisplay:0] will open separate windows
 and debuggers for each process. You should debug using the debugging
 versions of the libraries (run ./configure with the additional option
 –with-debugging (the default)).</p>
@@ -541,19 +540,6 @@ are saving time by not spending the time upgrading your system, but,
 in fact, your loss in efficiency by sticking with an outdated system
 is probably larger than then the time required to keep it up-to-date.</p></li>
 </ul>
-</section>
-<section id="fortran-notes">
-<h2>Fortran notes<a class="headerlink" href="#fortran-notes" title="Permalink to this heading">#</a></h2>
-<p>PETSc provides interfaces and modules for Fortran 90; see
-<a class="reference internal" href="../docs/manual/fortran.html"><span class="doc">PETSc for Fortran Users</span></a>.</p>
-<p>When passing floating point numbers into Fortran subroutines, always
-make sure you have them marked as double precision (e.g., pass in <code class="docutils literal notranslate"><span class="pre">10.d0</span></code>
-instead of <code class="docutils literal notranslate"><span class="pre">10.0</span></code> or declare them as PETSc variables, e.g.
-<code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Sys/PetscScalar.html">PetscScalar</a></span> <span class="pre">one</span> <span class="pre">=</span> <span class="pre">1.0</span></code>). Otherwise, the compiler interprets the input as a single
-precision number, which can cause crashes or other mysterious problems.
-Make sure to declare all variables (do not use the implicit feature of
-Fortran). In fact, we <strong>highly</strong> recommend using the <strong>implicit none</strong>
-option at the beginning of each Fortran subroutine you write.</p>
 </section>
 </section>
 
@@ -606,11 +592,6 @@ option at the beginning of each Fortran subroutine you write.</p>
  <li class="toc-h2 nav-item toc-entry">
   <a class="reference internal nav-link" href="#other-suggestions">
    Other suggestions
-  </a>
- </li>
- <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#fortran-notes">
-   Fortran notes
   </a>
  </li>
 </ul>
@@ -670,7 +651,7 @@ option at the beginning of each Fortran subroutine you write.</p>
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -686,7 +667,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

@@ -58,6 +58,16 @@ extern void PetscRmPointer(void*);
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define petscspacesumsetsubspace_ petscspacesumsetsubspace
 #endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscspacesumsetinterleave_ PETSCSPACESUMSETINTERLEAVE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscspacesumsetinterleave_ petscspacesumsetinterleave
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscspacesumgetinterleave_ PETSCSPACESUMGETINTERLEAVE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscspacesumgetinterleave_ petscspacesumgetinterleave
+#endif
 
 
 /* Definitions of Fortran Wrapper routines */
@@ -94,6 +104,16 @@ PETSC_EXTERN void  petscspacesumsetsubspace_(PetscSpace sp,PetscInt *s,PetscSpac
 *__ierr = PetscSpaceSumSetSubspace(
 	(PetscSpace)PetscToPointer((sp) ),*s,
 	(PetscSpace)PetscToPointer((subsp) ));
+}
+PETSC_EXTERN void  petscspacesumsetinterleave_(PetscSpace sp,PetscBool *interleave_basis,PetscBool *interleave_components, int *__ierr)
+{
+*__ierr = PetscSpaceSumSetInterleave(
+	(PetscSpace)PetscToPointer((sp) ),*interleave_basis,*interleave_components);
+}
+PETSC_EXTERN void  petscspacesumgetinterleave_(PetscSpace sp,PetscBool *interleave_basis,PetscBool *interleave_components, int *__ierr)
+{
+*__ierr = PetscSpaceSumGetInterleave(
+	(PetscSpace)PetscToPointer((sp) ),interleave_basis,interleave_components);
 }
 #if defined(__cplusplus)
 }

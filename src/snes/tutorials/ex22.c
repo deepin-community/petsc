@@ -1,4 +1,3 @@
-
 static const char help[] = "Solves PDE optimization problem using full-space method, interlaces state and adjoint variables.\n\n";
 
 #include <petscdm.h>
@@ -50,7 +49,7 @@ extern PetscErrorCode Monitor(SNES, PetscInt, PetscReal, void *);
 
 /*
     Uses full multigrid preconditioner with GMRES (with no preconditioner inside the GMRES) as the
-  smoother on all levels. This is because (1) in the matrix free case no matrix entries are
+  smoother on all levels. This is because (1) in the matrix-free case no matrix entries are
   available for doing Jacobi or SOR preconditioning and (2) the explicit matrix case the diagonal
   entry for the control variable is zero which means default SOR will not work.
 
@@ -115,7 +114,7 @@ int main(int argc, char **argv)
   if (use_monitor) {
     /* create graphics windows */
     PetscCall(PetscViewerDrawOpen(PETSC_COMM_WORLD, 0, "u_lambda - state variables and Lagrange multipliers", -1, -1, -1, -1, &user.u_lambda_viewer));
-    PetscCall(PetscViewerDrawOpen(PETSC_COMM_WORLD, 0, "fu_lambda - derivate w.r.t. state variables and Lagrange multipliers", -1, -1, -1, -1, &user.fu_lambda_viewer));
+    PetscCall(PetscViewerDrawOpen(PETSC_COMM_WORLD, 0, "fu_lambda - derivative w.r.t. state variables and Lagrange multipliers", -1, -1, -1, -1, &user.fu_lambda_viewer));
     PetscCall(SNESMonitorSet(snes, Monitor, 0, 0));
   }
 
@@ -197,7 +196,7 @@ PetscErrorCode ComputeFunction(SNES snes, Vec U, Vec FU, void *ctx)
   PetscCall(DMCompositeRestoreLocalVectors(packer, &vw, &vu_lambda));
   PetscCall(DMCompositeRestoreAccess(packer, FU, &vfw, &vfu_lambda));
   PetscCall(PetscLogFlops(13.0 * N));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -209,7 +208,7 @@ PetscErrorCode u_solution(void *dummy, PetscInt n, const PetscScalar *x, PetscSc
 
   PetscFunctionBeginUser;
   for (i = 0; i < n; i++) u[2 * i] = x[i] * x[i] - 1.25 * x[i] + .25;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ExactSolution(DM packer, Vec U)
@@ -236,7 +235,7 @@ PetscErrorCode ExactSolution(DM packer, Vec U)
   PetscCall(PFApplyVec(pf, x, u_global));
   PetscCall(PFDestroy(&pf));
   PetscCall(DMCompositeRestoreAccess(packer, U, &w, &u_global, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode Monitor(SNES snes, PetscInt its, PetscReal rnorm, void *dummy)
@@ -274,7 +273,7 @@ PetscErrorCode Monitor(SNES snes, PetscInt its, PetscReal rnorm, void *dummy)
   PetscCall(VecView(u_lambda, user->fu_lambda_viewer));
   PetscCall(DMCompositeRestoreAccess(packer, Uexact, &dw, &u_lambda));
   PetscCall(VecDestroy(&Uexact));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateMatrix_MF(DM packer, Mat *A)
@@ -289,7 +288,7 @@ PetscErrorCode DMCreateMatrix_MF(DM packer, Mat *A)
   PetscCall(MatCreateMFFD(PETSC_COMM_WORLD, m, m, PETSC_DETERMINE, PETSC_DETERMINE, A));
   PetscCall(MatSetUp(*A));
   PetscCall(MatSetDM(*A, packer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ComputeJacobian_MF(SNES snes, Vec x, Mat A, Mat B, void *ctx)
@@ -297,7 +296,7 @@ PetscErrorCode ComputeJacobian_MF(SNES snes, Vec x, Mat A, Mat B, void *ctx)
   PetscFunctionBeginUser;
   PetscCall(MatMFFDSetFunction(A, (PetscErrorCode(*)(void *, Vec, Vec))SNESComputeFunction, snes));
   PetscCall(MatMFFDSetBase(A, x, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

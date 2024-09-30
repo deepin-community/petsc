@@ -1,105 +1,108 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/dm/impls/stag/tests/ex30.c">Actual source code: ex30.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/dm/impls/stag/tests/ex30.c">Actual source code: ex30.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:48:38+00:00">
+<meta name="date" content="2024-03-29T14:13:05+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
 <pre width="80">
-<a name="line1">  1: </a>static char help[] = <font color="#666666">"Test <a href="../../../../../docs/manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>() in 3D\n\n"</font>;
+<a name="line1">  1: </a>static char help[] = <font color="#666666">"Test <a href="../../../../../manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>() in 3D\n\n"</font>;
 
 <a name="line3">  3: </a>#include <A href="../../../../../include/petscdm.h.html">&lt;petscdm.h&gt;</A>
 <a name="line4">  4: </a>#include <A href="../../../../../include/petscksp.h.html">&lt;petscksp.h&gt;</A>
 <a name="line5">  5: </a>#include <A href="../../../../../include/petscdmstag.h.html">&lt;petscdmstag.h&gt;</A>
 
-<a name="line7">  7: </a><font color="#B22222">/* Shorter, more convenient names for <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMStagStencilLocation</a> entries */</font>
-<a name="line8">  8: </a><strong><font color="#228B22">#define BACK_DOWN_LEFT   <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_DOWN_LEFT</a></font></strong>
-<a name="line9">  9: </a><strong><font color="#228B22">#define BACK_DOWN        <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_DOWN</a></font></strong>
-<a name="line10"> 10: </a><strong><font color="#228B22">#define BACK_DOWN_RIGHT  <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_DOWN_RIGHT</a></font></strong>
-<a name="line11"> 11: </a><strong><font color="#228B22">#define BACK_LEFT        <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_LEFT</a></font></strong>
-<a name="line12"> 12: </a><strong><font color="#228B22">#define BACK             <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK</a></font></strong>
-<a name="line13"> 13: </a><strong><font color="#228B22">#define BACK_RIGHT       <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_RIGHT</a></font></strong>
-<a name="line14"> 14: </a><strong><font color="#228B22">#define BACK_UP_LEFT     <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_UP_LEFT</a></font></strong>
-<a name="line15"> 15: </a><strong><font color="#228B22">#define BACK_UP          <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_UP</a></font></strong>
-<a name="line16"> 16: </a><strong><font color="#228B22">#define BACK_UP_RIGHT    <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_UP_RIGHT</a></font></strong>
-<a name="line17"> 17: </a><strong><font color="#228B22">#define DOWN_LEFT        <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_DOWN_LEFT</a></font></strong>
-<a name="line18"> 18: </a><strong><font color="#228B22">#define DOWN             <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_DOWN</a></font></strong>
-<a name="line19"> 19: </a><strong><font color="#228B22">#define DOWN_RIGHT       <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_DOWN_RIGHT</a></font></strong>
-<a name="line20"> 20: </a><strong><font color="#228B22">#define LEFT             <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_LEFT</a></font></strong>
-<a name="line21"> 21: </a><strong><font color="#228B22">#define ELEMENT          <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_ELEMENT</a></font></strong>
-<a name="line22"> 22: </a><strong><font color="#228B22">#define RIGHT            <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_RIGHT</a></font></strong>
-<a name="line23"> 23: </a><strong><font color="#228B22">#define UP_LEFT          <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_UP_LEFT</a></font></strong>
-<a name="line24"> 24: </a><strong><font color="#228B22">#define UP               <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_UP</a></font></strong>
-<a name="line25"> 25: </a><strong><font color="#228B22">#define UP_RIGHT         <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_UP_RIGHT</a></font></strong>
-<a name="line26"> 26: </a><strong><font color="#228B22">#define FRONT_DOWN_LEFT  <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_DOWN_LEFT</a></font></strong>
-<a name="line27"> 27: </a><strong><font color="#228B22">#define FRONT_DOWN       <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_DOWN</a></font></strong>
-<a name="line28"> 28: </a><strong><font color="#228B22">#define FRONT_DOWN_RIGHT <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_DOWN_RIGHT</a></font></strong>
-<a name="line29"> 29: </a><strong><font color="#228B22">#define FRONT_LEFT       <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_LEFT</a></font></strong>
-<a name="line30"> 30: </a><strong><font color="#228B22">#define FRONT            <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT</a></font></strong>
-<a name="line31"> 31: </a><strong><font color="#228B22">#define FRONT_RIGHT      <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_RIGHT</a></font></strong>
-<a name="line32"> 32: </a><strong><font color="#228B22">#define FRONT_UP_LEFT    <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_UP_LEFT</a></font></strong>
-<a name="line33"> 33: </a><strong><font color="#228B22">#define FRONT_UP         <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_UP</a></font></strong>
-<a name="line34"> 34: </a><strong><font color="#228B22">#define FRONT_UP_RIGHT   <a href="../../../../../docs/manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_UP_RIGHT</a></font></strong>
+<a name="line7">  7: </a><font color="#B22222">/* Shorter, more convenient names for <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMStagStencilLocation</a> entries */</font>
+<a name="line8">  8: </a><strong><font color="#228B22">#define BACK_DOWN_LEFT   <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_DOWN_LEFT</a></font></strong>
+<a name="line9">  9: </a><strong><font color="#228B22">#define BACK_DOWN        <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_DOWN</a></font></strong>
+<a name="line10"> 10: </a><strong><font color="#228B22">#define BACK_DOWN_RIGHT  <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_DOWN_RIGHT</a></font></strong>
+<a name="line11"> 11: </a><strong><font color="#228B22">#define BACK_LEFT        <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_LEFT</a></font></strong>
+<a name="line12"> 12: </a><strong><font color="#228B22">#define BACK             <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK</a></font></strong>
+<a name="line13"> 13: </a><strong><font color="#228B22">#define BACK_RIGHT       <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_RIGHT</a></font></strong>
+<a name="line14"> 14: </a><strong><font color="#228B22">#define BACK_UP_LEFT     <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_UP_LEFT</a></font></strong>
+<a name="line15"> 15: </a><strong><font color="#228B22">#define BACK_UP          <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_UP</a></font></strong>
+<a name="line16"> 16: </a><strong><font color="#228B22">#define BACK_UP_RIGHT    <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_BACK_UP_RIGHT</a></font></strong>
+<a name="line17"> 17: </a><strong><font color="#228B22">#define DOWN_LEFT        <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_DOWN_LEFT</a></font></strong>
+<a name="line18"> 18: </a><strong><font color="#228B22">#define DOWN             <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_DOWN</a></font></strong>
+<a name="line19"> 19: </a><strong><font color="#228B22">#define DOWN_RIGHT       <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_DOWN_RIGHT</a></font></strong>
+<a name="line20"> 20: </a><strong><font color="#228B22">#define LEFT             <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_LEFT</a></font></strong>
+<a name="line21"> 21: </a><strong><font color="#228B22">#define ELEMENT          <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_ELEMENT</a></font></strong>
+<a name="line22"> 22: </a><strong><font color="#228B22">#define RIGHT            <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_RIGHT</a></font></strong>
+<a name="line23"> 23: </a><strong><font color="#228B22">#define UP_LEFT          <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_UP_LEFT</a></font></strong>
+<a name="line24"> 24: </a><strong><font color="#228B22">#define UP               <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_UP</a></font></strong>
+<a name="line25"> 25: </a><strong><font color="#228B22">#define UP_RIGHT         <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_UP_RIGHT</a></font></strong>
+<a name="line26"> 26: </a><strong><font color="#228B22">#define FRONT_DOWN_LEFT  <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_DOWN_LEFT</a></font></strong>
+<a name="line27"> 27: </a><strong><font color="#228B22">#define FRONT_DOWN       <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_DOWN</a></font></strong>
+<a name="line28"> 28: </a><strong><font color="#228B22">#define FRONT_DOWN_RIGHT <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_DOWN_RIGHT</a></font></strong>
+<a name="line29"> 29: </a><strong><font color="#228B22">#define FRONT_LEFT       <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_LEFT</a></font></strong>
+<a name="line30"> 30: </a><strong><font color="#228B22">#define FRONT            <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT</a></font></strong>
+<a name="line31"> 31: </a><strong><font color="#228B22">#define FRONT_RIGHT      <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_RIGHT</a></font></strong>
+<a name="line32"> 32: </a><strong><font color="#228B22">#define FRONT_UP_LEFT    <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_UP_LEFT</a></font></strong>
+<a name="line33"> 33: </a><strong><font color="#228B22">#define FRONT_UP         <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_UP</a></font></strong>
+<a name="line34"> 34: </a><strong><font color="#228B22">#define FRONT_UP_RIGHT   <a href="../../../../../manualpages/DMStag/DMStagStencilLocation.html">DMSTAG_FRONT_UP_RIGHT</a></font></strong>
 
-<a name="line36"> 36: </a><strong><font color="#4169E1">static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CreateMat(<a href="../../../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *)</font></strong>;
-<a name="line37"> 37: </a><strong><font color="#4169E1">static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CheckMat(<a href="../../../../../docs/manualpages/DM/DM.html">DM</a>, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>)</font></strong>;
+<a name="line36"> 36: </a><strong><font color="#4169E1">static <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CreateMat(<a href="../../../../../manualpages/DM/DM.html">DM</a>, <a href="../../../../../manualpages/Mat/Mat.html">Mat</a> *)</font></strong>;
+<a name="line37"> 37: </a><strong><font color="#4169E1">static <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CheckMat(<a href="../../../../../manualpages/DM/DM.html">DM</a>, <a href="../../../../../manualpages/Mat/Mat.html">Mat</a>)</font></strong>;
 
 <a name="line39"> 39: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **argv)</font></strong>
 <a name="line40"> 40: </a>{
-<a name="line41"> 41: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>  dmSol;
-<a name="line42"> 42: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A;
+<a name="line41"> 41: </a>  <a href="../../../../../manualpages/DM/DM.html">DM</a>  dmSol;
+<a name="line42"> 42: </a>  <a href="../../../../../manualpages/Mat/Mat.html">Mat</a> A;
 
-<a name="line45"> 45: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, (char *)0, help);
+<a name="line44"> 44: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBeginUser.html">PetscFunctionBeginUser</a>;
+<a name="line45"> 45: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, (char *)0, help));
 <a name="line46"> 46: </a>  {
-<a name="line47"> 47: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> dof0 = 0, dof1 = 0, dof2 = 1, dof3 = 1; <font color="#B22222">/* 1 dof on each face and element center */</font>
-<a name="line48"> 48: </a>    const <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> stencilWidth = 1;
-<a name="line49"> 49: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagCreate3d.html">DMStagCreate3d</a>(<a href="../../../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <a href="../../../../../docs/manualpages/DM/DMBoundaryType.html">DM_BOUNDARY_NONE</a>, <a href="../../../../../docs/manualpages/DM/DMBoundaryType.html">DM_BOUNDARY_NONE</a>, <a href="../../../../../docs/manualpages/DM/DMBoundaryType.html">DM_BOUNDARY_NONE</a>, 4, 5, 6, <a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, <a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, <a href="../../../../../docs/manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, dof0, dof1, dof2, dof3, <a href="../../../../../docs/manualpages/DMStag/DMStagStencilType.html">DMSTAG_STENCIL_BOX</a>, stencilWidth, NULL, NULL, NULL, &amp;dmSol);
-<a name="line50"> 50: </a>    <a href="../../../../../docs/manualpages/DM/DMSetFromOptions.html">DMSetFromOptions</a>(dmSol);
-<a name="line51"> 51: </a>    <a href="../../../../../docs/manualpages/DM/DMSetUp.html">DMSetUp</a>(dmSol);
-<a name="line52"> 52: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagSetUniformCoordinatesExplicit.html">DMStagSetUniformCoordinatesExplicit</a>(dmSol, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0);
+<a name="line47"> 47: </a>    const <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> dof0 = 0, dof1 = 0, dof2 = 1, dof3 = 1; <font color="#B22222">/* 1 dof on each face and element center */</font>
+<a name="line48"> 48: </a>    const <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> stencilWidth = 1;
+<a name="line49"> 49: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagCreate3d.html">DMStagCreate3d</a>(<a href="../../../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <a href="../../../../../manualpages/DM/DMBoundaryType.html">DM_BOUNDARY_NONE</a>, <a href="../../../../../manualpages/DM/DMBoundaryType.html">DM_BOUNDARY_NONE</a>, <a href="../../../../../manualpages/DM/DMBoundaryType.html">DM_BOUNDARY_NONE</a>, 4, 5, 6, <a href="../../../../../manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, <a href="../../../../../manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, <a href="../../../../../manualpages/Sys/PETSC_DECIDE.html">PETSC_DECIDE</a>, dof0, dof1, dof2, dof3, <a href="../../../../../manualpages/DMStag/DMStagStencilType.html">DMSTAG_STENCIL_BOX</a>, stencilWidth, NULL, NULL, NULL, &amp;dmSol));
+<a name="line50"> 50: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMSetFromOptions.html">DMSetFromOptions</a>(dmSol));
+<a name="line51"> 51: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMSetUp.html">DMSetUp</a>(dmSol));
+<a name="line52"> 52: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagSetUniformCoordinatesExplicit.html">DMStagSetUniformCoordinatesExplicit</a>(dmSol, 0.0, 1.0, 0.0, 1.0, 0.0, 1.0));
 <a name="line53"> 53: </a>  }
-<a name="line54"> 54: </a>  CreateMat(dmSol, &amp;A);
-<a name="line55"> 55: </a>  CheckMat(dmSol, A);
-<a name="line56"> 56: </a>  <a href="../../../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;A);
-<a name="line57"> 57: </a>  <a href="../../../../../docs/manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dmSol);
-<a name="line58"> 58: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line54"> 54: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(CreateMat(dmSol, &amp;A));
+<a name="line55"> 55: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(CheckMat(dmSol, A));
+<a name="line56"> 56: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;A));
+<a name="line57"> 57: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMDestroy.html">DMDestroy</a>(&amp;dmSol));
+<a name="line58"> 58: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscFinalize.html">PetscFinalize</a>());
 <a name="line59"> 59: </a>  <font color="#4169E1">return</font> 0;
 <a name="line60"> 60: </a>}
 
-<a name="line62"> 62: </a><strong><font color="#4169E1"><a name="CreateMat"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CreateMat(<a href="../../../../../docs/manualpages/DM/DM.html">DM</a> dmSol, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> *pA)</font></strong>
+<a name="line62"> 62: </a><strong><font color="#4169E1"><a name="CreateMat"></a>static <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CreateMat(<a href="../../../../../manualpages/DM/DM.html">DM</a> dmSol, <a href="../../../../../manualpages/Mat/Mat.html">Mat</a> *pA)</font></strong>
 <a name="line63"> 63: </a>{
-<a name="line64"> 64: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>             coordLocal;
-<a name="line65"> 65: </a>  <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a>             A;
-<a name="line66"> 66: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        startx, starty, startz, N[3], nx, ny, nz, ex, ey, ez, d;
-<a name="line67"> 67: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        icp[3], icux[3], icuy[3], icuz[3], icux_right[3], icuy_up[3], icuz_front[3];
-<a name="line68"> 68: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>       isLastRankx, isLastRanky, isLastRankz, isFirstRankx, isFirstRanky, isFirstRankz;
-<a name="line69"> 69: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>       hx, hy, hz;
-<a name="line70"> 70: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>              dmCoord;
-<a name="line71"> 71: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> ****arrCoord;
+<a name="line64"> 64: </a>  <a href="../../../../../manualpages/Vec/Vec.html">Vec</a>             coordLocal;
+<a name="line65"> 65: </a>  <a href="../../../../../manualpages/Mat/Mat.html">Mat</a>             A;
+<a name="line66"> 66: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>        startx, starty, startz, N[3], nx, ny, nz, ex, ey, ez, d;
+<a name="line67"> 67: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>        icp[3], icux[3], icuy[3], icuz[3], icux_right[3], icuy_up[3], icuz_front[3];
+<a name="line68"> 68: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a>       isLastRankx, isLastRanky, isLastRankz, isFirstRankx, isFirstRanky, isFirstRankz;
+<a name="line69"> 69: </a>  <a href="../../../../../manualpages/Sys/PetscReal.html">PetscReal</a>       hx, hy, hz;
+<a name="line70"> 70: </a>  <a href="../../../../../manualpages/DM/DM.html">DM</a>              dmCoord;
+<a name="line71"> 71: </a>  <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> ****arrCoord;
 
-<a name="line74"> 74: </a>  <a href="../../../../../docs/manualpages/DM/DMCreateMatrix.html">DMCreateMatrix</a>(dmSol, pA);
+<a name="line73"> 73: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBeginUser.html">PetscFunctionBeginUser</a>;
+<a name="line74"> 74: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMCreateMatrix.html">DMCreateMatrix</a>(dmSol, pA));
 <a name="line75"> 75: </a>  A = *pA;
-<a name="line76"> 76: </a>  <a href="../../../../../docs/manualpages/DMStag/DMStagGetCorners.html">DMStagGetCorners</a>(dmSol, &amp;startx, &amp;starty, &amp;startz, &amp;nx, &amp;ny, &amp;nz, NULL, NULL, NULL);
-<a name="line77"> 77: </a>  <a href="../../../../../docs/manualpages/DMStag/DMStagGetGlobalSizes.html">DMStagGetGlobalSizes</a>(dmSol, &amp;N[0], &amp;N[1], &amp;N[2]);
-<a name="line79"> 79: </a>  <a href="../../../../../docs/manualpages/DMStag/DMStagGetIsLastRank.html">DMStagGetIsLastRank</a>(dmSol, &amp;isLastRankx, &amp;isLastRanky, &amp;isLastRankz);
-<a name="line80"> 80: </a>  <a href="../../../../../docs/manualpages/DMStag/DMStagGetIsFirstRank.html">DMStagGetIsFirstRank</a>(dmSol, &amp;isFirstRankx, &amp;isFirstRanky, &amp;isFirstRankz);
+<a name="line76"> 76: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetCorners.html">DMStagGetCorners</a>(dmSol, &amp;startx, &amp;starty, &amp;startz, &amp;nx, &amp;ny, &amp;nz, NULL, NULL, NULL));
+<a name="line77"> 77: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetGlobalSizes.html">DMStagGetGlobalSizes</a>(dmSol, &amp;N[0], &amp;N[1], &amp;N[2]));
+<a name="line78"> 78: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(N[0] &gt;= 2 &amp;&amp; N[1] &gt;= 2 &amp;&amp; N[2] &gt;= 2, <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)dmSol), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_SIZ</a>, <font color="#666666">"This example requires at least two elements in each dimensions"</font>);
+<a name="line79"> 79: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetIsLastRank.html">DMStagGetIsLastRank</a>(dmSol, &amp;isLastRankx, &amp;isLastRanky, &amp;isLastRankz));
+<a name="line80"> 80: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetIsFirstRank.html">DMStagGetIsFirstRank</a>(dmSol, &amp;isFirstRankx, &amp;isFirstRanky, &amp;isFirstRankz));
 <a name="line81"> 81: </a>  hx = 1.0 / N[0];
 <a name="line82"> 82: </a>  hy = 1.0 / N[1];
 <a name="line83"> 83: </a>  hz = 1.0 / N[2];
-<a name="line84"> 84: </a>  <a href="../../../../../docs/manualpages/DM/DMGetCoordinateDM.html">DMGetCoordinateDM</a>(dmSol, &amp;dmCoord);
-<a name="line85"> 85: </a>  <a href="../../../../../docs/manualpages/DM/DMGetCoordinatesLocal.html">DMGetCoordinatesLocal</a>(dmSol, &amp;coordLocal);
-<a name="line86"> 86: </a>  <a href="../../../../../docs/manualpages/DMStag/DMStagVecGetArrayRead.html">DMStagVecGetArrayRead</a>(dmCoord, coordLocal, &amp;arrCoord);
+<a name="line84"> 84: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMGetCoordinateDM.html">DMGetCoordinateDM</a>(dmSol, &amp;dmCoord));
+<a name="line85"> 85: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMGetCoordinatesLocal.html">DMGetCoordinatesLocal</a>(dmSol, &amp;coordLocal));
+<a name="line86"> 86: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagVecGetArrayRead.html">DMStagVecGetArrayRead</a>(dmCoord, coordLocal, &amp;arrCoord));
 <a name="line87"> 87: </a>  <font color="#4169E1">for</font> (d = 0; d &lt; 3; ++d) {
-<a name="line88"> 88: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, ELEMENT, d, &amp;icp[d]);
-<a name="line89"> 89: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, LEFT, d, &amp;icux[d]);
-<a name="line90"> 90: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, DOWN, d, &amp;icuy[d]);
-<a name="line91"> 91: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, BACK, d, &amp;icuz[d]);
-<a name="line92"> 92: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, RIGHT, d, &amp;icux_right[d]);
-<a name="line93"> 93: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, UP, d, &amp;icuy_up[d]);
-<a name="line94"> 94: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, FRONT, d, &amp;icuz_front[d]);
+<a name="line88"> 88: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, ELEMENT, d, &amp;icp[d]));
+<a name="line89"> 89: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, LEFT, d, &amp;icux[d]));
+<a name="line90"> 90: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, DOWN, d, &amp;icuy[d]));
+<a name="line91"> 91: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, BACK, d, &amp;icuz[d]));
+<a name="line92"> 92: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, RIGHT, d, &amp;icux_right[d]));
+<a name="line93"> 93: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, UP, d, &amp;icuy_up[d]));
+<a name="line94"> 94: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, FRONT, d, &amp;icuz_front[d]));
 <a name="line95"> 95: </a>  }
 
 <a name="line97"> 97: </a>  <font color="#4169E1">for</font> (ez = startz; ez &lt; startz + nz; ++ez) {
@@ -107,54 +110,54 @@
 <a name="line99"> 99: </a>      <font color="#4169E1">for</font> (ex = startx; ex &lt; startx + nx; ++ex) {
 <a name="line100">100: </a>        <font color="#4169E1">if</font> (ex == N[0] - 1) {
 <a name="line101">101: </a>          <font color="#B22222">/* Right Boundary velocity Dirichlet */</font>
-<a name="line102">102: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
-<a name="line103">103: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
+<a name="line102">102: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
+<a name="line103">103: </a>          const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
 <a name="line104">104: </a>          row.i                  = ex;
 <a name="line105">105: </a>          row.j                  = ey;
 <a name="line106">106: </a>          row.k                  = ez;
 <a name="line107">107: </a>          row.loc                = RIGHT;
 <a name="line108">108: </a>          row.c                  = 0;
-<a name="line109">109: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, &amp;valA, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line109">109: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, &amp;valA, <a href="../../../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>));
 <a name="line110">110: </a>        }
 <a name="line111">111: </a>        <font color="#4169E1">if</font> (ey == N[1] - 1) {
 <a name="line112">112: </a>          <font color="#B22222">/* Top boundary velocity Dirichlet */</font>
-<a name="line113">113: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
-<a name="line114">114: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
+<a name="line113">113: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
+<a name="line114">114: </a>          const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
 <a name="line115">115: </a>          row.i                  = ex;
 <a name="line116">116: </a>          row.j                  = ey;
 <a name="line117">117: </a>          row.k                  = ez;
 <a name="line118">118: </a>          row.loc                = UP;
 <a name="line119">119: </a>          row.c                  = 0;
-<a name="line120">120: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, &amp;valA, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line120">120: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, &amp;valA, <a href="../../../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>));
 <a name="line121">121: </a>        }
 <a name="line122">122: </a>        <font color="#4169E1">if</font> (ez == N[2] - 1) {
 <a name="line123">123: </a>          <font color="#B22222">/* Top boundary velocity Dirichlet */</font>
-<a name="line124">124: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
-<a name="line125">125: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
+<a name="line124">124: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
+<a name="line125">125: </a>          const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
 <a name="line126">126: </a>          row.i                  = ex;
 <a name="line127">127: </a>          row.j                  = ey;
 <a name="line128">128: </a>          row.k                  = ez;
 <a name="line129">129: </a>          row.loc                = FRONT;
 <a name="line130">130: </a>          row.c                  = 0;
-<a name="line131">131: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, &amp;valA, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line131">131: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, &amp;valA, <a href="../../../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>));
 <a name="line132">132: </a>        }
 
 <a name="line134">134: </a>        <font color="#B22222">/* Equation on left face of this element */</font>
 <a name="line135">135: </a>        <font color="#4169E1">if</font> (ex == 0) {
 <a name="line136">136: </a>          <font color="#B22222">/* Left velocity Dirichlet */</font>
-<a name="line137">137: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
-<a name="line138">138: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
+<a name="line137">137: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
+<a name="line138">138: </a>          const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
 <a name="line139">139: </a>          row.i                  = ex;
 <a name="line140">140: </a>          row.j                  = ey;
 <a name="line141">141: </a>          row.k                  = ez;
 <a name="line142">142: </a>          row.loc                = LEFT;
 <a name="line143">143: </a>          row.c                  = 0;
-<a name="line144">144: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, &amp;valA, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line144">144: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, &amp;valA, <a href="../../../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>));
 <a name="line145">145: </a>        } <font color="#4169E1">else</font> {
 <a name="line146">146: </a>          <font color="#B22222">/* X-momentum interior equation : (u_xx + u_yy + u_zz) - p_x = f^x */</font>
-<a name="line147">147: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[9];
-<a name="line148">148: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[9];
-<a name="line149">149: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      nEntries;
+<a name="line147">147: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[9];
+<a name="line148">148: </a>          <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[9];
+<a name="line149">149: </a>          <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>      nEntries;
 
 <a name="line151">151: </a>          row.i   = ex;
 <a name="line152">152: </a>          row.j   = ey;
@@ -610,25 +613,25 @@
 <a name="line602">602: </a>            col[8].c   = 0;
 <a name="line603">603: </a>            valA[8]    = -1.0 / hx;
 <a name="line604">604: </a>          }
-<a name="line605">605: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, nEntries, col, valA, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line605">605: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, nEntries, col, valA, <a href="../../../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>));
 <a name="line606">606: </a>        }
 
 <a name="line608">608: </a>        <font color="#B22222">/* Equation on bottom face of this element */</font>
 <a name="line609">609: </a>        <font color="#4169E1">if</font> (ey == 0) {
 <a name="line610">610: </a>          <font color="#B22222">/* Bottom boundary velocity Dirichlet */</font>
-<a name="line611">611: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
-<a name="line612">612: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
+<a name="line611">611: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
+<a name="line612">612: </a>          const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
 <a name="line613">613: </a>          row.i                  = ex;
 <a name="line614">614: </a>          row.j                  = ey;
 <a name="line615">615: </a>          row.k                  = ez;
 <a name="line616">616: </a>          row.loc                = DOWN;
 <a name="line617">617: </a>          row.c                  = 0;
-<a name="line618">618: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, &amp;valA, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line618">618: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, &amp;valA, <a href="../../../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>));
 <a name="line619">619: </a>        } <font color="#4169E1">else</font> {
 <a name="line620">620: </a>          <font color="#B22222">/* Y-momentum equation, (v_xx + v_yy + v_zz) - p_y = f^y */</font>
-<a name="line621">621: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[9];
-<a name="line622">622: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[9];
-<a name="line623">623: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      nEntries;
+<a name="line621">621: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[9];
+<a name="line622">622: </a>          <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[9];
+<a name="line623">623: </a>          <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>      nEntries;
 
 <a name="line625">625: </a>          row.i   = ex;
 <a name="line626">626: </a>          row.j   = ey;
@@ -1084,25 +1087,25 @@
 <a name="line1076">1076: </a>            col[8].c   = 0;
 <a name="line1077">1077: </a>            valA[8]    = -1.0 / hy;
 <a name="line1078">1078: </a>          }
-<a name="line1079">1079: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, nEntries, col, valA, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line1079">1079: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, nEntries, col, valA, <a href="../../../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>));
 <a name="line1080">1080: </a>        }
 
 <a name="line1082">1082: </a>        <font color="#B22222">/* Equation on back face of this element */</font>
 <a name="line1083">1083: </a>        <font color="#4169E1">if</font> (ez == 0) {
 <a name="line1084">1084: </a>          <font color="#B22222">/* Back boundary velocity Dirichlet */</font>
-<a name="line1085">1085: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
-<a name="line1086">1086: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
+<a name="line1085">1085: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
+<a name="line1086">1086: </a>          const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
 <a name="line1087">1087: </a>          row.i                  = ex;
 <a name="line1088">1088: </a>          row.j                  = ey;
 <a name="line1089">1089: </a>          row.k                  = ez;
 <a name="line1090">1090: </a>          row.loc                = BACK;
 <a name="line1091">1091: </a>          row.c                  = 0;
-<a name="line1092">1092: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, &amp;valA, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line1092">1092: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, &amp;valA, <a href="../../../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>));
 <a name="line1093">1093: </a>        } <font color="#4169E1">else</font> {
 <a name="line1094">1094: </a>          <font color="#B22222">/* Z-momentum equation, (w_xx + w_yy + w_zz) - p_z = f^z */</font>
-<a name="line1095">1095: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[9];
-<a name="line1096">1096: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[9];
-<a name="line1097">1097: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      nEntries;
+<a name="line1095">1095: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[9];
+<a name="line1096">1096: </a>          <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[9];
+<a name="line1097">1097: </a>          <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>      nEntries;
 
 <a name="line1099">1099: </a>          row.i   = ex;
 <a name="line1100">1100: </a>          row.j   = ey;
@@ -1558,15 +1561,15 @@
 <a name="line1550">1550: </a>            col[8].c   = 0;
 <a name="line1551">1551: </a>            valA[8]    = -1.0 / hz;
 <a name="line1552">1552: </a>          }
-<a name="line1553">1553: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, nEntries, col, valA, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line1553">1553: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, nEntries, col, valA, <a href="../../../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>));
 <a name="line1554">1554: </a>        }
 
 <a name="line1556">1556: </a>        <font color="#B22222">/* P equation : u_x + v_y + w_z = g</font>
 <a name="line1557">1557: </a><font color="#B22222">           Note that this includes an explicit zero on the diagonal. This is only needed for</font>
 <a name="line1558">1558: </a><font color="#B22222">           direct solvers (not required if using an iterative solver and setting the constant-pressure nullspace) */</font>
 <a name="line1559">1559: </a>        {
-<a name="line1560">1560: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[7];
-<a name="line1561">1561: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[7];
+<a name="line1560">1560: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[7];
+<a name="line1561">1561: </a>          <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[7];
 
 <a name="line1563">1563: </a>          row.i      = ex;
 <a name="line1564">1564: </a>          row.j      = ey;
@@ -1611,58 +1614,62 @@
 <a name="line1603">1603: </a>          valA[5]    = 1.0 / hz;
 <a name="line1604">1604: </a>          col[6]     = row;
 <a name="line1605">1605: </a>          valA[6]    = 0.0;
-<a name="line1606">1606: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 7, col, valA, <a href="../../../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line1606">1606: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatSetValuesStencil.html">DMStagMatSetValuesStencil</a>(dmSol, A, 1, &amp;row, 7, col, valA, <a href="../../../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>));
 <a name="line1607">1607: </a>        }
 <a name="line1608">1608: </a>      }
 <a name="line1609">1609: </a>    }
 <a name="line1610">1610: </a>  }
-<a name="line1611">1611: </a>  <a href="../../../../../docs/manualpages/DMStag/DMStagVecRestoreArrayRead.html">DMStagVecRestoreArrayRead</a>(dmCoord, coordLocal, &amp;arrCoord);
-<a name="line1612">1612: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(A, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
-<a name="line1613">1613: </a>  <a href="../../../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(A, <a href="../../../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>);
+<a name="line1611">1611: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagVecRestoreArrayRead.html">DMStagVecRestoreArrayRead</a>(dmCoord, coordLocal, &amp;arrCoord));
+<a name="line1612">1612: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(A, <a href="../../../../../manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>));
+<a name="line1613">1613: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(A, <a href="../../../../../manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>));
 
-<a name="line1615">1615: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1615">1615: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line1616">1616: </a>}
 
 <a name="line1618">1618: </a><font color="#B22222">/* A helper function to check values */</font>
-<a name="line1619">1619: </a><strong><font color="#4169E1"><a name="check_vals"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> check_vals(<a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ex, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ey, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> ez, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *ref, const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *computed)</font></strong>
+<a name="line1619">1619: </a><strong><font color="#4169E1"><a name="check_vals"></a>static <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> check_vals(<a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> ex, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> ey, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> ez, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> n, const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *ref, const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *computed)</font></strong>
 <a name="line1620">1620: </a>{
-<a name="line1621">1621: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> i;
+<a name="line1621">1621: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> i;
 
+<a name="line1623">1623: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBeginUser.html">PetscFunctionBeginUser</a>;
 <a name="line1624">1624: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; n; ++i) {
+<a name="line1625">1625: </a>    <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(ref[i] == computed[i], <a href="../../../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_PLIB</a>, <font color="#666666">"(%"</font> PetscInt_FMT <font color="#666666">",%"</font> PetscInt_FMT <font color="#666666">",%"</font> PetscInt_FMT <font color="#666666">") Assertion Failure. (ref[%"</font> PetscInt_FMT <font color="#666666">"]) %g != %g (computed)[%"</font> PetscInt_FMT <font color="#666666">"]"</font>, ex, ey, ez, i, (double)<a href="../../../../../manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(ref[i]), (double)<a href="../../../../../manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(computed[i]), i);
 <a name="line1626">1626: </a>  }
-<a name="line1627">1627: </a>  <font color="#4169E1">return</font> 0;
+<a name="line1627">1627: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line1628">1628: </a>}
 
 <a name="line1630">1630: </a><font color="#B22222">/* The same function as above, but getting and checking values, instead of setting them */</font>
-<a name="line1631">1631: </a><strong><font color="#4169E1"><a name="CheckMat"></a>static <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CheckMat(<a href="../../../../../docs/manualpages/DM/DM.html">DM</a> dmSol, <a href="../../../../../docs/manualpages/Mat/Mat.html">Mat</a> A)</font></strong>
+<a name="line1631">1631: </a><strong><font color="#4169E1"><a name="CheckMat"></a>static <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> CheckMat(<a href="../../../../../manualpages/DM/DM.html">DM</a> dmSol, <a href="../../../../../manualpages/Mat/Mat.html">Mat</a> A)</font></strong>
 <a name="line1632">1632: </a>{
-<a name="line1633">1633: </a>  <a href="../../../../../docs/manualpages/Vec/Vec.html">Vec</a>             coordLocal;
-<a name="line1634">1634: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        startx, starty, startz, N[3], nx, ny, nz, ex, ey, ez, d;
-<a name="line1635">1635: </a>  <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>        icp[3], icux[3], icuy[3], icuz[3], icux_right[3], icuy_up[3], icuz_front[3];
-<a name="line1636">1636: </a>  <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>       isLastRankx, isLastRanky, isLastRankz, isFirstRankx, isFirstRanky, isFirstRankz;
-<a name="line1637">1637: </a>  <a href="../../../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a>       hx, hy, hz;
-<a name="line1638">1638: </a>  <a href="../../../../../docs/manualpages/DM/DM.html">DM</a>              dmCoord;
-<a name="line1639">1639: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> ****arrCoord;
-<a name="line1640">1640: </a>  <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>     computed[1024];
+<a name="line1633">1633: </a>  <a href="../../../../../manualpages/Vec/Vec.html">Vec</a>             coordLocal;
+<a name="line1634">1634: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>        startx, starty, startz, N[3], nx, ny, nz, ex, ey, ez, d;
+<a name="line1635">1635: </a>  <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>        icp[3], icux[3], icuy[3], icuz[3], icux_right[3], icuy_up[3], icuz_front[3];
+<a name="line1636">1636: </a>  <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a>       isLastRankx, isLastRanky, isLastRankz, isFirstRankx, isFirstRanky, isFirstRankz;
+<a name="line1637">1637: </a>  <a href="../../../../../manualpages/Sys/PetscReal.html">PetscReal</a>       hx, hy, hz;
+<a name="line1638">1638: </a>  <a href="../../../../../manualpages/DM/DM.html">DM</a>              dmCoord;
+<a name="line1639">1639: </a>  <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> ****arrCoord;
+<a name="line1640">1640: </a>  <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>     computed[1024];
 
-<a name="line1643">1643: </a>  <a href="../../../../../docs/manualpages/DMStag/DMStagGetCorners.html">DMStagGetCorners</a>(dmSol, &amp;startx, &amp;starty, &amp;startz, &amp;nx, &amp;ny, &amp;nz, NULL, NULL, NULL);
-<a name="line1644">1644: </a>  <a href="../../../../../docs/manualpages/DMStag/DMStagGetGlobalSizes.html">DMStagGetGlobalSizes</a>(dmSol, &amp;N[0], &amp;N[1], &amp;N[2]);
-<a name="line1646">1646: </a>  <a href="../../../../../docs/manualpages/DMStag/DMStagGetIsLastRank.html">DMStagGetIsLastRank</a>(dmSol, &amp;isLastRankx, &amp;isLastRanky, &amp;isLastRankz);
-<a name="line1647">1647: </a>  <a href="../../../../../docs/manualpages/DMStag/DMStagGetIsFirstRank.html">DMStagGetIsFirstRank</a>(dmSol, &amp;isFirstRankx, &amp;isFirstRanky, &amp;isFirstRankz);
+<a name="line1642">1642: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBeginUser.html">PetscFunctionBeginUser</a>;
+<a name="line1643">1643: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetCorners.html">DMStagGetCorners</a>(dmSol, &amp;startx, &amp;starty, &amp;startz, &amp;nx, &amp;ny, &amp;nz, NULL, NULL, NULL));
+<a name="line1644">1644: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetGlobalSizes.html">DMStagGetGlobalSizes</a>(dmSol, &amp;N[0], &amp;N[1], &amp;N[2]));
+<a name="line1645">1645: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(N[0] &gt;= 2 &amp;&amp; N[1] &gt;= 2 &amp;&amp; N[2] &gt;= 2, <a href="../../../../../manualpages/Sys/PetscObjectComm.html">PetscObjectComm</a>((<a href="../../../../../manualpages/Sys/PetscObject.html">PetscObject</a>)dmSol), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_SIZ</a>, <font color="#666666">"This example requires at least two elements in each dimensions"</font>);
+<a name="line1646">1646: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetIsLastRank.html">DMStagGetIsLastRank</a>(dmSol, &amp;isLastRankx, &amp;isLastRanky, &amp;isLastRankz));
+<a name="line1647">1647: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetIsFirstRank.html">DMStagGetIsFirstRank</a>(dmSol, &amp;isFirstRankx, &amp;isFirstRanky, &amp;isFirstRankz));
 <a name="line1648">1648: </a>  hx = 1.0 / N[0];
 <a name="line1649">1649: </a>  hy = 1.0 / N[1];
 <a name="line1650">1650: </a>  hz = 1.0 / N[2];
-<a name="line1651">1651: </a>  <a href="../../../../../docs/manualpages/DM/DMGetCoordinateDM.html">DMGetCoordinateDM</a>(dmSol, &amp;dmCoord);
-<a name="line1652">1652: </a>  <a href="../../../../../docs/manualpages/DM/DMGetCoordinatesLocal.html">DMGetCoordinatesLocal</a>(dmSol, &amp;coordLocal);
-<a name="line1653">1653: </a>  <a href="../../../../../docs/manualpages/DMStag/DMStagVecGetArrayRead.html">DMStagVecGetArrayRead</a>(dmCoord, coordLocal, &amp;arrCoord);
+<a name="line1651">1651: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMGetCoordinateDM.html">DMGetCoordinateDM</a>(dmSol, &amp;dmCoord));
+<a name="line1652">1652: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DM/DMGetCoordinatesLocal.html">DMGetCoordinatesLocal</a>(dmSol, &amp;coordLocal));
+<a name="line1653">1653: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagVecGetArrayRead.html">DMStagVecGetArrayRead</a>(dmCoord, coordLocal, &amp;arrCoord));
 <a name="line1654">1654: </a>  <font color="#4169E1">for</font> (d = 0; d &lt; 3; ++d) {
-<a name="line1655">1655: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, ELEMENT, d, &amp;icp[d]);
-<a name="line1656">1656: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, LEFT, d, &amp;icux[d]);
-<a name="line1657">1657: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, DOWN, d, &amp;icuy[d]);
-<a name="line1658">1658: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, BACK, d, &amp;icuz[d]);
-<a name="line1659">1659: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, RIGHT, d, &amp;icux_right[d]);
-<a name="line1660">1660: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, UP, d, &amp;icuy_up[d]);
-<a name="line1661">1661: </a>    <a href="../../../../../docs/manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, FRONT, d, &amp;icuz_front[d]);
+<a name="line1655">1655: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, ELEMENT, d, &amp;icp[d]));
+<a name="line1656">1656: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, LEFT, d, &amp;icux[d]));
+<a name="line1657">1657: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, DOWN, d, &amp;icuy[d]));
+<a name="line1658">1658: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, BACK, d, &amp;icuz[d]));
+<a name="line1659">1659: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, RIGHT, d, &amp;icux_right[d]));
+<a name="line1660">1660: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, UP, d, &amp;icuy_up[d]));
+<a name="line1661">1661: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagGetLocationSlot.html">DMStagGetLocationSlot</a>(dmCoord, FRONT, d, &amp;icuz_front[d]));
 <a name="line1662">1662: </a>  }
 
 <a name="line1664">1664: </a>  <font color="#4169E1">for</font> (ez = startz; ez &lt; startz + nz; ++ez) {
@@ -1670,58 +1677,58 @@
 <a name="line1666">1666: </a>      <font color="#4169E1">for</font> (ex = startx; ex &lt; startx + nx; ++ex) {
 <a name="line1667">1667: </a>        <font color="#4169E1">if</font> (ex == N[0] - 1) {
 <a name="line1668">1668: </a>          <font color="#B22222">/* Right Boundary velocity Dirichlet */</font>
-<a name="line1669">1669: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
-<a name="line1670">1670: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
+<a name="line1669">1669: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
+<a name="line1670">1670: </a>          const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
 <a name="line1671">1671: </a>          row.i                  = ex;
 <a name="line1672">1672: </a>          row.j                  = ey;
 <a name="line1673">1673: </a>          row.k                  = ez;
 <a name="line1674">1674: </a>          row.loc                = RIGHT;
 <a name="line1675">1675: </a>          row.c                  = 0;
-<a name="line1676">1676: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, computed);
-<a name="line1677">1677: </a>          check_vals(ex, ey, ez, 1, &amp;valA, computed);
+<a name="line1676">1676: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, computed));
+<a name="line1677">1677: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(check_vals(ex, ey, ez, 1, &amp;valA, computed));
 <a name="line1678">1678: </a>        }
 <a name="line1679">1679: </a>        <font color="#4169E1">if</font> (ey == N[1] - 1) {
 <a name="line1680">1680: </a>          <font color="#B22222">/* Top boundary velocity Dirichlet */</font>
-<a name="line1681">1681: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
-<a name="line1682">1682: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
+<a name="line1681">1681: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
+<a name="line1682">1682: </a>          const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
 <a name="line1683">1683: </a>          row.i                  = ex;
 <a name="line1684">1684: </a>          row.j                  = ey;
 <a name="line1685">1685: </a>          row.k                  = ez;
 <a name="line1686">1686: </a>          row.loc                = UP;
 <a name="line1687">1687: </a>          row.c                  = 0;
-<a name="line1688">1688: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, computed);
-<a name="line1689">1689: </a>          check_vals(ex, ey, ez, 1, &amp;valA, computed);
+<a name="line1688">1688: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, computed));
+<a name="line1689">1689: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(check_vals(ex, ey, ez, 1, &amp;valA, computed));
 <a name="line1690">1690: </a>        }
 <a name="line1691">1691: </a>        <font color="#4169E1">if</font> (ez == N[2] - 1) {
 <a name="line1692">1692: </a>          <font color="#B22222">/* Top boundary velocity Dirichlet */</font>
-<a name="line1693">1693: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
-<a name="line1694">1694: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
+<a name="line1693">1693: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
+<a name="line1694">1694: </a>          const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
 <a name="line1695">1695: </a>          row.i                  = ex;
 <a name="line1696">1696: </a>          row.j                  = ey;
 <a name="line1697">1697: </a>          row.k                  = ez;
 <a name="line1698">1698: </a>          row.loc                = FRONT;
 <a name="line1699">1699: </a>          row.c                  = 0;
-<a name="line1700">1700: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, computed);
-<a name="line1701">1701: </a>          check_vals(ex, ey, ez, 1, &amp;valA, computed);
+<a name="line1700">1700: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, computed));
+<a name="line1701">1701: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(check_vals(ex, ey, ez, 1, &amp;valA, computed));
 <a name="line1702">1702: </a>        }
 
 <a name="line1704">1704: </a>        <font color="#B22222">/* Equation on left face of this element */</font>
 <a name="line1705">1705: </a>        <font color="#4169E1">if</font> (ex == 0) {
 <a name="line1706">1706: </a>          <font color="#B22222">/* Left velocity Dirichlet */</font>
-<a name="line1707">1707: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
-<a name="line1708">1708: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
+<a name="line1707">1707: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
+<a name="line1708">1708: </a>          const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
 <a name="line1709">1709: </a>          row.i                  = ex;
 <a name="line1710">1710: </a>          row.j                  = ey;
 <a name="line1711">1711: </a>          row.k                  = ez;
 <a name="line1712">1712: </a>          row.loc                = LEFT;
 <a name="line1713">1713: </a>          row.c                  = 0;
-<a name="line1714">1714: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, computed);
-<a name="line1715">1715: </a>          check_vals(ex, ey, ez, 1, &amp;valA, computed);
+<a name="line1714">1714: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, computed));
+<a name="line1715">1715: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(check_vals(ex, ey, ez, 1, &amp;valA, computed));
 <a name="line1716">1716: </a>        } <font color="#4169E1">else</font> {
 <a name="line1717">1717: </a>          <font color="#B22222">/* X-momentum interior equation : (u_xx + u_yy + u_zz) - p_x = f^x */</font>
-<a name="line1718">1718: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[9];
-<a name="line1719">1719: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[9];
-<a name="line1720">1720: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      nEntries;
+<a name="line1718">1718: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[9];
+<a name="line1719">1719: </a>          <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[9];
+<a name="line1720">1720: </a>          <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>      nEntries;
 
 <a name="line1722">1722: </a>          row.i   = ex;
 <a name="line1723">1723: </a>          row.j   = ey;
@@ -2177,27 +2184,27 @@
 <a name="line2173">2173: </a>            col[8].c   = 0;
 <a name="line2174">2174: </a>            valA[8]    = -1.0 / hx;
 <a name="line2175">2175: </a>          }
-<a name="line2176">2176: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, nEntries, col, computed);
-<a name="line2177">2177: </a>          check_vals(ex, ey, ez, nEntries, valA, computed);
+<a name="line2176">2176: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, nEntries, col, computed));
+<a name="line2177">2177: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(check_vals(ex, ey, ez, nEntries, valA, computed));
 <a name="line2178">2178: </a>        }
 
 <a name="line2180">2180: </a>        <font color="#B22222">/* Equation on bottom face of this element */</font>
 <a name="line2181">2181: </a>        <font color="#4169E1">if</font> (ey == 0) {
 <a name="line2182">2182: </a>          <font color="#B22222">/* Bottom boundary velocity Dirichlet */</font>
-<a name="line2183">2183: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
-<a name="line2184">2184: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
+<a name="line2183">2183: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
+<a name="line2184">2184: </a>          const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
 <a name="line2185">2185: </a>          row.i                  = ex;
 <a name="line2186">2186: </a>          row.j                  = ey;
 <a name="line2187">2187: </a>          row.k                  = ez;
 <a name="line2188">2188: </a>          row.loc                = DOWN;
 <a name="line2189">2189: </a>          row.c                  = 0;
-<a name="line2190">2190: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, computed);
-<a name="line2191">2191: </a>          check_vals(ex, ey, ez, 1, &amp;valA, computed);
+<a name="line2190">2190: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, computed));
+<a name="line2191">2191: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(check_vals(ex, ey, ez, 1, &amp;valA, computed));
 <a name="line2192">2192: </a>        } <font color="#4169E1">else</font> {
 <a name="line2193">2193: </a>          <font color="#B22222">/* Y-momentum equation, (v_xx + v_yy + v_zz) - p_y = f^y */</font>
-<a name="line2194">2194: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[9];
-<a name="line2195">2195: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[9];
-<a name="line2196">2196: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      nEntries;
+<a name="line2194">2194: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[9];
+<a name="line2195">2195: </a>          <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[9];
+<a name="line2196">2196: </a>          <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>      nEntries;
 
 <a name="line2198">2198: </a>          row.i   = ex;
 <a name="line2199">2199: </a>          row.j   = ey;
@@ -2653,27 +2660,27 @@
 <a name="line2649">2649: </a>            col[8].c   = 0;
 <a name="line2650">2650: </a>            valA[8]    = -1.0 / hy;
 <a name="line2651">2651: </a>          }
-<a name="line2652">2652: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, nEntries, col, computed);
-<a name="line2653">2653: </a>          check_vals(ex, ey, ez, nEntries, valA, computed);
+<a name="line2652">2652: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, nEntries, col, computed));
+<a name="line2653">2653: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(check_vals(ex, ey, ez, nEntries, valA, computed));
 <a name="line2654">2654: </a>        }
 
 <a name="line2656">2656: </a>        <font color="#B22222">/* Equation on back face of this element */</font>
 <a name="line2657">2657: </a>        <font color="#4169E1">if</font> (ez == 0) {
 <a name="line2658">2658: </a>          <font color="#B22222">/* Back boundary velocity Dirichlet */</font>
-<a name="line2659">2659: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
-<a name="line2660">2660: </a>          const <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
+<a name="line2659">2659: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a>     row;
+<a name="line2660">2660: </a>          const <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> valA = 1.0;
 <a name="line2661">2661: </a>          row.i                  = ex;
 <a name="line2662">2662: </a>          row.j                  = ey;
 <a name="line2663">2663: </a>          row.k                  = ez;
 <a name="line2664">2664: </a>          row.loc                = BACK;
 <a name="line2665">2665: </a>          row.c                  = 0;
-<a name="line2666">2666: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, computed);
-<a name="line2667">2667: </a>          check_vals(ex, ey, ez, 1, &amp;valA, computed);
+<a name="line2666">2666: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 1, &amp;row, computed));
+<a name="line2667">2667: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(check_vals(ex, ey, ez, 1, &amp;valA, computed));
 <a name="line2668">2668: </a>        } <font color="#4169E1">else</font> {
 <a name="line2669">2669: </a>          <font color="#B22222">/* Z-momentum equation, (w_xx + w_yy + w_zz) - p_z = f^z */</font>
-<a name="line2670">2670: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[9];
-<a name="line2671">2671: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[9];
-<a name="line2672">2672: </a>          <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a>      nEntries;
+<a name="line2670">2670: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[9];
+<a name="line2671">2671: </a>          <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[9];
+<a name="line2672">2672: </a>          <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a>      nEntries;
 
 <a name="line2674">2674: </a>          row.i   = ex;
 <a name="line2675">2675: </a>          row.j   = ey;
@@ -3129,16 +3136,16 @@
 <a name="line3125">3125: </a>            col[8].c   = 0;
 <a name="line3126">3126: </a>            valA[8]    = -1.0 / hz;
 <a name="line3127">3127: </a>          }
-<a name="line3128">3128: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, nEntries, col, computed);
-<a name="line3129">3129: </a>          check_vals(ex, ey, ez, nEntries, valA, computed);
+<a name="line3128">3128: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, nEntries, col, computed));
+<a name="line3129">3129: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(check_vals(ex, ey, ez, nEntries, valA, computed));
 <a name="line3130">3130: </a>        }
 
 <a name="line3132">3132: </a>        <font color="#B22222">/* P equation : u_x + v_y + w_z = g</font>
 <a name="line3133">3133: </a><font color="#B22222">           Note that this includes an explicit zero on the diagonal. This is only needed for</font>
 <a name="line3134">3134: </a><font color="#B22222">           direct solvers (not required if using an iterative solver and setting the constant-pressure nullspace) */</font>
 <a name="line3135">3135: </a>        {
-<a name="line3136">3136: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[7];
-<a name="line3137">3137: </a>          <a href="../../../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[7];
+<a name="line3136">3136: </a>          <a href="../../../../../manualpages/DMStag/DMStagStencil.html">DMStagStencil</a> row, col[7];
+<a name="line3137">3137: </a>          <a href="../../../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>   valA[7];
 
 <a name="line3139">3139: </a>          row.i      = ex;
 <a name="line3140">3140: </a>          row.j      = ey;
@@ -3183,14 +3190,14 @@
 <a name="line3179">3179: </a>          valA[5]    = 1.0 / hz;
 <a name="line3180">3180: </a>          col[6]     = row;
 <a name="line3181">3181: </a>          valA[6]    = 0.0;
-<a name="line3182">3182: </a>          <a href="../../../../../docs/manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 7, col, computed);
-<a name="line3183">3183: </a>          check_vals(ex, ey, ez, 7, valA, computed);
+<a name="line3182">3182: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagMatGetValuesStencil.html">DMStagMatGetValuesStencil</a>(dmSol, A, 1, &amp;row, 7, col, computed));
+<a name="line3183">3183: </a>          <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(check_vals(ex, ey, ez, 7, valA, computed));
 <a name="line3184">3184: </a>        }
 <a name="line3185">3185: </a>      }
 <a name="line3186">3186: </a>    }
 <a name="line3187">3187: </a>  }
-<a name="line3188">3188: </a>  <a href="../../../../../docs/manualpages/DMStag/DMStagVecRestoreArrayRead.html">DMStagVecRestoreArrayRead</a>(dmCoord, coordLocal, &amp;arrCoord);
-<a name="line3189">3189: </a>  <font color="#4169E1">return</font> 0;
+<a name="line3188">3188: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/DMStag/DMStagVecRestoreArrayRead.html">DMStagVecRestoreArrayRead</a>(dmCoord, coordLocal, &amp;arrCoord));
+<a name="line3189">3189: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line3190">3190: </a>}
 
 <a name="line3192">3192: </a><font color="#B22222">/*TEST</font>

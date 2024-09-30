@@ -1,4 +1,3 @@
-
 static char help[] = "Tests I/O of vectors for different data formats (binary,HDF5) and illustrates the use of user-defined event logging\n\n";
 
 #include <petscvec.h>
@@ -23,9 +22,7 @@ int main(int argc, char **args)
   PetscBool isadios = PETSC_FALSE;
 #endif
   PetscScalar const *values;
-#if defined(PETSC_USE_LOG)
-  PetscLogEvent VECTOR_GENERATE, VECTOR_READ;
-#endif
+  PetscLogEvent      VECTOR_GENERATE, VECTOR_READ;
 
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &args, (char *)0, help));

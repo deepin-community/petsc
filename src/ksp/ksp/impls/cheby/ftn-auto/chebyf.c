@@ -48,6 +48,16 @@ extern void PetscRmPointer(void*);
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define kspchebyshevesteiggetksp_ kspchebyshevesteiggetksp
 #endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define kspchebyshevsetkind_ KSPCHEBYSHEVSETKIND
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define kspchebyshevsetkind_ kspchebyshevsetkind
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define kspchebyshevgetkind_ KSPCHEBYSHEVGETKIND
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define kspchebyshevgetkind_ kspchebyshevgetkind
+#endif
 
 
 /* Definitions of Fortran Wrapper routines */
@@ -73,6 +83,17 @@ PETSC_EXTERN void  kspchebyshevesteiggetksp_(KSP ksp,KSP *kspest, int *__ierr)
 {
 *__ierr = KSPChebyshevEstEigGetKSP(
 	(KSP)PetscToPointer((ksp) ),kspest);
+}
+PETSC_EXTERN void  kspchebyshevsetkind_(KSP ksp,KSPChebyshevKind *kind, int *__ierr)
+{
+*__ierr = KSPChebyshevSetKind(
+	(KSP)PetscToPointer((ksp) ),*kind);
+}
+PETSC_EXTERN void  kspchebyshevgetkind_(KSP ksp,KSPChebyshevKind *kind, int *__ierr)
+{
+*__ierr = KSPChebyshevGetKind(
+	(KSP)PetscToPointer((ksp) ),
+	(KSPChebyshevKind* )PetscToPointer((kind) ));
 }
 #if defined(__cplusplus)
 }

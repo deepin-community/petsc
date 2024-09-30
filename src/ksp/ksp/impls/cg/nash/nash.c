@@ -1,4 +1,3 @@
-
 #include <../src/ksp/ksp/impls/cg/nash/nashimpl.h> /*I "petscksp.h" I*/
 
 #define NASH_PRECONDITIONED_DIRECTION   0
@@ -108,7 +107,7 @@ static PetscErrorCode KSPCGSolve_NASH(KSP ksp)
       cg->o_fcn = -cg->o_fcn;
       ++ksp->its;
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   if (rz < 0.0) {
@@ -143,7 +142,7 @@ static PetscErrorCode KSPCGSolve_NASH(KSP ksp)
       cg->o_fcn = -cg->o_fcn;
       ++ksp->its;
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /***************************************************************************/
@@ -221,7 +220,7 @@ static PetscErrorCode KSPCGSolve_NASH(KSP ksp)
       cg->o_fcn = -cg->o_fcn;
       ++ksp->its;
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /***************************************************************************/
@@ -251,7 +250,7 @@ static PetscErrorCode KSPCGSolve_NASH(KSP ksp)
     /* during the first step, we must follow a direction.                    */
     /*************************************************************************/
 
-    ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
+    ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
     PetscCall(PetscInfo(ksp, "KSPCGSolve_NASH: negative curvature: kappa=%g\n", (double)kappa));
 
     if (cg->radius && norm_p > 0.0) {
@@ -296,7 +295,7 @@ static PetscErrorCode KSPCGSolve_NASH(KSP ksp)
       cg->o_fcn = -cg->o_fcn;
       ++ksp->its;
     }
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /***************************************************************************/
@@ -325,7 +324,7 @@ static PetscErrorCode KSPCGSolve_NASH(KSP ksp)
       /* However, the full step goes beyond the trust region.                */
       /***********************************************************************/
 
-      ksp->reason = KSP_CONVERGED_CG_CONSTRAINED;
+      ksp->reason = KSP_CONVERGED_STEP_LENGTH;
       PetscCall(PetscInfo(ksp, "KSPCGSolve_NASH: constrained step: radius=%g\n", (double)cg->radius));
 
       if (norm_p > 0.0) {
@@ -490,12 +489,12 @@ static PetscErrorCode KSPCGSolve_NASH(KSP ksp)
       /* a direction of negative curvature.  Stop at the base.               */
       /***********************************************************************/
 
-      ksp->reason = KSP_CONVERGED_CG_NEG_CURVE;
+      ksp->reason = ksp->converged_neg_curve ? KSP_CONVERGED_NEG_CURVE : KSP_DIVERGED_INDEFINITE_MAT;
       PetscCall(PetscInfo(ksp, "KSPCGSolve_NASH: negative curvature: kappa=%g\n", (double)kappa));
       break;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 #endif
 }
 
@@ -507,7 +506,7 @@ static PetscErrorCode KSPCGSetUp_NASH(KSP ksp)
 
   PetscFunctionBegin;
   PetscCall(KSPSetWorkVecs(ksp, 3));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGDestroy_NASH(KSP ksp)
@@ -526,7 +525,7 @@ static PetscErrorCode KSPCGDestroy_NASH(KSP ksp)
   /***************************************************************************/
 
   PetscCall(KSPDestroyDefault(ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGSetRadius_NASH(KSP ksp, PetscReal radius)
@@ -535,7 +534,7 @@ static PetscErrorCode KSPCGSetRadius_NASH(KSP ksp, PetscReal radius)
 
   PetscFunctionBegin;
   cg->radius = radius;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGGetNormD_NASH(KSP ksp, PetscReal *norm_d)
@@ -544,7 +543,7 @@ static PetscErrorCode KSPCGGetNormD_NASH(KSP ksp, PetscReal *norm_d)
 
   PetscFunctionBegin;
   *norm_d = cg->norm_d;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGGetObjFcn_NASH(KSP ksp, PetscReal *o_fcn)
@@ -553,7 +552,7 @@ static PetscErrorCode KSPCGGetObjFcn_NASH(KSP ksp, PetscReal *o_fcn)
 
   PetscFunctionBegin;
   *o_fcn = cg->o_fcn;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPCGSetFromOptions_NASH(KSP ksp, PetscOptionItems *PetscOptionsObject)
@@ -568,11 +567,11 @@ static PetscErrorCode KSPCGSetFromOptions_NASH(KSP ksp, PetscOptionItems *PetscO
   PetscCall(PetscOptionsEList("-ksp_cg_dtype", "Norm used for direction", "", DType_Table, NASH_DIRECTION_TYPES, DType_Table[cg->dtype], &cg->dtype, NULL));
 
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPNASH -   Code to run conjugate gradient method subject to a constraint on the solution norm.
+   KSPNASH -   Code to run conjugate gradient method subject to a constraint on the solution norm in a trust region method {cite}`nash1984newton`
 
    Options Database Keys:
 .      -ksp_cg_radius <r> - Trust Region Radius
@@ -580,37 +579,36 @@ static PetscErrorCode KSPCGSetFromOptions_NASH(KSP ksp, PetscOptionItems *PetscO
    Level: developer
 
    Notes:
-    This is rarely used directly, it is used in Trust Region methods for nonlinear equations, `SNESNEWTONTR`
+   This is rarely used directly, it is used in Trust Region methods for nonlinear equations, `SNESNEWTONTR`
 
-  Uses preconditioned conjugate gradient to compute
-  an approximate minimizer of the quadratic function
+   Uses preconditioned conjugate gradient to compute
+   an approximate minimizer of the quadratic function
 
-            q(s) = g^T * s + 0.5 * s^T * H * s
+   $$
+   q(s) = g^T * s + 0.5 * s^T * H * s
+   $$
 
    subject to the trust region constraint
 
-            || s || <= delta,
+   $$
+   || s || \le delta,
+   $$
 
    where
-
+.vb
      delta is the trust region radius,
      g is the gradient vector,
      H is the Hessian approximation, and
      M is the positive definite preconditioner matrix.
-
-   `KSPConvergedReason` may be
-.vb
-  KSP_CONVERGED_CG_NEG_CURVE if convergence is reached along a negative curvature direction,
-  KSP_CONVERGED_CG_CONSTRAINED if convergence is reached along a constrained step,
 .ve
-  other `KSP` converged/diverged reasons
 
-  The preconditioner supplied should be symmetric and positive definite.
+   `KSPConvergedReason` may include
++  `KSP_CONVERGED_NEG_CURVE` - if convergence is reached along a negative curvature direction,
+-  `KSP_CONVERGED_STEP_LENGTH` - if convergence is reached along a constrained step,
 
-  Reference:
-   Nash, Stephen G. Newton-type minimization via the Lanczos method. SIAM Journal on Numerical Analysis 21, no. 4 (1984): 770-788.
+   The preconditioner supplied must be symmetric and positive definite.
 
-.seealso: [](chapter_ksp), `KSPQCG`, `KSPGLTR`, `KSPSTCG`, `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPCGSetRadius()`, `KSPCGGetNormD()`, `KSPCGGetObjFcn()`
+.seealso: [](ch_ksp), `KSPQCG`, `KSPGLTR`, `KSPSTCG`, `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPCGSetRadius()`, `KSPCGGetNormD()`, `KSPCGGetObjFcn()`
 M*/
 
 PETSC_EXTERN PetscErrorCode KSPCreate_NASH(KSP ksp)
@@ -627,6 +625,7 @@ PETSC_EXTERN PetscErrorCode KSPCreate_NASH(KSP ksp)
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_PRECONDITIONED, PC_LEFT, 2));
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_NATURAL, PC_LEFT, 2));
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_NONE, PC_LEFT, 1));
+  PetscCall(KSPSetConvergedNegativeCurvature(ksp, PETSC_TRUE));
 
   /***************************************************************************/
   /* Sets the functions that are associated with this data structure         */
@@ -644,5 +643,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_NASH(KSP ksp)
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPCGSetRadius_C", KSPCGSetRadius_NASH));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPCGGetNormD_C", KSPCGGetNormD_NASH));
   PetscCall(PetscObjectComposeFunction((PetscObject)ksp, "KSPCGGetObjFcn_C", KSPCGGetObjFcn_NASH));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

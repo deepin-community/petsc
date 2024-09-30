@@ -1,4 +1,3 @@
-
 static char help[] = "Chemo-taxis Problems from Mathematical Biology.\n";
 
 /*
@@ -212,7 +211,7 @@ PetscErrorCode IFunction(TS ts, PetscReal ftime, Vec U, Vec Udot, Vec F, void *p
   PetscCall(DMDAVecRestoreArrayRead(da, Udot, &udot));
   PetscCall(DMDAVecRestoreArrayWrite(da, F, &f));
   PetscCall(DMRestoreLocalVector(da, &localU));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------- */
@@ -251,7 +250,7 @@ PetscErrorCode InitialConditions(DM da, Vec U)
      Restore vectors
   */
   PetscCall(DMDAVecRestoreArrayWrite(da, U, &u));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

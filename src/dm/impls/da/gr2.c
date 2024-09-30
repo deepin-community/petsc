@@ -1,4 +1,3 @@
-
 /*
    Plots vectors obtained with DMDACreate2d()
 */
@@ -25,7 +24,7 @@ typedef struct {
     in one particular set of coordinates. It is a callback
     called from PetscDrawZoom()
 */
-PetscErrorCode VecView_MPI_Draw_DA2d_Zoom(PetscDraw draw, void *ctx)
+static PetscErrorCode VecView_MPI_Draw_DA2d_Zoom(PetscDraw draw, void *ctx)
 {
   ZoomCtx           *zctx = (ZoomCtx *)ctx;
   PetscInt           m, n, i, j, k, dof, id, c1, c2, c3, c4;
@@ -110,10 +109,10 @@ PetscErrorCode VecView_MPI_Draw_DA2d_Zoom(PetscDraw draw, void *ctx)
     }
   }
   PetscDrawCollectiveEnd(draw);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode VecView_MPI_Draw_DA2d(Vec xin, PetscViewer viewer)
+static PetscErrorCode VecView_MPI_Draw_DA2d(Vec xin, PetscViewer viewer)
 {
   DM                  da, dac, dag;
   PetscInt            N, s, M, w, ncoors = 4;
@@ -138,7 +137,7 @@ PetscErrorCode VecView_MPI_Draw_DA2d(Vec xin, PetscViewer viewer)
 
   PetscCall(PetscViewerDrawGetDraw(viewer, 0, &draw));
   PetscCall(PetscDrawIsNull(draw, &isnull));
-  if (isnull) PetscFunctionReturn(0);
+  if (isnull) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(PetscViewerDrawGetBounds(viewer, &nbounds, &bounds));
 
@@ -310,7 +309,7 @@ PetscErrorCode VecView_MPI_Draw_DA2d(Vec xin, PetscViewer viewer)
   PetscCall(PetscFree(displayfields));
   PetscCall(VecRestoreArrayRead(xcoorl, &zctx.xy));
   PetscCall(VecRestoreArrayRead(xlocal, &zctx.v));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_HDF5)
@@ -402,12 +401,12 @@ static PetscErrorCode VecGetHDF5ChunkSize(DM_DA *da, Vec xin, PetscInt dimension
       /* precomputed chunks are fine, we don't need to do anything */
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
 #if defined(PETSC_HAVE_HDF5)
-PetscErrorCode VecView_MPI_HDF5_DA(Vec xin, PetscViewer viewer)
+static PetscErrorCode VecView_MPI_HDF5_DA(Vec xin, PetscViewer viewer)
 {
   PetscViewer_HDF5  *hdf5 = (PetscViewer_HDF5 *)viewer->data;
   DM                 dm;
@@ -565,7 +564,7 @@ PetscErrorCode VecView_MPI_HDF5_DA(Vec xin, PetscViewer viewer)
   PetscCallHDF5(H5Sclose, (memspace));
   PetscCallHDF5(H5Dclose, (dset_id));
   PetscCall(PetscInfo(xin, "Wrote Vec object with name %s\n", vecname));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
@@ -629,7 +628,7 @@ static PetscErrorCode DMDAArrayMPIIO(DM da, PetscViewer viewer, Vec xin, PetscBo
   PetscCall(PetscViewerBinaryAddMPIIOOffset(viewer, ub));
   PetscCall(VecRestoreArrayRead(xin, &array));
   PetscCallMPI(MPI_Type_free(&view));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
@@ -695,7 +694,7 @@ PetscErrorCode VecView_MPI_DA(Vec xin, PetscViewer viewer)
       PetscCall(PetscViewerBinaryGetUseMPIIO(viewer, &isMPIIO));
       if (isMPIIO) {
         PetscCall(DMDAArrayMPIIO(da, viewer, xin, PETSC_TRUE));
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
     }
 #endif
@@ -753,11 +752,11 @@ PetscErrorCode VecView_MPI_DA(Vec xin, PetscViewer viewer)
 
     PetscCall(VecDestroy(&natural));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_HDF5)
-PetscErrorCode VecLoad_HDF5_DA(Vec xin, PetscViewer viewer)
+static PetscErrorCode VecLoad_HDF5_DA(Vec xin, PetscViewer viewer)
 {
   PetscViewer_HDF5 *hdf5 = (PetscViewer_HDF5 *)viewer->data;
   DM                da;
@@ -871,11 +870,11 @@ PetscErrorCode VecLoad_HDF5_DA(Vec xin, PetscViewer viewer)
   PetscCallHDF5(H5Sclose, (filespace));
   PetscCallHDF5(H5Sclose, (memspace));
   PetscCallHDF5(H5Dclose, (dset_id));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
-PetscErrorCode VecLoad_Binary_DA(Vec xin, PetscViewer viewer)
+static PetscErrorCode VecLoad_Binary_DA(Vec xin, PetscViewer viewer)
 {
   DM          da;
   Vec         natural;
@@ -894,7 +893,7 @@ PetscErrorCode VecLoad_Binary_DA(Vec xin, PetscViewer viewer)
   PetscCall(PetscViewerBinaryGetUseMPIIO(viewer, &isMPIIO));
   if (isMPIIO) {
     PetscCall(DMDAArrayMPIIO(da, viewer, xin, PETSC_FALSE));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 #endif
 
@@ -909,7 +908,7 @@ PetscErrorCode VecLoad_Binary_DA(Vec xin, PetscViewer viewer)
   PetscCall(PetscInfo(xin, "Loading vector from natural ordering into DMDA\n"));
   PetscCall(PetscOptionsGetInt(NULL, ((PetscObject)xin)->prefix, "-vecload_block_size", &bs, &flag));
   if (flag && bs != dd->w) PetscCall(PetscInfo(xin, "Block size in file %" PetscInt_FMT " not equal to DMDA's dof %" PetscInt_FMT "\n", bs, dd->w));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecLoad_Default_DA(Vec xin, PetscViewer viewer)
@@ -936,5 +935,5 @@ PetscErrorCode VecLoad_Default_DA(Vec xin, PetscViewer viewer)
     PetscCall(VecLoad_HDF5_DA(xin, viewer));
 #endif
   } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP, "Viewer type %s not supported for vector loading", ((PetscObject)viewer)->type_name);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,0 +1,5 @@
+# common arch-indep files are installed in usr/share/petsc
+breakout-link usr/lib/petscdir/petsc* -> usr/share/petsc/*
+
+# 64-bit (int64) scotch places libraries in a separate subdir, so RUNPATH is needed
+custom-library-search-path RUNPATH /usr/lib/*/scotch-int64 [usr/lib/petscdir/petsc64-*/*-complex-debug/lib/libpetsc64_complex.so.*]

@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/tests/ex173.c">Actual source code: ex173.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/mat/tests/ex173.c">Actual source code: ex173.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:48:05+00:00">
+<meta name="date" content="2024-03-29T14:13:17+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -23,23 +23,25 @@
 
 <a name="line13"> 13: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char **args)</font></strong>
 <a name="line14"> 14: </a>{
-<a name="line15"> 15: </a>  <a href="../../../docs/manualpages/Mat/Mat.html">Mat</a>         A;
-<a name="line16"> 16: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> fd;                       <font color="#B22222">/* viewer */</font>
+<a name="line15"> 15: </a>  <a href="../../../manualpages/Mat/Mat.html">Mat</a>         A;
+<a name="line16"> 16: </a>  <a href="../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a> fd;                       <font color="#B22222">/* viewer */</font>
 <a name="line17"> 17: </a>  char        file[PETSC_MAX_PATH_LEN]; <font color="#B22222">/* input file name */</font>
-<a name="line18"> 18: </a>  <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>   flg;
+<a name="line18"> 18: </a>  <a href="../../../manualpages/Sys/PetscBool.html">PetscBool</a>   flg;
 
-<a name="line21"> 21: </a>  <a href="../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;args, (char *)0, help);
-<a name="line22"> 22: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(NULL, NULL, <font color="#666666">"-f0"</font>, file, <font color="#4169E1">sizeof</font>(file), &amp;flg);
-<a name="line24"> 24: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerBinaryOpen.html">PetscViewerBinaryOpen</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, file, <a href="../../../docs/manualpages/Sys/PetscFileMode.html">FILE_MODE_READ</a>, &amp;fd);
-<a name="line25"> 25: </a>  <a href="../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;A);
-<a name="line26"> 26: </a>  <a href="../../../docs/manualpages/Mat/MatLoad.html">MatLoad</a>(A, fd);
-<a name="line27"> 27: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;fd);
+<a name="line20"> 20: </a>  <a href="../../../manualpages/Sys/PetscFunctionBeginUser.html">PetscFunctionBeginUser</a>;
+<a name="line21"> 21: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;args, (char *)0, help));
+<a name="line22"> 22: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscOptionsGetString.html">PetscOptionsGetString</a>(NULL, NULL, <font color="#666666">"-f0"</font>, file, <font color="#4169E1">sizeof</font>(file), &amp;flg));
+<a name="line23"> 23: </a>  <a href="../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(flg, <a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_USER</a>, <font color="#666666">"Must indicate binary file with the -f0 option"</font>);
+<a name="line24"> 24: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscViewerBinaryOpen.html">PetscViewerBinaryOpen</a>(<a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, file, <a href="../../../manualpages/Sys/PetscFileMode.html">FILE_MODE_READ</a>, &amp;fd));
+<a name="line25"> 25: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Mat/MatCreate.html">MatCreate</a>(<a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;A));
+<a name="line26"> 26: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Mat/MatLoad.html">MatLoad</a>(A, fd));
+<a name="line27"> 27: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;fd));
 
-<a name="line29"> 29: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerPushFormat.html">PetscViewerPushFormat</a>(<a href="../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>, <a href="../../../docs/manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_MATRIXMARKET</a>);
-<a name="line30"> 30: </a>  <a href="../../../docs/manualpages/Mat/MatView.html">MatView</a>(A, <a href="../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>);
-<a name="line31"> 31: </a>  <a href="../../../docs/manualpages/Viewer/PetscViewerPopFormat.html">PetscViewerPopFormat</a>(<a href="../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>);
-<a name="line32"> 32: </a>  <a href="../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;A);
-<a name="line33"> 33: </a>  <a href="../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line29"> 29: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscViewerPushFormat.html">PetscViewerPushFormat</a>(<a href="../../../manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>, <a href="../../../manualpages/Viewer/PetscViewerFormat.html">PETSC_VIEWER_ASCII_MATRIXMARKET</a>));
+<a name="line30"> 30: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Mat/MatView.html">MatView</a>(A, <a href="../../../manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>));
+<a name="line31"> 31: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Viewer/PetscViewerPopFormat.html">PetscViewerPopFormat</a>(<a href="../../../manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>));
+<a name="line32"> 32: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Mat/MatDestroy.html">MatDestroy</a>(&amp;A));
+<a name="line33"> 33: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscFinalize.html">PetscFinalize</a>());
 <a name="line34"> 34: </a>  <font color="#4169E1">return</font> 0;
 <a name="line35"> 35: </a>}
 

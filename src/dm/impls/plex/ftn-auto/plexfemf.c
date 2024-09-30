@@ -39,6 +39,26 @@ extern void PetscRmPointer(void*);
 #define dmplexsetscale_ dmplexsetscale
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmplexgetuseceed_ DMPLEXGETUSECEED
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmplexgetuseceed_ dmplexgetuseceed
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmplexsetuseceed_ DMPLEXSETUSECEED
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmplexsetuseceed_ dmplexsetuseceed
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmplexgetusematclosurepermutation_ DMPLEXGETUSEMATCLOSUREPERMUTATION
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmplexgetusematclosurepermutation_ dmplexgetusematclosurepermutation
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmplexsetusematclosurepermutation_ DMPLEXSETUSEMATCLOSUREPERMUTATION
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmplexsetusematclosurepermutation_ dmplexsetusematclosurepermutation
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmplexcreaterigidbody_ DMPLEXCREATERIGIDBODY
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmplexcreaterigidbody_ dmplexcreaterigidbody
@@ -104,11 +124,6 @@ extern void PetscRmPointer(void*);
 #define dmplexcomputecellwiseintegralfem_ dmplexcomputecellwiseintegralfem
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define dmplexcomputebdintegral_ DMPLEXCOMPUTEBDINTEGRAL
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define dmplexcomputebdintegral_ dmplexcomputebdintegral
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmplexcomputeinterpolatornested_ DMPLEXCOMPUTEINTERPOLATORNESTED
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmplexcomputeinterpolatornested_ dmplexcomputeinterpolatornested
@@ -153,6 +168,26 @@ PETSC_EXTERN void  dmplexsetscale_(DM dm,PetscUnit *unit,PetscReal *scale, int *
 {
 *__ierr = DMPlexSetScale(
 	(DM)PetscToPointer((dm) ),*unit,*scale);
+}
+PETSC_EXTERN void  dmplexgetuseceed_(DM dm,PetscBool *useCeed, int *__ierr)
+{
+*__ierr = DMPlexGetUseCeed(
+	(DM)PetscToPointer((dm) ),useCeed);
+}
+PETSC_EXTERN void  dmplexsetuseceed_(DM dm,PetscBool *useCeed, int *__ierr)
+{
+*__ierr = DMPlexSetUseCeed(
+	(DM)PetscToPointer((dm) ),*useCeed);
+}
+PETSC_EXTERN void  dmplexgetusematclosurepermutation_(DM dm,PetscBool *useClPerm, int *__ierr)
+{
+*__ierr = DMPlexGetUseMatClosurePermutation(
+	(DM)PetscToPointer((dm) ),useClPerm);
+}
+PETSC_EXTERN void  dmplexsetusematclosurepermutation_(DM dm,PetscBool *useClPerm, int *__ierr)
+{
+*__ierr = DMPlexSetUseMatClosurePermutation(
+	(DM)PetscToPointer((dm) ),*useClPerm);
 }
 PETSC_EXTERN void  dmplexcreaterigidbody_(DM dm,PetscInt *field,MatNullSpace *sp, int *__ierr)
 {
@@ -236,13 +271,6 @@ PETSC_EXTERN void  dmplexcomputecellwiseintegralfem_(DM dm,Vec X,Vec F,void*user
 	(DM)PetscToPointer((dm) ),
 	(Vec)PetscToPointer((X) ),
 	(Vec)PetscToPointer((F) ),user);
-}
-PETSC_EXTERN void  dmplexcomputebdintegral_(DM dm,Vec X,DMLabel label,PetscInt *numVals, PetscInt vals[],void(*func)(PetscInt, PetscInt, PetscInt, const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], const PetscInt[], const PetscInt[], const PetscScalar[], const PetscScalar[], const PetscScalar[], PetscReal, const PetscReal[], const PetscReal[], PetscInt, const PetscScalar[], PetscScalar[]),PetscScalar *integral,void*user, int *__ierr)
-{
-*__ierr = DMPlexComputeBdIntegral(
-	(DM)PetscToPointer((dm) ),
-	(Vec)PetscToPointer((X) ),
-	(DMLabel)PetscToPointer((label) ),*numVals,vals,func,integral,user);
 }
 PETSC_EXTERN void  dmplexcomputeinterpolatornested_(DM dmc,DM dmf,PetscBool *isRefined,Mat In,void*user, int *__ierr)
 {

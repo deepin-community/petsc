@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/objects/device/impls/cupm/cupminterface.cxx">Actual source code: cupminterface.cxx</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/sys/objects/device/impls/cupm/cupminterface.cxx">Actual source code: cupminterface.cxx</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:46:58+00:00">
+<meta name="date" content="2024-03-29T14:12:55+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -40,24 +40,24 @@
 <a name="line29"> 29: </a>// const decltype(cudaSuccess) Interface&lt;DeviceType::CUDA&gt;::cupmSuccess;
 <a name="line30"> 30: </a>// const decltype(hipAllGood)  Interface&lt;DeviceType::HIP&gt;::cupmSuccess;
 <a name="line31"> 31: </a><strong><font color="#228B22">#define PETSC_CUPM_DEFINE_STATIC_VARIABLE_EXACT(cuoriginal, hiporiginal, ours) \</font></strong>
-<a name="line32"> 32: </a><strong><font color="#228B22">  PetscIfPetscDefined(HAVE_CUDA, PETSC_CUPM_STATIC_VARIABLE_DEFN, <a href="../../../../../../docs/manualpages/Sys/PetscExpandToNothing.html">PetscExpandToNothing</a>)(cuoriginal, CUDA, ours); \</font></strong>
-<a name="line33"> 33: </a><strong><font color="#228B22">  PetscIfPetscDefined(HAVE_HIP, PETSC_CUPM_STATIC_VARIABLE_DEFN, <a href="../../../../../../docs/manualpages/Sys/PetscExpandToNothing.html">PetscExpandToNothing</a>)(hiporiginal, HIP, ours)</font></strong>
+<a name="line32"> 32: </a><strong><font color="#228B22">  PetscIfPetscDefined(HAVE_CUDA, PETSC_CUPM_STATIC_VARIABLE_DEFN, <a href="../../../../../../manualpages/Sys/PetscExpandToNothing.html">PetscExpandToNothing</a>)(cuoriginal, CUDA, ours); \</font></strong>
+<a name="line33"> 33: </a><strong><font color="#228B22">  PetscIfPetscDefined(HAVE_HIP, PETSC_CUPM_STATIC_VARIABLE_DEFN, <a href="../../../../../../manualpages/Sys/PetscExpandToNothing.html">PetscExpandToNothing</a>)(hiporiginal, HIP, ours)</font></strong>
 
 <a name="line35"> 35: </a>// define the static variable in terms of the class typename
 <a name="line36"> 36: </a><strong><font color="#228B22">#define PETSC_CUPM_DEFINE_STATIC_VARIABLE_VIA_CLASS_TYPENAME(type_name, ours) \</font></strong>
-<a name="line37"> 37: </a><strong><font color="#228B22">  PetscIfPetscDefined(HAVE_CUDA, PETSC_CUPM_STATIC_VARIABLE_DEFN_CLASS, <a href="../../../../../../docs/manualpages/Sys/PetscExpandToNothing.html">PetscExpandToNothing</a>)(type_name, CUDA, ours); \</font></strong>
-<a name="line38"> 38: </a><strong><font color="#228B22">  PetscIfPetscDefined(HAVE_HIP, PETSC_CUPM_STATIC_VARIABLE_DEFN_CLASS, <a href="../../../../../../docs/manualpages/Sys/PetscExpandToNothing.html">PetscExpandToNothing</a>)(type_name, HIP, ours)</font></strong>
+<a name="line37"> 37: </a><strong><font color="#228B22">  PetscIfPetscDefined(HAVE_CUDA, PETSC_CUPM_STATIC_VARIABLE_DEFN_CLASS, <a href="../../../../../../manualpages/Sys/PetscExpandToNothing.html">PetscExpandToNothing</a>)(type_name, CUDA, ours); \</font></strong>
+<a name="line38"> 38: </a><strong><font color="#228B22">  PetscIfPetscDefined(HAVE_HIP, PETSC_CUPM_STATIC_VARIABLE_DEFN_CLASS, <a href="../../../../../../manualpages/Sys/PetscExpandToNothing.html">PetscExpandToNothing</a>)(type_name, HIP, ours)</font></strong>
 
 <a name="line40"> 40: </a><strong><font color="#228B22">#define PETSC_CUPM_DEFINE_STATIC_VARIABLE_VIA_EXACT_TYPENAME(type_name, ours) \</font></strong>
-<a name="line41"> 41: </a><strong><font color="#228B22">  PetscIfPetscDefined(HAVE_CUDA, PETSC_CUPM_STATIC_VARIABLE_DEFN_EXACT, <a href="../../../../../../docs/manualpages/Sys/PetscExpandToNothing.html">PetscExpandToNothing</a>)(type_name, CUDA, ours); \</font></strong>
-<a name="line42"> 42: </a><strong><font color="#228B22">  PetscIfPetscDefined(HAVE_HIP, PETSC_CUPM_STATIC_VARIABLE_DEFN_EXACT, <a href="../../../../../../docs/manualpages/Sys/PetscExpandToNothing.html">PetscExpandToNothing</a>)(type_name, HIP, ours)</font></strong>
+<a name="line41"> 41: </a><strong><font color="#228B22">  PetscIfPetscDefined(HAVE_CUDA, PETSC_CUPM_STATIC_VARIABLE_DEFN_EXACT, <a href="../../../../../../manualpages/Sys/PetscExpandToNothing.html">PetscExpandToNothing</a>)(type_name, CUDA, ours); \</font></strong>
+<a name="line42"> 42: </a><strong><font color="#228B22">  PetscIfPetscDefined(HAVE_HIP, PETSC_CUPM_STATIC_VARIABLE_DEFN_EXACT, <a href="../../../../../../manualpages/Sys/PetscExpandToNothing.html">PetscExpandToNothing</a>)(type_name, HIP, ours)</font></strong>
 
 <a name="line44"> 44: </a>// <font color="#4169E1">if</font> both cuda and hip agree on the same naming scheme i.e. cudaSuccess and hipSuccess:
 <a name="line45"> 45: </a>//
 <a name="line46"> 46: </a>// PETSC_CUPM_DEFINE_STATIC_VARIABLE_MATCHING_SCHEME(Success) -&gt;
 <a name="line47"> 47: </a>// const decltype(cudaSuccess) Interface&lt;DeviceType::CUDA&gt;::cupmSuccess;
 <a name="line48"> 48: </a>// const decltype(hipSuccess)  Interface&lt;DeviceType::HIP&gt;::cupmSuccess;
-<a name="line49"> 49: </a><strong><font color="#228B22">#define PETSC_CUPM_DEFINE_STATIC_VARIABLE_MATCHING_SCHEME(suffix) PETSC_CUPM_DEFINE_STATIC_VARIABLE_EXACT(<a href="../../../../../../docs/manualpages/Sys/PetscConcat.html">PetscConcat</a>(cuda, suffix), <a href="../../../../../../docs/manualpages/Sys/PetscConcat.html">PetscConcat</a>(hip, suffix), <a href="../../../../../../docs/manualpages/Sys/PetscConcat.html">PetscConcat</a>(cupm, suffix))</font></strong>
+<a name="line49"> 49: </a><strong><font color="#228B22">#define PETSC_CUPM_DEFINE_STATIC_VARIABLE_MATCHING_SCHEME(suffix) PETSC_CUPM_DEFINE_STATIC_VARIABLE_EXACT(<a href="../../../../../../manualpages/Sys/PetscConcat.html">PetscConcat</a>(cuda, suffix), <a href="../../../../../../manualpages/Sys/PetscConcat.html">PetscConcat</a>(hip, suffix), <a href="../../../../../../manualpages/Sys/PetscConcat.html">PetscConcat</a>(cupm, suffix))</font></strong>
 
 <a name="line51"> 51: </a>// error codes
 <a name="line52"> 52: </a><strong><font color="#4169E1">PETSC_CUPM_DEFINE_STATIC_VARIABLE_VIA_CLASS_TYPENAME(cupmError_t, cupmSuccess)</font></strong>;
@@ -106,20 +106,21 @@
 
 <a name="line96"> 96: </a><strong><font color="#4169E1">PETSC_CUPM_DEFINE_STATIC_VARIABLE_VIA_CLASS_TYPENAME(cupmMemPoolAttr, cupmMemPoolAttrReleaseThreshold)</font></strong>;
 
-<a name="line98"> 98: </a><font color="#A020F0">#if <a href="../../../../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_CUDA)</font>
+<a name="line98"> 98: </a><font color="#A020F0">#if <a href="../../../../../../manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_CUDA)</font>
 <a name="line99"> 99: </a>template <font color="#4169E1">struct Interface</font>&lt;DeviceType::CUDA&gt;;
 <a name="line100">100: </a><font color="#A020F0">#endif</font>
-<a name="line101">101: </a><font color="#A020F0">#if <a href="../../../../../../docs/manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_HIP)</font>
-<a name="line102">102: </a>template <font color="#4169E1">struct Interface</font>&lt;DeviceType::HIP&gt;;
-<a name="line103">103: </a><font color="#A020F0">#endif</font>
 
-<a name="line105">105: </a>} // namespace impl
+<a name="line102">102: </a><font color="#A020F0">#if <a href="../../../../../../manualpages/Sys/PetscDefined.html">PetscDefined</a>(HAVE_HIP)</font>
+<a name="line103">103: </a>template <font color="#4169E1">struct Interface</font>&lt;DeviceType::HIP&gt;;
+<a name="line104">104: </a><font color="#A020F0">#endif</font>
 
-<a name="line107">107: </a>} // namespace cupm
+<a name="line106">106: </a>} // namespace impl
 
-<a name="line109">109: </a>} // namespace device
+<a name="line108">108: </a>} // namespace cupm
 
-<a name="line111">111: </a>} // namespace Petsc
+<a name="line110">110: </a>} // namespace device
+
+<a name="line112">112: </a>} // namespace Petsc
 </pre>
 </body>
 

@@ -16,9 +16,10 @@ const char *const  MPChacoEigenTypes[]         = {"LANCZOS", "RQI", "MPChacoEige
 extern PetscErrorCode MatMFFDInitializePackage(void);
 extern PetscErrorCode MatSolverTypeDestroy(void);
 static PetscBool      MatPackageInitialized = PETSC_FALSE;
+
 /*@C
-  MatFinalizePackage - This function destroys everything in the Petsc interface to the `Mat` package. It is
-  called from `PetscFinalize()`.
+  MatFinalizePackage - This function destroys everything in the Petsc interface to the `Mat`
+  package. It is called from `PetscFinalize()`.
 
   Level: developer
 
@@ -53,8 +54,16 @@ PetscErrorCode MatFinalizePackage(void)
   /* this is not ideal because it exposes SeqAIJ implementation details directly into the base Mat code */
   PetscCall(PetscFunctionListDestroy(&MatSeqAIJList));
   MatSeqAIJRegisterAllCalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
+
+#if defined(PETSC_HAVE_CUDA)
+PETSC_INTERN PetscErrorCode MatSolverTypeRegister_DENSECUDA(void);
+#endif
+
+#if defined(PETSC_HAVE_HIP)
+PETSC_INTERN PetscErrorCode MatSolverTypeRegister_DENSEHIP(void);
+#endif
 
 #if defined(PETSC_HAVE_MUMPS)
 PETSC_EXTERN PetscErrorCode MatSolverTypeRegister_MUMPS(void);
@@ -95,9 +104,6 @@ PETSC_EXTERN PetscErrorCode MatSolverTypeRegister_Pastix(void);
 #if defined(PETSC_HAVE_SUPERLU_DIST)
 PETSC_EXTERN PetscErrorCode MatSolverTypeRegister_SuperLU_DIST(void);
 #endif
-#if defined(PETSC_HAVE_ELEMENTAL)
-PETSC_EXTERN PetscErrorCode MatSolverTypeRegister_SparseElemental(void);
-#endif
 #if defined(PETSC_HAVE_MKL_PARDISO)
 PETSC_EXTERN PetscErrorCode MatSolverTypeRegister_MKL_Pardiso(void);
 #endif
@@ -131,7 +137,7 @@ PETSC_INTERN PetscErrorCode MatGetFactor_seqaij_bas(Mat, MatFactorType, Mat *);
 
   Level: developer
 
-.seealso: `Mat`, `PetscInitialize()`, `MatFinalizePackage()`
+.seealso: [](ch_matrices), `Mat`, `PetscInitialize()`, `MatFinalizePackage()`
 @*/
 PetscErrorCode MatInitializePackage(void)
 {
@@ -139,7 +145,7 @@ PetscErrorCode MatInitializePackage(void)
   PetscBool opt, pkg;
 
   PetscFunctionBegin;
-  if (MatPackageInitialized) PetscFunctionReturn(0);
+  if (MatPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   MatPackageInitialized = PETSC_TRUE;
   /* Initialize subpackage */
   PetscCall(MatMFFDInitializePackage());
@@ -160,10 +166,11 @@ PetscErrorCode MatInitializePackage(void)
   PetscCall(MatSeqAIJRegisterAll());
   /* Register Events */
   PetscCall(PetscLogEventRegister("MatMult", MAT_CLASSID, &MAT_Mult));
-  PetscCall(PetscLogEventRegister("MatMults", MAT_CLASSID, &MAT_Mults));
   PetscCall(PetscLogEventRegister("MatMultAdd", MAT_CLASSID, &MAT_MultAdd));
   PetscCall(PetscLogEventRegister("MatMultTranspose", MAT_CLASSID, &MAT_MultTranspose));
+  PetscCall(PetscLogEventRegister("MatMultHermitian", MAT_CLASSID, &MAT_MultHermitianTranspose));
   PetscCall(PetscLogEventRegister("MatMultTrAdd", MAT_CLASSID, &MAT_MultTransposeAdd));
+  PetscCall(PetscLogEventRegister("MatMultHTAdd", MAT_CLASSID, &MAT_MultHermitianTransposeAdd));
   PetscCall(PetscLogEventRegister("MatSolve", MAT_CLASSID, &MAT_Solve));
   PetscCall(PetscLogEventRegister("MatSolves", MAT_CLASSID, &MAT_Solves));
   PetscCall(PetscLogEventRegister("MatSolveAdd", MAT_CLASSID, &MAT_SolveAdd));
@@ -228,7 +235,7 @@ PetscErrorCode MatInitializePackage(void)
   PetscCall(PetscLogEventRegister("MatTrnMatMultNum", MAT_CLASSID, &MAT_TransposeMatMultNumeric));
   PetscCall(PetscLogEventRegister("MatTrnColorCreate", MAT_CLASSID, &MAT_TransposeColoringCreate));
   PetscCall(PetscLogEventRegister("MatRedundantMat", MAT_CLASSID, &MAT_RedundantMat));
-  PetscCall(PetscLogEventRegister("MatGetSeqNZStrct", MAT_CLASSID, &MAT_GetSequentialNonzeroStructure));
+  PetscCall(PetscLogEventRegister("MatGetSeqNZStrct", MAT_CLASSID, &MAT_GetSeqNonzeroStructure));
   PetscCall(PetscLogEventRegister("MatGetMultiProcB", MAT_CLASSID, &MAT_GetMultiProcBlock));
   PetscCall(PetscLogEventRegister("MatSetRandom", MAT_CLASSID, &MAT_SetRandom));
 
@@ -242,11 +249,6 @@ PetscErrorCode MatInitializePackage(void)
   PetscCall(PetscLogEventRegister("MatGetBrowsOfAcols", MAT_CLASSID, &MAT_GetBrowsOfAcols));
   PetscCall(PetscLogEventRegister("MatGetBrAoCol", MAT_CLASSID, &MAT_GetBrowsOfAocols));
 
-  PetscCall(PetscLogEventRegister("MatApplyPAPt_Symbolic", MAT_CLASSID, &MAT_Applypapt_symbolic));
-  PetscCall(PetscLogEventRegister("MatApplyPAPt_Numeric", MAT_CLASSID, &MAT_Applypapt_numeric));
-  PetscCall(PetscLogEventRegister("MatApplyPAPt", MAT_CLASSID, &MAT_Applypapt));
-
-  PetscCall(PetscLogEventRegister("MatGetSymTrans", MAT_CLASSID, &MAT_Getsymtranspose));
   PetscCall(PetscLogEventRegister("MatGetSymTransR", MAT_CLASSID, &MAT_Getsymtransreduced));
   PetscCall(PetscLogEventRegister("MatCUSPARSCopyTo", MAT_CLASSID, &MAT_CUSPARSECopyToGPU));
   PetscCall(PetscLogEventRegister("MatCUSPARSCopyFr", MAT_CLASSID, &MAT_CUSPARSECopyFromGPU));
@@ -359,20 +361,10 @@ PetscErrorCode MatInitializePackage(void)
   PetscCall(MatSolverTypeRegister(MATSOLVERPETSC, MATSEQDENSE, MAT_FACTOR_CHOLESKY, MatGetFactor_seqdense_petsc));
   PetscCall(MatSolverTypeRegister(MATSOLVERPETSC, MATSEQDENSE, MAT_FACTOR_QR, MatGetFactor_seqdense_petsc));
 #if defined(PETSC_HAVE_CUDA)
-  PetscCall(MatSolverTypeRegister(MATSOLVERCUDA, MATSEQDENSE, MAT_FACTOR_LU, MatGetFactor_seqdense_cuda));
-  PetscCall(MatSolverTypeRegister(MATSOLVERCUDA, MATSEQDENSE, MAT_FACTOR_CHOLESKY, MatGetFactor_seqdense_cuda));
-  PetscCall(MatSolverTypeRegister(MATSOLVERCUDA, MATSEQDENSE, MAT_FACTOR_QR, MatGetFactor_seqdense_cuda));
-  PetscCall(MatSolverTypeRegister(MATSOLVERCUDA, MATSEQDENSECUDA, MAT_FACTOR_LU, MatGetFactor_seqdense_cuda));
-  PetscCall(MatSolverTypeRegister(MATSOLVERCUDA, MATSEQDENSECUDA, MAT_FACTOR_CHOLESKY, MatGetFactor_seqdense_cuda));
-  PetscCall(MatSolverTypeRegister(MATSOLVERCUDA, MATSEQDENSECUDA, MAT_FACTOR_QR, MatGetFactor_seqdense_cuda));
+  PetscCall(MatSolverTypeRegister_DENSECUDA());
 #endif
 #if defined(PETSC_HAVE_HIP)
-  PetscCall(MatSolverTypeRegister(MATSOLVERHIP, MATSEQDENSE, MAT_FACTOR_LU, MatGetFactor_seqdense_hip));
-  PetscCall(MatSolverTypeRegister(MATSOLVERHIP, MATSEQDENSE, MAT_FACTOR_CHOLESKY, MatGetFactor_seqdense_hip));
-  PetscCall(MatSolverTypeRegister(MATSOLVERHIP, MATSEQDENSE, MAT_FACTOR_QR, MatGetFactor_seqdense_hip));
-  PetscCall(MatSolverTypeRegister(MATSOLVERHIP, MATSEQDENSEHIP, MAT_FACTOR_LU, MatGetFactor_seqdense_hip));
-  PetscCall(MatSolverTypeRegister(MATSOLVERHIP, MATSEQDENSEHIP, MAT_FACTOR_CHOLESKY, MatGetFactor_seqdense_hip));
-  PetscCall(MatSolverTypeRegister(MATSOLVERHIP, MATSEQDENSEHIP, MAT_FACTOR_QR, MatGetFactor_seqdense_hip));
+  PetscCall(MatSolverTypeRegister_DENSEHIP());
 #endif
 
   PetscCall(MatSolverTypeRegister(MATSOLVERBAS, MATSEQAIJ, MAT_FACTOR_ICC, MatGetFactor_seqaij_bas));
@@ -420,9 +412,6 @@ PetscErrorCode MatInitializePackage(void)
 #if defined(PETSC_HAVE_SUPERLU_DIST)
   PetscCall(MatSolverTypeRegister_SuperLU_DIST());
 #endif
-#if defined(PETSC_HAVE_ELEMENTAL)
-  PetscCall(MatSolverTypeRegister_SparseElemental());
-#endif
 #if defined(PETSC_HAVE_MKL_PARDISO)
   PetscCall(MatSolverTypeRegister_MKL_Pardiso());
 #endif
@@ -437,7 +426,7 @@ PetscErrorCode MatInitializePackage(void)
 #endif
   /* Register package finalizer */
   PetscCall(PetscRegisterFinalize(MatFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_DYNAMIC_LIBRARIES)
@@ -451,7 +440,7 @@ PETSC_EXTERN PetscErrorCode PetscDLLibraryRegister_petscmat(void)
 {
   PetscFunctionBegin;
   PetscCall(MatInitializePackage());
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif /* PETSC_HAVE_DYNAMIC_LIBRARIES */

@@ -1,9 +1,5 @@
 #include <petsc/private/dmdaimpl.h> /*I "petscdmda.h"  I*/
 
-extern PetscErrorCode DMSetUp_DA_1D(DM);
-extern PetscErrorCode DMSetUp_DA_2D(DM);
-extern PetscErrorCode DMSetUp_DA_3D(DM);
-
 PetscErrorCode DMSetUp_DA(DM da)
 {
   DM_DA *dd = (DM_DA *)da->data;
@@ -23,5 +19,5 @@ PetscErrorCode DMSetUp_DA(DM da)
     PetscCall(DMSetUp_DA_3D(da));
   } else SETERRQ(PetscObjectComm((PetscObject)da), PETSC_ERR_SUP, "DMs only supported for 1, 2, and 3d");
   PetscCall(DMViewFromOptions(da, NULL, "-dm_view"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

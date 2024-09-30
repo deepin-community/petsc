@@ -1,4 +1,3 @@
-
 /*
         Provides an interface to the IBM RS6000 Essl sparse solver
 
@@ -25,17 +24,17 @@ typedef struct {
   PetscBool CleanUpESSL;
 } Mat_Essl;
 
-PetscErrorCode MatDestroy_Essl(Mat A)
+static PetscErrorCode MatDestroy_Essl(Mat A)
 {
   Mat_Essl *essl = (Mat_Essl *)A->data;
 
   PetscFunctionBegin;
   if (essl->CleanUpESSL) PetscCall(PetscFree4(essl->a, essl->aux, essl->ia, essl->ja));
   PetscCall(PetscFree(A->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatSolve_Essl(Mat A, Vec b, Vec x)
+static PetscErrorCode MatSolve_Essl(Mat A, Vec b, Vec x)
 {
   Mat_Essl    *essl = (Mat_Essl *)A->data;
   PetscScalar *xx;
@@ -47,10 +46,10 @@ PetscErrorCode MatSolve_Essl(Mat A, Vec b, Vec x)
   PetscCall(VecGetArray(x, &xx));
   dgss(&zero, &nessl, essl->a, essl->ia, essl->ja, &essl->lna, xx, essl->aux, &essl->naux);
   PetscCall(VecRestoreArray(x, &xx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatLUFactorNumeric_Essl(Mat F, Mat A, const MatFactorInfo *info)
+static PetscErrorCode MatLUFactorNumeric_Essl(Mat F, Mat A, const MatFactorInfo *info)
 {
   Mat_SeqAIJ *aa   = (Mat_SeqAIJ *)(A)->data;
   Mat_Essl   *essl = (Mat_Essl *)(F)->data;
@@ -79,10 +78,10 @@ PetscErrorCode MatLUFactorNumeric_Essl(Mat F, Mat A, const MatFactorInfo *info)
   F->ops->solve     = MatSolve_Essl;
   (F)->assembled    = PETSC_TRUE;
   (F)->preallocated = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatLUFactorSymbolic_Essl(Mat B, Mat A, IS r, IS c, const MatFactorInfo *info)
+static PetscErrorCode MatLUFactorSymbolic_Essl(Mat B, Mat A, IS r, IS c, const MatFactorInfo *info)
 {
   Mat_SeqAIJ *a = (Mat_SeqAIJ *)A->data;
   Mat_Essl   *essl;
@@ -103,28 +102,24 @@ PetscErrorCode MatLUFactorSymbolic_Essl(Mat B, Mat A, IS r, IS c, const MatFacto
   essl->CleanUpESSL = PETSC_TRUE;
 
   B->ops->lufactornumeric = MatLUFactorNumeric_Essl;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatFactorGetSolverType_essl(Mat A, MatSolverType *type)
+static PetscErrorCode MatFactorGetSolverType_essl(Mat A, MatSolverType *type)
 {
   PetscFunctionBegin;
   *type = MATSOLVERESSL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-  MATSOLVERESSL - "essl" - Provides direct solvers, LU, for sequential matrices
-                              via the external package ESSL.
-
-  If ESSL is installed (see the manual for
-  instructions on how to declare the existence of external packages),
+  MATSOLVERESSL - "essl" - Provides direct solvers, LU, for sequential matrices via the external package ESSL.
 
   Works with `MATSEQAIJ` matrices
 
    Level: beginner
 
-.seealso: `PCLU`, `PCFactorSetMatSolverType()`, `MatSolverType`
+.seealso: [](ch_matrices), `Mat`, `PCLU`, `PCFactorSetMatSolverType()`, `MatSolverType`
 M*/
 
 PETSC_EXTERN PetscErrorCode MatGetFactor_seqaij_essl(Mat A, MatFactorType ftype, Mat *F)
@@ -154,12 +149,12 @@ PETSC_EXTERN PetscErrorCode MatGetFactor_seqaij_essl(Mat A, MatFactorType ftype,
   PetscCall(PetscStrallocpy(MATSOLVERESSL, &B->solvertype));
 
   *F = B;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode MatSolverTypeRegister_Essl(void)
 {
   PetscFunctionBegin;
   PetscCall(MatSolverTypeRegister(MATSOLVERESSL, MATSEQAIJ, MAT_FACTOR_LU, MatGetFactor_seqaij_essl));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

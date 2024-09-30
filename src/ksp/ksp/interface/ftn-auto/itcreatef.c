@@ -64,6 +64,16 @@ extern void PetscRmPointer(void*);
 #define kspgetoperators_ kspgetoperators
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define kspsetnestlevel_ KSPSETNESTLEVEL
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define kspsetnestlevel_ kspsetnestlevel
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define kspgetnestlevel_ KSPGETNESTLEVEL
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define kspgetnestlevel_ kspgetnestlevel
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define kspcreate_ KSPCREATE
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define kspcreate_ kspcreate
@@ -110,6 +120,16 @@ PETSC_EXTERN void  kspgetoperators_(KSP ksp,Mat *Amat,Mat *Pmat, int *__ierr)
 {
 *__ierr = KSPGetOperators(
 	(KSP)PetscToPointer((ksp) ),Amat,Pmat);
+}
+PETSC_EXTERN void  kspsetnestlevel_(KSP ksp,PetscInt *level, int *__ierr)
+{
+*__ierr = KSPSetNestLevel(
+	(KSP)PetscToPointer((ksp) ),*level);
+}
+PETSC_EXTERN void  kspgetnestlevel_(KSP ksp,PetscInt *level, int *__ierr)
+{
+*__ierr = KSPGetNestLevel(
+	(KSP)PetscToPointer((ksp) ),level);
 }
 PETSC_EXTERN void  kspcreate_(MPI_Fint * comm,KSP *inksp, int *__ierr)
 {

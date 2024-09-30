@@ -24,27 +24,29 @@ static PetscErrorCode DMMoab_GetWriteOptions_Private(PetscInt fsetid, PetscInt n
 
   PetscCall(PetscSNPrintf(wopts, PETSC_MAX_PATH_LEN, "%s%s%s%s%s", wopts_par, wopts_parid, wopts_dbg, (extra_opts ? extra_opts : ""), (dm_opts ? dm_opts : "")));
   *write_opts = wopts;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   DMMoabOutput - Output the solution vectors that are stored in the DMMoab object as tags
-  along with the complete mesh data structure in the native H5M or VTK format. The H5M output file
-  can be visualized directly with Paraview (if compiled with appropriate plugin) or converted
-  with MOAB/tools/mbconvert to a VTK or Exodus file.
-
-  This routine can also be used for check-pointing purposes to store a complete history of
-  the solution along with any other necessary data to restart computations.
+  along with the complete mesh data structure in the native H5M or VTK format
+  <http://ftp.mcs.anl.gov/pub/fathom/moab-docs/contents.html#fivetwo>.
 
   Collective
 
   Input Parameters:
-+ dm     - the discretization manager object containing solution in MOAB tags.
-.  filename - the name of the output file: e.g., poisson.h5m
--  usrwriteopts - the parallel write options needed for serializing a MOAB mesh database. Can be NULL.
-   Reference (Parallel Mesh Initialization: http://ftp.mcs.anl.gov/pub/fathom/moab-docs/contents.html#fivetwo)
++ dm           - the discretization manager object containing solution in MOAB tags.
+. filename     - the name of the output file: e.g., poisson.h5m
+- usrwriteopts - the parallel write options needed for serializing a MOAB mesh database. Can be NULL.
 
   Level: intermediate
+
+  Notes:
+  The H5M output file can be visualized directly with Paraview (if compiled with appropriate
+  plugin) or converted with MOAB/tools/mbconvert to a VTK or Exodus file.
+
+  This routine can also be used for check-pointing purposes to store a complete history of the
+  solution along with any other necessary data to restart computations.
 
 .seealso: `DMMoabLoadFromFile()`, `DMMoabSetGlobalFieldVector()`
 @*/
@@ -77,5 +79,5 @@ PetscErrorCode DMMoabOutput(DM dm, const char *filename, const char *usrwriteopt
   merr = dmmoab->mbiface->write_file(filename, NULL, writeopts, &dmmoab->fileset, 1);
   MBERRVM(dmmoab->mbiface, "Writing output of DMMoab failed.", merr);
   PetscCall(PetscFree(writeopts));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

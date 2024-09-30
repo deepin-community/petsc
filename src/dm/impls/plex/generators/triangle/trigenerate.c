@@ -22,7 +22,7 @@ static PetscErrorCode InitInput_Triangle(struct triangulateio *inputCtx)
   inputCtx->holelist                   = NULL;
   inputCtx->numberofregions            = 0;
   inputCtx->regionlist                 = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode InitOutput_Triangle(struct triangulateio *outputCtx)
@@ -41,7 +41,7 @@ static PetscErrorCode InitOutput_Triangle(struct triangulateio *outputCtx)
   outputCtx->numberofedges         = 0;
   outputCtx->edgelist              = NULL;
   outputCtx->edgemarkerlist        = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode FiniOutput_Triangle(struct triangulateio *outputCtx)
@@ -55,7 +55,7 @@ static PetscErrorCode FiniOutput_Triangle(struct triangulateio *outputCtx)
   free(outputCtx->edgemarkerlist);
   free(outputCtx->trianglelist);
   free(outputCtx->neighborlist);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode DMPlexGenerate_Triangle(DM boundary, PetscBool interpolate, DM *dm)
@@ -145,9 +145,9 @@ PETSC_EXTERN PetscErrorCode DMPlexGenerate_Triangle(DM boundary, PetscBool inter
     char args[32];
 
     /* Take away 'Q' for verbose output */
-    PetscCall(PetscStrcpy(args, "pqezQ"));
-    if (createConvexHull) PetscCall(PetscStrcat(args, "c"));
-    if (constrained) PetscCall(PetscStrcpy(args, "zepDQ"));
+    PetscCall(PetscStrncpy(args, "pqezQ", sizeof(args)));
+    if (createConvexHull) PetscCall(PetscStrlcat(args, "c", sizeof(args)));
+    if (constrained) PetscCall(PetscStrncpy(args, "zepDQ", sizeof(args)));
     if (mesh->triangleOpts) {
       triangulate(mesh->triangleOpts, &in, &out, NULL);
     } else {
@@ -223,7 +223,7 @@ PETSC_EXTERN PetscErrorCode DMPlexGenerate_Triangle(DM boundary, PetscBool inter
   PetscCall(DMPlexCopyHoles(*dm, boundary));
 #endif
   PetscCall(FiniOutput_Triangle(&out));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode DMPlexRefine_Triangle(DM dm, PetscReal *inmaxVolumes, DM *dmRefined)
@@ -273,7 +273,7 @@ PETSC_EXTERN PetscErrorCode DMPlexRefine_Triangle(DM dm, PetscReal *inmaxVolumes
     PetscCall(VecRestoreArray(coordinates, &array));
   }
   PetscCall(DMPlexGetHeightStratum(dm, 0, &cStart, &cEnd));
-  PetscCall(DMPlexGetGhostCellStratum(dm, &gcStart, NULL));
+  PetscCall(DMPlexGetCellTypeStratum(dm, DM_POLYTOPE_FV_GHOST, &gcStart, NULL));
   if (gcStart >= 0) cEnd = gcStart;
 
   in.numberofcorners   = 3;
@@ -319,7 +319,7 @@ PETSC_EXTERN PetscErrorCode DMPlexRefine_Triangle(DM dm, PetscReal *inmaxVolumes
     char args[32];
 
     /* Take away 'Q' for verbose output */
-    PetscCall(PetscStrcpy(args, "pqezQra"));
+    PetscCall(PetscStrncpy(args, "pqezQra", sizeof(args)));
     triangulate(args, &in, &out, NULL);
   }
   PetscCall(PetscFree(in.pointlist));
@@ -392,5 +392,5 @@ PETSC_EXTERN PetscErrorCode DMPlexRefine_Triangle(DM dm, PetscReal *inmaxVolumes
 #if !defined(PETSC_USE_REAL_DOUBLE)
   PetscCall(PetscFree(maxVolumes));
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

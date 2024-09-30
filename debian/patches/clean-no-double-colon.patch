@@ -1,10 +1,8 @@
 Remove double-colon from clean target which causes breakage in reverse-depends.
 
-Index: petsc/lib/petsc/conf/rules
-===================================================================
---- petsc.orig/lib/petsc/conf/rules	2023-06-11 21:50:16.576249138 +0200
-+++ petsc/lib/petsc/conf/rules	2023-06-11 21:50:16.572249100 +0200
-@@ -87,7 +87,7 @@
+--- a/lib/petsc/conf/rules
++++ b/lib/petsc/conf/rules
+@@ -34,7 +34,7 @@
                *.class *.ouit *.ad.* g_* silly.cmp *.tmp.* *.ilk *.pdb *.inst.c *.rej *.gcda *.gcno
  	@-${RM} -rf ${CLEANDIRS} *.dSYM AD_cache SunWS_cache
  
@@ -12,17 +10,15 @@ Index: petsc/lib/petsc/conf/rules
 +clean: clean-legacy
  
  #
- #  Checks if directory requires particular package or language
-Index: petsc/makefile
-===================================================================
---- petsc.orig/makefile	2023-06-11 21:50:16.576249138 +0200
-+++ petsc/makefile	2023-06-11 21:50:16.572249100 +0200
-@@ -333,7 +333,7 @@
+ #  These rules are for compiling the test examples.
+--- a/makefile
++++ b/makefile
+@@ -286,7 +286,7 @@
  allclean:
  	-@${OMAKE} -f gmakefile clean
  
 -clean:: allclean
 +clean: allclean
  
- distclean: chk_petscdir
+ distclean:
  	@if [ -f ${PETSC_DIR}/${PETSC_ARCH}/lib/petsc/conf/reconfigure-${PETSC_ARCH}.py ]; then \

@@ -1,22 +1,21 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/vec/vec/tutorials/ex43.c">Actual source code: ex43.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/vec/vec/tutorials/ex43.c">Actual source code: ex43.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:47:22+00:00">
+<meta name="date" content="2024-03-29T14:13:00+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
 <pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petscvec.h.html">&lt;petscvec.h&gt;</A>
 
-<a name="line2">  2: </a>#include <A href="../../../../include/petscvec.h.html">&lt;petscvec.h&gt;</A>
-
-<a name="line4">  4: </a><strong><font color="#4169E1"><a name="fillupvector"></a>PETSC_INTERN void fillupvector(<a href="../../../../docs/manualpages/Vec/Vec.html">Vec</a> *v, <a href="../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr)</font></strong>
-<a name="line5">  5: </a>{
-<a name="line6">  6: </a>  *<a href="../../../../docs/manualpages/Vec/VecSet.html">VecSet</a>(*v, 1.0);
-<a name="line7">  7: </a>  <font color="#4169E1">return</font>;
-<a name="line8">  8: </a>}
+<a name="line3">  3: </a><strong><font color="#4169E1"><a name="fillupvector"></a>PETSC_INTERN void fillupvector(<a href="../../../../manualpages/Vec/Vec.html">Vec</a> *v, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr)</font></strong>
+<a name="line4">  4: </a>{
+<a name="line5">  5: </a>  *ierr = <a href="../../../../manualpages/Vec/VecSet.html">VecSet</a>(*v, 1.0);
+<a name="line6">  6: </a>  <font color="#4169E1">return</font>;
+<a name="line7">  7: </a>}
 </pre>
 </body>
 

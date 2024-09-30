@@ -198,7 +198,7 @@ PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   PetscCall(PetscOptionsBool("-show_solution", "Output the solution for verification", "ex62.c", options->showSolution, &options->showSolution, NULL));
   PetscCall(PetscOptionsBool("-show_error", "Output the error for verification", "ex62.c", options->showError, &options->showError, NULL));
   PetscOptionsEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMVecViewLocal(DM dm, Vec v, PetscViewer viewer)
@@ -219,7 +219,7 @@ PetscErrorCode DMVecViewLocal(DM dm, Vec v, PetscViewer viewer)
     PetscCall(PetscBarrier((PetscObject)dm));
   }
   PetscCall(DMRestoreLocalVector(dm, &lv));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *user, DM *dm)
@@ -229,7 +229,7 @@ PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *user, DM *dm)
   PetscCall(DMSetType(*dm, DMPLEX));
   PetscCall(DMSetFromOptions(*dm));
   PetscCall(DMViewFromOptions(*dm, NULL, "-dm_view"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SetupProblem(DM dm, AppCtx *user)
@@ -255,7 +255,7 @@ PetscErrorCode SetupProblem(DM dm, AppCtx *user)
   default:
     SETERRQ(PETSC_COMM_WORLD, PETSC_ERR_ARG_OUTOFRANGE, "Invalid dimension %d", user->dim);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SetupDiscretization(DM dm, AppCtx *user)
@@ -289,7 +289,7 @@ PetscErrorCode SetupDiscretization(DM dm, AppCtx *user)
   }
   PetscCall(PetscFEDestroy(&fe[0]));
   PetscCall(PetscFEDestroy(&fe[1]));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode CreatePressureNullSpace(DM dm, AppCtx *user, Vec *v, MatNullSpace *nullSpace)
@@ -321,7 +321,7 @@ PetscErrorCode CreatePressureNullSpace(DM dm, AppCtx *user, Vec *v, MatNullSpace
     PetscCall(PetscObjectCompose(pressure, "nullspace", (PetscObject)nullSpacePres));
     PetscCall(MatNullSpaceDestroy(&nullSpacePres));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -424,7 +424,7 @@ int main(int argc, char **argv)
     }
     if (user.showSolution) {
       PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Solution\n"));
-      PetscCall(VecChop(u, 3.0e-9));
+      PetscCall(VecFilter(u, 3.0e-9));
       PetscCall(VecView(u, PETSC_VIEWER_STDOUT_WORLD));
     }
   } else {
@@ -439,7 +439,7 @@ int main(int argc, char **argv)
     /* Check residual */
     PetscCall(SNESComputeFunction(snes, u, r));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Initial Residual\n"));
-    PetscCall(VecChop(r, 1.0e-10));
+    PetscCall(VecFilter(r, 1.0e-10));
     PetscCall(VecView(r, PETSC_VIEWER_STDOUT_WORLD));
     PetscCall(VecNorm(r, NORM_2, &res));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "L_2 Residual: %g\n", (double)res));
@@ -458,7 +458,7 @@ int main(int argc, char **argv)
       PetscCall(VecAXPY(r, 1.0, b));
       PetscCall(VecDestroy(&b));
       PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Au - b = Au + F(0)\n"));
-      PetscCall(VecChop(r, 1.0e-10));
+      PetscCall(VecFilter(r, 1.0e-10));
       PetscCall(VecView(r, PETSC_VIEWER_STDOUT_WORLD));
       PetscCall(VecNorm(r, NORM_2, &res));
       PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Linear L_2 Residual: %g\n", (double)res));

@@ -29,11 +29,6 @@ extern void PetscRmPointer(void*);
 
 #include "petscksp.h"
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define kspcomputeoperator_ KSPCOMPUTEOPERATOR
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define kspcomputeoperator_ kspcomputeoperator
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define kspcomputeeigenvaluesexplicitly_ KSPCOMPUTEEIGENVALUESEXPLICITLY
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define kspcomputeeigenvaluesexplicitly_ kspcomputeeigenvaluesexplicitly
@@ -44,11 +39,6 @@ extern void PetscRmPointer(void*);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-PETSC_EXTERN void  kspcomputeoperator_(KSP ksp,MatType *mattype,Mat *mat, int *__ierr)
-{
-*__ierr = KSPComputeOperator(
-	(KSP)PetscToPointer((ksp) ),*mattype,mat);
-}
 PETSC_EXTERN void  kspcomputeeigenvaluesexplicitly_(KSP ksp,PetscInt *nmax,PetscReal r[],PetscReal c[], int *__ierr)
 {
 *__ierr = KSPComputeEigenvaluesExplicitly(

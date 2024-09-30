@@ -17,7 +17,7 @@ static PetscErrorCode KSPSetUp_PIPEPRCG(KSP ksp)
   /* get work vectors needed by PIPEPRCG */
   PetscCall(KSPSetWorkVecs(ksp, 9));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSetFromOptions_PIPEPRCG(KSP ksp, PetscOptionItems *PetscOptionsObject)
@@ -30,7 +30,7 @@ static PetscErrorCode KSPSetFromOptions_PIPEPRCG(KSP ksp, PetscOptionItems *Pets
   PetscCall(PetscOptionsBool("-recompute_w", "-recompute w_k with Ar_k? (default = True)", "", prcg->rc_w_q, &prcg->rc_w_q, &flag));
   if (!flag) prcg->rc_w_q = PETSC_TRUE;
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -127,7 +127,7 @@ static PetscErrorCode KSPSolve_PIPEPRCG(KSP ksp)
     PetscCall(KSPLogResidualHistory(ksp, dp));
     PetscCall(KSPMonitor(ksp, i, dp));
     PetscCall((*ksp->converged)(ksp, i, dp, &ksp->reason, ksp->cnvP));
-    if (ksp->reason) PetscFunctionReturn(0);
+    if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
     /* update scalars */
     alpha  = nu / *mu_p;
@@ -173,14 +173,14 @@ static PetscErrorCode KSPSolve_PIPEPRCG(KSP ksp)
 
   } while (i <= ksp->max_it);
   if (!ksp->reason) ksp->reason = KSP_DIVERGED_ITS;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-   KSPPIPEPRCG - Pipelined predict-and-recompute conjugate gradient method. [](sec_pipelineksp)
+   KSPPIPEPRCG - Pipelined predict-and-recompute conjugate gradient method {cite}`chen2020predict`. [](sec_pipelineksp)
 
    Options Database Key:
-.  -ksp_pipeprcg_recompute_w - recompute the w_k with Ar_k, default is true
+.  -ksp_pipeprcg_recompute_w - recompute the $w_k$ with $Ar_k$, default is true
 
    Level: intermediate
 
@@ -194,15 +194,12 @@ static PetscErrorCode KSPSolve_PIPEPRCG(KSP ksp)
    Contributed by:
    Tyler Chen, University of Washington, Applied Mathematics Department
 
-   Reference:
-   Tyler Chen and Erin Carson. "Predict-and-recompute conjugate gradient variants." SIAM Journal on Scientific Computing 42.5 (2020): A3084-A3108.
-
    Acknowledgments:
    This material is based upon work supported by the National Science Foundation Graduate Research Fellowship Program under Grant No. DGE-1762114.
    Any opinions, findings, and conclusions or recommendations expressed in this material are those of the author and do not necessarily
    reflect the views of the National Science Foundation.
 
-.seealso: [](chapter_ksp), [](doc_faq_pipelined), [](sec_pipelineksp), `KSPCreate()`, `KSPSetType()`, `KSPCG`, `KSPPIPECG`, `KSPPIPECR`, `KSPGROPPCG`, `KSPPGMRES`, `KSPCG`, `KSPCGUseSingleReduction()`
+.seealso: [](ch_ksp), [](doc_faq_pipelined), [](sec_pipelineksp), `KSPCreate()`, `KSPSetType()`, `KSPCG`, `KSPPIPECG`, `KSPPIPECR`, `KSPGROPPCG`, `KSPPGMRES`, `KSPCG`, `KSPCGUseSingleReduction()`
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_PIPEPRCG(KSP ksp)
 {
@@ -230,5 +227,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_PIPEPRCG(KSP ksp)
   ksp->ops->setfromoptions = KSPSetFromOptions_PIPEPRCG;
   ksp->ops->buildsolution  = KSPBuildSolutionDefault;
   ksp->ops->buildresidual  = KSPBuildResidualDefault;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

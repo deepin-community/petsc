@@ -1,4 +1,3 @@
-
 #include <../src/ksp/ksp/impls/gmres/gmresimpl.h>
 #include <petscblaslapack.h>
 
@@ -17,7 +16,7 @@ PetscErrorCode KSPComputeExtremeSingularValues_GMRES(KSP ksp, PetscReal *emax, P
   PetscCall(PetscBLASIntCast(N, &idummy));
   if (n <= 0) {
     *emax = *emin = 1.0;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   /* copy R matrix to work space */
   PetscCall(PetscArraycpy(R, gmres->hh_origin, (gmres->max_k + 2) * (gmres->max_k + 1)));
@@ -37,7 +36,7 @@ PetscErrorCode KSPComputeExtremeSingularValues_GMRES(KSP ksp, PetscReal *emax, P
 
   *emin = realpart[n - 1];
   *emax = realpart[0];
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode KSPComputeEigenvalues_GMRES(KSP ksp, PetscInt nmax, PetscReal *r, PetscReal *c, PetscInt *neig)
@@ -57,7 +56,7 @@ PetscErrorCode KSPComputeEigenvalues_GMRES(KSP ksp, PetscInt nmax, PetscReal *r,
   PetscCheck(nmax >= n, PetscObjectComm((PetscObject)ksp), PETSC_ERR_ARG_SIZ, "Not enough room in work space r and c for eigenvalues");
   *neig = n;
 
-  if (!n) PetscFunctionReturn(0);
+  if (!n) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* copy R matrix to work space */
   PetscCall(PetscArraycpy(R, gmres->hes_origin, N * N));
@@ -89,7 +88,7 @@ PetscErrorCode KSPComputeEigenvalues_GMRES(KSP ksp, PetscInt nmax, PetscReal *r,
   PetscCheck(nmax >= n, PetscObjectComm((PetscObject)ksp), PETSC_ERR_ARG_SIZ, "Not enough room in work space r and c for eigenvalues");
   *neig = n;
 
-  if (!n) PetscFunctionReturn(0);
+  if (!n) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* copy R matrix to work space */
   PetscCall(PetscArraycpy(R, gmres->hes_origin, N * N));
@@ -109,7 +108,7 @@ PetscErrorCode KSPComputeEigenvalues_GMRES(KSP ksp, PetscInt nmax, PetscReal *r,
   }
   PetscCall(PetscFree(perm));
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode KSPComputeRitz_GMRES(KSP ksp, PetscBool ritz, PetscBool small, PetscInt *nrit, Vec S[], PetscReal *tetar, PetscReal *tetai)
@@ -256,12 +255,9 @@ PetscErrorCode KSPComputeRitz_GMRES(KSP ksp, PetscBool ritz, PetscBool small, Pe
   PetscCall(PetscFree4(H, Q, wr, wi));
 
   /* Form the (Harmonic) Ritz vectors S = SR*V, columns of VV correspond to the basis of the Krylov subspace */
-  for (j = 0; j < nb; j++) {
-    PetscCall(VecZeroEntries(S[j]));
-    PetscCall(VecMAXPY(S[j], bn, &SR[j * bn], gmres->fullcycle ? gmres->vecb : &VEC_VV(0)));
-  }
+  for (j = 0; j < nb; j++) PetscCall(VecMAXPBY(S[j], bn, &SR[j * bn], 0, gmres->fullcycle ? gmres->vecb : &VEC_VV(0)));
 
   PetscCall(PetscFree(SR));
   *nrit = nb;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

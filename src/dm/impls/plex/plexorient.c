@@ -13,7 +13,7 @@
 
   Level: intermediate
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMPlexOrient()`, `DMPlexGetCone()`, `DMPlexGetConeOrientation()`, `DMPlexInterpolate()`, `DMPlexGetChart()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMPlexOrient()`, `DMPlexGetCone()`, `DMPlexGetConeOrientation()`, `DMPlexInterpolate()`, `DMPlexGetChart()`
 @*/
 PetscErrorCode DMPlexOrientPoint(DM dm, PetscInt p, PetscInt o)
 {
@@ -61,7 +61,7 @@ PetscErrorCode DMPlexOrientPoint(DM dm, PetscInt p, PetscInt o)
       PetscCall(DMPlexInsertConeOrientation(dm, support[s], c, po));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -80,7 +80,7 @@ static PetscErrorCode DMPlexCheckFace_Internal(DM dm, PetscInt *faceFIFO, PetscI
   PetscCall(DMGetDimension(dm, &dim));
   PetscCall(DMPlexGetSupportSize(dm, face, &supportSize));
   PetscCall(DMPlexGetSupport(dm, face, &support));
-  if (supportSize < 2) PetscFunctionReturn(0);
+  if (supportSize < 2) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCheck(supportSize == 2, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "Faces should separate only two cells, not %" PetscInt_FMT, supportSize);
   seenA    = PetscBTLookup(seenCells, support[0] - cStart);
   flippedA = PetscBTLookup(flippedCells, support[0] - cStart) ? 1 : 0;
@@ -128,13 +128,13 @@ static PetscErrorCode DMPlexCheckFace_Internal(DM dm, PetscInt *faceFIFO, PetscI
   } else PetscCheck(!mismatch || !flippedA || !flippedB, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "Attempt to flip already flipped cell: Fault mesh is non-orientable");
   PetscCall(PetscBTSet(seenCells, support[0] - cStart));
   PetscCall(PetscBTSet(seenCells, support[1] - cStart));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   DMPlexOrient - Give a consistent orientation to the input mesh
 
-  Input Parameters:
+  Input Parameter:
 . dm - The `DM`
 
   Note:
@@ -144,7 +144,7 @@ static PetscErrorCode DMPlexCheckFace_Internal(DM dm, PetscInt *faceFIFO, PetscI
 
   Level: advanced
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMCreate()`, `DMPLEX`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMCreate()`
 @*/
 PetscErrorCode DMPlexOrient(DM dm)
 {
@@ -501,5 +501,5 @@ PetscErrorCode DMPlexOrient(DM dm)
   PetscCall(PetscFree2(numNeighbors, neighbors));
   PetscCall(PetscFree3(rorntComp, lorntComp, locSupport));
   PetscCall(PetscFree3(faceFIFO, cellComp, faceComp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

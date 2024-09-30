@@ -1,4 +1,3 @@
-
 #include <petscsys.h>
 #include <petsc/private/drawimpl.h>
 #include <../src/sys/classes/draw/impls/win32/win32draw.h>
@@ -61,7 +60,7 @@ static PetscErrorCode PetscDrawSetDoubleBuffer_Win32(PetscDraw draw)
 
   windraw->node->DoubleBuffered = PETSC_TRUE;
   ReleaseDC(windraw->hWnd, hdc);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawFlush_Win32(PetscDraw draw)
@@ -75,7 +74,7 @@ static PetscErrorCode PetscDrawFlush_Win32(PetscDraw draw)
   /* flush double buffer into window */
   BitBlt(hdc, 0, 0, windraw->w, windraw->h, windraw->node->DoubleBuffer, 0, 0, SRCCOPY);
   ReleaseDC(windraw->hWnd, hdc);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode deletemouselist_Win32(WindowNode deletelist)
@@ -92,7 +91,7 @@ static PetscErrorCode deletemouselist_Win32(WindowNode deletelist)
   if (deletelist->wprev) deletelist->wprev->wnext = deletelist->wnext;
   if (deletelist->wnext) deletelist->wnext->wprev = deletelist->wprev;
   PetscFree(deletelist);
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 static PetscErrorCode PetscDrawGetMouseButton_Win32(PetscDraw draw, PetscDrawButton *button, PetscReal *x_user, PetscReal *y_user, PetscReal *x_phys, PetscReal *y_phys)
@@ -137,14 +136,14 @@ static PetscErrorCode PetscDrawGetMouseButton_Win32(PetscDraw draw, PetscDrawBut
   /* Release mutex so that  other code can use
      the linked list now that we are done with it */
   ReleaseMutex(g_hWindowListMutex);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawPause_Win32(PetscDraw draw)
 {
   PetscFunctionBegin;
   PetscSleep(draw->pause);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TranslateColor_Win32(PetscDraw draw, int color)
@@ -152,7 +151,7 @@ static PetscErrorCode TranslateColor_Win32(PetscDraw draw, int color)
   /* Maps single color value into the RGB colors in our tables */
   PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw->data;
   windraw->currentcolor    = RGB(RedMap[color], GreenMap[color], BlueMap[color]);
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 static PetscErrorCode AverageColorRectangle_Win32(PetscDraw draw, int c1, int c2, int c3, int c4)
@@ -161,7 +160,7 @@ static PetscErrorCode AverageColorRectangle_Win32(PetscDraw draw, int c1, int c2
     will be changed once the color gradient problem is worked out */
   PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw->data;
   windraw->currentcolor    = RGB(((RedMap[c1] + RedMap[c2] + RedMap[c3] + RedMap[c4]) / 4), ((GreenMap[c1] + GreenMap[c2] + GreenMap[c3] + GreenMap[c4]) / 4), ((BlueMap[c1] + BlueMap[c2] + BlueMap[c3] + BlueMap[c4]) / 4));
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 static PetscErrorCode AverageColorTriangle_Win32(PetscDraw draw, int c1, int c2, int c3)
@@ -170,7 +169,7 @@ static PetscErrorCode AverageColorTriangle_Win32(PetscDraw draw, int c1, int c2,
     will be changed once the color gradient problem is worked out */
   PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw->data;
   windraw->currentcolor    = RGB((RedMap[c1] + RedMap[c2] + RedMap[c3]) / 3, (GreenMap[c1] + GreenMap[c2] + GreenMap[c3]) / 3, (BlueMap[c1] + BlueMap[c2] + BlueMap[c3]) / 3);
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 static PetscErrorCode PetscDrawRectangle_Win32(PetscDraw draw, PetscReal xl, PetscReal yl, PetscReal xr, PetscReal yr, int c1, int c2, int c3, int c4)
@@ -198,7 +197,7 @@ static PetscErrorCode PetscDrawRectangle_Win32(PetscDraw draw, PetscReal xl, Pet
   /* Forces a WM_PAINT message and erases background */
   InvalidateRect(windraw->hWnd, NULL, TRUE);
   UpdateWindow(windraw->hWnd);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawLine_Win32(PetscDraw draw, PetscReal xl, PetscReal yl, PetscReal xr, PetscReal yr, int color)
@@ -224,7 +223,7 @@ static PetscErrorCode PetscDrawLine_Win32(PetscDraw draw, PetscReal xl, PetscRea
   /* Forces a WM_PAINT message and erases background */
   InvalidateRect(windraw->hWnd, NULL, TRUE);
   UpdateWindow(windraw->hWnd);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawLineSetWidth_Win32(PetscDraw draw, PetscReal width)
@@ -240,7 +239,7 @@ static PetscErrorCode PetscDrawLineSetWidth_Win32(PetscDraw draw, PetscReal widt
   if (finalwidth < 1) finalwidth = 1; /* minimum size PetscDrawLine can except */
 
   windraw->linewidth = finalwidth;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawLineGetWidth_Win32(PetscDraw draw, PetscReal *width)
@@ -249,7 +248,7 @@ static PetscErrorCode PetscDrawLineGetWidth_Win32(PetscDraw draw, PetscReal *wid
 
   PetscFunctionBegin;
   *width = (PetscReal)windraw->linewidth;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawPoint_Win32(PetscDraw draw, PetscReal x, PetscReal y, int color)
@@ -280,7 +279,7 @@ static PetscErrorCode PetscDrawPoint_Win32(PetscDraw draw, PetscReal x, PetscRea
   /* Forces a WM_PAINT and erases background */
   InvalidateRect(windraw->hWnd, NULL, TRUE);
   UpdateWindow(windraw->hWnd);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawPointSetSize_Win32(PetscDraw draw, PetscReal width)
@@ -295,7 +294,7 @@ static PetscErrorCode PetscDrawPointSetSize_Win32(PetscDraw draw, PetscReal widt
   diameter    = (int)PetscFloorReal(averagesize * width);
   if (diameter < 1) diameter = 1;
   windraw->pointdiameter = diameter;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawString_Win32(PetscDraw draw, PetscReal x, PetscReal y, int color, const char *text)
@@ -341,7 +340,7 @@ static PetscErrorCode PetscDrawString_Win32(PetscDraw draw, PetscReal x, PetscRe
   /* Forces a WM_PAINT message and erases background */
   InvalidateRect(windraw->hWnd, NULL, TRUE);
   UpdateWindow(windraw->hWnd);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawStringVertical_Win32(PetscDraw draw, PetscReal x, PetscReal y, int color, const char *text)
@@ -361,7 +360,7 @@ static PetscErrorCode PetscDrawStringVertical_Win32(PetscDraw draw, PetscReal x,
   r.right  = x1 + 1;
   r.top    = yone - 30;
 
-  logfont.lfEscapement     = 2700; /* Causes verticle text drawing */
+  logfont.lfEscapement     = 2700; /* Causes vertical text drawing */
   logfont.lfHeight         = windraw->stringheight;
   logfont.lfWidth          = windraw->stringwidth;
   logfont.lfOrientation    = 0;
@@ -387,7 +386,7 @@ static PetscErrorCode PetscDrawStringVertical_Win32(PetscDraw draw, PetscReal x,
   /* Forces a WM_PAINT message and erases background */
   InvalidateRect(windraw->hWnd, NULL, TRUE);
   UpdateWindow(windraw->hWnd);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawStringSetSize_Win32(PetscDraw draw, PetscReal width, PetscReal height)
@@ -402,7 +401,7 @@ static PetscErrorCode PetscDrawStringSetSize_Win32(PetscDraw draw, PetscReal wid
   if (w < 1) w = 1;
   windraw->stringheight = h;
   windraw->stringwidth  = w;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 static PetscErrorCode PetscDrawStringGetSize_Win32(PetscDraw draw, PetscReal *width, PetscReal *height)
 {
@@ -413,7 +412,7 @@ static PetscErrorCode PetscDrawStringGetSize_Win32(PetscDraw draw, PetscReal *wi
   PetscFunctionBegin;
   if (height) *height = (double)windraw->stringheight * scaleY;
   if (width) *width = (double)windraw->stringwidth * scaleX;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawResizeWindow_Win32(PetscDraw draw, int w, int h)
@@ -431,7 +430,7 @@ static PetscErrorCode PetscDrawResizeWindow_Win32(PetscDraw draw, int w, int h)
   SetBitmapDimensionEx(windraw->node->BufferBit, w, h, NULL);
   if (windraw->node->DoubleBuffered) SetBitmapDimensionEx(windraw->node->DoubleBufferBit, w, h, NULL);
   windraw->haveresized = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawCheckResizedWindow_Win32(PetscDraw draw)
@@ -440,7 +439,7 @@ static PetscErrorCode PetscDrawCheckResizedWindow_Win32(PetscDraw draw)
 
   PetscFunctionBegin;
   PetscCheck(windraw->haveresized != 1, PETSC_COMM_SELF, PETSC_ERR_SUP, "No support for resizing windows on Microsoft Windows");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawSetTitle_Win32(PetscDraw draw, const char title[])
@@ -449,7 +448,7 @@ static PetscErrorCode PetscDrawSetTitle_Win32(PetscDraw draw, const char title[]
 
   PetscFunctionBegin;
   SetWindowText(windraw->hWnd, title);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawClear_Win32(PetscDraw draw)
@@ -465,7 +464,7 @@ static PetscErrorCode PetscDrawClear_Win32(PetscDraw draw)
   /* force WM_PAINT message so cleared buffer will show */
   InvalidateRect(windraw->hWnd, NULL, TRUE);
   UpdateWindow(windraw->hWnd);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawTriangle_Win32(PetscDraw draw, PetscReal x1, PetscReal yone, PetscReal x2, PetscReal y2, PetscReal x3, PetscReal y3, int c1, int c2, int c3)
@@ -502,65 +501,16 @@ static PetscErrorCode PetscDrawTriangle_Win32(PetscDraw draw, PetscReal x1, Pets
   /* Forces a WM_PAINT message and erases background */
   InvalidateRect(windraw->hWnd, NULL, TRUE);
   UpdateWindow(windraw->hWnd);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-void PopMessageLoopThread_Win32(PetscDraw popdraw)
+static PetscErrorCode PetscDrawSetVisible_Win32(PetscDraw draw, PetscBool visible)
 {
-  PetscDraw_Win32 *pop = (PetscDraw_Win32 *)popdraw->data;
-  MSG              msg;
-  HWND             hWnd           = NULL;
-  const char       PopClassName[] = "PETSc Window Pop Class";
-  RECT             r;
-  int              width, height;
-  WNDCLASSEX       myclass;
-  LPVOID           lpMsgBuf;
+  PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw->data;
 
   PetscFunctionBegin;
-  /* initialize window class parameters */
-  myclass.cbSize        = sizeof(WNDCLASSEX);
-  myclass.style         = CS_OWNDC;
-  myclass.lpfnWndProc   = (WNDPROC)PetscWndProc;
-  myclass.cbClsExtra    = 0;
-  myclass.cbWndExtra    = 0;
-  myclass.hInstance     = NULL;
-  myclass.hIcon         = NULL;
-  myclass.hCursor       = LoadCursor(NULL, IDC_ARROW);
-  myclass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-  myclass.lpszMenuName  = NULL;
-  myclass.lpszClassName = PopClassName;
-  myclass.hIconSm       = NULL;
-
-  RegisterClassEx(&myclass);
-
-  SetRect(&r, 0, 0, 450, 450);
-
-  width  = (r.right - r.left) / 3;
-  height = (r.bottom - r.top) / 3;
-
-  hWnd   = CreateWindowEx(0, PopClassName, NULL, WS_POPUPWINDOW | WS_CAPTION, 0, 0, width, height, NULL, NULL, hInst, NULL);
-  pop->x = 0;
-  pop->y = 0;
-  pop->w = width;
-  pop->h = height;
-
-  if (!hWnd) {
-    lpMsgBuf = (LPVOID) "Window Not Successfully Created";
-    MessageBox(NULL, (LPCTSTR)lpMsgBuf, "Error", MB_OK | MB_ICONINFORMATION);
-    LocalFree(lpMsgBuf);
-    exit(0);
-  }
-  pop->hWnd = hWnd;
-  /* display and update new popup window */
-  ShowWindow(pop->hWnd, SW_SHOWNORMAL);
-  UpdateWindow(pop->hWnd);
-  SetEvent(pop->hReadyEvent);
-
-  while (GetMessage(&msg, pop->hWnd, 0, 0)) {
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
-  }
-  PetscFunctionReturnVoid();
+  ShowWindow(windraw->hWnd, visible ? SW_SHOWNA : SW_HIDE);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawDestroy_Win32(PetscDraw draw)
@@ -570,10 +520,10 @@ static PetscErrorCode PetscDrawDestroy_Win32(PetscDraw draw)
   PetscFunctionBegin;
   SendMessage(windraw->hWnd, WM_DESTROY, 0, 0);
   PetscFree(draw->data);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-void MessageLoopThread_Win32(PetscDraw draw)
+static void MessageLoopThread_Win32(PetscDraw draw)
 {
   PetscDraw_Win32 *windraw = (PetscDraw_Win32 *)draw->data;
   MSG              msg;
@@ -619,7 +569,7 @@ void MessageLoopThread_Win32(PetscDraw draw)
   return;
 }
 
-static struct _PetscDrawOps DvOps = {PetscDrawSetDoubleBuffer_Win32, PetscDrawFlush_Win32, PetscDrawLine_Win32, PetscDrawLineSetWidth_Win32, PetscDrawLineGetWidth_Win32, PetscDrawPoint_Win32, PetscDrawPointSetSize_Win32, PetscDrawString_Win32, PetscDrawStringVertical_Win32, PetscDrawStringSetSize_Win32, PetscDrawStringGetSize_Win32, 0, PetscDrawClear_Win32, PetscDrawRectangle_Win32, PetscDrawTriangle_Win32, 0, PetscDrawGetMouseButton_Win32, PetscDrawPause_Win32, 0, 0, PetscDrawGetPopup_Win32, PetscDrawSetTitle_Win32, PetscDrawCheckResizedWindow_Win32, PetscDrawResizeWindow_Win32, PetscDrawDestroy_Win32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+static struct _PetscDrawOps DvOps = {PetscDrawSetDoubleBuffer_Win32, PetscDrawFlush_Win32, PetscDrawLine_Win32, PetscDrawLineSetWidth_Win32, PetscDrawLineGetWidth_Win32, PetscDrawPoint_Win32, PetscDrawPointSetSize_Win32, PetscDrawString_Win32, PetscDrawStringVertical_Win32, PetscDrawStringSetSize_Win32, PetscDrawStringGetSize_Win32, 0, PetscDrawClear_Win32, PetscDrawRectangle_Win32, PetscDrawTriangle_Win32, 0, PetscDrawGetMouseButton_Win32, PetscDrawPause_Win32, 0, 0, PetscDrawGetPopup_Win32, PetscDrawSetTitle_Win32, PetscDrawCheckResizedWindow_Win32, PetscDrawResizeWindow_Win32, PetscDrawDestroy_Win32, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, PetscDrawSetVisible_Win32};
 
 static PetscErrorCode PetscDrawGetPopup_Win32(PetscDraw draw, PetscDraw *popup)
 {
@@ -635,7 +585,7 @@ static PetscErrorCode PetscDrawGetPopup_Win32(PetscDraw draw, PetscDraw *popup)
   } else {
     *popup = NULL;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 PETSC_EXTERN PetscErrorCode PetscDrawCreate_Win32(PetscDraw draw)
 {
@@ -649,7 +599,7 @@ PETSC_EXTERN PetscErrorCode PetscDrawCreate_Win32(PetscDraw draw)
 
   /* the following is temporary fix for initializing a global datastructure */
   if (!g_hWindowListMutex) g_hWindowListMutex = CreateMutex(NULL, FALSE, NULL);
-  PetscCall(PetscMemcpy(draw->ops, &DvOps, sizeof(DvOps)));
+  draw->ops[0] = DvOps;
 
   windraw->hReadyEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
   /* makes call to MessageLoopThread to creat window and attach a thread */
@@ -691,7 +641,7 @@ PETSC_EXTERN PetscErrorCode PetscDrawCreate_Win32(PetscDraw draw)
 
   ReleaseDC(windraw->hWnd, windraw->hdc);
   ReleaseMutex(g_hWindowListMutex);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* FUNCTION: PetscWndProc(HWND, unsigned, WORD, LONG)
@@ -798,7 +748,7 @@ static PetscErrorCode MouseRecord_Win32(HWND hWnd, PetscDrawButton button)
     }
   }
   ReleaseMutex(g_hWindowListMutex);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static void OnDestroy_Win32(HWND hWnd)

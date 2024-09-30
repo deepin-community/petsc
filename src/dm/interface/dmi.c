@@ -58,7 +58,7 @@ PetscErrorCode DMCreateGlobalVector_Section_Private(DM dm, Vec *vec)
   PetscCall(VecSetType(*vec, dm->vectype));
   PetscCall(VecSetDM(*vec, dm));
   /* PetscCall(VecSetLocalToGlobalMapping(*vec, dm->ltogmap)); */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateLocalVector_Section_Private(DM dm, Vec *vec)
@@ -82,29 +82,29 @@ PetscErrorCode DMCreateLocalVector_Section_Private(DM dm, Vec *vec)
   PetscCall(VecSetBlockSize(*vec, blockSize));
   PetscCall(VecSetType(*vec, dm->vectype));
   PetscCall(VecSetDM(*vec, dm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  DMCreateSectionSubDM - Returns an IS and subDM+subSection encapsulating a subproblem defined by the fields in a PetscSection in the DM.
+  DMCreateSectionSubDM - Returns an `IS` and `subDM` containing a `PetscSection` that encapsulates a subproblem defined by a subset of the fields in a `PetscSection` in the `DM`.
 
-  Not collective
+  Not Collective
 
   Input Parameters:
-+ dm        - The DM object
-. numFields - The number of fields in this subproblem
++ dm        - The `DM` object
+. numFields - The number of fields to incorporate into `subdm`
 - fields    - The field numbers of the selected fields
 
   Output Parameters:
-+ is - The global indices for the subproblem
-- subdm - The DM for the subproblem, which must already have be cloned from dm
-
-  Note: This handles all information in the DM class and the PetscSection. This is used as the basis for creating subDMs in specialized classes,
-  such as Plex and Forest.
++ is    - The global indices for the subproblem or `NULL`
+- subdm - The `DM` for the subproblem, which must already have be cloned from `dm` or `NULL`
 
   Level: intermediate
 
-.seealso `DMCreateSubDM()`, `DMGetLocalSection()`, `DMPlexSetMigrationSF()`, `DMView()`
+  Note:
+  If `is` and `subdm` are both `NULL` this does nothing
+
+.seealso: `DMCreateSubDM()`, `DMGetLocalSection()`, `DMPlexSetMigrationSF()`, `DMView()`
 @*/
 PetscErrorCode DMCreateSectionSubDM(DM dm, PetscInt numFields, const PetscInt fields[], IS *is, DM *subdm)
 {
@@ -113,7 +113,7 @@ PetscErrorCode DMCreateSectionSubDM(DM dm, PetscInt numFields, const PetscInt fi
   PetscInt     subSize = 0, subOff = 0, Nf, f, pStart, pEnd, p;
 
   PetscFunctionBegin;
-  if (!numFields) PetscFunctionReturn(0);
+  if (!numFields) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(DMGetLocalSection(dm, &section));
   PetscCall(DMGetGlobalSection(dm, &sectionGlobal));
   PetscCheck(section, PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_WRONG, "Must set default section for DM before splitting fields");
@@ -192,7 +192,7 @@ PetscErrorCode DMCreateSectionSubDM(DM dm, PetscInt numFields, const PetscInt fi
           }
         }
       }
-      PetscCallMPI(MPI_Allreduce(&set, &rset, 1, MPIU_INT, MPI_PROD, PetscObjectComm((PetscObject)dm)));
+      PetscCall(MPIU_Allreduce(&set, &rset, 1, MPIU_INT, MPI_PROD, PetscObjectComm((PetscObject)dm)));
       if (rset) PetscCall(ISSetBlockSize(*is, bs));
     }
   }
@@ -295,28 +295,25 @@ PetscErrorCode DMCreateSectionSubDM(DM dm, PetscInt numFields, const PetscInt fi
     }
     if (dm->coarseMesh) PetscCall(DMCreateSubDM(dm->coarseMesh, numFields, fields, NULL, &(*subdm)->coarseMesh));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  DMCreateSectionSuperDM - Returns an arrays of ISes and DM+Section encapsulating a superproblem defined by the DM+Sections passed in.
+  DMCreateSectionSuperDM - Returns an arrays of `IS` and a `DM` containing a `PetscSection` that encapsulates a superproblem defined by the array of `DM` and their `PetscSection`
 
-  Not collective
+  Not Collective
 
   Input Parameters:
-+ dms - The DM objects
-- len - The number of DMs
++ dms - The `DM` objects, the must all have the same topology; for example obtained with `DMClone()`
+- len - The number of `DM` in `dms`
 
   Output Parameters:
-+ is - The global indices for the subproblem, or NULL
-- superdm - The DM for the superproblem, which must already have be cloned
-
-  Note: This handles all information in the DM class and the PetscSection. This is used as the basis for creating subDMs in specialized classes,
-  such as Plex and Forest.
++ is      - The global indices for the subproblem, or `NULL`
+- superdm - The `DM` for the superproblem, which must already have be cloned and contain the same topology as the `dms`
 
   Level: intermediate
 
-.seealso `DMCreateSuperDM()`, `DMGetLocalSection()`, `DMPlexSetMigrationSF()`, `DMView()`
+.seealso: `DMCreateSuperDM()`, `DMGetLocalSection()`, `DMPlexSetMigrationSF()`, `DMView()`
 @*/
 PetscErrorCode DMCreateSectionSuperDM(DM dms[], PetscInt len, IS **is, DM *superdm)
 {
@@ -423,5 +420,5 @@ PetscErrorCode DMCreateSectionSuperDM(DM dms[], PetscInt len, IS **is, DM *super
   }
   PetscCall(PetscSectionDestroy(&supersection));
   PetscCall(PetscFree3(Nfs, sections, sectionGlobals));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

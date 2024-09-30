@@ -1,11 +1,10 @@
-
 #include <petsc/private/kspimpl.h>
 
 static PetscErrorCode KSPSetUp_CR(KSP ksp)
 {
   PetscFunctionBegin;
   PetscCall(KSPSetWorkVecs(ksp, 6));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSolve_CR(KSP ksp)
@@ -63,7 +62,7 @@ static PetscErrorCode KSPSolve_CR(KSP ksp)
   if (PetscAbsScalar(btop) < 0.0) {
     ksp->reason = KSP_DIVERGED_INDEFINITE_MAT;
     PetscCall(PetscInfo(ksp, "diverging due to indefinite or negative definite matrix\n"));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   ksp->its = 0;
@@ -73,7 +72,7 @@ static PetscErrorCode KSPSolve_CR(KSP ksp)
   PetscCall(PetscObjectSAWsGrantAccess((PetscObject)ksp));
   PetscCall(KSPLogResidualHistory(ksp, dp));
   PetscCall((*ksp->converged)(ksp, 0, dp, &ksp->reason, ksp->cnvP));
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   i = 0;
   do {
@@ -134,11 +133,11 @@ static PetscErrorCode KSPSolve_CR(KSP ksp)
     i++;
   } while (i < ksp->max_it);
   if (i >= ksp->max_it) ksp->reason = KSP_DIVERGED_ITS;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPCR - This code implements the (preconditioned) conjugate residuals method
+     KSPCR - This code implements the (preconditioned) conjugate residuals method {cite}`hs:52`
 
    Level: beginner
 
@@ -149,11 +148,7 @@ static PetscErrorCode KSPSolve_CR(KSP ksp)
 
    Support only for left preconditioning.
 
-   References:
-.  * - Magnus R. Hestenes and Eduard Stiefel, Methods of Conjugate Gradients for Solving Linear Systems,
-   Journal of Research of the National Bureau of Standards Vol. 49, No. 6, December 1952 Research Paper 2379
-
-.seealso: [](chapter_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPCG`
+.seealso: [](ch_ksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPCG`
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_CR(KSP ksp)
 {
@@ -170,5 +165,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_CR(KSP ksp)
   ksp->ops->buildresidual  = KSPBuildResidualDefault;
   ksp->ops->setfromoptions = NULL;
   ksp->ops->view           = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

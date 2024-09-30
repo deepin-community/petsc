@@ -1,4 +1,3 @@
-
 #include <../src/snes/impls/ntrdc/ntrdcimpl.h> /*I   "petscsnes.h"   I*/
 
 typedef struct {
@@ -31,7 +30,7 @@ static PetscErrorCode SNESTRDC_KSPConverged_Private(KSP ksp, PetscInt n, PetscRe
     PetscCall(PetscInfo(snes, "Ending linear iteration early, delta=%g, length=%g\n", (double)neP->delta, (double)nrm));
     *reason = KSP_CONVERGED_STEP_LENGTH;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESTRDC_KSPConverged_Destroy(void *cctx)
@@ -42,7 +41,7 @@ static PetscErrorCode SNESTRDC_KSPConverged_Destroy(void *cctx)
   PetscCall((*ctx->convdestroy)(ctx->convctx));
   PetscCall(PetscFree(ctx));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -63,21 +62,23 @@ static PetscErrorCode SNESTRDC_Converged_Private(SNES snes, PetscInt it, PetscRe
     PetscCall(PetscInfo(snes, "Exceeded maximum number of function evaluations: %" PetscInt_FMT "\n", snes->max_funcs));
     *reason = SNES_DIVERGED_FUNCTION_COUNT;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   SNESNewtonTRDCGetRhoFlag - Get whether the current solution update is within the trust-region.
 
+  Logically Collective
+
   Input Parameter:
 . snes - the nonlinear solver object
 
   Output Parameter:
-. rho_flag: `PETSC_TRUE` if the solution update is in the trust-region; otherwise, `PETSC_FALSE`
+. rho_flag - `PETSC_FALSE` or `PETSC_TRUE`
 
   Level: developer
 
-.seealso: `SNESNEWTONTRDC`, `SNESNewtonTRDCPreCheck()`, `SNESNewtonTRDCGetPreCheck()`, , `SNESNewtonTRDCSetPreCheck()`,
+.seealso: [](ch_snes), `SNES`, `SNESNEWTONTRDC`, `SNESNewtonTRDCPreCheck()`, `SNESNewtonTRDCGetPreCheck()`, `SNESNewtonTRDCSetPreCheck()`,
           `SNESNewtonTRDCSetPostCheck()`, `SNESNewtonTRDCGetPostCheck()`
 @*/
 PetscErrorCode SNESNewtonTRDCGetRhoFlag(SNES snes, PetscBool *rho_flag)
@@ -86,28 +87,28 @@ PetscErrorCode SNESNewtonTRDCGetRhoFlag(SNES snes, PetscBool *rho_flag)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
-  PetscValidBoolPointer(rho_flag, 2);
+  PetscAssertPointer(rho_flag, 2);
   *rho_flag = tr->rho_satisfied;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   SNESNewtonTRDCSetPreCheck - Sets a user function that is called before the search step has been determined.
-       Allows the user a chance to change or override the trust region decision.
+  SNESNewtonTRDCSetPreCheck - Sets a user function that is called before the search step has been determined.
+  Allows the user a chance to change or override the trust region decision.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  snes - the nonlinear solver object
-.  func - [optional] function evaluation routine, see `SNESNewtonTRDCPreCheck()`  for the calling sequence
--  ctx  - [optional] user-defined context for private data for the function evaluation routine (may be NULL)
+  Input Parameters:
++ snes - the nonlinear solver object
+. func - [optional] function evaluation routine, for the calling sequence see `SNESNewtonTRDCPreCheck()`
+- ctx  - [optional] user-defined context for private data for the function evaluation routine (may be `NULL`)
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   This function is called BEFORE the function evaluation within the `SNESNEWTONTRDC` solver.
+  Note:
+  This function is called BEFORE the function evaluation within the `SNESNEWTONTRDC` solver.
 
-.seealso: `SNESNEWTONTRDC`, `SNESNewtonTRDCPreCheck()`, `SNESNewtonTRDCGetPreCheck()`, `SNESNewtonTRDCSetPostCheck()`, `SNESNewtonTRDCGetPostCheck()`,
+.seealso: [](ch_snes), `SNES`, `SNESNEWTONTRDC`, `SNESNewtonTRDCPreCheck()`, `SNESNewtonTRDCGetPreCheck()`, `SNESNewtonTRDCSetPostCheck()`, `SNESNewtonTRDCGetPostCheck()`,
           `SNESNewtonTRDCGetRhoFlag()`
 @*/
 PetscErrorCode SNESNewtonTRDCSetPreCheck(SNES snes, PetscErrorCode (*func)(SNES, Vec, Vec, PetscBool *, void *), void *ctx)
@@ -118,24 +119,24 @@ PetscErrorCode SNESNewtonTRDCSetPreCheck(SNES snes, PetscErrorCode (*func)(SNES,
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   if (func) tr->precheck = func;
   if (ctx) tr->precheckctx = ctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   SNESNewtonTRDCGetPreCheck - Gets the pre-check function
+  SNESNewtonTRDCGetPreCheck - Gets the pre-check function optionally set with `SNESNewtonTRDCSetPreCheck()`
 
-   Not collective
+  Not Collective
 
-   Input Parameter:
-.  snes - the nonlinear solver context
+  Input Parameter:
+. snes - the nonlinear solver context
 
-   Output Parameters:
-+  func - [optional] function evaluation routine, see for the calling sequence `SNESNewtonTRDCPreCheck()`
--  ctx  - [optional] user-defined context for private data for the function evaluation routine (may be NULL)
+  Output Parameters:
++ func - [optional] function evaluation routine, for the calling sequence see `SNESNewtonTRDCPreCheck()`
+- ctx  - [optional] user-defined context for private data for the function evaluation routine (may be `NULL`)
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `SNESNEWTONTRDC`, `SNESNewtonTRDCSetPreCheck()`, `SNESNewtonTRDCPreCheck()`
+.seealso: [](ch_snes), `SNES`, `SNESNEWTONTRDC`, `SNESNewtonTRDCSetPreCheck()`, `SNESNewtonTRDCPreCheck()`
 @*/
 PetscErrorCode SNESNewtonTRDCGetPreCheck(SNES snes, PetscErrorCode (**func)(SNES, Vec, Vec, PetscBool *, void *), void **ctx)
 {
@@ -145,27 +146,27 @@ PetscErrorCode SNESNewtonTRDCGetPreCheck(SNES snes, PetscErrorCode (**func)(SNES
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   if (func) *func = tr->precheck;
   if (ctx) *ctx = tr->precheckctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   SNESNewtonTRDCSetPostCheck - Sets a user function that is called after the search step has been determined but before the next
-       function evaluation. Allows the user a chance to change or override the decision of the line search routine
+  SNESNewtonTRDCSetPostCheck - Sets a user function that is called after the search step has been determined but before the next
+  function evaluation. Allows the user a chance to change or override the decision of the line search routine
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  snes - the nonlinear solver object
-.  func - [optional] function evaluation routine, see `SNESNewtonTRDCPostCheck()`  for the calling sequence
--  ctx  - [optional] user-defined context for private data for the function evaluation routine (may be NULL)
+  Input Parameters:
++ snes - the nonlinear solver object
+. func - [optional] function evaluation routine, for the calling sequence see `SNESNewtonTRDCPostCheck()`
+- ctx  - [optional] user-defined context for private data for the function evaluation routine (may be `NULL`)
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   This function is called BEFORE the function evaluation within the `SNESNEWTONTRDC` solver while the function set in
-   `SNESLineSearchSetPostCheck()` is called AFTER the function evaluation.
+  Note:
+  This function is called BEFORE the function evaluation within the `SNESNEWTONTRDC` solver while the function set in
+  `SNESLineSearchSetPostCheck()` is called AFTER the function evaluation.
 
-.seealso: `SNESNEWTONTRDC`, `SNESNewtonTRDCPostCheck()`, `SNESNewtonTRDCGetPostCheck()`, `SNESNewtonTRDCSetPreCheck()`, `SNESNewtonTRDCGetPreCheck()`
+.seealso: [](ch_snes), `SNES`, `SNESNEWTONTRDC`, `SNESNewtonTRDCPostCheck()`, `SNESNewtonTRDCGetPostCheck()`, `SNESNewtonTRDCSetPreCheck()`, `SNESNewtonTRDCGetPreCheck()`
 @*/
 PetscErrorCode SNESNewtonTRDCSetPostCheck(SNES snes, PetscErrorCode (*func)(SNES, Vec, Vec, Vec, PetscBool *, PetscBool *, void *), void *ctx)
 {
@@ -175,24 +176,24 @@ PetscErrorCode SNESNewtonTRDCSetPostCheck(SNES snes, PetscErrorCode (*func)(SNES
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   if (func) tr->postcheck = func;
   if (ctx) tr->postcheckctx = ctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   SNESNewtonTRDCGetPostCheck - Gets the post-check function
+  SNESNewtonTRDCGetPostCheck - Gets the post-check function optionally set with `SNESNewtonTRDCSetPostCheck()`
 
-   Not collective
+  Not Collective
 
-   Input Parameter:
-.  snes - the nonlinear solver context
+  Input Parameter:
+. snes - the nonlinear solver context
 
-   Output Parameters:
-+  func - [optional] function evaluation routine, see for the calling sequence SNESNewtonTRDCPostCheck()
--  ctx  - [optional] user-defined context for private data for the function evaluation routine (may be NULL)
+  Output Parameters:
++ func - [optional] function evaluation routine, for the calling sequence see `SNESNewtonTRDCPostCheck()`
+- ctx  - [optional] user-defined context for private data for the function evaluation routine (may be `NULL`)
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `SNESNEWTONTRDC`, `SNESNewtonTRDCSetPostCheck()`, `SNESNewtonTRDCPostCheck()`
+.seealso: [](ch_snes), `SNES`, `SNESNEWTONTRDC`, `SNESNewtonTRDCSetPostCheck()`, `SNESNewtonTRDCPostCheck()`, `SNESNewtonTRDCSetPreCheck()`, `SNESNewtonTRDCGetPreCheck()`
 @*/
 PetscErrorCode SNESNewtonTRDCGetPostCheck(SNES snes, PetscErrorCode (**func)(SNES, Vec, Vec, Vec, PetscBool *, PetscBool *, void *), void **ctx)
 {
@@ -202,9 +203,10 @@ PetscErrorCode SNESNewtonTRDCGetPostCheck(SNES snes, PetscErrorCode (**func)(SNE
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   if (func) *func = tr->postcheck;
   if (ctx) *ctx = tr->postcheckctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+// PetscClangLinter pragma disable: -fdoc-internal-linkage
 /*@C
    SNESNewtonTRDCPreCheck - Called before the step has been determined in `SNESNEWTONTRDC`
 
@@ -215,12 +217,12 @@ PetscErrorCode SNESNewtonTRDCGetPostCheck(SNES snes, PetscErrorCode (**func)(SNE
 .  X - The last solution
 -  Y - The step direction
 
-   Output Parameters:
-.  changed_Y - Indicator that the step direction Y has been changed.
+   Output Parameter:
+.  changed_Y - Indicator that the step direction `Y` has been changed.
 
    Level: developer
 
-.seealso: `SNESNEWTONTRDC`, `SNESNewtonTRDCSetPreCheck()`, `SNESNewtonTRDCGetPreCheck()`, `SNESNewtonTRDCPostCheck()`
+.seealso: [](ch_snes), `SNES`, `SNESNEWTONTRDC`, `SNESNewtonTRDCSetPreCheck()`, `SNESNewtonTRDCGetPreCheck()`, `SNESNewtonTRDCPostCheck()`
 @*/
 static PetscErrorCode SNESNewtonTRDCPreCheck(SNES snes, Vec X, Vec Y, PetscBool *changed_Y)
 {
@@ -232,9 +234,10 @@ static PetscErrorCode SNESNewtonTRDCPreCheck(SNES snes, Vec X, Vec Y, PetscBool 
     PetscCall((*tr->precheck)(snes, X, Y, changed_Y, tr->precheckctx));
     PetscValidLogicalCollectiveBool(snes, *changed_Y, 4);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+// PetscClangLinter pragma disable: -fdoc-internal-linkage
 /*@C
    SNESNewtonTRDCPostCheck - Called after the step has been determined in `SNESNEWTONTRDC` but before the function evaluation at that step
 
@@ -248,14 +251,14 @@ static PetscErrorCode SNESNewtonTRDCPreCheck(SNES snes, Vec X, Vec Y, PetscBool 
 
    Output Parameters:
 +  changed_Y - indicator if step has been changed
--  changed_W - Indicator if the new candidate solution W has been changed.
-
-   Note:
-     If Y is changed then W is recomputed as X - Y
+-  changed_W - Indicator if the new candidate solution `W` has been changed.
 
    Level: developer
 
-.seealso: `SNESNEWTONTRDC`, `SNESNEWTONTRDC`, `SNESNewtonTRDCSetPostCheck()`, `SNESNewtonTRDCGetPostCheck()`, `SNESNewtonTRDCPreCheck()
+   Note:
+     If `Y` is changed then `W` is recomputed as `X` - `Y`
+
+.seealso: [](ch_snes), `SNES`, `SNESNEWTONTRDC`, `SNESNEWTONTRDC`, `SNESNewtonTRDCSetPostCheck()`, `SNESNewtonTRDCGetPostCheck()`, `SNESNewtonTRDCPreCheck()
 @*/
 static PetscErrorCode SNESNewtonTRDCPostCheck(SNES snes, Vec X, Vec Y, Vec W, PetscBool *changed_Y, PetscBool *changed_W)
 {
@@ -269,7 +272,7 @@ static PetscErrorCode SNESNewtonTRDCPostCheck(SNES snes, Vec X, Vec Y, Vec W, Pe
     PetscValidLogicalCollectiveBool(snes, *changed_Y, 5);
     PetscValidLogicalCollectiveBool(snes, *changed_W, 6);
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -347,7 +350,7 @@ static PetscErrorCode SNESSolve_NEWTONTRDC(SNES snes)
 
   /* test convergence */
   PetscUseTypeMethod(snes, converged, snes->iter, 0.0, 0.0, fnorm, &snes->reason, snes->cnvP);
-  if (snes->reason) PetscFunctionReturn(0);
+  if (snes->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   for (i = 0; i < maxits; i++) {
     PetscBool changed_y;
@@ -382,7 +385,7 @@ static PetscErrorCode SNESSolve_NEWTONTRDC(SNES snes)
         delta = neP->delta * xnorm;
       }
       deltaM = neP->deltaM * xnorm;
-      PetscCall(MatDiagonalScale(jac, PETSC_NULL, W));
+      PetscCall(MatDiagonalScale(jac, NULL, W));
     }
 
     /* calculating GradF of minimization function */
@@ -494,12 +497,6 @@ static PetscErrorCode SNESSolve_NEWTONTRDC(SNES snes)
       neP->itflag = PETSC_FALSE;
       /* both delta, ynorm, and xnorm are either scaled or unscaled */
       PetscCall(SNESTRDC_Converged_Private(snes, snes->iter, xnorm, ynorm, fnorm, &reason, snes->cnvP));
-      if (!reason) {
-        /* temp_xnorm, temp_ynorm is always unscaled */
-        /* also the inner iteration already calculated the Jacobian and solved the matrix */
-        /* therefore, it should be passing iteration number of iter+1 instead of iter+0 in the first iteration and after */
-        PetscCall((*snes->ops->converged)(snes, snes->iter + 1, temp_xnorm, temp_ynorm, fnorm, &reason, snes->cnvP));
-      }
       /* if multiphase state changes, break out inner iteration */
       if (reason == SNES_BREAKOUT_INNER_ITER) {
         if (bs > 1 && neP->auto_scale_multiphase) {
@@ -562,7 +559,7 @@ static PetscErrorCode SNESSolve_NEWTONTRDC(SNES snes)
     PetscCall(PetscFree(ctx));
     PetscCall(KSPSetConvergenceTest(ksp, convtest, convctx, convdestroy));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESSetUp_NEWTONTRDC(SNES snes)
@@ -570,13 +567,13 @@ static PetscErrorCode SNESSetUp_NEWTONTRDC(SNES snes)
   PetscFunctionBegin;
   PetscCall(SNESSetWorkVecs(snes, 6));
   PetscCall(SNESSetUpMatrices(snes));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SNESReset_NEWTONTRDC(SNES snes)
+static PetscErrorCode SNESReset_NEWTONTRDC(SNES snes)
 {
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESDestroy_NEWTONTRDC(SNES snes)
@@ -584,7 +581,7 @@ static PetscErrorCode SNESDestroy_NEWTONTRDC(SNES snes)
   PetscFunctionBegin;
   PetscCall(SNESReset_NEWTONTRDC(snes));
   PetscCall(PetscFree(snes->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESSetFromOptions_NEWTONTRDC(SNES snes, PetscOptionItems *PetscOptionsObject)
@@ -605,7 +602,7 @@ static PetscErrorCode SNESSetFromOptions_NEWTONTRDC(SNES snes, PetscOptionItems 
   PetscCall(PetscOptionsBool("-snes_trdc_use_cauchy", "use_cauchy", "use Cauchy step and direction", ctx->use_cauchy, &ctx->use_cauchy, NULL));
   PetscCall(PetscOptionsBool("-snes_trdc_auto_scale_multiphase", "auto_scale_multiphase", "Auto scaling for proper cauchy direction", ctx->auto_scale_multiphase, &ctx->auto_scale_multiphase, NULL));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESView_NEWTONTRDC(SNES snes, PetscViewer viewer)
@@ -620,33 +617,31 @@ static PetscErrorCode SNESView_NEWTONTRDC(SNES snes, PetscViewer viewer)
     PetscCall(PetscViewerASCIIPrintf(viewer, "  eta1=%g, eta2=%g, eta3=%g\n", (double)tr->eta1, (double)tr->eta2, (double)tr->eta3));
     PetscCall(PetscViewerASCIIPrintf(viewer, "  delta0=%g, t1=%g, t2=%g, deltaM=%g\n", (double)tr->delta0, (double)tr->t1, (double)tr->t2, (double)tr->deltaM));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
       SNESNEWTONTRDC - Newton based nonlinear solver that uses trust-region dogleg method with Cauchy direction
 
    Options Database Keys:
-+   -snes_trdc_tol <tol> - trust region tolerance
-.   -snes_trdc_eta1 <eta1> - trust region parameter 0.0 <= eta1 <= eta2, rho >= eta1 breaks out of the inner iteration (default: eta1=0.001)
-.   -snes_trdc_eta2 <eta2> - trust region parameter 0.0 <= eta1 <= eta2, rho <= eta2 shrinks the trust region (default: eta2=0.25)
-.   -snes_trdc_eta3 <eta3> - trust region parameter eta3 > eta2, rho >= eta3 expands the trust region (default: eta3=0.75)
-.   -snes_trdc_t1 <t1> - trust region parameter, shrinking factor of trust region (default: 0.25)
-.   -snes_trdc_t2 <t2> - trust region parameter, expanding factor of trust region (default: 2.0)
-.   -snes_trdc_deltaM <deltaM> - trust region parameter, max size of trust region, deltaM*norm2(x) (default: 0.5)
-.   -snes_trdc_delta0 <delta0> - trust region parameter, initial size of trust region, delta0*norm2(x) (default: 0.1)
-.   -snes_trdc_auto_scale_max <auto_scale_max> - used with auto_scale_multiphase, caps the maximum auto-scaling factor
-.   -snes_trdc_use_cauchy <use_cauchy> - True uses dogleg Cauchy (Steepest Descent direction) step & direction in the trust region algorithm
++   -snes_trdc_tol <tol>                                     - trust region tolerance
+.   -snes_trdc_eta1 <eta1>                                   - trust region parameter 0.0 <= eta1 <= eta2, rho >= eta1 breaks out of the inner iteration (default: eta1=0.001)
+.   -snes_trdc_eta2 <eta2>                                   - trust region parameter 0.0 <= eta1 <= eta2, rho <= eta2 shrinks the trust region (default: eta2=0.25)
+.   -snes_trdc_eta3 <eta3>                                   - trust region parameter eta3 > eta2, rho >= eta3 expands the trust region (default: eta3=0.75)
+.   -snes_trdc_t1 <t1>                                       - trust region parameter, shrinking factor of trust region (default: 0.25)
+.   -snes_trdc_t2 <t2>                                       - trust region parameter, expanding factor of trust region (default: 2.0)
+.   -snes_trdc_deltaM <deltaM>                               - trust region parameter, max size of trust region, $deltaM*norm2(x)$ (default: 0.5)
+.   -snes_trdc_delta0 <delta0>                               - trust region parameter, initial size of trust region, $delta0*norm2(x)$ (default: 0.1)
+.   -snes_trdc_auto_scale_max <auto_scale_max>               - used with auto_scale_multiphase, caps the maximum auto-scaling factor
+.   -snes_trdc_use_cauchy <use_cauchy>                       - True uses dogleg Cauchy (Steepest Descent direction) step & direction in the trust region algorithm
 -   -snes_trdc_auto_scale_multiphase <auto_scale_multiphase> - True turns on auto-scaling for multivariable block matrix for Cauchy and trust region
-
-    Reference:
-.   - * "Linear and Nonlinear Solvers for Simulating Multiphase Flow
-    within Large-Scale Engineered Subsurface Systems" by Heeho D. Park, Glenn E. Hammond,
-    Albert J. Valocchi, Tara LaForce.
 
    Level: intermediate
 
-.seealso: `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESNEWTONLS`, `SNESSetTrustRegionTolerance()`,
+   Note:
+   See {cite}`park2021linear`
+
+.seealso: [](ch_snes), `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESNEWTONLS`, `SNESSetTrustRegionTolerance()`,
           `SNESNewtonTRDCPreCheck()`, `SNESNewtonTRDCGetPreCheck()`, `SNESNewtonTRDCSetPostCheck()`, `SNESNewtonTRDCGetPostCheck()`,
           `SNESNewtonTRDCGetRhoFlag()`, `SNESNewtonTRDCSetPreCheck()`
 M*/
@@ -694,5 +689,5 @@ PETSC_EXTERN PetscErrorCode SNESCreate_NEWTONTRDC(SNES snes)
   PetscCall(PetscCalloc1(neP->bs,&neP->inorms));
   */
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,4 +1,3 @@
-
 /*
     This file implements flexible BiCGStab (FBiCGStab).
 */
@@ -8,7 +7,7 @@ static PetscErrorCode KSPSetUp_FBCGS(KSP ksp)
 {
   PetscFunctionBegin;
   PetscCall(KSPSetWorkVecs(ksp, 8));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Only need a few hacks from KSPSolve_BCGS */
@@ -44,7 +43,6 @@ static PetscErrorCode KSPSolve_FBCGS(KSP ksp)
 
   /* Compute initial residual */
   PetscCall(KSPGetPC(ksp, &pc));
-  PetscCall(PCSetUp(pc));
   PetscCall(PCGetOperators(pc, &mat, NULL));
   if (!ksp->guess_zero) {
     PetscCall(KSP_MatMult(ksp, mat, X, S2));
@@ -63,7 +61,7 @@ static PetscErrorCode KSPSolve_FBCGS(KSP ksp)
   PetscCall(KSPLogResidualHistory(ksp, dp));
   PetscCall(KSPMonitor(ksp, 0, dp));
   PetscCall((*ksp->converged)(ksp, 0, dp, &ksp->reason, ksp->cnvP));
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Make the initial Rp == R */
   PetscCall(VecCopy(R, RP));
@@ -143,16 +141,16 @@ static PetscErrorCode KSPSolve_FBCGS(KSP ksp)
   } while (i < ksp->max_it);
 
   if (i >= ksp->max_it) ksp->reason = KSP_DIVERGED_ITS;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPFBCGS - Implements the flexible BiCGStab method. [](sec_flexibleksp)
+   KSPFBCGS - Implements the flexible BiCGStab method. [](sec_flexibleksp)
 
    Level: beginner
 
    Notes:
-   Flexible BiCGStab, unlike most Krylov methods allows the preconditioner to be nonlinear, that is the action of the preconditioner to a vector need not be linear
+   Flexible BiCGStab, unlike most Krylov methods, allows the preconditioner to be nonlinear, that is the action of the preconditioner to a vector need not be linear
    in the vector entries.
 
    `KSPFBCGSR` provides another variant of this algorithm that requires fewer `MPI_Allreduce()` calls and my converge faster
@@ -161,7 +159,7 @@ static PetscErrorCode KSPSolve_FBCGS(KSP ksp)
 
    Only supportst right preconditioning
 
-.seealso: [](chapter_ksp),  [](sec_flexibleksp), `KSPFBCGSR`, `KSPPIPEBCGS`, `KSPBCGSL`, `KSPFBCGS`, `KSPCreate()`, `KSPFGMRES`, `KSPSetType()`, `KSPType`, `KSP`, `KSPBICG`, `KSPFBCGSL`, `KSPSetPCSide()`
+.seealso: [](ch_ksp),  [](sec_flexibleksp), `KSPFBCGSR`, `KSPPIPEBCGS`, `KSPBCGSL`, `KSPFBCGS`, `KSPCreate()`, `KSPFGMRES`, `KSPSetType()`, `KSPType`, `KSP`, `KSPBICG`, `KSPSetPCSide()`
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_FBCGS(KSP ksp)
 {
@@ -181,5 +179,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_FBCGS(KSP ksp)
 
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_UNPRECONDITIONED, PC_RIGHT, 2));
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_NONE, PC_RIGHT, 1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,4 +1,3 @@
-
 static char help[] = "Time-dependent PDE in 2d for calculating joint PDF. \n";
 /*
    p_t = -x_t*p_x -y_t*p_y + f(t)*p_yy
@@ -130,13 +129,13 @@ PetscErrorCode PostStep(TS ts)
   }
   PetscCall(DMDAVecRestoreArrayRead(cda, gc, &coors));
   PetscCall(DMDAVecRestoreArrayRead(user->da, X, &p));
-  PetscCallMPI(MPI_Allreduce(&sum, &asum, 1, MPIU_SCALAR, MPIU_SUM, PetscObjectComm((PetscObject)ts)));
+  PetscCall(MPIU_Allreduce(&sum, &asum, 1, MPIU_SCALAR, MPIU_SUM, PetscObjectComm((PetscObject)ts)));
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "sum(p)*dw*dtheta at t = %f = %f\n", (double)t, (double)(asum)));
   if (sum < 1.0e-2) {
     PetscCall(TSSetConvergedReason(ts, TS_CONVERGED_USER));
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Exiting TS as the integral of PDF is almost zero\n"));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ini_bou(Vec X, AppCtx *user)
@@ -193,7 +192,7 @@ PetscErrorCode ini_bou(Vec X, AppCtx *user)
   PetscCall(DMDAVecRestoreArray(user->da, X, &p));
   PetscCall(VecSum(X, &sum));
   PetscCall(VecScale(X, 1.0 / sum));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* First advection term */
@@ -211,7 +210,7 @@ PetscErrorCode adv1(PetscScalar **p, PetscScalar y, PetscInt i, PetscInt j, Pets
   } else if (user->st_width == 3) {
     *p1 = fpos * (2 * p[j][i + 1] + 3 * p[j][i] - 6 * p[j][i - 1] + p[j][i - 2]) / (6 * user->dx) + fneg * (-p[j][i + 2] + 6 * p[j][i + 1] - 3 * p[j][i] - 2 * p[j][i - 1]) / (6 * user->dx);
   } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "No support for wider stencils");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Second advection term */
@@ -229,7 +228,7 @@ PetscErrorCode adv2(PetscScalar **p, PetscScalar x, PetscInt i, PetscInt j, Pets
   } else if (user->st_width == 3) {
     *p2 = fpos * (2 * p[j + 1][i] + 3 * p[j][i] - 6 * p[j - 1][i] + p[j - 2][i]) / (6 * user->dy) + fneg * (-p[j + 2][i] + 6 * p[j + 1][i] - 3 * p[j][i] - 2 * p[j - 1][i]) / (6 * user->dy);
   } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "No support for wider stencils");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Diffusion term */
@@ -243,7 +242,7 @@ PetscErrorCode diffuse(PetscScalar **p, PetscInt i, PetscInt j, PetscReal t, Pet
   } else if (user->st_width == 3) {
     *p_diff = user->disper_coe * ((2 * p[j - 3][i] - 27 * p[j - 2][i] + 270 * p[j - 1][i] - 490 * p[j][i] + 270 * p[j + 1][i] - 27 * p[j + 2][i] + 2 * p[j + 3][i]) / (180.0 * user->dy * user->dy));
   } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_WRONG, "No support for wider stencils");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode IFunction(TS ts, PetscReal t, Vec X, Vec Xdot, Vec F, void *ctx)
@@ -293,7 +292,7 @@ PetscErrorCode IFunction(TS ts, PetscReal t, Vec X, Vec Xdot, Vec F, void *ctx)
   PetscCall(DMDAVecRestoreArray(user->da, F, &f));
   PetscCall(DMDAVecRestoreArrayRead(cda, gc, &coors));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode IJacobian(TS ts, PetscReal t, Vec X, Vec Xdot, PetscReal a, Mat J, Mat Jpre, void *ctx)
@@ -355,7 +354,7 @@ PetscErrorCode IJacobian(TS ts, PetscReal t, Vec X, Vec Xdot, PetscReal a, Mat J
     PetscCall(MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode Parameter_settings(AppCtx *user)
@@ -410,7 +409,7 @@ PetscErrorCode Parameter_settings(AppCtx *user)
   PetscCall(PetscOptionsGetEnum(NULL, NULL, "-by", DMBoundaryTypes, (PetscEnum *)&user->by, &flg));
   PetscCall(PetscOptionsGetBool(NULL, NULL, "-nonoiseinitial", &user->nonoiseinitial, &flg));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

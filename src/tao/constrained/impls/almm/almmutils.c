@@ -1,18 +1,18 @@
-#include <../src/tao/constrained/impls/almm/almm.h> /*I "petsctao.h" I*/ /*I "petscvec.h" I*/
+#include <../src/tao/constrained/impls/almm/almm.h> /*I "petsctao.h" I*/
 #include <petsctao.h>
 #include <petsc/private/petscimpl.h>
 #include <petsc/private/vecimpl.h>
 
 /*@
-   TaoALMMGetType - Retrieve the augmented Lagrangian formulation type for the subproblem.
+  TaoALMMGetType - Retrieve the augmented Lagrangian formulation type for the subproblem.
 
-   Input Parameters:
-.  tao - the `Tao` context for the `TAOALMM` solver
+  Input Parameter:
+. tao - the `Tao` context for the `TAOALMM` solver
 
-   Output Parameters:
-.  type - augmented Lagragrangian type
+  Output Parameter:
+. type - augmented Lagragrangian type
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `Tao`, `TAOALMM`, `TaoALMMSetType()`, `TaoALMMType`
 @*/
@@ -20,9 +20,9 @@ PetscErrorCode TaoALMMGetType(Tao tao, TaoALMMType *type)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidPointer(type, 2);
+  PetscAssertPointer(type, 2);
   PetscUseMethod(tao, "TaoALMMGetType_C", (Tao, TaoALMMType *), (tao, type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode TaoALMMGetType_Private(Tao tao, TaoALMMType *type)
@@ -31,17 +31,17 @@ PetscErrorCode TaoALMMGetType_Private(Tao tao, TaoALMMType *type)
 
   PetscFunctionBegin;
   *type = auglag->type;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoALMMSetType - Determine the augmented Lagrangian formulation type for the subproblem.
+  TaoALMMSetType - Determine the augmented Lagrangian formulation type for the subproblem.
 
-   Input Parameters:
-+  tao - the Tao context for the `TAOALMM` solver
--  type - augmented Lagragrangian type
+  Input Parameters:
++ tao  - the `Tao` context for the `TAOALMM` solver
+- type - augmented Lagragrangian type
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `Tao`, `TAOALMM`, `TaoALMMGetType()`, `TaoALMMType`
 @*/
@@ -50,7 +50,7 @@ PetscErrorCode TaoALMMSetType(Tao tao, TaoALMMType type)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscTryMethod(tao, "TaoALMMSetType_C", (Tao, TaoALMMType), (tao, type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode TaoALMMSetType_Private(Tao tao, TaoALMMType type)
@@ -60,19 +60,19 @@ PetscErrorCode TaoALMMSetType_Private(Tao tao, TaoALMMType type)
   PetscFunctionBegin;
   PetscCheck(!tao->setupcalled, PetscObjectComm((PetscObject)tao), PETSC_ERR_ORDER, "TaoALMMSetType() must be called before TaoSetUp()");
   auglag->type = type;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoALMMGetSubsolver - Retrieve the subsolver being used by `TAOALMM`.
+  TaoALMMGetSubsolver - Retrieve the subsolver being used by `TAOALMM`.
 
-   Input Parameters:
-.  tao - the `Tao` context for the `TAOALMM` solver
+  Input Parameter:
+. tao - the `Tao` context for the `TAOALMM` solver
 
-   Output Parameter:
-.  subsolver - the `Tao` context for the subsolver
+  Output Parameter:
+. subsolver - the `Tao` context for the subsolver
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `Tao`, `TAOALMM`, `TaoALMMSetSubsolver()`
 @*/
@@ -80,9 +80,9 @@ PetscErrorCode TaoALMMGetSubsolver(Tao tao, Tao *subsolver)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidPointer(subsolver, 2);
+  PetscAssertPointer(subsolver, 2);
   PetscUseMethod(tao, "TaoALMMGetSubsolver_C", (Tao, Tao *), (tao, subsolver));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode TaoALMMGetSubsolver_Private(Tao tao, Tao *subsolver)
@@ -91,20 +91,20 @@ PetscErrorCode TaoALMMGetSubsolver_Private(Tao tao, Tao *subsolver)
 
   PetscFunctionBegin;
   *subsolver = auglag->subsolver;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoALMMSetSubsolver - Changes the subsolver inside `TAOALMM` with the user provided one.
+  TaoALMMSetSubsolver - Changes the subsolver inside `TAOALMM` with the user provided one.
 
-   Input Parameters:
-+  tao - the `Tao` context for the `TAOALMM` solver
--  subsolver - the Tao context for the subsolver
+  Input Parameters:
++ tao       - the `Tao` context for the `TAOALMM` solver
+- subsolver - the Tao context for the subsolver
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   This is not recommended, instead call `TaoALMMGetSubsolver()` and set the type as desired.
+  Note:
+  This is not recommended, instead call `TaoALMMGetSubsolver()` and set the type as desired.
 
 .seealso: `Tao`, `TAOALMM`, `TaoALMMGetSubsolver()`
 @*/
@@ -114,7 +114,7 @@ PetscErrorCode TaoALMMSetSubsolver(Tao tao, Tao subsolver)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscValidHeaderSpecific(subsolver, TAO_CLASSID, 2);
   PetscTryMethod(tao, "TaoALMMSetSubsolver_C", (Tao, Tao), (tao, subsolver));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode TaoALMMSetSubsolver_Private(Tao tao, Tao subsolver)
@@ -123,7 +123,7 @@ PetscErrorCode TaoALMMSetSubsolver_Private(Tao tao, Tao subsolver)
   PetscBool compatible;
 
   PetscFunctionBegin;
-  if (subsolver == auglag->subsolver) PetscFunctionReturn(0);
+  if (subsolver == auglag->subsolver) PetscFunctionReturn(PETSC_SUCCESS);
   if (tao->bounded) {
     PetscCall(PetscObjectTypeCompareAny((PetscObject)subsolver, &compatible, TAOSHELL, TAOBNCG, TAOBQNLS, TAOBQNKLS, TAOBQNKTR, TAOBQNKTL, ""));
     PetscCheck(compatible, PetscObjectComm((PetscObject)tao), PETSC_ERR_ARG_INCOMP, "Subsolver must be a bound-constrained first-order method");
@@ -141,25 +141,25 @@ PetscErrorCode TaoALMMSetSubsolver_Private(Tao tao, Tao subsolver)
     PetscCall(TaoSetObjectiveAndGradient(auglag->subsolver, NULL, TaoALMMSubsolverObjectiveAndGradient_Private, (void *)auglag));
     PetscCall(TaoSetVariableBounds(auglag->subsolver, auglag->PL, auglag->PU));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoALMMGetMultipliers - Retrieve a pointer to the Lagrange multipliers.
+  TaoALMMGetMultipliers - Retrieve a pointer to the Lagrange multipliers.
 
-   Input Parameters:
-.  tao - the `Tao` context for the `TAOALMM` solver
+  Input Parameter:
+. tao - the `Tao` context for the `TAOALMM` solver
 
-   Output Parameters:
-.  Y - vector of Lagrange multipliers
+  Output Parameter:
+. Y - vector of Lagrange multipliers
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   For problems with both equality and inequality constraints,
-   the multipliers are combined together as Y = (Ye, Yi). Users
-   can recover copies of the subcomponents using index sets
-   provided by `TaoALMMGetDualIS()` and use `VecGetSubVector()`.
+  Notes:
+  For problems with both equality and inequality constraints,
+  the multipliers are combined together as Y = (Ye, Yi). Users
+  can recover copies of the subcomponents using index sets
+  provided by `TaoALMMGetDualIS()` and use `VecGetSubVector()`.
 
 .seealso: `TAOALMM`, `Tao`, `TaoALMMSetMultipliers()`, `TaoALMMGetDualIS()`
 @*/
@@ -167,9 +167,9 @@ PetscErrorCode TaoALMMGetMultipliers(Tao tao, Vec *Y)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidPointer(Y, 2);
+  PetscAssertPointer(Y, 2);
   PetscUseMethod(tao, "TaoALMMGetMultipliers_C", (Tao, Vec *), (tao, Y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode TaoALMMGetMultipliers_Private(Tao tao, Vec *Y)
@@ -179,29 +179,29 @@ PetscErrorCode TaoALMMGetMultipliers_Private(Tao tao, Vec *Y)
   PetscFunctionBegin;
   PetscCheck(tao->setupcalled, PetscObjectComm((PetscObject)tao), PETSC_ERR_ORDER, "TaoSetUp() must be called first for scatters to be constructed");
   *Y = auglag->Y;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoALMMSetMultipliers - Set user-defined Lagrange multipliers. The vector type and
-                             parallel structure of the given vectormust match equality and
-                             inequality constraints. The vector must have a local size equal
-                             to the sum of the local sizes for the constraint vectors, and a
-                             global size equal to the sum of the global sizes of the constraint
-                             vectors.
+  TaoALMMSetMultipliers - Set user-defined Lagrange multipliers.
 
-   Input Parameters:
-+  tao - the `Tao` context for the `TAOALMM` solver
--  Y - vector of Lagrange multipliers
+  Input Parameters:
++ tao - the `Tao` context for the `TAOALMM` solver
+- Y   - vector of Lagrange multipliers
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   This routine is only useful if the user wants to change the
-   parallel distribution of the combined dual vector in problems that
-   feature both equality and inequality constraints. For other tasks,
-   it is strongly recommended that the user retrieve the dual vector
-   created by the solver using TaoALMMGetMultipliers().
+  Notes:
+  The vector type and parallel layout must match the equality and inequality constraints.
+
+  The vector must have a local size equal to the sum of the local sizes for the constraint vectors, and a
+  global size equal to the sum of the global sizes of the constraint vectors.
+
+  This routine is only useful if the user wants to change the
+  parallel distribution of the combined dual vector in problems that
+  feature both equality and inequality constraints. For other tasks,
+  it is strongly recommended that the user retrieve the dual vector
+  created by the solver using `TaoALMMGetMultipliers()`.
 
 .seealso: `TAOALMM`, `Tao`, `TaoALMMGetMultipliers()`
 @*/
@@ -211,7 +211,7 @@ PetscErrorCode TaoALMMSetMultipliers(Tao tao, Vec Y)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscValidHeaderSpecific(Y, VEC_CLASSID, 2);
   PetscTryMethod(tao, "TaoALMMSetMultipliers_C", (Tao, Vec), (tao, Y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode TaoALMMSetMultipliers_Private(Tao tao, Vec Y)
@@ -223,7 +223,7 @@ PetscErrorCode TaoALMMSetMultipliers_Private(Tao tao, Vec Y)
 
   PetscFunctionBegin;
   /* no-op if user provides vector from TaoALMMGetMultipliers() */
-  if (Y == auglag->Y) PetscFunctionReturn(0);
+  if (Y == auglag->Y) PetscFunctionReturn(PETSC_SUCCESS);
   /* make sure vector type is same as equality and inequality constraints */
   if (tao->eq_constrained) {
     PetscCall(VecGetType(tao->constraints_equality, &Ytype));
@@ -271,22 +271,21 @@ PetscErrorCode TaoALMMSetMultipliers_Private(Tao tao, Vec Y)
     PetscCall(VecScatterDestroy(&auglag->Yscatter[1]));
     PetscCall(VecScatterCreate(auglag->Y, auglag->Yis[1], auglag->Yi, NULL, &auglag->Yscatter[1]));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoALMMGetPrimalIS - Retrieve a pointer to the index set that identifies optimization
-                        and slack variable components of the subsolver's solution vector.
-                        Not valid for problems with only equality constraints.
+  TaoALMMGetPrimalIS - Retrieve the index set that identifies optimization
+  and slack variable components of the subsolver's solution vector.
 
-   Input Parameter:
-.  tao - the `Tao` context for the `TAOALMM` solver
+  Input Parameter:
+. tao - the `Tao` context for the `TAOALMM` solver
 
-   Output Parameters:
-+  opt_is - index set associated with the optimization variables (NULL if not needed)
--  slack_is - index set associated with the slack variables (NULL if not needed)
+  Output Parameters:
++ opt_is   - index set associated with the optimization variables (`NULL` if not needed)
+- slack_is - index set associated with the slack variables (`NULL` if not needed)
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `TAOALMM`, `Tao`, `IS`, `TaoALMMGetPrimalVector()`
 @*/
@@ -295,7 +294,7 @@ PetscErrorCode TaoALMMGetPrimalIS(Tao tao, IS *opt_is, IS *slack_is)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscUseMethod(tao, "TaoALMMGetPrimalIS_C", (Tao, IS *, IS *), (tao, opt_is, slack_is));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode TaoALMMGetPrimalIS_Private(Tao tao, IS *opt_is, IS *slack_is)
@@ -307,23 +306,22 @@ PetscErrorCode TaoALMMGetPrimalIS_Private(Tao tao, IS *opt_is, IS *slack_is)
   PetscCheck(tao->setupcalled, PetscObjectComm((PetscObject)tao), PETSC_ERR_ORDER, "TaoSetUp() must be called first for index sets to be constructed");
   if (opt_is) *opt_is = auglag->Pis[0];
   if (slack_is) *slack_is = auglag->Pis[1];
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoALMMGetDualIS - Retrieve a pointer to the index set that identifies equality
-                      and inequality constraint components of the dual vector returned
-                      by `TaoALMMGetMultipliers()`. Not valid for problems with only one
-                      type of constraint.
+  TaoALMMGetDualIS - Retrieve the index set that identifies equality
+  and inequality constraint components of the dual vector returned
+  by `TaoALMMGetMultipliers()`.
 
-   Input Parameter:
-.  tao - the Tao context for the `TAOALMM` solver
+  Input Parameter:
+. tao - the Tao context for the `TAOALMM` solver
 
-   Output Parameters:
-+  eq_is - index set associated with the equality constraints (NULL if not needed)
--  ineq_is - index set associated with the inequality constraints (NULL if not needed)
+  Output Parameters:
++ eq_is   - index set associated with the equality constraints (`NULL` if not needed)
+- ineq_is - index set associated with the inequality constraints (`NULL` if not needed)
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `TAOALMM`, `Tao`, `TaoALMMGetMultipliers()`
 @*/
@@ -332,7 +330,7 @@ PetscErrorCode TaoALMMGetDualIS(Tao tao, IS *eq_is, IS *ineq_is)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscUseMethod(tao, "TaoALMMGetDualIS_C", (Tao, IS *, IS *), (tao, eq_is, ineq_is));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode TaoALMMGetDualIS_Private(Tao tao, IS *eq_is, IS *ineq_is)
@@ -345,5 +343,5 @@ PetscErrorCode TaoALMMGetDualIS_Private(Tao tao, IS *eq_is, IS *ineq_is)
   PetscCheck(tao->setupcalled, PetscObjectComm((PetscObject)tao), PETSC_ERR_ORDER, "TaoSetUp() must be called first for index sets to be constructed");
   if (eq_is) *eq_is = auglag->Yis[0];
   if (ineq_is) *ineq_is = auglag->Yis[1];
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

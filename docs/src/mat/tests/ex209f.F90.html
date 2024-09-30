@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/mat/tests/ex209f.F90">Actual source code: ex209f.F90</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/mat/tests/ex209f.F90">Actual source code: ex209f.F90</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:48:06+00:00">
+<meta name="date" content="2024-03-29T14:13:19+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -17,21 +17,21 @@
 <a name="line6">  6: </a>      use petscmat
 <a name="line7">  7: </a>      implicit none
 
-<a name="line9">  9: </a>      <a href="../../../docs/manualpages/Mat/Mat.html">Mat</a>      A
-<a name="line10"> 10: </a>      <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ierr
-<a name="line11"> 11: </a>      <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>, pointer :: km(:,:)
-<a name="line12"> 12: </a>      <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> three,one
-<a name="line13"> 13: </a>      <a href="../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> idxm(1),i,j
-<a name="line14"> 14: </a>      <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> v
+<a name="line9">  9: </a>      <a href="../../../manualpages/Mat/Mat.html">Mat</a>      A
+<a name="line10"> 10: </a>      <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ierr
+<a name="line11"> 11: </a>      <a href="../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>, pointer :: km(:,:)
+<a name="line12"> 12: </a>      <a href="../../../manualpages/Sys/PetscInt.html">PetscInt</a> three,one
+<a name="line13"> 13: </a>      <a href="../../../manualpages/Sys/PetscInt.html">PetscInt</a> idxm(1),i,j
+<a name="line14"> 14: </a>      <a href="../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> v
 
-<a name="line16"> 16: </a>      PetscCallA(<a href="../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(ierr))
+<a name="line16"> 16: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(ierr))
 
-<a name="line18"> 18: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatCreate.html">MatCreate</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>,A,ierr))
+<a name="line18"> 18: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Mat/MatCreate.html">MatCreate</a>(<a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>,A,ierr))
 <a name="line19"> 19: </a>      three = 3
-<a name="line20"> 20: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatSetSizes.html">MatSetSizes</a>(A,three,three,three,three,ierr))
-<a name="line21"> 21: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatSetBlockSize.html">MatSetBlockSize</a>(A,three,ierr))
-<a name="line22"> 22: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatSetType.html">MatSetType</a>(A, <a href="../../../docs/manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a>,ierr))
-<a name="line23"> 23: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatSetUp.html">MatSetUp</a>(A,ierr))
+<a name="line20"> 20: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Mat/MatSetSizes.html">MatSetSizes</a>(A,three,three,three,three,ierr))
+<a name="line21"> 21: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Mat/MatSetBlockSize.html">MatSetBlockSize</a>(A,three,ierr))
+<a name="line22"> 22: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Mat/MatSetType.html">MatSetType</a>(A, <a href="../../../manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a>,ierr))
+<a name="line23"> 23: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Mat/MatSetUp.html">MatSetUp</a>(A,ierr))
 
 <a name="line25"> 25: </a>      one = 1
 <a name="line26"> 26: </a>      idxm(1) = 0
@@ -42,18 +42,18 @@
 <a name="line31"> 31: </a>        enddo
 <a name="line32"> 32: </a>      enddo
 
-<a name="line34"> 34: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatSetValuesBlocked.html">MatSetValuesBlocked</a>(A, one, idxm, one, idxm, km, <a href="../../../docs/manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>, ierr))
-<a name="line35"> 35: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(A,<a href="../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>,ierr))
-<a name="line36"> 36: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(A,<a href="../../../docs/manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>,ierr))
-<a name="line37"> 37: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatView.html">MatView</a>(A,<a href="../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>,ierr))
+<a name="line34"> 34: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Mat/MatSetValuesBlocked.html">MatSetValuesBlocked</a>(A, one, idxm, one, idxm, km, <a href="../../../manualpages/Sys/ADD_VALUES.html">ADD_VALUES</a>, ierr))
+<a name="line35"> 35: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Mat/MatAssemblyBegin.html">MatAssemblyBegin</a>(A,<a href="../../../manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>,ierr))
+<a name="line36"> 36: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Mat/MatAssemblyEnd.html">MatAssemblyEnd</a>(A,<a href="../../../manualpages/Mat/MatAssemblyType.html">MAT_FINAL_ASSEMBLY</a>,ierr))
+<a name="line37"> 37: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Mat/MatView.html">MatView</a>(A,<a href="../../../manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>,ierr))
 
 <a name="line39"> 39: </a>      j = 0
-<a name="line40"> 40: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatGetValues.html">MatGetValues</a>(A,one,j,one,j,v,ierr))
+<a name="line40"> 40: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Mat/MatGetValues.html">MatGetValues</a>(A,one,j,one,j,v,ierr))
 
-<a name="line42"> 42: </a>      PetscCallA(<a href="../../../docs/manualpages/Mat/MatDestroy.html">MatDestroy</a>(A,ierr))
+<a name="line42"> 42: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Mat/MatDestroy.html">MatDestroy</a>(A,ierr))
 
 <a name="line44"> 44: </a>      deallocate(km)
-<a name="line45"> 45: </a>      PetscCallA(<a href="../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>(ierr))
+<a name="line45"> 45: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Sys/PetscFinalize.html">PetscFinalize</a>(ierr))
 <a name="line46"> 46: </a>      end
 
 <a name="line48"> 48: </a>!<font color="#B22222">/*TEST</font>

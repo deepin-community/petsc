@@ -11,7 +11,7 @@ static PetscErrorCode KSPSetUp_PIPECR(KSP ksp)
   PetscFunctionBegin;
   /* get work vectors needed by PIPECR */
   PetscCall(KSPSetWorkVecs(ksp, 7));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -70,7 +70,7 @@ static PetscErrorCode KSPSolve_PIPECR(KSP ksp)
   PetscCall(KSPMonitor(ksp, 0, dp));
   ksp->rnorm = dp;
   PetscCall((*ksp->converged)(ksp, 0, dp, &ksp->reason, ksp->cnvP)); /* test for convergence */
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   i = 0;
   do {
@@ -93,7 +93,7 @@ static PetscErrorCode KSPSolve_PIPECR(KSP ksp)
       PetscCall(KSPLogResidualHistory(ksp, dp));
       PetscCall(KSPMonitor(ksp, i, dp));
       PetscCall((*ksp->converged)(ksp, i, dp, &ksp->reason, ksp->cnvP));
-      if (ksp->reason) PetscFunctionReturn(0);
+      if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
     }
 
     if (i == 0) {
@@ -124,19 +124,19 @@ static PetscErrorCode KSPSolve_PIPECR(KSP ksp)
 
   } while (i <= ksp->max_it);
   if (i >= ksp->max_it) ksp->reason = KSP_DIVERGED_ITS;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-   KSPPIPECR - Pipelined conjugate residual method. [](sec_pipelineksp)
+   KSPPIPECR - Pipelined conjugate residual method {cite}`ghyselsvanroose2014`. [](sec_pipelineksp)
 
    Level: intermediate
 
    Notes:
-   This method has only a single non-blocking reduction per iteration, compared to 2 blocking for standard `KSPCR`.  The
+   This method has only a single non-blocking reduction per iteration, compared to 2 for standard `KSPCR`.  The
    non-blocking reduction is overlapped by the matrix-vector product, but not the preconditioner application.
 
-   See also `KSPPIPECG`, where the reduction is only overlapped with the matrix-vector product.
+   See also `KSPPIPECG`, where the reduction is overlapped with the matrix-vector product.
 
    MPI configuration may be necessary for reductions to make asynchronous progress, which is important for performance of pipelined methods.
    See [](doc_faq_pipelined)
@@ -144,11 +144,7 @@ static PetscErrorCode KSPSolve_PIPECR(KSP ksp)
    Contributed by:
    Pieter Ghysels, Universiteit Antwerpen, Intel Exascience lab Flanders
 
-   Reference:
-   P. Ghysels and W. Vanroose, "Hiding global synchronization latency in the preconditioned Conjugate Gradient algorithm",
-   Submitted to Parallel Computing, 2012.
-
-.seealso: [](chapter_ksp), [](sec_pipelineksp), [](doc_faq_pipelined), `KSPCreate()`, `KSPSetType()`, `KSPPIPECG`, `KSPGROPPCG`, `KSPPGMRES`, `KSPCG`, `KSPCGUseSingleReduction()`
+.seealso: [](ch_ksp), [](sec_pipelineksp), [](doc_faq_pipelined), `KSPCreate()`, `KSPSetType()`, `KSPPIPECG`, `KSPGROPPCG`, `KSPPGMRES`, `KSPCG`, `KSPCGUseSingleReduction()`
 M*/
 
 PETSC_EXTERN PetscErrorCode KSPCreate_PIPECR(KSP ksp)
@@ -164,5 +160,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_PIPECR(KSP ksp)
   ksp->ops->setfromoptions = NULL;
   ksp->ops->buildsolution  = KSPBuildSolutionDefault;
   ksp->ops->buildresidual  = KSPBuildResidualDefault;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

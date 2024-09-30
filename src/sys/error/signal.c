@@ -1,4 +1,3 @@
-
 /*
       Routines to handle signals the program will receive.
     Usually this will call the error handlers.
@@ -54,23 +53,25 @@ static void PetscSignalHandler_Private(int sig)
 }
 
 /*@
-   PetscSignalHandlerDefault - Default signal handler.
+  PetscSignalHandlerDefault - Default signal handler.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  sig - signal value
--  ptr - unused pointer
+  Input Parameters:
++ sig - signal value
+- ptr - unused pointer
 
-   Developer Note:
-   This does not call `PetscError()`, handles the entire error process directly
+  Level: advanced
 
-   Level: advanced
+  Developer Note:
+  This does not call `PetscError()`, it handles the entire error process, including possibly printing the traceback, directly
 
+.seealso: [](sec_errors), `PetscPushSignalHandler()`
 @*/
 PetscErrorCode PetscSignalHandlerDefault(int sig, void *ptr)
 {
-  const char *SIGNAME[64];
+  PetscErrorCode ierr;
+  const char    *SIGNAME[64];
 
   if (sig == SIGSEGV) PetscSignalSegvCheckPointerOrMpi();
   SIGNAME[0] = "Unknown signal";
@@ -136,22 +137,24 @@ PetscErrorCode PetscSignalHandlerDefault(int sig, void *ptr)
 #endif
 
   signal(sig, SIG_DFL);
-  PetscSleep(PetscGlobalRank % 4); /* prevent some jumbling of error messages from different ranks */
-  (*PetscErrorPrintf)("------------------------------------------------------------------------\n");
-  if (sig >= 0 && sig <= 20) (*PetscErrorPrintf)("Caught signal number %d %s\n", sig, SIGNAME[sig]);
-  else (*PetscErrorPrintf)("Caught signal\n");
+  ierr = PetscSleep(PetscGlobalRank % 4); /* prevent some jumbling of error messages from different ranks */
+  ierr = (*PetscErrorPrintf)("------------------------------------------------------------------------\n");
+  if (sig >= 0 && sig <= 20) ierr = (*PetscErrorPrintf)("Caught signal number %d %s\n", sig, SIGNAME[sig]);
+  else ierr = (*PetscErrorPrintf)("Caught signal\n");
 
-  (*PetscErrorPrintf)("Try option -start_in_debugger or -on_error_attach_debugger\n");
-  (*PetscErrorPrintf)("or see https://petsc.org/release/faq/#valgrind and https://petsc.org/release/faq/\n");
+  ierr = (*PetscErrorPrintf)("Try option -start_in_debugger or -on_error_attach_debugger\n");
+  ierr = (*PetscErrorPrintf)("or see https://petsc.org/release/faq/#valgrind and https://petsc.org/release/faq/\n");
 #if defined(PETSC_HAVE_CUDA)
-  (*PetscErrorPrintf)("or try https://docs.nvidia.com/cuda/cuda-memcheck/index.html on NVIDIA CUDA systems to find memory corruption errors\n");
+  ierr = (*PetscErrorPrintf)("or try https://docs.nvidia.com/cuda/cuda-memcheck/index.html on NVIDIA CUDA systems to find memory corruption errors\n");
 #endif
 #if PetscDefined(USE_DEBUG)
-  (*PetscErrorPrintf)("---------------------  Stack Frames ------------------------------------\n");
-  PetscStackView(PETSC_STDOUT);
+  #if !PetscDefined(HAVE_THREADSAFETY)
+  ierr = (*PetscErrorPrintf)("---------------------  Stack Frames ------------------------------------\n");
+  ierr = PetscStackView(PETSC_STDOUT);
+  #endif
 #else
-  (*PetscErrorPrintf)("configure using --with-debugging=yes, recompile, link, and run \n");
-  (*PetscErrorPrintf)("to get more information on the crash.\n");
+  ierr = (*PetscErrorPrintf)("configure using --with-debugging=yes, recompile, link, and run \n");
+  ierr = (*PetscErrorPrintf)("to get more information on the crash.\n");
 #endif
 #if !defined(PETSC_MISSING_SIGBUS)
   if (sig == SIGSEGV || sig == SIGBUS) {
@@ -160,13 +163,14 @@ PetscErrorCode PetscSignalHandlerDefault(int sig, void *ptr)
 #endif
     PetscBool debug;
 
-    PetscMallocGetDebug(&debug, NULL, NULL);
-    if (debug) PetscMallocValidate(__LINE__, PETSC_FUNCTION_NAME, __FILE__);
-    else (*PetscErrorPrintf)("Run with -malloc_debug to check if memory corruption is causing the crash.\n");
+    ierr = PetscMallocGetDebug(&debug, NULL, NULL);
+    if (debug) ierr = PetscMallocValidate(__LINE__, PETSC_FUNCTION_NAME, __FILE__);
+    else ierr = (*PetscErrorPrintf)("Run with -malloc_debug to check if memory corruption is causing the crash.\n");
   }
   atexit(MyExit);
-  PETSCABORT(PETSC_COMM_WORLD, (int)PETSC_ERR_SIG);
-  return 0;
+  (void)ierr;
+  PETSCABORT(PETSC_COMM_WORLD, PETSC_ERR_SIG);
+  return PETSC_SUCCESS;
 }
 
 #if !defined(PETSC_SIGNAL_CAST)
@@ -174,18 +178,22 @@ PetscErrorCode PetscSignalHandlerDefault(int sig, void *ptr)
 #endif
 
 /*@C
-   PetscPushSignalHandler - Catches the usual fatal errors and
-   calls a user-provided routine.
+  PetscPushSignalHandler - Catches the usual fatal errors and
+  calls a user-provided routine.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-+  routine - routine to call when a signal is received
--  ctx - optional context needed by the routine
+  Input Parameters:
++ routine - routine to call when a signal is received
+- ctx     - optional context needed by the routine
 
   Level: developer
 
-.seealso: `PetscPopSignalHandler()`, `PetscSignalHandlerDefault()`, `PetscPushErrorHandler()`
+  Note:
+  There is no way to return to a signal handler that was set directly by the user with the UNIX signal handler API or by
+  the loader. That information is lost with the first call to `PetscPushSignalHandler()`
+
+.seealso: [](sec_errors), `PetscPopSignalHandler()`, `PetscSignalHandlerDefault()`, `PetscPushErrorHandler()`
 @*/
 PetscErrorCode PetscPushSignalHandler(PetscErrorCode (*routine)(int, void *), void *ctx)
 {
@@ -215,7 +223,7 @@ PetscErrorCode PetscPushSignalHandler(PetscErrorCode (*routine)(int, void *), vo
       struct sigaction action;
       sigaction(SIGHUP, NULL, &action);
       if (action.sa_handler == SIG_IGN) {
-        PetscCall(PetscInfo(NULL, "SIGHUP previously set to ignore, therefor not changing its signal handler\n"));
+        PetscCall(PetscInfo(NULL, "SIGHUP previously set to ignore, therefore not changing its signal handler\n"));
       } else {
         signal(SIGHUP, PETSC_SIGNAL_CAST PetscSignalHandler_Private);
       }
@@ -241,7 +249,7 @@ PetscErrorCode PetscPushSignalHandler(PetscErrorCode (*routine)(int, void *), vo
 #endif
 #if !defined(PETSC_MISSING_SIGTERM)
   #if !defined(OMPI_MAJOR_VERSION)
-    /* OpenMPI may use SIGTERM to close down all its ranks; we don't want to generate many confusing PETSc error messages in that case */
+    /* Open MPI may use SIGTERM to close down all its ranks; we don't want to generate many confusing PETSc error messages in that case */
     signal(SIGTERM, PETSC_SIGNAL_CAST PetscSignalHandler_Private);
   #endif
 #endif
@@ -325,26 +333,30 @@ PetscErrorCode PetscPushSignalHandler(PetscErrorCode (*routine)(int, void *), vo
   newsh->ctx     = ctx;
   newsh->classid = SIGNAL_CLASSID;
   sh             = newsh;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscPopSignalHandler - Removes the most last signal handler that was pushed.
-       If no signal handlers are left on the stack it will remove the PETSc signal handler.
-       (That is PETSc will no longer catch signals).
+  PetscPopSignalHandler - Removes the last signal handler that was pushed.
+  If no signal handlers are left on the stack it will remove the PETSc signal handler.
+  (That is PETSc will no longer catch signals).
 
-   Not Collective
+  Not Collective
 
   Level: developer
 
-.seealso: `PetscPushSignalHandler()`
+  Note:
+  There is no way to return to a signal handler that was set directly by the user with the UNIX signal handler API or by
+  the loader. That information is lost with the first call to `PetscPushSignalHandler()`
+
+.seealso: [](sec_errors), `PetscPushSignalHandler()`
 @*/
 PetscErrorCode PetscPopSignalHandler(void)
 {
   struct SH *tmp;
 
   PetscFunctionBegin;
-  if (!sh) PetscFunctionReturn(0);
+  if (!sh) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCheck(sh->classid == SIGNAL_CLASSID, PETSC_COMM_SELF, PETSC_ERR_COR, "Signal object has been corrupted");
 
   tmp = sh;
@@ -406,5 +418,5 @@ PetscErrorCode PetscPopSignalHandler(void)
   } else {
     SignalSet = PETSC_TRUE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,140 +1,148 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/classes/viewer/interface/viewers.c">Actual source code: viewers.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/sys/classes/viewer/interface/viewers.c">Actual source code: viewers.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:46:46+00:00">
+<meta name="date" content="2024-03-29T14:12:42+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
 <pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
+<a name="line2">  2: </a>#include <A href="../../../../../include/petsc/private/viewerimpl.h.html">&lt;petsc/private/viewerimpl.h&gt;</A>
 
-<a name="line2">  2: </a>#include <A href="../../../../../include/petscsys.h.html">&lt;petscsys.h&gt;</A>
-<a name="line3">  3: </a>#include <A href="../../../../../include/petsc/private/viewerimpl.h.html">&lt;petsc/private/viewerimpl.h&gt;</A>
+<a name="line4">  4: </a><font color="#4169E1"><a name="_n_PetscViewers"></a>struct _n_PetscViewers </font>{
+<a name="line5">  5: </a>  <a href="../../../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a>     comm;
+<a name="line6">  6: </a>  <a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a> *viewer;
+<a name="line7">  7: </a>  int          n;
+<a name="line8">  8: </a>};
 
-<a name="line5">  5: </a><font color="#4169E1"><a name="_n_PetscViewers"></a>struct _n_PetscViewers </font>{
-<a name="line6">  6: </a>  <a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a>     comm;
-<a name="line7">  7: </a>  <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *viewer;
-<a name="line8">  8: </a>  int          n;
-<a name="line9">  9: </a>};
+<a name="line10"> 10: </a><font color="#B22222">/*@C</font>
+<a name="line11"> 11: </a><font color="#B22222">  <a href="../../../../../manualpages/Viewer/PetscViewersDestroy.html">PetscViewersDestroy</a> - Destroys a set of `<a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a>`s created with `<a href="../../../../../manualpages/Viewer/PetscViewersCreate.html">PetscViewersCreate</a>()`.</font>
 
-<a name="line11"> 11: </a><font color="#B22222">/*@C</font>
-<a name="line12"> 12: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Viewer/PetscViewersDestroy.html">PetscViewersDestroy</a> - Destroys a set of `<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`s created with `<a href="../../../../../docs/manualpages/Viewer/PetscViewersCreate.html">PetscViewersCreate</a>()`.</font>
+<a name="line13"> 13: </a><font color="#B22222">  Collective</font>
 
-<a name="line14"> 14: </a><font color="#B22222">   Collective</font>
+<a name="line15"> 15: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line16"> 16: </a><font color="#B22222">. v - the `<a href="../../../../../manualpages/Viewer/PetscViewers.html">PetscViewers</a>` to be destroyed.</font>
 
-<a name="line16"> 16: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line17"> 17: </a><font color="#B22222">.  v - the `<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`s to be destroyed.</font>
+<a name="line18"> 18: </a><font color="#B22222">  Level: intermediate</font>
 
-<a name="line19"> 19: </a><font color="#B22222">   Level: intermediate</font>
+<a name="line20"> 20: </a><font color="#B22222">.seealso: [](sec_viewers), `<a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a>`, `<a href="../../../../../manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>()`, `<a href="../../../../../manualpages/Viewer/PetscViewers.html">PetscViewers</a>`, `<a href="../../../../../manualpages/Viewer/PetscViewerSocketOpen.html">PetscViewerSocketOpen</a>()`, `<a href="../../../../../manualpages/Viewer/PetscViewerASCIIOpen.html">PetscViewerASCIIOpen</a>()`, `<a href="../../../../../manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>()`, `<a href="../../../../../manualpages/Viewer/PetscViewerDrawOpen.html">PetscViewerDrawOpen</a>()`, `<a href="../../../../../manualpages/Viewer/PetscViewersCreate.html">PetscViewersCreate</a>()`</font>
+<a name="line21"> 21: </a><font color="#B22222">@*/</font>
+<a name="line22"> 22: </a><strong><font color="#4169E1"><a name="PetscViewersDestroy"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/Viewer/PetscViewersDestroy.html">PetscViewersDestroy</a>(<a href="../../../../../manualpages/Viewer/PetscViewers.html">PetscViewers</a> *v)</font></strong>
+<a name="line23"> 23: </a>{
+<a name="line24"> 24: </a>  int i;
 
-<a name="line21"> 21: </a><font color="#B22222">.seealso: [](sec_viewers), `<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`, `<a href="../../../../../docs/manualpages/Viewer/PetscViewerSocketOpen.html">PetscViewerSocketOpen</a>()`, `<a href="../../../../../docs/manualpages/Viewer/PetscViewerASCIIOpen.html">PetscViewerASCIIOpen</a>()`, `<a href="../../../../../docs/manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>()`, `<a href="../../../../../docs/manualpages/Viewer/PetscViewerDrawOpen.html">PetscViewerDrawOpen</a>()`, `<a href="../../../../../docs/manualpages/Viewer/PetscViewersCreate.html">PetscViewersCreate</a>()`</font>
-<a name="line22"> 22: </a><font color="#B22222">@*/</font>
-<a name="line23"> 23: </a><strong><font color="#4169E1"><a name="PetscViewersDestroy"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Viewer/PetscViewersDestroy.html">PetscViewersDestroy</a>(<a href="../../../../../docs/manualpages/Viewer/PetscViewers.html">PetscViewers</a> *v)</font></strong>
-<a name="line24"> 24: </a>{
-<a name="line25"> 25: </a>  int i;
-
-<a name="line27"> 27: </a>  <font color="#4169E1">if</font> (!*v) <font color="#4169E1">return</font> 0;
-<a name="line28"> 28: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; (*v)-&gt;n; i++) <a href="../../../../../docs/manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;(*v)-&gt;viewer[i]);
-<a name="line29"> 29: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>((*v)-&gt;viewer);
-<a name="line30"> 30: </a>  <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(*v);
-<a name="line31"> 31: </a>  <font color="#4169E1">return</font> 0;
+<a name="line26"> 26: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line27"> 27: </a>  <font color="#4169E1">if</font> (!*v) <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line28"> 28: </a>  <font color="#4169E1">for</font> (i = 0; i &lt; (*v)-&gt;n; i++) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Viewer/PetscViewerDestroy.html">PetscViewerDestroy</a>(&amp;(*v)-&gt;viewer[i]));
+<a name="line29"> 29: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscFree.html">PetscFree</a>((*v)-&gt;viewer));
+<a name="line30"> 30: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(*v));
+<a name="line31"> 31: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line32"> 32: </a>}
 
 <a name="line34"> 34: </a><font color="#B22222">/*@C</font>
-<a name="line35"> 35: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Viewer/PetscViewersCreate.html">PetscViewersCreate</a> - Creates a container to hold a set of `<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`s. The container is essentially a sparse, growable in length array of `<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`s</font>
+<a name="line35"> 35: </a><font color="#B22222">  <a href="../../../../../manualpages/Viewer/PetscViewersCreate.html">PetscViewersCreate</a> - Creates a container to hold a set of `<a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a>`'s. The container is essentially a sparse, growable in length array of `<a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a>`s</font>
 
-<a name="line37"> 37: </a><font color="#B22222">   Collective</font>
+<a name="line37"> 37: </a><font color="#B22222">  Collective</font>
 
-<a name="line39"> 39: </a><font color="#B22222">   Input Parameter:</font>
-<a name="line40"> 40: </a><font color="#B22222">.   comm - the MPI communicator</font>
+<a name="line39"> 39: </a><font color="#B22222">  Input Parameter:</font>
+<a name="line40"> 40: </a><font color="#B22222">. comm - the MPI communicator</font>
 
-<a name="line42"> 42: </a><font color="#B22222">   Output Parameter:</font>
-<a name="line43"> 43: </a><font color="#B22222">.  v - the collection of `<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`s</font>
+<a name="line42"> 42: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line43"> 43: </a><font color="#B22222">. v - the collection of `<a href="../../../../../manualpages/Viewer/PetscViewers.html">PetscViewers</a>`</font>
 
-<a name="line45"> 45: </a><font color="#B22222">   Level: intermediate</font>
+<a name="line45"> 45: </a><font color="#B22222">  Level: intermediate</font>
 
-<a name="line47"> 47: </a><font color="#B22222">.seealso: [](sec_viewers), `<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`, `<a href="../../../../../docs/manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>()`, `<a href="../../../../../docs/manualpages/Viewer/PetscViewersDestroy.html">PetscViewersDestroy</a>()`</font>
+<a name="line47"> 47: </a><font color="#B22222">.seealso: [](sec_viewers), `<a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a>`, `<a href="../../../../../manualpages/Viewer/PetscViewers.html">PetscViewers</a>`, `<a href="../../../../../manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>()`, `<a href="../../../../../manualpages/Viewer/PetscViewersDestroy.html">PetscViewersDestroy</a>()`</font>
 <a name="line48"> 48: </a><font color="#B22222">@*/</font>
-<a name="line49"> 49: </a><strong><font color="#4169E1"><a name="PetscViewersCreate"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Viewer/PetscViewersCreate.html">PetscViewersCreate</a>(<a href="../../../../../docs/manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../docs/manualpages/Viewer/PetscViewers.html">PetscViewers</a> *v)</font></strong>
+<a name="line49"> 49: </a><strong><font color="#4169E1"><a name="PetscViewersCreate"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/Viewer/PetscViewersCreate.html">PetscViewersCreate</a>(<a href="../../../../../manualpages/Sys/MPI_Comm.html">MPI_Comm</a> comm, <a href="../../../../../manualpages/Viewer/PetscViewers.html">PetscViewers</a> *v)</font></strong>
 <a name="line50"> 50: </a>{
-<a name="line52"> 52: </a>  <a href="../../../../../docs/manualpages/Sys/PetscNew.html">PetscNew</a>(v);
-<a name="line53"> 53: </a>  (*v)-&gt;n    = 64;
-<a name="line54"> 54: </a>  (*v)-&gt;comm = comm;
+<a name="line51"> 51: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line52"> 52: </a>  PetscAssertPointer(v, 2);
+<a name="line53"> 53: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscNew.html">PetscNew</a>(v));
+<a name="line54"> 54: </a>  (*v)-&gt;n    = 64;
+<a name="line55"> 55: </a>  (*v)-&gt;comm = comm;
 
-<a name="line56"> 56: </a>  <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(64, &amp;(*v)-&gt;viewer);
-<a name="line57"> 57: </a>  <font color="#4169E1">return</font> 0;
-<a name="line58"> 58: </a>}
+<a name="line57"> 57: </a>  <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(64, &amp;(*v)-&gt;viewer));
+<a name="line58"> 58: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line59"> 59: </a>}
 
-<a name="line60"> 60: </a><font color="#B22222">/*@C</font>
-<a name="line61"> 61: </a><font color="#B22222">   <a href="../../../../../docs/manualpages/Viewer/PetscViewersGetViewer.html">PetscViewersGetViewer</a> - Gets a `<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>` from a `<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>` collection</font>
+<a name="line61"> 61: </a><font color="#B22222">/*@C</font>
+<a name="line62"> 62: </a><font color="#B22222">  <a href="../../../../../manualpages/Viewer/PetscViewersGetViewer.html">PetscViewersGetViewer</a> - Gets a `<a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a>` from a `<a href="../../../../../manualpages/Viewer/PetscViewers.html">PetscViewers</a>` collection</font>
 
-<a name="line63"> 63: </a><font color="#B22222">   Not Collective, but the resulting `<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>` will be collective object on viewers</font>
+<a name="line64"> 64: </a><font color="#B22222">  Collective if the viewer has not previously be obtained.</font>
 
-<a name="line65"> 65: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line66"> 66: </a><font color="#B22222">+   viewers - object created with `<a href="../../../../../docs/manualpages/Viewer/PetscViewersCreate.html">PetscViewersCreate</a>()`</font>
-<a name="line67"> 67: </a><font color="#B22222">-   n - number of `<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> `you want</font>
+<a name="line66"> 66: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line67"> 67: </a><font color="#B22222">+ viewers - object created with `<a href="../../../../../manualpages/Viewer/PetscViewersCreate.html">PetscViewersCreate</a>()`</font>
+<a name="line68"> 68: </a><font color="#B22222">- n       - number of `<a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a>` you want</font>
 
-<a name="line69"> 69: </a><font color="#B22222">   Output Parameter:</font>
-<a name="line70"> 70: </a><font color="#B22222">.  viewer - the `<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`</font>
+<a name="line70"> 70: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line71"> 71: </a><font color="#B22222">. viewer - the `<a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a>`</font>
 
-<a name="line72"> 72: </a><font color="#B22222">   Level: intermediate</font>
+<a name="line73"> 73: </a><font color="#B22222">  Level: intermediate</font>
 
-<a name="line74"> 74: </a><font color="#B22222">.seealso: [](sec_viewers), `<a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a>`, `<a href="../../../../../docs/manualpages/Viewer/PetscViewersCreate.html">PetscViewersCreate</a>()`, `<a href="../../../../../docs/manualpages/Viewer/PetscViewersDestroy.html">PetscViewersDestroy</a>()`</font>
-<a name="line75"> 75: </a><font color="#B22222">@*/</font>
-<a name="line76"> 76: </a><strong><font color="#4169E1"><a name="PetscViewersGetViewer"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../docs/manualpages/Viewer/PetscViewersGetViewer.html">PetscViewersGetViewer</a>(<a href="../../../../../docs/manualpages/Viewer/PetscViewers.html">PetscViewers</a> viewers, <a href="../../../../../docs/manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *viewer)</font></strong>
-<a name="line77"> 77: </a>{
-<a name="line81"> 81: </a>  <font color="#4169E1">if</font> (n &gt;= viewers-&gt;n) {
-<a name="line82"> 82: </a>    <a href="../../../../../docs/manualpages/Viewer/PetscViewer.html">PetscViewer</a> *v;
-<a name="line83"> 83: </a>    int          newn = n + 64; <font color="#B22222">/* add 64 new ones at a time */</font>
+<a name="line75"> 75: </a><font color="#B22222">.seealso: [](sec_viewers), `<a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a>`, `<a href="../../../../../manualpages/Viewer/PetscViewers.html">PetscViewers</a>`, `<a href="../../../../../manualpages/Viewer/PetscViewersCreate.html">PetscViewersCreate</a>()`, `<a href="../../../../../manualpages/Viewer/PetscViewersDestroy.html">PetscViewersDestroy</a>()`</font>
+<a name="line76"> 76: </a><font color="#B22222">@*/</font>
+<a name="line77"> 77: </a><strong><font color="#4169E1"><a name="PetscViewersGetViewer"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/Viewer/PetscViewersGetViewer.html">PetscViewersGetViewer</a>(<a href="../../../../../manualpages/Viewer/PetscViewers.html">PetscViewers</a> viewers, <a href="../../../../../manualpages/Sys/PetscInt.html">PetscInt</a> n, <a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a> *viewer)</font></strong>
+<a name="line78"> 78: </a>{
+<a name="line79"> 79: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line80"> 80: </a>  PetscAssertPointer(viewers, 1);
+<a name="line81"> 81: </a>  PetscAssertPointer(viewer, 3);
+<a name="line82"> 82: </a>  <a href="../../../../../manualpages/Sys/PetscCheck.html">PetscCheck</a>(n &gt;= 0, <a href="../../../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_ARG_OUTOFRANGE</a>, <font color="#666666">"Cannot access using a negative index - %"</font> PetscInt_FMT, n);
+<a name="line83"> 83: </a>  <font color="#4169E1">if</font> (n &gt;= viewers-&gt;n) {
+<a name="line84"> 84: </a>    <a href="../../../../../manualpages/Viewer/PetscViewer.html">PetscViewer</a> *v;
+<a name="line85"> 85: </a>    int          newn = n + 64; <font color="#B22222">/* add 64 new ones at a time */</font>
 
-<a name="line85"> 85: </a>    <a href="../../../../../docs/manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(newn, &amp;v);
-<a name="line86"> 86: </a>    <a href="../../../../../docs/manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(v, viewers-&gt;viewer, viewers-&gt;n);
-<a name="line87"> 87: </a>    <a href="../../../../../docs/manualpages/Sys/PetscFree.html">PetscFree</a>(viewers-&gt;viewer);
+<a name="line87"> 87: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscCalloc1.html">PetscCalloc1</a>(newn, &amp;v));
+<a name="line88"> 88: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscArraycpy.html">PetscArraycpy</a>(v, viewers-&gt;viewer, viewers-&gt;n));
+<a name="line89"> 89: </a>    <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Sys/PetscFree.html">PetscFree</a>(viewers-&gt;viewer));
 
-<a name="line89"> 89: </a>    viewers-&gt;viewer = v;
-<a name="line90"> 90: </a>  }
-<a name="line91"> 91: </a>  <font color="#4169E1">if</font> (!viewers-&gt;viewer[n]) <a href="../../../../../docs/manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>(viewers-&gt;comm, &amp;viewers-&gt;viewer[n]);
-<a name="line92"> 92: </a>  *viewer = viewers-&gt;viewer[n];
-<a name="line93"> 93: </a>  <font color="#4169E1">return</font> 0;
-<a name="line94"> 94: </a>}
+<a name="line91"> 91: </a>    viewers-&gt;viewer = v;
+<a name="line92"> 92: </a>  }
+<a name="line93"> 93: </a>  <font color="#4169E1">if</font> (!viewers-&gt;viewer[n]) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../../../manualpages/Viewer/PetscViewerCreate.html">PetscViewerCreate</a>(viewers-&gt;comm, &amp;viewers-&gt;viewer[n]));
+<a name="line94"> 94: </a>  *viewer = viewers-&gt;viewer[n];
+<a name="line95"> 95: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line96"> 96: </a>}
 
-<a name="line96"> 96: </a><font color="#B22222">/*</font>
-<a name="line97"> 97: </a><font color="#B22222">  PetscMonitorCompare - Checks if two monitors are identical; if they are then it destroys the new one</font>
+<a name="line98"> 98: </a><font color="#B22222">/*@C</font>
+<a name="line99"> 99: </a><font color="#B22222">  <a href="../../../../../manualpages/Viewer/PetscMonitorCompare.html">PetscMonitorCompare</a> - Checks if two monitors are identical; if they are then it destroys the new one</font>
 
-<a name="line99"> 99: </a><font color="#B22222">  Not collective</font>
+<a name="line101">101: </a><font color="#B22222">  Not Collective</font>
 
-<a name="line101">101: </a><font color="#B22222">  Input Parameters:</font>
-<a name="line102">102: </a><font color="#B22222">+ nmon      - The new monitor</font>
-<a name="line103">103: </a><font color="#B22222">. nmctx     - The new monitor context, or NULL</font>
-<a name="line104">104: </a><font color="#B22222">. nmdestroy - The new monitor destroy function, or NULL</font>
-<a name="line105">105: </a><font color="#B22222">. mon       - The old monitor</font>
-<a name="line106">106: </a><font color="#B22222">. mctx      - The old monitor context, or NULL</font>
-<a name="line107">107: </a><font color="#B22222">- mdestroy  - The old monitor destroy function, or NULL</font>
+<a name="line103">103: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line104">104: </a><font color="#B22222">+ nmon      - The new monitor</font>
+<a name="line105">105: </a><font color="#B22222">. nmctx     - The new monitor context, or `NULL`</font>
+<a name="line106">106: </a><font color="#B22222">. nmdestroy - The new monitor destroy function, or `NULL`</font>
+<a name="line107">107: </a><font color="#B22222">. mon       - The old monitor</font>
+<a name="line108">108: </a><font color="#B22222">. mctx      - The old monitor context, or `NULL`</font>
+<a name="line109">109: </a><font color="#B22222">- mdestroy  - The old monitor destroy function, or `NULL`</font>
 
-<a name="line109">109: </a><font color="#B22222">  Output Parameter:</font>
-<a name="line110">110: </a><font color="#B22222">. identical - `<a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>` if the monitors are the same</font>
+<a name="line111">111: </a><font color="#B22222">  Output Parameter:</font>
+<a name="line112">112: </a><font color="#B22222">. identical - `<a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>` if the monitors are the same</font>
 
-<a name="line112">112: </a><font color="#B22222">  Level: developer</font>
+<a name="line114">114: </a><font color="#B22222">  Level: developer</font>
 
-<a name="line114">114: </a><font color="#B22222">.seealso: [](sec_viewers), `<a href="../../../../../docs/manualpages/DM/DMMonitorSetFromOptions.html">DMMonitorSetFromOptions</a>()`, `<a href="../../../../../docs/manualpages/KSP/KSPMonitorSetFromOptions.html">KSPMonitorSetFromOptions</a>()`, `<a href="../../../../../docs/manualpages/SNES/SNESMonitorSetFromOptions.html">SNESMonitorSetFromOptions</a>()`</font>
-<a name="line115">115: </a><font color="#B22222">*/</font>
-<a name="line116">116: </a><strong><font color="#4169E1"><a name="PetscMonitorCompare"></a><a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> PetscMonitorCompare(<a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*nmon)(void), void *nmctx, <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*nmdestroy)(void **), <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*mon)(void), void *mctx, <a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*mdestroy)(void **), <a href="../../../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a> *identical)</font></strong>
-<a name="line117">117: </a>{
-<a name="line119">119: </a>  *identical = <a href="../../../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
-<a name="line120">120: </a>  <font color="#4169E1">if</font> (nmon == mon &amp;&amp; nmdestroy == mdestroy) {
-<a name="line121">121: </a>    <font color="#4169E1">if</font> (nmctx == mctx) *identical = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line122">122: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nmdestroy == (<a href="../../../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>(*)(void **))<a href="../../../../../docs/manualpages/Viewer/PetscViewerAndFormatDestroy.html">PetscViewerAndFormatDestroy</a>) {
-<a name="line123">123: </a>      PetscViewerAndFormat *old = (PetscViewerAndFormat *)mctx, *newo = (PetscViewerAndFormat *)nmctx;
-<a name="line124">124: </a>      <font color="#4169E1">if</font> (old-&gt;viewer == newo-&gt;viewer &amp;&amp; old-&gt;format == newo-&gt;format) *identical = <a href="../../../../../docs/manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
-<a name="line125">125: </a>    }
-<a name="line126">126: </a>    <font color="#4169E1">if</font> (*identical) {
-<a name="line127">127: </a>      <font color="#4169E1">if</font> (mdestroy) (*mdestroy)(&amp;nmctx);
+<a name="line116">116: </a><font color="#B22222">.seealso: [](sec_viewers), `<a href="../../../../../manualpages/DM/DMMonitorSetFromOptions.html">DMMonitorSetFromOptions</a>()`, `<a href="../../../../../manualpages/KSP/KSPMonitorSetFromOptions.html">KSPMonitorSetFromOptions</a>()`, `<a href="../../../../../manualpages/SNES/SNESMonitorSetFromOptions.html">SNESMonitorSetFromOptions</a>()`</font>
+<a name="line117">117: </a><font color="#B22222">@*/</font>
+<a name="line118">118: </a><strong><font color="#4169E1"><a name="PetscMonitorCompare"></a><a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../../../manualpages/Viewer/PetscMonitorCompare.html">PetscMonitorCompare</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*nmon)(void), void *nmctx, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*nmdestroy)(void **), <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*mon)(void), void *mctx, <a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> (*mdestroy)(void **), <a href="../../../../../manualpages/Sys/PetscBool.html">PetscBool</a> *identical)</font></strong>
+<a name="line119">119: </a>{
+<a name="line120">120: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line121">121: </a>  PetscAssertPointer(identical, 7);
+<a name="line122">122: </a>  *identical = <a href="../../../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>;
+<a name="line123">123: </a>  <font color="#4169E1">if</font> (nmon == mon &amp;&amp; nmdestroy == mdestroy) {
+<a name="line124">124: </a>    <font color="#4169E1">if</font> (nmctx == mctx) *identical = <a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
+<a name="line125">125: </a>    <font color="#4169E1">else</font> <font color="#4169E1">if</font> (nmdestroy == (<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>(*)(void **))<a href="../../../../../manualpages/Viewer/PetscViewerAndFormatDestroy.html">PetscViewerAndFormatDestroy</a>) {
+<a name="line126">126: </a>      PetscViewerAndFormat *old = (PetscViewerAndFormat *)mctx, *newo = (PetscViewerAndFormat *)nmctx;
+<a name="line127">127: </a>      <font color="#4169E1">if</font> (old-&gt;viewer == newo-&gt;viewer &amp;&amp; old-&gt;format == newo-&gt;format) *identical = <a href="../../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>;
 <a name="line128">128: </a>    }
-<a name="line129">129: </a>  }
-<a name="line130">130: </a>  <font color="#4169E1">return</font> 0;
-<a name="line131">131: </a>}
+<a name="line129">129: </a>    <font color="#4169E1">if</font> (*identical) {
+<a name="line130">130: </a>      <font color="#4169E1">if</font> (mdestroy) <a href="../../../../../manualpages/Sys/PetscCall.html">PetscCall</a>((*mdestroy)(&amp;nmctx));
+<a name="line131">131: </a>    }
+<a name="line132">132: </a>  }
+<a name="line133">133: </a>  <a href="../../../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line134">134: </a>}
 </pre>
 </body>
 

@@ -41,7 +41,7 @@ static PetscErrorCode KSPGuessReset_Fischer(KSPGuess guess)
   itg->last_b       = NULL;
   itg->last_b_state = 0;
   if (itg->last_b_coefs) PetscCall(PetscMemzero(itg->last_b_coefs, sizeof(*itg->last_b_coefs) * itg->maxl));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPGuessSetUp_Fischer(KSPGuess guess)
@@ -56,7 +56,7 @@ static PetscErrorCode KSPGuessSetUp_Fischer(KSPGuess guess)
   if (!itg->guess && (itg->method == 1 || itg->method == 2)) PetscCall(VecDuplicate(itg->xtilde[0], &itg->guess));
   if (!itg->corr && itg->method == 3) PetscCall(PetscCalloc1(itg->maxl * itg->maxl, &itg->corr));
   if (!itg->last_b_coefs && itg->method == 3) PetscCall(PetscCalloc1(itg->maxl, &itg->last_b_coefs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPGuessDestroy_Fischer(KSPGuess guess)
@@ -73,7 +73,7 @@ static PetscErrorCode KSPGuessDestroy_Fischer(KSPGuess guess)
   PetscCall(PetscFree(itg->last_b_coefs));
   PetscCall(PetscFree(itg));
   PetscCall(PetscObjectComposeFunction((PetscObject)guess, "KSPGuessFischerSetModel_C", NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Note: do not change the b right hand side as is done in the publication */
@@ -92,7 +92,7 @@ static PetscErrorCode KSPGuessFormGuess_Fischer_1(KSPGuess guess, Vec b, Vec x)
   }
   PetscCall(VecMAXPY(x, itg->curl, itg->alpha, itg->xtilde));
   PetscCall(VecCopy(x, itg->guess));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPGuessUpdate_Fischer_1(KSPGuess guess, Vec b, Vec x)
@@ -128,7 +128,7 @@ static PetscErrorCode KSPGuessUpdate_Fischer_1(KSPGuess guess, Vec b, Vec x)
       PetscCall(PetscInfo(guess->ksp, "Not increasing dimension of Fischer space because new direction is identical to previous\n"));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -151,7 +151,7 @@ static PetscErrorCode KSPGuessFormGuess_Fischer_2(KSPGuess guess, Vec b, Vec x)
   }
   PetscCall(VecMAXPY(x, itg->curl, itg->alpha, itg->xtilde));
   PetscCall(VecCopy(x, itg->guess));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPGuessUpdate_Fischer_2(KSPGuess guess, Vec b, Vec x)
@@ -187,7 +187,7 @@ static PetscErrorCode KSPGuessUpdate_Fischer_2(KSPGuess guess, Vec b, Vec x)
       PetscCall(PetscInfo(guess->ksp, "Not increasing dimension of Fischer space because new direction is identical to previous\n"));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -276,7 +276,7 @@ static PetscErrorCode KSPGuessFormGuess_Fischer_3(KSPGuess guess, Vec b, Vec x)
     PetscCall(PetscFree4(corr, s_values, work, scratch_vec));
 #endif
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPGuessUpdate_Fischer_3(KSPGuess guess, Vec b, Vec x)
@@ -329,7 +329,7 @@ static PetscErrorCode KSPGuessUpdate_Fischer_3(KSPGuess guess, Vec b, Vec x)
     PetscCall(VecMDot(b, itg->curl, itg->btilde, last_column));
   }
   for (i = 0; i < itg->curl; ++i) itg->corr[i * itg->maxl + itg->curl - 1] = last_column[i];
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPGuessSetFromOptions_Fischer(KSPGuess guess)
@@ -347,7 +347,7 @@ static PetscErrorCode KSPGuessSetFromOptions_Fischer(KSPGuess guess)
   PetscCall(PetscOptionsReal("-ksp_guess_fischer_tol", "Tolerance to determine rank via ratio of singular values", "KSPGuessSetTolerance", ITG->tol, &ITG->tol, NULL));
   PetscCall(PetscOptionsBool("-ksp_guess_fischer_monitor", "Monitor the guess", NULL, ITG->monitor, &ITG->monitor, NULL));
   PetscOptionsEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPGuessSetTolerance_Fischer(KSPGuess guess, PetscReal tol)
@@ -356,7 +356,7 @@ static PetscErrorCode KSPGuessSetTolerance_Fischer(KSPGuess guess, PetscReal tol
 
   PetscFunctionBegin;
   itg->tol = tol;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPGuessView_Fischer(KSPGuess guess, PetscViewer viewer)
@@ -367,25 +367,25 @@ static PetscErrorCode KSPGuessView_Fischer(KSPGuess guess, PetscViewer viewer)
   PetscFunctionBegin;
   PetscCall(PetscObjectTypeCompare((PetscObject)viewer, PETSCVIEWERASCII, &isascii));
   if (isascii) PetscCall(PetscViewerASCIIPrintf(viewer, "Model %" PetscInt_FMT ", size %" PetscInt_FMT "\n", itg->method, itg->maxl));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   KSPGuessFischerSetModel - Use the Paul Fischer algorithm or its variants to compute the initial guess
+  KSPGuessFischerSetModel - Set the Paul Fischer algorithm or its variants to compute the initial guess for a `KSPSolve()`
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  guess - the initial guess context
-.  model - use model 1, model 2, model 3, or any other number to turn it off
--  size  - size of subspace used to generate initial guess
+  Input Parameters:
++ guess - the initial guess context
+. model - use model 1, model 2, model 3, or any other number to turn it off
+- size  - size of subspace used to generate initial guess
 
-    Options Database Key:
-.   -ksp_guess_fischer_model <model,size> - uses the Fischer initial guess generator for repeated linear solves
+  Options Database Key:
+. -ksp_guess_fischer_model <model,size> - uses the Fischer initial guess generator for repeated linear solves
 
-   Level: advanced
+  Level: advanced
 
-.seealso: [](chapter_ksp), `KSPGuess`, `KSPGuessCreate()`, `KSPSetUseFischerGuess()`, `KSPSetGuess()`, `KSPGetGuess()`, `KSP`
+.seealso: [](ch_ksp), `KSPGuess`, `KSPGuessCreate()`, `KSPSetUseFischerGuess()`, `KSPSetGuess()`, `KSPGetGuess()`, `KSP`
 @*/
 PetscErrorCode KSPGuessFischerSetModel(KSPGuess guess, PetscInt model, PetscInt size)
 {
@@ -393,7 +393,7 @@ PetscErrorCode KSPGuessFischerSetModel(KSPGuess guess, PetscInt model, PetscInt 
   PetscValidHeaderSpecific(guess, KSPGUESS_CLASSID, 1);
   PetscValidLogicalCollectiveInt(guess, model, 2);
   PetscTryMethod(guess, "KSPGuessFischerSetModel_C", (KSPGuess, PetscInt, PetscInt), (guess, model, size));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPGuessFischerSetModel_Fischer(KSPGuess guess, PetscInt model, PetscInt size)
@@ -414,7 +414,7 @@ static PetscErrorCode KSPGuessFischerSetModel_Fischer(KSPGuess guess, PetscInt m
     guess->ops->update    = NULL;
     guess->ops->formguess = NULL;
     itg->method           = 0;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (size != itg->maxl) {
     PetscCall(PetscFree(itg->alpha));
@@ -425,46 +425,46 @@ static PetscErrorCode KSPGuessFischerSetModel_Fischer(KSPGuess guess, PetscInt m
   }
   itg->method = model;
   itg->maxl   = size;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-    KSPGUESSFISCHER - Implements Paul Fischer's two initial guess algorithms and a nonorthogonalizing variant for situations where
-    a linear system is solved repeatedly
+/*MC
+    KSPGUESSFISCHER - Implements Paul Fischer's initial guess algorithms {cite}`fischer1998projection`
+    and a non-orthogonalizing variant for situations where a linear system is solved repeatedly
 
-  References:
-. * - https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/19940020363_1994020363.pdf
+    Level: intermediate
 
-   Notes:
-    the algorithm is different from Fischer's paper because we do not CHANGE the right hand side of the new
+    Notes:
+    The algorithm is different from Fischer's paper because we do not CHANGE the right hand side of the new
     problem and solve the problem with an initial guess of zero, rather we solve the original problem
     with a nonzero initial guess (this is done so that the linear solver convergence tests are based on
-    the original RHS). We use the xtilde = x - xguess as the new direction so that it is not
+    the original RHS). We use the $xtilde = x - xguess$ as the new direction so that it is not
     mostly orthogonal to the previous solutions.
 
-    These are not intended to be used directly, they are called by KSP automatically with the command line options -ksp_guess_type fischer -ksp_guess_fischer_model <int,int> or programmatically as
+    These are not intended to be used directly, they are called by `KSPSolve()` automatically with the command
+    line options `-ksp_guess_type fischer` `-ksp_guess_fischer_model <int,int>` or programmatically with
 .vb
     KSPGetGuess(ksp,&guess);
     KSPGuessSetType(guess,KSPGUESSFISCHER);
     KSPGuessFischerSetModel(guess,model,basis);
     KSPGuessSetTolerance(guess,PETSC_MACHINE_EPSILON);
-
-    The default tolerance (which is only used in Method 3) is 32*PETSC_MACHINE_EPSILON. This value was chosen
+.ve
+    The default tolerance (which is only used in Method 3) is 32*`PETSC_MACHINE_EPSILON`. This value was chosen
     empirically by trying a range of tolerances and picking the one that lowered the solver iteration count the most
     with five vectors.
 
-    Method 2 is only for positive definite matrices, since it uses the A norm.
+    Method 2 is only for positive definite matrices, since it uses the energy norm.
 
     Method 3 is not in the original paper. It is the same as the first two methods except that it
     does not orthogonalize the input vectors or use A at all. This choice is faster but provides a
     less effective initial guess for large (about 10) numbers of stored vectors.
 
-    Developer note:
-      The option -ksp_fischer_guess <int,int> is still available for backward compatibility
+    Developer Note:
+    The option `-ksp_fischer_guess <int,int>` is still available for backward compatibility
 
-    Level: intermediate
+.seealso: [](ch_ksp), `KSPGuess`, `KSPGuessType`, `KSP`
+M*/
 
-@*/
 PetscErrorCode KSPGuessCreate_Fischer(KSPGuess guess)
 {
   KSPGuessFischer *fischer;
@@ -486,5 +486,5 @@ PetscErrorCode KSPGuessCreate_Fischer(KSPGuess guess)
   guess->ops->formguess      = KSPGuessFormGuess_Fischer_1;
 
   PetscCall(PetscObjectComposeFunction((PetscObject)guess, "KSPGuessFischerSetModel_C", KSPGuessFischerSetModel_Fischer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

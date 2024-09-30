@@ -29,6 +29,16 @@ extern void PetscRmPointer(void*);
 
 #include "petscmat.h"
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define matproductreplacemats_ MATPRODUCTREPLACEMATS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define matproductreplacemats_ matproductreplacemats
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define matproductsetfromoptions_ MATPRODUCTSETFROMOPTIONS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define matproductsetfromoptions_ matproductsetfromoptions
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define matproductnumeric_ MATPRODUCTNUMERIC
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define matproductnumeric_ matproductnumeric
@@ -42,11 +52,6 @@ extern void PetscRmPointer(void*);
 #define matproductsetfill_ MATPRODUCTSETFILL
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define matproductsetfill_ matproductsetfill
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define matproductsetalgorithm_ MATPRODUCTSETALGORITHM
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define matproductsetalgorithm_ matproductsetalgorithm
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define matproductsettype_ MATPRODUCTSETTYPE
@@ -84,6 +89,19 @@ extern void PetscRmPointer(void*);
 #if defined(__cplusplus)
 extern "C" {
 #endif
+PETSC_EXTERN void  matproductreplacemats_(Mat A,Mat B,Mat C,Mat D, int *__ierr)
+{
+*__ierr = MatProductReplaceMats(
+	(Mat)PetscToPointer((A) ),
+	(Mat)PetscToPointer((B) ),
+	(Mat)PetscToPointer((C) ),
+	(Mat)PetscToPointer((D) ));
+}
+PETSC_EXTERN void  matproductsetfromoptions_(Mat mat, int *__ierr)
+{
+*__ierr = MatProductSetFromOptions(
+	(Mat)PetscToPointer((mat) ));
+}
 PETSC_EXTERN void  matproductnumeric_(Mat mat, int *__ierr)
 {
 *__ierr = MatProductNumeric(
@@ -98,11 +116,6 @@ PETSC_EXTERN void  matproductsetfill_(Mat mat,PetscReal *fill, int *__ierr)
 {
 *__ierr = MatProductSetFill(
 	(Mat)PetscToPointer((mat) ),*fill);
-}
-PETSC_EXTERN void  matproductsetalgorithm_(Mat mat,MatProductAlgorithm *alg, int *__ierr)
-{
-*__ierr = MatProductSetAlgorithm(
-	(Mat)PetscToPointer((mat) ),*alg);
 }
 PETSC_EXTERN void  matproductsettype_(Mat mat,MatProductType *productype, int *__ierr)
 {

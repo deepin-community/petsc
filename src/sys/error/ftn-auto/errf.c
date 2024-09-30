@@ -33,11 +33,6 @@ extern void PetscRmPointer(void*);
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define petscpoperrorhandler_ petscpoperrorhandler
 #endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define petscmpierrorstring_ PETSCMPIERRORSTRING
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define petscmpierrorstring_ petscmpierrorstring
-#endif
 
 
 /* Definitions of Fortran Wrapper routines */
@@ -47,10 +42,6 @@ extern "C" {
 PETSC_EXTERN void  petscpoperrorhandler_(int *__ierr)
 {
 *__ierr = PetscPopErrorHandler();
-}
-PETSC_EXTERN void  petscmpierrorstring_(PetscMPIInt *err,char *string, int *__ierr, int cl0)
-{
-PetscMPIErrorString(*err,string);
 }
 #if defined(__cplusplus)
 }

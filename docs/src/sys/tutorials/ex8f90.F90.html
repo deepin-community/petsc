@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/tutorials/ex8f90.F90">Actual source code: ex8f90.F90</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/sys/tutorials/ex8f90.F90">Actual source code: ex8f90.F90</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:47:09+00:00">
+<meta name="date" content="2024-03-29T14:13:09+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -16,12 +16,12 @@
 <a name="line5">  5: </a>      use petsc
 <a name="line6">  6: </a>      implicit none
 
-<a name="line8">  8: </a>      <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>                            :: ierr
+<a name="line8">  8: </a>      <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>                            :: ierr
 <a name="line9">  9: </a>      Character(len=99) list1(6)
-<a name="line10"> 10: </a>      <a href="../../../docs/manualpages/Sys/PetscEnum.html">PetscEnum</a>                                 :: opt=-1
-<a name="line11"> 11: </a>      <a href="../../../docs/manualpages/Sys/PetscBool.html">PetscBool</a>                                 :: set=<a href="../../../docs/manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>
+<a name="line10"> 10: </a>      <a href="../../../manualpages/Sys/PetscEnum.html">PetscEnum</a>                                 :: opt=-1
+<a name="line11"> 11: </a>      <a href="../../../manualpages/Sys/PetscBool.html">PetscBool</a>                                 :: set=<a href="../../../manualpages/Sys/PETSC_FALSE.html">PETSC_FALSE</a>
 
-<a name="line13"> 13: </a>      PetscCallA(<a href="../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(ierr))
+<a name="line13"> 13: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(ierr))
 <a name="line14"> 14: </a>      list1(1) = 'a123'
 <a name="line15"> 15: </a>      list1(2) = 'b456'
 <a name="line16"> 16: </a>      list1(3) = 'c789'
@@ -31,11 +31,11 @@
 
 <a name="line21"> 21: </a>      write(*,20) list1(1)
 <a name="line22"> 22: </a>20    format(A99)
-<a name="line23"> 23: </a>      PetscCallA(<a href="../../../docs/manualpages/Sys/PetscOptionsGetEnum.html">PetscOptionsGetEnum</a>(PETSC_NULL_OPTIONS,'joe_','-jeff',list1,opt,set,ierr))
+<a name="line23"> 23: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Sys/PetscOptionsGetEnum.html">PetscOptionsGetEnum</a>(PETSC_NULL_OPTIONS,'joe_','-jeff',list1,opt,set,ierr))
 <a name="line24"> 24: </a>      write(*,*) 'opt is ', opt
 <a name="line25"> 25: </a>      write(*,*) 'set is ', set
 
-<a name="line27"> 27: </a>      PetscCallA(<a href="../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>(ierr))
+<a name="line27"> 27: </a>      <a href="../../../manualpages/Sys/PetscCallA.html">PetscCallA</a>(<a href="../../../manualpages/Sys/PetscFinalize.html">PetscFinalize</a>(ierr))
 <a name="line28"> 28: </a>      end
 
 <a name="line30"> 30: </a>!

@@ -1,37 +1,63 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/include/petscdmceed.h">Actual source code: petscdmceed.h</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/include/petscdmceed.h">Actual source code: petscdmceed.h</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:50:03+00:00">
+<meta name="date" content="2024-03-29T14:12:24+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
 <pre width="80">
-<a name="line1">  1: </a><font color="#A020F0">#ifndef PETSCDMCEED_H</font>
-<a name="line2">  2: </a><strong><font color="#228B22">#define PETSCDMCEED_H</font></strong>
+<a name="line1">  1: </a><font color="#A020F0">#pragma once</font>
 
-<a name="line4">  4: </a>#include <A href="petscdm.h.html">&lt;petscdm.h&gt;</A>
+<a name="line3">  3: </a>#include <A href="petscdm.h.html">&lt;petscdm.h&gt;</A>
 
-<a name="line6">  6: </a><font color="#A020F0">#if defined(PETSC_HAVE_LIBCEED)</font>
-<a name="line7">  7: </a><font color="#A020F0">  #include &lt;ceed.h&gt;</font>
+<a name="line5">  5: </a><font color="#A020F0">#if defined(PETSC_HAVE_LIBCEED)</font>
+<a name="line6">  6: </a><font color="#A020F0">  #include &lt;ceed.h&gt;</font>
 
-<a name="line9">  9: </a><font color="#A020F0">  #if defined(PETSC_CLANG_STATIC_ANALYZER)</font>
-<a name="line10"> 10: </a>void <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a>;
-<a name="line11"> 11: </a><font color="#A020F0">  #else</font>
-<a name="line12"> 12: </a><strong><font color="#228B22">    #define PetscCallCEED(...) \</font></strong>
-<a name="line13"> 13: </a><strong><font color="#228B22">      do { \</font></strong>
-<a name="line14"> 14: </a><strong><font color="#228B22">        <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> ierr_ceed_ = __VA_ARGS__; \</font></strong>
-<a name="line16"> 16: </a><strong><font color="#228B22">      } while (0)</font></strong>
-<a name="line17"> 17: </a><font color="#A020F0">  #endif </font><font color="#B22222">/* PETSC_CLANG_STATIC_ANALYZER */</font><font color="#A020F0"></font>
-<a name="line18"> 18: </a><strong><font color="#228B22">  #define CHKERRQ_CEED(...) PetscCallCEED(__VA_ARGS__)</font></strong>
+<a name="line8">  8: </a><font color="#A020F0">  #if defined(PETSC_CLANG_STATIC_ANALYZER)</font>
+<a name="line9">  9: </a><strong><font color="#4169E1">void PetscCallCEED(CeedErrorType)</font></strong>;
+<a name="line10"> 10: </a><font color="#A020F0">  #else</font>
+<a name="line11"> 11: </a><strong><font color="#228B22">    #define PetscCallCEED(...) \</font></strong>
+<a name="line12"> 12: </a><strong><font color="#228B22">      do { \</font></strong>
+<a name="line13"> 13: </a><strong><font color="#228B22">        CeedErrorType ierr_ceed_ = __VA_ARGS__; \</font></strong>
+<a name="line14"> 14: </a><strong><font color="#228B22">        <a href="../manualpages/Sys/PetscCheck.html">PetscCheck</a>(ierr_ceed_ == CEED_ERROR_SUCCESS, <a href="../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, <a href="../manualpages/Sys/PetscErrorCode.html">PETSC_ERR_LIB</a>, </font><font color="#666666">"libCEED error: %s"</font><font color="#228B22">, CeedErrorTypes[ierr_ceed_]); \</font></strong>
+<a name="line15"> 15: </a><strong><font color="#228B22">      } while (0)</font></strong>
+<a name="line16"> 16: </a><font color="#A020F0">  #endif </font><font color="#B22222">/* PETSC_CLANG_STATIC_ANALYZER */</font><font color="#A020F0"></font>
+<a name="line17"> 17: </a><strong><font color="#228B22">  #define CHKERRQ_CEED(...) PetscCallCEED(__VA_ARGS__)</font></strong>
 
-<a name="line20"> 20: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../docs/manualpages/DM/DMGetCeed.html">DMGetCeed</a>(<a href="../docs/manualpages/DM/DM.html">DM</a>, Ceed *)</font></strong>;
+<a name="line19"> 19: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../manualpages/DM/DMGetCeed.html">DMGetCeed</a>(<a href="../manualpages/DM/DM.html">DM</a>, Ceed *)</font></strong>;
 
-<a name="line22"> 22: </a><font color="#A020F0">#endif</font>
+<a name="line21"> 21: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecGetCeedVector(<a href="../manualpages/Vec/Vec.html">Vec</a>, Ceed, CeedVector *)</font></strong>;
+<a name="line22"> 22: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecGetCeedVectorRead(<a href="../manualpages/Vec/Vec.html">Vec</a>, Ceed, CeedVector *)</font></strong>;
+<a name="line23"> 23: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecRestoreCeedVector(<a href="../manualpages/Vec/Vec.html">Vec</a>, CeedVector *)</font></strong>;
+<a name="line24"> 24: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> VecRestoreCeedVectorRead(<a href="../manualpages/Vec/Vec.html">Vec</a>, CeedVector *)</font></strong>;
+<a name="line25"> 25: </a><strong><font color="#4169E1">PETSC_INTERN <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCeedCreate_Internal(<a href="../manualpages/DM/DM.html">DM</a>, <a href="../manualpages/IS/IS.html">IS</a>, <a href="../manualpages/Sys/PetscBool.html">PetscBool</a>, CeedQFunctionUser, const char *, DMCeed *)</font></strong>;
+<a name="line26"> 26: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCeedCreate(<a href="../manualpages/DM/DM.html">DM</a>, <a href="../manualpages/Sys/PetscBool.html">PetscBool</a>, CeedQFunctionUser, const char *)</font></strong>;
 
-<a name="line24"> 24: </a><font color="#A020F0">#endif</font>
+<a name="line28"> 28: </a><font color="#4169E1"><a name="_PETSc_DMCEED"></a>struct _PETSc_DMCEED </font>{
+<a name="line29"> 29: </a>  CeedBasis           basis;      // Basis <font color="#4169E1">for</font> element function space
+<a name="line30"> 30: </a>  CeedElemRestriction er;         // Map from PETSc local vector to element vectors
+<a name="line31"> 31: </a>  CeedQFunctionUser   func;       // Plex Function <font color="#4169E1">for</font> this operator
+<a name="line32"> 32: </a>  char               *funcSource; // Plex Function source as text
+<a name="line33"> 33: </a>  CeedQFunction       qf;         // QFunction expressing the operator action
+<a name="line34"> 34: </a>  CeedOperator        op;         // Operator action <font color="#4169E1">for</font> this object
+<a name="line35"> 35: </a>  DMCeed              geom;       // Operator computing geometric data at quadrature points
+<a name="line36"> 36: </a>  CeedElemRestriction erq;        // Map from PETSc local vector to quadrature points
+<a name="line37"> 37: </a>  CeedVector          qd;         // Geometric data at quadrature points used in calculating the qfunction
+<a name="line38"> 38: </a>};
+
+<a name="line40"> 40: </a><font color="#A020F0">#else</font>
+
+<a name="line42"> 42: </a><font color="#4169E1"><a name="_PETSc_DMCEED"></a>struct _PETSc_DMCEED </font>{
+<a name="line43"> 43: </a>  <a href="../manualpages/Sys/PetscInt.html">PetscInt</a> dummy;
+<a name="line44"> 44: </a>};
+
+<a name="line46"> 46: </a><font color="#A020F0">#endif</font>
+
+<a name="line48"> 48: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCeedComputeGeometry(<a href="../manualpages/DM/DM.html">DM</a>, DMCeed)</font></strong>;
+<a name="line49"> 49: </a><strong><font color="#4169E1">PETSC_EXTERN <a href="../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> DMCeedDestroy(DMCeed *)</font></strong>;
 </pre>
 </body>
 

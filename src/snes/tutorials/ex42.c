@@ -1,4 +1,3 @@
-
 static char help[] = "Newton's method to solve a two-variable system that comes from the Rosenbrock function.\n\n";
 
 /*
@@ -122,6 +121,7 @@ PetscErrorCode FormFunction1(SNES snes, Vec x, Vec f, void *ctx)
   PetscScalar       *ff;
   const PetscScalar *xx;
 
+  PetscFunctionBeginUser;
   /*
     Get pointers to vector data.
     - For default PETSc vectors, VecGetArray() returns a pointer to
@@ -139,7 +139,7 @@ PetscErrorCode FormFunction1(SNES snes, Vec x, Vec f, void *ctx)
   /* Restore vectors */
   PetscCall(VecRestoreArrayRead(x, &xx));
   PetscCall(VecRestoreArray(f, &ff));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -161,6 +161,7 @@ PetscErrorCode FormJacobian1(SNES snes, Vec x, Mat jac, Mat B, void *dummy)
   PetscScalar        A[4];
   PetscInt           idx[2] = {0, 1};
 
+  PetscFunctionBeginUser;
   /*
      Get pointer to vector data
   */
@@ -191,7 +192,7 @@ PetscErrorCode FormJacobian1(SNES snes, Vec x, Mat jac, Mat B, void *dummy)
     PetscCall(MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY));
   }
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

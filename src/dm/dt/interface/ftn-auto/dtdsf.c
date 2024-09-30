@@ -64,6 +64,16 @@ extern void PetscRmPointer(void*);
 #define petscdssetcoordinatedimension_ petscdssetcoordinatedimension
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscdsgetforcequad_ PETSCDSGETFORCEQUAD
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscdsgetforcequad_ petscdsgetforcequad
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscdssetforcequad_ PETSCDSSETFORCEQUAD
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscdssetforcequad_ petscdssetforcequad
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define petscdsiscohesive_ PETSCDSISCOHESIVE
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define petscdsiscohesive_ petscdsiscohesive
@@ -287,6 +297,16 @@ PETSC_EXTERN void  petscdssetcoordinatedimension_(PetscDS prob,PetscInt *dimEmbe
 {
 *__ierr = PetscDSSetCoordinateDimension(
 	(PetscDS)PetscToPointer((prob) ),*dimEmbed);
+}
+PETSC_EXTERN void  petscdsgetforcequad_(PetscDS ds,PetscBool *forceQuad, int *__ierr)
+{
+*__ierr = PetscDSGetForceQuad(
+	(PetscDS)PetscToPointer((ds) ),forceQuad);
+}
+PETSC_EXTERN void  petscdssetforcequad_(PetscDS ds,PetscBool *forceQuad, int *__ierr)
+{
+*__ierr = PetscDSSetForceQuad(
+	(PetscDS)PetscToPointer((ds) ),*forceQuad);
 }
 PETSC_EXTERN void  petscdsiscohesive_(PetscDS ds,PetscBool *isCohesive, int *__ierr)
 {

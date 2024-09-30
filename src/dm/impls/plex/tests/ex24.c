@@ -40,7 +40,7 @@ static PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   }
   PetscCall(PetscOptionsBool("-tpweight", "Use target partition weights", FILENAME, options->tpw, &options->tpw, NULL));
   PetscOptionsEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode ScotchResetRandomSeed()
@@ -49,7 +49,7 @@ static PetscErrorCode ScotchResetRandomSeed()
 #if defined(PETSC_HAVE_PTSCOTCH)
   SCOTCH_randomReset();
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *user, DM *dm)
@@ -60,7 +60,7 @@ static PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *user, DM *dm)
   PetscCall(DMPlexDistributeSetDefault(*dm, PETSC_FALSE));
   PetscCall(DMSetFromOptions(*dm));
   PetscCall(DMViewFromOptions(*dm, NULL, "-dm_view"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -87,13 +87,17 @@ int main(int argc, char **argv)
   PetscCall(CreateMesh(comm, &user, &dm2));
 
   if (user.tpw) {
+    PetscBool isscotch;
+
     PetscCall(PetscSectionCreate(comm, &tpws));
     PetscCall(PetscSectionSetChart(tpws, 0, size));
     for (i = 0; i < size; i++) {
       PetscInt tdof = i % 2 ? 2 * i - 1 : i + 2;
       PetscCall(PetscSectionSetDof(tpws, i, tdof));
     }
-    if (size > 1) { /* test zero tpw entry */
+    // PTScotch cannot have a zero partition weight
+    PetscCall(PetscStrncmp(user.partitioning, PETSCPARTITIONERPTSCOTCH, sizeof(PETSCPARTITIONERPTSCOTCH), &isscotch));
+    if (!isscotch && size > 1) { /* test zero tpw entry */
       PetscCall(PetscSectionSetDof(tpws, 0, 0));
     }
     PetscCall(PetscSectionSetUp(tpws));

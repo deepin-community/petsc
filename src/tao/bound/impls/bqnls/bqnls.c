@@ -16,7 +16,7 @@ static PetscErrorCode TaoBQNLSComputeHessian(Tao tao)
   else delta = 2.0 * PetscAbsScalar(bnk->f) / gnorm2;
   PetscCall(MatLMVMSymBroydenSetDelta(bqnk->B, delta));
   PetscCall(MatLMVMUpdate(bqnk->B, tao->solution, bnk->unprojected_gradient));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoBQNLSComputeStep(Tao tao, PetscBool shift, KSPConvergedReason *ksp_reason, PetscInt *step_type)
@@ -33,7 +33,7 @@ static PetscErrorCode TaoBQNLSComputeStep(Tao tao, PetscBool shift, KSPConverged
   PetscCall(MatLMVMGetUpdateCount(bqnk->B, &nupdates));
   if (nupdates == 0) *step_type = BNK_SCALED_GRADIENT;
   else *step_type = BNK_BFGS;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoSetFromOptions_BQNLS(Tao tao, PetscOptionItems *PetscOptionsObject)
@@ -60,7 +60,7 @@ static PetscErrorCode TaoSetFromOptions_BQNLS(Tao tao, PetscOptionItems *PetscOp
   PetscCall(MatSetFromOptions(bqnk->B));
   PetscCall(MatIsSPDKnown(bqnk->B, &is_set, &is_spd));
   PetscCheck(is_set && is_spd, PetscObjectComm((PetscObject)tao), PETSC_ERR_ARG_INCOMP, "LMVM matrix must be symmetric positive-definite");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -69,7 +69,7 @@ static PetscErrorCode TaoSetFromOptions_BQNLS(Tao tao, PetscOptionItems *PetscOp
              limited memory quasi-Newton formula. The quasi-Newton matrix and its options are
              accessible via the prefix `-tao_bqnls_`
 
-  Option Database Keys:
+  Options Database Keys:
 + -tao_bnk_max_cg_its - maximum number of bounded conjugate-gradient iterations taken in each Newton loop
 . -tao_bnk_as_type - active-set estimation method ("none", "bertsekas")
 . -tao_bnk_epsilon - (developer) tolerance for small pred/actual ratios that trigger automatic step acceptance
@@ -77,6 +77,7 @@ static PetscErrorCode TaoSetFromOptions_BQNLS(Tao tao, PetscOptionItems *PetscOp
 - -tao_bnk_as_step - (developer) trial step length used in estimating bounded active variables (-as_type bertsekas)
 
   Level: beginner
+
 .seealso: `TAOBNK`
 M*/
 PETSC_EXTERN PetscErrorCode TaoCreate_BQNLS(Tao tao)
@@ -96,5 +97,5 @@ PETSC_EXTERN PetscErrorCode TaoCreate_BQNLS(Tao tao)
   bqnk        = (TAO_BQNK *)bnk->ctx;
   bqnk->solve = TaoSolve_BNLS;
   PetscCall(MatSetType(bqnk->B, MATLMVMBFGS));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

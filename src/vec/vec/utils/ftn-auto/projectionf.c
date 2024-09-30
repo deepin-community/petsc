@@ -134,7 +134,6 @@ PETSC_EXTERN void  vecwhichbetween_(Vec VecLow,Vec V,Vec VecHigh,IS *S, int *__i
 	(Vec)PetscToPointer((V) ),
 	(Vec)PetscToPointer((VecHigh) ),S);
 }
-
 PETSC_EXTERN void  vecwhichbetweenorequal_(Vec VecLow,Vec V,Vec VecHigh,IS *S, int *__ierr)
 {
 *__ierr = VecWhichBetweenOrEqual(
@@ -142,7 +141,6 @@ PETSC_EXTERN void  vecwhichbetweenorequal_(Vec VecLow,Vec V,Vec VecHigh,IS *S, i
 	(Vec)PetscToPointer((V) ),
 	(Vec)PetscToPointer((VecHigh) ),S);
 }
-
 PETSC_EXTERN void  vecwhichinactive_(Vec VecLow,Vec V,Vec D,Vec VecHigh,PetscBool *Strong,IS *S, int *__ierr)
 {
 *__ierr = VecWhichInactive(

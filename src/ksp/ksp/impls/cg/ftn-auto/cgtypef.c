@@ -44,6 +44,11 @@ extern void PetscRmPointer(void*);
 #define kspcgsetradius_ kspcgsetradius
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define kspcgsetobjectivetarget_ KSPCGSETOBJECTIVETARGET
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define kspcgsetobjectivetarget_ kspcgsetobjectivetarget
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define kspcggetnormd_ KSPCGGETNORMD
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define kspcggetnormd_ kspcggetnormd
@@ -73,6 +78,11 @@ PETSC_EXTERN void  kspcgsetradius_(KSP ksp,PetscReal *radius, int *__ierr)
 {
 *__ierr = KSPCGSetRadius(
 	(KSP)PetscToPointer((ksp) ),*radius);
+}
+PETSC_EXTERN void  kspcgsetobjectivetarget_(KSP ksp,PetscReal *obj, int *__ierr)
+{
+*__ierr = KSPCGSetObjectiveTarget(
+	(KSP)PetscToPointer((ksp) ),*obj);
 }
 PETSC_EXTERN void  kspcggetnormd_(KSP ksp,PetscReal *norm_d, int *__ierr)
 {

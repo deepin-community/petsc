@@ -55,7 +55,7 @@ static PetscErrorCode TSAlpha_StageTime(TS ts)
   th->shift_V    = Gamma / (dt * Beta);
   th->shift_A    = Alpha_m / (Alpha_f * dt * dt * Beta);
   th->scale_F    = 1 / Alpha_f;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSAlpha_StageVecs(TS ts, Vec X)
@@ -87,7 +87,7 @@ static PetscErrorCode TSAlpha_StageVecs(TS ts, Vec X)
   /* Aa = A0 + Alpha_m*(A1-A0) */
   PetscCall(VecWAXPY(Aa, -1.0, A0, A1));
   PetscCall(VecAYPX(Aa, Alpha_m, A0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSAlpha_SNESSolve(TS ts, Vec b, Vec x)
@@ -100,7 +100,7 @@ static PetscErrorCode TSAlpha_SNESSolve(TS ts, Vec b, Vec x)
   PetscCall(SNESGetLinearSolveIterations(ts->snes, &lits));
   ts->snes_its += nits;
   ts->ksp_its += lits;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -185,7 +185,7 @@ finally:
 
   PetscCall(VecDestroy(&X1));
   PetscCall(VecDestroy(&V1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSStep_Alpha(TS ts)
@@ -245,7 +245,7 @@ static PetscErrorCode TSStep_Alpha(TS ts)
       PetscCall(PetscInfo(ts, "Step=%" PetscInt_FMT ", step rejections %" PetscInt_FMT " greater than current TS allowed, stopping solve\n", ts->steps, rejections));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSEvaluateWLTE_Alpha(TS ts, NormType wnormtype, PetscInt *order, PetscReal *wlte)
@@ -260,19 +260,19 @@ static PetscErrorCode TSEvaluateWLTE_Alpha(TS ts, NormType wnormtype, PetscInt *
   PetscFunctionBegin;
   if (!th->vec_sol_prev) {
     *wlte = -1;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (!th->vec_dot_prev) {
     *wlte = -1;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (!th->vec_lte_work[0]) {
     *wlte = -1;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (!th->vec_lte_work[1]) {
     *wlte = -1;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (ts->steprestart) {
     /* th->vec_lte_prev is set to the LTE in TSAlpha_Restart() */
@@ -304,7 +304,7 @@ static PetscErrorCode TSEvaluateWLTE_Alpha(TS ts, NormType wnormtype, PetscInt *
   if (wnormtype == NORM_2) *wlte = PetscSqrtReal(PetscSqr(enormX) / 2 + PetscSqr(enormV) / 2);
   else *wlte = PetscMax(enormX, enormV);
   if (order) *order = 2;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSRollBack_Alpha(TS ts)
@@ -314,7 +314,7 @@ static PetscErrorCode TSRollBack_Alpha(TS ts)
   PetscFunctionBegin;
   PetscCall(VecCopy(th->X0, ts->vec_sol));
   PetscCall(VecCopy(th->V0, ts->vec_dot));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -331,7 +331,7 @@ static PetscErrorCode TSInterpolate_Alpha(TS ts,PetscReal t,Vec X,Vec V)
   PetscCall(VecAXPY(X,dt,V));
   PetscCall(VecAXPY(X,dt*dt*((PetscReal)0.5-th->Beta),th->A0));
   PetscCall(VecAXPY(X,dt*dt*th->Beta,th->A1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 */
 
@@ -346,7 +346,7 @@ static PetscErrorCode SNESTSFormFunction_Alpha(PETSC_UNUSED SNES snes, Vec X, Ve
   /* F = Function(ta,Xa,Va,Aa) */
   PetscCall(TSComputeI2Function(ts, ta, Xa, Va, Aa, F));
   PetscCall(VecScale(F, th->scale_F));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESTSFormJacobian_Alpha(PETSC_UNUSED SNES snes, PETSC_UNUSED Vec X, Mat J, Mat P, TS ts)
@@ -359,7 +359,7 @@ static PetscErrorCode SNESTSFormJacobian_Alpha(PETSC_UNUSED SNES snes, PETSC_UNU
   PetscFunctionBegin;
   /* J,P = Jacobian(ta,Xa,Va,Aa) */
   PetscCall(TSComputeI2Jacobian(ts, ta, Xa, Va, Aa, dVdX, dAdX, J, P));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSReset_Alpha(TS ts)
@@ -380,7 +380,7 @@ static PetscErrorCode TSReset_Alpha(TS ts)
   PetscCall(VecDestroy(&th->vec_dot_prev));
   PetscCall(VecDestroy(&th->vec_lte_work[0]));
   PetscCall(VecDestroy(&th->vec_lte_work[1]));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSDestroy_Alpha(TS ts)
@@ -392,7 +392,7 @@ static PetscErrorCode TSDestroy_Alpha(TS ts)
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSAlpha2SetRadius_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSAlpha2SetParams_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSAlpha2GetParams_C", NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSSetUp_Alpha(TS ts)
@@ -422,7 +422,7 @@ static PetscErrorCode TSSetUp_Alpha(TS ts)
   }
 
   PetscCall(TSGetSNES(ts, &ts->snes));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSSetFromOptions_Alpha(TS ts, PetscOptionItems *PetscOptionsObject)
@@ -443,7 +443,7 @@ static PetscErrorCode TSSetFromOptions_Alpha(TS ts, PetscOptionItems *PetscOptio
     PetscCall(TSAlpha2SetParams(ts, th->Alpha_m, th->Alpha_f, th->Gamma, th->Beta));
   }
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSView_Alpha(TS ts, PetscViewer viewer)
@@ -454,7 +454,7 @@ static PetscErrorCode TSView_Alpha(TS ts, PetscViewer viewer)
   PetscFunctionBegin;
   PetscCall(PetscObjectTypeCompare((PetscObject)viewer, PETSCVIEWERASCII, &iascii));
   if (iascii) PetscCall(PetscViewerASCIIPrintf(viewer, "  Alpha_m=%g, Alpha_f=%g, Gamma=%g, Beta=%g\n", (double)th->Alpha_m, (double)th->Alpha_f, (double)th->Gamma, (double)th->Beta));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSAlpha2SetRadius_Alpha(TS ts, PetscReal radius)
@@ -469,7 +469,7 @@ static PetscErrorCode TSAlpha2SetRadius_Alpha(TS ts, PetscReal radius)
   beta    = (PetscReal)0.5 * (1 + alpha_m - alpha_f);
   beta *= beta;
   PetscCall(TSAlpha2SetParams(ts, alpha_m, alpha_f, gamma, beta));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSAlpha2SetParams_Alpha(TS ts, PetscReal alpha_m, PetscReal alpha_f, PetscReal gamma, PetscReal beta)
@@ -484,7 +484,7 @@ static PetscErrorCode TSAlpha2SetParams_Alpha(TS ts, PetscReal alpha_m, PetscRea
   th->Gamma   = gamma;
   th->Beta    = beta;
   th->order   = (PetscAbsReal(res) < tol) ? 2 : 1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSAlpha2GetParams_Alpha(TS ts, PetscReal *alpha_m, PetscReal *alpha_f, PetscReal *gamma, PetscReal *beta)
@@ -496,21 +496,15 @@ static PetscErrorCode TSAlpha2GetParams_Alpha(TS ts, PetscReal *alpha_m, PetscRe
   if (alpha_f) *alpha_f = th->Alpha_f;
   if (gamma) *gamma = th->Gamma;
   if (beta) *beta = th->Beta;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-      TSALPHA2 - ODE/DAE solver using the implicit Generalized-Alpha method
-                 for second-order systems
+  TSALPHA2 - ODE/DAE solver using the implicit Generalized-Alpha method for second-order systems {cite}`chung1993`
 
   Level: beginner
 
-  References:
-. * - J. Chung, G.M.Hubert. "A Time Integration Algorithm for Structural
-  Dynamics with Improved Numerical Dissipation: The Generalized-alpha
-  Method" ASME Journal of Applied Mechanics, 60, 371:375, 1993.
-
-.seealso: [](chapter_ts), `TS`, `TSCreate()`, `TSSetType()`, `TSAlpha2SetRadius()`, `TSAlpha2SetParams()`
+.seealso: [](ch_ts), `TS`, `TSCreate()`, `TSSetType()`, `TSAlpha2SetRadius()`, `TSAlpha2SetParams()`
 M*/
 PETSC_EXTERN PetscErrorCode TSCreate_Alpha2(TS ts)
 {
@@ -544,32 +538,38 @@ PETSC_EXTERN PetscErrorCode TSCreate_Alpha2(TS ts)
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSAlpha2SetRadius_C", TSAlpha2SetRadius_Alpha));
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSAlpha2SetParams_C", TSAlpha2SetParams_Alpha));
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSAlpha2GetParams_C", TSAlpha2GetParams_Alpha));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   TSAlpha2SetRadius - sets the desired spectral radius of the method for `TSALPHA2`
-                      (i.e. high-frequency numerical damping)
+  (i.e. high-frequency numerical damping)
 
   Logically Collective
 
-  The algorithmic parameters \alpha_m and \alpha_f of the
-  generalized-\alpha method can be computed in terms of a specified
-  spectral radius \rho in [0,1] for infinite time step in order to
-  control high-frequency numerical damping:
-    \alpha_m = (2-\rho)/(1+\rho)
-    \alpha_f = 1/(1+\rho)
-
   Input Parameters:
-+  ts - timestepping context
--  radius - the desired spectral radius
++ ts     - timestepping context
+- radius - the desired spectral radius
 
   Options Database Key:
-.  -ts_alpha_radius <radius> - set the desired spectral radius
+. -ts_alpha_radius <radius> - set the desired spectral radius
 
   Level: intermediate
 
-.seealso: [](chapter_ts), `TS`, `TSALPHA2`, `TSAlpha2SetParams()`, `TSAlpha2GetParams()`
+  Notes:
+
+  The algorithmic parameters $\alpha_m$ and $\alpha_f$ of the generalized-$\alpha$ method can
+  be computed in terms of a specified spectral radius $\rho$ in `[0, 1]` for infinite time step
+  in order to control high-frequency numerical damping\:
+
+  $$
+  \begin{align*}
+  \alpha_m = (2-\rho)/(1+\rho) \\
+  \alpha_f = 1/(1+\rho)
+  \end{align*}
+  $$
+
+.seealso: [](ch_ts), `TS`, `TSALPHA2`, `TSAlpha2SetParams()`, `TSAlpha2GetParams()`
 @*/
 PetscErrorCode TSAlpha2SetRadius(TS ts, PetscReal radius)
 {
@@ -578,7 +578,7 @@ PetscErrorCode TSAlpha2SetRadius(TS ts, PetscReal radius)
   PetscValidLogicalCollectiveReal(ts, radius, 2);
   PetscCheck(radius >= 0 && radius <= 1, ((PetscObject)ts)->comm, PETSC_ERR_ARG_OUTOFRANGE, "Radius %g not in range [0,1]", (double)radius);
   PetscTryMethod(ts, "TSAlpha2SetRadius_C", (TS, PetscReal), (ts, radius));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -586,36 +586,42 @@ PetscErrorCode TSAlpha2SetRadius(TS ts, PetscReal radius)
 
   Logically Collective
 
-  Second-order accuracy can be obtained so long as:
-    \gamma = 1/2 + alpha_m - alpha_f
-    \beta  = 1/4 (1 + alpha_m - alpha_f)^2
-
-  Unconditional stability requires:
-    \alpha_m >= \alpha_f >= 1/2
-
   Input Parameters:
-+ ts - timestepping context
-. \alpha_m - algorithmic parameter
-. \alpha_f - algorithmic parameter
-. \gamma   - algorithmic parameter
-- \beta    - algorithmic parameter
++ ts      - timestepping context
+. alpha_m - algorithmic parameter
+. alpha_f - algorithmic parameter
+. gamma   - algorithmic parameter
+- beta    - algorithmic parameter
 
   Options Database Keys:
 + -ts_alpha_alpha_m <alpha_m> - set alpha_m
 . -ts_alpha_alpha_f <alpha_f> - set alpha_f
-. -ts_alpha_gamma   <gamma> - set gamma
-- -ts_alpha_beta    <beta> - set beta
+. -ts_alpha_gamma   <gamma>   - set gamma
+- -ts_alpha_beta    <beta>    - set beta
 
   Level: advanced
 
-  Note:
-  Use of this function is normally only required to hack `TSALPHA2` to
-  use a modified integration scheme. Users should call
-  `TSAlpha2SetRadius()` to set the desired spectral radius of the methods
-  (i.e. high-frequency damping) in order so select optimal values for
+  Notes:
+  Second-order accuracy can be obtained so long as\:
+
+  $$
+  \begin{align*}
+  \gamma = 1/2 + \alpha_m - \alpha_f \\
+  \beta  = 1/4 (1 + \alpha_m - \alpha_f)^2.
+  \end{align*}
+  $$
+
+  Unconditional stability requires\:
+  $$
+  \alpha_m >= \alpha_f >= 1/2.
+  $$
+
+  Use of this function is normally only required to hack `TSALPHA2` to use a modified
+  integration scheme. Users should call `TSAlpha2SetRadius()` to set the desired spectral
+  radius of the methods (i.e. high-frequency damping) in order so select optimal values for
   these parameters.
 
-.seealso: [](chapter_ts), `TS`, `TSALPHA2`, `TSAlpha2SetRadius()`, `TSAlpha2GetParams()`
+.seealso: [](ch_ts), `TS`, `TSALPHA2`, `TSAlpha2SetRadius()`, `TSAlpha2GetParams()`
 @*/
 PetscErrorCode TSAlpha2SetParams(TS ts, PetscReal alpha_m, PetscReal alpha_f, PetscReal gamma, PetscReal beta)
 {
@@ -626,7 +632,7 @@ PetscErrorCode TSAlpha2SetParams(TS ts, PetscReal alpha_m, PetscReal alpha_f, Pe
   PetscValidLogicalCollectiveReal(ts, gamma, 4);
   PetscValidLogicalCollectiveReal(ts, beta, 5);
   PetscTryMethod(ts, "TSAlpha2SetParams_C", (TS, PetscReal, PetscReal, PetscReal, PetscReal), (ts, alpha_m, alpha_f, gamma, beta));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -638,30 +644,28 @@ PetscErrorCode TSAlpha2SetParams(TS ts, PetscReal alpha_m, PetscReal alpha_f, Pe
 . ts - timestepping context
 
   Output Parameters:
-+ \alpha_m - algorithmic parameter
-. \alpha_f - algorithmic parameter
-. \gamma   - algorithmic parameter
-- \beta    - algorithmic parameter
++ alpha_m - algorithmic parameter
+. alpha_f - algorithmic parameter
+. gamma   - algorithmic parameter
+- beta    - algorithmic parameter
 
   Level: advanced
 
   Note:
-  Use of this function is normally only required to hack `TSALPHA2` to
-  use a modified integration scheme. Users should call
-  `TSAlpha2SetRadius()` to set the high-frequency damping (i.e. spectral
-  radius of the method) in order so select optimal values for these
-  parameters.
+  Use of this function is normally only required to hack `TSALPHA2` to use a modified
+  integration scheme. Users should call `TSAlpha2SetRadius()` to set the high-frequency damping
+  (i.e. spectral radius of the method) in order so select optimal values for these parameters.
 
-.seealso: [](chapter_ts), `TS`, `TSALPHA2`, `TSAlpha2SetRadius()`, `TSAlpha2SetParams()`
+.seealso: [](ch_ts), `TS`, `TSALPHA2`, `TSAlpha2SetRadius()`, `TSAlpha2SetParams()`
 @*/
 PetscErrorCode TSAlpha2GetParams(TS ts, PetscReal *alpha_m, PetscReal *alpha_f, PetscReal *gamma, PetscReal *beta)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts, TS_CLASSID, 1);
-  if (alpha_m) PetscValidRealPointer(alpha_m, 2);
-  if (alpha_f) PetscValidRealPointer(alpha_f, 3);
-  if (gamma) PetscValidRealPointer(gamma, 4);
-  if (beta) PetscValidRealPointer(beta, 5);
+  if (alpha_m) PetscAssertPointer(alpha_m, 2);
+  if (alpha_f) PetscAssertPointer(alpha_f, 3);
+  if (gamma) PetscAssertPointer(gamma, 4);
+  if (beta) PetscAssertPointer(beta, 5);
   PetscUseMethod(ts, "TSAlpha2GetParams_C", (TS, PetscReal *, PetscReal *, PetscReal *, PetscReal *), (ts, alpha_m, alpha_f, gamma, beta));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

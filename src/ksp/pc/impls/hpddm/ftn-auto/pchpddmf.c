@@ -29,11 +29,6 @@ extern void PetscRmPointer(void*);
 
 #include "petscpc.h"
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define pchpddmsetauxiliarymat_ PCHPDDMSETAUXILIARYMAT
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define pchpddmsetauxiliarymat_ pchpddmsetauxiliarymat
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define pchpddmhasneumannmat_ PCHPDDMHASNEUMANNMAT
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define pchpddmhasneumannmat_ pchpddmhasneumannmat
@@ -54,6 +49,11 @@ extern void PetscRmPointer(void*);
 #define pchpddmgetcoarsecorrectiontype_ pchpddmgetcoarsecorrectiontype
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pchpddmsetstsharesubksp_ PCHPDDMSETSTSHARESUBKSP
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pchpddmsetstsharesubksp_ pchpddmsetstsharesubksp
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define pchpddmgetstsharesubksp_ PCHPDDMGETSTSHARESUBKSP
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define pchpddmgetstsharesubksp_ pchpddmgetstsharesubksp
@@ -69,13 +69,6 @@ extern void PetscRmPointer(void*);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-PETSC_EXTERN void  pchpddmsetauxiliarymat_(PC pc,IS is,Mat A,PetscErrorCode (*setup)(Mat, PetscReal, Vec, Vec, PetscReal, IS, void *),void*setup_ctx, int *__ierr)
-{
-*__ierr = PCHPDDMSetAuxiliaryMat(
-	(PC)PetscToPointer((pc) ),
-	(IS)PetscToPointer((is) ),
-	(Mat)PetscToPointer((A) ),setup,setup_ctx);
-}
 PETSC_EXTERN void  pchpddmhasneumannmat_(PC pc,PetscBool *has, int *__ierr)
 {
 *__ierr = PCHPDDMHasNeumannMat(
@@ -96,6 +89,11 @@ PETSC_EXTERN void  pchpddmgetcoarsecorrectiontype_(PC pc,PCHPDDMCoarseCorrection
 {
 *__ierr = PCHPDDMGetCoarseCorrectionType(
 	(PC)PetscToPointer((pc) ),type);
+}
+PETSC_EXTERN void  pchpddmsetstsharesubksp_(PC pc,PetscBool *share, int *__ierr)
+{
+*__ierr = PCHPDDMSetSTShareSubKSP(
+	(PC)PetscToPointer((pc) ),*share);
 }
 PETSC_EXTERN void  pchpddmgetstsharesubksp_(PC pc,PetscBool *share, int *__ierr)
 {

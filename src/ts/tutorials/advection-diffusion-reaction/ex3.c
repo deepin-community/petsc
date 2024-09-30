@@ -1,4 +1,3 @@
-
 static char help[] = "Model Equations for Advection-Diffusion\n";
 
 /*
@@ -159,6 +158,7 @@ PetscErrorCode InitialConditions(TS ts, Vec U, AppCtx *appctx)
   PetscInt     i, mstart, mend, xm, M;
   DM           da;
 
+  PetscFunctionBeginUser;
   PetscCall(TSGetDM(ts, &da));
   PetscCall(DMDAGetCorners(da, &mstart, 0, 0, &xm, 0, 0));
   PetscCall(DMDAGetInfo(da, PETSC_IGNORE, &M, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
@@ -186,7 +186,7 @@ PetscErrorCode InitialConditions(TS ts, Vec U, AppCtx *appctx)
      Restore vector
   */
   PetscCall(DMDAVecRestoreArray(da, U, &u));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------------------------------------------------------- */
 /*
@@ -206,6 +206,7 @@ PetscErrorCode Solution(TS ts, PetscReal t, Vec U, AppCtx *appctx)
   PetscInt     i, mstart, mend, xm, M;
   DM           da;
 
+  PetscFunctionBeginUser;
   PetscCall(TSGetDM(ts, &da));
   PetscCall(DMDAGetCorners(da, &mstart, 0, 0, &xm, 0, 0));
   PetscCall(DMDAGetInfo(da, PETSC_IGNORE, &M, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
@@ -230,7 +231,7 @@ PetscErrorCode Solution(TS ts, PetscReal t, Vec U, AppCtx *appctx)
      Restore vector
   */
   PetscCall(DMDAVecRestoreArray(da, U, &u));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */
@@ -262,6 +263,7 @@ PetscErrorCode RHSMatrixHeat(TS ts, PetscReal t, Vec U, Mat AA, Mat BB, void *ct
   PetscScalar v[3], h;
   DM          da;
 
+  PetscFunctionBeginUser;
   PetscCall(TSGetDM(ts, &da));
   PetscCall(DMDAGetInfo(da, 0, &M, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
   PetscCall(DMDAGetCorners(da, &mstart, 0, 0, &xm, 0, 0));
@@ -374,7 +376,7 @@ PetscErrorCode RHSMatrixHeat(TS ts, PetscReal t, Vec U, Mat AA, Mat BB, void *ct
      to the matrix. If we do, it will generate an error.
   */
   PetscCall(MatSetOption(A, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

@@ -1,14 +1,11 @@
 /*
-
     PETSc mathematics include file. Defines certain basic mathematical
     constants and functions for working with single, double, and quad precision
     floating point numbers as well as complex single and double.
 
     This file is included by petscsys.h and should not be used directly.
-
 */
-#ifndef PETSCMATH_H
-#define PETSCMATH_H
+#pragma once
 
 #include <math.h>
 #include <petscmacros.h>
@@ -17,11 +14,9 @@
 /* SUBMANSEC = Sys */
 
 /*
-
    Defines operations that are different for complex and real numbers.
    All PETSc objects in one program are built around the object
    PetscScalar which is either always a real or a complex.
-
 */
 
 /*
@@ -155,7 +150,7 @@
   #define PetscCeilReal(a)        ceilf(a)
   #define PetscFloorReal(a)       floorf(a)
   #define PetscFmodReal(a, b)     fmodf(a, b)
-  #define PetscCopySignReal(a, b) copysignf(a, b)
+  #define PetscCopysignReal(a, b) copysignf(a, b)
   #define PetscTGamma(a)          tgammaf(a)
   #if defined(PETSC_HAVE_LGAMMA_IS_GAMMA)
     #define PetscLGamma(a) gammaf(a)
@@ -178,20 +173,20 @@ static inline PetscReal PetscLog2Real(PetscReal a)
 }
 #endif
 
-#if defined(PETSC_HAVE_REAL___FLOAT128)
+#if defined(PETSC_HAVE_REAL___FLOAT128) && !defined(PETSC_SKIP_REAL___FLOAT128)
 PETSC_EXTERN MPI_Datatype MPIU___FLOAT128 PETSC_ATTRIBUTE_MPI_TYPE_TAG(__float128);
 #endif
-#if defined(PETSC_HAVE_REAL___FP16)
+#if defined(PETSC_HAVE_REAL___FP16) && !defined(PETSC_SKIP_REAL___FP16)
 PETSC_EXTERN MPI_Datatype MPIU___FP16 PETSC_ATTRIBUTE_MPI_TYPE_TAG(__fp16);
 #endif
 
 /*MC
    MPIU_REAL - Portable MPI datatype corresponding to `PetscReal` independent of what precision `PetscReal` is in
 
-   Notes:
-   In MPI calls that require an MPI datatype that matches a `PetscReal` or array of `PetscReal` values, pass this value.
-
    Level: beginner
+
+   Note:
+   In MPI calls that require an MPI datatype that matches a `PetscReal` or array of `PetscReal` values, pass this value.
 
 .seealso: `PetscReal`, `PetscScalar`, `PetscComplex`, `PetscInt`, `MPIU_SCALAR`, `MPIU_COMPLEX`, `MPIU_INT`
 M*/
@@ -210,31 +205,31 @@ M*/
  */
 #if defined(PETSC_HAVE_COMPLEX)
   #if defined(__cplusplus) && !defined(PETSC_USE_REAL___FLOAT128)
-    /* C++ support of complex number */
+  /* C++ support of complex number */
 
-    #define PetscRealPartComplex(a)      (a).real()
-    #define PetscImaginaryPartComplex(a) (a).imag()
-    #define PetscAbsComplex(a)           petsccomplexlib::abs(a)
-    #define PetscArgComplex(a)           petsccomplexlib::arg(a)
-    #define PetscConjComplex(a)          petsccomplexlib::conj(a)
-    #define PetscSqrtComplex(a)          petsccomplexlib::sqrt(a)
-    #define PetscPowComplex(a, b)        petsccomplexlib::pow(a, b)
-    #define PetscExpComplex(a)           petsccomplexlib::exp(a)
-    #define PetscLogComplex(a)           petsccomplexlib::log(a)
-    #define PetscSinComplex(a)           petsccomplexlib::sin(a)
-    #define PetscCosComplex(a)           petsccomplexlib::cos(a)
-    #define PetscTanComplex(a)           petsccomplexlib::tan(a)
-    #define PetscAsinComplex(a)          petsccomplexlib::asin(a)
-    #define PetscAcosComplex(a)          petsccomplexlib::acos(a)
-    #define PetscAtanComplex(a)          petsccomplexlib::atan(a)
-    #define PetscSinhComplex(a)          petsccomplexlib::sinh(a)
-    #define PetscCoshComplex(a)          petsccomplexlib::cosh(a)
-    #define PetscTanhComplex(a)          petsccomplexlib::tanh(a)
-    #define PetscAsinhComplex(a)         petsccomplexlib::asinh(a)
-    #define PetscAcoshComplex(a)         petsccomplexlib::acosh(a)
-    #define PetscAtanhComplex(a)         petsccomplexlib::atanh(a)
+    #define PetscRealPartComplex(a)      (static_cast<PetscComplex>(a)).real()
+    #define PetscImaginaryPartComplex(a) (static_cast<PetscComplex>(a)).imag()
+    #define PetscAbsComplex(a)           petsccomplexlib::abs(static_cast<PetscComplex>(a))
+    #define PetscArgComplex(a)           petsccomplexlib::arg(static_cast<PetscComplex>(a))
+    #define PetscConjComplex(a)          petsccomplexlib::conj(static_cast<PetscComplex>(a))
+    #define PetscSqrtComplex(a)          petsccomplexlib::sqrt(static_cast<PetscComplex>(a))
+    #define PetscPowComplex(a, b)        petsccomplexlib::pow(static_cast<PetscComplex>(a), static_cast<PetscComplex>(b))
+    #define PetscExpComplex(a)           petsccomplexlib::exp(static_cast<PetscComplex>(a))
+    #define PetscLogComplex(a)           petsccomplexlib::log(static_cast<PetscComplex>(a))
+    #define PetscSinComplex(a)           petsccomplexlib::sin(static_cast<PetscComplex>(a))
+    #define PetscCosComplex(a)           petsccomplexlib::cos(static_cast<PetscComplex>(a))
+    #define PetscTanComplex(a)           petsccomplexlib::tan(static_cast<PetscComplex>(a))
+    #define PetscAsinComplex(a)          petsccomplexlib::asin(static_cast<PetscComplex>(a))
+    #define PetscAcosComplex(a)          petsccomplexlib::acos(static_cast<PetscComplex>(a))
+    #define PetscAtanComplex(a)          petsccomplexlib::atan(static_cast<PetscComplex>(a))
+    #define PetscSinhComplex(a)          petsccomplexlib::sinh(static_cast<PetscComplex>(a))
+    #define PetscCoshComplex(a)          petsccomplexlib::cosh(static_cast<PetscComplex>(a))
+    #define PetscTanhComplex(a)          petsccomplexlib::tanh(static_cast<PetscComplex>(a))
+    #define PetscAsinhComplex(a)         petsccomplexlib::asinh(static_cast<PetscComplex>(a))
+    #define PetscAcoshComplex(a)         petsccomplexlib::acosh(static_cast<PetscComplex>(a))
+    #define PetscAtanhComplex(a)         petsccomplexlib::atanh(static_cast<PetscComplex>(a))
 
-    /* TODO: Add configure tests
+  /* TODO: Add configure tests
 
 #if !defined(PETSC_HAVE_CXX_TAN_COMPLEX)
 #undef PetscTanComplex
@@ -379,9 +374,13 @@ static inline PetscComplex PetscAtanhComplex(PetscComplex z)
     #endif /* PETSC_USE_REAL_* */
   #endif   /* (__cplusplus) */
 
-/*
-   PETSC_i is the imaginary number, i
-*/
+/*MC
+   PETSC_i - the pure imaginary complex number i
+
+   Level: intermediate
+
+.seealso: `PetscComplex`, `PetscScalar`
+M*/
 PETSC_EXTERN PetscComplex PETSC_i;
 
 /*
@@ -416,10 +415,10 @@ static inline PetscComplex PetscCMPLX(PetscReal x, PetscReal y)
   #endif
 }
 
-  #define MPIU_C_COMPLEX        MPI_C_COMPLEX PETSC_DEPRECATED_MACRO("GCC warning \"MPIU_C_COMPLEX macro is deprecated use MPI_C_COMPLEX (since version 3.15)\"")
-  #define MPIU_C_DOUBLE_COMPLEX MPI_C_DOUBLE_COMPLEX PETSC_DEPRECATED_MACRO("GCC warning \"MPIU_C_DOUBLE_COMPLEX macro is deprecated use MPI_C_DOUBLE_COMPLEX (since version 3.15)\"")
+  #define MPIU_C_COMPLEX        MPI_C_COMPLEX PETSC_DEPRECATED_MACRO(3, 15, 0, "MPI_C_COMPLEX", )
+  #define MPIU_C_DOUBLE_COMPLEX MPI_C_DOUBLE_COMPLEX PETSC_DEPRECATED_MACRO(3, 15, 0, "MPI_C_DOUBLE_COMPLEX", )
 
-  #if defined(PETSC_HAVE_REAL___FLOAT128)
+  #if defined(PETSC_HAVE_REAL___FLOAT128) && !defined(PETSC_SKIP_REAL___FLOAT128)
     // if complex is not used, then quadmath.h won't be included by petscsystypes.h
     #if defined(PETSC_USE_COMPLEX)
       #define MPIU___COMPLEX128_ATTR_TAG PETSC_ATTRIBUTE_MPI_TYPE_TAG(__complex128)
@@ -435,10 +434,10 @@ PETSC_EXTERN MPI_Datatype MPIU___COMPLEX128 MPIU___COMPLEX128_ATTR_TAG;
   /*MC
    MPIU_COMPLEX - Portable MPI datatype corresponding to `PetscComplex` independent of the precision of `PetscComplex`
 
-   Notes:
-   In MPI calls that require an MPI datatype that matches a `PetscComplex` or array of `PetscComplex` values, pass this value.
-
    Level: beginner
+
+   Note:
+   In MPI calls that require an MPI datatype that matches a `PetscComplex` or array of `PetscComplex` values, pass this value.
 
 .seealso: `PetscReal`, `PetscScalar`, `PetscComplex`, `PetscInt`, `MPIU_REAL`, `MPIU_SCALAR`, `MPIU_COMPLEX`, `MPIU_INT`, `PETSC_i`
 M*/
@@ -461,10 +460,10 @@ M*/
   /*MC
    MPIU_SCALAR - Portable MPI datatype corresponding to `PetscScalar` independent of the precision of `PetscScalar`
 
-   Notes:
-   In MPI calls that require an MPI datatype that matches a `PetscScalar` or array of `PetscScalar` values, pass this value.
-
    Level: beginner
+
+   Note:
+   In MPI calls that require an MPI datatype that matches a `PetscScalar` or array of `PetscScalar` values, pass this value.
 
 .seealso: `PetscReal`, `PetscScalar`, `PetscComplex`, `PetscInt`, `MPIU_REAL`, `MPIU_COMPLEX`, `MPIU_INT`
 M*/
@@ -485,7 +484,6 @@ M*/
    Level: beginner
 
 .seealso: `PetscScalar`, `PetscImaginaryPart()`, `PetscMax()`, `PetscClipInterval()`, `PetscAbsInt()`, `PetscAbsReal()`, `PetscSqr()`
-
 M*/
   #define PetscRealPart(a) PetscRealPartComplex(a)
 
@@ -503,11 +501,10 @@ M*/
 
    Level: beginner
 
-   Notes:
-       If PETSc was configured for real numbers then this always returns the value 0
+   Note:
+   If PETSc was configured for real numbers then this always returns the value 0
 
 .seealso: `PetscScalar`, `PetscRealPart()`, `PetscMax()`, `PetscClipInterval()`, `PetscAbsInt()`, `PetscAbsReal()`, `PetscSqr()`
-
 M*/
   #define PetscImaginaryPart(a) PetscImaginaryPartComplex(a)
 
@@ -568,8 +565,6 @@ typedef enum {
   PETSC_SCALAR_HALF
 } PetscScalarPrecision;
 
-/* --------------------------------------------------------------------------*/
-
 /*MC
    PetscAbs - Returns the absolute value of a number
 
@@ -582,18 +577,17 @@ typedef enum {
    Input Parameter:
 .  v - the number
 
+   Level: beginner
+
    Note:
    The type can be integer or real floating point value, but cannot be complex
 
-   Level: beginner
-
-.seealso: `PetscAbsInt()`, `PetscAbsReal()`, `PetscAbsScalar()`
-
+.seealso: `PetscAbsInt()`, `PetscAbsReal()`, `PetscAbsScalar()`, `PetscSign()`
 M*/
 #define PetscAbs(a) (((a) >= 0) ? (a) : (-(a)))
 
 /*MC
-   PetscSign - Returns the sign of a number as an integer
+   PetscSign - Returns the sign of a number as an integer of value -1, 0, or 1
 
    Synopsis:
    #include <petscmath.h>
@@ -604,11 +598,12 @@ M*/
    Input Parameter:
 .  v - the number
 
+   Level: beginner
+
    Note:
    The type can be integer or real floating point value
 
-   Level: beginner
-
+.seealso: `PetscAbsInt()`, `PetscAbsReal()`, `PetscAbsScalar()`
 M*/
 #define PetscSign(a) (((a) >= 0) ? ((a) == 0 ? 0 : 1) : -1)
 
@@ -625,13 +620,12 @@ M*/
 +  v1 - first value to find minimum of
 -  v2 - second value to find minimum of
 
-   Note:
-   The type can be integer or floating point value
-
    Level: beginner
 
-.seealso: `PetscMax()`, `PetscClipInterval()`, `PetscAbsInt()`, `PetscAbsReal()`, `PetscSqr()`
+   Note:
+   The type can be integer or floating point value, but cannot be complex
 
+.seealso: `PetscMax()`, `PetscClipInterval()`, `PetscAbsInt()`, `PetscAbsReal()`, `PetscSqr()`
 M*/
 #define PetscMin(a, b) (((a) < (b)) ? (a) : (b))
 
@@ -648,13 +642,12 @@ M*/
 +  v1 - first value to find maximum of
 -  v2 - second value to find maximum of
 
+   Level: beginner
+
    Note:
    The type can be integer or floating point value
 
-   Level: beginner
-
 .seealso: `PetscMin()`, `PetscClipInterval()`, `PetscAbsInt()`, `PetscAbsReal()`, `PetscSqr()`
-
 M*/
 #define PetscMax(a, b) (((a) < (b)) ? (b) : (a))
 
@@ -672,13 +665,18 @@ M*/
 .  a - lower end of interval
 -  b - upper end of interval
 
+   Level: beginner
+
    Note:
    The type can be integer or floating point value
 
-   Level: beginner
+   Example\:
+.vb
+  PetscInt c = PetscClipInterval(5, 2, 3); // the value of c is 3
+  PetscInt c = PetscClipInterval(5, 2, 6); // the value of c is 5
+.ve
 
 .seealso: `PetscMin()`, `PetscMax()`, `PetscAbsInt()`, `PetscAbsReal()`, `PetscSqr()`
-
 M*/
 #define PetscClipInterval(x, a, b) (PetscMax((a), PetscMin((x), (b))))
 
@@ -695,7 +693,6 @@ M*/
    Level: beginner
 
 .seealso: `PetscMax()`, `PetscMin()`, `PetscAbsReal()`, `PetscSqr()`
-
 M*/
 #define PetscAbsInt(a) (((a) < 0) ? (-(a)) : (a))
 
@@ -707,12 +704,11 @@ M*/
    Real abs PetscAbsReal(PetscReal v1)
 
    Input Parameter:
-.   v1 - the double
+.   v1 - the `PetscReal` value
 
    Level: beginner
 
 .seealso: `PetscMax()`, `PetscMin()`, `PetscAbsInt()`, `PetscSqr()`
-
 M*/
 #if defined(PETSC_USE_REAL_SINGLE)
   #define PetscAbsReal(a) fabsf(a)
@@ -736,17 +732,14 @@ M*/
    Input Parameter:
 .   v1 - the value
 
-   Note:
-   The type can be integer or floating point value
-
    Level: beginner
 
-.seealso: `PetscMax()`, `PetscMin()`, `PetscAbsInt()`, `PetscAbsReal()`
+   Note:
+   The type can be integer, floating point, or complex floating point
 
+.seealso: `PetscMax()`, `PetscMin()`, `PetscAbsInt()`, `PetscAbsReal()`
 M*/
 #define PetscSqr(a) ((a) * (a))
-
-/* ----------------------------------------------------------------------------*/
 
 #if defined(PETSC_USE_REAL_SINGLE)
   #define PetscRealConstant(constant) constant##F
@@ -765,42 +758,58 @@ M*/
 #define PETSC_PHI   PetscRealConstant(1.6180339887498948482045868343656381)
 #define PETSC_SQRT2 PetscRealConstant(1.4142135623730950488016887242096981)
 
-#if !defined(PETSC_USE_64BIT_INDICES)
-  #define PETSC_MAX_INT 2147483647
-  #define PETSC_MIN_INT (-PETSC_MAX_INT - 1)
-#else
-  #define PETSC_MAX_INT 9223372036854775807L
-  #define PETSC_MIN_INT (-PETSC_MAX_INT - 1)
-#endif
-#define PETSC_MAX_UINT16 65535
-
 #if defined(PETSC_USE_REAL_SINGLE)
   #define PETSC_MAX_REAL             3.40282346638528860e+38F
   #define PETSC_MIN_REAL             (-PETSC_MAX_REAL)
+  #define PETSC_REAL_MIN             1.1754944e-38F
   #define PETSC_MACHINE_EPSILON      1.19209290e-07F
   #define PETSC_SQRT_MACHINE_EPSILON 3.45266983e-04F
   #define PETSC_SMALL                1.e-5F
 #elif defined(PETSC_USE_REAL_DOUBLE)
   #define PETSC_MAX_REAL             1.7976931348623157e+308
   #define PETSC_MIN_REAL             (-PETSC_MAX_REAL)
+  #define PETSC_REAL_MIN             2.225073858507201e-308
   #define PETSC_MACHINE_EPSILON      2.2204460492503131e-16
   #define PETSC_SQRT_MACHINE_EPSILON 1.490116119384766e-08
   #define PETSC_SMALL                1.e-10
 #elif defined(PETSC_USE_REAL___FLOAT128)
   #define PETSC_MAX_REAL             FLT128_MAX
   #define PETSC_MIN_REAL             (-FLT128_MAX)
+  #define PETSC_REAL_MIN             FLT128_MIN
   #define PETSC_MACHINE_EPSILON      FLT128_EPSILON
   #define PETSC_SQRT_MACHINE_EPSILON 1.38777878078144567552953958511352539e-17Q
   #define PETSC_SMALL                1.e-20Q
 #elif defined(PETSC_USE_REAL___FP16)
   #define PETSC_MAX_REAL             65504.0F
   #define PETSC_MIN_REAL             (-PETSC_MAX_REAL)
+  #define PETSC_REAL_MIN             .00006103515625F
   #define PETSC_MACHINE_EPSILON      .0009765625F
   #define PETSC_SQRT_MACHINE_EPSILON .03125F
   #define PETSC_SMALL                5.e-3F
 #endif
 
-#define PETSC_INFINITY  (PETSC_MAX_REAL / 4)
+/*MC
+  PETSC_INFINITY - a finite number that represents infinity for setting certain bounds in `Tao`
+
+  Level: intermediate
+
+  Note:
+  This is not the IEEE infinity value
+
+.seealso: `PETSC_NINFINITY`, `SNESVIGetVariableBounds()`, `SNESVISetComputeVariableBounds()`, `SNESVISetVariableBounds()`
+M*/
+#define PETSC_INFINITY (PETSC_MAX_REAL / 4)
+
+/*MC
+  PETSC_NINFINITY - a finite number that represents negative infinity for setting certain bounds in `Tao`
+
+  Level: intermediate
+
+  Note:
+  This is not the negative IEEE infinity value
+
+.seealso: `PETSC_INFINITY`, `SNESVIGetVariableBounds()`, `SNESVISetComputeVariableBounds()`, `SNESVISetVariableBounds()`
+M*/
 #define PETSC_NINFINITY (-PETSC_INFINITY)
 
 PETSC_EXTERN PetscBool  PetscIsInfReal(PetscReal);
@@ -830,6 +839,31 @@ static inline PetscBool PetscIsNormalScalar(PetscScalar v)
 PETSC_EXTERN PetscBool PetscIsCloseAtTol(PetscReal, PetscReal, PetscReal, PetscReal);
 PETSC_EXTERN PetscBool PetscEqualReal(PetscReal, PetscReal);
 PETSC_EXTERN PetscBool PetscEqualScalar(PetscScalar, PetscScalar);
+
+/*@C
+  PetscIsCloseAtTolScalar - Like `PetscIsCloseAtTol()` but for `PetscScalar`
+
+  Input Parameters:
++ lhs  - The first number
+. rhs  - The second number
+. rtol - The relative tolerance
+- atol - The absolute tolerance
+
+  Level: beginner
+
+  Note:
+  This routine is equivalent to `PetscIsCloseAtTol()` when PETSc is configured without complex
+  numbers.
+
+.seealso: `PetscIsCloseAtTol()`
+@*/
+static inline PetscBool PetscIsCloseAtTolScalar(PetscScalar lhs, PetscScalar rhs, PetscReal rtol, PetscReal atol)
+{
+  PetscBool close = PetscIsCloseAtTol(PetscRealPart(lhs), PetscRealPart(rhs), rtol, atol);
+
+  if (PetscDefined(USE_COMPLEX)) close = (PetscBool)(close && PetscIsCloseAtTol(PetscImaginaryPart(lhs), PetscImaginaryPart(rhs), rtol, atol));
+  return close;
+}
 
 /*
     These macros are currently hardwired to match the regular data types, so there is no support for a different
@@ -885,7 +919,7 @@ static inline PetscInt PetscPowInt(PetscInt base, PetscInt power)
   while (power) {
     if (power & 1) result *= base;
     power >>= 1;
-    base *= base;
+    if (power) base *= base;
   }
   return result;
 }
@@ -896,7 +930,7 @@ static inline PetscInt64 PetscPowInt64(PetscInt base, PetscInt power)
   while (power) {
     if (power & 1) result *= base;
     power >>= 1;
-    base *= base;
+    if (power) base *= base;
   }
   return result;
 }
@@ -911,7 +945,7 @@ static inline PetscReal PetscPowRealInt(PetscReal base, PetscInt power)
   while (power) {
     if (power & 1) result *= base;
     power >>= 1;
-    base *= base;
+    if (power) base *= base;
   }
   return result;
 }
@@ -926,7 +960,7 @@ static inline PetscScalar PetscPowScalarInt(PetscScalar base, PetscInt power)
   while (power) {
     if (power & 1) result *= base;
     power >>= 1;
-    base *= base;
+    if (power) base *= base;
   }
   return result;
 }
@@ -938,7 +972,7 @@ static inline PetscScalar PetscPowScalarReal(PetscScalar base, PetscReal power)
 }
 
 /*MC
-    PetscApproximateLTE - Performs a less than or equal to on a given constant with a fudge for floating point numbers
+   PetscApproximateLTE - Performs a less than or equal to on a given constant with a fudge for floating point numbers
 
    Synopsis:
    #include <petscmath.h>
@@ -948,25 +982,30 @@ static inline PetscScalar PetscPowScalarReal(PetscScalar base, PetscReal power)
 
    Input Parameters:
 +   x - the variable
--   b - the constant float it is checking if x is less than or equal to
-
-   Notes:
-     The fudge factor is the value `PETSC_SMALL`
-
-     The constant numerical value is automatically set to the appropriate precision of PETSc so can just be provided as, for example, 3.2
-
-     This is used in several examples for setting initial conditions based on coordinate values that are computed with i*h that produces inexact
-     floating point results.
+-   b - the constant float it is checking if `x` is less than or equal to
 
    Level: advanced
 
-.seealso: `PetscMax()`, `PetscMin()`, `PetscAbsInt()`, `PetscAbsReal()`, `PetscApproximateGTE()`
+   Notes:
+   The fudge factor is the value `PETSC_SMALL`
 
+   The constant numerical value is automatically set to the appropriate precision of PETSc so can just be provided as, for example, 3.2
+
+   This is used in several examples for setting initial conditions based on coordinate values that are computed with i*h that produces inexact
+   floating point results.
+
+   Example\:
+.vb
+  PetscReal x;
+  if (PetscApproximateLTE(x, 3.2)) { // replaces if (x <= 3.2) {
+.ve
+
+.seealso: `PetscMax()`, `PetscMin()`, `PetscAbsInt()`, `PetscAbsReal()`, `PetscApproximateGTE()`
 M*/
 #define PetscApproximateLTE(x, b) ((x) <= (PetscRealConstant(b) + PETSC_SMALL))
 
 /*MC
-    PetscApproximateGTE - Performs a greater than or equal to on a given constant with a fudge for floating point numbers
+   PetscApproximateGTE - Performs a greater than or equal to on a given constant with a fudge for floating point numbers
 
    Synopsis:
    #include <petscmath.h>
@@ -976,25 +1015,30 @@ M*/
 
    Input Parameters:
 +   x - the variable
--   b - the constant float it is checking if x is greater than or equal to
-
-   Notes:
-     The fudge factor is the value `PETSC_SMALL`
-
-     The constant numerical value is automatically set to the appropriate precision of PETSc so can just be provided as, for example, 3.2
-
-     This is used in several examples for setting initial conditions based on coordinate values that are computed with i*h that produces inexact
-     floating point results.
+-   b - the constant float it is checking if `x` is greater than or equal to
 
    Level: advanced
 
-.seealso: `PetscMax()`, `PetscMin()`, `PetscAbsInt()`, `PetscAbsReal()`, `PetscApproximateLTE()`
+   Notes:
+   The fudge factor is the value `PETSC_SMALL`
 
+   The constant numerical value is automatically set to the appropriate precision of PETSc so can just be provided as, for example, 3.2
+
+   This is used in several examples for setting initial conditions based on coordinate values that are computed with i*h that produces inexact
+   floating point results.
+
+   Example\:
+.vb
+  PetscReal x;
+  if (PetscApproximateGTE(x, 3.2)) {  // replaces if (x >= 3.2) {
+.ve
+
+.seealso: `PetscMax()`, `PetscMin()`, `PetscAbsInt()`, `PetscAbsReal()`, `PetscApproximateLTE()`
 M*/
 #define PetscApproximateGTE(x, b) ((x) >= (PetscRealConstant(b) - PETSC_SMALL))
 
 /*MC
-    PetscCeilInt - Returns the ceiling of the quotation of two positive integers
+   PetscCeilInt - Returns the ceiling of the quotation of two positive integers
 
    Synopsis:
    #include <petscmath.h>
@@ -1008,12 +1052,15 @@ M*/
 
    Level: advanced
 
-.seealso: `PetscMax()`, `PetscMin()`, `PetscAbsInt()`, `PetscAbsReal()`, `PetscApproximateLTE()`
+  Example\:
+.vb
+  PetscInt n = PetscCeilInt(10, 3); // n has the value of 4
+.ve
 
+.seealso: `PetscMax()`, `PetscMin()`, `PetscAbsInt()`, `PetscAbsReal()`, `PetscApproximateLTE()`
 M*/
 #define PetscCeilInt(x, y) ((((PetscInt)(x)) / ((PetscInt)(y))) + ((((PetscInt)(x)) % ((PetscInt)(y))) ? 1 : 0))
 
 #define PetscCeilInt64(x, y) ((((PetscInt64)(x)) / ((PetscInt64)(y))) + ((((PetscInt64)(x)) % ((PetscInt64)(y))) ? 1 : 0))
 
 PETSC_EXTERN PetscErrorCode PetscLinearRegression(PetscInt, const PetscReal[], const PetscReal[], PetscReal *, PetscReal *);
-#endif

@@ -20,11 +20,11 @@ PetscLogEvent PETSCSF_Pack;
 PetscLogEvent PETSCSF_Unpack;
 
 /*@C
-   PetscSFInitializePackage - Initialize `PetscSF` package
+  PetscSFInitializePackage - Initialize `PetscSF` package
 
-   Logically Collective
+  Logically Collective
 
-   Level: developer
+  Level: developer
 
 .seealso: `PetscSF`, `PetscSFFinalizePackage()`
 @*/
@@ -34,7 +34,7 @@ PetscErrorCode PetscSFInitializePackage(void)
   PetscBool opt, pkg;
 
   PetscFunctionBegin;
-  if (PetscSFPackageInitialized) PetscFunctionReturn(0);
+  if (PetscSFPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   PetscSFPackageInitialized = PETSC_TRUE;
   /* Register Class */
   PetscCall(PetscClassIdRegister("Star Forest Graph", &PETSCSF_CLASSID));
@@ -70,15 +70,15 @@ PetscErrorCode PetscSFInitializePackage(void)
   }
   /* Register package finalizer */
   PetscCall(PetscRegisterFinalize(PetscSFFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscSFFinalizePackage - Finalize `PetscSF` package, it is called from `PetscFinalize()`
+  PetscSFFinalizePackage - Finalize `PetscSF` package, it is called from `PetscFinalize()`
 
-   Logically Collective
+  Logically Collective
 
-   Level: developer
+  Level: developer
 
 .seealso: `PetscSF`, `PetscSFInitializePackage()`
 @*/
@@ -88,5 +88,5 @@ PetscErrorCode PetscSFFinalizePackage(void)
   PetscCall(PetscFunctionListDestroy(&PetscSFList));
   PetscSFPackageInitialized = PETSC_FALSE;
   PetscSFRegisterAllCalled  = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

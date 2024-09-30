@@ -1,4 +1,3 @@
-
 static char help[] = "Tests signal handling.\n\n";
 
 #include <petscsys.h>
@@ -9,13 +8,13 @@ typedef struct _handlerCtx {
   int signum;
 } HandlerCtx;
 
-int handleSignal(int signum, void *ctx)
+PetscErrorCode handleSignal(int signum, void *ctx)
 {
   HandlerCtx *user = (HandlerCtx *)ctx;
 
   user->signum = signum;
   if (signum == SIGHUP) user->exitHandler = 1;
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 int main(int argc, char *args[])

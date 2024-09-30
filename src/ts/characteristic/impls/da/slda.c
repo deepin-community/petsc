@@ -2,7 +2,7 @@
 #include <petscdmda.h>
 #include <petscviewer.h>
 
-PetscErrorCode CharacteristicView_DA(Characteristic c, PetscViewer viewer)
+static PetscErrorCode CharacteristicView_DA(Characteristic c, PetscViewer viewer)
 {
   Characteristic_DA *da = (Characteristic_DA *)c->data;
   PetscBool          iascii, isstring;
@@ -16,19 +16,19 @@ PetscErrorCode CharacteristicView_DA(Characteristic c, PetscViewer viewer)
   } else if (isstring) {
     PetscCall(PetscViewerStringSPrintf(viewer, "dummy %" PetscInt_FMT, da->dummy));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode CharacteristicDestroy_DA(Characteristic c)
+static PetscErrorCode CharacteristicDestroy_DA(Characteristic c)
 {
   Characteristic_DA *da = (Characteristic_DA *)c->data;
 
   PetscFunctionBegin;
   PetscCall(PetscFree(da));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode CharacteristicSetUp_DA(Characteristic c)
+static PetscErrorCode CharacteristicSetUp_DA(Characteristic c)
 {
   PetscMPIInt  blockLen[2];
   MPI_Aint     indices[2];
@@ -64,7 +64,7 @@ PetscErrorCode CharacteristicSetUp_DA(Characteristic c)
   PetscCall(PetscMalloc1(c->numNeighbors, &c->remoteOffsets));
   PetscCall(PetscMalloc1(c->numNeighbors - 1, &c->request));
   PetscCall(PetscMalloc1(c->numNeighbors - 1, &c->status));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode CharacteristicCreate_DA(Characteristic c)
@@ -81,7 +81,7 @@ PETSC_EXTERN PetscErrorCode CharacteristicCreate_DA(Characteristic c)
   c->ops->view    = CharacteristicView_DA;
 
   da->dummy = 0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* -----------------------------------------------------------------------------
@@ -104,5 +104,5 @@ PetscErrorCode DMDAMapCoordsToPeriodicDomain(DM da, PetscScalar *x, PetscScalar 
     while (*y >= (PetscScalar)gy) *y -= (PetscScalar)gy;
     while (*y < 0.0) *y += (PetscScalar)gy;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

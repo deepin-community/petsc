@@ -38,6 +38,21 @@ extern void PetscRmPointer(void*);
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define pcgamgsetaggressivelevels_ pcgamgsetaggressivelevels
 #endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pcgamgmisksetaggressive_ PCGAMGMISKSETAGGRESSIVE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pcgamgmisksetaggressive_ pcgamgmisksetaggressive
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pcgamgsetaggressivesquaregraph_ PCGAMGSETAGGRESSIVESQUAREGRAPH
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pcgamgsetaggressivesquaregraph_ pcgamgsetaggressivesquaregraph
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define pcgamgmisksetmindegreeordering_ PCGAMGMISKSETMINDEGREEORDERING
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define pcgamgmisksetmindegreeordering_ pcgamgmisksetmindegreeordering
+#endif
 
 
 /* Definitions of Fortran Wrapper routines */
@@ -53,6 +68,21 @@ PETSC_EXTERN void  pcgamgsetaggressivelevels_(PC pc,PetscInt *n, int *__ierr)
 {
 *__ierr = PCGAMGSetAggressiveLevels(
 	(PC)PetscToPointer((pc) ),*n);
+}
+PETSC_EXTERN void  pcgamgmisksetaggressive_(PC pc,PetscInt *n, int *__ierr)
+{
+*__ierr = PCGAMGMISkSetAggressive(
+	(PC)PetscToPointer((pc) ),*n);
+}
+PETSC_EXTERN void  pcgamgsetaggressivesquaregraph_(PC pc,PetscBool *b, int *__ierr)
+{
+*__ierr = PCGAMGSetAggressiveSquareGraph(
+	(PC)PetscToPointer((pc) ),*b);
+}
+PETSC_EXTERN void  pcgamgmisksetmindegreeordering_(PC pc,PetscBool *b, int *__ierr)
+{
+*__ierr = PCGAMGMISkSetMinDegreeOrdering(
+	(PC)PetscToPointer((pc) ),*b);
 }
 #if defined(__cplusplus)
 }

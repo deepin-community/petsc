@@ -1,4 +1,3 @@
-
 #include <petsc/private/tsimpl.h> /*I  "petscts.h"  I*/
 PETSC_EXTERN PetscErrorCode TSCreate_Euler(TS);
 PETSC_EXTERN PetscErrorCode TSCreate_BEuler(TS);
@@ -13,6 +12,7 @@ PETSC_EXTERN PetscErrorCode TSCreate_GLLE(TS);
 PETSC_EXTERN PetscErrorCode TSCreate_SSP(TS);
 PETSC_EXTERN PetscErrorCode TSCreate_RK(TS);
 PETSC_EXTERN PetscErrorCode TSCreate_ARKIMEX(TS);
+PETSC_EXTERN PetscErrorCode TSCreate_DIRK(TS);
 PETSC_EXTERN PetscErrorCode TSCreate_RosW(TS);
 PETSC_EXTERN PetscErrorCode TSCreate_EIMEX(TS);
 PETSC_EXTERN PetscErrorCode TSCreate_Mimex(TS);
@@ -28,17 +28,14 @@ PETSC_EXTERN PetscErrorCode TSCreate_IRK(TS);
 
   Not Collective
 
-  Input parameter:
-. path - The dynamic library path
-
   Level: advanced
 
-.seealso: [](chapter_ts), `TS`, `TSCreate()`, `TSRegister()`, `TSRegisterDestroy()`
+.seealso: [](ch_ts), `TS`, `TSCreate()`, `TSRegister()`, `TSRegisterDestroy()`
 @*/
 PetscErrorCode TSRegisterAll(void)
 {
   PetscFunctionBegin;
-  if (TSRegisterAllCalled) PetscFunctionReturn(0);
+  if (TSRegisterAllCalled) PetscFunctionReturn(PETSC_SUCCESS);
   TSRegisterAllCalled = PETSC_TRUE;
 
   PetscCall(TSRegister(TSEULER, TSCreate_Euler));
@@ -59,6 +56,7 @@ PetscErrorCode TSRegisterAll(void)
   PetscCall(TSRegister(TSRK, TSCreate_RK));
   PetscCall(TSRegister(TSGLEE, TSCreate_GLEE));
   PetscCall(TSRegister(TSARKIMEX, TSCreate_ARKIMEX));
+  PetscCall(TSRegister(TSDIRK, TSCreate_DIRK));
   PetscCall(TSRegister(TSROSW, TSCreate_RosW));
   PetscCall(TSRegister(TSEIMEX, TSCreate_EIMEX));
   PetscCall(TSRegister(TSMIMEX, TSCreate_Mimex));
@@ -67,5 +65,5 @@ PetscErrorCode TSRegisterAll(void)
   PetscCall(TSRegister(TSMPRK, TSCreate_MPRK));
   PetscCall(TSRegister(TSDISCGRAD, TSCreate_DiscGrad));
   PetscCall(TSRegister(TSIRK, TSCreate_IRK));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

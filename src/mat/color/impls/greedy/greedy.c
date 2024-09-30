@@ -11,7 +11,7 @@ static PetscErrorCode MatColoringDestroy_Greedy(MatColoring mc)
 {
   PetscFunctionBegin;
   PetscCall(PetscFree(mc->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode GreedyColoringLocalDistanceOne_Private(MatColoring mc, PetscReal *wts, PetscInt *lperm, ISColoringValue *colors)
@@ -38,8 +38,9 @@ static PetscErrorCode GreedyColoringLocalDistanceOne_Private(MatColoring mc, Pet
   /* get the matrix communication structures */
   PetscCall(PetscObjectTypeCompare((PetscObject)m, MATMPIAIJ, &isMPIAIJ));
   PetscCall(PetscObjectBaseTypeCompare((PetscObject)m, MATSEQAIJ, &isSEQAIJ));
+  PetscCheck(isMPIAIJ || isSEQAIJ, PetscObjectComm((PetscObject)mc), PETSC_ERR_ARG_WRONG, "Matrix must be AIJ for greedy coloring");
   if (isMPIAIJ) {
-    /* get the CSR data for on and off diagonal portions of m */
+    /* get the CSR data for on and off-diagonal portions of m */
     Mat_SeqAIJ *dseq;
     Mat_SeqAIJ *oseq;
     md   = aij->A;
@@ -50,7 +51,7 @@ static PetscErrorCode GreedyColoringLocalDistanceOne_Private(MatColoring mc, Pet
     md_j = dseq->j;
     mo_i = oseq->i;
     mo_j = oseq->j;
-  } else if (isSEQAIJ) {
+  } else {
     /* get the CSR data for m */
     Mat_SeqAIJ *dseq;
     /* no off-processor nodes */
@@ -62,7 +63,8 @@ static PetscErrorCode GreedyColoringLocalDistanceOne_Private(MatColoring mc, Pet
     md_j = dseq->j;
     mo_i = NULL;
     mo_j = NULL;
-  } else SETERRQ(PetscObjectComm((PetscObject)mc), PETSC_ERR_ARG_WRONG, "Matrix must be AIJ for greedy coloring");
+  }
+
   PetscCall(MatColoringGetMaxColors(mc, &maxcolors));
   if (mo) {
     PetscCall(VecGetSize(aij->lvec, &no));
@@ -162,7 +164,7 @@ static PetscErrorCode GreedyColoringLocalDistanceOne_Private(MatColoring mc, Pet
     PetscCall(PetscFree2(ocolors, owts));
     PetscCall(PetscSFDestroy(&sf));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode GreedyColoringLocalDistanceTwo_Private(MatColoring mc, PetscReal *wts, PetscInt *lperm, ISColoringValue *colors)
@@ -191,6 +193,7 @@ static PetscErrorCode GreedyColoringLocalDistanceTwo_Private(MatColoring mc, Pet
   /* get the matrix communication structures */
   PetscCall(PetscObjectBaseTypeCompare((PetscObject)m, MATMPIAIJ, &isMPIAIJ));
   PetscCall(PetscObjectBaseTypeCompare((PetscObject)m, MATSEQAIJ, &isSEQAIJ));
+  PetscCheck(isMPIAIJ || isSEQAIJ, PetscObjectComm((PetscObject)mc), PETSC_ERR_ARG_WRONG, "Matrix must be AIJ for greedy coloring");
   if (isMPIAIJ) {
     Mat_SeqAIJ *dseq;
     Mat_SeqAIJ *oseq;
@@ -206,7 +209,7 @@ static PetscErrorCode GreedyColoringLocalDistanceTwo_Private(MatColoring mc, Pet
     rmd_j = dseq->j;
     rmo_i = oseq->i;
     rmo_j = oseq->j;
-  } else if (isSEQAIJ) {
+  } else {
     Mat_SeqAIJ *dseq;
     /* no off-processor nodes */
     md    = m;
@@ -219,16 +222,17 @@ static PetscErrorCode GreedyColoringLocalDistanceTwo_Private(MatColoring mc, Pet
     rmd_j = dseq->j;
     rmo_i = NULL;
     rmo_j = NULL;
-  } else SETERRQ(PetscObjectComm((PetscObject)mc), PETSC_ERR_ARG_WRONG, "Matrix must be AIJ for greedy coloring");
+  }
   if (!gr->symmetric) {
+    Mat_SeqAIJ *dseq = NULL;
+
+    PetscCheck(isSEQAIJ, PetscObjectComm((PetscObject)mc), PETSC_ERR_SUP, "Nonsymmetric greedy coloring only works in serial");
     PetscCall(MatTranspose(m, MAT_INITIAL_MATRIX, &mt));
-    if (isSEQAIJ) {
-      Mat_SeqAIJ *dseq = (Mat_SeqAIJ *)mt->data;
-      rmd_i            = dseq->i;
-      rmd_j            = dseq->j;
-      rmo_i            = NULL;
-      rmo_j            = NULL;
-    } else SETERRQ(PetscObjectComm((PetscObject)mc), PETSC_ERR_SUP, "Nonsymmetric greedy coloring only works in serial");
+    dseq  = (Mat_SeqAIJ *)mt->data;
+    rmd_i = dseq->i;
+    rmd_j = dseq->j;
+    rmo_i = NULL;
+    rmo_j = NULL;
   }
   /* create the vectors and communication structures if necessary */
   no = 0;
@@ -476,7 +480,7 @@ static PetscErrorCode GreedyColoringLocalDistanceTwo_Private(MatColoring mc, Pet
   PetscCall(PetscFree4(d1cols, dcolors, conf, bad));
   PetscCall(PetscFree2(badidx, badnext));
   if (!gr->symmetric) PetscCall(MatDestroy(&mt));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatColoringApply_Greedy(MatColoring mc, ISColoring *iscoloring)
@@ -496,12 +500,13 @@ static PetscErrorCode MatColoringApply_Greedy(MatColoring mc, ISColoring *iscolo
     wts   = mc->user_weights;
     lperm = mc->user_lperm;
   }
+  PetscCheck(mc->dist == 1 || mc->dist == 2, PetscObjectComm((PetscObject)mc), PETSC_ERR_ARG_OUTOFRANGE, "Only distance 1 and distance 2 supported by MatColoringGreedy");
   PetscCall(PetscMalloc1(ncols, &colors));
   if (mc->dist == 1) {
     PetscCall(GreedyColoringLocalDistanceOne_Private(mc, wts, lperm, colors));
-  } else if (mc->dist == 2) {
+  } else {
     PetscCall(GreedyColoringLocalDistanceTwo_Private(mc, wts, lperm, colors));
-  } else SETERRQ(PetscObjectComm((PetscObject)mc), PETSC_ERR_ARG_OUTOFRANGE, "Only distance 1 and distance 2 supported by MatColoringGreedy");
+  }
   finalcolor = 0;
   for (i = 0; i < ncols; i++) {
     if (colors[i] > finalcolor) finalcolor = colors[i];
@@ -515,7 +520,7 @@ static PetscErrorCode MatColoringApply_Greedy(MatColoring mc, ISColoring *iscolo
     PetscCall(PetscFree(wts));
     PetscCall(PetscFree(lperm));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatColoringSetFromOptions_Greedy(MatColoring mc, PetscOptionItems *PetscOptionsObject)
@@ -526,16 +531,15 @@ static PetscErrorCode MatColoringSetFromOptions_Greedy(MatColoring mc, PetscOpti
   PetscOptionsHeadBegin(PetscOptionsObject, "Greedy options");
   PetscCall(PetscOptionsBool("-mat_coloring_greedy_symmetric", "Flag for assuming a symmetric matrix", "", gr->symmetric, &gr->symmetric, NULL));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-  MATCOLORINGGREEDY - Greedy-with-conflict correction based matrix coloring for distance 1 and 2.
+  MATCOLORINGGREEDY - Greedy-with-conflict correction based matrix coloring for distance 1 and 2 {cite}`bozdaug2005parallel`
 
    Level: beginner
 
    Notes:
-
    These algorithms proceed in two phases -- local coloring and conflict resolution.  The local coloring
    tentatively colors all vertices at the distance required given what's known of the global coloring.  Then,
    the updated colors are transferred to different processors at distance one.  In the distance one case, each
@@ -546,10 +550,6 @@ static PetscErrorCode MatColoringSetFromOptions_Greedy(MatColoring mc, PetscOpti
    this is done until each column has received a valid color.
 
    Supports both distance one and distance two colorings.
-
-   References:
-.  * - Bozdag et al. "A Parallel Distance 2 Graph Coloring Algorithm for Distributed Memory Computers"
-   HPCC'05 Proceedings of the First international conference on High Performance Computing and Communications
 
 .seealso: `MatColoringType`, `MatColoringCreate()`, `MatColoring`, `MatColoringSetType()`, `MatColoringType`
 M*/
@@ -566,5 +566,5 @@ PETSC_EXTERN PetscErrorCode MatColoringCreate_Greedy(MatColoring mc)
   mc->ops->setfromoptions = MatColoringSetFromOptions_Greedy;
 
   gr->symmetric = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

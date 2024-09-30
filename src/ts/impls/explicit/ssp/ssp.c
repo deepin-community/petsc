@@ -28,7 +28,7 @@ static PetscErrorCode TSSSPGetWorkVectors(TS ts, PetscInt n, Vec **work)
   }
   *work        = ssp->work;
   ssp->workout = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSSSPRestoreWorkVectors(TS ts, PetscInt n, Vec **work)
@@ -40,17 +40,15 @@ static PetscErrorCode TSSSPRestoreWorkVectors(TS ts, PetscInt n, Vec **work)
   PetscCheck(*work == ssp->work, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Wrong work vectors checked out");
   ssp->workout = PETSC_FALSE;
   *work        = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-   TSSSPRKS2 - Optimal second order SSP Runge-Kutta method, low-storage, c_eff=(s-1)/s
-
-   Pseudocode 2 of Ketcheson 2008
+   TSSSPRKS2 - Optimal second order SSP Runge-Kutta method, low-storage, c_eff=(s-1)/s. Pseudocode 2 of {cite}`ketcheson_2008`
 
    Level: beginner
 
-.seealso: [](chapter_ts), `TSSSP`, `TSSSPSetType()`, `TSSSPSetNumStages()`
+.seealso: [](ch_ts), `TSSSP`, `TSSSPSetType()`, `TSSSPSetNumStages()`
 M*/
 static PetscErrorCode TSSSPStep_RK_2(TS ts, PetscReal t0, PetscReal dt, Vec sol)
 {
@@ -72,17 +70,17 @@ static PetscErrorCode TSSSPStep_RK_2(TS ts, PetscReal t0, PetscReal dt, Vec sol)
   PetscCall(TSComputeRHSFunction(ts, t0 + dt, work[0], F));
   PetscCall(VecAXPBYPCZ(sol, (s - 1.) / s, dt / s, 1. / s, work[0], F));
   PetscCall(TSSSPRestoreWorkVectors(ts, 2, &work));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-   TSSSPRKS3 - Optimal third order SSP Runge-Kutta, low-storage, c_eff=(PetscSqrtReal(s)-1)/PetscSqrtReal(s), where PetscSqrtReal(s) is an integer
+   TSSSPRKS3 - Optimal third order SSP Runge-Kutta, low-storage, $c_eff=(PetscSqrtReal(s)-1)/PetscSqrtReal(s)$, where `PetscSqrtReal`(s) is an integer
 
-   Pseudocode 2 of Ketcheson 2008
+   Pseudocode 2 of {cite}`ketcheson_2008`
 
    Level: beginner
 
-.seealso: [](chapter_ts), `TSSSP`, `TSSSPSetType()`, `TSSSPSetNumStages()`
+.seealso: [](ch_ts), `TSSSP`, `TSSSPSetType()`, `TSSSPSetNumStages()`
 M*/
 static PetscErrorCode TSSSPStep_RK_3(TS ts, PetscReal t0, PetscReal dt, Vec sol)
 {
@@ -131,17 +129,17 @@ static PetscErrorCode TSSSPStep_RK_3(TS ts, PetscReal t0, PetscReal dt, Vec sol)
   }
   PetscCall(VecCopy(work[0], sol));
   PetscCall(TSSSPRestoreWorkVectors(ts, 3, &work));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
    TSSSPRKS104 - Optimal fourth order SSP Runge-Kutta, low-storage (2N), c_eff=0.6
 
-   SSPRK(10,4), Pseudocode 3 of Ketcheson 2008
+   SSPRK(10,4), Pseudocode 3 of {cite}`ketcheson_2008`
 
    Level: beginner
 
-.seealso: [](chapter_ts), `TSSSP`, `TSSSPSetType()`
+.seealso: [](ch_ts), `TSSSP`, `TSSSPSetType()`
 M*/
 static PetscErrorCode TSSSPStep_RK_10_4(TS ts, PetscReal t0, PetscReal dt, Vec sol)
 {
@@ -174,7 +172,7 @@ static PetscErrorCode TSSSPStep_RK_10_4(TS ts, PetscReal t0, PetscReal dt, Vec s
   PetscCall(VecAXPBYPCZ(work[1], 3. / 5, dt / 10, 1, work[0], F));
   PetscCall(VecCopy(work[1], sol));
   PetscCall(TSSSPRestoreWorkVectors(ts, 3, &work));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSSetUp_SSP(TS ts)
@@ -183,7 +181,7 @@ static PetscErrorCode TSSetUp_SSP(TS ts)
   PetscCall(TSCheckImplicitTerm(ts));
   PetscCall(TSGetAdapt(ts, &ts->adapt));
   PetscCall(TSAdaptCandidatesClear(ts->adapt));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSStep_SSP(TS ts)
@@ -199,18 +197,18 @@ static PetscErrorCode TSStep_SSP(TS ts)
   PetscCall(TSAdaptCheckStage(ts->adapt, ts, ts->ptime + ts->time_step, sol, &stageok));
   if (!stageok) {
     ts->reason = TS_DIVERGED_STEP_REJECTED;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   PetscCall(TSAdaptChoose(ts->adapt, ts, ts->time_step, NULL, &next_time_step, &accept));
   if (!accept) {
     ts->reason = TS_DIVERGED_STEP_REJECTED;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   ts->ptime += ts->time_step;
   ts->time_step = next_time_step;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /*------------------------------------------------------------*/
 
@@ -222,7 +220,7 @@ static PetscErrorCode TSReset_SSP(TS ts)
   if (ssp->work) PetscCall(VecDestroyVecs(ssp->nwork, &ssp->work));
   ssp->nwork   = 0;
   ssp->workout = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSDestroy_SSP(TS ts)
@@ -237,106 +235,106 @@ static PetscErrorCode TSDestroy_SSP(TS ts)
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSSSPSetType_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSSSPGetNumStages_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSSSPSetNumStages_C", NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /*------------------------------------------------------------*/
 
 /*@C
-   TSSSPSetType - set the `TSSSP` time integration scheme to use
+  TSSSPSetType - set the `TSSSP` time integration scheme to use
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  ts - time stepping object
--  ssptype - type of scheme to use
+  Input Parameters:
++ ts      - time stepping object
+- ssptype - type of scheme to use
 
-   Options Database Keys:
-+   -ts_ssp_type <rks2>               - Type of `TSSSP` method (one of) rks2 rks3 rk104
--  -ts_ssp_nstages<rks2: 5, rks3: 9> - Number of stages
+  Options Database Keys:
++ -ts_ssp_type <rks2>               - Type of `TSSSP` method (one of) rks2 rks3 rk104
+- -ts_ssp_nstages<rks2: 5, rks3: 9> - Number of stages
 
-   Level: beginner
+  Level: beginner
 
-.seealso: [](chapter_ts), `TSSSP`, `TSSSPGetType()`, `TSSSPSetNumStages()`, `TSSSPRKS2`, `TSSSPRKS3`, `TSSSPRK104`
+.seealso: [](ch_ts), `TSSSP`, `TSSSPGetType()`, `TSSSPSetNumStages()`, `TSSSPRKS2`, `TSSSPRKS3`, `TSSSPRK104`
 @*/
 PetscErrorCode TSSSPSetType(TS ts, TSSSPType ssptype)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts, TS_CLASSID, 1);
-  PetscValidCharPointer(ssptype, 2);
+  PetscAssertPointer(ssptype, 2);
   PetscTryMethod(ts, "TSSSPSetType_C", (TS, TSSSPType), (ts, ssptype));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TSSSPGetType - get the `TSSSP` time integration scheme
+  TSSSPGetType - get the `TSSSP` time integration scheme
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameter:
-.  ts - time stepping object
+  Input Parameter:
+. ts - time stepping object
 
-   Output Parameter:
-.  type - type of scheme being used
+  Output Parameter:
+. type - type of scheme being used
 
-   Level: beginner
+  Level: beginner
 
-.seealso: [](chapter_ts), `TSSSP`, `TSSSPSettype()`, `TSSSPSetNumStages()`, `TSSSPRKS2`, `TSSSPRKS3`, `TSSSPRK104`
+.seealso: [](ch_ts), `TSSSP`, `TSSSPSettype()`, `TSSSPSetNumStages()`, `TSSSPRKS2`, `TSSSPRKS3`, `TSSSPRK104`
 @*/
 PetscErrorCode TSSSPGetType(TS ts, TSSSPType *type)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts, TS_CLASSID, 1);
   PetscUseMethod(ts, "TSSSPGetType_C", (TS, TSSSPType *), (ts, type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TSSSPSetNumStages - set the number of stages to use with the `TSSSP` method. Must be called after
-   `TSSSPSetType()`.
+  TSSSPSetNumStages - set the number of stages to use with the `TSSSP` method. Must be called after
+  `TSSSPSetType()`.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  ts - time stepping object
--  nstages - number of stages
+  Input Parameters:
++ ts      - time stepping object
+- nstages - number of stages
 
-   Options Database Keys:
-+   -ts_ssp_type <rks2>               - Type of `TSSSP` method (one of) rks2 rks3 rk104
--   -ts_ssp_nstages<rks2: 5, rks3: 9> - Number of stages
+  Options Database Keys:
++ -ts_ssp_type <rks2>               - Type of `TSSSP` method (one of) rks2 rks3 rk104
+- -ts_ssp_nstages<rks2: 5, rks3: 9> - Number of stages
 
-   Level: beginner
+  Level: beginner
 
-.seealso: [](chapter_ts), `TSSSP`, `TSSSPGetNumStages()`, `TSSSPSetNumStages()`, `TSSSPRKS2`, `TSSSPRKS3`, `TSSSPRK104`
+.seealso: [](ch_ts), `TSSSP`, `TSSSPGetNumStages()`, `TSSSPRKS2`, `TSSSPRKS3`, `TSSSPRK104`
 @*/
 PetscErrorCode TSSSPSetNumStages(TS ts, PetscInt nstages)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts, TS_CLASSID, 1);
   PetscTryMethod(ts, "TSSSPSetNumStages_C", (TS, PetscInt), (ts, nstages));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TSSSPGetNumStages - get the number of stages in the `TSSSP` time integration scheme
+  TSSSPGetNumStages - get the number of stages in the `TSSSP` time integration scheme
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameter:
-.  ts - time stepping object
+  Input Parameter:
+. ts - time stepping object
 
-   Output Parameter:
-.  nstages - number of stages
+  Output Parameter:
+. nstages - number of stages
 
-   Level: beginner
+  Level: beginner
 
-.seealso: [](chapter_ts), `TSSSP`, `TSSSPGetType()`, `TSSSPSetNumStages()`, `TSSSPRKS2`, `TSSSPRKS3`, `TSSSPRK104`
+.seealso: [](ch_ts), `TSSSP`, `TSSSPGetType()`, `TSSSPSetNumStages()`, `TSSSPRKS2`, `TSSSPRKS3`, `TSSSPRK104`
 @*/
 PetscErrorCode TSSSPGetNumStages(TS ts, PetscInt *nstages)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(ts, TS_CLASSID, 1);
   PetscUseMethod(ts, "TSSSPGetNumStages_C", (TS, PetscInt *), (ts, nstages));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSSSPSetType_SSP(TS ts, TSSSPType type)
@@ -347,7 +345,7 @@ static PetscErrorCode TSSSPSetType_SSP(TS ts, TSSSPType type)
 
   PetscFunctionBegin;
   PetscCall(PetscFunctionListFind(TSSSPList, type, &r));
-  PetscCheck(r, PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown TS_SSP type %s given", type);
+  PetscCheck(r, PetscObjectComm((PetscObject)ts), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unknown TS_SSP type %s given", type);
   ssp->onestep = r;
   PetscCall(PetscFree(ssp->type_name));
   PetscCall(PetscStrallocpy(type, &ssp->type_name));
@@ -363,7 +361,7 @@ static PetscErrorCode TSSSPSetType_SSP(TS ts, TSSSPType type)
       ssp->nstages = 5;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 static PetscErrorCode TSSSPGetType_SSP(TS ts, TSSSPType *type)
 {
@@ -371,7 +369,7 @@ static PetscErrorCode TSSSPGetType_SSP(TS ts, TSSSPType *type)
 
   PetscFunctionBegin;
   *type = ssp->type_name;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 static PetscErrorCode TSSSPSetNumStages_SSP(TS ts, PetscInt nstages)
 {
@@ -379,7 +377,7 @@ static PetscErrorCode TSSSPSetNumStages_SSP(TS ts, PetscInt nstages)
 
   PetscFunctionBegin;
   ssp->nstages = nstages;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 static PetscErrorCode TSSSPGetNumStages_SSP(TS ts, PetscInt *nstages)
 {
@@ -387,7 +385,7 @@ static PetscErrorCode TSSSPGetNumStages_SSP(TS ts, PetscInt *nstages)
 
   PetscFunctionBegin;
   *nstages = ssp->nstages;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSSetFromOptions_SSP(TS ts, PetscOptionItems *PetscOptionsObject)
@@ -404,7 +402,7 @@ static PetscErrorCode TSSetFromOptions_SSP(TS ts, PetscOptionItems *PetscOptions
     PetscCall(PetscOptionsInt("-ts_ssp_nstages", "Number of stages", "TSSSPSetNumStages", ssp->nstages, &ssp->nstages, NULL));
   }
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSView_SSP(TS ts, PetscViewer viewer)
@@ -415,13 +413,13 @@ static PetscErrorCode TSView_SSP(TS ts, PetscViewer viewer)
   PetscFunctionBegin;
   PetscCall(PetscObjectTypeCompare((PetscObject)viewer, PETSCVIEWERASCII, &ascii));
   if (ascii) PetscCall(PetscViewerASCIIPrintf(viewer, "  Scheme: %s\n", ssp->type_name));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------ */
 
 /*MC
-      TSSSP - Explicit strong stability preserving ODE solver
+      TSSSP - Explicit strong stability preserving ODE solver {cite}`ketcheson_2008` {cite}`gottliebketchesonshu2009`
 
   Most hyperbolic conservation laws have exact solutions that are total variation diminishing (TVD) or total variation
   bounded (TVB) although these solutions often contain discontinuities.  Spatial discretizations such as Godunov's
@@ -455,12 +453,7 @@ static PetscErrorCode TSView_SSP(TS ts, PetscViewer viewer)
 
   Level: beginner
 
-  References:
-+  * - Ketcheson, Highly efficient strong stability preserving Runge Kutta methods with low storage implementations, SISC, 2008.
--  * - Gottlieb, Ketcheson, and Shu, High order strong stability preserving time discretizations, J Scientific Computing, 2009.
-
-.seealso: [](chapter_ts), `TSCreate()`, `TS`, `TSSetType()`
-
+.seealso: [](ch_ts), `TSCreate()`, `TS`, `TSSetType()`
 M*/
 PETSC_EXTERN PetscErrorCode TSCreate_SSP(TS ts)
 {
@@ -485,7 +478,7 @@ PETSC_EXTERN PetscErrorCode TSCreate_SSP(TS ts)
   PetscCall(PetscObjectComposeFunction((PetscObject)ts, "TSSSPSetNumStages_C", TSSSPSetNumStages_SSP));
 
   PetscCall(TSSSPSetType(ts, TSSSPRKS2));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -494,18 +487,18 @@ PETSC_EXTERN PetscErrorCode TSCreate_SSP(TS ts)
 
   Level: developer
 
-.seealso: [](chapter_ts), `PetscInitialize()`, `TSSSPFinalizePackage()`, `TSInitializePackage()`
+.seealso: [](ch_ts), `PetscInitialize()`, `TSSSPFinalizePackage()`, `TSInitializePackage()`
 @*/
 PetscErrorCode TSSSPInitializePackage(void)
 {
   PetscFunctionBegin;
-  if (TSSSPPackageInitialized) PetscFunctionReturn(0);
+  if (TSSSPPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   TSSSPPackageInitialized = PETSC_TRUE;
   PetscCall(PetscFunctionListAdd(&TSSSPList, TSSSPRKS2, TSSSPStep_RK_2));
   PetscCall(PetscFunctionListAdd(&TSSSPList, TSSSPRKS3, TSSSPStep_RK_3));
   PetscCall(PetscFunctionListAdd(&TSSSPList, TSSSPRK104, TSSSPStep_RK_10_4));
   PetscCall(PetscRegisterFinalize(TSSSPFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -514,12 +507,12 @@ PetscErrorCode TSSSPInitializePackage(void)
 
   Level: developer
 
-.seealso: [](chapter_ts), `PetscFinalize()`, `TSSSPInitiallizePackage()`, `TSInitializePackage()`
+.seealso: [](ch_ts), `PetscFinalize()`, `TSSSPInitiallizePackage()`, `TSInitializePackage()`
 @*/
 PetscErrorCode TSSSPFinalizePackage(void)
 {
   PetscFunctionBegin;
   TSSSPPackageInitialized = PETSC_FALSE;
   PetscCall(PetscFunctionListDestroy(&TSSSPList));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

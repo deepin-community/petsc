@@ -11,18 +11,19 @@
 #endif
 
 /*@
-   PetscSleep - Sleeps some number of seconds.
+  PetscSleep - Sleeps some number of seconds.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-.  s - number of seconds to sleep
+  Input Parameter:
+. s - number of seconds to sleep
 
-   Note:
-   If s is negative waits for keyboard input
+  Level: intermediate
 
-   Level: intermediate
+  Note:
+  If `s` is negative waits for keyboard input
 
+.seealso: `PetscTime()`
 @*/
 PetscErrorCode PetscSleep(PetscReal s)
 {
@@ -52,5 +53,5 @@ PetscErrorCode PetscSleep(PetscReal s)
 #else
   SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP_SYS, "No support for sleep() on this machine");
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

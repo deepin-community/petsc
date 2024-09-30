@@ -1,4 +1,3 @@
-
 /*
    Implements the sequential vectors.
 */
@@ -20,7 +19,7 @@ extern PetscErrorCode VecCreate_Seq_Private(Vec, const float *);
 extern PetscErrorCode VecCreate_Seq_Private(Vec, const double *);
 #endif
 
-PETSC_EXTERN PetscErrorCode VecCreate_Seq(Vec V)
+PetscErrorCode VecCreate_Seq(Vec V)
 {
   Vec_Seq     *s;
   PetscScalar *array;
@@ -36,6 +35,10 @@ PETSC_EXTERN PetscErrorCode VecCreate_Seq(Vec V)
 
   s                  = (Vec_Seq *)V->data;
   s->array_allocated = array;
+  PetscCall(PetscObjectComposedDataSetReal((PetscObject)V, NormIds[NORM_2], 0));
+  PetscCall(PetscObjectComposedDataSetReal((PetscObject)V, NormIds[NORM_1], 0));
+  PetscCall(PetscObjectComposedDataSetReal((PetscObject)V, NormIds[NORM_INFINITY], 0));
+
 #else
   switch (((PetscObject)V)->precision) {
   case PETSC_PRECISION_SINGLE: {
@@ -60,5 +63,5 @@ PETSC_EXTERN PetscErrorCode VecCreate_Seq(Vec V)
     SETERRQ(PetscObjectComm((PetscObject)V), PETSC_ERR_SUP, "No support for mixed precision %d", (int)(((PetscObject)V)->precision));
   }
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

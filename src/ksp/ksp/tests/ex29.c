@@ -1,4 +1,3 @@
-
 static char help[] = "Tests ML interface. Modified from ~src/ksp/ksp/tests/ex19.c \n\
   -mx <xg>, where <xg> = number of grid points in the x-direction\n\
   -my <yg>, where <yg> = number of grid points in the y-direction\n\
@@ -39,7 +38,7 @@ typedef struct {
   Mat      A, P, R;
   KSP      ksp;
 } GridCtx;
-extern int FormJacobian_Grid(GridCtx *, Mat *);
+extern PetscErrorCode FormJacobian_Grid(GridCtx *, Mat *);
 
 int main(int argc, char **argv)
 {
@@ -77,7 +76,7 @@ int main(int argc, char **argv)
   PetscCall(VecGetLocalSize(fine_ctx.x, &nlocal));
   PetscCall(DMCreateLocalVector(fine_ctx.da, &fine_ctx.localX));
   PetscCall(VecDuplicate(fine_ctx.localX, &fine_ctx.localF));
-  PetscCall(MatCreateAIJ(PETSC_COMM_WORLD, nlocal, nlocal, n, n, 5, NULL, 3, NULL, &A));
+  PetscCall(MatCreateFromOptions(PETSC_COMM_WORLD, NULL, 1, nlocal, nlocal, n, n, &A));
   PetscCall(FormJacobian_Grid(&fine_ctx, &A));
 
   /* create linear solver */
@@ -116,7 +115,7 @@ int main(int argc, char **argv)
   return 0;
 }
 
-int FormJacobian_Grid(GridCtx *grid, Mat *J)
+PetscErrorCode FormJacobian_Grid(GridCtx *grid, Mat *J)
 {
   Mat                    jac = *J;
   PetscInt               i, j, row, mx, my, xs, ys, xm, ym, Xs, Ys, Xm, Ym, col[5];
@@ -168,7 +167,7 @@ int FormJacobian_Grid(GridCtx *grid, Mat *J)
   PetscCall(ISLocalToGlobalMappingRestoreIndices(ltogm, &ltog));
   PetscCall(MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY));
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 /*TEST

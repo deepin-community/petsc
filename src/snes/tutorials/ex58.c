@@ -1,4 +1,3 @@
-
 #include <petscsnes.h>
 #include <petscdm.h>
 #include <petscdmda.h>
@@ -128,7 +127,7 @@ PetscErrorCode FormBounds(SNES snes, Vec xl, Vec xu)
   PetscCall(SNESGetApplicationContext(snes, &ctx));
   PetscCall(VecSet(xl, ctx->lb));
   PetscCall(VecSet(xu, ctx->ub));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* -------------------------------------------------------------------- */
@@ -254,7 +253,7 @@ PetscErrorCode FormGradient(SNES snes, Vec X, Vec G, void *ptr)
   PetscCall(DMDAVecRestoreArray(da, G, &g));
   PetscCall(DMRestoreLocalVector(da, &localX));
   PetscCall(PetscLogFlops(67.0 * mx * my));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------- */
@@ -446,7 +445,7 @@ PetscErrorCode FormJacobian(SNES snes, Vec X, Mat H, Mat tHPre, void *ptr)
   PetscCall(DMRestoreLocalVector(da, &localX));
 
   PetscCall(PetscLogFlops(199.0 * mx * my));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------- */
@@ -543,7 +542,7 @@ PetscErrorCode FormBoundaryConditions(SNES snes, AppCtx **ouser)
       else yt = yt + hy; /* if (j==2 || j==3) */
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DestroyBoundaryConditions(AppCtx **ouser)
@@ -556,7 +555,7 @@ PetscErrorCode DestroyBoundaryConditions(AppCtx **ouser)
   PetscCall(PetscFree(user->left));
   PetscCall(PetscFree(user->right));
   PetscCall(PetscFree(*ouser));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------- */
@@ -593,7 +592,7 @@ PetscErrorCode ComputeInitialGuess(SNES snes, Vec X, void *dummy)
   }
   /* Restore vectors */
   PetscCall(DMDAVecRestoreArray(da, X, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

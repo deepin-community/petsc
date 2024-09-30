@@ -54,13 +54,11 @@ PETSC_EXTERN void  snesqnsetrestarttype_(SNES snes,SNESQNRestartType *rtype, int
 *__ierr = SNESQNSetRestartType(
 	(SNES)PetscToPointer((snes) ),*rtype);
 }
-
 PETSC_EXTERN void  snesqnsetscaletype_(SNES snes,SNESQNScaleType *stype, int *__ierr)
 {
 *__ierr = SNESQNSetScaleType(
 	(SNES)PetscToPointer((snes) ),*stype);
 }
-
 PETSC_EXTERN void  snesqnsettype_(SNES snes,SNESQNType *qtype, int *__ierr)
 {
 *__ierr = SNESQNSetType(

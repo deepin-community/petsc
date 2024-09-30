@@ -1,4 +1,3 @@
-
 /*
      Code for some of the parallel vector primitives.
 */
@@ -21,7 +20,7 @@ static PetscErrorCode VecResetPreallocationCOO_MPI(Vec v)
     PetscCall(PetscFree(vmpi->perm2));
     PetscCall(PetscSFDestroy(&vmpi->coo_sf));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecDestroy_MPI(Vec v)
@@ -29,10 +28,8 @@ PetscErrorCode VecDestroy_MPI(Vec v)
   Vec_MPI *x = (Vec_MPI *)v->data;
 
   PetscFunctionBegin;
-#if defined(PETSC_USE_LOG)
-  PetscLogObjectState((PetscObject)v, "Length=%" PetscInt_FMT, v->map->N);
-#endif
-  if (!x) PetscFunctionReturn(0);
+  PetscCall(PetscLogObjectState((PetscObject)v, "Length=%" PetscInt_FMT, v->map->N));
+  if (!x) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscFree(x->array_allocated));
 
   /* Destroy local representation of vector if it exists */
@@ -50,10 +47,10 @@ PetscErrorCode VecDestroy_MPI(Vec v)
   PetscCall(PetscObjectComposeFunction((PetscObject)v, "PetscMatlabEnginePut_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)v, "PetscMatlabEngineGet_C", NULL));
   PetscCall(PetscFree(v->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode VecView_MPI_ASCII(Vec xin, PetscViewer viewer)
+static PetscErrorCode VecView_MPI_ASCII(Vec xin, PetscViewer viewer)
 {
   PetscInt           i, work = xin->map->n, cnt, len, nLen;
   PetscMPIInt        j, n = 0, size, rank, tag = ((PetscObject)viewer)->tag;
@@ -74,7 +71,7 @@ PetscErrorCode VecView_MPI_ASCII(Vec xin, PetscViewer viewer)
     }
     navg = xin->map->N / size;
     PetscCall(PetscViewerASCIIPrintf(viewer, "  Load Balance - Local vector size Min %" PetscInt_FMT "  avg %" PetscInt_FMT "  max %" PetscInt_FMT "\n", nmin, navg, nmax));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   PetscCall(VecGetArrayRead(xin, &xarray));
@@ -369,7 +366,7 @@ PetscErrorCode VecView_MPI_ASCII(Vec xin, PetscViewer viewer)
   }
   PetscCall(PetscViewerFlush(viewer));
   PetscCall(VecRestoreArrayRead(xin, &xarray));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecView_MPI_Binary(Vec xin, PetscViewer viewer)
@@ -391,7 +388,7 @@ PetscErrorCode VecView_MPI_Draw_LG(Vec xin, PetscViewer viewer)
   PetscFunctionBegin;
   PetscCall(PetscViewerDrawGetDraw(viewer, 0, &draw));
   PetscCall(PetscDrawIsNull(draw, &isnull));
-  if (isnull) PetscFunctionReturn(0);
+  if (isnull) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCallMPI(MPI_Comm_rank(PetscObjectComm((PetscObject)xin), &rank));
   PetscCallMPI(MPI_Comm_size(PetscObjectComm((PetscObject)xin), &size));
   PetscCall(PetscMPIIntCast(xin->map->n, &n));
@@ -428,10 +425,10 @@ PetscErrorCode VecView_MPI_Draw_LG(Vec xin, PetscViewer viewer)
   }
   PetscCall(PetscDrawLGDraw(lg));
   PetscCall(PetscDrawLGSave(lg));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode VecView_MPI_Draw(Vec xin, PetscViewer viewer)
+PETSC_INTERN PetscErrorCode VecView_MPI_Draw(Vec xin, PetscViewer viewer)
 {
   PetscMPIInt        rank, size, tag = ((PetscObject)viewer)->tag;
   PetscInt           i, start, end;
@@ -445,7 +442,7 @@ PetscErrorCode VecView_MPI_Draw(Vec xin, PetscViewer viewer)
   PetscFunctionBegin;
   PetscCall(PetscViewerDrawGetDraw(viewer, 0, &draw));
   PetscCall(PetscDrawIsNull(draw, &isnull));
-  if (isnull) PetscFunctionReturn(0);
+  if (isnull) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCallMPI(MPI_Comm_size(PetscObjectComm((PetscObject)xin), &size));
   PetscCallMPI(MPI_Comm_rank(PetscObjectComm((PetscObject)xin), &rank));
 
@@ -482,7 +479,7 @@ PetscErrorCode VecView_MPI_Draw(Vec xin, PetscViewer viewer)
   PetscCall(PetscDrawFlush(draw));
   PetscCall(PetscDrawPause(draw));
   PetscCall(PetscDrawSave(draw));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_MATLAB)
@@ -513,7 +510,7 @@ PetscErrorCode VecView_MPI_Matlab(Vec xin, PetscViewer viewer)
     PetscCallMPI(MPI_Gatherv((void *)xarray, xin->map->n, MPIU_SCALAR, 0, 0, 0, MPIU_SCALAR, 0, PetscObjectComm((PetscObject)xin)));
   }
   PetscCall(VecRestoreArrayRead(xin, &xarray));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
@@ -539,14 +536,14 @@ PetscErrorCode VecView_MPI_ADIOS(Vec xin, PetscViewer viewer)
   PetscCall(VecGetSize(xin, &N));
   PetscCall(VecGetOwnershipRange(xin, &rstart, NULL));
 
-  sprintf(nlocalname, "%d", (int)n);
-  sprintf(nglobalname, "%d", (int)N);
-  sprintf(coffset, "%d", (int)rstart);
+  PetscCall(PetscSNPrintf(nlocalname, PETSC_STATIC_ARRAY_LENGTH(nlocalname), "%" PetscInt_FMT, n));
+  PetscCall(PetscSNPrintf(nglobalname, PETSC_STATIC_ARRAY_LENGTH(nglobalname), "%" PetscInt_FMT, N));
+  PetscCall(PetscSNPrintf(coffset, PETSC_STATIC_ARRAY_LENGTH(coffset), "%" PetscInt_FMT, rstart));
   id = adios_define_var(Petsc_adios_group, vecname, "", adios_double, nlocalname, nglobalname, coffset);
   PetscCall(VecGetArrayRead(xin, &array));
-  PetscCall(adios_write_byid(adios->adios_handle, id, array));
+  PetscCallExternal(adios_write_byid, adios->adios_handle, id, array);
   PetscCall(VecRestoreArrayRead(xin, &array));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
@@ -735,7 +732,7 @@ PetscErrorCode VecView_MPI_HDF5(Vec xin, PetscViewer viewer)
   #endif
   if (timestepping) PetscCall(PetscViewerHDF5WriteObjectAttribute(viewer, (PetscObject)xin, "timestepping", PETSC_BOOL, &timestepping));
   PetscCall(PetscInfo(xin, "Wrote Vec object with name %s\n", vecname));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
@@ -802,39 +799,42 @@ PETSC_EXTERN PetscErrorCode VecView_MPI(Vec xin, PetscViewer viewer)
     PetscCall(VecView_MPI_Matlab(xin, viewer));
 #endif
   } else if (isglvis) PetscCall(VecView_GLVis(xin, viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecGetSize_MPI(Vec xin, PetscInt *N)
 {
   PetscFunctionBegin;
   *N = xin->map->N;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecGetValues_MPI(Vec xin, PetscInt ni, const PetscInt ix[], PetscScalar y[])
 {
   const PetscScalar *xx;
-  PetscInt           i, tmp, start = xin->map->range[xin->stash.rank];
+  const PetscInt     start = xin->map->range[xin->stash.rank];
 
   PetscFunctionBegin;
   PetscCall(VecGetArrayRead(xin, &xx));
-  for (i = 0; i < ni; i++) {
+  for (PetscInt i = 0; i < ni; i++) {
     if (xin->stash.ignorenegidx && ix[i] < 0) continue;
-    tmp = ix[i] - start;
+    const PetscInt tmp = ix[i] - start;
+
     PetscCheck(tmp >= 0 && tmp < xin->map->n, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Can only get local values, trying %" PetscInt_FMT, ix[i]);
     y[i] = xx[tmp];
   }
   PetscCall(VecRestoreArrayRead(xin, &xx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecSetValues_MPI(Vec xin, PetscInt ni, const PetscInt ix[], const PetscScalar y[], InsertMode addv)
 {
-  PetscMPIInt  rank   = xin->stash.rank;
-  PetscInt    *owners = xin->map->range, start = owners[rank];
-  PetscInt     end = owners[rank + 1], i, row;
-  PetscScalar *xx;
+  const PetscBool   ignorenegidx = xin->stash.ignorenegidx;
+  const PetscBool   donotstash   = xin->stash.donotstash;
+  const PetscMPIInt rank         = xin->stash.rank;
+  const PetscInt   *owners       = xin->map->range;
+  const PetscInt    start = owners[rank], end = owners[rank + 1];
+  PetscScalar      *xx;
 
   PetscFunctionBegin;
   if (PetscDefined(USE_DEBUG)) {
@@ -843,32 +843,24 @@ PetscErrorCode VecSetValues_MPI(Vec xin, PetscInt ni, const PetscInt ix[], const
   }
   PetscCall(VecGetArray(xin, &xx));
   xin->stash.insertmode = addv;
+  for (PetscInt i = 0; i < ni; ++i) {
+    PetscInt row;
 
-  if (addv == INSERT_VALUES) {
-    for (i = 0; i < ni; i++) {
-      if (xin->stash.ignorenegidx && ix[i] < 0) continue;
-      PetscCheck(ix[i] >= 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Out of range index value %" PetscInt_FMT " cannot be negative", ix[i]);
-      if ((row = ix[i]) >= start && row < end) {
+    if (ignorenegidx && ix[i] < 0) continue;
+    PetscCheck(ix[i] >= 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Out of range index value %" PetscInt_FMT " cannot be negative", ix[i]);
+    if ((row = ix[i]) >= start && row < end) {
+      if (addv == INSERT_VALUES) {
         xx[row - start] = y[i];
-      } else if (!xin->stash.donotstash) {
-        PetscCheck(ix[i] < xin->map->N, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Out of range index value %" PetscInt_FMT " maximum %" PetscInt_FMT, ix[i], xin->map->N);
-        PetscCall(VecStashValue_Private(&xin->stash, row, y[i]));
-      }
-    }
-  } else {
-    for (i = 0; i < ni; i++) {
-      if (xin->stash.ignorenegidx && ix[i] < 0) continue;
-      PetscCheck(ix[i] >= 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Out of range index value %" PetscInt_FMT " cannot be negative", ix[i]);
-      if ((row = ix[i]) >= start && row < end) {
+      } else {
         xx[row - start] += y[i];
-      } else if (!xin->stash.donotstash) {
-        PetscCheck(ix[i] < xin->map->N, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Out of range index value %" PetscInt_FMT " maximum %" PetscInt_FMT, ix[i], xin->map->N);
-        PetscCall(VecStashValue_Private(&xin->stash, row, y[i]));
       }
+    } else if (!donotstash) {
+      PetscCheck(ix[i] < xin->map->N, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Out of range index value %" PetscInt_FMT " maximum %" PetscInt_FMT, ix[i], xin->map->N);
+      PetscCall(VecStashValue_Private(&xin->stash, row, y[i]));
     }
   }
   PetscCall(VecRestoreArray(xin, &xx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecSetValuesBlocked_MPI(Vec xin, PetscInt ni, const PetscInt ix[], const PetscScalar yin[], InsertMode addv)
@@ -916,7 +908,7 @@ PetscErrorCode VecSetValuesBlocked_MPI(Vec xin, PetscInt ni, const PetscInt ix[]
     }
   }
   PetscCall(VecRestoreArray(xin, &xx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -932,7 +924,7 @@ PetscErrorCode VecAssemblyBegin_MPI(Vec xin)
 
   PetscFunctionBegin;
   PetscCall(PetscObjectGetComm((PetscObject)xin, &comm));
-  if (xin->stash.donotstash) PetscFunctionReturn(0);
+  if (xin->stash.donotstash) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(MPIU_Allreduce((PetscEnum *)&xin->stash.insertmode, (PetscEnum *)&addv, 1, MPIU_ENUM, MPI_BOR, comm));
   PetscCheck(addv != (ADD_VALUES | INSERT_VALUES), comm, PETSC_ERR_ARG_NOTSAMETYPE, "Some processors inserted values while others added");
@@ -953,7 +945,7 @@ PetscErrorCode VecAssemblyBegin_MPI(Vec xin)
   PetscCall(PetscInfo(xin, "Stash has %" PetscInt_FMT " entries, uses %" PetscInt_FMT " mallocs.\n", nstash, reallocs));
   PetscCall(VecStashGetInfo_Private(&xin->bstash, &nstash, &reallocs));
   PetscCall(PetscInfo(xin, "Block-Stash has %" PetscInt_FMT " entries, uses %" PetscInt_FMT " mallocs.\n", nstash, reallocs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecAssemblyEnd_MPI(Vec vec)
@@ -998,7 +990,7 @@ PetscErrorCode VecAssemblyEnd_MPI(Vec vec)
     PetscCall(VecRestoreArray(vec, &xarray));
   }
   vec->stash.insertmode = NOT_SET_VALUES;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecSetPreallocationCOO_MPI(Vec x, PetscCount coo_n, const PetscInt coo_i[])
@@ -1011,7 +1003,7 @@ PetscErrorCode VecSetPreallocationCOO_MPI(Vec x, PetscCount coo_n, const PetscIn
 
   PetscFunctionBegin;
   PetscCall(PetscObjectGetComm((PetscObject)x, &comm));
-  PetscCall(MPI_Comm_size(comm, &size));
+  PetscCallMPI(MPI_Comm_size(comm, &size));
   PetscCall(VecResetPreallocationCOO_MPI(x));
 
   PetscCall(PetscLayoutSetUp(x->map));
@@ -1225,7 +1217,7 @@ PetscErrorCode VecSetPreallocationCOO_MPI(Vec x, PetscCount coo_n, const PetscIn
   vmpi->sendlen = sendlen;
   vmpi->recvlen = recvlen;
   vmpi->coo_sf  = sf2;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecSetValuesCOO_MPI(Vec x, const PetscScalar v[], InsertMode imode)
@@ -1264,5 +1256,5 @@ PetscErrorCode VecSetValuesCOO_MPI(Vec x, const PetscScalar v[], InsertMode imod
   }
 
   PetscCall(VecRestoreArray(x, &a));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

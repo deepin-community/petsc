@@ -1,4 +1,3 @@
-
 static char help[] = "Solves a nonlinear system in parallel with a user-defined Newton method.\n\
 Uses KSP to solve the linearized Newton systems.  This solver\n\
 is a very simplistic inexact Newton method.  The intent of this code is to\n\
@@ -160,12 +159,8 @@ int main(int argc, char **argv)
      Jacobian.  See the users manual for a discussion of better techniques
      for preallocating matrix memory.
   */
-  if (size == 1) {
-    PetscCall(MatCreateSeqAIJ(comm, N, N, 5, NULL, &J));
-  } else {
-    PetscCall(VecGetLocalSize(X, &m));
-    PetscCall(MatCreateAIJ(comm, m, m, N, N, 5, NULL, 3, NULL, &J));
-  }
+  PetscCall(VecGetLocalSize(X, &m));
+  PetscCall(MatCreateFromOptions(comm, NULL, 1, m, m, N, N, &J));
 
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Customize linear solver; set runtime options
@@ -330,7 +325,7 @@ PetscErrorCode FormInitialGuess(AppCtx *user, Vec X)
      Restore vector
   */
   PetscCall(VecRestoreArray(X, &x));
-  return 0;
+  return PETSC_SUCCESS;
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -404,7 +399,7 @@ PetscErrorCode ComputeFunction(AppCtx *user, Vec X, Vec F)
   PetscCall(VecRestoreArray(localX, &x));
   PetscCall(VecRestoreArray(F, &f));
   PetscCall(PetscLogFlops(11.0 * ym * xm));
-  return 0;
+  return PETSC_SUCCESS;
 }
 /* ------------------------------------------------------------------- */
 /*
@@ -415,8 +410,8 @@ PetscErrorCode ComputeFunction(AppCtx *user, Vec X, Vec F)
 .  user - user-defined application context
 
    Output Parameters:
-.  jac - Jacobian matrix
-.  flag - flag indicating matrix structure
++  jac - Jacobian matrix
+-  flag - flag indicating matrix structure
 
    Notes:
    Due to grid point reordering with DMDAs, we must always work
@@ -517,7 +512,7 @@ PetscErrorCode ComputeJacobian(AppCtx *user, Vec X, Mat jac)
   PetscCall(VecRestoreArray(localX, &x));
   PetscCall(MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY));
 
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 /*TEST

@@ -1,11 +1,17 @@
-#ifndef PETSC_HASHTABLE_H
-#define PETSC_HASHTABLE_H
+#pragma once
 
 #include <petsc/private/petscimpl.h>
 
 #define kh_inline   inline
 #define klib_unused PETSC_UNUSED
+#if !defined(kh_foreach_value)
+  #define undef_kh_foreach_value
+#endif
 #include <petsc/private/khash/khash.h>
+#if defined(undef_kh_foreach_value)
+  #undef kh_foreach_value
+  #undef undef_kh_foreach_value
+#endif
 
 /* Required for khash <= 0.2.5 */
 #if !defined(kcalloc)
@@ -86,14 +92,14 @@
   @param  code  Block of code to execute
  */
   #define kh_foreach_value(h, vvar, code) \
-    { \
+    do { \
       khint_t __i; \
       for (__i = kh_begin(h); __i != kh_end(h); ++__i) { \
         if (!kh_exist(h, __i)) continue; \
         (vvar) = kh_val(h, __i); \
         code; \
       } \
-    }
+    } while (0)
 #endif /*kh_foreach_value*/
 
 /* --- Helper macro for error checking --- */
@@ -108,18 +114,37 @@
 
 typedef khiter_t PetscHashIter;
 
+#define PetscHashIterAtEnd(ht, i) ((i) == kh_end((ht)))
+
+#define PetscHashIterAtBegin(ht, i) ((i) == kh_begin((ht)))
+
+#define PetscHashIterIncContinue(ht, it) (!PetscHashIterAtEnd((ht), (it)) && !kh_exist((ht), (it)))
+
 #define PetscHashIterBegin(ht, i) \
   do { \
-    (i) = kh_begin((ht)); \
-    if ((i) != kh_end((ht)) && !kh_exist((ht), (i))) PetscHashIterNext((ht), (i)); \
+    PetscHashIter phib_it_ = kh_begin((ht)); \
+    if (PetscHashIterIncContinue((ht), phib_it_)) PetscHashIterNext((ht), phib_it_); \
+    (i) = phib_it_; \
   } while (0)
 
 #define PetscHashIterNext(ht, i) \
   do { \
     ++(i); \
-  } while ((i) != kh_end((ht)) && !kh_exist((ht), (i)))
+  } while (PetscHashIterIncContinue((ht), (i)))
 
-#define PetscHashIterAtEnd(ht, i) ((i) == kh_end((ht)))
+#define PetscHashIterEnd(ht, i) ((i) = kh_end((ht)))
+
+#define PetscHashIterDecContinue(ht, it) (PetscHashIterAtEnd((ht), (it)) || (!PetscHashIterAtBegin((ht), (it)) && !kh_exist((ht), (it))))
+
+#define PetscHashIterPrevious(ht, i) \
+  do { \
+    PetscHashIter phip_it_ = (i); \
+    PetscAssertAbort(!PetscHashIterAtBegin((ht), phip_it_), PETSC_COMM_SELF, PETSC_ERR_PLIB, "Trying to decrement iterator past begin"); \
+    do { \
+      --phip_it_; \
+    } while (PetscHashIterDecContinue((ht), phip_it_)); \
+    (i) = phip_it_; \
+  } while (0)
 
 #define PetscHashIterGetKey(ht, i, k) ((k) = kh_key((ht), (i)))
 
@@ -133,7 +158,7 @@ typedef khint32_t PetscHash32_t;
 typedef khint64_t PetscHash64_t;
 typedef khint_t   PetscHash_t;
 
-/* Thomas Wang's first version for 32bit integers */
+/* Thomas Wang's first version for 32-bit integers */
 static inline PetscHash_t PetscHash_UInt32_v0(PetscHash32_t key)
 {
   key += ~(key << 15);
@@ -145,7 +170,7 @@ static inline PetscHash_t PetscHash_UInt32_v0(PetscHash32_t key)
   return key;
 }
 
-/* Thomas Wang's second version for 32bit integers */
+/* Thomas Wang's second version for 32-bit integers */
 static inline PetscHash_t PetscHash_UInt32_v1(PetscHash32_t key)
 {
   key = ~key + (key << 15); /* key = (key << 15) - key - 1; */
@@ -162,7 +187,7 @@ static inline PetscHash_t PetscHash_UInt32(PetscHash32_t key)
   return PetscHash_UInt32_v1(key);
 }
 
-/* Thomas Wang's version for 64bit integer -> 32bit hash */
+/* Thomas Wang's version for 64-bit integer -> 32-bit hash */
 static inline PetscHash32_t PetscHash_UInt64_32(PetscHash64_t key)
 {
   key = ~key + (key << 18); /* key = (key << 18) - key - 1; */
@@ -174,7 +199,7 @@ static inline PetscHash32_t PetscHash_UInt64_32(PetscHash64_t key)
   return (PetscHash32_t)key;
 }
 
-/* Thomas Wang's version for 64bit integer -> 64bit hash */
+/* Thomas Wang's version for 64-bit integer -> 64-bit hash */
 static inline PetscHash64_t PetscHash_UInt64_64(PetscHash64_t key)
 {
   key = ~key + (key << 21); /* key = (key << 21) - key - 1; */
@@ -201,7 +226,7 @@ static inline PetscHash_t PetscHashInt(PetscInt key)
 #endif
 }
 
-static inline PetscHash_t PetscHashPointer(void *key)
+static inline PetscHash_t PetscHashPointer(const void *key)
 {
 #if PETSC_SIZEOF_VOID_P == 8
   return PetscHash_UInt64((PetscHash64_t)key);
@@ -218,5 +243,3 @@ static inline PetscHash_t PetscHashCombine(PetscHash_t seed, PetscHash_t hash)
 }
 
 #define PetscHashEqual(a, b) ((a) == (b))
-
-#endif /* PETSC_HASHTABLE_H */

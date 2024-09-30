@@ -29,6 +29,26 @@ extern void PetscRmPointer(void*);
 
 #include "petscsys.h"
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscloggetdefaulthandler_ PETSCLOGGETDEFAULTHANDLER
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscloggetdefaulthandler_ petscloggetdefaulthandler
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscloggetstate_ PETSCLOGGETSTATE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscloggetstate_ petscloggetstate
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscloghandlerstart_ PETSCLOGHANDLERSTART
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscloghandlerstart_ petscloghandlerstart
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscloghandlerstop_ PETSCLOGHANDLERSTOP
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscloghandlerstop_ petscloghandlerstop
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define petsclogactions_ PETSCLOGACTIONS
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define petsclogactions_ petsclogactions
@@ -108,12 +128,45 @@ extern void PetscRmPointer(void*);
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define petsclogeventdeactivateclass_ petsclogeventdeactivateclass
 #endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petsclogeventspause_ PETSCLOGEVENTSPAUSE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petsclogeventspause_ petsclogeventspause
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petsclogeventsresume_ PETSCLOGEVENTSRESUME
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petsclogeventsresume_ petsclogeventsresume
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petsclogsetthreshold_ PETSCLOGSETTHRESHOLD
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petsclogsetthreshold_ petsclogsetthreshold
+#endif
 
 
 /* Definitions of Fortran Wrapper routines */
 #if defined(__cplusplus)
 extern "C" {
 #endif
+PETSC_EXTERN void  petscloggetdefaulthandler_(PetscLogHandler *handler, int *__ierr)
+{
+*__ierr = PetscLogGetDefaultHandler(
+	(PetscLogHandler* )PetscToPointer((handler) ));
+}
+PETSC_EXTERN void  petscloggetstate_(PetscLogState *state, int *__ierr)
+{
+*__ierr = PetscLogGetState(
+	(PetscLogState* )PetscToPointer((state) ));
+}
+PETSC_EXTERN void  petscloghandlerstart_(PetscLogHandler *h, int *__ierr)
+{
+*__ierr = PetscLogHandlerStart(*h);
+}
+PETSC_EXTERN void  petscloghandlerstop_(PetscLogHandler *h, int *__ierr)
+{
+*__ierr = PetscLogHandlerStop(*h);
+}
 PETSC_EXTERN void  petsclogactions_(PetscBool *flag, int *__ierr)
 {
 *__ierr = PetscLogActions(*flag);
@@ -177,6 +230,18 @@ PETSC_EXTERN void  petsclogeventactivateclass_(PetscClassId *classid, int *__ier
 PETSC_EXTERN void  petsclogeventdeactivateclass_(PetscClassId *classid, int *__ierr)
 {
 *__ierr = PetscLogEventDeactivateClass(*classid);
+}
+PETSC_EXTERN void  petsclogeventspause_(int *__ierr)
+{
+*__ierr = PetscLogEventsPause();
+}
+PETSC_EXTERN void  petsclogeventsresume_(int *__ierr)
+{
+*__ierr = PetscLogEventsResume();
+}
+PETSC_EXTERN void  petsclogsetthreshold_(PetscLogDouble *newThresh,PetscLogDouble *oldThresh, int *__ierr)
+{
+*__ierr = PetscLogSetThreshold(*newThresh,oldThresh);
 }
 #if defined(__cplusplus)
 }

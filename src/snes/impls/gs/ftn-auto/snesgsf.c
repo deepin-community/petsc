@@ -64,7 +64,6 @@ PETSC_EXTERN void  snesngsgettolerances_(SNES snes,PetscReal *atol,PetscReal *rt
 *__ierr = SNESNGSGetTolerances(
 	(SNES)PetscToPointer((snes) ),atol,rtol,stol,maxit);
 }
-
 PETSC_EXTERN void  snesngssetsweeps_(SNES snes,PetscInt *sweeps, int *__ierr)
 {
 *__ierr = SNESNGSSetSweeps(

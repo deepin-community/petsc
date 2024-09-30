@@ -1,4 +1,3 @@
-
 static char help[] = "Solves a variable Poisson problem with KSP.\n\n";
 
 /*
@@ -129,6 +128,7 @@ PetscErrorCode UserInitializeLinearSolver(PetscInt m, PetscInt n, UserCtx *userc
 {
   PetscInt N;
 
+  PetscFunctionBeginUser;
   /*
      Here we assume use of a grid of size m x n, with all points on the
      interior of the domain, i.e., we do not include the points corresponding
@@ -159,8 +159,7 @@ PetscErrorCode UserInitializeLinearSolver(PetscInt m, PetscInt n, UserCtx *userc
      the linear solves needed.
   */
   PetscCall(KSPCreate(PETSC_COMM_SELF, &userctx->ksp));
-
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -176,6 +175,7 @@ PetscErrorCode UserDoLinearSolver(PetscScalar *rho, UserCtx *userctx, PetscScala
   PC          pc;
   PetscScalar v, hx2 = userctx->hx2, hy2 = userctx->hy2;
 
+  PetscFunctionBeginUser;
   /*
      This is not the most efficient way of generating the matrix
      but let's not worry about it. We should have separate code for
@@ -274,8 +274,7 @@ PetscErrorCode UserDoLinearSolver(PetscScalar *rho, UserCtx *userctx, PetscScala
   */
   PetscCall(VecResetArray(userctx->x));
   PetscCall(VecResetArray(userctx->b));
-
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------------*/
@@ -286,11 +285,12 @@ PetscErrorCode UserFinalizeLinearSolver(UserCtx *userctx)
      we free the work space.  All PETSc objects should be destroyed when
      they are no longer needed.
   */
+  PetscFunctionBeginUser;
   PetscCall(KSPDestroy(&userctx->ksp));
   PetscCall(VecDestroy(&userctx->x));
   PetscCall(VecDestroy(&userctx->b));
   PetscCall(MatDestroy(&userctx->A));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

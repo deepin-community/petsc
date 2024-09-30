@@ -1,6 +1,6 @@
 static const char help[] = "Solves a Q1-P0 Stokes problem from Underworld.\n\
 \n\
-You can obtain a sample matrix from http://ftp.mcs.anl.gov/pub/petsc/Datafiles/matrices/underworld32.gz\n\
+You can obtain a sample matrix from https://web.cels.anl.gov/projects/petsc/download/Datafiles/matrices/underworld32.gz\n\
 and run with -f underworld32.gz\n\n";
 
 #include <petscksp.h>
@@ -37,7 +37,7 @@ static PetscErrorCode replace_submats(Mat A, IS isu, IS isp)
   PetscCall(MatDestroy(&nA12));
   PetscCall(MatDestroy(&nA21));
   PetscCall(MatDestroy(&nA22));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode LSCLoadTestOperators(Mat *A11, Mat *A12, Mat *A21, Mat *A22, Vec *b1, Vec *b2)
@@ -68,7 +68,7 @@ PetscErrorCode LSCLoadTestOperators(Mat *A11, Mat *A12, Mat *A21, Mat *A22, Vec 
   PetscCall(VecLoad(*b1, viewer));
   PetscCall(VecLoad(*b2, viewer));
   PetscCall(PetscViewerDestroy(&viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode LoadTestMatrices(Mat *_A, Vec *_x, Vec *_b, IS *_isu, IS *_isp)
@@ -140,7 +140,7 @@ PetscErrorCode LoadTestMatrices(Mat *_A, Vec *_x, Vec *_b, IS *_isu, IS *_isp)
   *_A   = A;
   *_x   = x;
   *_b   = b;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode port_lsd_bfbt(void)
@@ -150,11 +150,13 @@ PetscErrorCode port_lsd_bfbt(void)
   KSP       ksp_A;
   PC        pc_A;
   IS        isu, isp;
-  PetscBool test_fs = PETSC_FALSE;
+  PetscBool test_fs = PETSC_FALSE, set_symmetry = PETSC_FALSE, test_sbaij = PETSC_FALSE;
 
   PetscFunctionBeginUser;
   PetscCall(LoadTestMatrices(&A, &x, &b, &isu, &isp));
   PetscCall(PetscOptionsGetBool(NULL, NULL, "-test_fs", &test_fs, NULL));
+  PetscCall(PetscOptionsGetBool(NULL, NULL, "-set_symmetry", &set_symmetry, NULL));
+  PetscCall(PetscOptionsGetBool(NULL, NULL, "-test_sbaij", &test_sbaij, NULL));
   if (!test_fs) {
     PetscCall(PetscObjectReference((PetscObject)A));
     P = A;
@@ -167,10 +169,14 @@ PetscErrorCode port_lsd_bfbt(void)
 
   PetscCall(KSPSetFromOptions(ksp_A));
   PetscCall(KSPGetPC(ksp_A, &pc_A));
-  PetscCall(PetscObjectTypeCompare((PetscObject)pc_A, PCLU, &test_fs));
-  if (test_fs) {
+  PetscCall(PetscObjectTypeCompare((PetscObject)pc_A, PCFIELDSPLIT, &test_fs));
+  if (!test_fs) {
     PetscCall(MatDestroy(&P));
     PetscCall(MatConvert(A, MATAIJ, MAT_INITIAL_MATRIX, &P));
+    if (set_symmetry || test_sbaij) {
+      PetscCall(MatSetOption(P, MAT_SYMMETRIC, PETSC_TRUE));
+      if (test_sbaij) PetscCall(MatConvert(P, MATSBAIJ, MAT_INPLACE_MATRIX, &P));
+    }
     PetscCall(KSPSetOperators(ksp_A, A, P));
     PetscCall(KSPSetFromOptions(ksp_A));
     PetscCall(KSPSolve(ksp_A, b, x));
@@ -258,7 +264,7 @@ PetscErrorCode port_lsd_bfbt(void)
   PetscCall(VecDestroy(&b));
   PetscCall(ISDestroy(&isu));
   PetscCall(ISDestroy(&isp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -273,7 +279,7 @@ int main(int argc, char **argv)
 /*TEST
 
     test:
-      args: -f ${DATAFILESPATH}/matrices/underworld32.gz -fc_ksp_view -fc_ksp_monitor_short -fc_ksp_type fgmres -fc_ksp_max_it 4000 -fc_ksp_diagonal_scale -fc_pc_type fieldsplit -fc_pc_fieldsplit_type SCHUR -fc_pc_fieldsplit_schur_fact_type UPPER -fc_fieldsplit_velocity_ksp_type cg -fc_fieldsplit_velocity_pc_type cholesky -fc_fieldsplit_velocity_pc_factor_mat_ordering_type nd -fc_fieldsplit_pressure_ksp_max_it 100 -fc_fieldsplit_pressure_ksp_constant_null_space -fc_fieldsplit_pressure_ksp_monitor_short -fc_fieldsplit_pressure_pc_type lsc -fc_fieldsplit_pressure_lsc_ksp_type cg -fc_fieldsplit_pressure_lsc_ksp_max_it 100 -fc_fieldsplit_pressure_lsc_ksp_constant_null_space -fc_fieldsplit_pressure_lsc_ksp_converged_reason -fc_fieldsplit_pressure_lsc_pc_type icc -test_fs {{0 1}separate output} -fc_pc_fieldsplit_off_diag_use_amat {{0 1}separate output} -fc_pc_fieldsplit_diag_use_amat {{0 1}separate output}
+      args: -f ${DATAFILESPATH}/matrices/underworld32.gz -fc_ksp_view -fc_ksp_monitor_short -fc_ksp_type fgmres -fc_ksp_max_it 4000 -fc_ksp_diagonal_scale -fc_pc_type fieldsplit -fc_pc_fieldsplit_type SCHUR -fc_pc_fieldsplit_schur_fact_type UPPER -fc_fieldsplit_velocity_ksp_type cg -fc_fieldsplit_velocity_pc_type cholesky -fc_fieldsplit_velocity_pc_factor_mat_ordering_type nd -fc_fieldsplit_pressure_ksp_max_it 100 -fc_fieldsplit_pressure_ksp_constant_null_space -fc_fieldsplit_pressure_ksp_monitor_short -fc_fieldsplit_pressure_pc_type lsc -fc_fieldsplit_pressure_lsc_ksp_type cg -fc_fieldsplit_pressure_lsc_ksp_max_it 100 -fc_fieldsplit_pressure_lsc_ksp_constant_null_space -fc_fieldsplit_pressure_lsc_ksp_converged_reason -fc_fieldsplit_pressure_lsc_pc_type icc -test_fs {{0 1}separate output} -fc_pc_fieldsplit_off_diag_use_amat {{0 1}separate output} -fc_pc_fieldsplit_diag_use_amat {{0 1}separate output} -a11_mat_block_size 2
       requires: datafilespath double !complex !defined(PETSC_USE_64BIT_INDICES)
 
     test:
@@ -287,5 +293,18 @@ int main(int argc, char **argv)
       nsize: 2
       args: -f ${DATAFILESPATH}/matrices/underworld32.gz -fc_ksp_view_pre -fc_pc_type lu
       requires: datafilespath mumps double !complex !defined(PETSC_USE_64BIT_INDICES)
+
+    testset:
+      requires: hpddm slepc datafilespath double !complex !defined(PETSC_USE_64BIT_INDICES) defined(PETSC_HAVE_DYNAMIC_LIBRARIES) defined(PETSC_USE_SHARED_LIBRARIES)
+      nsize: 4
+      args: -f ${DATAFILESPATH}/matrices/underworld32.gz -test_fs false -prefix_push fc_ -ksp_converged_reason -ksp_max_it 100 -ksp_pc_side right -pc_type hpddm -pc_hpddm_levels_1_svd_nsv 100 -pc_hpddm_levels_1_svd_relative_threshold 1e-6 -pc_hpddm_levels_1_sub_pc_type cholesky -pc_hpddm_coarse_pc_type cholesky -pc_hpddm_levels_1_sub_pc_factor_shift_type inblocks -prefix_pop
+      test:
+        suffix: harmonic_overlap_1
+        filter: grep -v "WARNING! " | grep -v "There are 2 unused database options" | grep -v "Option left: name:-fc_pc_hpddm_levels_1_svd_pc_"
+        args: -prefix_push fc_ -pc_hpddm_harmonic_overlap 1 -pc_hpddm_levels_1_svd_pc_type cholesky -pc_hpddm_levels_1_svd_pc_factor_shift_type inblocks -prefix_pop -fc_pc_hpddm_levels_1_st_share_sub_ksp {{true false}shared output} -test_sbaij {{true false}shared output}
+      test:
+        suffix: harmonic_overlap_1_define_false
+        output_file: output/ex11_harmonic_overlap_1.out
+        args: -prefix_push fc_ -pc_hpddm_harmonic_overlap 1 -pc_hpddm_define_subdomains false -pc_hpddm_levels_1_svd_pc_type cholesky -pc_hpddm_levels_1_svd_pc_factor_shift_type inblocks -pc_hpddm_levels_1_svd_pc_factor_shift_type inblocks -pc_hpddm_levels_1_pc_type asm -pc_hpddm_levels_1_sub_pc_type cholesky -prefix_pop
 
 TEST*/

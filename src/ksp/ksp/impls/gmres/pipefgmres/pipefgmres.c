@@ -1,4 +1,3 @@
-
 #include <../src/ksp/ksp/impls/gmres/pipefgmres/pipefgmresimpl.h> /*I  "petscksp.h"  I*/
 
 static PetscBool  cited      = PETSC_FALSE;
@@ -15,22 +14,11 @@ static const char citation[] = "@article{SSM2016,\n"
                                "  eprint = {http://dx.doi.org/10.1137/15M1049130}\n"
                                "}\n";
 
-#define PIPEFGMRES_DELTA_DIRECTIONS 10
-#define PIPEFGMRES_DEFAULT_MAXK     30
-
 static PetscErrorCode KSPPIPEFGMRESGetNewVectors(KSP, PetscInt);
 static PetscErrorCode KSPPIPEFGMRESUpdateHessenberg(KSP, PetscInt, PetscBool *, PetscReal *);
 static PetscErrorCode KSPPIPEFGMRESBuildSoln(PetscScalar *, Vec, Vec, KSP, PetscInt);
 extern PetscErrorCode KSPReset_PIPEFGMRES(KSP);
 
-/*
-
-    KSPSetUp_PIPEFGMRES - Sets up the workspace needed by pipefgmres.
-
-    This is called once, usually automatically by KSPSolve() or KSPSetUp(),
-    but can be called directly by KSPSetUp().
-
-*/
 static PetscErrorCode KSPSetUp_PIPEFGMRES(KSP ksp)
 {
   PetscInt        k;
@@ -54,26 +42,9 @@ static PetscErrorCode KSPSetUp_PIPEFGMRES(KSP ksp)
   PetscCall(KSPCreateVecs(ksp, pipefgmres->vv_allocated, &pipefgmres->zvecs_user_work[0], 0, NULL));
   for (k = 0; k < pipefgmres->vv_allocated; k++) pipefgmres->zvecs[k] = pipefgmres->zvecs_user_work[0][k];
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-
-    KSPPIPEFGMRESCycle - Run pipefgmres, possibly with restart.  Return residual
-                  history if requested.
-
-    input parameters:
-.        pipefgmres  - structure containing parameters and work areas
-
-    output parameters:
-.        itcount - number of iterations used.  If null, ignored.
-.        converged - 0 if not converged
-
-    Notes:
-    On entry, the value in vector VEC_VV(0) should be
-    the initial residual.
-
-*/
 static PetscErrorCode KSPPIPEFGMRESCycle(PetscInt *itcount, KSP ksp)
 {
   KSP_PIPEFGMRES *pipefgmres = (KSP_PIPEFGMRES *)(ksp->data);
@@ -128,7 +99,7 @@ static PetscErrorCode KSPPIPEFGMRESCycle(PetscInt *itcount, KSP ksp)
   PetscCall((*ksp->converged)(ksp, ksp->its, ksp->rnorm, &ksp->reason, ksp->cnvP));
   if (ksp->reason) {
     if (itcount) *itcount = 0;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /* scale VEC_VV (the initial residual) */
@@ -153,8 +124,7 @@ static PetscErrorCode KSPPIPEFGMRESCycle(PetscInt *itcount, KSP ksp)
     /* see if more space is needed for work vectors */
     if (pipefgmres->vv_allocated <= loc_it + VEC_OFFSET + 1) {
       PetscCall(KSPPIPEFGMRESGetNewVectors(ksp, loc_it + 1));
-      /* (loc_it+1) is passed in as number of the first vector that should
-         be allocated */
+      /* (loc_it+1) is passed in as number of the first vector that should be allocated */
     }
 
     /* Note that these inner products are with "Z" now, so
@@ -175,7 +145,7 @@ static PetscErrorCode KSPPIPEFGMRESCycle(PetscInt *itcount, KSP ksp)
 
     /* The work to be overlapped with the inner products follows.
        This is application of the preconditioner and the operator
-       to compute intermediate quantites which will be combined (locally)
+       to compute intermediate quantities which will be combined (locally)
        with the results of the inner products.
        */
     PetscCall(KSP_PCApply(ksp, ZVEC(loc_it), Q));
@@ -195,7 +165,7 @@ static PetscErrorCode KSPPIPEFGMRESCycle(PetscInt *itcount, KSP ksp)
     PetscCall(VecMDotEnd(ZVEC(loc_it), loc_it + 2, redux, lhh));
     tt = PetscRealPart(lhh[loc_it + 1]);
 
-    /* Hessenberg entries, and entries for (naive) classical Graham-Schmidt
+    /* Hessenberg entries, and entries for (naive) classical Gram-Schmidt
       Note that the Hessenberg entries require a shift, as these are for the
       relation AU = VH, which is wrt unshifted basis vectors */
     hh  = HH(0, loc_it);
@@ -243,7 +213,7 @@ static PetscErrorCode KSPPIPEFGMRESCycle(PetscInt *itcount, KSP ksp)
     /* The recurred computation for the preconditioned vector (u) */
     PetscCall(VecCopy(Q, PREVEC(loc_it + 1)));
     PetscCall(VecMAXPY(PREVEC(loc_it + 1), loc_it + 1, lhh, &PREVEC(0)));
-    PetscCall(VecScale(PREVEC(loc_it + 1), 1.0 / tt));
+    if (tt) PetscCall(VecScale(PREVEC(loc_it + 1), 1.0 / tt));
 
     /* Unshift an entry in the GS coefficients ("removing the bar") */
     lhh[loc_it] -= shift;
@@ -252,7 +222,7 @@ static PetscErrorCode KSPPIPEFGMRESCycle(PetscInt *itcount, KSP ksp)
        Note placement AFTER the "unshift" */
     PetscCall(VecCopy(W, ZVEC(loc_it + 1)));
     PetscCall(VecMAXPY(ZVEC(loc_it + 1), loc_it + 1, lhh, &ZVEC(0)));
-    PetscCall(VecScale(ZVEC(loc_it + 1), 1.0 / tt));
+    if (tt) PetscCall(VecScale(ZVEC(loc_it + 1), 1.0 / tt));
 
     /* Happy Breakdown Check */
     hapbnd = PetscAbsScalar((tt) / *RS(loc_it));
@@ -278,7 +248,7 @@ static PetscErrorCode KSPPIPEFGMRESCycle(PetscInt *itcount, KSP ksp)
        here to check that the hessenberg matrix is indeed non-singular (since
        FGMRES does not guarantee this) */
 
-    /* Now apply rotations to new col of hessenberg (and right side of system),
+    /* Now apply rotations to new col of Hessenberg (and right side of system),
        calculate new rotation, and get new residual norm at the same time*/
     PetscCall(KSPPIPEFGMRESUpdateHessenberg(ksp, loc_it, &hapend, &res_norm));
     if (ksp->reason) break;
@@ -297,46 +267,36 @@ static PetscErrorCode KSPPIPEFGMRESCycle(PetscInt *itcount, KSP ksp)
     /* Catch error in happy breakdown and signal convergence and break from loop */
     if (hapend) {
       if (!ksp->reason) {
-        PetscCheck(!ksp->errorifnotconverged, PetscObjectComm((PetscObject)ksp), PETSC_ERR_NOT_CONVERGED, "You reached the happy break down, but convergence was not indicated. Residual norm = %g", (double)res_norm);
+        PetscCheck(!ksp->errorifnotconverged, PetscObjectComm((PetscObject)ksp), PETSC_ERR_NOT_CONVERGED, "Reached happy break down, but convergence was not indicated. Residual norm = %g", (double)res_norm);
         ksp->reason = KSP_DIVERGED_BREAKDOWN;
         break;
       }
     }
   }
   /* END OF ITERATION LOOP */
-  PetscCall(KSPLogResidualHistory(ksp, ksp->rnorm));
 
   /*
      Monitor if we know that we will not return for a restart */
-  if (loc_it && (ksp->reason || ksp->its >= ksp->max_it)) PetscCall(KSPMonitor(ksp, ksp->its, ksp->rnorm));
+  if (loc_it && (ksp->reason || ksp->its >= ksp->max_it)) {
+    PetscCall(KSPMonitor(ksp, ksp->its, ksp->rnorm));
+    PetscCall(KSPLogResidualHistory(ksp, ksp->rnorm));
+  }
 
   if (itcount) *itcount = loc_it;
 
   /*
-    Down here we have to solve for the "best" coefficients of the Krylov
+    Solve for the "best" coefficients of the Krylov
     columns, add the solution values together, and possibly unwind the
     preconditioning from the solution
    */
 
   /* Form the solution (or the solution so far) */
-  /* Note: must pass in (loc_it-1) for iteration count so that KSPPIPEGMRESIIBuildSoln
-     properly navigates */
+  /* Note: must pass in (loc_it-1) for iteration count so that KSPPIPEGMRESIIBuildSoln properly navigates */
 
   PetscCall(KSPPIPEFGMRESBuildSoln(RS(0), ksp->vec_sol, ksp->vec_sol, ksp, loc_it - 1));
-
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-    KSPSolve_PIPEFGMRES - This routine applies the PIPEFGMRES method.
-
-   Input Parameter:
-.     ksp - the Krylov space object that was set to use pipefgmres
-
-   Output Parameter:
-.     outits - number of iterations used
-
-*/
 static PetscErrorCode KSPSolve_PIPEFGMRES(KSP ksp)
 {
   PetscInt        its, itcount;
@@ -344,8 +304,7 @@ static PetscErrorCode KSPSolve_PIPEFGMRES(KSP ksp)
   PetscBool       guess_zero = ksp->guess_zero;
 
   PetscFunctionBegin;
-  /* We have not checked these routines for use with complex numbers. The inner products
-     are likely not defined correctly for that case */
+  /* We have not checked these routines for use with complex numbers. The inner products are likely not defined correctly for that case */
   PetscCheck(!PetscDefined(USE_COMPLEX) || PetscDefined(SKIP_COMPLEX), PETSC_COMM_WORLD, PETSC_ERR_SUP, "PIPEFGMRES has not been implemented for use with complex scalars");
 
   PetscCall(PetscCitationsRegister(citation, &cited));
@@ -368,7 +327,7 @@ static PetscErrorCode KSPSolve_PIPEFGMRES(KSP ksp)
     ksp->guess_zero = PETSC_FALSE; /* every future call to KSPInitialResidual() will have nonzero guess */
   }
   ksp->guess_zero = guess_zero; /* restore if user provided nonzero initial guess */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPDestroy_PIPEFGMRES(KSP ksp)
@@ -376,22 +335,9 @@ static PetscErrorCode KSPDestroy_PIPEFGMRES(KSP ksp)
   PetscFunctionBegin;
   PetscCall(KSPReset_PIPEFGMRES(ksp));
   PetscCall(KSPDestroy_GMRES(ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-    KSPPIPEFGMRESBuildSoln - create the solution from the starting vector and the
-                      current iterates.
-
-    Input parameters:
-        nrs - work area of size it + 1.
-        vguess  - index of initial guess
-        vdest - index of result.  Note that vguess may == vdest (replace
-                guess with the solution).
-        it - HH upper triangular part is a block of size (it+1) x (it+1)
-
-     This is an internal routine that knows about the PIPEFGMRES internals.
- */
 static PetscErrorCode KSPPIPEFGMRESBuildSoln(PetscScalar *nrs, Vec vguess, Vec vdest, KSP ksp, PetscInt it)
 {
   PetscScalar     tt;
@@ -399,13 +345,12 @@ static PetscErrorCode KSPPIPEFGMRESBuildSoln(PetscScalar *nrs, Vec vguess, Vec v
   KSP_PIPEFGMRES *pipefgmres = (KSP_PIPEFGMRES *)(ksp->data);
 
   PetscFunctionBegin;
-  /* Solve for solution vector that minimizes the residual */
-
   if (it < 0) {                        /* no pipefgmres steps have been performed */
     PetscCall(VecCopy(vguess, vdest)); /* VecCopy() is smart, exits immediately if vguess == vdest */
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
+  /* Solve for solution vector that minimizes the residual */
   /* solve the upper triangular system - RS is the right side and HH is
      the upper triangular matrix  - put soln in nrs */
   if (*HH(it, it) != 0.0) nrs[it] = *RS(it) / *HH(it, it);
@@ -418,8 +363,7 @@ static PetscErrorCode KSPPIPEFGMRESBuildSoln(PetscScalar *nrs, Vec vguess, Vec v
   }
 
   /* Accumulate the correction to the solution of the preconditioned problem in VEC_TEMP */
-  PetscCall(VecZeroEntries(VEC_TEMP));
-  PetscCall(VecMAXPY(VEC_TEMP, it + 1, nrs, &PREVEC(0)));
+  PetscCall(VecMAXPBY(VEC_TEMP, it + 1, nrs, 0, &PREVEC(0)));
 
   /* add solution to previous solution */
   if (vdest == vguess) {
@@ -427,28 +371,9 @@ static PetscErrorCode KSPPIPEFGMRESBuildSoln(PetscScalar *nrs, Vec vguess, Vec v
   } else {
     PetscCall(VecWAXPY(vdest, 1.0, VEC_TEMP, vguess));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-
-    KSPPIPEFGMRESUpdateHessenberg - Do the scalar work for the orthogonalization.
-                            Return new residual.
-
-    input parameters:
-
-.        ksp -    Krylov space object
-.        it  -    plane rotations are applied to the (it+1)th column of the
-                  modified hessenberg (i.e. HH(:,it))
-.        hapend - PETSC_FALSE not happy breakdown ending.
-
-    output parameters:
-.        res - the new residual
-
- */
-/*
-.  it - column of the Hessenberg that is complete, PIPEFGMRES is actually computing two columns ahead of this
- */
 static PetscErrorCode KSPPIPEFGMRESUpdateHessenberg(KSP ksp, PetscInt it, PetscBool *hapend, PetscReal *res)
 {
   PetscScalar    *hh, *cc, *ss, *rs;
@@ -472,8 +397,7 @@ static PetscErrorCode KSPPIPEFGMRESUpdateHessenberg(KSP ksp, PetscInt it, PetscB
     *hapend = PETSC_TRUE;
   }
 
-  /* Apply all the previously computed plane rotations to the new column
-     of the Hessenberg matrix */
+  /* Apply all the previously computed plane rotations to the new column of the Hessenberg matrix */
   /* Note: this uses the rotation [conj(c)  s ; -s   c], c= cos(theta), s= sin(theta),
      and some refs have [c   s ; -conj(s)  c] (don't be confused!) */
 
@@ -499,7 +423,7 @@ static PetscErrorCode KSPPIPEFGMRESUpdateHessenberg(KSP ksp, PetscInt it, PetscB
     PetscReal delta = PetscSqrtReal(PetscSqr(PetscAbsScalar(hh[it])) + PetscSqr(PetscAbsScalar(hh[it + 1])));
     if (delta == 0.0) {
       ksp->reason = KSP_DIVERGED_NULL;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
 
     cc[it] = hh[it] / delta;     /* new cosine value */
@@ -515,33 +439,18 @@ static PetscErrorCode KSPPIPEFGMRESUpdateHessenberg(KSP ksp, PetscInt it, PetscB
             but now the new sine rotation would be zero...so the residual should
             be zero...so we will multiply "zero" by the last residual.  This might
             not be exactly what we want to do here -could just return "zero". */
-
     *res = 0.0;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-   KSPBuildSolution_PIPEFGMRES
-
-     Input Parameter:
-.     ksp - the Krylov space object
-.     ptr-
-
-   Output Parameter:
-.     result - the solution
-
-   Note: this calls KSPPIPEFGMRESBuildSoln - the same function that KSPPIPEFGMRESCycle
-   calls directly.
-
-*/
-PetscErrorCode KSPBuildSolution_PIPEFGMRES(KSP ksp, Vec ptr, Vec *result)
+static PetscErrorCode KSPBuildSolution_PIPEFGMRES(KSP ksp, Vec ptr, Vec *result)
 {
   KSP_PIPEFGMRES *pipefgmres = (KSP_PIPEFGMRES *)ksp->data;
 
   PetscFunctionBegin;
   if (!ptr) {
-    if (!pipefgmres->sol_temp) { PetscCall(VecDuplicate(ksp->vec_sol, &pipefgmres->sol_temp)); }
+    if (!pipefgmres->sol_temp) PetscCall(VecDuplicate(ksp->vec_sol, &pipefgmres->sol_temp));
     ptr = pipefgmres->sol_temp;
   }
   if (!pipefgmres->nrs) {
@@ -551,10 +460,10 @@ PetscErrorCode KSPBuildSolution_PIPEFGMRES(KSP ksp, Vec ptr, Vec *result)
 
   PetscCall(KSPPIPEFGMRESBuildSoln(pipefgmres->nrs, ksp->vec_sol, ptr, ksp, pipefgmres->it));
   if (result) *result = ptr;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPSetFromOptions_PIPEFGMRES(KSP ksp, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode KSPSetFromOptions_PIPEFGMRES(KSP ksp, PetscOptionItems *PetscOptionsObject)
 {
   KSP_PIPEFGMRES *pipefgmres = (KSP_PIPEFGMRES *)ksp->data;
   PetscBool       flg;
@@ -566,10 +475,10 @@ PetscErrorCode KSPSetFromOptions_PIPEFGMRES(KSP ksp, PetscOptionItems *PetscOpti
   PetscCall(PetscOptionsScalar("-ksp_pipefgmres_shift", "shift parameter", "KSPPIPEFGMRESSetShift", pipefgmres->shift, &shift, &flg));
   if (flg) PetscCall(KSPPIPEFGMRESSetShift(ksp, shift));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode KSPView_PIPEFGMRES(KSP ksp, PetscViewer viewer)
+static PetscErrorCode KSPView_PIPEFGMRES(KSP ksp, PetscViewer viewer)
 {
   KSP_PIPEFGMRES *pipefgmres = (KSP_PIPEFGMRES *)ksp->data;
   PetscBool       iascii, isstring;
@@ -594,7 +503,7 @@ PetscErrorCode KSPView_PIPEFGMRES(KSP ksp, PetscViewer viewer)
     PetscCall(PetscViewerStringSPrintf(viewer, "   shift=%g\n", (double)pipefgmres->shift));
 #endif
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode KSPReset_PIPEFGMRES(KSP ksp)
@@ -613,23 +522,24 @@ PetscErrorCode KSPReset_PIPEFGMRES(KSP ksp)
   PetscCall(PetscFree(pipefgmres->zvecs_user_work));
   PetscCall(PetscFree(pipefgmres->redux));
   PetscCall(KSPReset_GMRES(ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-   KSPPIPEFGMRES - Implements the Pipelined (1-stage) Flexible Generalized Minimal Residual method. [](sec_pipelineksp). [](sec_flexibleksp)
+   KSPPIPEFGMRES - Implements the Pipelined (1-stage) Flexible Generalized Minimal Residual method {cite}`sananschneppmay2016`. [](sec_pipelineksp). [](sec_flexibleksp)
 
    Options Database Keys:
 +   -ksp_gmres_restart <restart> - the number of Krylov directions to orthogonalize against
 .   -ksp_gmres_haptol <tol> - sets the tolerance for "happy ending" (exact convergence)
-.   -ksp_gmres_preallocate - preallocate all the Krylov search directions initially (otherwise groups of
-.   -ksp_pipefgmres_shift - the shift to use (defaults to 1. See KSPPIPEFGMRESSetShift()
-                             vectors are allocated as needed)
+.   -ksp_gmres_preallocate - preallocate all the Krylov search directions initially (otherwise groups of vectors are allocated as needed)
+.   -ksp_pipefgmres_shift - the shift to use (defaults to 1. See `KSPPIPEFGMRESSetShift()`
 -   -ksp_gmres_krylov_monitor - plot the Krylov space generated
 
    Level: intermediate
 
    Notes:
+   Compare to `KSPPGMRES` and `KSPFGMRES`
+
    This variant is not "explicitly normalized" like `KSPPGMRES`, and requires a shift parameter.
 
    A heuristic for choosing the shift parameter is the largest eigenvalue of the preconditioned operator.
@@ -640,18 +550,12 @@ PetscErrorCode KSPReset_PIPEFGMRES(KSP ksp)
    See [](doc_faq_pipelined)
 
    Developer Note:
-    This class is subclassed off of `KSPGMRES`.
+   This class is subclassed off of `KSPGMRES`, see the source code in src/ksp/ksp/impls/gmres for comments on the structure of the code
 
    Contributed by:
    P. Sanan and S.M. Schnepp
 
-   Reference:
-    P. Sanan, S.M. Schnepp, and D.A. May,
-    "Pipelined, Flexible Krylov Subspace Methods,"
-    SIAM Journal on Scientific Computing 2016 38:5, C441-C470,
-    DOI: 10.1137/15M1049130
-
-.seealso: [](chapter_ksp), [](doc_faq_pipelined), [](sec_pipelineksp), [](sec_flexibleksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPLGMRES`, `KSPPIPECG`, `KSPPIPECR`, `KSPPGMRES`, `KSPFGMRES`
+.seealso: [](ch_ksp), [](doc_faq_pipelined), [](sec_pipelineksp), [](sec_flexibleksp), `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPLGMRES`, `KSPPIPECG`, `KSPPIPECR`, `KSPPGMRES`, `KSPFGMRES`
           `KSPGMRESSetRestart()`, `KSPGMRESSetHapTol()`, `KSPGMRESSetPreAllocateVectors()`, `KSPGMRESMonitorKrylov()`, `KSPPIPEFGMRESSetShift()`
 M*/
 
@@ -692,7 +596,7 @@ PETSC_EXTERN PetscErrorCode KSPCreate_PIPEFGMRES(KSP ksp)
   pipefgmres->orthogwork     = NULL;
   pipefgmres->cgstype        = KSP_GMRES_CGS_REFINE_NEVER;
   pipefgmres->shift          = 1.0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPPIPEFGMRESGetNewVectors(KSP ksp, PetscInt it)
@@ -709,7 +613,7 @@ static PetscErrorCode KSPPIPEFGMRESGetNewVectors(KSP ksp, PetscInt it)
   /* Adjust the number to allocate to make sure that we don't exceed the
      number of available slots (pipefgmres->vecs_allocated)*/
   if (it + VEC_OFFSET + nalloc >= pipefgmres->vecs_allocated) nalloc = pipefgmres->vecs_allocated - it - VEC_OFFSET;
-  if (!nalloc) PetscFunctionReturn(0);
+  if (!nalloc) PetscFunctionReturn(PETSC_SUCCESS);
 
   pipefgmres->vv_allocated += nalloc; /* vv_allocated is the number of vectors allocated */
 
@@ -728,7 +632,7 @@ static PetscErrorCode KSPPIPEFGMRESGetNewVectors(KSP ksp, PetscInt it)
 
   /* increment the number of work vector chunks */
   pipefgmres->nwork_alloc++;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -737,11 +641,11 @@ static PetscErrorCode KSPPIPEFGMRESGetNewVectors(KSP ksp, PetscInt it)
   Logically Collective
 
   Input Parameters:
-+  ksp - the Krylov space context
--  shift - the shift
++ ksp   - the Krylov space context
+- shift - the shift
 
   Options Database Key:
-.  -ksp_pipefgmres_shift <shift> - set the shift parameter
+. -ksp_pipefgmres_shift <shift> - set the shift parameter
 
   Level: intermediate
 
@@ -750,7 +654,7 @@ static PetscErrorCode KSPPIPEFGMRESGetNewVectors(KSP ksp, PetscInt it)
   This can be achieved with PETSc itself by using a few iterations of a Krylov method.
   See `KSPComputeEigenvalues()` (and note the caveats there).
 
-.seealso: [](chapter_ksp), `KSPPIPEFGMRES`, `KSPComputeEigenvalues()`
+.seealso: [](ch_ksp), `KSPPIPEFGMRES`, `KSPComputeEigenvalues()`
 @*/
 PetscErrorCode KSPPIPEFGMRESSetShift(KSP ksp, PetscScalar shift)
 {
@@ -760,5 +664,5 @@ PetscErrorCode KSPPIPEFGMRESSetShift(KSP ksp, PetscScalar shift)
   PetscValidHeaderSpecific(ksp, KSP_CLASSID, 1);
   PetscValidLogicalCollectiveScalar(ksp, shift, 2);
   pipefgmres->shift = shift;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

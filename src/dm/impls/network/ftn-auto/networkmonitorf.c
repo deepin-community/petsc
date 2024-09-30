@@ -68,7 +68,6 @@ PETSC_EXTERN void  dmnetworkmonitorpop_(DMNetworkMonitor monitor, int *__ierr)
 *__ierr = DMNetworkMonitorPop(
 	(DMNetworkMonitor)PetscToPointer((monitor) ));
 }
-
 PETSC_EXTERN void  dmnetworkmonitorview_(DMNetworkMonitor monitor,Vec x, int *__ierr)
 {
 *__ierr = DMNetworkMonitorView(

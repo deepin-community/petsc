@@ -7,12 +7,11 @@ class Configure(config.package.Package):
     self.cyver = None
     self.cython = 0
     self.numpy = 0
-    self.skippackagewithoptions = 1
     return
 
   def setupHelp(self,help):
     import nargs
-    help.addArgument('PETSc', '-with-python-exec=<executable>', nargs.Arg(None, None, 'Alternate Python executable to use for mpi4py/petsc4py'))
+    help.addArgument('PETSc', '-with-python-exec=<executable>', nargs.Arg(None, None, 'Python executable to use for mpi4py/petsc4py'))
     help.addArgument('PETSc', '-have-numpy=<bool>', nargs.ArgBool(None, None, 'Whether numpy python module is installed (default: autodetect)'))
     return
 

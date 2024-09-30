@@ -1,4 +1,3 @@
-
 /*
    Code for manipulating distributed regular 1d arrays in parallel.
    This file was created by Peter Mell   6/30/95
@@ -47,7 +46,7 @@ static PetscErrorCode DMView_DA_1d(DM da, PetscViewer viewer)
       PetscCall(PetscFree(nz));
       navg = navg / size;
       PetscCall(PetscViewerASCIIPrintf(viewer, "  Load Balance - Grid Points: Min %" PetscInt_FMT "  avg %" PetscInt_FMT "  max %" PetscInt_FMT "\n", nmin, navg, nmax));
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
     if (format != PETSC_VIEWER_ASCII_VTK_DEPRECATED && format != PETSC_VIEWER_ASCII_VTK_CELL_DEPRECATED && format != PETSC_VIEWER_ASCII_GLVIS) {
       DMDALocalInfo info;
@@ -68,7 +67,7 @@ static PetscErrorCode DMView_DA_1d(DM da, PetscViewer viewer)
 
     PetscCall(PetscViewerDrawGetDraw(viewer, 0, &draw));
     PetscCall(PetscDrawIsNull(draw, &isnull));
-    if (isnull) PetscFunctionReturn(0);
+    if (isnull) PetscFunctionReturn(PETSC_SUCCESS);
 
     PetscCall(PetscDrawCheckResizedWindow(draw));
     PetscCall(PetscDrawClear(draw));
@@ -119,7 +118,7 @@ static PetscErrorCode DMView_DA_1d(DM da, PetscViewer viewer)
     PetscCall(DMView_DA_Matlab(da, viewer));
 #endif
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMSetUp_DA_1D(DM da)
@@ -311,52 +310,51 @@ PetscErrorCode DMSetUp_DA_1D(DM da)
 
   PetscCall(ISLocalToGlobalMappingCreate(comm, dof, nn, idx, PETSC_OWN_POINTER, &da->ltogmap));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   DMDACreate1d - Creates an object that will manage the communication of  one-dimensional
-   regular array data that is distributed across some processors.
+  DMDACreate1d - Creates an object that will manage the communication of  one-dimensional
+  regular array data that is distributed across one or mpre MPI processes.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  comm - MPI communicator
-.  bx - type of ghost cells at the boundary the array should have, if any. Use
-          `DM_BOUNDARY_NONE`, `DM_BOUNDARY_GHOSTED`, or `DM_BOUNDARY_PERIODIC`.
-.  M - global dimension of the array (that is the number of grid points)
-            from the command line with -da_grid_x <M>)
-.  dof - number of degrees of freedom per node
-.  s - stencil width
--  lx - array containing number of nodes in the X direction on each processor,
-        or NULL. If non-null, must be of length as the number of processes in the MPI_Comm.
-        The sum of these entries must equal M
+  Input Parameters:
++ comm - MPI communicator
+. bx   - type of ghost cells at the boundary the array should have, if any. Use
+         `DM_BOUNDARY_NONE`, `DM_BOUNDARY_GHOSTED`, or `DM_BOUNDARY_PERIODIC`.
+. M    - global dimension of the array (that is the number of grid points)
+. dof  - number of degrees of freedom per node
+. s    - stencil width
+- lx   - array containing number of nodes in the X direction on each processor,
+         or `NULL`. If non-null, must be of length as the number of processes in the MPI_Comm.
+         The sum of these entries must equal `M`
 
-   Output Parameter:
-.  da - the resulting distributed array object
+  Output Parameter:
+. da - the resulting distributed array object
 
-   Options Database Keys:
-+  -dm_view - Calls `DMView()` at the conclusion of `DMDACreate1d()`
-.  -da_grid_x <nx> - number of grid points in x direction
-.  -da_refine_x <rx> - refinement factor
--  -da_refine <n> - refine the `DMDA` n times before creating it
+  Options Database Keys:
++ -dm_view          - Calls `DMView()` at the conclusion of `DMDACreate1d()`
+. -da_grid_x <nx>   - number of grid points in x direction
+. -da_refine_x <rx> - refinement factor
+- -da_refine <n>    - refine the `DMDA` n times before creating it
 
-   Level: beginner
+  Level: beginner
 
-   Notes:
-   The array data itself is NOT stored in the `DMDA`, it is stored in `Vec` objects;
-   The appropriate vector objects can be obtained with calls to `DMCreateGlobalVector()`
-   and `DMCreateLocalVector()` and calls to `VecDuplicate()` if more are needed.
+  Notes:
+  The array data itself is NOT stored in the `DMDA`, it is stored in `Vec` objects;
+  The appropriate vector objects can be obtained with calls to `DMCreateGlobalVector()`
+  and `DMCreateLocalVector()` and calls to `VecDuplicate()` if more are needed.
 
-   You must call `DMSetUp()` after this call before using this `DM`.
+  You must call `DMSetUp()` after this call before using this `DM`.
 
-   If you wish to use the options database to change values in the `DMDA` call `DMSetFromOptions()` after this call
-   but before `DMSetUp()`.
+  If you wish to use the options database to change values in the `DMDA` call `DMSetFromOptions()` after this call
+  but before `DMSetUp()`.
 
-.seealso: `DMDA`, `DM`, `DMDestroy()`, `DMView()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMGlobalToLocalBegin()`, `DMDASetRefinementFactor()`,
+.seealso: [](sec_struct), `DMDA`, `DM`, `DMDestroy()`, `DMView()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMGlobalToLocalBegin()`, `DMDASetRefinementFactor()`,
           `DMGlobalToLocalEnd()`, `DMLocalToGlobalBegin()`, `DMLocalToLocalBegin()`, `DMLocalToLocalEnd()`, `DMDAGetRefinementFactor()`,
           `DMDAGetInfo()`, `DMCreateGlobalVector()`, `DMCreateLocalVector()`, `DMDACreateNaturalVector()`, `DMLoad()`, `DMDAGetOwnershipRanges()`,
-          `DMStagCreate1d()`
+          `DMStagCreate1d()`, `DMBoundaryType`
 @*/
 PetscErrorCode DMDACreate1d(MPI_Comm comm, DMBoundaryType bx, PetscInt M, PetscInt dof, PetscInt s, const PetscInt lx[], DM *da)
 {
@@ -372,5 +370,5 @@ PetscErrorCode DMDACreate1d(MPI_Comm comm, DMBoundaryType bx, PetscInt M, PetscI
   PetscCall(DMDASetDof(*da, dof));
   PetscCall(DMDASetStencilWidth(*da, s));
   PetscCall(DMDASetOwnershipRanges(*da, lx, NULL, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

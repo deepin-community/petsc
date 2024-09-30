@@ -10,7 +10,7 @@ static PetscErrorCode PetscFEDestroy_Composite(PetscFE fem)
   PetscFunctionBegin;
   PetscCall(PetscFree(cmp->embedding));
   PetscCall(PetscFree(cmp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscFESetUp_Composite(PetscFE fem)
@@ -94,7 +94,7 @@ static PetscErrorCode PetscFESetUp_Composite(PetscFE fem)
   PetscCall(PetscFree(invVscalar));
 #endif
   PetscCall(PetscFree2(pivots, work));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscFECreateTabulation_Composite(PetscFE fem, PetscInt npoints, const PetscReal points[], PetscInt K, PetscTabulation T)
@@ -189,7 +189,7 @@ static PetscErrorCode PetscFECreateTabulation_Composite(PetscFE fem, PetscInt np
   if (K >= 0) PetscCall(DMRestoreWorkArray(dm, npoints * spdim, MPIU_REAL, &tmpB));
   if (K >= 1) PetscCall(DMRestoreWorkArray(dm, npoints * spdim * dim, MPIU_REAL, &tmpD));
   if (K >= 2) PetscCall(DMRestoreWorkArray(dm, npoints * spdim * dim * dim, MPIU_REAL, &tmpH));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscFEInitialize_Composite(PetscFE fem)
@@ -205,7 +205,7 @@ static PetscErrorCode PetscFEInitialize_Composite(PetscFE fem)
   fem->ops->integratebdresidual     = PetscFEIntegrateBdResidual_Basic;
   fem->ops->integratejacobianaction = NULL /* PetscFEIntegrateJacobianAction_Basic */;
   fem->ops->integratejacobian       = PetscFEIntegrateJacobian_Basic;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -229,22 +229,22 @@ PETSC_EXTERN PetscErrorCode PetscFECreate_Composite(PetscFE fem)
   cmp->jac            = NULL;
 
   PetscCall(PetscFEInitialize_Composite(fem));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   PetscFECompositeGetMapping - Returns the mappings from the reference element to each subelement
 
-  Not collective
+  Not Collective
 
   Input Parameter:
 . fem - The `PetscFE` object
 
   Output Parameters:
-+ blockSize - The number of elements in a block
-. numBlocks - The number of blocks in a batch
-. batchSize - The number of elements in a batch
-- numBatches - The number of batches in a chunk
++ numSubelements - The number of sub elements
+. v0             - The affine transformation for each element
+. jac            - The Jacobian for each element
+- invjac         - The inverse of the Jacobian
 
   Level: intermediate
 
@@ -257,20 +257,20 @@ PetscErrorCode PetscFECompositeGetMapping(PetscFE fem, PetscInt *numSubelements,
   PetscFunctionBegin;
   PetscValidHeaderSpecific(fem, PETSCFE_CLASSID, 1);
   if (numSubelements) {
-    PetscValidIntPointer(numSubelements, 2);
+    PetscAssertPointer(numSubelements, 2);
     *numSubelements = cmp->numSubelements;
   }
   if (v0) {
-    PetscValidPointer(v0, 3);
+    PetscAssertPointer(v0, 3);
     *v0 = cmp->v0;
   }
   if (jac) {
-    PetscValidPointer(jac, 4);
+    PetscAssertPointer(jac, 4);
     *jac = cmp->jac;
   }
   if (invjac) {
-    PetscValidPointer(invjac, 5);
+    PetscAssertPointer(invjac, 5);
     *invjac = cmp->invjac;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

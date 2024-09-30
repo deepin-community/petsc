@@ -124,9 +124,29 @@ extern void PetscRmPointer(void*);
 #define veclog_ veclog
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define vecabs_ VECABS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define vecabs_ vecabs
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define vecconjugate_ VECCONJUGATE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define vecconjugate_ vecconjugate
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define vecsqrtabs_ VECSQRTABS
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define vecsqrtabs_ vecsqrtabs
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define vecimaginarypart_ VECIMAGINARYPART
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define vecimaginarypart_ vecimaginarypart
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define vecrealpart_ VECREALPART
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define vecrealpart_ vecrealpart
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define vecdotnorm2_ VECDOTNORM2
@@ -144,24 +164,9 @@ extern void PetscRmPointer(void*);
 #define vecmean_ vecmean
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define vecimaginarypart_ VECIMAGINARYPART
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define vecimaginarypart_ vecimaginarypart
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define vecrealpart_ VECREALPART
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define vecrealpart_ vecrealpart
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define vecshift_ VECSHIFT
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define vecshift_ vecshift
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define vecabs_ VECABS
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define vecabs_ vecabs
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define vecpermute_ VECPERMUTE
@@ -283,9 +288,29 @@ PETSC_EXTERN void  veclog_(Vec v, int *__ierr)
 *__ierr = VecLog(
 	(Vec)PetscToPointer((v) ));
 }
+PETSC_EXTERN void  vecabs_(Vec v, int *__ierr)
+{
+*__ierr = VecAbs(
+	(Vec)PetscToPointer((v) ));
+}
+PETSC_EXTERN void  vecconjugate_(Vec x, int *__ierr)
+{
+*__ierr = VecConjugate(
+	(Vec)PetscToPointer((x) ));
+}
 PETSC_EXTERN void  vecsqrtabs_(Vec v, int *__ierr)
 {
 *__ierr = VecSqrtAbs(
+	(Vec)PetscToPointer((v) ));
+}
+PETSC_EXTERN void  vecimaginarypart_(Vec v, int *__ierr)
+{
+*__ierr = VecImaginaryPart(
+	(Vec)PetscToPointer((v) ));
+}
+PETSC_EXTERN void  vecrealpart_(Vec v, int *__ierr)
+{
+*__ierr = VecRealPart(
 	(Vec)PetscToPointer((v) ));
 }
 PETSC_EXTERN void  vecdotnorm2_(Vec s,Vec t,PetscScalar *dp,PetscReal *nm, int *__ierr)
@@ -304,25 +329,10 @@ PETSC_EXTERN void  vecmean_(Vec v,PetscScalar *mean, int *__ierr)
 *__ierr = VecMean(
 	(Vec)PetscToPointer((v) ),mean);
 }
-PETSC_EXTERN void  vecimaginarypart_(Vec v, int *__ierr)
-{
-*__ierr = VecImaginaryPart(
-	(Vec)PetscToPointer((v) ));
-}
-PETSC_EXTERN void  vecrealpart_(Vec v, int *__ierr)
-{
-*__ierr = VecRealPart(
-	(Vec)PetscToPointer((v) ));
-}
 PETSC_EXTERN void  vecshift_(Vec v,PetscScalar *shift, int *__ierr)
 {
 *__ierr = VecShift(
 	(Vec)PetscToPointer((v) ),*shift);
-}
-PETSC_EXTERN void  vecabs_(Vec v, int *__ierr)
-{
-*__ierr = VecAbs(
-	(Vec)PetscToPointer((v) ));
 }
 PETSC_EXTERN void  vecpermute_(Vec x,IS row,PetscBool *inv, int *__ierr)
 {

@@ -1,5 +1,4 @@
-
-/* seq.f -- translated by f2c (version of 25 March 1992  12:58:56).*/
+/* seq.f -- translated by f2c (version of 25 March 1992  12:58:56). */
 
 #include <../src/mat/color/impls/minpack/color.h>
 
@@ -120,5 +119,5 @@ PetscErrorCode MINPACKseq(PetscInt *n, const PetscInt *indrow, const PetscInt *j
   }
 
   /*        End of iteration loop. */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

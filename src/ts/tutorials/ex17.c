@@ -106,7 +106,7 @@ int main(int argc, char **argv)
   PetscCall(TSSetTimeStep(ts, dt));
 
   /* Use slow fd Jacobian or fast fd Jacobian with colorings.
-     Note: this requirs snes which is not created until TSSetUp()/TSSetFromOptions() is called */
+     Note: this requires snes which is not created until TSSetUp()/TSSetFromOptions() is called */
   PetscOptionsBegin(PETSC_COMM_WORLD, NULL, "Options for Jacobian evaluation", NULL);
   PetscCall(PetscOptionsEnum("-jac_type", "Type of Jacobian", "", JacobianTypes, (PetscEnum)jacType, (PetscEnum *)&jacType, 0));
   PetscOptionsEnd();
@@ -204,7 +204,7 @@ static PetscErrorCode FormIFunction(TS ts, PetscReal ftime, Vec U, Vec Udot, Vec
   PetscCall(DMDAVecRestoreArrayRead(da, Udot, &udot));
   PetscCall(DMDAVecRestoreArray(da, F, &f));
   PetscCall(DMRestoreLocalVector(da, &localU));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */
@@ -264,7 +264,7 @@ PetscErrorCode FormIJacobian(TS ts, PetscReal t, Vec U, Vec Udot, PetscReal a, M
     PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Jpre:\n"));
     PetscCall(MatView(Jpre, PETSC_VIEWER_STDOUT_WORLD));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------- */
@@ -299,7 +299,7 @@ PetscErrorCode FormInitialSolution(TS ts, Vec U, void *ptr)
 
   /* Restore vectors */
   PetscCall(DMDAVecRestoreArray(da, U, &u));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

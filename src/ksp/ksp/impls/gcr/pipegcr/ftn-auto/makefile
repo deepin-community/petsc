@@ -1,15 +1,3 @@
 
-#requiresdefine   'PETSC_HAVE_FORTRAN'
-ALL: lib
-
-CFLAGS   =
-FFLAGS   =
-SOURCEC  = pipegcrf.c
-SOURCEF  =
-SOURCEH  = 
-DIRS     =
+#requiresdefine   'PETSC_USE_FORTRAN_BINDINGS'
 LIBBASE  = libpetscksp
-LOCDIR   = src/ksp/ksp/impls/gcr/pipegcr/ftn-auto/
-include ${PETSC_DIR}/lib/petsc/conf/variables
-include ${PETSC_DIR}/lib/petsc/conf/rules
-include ${PETSC_DIR}/lib/petsc/conf/test

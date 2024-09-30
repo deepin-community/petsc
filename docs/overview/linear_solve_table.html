@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Summary of Sparse Linear Solvers Available In PETSc &#8212; PETSc 3.18.6 documentation</title>
+    <title>Summary of Sparse Linear Solvers Available In PETSc &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -142,31 +143,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -293,31 +293,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -396,18 +395,20 @@
   <div class="bd-toc-item navbar-nav">
     <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="nutshell.html">PETSc in a nutshell</a></li>
-<li class="toctree-l1"><a class="reference internal" href="features.html">Core Features and Functionality</a></li>
+<li class="toctree-l1"><a class="reference internal" href="features.html">Supported Systems</a></li>
+
 <li class="toctree-l1"><a class="reference internal" href="gpu_roadmap.html">GPU Support Roadmap</a></li>
 <li class="toctree-l1"><a class="reference internal" href="vector_table.html">Summary of Vector Types Available In PETSc</a></li>
 <li class="toctree-l1"><a class="reference internal" href="matrix_table.html">Summary of Matrix Types Available In PETSc</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Summary of Sparse Linear Solvers Available In PETSc</a></li>
 <li class="toctree-l1"><a class="reference internal" href="nonlinear_solve_table.html">Summary of Nonlinear Solvers Available In PETSc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="integrator_table.html">Summary of Time Integrators Available In PETSc</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tao_solve_table.html">Summary of Tao Solvers</a></li>
 <li class="toctree-l1"><a class="reference internal" href="discrete_table.html">Summary of Discretization Management Systems</a></li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../docs/manual/index.html">User-Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../docs/manual/introduction.html">Introduction to PETSc</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/about_this_manual.html">About This Manual</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../manual/index.html">User-Guide</a><input class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manual/introduction.html">Introduction to PETSc</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manual/about_this_manual.html">About This Manual</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/getting_started.html">Getting Started</a></li>
 
 
 
@@ -416,46 +417,139 @@
 
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../docs/manual/programming.html">The Solvers in PETSc/TAO</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/vec.html">Vectors and Parallel Data</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/mat.html">Matrices</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/ksp.html">KSP: Linear System Solvers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/snes.html">SNES: Nonlinear Solvers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/ts.html">TS: Scalable ODE and DAE Solvers</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manual/programming.html">The Solvers in PETSc/TAO</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manual/vec.html">Vectors and Parallel Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/mat.html">Matrices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/ksp.html">KSP: Linear System Solvers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/snes.html">SNES: Nonlinear Solvers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/ts.html">TS: Scalable ODE and DAE Solvers</a></li>
 
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/tao.html">TAO: Optimization Solvers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/tao.html">TAO: Optimization Solvers</a></li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../docs/manual/dm.html">DM: Interfacing Between Solvers and Models/Discretizations</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/dmbase.html">DM Basics</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/dmplex.html">DMPlex: Unstructured Grids in PETSc</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/dmstag.html">DMSTAG: Staggered, Structured Grids in PETSc</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/dt.html">PetscDT: Discretization Technology in PETSc</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/fe.html">PetscFE: Finite Element Infrastructure in PETSc</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/dmnetwork.html">Networks</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manual/dm.html">DM: Interfacing Between Solvers and Models/Discretizations</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manual/dmbase.html">DM Basics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/dmplex.html">DMPlex: Unstructured Grids</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/dmstag.html">DMSTAG: Staggered, Structured Grid</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/dmnetwork.html">Networks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/dt.html">PetscDT: Discretization Technology in PETSc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/fe.html">PetscFE: Finite Element Infrastructure in PETSc</a></li>
 </ul>
 </li>
-<li class="toctree-l2 has-children"><a class="reference internal" href="../docs/manual/additional.html">Additional Information</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/fortran.html">PETSc for Fortran Users</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/matlab.html">Using MATLAB with PETSc</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/profiling.html">Profiling</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/performance.html">Hints for Performance Tuning</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/blas-lapack.html">The Use of BLAS and LAPACK in PETSc and external libraries</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/other.html">Other PETSc Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/advanced.html">Advanced Features of Matrices and Solvers</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/tests.html">Running PETSc Tests</a></li>
-<li class="toctree-l3"><a class="reference internal" href="../docs/manual/acknowledgements.html">Acknowledgments</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manual/additional.html">Additional Information</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manual/fortran.html">PETSc for Fortran Users</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/matlab.html">Using MATLAB with PETSc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/profiling.html">Profiling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/performance.html">Hints for Performance Tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/blas-lapack.html">The Use of BLAS and LAPACK in PETSc and external libraries</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/other.html">Other PETSc Features</a></li>
+
+<li class="toctree-l3"><a class="reference internal" href="../manual/advanced.html">Advanced Features of Matrices and Solvers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manual/tests.html">Running PETSc Tests</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1 has-children"><a class="reference internal" href="../docs/manualpages/index.html">API-Docs</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
-<li class="toctree-l2"><a class="reference internal" href="../docs/changes/index.html">Changes for each release</a></li>
-<li class="toctree-l2"><a class="reference internal" href="../docs/manualpages/singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../manualpages/index.html">C/Fortran API</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/Vector.html">Vectors and Index Sets</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Vec/index.html">Vector Operations (Vec)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/IS/index.html">Index sets (IS)</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="../docs/changes/index.html">Changes for each release</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../docs/manualpages/singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/Matrix.html">Matrices and Matrix Operations</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Mat/index.html">Matrix Operations (Mat)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/MatOrderings/index.html">Matrix colorings (MatColoring), orderings (MatOrdering), partitionings (MatPartitioning), and coarsening (MatCoarsen)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/MatFD/index.html">Finite difference computation of Jacobians (MatFD)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/DataLayout.html">Data Layout and Communication</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/PetscSF/index.html">Star Forest Communication (PetscSF)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/PetscSection/index.html">Section Data Layout (PetscSection)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/AO/index.html">Application Orderings (AO)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/DataManagement.html">Data Management between Vec and Mat, and Distributed Mesh Data Structures</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DM/index.html">Data Management (DM)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMDA/index.html">Structured Grids (DMDA)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMStag/index.html">Staggered, Structured Grids (DMSTAG)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMPlex/index.html">Unstructured Grids and Cell Complexes (DMPLEX)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMNetwork/index.html">Graphs and Networks (DMNETWORK)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMForest/index.html">A Forest of Trees and Structured Adaptive Refinement (DMFOREST)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMPatch/index.html">Sequences of parallel mesh patches (DMPATCH)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMSwarm/index.html">Particle Discretizations (DMSWARM)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMMOAB/index.html">MOAB Mesh Representation (DMMOAB)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMLabel/index.html">Selecting Parts of Meshes (DMLabel)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DMPRODUCT/index.html">Tensor products of meshes (DMRODUCT)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/Discretization.html">Discretization and Function Spaces</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DT/index.html">Discretization Technology and Quadrature (DT)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/SPACE/index.html">Function Spaces (PetscSpace)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/DUALSPACE/index.html">Dual Spaces (PetscDualSpace)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/FE/index.html">Finite Elements (PetscFE)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/FV/index.html">Finite Volumes (PetscFV)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/PF/index.html">Defining your own mathematical functions (PF)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/LANDAU/index.html">Landau Collision Operator</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/LinearSolvers.html">Linear Solvers and Preconditioners</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/KSP/index.html">Linear Solvers and Krylov Methods (KSP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/PC/index.html">Preconditioners (PC)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/NonlinearSolvers.html">Nonlinear Solvers</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/SNES/index.html">Nonlinear Solvers (SNES)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/SNESFAS/index.html">Full Approximation Scheme (FAS) nonlinear multigrid</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/Timestepping.html">Forward and Adjoint Timestepping</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/TS/index.html">Time Stepping ODE and DAE Solvers (TS)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Sensitivity/index.html">Sensitivity Analysis for ODE and DAE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Characteristic/index.html">Semi-Lagrangian Solves using the Method of Characteristics</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/Optimization.html">Optimization</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Tao/index.html">Optimization Solvers (Tao)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/TaoLineSearch/index.html">Optimization Line Search (TaoLineSearch)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/Visualization.html">Graphics and Visualization</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Draw/index.html">Graphics (Draw)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Viewer/index.html">Viewing Objects (Viewer)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../manualpages/System.html">System Routines, Profiling, Data Structures</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Sys/index.html">PETSc Options, IO, and System Utilities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/PetscH/index.html">Hash Tables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../manualpages/Profiling/index.html">Profiling and Logging</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../changes/index.html">Changes for each release</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../manualpages/singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changes/index.html">Changes for each release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../manualpages/singleindex.html">Single Index of all PETSc Manual Pages</a></li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="previous_release_docs.html">Documentation for previous PETSc releases</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.19/docs"> 3.19</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.18/docs"> 3.18</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.17/docs"> 3.17</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.16/docs"> 3.16</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.15/docs"> 3.15</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.14/docs"> 3.14</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.13/docs"> 3.13</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.12/docs"> 3.12</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.11/docs"> 3.11</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.10/docs"> 3.10</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.9/docs"> 3.9</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.8/docs"> 3.8</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.7/docs"> 3.7</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.6/docs"> 3.6</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.5/docs"> 3.5</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.4/docs"> 3.4</a></li>
+<li class="toctree-l2"><a class="reference external" href="https://web.cels.anl.gov/projects/petsc/vault/petsc-3.3/docs"> 3.3</a></li>
+</ul>
+</li>
 </ul>
 
   </div>
@@ -505,95 +599,127 @@
 <tbody>
 <tr class="row-even"><td><p>Generic</p></td>
 <td><p>Jacobi</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCJACOBI.html">PCJACOBI</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATDENSE.html">MATDENSE</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCJACOBI.html">PCJACOBI</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATDENSE.html">MATDENSE</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td></td>
 <td><p>Point Block Jacobi</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCPBJACOBI.html">PCPBJACOBI</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATKAIJ.html">MATKAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATMPISELL.html">MATMPISELL</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATIS.html">MATIS</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCPBJACOBI.html">PCPBJACOBI</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATKAIJ.html">MATKAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATMPISELL.html">MATMPISELL</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATIS.html">MATIS</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td></td>
-<td><p>Block Jacobi</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCBJACOBI.html">PCBJACOBI</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code></p></td>
+<td><p>Variable Point Block Jacobi</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCPBJACOBI.html">PCPBJACOBI</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td></td>
-<td><p>SOR</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCSOR.html">PCSOR</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQDENSE.html">MATSEQDENSE</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQSBAIJ.html">MATSEQSBAIJ</a></span></code></p></td>
+<td><p>Block Jacobi</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCBJACOBI.html">PCBJACOBI</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code></p></td>
 <td><p>—</p></td>
-<td></td>
+<td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td></td>
+<td><p>SOR</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCSOR.html">PCSOR</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQDENSE.html">MATSEQDENSE</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQSBAIJ.html">MATSEQSBAIJ</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td></td>
 <td><p>Point Block SOR</p></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a></span></code> (only for <code class="docutils literal notranslate"><span class="pre">bs</span></code> = 2,3,4,5)</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a></span></code> (only for <code class="docutils notranslate"><span class="pre">bs</span></code> = 2,3,4,5)</p></td>
 <td><p>—</p></td>
-<td></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>Kaczmarz</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCKACZMARZ.html">PCKACZMARZ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td></td>
 <td><p>Additive Schwarz</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCASM.html">PCASM</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCASM.html">PCASM</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td></td>
+<td><p>Vanka/overlapping patches</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCPATCH.html">PCPATCH</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td></td>
 <td><p>Deflation</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCDEFLATION.html">PCDEFLATION</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCDEFLATION.html">PCDEFLATION</a></span></code></p></td>
 <td><p>All</p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
-<tr class="row-odd"><td><p>Incomplete</p></td>
+<tr class="row-even"><td><p>Incomplete</p></td>
 <td><p>ILU</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCILU.html">PCILU</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCILU.html">PCILU</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a></span></code></p></td>
 <td><p>—</p></td>
-<td></td>
-<td><p>X</p></td>
-</tr>
-<tr class="row-even"><td></td>
-<td><p>ILU with drop tolerance</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCILU.html">PCILU</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
-<td><p><a class="reference external" href="../../docs/manualpages/Mat/MATSOLVERSUPERLU.html">SuperLU Sequential ILU solver</a></p></td>
 <td></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td></td>
+<td><p>ILU with drop tolerance</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCILU.html">PCILU</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
+<td><p><a class="reference external" href="../../manualpages/Mat/MATSOLVERSUPERLU.html">SuperLU Sequential ILU solver</a></p></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCILU.html">PCILU</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
-<td><p>Euclid/hypre (<code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCHYPRE.html">PCHYPRE</a></span></code>)</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCILU.html">PCILU</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
+<td><p>Euclid/hypre (<code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCHYPRE.html">PCHYPRE</a></span></code>)</p></td>
 <td><p>X</p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td></td>
+<tr class="row-odd"><td></td>
 <td><p>ICholesky</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCICC.html">PCICC</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQSBAIJ.html">MATSEQSBAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCICC.html">PCICC</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQSBAIJ.html">MATSEQSBAIJ</a></span></code></p></td>
 <td><p>—</p></td>
+<td></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>Algebraic recursive multilevel</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCPARMS.html">PCPARMS</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
+<td><p><a class="reference external" href="https://www-users.cse.umn.edu/~saad/software/pARMS/">pARMS</a></p></td>
 <td></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td><p>Matrix Free</p></td>
 <td><p>Infrastructure</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCSHELL.html">PCSHELL</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCSHELL.html">PCSHELL</a></span></code></p></td>
 <td><p>All</p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
@@ -601,7 +727,7 @@
 </tr>
 <tr class="row-even"><td><p>Multigrid</p></td>
 <td><p>Infrastructure</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCMG.html">PCMG</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCMG.html">PCMG</a></span></code></p></td>
 <td><p>All</p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
@@ -617,72 +743,144 @@
 </tr>
 <tr class="row-even"><td></td>
 <td><p>Smoothed Aggregation</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCGAMG.html">PCGAMG</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCGAMG.html">PCGAMG</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td></td>
+<td><p>Smoothed Aggregation (ML)</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCML.html">PCML</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
+<td><p><a class="reference external" href="https://trilinos.github.io/ml.html">ML/Trilinos</a></p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td></td>
 <td><p>Structured Geometric</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCPFMG.html">PCPFMG</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/DMDA/MATHYPRESTRUCT.html">MATHYPRESTRUCT</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCPFMG.html">PCPFMG</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCSYSPFMG.html">PCSYSPFMG</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCSMG.html">PCSMG</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/DMDA/MATHYPRESTRUCT.html">MATHYPRESTRUCT</a></span></code></p></td>
 <td><p><a class="reference external" href="https://hypre.readthedocs.io/en/latest/solvers-smg-pfmg.html">hypre</a></p></td>
 <td><p>X</p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td></td>
+<tr class="row-odd"><td></td>
 <td><p>Classical Algebraic</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCHYPRE.html">PCHYPRE</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCML.html">PCML</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
-<td><p><a class="reference external" href="https://hypre.readthedocs.io/en/latest/solvers-boomeramg.html">BoomerAMG/hypre</a>, <a class="reference external" href="https://trilinos.github.io/ml.html">ML/Trilinos</a></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCHYPRE.html">PCHYPRE</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCAMGX.html">PCAMGX</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
+<td><p><a class="reference external" href="https://hypre.readthedocs.io/en/latest/solvers-boomeramg.html">BoomerAMG/hypre</a>, <a class="reference external" href="https://developer.nvidia.com/amgx">AmgX</a></p></td>
 <td><p>X</p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td></td>
-<td><p>Domain Decomposition</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCHPDDM.html">PCHPDDM</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATIS.html">MATIS</a></span></code></p></td>
-<td><p><a class="reference external" href="https://github.com/hpddm/hpddm">HPDDM</a></p></td>
-<td><p>X</p></td>
-<td><p>X</p></td>
-</tr>
-<tr class="row-even"><td><p>Physics-based Splitting</p></td>
-<td><p>Relaxation &amp; Schur Complement</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCFIELDSPLIT.html">PCFIELDSPLIT</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATNEST.html">MATNEST</a></span></code></p></td>
+<tr class="row-even"><td></td>
+<td><p>Multi-group MG</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCHMG.html">PCHMG</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td></td>
+<td><p>Domain Decomposition</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCHPDDM.html">PCHPDDM</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATIS.html">MATIS</a></span></code></p></td>
+<td><p><a class="reference external" href="https://github.com/hpddm/hpddm">HPDDM</a></p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Hierarchical matrices</p></td>
+<td><p><span class="math">\(\mathcal H^2\)</span></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCH2OPUS.html">PCH2OPUS</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATHTOOL.html">MATHTOOL</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATH2OPUS.html">MATH2OPUS</a></span></code></p></td>
+<td><p><a class="reference external" href="https://github.com/ecrc/h2opus">H2OPUS</a></p></td>
+<td><p>X</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>Physics-based Splitting</p></td>
+<td><p>Relaxation &amp; Schur Complement</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCFIELDSPLIT.html">PCFIELDSPLIT</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATNEST.html">MATNEST</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>Galerkin composition</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCGALERKIN.html">PCGALERKIN</a></span></code></p></td>
+<td><p>Any</p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>Additive/multiplicative</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCCOMPOSITE.html">PCCOMPOSITE</a></span></code></p></td>
+<td><p>Any</p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td></td>
 <td><p>Least Squares Commutator</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCLSC.html">PCLSC</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">MATSCHURCOMPLEMENT</span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCLSC.html">PCLSC</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/MATSCHURCOMPLEMENT.html">MATSCHURCOMPLEMENT</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Parallel transformation</p></td>
+<td><p>Redistribution</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCREDISTRIBUTE.html">PCREDISTRIBUTE</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>Telescoping communicator</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCTELESCOPE.html">PCTELESCOPE</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>Distribute for MPI</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCMPI.html">PCMPI</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td><p>Approximate Inverse</p></td>
 <td><p>AIV</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCHYPRE.html">PCHYPRE</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCSPAI.html">PCSPAI</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCHYPRE.html">PCHYPRE</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCSPAI.html">PCSPAI</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="https://hypre.readthedocs.io/en/latest/solvers-parasails.html">Parasails/hypre</a>, <a class="reference external" href="https://epubs.siam.org/doi/abs/10.1137/S1064827595294691?journalCode=sjoce3">SPAI</a></p></td>
 <td><p>X</p></td>
 <td></td>
 </tr>
 <tr class="row-odd"><td><p>Substructuring</p></td>
 <td><p>Balancing Neumann-Neumann</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCNN.html">PCNN</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATIS.html">MATIS</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCNN.html">PCNN</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATIS.html">MATIS</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td></td>
 <td><p>Balancing Domain Decomposition</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCBDDC.html">PCBDDC</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATIS.html">MATIS</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCBDDC.html">PCBDDC</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATIS.html">MATIS</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>2-level Schwarz wire basket</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCEXOTIC.html">PCEXOTIC</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
@@ -707,8 +905,8 @@
 <tbody>
 <tr class="row-even"><td><p>Direct LU</p></td>
 <td><p>LU</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCLU.html">PCLU</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCLU.html">PCLU</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a></span></code></p></td>
 <td><p>—</p></td>
 <td></td>
 <td><p>X</p></td>
@@ -716,7 +914,7 @@
 <tr class="row-odd"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="https://www.mathworks.com/products/matlab.html">MATLAB</a></p></td>
 <td></td>
 <td><p>X</p></td>
@@ -724,7 +922,7 @@
 <tr class="row-even"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="http://pastix.gforge.inria.fr/files/README-txt.html">PaStiX</a></p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
@@ -732,7 +930,7 @@
 <tr class="row-odd"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="https://portal.nersc.gov/project/sparse/superlu/">SuperLU</a></p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
@@ -740,7 +938,7 @@
 <tr class="row-even"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATBAIJ.html">MATBAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="https://mumps-solver.org/">MUMPS</a></p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
@@ -748,7 +946,7 @@
 <tr class="row-odd"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="https://www.ibm.com/support/knowledgecenter/en/SSFHY8/essl_welcome.html">ESSL</a></p></td>
 <td></td>
 <td></td>
@@ -756,7 +954,7 @@
 <tr class="row-even"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="https://people.engr.tamu.edu/davis/suitesparse.html">UMPFPACK (SuiteSparse)</a></p></td>
 <td></td>
 <td><p>X</p></td>
@@ -764,7 +962,7 @@
 <tr class="row-odd"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="https://people.engr.tamu.edu/davis/suitesparse.html">KLU (SuiteSparse)</a></p></td>
 <td></td>
 <td><p>X</p></td>
@@ -772,7 +970,7 @@
 <tr class="row-even"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="https://web.stanford.edu/group/SOL/software/lusol/">LUSOL</a></p></td>
 <td></td>
 <td></td>
@@ -780,15 +978,15 @@
 <tr class="row-odd"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a></span></code></p></td>
-<td><p><a class="reference external" href="https://software.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top.html">MKL Pardiso</a></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQBAIJ.html">MATSEQBAIJ</a></span></code></p></td>
+<td><p><a class="reference external" href="https://software.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top.html">MKL PARDISO</a></p></td>
 <td></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATMPIAIJ.html">MATMPIAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATMPIBAIJ.html">MATMPIBAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATMPIAIJ.html">MATMPIAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATMPIBAIJ.html">MATMPIBAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="https://software.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top.html">MKL CPardiso</a></p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
@@ -796,15 +994,15 @@
 <tr class="row-odd"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATDENSE.html">MATDENSE</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATDENSE.html">MATDENSE</a></span></code></p></td>
 <td><p><a class="reference external" href="https://github.com/elemental/Elemental">Elemental</a></p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td><p>Direct Cholesky</p></td>
 <td><p>Cholesky</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/PC/PCCHOLESKY.html">PCCHOLESKY</a></span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQSBAIJ.html">MATSEQSBAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCCHOLESKY.html">PCCHOLESKY</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQSBAIJ.html">MATSEQSBAIJ</a></span></code></p></td>
 <td><p>—</p></td>
 <td></td>
 <td><p>X</p></td>
@@ -812,7 +1010,7 @@
 <tr class="row-odd"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="http://pastix.gforge.inria.fr/files/README-txt.html">PaStiX</a></p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
@@ -820,7 +1018,7 @@
 <tr class="row-even"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSBAIJ.html">MATSBAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="https://mumps-solver.org/">MUMPS</a></p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
@@ -828,7 +1026,7 @@
 <tr class="row-odd"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQSBAIJ.html">MATSEQSBAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQSBAIJ.html">MATSEQSBAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="https://people.engr.tamu.edu/davis/suitesparse.html">CHOLMOD (SuiteSparse)</a></p></td>
 <td></td>
 <td><p>X</p></td>
@@ -836,7 +1034,7 @@
 <tr class="row-even"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATDENSE.html">MATDENSE</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATDENSE.html">MATDENSE</a></span></code></p></td>
 <td><p><a class="reference external" href="https://github.com/elemental/Elemental">Elemental</a></p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
@@ -844,31 +1042,39 @@
 <tr class="row-odd"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATSEQSBAIJ.html">MATSEQSBAIJ</a></span></code></p></td>
-<td><p><a class="reference external" href="https://software.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top.html">MKL Pardiso</a></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQSBAIJ.html">MATSEQSBAIJ</a></span></code></p></td>
+<td><p><a class="reference external" href="https://software.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top.html">MKL PARDISO</a></p></td>
 <td></td>
 <td></td>
 </tr>
 <tr class="row-even"><td></td>
 <td></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATMPIAIJ.html">MATMPIAIJ</a></span></code>, <code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATMPIBAIJ.html">MATMPIBAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATMPIAIJ.html">MATMPIAIJ</a></span></code>, <code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATMPIBAIJ.html">MATMPIBAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="https://software.intel.com/content/www/us/en/develop/documentation/onemkl-developer-reference-c/top.html">MKL CPardiso</a></p></td>
 <td><p>X</p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><p>Direct QR</p></td>
+<tr class="row-odd"><td><p>Direct SVD</p></td>
+<td><p>Singular value decomposition</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCSVD.html">PCSVD</a></span></code></p></td>
+<td><p>Any</p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Direct QR</p></td>
 <td><p>QR</p></td>
-<td><p><cite>PCQR</cite></p></td>
-<td><p><cite>MATSEQAIJ</cite></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/PC/PCQR.html">PCQR</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATSEQAIJ.html">MATSEQAIJ</a></span></code></p></td>
 <td><p><a class="reference external" href="https://people.engr.tamu.edu/davis/suitesparse.html">SuiteSparse QR</a></p></td>
 <td></td>
 <td></td>
 </tr>
-<tr class="row-even"><td></td>
+<tr class="row-odd"><td></td>
 <td><p>XXt and XYt</p></td>
 <td></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/Mat/MATAIJ.html">MATAIJ</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td></td>
@@ -890,109 +1096,271 @@
 </thead>
 <tbody>
 <tr class="row-even"><td><p>Richardson</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPRICHARDSON.html">KSPRICHARDSON</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPRICHARDSON.html">KSPRICHARDSON</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td><p>Chebyshev</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPCHEBYSHEV.html">KSPCHEBYSHEV</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPCHEBYSHEV.html">KSPCHEBYSHEV</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td><p>GMRES</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPGMRES.html">KSPGMRES</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPGMRES.html">KSPGMRES</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td><p>Flexible GMRES</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPFGMRES.html">KSPFGMRES</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPFGMRES.html">KSPFGMRES</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td><p>LGMRES</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPLGMRES.html">KSPLGMRES</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPLGMRES.html">KSPLGMRES</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Deflated GMRES</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPDGMRES.html">KSPDGMRES</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>Two-stage with least squares residual minimization</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPTSIRM.html">KSPTSIRM</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td><p>Conjugate Gradient</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPCG.html">KSPCG</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPCG.html">KSPCG</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td><p>Conjugate Gradient Squared</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPCGS.html">KSPCGS</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPCGS.html">KSPCGS</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td><p>Conjugate Gradient for Least Squares</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPCGLS.html">KSPCGLS</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPCGLS.html">KSPCGLS</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td><p>Conjugate Gradient on Normal Equations</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPCGNE.html">KSPCGNE</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPCGNE.html">KSPCGNE</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
-<tr class="row-odd"><td><p>Bi-Conjugate Gradient</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPBICG.html">KSPBICG</a></span></code></p></td>
+<tr class="row-odd"><td><p>Nash Conjugate Gradient with trust region constraint</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPNASH.html">KSPNASH</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
-<tr class="row-even"><td><p>Stabilized Bi-Conjugate Gradient</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPBCGS.html">KSPBCGS</a></span></code></p></td>
+<tr class="row-even"><td><p>Conjugate Gradient with trust region constraint</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPSTCG.html">KSPSTCG</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gould et al Conjugate Gradient with trust region constraint</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPGLTR.html">KSPGLTR</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Steinhaug Conjugate Gradient with trust region constraint</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPQCG.html">KSPQCG</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Left Conjugate Direction</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPLCD.html">KSPLCD</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Bi-Conjugate Gradient</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPBICG.html">KSPBICG</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stabilized Bi-Conjugate Gradient</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPBCGS.html">KSPBCGS</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Improved Stabilized Bi-Conjugate Gradient</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPIBCGS.html">KSPIBCGS</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td><p>Transpose-free QMR</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPTFQMR.html">KSPTFQMR</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPTFQMR.html">KSPTFQMR</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Tony Chan QMR</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPTCQMR.html">KSPTCQMR</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>QMR BiCGStab</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPQMRCGS.html">KSPQMRCGS</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Flexible Conjugate Gradients</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPFCG.html">KSPFCG</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Flexible stabilized Bi-Conjugate Gradients</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPFBCGS.html">KSPFBCGS</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Flexible stabilized Bi-Conjugate Gradients with fewer reductions</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPFBCGSR.html">KSPFBCGSR</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Stabilized Bi-Conjugate Gradients with length <span class="math">\(\ell\)</span> recurrence</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPBCGSL.html">KSPBCGSL</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td><p>Conjugate Residual</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPCR.html">KSPCR</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPCR.html">KSPCR</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td><p>Generalized Conjugate Residual</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPGCR.html">KSPGCR</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPGCR.html">KSPGCR</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td><p>Generalized Conjugate Residual (with inner normalization and deflated restarts)</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPHPDDM.html">KSPHPDDM</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPHPDDM.html">KSPHPDDM</a></span></code></p></td>
 <td><p><a class="reference external" href="https://github.com/hpddm/hpddm">HPDDM</a></p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td><p>Minimum Residual</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPMINRES.html">KSPMINRES</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPMINRES.html">KSPMINRES</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-even"><td><p>LSQR</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPLSQR.html">KSPLSQR</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPLSQR.html">KSPLSQR</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
 </tr>
 <tr class="row-odd"><td><p>SYMMLQ</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre"><a href="PETSC_DOC_OUT_ROOT_PLACEHOLDER/docs/manualpages/KSP/KSPSYMMLQ.html">KSPSYMMLQ</a></span></code></p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPSYMMLQ.html">KSPSYMMLQ</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>FETI-DP (reduction to dual-primal sub-problem)</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPFETIDP.html">KSPFETIDP</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Gropp’s overlapped reduction Conjugate Gradient</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPGROPPCG.html">KSPGROPPCG</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Pipelined Conjugate Gradient</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPPIPECG.html">KSPPIPECG</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pipelined Conjugate Gradient with residual replacement</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPPIPECGRR.html">KSPPIPECGRR</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Pipelined depth <span class="math">\(\ell\)</span> Conjugate Gradient</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPPIPELCG.html">KSPPIPELCG</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pipelined predict-and-recompute Conjugate Gradient</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPPIPEPRCG.html">KSPPIPEPRCG</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Pipelined Conjugate Gradient over iteration pairs</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPPIPECG2.html">KSPPIPECG2</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pipelined flexible Conjugate Gradient</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPPIPEFCG.html">KSPPIPEFCG</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Pipelined stabilized Bi-Conjugate Gradients</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPPIPEBCGS.html">KSPPIPEBCGS</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pipelined Conjugate Residual</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPPIPECR.html">KSPPIPECR</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Pipelined flexible GMRES</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPPIPEFGMRES.html">KSPPIPEFGMRES</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pipelined Generalized Conjugate Residual</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPPIPEGCR.html">KSPPIPEGCR</a></span></code></p></td>
+<td><p>—</p></td>
+<td><p>X</p></td>
+<td><p>X</p></td>
+</tr>
+<tr class="row-even"><td><p>Pipelined GMRES</p></td>
+<td><p><code class="docutils notranslate"><span class="pre"><a href="../manualpages/KSP/KSPPGMRES.html">KSPPGMRES</a></span></code></p></td>
 <td><p>—</p></td>
 <td><p>X</p></td>
 <td><p>X</p></td>
@@ -1112,7 +1480,7 @@
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -1128,7 +1496,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

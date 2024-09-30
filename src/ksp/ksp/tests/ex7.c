@@ -1,4 +1,3 @@
-
 static char help[] = "Illustrate how to solves a matrix-free linear system with KSP.\n\n";
 
 /*
@@ -24,7 +23,7 @@ PetscErrorCode MyMatShellMult(Mat As, Vec x, Vec y)
   /* printf("MatShellMult...user should implement this routine without using a matrix\n"); */
   PetscCall(MatShellGetContext(As, &P));
   PetscCall(MatMult(P, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **args)

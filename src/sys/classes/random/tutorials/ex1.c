@@ -1,4 +1,3 @@
-
 static char help[] = "Tests PetscRandom functions.\n\n";
 
 #include <petscsys.h>
@@ -11,14 +10,12 @@ static char help[] = "Tests PetscRandom functions.\n\n";
 
 int main(int argc, char **argv)
 {
-  PetscInt    i, n = 1000, *values;
-  PetscRandom rnd;
-  PetscScalar value, avg = 0.0;
-  PetscMPIInt rank;
-  PetscInt    view_rank = -1;
-#if defined(PETSC_USE_LOG)
+  PetscInt      i, n = 1000, *values;
+  PetscRandom   rnd;
+  PetscScalar   value, avg = 0.0;
+  PetscMPIInt   rank;
+  PetscInt      view_rank = -1;
   PetscLogEvent event;
-#endif
 
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &argv, (char *)0, help));

@@ -3,13 +3,14 @@ import config.package
 class Configure(config.package.Package):
   def __init__(self, framework):
     config.package.Package.__init__(self, framework)
-    self.download               = ['http://ftp.mcs.anl.gov/pub/petsc/externalpackages/f2cblaslapack-3.8.0.q0.tar.gz']
+    self.download               = ['https://web.cels.anl.gov/projects/petsc/download/externalpackages/f2cblaslapack-3.8.0.q2.tar.gz']
     self.downloadonWindows      = 1
     self.skippackagewithoptions = 1
 
   def setupDependencies(self, framework):
     config.package.Package.setupDependencies(self, framework)
     self.blis = framework.require('config.packages.blis', self)
+    self.blis.complex_return = 'intel' # f2cblaslapack puts complex return values into the arguments, like Intel Fortran compilers, and blis needs to know this
     self.scalartypes = framework.require('PETSc.options.scalarTypes', self)
     self.odeps = [self.blis]
     return

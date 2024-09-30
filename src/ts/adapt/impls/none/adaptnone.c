@@ -9,7 +9,7 @@ static PetscErrorCode TSAdaptChoose_None(TSAdapt adapt, TS ts, PetscReal h, Pets
   *wlte    = -1; /* Weighted local truncation error was not evaluated */
   *wltea   = -1; /* Weighted absolute local truncation error was not evaluated */
   *wlter   = -1; /* Weighted relative local truncation error was not evaluated */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -17,11 +17,11 @@ static PetscErrorCode TSAdaptChoose_None(TSAdapt adapt, TS ts, PetscReal h, Pets
 
    Level: intermediate
 
-.seealso: [](chapter_ts), `TS`, `TSAdapt`, `TSAdaptChoose()`, `TSAdaptType`
+.seealso: [](ch_ts), `TS`, `TSAdapt`, `TSAdaptChoose()`, `TSAdaptType`
 M*/
 PETSC_EXTERN PetscErrorCode TSAdaptCreate_None(TSAdapt adapt)
 {
   PetscFunctionBegin;
   adapt->ops->choose = TSAdaptChoose_None;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

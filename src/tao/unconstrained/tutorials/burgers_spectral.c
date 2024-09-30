@@ -1,4 +1,3 @@
-
 static char help[] = "Solves a simple data assimilation problem with one dimensional Burger's equation using TSAdjoint\n\n";
 
 /*
@@ -275,7 +274,7 @@ int main(int argc, char **argv)
      Always call PetscFinalize() before exiting a program.  This routine
        - finalizes the PETSc libraries as well as MPI
        - provides summary and diagnostic information if certain runtime
-         options are chosen (e.g., -log_summary).
+         options are chosen (e.g., -log_view).
   */
   PetscCall(PetscFinalize());
   return 0;
@@ -307,7 +306,7 @@ PetscErrorCode InitialConditions(Vec u, AppCtx *appctx)
   for (i = xs; i < xs + xn; i++) s[i] = 2.0 * appctx->param.mu * PETSC_PI * PetscSinScalar(PETSC_PI * xg[i]) / (2.0 + PetscCosScalar(PETSC_PI * xg[i])) + 0.25 * PetscExpReal(-4.0 * PetscPowReal(xg[i] - 2.0, 2.0));
   PetscCall(DMDAVecRestoreArray(appctx->da, u, &s));
   PetscCall(DMDAVecRestoreArrayRead(appctx->da, appctx->SEMop.grid, (void *)&xg));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -335,7 +334,7 @@ PetscErrorCode TrueSolution(Vec u, AppCtx *appctx)
   for (i = xs; i < xs + xn; i++) s[i] = 2.0 * appctx->param.mu * PETSC_PI * PetscSinScalar(PETSC_PI * xg[i]) / (2.0 + PetscCosScalar(PETSC_PI * xg[i]));
   PetscCall(DMDAVecRestoreArray(appctx->da, u, &s));
   PetscCall(DMDAVecRestoreArrayRead(appctx->da, appctx->SEMop.grid, (void *)&xg));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------------------------------------------------------- */
 /*
@@ -362,7 +361,7 @@ PetscErrorCode ComputeObjective(PetscReal t, Vec obj, AppCtx *appctx)
   }
   PetscCall(DMDAVecRestoreArray(appctx->da, obj, &s));
   PetscCall(DMDAVecRestoreArrayRead(appctx->da, appctx->SEMop.grid, (void *)&xg));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode RHSFunction(TS ts, PetscReal t, Vec globalin, Vec globalout, void *ctx)
@@ -374,7 +373,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal t, Vec globalin, Vec globalout, void
   PetscCall(VecPointwiseMult(globalout, globalin, globalout)); /* u grad u */
   PetscCall(VecScale(globalout, -1.0));
   PetscCall(MatMultAdd(appctx->SEMop.keptstiff, globalin, globalout, globalout));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -405,7 +404,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal t, Vec globalin, Mat A, Mat B, void 
   /*   A  = K - A    */
   PetscCall(MatScale(A, -1.0));
   PetscCall(MatAXPY(A, 1.0, appctx->SEMop.keptstiff, SAME_NONZERO_PATTERN));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------------------------------------------- */
@@ -470,7 +469,7 @@ PetscErrorCode RHSMatrixLaplaciangllDM(TS ts, PetscReal t, Vec X, Mat A, Mat BB,
   PetscCall(VecReciprocal(appctx->SEMop.mass));
 
   PetscCall(PetscGaussLobattoLegendreElementLaplacianDestroy(appctx->SEMop.gll.n, appctx->SEMop.gll.nodes, appctx->SEMop.gll.weights, &temp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -521,7 +520,7 @@ PetscErrorCode RHSMatrixAdvectiongllDM(TS ts, PetscReal t, Vec X, Mat A, Mat BB,
   PetscCall(MatDiagonalScale(A, appctx->SEMop.mass, 0));
   PetscCall(VecReciprocal(appctx->SEMop.mass));
   PetscCall(PetscGaussLobattoLegendreElementAdvectionDestroy(appctx->SEMop.gll.n, appctx->SEMop.gll.nodes, appctx->SEMop.gll.weights, &temp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------ */
 /*
@@ -602,7 +601,7 @@ PetscErrorCode FormFunctionGradient(Tao tao, Vec IC, PetscReal *f, Vec G, void *
   PetscCall(VecPointwiseDivide(G, G, appctx->SEMop.mass));
 
   PetscCall(TaoGetSolutionStatus(tao, &its, &ff, &gnorm, &cnorm, &xdiff, &reason));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MonitorError(Tao tao, void *ctx)
@@ -619,7 +618,7 @@ PetscErrorCode MonitorError(Tao tao, void *ctx)
   PetscCall(VecDestroy(&temp));
   nrm = PetscSqrtReal(nrm);
   PetscCall(PetscPrintf(PETSC_COMM_WORLD, "Error for initial conditions %g\n", (double)nrm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

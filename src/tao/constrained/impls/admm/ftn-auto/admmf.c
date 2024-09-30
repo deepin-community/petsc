@@ -74,6 +74,11 @@ extern void PetscRmPointer(void*);
 #define taoadmmsetregularizercoefficient_ taoadmmsetregularizercoefficient
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define taoadmmgetregularizercoefficient_ TAOADMMGETREGULARIZERCOEFFICIENT
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define taoadmmgetregularizercoefficient_ taoadmmgetregularizercoefficient
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define taogetadmmparenttao_ TAOGETADMMPARENTTAO
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define taogetadmmparenttao_ taogetadmmparenttao
@@ -154,6 +159,11 @@ PETSC_EXTERN void  taoadmmsetregularizercoefficient_(Tao tao,PetscReal *lambda, 
 {
 *__ierr = TaoADMMSetRegularizerCoefficient(
 	(Tao)PetscToPointer((tao) ),*lambda);
+}
+PETSC_EXTERN void  taoadmmgetregularizercoefficient_(Tao tao,PetscReal *lambda, int *__ierr)
+{
+*__ierr = TaoADMMGetRegularizerCoefficient(
+	(Tao)PetscToPointer((tao) ),lambda);
 }
 PETSC_EXTERN void  taogetadmmparenttao_(Tao tao,Tao *admm_tao, int *__ierr)
 {

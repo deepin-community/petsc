@@ -114,6 +114,11 @@ extern void PetscRmPointer(void*);
 #define petscdualspacegetsection_ petscdualspacegetsection
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define petscdualspacegetinteriorsection_ PETSCDUALSPACEGETINTERIORSECTION
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define petscdualspacegetinteriorsection_ petscdualspacegetinteriorsection
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define petscdualspacegetalldata_ PETSCDUALSPACEGETALLDATA
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define petscdualspacegetalldata_ petscdualspacegetalldata
@@ -253,6 +258,11 @@ PETSC_EXTERN void  petscdualspacegetuniform_(PetscDualSpace sp,PetscBool *unifor
 PETSC_EXTERN void  petscdualspacegetsection_(PetscDualSpace sp,PetscSection *section, int *__ierr)
 {
 *__ierr = PetscDualSpaceGetSection(
+	(PetscDualSpace)PetscToPointer((sp) ),section);
+}
+PETSC_EXTERN void  petscdualspacegetinteriorsection_(PetscDualSpace sp,PetscSection *section, int *__ierr)
+{
+*__ierr = PetscDualSpaceGetInteriorSection(
 	(PetscDualSpace)PetscToPointer((sp) ),section);
 }
 PETSC_EXTERN void  petscdualspacegetalldata_(PetscDualSpace sp,PetscQuadrature *allNodes,Mat *allMat, int *__ierr)

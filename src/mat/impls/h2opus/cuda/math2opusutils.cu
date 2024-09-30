@@ -22,11 +22,11 @@ PETSC_INTERN PetscErrorCode PetscSFGetVectorSF(PetscSF sf, PetscInt nv, PetscInt
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sf, PETSCSF_CLASSID, 1);
   PetscValidLogicalCollectiveInt(sf, nv, 2);
-  PetscValidPointer(vsf, 5);
+  PetscAssertPointer(vsf, 5);
   if (nv == 1) {
     PetscCall(PetscObjectReference((PetscObject)sf));
     *vsf = sf;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(PetscObjectGetComm((PetscObject)sf, &comm));
   PetscCall(PetscSFGetGraph(sf, &nr, &nl, &ilocal, &iremote));
@@ -76,7 +76,7 @@ PETSC_INTERN PetscErrorCode PetscSFGetVectorSF(PetscSF sf, PetscInt nv, PetscInt
   PetscCall(PetscFree(ldrs));
   PetscCall(PetscSFCreate(comm, vsf));
   PetscCall(PetscSFSetGraph(*vsf, vnr, vnl, vilocal, PETSC_OWN_POINTER, viremote, PETSC_OWN_POINTER));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_INTERN PetscErrorCode MatDenseGetH2OpusVectorSF(Mat A, PetscSF h2sf, PetscSF *osf)
@@ -86,7 +86,7 @@ PETSC_INTERN PetscErrorCode MatDenseGetH2OpusVectorSF(Mat A, PetscSF h2sf, Petsc
   PetscFunctionBegin;
   PetscValidHeaderSpecific(A, MAT_CLASSID, 1);
   PetscValidHeaderSpecific(h2sf, PETSCSF_CLASSID, 2);
-  PetscValidPointer(osf, 3);
+  PetscAssertPointer(osf, 3);
   PetscCall(PetscObjectQuery((PetscObject)A, "_math2opus_vectorsf", (PetscObject *)&asf));
   if (!asf) {
     PetscInt lda;
@@ -97,7 +97,7 @@ PETSC_INTERN PetscErrorCode MatDenseGetH2OpusVectorSF(Mat A, PetscSF h2sf, Petsc
     PetscCall(PetscObjectDereference((PetscObject)asf));
   }
   *osf = asf;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_CUDA)
@@ -146,7 +146,7 @@ PETSC_INTERN PetscErrorCode VecSign(Vec v, Vec s)
     PetscCall(VecRestoreArrayWrite(s, &as));
     PetscCall(VecRestoreArrayRead(v, &av));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_CUDA)
@@ -185,7 +185,7 @@ PETSC_INTERN PetscErrorCode VecSetDelta(Vec x, PetscInt i)
     PetscCall(VecAssemblyBegin(x));
     PetscCall(VecAssemblyEnd(x));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* these are approximate norms */
@@ -286,5 +286,5 @@ PETSC_INTERN PetscErrorCode MatApproximateNorm_Private(Mat A, NormType normtype,
     SETERRQ(PetscObjectComm((PetscObject)A), PETSC_ERR_SUP, "%s norm not supported", NormTypes[normtype]);
   }
   PetscCall(PetscInfo(A, "%s norm %g computed in %" PetscInt_FMT " iterations\n", NormTypes[normtype], (double)*n, i));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

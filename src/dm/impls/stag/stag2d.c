@@ -7,27 +7,32 @@
   Collective
 
   Input Parameters:
-+ comm - MPI communicator
-. bndx,bndy - boundary type: `DM_BOUNDARY_NONE`, `DM_BOUNDARY_PERIODIC`, or `DM_BOUNDARY_GHOSTED`
-. M,N - global number of elements in x,y directions
-. m,n - number of ranks in the x,y directions (may be `PETSC_DECIDE`)
-. dof0 - number of degrees of freedom per vertex/0-cell
-. dof1 - number of degrees of freedom per face/1-cell
-. dof2 - number of degrees of freedom per element/2-cell
-. stencilType - ghost/halo region type: `DMSTAG_STENCIL_NONE`, `DMSTAG_STENCIL_BOX`, or `DMSTAG_STENCIL_STAR`
++ comm         - MPI communicator
+. bndx         - x boundary type, `DM_BOUNDARY_NONE`, `DM_BOUNDARY_PERIODIC`, or
+`DM_BOUNDARY_GHOSTED`
+. bndy         - y boundary type, `DM_BOUNDARY_NONE`, `DM_BOUNDARY_PERIODIC`, or `DM_BOUNDARY_GHOSTED`
+. M            - global number of elements in x direction
+. N            - global number of elements in y direction
+. m            - number of ranks in the x direction (may be `PETSC_DECIDE`)
+. n            - number of ranks in the y direction (may be `PETSC_DECIDE`)
+. dof0         - number of degrees of freedom per vertex/0-cell
+. dof1         - number of degrees of freedom per face/1-cell
+. dof2         - number of degrees of freedom per element/2-cell
+. stencilType  - ghost/halo region type: `DMSTAG_STENCIL_NONE`, `DMSTAG_STENCIL_BOX`, or `DMSTAG_STENCIL_STAR`
 . stencilWidth - width, in elements, of halo/ghost region
-- lx,ly - arrays of local x,y element counts, of length equal to m,n, summing to M,N
+. lx           - array of local x element counts, of length equal to `m`, summing to `M`
+- ly           - array of local y element counts, of length equal to `n`, summing to `N`
 
   Output Parameter:
 . dm - the new `DMSTAG` object
 
   Options Database Keys:
-+ -dm_view - calls `DMViewFromOptions()` at the conclusion of `DMSetUp()`
-. -stag_grid_x <nx> - number of elements in the x direction
-. -stag_grid_y <ny> - number of elements in the y direction
-. -stag_ranks_x <rx> - number of ranks in the x direction
-. -stag_ranks_y <ry> - number of ranks in the y direction
-. -stag_ghost_stencil_width - width of ghost region, in elements
++ -dm_view                                      - calls `DMViewFromOptions()` at the conclusion of `DMSetUp()`
+. -stag_grid_x <nx>                             - number of elements in the x direction
+. -stag_grid_y <ny>                             - number of elements in the y direction
+. -stag_ranks_x <rx>                            - number of ranks in the x direction
+. -stag_ranks_y <ry>                            - number of ranks in the y direction
+. -stag_ghost_stencil_width                     - width of ghost region, in elements
 . -stag_boundary_type_x <none,ghosted,periodic> - `DMBoundaryType` value
 - -stag_boundary_type_y <none,ghosted,periodic> - `DMBoundaryType` value
 
@@ -38,7 +43,7 @@
   If you wish to use the options database (see the keys above) to change values in the `DMSTAG`, you must call
   `DMSetFromOptions()` after this function but before `DMSetUp()`.
 
-.seealso: [](chapter_stag), `DMSTAG`, `DMStagCreate1d()`, `DMStagCreate3d()`, `DMDestroy()`, `DMView()`, `DMCreateGlobalVector()`, `DMCreateLocalVector()`, `DMLocalToGlobalBegin()`, `DMDACreate2d()`
+.seealso: [](ch_stag), `DMSTAG`, `DMStagCreate1d()`, `DMStagCreate3d()`, `DMDestroy()`, `DMView()`, `DMCreateGlobalVector()`, `DMCreateLocalVector()`, `DMLocalToGlobalBegin()`, `DMDACreate2d()`
 @*/
 PETSC_EXTERN PetscErrorCode DMStagCreate2d(MPI_Comm comm, DMBoundaryType bndx, DMBoundaryType bndy, PetscInt M, PetscInt N, PetscInt m, PetscInt n, PetscInt dof0, PetscInt dof1, PetscInt dof2, DMStagStencilType stencilType, PetscInt stencilWidth, const PetscInt lx[], const PetscInt ly[], DM *dm)
 {
@@ -46,7 +51,7 @@ PETSC_EXTERN PetscErrorCode DMStagCreate2d(MPI_Comm comm, DMBoundaryType bndx, D
   PetscCall(DMCreate(comm, dm));
   PetscCall(DMSetDimension(*dm, 2));
   PetscCall(DMStagInitialize(bndx, bndy, DM_BOUNDARY_NONE, M, N, 0, m, n, 0, dof0, dof1, dof2, 0, stencilType, stencilWidth, lx, ly, NULL, *dm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_INTERN PetscErrorCode DMStagRestrictSimple_2d(DM dmf, Vec xf_local, DM dmc, Vec xc_local)
@@ -112,7 +117,7 @@ PETSC_INTERN PetscErrorCode DMStagRestrictSimple_2d(DM dmf, Vec xf_local, DM dmc
   }
   PetscCall(DMStagVecRestoreArray(dmf, xf_local, &LA_xf));
   PetscCall(DMStagVecRestoreArray(dmc, xc_local, &LA_xc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_INTERN PetscErrorCode DMStagSetUniformCoordinatesExplicit_2d(DM dm, PetscReal xmin, PetscReal xmax, PetscReal ymin, PetscReal ymax)
@@ -171,7 +176,7 @@ PETSC_INTERN PetscErrorCode DMStagSetUniformCoordinatesExplicit_2d(DM dm, PetscR
   PetscCall(DMStagVecRestoreArray(dmCoord, coordLocal, &arr));
   PetscCall(DMSetCoordinatesLocal(dm, coordLocal));
   PetscCall(VecDestroy(&coordLocal));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Helper functions used in DMSetUp_Stag() */
@@ -388,7 +393,10 @@ PETSC_INTERN PetscErrorCode DMSetUp_Stag_2d(DM dm)
       if (neighborRank >= 0) { /* note we copy the values for our own rank (neighbor 4) */
         nNeighbors[i][0] = stag->l[0][neighborRank % stag->nRanks[0]];
         nNeighbors[i][1] = stag->l[1][neighborRank / stag->nRanks[0]];
-      } /* else leave uninitialized - error if accessed */
+      } else {
+        nNeighbors[i][0] = 0;
+        nNeighbors[i][1] = 0;
+      }
     }
 
     /* These offsets should always be non-negative, and describe how many
@@ -971,7 +979,7 @@ PETSC_INTERN PetscErrorCode DMSetUp_Stag_2d(DM dm)
   /* View from Options */
   PetscCall(DMViewFromOptions(dm, NULL, "-dm_view"));
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* adapted from da2.c */
@@ -1022,7 +1030,7 @@ static PetscErrorCode DMStagSetUpBuildRankGrid_2d(DM dm)
   PetscCheck(N >= n, PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_OUTOFRANGE, "Partition in y direction is too fine! %" PetscInt_FMT " %" PetscInt_FMT, N, n);
   stag->nRanks[0] = m;
   stag->nRanks[1] = n;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMStagSetUpBuildNeighbors_2d(DM dm)
@@ -1085,7 +1093,7 @@ static PetscErrorCode DMStagSetUpBuildNeighbors_2d(DM dm)
     }
   }
 
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMStagSetUpBuildGlobalOffsets_2d(DM dm, PetscInt **pGlobalOffsets)
@@ -1128,7 +1136,7 @@ static PetscErrorCode DMStagSetUpBuildGlobalOffsets_2d(DM dm, PetscInt **pGlobal
     }
     /* Don't need to compute entries in last element */
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMStagComputeLocationOffsets_2d(DM dm)
@@ -1148,7 +1156,7 @@ static PetscErrorCode DMStagComputeLocationOffsets_2d(DM dm)
   stag->locationOffsets[DMSTAG_UP_LEFT]    = stag->locationOffsets[DMSTAG_DOWN_LEFT] + epr;
   stag->locationOffsets[DMSTAG_UP]         = stag->locationOffsets[DMSTAG_DOWN] + epr;
   stag->locationOffsets[DMSTAG_UP_RIGHT]   = stag->locationOffsets[DMSTAG_UP_LEFT] + epe;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_INTERN PetscErrorCode DMStagPopulateLocalToGlobalInjective_2d(DM dm)
@@ -1230,7 +1238,7 @@ PETSC_INTERN PetscErrorCode DMStagPopulateLocalToGlobalInjective_2d(DM dm)
   PetscCall(ISDestroy(&isLocal));
   PetscCall(ISDestroy(&isGlobal));
   if (globalOffsetsRecomputed) PetscCall(PetscFree(globalOffsetsRecomputed));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_INTERN PetscErrorCode DMCreateMatrix_Stag_2D_AIJ_Assemble(DM dm, Mat A)
@@ -1399,5 +1407,5 @@ PETSC_INTERN PetscErrorCode DMCreateMatrix_Stag_2D_AIJ_Assemble(DM dm, Mat A)
   } else SETERRQ(PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_OUTOFRANGE, "Unsupported stencil type %s", DMStagStencilTypes[stencil_type]);
   PetscCall(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

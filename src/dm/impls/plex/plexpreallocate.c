@@ -133,7 +133,7 @@ static PetscErrorCode DMPlexComputeAnchorAdjacencies(DM dm, PetscBool useCone, P
           for (nd = 0; nd < qAdjDof - qAdjCDof; ++nd) adj[aOff++] = (qAdjOff < 0 ? -(qAdjOff + 1) : qAdjOff) + nd;
         }
       }
-      PetscCall(PetscSortRemoveDupsInt(&aDof, &adj[aOffOrig]));
+      if (adj) PetscCall(PetscSortRemoveDupsInt(&aDof, &adj[aOffOrig]));
       PetscCall(PetscSectionSetDof(adjSec, p, aDof));
     }
     *anchorAdj = adj;
@@ -148,7 +148,7 @@ static PetscErrorCode DMPlexComputeAnchorAdjacencies(DM dm, PetscBool useCone, P
     PetscCall(PetscSectionSetUp(adjSec));
   }
   *anchorSectionAdj = adjSec;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexCreateAdjacencySection_Static(DM dm, PetscInt bs, PetscSF sfDof, PetscBool useCone, PetscBool useClosure, PetscBool useAnchors, PetscSection *sA, PetscInt **colIdx)
@@ -247,7 +247,7 @@ static PetscErrorCode DMPlexCreateAdjacencySection_Static(DM dm, PetscInt bs, Pe
     PetscCall(PetscSectionInvalidateMaxDof_Internal(rootSectionAdj));
   }
   if (debug) {
-    PetscCall(PetscPrintf(comm, "Adjancency Section for Preallocation on Roots:\n"));
+    PetscCall(PetscPrintf(comm, "Adjacency Section for Preallocation on Roots:\n"));
     PetscCall(PetscSectionView(rootSectionAdj, NULL));
   }
   /* Add in local adjacency sizes for owned dofs on interface (roots) */
@@ -276,7 +276,7 @@ static PetscErrorCode DMPlexCreateAdjacencySection_Static(DM dm, PetscInt bs, Pe
   }
   PetscCall(PetscSectionSetUp(rootSectionAdj));
   if (debug) {
-    PetscCall(PetscPrintf(comm, "Adjancency Section for Preallocation on Roots after local additions:\n"));
+    PetscCall(PetscPrintf(comm, "Adjacency Section for Preallocation on Roots after local additions:\n"));
     PetscCall(PetscSectionView(rootSectionAdj, NULL));
   }
   /* Create adj SF based on dof SF */
@@ -431,7 +431,7 @@ static PetscErrorCode DMPlexCreateAdjacencySection_Static(DM dm, PetscInt bs, Pe
   /* Debugging */
   if (debug) {
     IS tmp;
-    PetscCall(PetscPrintf(comm, "Adjancency Section for Preallocation on Roots after compression:\n"));
+    PetscCall(PetscPrintf(comm, "Adjacency Section for Preallocation on Roots after compression:\n"));
     PetscCall(PetscSectionView(rootSectionAdj, NULL));
     PetscCall(PetscPrintf(comm, "Root adjacency indices after compression\n"));
     PetscCall(ISCreateGeneral(comm, adjSize, rootAdj, PETSC_USE_POINTER, &tmp));
@@ -558,7 +558,7 @@ static PetscErrorCode DMPlexCreateAdjacencySection_Static(DM dm, PetscInt bs, Pe
 
   *sA     = sectionAdj;
   *colIdx = cols;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexUpdateAllocation_Static(DM dm, PetscLayout rLayout, PetscInt bs, PetscInt f, PetscSection sectionAdj, const PetscInt cols[], PetscInt dnz[], PetscInt onz[], PetscInt dnzu[], PetscInt onzu[])
@@ -618,7 +618,7 @@ static PetscErrorCode DMPlexUpdateAllocation_Static(DM dm, PetscLayout rLayout, 
       onzu[r] /= bs;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexFillMatrix_Static(DM dm, PetscLayout rLayout, PetscInt bs, PetscInt f, PetscSection sectionAdj, const PetscInt cols[], Mat A)
@@ -659,7 +659,7 @@ static PetscErrorCode DMPlexFillMatrix_Static(DM dm, PetscLayout rLayout, PetscI
     }
   }
   PetscCall(PetscFree(values));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -669,12 +669,12 @@ static PetscErrorCode DMPlexFillMatrix_Static(DM dm, PetscLayout rLayout, PetscI
   Collective
 
   Input Parameters:
-+ dm   - The `DMPLEX`
-. bs   - The matrix blocksize
-. dnz  - An array to hold the number of nonzeros in the diagonal block
-. onz  - An array to hold the number of nonzeros in the off-diagonal block
-. dnzu - An array to hold the number of nonzeros in the upper triangle of the diagonal block
-. onzu - An array to hold the number of nonzeros in the upper triangle of the off-diagonal block
++ dm         - The `DMPLEX`
+. bs         - The matrix blocksize
+. dnz        - An array to hold the number of nonzeros in the diagonal block
+. onz        - An array to hold the number of nonzeros in the off-diagonal block
+. dnzu       - An array to hold the number of nonzeros in the upper triangle of the diagonal block
+. onzu       - An array to hold the number of nonzeros in the upper triangle of the off-diagonal block
 - fillMatrix - If `PETSC_TRUE`, fill the matrix with zeros
 
   Output Parameter:
@@ -682,12 +682,11 @@ static PetscErrorCode DMPlexFillMatrix_Static(DM dm, PetscLayout rLayout, PetscI
 
   Level: advanced
 
-.seealso: [](chapter_unstructured), `DM`, `DMPLEX`, `DMCreateMatrix()`
+.seealso: [](ch_unstructured), `DM`, `DMPLEX`, `DMCreateMatrix()`
 @*/
 PetscErrorCode DMPlexPreallocateOperator(DM dm, PetscInt bs, PetscInt dnz[], PetscInt onz[], PetscInt dnzu[], PetscInt onzu[], Mat A, PetscBool fillMatrix)
 {
   MPI_Comm     comm;
-  PetscDS      prob;
   MatType      mtype;
   PetscSF      sf, sfDof;
   PetscSection section;
@@ -703,11 +702,10 @@ PetscErrorCode DMPlexPreallocateOperator(DM dm, PetscInt bs, PetscInt dnz[], Pet
   PetscFunctionBegin;
   PetscValidHeaderSpecific(dm, DM_CLASSID, 1);
   PetscValidHeaderSpecific(A, MAT_CLASSID, 7);
-  if (dnz) PetscValidIntPointer(dnz, 3);
-  if (onz) PetscValidIntPointer(onz, 4);
-  if (dnzu) PetscValidIntPointer(dnzu, 5);
-  if (onzu) PetscValidIntPointer(onzu, 6);
-  PetscCall(DMGetDS(dm, &prob));
+  if (dnz) PetscAssertPointer(dnz, 3);
+  if (onz) PetscAssertPointer(onz, 4);
+  if (dnzu) PetscAssertPointer(dnzu, 5);
+  if (onzu) PetscAssertPointer(onzu, 6);
   PetscCall(DMGetPointSF(dm, &sf));
   PetscCall(DMGetLocalSection(dm, &section));
   PetscCall(PetscOptionsGetBool(NULL, NULL, "-dm_view_preallocation", &debug, NULL));
@@ -791,7 +789,7 @@ PetscErrorCode DMPlexPreallocateOperator(DM dm, PetscInt bs, PetscInt dnz[], Pet
     PetscCall(PetscFree(cols[idx]));
   }
   PetscCall(PetscLogEventEnd(DMPLEX_Preallocate, dm, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if 0
@@ -838,6 +836,6 @@ PetscErrorCode DMPlexPreallocateOperator_2(DM dm, PetscInt bs, PetscSection sect
 
   PetscCall(PetscSFReduceBegin(sf,MPIU_INT,ldnz,dnz,MPI_SUM));
   PetscCall(PetscSFReduceEnd  (sf,MPIU_INT,lonz,onz,MPI_SUM));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif

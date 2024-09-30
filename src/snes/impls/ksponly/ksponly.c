@@ -30,6 +30,7 @@ static PetscErrorCode SNESSolve_KSPONLY(SNES snes)
   if (snes->numbermonitors) {
     PetscReal fnorm;
     PetscCall(VecNorm(F, NORM_2, &fnorm));
+    SNESCheckFunctionNorm(snes, fnorm);
     PetscCall(SNESMonitor(snes, 0, fnorm));
   }
 
@@ -60,33 +61,36 @@ static PetscErrorCode SNESSolve_KSPONLY(SNES snes)
     PetscReal fnorm;
     PetscCall(SNESComputeFunction(snes, X, F));
     PetscCall(VecNorm(F, NORM_2, &fnorm));
+    SNESCheckFunctionNorm(snes, fnorm);
     PetscCall(SNESMonitor(snes, 1, fnorm));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESSetUp_KSPONLY(SNES snes)
 {
   PetscFunctionBegin;
   PetscCall(SNESSetUpMatrices(snes));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESDestroy_KSPONLY(SNES snes)
 {
   PetscFunctionBegin;
   PetscCall(PetscFree(snes->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-      SNESKSPONLY - Nonlinear solver that performs one Newton step and does not compute any norms.
-      The main purpose of this solver is to solve linear problems using the `SNES` interface, without
-      any additional overhead in the form of vector operations.
+   SNESKSPONLY - Nonlinear solver that performs one Newton step with `KSPSolve()` and does not compute any norms.
 
    Level: beginner
 
-.seealso: `SNES`, `SNESType`, `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESNEWTONLS`, `SNESNEWTONTR`
+   Note:
+   The main purpose of this solver is to solve linear problems using the `SNES` interface, without
+   any additional overhead in the form of vector norm operations.
+
+.seealso: [](ch_snes), `SNES`, `SNESType`, `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESNEWTONLS`, `SNESNEWTONTR`, `SNESKSPTRANSPOSEONLY`
 M*/
 PETSC_EXTERN PetscErrorCode SNESCreate_KSPONLY(SNES snes)
 {
@@ -107,17 +111,19 @@ PETSC_EXTERN PetscErrorCode SNESCreate_KSPONLY(SNES snes)
 
   PetscCall(PetscNew(&ksponly));
   snes->data = (void *)ksponly;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-      SNESKSPTRANSPOSEONLY - Nonlinear solver that performs one Newton step and does not compute any norms.
-      The main purpose of this solver is to solve transposed linear problems using the `SNES` interface, without
-      any additional overhead in the form of vector operations within adjoint solvers.
+   SNESKSPTRANSPOSEONLY - Nonlinear solver that performs one Newton step with `KSPSolveTranspose()` and does not compute any norms.
 
    Level: beginner
 
-.seealso: `SNES`, `SNESType`, `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESKSPTRANSPOSEONLY`, `SNESNEWTONLS`, `SNESNEWTONTR`
+   Note:
+   The main purpose of this solver is to solve transposed linear problems using the `SNES` interface, without
+   any additional overhead in the form of vector operations within adjoint solvers.
+
+.seealso: [](ch_snes), `SNES`, `SNESType`, `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESKS`, `SNESNEWTONLS`, `SNESNEWTONTR`
 M*/
 PETSC_EXTERN PetscErrorCode SNESCreate_KSPTRANSPOSEONLY(SNES snes)
 {
@@ -128,5 +134,5 @@ PETSC_EXTERN PetscErrorCode SNESCreate_KSPTRANSPOSEONLY(SNES snes)
   PetscCall(PetscObjectChangeTypeName((PetscObject)snes, SNESKSPTRANSPOSEONLY));
   kspo                  = (SNES_KSPONLY *)snes->data;
   kspo->transpose_solve = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

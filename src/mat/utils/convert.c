@@ -1,4 +1,3 @@
-
 #include <petsc/private/matimpl.h>
 
 /*
@@ -16,7 +15,7 @@ PETSC_INTERN PetscErrorCode MatConvert_Basic(Mat mat, MatType newtype, MatReuse 
   PetscFunctionBegin;
   if (!mat->ops->getrow) { /* missing get row, use matvecs */
     PetscCall(MatConvert_Shell(mat, newtype, reuse, newmat));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(PetscObjectTypeCompare((PetscObject)mat, MATSEQSBAIJ, &isSBAIJ));
   if (!isSBAIJ) PetscCall(PetscObjectTypeCompare((PetscObject)mat, MATMPISBAIJ, &isSBAIJ));
@@ -55,5 +54,5 @@ PETSC_INTERN PetscErrorCode MatConvert_Basic(Mat mat, MatType newtype, MatReuse 
   } else {
     *newmat = M;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

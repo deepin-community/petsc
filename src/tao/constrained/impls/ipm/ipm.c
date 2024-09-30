@@ -185,7 +185,7 @@ static PetscErrorCode TaoSolve_IPM(Tao tao)
     PetscUseTypeMethod(tao, convergencetest, tao->cnvP);
     tao->niter++;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoSetup_IPM(Tao tao)
@@ -214,7 +214,7 @@ static PetscErrorCode TaoSetup_IPM(Tao tao)
     PetscCall(VecDuplicate(tao->constraints_equality, &tao->DE));
   }
   if (tao->constraints_inequality) PetscCall(VecDuplicate(tao->constraints_inequality, &tao->DI));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode IPMInitializeBounds(Tao tao)
@@ -445,7 +445,7 @@ static PetscErrorCode IPMInitializeBounds(Tao tao)
   PetscCall(PetscFree(ucind));
   PetscCall(PetscFree(uceind));
   PetscCall(PetscFree(xind));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoDestroy_IPM(Tao tao)
@@ -502,7 +502,7 @@ static PetscErrorCode TaoDestroy_IPM(Tao tao)
   PetscCall(ISDestroy(&ipmP->isxl));
   PetscCall(KSPDestroy(&tao->ksp));
   PetscCall(PetscFree(tao->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoSetFromOptions_IPM(Tao tao, PetscOptionItems *PetscOptionsObject)
@@ -516,12 +516,12 @@ static PetscErrorCode TaoSetFromOptions_IPM(Tao tao, PetscOptionItems *PetscOpti
   PetscCall(PetscOptionsReal("-tao_ipm_pushnu", "parameter to push initial (inequality) dual variables away from bounds", NULL, ipmP->pushnu, &ipmP->pushnu, NULL));
   PetscOptionsHeadEnd();
   PetscCall(KSPSetFromOptions(tao->ksp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoView_IPM(Tao tao, PetscViewer viewer)
 {
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 /* IPMObjectiveAndGradient()
@@ -542,7 +542,7 @@ static PetscErrorCode IPMObjective(TaoLineSearch ls, Vec X, PetscReal *f, void *
   PetscFunctionBegin;
   PetscCall(IPMComputeKKT(tao));
   *f = ipmP->phi;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 */
 
@@ -608,11 +608,11 @@ static PetscErrorCode IPMComputeKKT(Tao tao)
   }
 
   ipmP->phi = PetscSqrtScalar(ipmP->phi);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* evaluate user info at current point */
-PetscErrorCode IPMEvaluate(Tao tao)
+static PetscErrorCode IPMEvaluate(Tao tao)
 {
   TAO_IPM *ipmP = (TAO_IPM *)tao->data;
 
@@ -631,11 +631,11 @@ PetscErrorCode IPMEvaluate(Tao tao)
     /* Ai' =   jac_ineq | I (w/lb) | -I (w/ub)  */
     PetscCall(IPMUpdateAi(tao));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Push initial point away from bounds */
-PetscErrorCode IPMPushInitialPoint(Tao tao)
+static PetscErrorCode IPMPushInitialPoint(Tao tao)
 {
   TAO_IPM *ipmP = (TAO_IPM *)tao->data;
 
@@ -651,10 +651,10 @@ PetscErrorCode IPMPushInitialPoint(Tao tao)
     PetscCall(VecSet(tao->DE, 1.0));
     PetscCall(VecSet(ipmP->lambdae, 1.0));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode IPMUpdateAi(Tao tao)
+static PetscErrorCode IPMUpdateAi(Tao tao)
 {
   /* Ai =     Ji
               I (w/lb)
@@ -683,7 +683,7 @@ PetscErrorCode IPMUpdateAi(Tao tao)
   r3 = r2 + ipmP->nxlb;
   r4 = r3 + ipmP->nxub;
 
-  if (!ipmP->nb) PetscFunctionReturn(0);
+  if (!ipmP->nb) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Create Ai matrix if it doesn't exist yet */
   if (!ipmP->Ai) {
@@ -759,7 +759,7 @@ PetscErrorCode IPMUpdateAi(Tao tao)
     PetscCall(VecScatterBegin(ipmP->ci_scat, tao->constraints_inequality, ipmP->ci, INSERT_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterEnd(ipmP->ci_scat, tao->constraints_inequality, ipmP->ci, INSERT_VALUES, SCATTER_FORWARD));
   }
-  if (!ipmP->work) VecDuplicate(tao->solution, &ipmP->work);
+  if (!ipmP->work) PetscCall(VecDuplicate(tao->solution, &ipmP->work));
   PetscCall(VecCopy(tao->solution, ipmP->work));
   if (tao->XL) {
     PetscCall(VecAXPY(ipmP->work, -1.0, tao->XL));
@@ -780,14 +780,14 @@ PetscErrorCode IPMUpdateAi(Tao tao)
       PetscCall(VecScatterEnd(ipmP->xu_scat, ipmP->work, ipmP->ci, INSERT_VALUES, SCATTER_FORWARD));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* create K = [ Hlag , 0 , Ae', -Ai'];
               [Ae , 0,   0  , 0];
               [Ai ,-I,   0 ,  0];
               [ 0 , S ,  0,   Y ];  */
-PetscErrorCode IPMUpdateK(Tao tao)
+static PetscErrorCode IPMUpdateK(Tao tao)
 {
   TAO_IPM         *ipmP = (TAO_IPM *)tao->data;
   MPI_Comm         comm;
@@ -964,10 +964,10 @@ PetscErrorCode IPMUpdateK(Tao tao)
   PetscCall(PetscFree(newvals));
   PetscCall(MatAssemblyBegin(ipmP->K, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(ipmP->K, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode IPMGatherRHS(Tao tao, Vec RHS, Vec X1, Vec X2, Vec X3, Vec X4)
+static PetscErrorCode IPMGatherRHS(Tao tao, Vec RHS, Vec X1, Vec X2, Vec X3, Vec X4)
 {
   TAO_IPM *ipmP = (TAO_IPM *)tao->data;
 
@@ -994,10 +994,10 @@ PetscErrorCode IPMGatherRHS(Tao tao, Vec RHS, Vec X1, Vec X2, Vec X3, Vec X4)
       PetscCall(VecScatterEnd(ipmP->rhs4, X4, RHS, INSERT_VALUES, SCATTER_FORWARD));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode IPMScatterStep(Tao tao, Vec STEP, Vec X1, Vec X2, Vec X3, Vec X4)
+static PetscErrorCode IPMScatterStep(Tao tao, Vec STEP, Vec X1, Vec X2, Vec X3, Vec X4)
 {
   TAO_IPM *ipmP = (TAO_IPM *)tao->data;
 
@@ -1024,13 +1024,13 @@ PetscErrorCode IPMScatterStep(Tao tao, Vec STEP, Vec X1, Vec X2, Vec X3, Vec X4)
     PetscCall(VecScatterEnd(ipmP->step4, STEP, X4, INSERT_VALUES, SCATTER_FORWARD));
   }
   CHKMEMQ;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
   TAOIPM - Interior point algorithm for generally constrained optimization.
 
-  Option Database Keys:
+  Options Database Keys:
 +   -tao_ipm_pushnu - parameter to push initial dual variables away from bounds
 -   -tao_ipm_pushs - parameter to push initial slack variables away from bounds
 
@@ -1038,6 +1038,7 @@ PetscErrorCode IPMScatterStep(Tao tao, Vec STEP, Vec X1, Vec X2, Vec X3, Vec X4)
     This algorithm is more of a place-holder for future constrained optimization algorithms and should not yet be used for large problems or production code.
   Level: beginner
 
+.seealso: `Tao`, `TAOPDIPM`, `TaoType`
 M*/
 
 PETSC_EXTERN PetscErrorCode TaoCreate_IPM(Tao tao)
@@ -1067,5 +1068,5 @@ PETSC_EXTERN PetscErrorCode TaoCreate_IPM(Tao tao)
   PetscCall(KSPCreate(((PetscObject)tao)->comm, &tao->ksp));
   PetscCall(PetscObjectIncrementTabLevel((PetscObject)tao->ksp, (PetscObject)tao, 1));
   PetscCall(KSPSetOptionsPrefix(tao->ksp, tao->hdr.prefix));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

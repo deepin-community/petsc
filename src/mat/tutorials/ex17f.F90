@@ -1,4 +1,3 @@
-
 program main
 #include <petsc/finclude/petscvec.h>
 #include <petsc/finclude/petscmat.h>
@@ -31,8 +30,8 @@ implicit none
   allocate(emptyranks(nemptyranks))
   allocate(bigranks(nbigranks))
 
-  PetscCallA(PetscOptionsGetIntArray(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER,"-emptyranks",emptyranks,nemptyranks,set,ierr))
-  PetscCallA(PetscOptionsGetIntArray(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER,"-bigranks",bigranks,nbigranks,set,ierr))
+  PetscCallA(PetscOptionsGetIntArray(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER,'-emptyranks',emptyranks,nemptyranks,set,ierr))
+  PetscCallA(PetscOptionsGetIntArray(PETSC_NULL_OPTIONS,PETSC_NULL_CHARACTER,'-bigranks',bigranks,nbigranks,set,ierr))
 
   m = 1
   do i=1,nemptyranks

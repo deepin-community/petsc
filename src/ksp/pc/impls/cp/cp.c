@@ -1,4 +1,3 @@
-
 #include <petsc/private/pcimpl.h> /*I "petscpc.h" I*/
 #include <../src/mat/impls/aij/seq/aij.h>
 
@@ -56,7 +55,7 @@ static PetscErrorCode PCSetUp_CP(PC pc)
     for (j = cp->i[i]; j < cp->i[i + 1]; j++) cp->d[i] += cp->a[j] * cp->a[j]; /* over rows in column */
     cp->d[i] = 1.0 / cp->d[i];
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApply_CP(PC pc, Vec bb, Vec xx)
@@ -87,7 +86,7 @@ static PetscErrorCode PCApply_CP(PC pc, Vec bb, Vec xx)
 
   PetscCall(VecRestoreArray(cp->work, &b));
   PetscCall(VecRestoreArray(xx, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCReset_CP(PC pc)
@@ -98,7 +97,7 @@ static PetscErrorCode PCReset_CP(PC pc)
   PetscCall(PetscFree(cp->d));
   PetscCall(VecDestroy(&cp->work));
   PetscCall(PetscFree3(cp->a, cp->i, cp->j));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCDestroy_CP(PC pc)
@@ -110,13 +109,13 @@ static PetscErrorCode PCDestroy_CP(PC pc)
   PetscCall(PetscFree(cp->d));
   PetscCall(PetscFree3(cp->a, cp->i, cp->j));
   PetscCall(PetscFree(pc->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSetFromOptions_CP(PC pc, PetscOptionItems *PetscOptionsObject)
 {
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -157,7 +156,7 @@ static PetscErrorCode PCSetFromOptions_CP(PC pc, PetscOptionItems *PetscOptionsO
 
   Level: intermediate
 
-.seealso: `PCCreate()`, `PCSetType()`, `PCType`, `PCJACOBI`, `PCSOR`
+.seealso: [](ch_ksp), `PCCreate()`, `PCSetType()`, `PCType`, `PCJACOBI`, `PCSOR`
 M*/
 
 PETSC_EXTERN PetscErrorCode PCCreate_CP(PC pc)
@@ -176,5 +175,5 @@ PETSC_EXTERN PetscErrorCode PCCreate_CP(PC pc)
   pc->ops->setfromoptions  = PCSetFromOptions_CP;
   pc->ops->view            = NULL;
   pc->ops->applyrichardson = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

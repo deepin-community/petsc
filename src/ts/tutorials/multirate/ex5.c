@@ -16,7 +16,7 @@ static const char help[] = "1D periodic Finite Volume solver in slope-limiter fo
                            " a is a piecewise function with two values say a0 and a1 (both a0 and a1 are constant).\n"
                            " in this toy problem we assume a=a0 when x<0 and a=a1 when x>0 with a0<a1 which has the same discontinuous point with initial condition.\n"
                            " we don't provide an exact solution, so you need to generate reference solution to do convergnece staudy,\n"
-                           " more precisely, you need firstly generate a reference to a binary file say file.bin, then on commend line,\n"
+                           " more precisely, you need firstly generate a reference to a binary file say file.bin, then on command line,\n"
                            " you should type -simulation -f file.bin.\n"
                            " you can choose the number of grids by -da_grid_x.\n"
                            " you can choose the value of a by -physics_advect_a1 and -physics_advect_a2.\n";
@@ -55,7 +55,7 @@ static PetscErrorCode PhysicsRiemann_Advect(void *vctx, PetscInt m, const PetscS
   else if (x < 0) flux[0] = PetscMax(0, speed[0]) * uL[0] + PetscMin(0, speed[0]) * uR[0];                         /* else if condition need to be changed based on different problem, 'x = 0' is discontinuous point of a */
   else flux[0] = PetscMax(0, speed[1]) * uL[0] + PetscMin(0, speed[1]) * uR[0];
   *maxspeed = *speed;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PhysicsCharacteristic_Advect(void *vctx, PetscInt m, const PetscScalar *u, PetscScalar *X, PetscScalar *Xi, PetscReal *speeds, PetscReal x)
@@ -67,7 +67,7 @@ static PetscErrorCode PhysicsCharacteristic_Advect(void *vctx, PetscInt m, const
   Xi[0] = 1.;
   if (x < 0) speeds[0] = ctx->a[0]; /* x is discontinuous point of a */
   else speeds[0] = ctx->a[1];
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PhysicsSample_Advect(void *vctx, PetscInt initial, FVBCType bctype, PetscReal xmin, PetscReal xmax, PetscReal t, PetscReal x, PetscReal *u)
@@ -155,7 +155,7 @@ static PetscErrorCode PhysicsSample_Advect(void *vctx, PetscInt initial, FVBCTyp
       SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_UNKNOWN_TYPE, "unknown initial condition");
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PhysicsCreate_Advect(FVCtx *ctx)
@@ -179,7 +179,7 @@ static PetscErrorCode PhysicsCreate_Advect(FVCtx *ctx)
     PetscCall(PetscOptionsReal("-physics_advect_a2", "Speed2", "", user->a[1], &user->a[1], NULL));
   }
   PetscOptionsEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------- Finite Volume Solver for slow parts ----------------------------------- */
@@ -284,7 +284,7 @@ PetscErrorCode FVRHSFunctionslow(TS ts, PetscReal time, Vec X, Vec F, void *vctx
   PetscCall(VecRestoreArray(F, &f));
   PetscCall(DMDARestoreArray(da, PETSC_TRUE, &slope));
   PetscCall(DMRestoreLocalVector(da, &Xloc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* --------------------------------- Finite Volume Solver for fast  parts ----------------------------------- */
@@ -387,7 +387,7 @@ PetscErrorCode FVRHSFunctionfast(TS ts, PetscReal time, Vec X, Vec F, void *vctx
   PetscCall(VecRestoreArray(F, &f));
   PetscCall(DMDARestoreArray(da, PETSC_TRUE, &slope));
   PetscCall(DMRestoreLocalVector(da, &Xloc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode FVRHSFunctionslow2(TS ts, PetscReal time, Vec X, Vec F, void *vctx)
@@ -502,7 +502,7 @@ PetscErrorCode FVRHSFunctionslow2(TS ts, PetscReal time, Vec X, Vec F, void *vct
   PetscCall(VecRestoreArray(F, &f));
   PetscCall(DMDARestoreArray(da, PETSC_TRUE, &slope));
   PetscCall(DMRestoreLocalVector(da, &Xloc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode FVRHSFunctionfast2(TS ts, PetscReal time, Vec X, Vec F, void *vctx)
@@ -604,7 +604,7 @@ PetscErrorCode FVRHSFunctionfast2(TS ts, PetscReal time, Vec X, Vec F, void *vct
   PetscCall(VecRestoreArray(F, &f));
   PetscCall(DMDARestoreArray(da, PETSC_TRUE, &slope));
   PetscCall(DMRestoreLocalVector(da, &Xloc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char *argv[])

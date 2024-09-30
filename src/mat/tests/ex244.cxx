@@ -1,4 +1,3 @@
-
 static char help[] = "Tests MatConvert(), MatLoad() for MATSCALAPACK interface.\n\n";
 /*
  Example:
@@ -32,7 +31,7 @@ int main(int argc, char **args)
   PetscCall(MatLoad(A, view));
   PetscCall(PetscViewerDestroy(&view));
 
-  PetscOptionsGetString(NULL, NULL, "-fB", file[1], PETSC_MAX_PATH_LEN, &flgB);
+  PetscCall(PetscOptionsGetString(NULL, NULL, "-fB", file[1], PETSC_MAX_PATH_LEN, &flgB));
   if (flgB) {
     PetscCall(PetscViewerBinaryOpen(PETSC_COMM_WORLD, file[1], FILE_MODE_READ, &view));
     PetscCall(MatCreate(PETSC_COMM_WORLD, &B));

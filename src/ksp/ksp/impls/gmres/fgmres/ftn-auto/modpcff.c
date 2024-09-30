@@ -44,15 +44,15 @@ extern void PetscRmPointer(void*);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-PETSC_EXTERN void  kspfgmresmodifypcnochange_(KSP ksp,PetscInt *total_its,PetscInt *loc_its,PetscReal *res_norm,void*dummy, int *__ierr)
+PETSC_EXTERN void  kspfgmresmodifypcnochange_(KSP ksp,PetscInt *total_its,PetscInt *loc_its,PetscReal *res_norm,void*ctx, int *__ierr)
 {
 *__ierr = KSPFGMRESModifyPCNoChange(
-	(KSP)PetscToPointer((ksp) ),*total_its,*loc_its,*res_norm,dummy);
+	(KSP)PetscToPointer((ksp) ),*total_its,*loc_its,*res_norm,ctx);
 }
-PETSC_EXTERN void  kspfgmresmodifypcksp_(KSP ksp,PetscInt *total_its,PetscInt *loc_its,PetscReal *res_norm,void*dummy, int *__ierr)
+PETSC_EXTERN void  kspfgmresmodifypcksp_(KSP ksp,PetscInt *total_its,PetscInt *loc_its,PetscReal *res_norm,void*ctx, int *__ierr)
 {
 *__ierr = KSPFGMRESModifyPCKSP(
-	(KSP)PetscToPointer((ksp) ),*total_its,*loc_its,*res_norm,dummy);
+	(KSP)PetscToPointer((ksp) ),*total_its,*loc_its,*res_norm,ctx);
 }
 #if defined(__cplusplus)
 }

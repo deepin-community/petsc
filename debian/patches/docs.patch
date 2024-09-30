@@ -1,16 +1,23 @@
 A few minor Debian customizations of the HTML PETSc documentation.
 Remove links to non-free PDF files.
 
-Index: petsc/docs/faq/index.html
-===================================================================
---- petsc.orig/docs/faq/index.html	2023-01-06 23:51:45.112846374 +0100
-+++ petsc/docs/faq/index.html	2023-01-06 23:51:45.104846303 +0100
-@@ -845,7 +845,7 @@
+--- a/docs/faq/index.html
++++ b/docs/faq/index.html
+@@ -841,8 +841,8 @@
+ <section id="the-petsc-distribution-is-so-large-how-can-i-reduce-my-disk-space-usage">
+ <h3><a class="toc-backref" href="#table-of-contents">The PETSc distribution is SO Large. How can I reduce my disk space usage?</a><a class="headerlink" href="#the-petsc-distribution-is-so-large-how-can-i-reduce-my-disk-space-usage" title="Permalink to this heading">#</a></h3>
  <ol class="arabic simple">
- <li><p>The directory <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/docs</span></code> contains a set of HTML manual pages in for use with a
- browser. You can delete these pages to save some disk space.</p></li>
--<li><p>The PETSc users manual is provided in PDF format at <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/docs/manual.pdf</span></code>. You
-+<li><p>The PETSc users manual is provided in <a class="reference external" href="https://www.mcs.anl.gov/petsc/petsc-current/docs/manual.pdf"><span class="std std-ref">PDF format</span></a>. You
- can delete this.</p></li>
+-<li><p>The PETSc users manual is provided in PDF format at <code class="docutils notranslate"><span class="pre">$PETSC_DIR/manual.pdf</span></code>. You
+-can delete this.</p></li>
++<li><p>The PETSc users manual is provided in PDF format at <a class="reference external" href="https://petsc.org/release/manual/manual.pdf">
++<span class="std std-ref">https://petsc.org/release/manual/manual.pdf</span></a>.</p></li>
  <li><p>The PETSc test suite contains sample output for many of the examples. These are
- contained in the PETSc directories <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR/src/*/tutorials/output</span></code> and
+ contained in the PETSc directories <code class="docutils notranslate"><span class="pre">$PETSC_DIR/src/*/tutorials/output</span></code> and
+ <code class="docutils notranslate"><span class="pre">$PETSC_DIR/src/*/tests/output</span></code>. Once you have run the test examples, you may remove
+@@ -3343,4 +3343,4 @@
+ </div>
+   </footer>
+   </body>
+-</html>
+\ No newline at end of file
++</html>

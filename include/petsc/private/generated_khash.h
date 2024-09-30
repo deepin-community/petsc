@@ -4,12 +4,12 @@ This file is processed by make allmanpages in $PETSC_DIR/makefile to create manu
 for the types and macros created by PETSC_HASH_SET(). For example, PetscHSetIJ.
 
 /*S
-  PetscHSetI - Hash set with a key of <Type>
+  PetscHSetI - Hash set with a key of PetscInt
 
   Level: developer
 
 .seealso: `PETSC_HASH_SET()`, `PetscHSetICreate()`, `PetscHSetIDestroy()`, `PetscHSetIQueryAdd()`, `PetscHSetIDel()`,
-          `PetscHSetIAdd()`, PetscHSetIReset()`
+          `PetscHSetIAdd()`, `PetscHSetIReset()`, `PETSC_HASH_MAP()`, `PetscHMapICreate()`,  `PetscHSetI`
 S*/
 typedef struct _PetscHashI PetscHSetI;
 
@@ -261,7 +261,7 @@ M*/
   Input Parameters:
 + ht    - The hash set
 . off   - Input offset in array (usually zero)
-- array - Array where to put hash set entries into
+- array - Array to put hash set entries in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash set size)
@@ -276,12 +276,12 @@ This file is processed by make allmanpages in $PETSC_DIR/makefile to create manu
 for the types and macros created by PETSC_HASH_SET(). For example, PetscHSetIJ.
 
 /*S
-  PetscHSetIJ - Hash set with a key of <Type>
+  PetscHSetIJ - Hash set with a key of struct {PetscInt i, j;}
 
   Level: developer
 
 .seealso: `PETSC_HASH_SET()`, `PetscHSetIJCreate()`, `PetscHSetIJDestroy()`, `PetscHSetIJQueryAdd()`, `PetscHSetIJDel()`,
-          `PetscHSetIJAdd()`, PetscHSetIJReset()`
+          `PetscHSetIJAdd()`, `PetscHSetIJReset()`, `PETSC_HASH_MAP()`, `PetscHMapIJCreate()`,  `PetscHSetIJ`
 S*/
 typedef struct _PetscHashIJ PetscHSetIJ;
 
@@ -533,7 +533,7 @@ M*/
   Input Parameters:
 + ht    - The hash set
 . off   - Input offset in array (usually zero)
-- array - Array where to put hash set entries into
+- array - Array to put hash set entries in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash set size)
@@ -547,14 +547,14 @@ This file is processed by make allmanpages in $PETSC_DIR/makefile to create manu
 for the types and macros created by PETSC_HASH_MAP(). For example, PetscHMAPIJ.
 
 /*S
-  PetscHMapI - Hash table map
+  PetscHMapI - Hash table map with a key of PetscInt
 
   Synopsis:
   typedef khash_t(HMapI) *PetscHMapI;
 
   Level: developer
 
-.seealso: `PETSC_HASH_MAP()`, `PetscHMapICreate()`
+.seealso: `PETSC_HASH_MAP()`, `PetscHMapICreate()`, `PETSC_HASH_SET()`, `PetscHSetICreate()`
 S*/
 typedef struct _PetscHashI PetscHMapI;
 
@@ -570,7 +570,28 @@ typedef struct _PetscHashI PetscHMapI;
 
   Level: developer
 
-.seealso: `PetscHMapIDestroy()`
+.seealso: `PetscHMapICreateWithSize()`, `PetscHMapIDestroy()`
+M*/
+
+/*MC
+  PetscHMapICreateWithSize - Create a hash table with a given initial size
+
+  Synopsis:
+  #include <petsc/private/hashmapi.h>
+  PetscErrorCode PetscHMapICreateWithSize(PetscInt n, PetscHMapI *ht)
+
+  Input Parameter:
+. n - The size of the hash table
+
+  Output Parameter:
+. ht - The hash table
+
+  Level: developer
+
+  Note:
+  `n` must be non-negative.
+
+.seealso: `PetscHMapICreate()`, `PetscHMapIDestroy()`
 M*/
 
 /*MC
@@ -585,7 +606,7 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapICreate()`
+.seealso: `PetscHMapICreate()`, `PetscHMapICreateWithSize()`
 M*/
 
 /*MC
@@ -704,7 +725,8 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIGet()`, `PetscHMapISet()`, `PetscHMapIFind()`
+.seealso: `PetscHMapIGet()`, `PetscHMapIGetWithDefault()`, `PetscHMapISet()`,
+`PetscHMapISetWithMode()`, `PetscHMapIFind()`
 M*/
 
 /*MC
@@ -723,8 +745,31 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapISet()`, `PetscHMapIIterGet()`
+.seealso: `PetscHMapISet()`, `PetscHMapISetWithMode()`, `PetscHMapIIterGet()`,
+`PetscHMapIGetWithDefault()`
 M*/
+
+/*MC
+  PetscHMapIGetWithDefault - Get the value for a key in the hash table but override the default
+  value returned if the key was not found
+
+  Synopsis:
+  #include <petsc/private/hashmapi.h>
+  PetscErrorCode PetscHMapIGetWithDefault(PetscHMapI ht, PetscInt key, PetscInt default_val, PetscInt *val)
+
+  Input Parameters:
++ ht          - The hash table
+. key         - The key
+- default_val - The default value to set `val` to if `key` was not found
+
+  Output Parameter:
+. val - The value
+
+  Level: developer
+
+.seealso: `PetscHMapIGet()`, `PetscHMapISet()`, `PetscHMapISetWithMode()`, `PetscHMapIIterGet()`
+M*/
+
 
 /*MC
   PetscHMapISet - Set a (key,value) entry in the hash table
@@ -740,7 +785,46 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIGet()`, `PetscHMapIIterSet()`
+.seealso: `PetscHMapIGet()`, `PetscHMapISetWithMode()`, `PetscHMapIGetWithDefault()`,
+`PetscHMapIIterSet()`
+M*/
+
+/*MC
+  PetscHMapISetWithMode - Set a (key,value) entry in the hash table according to an `InsertMode`
+
+  Synopsis:
+  #include <petsc/private/hashmapi.h>
+  PetscErrorCode PetscHMapISetWithMode(PetscHMapI ht, PetscInt key, PetscInt val, InsertMode mode)
+
+  Input Parameters:
++ ht   - The hash table
+. key  - The key
+. val  - The value
+- mode - The insertion mode
+
+  Level: developer
+
+  Notes:
+  `mode` may be any of the following\:
+  - `INSERT_VALUES`\: this routine behaves identically to `PetscHMapISet()`.
+  - `ADD_VALUES`\: if `key` is found `val` is added to the current entry, otherwise (`key`, `value`)
+                   is inserted into `ht` as-if-by `INSERT_VALUES`.
+  - `MAX_VALUES`\: if `key` is found the current value is replaced by the maximum of `val` and the
+                   current entry, otherwise (`key`, `value`) is inserted into `ht` as-if-by
+                   `INSERT_VALUES`.
+  - `MIN_VALUES`\: if `key` is found the current value is replaced by the minimum of `val` and the
+                   current entry, otherwise (`key`, `value`) is inserted into `ht` as-if-by
+                   `INSERT_VALUES`.
+
+   All other `InsertMode` values raise an error.
+
+   Since this routine relies on `+`, `<`, and `>` being well-formed for a particular type
+   it is not available by default for all PETSc hash table instantiations. If a particular
+   instantiation supports this routine it must define `PETSC_HMAPI_HAVE_EXTENDED_API` to
+   `1`.
+
+.seealso: `PetscHMapISet()`, `PetscHMapIGet()`, `PetscHMapIGetWithDefault()`,
+`PetscHMapIIterSet()`
 M*/
 
 /*MC
@@ -776,7 +860,7 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIQueryDel()`, `PetscHMapISet()`
+.seealso: `PetscHMapIQueryDel()`, `PetscHMapISet()`, `PetscHMapISetWithMode()`
 M*/
 
 /*MC
@@ -835,7 +919,8 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIIterSet()`, `PetscHMapIQuerySet()`, `PetscHMapISet()`
+.seealso: `PetscHMapIIterSet()`, `PetscHMapIQuerySet()`, `PetscHMapISet()`,
+`PetscHMapISetWithMode()`
 M*/
 
 /*MC
@@ -854,7 +939,7 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIFind()`, `PetscHMapIGet()`
+.seealso: `PetscHMapIFind()`, `PetscHMapIGet()`, `PetscHMapIGetWithDefault()`
 M*/
 
 /*MC
@@ -871,7 +956,8 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIPut()`, `PetscHMapIQuerySet()`, `PetscHMapISet()`
+.seealso: `PetscHMapIPut()`, `PetscHMapIQuerySet()`, `PetscHMapISet()`,
+`PetscHMapISetWithMode()`
 M*/
 
 /*MC
@@ -900,7 +986,7 @@ M*/
   Input Parameters:
 + ht    - The hash table
 . off   - Input offset in array (usually zero)
-- array - Array where to put hash table keys into
+- array - Array to put hash table keys in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash table size)
@@ -921,7 +1007,7 @@ M*/
   Input Parameters:
 + ht    - The hash table
 . off   - Input offset in array (usually zero)
-- array - Array where to put hash table values into
+- array - Array to put hash table values in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash table size)
@@ -942,8 +1028,8 @@ M*/
   Input Parameters:
 + ht    - The hash table
 . off   - Input offset in array (usually zero)
-. karray - Array where to put hash table keys into
-- varray - Array where to put hash table values into
+. karray - Array to put hash table keys in
+- varray - Array to put hash table values in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash table size)
@@ -958,14 +1044,14 @@ This file is processed by make allmanpages in $PETSC_DIR/makefile to create manu
 for the types and macros created by PETSC_HASH_MAP(). For example, PetscHMAPIJ.
 
 /*S
-  PetscHMapIJ - Hash table map
+  PetscHMapIJ - Hash table map with a key of struct {PetscInt i, j;}
 
   Synopsis:
   typedef khash_t(HMapIJ) *PetscHMapIJ;
 
   Level: developer
 
-.seealso: `PETSC_HASH_MAP()`, `PetscHMapIJCreate()`
+.seealso: `PETSC_HASH_MAP()`, `PetscHMapIJCreate()`, `PETSC_HASH_SET()`, `PetscHSetIJCreate()`
 S*/
 typedef struct _PetscHashIJ PetscHMapIJ;
 
@@ -981,7 +1067,28 @@ typedef struct _PetscHashIJ PetscHMapIJ;
 
   Level: developer
 
-.seealso: `PetscHMapIJDestroy()`
+.seealso: `PetscHMapIJCreateWithSize()`, `PetscHMapIJDestroy()`
+M*/
+
+/*MC
+  PetscHMapIJCreateWithSize - Create a hash table with a given initial size
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJCreateWithSize(PetscInt n, PetscHMapIJ *ht)
+
+  Input Parameter:
+. n - The size of the hash table
+
+  Output Parameter:
+. ht - The hash table
+
+  Level: developer
+
+  Note:
+  `n` must be non-negative.
+
+.seealso: `PetscHMapIJCreate()`, `PetscHMapIJDestroy()`
 M*/
 
 /*MC
@@ -996,7 +1103,7 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIJCreate()`
+.seealso: `PetscHMapIJCreate()`, `PetscHMapIJCreateWithSize()`
 M*/
 
 /*MC
@@ -1115,7 +1222,8 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIJGet()`, `PetscHMapIJSet()`, `PetscHMapIJFind()`
+.seealso: `PetscHMapIJGet()`, `PetscHMapIJGetWithDefault()`, `PetscHMapIJSet()`,
+`PetscHMapIJSetWithMode()`, `PetscHMapIJFind()`
 M*/
 
 /*MC
@@ -1134,8 +1242,31 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIJSet()`, `PetscHMapIJIterGet()`
+.seealso: `PetscHMapIJSet()`, `PetscHMapIJSetWithMode()`, `PetscHMapIJIterGet()`,
+`PetscHMapIJGetWithDefault()`
 M*/
+
+/*MC
+  PetscHMapIJGetWithDefault - Get the value for a key in the hash table but override the default
+  value returned if the key was not found
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJGetWithDefault(PetscHMapIJ ht, struct {PetscInt i, j;} key, PetscInt default_val, PetscInt *val)
+
+  Input Parameters:
++ ht          - The hash table
+. key         - The key
+- default_val - The default value to set `val` to if `key` was not found
+
+  Output Parameter:
+. val - The value
+
+  Level: developer
+
+.seealso: `PetscHMapIJGet()`, `PetscHMapIJSet()`, `PetscHMapIJSetWithMode()`, `PetscHMapIJIterGet()`
+M*/
+
 
 /*MC
   PetscHMapIJSet - Set a (key,value) entry in the hash table
@@ -1151,7 +1282,46 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIJGet()`, `PetscHMapIJIterSet()`
+.seealso: `PetscHMapIJGet()`, `PetscHMapIJSetWithMode()`, `PetscHMapIJGetWithDefault()`,
+`PetscHMapIJIterSet()`
+M*/
+
+/*MC
+  PetscHMapIJSetWithMode - Set a (key,value) entry in the hash table according to an `InsertMode`
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJSetWithMode(PetscHMapIJ ht, struct {PetscInt i, j;} key, PetscInt val, InsertMode mode)
+
+  Input Parameters:
++ ht   - The hash table
+. key  - The key
+. val  - The value
+- mode - The insertion mode
+
+  Level: developer
+
+  Notes:
+  `mode` may be any of the following\:
+  - `INSERT_VALUES`\: this routine behaves identically to `PetscHMapIJSet()`.
+  - `ADD_VALUES`\: if `key` is found `val` is added to the current entry, otherwise (`key`, `value`)
+                   is inserted into `ht` as-if-by `INSERT_VALUES`.
+  - `MAX_VALUES`\: if `key` is found the current value is replaced by the maximum of `val` and the
+                   current entry, otherwise (`key`, `value`) is inserted into `ht` as-if-by
+                   `INSERT_VALUES`.
+  - `MIN_VALUES`\: if `key` is found the current value is replaced by the minimum of `val` and the
+                   current entry, otherwise (`key`, `value`) is inserted into `ht` as-if-by
+                   `INSERT_VALUES`.
+
+   All other `InsertMode` values raise an error.
+
+   Since this routine relies on `+`, `<`, and `>` being well-formed for a particular type
+   it is not available by default for all PETSc hash table instantiations. If a particular
+   instantiation supports this routine it must define `PETSC_HMAPIJ_HAVE_EXTENDED_API` to
+   `1`.
+
+.seealso: `PetscHMapIJSet()`, `PetscHMapIJGet()`, `PetscHMapIJGetWithDefault()`,
+`PetscHMapIJIterSet()`
 M*/
 
 /*MC
@@ -1187,7 +1357,7 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIJQueryDel()`, `PetscHMapIJSet()`
+.seealso: `PetscHMapIJQueryDel()`, `PetscHMapIJSet()`, `PetscHMapIJSetWithMode()`
 M*/
 
 /*MC
@@ -1246,7 +1416,8 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIJIterSet()`, `PetscHMapIJQuerySet()`, `PetscHMapIJSet()`
+.seealso: `PetscHMapIJIterSet()`, `PetscHMapIJQuerySet()`, `PetscHMapIJSet()`,
+`PetscHMapIJSetWithMode()`
 M*/
 
 /*MC
@@ -1265,7 +1436,7 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIJFind()`, `PetscHMapIJGet()`
+.seealso: `PetscHMapIJFind()`, `PetscHMapIJGet()`, `PetscHMapIJGetWithDefault()`
 M*/
 
 /*MC
@@ -1282,7 +1453,8 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIJPut()`, `PetscHMapIJQuerySet()`, `PetscHMapIJSet()`
+.seealso: `PetscHMapIJPut()`, `PetscHMapIJQuerySet()`, `PetscHMapIJSet()`,
+`PetscHMapIJSetWithMode()`
 M*/
 
 /*MC
@@ -1311,7 +1483,7 @@ M*/
   Input Parameters:
 + ht    - The hash table
 . off   - Input offset in array (usually zero)
-- array - Array where to put hash table keys into
+- array - Array to put hash table keys in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash table size)
@@ -1332,7 +1504,7 @@ M*/
   Input Parameters:
 + ht    - The hash table
 . off   - Input offset in array (usually zero)
-- array - Array where to put hash table values into
+- array - Array to put hash table values in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash table size)
@@ -1353,8 +1525,8 @@ M*/
   Input Parameters:
 + ht    - The hash table
 . off   - Input offset in array (usually zero)
-. karray - Array where to put hash table keys into
-- varray - Array where to put hash table values into
+. karray - Array to put hash table keys in
+- varray - Array to put hash table values in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash table size)
@@ -1369,14 +1541,511 @@ This file is processed by make allmanpages in $PETSC_DIR/makefile to create manu
 for the types and macros created by PETSC_HASH_MAP(). For example, PetscHMAPIJ.
 
 /*S
-  PetscHMapIV - Hash table map
+  PetscHMapIJ - Hash table map with a key of struct {PetscInt i, j;}
+
+  Synopsis:
+  typedef khash_t(HMapIJ) *PetscHMapIJ;
+
+  Level: developer
+
+.seealso: `PETSC_HASH_MAP()`, `PetscHMapIJCreate()`, `PETSC_HASH_SET()`, `PetscHSetIJCreate()`
+S*/
+typedef struct _PetscHashIJ PetscHMapIJ;
+
+/*MC
+  PetscHMapIJCreate - Create a hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJCreate(PetscHMapIJ *ht)
+
+  Output Parameter:
+. ht - The hash table
+
+  Level: developer
+
+.seealso: `PetscHMapIJCreateWithSize()`, `PetscHMapIJDestroy()`
+M*/
+
+/*MC
+  PetscHMapIJCreateWithSize - Create a hash table with a given initial size
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJCreateWithSize(PetscInt n, PetscHMapIJ *ht)
+
+  Input Parameter:
+. n - The size of the hash table
+
+  Output Parameter:
+. ht - The hash table
+
+  Level: developer
+
+  Note:
+  `n` must be non-negative.
+
+.seealso: `PetscHMapIJCreate()`, `PetscHMapIJDestroy()`
+M*/
+
+/*MC
+  PetscHMapIJDestroy - Destroy a hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJDestroy(PetscHMapIJ *ht)
+
+  Input Parameter:
+. ht - The hash table
+
+  Level: developer
+
+.seealso: `PetscHMapIJCreate()`, `PetscHMapIJCreateWithSize()`
+M*/
+
+/*MC
+  PetscHMapIJReset - Reset a hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJReset(PetscHMapIJ ht)
+
+  Input Parameter:
+. ht - The hash table
+
+  Level: developer
+
+.seealso: `PetscHMapIJClear()`
+M*/
+
+/*MC
+  PetscHMapIJDuplicate - Duplicate a hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJDuplicate(PetscHMapIJ ht, PetscHMapIJ *hd)
+
+  Input Parameter:
+. ht - The source hash table
+
+  Output Parameter:
+. ht - The duplicated hash table
+
+  Level: developer
+
+.seealso: `PetscHMapIJCreate()`
+M*/
+
+/*MC
+  PetscHMapIJClear - Clear a hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJClear(PetscHMapIJ ht)
+
+  Input Parameter:
+. ht - The hash table
+
+  Level: developer
+
+.seealso: `PetscHMapIJReset()`
+M*/
+
+/*MC
+  PetscHMapIJResize - Set the number of buckets in a hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJResize(PetscHMapIJ ht, PetscInt nb)
+
+  Input Parameters:
++ ht - The hash table
+- nb - The number of buckets
+
+  Level: developer
+
+.seealso: `PetscHMapIJCreate()`
+M*/
+
+/*MC
+  PetscHMapIJGetSize - Get the number of entries in a hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJGetSize(PetscHMapIJ ht, PetscInt *n)
+
+  Input Parameter:
+. ht - The hash table
+
+  Output Parameter:
+. n - The number of entries
+
+  Level: developer
+
+.seealso: `PetscHMapIJResize()`
+M*/
+
+/*MC
+  PetscHMapIJGetCapacity - Get the current size of the array in the hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJGetCapacity(PetscHMapIJ ht, PetscInt *n)
+
+  Input Parameter:
+. ht - The hash table
+
+  Output Parameter:
+. n - The capacity
+
+  Level: developer
+
+.seealso: `PetscHMapIJResize()`, `PetscHMapIJGetSize()`
+M*/
+
+/*MC
+  PetscHMapIJHas - Query for a key in the hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJHas(PetscHMapIJ ht, struct {PetscInt i, j;} key, PetscBool *has)
+
+  Input Parameters:
++ ht  - The hash table
+- key - The key
+
+  Output Parameter:
+. has - Boolean indicating whether key is in the hash table
+
+  Level: developer
+
+.seealso: `PetscHMapIJGet()`, `PetscHMapIJGetWithDefault()`, `PetscHMapIJSet()`,
+`PetscHMapIJSetWithMode()`, `PetscHMapIJFind()`
+M*/
+
+/*MC
+  PetscHMapIJGet - Get the value for a key in the hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJGet(PetscHMapIJ ht, struct {PetscInt i, j;} key, PetscScalar *val)
+
+  Input Parameters:
++ ht  - The hash table
+- key - The key
+
+  Output Parameter:
+. val - The value
+
+  Level: developer
+
+.seealso: `PetscHMapIJSet()`, `PetscHMapIJSetWithMode()`, `PetscHMapIJIterGet()`,
+`PetscHMapIJGetWithDefault()`
+M*/
+
+/*MC
+  PetscHMapIJGetWithDefault - Get the value for a key in the hash table but override the default
+  value returned if the key was not found
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJGetWithDefault(PetscHMapIJ ht, struct {PetscInt i, j;} key, PetscScalar default_val, PetscScalar *val)
+
+  Input Parameters:
++ ht          - The hash table
+. key         - The key
+- default_val - The default value to set `val` to if `key` was not found
+
+  Output Parameter:
+. val - The value
+
+  Level: developer
+
+.seealso: `PetscHMapIJGet()`, `PetscHMapIJSet()`, `PetscHMapIJSetWithMode()`, `PetscHMapIJIterGet()`
+M*/
+
+
+/*MC
+  PetscHMapIJSet - Set a (key,value) entry in the hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJSet(PetscHMapIJ ht, struct {PetscInt i, j;} key, PetscScalar val)
+
+  Input Parameters:
++ ht  - The hash table
+. key - The key
+- val - The value
+
+  Level: developer
+
+.seealso: `PetscHMapIJGet()`, `PetscHMapIJSetWithMode()`, `PetscHMapIJGetWithDefault()`,
+`PetscHMapIJIterSet()`
+M*/
+
+/*MC
+  PetscHMapIJSetWithMode - Set a (key,value) entry in the hash table according to an `InsertMode`
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJSetWithMode(PetscHMapIJ ht, struct {PetscInt i, j;} key, PetscScalar val, InsertMode mode)
+
+  Input Parameters:
++ ht   - The hash table
+. key  - The key
+. val  - The value
+- mode - The insertion mode
+
+  Level: developer
+
+  Notes:
+  `mode` may be any of the following\:
+  - `INSERT_VALUES`\: this routine behaves identically to `PetscHMapIJSet()`.
+  - `ADD_VALUES`\: if `key` is found `val` is added to the current entry, otherwise (`key`, `value`)
+                   is inserted into `ht` as-if-by `INSERT_VALUES`.
+  - `MAX_VALUES`\: if `key` is found the current value is replaced by the maximum of `val` and the
+                   current entry, otherwise (`key`, `value`) is inserted into `ht` as-if-by
+                   `INSERT_VALUES`.
+  - `MIN_VALUES`\: if `key` is found the current value is replaced by the minimum of `val` and the
+                   current entry, otherwise (`key`, `value`) is inserted into `ht` as-if-by
+                   `INSERT_VALUES`.
+
+   All other `InsertMode` values raise an error.
+
+   Since this routine relies on `+`, `<`, and `>` being well-formed for a particular type
+   it is not available by default for all PETSc hash table instantiations. If a particular
+   instantiation supports this routine it must define `PETSC_HMAPIJ_HAVE_EXTENDED_API` to
+   `1`.
+
+.seealso: `PetscHMapIJSet()`, `PetscHMapIJGet()`, `PetscHMapIJGetWithDefault()`,
+`PetscHMapIJIterSet()`
+M*/
+
+/*MC
+  PetscHMapIJDel - Remove a key and its value from the hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJDel(PetscHMapIJ ht,struct {PetscInt i, j;} key)
+
+  Input Parameters:
++ ht  - The hash table
+- key - The key
+
+  Level: developer
+
+.seealso: `PetscHMapIJHas()`, `PetscHMapIJIterDel()`
+M*/
+
+/*MC
+  PetscHMapIJQuerySet - Query and set a (key,value) entry in the hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJQuerySet(PetscHMapIJ ht, struct {PetscInt i, j;} key, PetscScalar val, PetscBool *missing)
+
+  Input Parameters:
++ ht  - The hash table
+. key - The key
+- val - The value
+
+  Output Parameter:
+. missing - Boolean indicating whether the key was missing
+
+  Level: developer
+
+.seealso: `PetscHMapIJQueryDel()`, `PetscHMapIJSet()`, `PetscHMapIJSetWithMode()`
+M*/
+
+/*MC
+  PetscHMapIJQueryDel - Query and remove a (key,value) entry from the hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJQueryDel(PetscHMapIJ ht, struct {PetscInt i, j;} key, PetscBool *present)
+
+  Input Parameters:
++ ht  - The hash table
+- key - The key
+
+  Output Parameter:
+. present - Boolean indicating whether the key was present
+
+  Level: developer
+
+.seealso: `PetscHMapIJQuerySet()`, `PetscHMapIJDel()`
+M*/
+
+/*MC
+  PetscHMapIJFind - Query for key in the hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJFind(PetscHMapIJ ht, struct {PetscInt i, j;} key, PetscHashIter *iter, PetscBool *found)
+
+  Input Parameters:
++ ht  - The hash table
+- key - The key
+
+  Output Parameters:
++ iter - Iterator referencing the value for key
+- found - Boolean indicating whether the key was present
+
+  Level: developer
+
+.seealso: `PetscHMapIJIterGet()`, `PetscHMapIJIterDel()`
+M*/
+
+/*MC
+  PetscHMapIJPut - Set a key in the hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJPut(PetscHMapIJ ht, struct {PetscInt i, j;} key, PetscHashIter *iter, PetscBool *missing)
+
+  Input Parameters:
++ ht  - The hash table
+- key - The key
+
+  Output Parameters:
++ iter - Iterator referencing the value for key
+- missing - Boolean indicating whether the key was missing
+
+  Level: developer
+
+.seealso: `PetscHMapIJIterSet()`, `PetscHMapIJQuerySet()`, `PetscHMapIJSet()`,
+`PetscHMapIJSetWithMode()`
+M*/
+
+/*MC
+  PetscHMapIJIterGet - Get the value referenced by an iterator in the hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJIterGet(PetscHMapIJ ht, PetscHashIter iter, PetscScalar *val)
+
+  Input Parameters:
++ ht   - The hash table
+- iter - The iterator
+
+  Output Parameter:
+. val  - The value
+
+  Level: developer
+
+.seealso: `PetscHMapIJFind()`, `PetscHMapIJGet()`, `PetscHMapIJGetWithDefault()`
+M*/
+
+/*MC
+  PetscHMapIJIterSet - Set the value referenced by an iterator in the hash
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJIterSet(PetscHMapIJ ht, PetscHashIter iter, PetscScalar val)
+
+  Input Parameters:
++ ht   - The hash table
+. iter - The iterator
+- val  - The value
+
+  Level: developer
+
+.seealso: `PetscHMapIJPut()`, `PetscHMapIJQuerySet()`, `PetscHMapIJSet()`,
+`PetscHMapIJSetWithMode()`
+M*/
+
+/*MC
+  PetscHMapIJIterDel - Remove the (key,value) referenced by an iterator from the hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJIterDel(PetscHMapIJ ht, PetscHashIter iter)
+
+  Input Parameters:
++ ht   - The hash table
+- iter - The iterator
+
+  Level: developer
+
+.seealso: `PetscHMapIJFind()`, `PetscHMapIJQueryDel()`, `PetscHMapIJDel()`
+M*/
+
+/*MC
+  PetscHMapIJGetKeys - Get all keys from a hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJGetKeys(PetscHMapIJ ht, PetscInt *off, struct {PetscInt i, j;} array[])
+
+  Input Parameters:
++ ht    - The hash table
+. off   - Input offset in array (usually zero)
+- array - Array to put hash table keys in
+
+  Output Parameters:
++ off   - Output offset in array (output offset = input offset + hash table size)
+- array - Array filled with the hash table keys
+
+  Level: developer
+
+.seealso: `PetscHSetIJGetSize()`, `PetscHMapIJGetVals()`
+M*/
+
+/*MC
+  PetscHMapIJGetVals - Get all values from a hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJGetVals(PetscHMapIJ ht, PetscInt *off, PetscScalar array[])
+
+  Input Parameters:
++ ht    - The hash table
+. off   - Input offset in array (usually zero)
+- array - Array to put hash table values in
+
+  Output Parameters:
++ off   - Output offset in array (output offset = input offset + hash table size)
+- array - Array filled with the hash table values
+
+  Level: developer
+
+.seealso: `PetscHSetIJGetSize()`, `PetscHMapIJGetKeys()`
+M*/
+
+/*MC
+  PetscHMapIJGetPairs - Get all (key,value) pairs from a hash table
+
+  Synopsis:
+  #include <petsc/private/hashmapij.h>
+  PetscErrorCode PetscHMapIJGetPairs(PetscHMapIJ ht, PetscInt *off, struct {PetscInt i, j;} karray[], PetscScalar varray[])
+
+  Input Parameters:
++ ht    - The hash table
+. off   - Input offset in array (usually zero)
+. karray - Array to put hash table keys in
+- varray - Array to put hash table values in
+
+  Output Parameters:
++ off   - Output offset in array (output offset = input offset + hash table size)
+. karray - Array filled with the hash table keys
+- varray - Array filled with the hash table values
+
+  Level: developer
+
+.seealso: `PetscHSetIJGetSize()`, `PetscHMapIJGetKeys()`, `PetscHMapIJGetVals()`
+M*/
+This file is processed by make allmanpages in $PETSC_DIR/makefile to create manual pages
+for the types and macros created by PETSC_HASH_MAP(). For example, PetscHMAPIJ.
+
+/*S
+  PetscHMapIV - Hash table map with a key of PetscInt
 
   Synopsis:
   typedef khash_t(HMapIV) *PetscHMapIV;
 
   Level: developer
 
-.seealso: `PETSC_HASH_MAP()`, `PetscHMapIVCreate()`
+.seealso: `PETSC_HASH_MAP()`, `PetscHMapIVCreate()`, `PETSC_HASH_SET()`, `PetscHSetIVCreate()`
 S*/
 typedef struct _PetscHashIV PetscHMapIV;
 
@@ -1392,7 +2061,28 @@ typedef struct _PetscHashIV PetscHMapIV;
 
   Level: developer
 
-.seealso: `PetscHMapIVDestroy()`
+.seealso: `PetscHMapIVCreateWithSize()`, `PetscHMapIVDestroy()`
+M*/
+
+/*MC
+  PetscHMapIVCreateWithSize - Create a hash table with a given initial size
+
+  Synopsis:
+  #include <petsc/private/hashmapiv.h>
+  PetscErrorCode PetscHMapIVCreateWithSize(PetscInt n, PetscHMapIV *ht)
+
+  Input Parameter:
+. n - The size of the hash table
+
+  Output Parameter:
+. ht - The hash table
+
+  Level: developer
+
+  Note:
+  `n` must be non-negative.
+
+.seealso: `PetscHMapIVCreate()`, `PetscHMapIVDestroy()`
 M*/
 
 /*MC
@@ -1407,7 +2097,7 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIVCreate()`
+.seealso: `PetscHMapIVCreate()`, `PetscHMapIVCreateWithSize()`
 M*/
 
 /*MC
@@ -1526,7 +2216,8 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIVGet()`, `PetscHMapIVSet()`, `PetscHMapIVFind()`
+.seealso: `PetscHMapIVGet()`, `PetscHMapIVGetWithDefault()`, `PetscHMapIVSet()`,
+`PetscHMapIVSetWithMode()`, `PetscHMapIVFind()`
 M*/
 
 /*MC
@@ -1545,8 +2236,31 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIVSet()`, `PetscHMapIVIterGet()`
+.seealso: `PetscHMapIVSet()`, `PetscHMapIVSetWithMode()`, `PetscHMapIVIterGet()`,
+`PetscHMapIVGetWithDefault()`
 M*/
+
+/*MC
+  PetscHMapIVGetWithDefault - Get the value for a key in the hash table but override the default
+  value returned if the key was not found
+
+  Synopsis:
+  #include <petsc/private/hashmapiv.h>
+  PetscErrorCode PetscHMapIVGetWithDefault(PetscHMapIV ht, PetscInt key, PetscScalar default_val, PetscScalar *val)
+
+  Input Parameters:
++ ht          - The hash table
+. key         - The key
+- default_val - The default value to set `val` to if `key` was not found
+
+  Output Parameter:
+. val - The value
+
+  Level: developer
+
+.seealso: `PetscHMapIVGet()`, `PetscHMapIVSet()`, `PetscHMapIVSetWithMode()`, `PetscHMapIVIterGet()`
+M*/
+
 
 /*MC
   PetscHMapIVSet - Set a (key,value) entry in the hash table
@@ -1562,7 +2276,46 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIVGet()`, `PetscHMapIVIterSet()`
+.seealso: `PetscHMapIVGet()`, `PetscHMapIVSetWithMode()`, `PetscHMapIVGetWithDefault()`,
+`PetscHMapIVIterSet()`
+M*/
+
+/*MC
+  PetscHMapIVSetWithMode - Set a (key,value) entry in the hash table according to an `InsertMode`
+
+  Synopsis:
+  #include <petsc/private/hashmapiv.h>
+  PetscErrorCode PetscHMapIVSetWithMode(PetscHMapIV ht, PetscInt key, PetscScalar val, InsertMode mode)
+
+  Input Parameters:
++ ht   - The hash table
+. key  - The key
+. val  - The value
+- mode - The insertion mode
+
+  Level: developer
+
+  Notes:
+  `mode` may be any of the following\:
+  - `INSERT_VALUES`\: this routine behaves identically to `PetscHMapIVSet()`.
+  - `ADD_VALUES`\: if `key` is found `val` is added to the current entry, otherwise (`key`, `value`)
+                   is inserted into `ht` as-if-by `INSERT_VALUES`.
+  - `MAX_VALUES`\: if `key` is found the current value is replaced by the maximum of `val` and the
+                   current entry, otherwise (`key`, `value`) is inserted into `ht` as-if-by
+                   `INSERT_VALUES`.
+  - `MIN_VALUES`\: if `key` is found the current value is replaced by the minimum of `val` and the
+                   current entry, otherwise (`key`, `value`) is inserted into `ht` as-if-by
+                   `INSERT_VALUES`.
+
+   All other `InsertMode` values raise an error.
+
+   Since this routine relies on `+`, `<`, and `>` being well-formed for a particular type
+   it is not available by default for all PETSc hash table instantiations. If a particular
+   instantiation supports this routine it must define `PETSC_HMAPIV_HAVE_EXTENDED_API` to
+   `1`.
+
+.seealso: `PetscHMapIVSet()`, `PetscHMapIVGet()`, `PetscHMapIVGetWithDefault()`,
+`PetscHMapIVIterSet()`
 M*/
 
 /*MC
@@ -1598,7 +2351,7 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIVQueryDel()`, `PetscHMapIVSet()`
+.seealso: `PetscHMapIVQueryDel()`, `PetscHMapIVSet()`, `PetscHMapIVSetWithMode()`
 M*/
 
 /*MC
@@ -1657,7 +2410,8 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIVIterSet()`, `PetscHMapIVQuerySet()`, `PetscHMapIVSet()`
+.seealso: `PetscHMapIVIterSet()`, `PetscHMapIVQuerySet()`, `PetscHMapIVSet()`,
+`PetscHMapIVSetWithMode()`
 M*/
 
 /*MC
@@ -1676,7 +2430,7 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIVFind()`, `PetscHMapIVGet()`
+.seealso: `PetscHMapIVFind()`, `PetscHMapIVGet()`, `PetscHMapIVGetWithDefault()`
 M*/
 
 /*MC
@@ -1693,7 +2447,8 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapIVPut()`, `PetscHMapIVQuerySet()`, `PetscHMapIVSet()`
+.seealso: `PetscHMapIVPut()`, `PetscHMapIVQuerySet()`, `PetscHMapIVSet()`,
+`PetscHMapIVSetWithMode()`
 M*/
 
 /*MC
@@ -1722,7 +2477,7 @@ M*/
   Input Parameters:
 + ht    - The hash table
 . off   - Input offset in array (usually zero)
-- array - Array where to put hash table keys into
+- array - Array to put hash table keys in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash table size)
@@ -1743,7 +2498,7 @@ M*/
   Input Parameters:
 + ht    - The hash table
 . off   - Input offset in array (usually zero)
-- array - Array where to put hash table values into
+- array - Array to put hash table values in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash table size)
@@ -1764,8 +2519,8 @@ M*/
   Input Parameters:
 + ht    - The hash table
 . off   - Input offset in array (usually zero)
-. karray - Array where to put hash table keys into
-- varray - Array where to put hash table values into
+. karray - Array to put hash table keys in
+- varray - Array to put hash table values in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash table size)
@@ -1780,14 +2535,14 @@ This file is processed by make allmanpages in $PETSC_DIR/makefile to create manu
 for the types and macros created by PETSC_HASH_MAP(). For example, PetscHMAPIJ.
 
 /*S
-  PetscHMapObj - Hash table map
+  PetscHMapObj - Hash table map with a key of PetscInt64
 
   Synopsis:
   typedef khash_t(HMapObj) *PetscHMapObj;
 
   Level: developer
 
-.seealso: `PETSC_HASH_MAP()`, `PetscHMapObjCreate()`
+.seealso: `PETSC_HASH_MAP()`, `PetscHMapObjCreate()`, `PETSC_HASH_SET()`, `PetscHSetObjCreate()`
 S*/
 typedef struct _PetscHashObj PetscHMapObj;
 
@@ -1803,7 +2558,28 @@ typedef struct _PetscHashObj PetscHMapObj;
 
   Level: developer
 
-.seealso: `PetscHMapObjDestroy()`
+.seealso: `PetscHMapObjCreateWithSize()`, `PetscHMapObjDestroy()`
+M*/
+
+/*MC
+  PetscHMapObjCreateWithSize - Create a hash table with a given initial size
+
+  Synopsis:
+  #include <petsc/private/hashmapobj.h>
+  PetscErrorCode PetscHMapObjCreateWithSize(PetscInt n, PetscHMapObj *ht)
+
+  Input Parameter:
+. n - The size of the hash table
+
+  Output Parameter:
+. ht - The hash table
+
+  Level: developer
+
+  Note:
+  `n` must be non-negative.
+
+.seealso: `PetscHMapObjCreate()`, `PetscHMapObjDestroy()`
 M*/
 
 /*MC
@@ -1818,7 +2594,7 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapObjCreate()`
+.seealso: `PetscHMapObjCreate()`, `PetscHMapObjCreateWithSize()`
 M*/
 
 /*MC
@@ -1937,7 +2713,8 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapObjGet()`, `PetscHMapObjSet()`, `PetscHMapObjFind()`
+.seealso: `PetscHMapObjGet()`, `PetscHMapObjGetWithDefault()`, `PetscHMapObjSet()`,
+`PetscHMapObjSetWithMode()`, `PetscHMapObjFind()`
 M*/
 
 /*MC
@@ -1956,8 +2733,31 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapObjSet()`, `PetscHMapObjIterGet()`
+.seealso: `PetscHMapObjSet()`, `PetscHMapObjSetWithMode()`, `PetscHMapObjIterGet()`,
+`PetscHMapObjGetWithDefault()`
 M*/
+
+/*MC
+  PetscHMapObjGetWithDefault - Get the value for a key in the hash table but override the default
+  value returned if the key was not found
+
+  Synopsis:
+  #include <petsc/private/hashmapobj.h>
+  PetscErrorCode PetscHMapObjGetWithDefault(PetscHMapObj ht, PetscInt64 key, PetscObject default_val, PetscObject *val)
+
+  Input Parameters:
++ ht          - The hash table
+. key         - The key
+- default_val - The default value to set `val` to if `key` was not found
+
+  Output Parameter:
+. val - The value
+
+  Level: developer
+
+.seealso: `PetscHMapObjGet()`, `PetscHMapObjSet()`, `PetscHMapObjSetWithMode()`, `PetscHMapObjIterGet()`
+M*/
+
 
 /*MC
   PetscHMapObjSet - Set a (key,value) entry in the hash table
@@ -1973,7 +2773,46 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapObjGet()`, `PetscHMapObjIterSet()`
+.seealso: `PetscHMapObjGet()`, `PetscHMapObjSetWithMode()`, `PetscHMapObjGetWithDefault()`,
+`PetscHMapObjIterSet()`
+M*/
+
+/*MC
+  PetscHMapObjSetWithMode - Set a (key,value) entry in the hash table according to an `InsertMode`
+
+  Synopsis:
+  #include <petsc/private/hashmapobj.h>
+  PetscErrorCode PetscHMapObjSetWithMode(PetscHMapObj ht, PetscInt64 key, PetscObject val, InsertMode mode)
+
+  Input Parameters:
++ ht   - The hash table
+. key  - The key
+. val  - The value
+- mode - The insertion mode
+
+  Level: developer
+
+  Notes:
+  `mode` may be any of the following\:
+  - `INSERT_VALUES`\: this routine behaves identically to `PetscHMapObjSet()`.
+  - `ADD_VALUES`\: if `key` is found `val` is added to the current entry, otherwise (`key`, `value`)
+                   is inserted into `ht` as-if-by `INSERT_VALUES`.
+  - `MAX_VALUES`\: if `key` is found the current value is replaced by the maximum of `val` and the
+                   current entry, otherwise (`key`, `value`) is inserted into `ht` as-if-by
+                   `INSERT_VALUES`.
+  - `MIN_VALUES`\: if `key` is found the current value is replaced by the minimum of `val` and the
+                   current entry, otherwise (`key`, `value`) is inserted into `ht` as-if-by
+                   `INSERT_VALUES`.
+
+   All other `InsertMode` values raise an error.
+
+   Since this routine relies on `+`, `<`, and `>` being well-formed for a particular type
+   it is not available by default for all PETSc hash table instantiations. If a particular
+   instantiation supports this routine it must define `PETSC_HMAPObj_HAVE_EXTENDED_API` to
+   `1`.
+
+.seealso: `PetscHMapObjSet()`, `PetscHMapObjGet()`, `PetscHMapObjGetWithDefault()`,
+`PetscHMapObjIterSet()`
 M*/
 
 /*MC
@@ -2009,7 +2848,7 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapObjQueryDel()`, `PetscHMapObjSet()`
+.seealso: `PetscHMapObjQueryDel()`, `PetscHMapObjSet()`, `PetscHMapObjSetWithMode()`
 M*/
 
 /*MC
@@ -2068,7 +2907,8 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapObjIterSet()`, `PetscHMapObjQuerySet()`, `PetscHMapObjSet()`
+.seealso: `PetscHMapObjIterSet()`, `PetscHMapObjQuerySet()`, `PetscHMapObjSet()`,
+`PetscHMapObjSetWithMode()`
 M*/
 
 /*MC
@@ -2087,7 +2927,7 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapObjFind()`, `PetscHMapObjGet()`
+.seealso: `PetscHMapObjFind()`, `PetscHMapObjGet()`, `PetscHMapObjGetWithDefault()`
 M*/
 
 /*MC
@@ -2104,7 +2944,8 @@ M*/
 
   Level: developer
 
-.seealso: `PetscHMapObjPut()`, `PetscHMapObjQuerySet()`, `PetscHMapObjSet()`
+.seealso: `PetscHMapObjPut()`, `PetscHMapObjQuerySet()`, `PetscHMapObjSet()`,
+`PetscHMapObjSetWithMode()`
 M*/
 
 /*MC
@@ -2133,7 +2974,7 @@ M*/
   Input Parameters:
 + ht    - The hash table
 . off   - Input offset in array (usually zero)
-- array - Array where to put hash table keys into
+- array - Array to put hash table keys in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash table size)
@@ -2154,7 +2995,7 @@ M*/
   Input Parameters:
 + ht    - The hash table
 . off   - Input offset in array (usually zero)
-- array - Array where to put hash table values into
+- array - Array to put hash table values in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash table size)
@@ -2175,8 +3016,8 @@ M*/
   Input Parameters:
 + ht    - The hash table
 . off   - Input offset in array (usually zero)
-. karray - Array where to put hash table keys into
-- varray - Array where to put hash table values into
+. karray - Array to put hash table keys in
+- varray - Array to put hash table values in
 
   Output Parameters:
 + off   - Output offset in array (output offset = input offset + hash table size)

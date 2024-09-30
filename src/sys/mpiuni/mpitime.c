@@ -26,7 +26,7 @@ double MPI_Wtime(void)
   if (flag) {
     if (!QueryPerformanceCounter(&StartTime)) PETSCABORT(MPI_COMM_WORLD, PETSC_ERR_LIB);
     if (!QueryPerformanceFrequency(&PerfFreq)) PETSCABORT(MPI_COMM_WORLD, PETSC_ERR_LIB);
-      /* Explicitly convert the higher 32 bits, and add the lower 32 bits from the counter */
+      /* Explicitly convert the higher 32-bits, and add the lower 32-bits from the counter */
       /* works on non-pentium CPUs ? */
   #if defined(PETSC_HAVE_LARGE_INTEGER_U)
     SecInTick = 1.0 / ((double)PerfFreq.u.HighPart * FACTOR + (double)PerfFreq.u.LowPart);
@@ -41,15 +41,16 @@ double MPI_Wtime(void)
   dwCurHigh   = (DWORD)CurTime.u.HighPart;
   dwStartHigh = (DWORD)StartTime.u.HighPart;
   #else
-  dwCurHigh = (DWORD)CurTime.HighPart;
+  dwCurHigh   = (DWORD)CurTime.HighPart;
   dwStartHigh = (DWORD)StartTime.HighPart;
   #endif
   dHigh = (signed)(dwCurHigh - dwStartHigh);
 
+  dTime = dHigh * (double)FACTOR;
   #if defined(PETSC_HAVE_LARGE_INTEGER_U)
-  dTime = dHigh * (double)FACTOR + (double)CurTime.u.LowPart - (double)StartTime.u.LowPart;
+  dTime += (double)CurTime.u.LowPart - (double)StartTime.u.LowPart;
   #else
-  dTime = dHigh * (double)FACTOR + (double)CurTime.LowPart - (double)StartTime.LowPart;
+  dTime += (double)CurTime.LowPart - (double)StartTime.LowPart;
   #endif
   /* Use the following with older versions of the Borland compiler
   dTime = dHigh*(double)FACTOR + (double)CurTime.u.LowPart - (double)StartTime.u.LowPart;

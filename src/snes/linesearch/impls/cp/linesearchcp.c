@@ -33,7 +33,7 @@ static PetscErrorCode SNESLineSearchApply_CP(SNESLineSearch linesearch)
       PetscCall(PetscViewerASCIISubtractTab(monitor, ((PetscObject)linesearch)->tablevel));
     }
     PetscCall(SNESSetConvergedReason(linesearch->snes, SNES_CONVERGED_FNORM_ABS));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   fty_init = fty_old;
@@ -98,7 +98,7 @@ static PetscErrorCode SNESLineSearchApply_CP(SNESLineSearch linesearch)
   if (linesearch->ops->viproject) PetscCall((*linesearch->ops->viproject)(snes, W));
   /* postcheck */
   PetscCall(SNESLineSearchPostCheck(linesearch, X, Y, W, &changed_y, &changed_w));
-  if (changed_y) {
+  if (changed_y && !changed_w) {
     PetscCall(VecAXPY(X, -lambda, Y));
     if (linesearch->ops->viproject) PetscCall((*linesearch->ops->viproject)(snes, X));
   } else {
@@ -117,7 +117,7 @@ static PetscErrorCode SNESLineSearchApply_CP(SNESLineSearch linesearch)
     PetscCall(PetscViewerASCIISubtractTab(monitor, ((PetscObject)linesearch)->tablevel));
   }
   if (lambda <= steptol) PetscCall(SNESLineSearchSetReason(linesearch, SNES_LINESEARCH_FAILED_REDUCT));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -131,14 +131,14 @@ static PetscErrorCode SNESLineSearchApply_CP(SNESLineSearch linesearch)
 .  -snes_linesearch_damping <damping> - initial trial step length is scaled by this factor, default is 1.0
 -  -snes_linesearch_max_it <max_it> - the maximum number of secant steps performed.
 
+   Level: advanced
+
    Notes:
    This method does NOT use the objective function if it is provided with `SNESSetObjective()`.
 
    This method is the preferred line search for `SNESQN` and `SNESNCG`.
 
-   Level: advanced
-
-.seealso: `SNESLineSearch`, `SNESLineSearchType`, `SNESLineSearchCreate()`, `SNESLineSearchSetType()`
+.seealso: [](ch_snes), `SNESLineSearch`, `SNESLineSearchType`, `SNESLineSearchCreate()`, `SNESLineSearchSetType()`
 M*/
 PETSC_EXTERN PetscErrorCode SNESLineSearchCreate_CP(SNESLineSearch linesearch)
 {
@@ -152,5 +152,5 @@ PETSC_EXTERN PetscErrorCode SNESLineSearchCreate_CP(SNESLineSearch linesearch)
   linesearch->order               = SNES_LINESEARCH_ORDER_LINEAR;
 
   linesearch->max_its = 1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

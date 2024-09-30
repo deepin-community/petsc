@@ -1,0 +1,26 @@
+petsc4py.PETSc.DeviceContext.StreamType
+=======================================
+
+.. autoclass:: petsc4py.PETSc.DeviceContext.StreamType
+   :show-inheritance:
+
+   
+
+   
+
+   
+   .. rubric:: Attributes Summary
+   .. autosummary::
+   
+      ~petsc4py.PETSc.DeviceContext.StreamType.DEFAULT_BLOCKING
+      ~petsc4py.PETSc.DeviceContext.StreamType.GLOBAL_BLOCKING
+      ~petsc4py.PETSc.DeviceContext.StreamType.GLOBAL_NONBLOCKING
+
+   
+
+   
+   .. rubric:: Attributes Documentation
+   
+   .. autoattribute:: DEFAULT_BLOCKING
+   .. autoattribute:: GLOBAL_BLOCKING
+   .. autoattribute:: GLOBAL_NONBLOCKING

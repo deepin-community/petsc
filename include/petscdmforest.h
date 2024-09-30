@@ -1,21 +1,20 @@
 /*
   DMFOREST, for parallel, hierarchically refined, distributed mesh problems.
 */
-#ifndef PETSCDMFOREST_H
-#define PETSCDMFOREST_H
+#pragma once
 
 #include <petscdm.h>
 
 /* SUBMANSEC = DMForest */
 
 /*J
-    DMForestTopology - String with the name of a PETSc `DMFOREST` base mesh topology. The topology is a string (e.g.
+   DMForestTopology - String with the name of a PETSc `DMFOREST` base mesh topology. The topology is a string (e.g.
   "cube", "shell") and can be interpreted by subtypes of `DMFOREST`) to construct the base `DM` of a forest during
   `DMSetUp()`.
 
    Level: beginner
 
-.seealso: `DMForestSetTopology()`, `DMForestGetTopology()`, `DMFOREST`
+.seealso: [](ch_dmbase), `DMForestSetTopology()`, `DMForestGetTopology()`, `DMFOREST`
 J*/
 typedef const char *DMForestTopology;
 
@@ -63,11 +62,11 @@ PETSC_EXTERN PetscErrorCode DMForestSetAdaptivityLabel(DM, DMLabel);
 PETSC_EXTERN PetscErrorCode DMForestGetAdaptivityLabel(DM, DMLabel *);
 
 /*J
-    DMForestAdaptivityStrategy - String with the name of a PETSc `DMFOREST` adaptivity strategy
+   DMForestAdaptivityStrategy - String with the name of a PETSc `DMFOREST` adaptivity strategy
 
    Level: intermediate
 
-.seealso: `DMForestSetType()`, `DMFOREST`, `DMForestSetAdaptivityStrategy()`, `DMForestGetAdaptivityStrategy()`, `DMForestSetGradeFactor()`
+.seealso: [](ch_dmbase), `DMFOREST`, `DMForestSetAdaptivityStrategy()`, `DMForestGetAdaptivityStrategy()`, `DMForestSetGradeFactor()`
 J*/
 typedef const char *DMForestAdaptivityStrategy;
 #define DMFORESTADAPTALL "all"
@@ -107,9 +106,6 @@ PETSC_EXTERN PetscErrorCode DMForestGetCellWeightFactor(DM, PetscReal *);
 PETSC_EXTERN PetscErrorCode DMForestSetWeightCapacity(DM, PetscReal);
 PETSC_EXTERN PetscErrorCode DMForestGetWeightCapacity(DM, PetscReal *);
 
-PETSC_EXTERN PetscErrorCode DMForestGetFineProjector(DM, Mat *);
-PETSC_EXTERN PetscErrorCode DMForestGetCoarseRestrictor(DM, Mat *);
-
 /* miscellaneous */
 PETSC_EXTERN PetscErrorCode DMForestTemplate(DM, MPI_Comm, DM *);
 
@@ -122,5 +118,3 @@ PETSC_EXTERN PetscErrorCode DMP4estGetPartitionForCoarsening(DM, PetscBool *);
 PETSC_EXTERN PetscErrorCode DMP4estSetPartitionForCoarsening(DM, PetscBool);
 PETSC_EXTERN PetscErrorCode DMP8estGetPartitionForCoarsening(DM, PetscBool *);
 PETSC_EXTERN PetscErrorCode DMP8estSetPartitionForCoarsening(DM, PetscBool);
-
-#endif

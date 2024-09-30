@@ -13,12 +13,12 @@ static PetscErrorCode LabelPoints(DM dm)
 
   PetscFunctionBegin;
   PetscCall(PetscOptionsGetBool(NULL, NULL, "-label_mesh", &flg, NULL));
-  if (!flg) PetscFunctionReturn(0);
+  if (!flg) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(DMCreateLabel(dm, "test"));
   PetscCall(DMGetLabel(dm, "test", &label));
   PetscCall(DMPlexGetChart(dm, &pStart, &pEnd));
   for (p = pStart; p < pEnd; ++p) PetscCall(DMLabelSetValue(label, p, p));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode CreateMesh(MPI_Comm comm, DM *dm)
@@ -29,10 +29,11 @@ static PetscErrorCode CreateMesh(MPI_Comm comm, DM *dm)
   PetscCall(DMSetFromOptions(*dm));
   PetscCall(LabelPoints(*dm));
   PetscCall(PetscObjectSetOptionsPrefix((PetscObject)*dm, "post_label_"));
+  PetscCall(DMPlexDistributeSetDefault(*dm, PETSC_FALSE));
   PetscCall(DMSetFromOptions(*dm));
   PetscCall(PetscObjectSetOptionsPrefix((PetscObject)*dm, NULL));
   PetscCall(DMViewFromOptions(*dm, NULL, "-dm_view"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -71,6 +72,10 @@ int main(int argc, char **argv)
     nsize: {{1 3 5}}
     requires: parmetis
     args: -dm_plex_box_faces 3,3 -dm_plex_simplex 0 -dm_refine 2 -dm_plex_check_all -petscpartitioner_type parmetis
+
+  test:
+    suffix: box_quad_label
+    args: -dm_plex_box_faces 3,3 -dm_plex_simplex 0 -dm_refine 2 -dm_plex_check_all -dm_plex_transform_label_match_strata {{0 1}separate output} -dm_view
 
   test:
     suffix: ref_tet

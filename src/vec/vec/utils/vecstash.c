@@ -1,4 +1,3 @@
-
 #include <petsc/private/vecimpl.h>
 
 #define DEFAULT_STASH_SIZE 100
@@ -14,8 +13,8 @@
   comm - communicator, required for scatters.
   bs   - stash block size. used when stashing blocks of values
 
-  Output Parameters:
-  stash    - the newly created stash
+  Output Parameter:
+. stash    - the newly created stash
 */
 PetscErrorCode VecStashCreate_Private(MPI_Comm comm, PetscInt bs, VecStash *stash)
 {
@@ -66,7 +65,7 @@ PetscErrorCode VecStashCreate_Private(MPI_Comm comm, PetscInt bs, VecStash *stas
   stash->nprocessed   = 0;
   stash->donotstash   = PETSC_FALSE;
   stash->ignorenegidx = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -77,11 +76,11 @@ PetscErrorCode VecStashDestroy_Private(VecStash *stash)
   PetscFunctionBegin;
   PetscCall(PetscFree2(stash->array, stash->idx));
   PetscCall(PetscFree(stash->bowners));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
-   VecStashScatterEnd_Private - This is called as the fial stage of
+   VecStashScatterEnd_Private - This is called as the final stage of
    scatter. The final stages of message passing is done here, and
    all the memory used for message passing is cleanedu up. This
    routine also resets the stash, and deallocates the memory used
@@ -123,7 +122,7 @@ PetscErrorCode VecStashScatterEnd_Private(VecStash *stash)
   PetscCall(PetscFree2(stash->svalues, stash->sindices));
   PetscCall(PetscFree2(stash->rvalues, stash->rindices));
   PetscCall(PetscFree(stash->nprocs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -143,7 +142,7 @@ PetscErrorCode VecStashGetInfo_Private(VecStash *stash, PetscInt *nstash, PetscI
     if (stash->reallocs < 0) *reallocs = 0;
     else *reallocs = stash->reallocs;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -159,7 +158,7 @@ PetscErrorCode VecStashSetInitialSize_Private(VecStash *stash, PetscInt max)
 {
   PetscFunctionBegin;
   stash->umax = max;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* VecStashExpand_Private - Expand the stash. This function is called
@@ -183,7 +182,7 @@ PetscErrorCode VecStashExpand_Private(VecStash *stash, PetscInt incr)
   if (!stash->oldnmax && !stash->nmax) { /* new stash */
     if (stash->umax) newnmax = stash->umax / bs;
     else newnmax = DEFAULT_STASH_SIZE / bs;
-  } else if (!stash->nmax) { /* resuing stash */
+  } else if (!stash->nmax) { /* reusing stash */
     if (stash->umax > stash->oldnmax) newnmax = stash->umax / bs;
     else newnmax = stash->oldnmax / bs;
   } else newnmax = stash->nmax * 2;
@@ -199,7 +198,7 @@ PetscErrorCode VecStashExpand_Private(VecStash *stash, PetscInt incr)
   stash->idx   = n_idx;
   stash->nmax  = newnmax;
   stash->reallocs++;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /*
   VecStashScatterBegin_Private - Initiates the transfer of values to the
@@ -217,7 +216,7 @@ PetscErrorCode VecStashExpand_Private(VecStash *stash, PetscInt incr)
   ranges specified blocked global indices, and for the regular stash in
   the proper global indices.
 */
-PetscErrorCode VecStashScatterBegin_Private(VecStash *stash, PetscInt *owners)
+PetscErrorCode VecStashScatterBegin_Private(VecStash *stash, const PetscInt *owners)
 {
   PetscMPIInt  size = stash->size, tag1 = stash->tag1, tag2 = stash->tag2;
   PetscInt    *owner, *start, *nprocs, nsends, nreceives;
@@ -306,7 +305,7 @@ PetscErrorCode VecStashScatterBegin_Private(VecStash *stash, PetscInt *owners)
   stash->send_waits = send_waits;
   stash->recv_waits = recv_waits;
   stash->rmax       = nmax;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -338,7 +337,7 @@ PetscErrorCode VecStashScatterGetMesg_Private(VecStash *stash, PetscMPIInt *nval
   PetscFunctionBegin;
   *flg = 0; /* When a message is discovered this is reset to 1 */
   /* Return if no more messages to process */
-  if (stash->nprocessed == stash->nrecvs) PetscFunctionReturn(0);
+  if (stash->nprocessed == stash->nrecvs) PetscFunctionReturn(PETSC_SUCCESS);
 
   flg_v = stash->nprocs;
   /* If a matching pair of receives are found, process them, and return the data to
@@ -366,7 +365,7 @@ PetscErrorCode VecStashScatterGetMesg_Private(VecStash *stash, PetscMPIInt *nval
       match_found = PETSC_TRUE;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -377,7 +376,7 @@ PetscErrorCode VecStashSortCompress_Private(VecStash *stash)
   PetscInt i, j, bs = stash->bs;
 
   PetscFunctionBegin;
-  if (!stash->n) PetscFunctionReturn(0);
+  if (!stash->n) PetscFunctionReturn(PETSC_SUCCESS);
   if (bs == 1) {
     PetscCall(PetscSortIntWithScalarArray(stash->n, stash->idx, stash->array));
     for (i = 1, j = 0; i < stash->n; i++) {
@@ -431,7 +430,7 @@ PetscErrorCode VecStashSortCompress_Private(VecStash *stash)
     PetscCall(PetscMemcpy(stash->array, arr, stash->n * bs * sizeof(PetscScalar)));
     PetscCall(PetscFree2(perm, arr));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode VecStashGetOwnerList_Private(VecStash *stash, PetscLayout map, PetscMPIInt *nowners, PetscMPIInt **owners)
@@ -455,5 +454,5 @@ PetscErrorCode VecStashGetOwnerList_Private(VecStash *stash, PetscLayout map, Pe
   }
   PetscCall(PetscSegBufferExtractAlloc(seg, owners));
   PetscCall(PetscSegBufferDestroy(&seg));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

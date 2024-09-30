@@ -141,6 +141,16 @@ extern void PetscRmPointer(void*);
 #define dmsetmatrixstructureonly_ dmsetmatrixstructureonly
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmsetblockingtype_ DMSETBLOCKINGTYPE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmsetblockingtype_ dmsetblockingtype
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmgetblockingtype_ DMGETBLOCKINGTYPE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmgetblockingtype_ dmgetblockingtype
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmrefine_ DMREFINE
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmrefine_ dmrefine
@@ -361,16 +371,6 @@ extern void PetscRmPointer(void*);
 #define dmgetfield_ dmgetfield
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
-#define dmsetfield_ DMSETFIELD
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define dmsetfield_ dmsetfield
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
-#define dmaddfield_ DMADDFIELD
-#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
-#define dmaddfield_ dmaddfield
-#endif
-#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmsetfieldavoidtensor_ DMSETFIELDAVOIDTENSOR
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmsetfieldavoidtensor_ dmsetfieldavoidtensor
@@ -454,6 +454,11 @@ extern void PetscRmPointer(void*);
 #define dmcreateds_ DMCREATEDS
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmcreateds_ dmcreateds
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmusetensororder_ DMUSETENSORORDER
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmusetensororder_ dmusetensororder
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmcomputeexactsolution_ DMCOMPUTEEXACTSOLUTION
@@ -712,6 +717,17 @@ PETSC_EXTERN void  dmsetmatrixstructureonly_(DM dm,PetscBool *only, int *__ierr)
 {
 *__ierr = DMSetMatrixStructureOnly(
 	(DM)PetscToPointer((dm) ),*only);
+}
+PETSC_EXTERN void  dmsetblockingtype_(DM dm,DMBlockingType *btype, int *__ierr)
+{
+*__ierr = DMSetBlockingType(
+	(DM)PetscToPointer((dm) ),*btype);
+}
+PETSC_EXTERN void  dmgetblockingtype_(DM dm,DMBlockingType *btype, int *__ierr)
+{
+*__ierr = DMGetBlockingType(
+	(DM)PetscToPointer((dm) ),
+	(DMBlockingType* )PetscToPointer((btype) ));
 }
 PETSC_EXTERN void  dmrefine_(DM dm,MPI_Fint * comm,DM *dmf, int *__ierr)
 {
@@ -973,18 +989,6 @@ PETSC_EXTERN void  dmgetfield_(DM dm,PetscInt *f,DMLabel *label,PetscObject *dis
 *__ierr = DMGetField(
 	(DM)PetscToPointer((dm) ),*f,label,disc);
 }
-PETSC_EXTERN void  dmsetfield_(DM dm,PetscInt *f,DMLabel label,PetscObject *disc, int *__ierr)
-{
-*__ierr = DMSetField(
-	(DM)PetscToPointer((dm) ),*f,
-	(DMLabel)PetscToPointer((label) ),*disc);
-}
-PETSC_EXTERN void  dmaddfield_(DM dm,DMLabel label,PetscObject *disc, int *__ierr)
-{
-*__ierr = DMAddField(
-	(DM)PetscToPointer((dm) ),
-	(DMLabel)PetscToPointer((label) ),*disc);
-}
 PETSC_EXTERN void  dmsetfieldavoidtensor_(DM dm,PetscInt *f,PetscBool *avoidTensor, int *__ierr)
 {
 *__ierr = DMSetFieldAvoidTensor(
@@ -1031,42 +1035,44 @@ PETSC_EXTERN void  dmcleards_(DM dm, int *__ierr)
 *__ierr = DMClearDS(
 	(DM)PetscToPointer((dm) ));
 }
-PETSC_EXTERN void  dmgetds_(DM dm,PetscDS *prob, int *__ierr)
+PETSC_EXTERN void  dmgetds_(DM dm,PetscDS *ds, int *__ierr)
 {
 *__ierr = DMGetDS(
-	(DM)PetscToPointer((dm) ),prob);
+	(DM)PetscToPointer((dm) ),ds);
 }
-PETSC_EXTERN void  dmgetcellds_(DM dm,PetscInt *point,PetscDS *prob, int *__ierr)
+PETSC_EXTERN void  dmgetcellds_(DM dm,PetscInt *point,PetscDS *ds,PetscDS *dsIn, int *__ierr)
 {
 *__ierr = DMGetCellDS(
-	(DM)PetscToPointer((dm) ),*point,prob);
+	(DM)PetscToPointer((dm) ),*point,ds,dsIn);
 }
-PETSC_EXTERN void  dmgetregionds_(DM dm,DMLabel label,IS *fields,PetscDS *ds, int *__ierr)
+PETSC_EXTERN void  dmgetregionds_(DM dm,DMLabel label,IS *fields,PetscDS *ds,PetscDS *dsIn, int *__ierr)
 {
 *__ierr = DMGetRegionDS(
 	(DM)PetscToPointer((dm) ),
-	(DMLabel)PetscToPointer((label) ),fields,ds);
+	(DMLabel)PetscToPointer((label) ),fields,ds,dsIn);
 }
-PETSC_EXTERN void  dmsetregionds_(DM dm,DMLabel label,IS fields,PetscDS ds, int *__ierr)
+PETSC_EXTERN void  dmsetregionds_(DM dm,DMLabel label,IS fields,PetscDS ds,PetscDS dsIn, int *__ierr)
 {
 *__ierr = DMSetRegionDS(
 	(DM)PetscToPointer((dm) ),
 	(DMLabel)PetscToPointer((label) ),
 	(IS)PetscToPointer((fields) ),
-	(PetscDS)PetscToPointer((ds) ));
+	(PetscDS)PetscToPointer((ds) ),
+	(PetscDS)PetscToPointer((dsIn) ));
 }
-PETSC_EXTERN void  dmgetregionnumds_(DM dm,PetscInt *num,DMLabel *label,IS *fields,PetscDS *ds, int *__ierr)
+PETSC_EXTERN void  dmgetregionnumds_(DM dm,PetscInt *num,DMLabel *label,IS *fields,PetscDS *ds,PetscDS *dsIn, int *__ierr)
 {
 *__ierr = DMGetRegionNumDS(
-	(DM)PetscToPointer((dm) ),*num,label,fields,ds);
+	(DM)PetscToPointer((dm) ),*num,label,fields,ds,dsIn);
 }
-PETSC_EXTERN void  dmsetregionnumds_(DM dm,PetscInt *num,DMLabel label,IS fields,PetscDS ds, int *__ierr)
+PETSC_EXTERN void  dmsetregionnumds_(DM dm,PetscInt *num,DMLabel label,IS fields,PetscDS ds,PetscDS dsIn, int *__ierr)
 {
 *__ierr = DMSetRegionNumDS(
 	(DM)PetscToPointer((dm) ),*num,
 	(DMLabel)PetscToPointer((label) ),
 	(IS)PetscToPointer((fields) ),
-	(PetscDS)PetscToPointer((ds) ));
+	(PetscDS)PetscToPointer((ds) ),
+	(PetscDS)PetscToPointer((dsIn) ));
 }
 PETSC_EXTERN void  dmfindregionnum_(DM dm,PetscDS ds,PetscInt *num, int *__ierr)
 {
@@ -1078,6 +1084,11 @@ PETSC_EXTERN void  dmcreateds_(DM dm, int *__ierr)
 {
 *__ierr = DMCreateDS(
 	(DM)PetscToPointer((dm) ));
+}
+PETSC_EXTERN void  dmusetensororder_(DM dm,PetscBool *tensor, int *__ierr)
+{
+*__ierr = DMUseTensorOrder(
+	(DM)PetscToPointer((dm) ),*tensor);
 }
 PETSC_EXTERN void  dmcomputeexactsolution_(DM dm,PetscReal *time,Vec u,Vec u_t, int *__ierr)
 {

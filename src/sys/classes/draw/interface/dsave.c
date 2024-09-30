@@ -10,28 +10,28 @@ static PetscErrorCode PetscDrawSave_SAWs(PetscDraw);
 #endif
 
 /*@C
-   PetscDrawSetSave - Saves images produced in a `PetscDraw` into a file
+  PetscDrawSetSave - Saves images produced in a `PetscDraw` into a file
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  draw      - the graphics context
--  filename  - name of the file, if .ext then uses name of draw object plus .ext using .ext to determine the image type
+  Input Parameters:
++ draw     - the graphics context
+- filename - name of the file, if .ext then uses name of draw object plus .ext using .ext to determine the image type
 
-   Options Database Keys:
-+  -draw_save <filename>  - filename could be name.ext or .ext (where .ext determines the type of graphics file to save, for example .png)
-.  -draw_save_final_image [optional filename] - saves the final image displayed in a window
--  -draw_save_single_file - saves each new image in the same file, normally each new image is saved in a new file with filename/filename_%d.ext
+  Options Database Keys:
++ -draw_save <filename>                      - filename could be name.ext or .ext (where .ext determines the type of graphics file to save, for example .png)
+. -draw_save_final_image [optional filename] - saves the final image displayed in a window
+- -draw_save_single_file                     - saves each new image in the same file, normally each new image is saved in a new file with filename/filename_%d.ext
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-    You should call this BEFORE creating your image and calling `PetscDrawSave()`.
-   The supported image types are .png, .gif, .jpg, and .ppm (PETSc chooses the default in that order).
-   Support for .png images requires configure --with-libpng.
-   Support for .gif images requires configure --with-giflib.
-   Support for .jpg images requires configure --with-libjpeg.
-   Support for .ppm images is built-in. The PPM format has no compression (640x480 pixels ~ 900 KiB).
+  Note:
+  You should call this BEFORE creating your image and calling `PetscDrawSave()`.
+  The supported image types are .png, .gif, .jpg, and .ppm (PETSc chooses the default in that order).
+  Support for .png images requires configure --with-libpng.
+  Support for .gif images requires configure --with-giflib.
+  Support for .jpg images requires configure --with-libjpeg.
+  Support for .ppm images is built-in. The PPM format has no compression (640x480 pixels ~ 900 KiB).
 
 .seealso: `PetscDraw`, `PetscDrawOpenX()`, `PetscDrawOpenImage()`, `PetscDrawSetFromOptions()`, `PetscDrawCreate()`, `PetscDrawDestroy()`, `PetscDrawSetSaveFinalImage()`
 @*/
@@ -43,7 +43,7 @@ PetscErrorCode PetscDrawSetSave(PetscDraw draw, const char filename[])
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
-  if (filename) PetscValidCharPointer(filename, 2);
+  if (filename) PetscAssertPointer(filename, 2);
 
   /* determine save filename and image extension */
   if (filename && filename[0]) {
@@ -53,8 +53,9 @@ PetscErrorCode PetscDrawSetSave(PetscDraw draw, const char filename[])
       size_t l1 = 0, l2 = 0;
       PetscCall(PetscStrlen(filename, &l1));
       PetscCall(PetscStrlen(imageext, &l2));
-      PetscCall(PetscStrncpy(buf, filename, l1 - l2 + 1));
-      savename = buf;
+      PetscCall(PetscStrncpy(buf, filename, sizeof(buf)));
+      buf[l1 - l2 + 1] = '\0';
+      savename         = buf;
     }
   }
 
@@ -72,26 +73,26 @@ PetscErrorCode PetscDrawSetSave(PetscDraw draw, const char filename[])
   } else {
     PetscCall(PetscInfo(NULL, "Will save images to file %s/%s_%%d%s\n", draw->savefilename, draw->savefilename, draw->saveimageext));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscDrawSetSaveMovie - Saves a movie produced from a `PetscDraw` into a file
+  PetscDrawSetSaveMovie - Saves a movie produced from a `PetscDraw` into a file
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  draw      - the graphics context
--  movieext  - optional extension defining the movie format
+  Input Parameters:
++ draw     - the graphics context
+- movieext - optional extension defining the movie format
 
-   Options Database Key:
-.  -draw_save_movie <.ext> - saves a movie with extension .ext
+  Options Database Key:
+. -draw_save_movie <.ext> - saves a movie with extension .ext
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-    You should call this AFTER calling `PetscDrawSetSave()` and BEFORE creating your image with `PetscDrawSave()`.
-   The ffmpeg utility must be in your path to make the movie.
+  Note:
+  You should call this AFTER calling `PetscDrawSetSave()` and BEFORE creating your image with `PetscDrawSave()`.
+  The ffmpeg utility must be in your path to make the movie.
 
 .seealso: `PetscDraw`, `PetscDrawSetSave()`, `PetscDrawSetFromOptions()`, `PetscDrawCreate()`, `PetscDrawDestroy()`
 @*/
@@ -99,35 +100,35 @@ PetscErrorCode PetscDrawSetSaveMovie(PetscDraw draw, const char movieext[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
-  if (movieext) PetscValidCharPointer(movieext, 2);
+  if (movieext) PetscAssertPointer(movieext, 2);
 
   if (!draw->savefilename) PetscCall(PetscDrawSetSave(draw, ""));
   PetscCall(PetscDrawMovieCheckFormat(&movieext));
   PetscCall(PetscStrallocpy(movieext, &draw->savemovieext));
-  draw->savesinglefile = PETSC_FALSE; /* otherwise we cannot generage movies */
+  draw->savesinglefile = PETSC_FALSE; /* otherwise we cannot generate movies */
 
   PetscCall(PetscInfo(NULL, "Will save movie to file %s%s\n", draw->savefilename, draw->savemovieext));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   PetscDrawSetSaveFinalImage - Saves the final image produced in a `PetscDraw` into a file
+  PetscDrawSetSaveFinalImage - Saves the final image produced in a `PetscDraw` into a file
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  draw      - the graphics context
--  filename  - name of the file, if NULL or empty uses name set with `PetscDrawSetSave()` or the name of the draw object
+  Input Parameters:
++ draw     - the graphics context
+- filename - name of the file, if NULL or empty uses name set with `PetscDrawSetSave()` or the name of the draw object
 
-   Options Database Key:
-.  -draw_save_final_image  <filename> - filename could be name.ext or .ext (where .ext determines the type of graphics file to save, for example .png)
+  Options Database Key:
+. -draw_save_final_image  <filename> - filename could be name.ext or .ext (where .ext determines the type of graphics file to save, for example .png)
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-    You should call this BEFORE creating your image and calling `PetscDrawSave()`.
+  Notes:
+  You should call this BEFORE creating your image and calling `PetscDrawSave()`.
 
-   The supported image types are .png, .gif, and .ppm (PETSc chooses the default in that order).
+  The supported image types are .png, .gif, and .ppm (PETSc chooses the default in that order).
 .vb
    Support for .png images requires configure --with-libpng.
    Support for .gif images requires configure --with-giflib.
@@ -153,21 +154,21 @@ PetscErrorCode PetscDrawSetSaveFinalImage(PetscDraw draw, const char filename[])
   }
   PetscCall(PetscFree(draw->savefinalfilename));
   PetscCall(PetscStrallocpy(filename, &draw->savefinalfilename));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscDrawSave - Saves a drawn image
+  PetscDrawSave - Saves a drawn image
 
-   Collective
+  Collective
 
-   Input Parameters:
-.  draw - the drawing context
+  Input Parameter:
+. draw - the drawing context
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-    this is not normally called by the user.
+  Note:
+  this is not normally called by the user.
 
 .seealso: `PetscDraw`, `PetscDrawSetSave()`
 @*/
@@ -182,12 +183,12 @@ PetscErrorCode PetscDrawSave(PetscDraw draw)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
-  if (!draw->ops->save && !draw->ops->getimage) PetscFunctionReturn(0);
+  if (!draw->ops->save && !draw->ops->getimage) PetscFunctionReturn(PETSC_SUCCESS);
   if (draw->ops->save) {
     PetscUseTypeMethod(draw, save);
     goto finally;
   }
-  if (!draw->savefilename || !draw->saveimageext) PetscFunctionReturn(0);
+  if (!draw->savefilename || !draw->saveimageext) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCallMPI(MPI_Comm_rank(PetscObjectComm((PetscObject)draw), &rank));
 
   saveindex = draw->savefilecount++;
@@ -210,9 +211,9 @@ PetscErrorCode PetscDrawSave(PetscDraw draw)
   if (draw->savesinglefile) {
     PetscCall(PetscSNPrintf(basename, sizeof(basename), "%s", draw->savefilename));
   } else {
-    char *basefilename;
+    char *basefilename = NULL;
 
-    PetscCall(PetscStrrchr(draw->savefilename, '/', (char **)&basefilename));
+    PetscCall(PetscStrrchr(draw->savefilename, '/', &basefilename));
     if (basefilename != draw->savefilename) {
       PetscCall(PetscSNPrintf(basename, sizeof(basename), "%s_%d", draw->savefilename, (int)saveindex));
     } else {
@@ -231,23 +232,23 @@ finally:
 #if defined(PETSC_HAVE_SAWS)
   PetscCall(PetscDrawSave_SAWs(draw));
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscDrawSaveMovie - Saves a movie from previously saved images
+  PetscDrawSaveMovie - Saves a movie from previously saved images
 
-   Collective
+  Collective
 
-   Input Parameters:
-.  draw - the drawing context
+  Input Parameter:
+. draw - the drawing context
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   This is not normally called by the user.
+  Notes:
+  This is not normally called by the user.
 
-   The ffmpeg utility must be in your path to make the movie.
+  The ffmpeg utility must be in your path to make the movie.
 
 .seealso: `PetscDraw`, `PetscDrawSetSave()`, `PetscDrawSetSaveMovie()`
 @*/
@@ -257,8 +258,8 @@ PetscErrorCode PetscDrawSaveMovie(PetscDraw draw)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
-  if (!draw->ops->save && !draw->ops->getimage) PetscFunctionReturn(0);
-  if (!draw->savefilename || !draw->savemovieext || draw->savesinglefile) PetscFunctionReturn(0);
+  if (!draw->ops->save && !draw->ops->getimage) PetscFunctionReturn(PETSC_SUCCESS);
+  if (!draw->savefilename || !draw->savemovieext || draw->savesinglefile) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCallMPI(MPI_Comm_rank(PetscObjectComm((PetscObject)draw), &rank));
   {
     const char *fname = draw->savefilename;
@@ -267,7 +268,7 @@ PetscErrorCode PetscDrawSaveMovie(PetscDraw draw)
     if (rank == 0) PetscCall(PetscDrawMovieSave(fname, draw->savefilecount, imext, draw->savemoviefps, mvext));
     PetscCallMPI(MPI_Barrier(PetscObjectComm((PetscObject)draw)));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_SAWS)
@@ -298,7 +299,7 @@ static PetscErrorCode PetscImageListDestroy(void)
     PetscCall(PetscFree(image));
     image = next;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscImageListAdd(const char filename[], const char ext[], PetscInt count)
@@ -311,14 +312,14 @@ static PetscErrorCode PetscImageListAdd(const char filename[], const char ext[],
     PetscCall(PetscStrcmp(filename, oimage->filename, &flg));
     if (flg) {
       oimage->count = count;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
     while (oimage->next) {
       oimage = oimage->next;
       PetscCall(PetscStrcmp(filename, oimage->filename, &flg));
       if (flg) {
         oimage->count = count;
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
     }
     PetscCall(PetscNew(&image));
@@ -331,7 +332,7 @@ static PetscErrorCode PetscImageListAdd(const char filename[], const char ext[],
   PetscCall(PetscStrallocpy(filename, &image->filename));
   PetscCall(PetscStrallocpy(ext, &image->ext));
   image->count = count;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDrawSave_SAWs(PetscDraw draw)
@@ -341,7 +342,7 @@ static PetscErrorCode PetscDrawSave_SAWs(PetscDraw draw)
   size_t         len = 0;
 
   PetscFunctionBegin;
-  if (!draw->savefilename || !draw->saveimageext) PetscFunctionReturn(0);
+  if (!draw->savefilename || !draw->saveimageext) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscImageListAdd(draw->savefilename, draw->saveimageext, draw->savefilecount - 1));
   image = SAWs_images;
   while (image) {
@@ -358,7 +359,7 @@ static PetscErrorCode PetscDrawSave_SAWs(PetscDraw draw)
   PetscCall(PetscStrlcat(body, "<br>\n", sizeof(body)));
   if (draw->savefilecount > 0) PetscCallSAWs(SAWs_Pop_Body, ("index.html", 1));
   PetscCallSAWs(SAWs_Push_Body, ("index.html", 1, body));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif

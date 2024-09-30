@@ -1,4 +1,3 @@
-
 static char help[] = "Tests repeated setups and solves of PCFIELDSPLIT.\n\n";
 #include <petscksp.h>
 
@@ -28,7 +27,7 @@ static PetscErrorCode replace_submats(Mat A)
   }
   PetscCall(PetscFree(r));
   PetscCall(PetscFree(c));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char *argv[])
@@ -43,7 +42,7 @@ int main(int argc, char *argv[])
 
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &argv, (char *)0, help));
-  PetscCall(MatCreateAIJ(PETSC_COMM_WORLD, 10, 10, PETSC_DECIDE, PETSC_DECIDE, 1, NULL, 0, NULL, &M));
+  PetscCall(MatCreateFromOptions(PETSC_COMM_WORLD, NULL, 1, 10, 10, PETSC_DECIDE, PETSC_DECIDE, &M));
   PetscCall(MatAssemblyBegin(M, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(M, MAT_FINAL_ASSEMBLY));
   PetscCall(MatShift(M, 1.));
@@ -77,6 +76,7 @@ int main(int argc, char *argv[])
   PetscCall(replace_submats(A));
   PetscCall(replace_submats(P));
   PetscCall(KSPSolve(ksp, b, x));
+  PetscCall(KSPSolveTranspose(ksp, b, x));
 
   PetscCall(KSPDestroy(&ksp));
   PetscCall(VecDestroy(&x));

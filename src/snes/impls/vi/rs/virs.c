@@ -1,21 +1,20 @@
-
 #include <../src/snes/impls/vi/rs/virsimpl.h> /*I "petscsnes.h" I*/
 #include <petsc/private/dmimpl.h>
 #include <petsc/private/vecimpl.h>
 
 /*@
-   SNESVIGetInactiveSet - Gets the global indices for the inactive set variables (these correspond to the degrees of freedom the linear
-     system is solved on)
+  SNESVIGetInactiveSet - Gets the global indices for the inactive set variables (these correspond to the degrees of freedom the linear
+  system is solved on)
 
-   Input parameter:
-.  snes - the `SNES` context
+  Input Parameter:
+. snes - the `SNES` context
 
-   Output parameter:
-.  inact - inactive set index set
+  Output Parameter:
+. inact - inactive set index set
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `SNESVINEWTONRSLS`
+.seealso: [](ch_snes), `SNES`, `SNESVINEWTONRSLS`
 @*/
 PetscErrorCode SNESVIGetInactiveSet(SNES snes, IS *inact)
 {
@@ -23,7 +22,7 @@ PetscErrorCode SNESVIGetInactiveSet(SNES snes, IS *inact)
 
   PetscFunctionBegin;
   *inact = vi->IS_inact;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -48,7 +47,7 @@ typedef struct {
 /*
      DMCreateGlobalVector_SNESVI - Creates global vector of the size of the reduced space
 */
-PetscErrorCode DMCreateGlobalVector_SNESVI(DM dm, Vec *vec)
+static PetscErrorCode DMCreateGlobalVector_SNESVI(DM dm, Vec *vec)
 {
   PetscContainer isnes;
   DM_SNESVI     *dmsnesvi;
@@ -59,13 +58,13 @@ PetscErrorCode DMCreateGlobalVector_SNESVI(DM dm, Vec *vec)
   PetscCall(PetscContainerGetPointer(isnes, (void **)&dmsnesvi));
   PetscCall(VecCreateMPI(PetscObjectComm((PetscObject)dm), dmsnesvi->n, PETSC_DETERMINE, vec));
   PetscCall(VecSetDM(*vec, dm));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
      DMCreateInterpolation_SNESVI - Modifieds the interpolation obtained from the DM by removing all rows and columns associated with active constraints.
 */
-PetscErrorCode DMCreateInterpolation_SNESVI(DM dm1, DM dm2, Mat *mat, Vec *vec)
+static PetscErrorCode DMCreateInterpolation_SNESVI(DM dm1, DM dm2, Mat *mat, Vec *vec)
 {
   PetscContainer isnes;
   DM_SNESVI     *dmsnesvi1, *dmsnesvi2;
@@ -83,13 +82,13 @@ PetscErrorCode DMCreateInterpolation_SNESVI(DM dm1, DM dm2, Mat *mat, Vec *vec)
   PetscCall(MatCreateSubMatrix(interp, dmsnesvi2->inactive, dmsnesvi1->inactive, MAT_INITIAL_MATRIX, mat));
   PetscCall(MatDestroy(&interp));
   *vec = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
      DMCoarsen_SNESVI - Computes the regular coarsened DM then computes additional information about its inactive set
 */
-PetscErrorCode DMCoarsen_SNESVI(DM dm1, MPI_Comm comm, DM *dm2)
+static PetscErrorCode DMCoarsen_SNESVI(DM dm1, MPI_Comm comm, DM *dm2)
 {
   PetscContainer  isnes;
   DM_SNESVI      *dmsnesvi1;
@@ -160,10 +159,10 @@ PetscErrorCode DMCoarsen_SNESVI(DM dm1, MPI_Comm comm, DM *dm2)
   PetscCall(VecDestroy(&finemarked));
   PetscCall(VecDestroy(&coarsemarked));
   PetscCall(ISDestroy(&inactive));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMDestroy_SNESVI(DM_SNESVI *dmsnesvi)
+static PetscErrorCode DMDestroy_SNESVI(DM_SNESVI *dmsnesvi)
 {
   PetscFunctionBegin;
   /* reset the base methods in the DM object that were changed when the DM_SNESVI was reset */
@@ -178,22 +177,22 @@ PetscErrorCode DMDestroy_SNESVI(DM_SNESVI *dmsnesvi)
 
   PetscCall(ISDestroy(&dmsnesvi->inactive));
   PetscCall(PetscFree(dmsnesvi));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-     DMSetVI - Marks a DM as associated with a VI problem. This causes the interpolation/restriction operators to
-               be restricted to only those variables NOT associated with active constraints.
+  DMSetVI - Marks a `DM` as associated with a VI problem. This causes the interpolation/restriction operators to
+  be restricted to only those variables NOT associated with active constraints.
 
-    Logically Collective
+  Logically Collective
 
-    Input Parameters:
-+   dm - the `DM` object
--   inactive - an `IS` indicating which points are currently not active
+  Input Parameters:
++ dm       - the `DM` object
+- inactive - an `IS` indicating which points are currently not active
 
-    Level: intermediate
+  Level: intermediate
 
-.seealso: `SNESVINEWTONRSLS`, `SNESVIGetInactiveSet()`
+.seealso: [](ch_snes), `SNES`, `SNESVINEWTONRSLS`, `SNESVIGetInactiveSet()`
 @*/
 PetscErrorCode DMSetVI(DM dm, IS inactive)
 {
@@ -201,7 +200,7 @@ PetscErrorCode DMSetVI(DM dm, IS inactive)
   DM_SNESVI     *dmsnesvi;
 
   PetscFunctionBegin;
-  if (!dm) PetscFunctionReturn(0);
+  if (!dm) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(PetscObjectReference((PetscObject)inactive));
 
@@ -233,7 +232,7 @@ PetscErrorCode DMSetVI(DM dm, IS inactive)
 
   dmsnesvi->inactive = inactive;
   dmsnesvi->dm       = dm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -243,21 +242,13 @@ PetscErrorCode DMSetVI(DM dm, IS inactive)
 PetscErrorCode DMDestroyVI(DM dm)
 {
   PetscFunctionBegin;
-  if (!dm) PetscFunctionReturn(0);
+  if (!dm) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscObjectCompose((PetscObject)dm, "VI", (PetscObject)NULL));
-  PetscFunctionReturn(0);
-}
-
-PetscErrorCode SNESCreateIndexSets_VINEWTONRSLS(SNES snes, Vec X, Vec F, IS *ISact, IS *ISinact)
-{
-  PetscFunctionBegin;
-  PetscCall(SNESVIGetActiveSetIS(snes, X, F, ISact));
-  PetscCall(ISComplement(*ISact, X->map->rstart, X->map->rend, ISinact));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Create active and inactive set vectors. The local size of this vector is set and petsc computes the global size */
-PetscErrorCode SNESCreateSubVectors_VINEWTONRSLS(SNES snes, PetscInt n, Vec *newv)
+static PetscErrorCode SNESCreateSubVectors_VINEWTONRSLS(SNES snes, PetscInt n, Vec *newv)
 {
   Vec v;
 
@@ -266,11 +257,11 @@ PetscErrorCode SNESCreateSubVectors_VINEWTONRSLS(SNES snes, PetscInt n, Vec *new
   PetscCall(VecSetSizes(v, n, PETSC_DECIDE));
   PetscCall(VecSetType(v, VECSTANDARD));
   *newv = v;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Resets the snes PC and KSP when the active set sizes change */
-PetscErrorCode SNESVIResetPCandKSP(SNES snes, Mat Amat, Mat Pmat)
+static PetscErrorCode SNESVIResetPCandKSP(SNES snes, Mat Amat, Mat Pmat)
 {
   KSP snesksp;
 
@@ -298,13 +289,13 @@ PetscErrorCode SNESVIResetPCandKSP(SNES snes, Mat Amat, Mat Pmat)
   PetscCall(KSPDestroy(&snesksp));
   snes->ksp = kspnew;
    PetscCall(KSPSetFromOptions(kspnew));*/
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Variational Inequality solver using reduce space method. No semismooth algorithm is
    implemented in this algorithm. It basically identifies the active constraints and does
    a linear solve on the other variables (those not associated with the active constraints). */
-PetscErrorCode SNESSolve_VINEWTONRSLS(SNES snes)
+static PetscErrorCode SNESSolve_VINEWTONRSLS(SNES snes)
 {
   SNES_VINEWTONRSLS   *vi = (SNES_VINEWTONRSLS *)snes->data;
   PetscInt             maxits, i, lits;
@@ -348,11 +339,11 @@ PetscErrorCode SNESSolve_VINEWTONRSLS(SNES snes)
   snes->norm = fnorm;
   PetscCall(PetscObjectSAWsGrantAccess((PetscObject)snes));
   PetscCall(SNESLogConvergenceHistory(snes, fnorm, 0));
-  PetscCall(SNESMonitor(snes, 0, fnorm));
 
   /* test convergence */
-  PetscUseTypeMethod(snes, converged, 0, 0.0, 0.0, fnorm, &snes->reason, snes->cnvP);
-  if (snes->reason) PetscFunctionReturn(0);
+  PetscCall(SNESConverged(snes, 0, 0.0, 0.0, fnorm));
+  PetscCall(SNESMonitor(snes, 0, fnorm));
+  if (snes->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   for (i = 0; i < maxits; i++) {
     IS         IS_act;    /* _act -> active set _inact -> inactive set */
@@ -554,7 +545,7 @@ PetscErrorCode SNESSolve_VINEWTONRSLS(SNES snes)
     if (snes->domainerror) {
       snes->reason = SNES_DIVERGED_FUNCTION_DOMAIN;
       PetscCall(DMDestroyVI(snes->dm));
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
     if (lssucceed) {
       if (++snes->numFailures >= snes->maxFailures) {
@@ -576,38 +567,34 @@ PetscErrorCode SNESSolve_VINEWTONRSLS(SNES snes)
     snes->ynorm = ynorm;
     PetscCall(PetscObjectSAWsGrantAccess((PetscObject)snes));
     PetscCall(SNESLogConvergenceHistory(snes, snes->norm, lits));
-    PetscCall(SNESMonitor(snes, snes->iter, snes->norm));
     /* Test for convergence, xnorm = || X || */
     if (snes->ops->converged != SNESConvergedSkip) PetscCall(VecNorm(X, NORM_2, &xnorm));
-    PetscUseTypeMethod(snes, converged, snes->iter, xnorm, ynorm, fnorm, &snes->reason, snes->cnvP);
+    PetscCall(SNESConverged(snes, snes->iter, xnorm, ynorm, fnorm));
+    PetscCall(SNESMonitor(snes, snes->iter, snes->norm));
     if (snes->reason) break;
   }
   /* make sure that the VI information attached to the DM is removed if the for loop above was broken early due to some exceptional conditional */
   PetscCall(DMDestroyVI(snes->dm));
-  if (i == maxits) {
-    PetscCall(PetscInfo(snes, "Maximum number of iterations has been reached: %" PetscInt_FMT "\n", maxits));
-    if (!snes->reason) snes->reason = SNES_DIVERGED_MAX_IT;
-  }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   SNESVISetRedundancyCheck - Provide a function to check for any redundancy in the VI active set
+  SNESVISetRedundancyCheck - Provide a function to check for any redundancy in the VI active set
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  snes - the `SNESVINEWTONRSLS` context
-.  func - the function to check of redundancies
--  ctx - optional context used by the function
+  Input Parameters:
++ snes - the `SNESVINEWTONRSLS` context
+. func - the function to check of redundancies
+- ctx  - optional context used by the function
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   Sometimes the inactive set will result in a non-singular sub-Jacobian problem that needs to be solved, this allows the user,
-   when they know more about their specific problem to provide a function that removes the redundancy that results in the singular linear system
+  Note:
+  Sometimes the inactive set will result in a singular sub-Jacobian problem that needs to be solved, this allows the user,
+  when they know more about their specific problem to provide a function that removes the redundancy that results in the singular linear system
 
-.seealso: `SNESVINEWTONRSLS`, `SNESVIGetInactiveSet()`, `DMSetVI()`
+.seealso: [](ch_snes), `SNES`, `SNESVINEWTONRSLS`, `SNESVIGetInactiveSet()`, `DMSetVI()`
  @*/
 PetscErrorCode SNESVISetRedundancyCheck(SNES snes, PetscErrorCode (*func)(SNES, IS, IS *, void *), void *ctx)
 {
@@ -617,7 +604,7 @@ PetscErrorCode SNESVISetRedundancyCheck(SNES snes, PetscErrorCode (*func)(SNES, 
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   vi->checkredundancy = func;
   vi->ctxP            = ctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_MATLAB)
@@ -639,13 +626,13 @@ PetscErrorCode SNESVIRedundancyCheck_Matlab(SNES snes, IS is_act, IS *is_redact,
   PetscFunctionBegin;
   PetscValidHeaderSpecific(snes, SNES_CLASSID, 1);
   PetscValidHeaderSpecific(is_act, IS_CLASSID, 2);
-  PetscValidPointer(is_redact, 3);
+  PetscAssertPointer(is_redact, 3);
   PetscCheckSameComm(snes, 1, is_act, 2);
 
   /* Create IS for reduced active set of size 0, its size and indices will
-   bet set by the Matlab function */
+   bet set by the MATLAB function */
   PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)snes), 0, indices, PETSC_OWN_POINTER, is_redact));
-  /* call Matlab function in ctx */
+  /* call MATLAB function in ctx */
   PetscCall(PetscArraycpy(&ls, &snes, 1));
   PetscCall(PetscArraycpy(&l1, &is_act, 1));
   PetscCall(PetscArraycpy(&l2, is_redact, 1));
@@ -661,7 +648,7 @@ PetscErrorCode SNESVIRedundancyCheck_Matlab(SNES snes, IS is_act, IS *is_redact,
   mxDestroyArray(prhs[2]);
   mxDestroyArray(prhs[3]);
   mxDestroyArray(plhs[0]);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode SNESVISetRedundancyCheckMatlab(SNES snes, const char *func, mxArray *ctx)
@@ -674,26 +661,12 @@ PetscErrorCode SNESVISetRedundancyCheckMatlab(SNES snes, const char *func, mxArr
   PetscCall(PetscStrallocpy(func, &sctx->funcname));
   sctx->ctx = mxDuplicateArray(ctx);
   PetscCall(SNESVISetRedundancyCheck(snes, SNESVIRedundancyCheck_Matlab, sctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif
 
-/*
-   SNESSetUp_VINEWTONRSLS - Sets up the internal data structures for the later use
-   of the SNESVI nonlinear solver.
-
-   Input Parameter:
-.  snes - the SNES context
-
-   Application Interface Routine: SNESSetUp()
-
-   Note:
-   For basic use of the SNES solvers, the user need not explicitly call
-   SNESSetUp(), since these actions will automatically occur during
-   the call to SNESSolve().
- */
-PetscErrorCode SNESSetUp_VINEWTONRSLS(SNES snes)
+static PetscErrorCode SNESSetUp_VINEWTONRSLS(SNES snes)
 {
   SNES_VINEWTONRSLS *vi = (SNES_VINEWTONRSLS *)snes->data;
   PetscInt          *indices;
@@ -717,39 +690,37 @@ PetscErrorCode SNESSetUp_VINEWTONRSLS(SNES snes)
     PetscCall(SNESGetLineSearch(snes, &linesearch));
     PetscCall(SNESLineSearchSetType(linesearch, SNESLINESEARCHBT));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode SNESReset_VINEWTONRSLS(SNES snes)
+static PetscErrorCode SNESReset_VINEWTONRSLS(SNES snes)
 {
   SNES_VINEWTONRSLS *vi = (SNES_VINEWTONRSLS *)snes->data;
 
   PetscFunctionBegin;
   PetscCall(SNESReset_VI(snes));
   PetscCall(ISDestroy(&vi->IS_inact_prev));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
       SNESVINEWTONRSLS - Reduced space active set solvers for variational inequalities based on Newton's method
 
    Options Database Keys:
-+   -snes_type <vinewtonssls,vinewtonrsls> - a semi-smooth solver, a reduced space active set method
--   -snes_vi_monitor - prints the number of active constraints at each iteration.
++   -snes_type <vinewtonssls,vinewtonrsls> - a semi-smooth solver or a reduced space active set method
+-   -snes_vi_monitor                       - prints the number of active constraints at each iteration.
 
    Level: beginner
-
-   References:
-.  * - T. S. Munson, and S. Benson. Flexible Complementarity Solvers for Large Scale
-     Applications, Optimization Methods and Software, 21 (2006).
 
    Note:
    At each set of this methods the algorithm produces an inactive set of variables that are constrained to their current values
    (because changing these values would result in those variables no longer satisfying the inequality constraints)
    and produces a step direction by solving the linear system arising from the Jacobian with the inactive variables removed. In other
-   words on a reduced space of the solution space. Based on the Newton update it then adjusts the inactive sep for the next iteration.
+   words on a reduced space of the solution space. Based on the Newton update it then adjusts the inactive set for the next iteration.
 
-.seealso: `SNESVISetVariableBounds()`, `SNESVISetComputeVariableBounds()`, `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESVINEWTONSSLS`, `SNESNEWTONTRDC`, `SNESLineSearchSetType()`, `SNESLineSearchSetPostCheck()`, `SNESLineSearchSetPreCheck()`, `SNESVIGetInactiveSet()`, `DMSetVI()`, `SNESVISetRedundancyCheck()`
+   See {cite}`benson2006flexible`
+
+.seealso: [](ch_snes), `SNESVISetVariableBounds()`, `SNESVISetComputeVariableBounds()`, `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESVINEWTONSSLS`, `SNESNEWTONTR`, `SNESLineSearchSetType()`, `SNESLineSearchSetPostCheck()`, `SNESLineSearchSetPreCheck()`, `SNESVIGetInactiveSet()`, `DMSetVI()`, `SNESVISetRedundancyCheck()`
 M*/
 PETSC_EXTERN PetscErrorCode SNESCreate_VINEWTONRSLS(SNES snes)
 {
@@ -780,5 +751,5 @@ PETSC_EXTERN PetscErrorCode SNESCreate_VINEWTONRSLS(SNES snes)
 
   PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESVISetVariableBounds_C", SNESVISetVariableBounds_VI));
   PetscCall(PetscObjectComposeFunction((PetscObject)snes, "SNESVISetComputeVariableBounds_C", SNESVISetComputeVariableBounds_VI));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

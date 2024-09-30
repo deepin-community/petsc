@@ -7,10 +7,10 @@ PetscErrorCode PetscDeviceContextCreate_HIP(PetscDeviceContext dctx)
   static constexpr auto hip_context = CUPMContextHip();
 
   PetscFunctionBegin;
-  PetscCall(hip_context.initialize());
+  PetscCall(hip_context.initialize(dctx->device));
   dctx->data = new PetscDeviceContext_(HIP);
-  PetscCall(PetscMemcpy(dctx->ops, &hip_context.ops, sizeof(hip_context.ops)));
-  PetscFunctionReturn(0);
+  *dctx->ops = hip_context.ops;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -27,10 +27,10 @@ PetscErrorCode PetscHIPBLASGetHandle(hipblasHandle_t *handle)
   PetscDeviceContext dctx;
 
   PetscFunctionBegin;
-  PetscValidPointer(handle, 1);
+  PetscAssertPointer(handle, 1);
   PetscCall(PetscDeviceContextGetCurrentContextAssertType_Internal(&dctx, PETSC_DEVICE_HIP));
   PetscCall(PetscDeviceContextGetBLASHandle_Internal(dctx, handle));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PetscHIPSOLVERGetHandle(hipsolverHandle_t *handle)
@@ -38,8 +38,21 @@ PetscErrorCode PetscHIPSOLVERGetHandle(hipsolverHandle_t *handle)
   PetscDeviceContext dctx;
 
   PetscFunctionBegin;
-  PetscValidPointer(handle, 1);
+  PetscAssertPointer(handle, 1);
   PetscCall(PetscDeviceContextGetCurrentContextAssertType_Internal(&dctx, PETSC_DEVICE_HIP));
   PetscCall(PetscDeviceContextGetSOLVERHandle_Internal(dctx, handle));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+PetscErrorCode PetscGetCurrentHIPStream(hipStream_t *stream)
+{
+  PetscDeviceContext dctx;
+  void              *handle;
+
+  PetscFunctionBegin;
+  PetscAssertPointer(stream, 1);
+  PetscCall(PetscDeviceContextGetCurrentContextAssertType_Internal(&dctx, PETSC_DEVICE_HIP));
+  PetscCall(PetscDeviceContextGetStreamHandle(dctx, &handle));
+  *stream = *(hipStream_t *)handle;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

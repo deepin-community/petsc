@@ -1,4 +1,3 @@
-
 #include <../src/mat/impls/aij/mpi/mpiaij.h> /*I "petscmat.h"  I*/
 #include <petscsf.h>
 
@@ -13,7 +12,7 @@ static PetscErrorCode MatColoringDestroy_JP(MatColoring mc)
 {
   PetscFunctionBegin;
   PetscCall(PetscFree(mc->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatColoringSetFromOptions_JP(MatColoring mc, PetscOptionItems *PetscOptionsObject)
@@ -24,7 +23,7 @@ static PetscErrorCode MatColoringSetFromOptions_JP(MatColoring mc, PetscOptionIt
   PetscOptionsHeadBegin(PetscOptionsObject, "JP options");
   PetscCall(PetscOptionsBool("-mat_coloring_jp_local", "Do an initial coloring of local columns", "", jp->local, &jp->local, NULL));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MCJPGreatestWeight_Private(MatColoring mc, const PetscReal *weights, PetscReal *maxweights)
@@ -124,7 +123,7 @@ static PetscErrorCode MCJPGreatestWeight_Private(MatColoring mc, const PetscReal
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MCJPInitialLocalColor_Private(MatColoring mc, PetscInt *lperm, ISColoringValue *colors)
@@ -262,7 +261,7 @@ static PetscErrorCode MCJPInitialLocalColor_Private(MatColoring mc, PetscInt *lp
   }
   PetscCall(PetscFree5(colormask, seen, idxbuf, distbuf, boundary));
   PetscCall(PetscLogEventEnd(MATCOLORING_Local, mc, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MCJPMinColor_Private(MatColoring mc, ISColoringValue maxcolor, const ISColoringValue *colors, ISColoringValue *mincolors)
@@ -385,7 +384,7 @@ static PetscErrorCode MCJPMinColor_Private(MatColoring mc, ISColoringValue maxco
   for (i = 0; i < dn; i++) {
     if (mincolors[i] == IS_COLORING_MAX) mincolors[i] = maxcolor + 1;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode MatColoringApply_JP(MatColoring mc, ISColoring *iscoloring)
@@ -462,11 +461,11 @@ static PetscErrorCode MatColoringApply_JP(MatColoring mc, ISColoring *iscoloring
   PetscCall(PetscFree(maxweights));
   PetscCall(PetscFree(mincolor));
   PetscCall(PetscSFDestroy(&jp->sf));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-  MATCOLORINGJP - Parallel Jones-Plassmann coloring
+  MATCOLORINGJP - Parallel Jones-Plassmann coloring {cite}`jp:pcolor`
 
    Level: beginner
 
@@ -474,14 +473,10 @@ static PetscErrorCode MatColoringApply_JP(MatColoring mc, ISColoring *iscoloring
 .  -mat_coloring_jp_local - perform a local coloring before applying the parallel algorithm
 
    Notes:
-    This method uses a parallel Luby-style coloring with weights to choose an independent set of processor
+   This method uses a parallel Luby-style coloring with weights to choose an independent set of processor
    boundary vertices at each stage that may be assigned colors independently.
 
    Supports both distance one and distance two colorings.
-
-   References:
-.  * - M. Jones and P. Plassmann, "A parallel graph coloring heuristic," SIAM Journal on Scientific Computing, vol. 14, no. 3,
-   pp. 654-669, 1993.
 
 .seealso: `MatColoring`, `MatColoringType`, `MatColoringCreate()`, `MatColoring`, `MatColoringSetType()`
 M*/
@@ -503,5 +498,5 @@ PETSC_EXTERN PetscErrorCode MatColoringCreate_JP(MatColoring mc)
   mc->ops->view           = NULL;
   mc->ops->destroy        = MatColoringDestroy_JP;
   mc->ops->setfromoptions = MatColoringSetFromOptions_JP;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

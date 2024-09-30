@@ -1,4 +1,3 @@
-
 #include <petsc/private/randomimpl.h>
 
 #define USE_MPI
@@ -7,14 +6,14 @@ EXTERN_C_BEGIN
 #include <sprng.h>
 EXTERN_C_END
 
-PetscErrorCode PetscRandomSeed_Sprng(PetscRandom r)
+static PetscErrorCode PetscRandomSeed_Sprng(PetscRandom r)
 {
   PetscFunctionBegin;
   init_sprng(r->seed, SPRNG_DEFAULT);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PetscRandomGetValue_Sprng(PetscRandom r, PetscScalar *val)
+static PetscErrorCode PetscRandomGetValue_Sprng(PetscRandom r, PetscScalar *val)
 {
   PetscFunctionBegin;
 #if defined(PETSC_USE_COMPLEX)
@@ -27,10 +26,10 @@ PetscErrorCode PetscRandomGetValue_Sprng(PetscRandom r, PetscScalar *val)
   if (r->iset) *val = r->width * sprng() + r->low;
   else *val = sprng();
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PetscRandomGetValueReal_Sprng(PetscRandom r, PetscReal *val)
+static PetscErrorCode PetscRandomGetValueReal_Sprng(PetscRandom r, PetscReal *val)
 {
   PetscFunctionBegin;
 #if defined(PETSC_USE_COMPLEX)
@@ -40,7 +39,7 @@ PetscErrorCode PetscRandomGetValueReal_Sprng(PetscRandom r, PetscReal *val)
   if (r->iset) *val = r->width * sprng() + r->low;
   else *val = sprng();
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static struct _PetscRandomOps PetscRandomOps_Values = {
@@ -52,8 +51,10 @@ static struct _PetscRandomOps PetscRandomOps_Values = {
 /*MC
    PETSCSPRNG - access to the publicly available random number generator sprng
 
-   Options Database Keys:
+   Options Database Key:
 . -random_type <rand,rand48,sprng> - select the random number generator at runtime
+
+  Level: beginner
 
    Note:
    PETSc must be ./configure with the option --download-sprng to use this random number generator.
@@ -62,15 +63,13 @@ static struct _PetscRandomOps PetscRandomOps_Values = {
    This is NOT currently using a parallel random number generator. Sprng does have
    an MPI version we should investigate.
 
-  Level: beginner
-
 .seealso: `RandomCreate()`, `RandomSetType()`, `PETSCRAND`, `PETSCRAND48`, `PetscRandomSetFromOptions()`
 M*/
 
 PETSC_EXTERN PetscErrorCode PetscRandomCreate_Sprng(PetscRandom r)
 {
   PetscFunctionBegin;
-  PetscCall(PetscMemcpy(r->ops, &PetscRandomOps_Values, sizeof(PetscRandomOps_Values)));
+  r->ops[0] = PetscRandomOps_Values;
   PetscCall(PetscObjectChangeTypeName((PetscObject)r, PETSCSPRNG));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

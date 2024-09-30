@@ -69,6 +69,16 @@ extern void PetscRmPointer(void*);
 #define dmplextransformextrudesetsymmetric_ dmplextransformextrudesetsymmetric
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmplextransformextrudegetperiodic_ DMPLEXTRANSFORMEXTRUDEGETPERIODIC
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmplextransformextrudegetperiodic_ dmplextransformextrudegetperiodic
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmplextransformextrudesetperiodic_ DMPLEXTRANSFORMEXTRUDESETPERIODIC
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmplextransformextrudesetperiodic_ dmplextransformextrudesetperiodic
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmplextransformextrudegetnormal_ DMPLEXTRANSFORMEXTRUDEGETNORMAL
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmplextransformextrudegetnormal_ dmplextransformextrudegetnormal
@@ -128,6 +138,16 @@ PETSC_EXTERN void  dmplextransformextrudesetsymmetric_(DMPlexTransform tr,PetscB
 {
 *__ierr = DMPlexTransformExtrudeSetSymmetric(
 	(DMPlexTransform)PetscToPointer((tr) ),*symmetric);
+}
+PETSC_EXTERN void  dmplextransformextrudegetperiodic_(DMPlexTransform tr,PetscBool *periodic, int *__ierr)
+{
+*__ierr = DMPlexTransformExtrudeGetPeriodic(
+	(DMPlexTransform)PetscToPointer((tr) ),periodic);
+}
+PETSC_EXTERN void  dmplextransformextrudesetperiodic_(DMPlexTransform tr,PetscBool *periodic, int *__ierr)
+{
+*__ierr = DMPlexTransformExtrudeSetPeriodic(
+	(DMPlexTransform)PetscToPointer((tr) ),*periodic);
 }
 PETSC_EXTERN void  dmplextransformextrudegetnormal_(DMPlexTransform tr,PetscReal normal[], int *__ierr)
 {

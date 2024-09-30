@@ -1,4 +1,3 @@
-
 /* TODO change to
 #include <../src/mat/impls/dense/seq/dense.h>
 */
@@ -91,6 +90,6 @@ PetscErrorCode MatLoad_Dense_HDF5(Mat mat, PetscViewer viewer)
 
   PetscCall(MatAssemblyBegin(mat, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(mat, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif

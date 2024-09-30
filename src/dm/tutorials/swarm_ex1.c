@@ -1,4 +1,3 @@
-
 static char help[] = "Tests DMSwarm\n\n";
 
 #include <petscdm.h>
@@ -85,7 +84,7 @@ PetscErrorCode ex1_1(void)
   }
 
   PetscCall(DMDestroy(&dms));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ex1_2(void)
@@ -165,7 +164,7 @@ PetscErrorCode ex1_2(void)
     PetscCall(DMSwarmDestroyGlobalVectorFromField(dms, "viscosity", &x));
   }
   PetscCall(DMDestroy(&dms));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -282,7 +281,7 @@ PetscErrorCode ex1_3(void)
   }
   PetscCall(DMDestroy(&dmcell));
   PetscCall(DMDestroy(&dms));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 typedef struct {
@@ -331,7 +330,7 @@ PetscErrorCode collect_zone(DM dm, void *ctx, PetscInt *nfound, PetscInt **found
 
   *nfound    = p2collect;
   *foundlist = plist;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode ex1_4(void)
@@ -473,7 +472,7 @@ PetscErrorCode ex1_4(void)
   PetscCall(DMDestroy(&dmcell));
   PetscCall(DMDestroy(&dms));
   PetscCall(PetscFree(zone));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

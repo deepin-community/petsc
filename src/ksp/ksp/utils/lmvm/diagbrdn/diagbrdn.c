@@ -1,20 +1,14 @@
 #include <../src/ksp/ksp/utils/lmvm/diagbrdn/diagbrdn.h> /*I "petscksp.h" I*/
 
-/*------------------------------------------------------------*/
-
 static PetscErrorCode MatSolve_DiagBrdn(Mat B, Vec F, Vec dX)
 {
   Mat_LMVM     *lmvm = (Mat_LMVM *)B->data;
   Mat_DiagBrdn *ldb  = (Mat_DiagBrdn *)lmvm->ctx;
 
   PetscFunctionBegin;
-  VecCheckSameSize(F, 2, dX, 3);
-  VecCheckMatCompatible(B, dX, 3, F, 2);
   PetscCall(VecPointwiseMult(dX, ldb->invD, F));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatMult_DiagBrdn(Mat B, Vec X, Vec Z)
 {
@@ -22,38 +16,31 @@ static PetscErrorCode MatMult_DiagBrdn(Mat B, Vec X, Vec Z)
   Mat_DiagBrdn *ldb  = (Mat_DiagBrdn *)lmvm->ctx;
 
   PetscFunctionBegin;
-  VecCheckSameSize(X, 2, Z, 3);
-  VecCheckMatCompatible(B, X, 2, Z, 3);
   PetscCall(VecPointwiseDivide(Z, X, ldb->invD));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatUpdate_DiagBrdn(Mat B, Vec X, Vec F)
 {
   Mat_LMVM     *lmvm = (Mat_LMVM *)B->data;
   Mat_DiagBrdn *ldb  = (Mat_DiagBrdn *)lmvm->ctx;
   PetscInt      old_k, i, start;
-  PetscScalar   yty, ststmp, curvature, ytDy, stDs, ytDs;
-  PetscReal     curvtol, sigma, yy_sum, ss_sum, ys_sum, denom;
+  PetscScalar   yty, curvature, ytDy, stDs, ytDs;
+  PetscReal     curvtol, sigma, yy_sum, ss_sum, ys_sum, denom, ststmp;
+  PetscReal     stDsr, ytDyr;
 
   PetscFunctionBegin;
-  if (!lmvm->m) PetscFunctionReturn(0);
+  if (!lmvm->m) PetscFunctionReturn(PETSC_SUCCESS);
   if (lmvm->prev_set) {
     /* Compute the new (S = X - Xprev) and (Y = F - Fprev) vectors */
     PetscCall(VecAYPX(lmvm->Xprev, -1.0, X));
     PetscCall(VecAYPX(lmvm->Fprev, -1.0, F));
-    /* Compute tolerance for accepting the update */
-    PetscCall(VecDotBegin(lmvm->Xprev, lmvm->Fprev, &curvature));
-    PetscCall(VecDotBegin(lmvm->Xprev, lmvm->Xprev, &ststmp));
-    PetscCall(VecDotEnd(lmvm->Xprev, lmvm->Fprev, &curvature));
-    PetscCall(VecDotEnd(lmvm->Xprev, lmvm->Xprev, &ststmp));
-    if (PetscRealPart(ststmp) < lmvm->eps) {
-      curvtol = 0.0;
-    } else {
-      curvtol = lmvm->eps * PetscRealPart(ststmp);
-    }
+
+    /* Test if the updates can be accepted */
+    PetscCall(VecDotNorm2(lmvm->Xprev, lmvm->Fprev, &curvature, &ststmp));
+    if (ststmp < lmvm->eps) curvtol = 0.0;
+    else curvtol = lmvm->eps * ststmp;
+
     /* Test the curvature for the update */
     if (PetscRealPart(curvature) > curvtol) {
       /* Update is good so we accept it */
@@ -71,7 +58,7 @@ static PetscErrorCode MatUpdate_DiagBrdn(Mat B, Vec X, Vec F)
       PetscCall(VecDot(lmvm->Y[lmvm->k], lmvm->Y[lmvm->k], &yty));
       ldb->yty[lmvm->k] = PetscRealPart(yty);
       ldb->yts[lmvm->k] = PetscRealPart(curvature);
-      ldb->sts[lmvm->k] = PetscRealPart(ststmp);
+      ldb->sts[lmvm->k] = ststmp;
       if (ldb->forward) {
         /* We are doing diagonal scaling of the forward Hessian B */
         /*  BFGS = DFP = inv(D); */
@@ -172,10 +159,8 @@ static PetscErrorCode MatUpdate_DiagBrdn(Mat B, Vec X, Vec F)
             PetscCall(VecPointwiseMult(ldb->V, lmvm->Y[0], ldb->invDnew));
             PetscCall(VecPointwiseDivide(ldb->W, lmvm->S[0], ldb->invDnew));
 
-            PetscCall(VecDotBegin(ldb->V, lmvm->Y[0], &ytDy));
-            PetscCall(VecDotBegin(ldb->W, lmvm->S[0], &stDs));
-            PetscCall(VecDotEnd(ldb->V, lmvm->Y[0], &ytDy));
-            PetscCall(VecDotEnd(ldb->W, lmvm->S[0], &stDs));
+            PetscCall(VecDot(ldb->V, lmvm->Y[0], &ytDy));
+            PetscCall(VecDot(ldb->W, lmvm->S[0], &stDs));
 
             ss_sum = PetscRealPart(stDs);
             yy_sum = PetscRealPart(ytDy);
@@ -193,10 +178,8 @@ static PetscErrorCode MatUpdate_DiagBrdn(Mat B, Vec X, Vec F)
               PetscCall(VecPointwiseMult(ldb->V, lmvm->Y[i], ldb->U));
               PetscCall(VecPointwiseMult(ldb->W, lmvm->S[i], ldb->U));
 
-              PetscCall(VecDotBegin(ldb->W, lmvm->S[i], &stDs));
-              PetscCall(VecDotBegin(ldb->V, lmvm->Y[i], &ytDy));
-              PetscCall(VecDotEnd(ldb->W, lmvm->S[i], &stDs));
-              PetscCall(VecDotEnd(ldb->V, lmvm->Y[i], &ytDy));
+              PetscCall(VecDot(ldb->W, lmvm->S[i], &stDs));
+              PetscCall(VecDot(ldb->V, lmvm->Y[i], &ytDy));
 
               ss_sum += PetscRealPart(stDs);
               ys_sum += ldb->yts[i];
@@ -208,13 +191,10 @@ static PetscErrorCode MatUpdate_DiagBrdn(Mat B, Vec X, Vec F)
             /*  Compute summations for scalar scaling */
             PetscCall(VecPointwiseDivide(ldb->W, lmvm->S[0], ldb->invDnew));
 
-            PetscCall(VecDotBegin(ldb->W, lmvm->Y[0], &ytDs));
-            PetscCall(VecDotBegin(ldb->W, ldb->W, &stDs));
-            PetscCall(VecDotEnd(ldb->W, lmvm->Y[0], &ytDs));
-            PetscCall(VecDotEnd(ldb->W, ldb->W, &stDs));
+            PetscCall(VecDotNorm2(lmvm->Y[0], ldb->W, &ytDs, &stDsr));
 
             ys_sum = PetscRealPart(ytDs);
-            ss_sum = PetscRealPart(stDs);
+            ss_sum = stDsr;
             yy_sum = ldb->yty[0];
           } else {
             PetscCall(VecCopy(ldb->invDnew, ldb->U));
@@ -228,12 +208,9 @@ static PetscErrorCode MatUpdate_DiagBrdn(Mat B, Vec X, Vec F)
             for (i = start; i < PetscMin(lmvm->nupdates, ldb->sigma_hist); ++i) {
               PetscCall(VecPointwiseMult(ldb->W, lmvm->S[i], ldb->U));
 
-              PetscCall(VecDotBegin(ldb->W, lmvm->Y[i], &ytDs));
-              PetscCall(VecDotBegin(ldb->W, ldb->W, &stDs));
-              PetscCall(VecDotEnd(ldb->W, lmvm->Y[i], &ytDs));
-              PetscCall(VecDotEnd(ldb->W, ldb->W, &stDs));
+              PetscCall(VecDotNorm2(lmvm->Y[i], ldb->W, &ytDs, &stDsr));
 
-              ss_sum += PetscRealPart(stDs);
+              ss_sum += stDsr;
               ys_sum += PetscRealPart(ytDs);
               yy_sum += ldb->yty[i];
             }
@@ -247,12 +224,9 @@ static PetscErrorCode MatUpdate_DiagBrdn(Mat B, Vec X, Vec F)
           for (i = start; i < PetscMin(lmvm->nupdates, ldb->sigma_hist); ++i) {
             PetscCall(VecPointwiseMult(ldb->V, lmvm->Y[i], ldb->invDnew));
 
-            PetscCall(VecDotBegin(ldb->V, lmvm->S[i], &ytDs));
-            PetscCall(VecDotBegin(ldb->V, ldb->V, &ytDy));
-            PetscCall(VecDotEnd(ldb->V, lmvm->S[i], &ytDs));
-            PetscCall(VecDotEnd(ldb->V, ldb->V, &ytDy));
+            PetscCall(VecDotNorm2(lmvm->S[i], ldb->V, &ytDs, &ytDyr));
 
-            yy_sum += PetscRealPart(ytDy);
+            yy_sum += ytDyr;
             ys_sum += PetscRealPart(ytDs);
             ss_sum += ldb->sts[i];
           }
@@ -269,14 +243,10 @@ static PetscErrorCode MatUpdate_DiagBrdn(Mat B, Vec X, Vec F)
             PetscCall(VecPointwiseMult(ldb->V, ldb->invDnew, lmvm->Y[i]));
             PetscCall(VecPointwiseMult(ldb->W, ldb->U, lmvm->S[i]));
 
-            PetscCall(VecDotBegin(ldb->V, ldb->W, &ytDs));
-            PetscCall(VecDotBegin(ldb->V, ldb->V, &ytDy));
-            PetscCall(VecDotBegin(ldb->W, ldb->W, &stDs));
-            PetscCall(VecDotEnd(ldb->V, ldb->W, &ytDs));
-            PetscCall(VecDotEnd(ldb->V, ldb->V, &ytDy));
-            PetscCall(VecDotEnd(ldb->W, ldb->W, &stDs));
+            PetscCall(VecDotNorm2(ldb->W, ldb->V, &ytDs, &ytDyr));
+            PetscCall(VecDot(ldb->W, ldb->W, &stDs));
 
-            yy_sum += PetscRealPart(ytDy);
+            yy_sum += ytDyr;
             ys_sum += PetscRealPart(ytDs);
             ss_sum += PetscRealPart(stDs);
           }
@@ -328,10 +298,8 @@ static PetscErrorCode MatUpdate_DiagBrdn(Mat B, Vec X, Vec F)
   PetscCall(VecCopy(X, lmvm->Xprev));
   PetscCall(VecCopy(F, lmvm->Fprev));
   lmvm->prev_set = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatCopy_DiagBrdn(Mat B, Mat M, MatStructure str)
 {
@@ -359,10 +327,8 @@ static PetscErrorCode MatCopy_DiagBrdn(Mat B, Mat M, MatStructure str)
     mctx->yts[i] = bctx->yts[i];
     mctx->sts[i] = bctx->sts[i];
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatView_DiagBrdn(Mat B, PetscViewer pv)
 {
@@ -378,10 +344,8 @@ static PetscErrorCode MatView_DiagBrdn(Mat B, PetscViewer pv)
     PetscCall(PetscViewerASCIIPrintf(pv, "Convex factor: theta=%g\n", (double)ldb->theta));
   }
   PetscCall(MatView_LMVM(B, pv));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatSetFromOptions_DiagBrdn(Mat B, PetscOptionItems *PetscOptionsObject)
 {
@@ -403,10 +367,8 @@ static PetscErrorCode MatSetFromOptions_DiagBrdn(Mat B, PetscOptionItems *PetscO
   PetscCheck(!(ldb->alpha < 0.0) && !(ldb->alpha > 1.0), PetscObjectComm((PetscObject)B), PETSC_ERR_ARG_OUTOFRANGE, "convex ratio in the J0 scaling cannot be outside the range of [0, 1]");
   PetscCheck(!(ldb->rho < 0.0) && !(ldb->rho > 1.0), PetscObjectComm((PetscObject)B), PETSC_ERR_ARG_OUTOFRANGE, "convex update limiter in the J0 scaling cannot be outside the range of [0, 1]");
   PetscCheck(ldb->sigma_hist >= 0, PetscObjectComm((PetscObject)B), PETSC_ERR_ARG_OUTOFRANGE, "J0 scaling history length cannot be negative");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatReset_DiagBrdn(Mat B, PetscBool destructive)
 {
@@ -427,10 +389,8 @@ static PetscErrorCode MatReset_DiagBrdn(Mat B, PetscBool destructive)
     ldb->allocated = PETSC_FALSE;
   }
   PetscCall(MatReset_LMVM(B, destructive));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatAllocate_DiagBrdn(Mat B, Vec X, Vec F)
 {
@@ -450,10 +410,8 @@ static PetscErrorCode MatAllocate_DiagBrdn(Mat B, Vec X, Vec F)
     PetscCall(VecDuplicate(lmvm->Xprev, &ldb->W));
     ldb->allocated = PETSC_TRUE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatDestroy_DiagBrdn(Mat B)
 {
@@ -474,10 +432,8 @@ static PetscErrorCode MatDestroy_DiagBrdn(Mat B)
   }
   PetscCall(PetscFree(lmvm->ctx));
   PetscCall(MatDestroy_LMVM(B));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 static PetscErrorCode MatSetUp_DiagBrdn(Mat B)
 {
@@ -497,10 +453,8 @@ static PetscErrorCode MatSetUp_DiagBrdn(Mat B)
     PetscCall(VecDuplicate(lmvm->Xprev, &ldb->W));
     ldb->allocated = PETSC_TRUE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
-
-/*------------------------------------------------------------*/
 
 PetscErrorCode MatCreate_LMVMDiagBrdn(Mat B)
 {
@@ -539,55 +493,55 @@ PetscErrorCode MatCreate_LMVMDiagBrdn(Mat B)
   ldb->tol        = 1e-8;
   ldb->sigma_hist = 1;
   ldb->allocated  = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*------------------------------------------------------------*/
-
 /*@
-   MatCreateLMVMDiagBroyden - DiagBrdn creates a symmetric Broyden-type diagonal matrix used
-   for approximating Hessians. It consists of a convex combination of DFP and BFGS
-   diagonal approximation schemes, such that DiagBrdn = (1-theta)*BFGS + theta*DFP.
-   To preserve symmetric positive-definiteness, we restrict theta to be in [0, 1].
-   We also ensure positive definiteness by taking the `VecAbs()` of the final vector.
+  MatCreateLMVMDiagBroyden - DiagBrdn creates a symmetric Broyden-type diagonal matrix used
+  for approximating Hessians.
 
-   There are two ways of approximating the diagonal: using the forward (B) update
-   schemes for BFGS and DFP and then taking the inverse, or directly working with
-   the inverse (H) update schemes for the BFGS and DFP updates, derived using the
-   Sherman-Morrison-Woodbury formula. We have implemented both, controlled by a
-   parameter below.
+  Collective
 
-   In order to use the DiagBrdn matrix with other vector types, i.e. doing matrix-vector products
-   and matrix solves, the matrix must first be created using `MatCreate()` and `MatSetType()`,
-   followed by `MatLMVMAllocate()`. Then it will be available for updating
-   (via `MatLMVMUpdate()`) in one's favored solver implementation.
+  Input Parameters:
++ comm - MPI communicator
+. n    - number of local rows for storage vectors
+- N    - global size of the storage vectors
 
-   Collective
+  Output Parameter:
+. B - the matrix
 
-   Input Parameters:
-+  comm - MPI communicator
-.  n - number of local rows for storage vectors
--  N - global size of the storage vectors
+  Options Database Keys:
++ -mat_lmvm_theta      - (developer) convex ratio between BFGS and DFP components of the diagonal J0 scaling
+. -mat_lmvm_rho        - (developer) update limiter for the J0 scaling
+. -mat_lmvm_alpha      - (developer) coefficient factor for the quadratic subproblem in J0 scaling
+. -mat_lmvm_beta       - (developer) exponential factor for the diagonal J0 scaling
+. -mat_lmvm_sigma_hist - (developer) number of past updates to use in J0 scaling.
+. -mat_lmvm_tol        - (developer) tolerance for bounding the denominator of the rescaling away from 0.
+- -mat_lmvm_forward    - (developer) whether or not to use the forward or backward Broyden update to the diagonal
 
-   Output Parameter:
-.  B - the matrix
+  Level: intermediate
 
-   Options Database Keys:
-+   -mat_lmvm_theta - (developer) convex ratio between BFGS and DFP components of the diagonal J0 scaling
-.   -mat_lmvm_rho - (developer) update limiter for the J0 scaling
-.   -mat_lmvm_alpha - (developer) coefficient factor for the quadratic subproblem in J0 scaling
-.   -mat_lmvm_beta - (developer) exponential factor for the diagonal J0 scaling
-.   -mat_lmvm_sigma_hist - (developer) number of past updates to use in J0 scaling.
-.   -mat_lmvm_tol - (developer) tolerance for bounding the denominator of the rescaling away from 0.
--   -mat_lmvm_forward - (developer) whether or not to use the forward or backward Broyden update to the diagonal
+  Notes:
+  It is recommended that one use the `MatCreate()`, `MatSetType()` and/or `MatSetFromOptions()`
+  paradigm instead of this routine directly.
 
-   Level: intermediate
+  It consists of a convex combination of DFP and BFGS
+  diagonal approximation schemes, such that DiagBrdn = (1-theta)*BFGS + theta*DFP.
+  To preserve symmetric positive-definiteness, we restrict theta to be in [0, 1].
+  We also ensure positive definiteness by taking the `VecAbs()` of the final vector.
 
-   Note:
-   It is recommended that one use the `MatCreate()`, `MatSetType()` and/or `MatSetFromOptions()`
-   paradigm instead of this routine directly.
+  There are two ways of approximating the diagonal: using the forward (B) update
+  schemes for BFGS and DFP and then taking the inverse, or directly working with
+  the inverse (H) update schemes for the BFGS and DFP updates, derived using the
+  Sherman-Morrison-Woodbury formula. We have implemented both, controlled by a
+  parameter below.
 
-.seealso: [](chapter_ksp), `MatCreate()`, `MATLMVM`, `MATLMVMDIAGBRDN`, `MatCreateLMVMDFP()`, `MatCreateLMVMSR1()`,
+  In order to use the DiagBrdn matrix with other vector types, i.e. doing matrix-vector products
+  and matrix solves, the matrix must first be created using `MatCreate()` and `MatSetType()`,
+  followed by `MatLMVMAllocate()`. Then it will be available for updating
+  (via `MatLMVMUpdate()`) in one's favored solver implementation.
+
+.seealso: [](ch_ksp), `MatCreate()`, `MATLMVM`, `MATLMVMDIAGBRDN`, `MatCreateLMVMDFP()`, `MatCreateLMVMSR1()`,
           `MatCreateLMVMBFGS()`, `MatCreateLMVMBrdn()`, `MatCreateLMVMSymBrdn()`
 @*/
 PetscErrorCode MatCreateLMVMDiagBroyden(MPI_Comm comm, PetscInt n, PetscInt N, Mat *B)
@@ -597,5 +551,5 @@ PetscErrorCode MatCreateLMVMDiagBroyden(MPI_Comm comm, PetscInt n, PetscInt N, M
   PetscCall(MatSetSizes(*B, n, n, N, N));
   PetscCall(MatSetType(*B, MATLMVMDIAGBROYDEN));
   PetscCall(MatSetUp(*B));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

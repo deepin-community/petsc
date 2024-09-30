@@ -1,41 +1,41 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/sys/objects/pgname.c">Actual source code: pgname.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/sys/objects/pgname.c">Actual source code: pgname.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:46:56+00:00">
+<meta name="date" content="2024-03-29T14:12:53+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
 <pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../include/petsc/private/petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
 
-<a name="line2">  2: </a>#include <A href="../../../include/petsc/private/petscimpl.h.html">&lt;petsc/private/petscimpl.h&gt;</A>
+<a name="line3">  3: </a><font color="#B22222">/*@C</font>
+<a name="line4">  4: </a><font color="#B22222">  <a href="../../../manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a> - Gets a string name associated with a PETSc object.</font>
 
-<a name="line4">  4: </a><font color="#B22222">/*@C</font>
-<a name="line5">  5: </a><font color="#B22222">   <a href="../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a> - Gets a string name associated with a PETSc object.</font>
+<a name="line6">  6: </a><font color="#B22222">  Not Collective unless `obj` has not yet been named</font>
 
-<a name="line7">  7: </a><font color="#B22222">   Not Collective unless object has not been named yet</font>
+<a name="line8">  8: </a><font color="#B22222">  Input Parameters:</font>
+<a name="line9">  9: </a><font color="#B22222">+ obj  - the PETSc variable. It must be cast with a (`<a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>`), for example,</font>
+<a name="line10"> 10: </a><font color="#B22222">         `<a href="../../../manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>`((`<a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>`)mat,&amp;name);</font>
+<a name="line11"> 11: </a><font color="#B22222">- name - the name associated with `obj`</font>
 
-<a name="line9">  9: </a><font color="#B22222">   Input Parameters:</font>
-<a name="line10"> 10: </a><font color="#B22222">+  obj - the Petsc variable</font>
-<a name="line11"> 11: </a><font color="#B22222">         Thus must be cast with a (`<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>`), for example,</font>
-<a name="line12"> 12: </a><font color="#B22222">         `<a href="../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>`((`<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a>`)mat,&amp;name);</font>
-<a name="line13"> 13: </a><font color="#B22222">-  name - the name associated with obj</font>
+<a name="line13"> 13: </a><font color="#B22222">  Level: intermediate</font>
 
-<a name="line15"> 15: </a><font color="#B22222">   Note:</font>
-<a name="line16"> 16: </a><font color="#B22222">    Calls `<a href="../../../docs/manualpages/Sys/PetscObjectName.html">PetscObjectName</a>()` if a name has not yet been provided to the object.</font>
+<a name="line15"> 15: </a><font color="#B22222">  Note:</font>
+<a name="line16"> 16: </a><font color="#B22222">  Calls `<a href="../../../manualpages/Sys/PetscObjectName.html">PetscObjectName</a>()` if a name has not yet been provided to the object.</font>
 
-<a name="line18"> 18: </a><font color="#B22222">   Level: intermediate</font>
-
-<a name="line20"> 20: </a><font color="#B22222">.seealso: `<a href="../../../docs/manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>()`, `<a href="../../../docs/manualpages/Sys/PetscObjectName.html">PetscObjectName</a>()`</font>
-<a name="line21"> 21: </a><font color="#B22222">@*/</font>
-<a name="line22"> 22: </a><strong><font color="#4169E1"><a name="PetscObjectGetName"></a><a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../docs/manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>(<a href="../../../docs/manualpages/Sys/PetscObject.html">PetscObject</a> obj, const char *name[])</font></strong>
-<a name="line23"> 23: </a>{
-<a name="line26"> 26: </a>  <a href="../../../docs/manualpages/Sys/PetscObjectName.html">PetscObjectName</a>(obj);
-<a name="line27"> 27: </a>  *name = obj-&gt;name;
-<a name="line28"> 28: </a>  <font color="#4169E1">return</font> 0;
-<a name="line29"> 29: </a>}
+<a name="line18"> 18: </a><font color="#B22222">.seealso: `<a href="../../../manualpages/Sys/PetscObjectSetName.html">PetscObjectSetName</a>()`, `<a href="../../../manualpages/Sys/PetscObjectName.html">PetscObjectName</a>()`, `<a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a>`, `<a href="../../../manualpages/Sys/PetscObjectGetId.html">PetscObjectGetId</a>()`</font>
+<a name="line19"> 19: </a><font color="#B22222">@*/</font>
+<a name="line20"> 20: </a><strong><font color="#4169E1"><a name="PetscObjectGetName"></a><a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> <a href="../../../manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>(<a href="../../../manualpages/Sys/PetscObject.html">PetscObject</a> obj, const char *name[])</font></strong>
+<a name="line21"> 21: </a>{
+<a name="line22"> 22: </a>  <a href="../../../manualpages/Sys/PetscFunctionBegin.html">PetscFunctionBegin</a>;
+<a name="line24"> 24: </a>  PetscAssertPointer(name, 2);
+<a name="line25"> 25: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscObjectName.html">PetscObjectName</a>(obj));
+<a name="line26"> 26: </a>  *name = obj-&gt;name;
+<a name="line27"> 27: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
+<a name="line28"> 28: </a>}
 </pre>
 </body>
 

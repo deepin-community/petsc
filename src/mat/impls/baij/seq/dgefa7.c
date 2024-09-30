@@ -1,4 +1,3 @@
-
 /*
       Inverts 7 by 7 matrix using gaussian elimination with partial pivoting.
 
@@ -164,5 +163,5 @@ PETSC_EXTERN PetscErrorCode PetscKernel_A_gets_inverse_A_7(MatScalar *a, PetscRe
       ay[6] = stmp;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

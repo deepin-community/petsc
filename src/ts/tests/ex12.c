@@ -1,4 +1,3 @@
-
 static char help[] = "Tests PetscObjectSetOptions() for TS object\n\n";
 
 /* ------------------------------------------------------------------------
@@ -221,6 +220,7 @@ PetscErrorCode InitialConditions(Vec u, AppCtx *appctx)
   PetscScalar *u_localptr, h = appctx->h, x;
   PetscInt     i, mybase, myend;
 
+  PetscFunctionBeginUser;
   /*
      Determine starting point of each processor's range of
      grid values.
@@ -253,7 +253,7 @@ PetscErrorCode InitialConditions(Vec u, AppCtx *appctx)
   */
   PetscCall(VecRestoreArray(u, &u_localptr));
 
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------------------------------------------------------- */
 /*
@@ -272,6 +272,7 @@ PetscErrorCode ExactSolution(PetscReal t, Vec solution, AppCtx *appctx)
   PetscScalar *s_localptr, h = appctx->h, x;
   PetscInt     i, mybase, myend;
 
+  PetscFunctionBeginUser;
   /*
      Determine starting and ending points of each processor's
      range of grid values
@@ -296,7 +297,7 @@ PetscErrorCode ExactSolution(PetscReal t, Vec solution, AppCtx *appctx)
      Restore vector
   */
   PetscCall(VecRestoreArray(solution, &s_localptr));
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------------------------------------------------------- */
 /*
@@ -326,6 +327,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal t, Vec global_in, Vec global_out, vo
   PetscScalar       *copyptr, sc;
   const PetscScalar *localptr;
 
+  PetscFunctionBeginUser;
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Get ready for local function computations
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -392,7 +394,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal t, Vec global_in, Vec global_out, vo
   PetscCall(DMLocalToGlobalBegin(da, localwork, INSERT_VALUES, global_out));
   PetscCall(DMLocalToGlobalEnd(da, localwork, INSERT_VALUES, global_out));
 
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* --------------------------------------------------------------------- */
 /*
@@ -432,6 +434,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal t, Vec global_in, Mat AA, Mat BB, vo
   const PetscScalar *localptr;
   PetscInt           i, mstart, mend, mstarts, mends, idx[3], is;
 
+  PetscFunctionBeginUser;
   /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
      Get ready for local Jacobian computations
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -525,7 +528,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal t, Vec global_in, Mat AA, Mat BB, vo
   */
   PetscCall(MatSetOption(BB, MAT_NEW_NONZERO_LOCATION_ERR, PETSC_TRUE));
 
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

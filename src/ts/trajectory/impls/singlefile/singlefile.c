@@ -1,4 +1,3 @@
-
 #include <petsc/private/tsimpl.h> /*I "petscts.h"  I*/
 
 typedef struct {
@@ -20,7 +19,7 @@ static PetscErrorCode TSTrajectorySet_Singlefile(TSTrajectory tj, TS ts, PetscIn
   }
   PetscCall(VecView(X, sf->viewer));
   PetscCall(PetscViewerBinaryWrite(sf->viewer, &time, 1, PETSC_REAL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TSTrajectoryDestroy_Singlefile(TSTrajectory tj)
@@ -30,7 +29,7 @@ static PetscErrorCode TSTrajectoryDestroy_Singlefile(TSTrajectory tj)
   PetscFunctionBegin;
   PetscCall(PetscViewerDestroy(&sf->viewer));
   PetscCall(PetscFree(sf));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -39,7 +38,7 @@ static PetscErrorCode TSTrajectoryDestroy_Singlefile(TSTrajectory tj)
 
   Level: intermediate
 
-.seealso: [](chapter_ts), `TSTrajectoryCreate()`, `TS`, `TSTrajectorySetType()`, `TSTrajectoryType`, `TSTrajectory`
+.seealso: [](ch_ts), `TSTrajectoryCreate()`, `TS`, `TSTrajectorySetType()`, `TSTrajectoryType`, `TSTrajectory`
 M*/
 PETSC_EXTERN PetscErrorCode TSTrajectoryCreate_Singlefile(TSTrajectory tj, TS ts)
 {
@@ -52,5 +51,5 @@ PETSC_EXTERN PetscErrorCode TSTrajectoryCreate_Singlefile(TSTrajectory tj, TS ts
   tj->ops->get     = NULL;
   tj->ops->destroy = TSTrajectoryDestroy_Singlefile;
   ts->setupcalled  = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

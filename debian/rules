@@ -154,7 +154,6 @@ CONFIGURATION_OPTIONS=--with-shared-libraries --with-pic=1 \
 	  --with-opencl=1 \
 	  --with-blas-lib=-lblas --with-lapack-lib=-llapack \
 	  --with-scalapack=1 --with-scalapack-lib=-lscalapack-$(PETSC_MPI) \
-	  --with-ptscotch=1 --with-ptscotch-include=/usr/include/scotch --with-ptscotch-lib="-lptesmumps -lptscotch -lptscotcherr" \
 	  --with-fftw=1 --with-fftw-include=[] --with-fftw-lib="-lfftw3 -lfftw3_mpi" \
 	  --with-yaml=1 \
 	  $(VALGRIND_CONFIG) \
@@ -181,7 +180,14 @@ else
          --with-hypre-lib="-l$(HYPRE64_LIB)"
 endif
 
-# standard MUMPS (32 bit)
+# standard scotch (32 but integers)
+SCOTCH_CONFIG=--with-ptscotch=1 --with-ptscotch-include=/usr/include/scotch --with-ptscotch-lib="-lptesmumps -lptscotch -lptscotcherr" \
+
+# 64-bit scotch
+SCOTCH64_LIBDIR=/usr/lib/$(DEB_HOST_MULTIARCH)/scotch-int64
+SCOTCH64_CONFIG=--with-ptscotch=1 --with-ptscotch-include=/usr/include/scotch-int64 --with-ptscotch-lib="-Wl,-rpath=$(SCOTCH64_LIBDIR) -L$(SCOTCH64_LIBDIR) -lptesmumps -lptscotch -lptscotcherr" \
+
+# standard MUMPS (32 bit integers)
 MUMPS_CONFIG=--with-mumps=1 --with-mumps-include=[] --with-mumps-lib="-ldmumps -lzmumps -lsmumps -lcmumps -lmumps_common -lpord"
 
 # 64-bit MUMPS
@@ -260,6 +266,7 @@ override_dh_clean: override_dh_auto_clean
 	dh_clean
 	rm -f *.log *.log.bkp configtest.mod
 	rm -f src/vec/vec/tests/x.h5
+	rm -rf lib/petsc/bin/__pycache__
 	rm -f lib/petsc/conf/petscvariables
 	rm -f reconfigure-*.py
 	find config -name *.pyc | xargs rm -f
@@ -274,6 +281,7 @@ override_dh_auto_configure:
           --with-debugging=1  \
           --shared-library-extension=_real \
           $(CONFIGURATION_OPTIONS)  \
+          $(SCOTCH_CONFIG)  \
           $(HYPRE_CONFIG)  \
           $(MUMPS_CONFIG)  \
           $(SUITESPARSE_CONFIG) \
@@ -297,6 +305,7 @@ override_dh_auto_configure:
           --with-debugging=0  \
           --shared-library-extension=_real \
           $(CONFIGURATION_OPTIONS)  \
+          $(SCOTCH_CONFIG)  \
           $(HYPRE_CONFIG)  \
           $(MUMPS_CONFIG)  \
           $(SUITESPARSE_CONFIG) \
@@ -320,6 +329,7 @@ override_dh_auto_configure:
           --with-debugging=0  \
           --with-scalar-type=complex --shared-library-extension=_complex \
           $(CONFIGURATION_OPTIONS)  \
+          $(SCOTCH_CONFIG)  \
           $(MUMPS_CONFIG)  \
           $(SUITESPARSE_CONFIG) \
           $(SUPERLU_CONFIG)  \
@@ -341,6 +351,7 @@ override_dh_auto_configure:
           --with-debugging=1  \
           --with-scalar-type=complex --shared-library-extension=_complex \
           $(CONFIGURATION_OPTIONS)  \
+          $(SCOTCH_CONFIG)  \
           $(MUMPS_CONFIG)  \
           $(SUITESPARSE_CONFIG) \
           $(SUPERLU_CONFIG)  \
@@ -363,6 +374,7 @@ override_dh_auto_configure:
           --with-debugging=1  \
           --shared-library-extension=64_real \
           $(CONFIGURATION_OPTIONS)  \
+          $(SCOTCH64_CONFIG)  \
           $(HYPRE64_CONFIG)  \
           $(MUMPS64_CONFIG)  \
           $(SUITESPARSE64_CONFIG) \
@@ -384,6 +396,7 @@ override_dh_auto_configure:
           --with-debugging=0  \
           --shared-library-extension=64_real \
           $(CONFIGURATION_OPTIONS)  \
+          $(SCOTCH64_CONFIG)  \
           $(HYPRE64_CONFIG)  \
           $(MUMPS64_CONFIG)  \
           $(SUITESPARSE64_CONFIG) \
@@ -405,6 +418,7 @@ override_dh_auto_configure:
           --with-debugging=0  \
           --with-scalar-type=complex --shared-library-extension=64_complex \
           $(CONFIGURATION_OPTIONS)  \
+          $(SCOTCH64_CONFIG)  \
           $(MUMPS64_CONFIG)  \
           $(SUITESPARSE64_CONFIG) \
           $(ZOLTAN_CONFIG)  \
@@ -425,6 +439,7 @@ override_dh_auto_configure:
           --with-debugging=1  \
           --with-scalar-type=complex --shared-library-extension=64_complex \
           $(CONFIGURATION_OPTIONS)  \
+          $(SCOTCH64_CONFIG)  \
           $(MUMPS64_CONFIG)  \
           $(SUITESPARSE64_CONFIG) \
           $(ZOLTAN_CONFIG)  \
@@ -585,6 +600,8 @@ override_dh_installdocs-indep:
 	    sed "s|href=\"$${h}\"|href=\"/usr/include/petsc$${hdir}/$${h}\"|" -i $${hdoc};  \
 	  done  \
 	fi
+	rm -rf debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/docs/_static/language_data.js
+	ln -s /usr/share/javascript/sphinxdoc/1.0/language_data.js debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/docs/_static/
 	for j in jquery searchtools underscore doctools; do \
 	    rm -rf debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/docs/_static/$${j}.js ; \
 	    ln -s /usr/share/sphinx/themes/basic/static/$${j}.js debian/$(PETSC_DOC_PACKAGE)/usr/share/doc/$(PETSC_DOC_PACKAGE)/docs/_static/$${j}.js ; \
@@ -647,12 +664,6 @@ override_dh_installdeb:
 
 override_dh_gencontrol:
 	dh_gencontrol -- -VMPI:Depends="$(MPI_DEPENDS)"
-
-override_dh_strip:
-	dh_strip --dbg-package=$(PETSC_REAL_DEBUG_PACKAGE)
-	dh_strip --dbg-package=$(PETSC_COMPLEX_DEBUG_PACKAGE)
-	dh_strip --dbg-package=$(PETSC64_REAL_DEBUG_PACKAGE)
-	dh_strip --dbg-package=$(PETSC64_COMPLEX_DEBUG_PACKAGE)
 
 # a sample binary build is made to build docs, but those binaries are not installed in an arch-indep build
 override_dh_missing-indep:

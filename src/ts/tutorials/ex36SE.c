@@ -1,4 +1,3 @@
-
 static char help[] = "Transistor amplifier (semi-explicit).\n";
 
 /*F
@@ -25,7 +24,7 @@ PetscErrorCode Ue(PetscScalar t, PetscScalar *U)
 {
   PetscFunctionBeginUser;
   U = 0.4 * sin(200 * pi * t);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 * /
 
@@ -52,7 +51,7 @@ PetscErrorCode Ue(PetscScalar t, PetscScalar *U)
   PetscCall(VecRestoreArrayRead(Y, &y));
   PetscCall(VecRestoreArrayRead(Ydot, &ydot));
   PetscCall(VecRestoreArray(F, &f));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -100,7 +99,7 @@ static PetscErrorCode IJacobianSemiExplicit(TS ts, PetscReal t, Vec Y, Vec Ydot,
     PetscCall(MatAssemblyBegin(B, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(B, MAT_FINAL_ASSEMBLY));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)

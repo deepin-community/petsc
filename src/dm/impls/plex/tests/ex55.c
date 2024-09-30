@@ -29,7 +29,7 @@ static PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   options->format                  = PETSC_VIEWER_DEFAULT;
   options->second_write_read       = PETSC_FALSE;
   options->use_low_level_functions = PETSC_FALSE;
-  PetscCall(PetscStrcpy(options->ofname, "ex55.h5"));
+  PetscCall(PetscStrncpy(options->ofname, "ex55.h5", sizeof(options->ofname)));
 
   PetscOptionsBegin(comm, "", "Meshing Problem Options", "DMPLEX");
   PetscCall(PetscOptionsBool("-compare", "Compare the meshes using DMPlexEqual()", "ex55.c", options->compare, &options->compare, NULL));
@@ -43,7 +43,7 @@ static PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   PetscCall(PetscOptionsBool("-second_write_read", "Write and read for the 2nd time", "ex55.c", options->second_write_read, &options->second_write_read, NULL));
   PetscCall(PetscOptionsBool("-use_low_level_functions", "Use low level functions for viewing and loading", "ex55.c", options->use_low_level_functions, &options->use_low_level_functions, NULL));
   PetscOptionsEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode CheckDistributed(DM dm, PetscBool expectedDistributed)
@@ -55,10 +55,10 @@ static PetscErrorCode CheckDistributed(DM dm, PetscBool expectedDistributed)
 
   PetscFunctionBeginUser;
   PetscCallMPI(MPI_Comm_size(PetscObjectComm((PetscObject)dm), &size));
-  if (size < 2) PetscFunctionReturn(0);
+  if (size < 2) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(DMPlexIsDistributed(dm, &distributed));
   PetscCheck(distributed == expectedDistributed, PetscObjectComm((PetscObject)dm), PETSC_ERR_PLIB, "Expected DM being %s but actually is %s", expectedDistributed ? YES : NO, distributed ? YES : NO);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode CheckInterpolated(DM dm, PetscBool expectedInterpolated)
@@ -72,7 +72,7 @@ static PetscErrorCode CheckInterpolated(DM dm, PetscBool expectedInterpolated)
   PetscCall(DMPlexIsInterpolatedCollective(dm, &iflg));
   interpolated = (PetscBool)(iflg == DMPLEX_INTERPOLATED_FULL);
   PetscCheck(interpolated == expectedInterpolated, PetscObjectComm((PetscObject)dm), PETSC_ERR_PLIB, "Expected DM being %s but actually is %s", expectedInterpolated ? YES : NO, interpolated ? YES : NO);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode CheckDistributedInterpolated(DM dm, PetscViewer v, AppCtx *user)
@@ -104,7 +104,7 @@ static PetscErrorCode CheckDistributedInterpolated(DM dm, PetscViewer v, AppCtx 
   }
   PetscCall(CheckDistributed(dm, distributed));
   PetscCall(CheckInterpolated(dm, interpolated));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode DMPlexWriteAndReadHDF5(DM dm, const char filename[], const char prefix[], AppCtx *user, DM *dm_new)
@@ -146,7 +146,7 @@ static PetscErrorCode DMPlexWriteAndReadHDF5(DM dm, const char filename[], const
   PetscCall(PetscViewerPopFormat(v));
   PetscCall(PetscViewerDestroy(&v));
   *dm_new = dmnew;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -238,7 +238,7 @@ int main(int argc, char **argv)
       suffix: 2
       nsize: {{1 2 4 8}separate output}
       args: -format {{default hdf5_petsc}separate output}
-      args: -dm_plex_view_hdf5_storage_version {{1.0.0 2.0.0}}
+      args: -dm_plex_view_hdf5_storage_version {{1.0.0 2.0.0 3.0.0}}
       args: -interpolate {{0 1}separate output}
     test:
       suffix: 2a
@@ -249,7 +249,7 @@ int main(int argc, char **argv)
     suffix: 3
     requires: exodusii
     args: -filename ${wPETSC_DIR}/share/petsc/datafiles/meshes/blockcylinder-50.exo -compare -compare_labels
-    args: -dm_plex_view_hdf5_storage_version {{1.0.0 2.0.0}}
+    args: -dm_plex_view_hdf5_storage_version {{1.0.0 2.0.0 3.0.0}}
 
   # Load HDF5 file in XDMF format in parallel, write, read dm1, write, read dm2, and compare dm1 and dm2
   testset:
@@ -261,7 +261,7 @@ int main(int argc, char **argv)
       suffix: hdf5_petsc
       nsize: {{1 2}}
       args: -format hdf5_petsc -compare_labels
-      args: -dm_plex_view_hdf5_storage_version {{1.0.0 2.0.0}}
+      args: -dm_plex_view_hdf5_storage_version {{1.0.0 2.0.0 3.0.0}}
     test:
       suffix: hdf5_xdmf
       nsize: {{1 3 8}}
@@ -287,7 +287,7 @@ int main(int argc, char **argv)
     args: -filename ${DATAFILESPATH}/meshes/cube-hexahedra-refined.h5 -dm_plex_create_from_hdf5_xdmf -dm_plex_hdf5_topology_path /cells -dm_plex_hdf5_geometry_path /coordinates
     args: -format hdf5_petsc -second_write_read -compare -compare_labels
     args: -interpolate {{0 1}} -distribute {{0 1}}
-    args: -dm_plex_view_hdf5_storage_version {{1.0.0 2.0.0}}
+    args: -dm_plex_view_hdf5_storage_version {{1.0.0 2.0.0 3.0.0}}
 
   testset:
     # the same data and settings as dm_impls_plex_tests-ex18_9%
@@ -297,6 +297,7 @@ int main(int argc, char **argv)
     args: -dm_plex_check_symmetry -dm_plex_check_skeleton -dm_plex_check_geometry
     args: -filename ${DATAFILESPATH}/meshes/cube-hexahedra-refined.h5 -dm_plex_create_from_hdf5_xdmf -dm_plex_hdf5_topology_path /cells -dm_plex_hdf5_geometry_path /coordinates
     args: -format {{hdf5_petsc hdf5_xdmf}} -second_write_read -compare
+    args: -dm_plex_view_hdf5_storage_version 3.0.0
     test:
       suffix: hdf5_seqload
       args: -distribute
@@ -329,14 +330,14 @@ int main(int argc, char **argv)
     requires: exodusii
     nsize: 2
     args: -filename ${wPETSC_DIR}/share/petsc/datafiles/meshes/TwoQuads.exo -new_dm_view ascii:ex5_new_dm_view.log:ascii_info_detail
-    args: -dm_plex_view_hdf5_storage_version {{1.0.0 2.0.0}}
+    args: -dm_plex_view_hdf5_storage_version {{1.0.0 2.0.0 3.0.0}}
 
   # test backward compatibility with petsc_hdf5 format version 1.0.0, serial idempotence
   testset:
     suffix: 10-v3.16.0-v1.0.0
     requires: hdf5 !complex datafilespath
     args: -dm_plex_check_all -compare -compare_labels
-    args: -dm_plex_view_hdf5_storage_version {{1.0.0 2.0.0}} -use_low_level_functions {{0 1}}
+    args: -dm_plex_view_hdf5_storage_version {{1.0.0 2.0.0 3.0.0}} -use_low_level_functions {{0 1}}
     test:
       suffix: a
       args: -filename ${DATAFILESPATH}/meshes/hdf5-petsc/petsc-v3.16.0/v1.0.0/annulus-20.h5

@@ -74,7 +74,6 @@ extern void PetscRmPointer(void*);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
 PETSC_EXTERN void  matseqaijsettotalpreallocation_(Mat A,PetscInt *nztotal, int *__ierr)
 {
 *__ierr = MatSeqAIJSetTotalPreallocation(

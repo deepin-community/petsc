@@ -37,14 +37,14 @@ static PetscErrorCode Petsc1DNodeFamilyCreate(PetscDTNodeType family, PetscReal 
   }
   f->refct = 1;
   *nf      = f;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode Petsc1DNodeFamilyReference(Petsc1DNodeFamily nf)
 {
   PetscFunctionBegin;
   if (nf) nf->refct++;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode Petsc1DNodeFamilyDestroy(Petsc1DNodeFamily *nf)
@@ -52,17 +52,17 @@ static PetscErrorCode Petsc1DNodeFamilyDestroy(Petsc1DNodeFamily *nf)
   PetscInt i, nc;
 
   PetscFunctionBegin;
-  if (!(*nf)) PetscFunctionReturn(0);
+  if (!(*nf)) PetscFunctionReturn(PETSC_SUCCESS);
   if (--(*nf)->refct > 0) {
     *nf = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   nc = (*nf)->nComputed;
   for (i = 0; i < nc; i++) PetscCall(PetscFree((*nf)->nodesets[i]));
   PetscCall(PetscFree((*nf)->nodesets));
   PetscCall(PetscFree(*nf));
   *nf = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode Petsc1DNodeFamilyGetNodeSets(Petsc1DNodeFamily f, PetscInt degree, PetscReal ***nodesets)
@@ -112,7 +112,7 @@ static PetscErrorCode Petsc1DNodeFamilyGetNodeSets(Petsc1DNodeFamily f, PetscInt
     f->nComputed = degree + 1;
   }
   *nodesets = f->nodesets;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* http://arxiv.org/abs/2002.09421 for details */
@@ -138,7 +138,7 @@ static PetscErrorCode PetscNodeRecursive_Internal(PetscInt dim, PetscInt degree,
     }
     for (i = 0; i < dim + 1; i++) node[i] /= w;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* compute simplex nodes for the biunit simplex from the 1D node family */
@@ -155,13 +155,13 @@ static PetscErrorCode Petsc1DNodeFamilyComputeSimplexNodes(Petsc1DNodeFamily f, 
   PetscFunctionBegin;
   PetscCheck(dim >= 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Must have non-negative dimension");
   PetscCheck(degree >= 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Must have non-negative degree");
-  if (!dim) PetscFunctionReturn(0);
+  if (!dim) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(PetscCalloc1(dim + 2, &tup));
   k = 0;
   PetscCall(PetscDTBinomialInt(degree + dim, dim, &npoints));
   PetscCall(Petsc1DNodeFamilyGetNodeSets(f, degree, &nodesets));
   worksize = ((dim + 2) * (dim + 3)) / 2;
-  PetscCall(PetscMalloc2(worksize, &nodework, worksize, &tupwork));
+  PetscCall(PetscCalloc2(worksize, &nodework, worksize, &tupwork));
   /* loop over the tuples of length dim with sum at most degree */
   for (k = 0; k < npoints; k++) {
     PetscInt i;
@@ -173,6 +173,7 @@ static PetscErrorCode Petsc1DNodeFamilyComputeSimplexNodes(Petsc1DNodeFamily f, 
     case PETSCDTNODES_EQUISPACED:
       /* compute equispaces nodes on the unit reference triangle */
       if (f->endpoints) {
+        PetscCheck(degree > 0, PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Must have positive degree");
         for (i = 0; i < dim; i++) points[dim * k + i] = (PetscReal)tup[i + 1] / (PetscReal)degree;
       } else {
         for (i = 0; i < dim; i++) {
@@ -183,7 +184,7 @@ static PetscErrorCode Petsc1DNodeFamilyComputeSimplexNodes(Petsc1DNodeFamily f, 
       }
       break;
     default:
-      /* compute equispaces nodes on the barycentric reference triangle (the trace on the first dim dimensions are the
+      /* compute equispaced nodes on the barycentric reference triangle (the trace on the first dim dimensions are the
        * unit reference triangle nodes */
       for (i = 0; i < dim + 1; i++) tupwork[i] = tup[i];
       PetscCall(PetscNodeRecursive_Internal(dim, degree, nodesets, tupwork, nodework));
@@ -196,7 +197,7 @@ static PetscErrorCode Petsc1DNodeFamilyComputeSimplexNodes(Petsc1DNodeFamily f, 
   for (k = 0; k < npoints * dim; k++) points[k] = points[k] * 2. - 1.;
   PetscCall(PetscFree2(nodework, tupwork));
   PetscCall(PetscFree(tup));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* If we need to get the dofs from a mesh point, or add values into dofs at a mesh point, and there is more than one dof
@@ -326,14 +327,14 @@ PetscErrorCode PetscLagNodeIndicesGetData_Internal(PetscLagNodeIndices ni, Petsc
   *nNodes     = ni->nNodes;
   *nodeIdx    = ni->nodeIdx;
   *nodeVec    = ni->nodeVec;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscLagNodeIndicesReference(PetscLagNodeIndices ni)
 {
   PetscFunctionBegin;
   if (ni) ni->refct++;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscLagNodeIndicesDuplicate(PetscLagNodeIndices ni, PetscLagNodeIndices *niNew)
@@ -349,23 +350,23 @@ static PetscErrorCode PetscLagNodeIndicesDuplicate(PetscLagNodeIndices ni, Petsc
   PetscCall(PetscMalloc1(ni->nNodes * ni->nodeVecDim, &((*niNew)->nodeVec)));
   PetscCall(PetscArraycpy((*niNew)->nodeVec, ni->nodeVec, ni->nNodes * ni->nodeVecDim));
   (*niNew)->perm = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscLagNodeIndicesDestroy(PetscLagNodeIndices *ni)
 {
   PetscFunctionBegin;
-  if (!(*ni)) PetscFunctionReturn(0);
+  if (!(*ni)) PetscFunctionReturn(PETSC_SUCCESS);
   if (--(*ni)->refct > 0) {
     *ni = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(PetscFree((*ni)->nodeIdx));
   PetscCall(PetscFree((*ni)->nodeVec));
   PetscCall(PetscFree((*ni)->perm));
   PetscCall(PetscFree(*ni));
   *ni = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* The vertices are given nodeIdx coordinates (e.g. the corners of the barycentric triangle).  Those coordinates are
@@ -466,7 +467,7 @@ static PetscErrorCode PetscLagNodeIndicesComputeVertexOrder(DM dm, PetscLagNodeI
   ni->perm    = invClosureOrder;
   PetscCall(PetscFree(revlexOrder));
   PetscCall(PetscFree(closureOrder));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* the coordinates of the simplex vertices are the corners of the barycentric simplex.
@@ -487,7 +488,7 @@ static PetscErrorCode PetscLagNodeIndicesCreateSimplexVertices(DM dm, PetscLagNo
   for (d = 0; d < dim + 1; d++) ni->nodeIdx[d * (dim + 2)] = 1;
   PetscCall(PetscLagNodeIndicesComputeVertexOrder(dm, ni, PETSC_FALSE));
   *nodeIndices = ni;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* A polytope that is a tensor product of a facet and a segment.
@@ -519,7 +520,7 @@ static PetscErrorCode PetscLagNodeIndicesCreateTensorVertices(DM dm, PetscLagNod
   }
   PetscCall(PetscLagNodeIndicesComputeVertexOrder(dm, ni, PETSC_TRUE));
   *nodeIndices = ni;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* This helps us compute symmetries, and it also helps us compute coordinates for dofs that are being pushed
@@ -643,7 +644,7 @@ static PetscErrorCode PetscLagNodeIndicesPushForward(DM dm, PetscLagNodeIndices 
   }
   PetscCall(DMRestoreWorkArray(dm, pNk * Nk, MPIU_REAL, &Jstar));
   PetscCall(DMRestoreWorkArray(dm, dim * dim, MPIU_REAL, &J));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* given to sets of nodes, take the tensor product, where the product of the dof indices is concatenation and the
@@ -744,7 +745,7 @@ static PetscErrorCode PetscLagNodeIndicesTensor(PetscLagNodeIndices tracei, Pets
   PetscCall(PetscFree2(projTstar, projFstar));
   PetscCall(PetscFree2(projT, projF));
   *nodeIndices = ni;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* simple union of two sets of nodes */
@@ -768,7 +769,7 @@ static PetscErrorCode PetscLagNodeIndicesMerge(PetscLagNodeIndices niA, PetscLag
   PetscCall(PetscArraycpy(&(ni->nodeIdx[niA->nNodes * nodeIdxDim]), niB->nodeIdx, niB->nNodes * nodeIdxDim));
   PetscCall(PetscArraycpy(&(ni->nodeVec[niA->nNodes * nodeVecDim]), niB->nodeVec, niB->nNodes * nodeVecDim));
   *nodeIndices = ni;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #define PETSCTUPINTCOMPREVLEX(N) \
@@ -851,7 +852,7 @@ static PetscErrorCode PetscLagNodeIndicesGetPermutation(PetscLagNodeIndices ni, 
     PetscCall(PetscFree(sorter));
   }
   *perm = ni->perm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceDestroy_Lagrange(PetscDualSpace sp)
@@ -899,7 +900,7 @@ static PetscErrorCode PetscDualSpaceDestroy_Lagrange(PetscDualSpace sp)
   PetscCall(PetscObjectComposeFunction((PetscObject)sp, "PetscDualSpaceLagrangeSetUseMoments_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)sp, "PetscDualSpaceLagrangeGetMomentOrder_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)sp, "PetscDualSpaceLagrangeSetMomentOrder_C", NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceLagrangeView_Ascii(PetscDualSpace sp, PetscViewer viewer)
@@ -908,7 +909,7 @@ static PetscErrorCode PetscDualSpaceLagrangeView_Ascii(PetscDualSpace sp, PetscV
 
   PetscFunctionBegin;
   PetscCall(PetscViewerASCIIPrintf(viewer, "%s %s%sLagrange dual space\n", lag->continuous ? "Continuous" : "Discontinuous", lag->tensorSpace ? "tensor " : "", lag->trimmed ? "trimmed " : ""));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceView_Lagrange(PetscDualSpace sp, PetscViewer viewer)
@@ -920,7 +921,7 @@ static PetscErrorCode PetscDualSpaceView_Lagrange(PetscDualSpace sp, PetscViewer
   PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
   PetscCall(PetscObjectTypeCompare((PetscObject)viewer, PETSCVIEWERASCII, &iascii));
   if (iascii) PetscCall(PetscDualSpaceLagrangeView_Ascii(sp, viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceSetFromOptions_Lagrange(PetscDualSpace sp, PetscOptionItems *PetscOptionsObject)
@@ -956,7 +957,7 @@ static PetscErrorCode PetscDualSpaceSetFromOptions_Lagrange(PetscDualSpace sp, P
   PetscCall(PetscOptionsInt("-petscdualspace_lagrange_moment_order", "Quadrature order for moment functionals", "PetscDualSpaceLagrangeSetMomentOrder", momentOrder, &momentOrder, &flg));
   if (flg) PetscCall(PetscDualSpaceLagrangeSetMomentOrder(sp, momentOrder));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceDuplicate_Lagrange(PetscDualSpace sp, PetscDualSpace spNew)
@@ -981,7 +982,7 @@ static PetscErrorCode PetscDualSpaceDuplicate_Lagrange(PetscDualSpace sp, PetscD
     PetscCall(Petsc1DNodeFamilyReference(lag->nodeFamily));
     lagnew->nodeFamily = lag->nodeFamily;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* for making tensor product spaces: take a dual space and product a segment space that has all the same
@@ -1002,7 +1003,7 @@ static PetscErrorCode PetscDualSpaceCreateEdgeSubspace_Lagrange(PetscDualSpace s
   newlag               = (PetscDualSpace_Lag *)(*bdsp)->data;
   newlag->interiorOnly = interiorOnly;
   PetscCall(PetscDualSpaceSetUp(*bdsp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* just the points, weights aren't handled */
@@ -1030,7 +1031,7 @@ static PetscErrorCode PetscQuadratureCreateTensor(PetscQuadrature trace, PetscQu
   }
   PetscCall(PetscQuadratureCreate(PETSC_COMM_SELF, product));
   PetscCall(PetscQuadratureSetData(*product, dim, 0, numPoints, points, NULL));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Kronecker tensor product where matrix is considered a matrix of k-forms, so that
@@ -1171,10 +1172,10 @@ static PetscErrorCode MatTensorAltV(Mat trace, Mat fiber, PetscInt dimTrace, Pet
   PetscCall(MatAssemblyBegin(prod, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(prod, MAT_FINAL_ASSEMBLY));
   *product = prod;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/* Union of quadrature points, with an attempt to identify commont points in the two sets */
+/* Union of quadrature points, with an attempt to identify common points in the two sets */
 static PetscErrorCode PetscQuadraturePointsMerge(PetscQuadrature quadA, PetscQuadrature quadB, PetscQuadrature *quadJoint, PetscInt *aToJoint[], PetscInt *bToJoint[])
 {
   PetscInt         dimA, dimB;
@@ -1217,7 +1218,7 @@ static PetscErrorCode PetscQuadraturePointsMerge(PetscQuadrature quadA, PetscQua
   PetscCall(PetscQuadratureCreate(PETSC_COMM_SELF, &qJ));
   PetscCall(PetscQuadratureSetData(qJ, dimA, 0, nJoint, pointsJoint, NULL));
   *quadJoint = qJ;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Matrices matA and matB are both quadrature -> dof matrices: produce a matrix that is joint quadrature -> union of
@@ -1285,7 +1286,7 @@ static PetscErrorCode MatricesMerge(Mat matA, Mat matB, PetscInt dim, PetscInt k
   PetscCall(MatAssemblyBegin(M, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(M, MAT_FINAL_ASSEMBLY));
   *matMerged = M;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Take a dual space and product a segment space that has all the same specifications (trimmed, continuous, order,
@@ -1327,7 +1328,7 @@ static PetscErrorCode PetscDualSpaceCreateFacetSubspace_Lagrange(PetscDualSpace 
   newlag               = (PetscDualSpace_Lag *)(*bdsp)->data;
   newlag->interiorOnly = interiorOnly;
   PetscCall(PetscDualSpaceSetUp(*bdsp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Construct simplex nodes from a nodefamily, add Nk dof vectors of length Nk at each node.
@@ -1419,7 +1420,7 @@ static PetscErrorCode PetscDualSpaceLagrangeCreateSimplexNodeMat(Petsc1DNodeFami
   *iNodes      = intNodes;
   *iMat        = intMat;
   *nodeIndices = ni;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* once the nodeIndices have been created for the interior of the reference cell, and for all of the boundary cells,
@@ -1469,7 +1470,7 @@ static PetscErrorCode PetscDualSpaceLagrangeCreateAllNodeIdx(PetscDualSpace sp)
     PetscCall(PetscLagNodeIndicesPushForward(dm, verti, p, plag->vertIndices, plag->intNodeIndices, 0, formDegree, &(ni->nodeIdx[off * nodeIdxDim]), &(ni->nodeVec[off * Nk])));
   }
   lag->allNodeIndices = ni;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* once the (quadrature, Matrix) forms of the dofs have been created for the interior of the
@@ -1628,7 +1629,48 @@ static PetscErrorCode PetscDualSpaceCreateAllDataFromInteriorData(PetscDualSpace
   sp->allMat = allMat;
   PetscCall(PetscQuadratureDestroy(&(sp->allNodes)));
   sp->allNodes = allNodes;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+static PetscErrorCode PetscDualSpaceComputeFunctionalsFromAllData_Moments(PetscDualSpace sp)
+{
+  Mat              allMat;
+  PetscInt         momentOrder, i;
+  PetscBool        tensor = PETSC_FALSE;
+  const PetscReal *weights;
+  PetscScalar     *array;
+  PetscInt         nDofs;
+  PetscInt         dim, Nc;
+  DM               dm;
+  PetscQuadrature  allNodes;
+  PetscInt         nNodes;
+
+  PetscFunctionBegin;
+  PetscCall(PetscDualSpaceGetDM(sp, &dm));
+  PetscCall(DMGetDimension(dm, &dim));
+  PetscCall(PetscDualSpaceGetNumComponents(sp, &Nc));
+  PetscCall(PetscDualSpaceGetAllData(sp, &allNodes, &allMat));
+  PetscCall(MatGetSize(allMat, &nDofs, NULL));
+  PetscCheck(nDofs == 1, PETSC_COMM_SELF, PETSC_ERR_SUP, "We do not yet support moments beyond P0, nDofs == %" PetscInt_FMT, nDofs);
+  PetscCall(PetscMalloc1(nDofs, &(sp->functional)));
+  PetscCall(PetscDualSpaceLagrangeGetMomentOrder(sp, &momentOrder));
+  PetscCall(PetscDualSpaceLagrangeGetTensor(sp, &tensor));
+  if (!tensor) PetscCall(PetscDTStroudConicalQuadrature(dim, Nc, PetscMax(momentOrder + 1, 1), -1.0, 1.0, &(sp->functional[0])));
+  else PetscCall(PetscDTGaussTensorQuadrature(dim, Nc, PetscMax(momentOrder + 1, 1), -1.0, 1.0, &(sp->functional[0])));
+  /* Need to replace allNodes and allMat */
+  PetscCall(PetscObjectReference((PetscObject)sp->functional[0]));
+  PetscCall(PetscQuadratureDestroy(&(sp->allNodes)));
+  sp->allNodes = sp->functional[0];
+  PetscCall(PetscQuadratureGetData(sp->allNodes, NULL, NULL, &nNodes, NULL, &weights));
+  PetscCall(MatCreateSeqDense(PETSC_COMM_SELF, nDofs, nNodes * Nc, NULL, &allMat));
+  PetscCall(MatDenseGetArrayWrite(allMat, &array));
+  for (i = 0; i < nNodes * Nc; ++i) array[i] = weights[i];
+  PetscCall(MatDenseRestoreArrayWrite(allMat, &array));
+  PetscCall(MatAssemblyBegin(allMat, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatAssemblyEnd(allMat, MAT_FINAL_ASSEMBLY));
+  PetscCall(MatDestroy(&(sp->allMat)));
+  sp->allMat = allMat;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* rather than trying to get all data from the functionals, we create
@@ -1637,12 +1679,12 @@ static PetscErrorCode PetscDualSpaceCreateAllDataFromInteriorData(PetscDualSpace
  * Ideally most of the uses of PetscDualSpace in PetscFE will switch
  * to using intMat and allMat, so that the individual functionals
  * don't need to be constructed at all */
-static PetscErrorCode PetscDualSpaceComputeFunctionalsFromAllData(PetscDualSpace sp)
+PETSC_INTERN PetscErrorCode PetscDualSpaceComputeFunctionalsFromAllData(PetscDualSpace sp)
 {
   PetscQuadrature  allNodes;
   Mat              allMat;
   PetscInt         nDofs;
-  PetscInt         dim, k, Nk, Nc, f;
+  PetscInt         dim, Nc, f;
   DM               dm;
   PetscInt         nNodes, spdim;
   const PetscReal *nodes = NULL;
@@ -1653,8 +1695,6 @@ static PetscErrorCode PetscDualSpaceComputeFunctionalsFromAllData(PetscDualSpace
   PetscCall(PetscDualSpaceGetDM(sp, &dm));
   PetscCall(DMGetDimension(dm, &dim));
   PetscCall(PetscDualSpaceGetNumComponents(sp, &Nc));
-  PetscCall(PetscDualSpaceGetFormDegree(sp, &k));
-  PetscCall(PetscDTBinomialInt(dim, PetscAbsInt(k), &Nk));
   PetscCall(PetscDualSpaceGetAllData(sp, &allNodes, &allMat));
   nNodes = 0;
   if (allNodes) PetscCall(PetscQuadratureGetData(allNodes, NULL, NULL, &nNodes, &nodes, NULL));
@@ -1664,33 +1704,6 @@ static PetscErrorCode PetscDualSpaceComputeFunctionalsFromAllData(PetscDualSpace
   PetscCheck(spdim == nDofs, PETSC_COMM_SELF, PETSC_ERR_PLIB, "incompatible all matrix size");
   PetscCall(PetscMalloc1(nDofs, &(sp->functional)));
   PetscCall(PetscDualSpaceLagrangeGetUseMoments(sp, &useMoments));
-  if (useMoments) {
-    Mat              allMat;
-    PetscInt         momentOrder, i;
-    PetscBool        tensor;
-    const PetscReal *weights;
-    PetscScalar     *array;
-
-    PetscCheck(nDofs == 1, PETSC_COMM_SELF, PETSC_ERR_SUP, "We do not yet support moments beyond P0, nDofs == %" PetscInt_FMT, nDofs);
-    PetscCall(PetscDualSpaceLagrangeGetMomentOrder(sp, &momentOrder));
-    PetscCall(PetscDualSpaceLagrangeGetTensor(sp, &tensor));
-    if (!tensor) PetscCall(PetscDTStroudConicalQuadrature(dim, Nc, PetscMax(momentOrder + 1, 1), -1.0, 1.0, &(sp->functional[0])));
-    else PetscCall(PetscDTGaussTensorQuadrature(dim, Nc, PetscMax(momentOrder + 1, 1), -1.0, 1.0, &(sp->functional[0])));
-    /* Need to replace allNodes and allMat */
-    PetscCall(PetscObjectReference((PetscObject)sp->functional[0]));
-    PetscCall(PetscQuadratureDestroy(&(sp->allNodes)));
-    sp->allNodes = sp->functional[0];
-    PetscCall(PetscQuadratureGetData(sp->allNodes, NULL, NULL, &nNodes, NULL, &weights));
-    PetscCall(MatCreateSeqDense(PETSC_COMM_SELF, nDofs, nNodes * Nc, NULL, &allMat));
-    PetscCall(MatDenseGetArrayWrite(allMat, &array));
-    for (i = 0; i < nNodes * Nc; ++i) array[i] = weights[i];
-    PetscCall(MatDenseRestoreArrayWrite(allMat, &array));
-    PetscCall(MatAssemblyBegin(allMat, MAT_FINAL_ASSEMBLY));
-    PetscCall(MatAssemblyEnd(allMat, MAT_FINAL_ASSEMBLY));
-    PetscCall(MatDestroy(&(sp->allMat)));
-    sp->allMat = allMat;
-    PetscFunctionReturn(0);
-  }
   for (f = 0; f < nDofs; f++) {
     PetscInt           ncols, c;
     const PetscInt    *cols;
@@ -1701,7 +1714,6 @@ static PetscErrorCode PetscDualSpaceComputeFunctionalsFromAllData(PetscDualSpace
     PetscInt           countNodes;
 
     PetscCall(MatGetRow(allMat, f, &ncols, &cols, &vals));
-    PetscCheck(ncols % Nk == 0, PETSC_COMM_SELF, PETSC_ERR_PLIB, "all matrix is not laid out as blocks of k-forms");
     for (c = 1, nNodesf = 1; c < ncols; c++) {
       if ((cols[c] / Nc) != (cols[c - 1] / Nc)) nNodesf++;
     }
@@ -1721,51 +1733,7 @@ static PetscErrorCode PetscDualSpaceComputeFunctionalsFromAllData(PetscDualSpace
     PetscCall(PetscQuadratureSetData(sp->functional[f], dim, Nc, nNodesf, nodesf, weightsf));
     PetscCall(MatRestoreRow(allMat, f, &ncols, &cols, &vals));
   }
-  PetscFunctionReturn(0);
-}
-
-/* take a matrix meant for k-forms and expand it to one for Ncopies */
-static PetscErrorCode PetscDualSpaceLagrangeMatrixCreateCopies(Mat A, PetscInt Nk, PetscInt Ncopies, Mat *Abs)
-{
-  PetscInt m, n, i, j, k;
-  PetscInt maxnnz, *nnz, *iwork;
-  Mat      Ac;
-
-  PetscFunctionBegin;
-  PetscCall(MatGetSize(A, &m, &n));
-  PetscCheck(n % Nk == 0, PETSC_COMM_SELF, PETSC_ERR_PLIB, "Number of columns in A %" PetscInt_FMT " is not a multiple of Nk %" PetscInt_FMT, n, Nk);
-  PetscCall(PetscMalloc1(m * Ncopies, &nnz));
-  for (i = 0, maxnnz = 0; i < m; i++) {
-    PetscInt innz;
-    PetscCall(MatGetRow(A, i, &innz, NULL, NULL));
-    PetscCheck(innz % Nk == 0, PETSC_COMM_SELF, PETSC_ERR_PLIB, "A row %" PetscInt_FMT " nnzs is not a multiple of Nk %" PetscInt_FMT, innz, Nk);
-    for (j = 0; j < Ncopies; j++) nnz[i * Ncopies + j] = innz;
-    maxnnz = PetscMax(maxnnz, innz);
-  }
-  PetscCall(MatCreateSeqAIJ(PETSC_COMM_SELF, m * Ncopies, n * Ncopies, 0, nnz, &Ac));
-  PetscCall(MatSetOption(Ac, MAT_IGNORE_ZERO_ENTRIES, PETSC_FALSE));
-  PetscCall(PetscFree(nnz));
-  PetscCall(PetscMalloc1(maxnnz, &iwork));
-  for (i = 0; i < m; i++) {
-    PetscInt           innz;
-    const PetscInt    *cols;
-    const PetscScalar *vals;
-
-    PetscCall(MatGetRow(A, i, &innz, &cols, &vals));
-    for (j = 0; j < innz; j++) iwork[j] = (cols[j] / Nk) * (Nk * Ncopies) + (cols[j] % Nk);
-    for (j = 0; j < Ncopies; j++) {
-      PetscInt row = i * Ncopies + j;
-
-      PetscCall(MatSetValues(Ac, 1, &row, innz, iwork, vals, INSERT_VALUES));
-      for (k = 0; k < innz; k++) iwork[k] += Nk;
-    }
-    PetscCall(MatRestoreRow(A, i, &innz, &cols, &vals));
-  }
-  PetscCall(PetscFree(iwork));
-  PetscCall(MatAssemblyBegin(Ac, MAT_FINAL_ASSEMBLY));
-  PetscCall(MatAssemblyEnd(Ac, MAT_FINAL_ASSEMBLY));
-  *Abs = Ac;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* check if a cell is a tensor product of the segment with a facet,
@@ -1790,7 +1758,7 @@ static PetscErrorCode DMPlexPointIsTensor_Internal_Given(DM dm, PetscInt p, Pets
   /* two points that have a non-empty meet cannot be at opposite ends of a cell */
   if (nmeet) {
     *isTensor = PETSC_FALSE;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   PetscCall(DMPlexGetConeSize(dm, p, &coneSize));
   PetscCall(DMPlexGetCone(dm, p, &cone));
@@ -1819,14 +1787,14 @@ static PetscErrorCode DMPlexPointIsTensor_Internal_Given(DM dm, PetscInt p, Pets
         if (fCone[ef] == q) {
           if (dcount) {
             *isTensor = PETSC_FALSE;
-            PetscFunctionReturn(0);
+            PetscFunctionReturn(PETSC_SUCCESS);
           }
           d = q;
           dcount++;
         } else if (f2Cone[ef] == q) {
           if (d2count) {
             *isTensor = PETSC_FALSE;
-            PetscFunctionReturn(0);
+            PetscFunctionReturn(PETSC_SUCCESS);
           }
           d2 = q;
           d2count++;
@@ -1838,11 +1806,11 @@ static PetscErrorCode DMPlexPointIsTensor_Internal_Given(DM dm, PetscInt p, Pets
     PetscCall(DMPlexPointIsTensor_Internal_Given(dm, t, d, d2, &tIsTensor));
     if (!tIsTensor) {
       *isTensor = PETSC_FALSE;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
   }
   *isTensor = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* determine if a cell is a tensor with a segment by looping over pairs of facets to find a pair
@@ -1880,14 +1848,14 @@ static PetscErrorCode DMPlexPointIsTensor_Internal(DM dm, PetscInt p, PetscBool 
         if (isTensor) *isTensor = PETSC_TRUE;
         if (endA) *endA = f;
         if (endB) *endB = f2;
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
     }
   }
   if (isTensor) *isTensor = PETSC_FALSE;
   if (endA) *endA = -1;
   if (endB) *endB = -1;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* determine if a cell is a tensor with a segment by looping over pairs of facets to find a pair
@@ -1900,7 +1868,7 @@ static PetscErrorCode DMPlexPointIsTensor(DM dm, PetscInt p, PetscBool *isTensor
   PetscCall(DMPlexIsInterpolated(dm, &interpolated));
   PetscCheck(interpolated == DMPLEX_INTERPOLATED_FULL, PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_WRONGSTATE, "Only for interpolated DMPlex's");
   PetscCall(DMPlexPointIsTensor_Internal(dm, p, isTensor, endA, endB));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Let k = formDegree and k' = -sign(k) * dim + k.  Transform a symmetric frame for k-forms on the biunit simplex into
@@ -1963,7 +1931,7 @@ static PetscErrorCode BiunitSimplexSymmetricFormTransformation(PetscInt dim, Pet
     }
   }
   PetscCall(PetscFree4(biToEq, eqToBi, biToEqStar, eqToBiStar));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* permute a quadrature -> dof matrix so that its rows are in revlex order by nodeIdx */
@@ -1999,7 +1967,7 @@ static PetscErrorCode MatPermuteByNodeIdx(Mat A, PetscLagNodeIndices ni, Mat *Ap
   PetscCall(PetscFree(ni->nodeVec));
   ni->nodeIdx = nIdxPerm;
   ni->nodeVec = nVecPerm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceSetUp_Lagrange(PetscDualSpace sp)
@@ -2084,6 +2052,25 @@ static PetscErrorCode PetscDualSpaceSetUp_Lagrange(PetscDualSpace sp)
   nodeFamily = lag->nodeFamily;
   PetscCheck(interpolated == DMPLEX_INTERPOLATED_FULL || !continuous || (PetscAbsInt(formDegree) <= 0 && order <= 1), PETSC_COMM_SELF, PETSC_ERR_PLIB, "Reference element won't support all boundary nodes");
 
+  if (Ncopies > 1) {
+    PetscDualSpace scalarsp;
+
+    PetscCall(PetscDualSpaceDuplicate(sp, &scalarsp));
+    /* Setting the number of components to Nk is a space with 1 copy of each k-form */
+    sp->setupcalled = PETSC_FALSE;
+    PetscCall(PetscDualSpaceSetNumComponents(scalarsp, Nk));
+    PetscCall(PetscDualSpaceSetUp(scalarsp));
+    PetscCall(PetscDualSpaceSetType(sp, PETSCDUALSPACESUM));
+    PetscCall(PetscDualSpaceSumSetNumSubspaces(sp, Ncopies));
+    PetscCall(PetscDualSpaceSumSetConcatenate(sp, PETSC_TRUE));
+    PetscCall(PetscDualSpaceSumSetInterleave(sp, PETSC_TRUE, PETSC_FALSE));
+    for (PetscInt i = 0; i < Ncopies; i++) PetscCall(PetscDualSpaceSumSetSubspace(sp, i, scalarsp));
+    PetscCall(PetscDualSpaceSetUp(sp));
+    PetscCall(PetscDualSpaceDestroy(&scalarsp));
+    PetscCall(DMDestroy(&dmint));
+    PetscFunctionReturn(PETSC_SUCCESS);
+  }
+
   /* step 2: construct the boundary spaces */
   PetscCall(PetscMalloc2(depth + 1, &pStratStart, depth + 1, &pStratEnd));
   PetscCall(PetscCalloc1(pEnd, &(sp->pointSpaces)));
@@ -2135,7 +2122,7 @@ static PetscErrorCode PetscDualSpaceSetUp_Lagrange(PetscDualSpace sp)
           const PetscInt *cone;
           const PetscInt *refCone;
 
-          q   = supp[0];
+          q   = supp[s];
           qsp = sp->pointSpaces[q];
           PetscCall(DMPlexGetConeSize(dm, q, &coneSize));
           PetscCall(DMPlexGetCone(dm, q, &cone));
@@ -2159,39 +2146,6 @@ static PetscErrorCode PetscDualSpaceSetUp_Lagrange(PetscDualSpace sp)
       PetscCall(PetscDualSpaceGetInteriorDimension(sp->pointSpaces[p], &pspdim));
       PetscCall(PetscSectionSetDof(section, p, pspdim));
     }
-  }
-
-  if (Ncopies > 1) {
-    Mat                 intMatScalar, allMatScalar;
-    PetscDualSpace      scalarsp;
-    PetscDualSpace_Lag *scalarlag;
-
-    PetscCall(PetscDualSpaceDuplicate(sp, &scalarsp));
-    /* Setting the number of components to Nk is a space with 1 copy of each k-form */
-    PetscCall(PetscDualSpaceSetNumComponents(scalarsp, Nk));
-    PetscCall(PetscDualSpaceSetUp(scalarsp));
-    PetscCall(PetscDualSpaceGetInteriorData(scalarsp, &(sp->intNodes), &intMatScalar));
-    PetscCall(PetscObjectReference((PetscObject)(sp->intNodes)));
-    if (intMatScalar) PetscCall(PetscDualSpaceLagrangeMatrixCreateCopies(intMatScalar, Nk, Ncopies, &(sp->intMat)));
-    PetscCall(PetscDualSpaceGetAllData(scalarsp, &(sp->allNodes), &allMatScalar));
-    PetscCall(PetscObjectReference((PetscObject)(sp->allNodes)));
-    PetscCall(PetscDualSpaceLagrangeMatrixCreateCopies(allMatScalar, Nk, Ncopies, &(sp->allMat)));
-    sp->spdim    = scalarsp->spdim * Ncopies;
-    sp->spintdim = scalarsp->spintdim * Ncopies;
-    scalarlag    = (PetscDualSpace_Lag *)scalarsp->data;
-    PetscCall(PetscLagNodeIndicesReference(scalarlag->vertIndices));
-    lag->vertIndices = scalarlag->vertIndices;
-    PetscCall(PetscLagNodeIndicesReference(scalarlag->intNodeIndices));
-    lag->intNodeIndices = scalarlag->intNodeIndices;
-    PetscCall(PetscLagNodeIndicesReference(scalarlag->allNodeIndices));
-    lag->allNodeIndices = scalarlag->allNodeIndices;
-    PetscCall(PetscDualSpaceDestroy(&scalarsp));
-    PetscCall(PetscSectionSetDof(section, 0, sp->spintdim));
-    PetscCall(PetscDualSpaceSectionSetUp_Internal(sp, section));
-    PetscCall(PetscDualSpaceComputeFunctionalsFromAllData(sp));
-    PetscCall(PetscFree2(pStratStart, pStratEnd));
-    PetscCall(DMDestroy(&dmint));
-    PetscFunctionReturn(0);
   }
 
   if (trimmed && !continuous) {
@@ -2236,7 +2190,7 @@ static PetscErrorCode PetscDualSpaceSetUp_Lagrange(PetscDualSpace sp)
     PetscCall(PetscDualSpaceDestroy(&spcont));
     PetscCall(PetscFree2(pStratStart, pStratEnd));
     PetscCall(DMDestroy(&dmint));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   /* step 3: construct intNodes, and intMat, and combine it with boundray data to make allNodes and allMat */
@@ -2487,10 +2441,15 @@ static PetscErrorCode PetscDualSpaceSetUp_Lagrange(PetscDualSpace sp)
   }
   PetscCall(PetscSectionGetStorageSize(section, &sp->spdim));
   PetscCall(PetscSectionGetConstrainedStorageSize(section, &sp->spintdim));
-  PetscCall(PetscDualSpaceComputeFunctionalsFromAllData(sp));
+  // TODO: fix this, computing functionals from moments should be no different for nodal vs modal
+  if (lag->useMoments) {
+    PetscCall(PetscDualSpaceComputeFunctionalsFromAllData_Moments(sp));
+  } else {
+    PetscCall(PetscDualSpaceComputeFunctionalsFromAllData(sp));
+  }
   PetscCall(PetscFree2(pStratStart, pStratEnd));
   PetscCall(DMDestroy(&dmint));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Create a matrix that represents the transformation that DMPlexVecGetClosure() would need
@@ -2514,7 +2473,7 @@ PetscErrorCode PetscDualSpaceCreateInteriorSymmetryMatrix_Lagrange(PetscDualSpac
   PetscFunctionBegin;
   if (!sp->spintdim) {
     *symMat = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   lag            = (PetscDualSpace_Lag *)sp->data;
   vertIndices    = lag->vertIndices;
@@ -2654,7 +2613,36 @@ PetscErrorCode PetscDualSpaceCreateInteriorSymmetryMatrix_Lagrange(PetscDualSpac
   *symMat = A;
   PetscCall(PetscFree3(V, W, work));
   PetscCall(PetscLagNodeIndicesDestroy(&ni));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
+// get the symmetries of closure points
+PETSC_INTERN PetscErrorCode PetscDualSpaceGetBoundarySymmetries_Internal(PetscDualSpace sp, PetscInt ***symperms, PetscScalar ***symflips)
+{
+  PetscInt  closureSize = 0;
+  PetscInt *closure     = NULL;
+  PetscInt  r;
+
+  PetscFunctionBegin;
+  PetscCall(DMPlexGetTransitiveClosure(sp->dm, 0, PETSC_TRUE, &closureSize, &closure));
+  for (r = 0; r < closureSize; r++) {
+    PetscDualSpace       psp;
+    PetscInt             point = closure[2 * r];
+    PetscInt             pspintdim;
+    const PetscInt    ***psymperms = NULL;
+    const PetscScalar ***psymflips = NULL;
+
+    if (!point) continue;
+    PetscCall(PetscDualSpaceGetPointSubspace(sp, point, &psp));
+    if (!psp) continue;
+    PetscCall(PetscDualSpaceGetInteriorDimension(psp, &pspintdim));
+    if (!pspintdim) continue;
+    PetscCall(PetscDualSpaceGetSymmetries(psp, &psymperms, &psymflips));
+    symperms[r] = (PetscInt **)(psymperms ? psymperms[0] : NULL);
+    symflips[r] = (PetscScalar **)(psymflips ? psymflips[0] : NULL);
+  }
+  PetscCall(DMPlexRestoreTransitiveClosure(sp->dm, 0, PETSC_TRUE, &closureSize, &closure));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #define BaryIndex(perEdge, a, b, c) (((b) * (2 * perEdge + 1 - (b))) / 2) + (c)
@@ -2788,30 +2776,7 @@ static PetscErrorCode PetscDualSpaceGetSymmetries_Lagrange(PetscDualSpace sp, co
         symflips[0] = NULL;
       }
     }
-    { /* get the symmetries of closure points */
-      PetscInt  closureSize = 0;
-      PetscInt *closure     = NULL;
-      PetscInt  r;
-
-      PetscCall(DMPlexGetTransitiveClosure(sp->dm, 0, PETSC_TRUE, &closureSize, &closure));
-      for (r = 0; r < closureSize; r++) {
-        PetscDualSpace       psp;
-        PetscInt             point = closure[2 * r];
-        PetscInt             pspintdim;
-        const PetscInt    ***psymperms = NULL;
-        const PetscScalar ***psymflips = NULL;
-
-        if (!point) continue;
-        PetscCall(PetscDualSpaceGetPointSubspace(sp, point, &psp));
-        if (!psp) continue;
-        PetscCall(PetscDualSpaceGetInteriorDimension(psp, &pspintdim));
-        if (!pspintdim) continue;
-        PetscCall(PetscDualSpaceGetSymmetries(psp, &psymperms, &psymflips));
-        symperms[r] = (PetscInt **)(psymperms ? psymperms[0] : NULL);
-        symflips[r] = (PetscScalar **)(psymflips ? psymflips[0] : NULL);
-      }
-      PetscCall(DMPlexRestoreTransitiveClosure(sp->dm, 0, PETSC_TRUE, &closureSize, &closure));
-    }
+    PetscCall(PetscDualSpaceGetBoundarySymmetries_Internal(sp, symperms, symflips));
     for (p = 0; p < pEnd; p++)
       if (symperms[p]) break;
     if (p == pEnd) {
@@ -2830,7 +2795,7 @@ static PetscErrorCode PetscDualSpaceGetSymmetries_Lagrange(PetscDualSpace sp, co
   }
   if (perms) *perms = (const PetscInt ***)lag->symperms;
   if (flips) *flips = (const PetscScalar ***)lag->symflips;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceLagrangeGetContinuity_Lagrange(PetscDualSpace sp, PetscBool *continuous)
@@ -2839,9 +2804,9 @@ static PetscErrorCode PetscDualSpaceLagrangeGetContinuity_Lagrange(PetscDualSpac
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
-  PetscValidBoolPointer(continuous, 2);
+  PetscAssertPointer(continuous, 2);
   *continuous = lag->continuous;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceLagrangeSetContinuity_Lagrange(PetscDualSpace sp, PetscBool continuous)
@@ -2851,7 +2816,7 @@ static PetscErrorCode PetscDualSpaceLagrangeSetContinuity_Lagrange(PetscDualSpac
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
   lag->continuous = continuous;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -2860,39 +2825,39 @@ static PetscErrorCode PetscDualSpaceLagrangeSetContinuity_Lagrange(PetscDualSpac
   Not Collective
 
   Input Parameter:
-. sp         - the `PetscDualSpace`
+. sp - the `PetscDualSpace`
 
   Output Parameter:
 . continuous - flag for element continuity
 
   Level: intermediate
 
-.seealso: `PetscDualSpace`, `PetscDualSpaceLagrangeSetContinuity()`
+.seealso: `PETSCDUALSPACELAGRANGE`, `PetscDualSpace`, `PetscDualSpaceLagrangeSetContinuity()`
 @*/
 PetscErrorCode PetscDualSpaceLagrangeGetContinuity(PetscDualSpace sp, PetscBool *continuous)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
-  PetscValidBoolPointer(continuous, 2);
+  PetscAssertPointer(continuous, 2);
   PetscTryMethod(sp, "PetscDualSpaceLagrangeGetContinuity_C", (PetscDualSpace, PetscBool *), (sp, continuous));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscDualSpaceLagrangeSetContinuity - Indicate whether the element is continuous
 
-  Logically Collective on sp
+  Logically Collective
 
   Input Parameters:
 + sp         - the `PetscDualSpace`
 - continuous - flag for element continuity
 
-  Options Database:
+  Options Database Key:
 . -petscdualspace_lagrange_continuity <bool> - use a continuous element
 
   Level: intermediate
 
-.seealso: `PetscDualSpace`, `PetscDualSpaceLagrangeGetContinuity()`
+.seealso: `PETSCDUALSPACELAGRANGE`, `PetscDualSpace`, `PetscDualSpaceLagrangeGetContinuity()`
 @*/
 PetscErrorCode PetscDualSpaceLagrangeSetContinuity(PetscDualSpace sp, PetscBool continuous)
 {
@@ -2900,7 +2865,7 @@ PetscErrorCode PetscDualSpaceLagrangeSetContinuity(PetscDualSpace sp, PetscBool 
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
   PetscValidLogicalCollectiveBool(sp, continuous, 2);
   PetscTryMethod(sp, "PetscDualSpaceLagrangeSetContinuity_C", (PetscDualSpace, PetscBool), (sp, continuous));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceLagrangeGetTensor_Lagrange(PetscDualSpace sp, PetscBool *tensor)
@@ -2909,7 +2874,7 @@ static PetscErrorCode PetscDualSpaceLagrangeGetTensor_Lagrange(PetscDualSpace sp
 
   PetscFunctionBegin;
   *tensor = lag->tensorSpace;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceLagrangeSetTensor_Lagrange(PetscDualSpace sp, PetscBool tensor)
@@ -2918,7 +2883,7 @@ static PetscErrorCode PetscDualSpaceLagrangeSetTensor_Lagrange(PetscDualSpace sp
 
   PetscFunctionBegin;
   lag->tensorSpace = tensor;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceLagrangeGetTrimmed_Lagrange(PetscDualSpace sp, PetscBool *trimmed)
@@ -2927,7 +2892,7 @@ static PetscErrorCode PetscDualSpaceLagrangeGetTrimmed_Lagrange(PetscDualSpace s
 
   PetscFunctionBegin;
   *trimmed = lag->trimmed;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceLagrangeSetTrimmed_Lagrange(PetscDualSpace sp, PetscBool trimmed)
@@ -2936,7 +2901,7 @@ static PetscErrorCode PetscDualSpaceLagrangeSetTrimmed_Lagrange(PetscDualSpace s
 
   PetscFunctionBegin;
   lag->trimmed = trimmed;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceLagrangeGetNodeType_Lagrange(PetscDualSpace sp, PetscDTNodeType *nodeType, PetscBool *boundary, PetscReal *exponent)
@@ -2947,7 +2912,7 @@ static PetscErrorCode PetscDualSpaceLagrangeGetNodeType_Lagrange(PetscDualSpace 
   if (nodeType) *nodeType = lag->nodeType;
   if (boundary) *boundary = lag->endNodes;
   if (exponent) *exponent = lag->nodeExponent;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceLagrangeSetNodeType_Lagrange(PetscDualSpace sp, PetscDTNodeType nodeType, PetscBool boundary, PetscReal exponent)
@@ -2959,7 +2924,7 @@ static PetscErrorCode PetscDualSpaceLagrangeSetNodeType_Lagrange(PetscDualSpace 
   lag->nodeType     = nodeType;
   lag->endNodes     = boundary;
   lag->nodeExponent = exponent;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceLagrangeGetUseMoments_Lagrange(PetscDualSpace sp, PetscBool *useMoments)
@@ -2968,7 +2933,7 @@ static PetscErrorCode PetscDualSpaceLagrangeGetUseMoments_Lagrange(PetscDualSpac
 
   PetscFunctionBegin;
   *useMoments = lag->useMoments;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceLagrangeSetUseMoments_Lagrange(PetscDualSpace sp, PetscBool useMoments)
@@ -2977,7 +2942,7 @@ static PetscErrorCode PetscDualSpaceLagrangeSetUseMoments_Lagrange(PetscDualSpac
 
   PetscFunctionBegin;
   lag->useMoments = useMoments;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceLagrangeGetMomentOrder_Lagrange(PetscDualSpace sp, PetscInt *momentOrder)
@@ -2986,7 +2951,7 @@ static PetscErrorCode PetscDualSpaceLagrangeGetMomentOrder_Lagrange(PetscDualSpa
 
   PetscFunctionBegin;
   *momentOrder = lag->momentOrder;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceLagrangeSetMomentOrder_Lagrange(PetscDualSpace sp, PetscInt momentOrder)
@@ -2995,13 +2960,13 @@ static PetscErrorCode PetscDualSpaceLagrangeSetMomentOrder_Lagrange(PetscDualSpa
 
   PetscFunctionBegin;
   lag->momentOrder = momentOrder;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscDualSpaceLagrangeGetTensor - Get the tensor nature of the dual space
 
-  Not collective
+  Not Collective
 
   Input Parameter:
 . sp - The `PetscDualSpace`
@@ -3011,42 +2976,42 @@ static PetscErrorCode PetscDualSpaceLagrangeSetMomentOrder_Lagrange(PetscDualSpa
 
   Level: intermediate
 
-.seealso: `PetscDualSpace`, `PetscDualSpaceLagrangeSetTensor()`, `PetscDualSpaceCreate()`
+.seealso: `PETSCDUALSPACELAGRANGE`, `PetscDualSpace`, `PetscDualSpaceLagrangeSetTensor()`, `PetscDualSpaceCreate()`
 @*/
 PetscErrorCode PetscDualSpaceLagrangeGetTensor(PetscDualSpace sp, PetscBool *tensor)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
-  PetscValidBoolPointer(tensor, 2);
+  PetscAssertPointer(tensor, 2);
   PetscTryMethod(sp, "PetscDualSpaceLagrangeGetTensor_C", (PetscDualSpace, PetscBool *), (sp, tensor));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscDualSpaceLagrangeSetTensor - Set the tensor nature of the dual space
 
-  Not collective
+  Not Collective
 
   Input Parameters:
-+ sp - The `PetscDualSpace`
++ sp     - The `PetscDualSpace`
 - tensor - Whether the dual space has tensor layout (vs. simplicial)
 
   Level: intermediate
 
-.seealso: `PetscDualSpace`, `PetscDualSpaceLagrangeGetTensor()`, `PetscDualSpaceCreate()`
+.seealso: `PETSCDUALSPACELAGRANGE`, `PetscDualSpace`, `PetscDualSpaceLagrangeGetTensor()`, `PetscDualSpaceCreate()`
 @*/
 PetscErrorCode PetscDualSpaceLagrangeSetTensor(PetscDualSpace sp, PetscBool tensor)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
   PetscTryMethod(sp, "PetscDualSpaceLagrangeSetTensor_C", (PetscDualSpace, PetscBool), (sp, tensor));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscDualSpaceLagrangeGetTrimmed - Get the trimmed nature of the dual space
 
-  Not collective
+  Not Collective
 
   Input Parameter:
 . sp - The `PetscDualSpace`
@@ -3056,43 +3021,43 @@ PetscErrorCode PetscDualSpaceLagrangeSetTensor(PetscDualSpace sp, PetscBool tens
 
   Level: intermediate
 
-.seealso: `PetscDualSpace`, `PetscDualSpaceLagrangeSetTrimmed()`, `PetscDualSpaceCreate()`
+.seealso: `PETSCDUALSPACELAGRANGE`, `PetscDualSpace`, `PetscDualSpaceLagrangeSetTrimmed()`, `PetscDualSpaceCreate()`
 @*/
 PetscErrorCode PetscDualSpaceLagrangeGetTrimmed(PetscDualSpace sp, PetscBool *trimmed)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
-  PetscValidBoolPointer(trimmed, 2);
+  PetscAssertPointer(trimmed, 2);
   PetscTryMethod(sp, "PetscDualSpaceLagrangeGetTrimmed_C", (PetscDualSpace, PetscBool *), (sp, trimmed));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscDualSpaceLagrangeSetTrimmed - Set the trimmed nature of the dual space
 
-  Not collective
+  Not Collective
 
   Input Parameters:
-+ sp - The `PetscDualSpace`
++ sp      - The `PetscDualSpace`
 - trimmed - Whether the dual space represents to dual basis of a trimmed polynomial space (e.g. Raviart-Thomas and higher order / other form degree variants)
 
   Level: intermediate
 
-.seealso: `PetscDualSpace`, `PetscDualSpaceLagrangeGetTrimmed()`, `PetscDualSpaceCreate()`
+.seealso: `PETSCDUALSPACELAGRANGE`, `PetscDualSpace`, `PetscDualSpaceLagrangeGetTrimmed()`, `PetscDualSpaceCreate()`
 @*/
 PetscErrorCode PetscDualSpaceLagrangeSetTrimmed(PetscDualSpace sp, PetscBool trimmed)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
   PetscTryMethod(sp, "PetscDualSpaceLagrangeSetTrimmed_C", (PetscDualSpace, PetscBool), (sp, trimmed));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscDualSpaceLagrangeGetNodeType - Get a description of how nodes are laid out for Lagrange polynomials in this
   dual space
 
-  Not collective
+  Not Collective
 
   Input Parameter:
 . sp - The `PetscDualSpace`
@@ -3106,27 +3071,27 @@ PetscErrorCode PetscDualSpaceLagrangeSetTrimmed(PetscDualSpace sp, PetscBool tri
 
   Level: advanced
 
-.seealso: `PetscDualSpace`, `PetscDTNodeType`, `PetscDualSpaceLagrangeSetNodeType()`
+.seealso: `PETSCDUALSPACELAGRANGE`, `PetscDualSpace`, `PetscDTNodeType`, `PetscDualSpaceLagrangeSetNodeType()`
 @*/
 PetscErrorCode PetscDualSpaceLagrangeGetNodeType(PetscDualSpace sp, PetscDTNodeType *nodeType, PetscBool *boundary, PetscReal *exponent)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
-  if (nodeType) PetscValidPointer(nodeType, 2);
-  if (boundary) PetscValidBoolPointer(boundary, 3);
-  if (exponent) PetscValidRealPointer(exponent, 4);
+  if (nodeType) PetscAssertPointer(nodeType, 2);
+  if (boundary) PetscAssertPointer(boundary, 3);
+  if (exponent) PetscAssertPointer(exponent, 4);
   PetscTryMethod(sp, "PetscDualSpaceLagrangeGetNodeType_C", (PetscDualSpace, PetscDTNodeType *, PetscBool *, PetscReal *), (sp, nodeType, boundary, exponent));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscDualSpaceLagrangeSetNodeType - Set a description of how nodes are laid out for Lagrange polynomials in this
   dual space
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+ sp - The `PetscDualSpace`
++ sp       - The `PetscDualSpace`
 . nodeType - The type of nodes
 . boundary - Whether the node type is one that includes endpoints (if nodeType is `PETSCDTNODES_GAUSSJACOBI`, nodes that
              include the boundary are Gauss-Lobatto-Jacobi nodes)
@@ -3135,20 +3100,20 @@ PetscErrorCode PetscDualSpaceLagrangeGetNodeType(PetscDualSpace sp, PetscDTNodeT
 
   Level: advanced
 
-.seealso: `PetscDualSpace`, `PetscDTNodeType`, `PetscDualSpaceLagrangeGetNodeType()`
+.seealso: `PETSCDUALSPACELAGRANGE`, `PetscDualSpace`, `PetscDTNodeType`, `PetscDualSpaceLagrangeGetNodeType()`
 @*/
 PetscErrorCode PetscDualSpaceLagrangeSetNodeType(PetscDualSpace sp, PetscDTNodeType nodeType, PetscBool boundary, PetscReal exponent)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
   PetscTryMethod(sp, "PetscDualSpaceLagrangeSetNodeType_C", (PetscDualSpace, PetscDTNodeType, PetscBool, PetscReal), (sp, nodeType, boundary, exponent));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscDualSpaceLagrangeGetUseMoments - Get the flag for using moment functionals
 
-  Not collective
+  Not Collective
 
   Input Parameter:
 . sp - The `PetscDualSpace`
@@ -3158,42 +3123,42 @@ PetscErrorCode PetscDualSpaceLagrangeSetNodeType(PetscDualSpace sp, PetscDTNodeT
 
   Level: advanced
 
-.seealso: `PetscDualSpace`, `PetscDualSpaceLagrangeSetUseMoments()`
+.seealso: `PETSCDUALSPACELAGRANGE`, `PetscDualSpace`, `PetscDualSpaceLagrangeSetUseMoments()`
 @*/
 PetscErrorCode PetscDualSpaceLagrangeGetUseMoments(PetscDualSpace sp, PetscBool *useMoments)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
-  PetscValidBoolPointer(useMoments, 2);
+  PetscAssertPointer(useMoments, 2);
   PetscUseMethod(sp, "PetscDualSpaceLagrangeGetUseMoments_C", (PetscDualSpace, PetscBool *), (sp, useMoments));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscDualSpaceLagrangeSetUseMoments - Set the flag for moment functionals
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+ sp - The `PetscDualSpace`
++ sp         - The `PetscDualSpace`
 - useMoments - The flag for moment functionals
 
   Level: advanced
 
-.seealso: `PetscDualSpace`, `PetscDualSpaceLagrangeGetUseMoments()`
+.seealso: `PETSCDUALSPACELAGRANGE`, `PetscDualSpace`, `PetscDualSpaceLagrangeGetUseMoments()`
 @*/
 PetscErrorCode PetscDualSpaceLagrangeSetUseMoments(PetscDualSpace sp, PetscBool useMoments)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
   PetscTryMethod(sp, "PetscDualSpaceLagrangeSetUseMoments_C", (PetscDualSpace, PetscBool), (sp, useMoments));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscDualSpaceLagrangeGetMomentOrder - Get the order for moment integration
 
-  Not collective
+  Not Collective
 
   Input Parameter:
 . sp - The `PetscDualSpace`
@@ -3203,36 +3168,36 @@ PetscErrorCode PetscDualSpaceLagrangeSetUseMoments(PetscDualSpace sp, PetscBool 
 
   Level: advanced
 
-.seealso: `PetscDualSpace`, `PetscDualSpaceLagrangeSetMomentOrder()`
+.seealso: `PETSCDUALSPACELAGRANGE`, `PetscDualSpace`, `PetscDualSpaceLagrangeSetMomentOrder()`
 @*/
 PetscErrorCode PetscDualSpaceLagrangeGetMomentOrder(PetscDualSpace sp, PetscInt *order)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
-  PetscValidIntPointer(order, 2);
+  PetscAssertPointer(order, 2);
   PetscUseMethod(sp, "PetscDualSpaceLagrangeGetMomentOrder_C", (PetscDualSpace, PetscInt *), (sp, order));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   PetscDualSpaceLagrangeSetMomentOrder - Set the order for moment integration
 
-  Logically collective
+  Logically Collective
 
   Input Parameters:
-+ sp - The `PetscDualSpace`
++ sp    - The `PetscDualSpace`
 - order - The order for moment integration
 
   Level: advanced
 
-.seealso: `PetscDualSpace`, `PetscDualSpaceLagrangeGetMomentOrder()`
+.seealso: `PETSCDUALSPACELAGRANGE`, `PetscDualSpace`, `PetscDualSpaceLagrangeGetMomentOrder()`
 @*/
 PetscErrorCode PetscDualSpaceLagrangeSetMomentOrder(PetscDualSpace sp, PetscInt order)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(sp, PETSCDUALSPACE_CLASSID, 1);
   PetscTryMethod(sp, "PetscDualSpaceLagrangeSetMomentOrder_C", (PetscDualSpace, PetscInt), (sp, order));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PetscDualSpaceInitialize_Lagrange(PetscDualSpace sp)
@@ -3251,7 +3216,7 @@ static PetscErrorCode PetscDualSpaceInitialize_Lagrange(PetscDualSpace sp)
   sp->ops->applyint             = PetscDualSpaceApplyInteriorDefault;
   sp->ops->createalldata        = PetscDualSpaceCreateAllDataDefault;
   sp->ops->createintdata        = PetscDualSpaceCreateInteriorDataDefault;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -3259,7 +3224,14 @@ static PetscErrorCode PetscDualSpaceInitialize_Lagrange(PetscDualSpace sp)
 
   Level: intermediate
 
-.seealso: `PetscDualSpace`, `PetscDualSpaceType`, `PetscDualSpaceCreate()`, `PetscDualSpaceSetType()`
+  Developer Note:
+  This `PetscDualSpace` seems to manage directly trimmed and untrimmed polynomials as well as tensor and non-tensor polynomials while for `PetscSpace` there seems to
+  be different `PetscSpaceType` for them.
+
+.seealso: `PetscDualSpace`, `PetscDualSpaceType`, `PetscDualSpaceCreate()`, `PetscDualSpaceSetType()`,
+          `PetscDualSpaceLagrangeSetMomentOrder()`, `PetscDualSpaceLagrangeGetMomentOrder()`, `PetscDualSpaceLagrangeSetUseMoments()`, `PetscDualSpaceLagrangeGetUseMoments()`,
+          `PetscDualSpaceLagrangeSetNodeType, PetscDualSpaceLagrangeGetNodeType, PetscDualSpaceLagrangeGetContinuity, PetscDualSpaceLagrangeSetContinuity,
+          `PetscDualSpaceLagrangeGetTensor()`, `PetscDualSpaceLagrangeSetTensor()`, `PetscDualSpaceLagrangeGetTrimmed()`, `PetscDualSpaceLagrangeSetTrimmed()`
 M*/
 PETSC_EXTERN PetscErrorCode PetscDualSpaceCreate_Lagrange(PetscDualSpace sp)
 {
@@ -3292,5 +3264,5 @@ PETSC_EXTERN PetscErrorCode PetscDualSpaceCreate_Lagrange(PetscDualSpace sp)
   PetscCall(PetscObjectComposeFunction((PetscObject)sp, "PetscDualSpaceLagrangeSetUseMoments_C", PetscDualSpaceLagrangeSetUseMoments_Lagrange));
   PetscCall(PetscObjectComposeFunction((PetscObject)sp, "PetscDualSpaceLagrangeGetMomentOrder_C", PetscDualSpaceLagrangeGetMomentOrder_Lagrange));
   PetscCall(PetscObjectComposeFunction((PetscObject)sp, "PetscDualSpaceLagrangeSetMomentOrder_C", PetscDualSpaceLagrangeSetMomentOrder_Lagrange));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

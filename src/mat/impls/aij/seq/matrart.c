@@ -1,4 +1,3 @@
-
 /*
   Defines projective product routines where A is a SeqAIJ matrix
           C = R * A * R^T
@@ -8,7 +7,7 @@
 #include <../src/mat/utils/freespace.h>
 #include <../src/mat/impls/dense/seq/dense.h> /*I "petscmat.h" I*/
 
-PetscErrorCode MatDestroy_SeqAIJ_RARt(void *data)
+static PetscErrorCode MatDestroy_SeqAIJ_RARt(void *data)
 {
   Mat_RARt *rart = (Mat_RARt *)data;
 
@@ -20,7 +19,7 @@ PetscErrorCode MatDestroy_SeqAIJ_RARt(void *data)
   PetscCall(PetscFree(rart->work));
   if (rart->destroy) PetscCall((*rart->destroy)(rart->data));
   PetscCall(PetscFree(rart));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatRARtSymbolic_SeqAIJ_SeqAIJ_colorrart(Mat A, Mat R, PetscReal fill, Mat C)
@@ -48,7 +47,7 @@ PetscErrorCode MatRARtSymbolic_SeqAIJ_SeqAIJ_colorrart(Mat A, Mat R, PetscReal f
   C->product->data    = rart;
   C->product->destroy = MatDestroy_SeqAIJ_RARt;
 
-  /* ------ Use coloring ---------- */
+  /* Use coloring  */
   /* inode causes memory problem */
   PetscCall(MatSetOption(C, MAT_USE_INODES, PETSC_FALSE));
 
@@ -95,13 +94,13 @@ PetscErrorCode MatRARtSymbolic_SeqAIJ_SeqAIJ_colorrart(Mat A, Mat R, PetscReal f
     PetscCall(PetscInfo(C, "RARt_den %" PetscInt_FMT " %" PetscInt_FMT "; Rt %" PetscInt_FMT " %" PetscInt_FMT " (RARt->nz %" PetscInt_FMT ")/(m*ncolors)=%g\n", RARt_dense->rmap->n, RARt_dense->cmap->n, R->cmap->n, R->rmap->n, c->nz, (double)density));
   }
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
  RAB = R * A * B, R and A in seqaij format, B in dense format;
 */
-PetscErrorCode MatMatMatMultNumeric_SeqAIJ_SeqAIJ_SeqDense(Mat R, Mat A, Mat B, Mat RAB, PetscScalar *work)
+static PetscErrorCode MatMatMatMultNumeric_SeqAIJ_SeqAIJ_SeqDense(Mat R, Mat A, Mat B, Mat RAB, PetscScalar *work)
 {
   Mat_SeqAIJ        *a = (Mat_SeqAIJ *)A->data, *r = (Mat_SeqAIJ *)R->data;
   PetscScalar        r1, r2, r3, r4;
@@ -114,7 +113,7 @@ PetscErrorCode MatMatMatMultNumeric_SeqAIJ_SeqAIJ_SeqDense(Mat R, Mat A, Mat B, 
   PetscInt           rm2 = 2 * rm, rm3 = 3 * rm, colrm;
 
   PetscFunctionBegin;
-  if (!dm || !dn) PetscFunctionReturn(0);
+  if (!dm || !dn) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCheck(bm == A->cmap->n, PETSC_COMM_SELF, PETSC_ERR_ARG_SIZ, "Number columns in A %" PetscInt_FMT " not equal rows in B %" PetscInt_FMT, A->cmap->n, bm);
   PetscCheck(am == R->cmap->n, PETSC_COMM_SELF, PETSC_ERR_ARG_SIZ, "Number columns in R %" PetscInt_FMT " not equal rows in A %" PetscInt_FMT, R->cmap->n, am);
   PetscCheck(R->rmap->n == RAB->rmap->n, PETSC_COMM_SELF, PETSC_ERR_ARG_SIZ, "Number rows in RAB %" PetscInt_FMT " not equal rows in R %" PetscInt_FMT, RAB->rmap->n, R->rmap->n);
@@ -133,7 +132,7 @@ PetscErrorCode MatMatMatMultNumeric_SeqAIJ_SeqAIJ_SeqDense(Mat R, Mat A, Mat B, 
       PetscCall(MatMatMultNumeric_SeqAIJ_SeqDense(A, B, AB_den));
       PetscCall(MatMatMultNumeric_SeqAIJ_SeqDense(R, AB_den, RAB));
       PetscCall(MatDestroy(&AB_den));
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
   }
 
@@ -214,7 +213,7 @@ PetscErrorCode MatMatMatMultNumeric_SeqAIJ_SeqAIJ_SeqDense(Mat R, Mat A, Mat B, 
   PetscCall(MatDenseRestoreArray(RAB, &d));
   PetscCall(MatAssemblyBegin(RAB, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(RAB, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatRARtNumeric_SeqAIJ_SeqAIJ_colorrart(Mat A, Mat R, Mat C)
@@ -239,7 +238,7 @@ PetscErrorCode MatRARtNumeric_SeqAIJ_SeqAIJ_colorrart(Mat A, Mat R, Mat C)
 
   /* Recover C from C_dense */
   PetscCall(MatTransColoringApplyDenToSp(matcoloring, RARt, C));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatRARtSymbolic_SeqAIJ_SeqAIJ_matmattransposemult(Mat A, Mat R, PetscReal fill, Mat C)
@@ -275,7 +274,7 @@ PetscErrorCode MatRARtSymbolic_SeqAIJ_SeqAIJ_matmattransposemult(Mat A, Mat R, P
   C->product->data    = rart;
   C->product->destroy = MatDestroy_SeqAIJ_RARt;
   PetscCall(PetscInfo(C, "Use ARt=A*R^T, C=R*ARt via MatMatTransposeMult(). Coloring can be applied to A*R^T.\n"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatRARtNumeric_SeqAIJ_SeqAIJ_matmattransposemult(Mat A, Mat R, Mat C)
@@ -288,7 +287,7 @@ PetscErrorCode MatRARtNumeric_SeqAIJ_SeqAIJ_matmattransposemult(Mat A, Mat R, Ma
   rart = (Mat_RARt *)C->product->data;
   PetscCall(MatMatTransposeMultNumeric_SeqAIJ_SeqAIJ(A, R, rart->ARt)); /* dominate! */
   PetscCall(MatMatMultNumeric_SeqAIJ_SeqAIJ(R, rart->ARt, C));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatRARtSymbolic_SeqAIJ_SeqAIJ(Mat A, Mat R, PetscReal fill, Mat C)
@@ -310,7 +309,7 @@ PetscErrorCode MatRARtSymbolic_SeqAIJ_SeqAIJ(Mat A, Mat R, PetscReal fill, Mat C
   C->product->destroy = MatDestroy_SeqAIJ_RARt;
   C->ops->rartnumeric = MatRARtNumeric_SeqAIJ_SeqAIJ;
   PetscCall(PetscInfo(C, "Use Rt=R^T and C=R*A*Rt via MatMatMatMult() to avoid sparse inner products\n"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatRARtNumeric_SeqAIJ_SeqAIJ(Mat A, Mat R, Mat C)
@@ -326,7 +325,7 @@ PetscErrorCode MatRARtNumeric_SeqAIJ_SeqAIJ(Mat A, Mat R, Mat C)
   C->product->data = rart->data;
   PetscCall(MatMatMatMultNumeric_SeqAIJ_SeqAIJ_SeqAIJ(R, A, rart->Rt, C));
   C->product->data = rart;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatRARt_SeqAIJ_SeqAIJ(Mat A, Mat R, MatReuse scall, PetscReal fill, Mat *C)
@@ -362,10 +361,9 @@ PetscErrorCode MatRARt_SeqAIJ_SeqAIJ(Mat A, Mat R, MatReuse scall, PetscReal fil
   PetscCall(PetscLogEventBegin(MAT_RARtNumeric, A, R, 0, 0));
   PetscCall(((*C)->ops->rartnumeric)(A, R, *C));
   PetscCall(PetscLogEventEnd(MAT_RARtNumeric, A, R, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/* ------------------------------------------------------------- */
 PetscErrorCode MatProductSymbolic_RARt_SeqAIJ_SeqAIJ(Mat C)
 {
   Mat_Product        *product = C->product;
@@ -397,5 +395,5 @@ PetscErrorCode MatProductSymbolic_RARt_SeqAIJ_SeqAIJ(Mat C)
 
 next:
   C->ops->productnumeric = MatProductNumeric_RARt;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

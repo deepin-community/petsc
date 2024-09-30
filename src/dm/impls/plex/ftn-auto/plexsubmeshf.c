@@ -75,6 +75,11 @@ extern void PetscRmPointer(void*);
 #define dmplexcreatesubmesh_ dmplexcreatesubmesh
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define dmplexreordercohesivesupports_ DMPLEXREORDERCOHESIVESUPPORTS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define dmplexreordercohesivesupports_ dmplexreordercohesivesupports
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define dmplexfilter_ DMPLEXFILTER
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define dmplexfilter_ dmplexfilter
@@ -165,6 +170,11 @@ PETSC_EXTERN void  dmplexcreatesubmesh_(DM dm,DMLabel vertexLabel,PetscInt *valu
 *__ierr = DMPlexCreateSubmesh(
 	(DM)PetscToPointer((dm) ),
 	(DMLabel)PetscToPointer((vertexLabel) ),*value,*markedFaces,subdm);
+}
+PETSC_EXTERN void  dmplexreordercohesivesupports_(DM dm, int *__ierr)
+{
+*__ierr = DMPlexReorderCohesiveSupports(
+	(DM)PetscToPointer((dm) ));
 }
 PETSC_EXTERN void  dmplexfilter_(DM dm,DMLabel cellLabel,PetscInt *value,DM *subdm, int *__ierr)
 {

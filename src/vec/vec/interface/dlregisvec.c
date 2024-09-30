@@ -1,4 +1,3 @@
-
 #include <petsc/private/vecimpl.h>
 #include <petsc/private/isimpl.h>
 #include <petscpf.h>
@@ -11,8 +10,8 @@ extern PetscFunctionList ISLocalToGlobalMappingList;
 const char              *ISInfos[] = {"SORTED", "UNIQUE", "PERMUTATION", "INTERVAL", "IDENTITY", "ISInfo", "IS_", NULL};
 
 /*@C
-  ISFinalizePackage - This function destroys everything in the IS package. It is
-  called from PetscFinalize().
+  ISFinalizePackage - This function destroys everything in the `IS` package. It is
+  called from `PetscFinalize()`.
 
   Level: developer
 
@@ -27,11 +26,11 @@ PetscErrorCode ISFinalizePackage(void)
   ISPackageInitialized                    = PETSC_FALSE;
   ISRegisterAllCalled                     = PETSC_FALSE;
   ISLocalToGlobalMappingRegisterAllCalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-      ISInitializePackage - This function initializes everything in the IS package. It is called
+  ISInitializePackage - This function initializes everything in the `IS` package. It is called
   from PetscDLLibraryRegister_petscvec() when using dynamic libraries, and on the first call to ISCreateXXXX()
   when using shared or static libraries.
 
@@ -45,7 +44,7 @@ PetscErrorCode ISInitializePackage(void)
   PetscBool opt, pkg;
 
   PetscFunctionBegin;
-  if (ISPackageInitialized) PetscFunctionReturn(0);
+  if (ISPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   ISPackageInitialized = PETSC_TRUE;
   /* Register Classes */
   PetscCall(PetscClassIdRegister("Index Set", &IS_CLASSID));
@@ -81,7 +80,7 @@ PetscErrorCode ISInitializePackage(void)
   }
   /* Register package finalizer */
   PetscCall(PetscRegisterFinalize(ISFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 extern MPI_Op PetscSplitReduction_Op;
@@ -106,7 +105,7 @@ static void MPIAPI MPIU_MaxIndex_Local(void *in, void *out, PetscMPIInt *cnt, MP
 
   PetscFunctionBegin;
   if (*datatype != MPIU_REAL_INT) {
-    (*PetscErrorPrintf)("Can only handle MPIU_REAL_INT data types");
+    PetscCallAbort(MPI_COMM_SELF, (*PetscErrorPrintf)("Can only handle MPIU_REAL_INT data types"));
     PETSCABORT(MPI_COMM_SELF, PETSC_ERR_ARG_WRONG);
   }
   for (c = 0; c < *cnt; c++) {
@@ -132,7 +131,7 @@ static void MPIAPI MPIU_MinIndex_Local(void *in, void *out, PetscMPIInt *cnt, MP
 
   PetscFunctionBegin;
   if (*datatype != MPIU_REAL_INT) {
-    (*PetscErrorPrintf)("Can only handle MPIU_REAL_INT data types");
+    PetscCallAbort(MPI_COMM_SELF, (*PetscErrorPrintf)("Can only handle MPIU_REAL_INT data types"));
     PETSCABORT(MPI_COMM_SELF, PETSC_ERR_ARG_WRONG);
   }
   for (c = 0; c < *cnt; c++) {
@@ -154,8 +153,8 @@ PetscInt          NormIds[7]; /* map from NormType to IDs used to cache Normvalu
 static PetscBool VecPackageInitialized = PETSC_FALSE;
 
 /*@C
-  VecInitializePackage - This function initializes everything in the Vec package. It is called
-  from PetscDLLibraryRegister_petscvec() when using dynamic libraries, and on the first call to VecCreate()
+  VecInitializePackage - This function initializes everything in the `Vec` package. It is called
+  from PetscDLLibraryRegister_petscvec() when using dynamic libraries, and on the first call to `VecCreate()`
   when using shared or static libraries.
 
   Level: developer
@@ -169,7 +168,7 @@ PetscErrorCode VecInitializePackage(void)
   PetscInt  i;
 
   PetscFunctionBegin;
-  if (VecPackageInitialized) PetscFunctionReturn(0);
+  if (VecPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   VecPackageInitialized = PETSC_TRUE;
   /* Register Classes */
   PetscCall(PetscClassIdRegister("Vector", &VEC_CLASSID));
@@ -203,7 +202,7 @@ PetscErrorCode VecInitializePackage(void)
   PetscCall(PetscLogEventRegister("VecSetValuesCOO", VEC_CLASSID, &VEC_SetValuesCOO));
   PetscCall(PetscLogEventRegister("VecLoad", VEC_CLASSID, &VEC_Load));
   PetscCall(PetscLogEventRegister("VecScatterBegin", VEC_CLASSID, &VEC_ScatterBegin));
-  PetscCall(PetscLogEventRegister("VecScatterEnd  ", VEC_CLASSID, &VEC_ScatterEnd));
+  PetscCall(PetscLogEventRegister("VecScatterEnd", VEC_CLASSID, &VEC_ScatterEnd));
   PetscCall(PetscLogEventRegister("VecSetRandom", VEC_CLASSID, &VEC_SetRandom));
   PetscCall(PetscLogEventRegister("VecReduceArith", VEC_CLASSID, &VEC_ReduceArithmetic));
   PetscCall(PetscLogEventRegister("VecReduceComm", VEC_CLASSID, &VEC_ReduceCommunication));
@@ -217,14 +216,10 @@ PetscErrorCode VecInitializePackage(void)
 #if defined(PETSC_HAVE_CUDA)
   PetscCall(PetscLogEventRegister("VecCUDACopyTo", VEC_CLASSID, &VEC_CUDACopyToGPU));
   PetscCall(PetscLogEventRegister("VecCUDACopyFrom", VEC_CLASSID, &VEC_CUDACopyFromGPU));
-  PetscCall(PetscLogEventRegister("VecCopyToSome", VEC_CLASSID, &VEC_CUDACopyToGPUSome));
-  PetscCall(PetscLogEventRegister("VecCopyFromSome", VEC_CLASSID, &VEC_CUDACopyFromGPUSome));
 #endif
 #if defined(PETSC_HAVE_HIP)
   PetscCall(PetscLogEventRegister("VecHIPCopyTo", VEC_CLASSID, &VEC_HIPCopyToGPU));
   PetscCall(PetscLogEventRegister("VecHIPCopyFrom", VEC_CLASSID, &VEC_HIPCopyFromGPU));
-  PetscCall(PetscLogEventRegister("VecCopyToSome", VEC_CLASSID, &VEC_HIPCopyToGPUSome));
-  PetscCall(PetscLogEventRegister("VecCopyFromSome", VEC_CLASSID, &VEC_HIPCopyFromGPUSome));
 #endif
 
   /* Mark non-collective events */
@@ -236,14 +231,10 @@ PetscErrorCode VecInitializePackage(void)
 #if defined(PETSC_HAVE_CUDA)
   PetscCall(PetscLogEventSetCollective(VEC_CUDACopyToGPU, PETSC_FALSE));
   PetscCall(PetscLogEventSetCollective(VEC_CUDACopyFromGPU, PETSC_FALSE));
-  PetscCall(PetscLogEventSetCollective(VEC_CUDACopyToGPUSome, PETSC_FALSE));
-  PetscCall(PetscLogEventSetCollective(VEC_CUDACopyFromGPUSome, PETSC_FALSE));
 #endif
 #if defined(PETSC_HAVE_HIP)
   PetscCall(PetscLogEventSetCollective(VEC_HIPCopyToGPU, PETSC_FALSE));
   PetscCall(PetscLogEventSetCollective(VEC_HIPCopyFromGPU, PETSC_FALSE));
-  PetscCall(PetscLogEventSetCollective(VEC_HIPCopyToGPUSome, PETSC_FALSE));
-  PetscCall(PetscLogEventSetCollective(VEC_HIPCopyFromGPUSome, PETSC_FALSE));
 #endif
   /* Turn off high traffic events by default */
   PetscCall(PetscLogEventSetActiveAll(VEC_SetValues, PETSC_FALSE));
@@ -274,7 +265,7 @@ PetscErrorCode VecInitializePackage(void)
 
   /* Register package finalizer */
   PetscCall(PetscRegisterFinalize(VecFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -295,14 +286,14 @@ PetscErrorCode VecFinalizePackage(void)
   if (Petsc_Reduction_keyval != MPI_KEYVAL_INVALID) PetscCallMPI(MPI_Comm_free_keyval(&Petsc_Reduction_keyval));
   VecPackageInitialized = PETSC_FALSE;
   VecRegisterAllCalled  = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_DYNAMIC_LIBRARIES)
 /*
   PetscDLLibraryRegister - This function is called when the dynamic library it is in is opened.
 
-  This one registers all the methods that are in the basic PETSc Vec library.
+  This one registers all the methods that are in the PETSc `Vec` library.
 
  */
 PETSC_EXTERN PetscErrorCode PetscDLLibraryRegister_petscvec(void)
@@ -313,7 +304,7 @@ PETSC_EXTERN PetscErrorCode PetscDLLibraryRegister_petscvec(void)
   PetscCall(AOInitializePackage());
   PetscCall(VecInitializePackage());
   PetscCall(PFInitializePackage());
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif /* PETSC_HAVE_DYNAMIC_LIBRARIES */

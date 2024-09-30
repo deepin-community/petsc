@@ -1,11 +1,10 @@
-
 /*
   Code for manipulating distributed regular arrays in parallel.
 */
 
 #include <petsc/private/dmdaimpl.h> /*I   "petscdmda.h"   I*/
 
-PetscErrorCode VecDuplicate_MPI_DA(Vec g, Vec *gg)
+static PetscErrorCode VecDuplicate_MPI_DA(Vec g, Vec *gg)
 {
   DM          da;
   PetscLayout map;
@@ -15,7 +14,7 @@ PetscErrorCode VecDuplicate_MPI_DA(Vec g, Vec *gg)
   PetscCall(DMCreateGlobalVector(da, gg));
   PetscCall(VecGetLayout(g, &map));
   PetscCall(VecSetLayout(*gg, map));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateGlobalVector_DA(DM da, Vec *g)
@@ -24,7 +23,7 @@ PetscErrorCode DMCreateGlobalVector_DA(DM da, Vec *g)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(da, DM_CLASSID, 1);
-  PetscValidPointer(g, 2);
+  PetscAssertPointer(g, 2);
   PetscCall(VecCreate(PetscObjectComm((PetscObject)da), g));
   PetscCall(VecSetSizes(*g, dd->Nlocal, PETSC_DETERMINE));
   PetscCall(VecSetBlockSize(*g, dd->w));
@@ -38,33 +37,36 @@ PetscErrorCode DMCreateGlobalVector_DA(DM da, Vec *g)
   PetscCall(VecSetOperation(*g, VECOP_VIEW, (void (*)(void))VecView_MPI_DA));
   PetscCall(VecSetOperation(*g, VECOP_LOAD, (void (*)(void))VecLoad_Default_DA));
   PetscCall(VecSetOperation(*g, VECOP_DUPLICATE, (void (*)(void))VecDuplicate_MPI_DA));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   DMDACreateNaturalVector - Creates a parallel PETSc vector that
-   will hold vector values in the natural numbering, rather than in
-   the PETSc parallel numbering associated with the `DMDA`.
+  DMDACreateNaturalVector - Creates a parallel PETSc vector that
+  will hold vector values in the natural numbering, rather than in
+  the PETSc parallel numbering associated with the `DMDA`.
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  da - the distributed array
+  Input Parameter:
+. da - the distributed array
 
-   Output Parameter:
-.  g - the distributed global vector
+  Output Parameter:
+. g - the distributed global vector
 
-   Level: developer
+  Level: advanced
 
-   Notes:
-   The output parameter, g, is a regular PETSc vector that should be destroyed
-   with a call to `VecDestroy()` when usage is finished.
+  Notes:
+  The natural numbering is a number of grid nodes that starts with, in three dimensions, with (0,0,0), (1,0,0), (2,0,0), ..., (m-1,0,0) followed by
+  (0,1,0), (1,1,0), (2,1,0), ..., (m,1,0) etc up to (0,n-1,p-1), (1,n-1,p-1), (2,n-1,p-1), ..., (m-1,n-1,p-1).
 
-   The number of local entries in the vector on each process is the same
-   as in a vector created with `DMCreateGlobalVector()`.
+  The output parameter, `g`, is a regular `Vec` that should be destroyed
+  with a call to `VecDestroy()` when usage is finished.
 
-.seealso: `DM`, `DMDA`, `DMCreateLocalVector()`, `VecDuplicate()`, `VecDuplicateVecs()`,
-          `DMDACreate1d()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMGlobalToLocalBegin()`,
+  The number of local entries in the vector on each process is the same
+  as in a vector created with `DMCreateGlobalVector()`.
+
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAGlobalToNaturalBegin()`, `DMDAGlobalToNaturalEnd()`, `DMDANaturalToGlobalBegin()`, `DMDANaturalToGlobalEnd()`,
+          `DMCreateLocalVector()`, `VecDuplicate()`, `VecDuplicateVecs()`, `DMDACreate1d()`, `DMDACreate2d()`, `DMDACreate3d()`, `DMGlobalToLocalBegin()`,
           `DMGlobalToLocalEnd()`, `DMLocalToGlobalBegin()`
 @*/
 PetscErrorCode DMDACreateNaturalVector(DM da, Vec *g)
@@ -74,7 +76,7 @@ PetscErrorCode DMDACreateNaturalVector(DM da, Vec *g)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(da, DM_CLASSID, 1, DMDA);
-  PetscValidPointer(g, 2);
+  PetscAssertPointer(g, 2);
   if (dd->natural) {
     PetscCall(PetscObjectGetReference((PetscObject)dd->natural, &cnt));
     if (cnt == 1) { /* object is not currently used by anyone */
@@ -87,8 +89,7 @@ PetscErrorCode DMDACreateNaturalVector(DM da, Vec *g)
     PetscCall(VecSetBlockSize(*g, dd->w));
     PetscCall(VecSetType(*g, da->vectype));
     PetscCall(PetscObjectReference((PetscObject)*g));
-
     dd->natural = *g;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

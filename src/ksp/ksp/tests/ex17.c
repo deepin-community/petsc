@@ -1,4 +1,3 @@
-
 static char help[] = "Solves a linear system with KSP.  This problem is\n\
 intended to test the complex numbers version of various solvers.\n\n";
 
@@ -122,6 +121,7 @@ PetscErrorCode FormTestMatrix(Mat A, PetscInt n, TestType type)
   PetscScalar val[5];
   PetscInt    i, j, Ii, J, col[5], Istart, Iend;
 
+  PetscFunctionBeginUser;
   PetscCall(MatGetOwnershipRange(A, &Istart, &Iend));
   if (type == TEST_1) {
     val[0] = 1.0;
@@ -283,8 +283,7 @@ PetscErrorCode FormTestMatrix(Mat A, PetscInt n, TestType type)
 
   PetscCall(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
-
-  return 0;
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

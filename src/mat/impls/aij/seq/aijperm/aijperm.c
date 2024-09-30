@@ -1,4 +1,3 @@
-
 /*
   Defines basic operations for the MATSEQAIJPERM matrix class.
   This class is derived from the MATSEQAIJ class and retains the
@@ -89,10 +88,10 @@ PETSC_INTERN PetscErrorCode MatConvert_SeqAIJPERM_SeqAIJ(Mat A, MatType type, Ma
   PetscCall(PetscObjectChangeTypeName((PetscObject)B, MATSEQAIJ));
 
   *newmat = B;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatDestroy_SeqAIJPERM(Mat A)
+static PetscErrorCode MatDestroy_SeqAIJPERM(Mat A)
 {
   Mat_SeqAIJPERM *aijperm = (Mat_SeqAIJPERM *)A->spptr;
 
@@ -112,10 +111,10 @@ PetscErrorCode MatDestroy_SeqAIJPERM(Mat A)
    * that is how things work for the SuperLU matrix class. */
   PetscCall(PetscObjectComposeFunction((PetscObject)A, "MatConvert_seqaijperm_seqaij_C", NULL));
   PetscCall(MatDestroy_SeqAIJ(A));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatDuplicate_SeqAIJPERM(Mat A, MatDuplicateOption op, Mat *M)
+static PetscErrorCode MatDuplicate_SeqAIJPERM(Mat A, MatDuplicateOption op, Mat *M)
 {
   Mat_SeqAIJPERM *aijperm = (Mat_SeqAIJPERM *)A->spptr;
   Mat_SeqAIJPERM *aijperm_dest;
@@ -148,10 +147,10 @@ PetscErrorCode MatDuplicate_SeqAIJPERM(Mat A, MatDuplicateOption op, Mat *M)
   PetscCall(PetscArraycpy(aijperm_dest->iperm, aijperm->iperm, A->rmap->n));
   PetscCall(PetscArraycpy(aijperm_dest->xgroup, aijperm->xgroup, aijperm->ngroup + 1));
   PetscCall(PetscArraycpy(aijperm_dest->nzgroup, aijperm->nzgroup, aijperm->ngroup));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatSeqAIJPERM_create_perm(Mat A)
+static PetscErrorCode MatSeqAIJPERM_create_perm(Mat A)
 {
   Mat_SeqAIJ     *a       = (Mat_SeqAIJ *)(A)->data;
   Mat_SeqAIJPERM *aijperm = (Mat_SeqAIJPERM *)A->spptr;
@@ -170,7 +169,7 @@ PetscErrorCode MatSeqAIJPERM_create_perm(Mat A)
   PetscInt i, ngroup, istart, ipos;
 
   PetscFunctionBegin;
-  if (aijperm->nonzerostate == A->nonzerostate) PetscFunctionReturn(0); /* permutation exists and matches current nonzero structure */
+  if (aijperm->nonzerostate == A->nonzerostate) PetscFunctionReturn(PETSC_SUCCESS); /* permutation exists and matches current nonzero structure */
   aijperm->nonzerostate = A->nonzerostate;
   /* Free anything previously put in the Mat_SeqAIJPERM data structure. */
   PetscCall(PetscFree(aijperm->xgroup));
@@ -248,15 +247,15 @@ PetscErrorCode MatSeqAIJPERM_create_perm(Mat A)
   PetscCall(PetscFree(rows_in_bucket));
   PetscCall(PetscFree(ipnz));
   PetscCall(PetscFree(nz_in_row));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatAssemblyEnd_SeqAIJPERM(Mat A, MatAssemblyType mode)
+static PetscErrorCode MatAssemblyEnd_SeqAIJPERM(Mat A, MatAssemblyType mode)
 {
   Mat_SeqAIJ *a = (Mat_SeqAIJ *)A->data;
 
   PetscFunctionBegin;
-  if (mode == MAT_FLUSH_ASSEMBLY) PetscFunctionReturn(0);
+  if (mode == MAT_FLUSH_ASSEMBLY) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Since a MATSEQAIJPERM matrix is really just a MATSEQAIJ with some
    * extra information, call the AssemblyEnd routine for a MATSEQAIJ.
@@ -271,10 +270,10 @@ PetscErrorCode MatAssemblyEnd_SeqAIJPERM(Mat A, MatAssemblyType mode)
 
   /* Now calculate the permutation and grouping information. */
   PetscCall(MatSeqAIJPERM_create_perm(A));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatMult_SeqAIJPERM(Mat A, Vec xx, Vec yy)
+static PetscErrorCode MatMult_SeqAIJPERM(Mat A, Vec xx, Vec yy)
 {
   Mat_SeqAIJ        *a = (Mat_SeqAIJ *)A->data;
   const PetscScalar *x;
@@ -453,7 +452,7 @@ PetscErrorCode MatMult_SeqAIJPERM(Mat A, Vec xx, Vec yy)
   PetscCall(PetscLogFlops(PetscMax(2.0 * a->nz - A->rmap->n, 0)));
   PetscCall(VecRestoreArrayRead(xx, &x));
   PetscCall(VecRestoreArray(yy, &y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* MatMultAdd_SeqAIJPERM() calculates yy = ww + A * xx.
@@ -463,7 +462,7 @@ PetscErrorCode MatMult_SeqAIJPERM(Mat A, Vec xx, Vec yy)
 /*
     I hate having virtually identical code for the mult and the multadd!!!
 */
-PetscErrorCode MatMultAdd_SeqAIJPERM(Mat A, Vec xx, Vec ww, Vec yy)
+static PetscErrorCode MatMultAdd_SeqAIJPERM(Mat A, Vec xx, Vec ww, Vec yy)
 {
   Mat_SeqAIJ        *a = (Mat_SeqAIJ *)A->data;
   const PetscScalar *x;
@@ -604,7 +603,7 @@ PetscErrorCode MatMultAdd_SeqAIJPERM(Mat A, Vec xx, Vec ww, Vec yy)
   PetscCall(PetscLogFlops(2.0 * a->nz));
   PetscCall(VecRestoreArrayRead(xx, &x));
   PetscCall(VecRestoreArrayPair(yy, ww, &y, &w));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* MatConvert_SeqAIJ_SeqAIJPERM converts a SeqAIJ matrix into a
@@ -620,7 +619,7 @@ PETSC_INTERN PetscErrorCode MatConvert_SeqAIJ_SeqAIJPERM(Mat A, MatType type, Ma
   PetscFunctionBegin;
   if (reuse == MAT_INITIAL_MATRIX) PetscCall(MatDuplicate(A, MAT_COPY_VALUES, &B));
   PetscCall(PetscObjectTypeCompare((PetscObject)A, type, &sametype));
-  if (sametype) PetscFunctionReturn(0);
+  if (sametype) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(PetscNew(&aijperm));
   B->spptr = (void *)aijperm;
@@ -640,39 +639,34 @@ PETSC_INTERN PetscErrorCode MatConvert_SeqAIJ_SeqAIJPERM(Mat A, MatType type, Ma
 
   PetscCall(PetscObjectChangeTypeName((PetscObject)B, MATSEQAIJPERM));
   *newmat = B;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   MatCreateSeqAIJPERM - Creates a sparse matrix of type `MATSEQAIJPERM`.
-   This type inherits from `MATSEQAIJ`, but calculates some additional permutation
-   information that is used to allow better vectorization of some
-   operations.  At the cost of increased storage, the `MATSEQAIJ` formatted
-   matrix can be copied to a format in which pieces of the matrix are
-   stored in ELLPACK format, allowing the vectorized matrix multiply
-   routine to use stride-1 memory accesses.  As with the `MATSEQAIJ` type, it is
-   important to preallocate matrix storage in order to get good assembly
-   performance.
+  MatCreateSeqAIJPERM - Creates a sparse matrix of type `MATSEQAIJPERM`.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  comm - MPI communicator, set to `PETSC_COMM_SELF`
-.  m - number of rows
-.  n - number of columns
-.  nz - number of nonzeros per row (same for all rows)
--  nnz - array containing the number of nonzeros in the various rows
-         (possibly different for each row) or NULL
+  Input Parameters:
++ comm - MPI communicator, set to `PETSC_COMM_SELF`
+. m    - number of rows
+. n    - number of columns
+. nz   - number of nonzeros per row (same for all rows), ignored if `nnz` is given
+- nnz  - array containing the number of nonzeros in the various rows (possibly different for each row) or `NULL`
 
-   Output Parameter:
-.  A - the matrix
+  Output Parameter:
+. A - the matrix
 
-   Note:
-   If nnz is given then nz is ignored
+  Level: intermediate
 
-   Level: intermediate
+  Notes:
+  This type inherits from `MATSEQAIJ`, but calculates some additional permutation information
+  that is used to allow better vectorization of some operations.  At the cost of increased
+  storage, the `MATSEQAIJ` formatted matrix can be copied to a format in which pieces of the
+  matrix are stored in ELLPACK format, allowing the vectorized matrix multiply routine to use
+  stride-1 memory accesses.
 
-.seealso: `MatCreate()`, `MatCreateMPIAIJPERM()`, `MatSetValues()`
+.seealso: [](ch_matrices), `Mat`, `MatCreate()`, `MatCreateMPIAIJPERM()`, `MatSetValues()`
 @*/
 PetscErrorCode MatCreateSeqAIJPERM(MPI_Comm comm, PetscInt m, PetscInt n, PetscInt nz, const PetscInt nnz[], Mat *A)
 {
@@ -681,7 +675,7 @@ PetscErrorCode MatCreateSeqAIJPERM(MPI_Comm comm, PetscInt m, PetscInt n, PetscI
   PetscCall(MatSetSizes(*A, m, n, m, n));
   PetscCall(MatSetType(*A, MATSEQAIJPERM));
   PetscCall(MatSeqAIJSetPreallocation_SeqAIJ(*A, nz, nnz));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode MatCreate_SeqAIJPERM(Mat A)
@@ -689,5 +683,5 @@ PETSC_EXTERN PetscErrorCode MatCreate_SeqAIJPERM(Mat A)
   PetscFunctionBegin;
   PetscCall(MatSetType(A, MATSEQAIJ));
   PetscCall(MatConvert_SeqAIJ_SeqAIJPERM(A, MATSEQAIJPERM, MAT_INPLACE_MATRIX, &A));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

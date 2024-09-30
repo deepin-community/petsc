@@ -1,0 +1,31 @@
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/sys/objects/ftn-custom/zpgnamef.c">Actual source code: zpgnamef.c</a></center><br>
+
+<html>
+<head>
+<title></title>
+<meta name="generator" content="c2html 0.9.4">
+<meta name="date" content="2024-03-29T14:13:00+00:00">
+</head>
+
+<body bgcolor="#FFFFFF">
+<pre width="80">
+<a name="line1">  1: </a>#include <A href="../../../../include/petsc/private/fortranimpl.h.html">&lt;petsc/private/fortranimpl.h&gt;</A>
+
+<a name="line3">  3: </a><font color="#A020F0">#if defined(PETSC_HAVE_FORTRAN_CAPS)</font>
+<a name="line4">  4: </a><strong><font color="#228B22">  #define petscobjectgetname_ PETSCOBJECTGETNAME</font></strong>
+<a name="line5">  5: </a><font color="#A020F0">#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE)</font>
+<a name="line6">  6: </a><strong><font color="#228B22">  #define petscobjectgetname_ petscobjectgetname</font></strong>
+<a name="line7">  7: </a><font color="#A020F0">#endif</font>
+
+<a name="line9">  9: </a><strong><font color="#4169E1"><a name="petscobjectgetname_"></a>PETSC_EXTERN void petscobjectgetname_(<a href="../../../../manualpages/Sys/PetscObject.html">PetscObject</a> *obj, char *name, <a href="../../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> *ierr, PETSC_FORTRAN_CHARLEN_T len)</font></strong>
+<a name="line10"> 10: </a>{
+<a name="line11"> 11: </a>  const char *tmp;
+<a name="line12"> 12: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscObjectGetName.html">PetscObjectGetName</a>(*obj, &amp;tmp);
+<a name="line13"> 13: </a>  *ierr = <a href="../../../../manualpages/Sys/PetscStrncpy.html">PetscStrncpy</a>(name, tmp, len);
+<a name="line14"> 14: </a>  <font color="#4169E1">if</font> (*ierr) <font color="#4169E1">return</font>;
+<a name="line15"> 15: </a>  FIXRETURNCHAR(<a href="../../../../manualpages/Sys/PETSC_TRUE.html">PETSC_TRUE</a>, name, len);
+<a name="line16"> 16: </a>}
+</pre>
+</body>
+
+</html>

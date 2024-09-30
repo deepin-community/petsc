@@ -139,6 +139,7 @@ PETSC_ARCH from environment does not match command-line or name of script. Using
       m = hashlib.md5()
       m.update(hash.encode('utf-8'))
       hprefix = m.hexdigest()
+      self.logPrint('Computed hash to be used with --package-prefix-hash option: '+hprefix)
       if 'arch-hash' in self.argDB:
         self.argDB['PETSC_ARCH'] = 'arch-'+hprefix[0:6]
         self.arch = 'arch-'+hprefix[0:6]
@@ -157,14 +158,22 @@ PETSC_ARCH from environment does not match command-line or name of script. Using
           if os.path.isdir(hashdirpackages):
             if os.path.exists(hashfilepackages):
               self.argDB['package-prefix-hash'] = 'reuse' # indicates prefix libraries already built, no need to rebuild
+              self.logPrint('Found existing '+hashfilepackages+' reusing packages built in '+hashdirpackages)
               status = True
               break
-            else: continue # perhaps an incomplete build? use a longer hash
+            else:
+              self.logPrint('Found existing '+hashdirpackages+' but it is incomplete so trying a longer directory name based on the hash')
+              continue # perhaps an incomplete build? use a longer hash
           else:
+            if self.argDB['force']:
+              # since the previous hash associated with --package-prefix-hash
+              # (and hence its directory of built packages) is not available
+              # all the packages associated with that hash cannot be reused
+              raise RuntimeError('You cannot use --force with --package-prefix-hash=directory; you need to delete the $PETSC_ARCH directory and run configure again')
+            self.logPrint('Creating package-prefix-hash subdirectory '+hashdirpackages)
             try:
               os.mkdir(hashdirpackages)
             except Exception as e:
-              self.logPrint('Error creating package-prefix-hash directory '+hashdirpackages+': '+str(e))
               raise RuntimeError('You must have write permission on --package-prefix-hash='+self.argDB['package-prefix-hash']+' directory')
             status = True
             break
@@ -200,11 +209,15 @@ PETSC_ARCH from environment does not match command-line or name of script. Using
       print('Your configure options and state has not changed; no need to run configure')
       print('However you can force a configure run using the option: --force')
 
+      import logger
       from config.packages.make import getMakeUserPath
-      print('xxx=========================================================================xxx')
+      banner_ends   = 'xxx'
+      banner_middle = '=' * (logger.get_global_divider_length() - 2 * len(banner_ends))
+      banner_line   = banner_middle.join((banner_ends, banner_ends))
+      print(banner_line)
       print(' Build PETSc libraries with:')
       print('   %s PETSC_DIR=%s PETSC_ARCH=%s all' % (getMakeUserPath(self.arch), self.petscdir.dir, self.arch))
-      print('xxx=========================================================================xxx')
+      print(banner_line)
       sys.exit()
     self.logPrint('configure hash file: '+hashfile+' does not match, need to run configure')
     self.makeDependency(hash,hashfile,hashfilepackages)

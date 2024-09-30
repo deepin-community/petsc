@@ -11,9 +11,10 @@ if __name__ == '__main__':
   configure_options = [
     '--package-prefix-hash='+petsc_hash_pkgs,
     '--with-make-test-np=3',
-    'COPTFLAGS=-g -O',
-    'FOPTFLAGS=-g -O',
-    'CXXOPTFLAGS=-g -O',
+    'COPTFLAGS=-g -O0',
+    'FOPTFLAGS=-g -O0',
+    'CXXOPTFLAGS=-g -O0',
+    '--with-coverage',
     '--download-suitesparse',
     '--download-mumps',
     '--download-scalapack',
@@ -30,6 +31,7 @@ if __name__ == '__main__':
     '--download-parmetis',
     '--download-triangle',
     '--download-p4est',
+    '--download-mfem',
     '--with-cuda',
     '--with-shared-libraries',
     '--download-magma',
@@ -40,9 +42,12 @@ if __name__ == '__main__':
     '--download-kokkos-kernels',
     '--download-hwloc',
     '--download-hypre',
-    '--download-hypre-configure-arguments=--enable-unified-memory',
     '--download-raja',
     '--download-amgx',
+    '--download-zfp',
+    '--download-butterflypack',
+    '--download-strumpack',
+    '--with-strict-petscerrorcode',
   ]
 
   configure.petsc_configure(configure_options)

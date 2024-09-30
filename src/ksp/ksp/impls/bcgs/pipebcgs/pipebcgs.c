@@ -1,4 +1,3 @@
-
 /*
     This file implements pipelined BiCGStab (pipe-BiCGStab).
 */
@@ -8,7 +7,7 @@ static PetscErrorCode KSPSetUp_PIPEBCGS(KSP ksp)
 {
   PetscFunctionBegin;
   PetscCall(KSPSetWorkVecs(ksp, 15));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* Only need a few hacks from KSPSolve_BCGS */
@@ -50,7 +49,6 @@ static PetscErrorCode KSPSolve_PIPEBCGS(KSP ksp)
 
   /* Compute initial residual */
   PetscCall(KSPGetPC(ksp, &pc));
-  PetscCall(PCSetUp(pc));
   if (!ksp->guess_zero) {
     PetscCall(KSP_MatMult(ksp, pc->mat, X, Q2));
     PetscCall(VecCopy(B, R));
@@ -70,7 +68,7 @@ static PetscErrorCode KSPSolve_PIPEBCGS(KSP ksp)
   PetscCall(KSPLogResidualHistory(ksp, dp));
   PetscCall(KSPMonitor(ksp, 0, dp));
   PetscCall((*ksp->converged)(ksp, 0, dp, &ksp->reason, ksp->cnvP));
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Initialize */
   PetscCall(VecCopy(R, RP)); /* rp <- r */
@@ -197,7 +195,7 @@ static PetscErrorCode KSPSolve_PIPEBCGS(KSP ksp)
   } while (i < ksp->max_it);
 
   if (i >= ksp->max_it) ksp->reason = KSP_DIVERGED_ITS;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -206,7 +204,7 @@ static PetscErrorCode KSPSolve_PIPEBCGS(KSP ksp)
     Level: intermediate
 
     Notes:
-    This method has only two non-blocking reductions per iteration, compared to 3 blocking for standard FBCGS.  The
+    This method has only two non-blocking reductions per iteration, compared to 3 blocking for standard `KSPFBCGS`.  The
     non-blocking reductions are overlapped by matrix-vector products and preconditioner applications.
 
     Periodic residual replacement may be used to increase robustness and maximal attainable accuracy.
@@ -217,15 +215,10 @@ static PetscErrorCode KSPSolve_PIPEBCGS(KSP ksp)
     performance of pipelined methods. See [](doc_faq_pipelined)
 
     Contributed by:
-    Siegfried Cools, Universiteit Antwerpen,
+    Siegfried Cools, Universiteit Antwerpen, {cite}`cools2017communication`
     EXA2CT European Project on EXascale Algorithms and Advanced Computational Techniques, 2016.
 
-    Reference:
-.   * - S. Cools and W. Vanroose,
-    "The communication-hiding pipelined BiCGStab method for the parallel solution of large unsymmetric linear systems",
-    Parallel Computing, 65:1-20, 2017.
-
-.seealso: [](chapter_ksp), `KSPFBCGS`, `KSPFBCGSR`, `KSPBCGS`, `KSPBCGSL`, `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPBICG`, `KSPFBCGS`, `KSPFBCGSL`, `KSPSetPCSide()`,
+.seealso: [](ch_ksp), `KSPFBCGS`, `KSPFBCGSR`, `KSPBCGS`, `KSPBCGSL`, `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPBICG`, `KSPFBCGS`, `KSPSetPCSide()`,
            [](sec_pipelineksp), [](doc_faq_pipelined)
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_PIPEBCGS(KSP ksp)
@@ -245,5 +238,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_PIPEBCGS(KSP ksp)
 
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_UNPRECONDITIONED, PC_RIGHT, 2));
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_NONE, PC_RIGHT, 1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

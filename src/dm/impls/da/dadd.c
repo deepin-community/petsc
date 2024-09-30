@@ -1,30 +1,34 @@
 #include <petsc/private/dmdaimpl.h> /*I   "petscdmda.h"   I*/
 
 /*@
-  DMDACreatePatchIS - Creates an index set corresponding to a patch of the `DMDA`.
+  DMDACreatePatchIS - Creates an index set corresponding to a logically rectangular patch of the `DMDA`.
 
   Collective
 
   Input Parameters:
-+  da - the `DMDA`
-.  lower - a matstencil with i, j and k corresponding to the lower corner of the patch
-.  upper - a matstencil with i, j and k corresponding to the upper corner of the patch
--  offproc - indicate whether the returned IS will contain off process indices
++ da      - the `DMDA`
+. lower   - a `MatStencil` with i, j and k entries corresponding to the lower corner of the patch
+. upper   - a `MatStencil` with i, j and k entries corresponding to the upper corner of the patch
+- offproc - indicate whether the returned `IS` will contain off process indices
 
-  Output Parameters:
-.  is - the `IS` corresponding to the patch
+  Output Parameter:
+. is - the `IS` corresponding to the patch
 
   Level: developer
 
   Notes:
-  This routine always returns an `IS` on the `DMDA` comm, if offproc is set to `PETSC_TRUE`,
-  the routine returns an `IS` with all the indices requested regardless of whether these indices
-  are present on the requesting rank or not. Thus, it is upon the caller to ensure that
-  the indices returned in this mode are appropriate. If offproc is set to `PETSC_FALSE`,
-  the `IS` only returns the subset of indices that are present on the requesting rank and there
-  is no duplication of indices.
+  This routine always returns an `IS` on the `DMDA` communicator.
 
-.seealso: `DM`, `DMDA`, `DMCreateDomainDecomposition()`, `DMCreateDomainDecompositionScatters()`
+  If `offproc` is set to `PETSC_TRUE`,
+  the routine returns an `IS` with all the indices requested regardless of whether these indices
+  are present on the requesting MPI process or not. Thus, it is upon the caller to ensure that
+  the indices returned in this mode are appropriate.
+
+  If `offproc` is set to `PETSC_FALSE`,
+  the `IS` only returns the subset of indices that are present on the requesting MPI process and there
+  is no duplication of indices between multiple MPI processes.
+
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMCreateDomainDecomposition()`, `DMCreateDomainDecompositionScatters()`
 @*/
 PetscErrorCode DMDACreatePatchIS(DM da, MatStencil *lower, MatStencil *upper, IS *is, PetscBool offproc)
 {
@@ -255,10 +259,10 @@ PetscErrorCode DMDACreatePatchIS(DM da, MatStencil *lower, MatStencil *upper, IS
 
 createis:
   PetscCall(ISCreateGeneral(PetscObjectComm((PetscObject)da), idx, indices, PETSC_OWN_POINTER, is));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMDASubDomainDA_Private(DM dm, PetscInt *nlocal, DM **sdm)
+static PetscErrorCode DMDASubDomainDA_Private(DM dm, PetscInt *nlocal, DM **sdm)
 {
   DM           *da;
   PetscInt      dim, size, i, j, k, idx;
@@ -410,7 +414,7 @@ PetscErrorCode DMDASubDomainDA_Private(DM dm, PetscInt *nlocal, DM **sdm)
     zs += zm;
   }
   *sdm = da;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -493,10 +497,10 @@ PetscErrorCode DMCreateDomainDecompositionScatters_DA(DM dm, PetscInt nsubdms, D
 
     PetscCall(ISDestroy(&gdis));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode DMDASubDomainIS_Private(DM dm, PetscInt n, DM *subdm, IS **iis, IS **ois)
+static PetscErrorCode DMDASubDomainIS_Private(DM dm, PetscInt n, DM *subdm, IS **iis, IS **ois)
 {
   PetscInt      i;
   DMDALocalInfo info, subinfo;
@@ -532,13 +536,13 @@ PetscErrorCode DMDASubDomainIS_Private(DM dm, PetscInt n, DM *subdm, IS **iis, I
       PetscCall(DMDACreatePatchIS(dm, &lower, &upper, &(*ois)[i], patchis_offproc));
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMCreateDomainDecomposition_DA(DM dm, PetscInt *len, char ***names, IS **iis, IS **ois, DM **subdm)
 {
-  DM      *sdm;
-  PetscInt n, i;
+  DM      *sdm = NULL;
+  PetscInt n   = 0, i;
 
   PetscFunctionBegin;
   PetscCall(DMDASubDomainDA_Private(dm, &n, &sdm));
@@ -552,5 +556,5 @@ PetscErrorCode DMCreateDomainDecomposition_DA(DM dm, PetscInt *len, char ***name
     for (i = 0; i < n; i++) PetscCall(DMDestroy(&sdm[i]));
   }
   if (len) *len = n;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

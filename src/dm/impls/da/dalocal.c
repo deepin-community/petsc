@@ -1,4 +1,3 @@
-
 /*
   Code for manipulating distributed regular arrays in parallel.
 */
@@ -39,7 +38,7 @@ static PetscErrorCode VecMatlabEnginePut_DA2d(PetscObject obj, void *mengine)
   engPutVariable((Engine *)mengine, obj->name, mat);
 
   PetscCall(VecRestoreArray(vec, &array));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #endif
 
@@ -49,7 +48,7 @@ PetscErrorCode DMCreateLocalVector_DA(DM da, Vec *g)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(da, DM_CLASSID, 1);
-  PetscValidPointer(g, 2);
+  PetscAssertPointer(g, 2);
   PetscCall(VecCreate(PETSC_COMM_SELF, g));
   PetscCall(VecSetSizes(*g, dd->nlocal, PETSC_DETERMINE));
   PetscCall(VecSetBlockSize(*g, dd->w));
@@ -62,11 +61,11 @@ PetscErrorCode DMCreateLocalVector_DA(DM da, Vec *g)
 #if defined(PETSC_HAVE_MATLAB)
   if (dd->w == 1 && da->dim == 2) PetscCall(PetscObjectComposeFunction((PetscObject)*g, "PetscMatlabEnginePut_C", VecMatlabEnginePut_DA2d));
 #endif
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMDAGetNumCells - Get the number of cells in the local piece of the `DMDA`. This includes ghost cells.
+  DMDAGetNumCells - Get the number of cells (or vertices) in the local piece of the `DMDA`. This includes ghost cells.
 
   Input Parameter:
 . dm - The `DMDA` object
@@ -75,11 +74,11 @@ PetscErrorCode DMCreateLocalVector_DA(DM da, Vec *g)
 + numCellsX - The number of local cells in the x-direction
 . numCellsY - The number of local cells in the y-direction
 . numCellsZ - The number of local cells in the z-direction
-- numCells - The number of local cells
+- numCells  - The number of local cells
 
   Level: developer
 
-.seealso: `DM`, `DMDA`, `DMDAGetCellPoint()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAGetCellPoint()`
 @*/
 PetscErrorCode DMDAGetNumCells(DM dm, PetscInt *numCellsX, PetscInt *numCellsY, PetscInt *numCellsZ, PetscInt *numCells)
 {
@@ -91,37 +90,39 @@ PetscErrorCode DMDAGetNumCells(DM dm, PetscInt *numCellsX, PetscInt *numCellsY, 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMDA);
   if (numCellsX) {
-    PetscValidIntPointer(numCellsX, 2);
+    PetscAssertPointer(numCellsX, 2);
     *numCellsX = mx;
   }
   if (numCellsY) {
-    PetscValidIntPointer(numCellsY, 3);
+    PetscAssertPointer(numCellsY, 3);
     *numCellsY = my;
   }
   if (numCellsZ) {
-    PetscValidIntPointer(numCellsZ, 4);
+    PetscAssertPointer(numCellsZ, 4);
     *numCellsZ = mz;
   }
   if (numCells) {
-    PetscValidIntPointer(numCells, 5);
+    PetscAssertPointer(numCells, 5);
     *numCells = nC;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  DMDAGetCellPoint - Get the DM point corresponding to the tuple (i, j, k) in the `DMDA`
+  DMDAGetCellPoint - Get the `DM` point corresponding to the tuple (i, j, k) in the `DMDA`
 
   Input Parameters:
 + dm - The `DMDA` object
-- i,j,k - The global indices for the cell
+. i  - The global x index for the cell
+. j  - The global y index for the cell
+- k  - The global z index for the cell
 
-  Output Parameters:
+  Output Parameter:
 . point - The local `DM` point
 
   Level: developer
 
-.seealso: `DM`, `DMDA`, `DMDAGetNumCells()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAGetNumCells()`
 @*/
 PetscErrorCode DMDAGetCellPoint(DM dm, PetscInt i, PetscInt j, PetscInt k, PetscInt *point)
 {
@@ -130,13 +131,13 @@ PetscErrorCode DMDAGetCellPoint(DM dm, PetscInt i, PetscInt j, PetscInt k, Petsc
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(dm, DM_CLASSID, 1, DMDA);
-  PetscValidIntPointer(point, 5);
+  PetscAssertPointer(point, 5);
   PetscCall(DMDAGetLocalInfo(dm, &info));
   if (dim > 0) PetscCheck(!(i < info.gxs) && !(i >= info.gxs + info.gxm), PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "X index %" PetscInt_FMT " not in [%" PetscInt_FMT ", %" PetscInt_FMT ")", i, info.gxs, info.gxs + info.gxm);
   if (dim > 1) PetscCheck(!(j < info.gys) && !(j >= info.gys + info.gym), PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Y index %" PetscInt_FMT " not in [%" PetscInt_FMT ", %" PetscInt_FMT ")", j, info.gys, info.gys + info.gym);
   if (dim > 2) PetscCheck(!(k < info.gzs) && !(k >= info.gzs + info.gzm), PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Z index %" PetscInt_FMT PetscInt_FMT " not in [%" PetscInt_FMT ", %" PetscInt_FMT ")", k, info.gzs, info.gzs + info.gzm);
   *point = i + (dim > 1 ? (j + (dim > 2 ? k * info.gym : 0)) * info.gxm : 0);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMDAGetNumVertices(DM dm, PetscInt *numVerticesX, PetscInt *numVerticesY, PetscInt *numVerticesZ, PetscInt *numVertices)
@@ -151,22 +152,22 @@ PetscErrorCode DMDAGetNumVertices(DM dm, PetscInt *numVerticesX, PetscInt *numVe
 
   PetscFunctionBegin;
   if (numVerticesX) {
-    PetscValidIntPointer(numVerticesX, 2);
+    PetscAssertPointer(numVerticesX, 2);
     *numVerticesX = nVx;
   }
   if (numVerticesY) {
-    PetscValidIntPointer(numVerticesY, 3);
+    PetscAssertPointer(numVerticesY, 3);
     *numVerticesY = nVy;
   }
   if (numVerticesZ) {
-    PetscValidIntPointer(numVerticesZ, 4);
+    PetscAssertPointer(numVerticesZ, 4);
     *numVerticesZ = nVz;
   }
   if (numVertices) {
-    PetscValidIntPointer(numVertices, 5);
+    PetscAssertPointer(numVertices, 5);
     *numVertices = nV;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMDAGetNumFaces(DM dm, PetscInt *numXFacesX, PetscInt *numXFaces, PetscInt *numYFacesY, PetscInt *numYFaces, PetscInt *numZFacesZ, PetscInt *numZFaces)
@@ -183,30 +184,30 @@ PetscErrorCode DMDAGetNumFaces(DM dm, PetscInt *numXFacesX, PetscInt *numXFaces,
 
   PetscFunctionBegin;
   if (numXFacesX) {
-    PetscValidIntPointer(numXFacesX, 2);
+    PetscAssertPointer(numXFacesX, 2);
     *numXFacesX = nxF;
   }
   if (numXFaces) {
-    PetscValidIntPointer(numXFaces, 3);
+    PetscAssertPointer(numXFaces, 3);
     *numXFaces = nXF;
   }
   if (numYFacesY) {
-    PetscValidIntPointer(numYFacesY, 4);
+    PetscAssertPointer(numYFacesY, 4);
     *numYFacesY = nyF;
   }
   if (numYFaces) {
-    PetscValidIntPointer(numYFaces, 5);
+    PetscAssertPointer(numYFaces, 5);
     *numYFaces = nYF;
   }
   if (numZFacesZ) {
-    PetscValidIntPointer(numZFacesZ, 6);
+    PetscAssertPointer(numZFacesZ, 6);
     *numZFacesZ = nzF;
   }
   if (numZFaces) {
-    PetscValidIntPointer(numZFaces, 7);
+    PetscAssertPointer(numZFaces, 7);
     *numZFaces = nZF;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMDAGetHeightStratum(DM dm, PetscInt height, PetscInt *pStart, PetscInt *pEnd)
@@ -215,8 +216,8 @@ PetscErrorCode DMDAGetHeightStratum(DM dm, PetscInt height, PetscInt *pStart, Pe
   PetscInt       nC, nV, nXF, nYF, nZF;
 
   PetscFunctionBegin;
-  if (pStart) PetscValidIntPointer(pStart, 3);
-  if (pEnd) PetscValidIntPointer(pEnd, 4);
+  if (pStart) PetscAssertPointer(pStart, 3);
+  if (pEnd) PetscAssertPointer(pEnd, 4);
   PetscCall(DMDAGetNumCells(dm, NULL, NULL, NULL, &nC));
   PetscCall(DMDAGetNumVertices(dm, NULL, NULL, NULL, &nV));
   PetscCall(DMDAGetNumFaces(dm, NULL, &nXF, NULL, &nYF, NULL, &nZF));
@@ -237,7 +238,7 @@ PetscErrorCode DMDAGetHeightStratum(DM dm, PetscInt height, PetscInt *pStart, Pe
     if (pStart) *pStart = 0;
     if (pEnd) *pEnd = nC + nV + nXF + nYF + nZF;
   } else SETERRQ(PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_OUTOFRANGE, "No points of height %" PetscInt_FMT " in the DA", height);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMDAGetDepthStratum(DM dm, PetscInt depth, PetscInt *pStart, PetscInt *pEnd)
@@ -246,8 +247,8 @@ PetscErrorCode DMDAGetDepthStratum(DM dm, PetscInt depth, PetscInt *pStart, Pets
   PetscInt       nC, nV, nXF, nYF, nZF;
 
   PetscFunctionBegin;
-  if (pStart) PetscValidIntPointer(pStart, 3);
-  if (pEnd) PetscValidIntPointer(pEnd, 4);
+  if (pStart) PetscAssertPointer(pStart, 3);
+  if (pEnd) PetscAssertPointer(pEnd, 4);
   PetscCall(DMDAGetNumCells(dm, NULL, NULL, NULL, &nC));
   PetscCall(DMDAGetNumVertices(dm, NULL, NULL, NULL, &nV));
   PetscCall(DMDAGetNumFaces(dm, NULL, &nXF, NULL, &nYF, NULL, &nZF));
@@ -268,86 +269,7 @@ PetscErrorCode DMDAGetDepthStratum(DM dm, PetscInt depth, PetscInt *pStart, Pets
     if (pStart) *pStart = 0;
     if (pEnd) *pEnd = nC + nV + nXF + nYF + nZF;
   } else SETERRQ(PetscObjectComm((PetscObject)dm), PETSC_ERR_ARG_OUTOFRANGE, "No points of depth %" PetscInt_FMT " in the DA", depth);
-  PetscFunctionReturn(0);
-}
-
-PetscErrorCode DMDAGetConeSize(DM dm, PetscInt p, PetscInt *coneSize)
-{
-  const PetscInt dim = dm->dim;
-  PetscInt       nC, nV, nXF, nYF, nZF;
-
-  PetscFunctionBegin;
-  *coneSize = 0;
-  PetscCall(DMDAGetNumCells(dm, NULL, NULL, NULL, &nC));
-  PetscCall(DMDAGetNumVertices(dm, NULL, NULL, NULL, &nV));
-  PetscCall(DMDAGetNumFaces(dm, NULL, &nXF, NULL, &nYF, NULL, &nZF));
-  switch (dim) {
-  case 2:
-    if (p >= 0) {
-      if (p < nC) {
-        *coneSize = 4;
-      } else if (p < nC + nV) {
-        *coneSize = 0;
-      } else if (p < nC + nV + nXF + nYF + nZF) {
-        *coneSize = 2;
-      } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Point %" PetscInt_FMT " should be in [0, %" PetscInt_FMT ")", p, nC + nV + nXF + nYF + nZF);
-    } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Negative point %" PetscInt_FMT " is invalid", p);
-    break;
-  case 3:
-    SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP, "Too lazy to do 3D");
-  }
-  PetscFunctionReturn(0);
-}
-
-PetscErrorCode DMDAGetCone(DM dm, PetscInt p, PetscInt *cone[])
-{
-  const PetscInt dim = dm->dim;
-  PetscInt       nCx, nCy, nCz, nC, nVx, nVy, nVz, nV, nxF, nyF, nzF, nXF, nYF, nZF;
-
-  PetscFunctionBegin;
-  if (!cone) PetscCall(DMGetWorkArray(dm, 6, MPIU_INT, cone));
-  PetscCall(DMDAGetNumCells(dm, &nCx, &nCy, &nCz, &nC));
-  PetscCall(DMDAGetNumVertices(dm, &nVx, &nVy, &nVz, &nV));
-  PetscCall(DMDAGetNumFaces(dm, &nxF, &nXF, &nyF, &nYF, &nzF, &nZF));
-  switch (dim) {
-  case 2:
-    if (p >= 0) {
-      if (p < nC) {
-        const PetscInt cy = p / nCx;
-        const PetscInt cx = p % nCx;
-
-        (*cone)[0] = cy * nxF + cx + nC + nV;
-        (*cone)[1] = cx * nyF + cy + nyF + nC + nV + nXF;
-        (*cone)[2] = cy * nxF + cx + nxF + nC + nV;
-        (*cone)[3] = cx * nyF + cy + nC + nV + nXF;
-        SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP, "Too lazy to do cell cones");
-      } else if (p < nC + nV) {
-      } else if (p < nC + nV + nXF) {
-        const PetscInt fy = (p - nC + nV) / nxF;
-        const PetscInt fx = (p - nC + nV) % nxF;
-
-        (*cone)[0] = fy * nVx + fx + nC;
-        (*cone)[1] = fy * nVx + fx + 1 + nC;
-      } else if (p < nC + nV + nXF + nYF) {
-        const PetscInt fx = (p - nC + nV + nXF) / nyF;
-        const PetscInt fy = (p - nC + nV + nXF) % nyF;
-
-        (*cone)[0] = fy * nVx + fx + nC;
-        (*cone)[1] = fy * nVx + fx + nVx + nC;
-      } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Point %" PetscInt_FMT " should be in [0, %" PetscInt_FMT ")", p, nC + nV + nXF + nYF + nZF);
-    } else SETERRQ(PETSC_COMM_SELF, PETSC_ERR_ARG_OUTOFRANGE, "Negative point %" PetscInt_FMT " is invalid", p);
-    break;
-  case 3:
-    SETERRQ(PETSC_COMM_SELF, PETSC_ERR_SUP, "Too lazy to do 3D");
-  }
-  PetscFunctionReturn(0);
-}
-
-PetscErrorCode DMDARestoreCone(DM dm, PetscInt p, PetscInt *cone[])
-{
-  PetscFunctionBegin;
-  PetscCall(DMGetWorkArray(dm, 6, MPIU_INT, cone));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode DMDASetVertexCoordinates(DM dm, PetscReal xl, PetscReal xu, PetscReal yl, PetscReal yu, PetscReal zl, PetscReal zu)
@@ -400,28 +322,30 @@ PetscErrorCode DMDASetVertexCoordinates(DM dm, PetscReal xl, PetscReal xu, Petsc
   PetscCall(DMSetCoordinatesLocal(dm, coordinates));
   PetscCall(PetscSectionDestroy(&section));
   PetscCall(VecDestroy(&coordinates));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* ------------------------------------------------------------------- */
 
 /*@C
-     DMDAGetArray - Gets a work array for a `DMDA`
+  DMDAGetArray - Gets a work array for a `DMDA`
 
-    Input Parameters:
-+    da - information about my local patch
--    ghosted - do you want arrays for the ghosted or nonghosted patch
+  Input Parameters:
++ da      - a `DMDA`
+- ghosted - do you want arrays for the ghosted or nonghosted patch
 
-    Output Parameters:
-.    vptr - array data structured
+  Output Parameter:
+. vptr - array data structured
 
   Level: advanced
 
-  Note:
-   The vector values are NOT initialized and may have garbage in them, so you may need
-   to zero them.
+  Notes:
+  The vector values are NOT initialized and may have garbage in them, so you may need
+  to zero them.
 
-.seealso: `DM`, `DMDA`, `DMDARestoreArray()`
+  Use `DMDARestoreArray()` to return the array
+
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDARestoreArray()`
 @*/
 PetscErrorCode DMDAGetArray(DM da, PetscBool ghosted, void *vptr)
 {
@@ -525,20 +449,20 @@ done:
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-     DMDARestoreArray - Restores an array of derivative types for a `DMDA`
+  DMDARestoreArray - Restores an array for a `DMDA` obtained with  `DMDAGetArray()`
 
-    Input Parameters:
-+    da - information about my local patch
-.    ghosted - do you want arrays for the ghosted or nonghosted patch
--    vptr - array data structured
+  Input Parameters:
++ da      - information about my local patch
+. ghosted - do you want arrays for the ghosted or nonghosted patch
+- vptr    - array data structured
 
-     Level: advanced
+  Level: advanced
 
-.seealso: `DM`, `DMDA`, `DMDAGetArray()`
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAGetArray()`
 @*/
 PetscErrorCode DMDARestoreArray(DM da, PetscBool ghosted, void *vptr)
 {
@@ -581,5 +505,5 @@ PetscErrorCode DMDARestoreArray(DM da, PetscBool ghosted, void *vptr)
       }
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

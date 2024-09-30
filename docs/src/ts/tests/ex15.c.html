@@ -1,10 +1,10 @@
-<center><a href="https://gitlab.com/petsc/petsc/-/blob/c7d19d7b3f2d9e6411c648820d1207320e4154c7/src/ts/tests/ex15.c">Actual source code: ex15.c</a></center><br>
+<center><a href="https://gitlab.com/petsc/petsc/-/blob/183cd29ee28cacc3ee84c625478d276606b77b2c/src/ts/tests/ex15.c">Actual source code: ex15.c</a></center><br>
 
 <html>
 <head>
 <title></title>
 <meta name="generator" content="c2html 0.9.4">
-<meta name="date" content="2023-03-30T15:49:41+00:00">
+<meta name="date" content="2024-03-29T14:12:37+00:00">
 </head>
 
 <body bgcolor="#FFFFFF">
@@ -51,118 +51,123 @@
 <a name="line40"> 40: </a>} VarMode;
 <a name="line41"> 41: </a>static const char *const VarModes[] = {<font color="#666666">"CONSERVATIVE"</font>, <font color="#666666">"NONCONSERVATIVE"</font>, <font color="#666666">"TRANSIENTVAR"</font>, <font color="#666666">"VarMode"</font>, <font color="#666666">"VAR_"</font>, NULL};
 
-<a name="line43"> 43: </a><strong><font color="#4169E1"><a name="IFunction_Conservative"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> IFunction_Conservative(<a href="../../../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> U, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> Udot, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> F, void *ctx)</font></strong>
+<a name="line43"> 43: </a><strong><font color="#4169E1"><a name="IFunction_Conservative"></a>static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> IFunction_Conservative(<a href="../../../manualpages/TS/TS.html">TS</a> ts, <a href="../../../manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../../manualpages/Vec/Vec.html">Vec</a> U, <a href="../../../manualpages/Vec/Vec.html">Vec</a> Udot, <a href="../../../manualpages/Vec/Vec.html">Vec</a> F, void *ctx)</font></strong>
 <a name="line44"> 44: </a>{
-<a name="line45"> 45: </a>  const <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *u, *udot;
-<a name="line46"> 46: </a>  <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *f;
+<a name="line45"> 45: </a>  const <a href="../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *u, *udot;
+<a name="line46"> 46: </a>  <a href="../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>       *f;
 
-<a name="line49"> 49: </a>  <a href="../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(U, &amp;u);
-<a name="line50"> 50: </a>  <a href="../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(Udot, &amp;udot);
-<a name="line51"> 51: </a>  <a href="../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(F, &amp;f);
+<a name="line48"> 48: </a>  <a href="../../../manualpages/Sys/PetscFunctionBeginUser.html">PetscFunctionBeginUser</a>;
+<a name="line49"> 49: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(U, &amp;u));
+<a name="line50"> 50: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(Udot, &amp;udot));
+<a name="line51"> 51: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecGetArray.html">VecGetArray</a>(F, &amp;f));
 
 <a name="line53"> 53: </a>  f[0] = udot[0] + u[0];
 <a name="line54"> 54: </a>  f[1] = udot[1] - u[0];
 
-<a name="line56"> 56: </a>  <a href="../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(U, &amp;u);
-<a name="line57"> 57: </a>  <a href="../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(Udot, &amp;udot);
-<a name="line58"> 58: </a>  <a href="../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(F, &amp;f);
-<a name="line59"> 59: </a>  <font color="#4169E1">return</font> 0;
+<a name="line56"> 56: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(U, &amp;u));
+<a name="line57"> 57: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(Udot, &amp;udot));
+<a name="line58"> 58: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(F, &amp;f));
+<a name="line59"> 59: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line60"> 60: </a>}
 
-<a name="line62"> 62: </a><strong><font color="#4169E1"><a name="IFunction_Nonconservative"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> IFunction_Nonconservative(<a href="../../../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> U, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> Udot, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> F, void *ctx)</font></strong>
+<a name="line62"> 62: </a><strong><font color="#4169E1"><a name="IFunction_Nonconservative"></a>static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> IFunction_Nonconservative(<a href="../../../manualpages/TS/TS.html">TS</a> ts, <a href="../../../manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../../manualpages/Vec/Vec.html">Vec</a> U, <a href="../../../manualpages/Vec/Vec.html">Vec</a> Udot, <a href="../../../manualpages/Vec/Vec.html">Vec</a> F, void *ctx)</font></strong>
 <a name="line63"> 63: </a>{
-<a name="line64"> 64: </a>  const <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *u, *udot;
-<a name="line65"> 65: </a>  <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *f;
+<a name="line64"> 64: </a>  const <a href="../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *u, *udot;
+<a name="line65"> 65: </a>  <a href="../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>       *f;
 
-<a name="line68"> 68: </a>  <a href="../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(U, &amp;u);
-<a name="line69"> 69: </a>  <a href="../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(Udot, &amp;udot);
-<a name="line70"> 70: </a>  <a href="../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(F, &amp;f);
+<a name="line67"> 67: </a>  <a href="../../../manualpages/Sys/PetscFunctionBeginUser.html">PetscFunctionBeginUser</a>;
+<a name="line68"> 68: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(U, &amp;u));
+<a name="line69"> 69: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(Udot, &amp;udot));
+<a name="line70"> 70: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecGetArray.html">VecGetArray</a>(F, &amp;f));
 
 <a name="line72"> 72: </a>  f[0] = PetscExpScalar(u[0]) * udot[0] + PetscExpScalar(u[0]);
 <a name="line73"> 73: </a>  f[1] = PetscExpScalar(u[1]) * udot[1] - PetscExpScalar(u[0]);
 
-<a name="line75"> 75: </a>  <a href="../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(U, &amp;u);
-<a name="line76"> 76: </a>  <a href="../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(Udot, &amp;udot);
-<a name="line77"> 77: </a>  <a href="../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(F, &amp;f);
-<a name="line78"> 78: </a>  <font color="#4169E1">return</font> 0;
+<a name="line75"> 75: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(U, &amp;u));
+<a name="line76"> 76: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(Udot, &amp;udot));
+<a name="line77"> 77: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(F, &amp;f));
+<a name="line78"> 78: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line79"> 79: </a>}
 
-<a name="line81"> 81: </a><strong><font color="#4169E1"><a name="IFunction_TransientVar"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> IFunction_TransientVar(<a href="../../../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../../docs/manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> U, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> Cdot, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> F, void *ctx)</font></strong>
+<a name="line81"> 81: </a><strong><font color="#4169E1"><a name="IFunction_TransientVar"></a>static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> IFunction_TransientVar(<a href="../../../manualpages/TS/TS.html">TS</a> ts, <a href="../../../manualpages/Sys/PetscReal.html">PetscReal</a> t, <a href="../../../manualpages/Vec/Vec.html">Vec</a> U, <a href="../../../manualpages/Vec/Vec.html">Vec</a> Cdot, <a href="../../../manualpages/Vec/Vec.html">Vec</a> F, void *ctx)</font></strong>
 <a name="line82"> 82: </a>{
-<a name="line83"> 83: </a>  const <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> *u, *cdot;
-<a name="line84"> 84: </a>  <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a>       *f;
+<a name="line83"> 83: </a>  const <a href="../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> *u, *cdot;
+<a name="line84"> 84: </a>  <a href="../../../manualpages/Sys/PetscScalar.html">PetscScalar</a>       *f;
 
-<a name="line87"> 87: </a>  <a href="../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(U, &amp;u);
-<a name="line88"> 88: </a>  <a href="../../../docs/manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(Cdot, &amp;cdot);
-<a name="line89"> 89: </a>  <a href="../../../docs/manualpages/Vec/VecGetArray.html">VecGetArray</a>(F, &amp;f);
+<a name="line86"> 86: </a>  <a href="../../../manualpages/Sys/PetscFunctionBeginUser.html">PetscFunctionBeginUser</a>;
+<a name="line87"> 87: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(U, &amp;u));
+<a name="line88"> 88: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecGetArrayRead.html">VecGetArrayRead</a>(Cdot, &amp;cdot));
+<a name="line89"> 89: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecGetArray.html">VecGetArray</a>(F, &amp;f));
 
 <a name="line91"> 91: </a>  f[0] = cdot[0] + PetscExpScalar(u[0]);
 <a name="line92"> 92: </a>  f[1] = cdot[1] - PetscExpScalar(u[0]);
 
-<a name="line94"> 94: </a>  <a href="../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(U, &amp;u);
-<a name="line95"> 95: </a>  <a href="../../../docs/manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(Cdot, &amp;cdot);
-<a name="line96"> 96: </a>  <a href="../../../docs/manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(F, &amp;f);
-<a name="line97"> 97: </a>  <font color="#4169E1">return</font> 0;
+<a name="line94"> 94: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(U, &amp;u));
+<a name="line95"> 95: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecRestoreArrayRead.html">VecRestoreArrayRead</a>(Cdot, &amp;cdot));
+<a name="line96"> 96: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecRestoreArray.html">VecRestoreArray</a>(F, &amp;f));
+<a name="line97"> 97: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line98"> 98: </a>}
 
-<a name="line100">100: </a><strong><font color="#4169E1"><a name="TransientVar"></a>static <a href="../../../docs/manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TransientVar(<a href="../../../docs/manualpages/TS/TS.html">TS</a> ts, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> U, <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a> C, void *ctx)</font></strong>
+<a name="line100">100: </a><strong><font color="#4169E1"><a name="TransientVar"></a>static <a href="../../../manualpages/Sys/PetscErrorCode.html">PetscErrorCode</a> TransientVar(<a href="../../../manualpages/TS/TS.html">TS</a> ts, <a href="../../../manualpages/Vec/Vec.html">Vec</a> U, <a href="../../../manualpages/Vec/Vec.html">Vec</a> C, void *ctx)</font></strong>
 <a name="line101">101: </a>{
-<a name="line103">103: </a>  <a href="../../../docs/manualpages/Vec/VecCopy.html">VecCopy</a>(U, C);
-<a name="line104">104: </a>  <a href="../../../docs/manualpages/Vec/VecExp.html">VecExp</a>(C);
-<a name="line105">105: </a>  <font color="#4169E1">return</font> 0;
+<a name="line102">102: </a>  <a href="../../../manualpages/Sys/PetscFunctionBeginUser.html">PetscFunctionBeginUser</a>;
+<a name="line103">103: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecCopy.html">VecCopy</a>(U, C));
+<a name="line104">104: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecExp.html">VecExp</a>(C));
+<a name="line105">105: </a>  <a href="../../../manualpages/Sys/PetscFunctionReturn.html">PetscFunctionReturn</a>(<a href="../../../manualpages/Sys/PetscErrorCode.html">PETSC_SUCCESS</a>);
 <a name="line106">106: </a>}
 
 <a name="line108">108: </a><strong><font color="#4169E1"><a name="main"></a>int main(int argc, char *argv[])</font></strong>
 <a name="line109">109: </a>{
-<a name="line110">110: </a>  <a href="../../../docs/manualpages/TS/TS.html">TS</a>          ts;
-<a name="line111">111: </a>  <a href="../../../docs/manualpages/DM/DM.html">DM</a>          dm;
-<a name="line112">112: </a>  <a href="../../../docs/manualpages/Vec/Vec.html">Vec</a>         U;
+<a name="line110">110: </a>  <a href="../../../manualpages/TS/TS.html">TS</a>          ts;
+<a name="line111">111: </a>  <a href="../../../manualpages/DM/DM.html">DM</a>          dm;
+<a name="line112">112: </a>  <a href="../../../manualpages/Vec/Vec.html">Vec</a>         U;
 <a name="line113">113: </a>  VarMode     var = VAR_CONSERVATIVE;
-<a name="line114">114: </a>  <a href="../../../docs/manualpages/Sys/PetscScalar.html">PetscScalar</a> sum;
+<a name="line114">114: </a>  <a href="../../../manualpages/Sys/PetscScalar.html">PetscScalar</a> sum;
 
-<a name="line117">117: </a>  <a href="../../../docs/manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help);
-<a name="line118">118: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, NULL, <font color="#666666">"<a href="../../../docs/manualpages/TS/TS.html">TS</a> conservation example"</font>, <font color="#666666">""</font>);
-<a name="line119">119: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsEnum.html">PetscOptionsEnum</a>(<font color="#666666">"-var"</font>, <font color="#666666">"Variable formulation"</font>, NULL, VarModes, (<a href="../../../docs/manualpages/Sys/PetscEnum.html">PetscEnum</a>)var, (<a href="../../../docs/manualpages/Sys/PetscEnum.html">PetscEnum</a> *)&amp;var, NULL);
-<a name="line120">120: </a>  <a href="../../../docs/manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
+<a name="line116">116: </a>  <a href="../../../manualpages/Sys/PetscFunctionBeginUser.html">PetscFunctionBeginUser</a>;
+<a name="line117">117: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscInitialize.html">PetscInitialize</a>(&amp;argc, &amp;argv, NULL, help));
+<a name="line118">118: </a>  <a href="../../../manualpages/Sys/PetscOptionsBegin.html">PetscOptionsBegin</a>(<a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, NULL, <font color="#666666">"<a href="../../../manualpages/TS/TS.html">TS</a> conservation example"</font>, <font color="#666666">""</font>);
+<a name="line119">119: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscOptionsEnum.html">PetscOptionsEnum</a>(<font color="#666666">"-var"</font>, <font color="#666666">"Variable formulation"</font>, NULL, VarModes, (<a href="../../../manualpages/Sys/PetscEnum.html">PetscEnum</a>)var, (<a href="../../../manualpages/Sys/PetscEnum.html">PetscEnum</a> *)&amp;var, NULL));
+<a name="line120">120: </a>  <a href="../../../manualpages/Sys/PetscOptionsEnd.html">PetscOptionsEnd</a>();
 
-<a name="line122">122: </a>  <a href="../../../docs/manualpages/TS/TSCreate.html">TSCreate</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;ts);
-<a name="line123">123: </a>  <a href="../../../docs/manualpages/TS/TSSetType.html">TSSetType</a>(ts, <a href="../../../docs/manualpages/TS/TSBDF.html">TSBDF</a>);
-<a name="line124">124: </a>  <a href="../../../docs/manualpages/TS/TSGetDM.html">TSGetDM</a>(ts, &amp;dm);
-<a name="line125">125: </a>  <a href="../../../docs/manualpages/Vec/VecCreateSeq.html">VecCreateSeq</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, 2, &amp;U);
-<a name="line126">126: </a>  <a href="../../../docs/manualpages/Vec/VecSetValue.html">VecSetValue</a>(U, 0, 2., <a href="../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
-<a name="line127">127: </a>  <a href="../../../docs/manualpages/Vec/VecSetValue.html">VecSetValue</a>(U, 1, 1., <a href="../../../docs/manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>);
+<a name="line122">122: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/TS/TSCreate.html">TSCreate</a>(<a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, &amp;ts));
+<a name="line123">123: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/TS/TSSetType.html">TSSetType</a>(ts, <a href="../../../manualpages/TS/TSBDF.html">TSBDF</a>));
+<a name="line124">124: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/TS/TSGetDM.html">TSGetDM</a>(ts, &amp;dm));
+<a name="line125">125: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecCreateSeq.html">VecCreateSeq</a>(<a href="../../../manualpages/Sys/PETSC_COMM_SELF.html">PETSC_COMM_SELF</a>, 2, &amp;U));
+<a name="line126">126: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecSetValue.html">VecSetValue</a>(U, 0, 2., <a href="../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>));
+<a name="line127">127: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecSetValue.html">VecSetValue</a>(U, 1, 1., <a href="../../../manualpages/Sys/INSERT_VALUES.html">INSERT_VALUES</a>));
 <a name="line128">128: </a>  <font color="#4169E1">switch</font> (var) {
 <a name="line129">129: </a>  <font color="#4169E1">case</font> VAR_CONSERVATIVE:
-<a name="line130">130: </a>    <a href="../../../docs/manualpages/TS/DMTSSetIFunction.html">DMTSSetIFunction</a>(dm, IFunction_Conservative, NULL);
+<a name="line130">130: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/TS/DMTSSetIFunction.html">DMTSSetIFunction</a>(dm, IFunction_Conservative, NULL));
 <a name="line131">131: </a>    <font color="#4169E1">break</font>;
 <a name="line132">132: </a>  <font color="#4169E1">case</font> VAR_NONCONSERVATIVE:
-<a name="line133">133: </a>    <a href="../../../docs/manualpages/Vec/VecLog.html">VecLog</a>(U);
-<a name="line134">134: </a>    <a href="../../../docs/manualpages/TS/DMTSSetIFunction.html">DMTSSetIFunction</a>(dm, IFunction_Nonconservative, NULL);
+<a name="line133">133: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecLog.html">VecLog</a>(U));
+<a name="line134">134: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/TS/DMTSSetIFunction.html">DMTSSetIFunction</a>(dm, IFunction_Nonconservative, NULL));
 <a name="line135">135: </a>    <font color="#4169E1">break</font>;
 <a name="line136">136: </a>  <font color="#4169E1">case</font> VAR_TRANSIENTVAR:
-<a name="line137">137: </a>    <a href="../../../docs/manualpages/Vec/VecLog.html">VecLog</a>(U);
-<a name="line138">138: </a>    <a href="../../../docs/manualpages/TS/DMTSSetIFunction.html">DMTSSetIFunction</a>(dm, IFunction_TransientVar, NULL);
-<a name="line139">139: </a>    <a href="../../../docs/manualpages/TS/DMTSSetTransientVariable.html">DMTSSetTransientVariable</a>(dm, TransientVar, NULL);
+<a name="line137">137: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecLog.html">VecLog</a>(U));
+<a name="line138">138: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/TS/DMTSSetIFunction.html">DMTSSetIFunction</a>(dm, IFunction_TransientVar, NULL));
+<a name="line139">139: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/TS/DMTSSetTransientVariable.html">DMTSSetTransientVariable</a>(dm, TransientVar, NULL));
 <a name="line140">140: </a>  }
-<a name="line141">141: </a>  <a href="../../../docs/manualpages/TS/TSSetMaxTime.html">TSSetMaxTime</a>(ts, 1.);
-<a name="line142">142: </a>  <a href="../../../docs/manualpages/TS/TSSetFromOptions.html">TSSetFromOptions</a>(ts);
+<a name="line141">141: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/TS/TSSetMaxTime.html">TSSetMaxTime</a>(ts, 1.));
+<a name="line142">142: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/TS/TSSetFromOptions.html">TSSetFromOptions</a>(ts));
 
-<a name="line144">144: </a>  <a href="../../../docs/manualpages/TS/TSSolve.html">TSSolve</a>(ts, U);
+<a name="line144">144: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/TS/TSSolve.html">TSSolve</a>(ts, U));
 <a name="line145">145: </a>  <font color="#4169E1">switch</font> (var) {
 <a name="line146">146: </a>  <font color="#4169E1">case</font> VAR_CONSERVATIVE:
 <a name="line147">147: </a>    <font color="#4169E1">break</font>;
 <a name="line148">148: </a>  <font color="#4169E1">case</font> VAR_NONCONSERVATIVE:
 <a name="line149">149: </a>  <font color="#4169E1">case</font> VAR_TRANSIENTVAR:
-<a name="line150">150: </a>    <a href="../../../docs/manualpages/Vec/VecExp.html">VecExp</a>(U);
+<a name="line150">150: </a>    <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecExp.html">VecExp</a>(U));
 <a name="line151">151: </a>    <font color="#4169E1">break</font>;
 <a name="line152">152: </a>  }
-<a name="line153">153: </a>  <a href="../../../docs/manualpages/Vec/VecView.html">VecView</a>(U, <a href="../../../docs/manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>);
-<a name="line154">154: </a>  <a href="../../../docs/manualpages/Vec/VecSum.html">VecSum</a>(U, &amp;sum);
-<a name="line155">155: </a>  <a href="../../../docs/manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../docs/manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"Conservation error %g\n"</font>, (double)<a href="../../../docs/manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(sum - 3.));
+<a name="line153">153: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecView.html">VecView</a>(U, <a href="../../../manualpages/Viewer/PETSC_VIEWER_STDOUT_WORLD.html">PETSC_VIEWER_STDOUT_WORLD</a>));
+<a name="line154">154: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecSum.html">VecSum</a>(U, &amp;sum));
+<a name="line155">155: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscPrintf.html">PetscPrintf</a>(<a href="../../../manualpages/Sys/PETSC_COMM_WORLD.html">PETSC_COMM_WORLD</a>, <font color="#666666">"Conservation error %g\n"</font>, (double)<a href="../../../manualpages/Sys/PetscRealPart.html">PetscRealPart</a>(sum - 3.)));
 
-<a name="line157">157: </a>  <a href="../../../docs/manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;U);
-<a name="line158">158: </a>  <a href="../../../docs/manualpages/TS/TSDestroy.html">TSDestroy</a>(&amp;ts);
-<a name="line159">159: </a>  <a href="../../../docs/manualpages/Sys/PetscFinalize.html">PetscFinalize</a>();
+<a name="line157">157: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Vec/VecDestroy.html">VecDestroy</a>(&amp;U));
+<a name="line158">158: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/TS/TSDestroy.html">TSDestroy</a>(&amp;ts));
+<a name="line159">159: </a>  <a href="../../../manualpages/Sys/PetscCall.html">PetscCall</a>(<a href="../../../manualpages/Sys/PetscFinalize.html">PetscFinalize</a>());
 <a name="line160">160: </a>  <font color="#4169E1">return</font> 0;
 <a name="line161">161: </a>}
 

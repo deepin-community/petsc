@@ -19,7 +19,7 @@
 
 */
 
-#include <petsc/private/pcbddcimpl.h> /*I "petscpc.h" I*/ /* includes for fortran wrappers */
+#include <petsc/private/pcbddcimpl.h> /*I "petscpc.h" I*/ /* header file for Fortran wrappers */
 #include <petsc/private/pcbddcprivateimpl.h>
 #include <petscblaslapack.h>
 
@@ -54,9 +54,9 @@ PetscLogEvent PC_BDDC_Solves[PETSC_PCBDDC_MAXLEVELS][3];
 
 const char *const PCBDDCInterfaceExtTypes[] = {"DIRICHLET", "LUMP", "PCBDDCInterfaceExtType", "PC_BDDC_INTERFACE_EXT_", NULL};
 
-PetscErrorCode PCApply_BDDC(PC, Vec, Vec);
+static PetscErrorCode PCApply_BDDC(PC, Vec, Vec);
 
-PetscErrorCode PCSetFromOptions_BDDC(PC pc, PetscOptionItems *PetscOptionsObject)
+static PetscErrorCode PCSetFromOptions_BDDC(PC pc, PetscOptionItems *PetscOptionsObject)
 {
   PC_BDDC *pcbddc = (PC_BDDC *)pc->data;
   PetscInt nt, i;
@@ -125,7 +125,7 @@ PetscErrorCode PCSetFromOptions_BDDC(PC pc, PetscOptionItems *PetscOptionsObject
   PetscCall(PetscOptionsBool("-pc_bddc_detect_disconnected_filter", "Filters out small entries in the local matrix when detecting disconnected subdomains", "none", pcbddc->detect_disconnected_filter, &pcbddc->detect_disconnected_filter, NULL));
   PetscCall(PetscOptionsBool("-pc_bddc_eliminate_dirichlet", "Whether or not we want to eliminate dirichlet dofs during presolve", "none", pcbddc->eliminate_dirdofs, &pcbddc->eliminate_dirdofs, NULL));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCView_BDDC(PC pc, PetscViewer viewer)
@@ -194,7 +194,7 @@ static PetscErrorCode PCView_BDDC(PC pc, PetscViewer viewer)
     PetscCall(PetscViewerASCIIPrintf(viewer, "  Benign subspace trick: %d (change explicit %d)\n", pcbddc->benign_saddle_point, pcbddc->benign_change_explicit));
     PetscCall(PetscViewerASCIIPrintf(viewer, "  Benign subspace trick is active: %d\n", pcbddc->benign_have_null));
     PetscCall(PetscViewerASCIIPrintf(viewer, "  Algebraic computation of no-net-flux: %d\n", pcbddc->compute_nonetflux));
-    if (!pc->setupcalled) PetscFunctionReturn(0);
+    if (!pc->setupcalled) PetscFunctionReturn(PETSC_SUCCESS);
 
     /* compute interface size */
     PetscCall(VecSet(pcis->vec1_B, 1.0));
@@ -276,7 +276,7 @@ static PetscErrorCode PCView_BDDC(PC pc, PetscViewer viewer)
     PetscCall(PetscSubcommDestroy(&subcomm));
     PetscCall(PetscViewerFlush(viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetDiscreteGradient_BDDC(PC pc, Mat G, PetscInt order, PetscInt field, PetscBool global, PetscBool conforming)
@@ -291,33 +291,33 @@ static PetscErrorCode PCBDDCSetDiscreteGradient_BDDC(PC pc, Mat G, PetscInt orde
   pcbddc->nedfield         = field;
   pcbddc->nedglobal        = global;
   pcbddc->conforming       = conforming;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  PCBDDCSetDiscreteGradient - Sets the discrete gradient
+  PCBDDCSetDiscreteGradient - Sets the discrete gradient to be used by the `PCBDDC` preconditioner
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc         - the preconditioning context
-.  G          - the discrete gradient matrix (in `MATAIJ` format)
-.  order      - the order of the Nedelec space (1 for the lowest order)
-.  field      - the field id of the Nedelec dofs (not used if the fields have not been specified)
-.  global     - the type of global ordering for the rows of G
--  conforming - whether the mesh is conforming or not
+  Input Parameters:
++ pc         - the preconditioning context
+. G          - the discrete gradient matrix (in `MATAIJ` format)
+. order      - the order of the Nedelec space (1 for the lowest order)
+. field      - the field id of the Nedelec dofs (not used if the fields have not been specified)
+. global     - the type of global ordering for the rows of `G`
+- conforming - whether the mesh is conforming or not
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-    The discrete gradient matrix G is used to analyze the subdomain edges, and it should not contain any zero entry.
-          For variable order spaces, the order should be set to zero.
-          If global is true, the rows of G should be given in global ordering for the whole dofs;
-          if false, the ordering should be global for the Nedelec field.
-          In the latter case, it should hold gid[i] < gid[j] iff geid[i] < geid[j], with gid the global orderding for all the dofs
-          and geid the one for the Nedelec field.
+  Note:
+  The discrete gradient matrix `G` is used to analyze the subdomain edges, and it should not contain any zero entry.
+  For variable order spaces, the order should be set to zero.
+  If `global` is `PETSC_TRUE`, the rows of `G` should be given in global ordering for the whole dofs;
+  if `PETSC_FALSE`, the ordering should be global for the Nedelec field.
+  In the latter case, it should hold gid[i] < gid[j] iff geid[i] < geid[j], with gid the global orderding for all the dofs
+  and geid the one for the Nedelec field.
 
-.seealso: `PCBDDC`, `PCBDDCSetDofsSplitting()`, `PCBDDCSetDofsSplittingLocal()`, `MATAIJ`, `PCBDDCSetDivergenceMat()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetDofsSplitting()`, `PCBDDCSetDofsSplittingLocal()`, `MATAIJ`, `PCBDDCSetDivergenceMat()`
 @*/
 PetscErrorCode PCBDDCSetDiscreteGradient(PC pc, Mat G, PetscInt order, PetscInt field, PetscBool global, PetscBool conforming)
 {
@@ -330,7 +330,7 @@ PetscErrorCode PCBDDCSetDiscreteGradient(PC pc, Mat G, PetscInt order, PetscInt 
   PetscValidLogicalCollectiveBool(pc, conforming, 6);
   PetscCheckSameComm(pc, 1, G, 2);
   PetscTryMethod(pc, "PCBDDCSetDiscreteGradient_C", (PC, Mat, PetscInt, PetscInt, PetscBool, PetscBool), (pc, G, order, field, global, conforming));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetDivergenceMat_BDDC(PC pc, Mat divudotp, PetscBool trans, IS vl2l)
@@ -348,29 +348,29 @@ static PetscErrorCode PCBDDCSetDivergenceMat_BDDC(PC pc, Mat divudotp, PetscBool
     PetscCall(ISDestroy(&pcbddc->divudotp_vl2l));
     pcbddc->divudotp_vl2l = vl2l;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  PCBDDCSetDivergenceMat - Sets the linear operator representing \int_\Omega \div {\bf u} \cdot p dx
+  PCBDDCSetDivergenceMat - Sets the linear operator representing \int_\Omega \div {\bf u} \cdot p dx for the `PCBDDC` preconditioner
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioning context
-.  divudotp - the matrix (must be of type `MATIS`)
-.  trans - if trans if false (resp. true), then pressures are in the test (trial) space and velocities are in the trial (test) space.
--  vl2l - optional index set describing the local (wrt the local matrix in divudotp) to local (wrt the local matrix
+  Input Parameters:
++ pc       - the preconditioning context
+. divudotp - the matrix (must be of type `MATIS`)
+. trans    - if `PETSC_FALSE` (resp. `PETSC_TRUE`), then pressures are in the test (trial) space and velocities are in the trial (test) space.
+- vl2l     - optional index set describing the local (wrt the local matrix in `divudotp`) to local (wrt the local matrix
    in the preconditioning matrix) map for the velocities
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   This auxiliary matrix is used to compute quadrature weights representing the net-flux across subdomain boundaries
+  Notes:
+  This auxiliary matrix is used to compute quadrature weights representing the net-flux across subdomain boundaries
 
-   If vl2l is NULL, the local ordering for velocities in divudotp should match that of the preconditioning matrix
+  If `vl2l` is `NULL`, the local ordering for velocities in `divudotp` should match that of the preconditioning matrix
 
-.seealso: `PCBDDC`, `PCBDDCSetDiscreteGradient()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetDiscreteGradient()`
 @*/
 PetscErrorCode PCBDDCSetDivergenceMat(PC pc, Mat divudotp, PetscBool trans, IS vl2l)
 {
@@ -385,7 +385,7 @@ PetscErrorCode PCBDDCSetDivergenceMat(PC pc, Mat divudotp, PetscBool trans, IS v
   PetscCall(PetscObjectTypeCompare((PetscObject)divudotp, MATIS, &ismatis));
   PetscCheck(ismatis, PetscObjectComm((PetscObject)pc), PETSC_ERR_ARG_WRONG, "Divergence matrix needs to be of type MATIS");
   PetscTryMethod(pc, "PCBDDCSetDivergenceMat_C", (PC, Mat, PetscBool, IS), (pc, divudotp, trans, vl2l));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetChangeOfBasisMat_BDDC(PC pc, Mat change, PetscBool interior)
@@ -397,22 +397,22 @@ static PetscErrorCode PCBDDCSetChangeOfBasisMat_BDDC(PC pc, Mat change, PetscBoo
   PetscCall(MatDestroy(&pcbddc->user_ChangeOfBasisMatrix));
   pcbddc->user_ChangeOfBasisMatrix = change;
   pcbddc->change_interior          = interior;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
- PCBDDCSetChangeOfBasisMat - Set user defined change of basis for dofs
+  PCBDDCSetChangeOfBasisMat - Set user defined change of basis for dofs
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioning context
-.  change - the change of basis matrix
--  interior - whether or not the change of basis modifies interior dofs
+  Input Parameters:
++ pc       - the preconditioning context
+. change   - the change of basis matrix
+- interior - whether or not the change of basis modifies interior dofs
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCBDDC`
+.seealso: [](ch_ksp), `PCBDDC`
 @*/
 PetscErrorCode PCBDDCSetChangeOfBasisMat(PC pc, Mat change, PetscBool interior)
 {
@@ -432,7 +432,7 @@ PetscErrorCode PCBDDCSetChangeOfBasisMat(PC pc, Mat change, PetscBool interior)
     PetscCheck(cols_c == cols, PetscObjectComm((PetscObject)pc), PETSC_ERR_SUP, "Invalid number of local columns for change of basis matrix! %" PetscInt_FMT " != %" PetscInt_FMT, cols_c, cols);
   }
   PetscTryMethod(pc, "PCBDDCSetChangeOfBasisMat_C", (PC, Mat, PetscBool), (pc, change, interior));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetPrimalVerticesIS_BDDC(PC pc, IS PrimalVertices)
@@ -447,24 +447,24 @@ static PetscErrorCode PCBDDCSetPrimalVerticesIS_BDDC(PC pc, IS PrimalVertices)
   PetscCall(ISDestroy(&pcbddc->user_primal_vertices_local));
   pcbddc->user_primal_vertices = PrimalVertices;
   if (!isequal) pcbddc->recompute_topography = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
- PCBDDCSetPrimalVerticesIS - Set additional user defined primal vertices in `PCBDDC`
+  PCBDDCSetPrimalVerticesIS - Set additional user defined primal vertices in `PCBDDC`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioning context
--  PrimalVertices - index set of primal vertices in global numbering (can be empty)
+  Input Parameters:
++ pc             - the preconditioning context
+- PrimalVertices - index set of primal vertices in global numbering (can be empty)
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   Any process can list any global node
+  Note:
+  Any process can list any global node
 
-.seealso: `PCBDDC`, `PCBDDCGetPrimalVerticesIS()`, `PCBDDCSetPrimalVerticesLocalIS()`, `PCBDDCGetPrimalVerticesLocalIS()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCGetPrimalVerticesIS()`, `PCBDDCSetPrimalVerticesLocalIS()`, `PCBDDCGetPrimalVerticesLocalIS()`
 @*/
 PetscErrorCode PCBDDCSetPrimalVerticesIS(PC pc, IS PrimalVertices)
 {
@@ -473,7 +473,7 @@ PetscErrorCode PCBDDCSetPrimalVerticesIS(PC pc, IS PrimalVertices)
   PetscValidHeaderSpecific(PrimalVertices, IS_CLASSID, 2);
   PetscCheckSameComm(pc, 1, PrimalVertices, 2);
   PetscTryMethod(pc, "PCBDDCSetPrimalVerticesIS_C", (PC, IS), (pc, PrimalVertices));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCGetPrimalVerticesIS_BDDC(PC pc, IS *is)
@@ -482,31 +482,31 @@ static PetscErrorCode PCBDDCGetPrimalVerticesIS_BDDC(PC pc, IS *is)
 
   PetscFunctionBegin;
   *is = pcbddc->user_primal_vertices;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
- PCBDDCGetPrimalVerticesIS - Get user defined primal vertices set with `PCBDDCSetPrimalVerticesIS()`
+  PCBDDCGetPrimalVerticesIS - Get user defined primal vertices set with `PCBDDCSetPrimalVerticesIS()`
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  pc - the preconditioning context
+  Input Parameter:
+. pc - the preconditioning context
 
-   Output Parameter:
-.  is - index set of primal vertices in global numbering (NULL if not set)
+  Output Parameter:
+. is - index set of primal vertices in global numbering (`NULL` if not set)
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCBDDC`, `PCBDDCSetPrimalVerticesIS()`, `PCBDDCSetPrimalVerticesLocalIS()`, `PCBDDCGetPrimalVerticesLocalIS()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetPrimalVerticesIS()`, `PCBDDCSetPrimalVerticesLocalIS()`, `PCBDDCGetPrimalVerticesLocalIS()`
 @*/
 PetscErrorCode PCBDDCGetPrimalVerticesIS(PC pc, IS *is)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
-  PetscValidPointer(is, 2);
+  PetscAssertPointer(is, 2);
   PetscUseMethod(pc, "PCBDDCGetPrimalVerticesIS_C", (PC, IS *), (pc, is));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetPrimalVerticesLocalIS_BDDC(PC pc, IS PrimalVertices)
@@ -521,21 +521,21 @@ static PetscErrorCode PCBDDCSetPrimalVerticesLocalIS_BDDC(PC pc, IS PrimalVertic
   PetscCall(ISDestroy(&pcbddc->user_primal_vertices_local));
   pcbddc->user_primal_vertices_local = PrimalVertices;
   if (!isequal) pcbddc->recompute_topography = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
- PCBDDCSetPrimalVerticesLocalIS - Set additional user defined primal vertices in `PCBDDC`
+  PCBDDCSetPrimalVerticesLocalIS - Set additional user defined primal vertices in `PCBDDC`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioning context
--  PrimalVertices - index set of primal vertices in local numbering (can be empty)
+  Input Parameters:
++ pc             - the preconditioning context
+- PrimalVertices - index set of primal vertices in local numbering (can be empty)
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCBDDC`, `PCBDDCSetPrimalVerticesIS()`, `PCBDDCGetPrimalVerticesIS()`, `PCBDDCGetPrimalVerticesLocalIS()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetPrimalVerticesIS()`, `PCBDDCGetPrimalVerticesIS()`, `PCBDDCGetPrimalVerticesLocalIS()`
 @*/
 PetscErrorCode PCBDDCSetPrimalVerticesLocalIS(PC pc, IS PrimalVertices)
 {
@@ -544,7 +544,7 @@ PetscErrorCode PCBDDCSetPrimalVerticesLocalIS(PC pc, IS PrimalVertices)
   PetscValidHeaderSpecific(PrimalVertices, IS_CLASSID, 2);
   PetscCheckSameComm(pc, 1, PrimalVertices, 2);
   PetscTryMethod(pc, "PCBDDCSetPrimalVerticesLocalIS_C", (PC, IS), (pc, PrimalVertices));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCGetPrimalVerticesLocalIS_BDDC(PC pc, IS *is)
@@ -553,31 +553,31 @@ static PetscErrorCode PCBDDCGetPrimalVerticesLocalIS_BDDC(PC pc, IS *is)
 
   PetscFunctionBegin;
   *is = pcbddc->user_primal_vertices_local;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
- PCBDDCGetPrimalVerticesLocalIS - Get user defined primal vertices set with `PCBDDCSetPrimalVerticesLocalIS()`
+  PCBDDCGetPrimalVerticesLocalIS - Get user defined primal vertices set with `PCBDDCSetPrimalVerticesLocalIS()`
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  pc - the preconditioning context
+  Input Parameter:
+. pc - the preconditioning context
 
-   Output Parameter:
-.  is - index set of primal vertices in local numbering (NULL if not set)
+  Output Parameter:
+. is - index set of primal vertices in local numbering (`NULL` if not set)
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCBDDC`, `PCBDDCSetPrimalVerticesIS()`, `PCBDDCGetPrimalVerticesIS()`, `PCBDDCSetPrimalVerticesLocalIS()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetPrimalVerticesIS()`, `PCBDDCGetPrimalVerticesIS()`, `PCBDDCSetPrimalVerticesLocalIS()`
 @*/
 PetscErrorCode PCBDDCGetPrimalVerticesLocalIS(PC pc, IS *is)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
-  PetscValidPointer(is, 2);
+  PetscAssertPointer(is, 2);
   PetscUseMethod(pc, "PCBDDCGetPrimalVerticesLocalIS_C", (PC, IS *), (pc, is));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetCoarseningRatio_BDDC(PC pc, PetscInt k)
@@ -586,27 +586,27 @@ static PetscErrorCode PCBDDCSetCoarseningRatio_BDDC(PC pc, PetscInt k)
 
   PetscFunctionBegin;
   pcbddc->coarsening_ratio = k;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  PCBDDCSetCoarseningRatio - Set coarsening ratio used in multilevel version
+  PCBDDCSetCoarseningRatio - Set coarsening ratio used in the multi-level version of `PCBDDC`
 
-   Logically collective
+  Logically Collective
 
-   Input Parameters:
-+  pc - the preconditioning context
--  k - coarsening ratio (H/h at the coarser level)
+  Input Parameters:
++ pc - the preconditioning context
+- k  - coarsening ratio (H/h at the coarser level)
 
-   Options Database Key:
-.    -pc_bddc_coarsening_ratio <int> - Set coarsening ratio used in multilevel coarsening
+  Options Database Key:
+. -pc_bddc_coarsening_ratio <int> - Set the coarsening ratio used in multi-level coarsening
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   Approximately k subdomains at the finer level will be aggregated into a single subdomain at the coarser level
+  Note:
+  Approximately `k` subdomains at the finer level will be aggregated into a single subdomain at the coarser level
 
-.seealso: `PCBDDC`, `PCBDDCSetLevels()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetLevels()`
 @*/
 PetscErrorCode PCBDDCSetCoarseningRatio(PC pc, PetscInt k)
 {
@@ -614,7 +614,7 @@ PetscErrorCode PCBDDCSetCoarseningRatio(PC pc, PetscInt k)
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscValidLogicalCollectiveInt(pc, k, 2);
   PetscTryMethod(pc, "PCBDDCSetCoarseningRatio_C", (PC, PetscInt), (pc, k));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* The following functions (PCBDDCSetUseExactDirichlet PCBDDCSetLevel) are not public */
@@ -624,7 +624,7 @@ static PetscErrorCode PCBDDCSetUseExactDirichlet_BDDC(PC pc, PetscBool flg)
 
   PetscFunctionBegin;
   pcbddc->use_exact_dirichlet_trick = flg;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCBDDCSetUseExactDirichlet(PC pc, PetscBool flg)
@@ -633,7 +633,7 @@ PetscErrorCode PCBDDCSetUseExactDirichlet(PC pc, PetscBool flg)
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscValidLogicalCollectiveBool(pc, flg, 2);
   PetscTryMethod(pc, "PCBDDCSetUseExactDirichlet_C", (PC, PetscBool), (pc, flg));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetLevel_BDDC(PC pc, PetscInt level)
@@ -642,7 +642,7 @@ static PetscErrorCode PCBDDCSetLevel_BDDC(PC pc, PetscInt level)
 
   PetscFunctionBegin;
   pcbddc->current_level = level;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCBDDCSetLevel(PC pc, PetscInt level)
@@ -651,7 +651,7 @@ PetscErrorCode PCBDDCSetLevel(PC pc, PetscInt level)
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscValidLogicalCollectiveInt(pc, level, 2);
   PetscTryMethod(pc, "PCBDDCSetLevel_C", (PC, PetscInt), (pc, level));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetLevels_BDDC(PC pc, PetscInt levels)
@@ -661,27 +661,27 @@ static PetscErrorCode PCBDDCSetLevels_BDDC(PC pc, PetscInt levels)
   PetscFunctionBegin;
   PetscCheck(levels < PETSC_PCBDDC_MAXLEVELS, PetscObjectComm((PetscObject)pc), PETSC_ERR_SUP, "Maximum number of additional levels for BDDC is %d", PETSC_PCBDDC_MAXLEVELS - 1);
   pcbddc->max_levels = levels;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
- PCBDDCSetLevels - Sets the maximum number of additional levels allowed for multilevel `PCBDDC`
+  PCBDDCSetLevels - Sets the maximum number of additional levels allowed for multilevel `PCBDDC`
 
-   Logically collective
+  Logically Collective
 
-   Input Parameters:
-+  pc - the preconditioning context
--  levels - the maximum number of levels
+  Input Parameters:
++ pc     - the preconditioning context
+- levels - the maximum number of levels
 
-   Options Database Key:
-.    -pc_bddc_levels <int> - Set maximum number of levels for multilevel
+  Options Database Key:
+. -pc_bddc_levels <int> - Set maximum number of levels for multilevel
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   The default value is 0, that gives the classical two-levels BDDC
+  Note:
+  The default value is 0, that gives the classical two-levels BDDC algorithm
 
-.seealso: `PCBDDC`, `PCBDDCSetCoarseningRatio()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetCoarseningRatio()`
 @*/
 PetscErrorCode PCBDDCSetLevels(PC pc, PetscInt levels)
 {
@@ -689,7 +689,7 @@ PetscErrorCode PCBDDCSetLevels(PC pc, PetscInt levels)
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscValidLogicalCollectiveInt(pc, levels, 2);
   PetscTryMethod(pc, "PCBDDCSetLevels_C", (PC, PetscInt), (pc, levels));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetDirichletBoundaries_BDDC(PC pc, IS DirichletBoundaries)
@@ -705,24 +705,24 @@ static PetscErrorCode PCBDDCSetDirichletBoundaries_BDDC(PC pc, IS DirichletBound
   PetscCall(ISDestroy(&pcbddc->DirichletBoundaries));
   pcbddc->DirichletBoundaries = DirichletBoundaries;
   if (!isequal) pcbddc->recompute_topography = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
- PCBDDCSetDirichletBoundaries - Set IS defining Dirichlet boundaries for the global problem.
+  PCBDDCSetDirichletBoundaries - Set the `IS` defining Dirichlet boundaries for the global problem.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioning context
--  DirichletBoundaries - parallel IS defining the Dirichlet boundaries
+  Input Parameters:
++ pc                  - the preconditioning context
+- DirichletBoundaries - parallel `IS` defining the Dirichlet boundaries
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   Provide the information if you used `MatZeroRows()` or `MatZeroRowsColumns()`. Any process can list any global node
+  Note:
+  Provide the information if you used `MatZeroRows()` or `MatZeroRowsColumns()`. Any process can list any global node
 
-.seealso: `PCBDDC`, `PCBDDCSetDirichletBoundariesLocal()`, `MatZeroRows()`, `MatZeroRowsColumns()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetDirichletBoundariesLocal()`, `MatZeroRows()`, `MatZeroRowsColumns()`
 @*/
 PetscErrorCode PCBDDCSetDirichletBoundaries(PC pc, IS DirichletBoundaries)
 {
@@ -731,7 +731,7 @@ PetscErrorCode PCBDDCSetDirichletBoundaries(PC pc, IS DirichletBoundaries)
   PetscValidHeaderSpecific(DirichletBoundaries, IS_CLASSID, 2);
   PetscCheckSameComm(pc, 1, DirichletBoundaries, 2);
   PetscTryMethod(pc, "PCBDDCSetDirichletBoundaries_C", (PC, IS), (pc, DirichletBoundaries));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetDirichletBoundariesLocal_BDDC(PC pc, IS DirichletBoundaries)
@@ -747,21 +747,21 @@ static PetscErrorCode PCBDDCSetDirichletBoundariesLocal_BDDC(PC pc, IS Dirichlet
   PetscCall(ISDestroy(&pcbddc->DirichletBoundaries));
   pcbddc->DirichletBoundariesLocal = DirichletBoundaries;
   if (!isequal) pcbddc->recompute_topography = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
- PCBDDCSetDirichletBoundariesLocal - Set IS defining Dirichlet boundaries for the global problem in local ordering.
+  PCBDDCSetDirichletBoundariesLocal - Set the `IS` defining Dirichlet boundaries for the global problem in local ordering.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioning context
--  DirichletBoundaries - parallel IS defining the Dirichlet boundaries (in local ordering)
+  Input Parameters:
++ pc                  - the preconditioning context
+- DirichletBoundaries - parallel `IS` defining the Dirichlet boundaries (in local ordering)
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCBDDC`, `PCBDDCSetDirichletBoundaries()`, `MatZeroRows()`, `MatZeroRowsColumns()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetDirichletBoundaries()`, `MatZeroRows()`, `MatZeroRowsColumns()`
 @*/
 PetscErrorCode PCBDDCSetDirichletBoundariesLocal(PC pc, IS DirichletBoundaries)
 {
@@ -770,7 +770,7 @@ PetscErrorCode PCBDDCSetDirichletBoundariesLocal(PC pc, IS DirichletBoundaries)
   PetscValidHeaderSpecific(DirichletBoundaries, IS_CLASSID, 2);
   PetscCheckSameComm(pc, 1, DirichletBoundaries, 2);
   PetscTryMethod(pc, "PCBDDCSetDirichletBoundariesLocal_C", (PC, IS), (pc, DirichletBoundaries));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetNeumannBoundaries_BDDC(PC pc, IS NeumannBoundaries)
@@ -786,24 +786,24 @@ static PetscErrorCode PCBDDCSetNeumannBoundaries_BDDC(PC pc, IS NeumannBoundarie
   PetscCall(ISDestroy(&pcbddc->NeumannBoundaries));
   pcbddc->NeumannBoundaries = NeumannBoundaries;
   if (!isequal) pcbddc->recompute_topography = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCBDDCSetNeumannBoundaries - Set `IS` defining Neumann boundaries for the global problem.
+  PCBDDCSetNeumannBoundaries - Set the `IS` defining Neumann boundaries for the global problem.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioning context
--  NeumannBoundaries - parallel IS defining the Neumann boundaries
+  Input Parameters:
++ pc                - the preconditioning context
+- NeumannBoundaries - parallel `IS` defining the Neumann boundaries
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   Any process can list any global node
+  Note:
+  Any process can list any global node
 
-.seealso: `PCBDDC`, `PCBDDCSetNeumannBoundariesLocal()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetNeumannBoundariesLocal()`
 @*/
 PetscErrorCode PCBDDCSetNeumannBoundaries(PC pc, IS NeumannBoundaries)
 {
@@ -812,7 +812,7 @@ PetscErrorCode PCBDDCSetNeumannBoundaries(PC pc, IS NeumannBoundaries)
   PetscValidHeaderSpecific(NeumannBoundaries, IS_CLASSID, 2);
   PetscCheckSameComm(pc, 1, NeumannBoundaries, 2);
   PetscTryMethod(pc, "PCBDDCSetNeumannBoundaries_C", (PC, IS), (pc, NeumannBoundaries));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetNeumannBoundariesLocal_BDDC(PC pc, IS NeumannBoundaries)
@@ -828,21 +828,21 @@ static PetscErrorCode PCBDDCSetNeumannBoundariesLocal_BDDC(PC pc, IS NeumannBoun
   PetscCall(ISDestroy(&pcbddc->NeumannBoundaries));
   pcbddc->NeumannBoundariesLocal = NeumannBoundaries;
   if (!isequal) pcbddc->recompute_topography = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
- PCBDDCSetNeumannBoundariesLocal - Set IS defining Neumann boundaries for the global problem in local ordering.
+  PCBDDCSetNeumannBoundariesLocal - Set the `IS` defining Neumann boundaries for the global problem in local ordering.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioning context
--  NeumannBoundaries - parallel IS defining the subdomain part of Neumann boundaries (in local ordering)
+  Input Parameters:
++ pc                - the preconditioning context
+- NeumannBoundaries - parallel `IS` defining the subdomain part of Neumann boundaries (in local ordering)
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PCBDDC`, `PCBDDCSetNeumannBoundaries()`, `PCBDDCGetDirichletBoundaries()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetNeumannBoundaries()`, `PCBDDCGetDirichletBoundaries()`
 @*/
 PetscErrorCode PCBDDCSetNeumannBoundariesLocal(PC pc, IS NeumannBoundaries)
 {
@@ -851,7 +851,7 @@ PetscErrorCode PCBDDCSetNeumannBoundariesLocal(PC pc, IS NeumannBoundaries)
   PetscValidHeaderSpecific(NeumannBoundaries, IS_CLASSID, 2);
   PetscCheckSameComm(pc, 1, NeumannBoundaries, 2);
   PetscTryMethod(pc, "PCBDDCSetNeumannBoundariesLocal_C", (PC, IS), (pc, NeumannBoundaries));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCGetDirichletBoundaries_BDDC(PC pc, IS *DirichletBoundaries)
@@ -860,33 +860,33 @@ static PetscErrorCode PCBDDCGetDirichletBoundaries_BDDC(PC pc, IS *DirichletBoun
 
   PetscFunctionBegin;
   *DirichletBoundaries = pcbddc->DirichletBoundaries;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCBDDCGetDirichletBoundaries - Get parallel `IS` for Dirichlet boundaries
+  PCBDDCGetDirichletBoundaries - Get parallel `IS` for Dirichlet boundaries
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  pc - the preconditioning context
+  Input Parameter:
+. pc - the preconditioning context
 
-   Output Parameter:
-.  DirichletBoundaries - index set defining the Dirichlet boundaries
+  Output Parameter:
+. DirichletBoundaries - index set defining the Dirichlet boundaries
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   The `IS` returned (if any) is the same passed in earlier by the user with `PCBDDCSetDirichletBoundaries()`
+  Note:
+  The `IS` returned (if any) is the same passed in earlier by the user with `PCBDDCSetDirichletBoundaries()`
 
-.seealso: `PCBDDC`, `PCBDDCSetDirichletBoundaries()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetDirichletBoundaries()`
 @*/
 PetscErrorCode PCBDDCGetDirichletBoundaries(PC pc, IS *DirichletBoundaries)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscUseMethod(pc, "PCBDDCGetDirichletBoundaries_C", (PC, IS *), (pc, DirichletBoundaries));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCGetDirichletBoundariesLocal_BDDC(PC pc, IS *DirichletBoundaries)
@@ -895,35 +895,35 @@ static PetscErrorCode PCBDDCGetDirichletBoundariesLocal_BDDC(PC pc, IS *Dirichle
 
   PetscFunctionBegin;
   *DirichletBoundaries = pcbddc->DirichletBoundariesLocal;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCBDDCGetDirichletBoundariesLocal - Get parallel `IS` for Dirichlet boundaries (in local ordering)
+  PCBDDCGetDirichletBoundariesLocal - Get parallel `IS` for Dirichlet boundaries (in local ordering)
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  pc - the preconditioning context
+  Input Parameter:
+. pc - the preconditioning context
 
-   Output Parameter:
-.  DirichletBoundaries - index set defining the subdomain part of Dirichlet boundaries
+  Output Parameter:
+. DirichletBoundaries - index set defining the subdomain part of Dirichlet boundaries
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   The `IS` returned could be the same passed in earlier by the user (if provided with `PCBDDCSetDirichletBoundariesLocal()`)
-   or a global-to-local map of the global `IS` (if provided with `PCBDDCSetDirichletBoundaries()`).
-   In the latter case, the `IS` will be available only after `PCSetUp()`.
+  Note:
+  The `IS` returned could be the same passed in earlier by the user (if provided with `PCBDDCSetDirichletBoundariesLocal()`)
+  or a global-to-local map of the global `IS` (if provided with `PCBDDCSetDirichletBoundaries()`).
+  In the latter case, the `IS` will be available only after `PCSetUp()`.
 
-.seealso: `PCBDDC`, `PCBDDCGetDirichletBoundariesLocal()`, `PCBDDCGetDirichletBoundaries()`, `PCBDDCSetDirichletBoundaries()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCGetDirichletBoundaries()`, `PCBDDCSetDirichletBoundaries()`
 @*/
 PetscErrorCode PCBDDCGetDirichletBoundariesLocal(PC pc, IS *DirichletBoundaries)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscUseMethod(pc, "PCBDDCGetDirichletBoundariesLocal_C", (PC, IS *), (pc, DirichletBoundaries));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCGetNeumannBoundaries_BDDC(PC pc, IS *NeumannBoundaries)
@@ -932,33 +932,33 @@ static PetscErrorCode PCBDDCGetNeumannBoundaries_BDDC(PC pc, IS *NeumannBoundari
 
   PetscFunctionBegin;
   *NeumannBoundaries = pcbddc->NeumannBoundaries;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCBDDCGetNeumannBoundaries - Get parallel `IS` for Neumann boundaries
+  PCBDDCGetNeumannBoundaries - Get parallel `IS` for Neumann boundaries
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  pc - the preconditioning context
+  Input Parameter:
+. pc - the preconditioning context
 
-   Output Parameter:
-.  NeumannBoundaries - index set defining the Neumann boundaries
+  Output Parameter:
+. NeumannBoundaries - index set defining the Neumann boundaries
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   The `IS` returned (if any) is the same passed in earlier by the user with `PCBDDCSetNeumannBoundaries()`
+  Note:
+  The `IS` returned (if any) is the same passed in earlier by the user with `PCBDDCSetNeumannBoundaries()`
 
-.seealso: `PCBDDC`, `PCBDDCSetNeumannBoundaries()`, `PCBDDCGetDirichletBoundaries()`, `PCBDDCSetDirichletBoundaries()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetNeumannBoundaries()`, `PCBDDCGetDirichletBoundaries()`, `PCBDDCSetDirichletBoundaries()`
 @*/
 PetscErrorCode PCBDDCGetNeumannBoundaries(PC pc, IS *NeumannBoundaries)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscUseMethod(pc, "PCBDDCGetNeumannBoundaries_C", (PC, IS *), (pc, NeumannBoundaries));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCGetNeumannBoundariesLocal_BDDC(PC pc, IS *NeumannBoundaries)
@@ -967,35 +967,35 @@ static PetscErrorCode PCBDDCGetNeumannBoundariesLocal_BDDC(PC pc, IS *NeumannBou
 
   PetscFunctionBegin;
   *NeumannBoundaries = pcbddc->NeumannBoundariesLocal;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCBDDCGetNeumannBoundariesLocal - Get parallel `IS` for Neumann boundaries (in local ordering)
+  PCBDDCGetNeumannBoundariesLocal - Get parallel `IS` for Neumann boundaries (in local ordering)
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  pc - the preconditioning context
+  Input Parameter:
+. pc - the preconditioning context
 
-   Output Parameter:
-.  NeumannBoundaries - index set defining the subdomain part of Neumann boundaries
+  Output Parameter:
+. NeumannBoundaries - index set defining the subdomain part of Neumann boundaries
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   The `IS` returned could be the same passed in earlier by the user (if provided with `PCBDDCSetNeumannBoundariesLocal()`
-   or a global-to-local map of the global `IS` (if provided with `PCBDDCSetNeumannBoundaries()`).
-   In the latter case, the `IS` will be available after `PCSetUp()`.
+  Note:
+  The `IS` returned could be the same passed in earlier by the user (if provided with `PCBDDCSetNeumannBoundariesLocal()`
+  or a global-to-local map of the global `IS` (if provided with `PCBDDCSetNeumannBoundaries()`).
+  In the latter case, the `IS` will be available after `PCSetUp()`.
 
-.seealso: `PCBDDC``PCBDDCSetNeumannBoundaries()`, `PCBDDCSetNeumannBoundariesLocal)`, `PCBDDCGetNeumannBoundaries()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetNeumannBoundaries()`, `PCBDDCSetNeumannBoundariesLocal)`, `PCBDDCGetNeumannBoundaries()`
 @*/
 PetscErrorCode PCBDDCGetNeumannBoundariesLocal(PC pc, IS *NeumannBoundaries)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   PetscUseMethod(pc, "PCBDDCGetNeumannBoundariesLocal_C", (PC, IS *), (pc, NeumannBoundaries));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetLocalAdjacencyGraph_BDDC(PC pc, PetscInt nvtxs, const PetscInt xadj[], const PetscInt adjncy[], PetscCopyMode copymode)
@@ -1011,7 +1011,7 @@ static PetscErrorCode PCBDDCSetLocalAdjacencyGraph_BDDC(PC pc, PetscInt nvtxs, c
       PetscCall(PetscFree(adjncy));
     }
     PetscCall(PCBDDCGraphResetCSR(mat_graph));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   if (mat_graph->nvtxs == nvtxs && mat_graph->freecsr) { /* we own the data */
     if (mat_graph->xadj == xadj && mat_graph->adjncy == adjncy) same_data = PETSC_TRUE;
@@ -1042,26 +1042,27 @@ static PetscErrorCode PCBDDCSetLocalAdjacencyGraph_BDDC(PC pc, PetscInt nvtxs, c
     mat_graph->nvtxs_csr         = nvtxs;
     pcbddc->recompute_topography = PETSC_TRUE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCBDDCSetLocalAdjacencyGraph - Set adjacency structure (CSR graph) of the local degrees of freedom.
+  PCBDDCSetLocalAdjacencyGraph - Set adjacency structure (CSR graph) of the local degrees of freedom.
 
-   Not collective
+  Not collective
 
-   Input Parameters:
-+  pc - the preconditioning context.
-.  nvtxs - number of local vertices of the graph (i.e., the number of local dofs).
-.  xadj, adjncy - the connectivity of the dofs in CSR format.
--  copymode - supported modes are `PETSC_COPY_VALUES`, `PETSC_USE_POINTER` or `PETSC_OWN_POINTER`.
+  Input Parameters:
++ pc       - the preconditioning context.
+. nvtxs    - number of local vertices of the graph (i.e., the number of local dofs).
+. xadj     - CSR format row pointers for the connectivity of the dofs
+. adjncy   - CSR format column pointers for the connectivity of the dofs
+- copymode - supported modes are `PETSC_COPY_VALUES`, `PETSC_USE_POINTER` or `PETSC_OWN_POINTER`.
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   A dof is considered connected with all local dofs if xadj[dof+1]-xadj[dof] == 1 and adjncy[xadj[dof]] is negative.
+  Note:
+  A dof is considered connected with all local dofs if xadj[dof+1]-xadj[dof] == 1 and adjncy[xadj[dof]] is negative.
 
-.seealso: `PCBDDC`, `PetscCopyMode`
+.seealso: [](ch_ksp), `PCBDDC`, `PetscCopyMode`
 @*/
 PetscErrorCode PCBDDCSetLocalAdjacencyGraph(PC pc, PetscInt nvtxs, const PetscInt xadj[], const PetscInt adjncy[], PetscCopyMode copymode)
 {
@@ -1070,8 +1071,8 @@ PetscErrorCode PCBDDCSetLocalAdjacencyGraph(PC pc, PetscInt nvtxs, const PetscIn
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
   if (nvtxs) {
-    PetscValidIntPointer(xadj, 3);
-    if (xadj[nvtxs]) PetscValidIntPointer(adjncy, 4);
+    PetscAssertPointer(xadj, 3);
+    if (xadj[nvtxs]) PetscAssertPointer(adjncy, 4);
   }
   PetscTryMethod(pc, "PCBDDCSetLocalAdjacencyGraph_C", (PC, PetscInt, const PetscInt[], const PetscInt[], PetscCopyMode), (pc, nvtxs, xadj, adjncy, copymode));
   /* free arrays if PCBDDC is not the PC type */
@@ -1080,7 +1081,7 @@ PetscErrorCode PCBDDCSetLocalAdjacencyGraph(PC pc, PetscInt nvtxs, const PetscIn
     PetscCall(PetscFree(xadj));
     PetscCall(PetscFree(adjncy));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetDofsSplittingLocal_BDDC(PC pc, PetscInt n_is, IS ISForDofs[])
@@ -1112,25 +1113,25 @@ static PetscErrorCode PCBDDCSetDofsSplittingLocal_BDDC(PC pc, PetscInt n_is, IS 
   pcbddc->n_ISForDofsLocal = n_is;
   if (n_is) pcbddc->user_provided_isfordofs = PETSC_TRUE;
   if (!isequal) pcbddc->recompute_topography = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCBDDCSetDofsSplittingLocal - Set index sets defining fields of the local subdomain matrix
+  PCBDDCSetDofsSplittingLocal - Set the `IS` defining fields of the local subdomain matrix
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioning context
-.  n_is - number of index sets defining the fields, must be the same on all MPI ranks
--  ISForDofs - array of `IS` describing the fields in local ordering
+  Input Parameters:
++ pc        - the preconditioning context
+. n_is      - number of index sets defining the fields, must be the same on all MPI processes
+- ISForDofs - array of `IS` describing the fields in local ordering
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   Not all nodes need to be listed: unlisted nodes will belong to the complement field.
+  Note:
+  Not all nodes need to be listed, unlisted nodes will belong to the complement field.
 
-.seealso: `PCBDDC`, `PCBDDCSetDofsSplitting()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetDofsSplitting()`
 @*/
 PetscErrorCode PCBDDCSetDofsSplittingLocal(PC pc, PetscInt n_is, IS ISForDofs[])
 {
@@ -1144,7 +1145,7 @@ PetscErrorCode PCBDDCSetDofsSplittingLocal(PC pc, PetscInt n_is, IS ISForDofs[])
     PetscValidHeaderSpecific(ISForDofs[i], IS_CLASSID, 3);
   }
   PetscTryMethod(pc, "PCBDDCSetDofsSplittingLocal_C", (PC, PetscInt, IS[]), (pc, n_is, ISForDofs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCSetDofsSplitting_BDDC(PC pc, PetscInt n_is, IS ISForDofs[])
@@ -1176,25 +1177,25 @@ static PetscErrorCode PCBDDCSetDofsSplitting_BDDC(PC pc, PetscInt n_is, IS ISFor
   pcbddc->n_ISForDofs = n_is;
   if (n_is) pcbddc->user_provided_isfordofs = PETSC_TRUE;
   if (!isequal) pcbddc->recompute_topography = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCBDDCSetDofsSplitting - Set index sets defining fields of the global matrix
+  PCBDDCSetDofsSplitting - Set the `IS` defining fields of the global matrix
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the preconditioning context
-.  n_is - number of index sets defining the fields
--  ISForDofs - array of IS describing the fields in global ordering
+  Input Parameters:
++ pc        - the preconditioning context
+. n_is      - number of index sets defining the fields
+- ISForDofs - array of `IS` describing the fields in global ordering
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-   Any process can list any global node. Not all nodes need to be listed: unlisted nodes will belong to the complement field.
+  Note:
+  Any process can list any global node. Not all nodes need to be listed: unlisted nodes will belong to the complement field.
 
-.seealso: `PCBDDC`, `PCBDDCSetDofsSplittingLocal()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCSetDofsSplittingLocal()`
 @*/
 PetscErrorCode PCBDDCSetDofsSplitting(PC pc, PetscInt n_is, IS ISForDofs[])
 {
@@ -1208,7 +1209,7 @@ PetscErrorCode PCBDDCSetDofsSplitting(PC pc, PetscInt n_is, IS ISForDofs[])
     PetscCheckSameComm(pc, 1, ISForDofs[i], 3);
   }
   PetscTryMethod(pc, "PCBDDCSetDofsSplitting_C", (PC, PetscInt, IS[]), (pc, n_is, ISForDofs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1392,7 +1393,7 @@ static PetscErrorCode PCPreSolve_BDDC(PC pc, KSP ksp, Vec rhs, Vec x)
   } else if (pcbddc->ChangeOfBasisMatrix && pcbddc->change_interior && benign_correction_computed && pcbddc->use_exact_dirichlet_trick) {
     PetscCall(VecLockReadPop(pcis->vec1_global));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1435,23 +1436,21 @@ static PetscErrorCode PCPostSolve_BDDC(PC pc, KSP ksp, Vec rhs, Vec x)
     /* reset flag for exact dirichlet trick */
     pcbddc->exact_dirichlet_trick_app = PETSC_FALSE;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+// PetscClangLinter pragma disable: -fdoc-sowing-chars
 /*
-   PCSetUp_BDDC - Prepares for the use of the BDDC preconditioner
-                  by setting data structures and options.
+  PCSetUp_BDDC - Prepares for the use of the BDDC preconditioner
+  by setting data structures and options.
 
-   Input Parameter:
-+  pc - the preconditioner context
+  Input Parameter:
+. pc - the preconditioner context
 
    Application Interface Routine: PCSetUp()
 
-   Note:
-     The interface routine PCSetUp() is not usually called directly by
-     the user, but instead is called by PCApply() if necessary.
 */
-PetscErrorCode PCSetUp_BDDC(PC pc)
+static PetscErrorCode PCSetUp_BDDC(PC pc)
 {
   PC_BDDC        *pcbddc = (PC_BDDC *)pc->data;
   PCBDDCSubSchurs sub_schurs;
@@ -1576,9 +1575,7 @@ PetscErrorCode PCSetUp_BDDC(PC pc)
   if (!pcbddc->graphanalyzed) {
     PetscCall(PCBDDCAnalyzeInterface(pc));
     computeconstraintsmatrix = PETSC_TRUE;
-    if (pcbddc->adaptive_selection && !pcbddc->use_deluxe_scaling && !pcbddc->mat_graph->twodim) {
-      SETERRQ(PetscObjectComm((PetscObject)pc), PETSC_ERR_SUP, "Cannot compute the adaptive primal space for a problem with 3D edges without deluxe scaling");
-    }
+    PetscCheck(!(pcbddc->adaptive_selection && !pcbddc->use_deluxe_scaling && !pcbddc->mat_graph->twodim), PetscObjectComm((PetscObject)pc), PETSC_ERR_SUP, "Cannot compute the adaptive primal space for a problem with 3D edges without deluxe scaling");
     if (pcbddc->compute_nonetflux) {
       MatNullSpace nnfnnsp;
 
@@ -1733,9 +1730,10 @@ PetscErrorCode PCSetUp_BDDC(PC pc)
     PetscCall(PetscViewerASCIISubtractTab(pcbddc->dbg_viewer, 2 * pcbddc->current_level));
     PetscCall(PetscViewerASCIIPopSynchronized(pcbddc->dbg_viewer));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
+// PetscClangLinter pragma disable: -fdoc-sowing-chars
 /*
    PCApply_BDDC - Applies the BDDC operator to a vector.
 
@@ -1748,7 +1746,7 @@ PetscErrorCode PCSetUp_BDDC(PC pc)
 
    Application Interface Routine: PCApply()
  */
-PetscErrorCode PCApply_BDDC(PC pc, Vec r, Vec z)
+static PetscErrorCode PCApply_BDDC(PC pc, Vec r, Vec z)
 {
   PC_IS            *pcis   = (PC_IS *)(pc->data);
   PC_BDDC          *pcbddc = (PC_BDDC *)(pc->data);
@@ -1839,7 +1837,7 @@ PetscErrorCode PCApply_BDDC(PC pc, Vec r, Vec z)
   if (pcbddc->interface_extension == PC_BDDC_INTERFACE_EXT_LUMP) {
     PetscCall(VecScatterBegin(pcis->global_to_D, pcis->vec1_D, z, INSERT_VALUES, SCATTER_REVERSE));
     PetscCall(VecScatterEnd(pcis->global_to_D, pcis->vec1_D, z, INSERT_VALUES, SCATTER_REVERSE));
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
   /* Second Dirichlet solve and assembling of output */
   PetscCall(VecScatterBegin(pcis->global_to_B, z, pcis->vec1_B, INSERT_VALUES, SCATTER_FORWARD));
@@ -1903,7 +1901,7 @@ PetscErrorCode PCApply_BDDC(PC pc, Vec r, Vec z)
     PetscCall(VecCopy(z, pcbddc->work_change));
     PetscCall(MatMult(pcbddc->ChangeOfBasisMatrix, pcbddc->work_change, z));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -1918,7 +1916,7 @@ PetscErrorCode PCApply_BDDC(PC pc, Vec r, Vec z)
 
    Application Interface Routine: PCApplyTranspose()
  */
-PetscErrorCode PCApplyTranspose_BDDC(PC pc, Vec r, Vec z)
+static PetscErrorCode PCApplyTranspose_BDDC(PC pc, Vec r, Vec z)
 {
   PC_IS            *pcis   = (PC_IS *)(pc->data);
   PC_BDDC          *pcbddc = (PC_BDDC *)(pc->data);
@@ -2057,10 +2055,10 @@ PetscErrorCode PCApplyTranspose_BDDC(PC pc, Vec r, Vec z)
     PetscCall(VecCopy(z, pcbddc->work_change));
     PetscCall(MatMult(pcbddc->ChangeOfBasisMatrix, pcbddc->work_change, z));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCReset_BDDC(PC pc)
+static PetscErrorCode PCReset_BDDC(PC pc)
 {
   PC_BDDC *pcbddc = (PC_BDDC *)pc->data;
   PC_IS   *pcis   = (PC_IS *)pc->data;
@@ -2079,7 +2077,7 @@ PetscErrorCode PCReset_BDDC(PC pc)
   PetscCall(VecDestroy(&pcbddc->temp_solution));
   PetscCall(VecDestroy(&pcbddc->original_rhs));
   /* free data created by PCIS */
-  PetscCall(PCISDestroy(pc));
+  PetscCall(PCISReset(pc));
 
   /* restore defaults */
   kspD = pcbddc->ksp_D;
@@ -2107,10 +2105,10 @@ PetscErrorCode PCReset_BDDC(PC pc)
   pcbddc->ksp_D                     = kspD;
   pcbddc->ksp_R                     = kspR;
   pcbddc->coarse_ksp                = kspC;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCDestroy_BDDC(PC pc)
+static PetscErrorCode PCDestroy_BDDC(PC pc)
 {
   PC_BDDC *pcbddc = (PC_BDDC *)pc->data;
 
@@ -2147,7 +2145,7 @@ PetscErrorCode PCDestroy_BDDC(PC pc)
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCPreSolveChangeRHS_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCSetCoordinates_C", NULL));
   PetscCall(PetscFree(pc->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSetCoordinates_BDDC(PC pc, PetscInt dim, PetscInt nloc, PetscReal *coords)
@@ -2165,14 +2163,14 @@ static PetscErrorCode PCSetCoordinates_BDDC(PC pc, PetscInt dim, PetscInt nloc, 
   /* flg setup */
   pcbddc->recompute_topography = PETSC_TRUE;
   pcbddc->corner_selected      = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCPreSolveChangeRHS_BDDC(PC pc, PetscBool *change)
 {
   PetscFunctionBegin;
   *change = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCMatFETIDPGetRHS_BDDC(Mat fetidp_mat, Vec standard_rhs, Vec fetidp_flux_rhs)
@@ -2259,24 +2257,24 @@ static PetscErrorCode PCBDDCMatFETIDPGetRHS_BDDC(Mat fetidp_mat, Vec standard_rh
     PetscCall(VecScatterBegin(mat_ctx->l2g_p, mat_ctx->vP, fetidp_flux_rhs, ADD_VALUES, SCATTER_FORWARD));
     PetscCall(VecScatterEnd(mat_ctx->l2g_p, mat_ctx->vP, fetidp_flux_rhs, ADD_VALUES, SCATTER_FORWARD));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PCBDDCMatFETIDPGetRHS - Compute the right-hand side for FETI-DP linear system using the physical right-hand side
+  PCBDDCMatFETIDPGetRHS - Compute the right-hand side for a FETI-DP linear system using the physical right-hand side
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  fetidp_mat      - the FETI-DP matrix object obtained by a call to `PCBDDCCreateFETIDPOperators()`
--  standard_rhs    - the right-hand side of the original linear system
+  Input Parameters:
++ fetidp_mat   - the FETI-DP matrix object obtained by a call to `PCBDDCCreateFETIDPOperators()`
+- standard_rhs - the right-hand side of the original linear system
 
-   Output Parameter:
-.  fetidp_flux_rhs - the right-hand side for the FETI-DP linear system
+  Output Parameter:
+. fetidp_flux_rhs - the right-hand side for the FETI-DP linear system
 
-   Level: developer
+  Level: developer
 
-.seealso: `PCBDDC`, `PCBDDCCreateFETIDPOperators()`, `PCBDDCMatFETIDPGetSolution()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCCreateFETIDPOperators()`, `PCBDDCMatFETIDPGetSolution()`
 @*/
 PetscErrorCode PCBDDCMatFETIDPGetRHS(Mat fetidp_mat, Vec standard_rhs, Vec fetidp_flux_rhs)
 {
@@ -2288,7 +2286,7 @@ PetscErrorCode PCBDDCMatFETIDPGetRHS(Mat fetidp_mat, Vec standard_rhs, Vec fetid
   PetscValidHeaderSpecific(fetidp_flux_rhs, VEC_CLASSID, 3);
   PetscCall(MatShellGetContext(fetidp_mat, &mat_ctx));
   PetscUseMethod(mat_ctx->pc, "PCBDDCMatFETIDPGetRHS_C", (Mat, Vec, Vec), (fetidp_mat, standard_rhs, fetidp_flux_rhs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCMatFETIDPGetSolution_BDDC(Mat fetidp_mat, Vec fetidp_flux_sol, Vec standard_sol)
@@ -2353,7 +2351,7 @@ static PetscErrorCode PCBDDCMatFETIDPGetSolution_BDDC(Mat fetidp_mat, Vec fetidp
     PetscCall(VecScatterBegin(mat_ctx->g2g_p, fetidp_flux_sol, standard_sol, INSERT_VALUES, SCATTER_REVERSE));
     PetscCall(VecScatterEnd(mat_ctx->g2g_p, fetidp_flux_sol, standard_sol, INSERT_VALUES, SCATTER_REVERSE));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCView_BDDCIPC(PC pc, PetscViewer viewer)
@@ -2368,7 +2366,7 @@ static PetscErrorCode PCView_BDDCIPC(PC pc, PetscViewer viewer)
   PetscCall(PetscViewerASCIIPushTab(viewer));
   PetscCall(PCView(bddcipc_ctx->bddc, viewer));
   PetscCall(PetscViewerASCIIPopTab(viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSetUp_BDDCIPC(PC pc)
@@ -2393,7 +2391,7 @@ static PetscErrorCode PCSetUp_BDDCIPC(PC pc)
   PetscCall(VecScatterCreate(vv, is, pcis->vec1_B, NULL, &bddcipc_ctx->g2l));
   PetscCall(ISDestroy(&is));
   PetscCall(VecDestroy(&vv));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApply_BDDCIPC(PC pc, Vec r, Vec x)
@@ -2411,7 +2409,7 @@ static PetscErrorCode PCApply_BDDCIPC(PC pc, Vec r, Vec x)
   PetscCall(PCBDDCApplyInterfacePreconditioner(bddcipc_ctx->bddc, PETSC_FALSE));
   PetscCall(PCBDDCScalingExtension(bddcipc_ctx->bddc, pcis->vec1_B, x));
   pcis->global_to_B = tmps;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApplyTranspose_BDDCIPC(PC pc, Vec r, Vec x)
@@ -2429,7 +2427,7 @@ static PetscErrorCode PCApplyTranspose_BDDCIPC(PC pc, Vec r, Vec x)
   PetscCall(PCBDDCApplyInterfacePreconditioner(bddcipc_ctx->bddc, PETSC_TRUE));
   PetscCall(PCBDDCScalingExtension(bddcipc_ctx->bddc, pcis->vec1_B, x));
   pcis->global_to_B = tmps;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCDestroy_BDDCIPC(PC pc)
@@ -2441,24 +2439,24 @@ static PetscErrorCode PCDestroy_BDDCIPC(PC pc)
   PetscCall(PCDestroy(&bddcipc_ctx->bddc));
   PetscCall(VecScatterDestroy(&bddcipc_ctx->g2l));
   PetscCall(PetscFree(bddcipc_ctx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
- PCBDDCMatFETIDPGetSolution - Compute the physical solution using the solution of the FETI-DP linear system
+  PCBDDCMatFETIDPGetSolution - Compute the physical solution using the solution of the FETI-DP linear system
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  fetidp_mat      - the FETI-DP matrix obtained by a call to PCBDDCCreateFETIDPOperators()`
--  fetidp_flux_sol - the solution of the FETI-DP linear system`
+  Input Parameters:
++ fetidp_mat      - the FETI-DP matrix obtained by a call to `PCBDDCCreateFETIDPOperators()`
+- fetidp_flux_sol - the solution of the FETI-DP linear system`
 
-   Output Parameter:
-.  standard_sol    - the solution defined on the physical domain
+  Output Parameter:
+. standard_sol - the solution defined on the physical domain
 
-   Level: developer
+  Level: developer
 
-.seealso: `PCBDDC`, `PCBDDCCreateFETIDPOperators()`, `PCBDDCMatFETIDPGetRHS()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCCreateFETIDPOperators()`, `PCBDDCMatFETIDPGetRHS()`
 @*/
 PetscErrorCode PCBDDCMatFETIDPGetSolution(Mat fetidp_mat, Vec fetidp_flux_sol, Vec standard_sol)
 {
@@ -2470,7 +2468,7 @@ PetscErrorCode PCBDDCMatFETIDPGetSolution(Mat fetidp_mat, Vec fetidp_flux_sol, V
   PetscValidHeaderSpecific(standard_sol, VEC_CLASSID, 3);
   PetscCall(MatShellGetContext(fetidp_mat, &mat_ctx));
   PetscUseMethod(mat_ctx->pc, "PCBDDCMatFETIDPGetSolution_C", (Mat, Vec, Vec), (fetidp_mat, fetidp_flux_sol, standard_sol));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCBDDCCreateFETIDPOperators_BDDC(PC pc, PetscBool fully_redundant, const char *prefix, Mat *fetidp_mat, PC *fetidp_pc)
@@ -2645,12 +2643,13 @@ static PetscErrorCode PCBDDCCreateFETIDPOperators_BDDC(PC pc, PetscBool fully_re
 
         for (i = 0; i < nn; i++) {
           KSP       kspC;
-          PC        pc;
+          PC        npc;
           Mat       F, pF;
           Vec       x, y;
           PetscBool isschur, prec = PETSC_TRUE;
 
           PetscCall(KSPCreate(PetscObjectComm((PetscObject)ksps[i]), &kspC));
+          PetscCall(KSPSetNestLevel(kspC, pc->kspnestlevel));
           PetscCall(KSPSetOptionsPrefix(kspC, ((PetscObject)ksps[i])->prefix));
           PetscCall(KSPAppendOptionsPrefix(kspC, "check_"));
           PetscCall(KSPGetOperators(ksps[i], &F, &pF));
@@ -2666,27 +2665,27 @@ static PetscErrorCode PCBDDCCreateFETIDPOperators_BDDC(PC pc, PetscBool fully_re
             PetscCall(MatSchurComplementGetKSP(F, &kspS2));
             PetscCall(PetscSNPrintf(prefix, sizeof(prefix), "%sschur_", ((PetscObject)kspC)->prefix));
             PetscCall(KSPSetOptionsPrefix(kspS2, prefix));
-            PetscCall(KSPGetPC(kspS2, &pc));
-            PetscCall(PCSetType(pc, PCKSP));
-            PetscCall(PCKSPSetKSP(pc, kspS));
+            PetscCall(KSPGetPC(kspS2, &npc));
+            PetscCall(PCSetType(npc, PCKSP));
+            PetscCall(PCKSPSetKSP(npc, kspS));
             PetscCall(KSPSetFromOptions(kspS2));
-            PetscCall(KSPGetPC(kspS2, &pc));
-            PetscCall(PCSetUseAmat(pc, PETSC_TRUE));
+            PetscCall(KSPGetPC(kspS2, &npc));
+            PetscCall(PCSetUseAmat(npc, PETSC_TRUE));
           } else {
             PetscCall(PetscObjectReference((PetscObject)F));
           }
           PetscCall(KSPSetFromOptions(kspC));
           PetscCall(PetscOptionsGetBool(NULL, ((PetscObject)kspC)->prefix, "-preconditioned", &prec, NULL));
           if (prec) {
-            PetscCall(KSPGetPC(ksps[i], &pc));
-            PetscCall(KSPSetPC(kspC, pc));
+            PetscCall(KSPGetPC(ksps[i], &npc));
+            PetscCall(KSPSetPC(kspC, npc));
           }
           PetscCall(KSPSetOperators(kspC, F, pF));
           PetscCall(MatCreateVecs(F, &x, &y));
           PetscCall(VecSetRandom(x, NULL));
           PetscCall(MatMult(F, x, y));
           PetscCall(KSPSolve(kspC, y, x));
-          PetscCall(KSPCheckSolve(kspC, pc, x));
+          PetscCall(KSPCheckSolve(kspC, npc, x));
           PetscCall(KSPDestroy(&kspC));
           PetscCall(MatDestroy(&F));
           PetscCall(VecDestroy(&x));
@@ -2699,42 +2698,41 @@ static PetscErrorCode PCBDDCCreateFETIDPOperators_BDDC(PC pc, PetscBool fully_re
   /* return pointers for objects created */
   *fetidp_mat = newmat;
   *fetidp_pc  = newpc;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
- PCBDDCCreateFETIDPOperators - Create FETI-DP operators
+  PCBDDCCreateFETIDPOperators - Create FETI-DP operators
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  pc - the BDDC preconditioning context (setup should have been called before)
-.  fully_redundant - true for a fully redundant set of Lagrange multipliers
--  prefix - optional options database prefix for the objects to be created (can be NULL)
+  Input Parameters:
++ pc              - the `PCBDDC` preconditioning context (setup should have been called before)
+. fully_redundant - true for a fully redundant set of Lagrange multipliers
+- prefix          - optional options database prefix for the objects to be created (can be `NULL`)
 
-   Output Parameters:
-+  fetidp_mat - shell FETI-DP matrix object
--  fetidp_pc  - shell Dirichlet preconditioner for FETI-DP matrix
+  Output Parameters:
++ fetidp_mat - shell FETI-DP matrix object
+- fetidp_pc  - shell Dirichlet preconditioner for FETI-DP matrix
 
-   Level: developer
+  Level: developer
 
-   Note:
-   Currently the only operations provided for FETI-DP matrix are `MatMult()` and `MatMultTranspose()`
+  Note:
+  Currently the only operations provided for FETI-DP matrix are `MatMult()` and `MatMultTranspose()`
 
-.seealso: `PCBDDC`, `PCBDDCMatFETIDPGetRHS()`, `PCBDDCMatFETIDPGetSolution()`
+.seealso: [](ch_ksp), `PCBDDC`, `PCBDDCMatFETIDPGetRHS()`, `PCBDDCMatFETIDPGetSolution()`
 @*/
 PetscErrorCode PCBDDCCreateFETIDPOperators(PC pc, PetscBool fully_redundant, const char *prefix, Mat *fetidp_mat, PC *fetidp_pc)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(pc, PC_CLASSID, 1);
-  if (pc->setupcalled) {
-    PetscUseMethod(pc, "PCBDDCCreateFETIDPOperators_C", (PC, PetscBool, const char *, Mat *, PC *), (pc, fully_redundant, prefix, fetidp_mat, fetidp_pc));
-  } else SETERRQ(PetscObjectComm((PetscObject)pc), PETSC_ERR_SUP, "You must call PCSetup_BDDC() first");
-  PetscFunctionReturn(0);
+  PetscCheck(pc->setupcalled, PetscObjectComm((PetscObject)pc), PETSC_ERR_SUP, "You must call PCSetup_BDDC() first");
+  PetscUseMethod(pc, "PCBDDCCreateFETIDPOperators_C", (PC, PetscBool, const char *, Mat *, PC *), (pc, fully_redundant, prefix, fetidp_mat, fetidp_pc));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-   PCBDDC - Balancing Domain Decomposition by Constraints preconditioners
+   PCBDDC - Balancing Domain Decomposition by Constraints preconditioners, {cite}`dohrmann2007approximate`, {cite}`klawonn2006dual`, {cite}`mandel2008multispace`
 
    Requires `MATIS` matrices (Pmat) with local matrices (inside the `MATIS`) of type `MATSEQAIJ`, `MATSEQBAIJ` or `MATSEQSBAIJ`
 
@@ -2743,7 +2741,7 @@ PetscErrorCode PCBDDCCreateFETIDPOperators(PC pc, PetscBool fully_redundant, con
    Unlike 'conventional' interface preconditioners, `PCBDDC` iterates over all degrees of freedom, not just those on the interface. This allows the use
    of approximate solvers on the subdomains.
 
-   Approximate local solvers are automatically adapted (see [1]) if the user has attached a nullspace object to the subdomain matrices, and informed
+   Approximate local solvers are automatically adapted (see {cite}`dohrmann2007approximate`,) if the user has attached a nullspace object to the subdomain matrices, and informed
    `PCBDDC` of using approximate solvers (via the command line).
 
    Boundary nodes are split in vertices, edges and faces classes using information from the local to global mapping of dofs and the local connectivity graph of nodes.
@@ -2754,33 +2752,33 @@ PetscErrorCode PCBDDCCreateFETIDPOperators(PC pc, PetscBool fully_redundant, con
 
    Constraints can be customized by attaching a `MatNullSpace` object to the `MATIS` matrix via `MatSetNearNullSpace()`. Non-singular modes are retained via SVD.
 
-   Change of basis is performed similarly to [2] when requested. When more than one constraint is present on a single connected component
+   Change of basis is performed similarly to {cite}`klawonn2006dual` when requested. When more than one constraint is present on a single connected component
    (i.e. an edge or a face), a robust method based on local QR factorizations is used.
    User defined change of basis can be passed to `PCBDDC` with `PCBDDCSetChangeOfBasisMat()`
 
-   The PETSc implementation also supports multilevel `PCBDDC` [3]. Coarse grids are partitioned using a `MatPartitioning` object.
+   The PETSc implementation also supports multilevel `PCBDDC` {cite}`mandel2008multispace`. Coarse grids are partitioned using a `MatPartitioning` object.
 
-   Adaptive selection of primal constraints [4] is supported for SPD systems with high-contrast in the coefficients if MUMPS or MKL_PARDISO are present.
+   Adaptive selection of primal constraints is supported for SPD systems with high-contrast in the coefficients if MUMPS or MKL_PARDISO are present.
    Future versions of the code will also consider using PASTIX.
 
    An experimental interface to the FETI-DP method is available. FETI-DP operators could be created using `PCBDDCCreateFETIDPOperators()`.
     A stand-alone class for the FETI-DP method will be provided in the next releases.
 
    Options Database Keys:
-+    -pc_bddc_use_vertices <true> - use or not vertices in primal space
-.    -pc_bddc_use_edges <true> - use or not edges in primal space
-.    -pc_bddc_use_faces <false> - use or not faces in primal space
-.    -pc_bddc_symmetric <true> - symmetric computation of primal basis functions. Specify false for unsymmetric problems
++    -pc_bddc_use_vertices <true>         - use or not vertices in primal space
+.    -pc_bddc_use_edges <true>            - use or not edges in primal space
+.    -pc_bddc_use_faces <false>           - use or not faces in primal space
+.    -pc_bddc_symmetric <true>            - symmetric computation of primal basis functions. Specify false for unsymmetric problems
 .    -pc_bddc_use_change_of_basis <false> - use change of basis approach (on edges only)
 .    -pc_bddc_use_change_on_faces <false> - use change of basis approach on faces if change of basis has been requested
-.    -pc_bddc_switch_static <false> - switches from M_2 (default) to M_3 operator (see reference article [1])
-.    -pc_bddc_levels <0> - maximum number of levels for multilevel
-.    -pc_bddc_coarsening_ratio <8> - number of subdomains which will be aggregated together at the coarser level (e.g. H/h ratio at the coarser level, significative only in the multilevel case)
-.    -pc_bddc_coarse_redistribute <0> - size of a subset of processors where the coarse problem will be remapped (the value is ignored if not at the coarsest level)
-.    -pc_bddc_use_deluxe_scaling <false> - use deluxe scaling
-.    -pc_bddc_schur_layers <\-1> - select the economic version of deluxe scaling by specifying the number of layers (-1 corresponds to the original deluxe scaling)
-.    -pc_bddc_adaptive_threshold <0.0> - when a value different than zero is specified, adaptive selection of constraints is performed on edges and faces (requires deluxe scaling and MUMPS or MKL_PARDISO installed)
--    -pc_bddc_check_level <0> - set verbosity level of debugging output
+.    -pc_bddc_switch_static <false>       - switches from M_2 (default) to M_3 operator (see reference article [1])
+.    -pc_bddc_levels <0>                  - maximum number of levels for multilevel
+.    -pc_bddc_coarsening_ratio <8>        - number of subdomains which will be aggregated together at the coarser level (e.g. H/h ratio at the coarser level, significative only in the multilevel case)
+.    -pc_bddc_coarse_redistribute <0>     - size of a subset of processors where the coarse problem will be remapped (the value is ignored if not at the coarsest level)
+.    -pc_bddc_use_deluxe_scaling <false>  - use deluxe scaling
+.    -pc_bddc_schur_layers <\-1>          - select the economic version of deluxe scaling by specifying the number of layers (-1 corresponds to the original deluxe scaling)
+.    -pc_bddc_adaptive_threshold <0.0>    - when a value different than zero is specified, adaptive selection of constraints is performed on edges and faces (requires deluxe scaling and MUMPS or MKL_PARDISO installed)
+-    -pc_bddc_check_level <0>             - set verbosity level of debugging output
 
    Options for Dirichlet, Neumann or coarse solver can be set using the appropriate options prefix
 .vb
@@ -2804,19 +2802,14 @@ PetscErrorCode PCBDDCCreateFETIDPOperators(PC pc, PetscBool fully_redundant, con
 .ve
    will use a threshold of 5 for constraints' selection at the first coarse level and will redistribute the coarse problem of the first coarse level on 3 processors
 
-   References:
-+  * - C. R. Dohrmann. "An approximate BDDC preconditioner", Numerical Linear Algebra with Applications Volume 14, Issue 2, pages 149--168, March 2007
-.  * - A. Klawonn and O. B. Widlund. "Dual-Primal FETI Methods for Linear Elasticity", Communications on Pure and Applied Mathematics Volume 59, Issue 11, pages 1523--1572, November 2006
-.  * - J. Mandel, B. Sousedik, C. R. Dohrmann. "Multispace and Multilevel BDDC", Computing Volume 83, Issue 2--3, pages 55--85, November 2008
--  * - C. Pechstein and C. R. Dohrmann. "Modern domain decomposition methods BDDC, deluxe scaling, and an algebraic approach", Seminar talk, Linz, December 2013, http://people.ricam.oeaw.ac.at/c.pechstein/pechstein-bddc2013.pdf
-
    Level: intermediate
 
-   Contributed by Stefano Zampini
+   Contributed by:
+   Stefano Zampini
 
- .seealso: `PCCreate()`, `PCSetType()`, `PCType`, `PC`, `MATIS`, `PCLU`, `PGGAMG`, `PC`, `PCBDDCSetLocalAdjacencyGraph()`, `PCBDDCSetDofsSplitting()`,
-            `PCBDDCSetDirichletBoundaries()`, `PCBDDCSetNeumannBoundaries()`, `PCBDDCSetPrimalVerticesIS()`, `MatNullSpace`, `MatSetNearNullSpace()`,
-            `PCBDDCSetChangeOfBasisMat()`, `PCBDDCCreateFETIDPOperators()`, `PCNN`
+.seealso: [](ch_ksp), `PCCreate()`, `PCSetType()`, `PCType`, `PC`, `MATIS`, `PCLU`, `PCGAMG`, `PC`, `PCBDDCSetLocalAdjacencyGraph()`, `PCBDDCSetDofsSplitting()`,
+          `PCBDDCSetDirichletBoundaries()`, `PCBDDCSetNeumannBoundaries()`, `PCBDDCSetPrimalVerticesIS()`, `MatNullSpace`, `MatSetNearNullSpace()`,
+          `PCBDDCSetChangeOfBasisMat()`, `PCBDDCCreateFETIDPOperators()`, `PCNN`
 M*/
 
 PETSC_EXTERN PetscErrorCode PCCreate_BDDC(PC pc)
@@ -2827,8 +2820,7 @@ PETSC_EXTERN PetscErrorCode PCCreate_BDDC(PC pc)
   PetscCall(PetscNew(&pcbddc));
   pc->data = pcbddc;
 
-  /* create PCIS data structure */
-  PetscCall(PCISCreate(pc));
+  PetscCall(PCISInitialize(pc));
 
   /* create local graph structure */
   PetscCall(PCBDDCGraphCreate(&pcbddc->mat_graph));
@@ -2895,23 +2887,23 @@ PETSC_EXTERN PetscErrorCode PCCreate_BDDC(PC pc)
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCBDDCMatFETIDPGetSolution_C", PCBDDCMatFETIDPGetSolution_BDDC));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCPreSolveChangeRHS_C", PCPreSolveChangeRHS_BDDC));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCSetCoordinates_C", PCSetCoordinates_BDDC));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
- PCBDDCInitializePackage - This function initializes everything in the `PCBDDC` package. It is called
-    from `PCInitializePackage()`.
+  PCBDDCInitializePackage - This function initializes everything in the `PCBDDC` package. It is called
+  from `PCInitializePackage()`.
 
- Level: developer
+  Level: developer
 
- .seealso: `PetscInitialize()`, `PCBDDCFinalizePackage()`
+.seealso: [](ch_ksp), `PetscInitialize()`, `PCBDDCFinalizePackage()`
 @*/
 PetscErrorCode PCBDDCInitializePackage(void)
 {
   int i;
 
   PetscFunctionBegin;
-  if (PCBDDCPackageInitialized) PetscFunctionReturn(0);
+  if (PCBDDCPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   PCBDDCPackageInitialized = PETSC_TRUE;
   PetscCall(PetscRegisterFinalize(PCBDDCFinalizePackage));
 
@@ -2962,20 +2954,20 @@ PetscErrorCode PCBDDCInitializePackage(void)
     PetscCall(PetscSNPrintf(ename, sizeof(ename), "PCBDDCCoaS l%02d", i));
     PetscCall(PetscLogEventRegister(ename, PC_CLASSID, &PC_BDDC_Solves[i][2]));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-    PCBDDCFinalizePackage - This function frees everything from the `PCBDDC` package. It is
-    called from `PetscFinalize()` automatically.
+  PCBDDCFinalizePackage - This function frees everything from the `PCBDDC` package. It is
+  called from `PetscFinalize()` automatically.
 
-    Level: developer
+  Level: developer
 
- .seealso: `PetscFinalize()`, `PCBDDCInitializePackage()`
+.seealso: [](ch_ksp), `PetscFinalize()`, `PCBDDCInitializePackage()`
 @*/
 PetscErrorCode PCBDDCFinalizePackage(void)
 {
   PetscFunctionBegin;
   PCBDDCPackageInitialized = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

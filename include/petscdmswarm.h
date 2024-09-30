@@ -1,24 +1,28 @@
-#ifndef PETSCDMSWARM_H
-#define PETSCDMSWARM_H
+#pragma once
 
 #include <petscdm.h>
 #include <petscdt.h>
+
+typedef struct _p_DMSwarmDataField  *DMSwarmDataField;
+typedef struct _p_DMSwarmDataBucket *DMSwarmDataBucket;
+typedef struct _p_DMSwarmSort       *DMSwarmSort;
 
 /* SUBMANSEC = DMSwarm */
 
 /*E
    DMSwarmType - Defines the type of `DMSWARM`
 
-   DMSWARM_BASIC defines N entries of varied data-types which the user may register.
+   Values:
++  `DMSWARM_BASIC` - defines N entries of varied data-types which the user may register.
+-  `DMSWARM_PIC`   - suitable for particle-in-cell methods. Configured as `DMSWARM_PIC`, the swarm will be aware of, another `DM` which serves as the background mesh.
 
-   DMSWARM_PIC is suitable for particle-in-cell methods. Configured as DMSWARM_PIC, the swarm will be aware of, another DM which serves as the background mesh.
    Fields specific to particle-in-cell methods are registered by default. These include spatial coordinates, a unique identifier, a cell index and an index for
-   the owning rank. The background mesh will (by default) define the spatial decomposition of the points defined in the swarm. DMSWARM_PIC provides support
+   the owning rank. The background mesh will (by default) define the spatial decomposition of the points defined in the swarm. `DMSWARM_PIC` provides support
    for particle-in-cell operations such as defining initial point coordinates, communicating particles between sub-domains, projecting particle data fields on to the mesh.
 
    Level: beginner
 
-.seealso: `DMSwarmSetType()`
+.seealso: [](ch_dmbase), `DMSWARM`, `DMSwarmSetType()`
 E*/
 typedef enum {
   DMSWARM_BASIC = 0,
@@ -42,18 +46,17 @@ typedef enum {
 /*E
    DMSwarmPICLayoutType - Defines the method used to define particle coordinates within each cell. The layouts are constructured using the reference cell geometry
 
-   DMSWARMPIC_LAYOUT_REGULAR defines points on a regular ijk mesh.
-   When using DMSWARMPIC_LAYOUT_REGULAR, the fill_param defines the number of points in each spatial direction.
-
-   DMSWARMPIC_LAYOUT_GAUSS defines points using an npoint Gauss-Legendre tensor product quadrature rule.
-   When using DMSWARMPIC_LAYOUT_GAUSS, the fill_param defines the number of quadrature points in each spatial direction.
-
-   DMSWARMPIC_LAYOUT_SUBDIVISION defines points on the centroid of a sub-divided reference cell.
-   When using DMSWARMPIC_LAYOUT_SUBDIVISION, the fill_param defines the number times the reference cell is sub-divided.
+   Values:
++  `DMSWARMPIC_LAYOUT_REGULAR`     - defines points on a regular ijk mesh. In this case
+                                     the `fill_param` argument of `DMSwarmInsertPointsUsingCellDM()` defines the number of points in each spatial direction.
+.  `DMSWARMPIC_LAYOUT_GAUSS`       - defines points using an npoint Gauss-Legendre tensor product quadrature rule. In this case
+                                     the `fill_param` argument of `DMSwarmInsertPointsUsingCellDM()` defines the number of quadrature points in each spatial direction.
+-  `DMSWARMPIC_LAYOUT_SUBDIVISION` - defines points on the centroid of a sub-divided reference cell. In this case
+                                     the `fill_param` argument of `DMSwarmInsertPointsUsingCellDM()` defines the number times the reference cell is sub-divided.
 
    Level: beginner
 
-.seealso: `DMSWARM`, `DM`, `DMSwarmInsertPointsUsingCellDM()`
+.seealso: [](ch_dmbase), `DMSWARM`, `DM`, `DMSwarmInsertPointsUsingCellDM()`
 E*/
 typedef enum {
   DMSWARMPIC_LAYOUT_REGULAR = 0,
@@ -94,6 +97,8 @@ PETSC_EXTERN PetscErrorCode DMSwarmCopyPoint(DM dm, PetscInt, PetscInt);
 
 PETSC_EXTERN PetscErrorCode DMSwarmGetLocalSize(DM, PetscInt *);
 PETSC_EXTERN PetscErrorCode DMSwarmGetSize(DM, PetscInt *);
+PETSC_EXTERN PetscErrorCode DMSwarmGetMigrateType(DM, DMSwarmMigrateType *);
+PETSC_EXTERN PetscErrorCode DMSwarmSetMigrateType(DM, DMSwarmMigrateType);
 PETSC_EXTERN PetscErrorCode DMSwarmMigrate(DM, PetscBool);
 
 PETSC_EXTERN PetscErrorCode DMSwarmCollectViewCreate(DM);
@@ -118,7 +123,6 @@ PETSC_EXTERN PetscErrorCode DMSwarmSortGetNumberOfPointsPerCell(DM, PetscInt, Pe
 PETSC_EXTERN PetscErrorCode DMSwarmSortGetIsValid(DM, PetscBool *);
 PETSC_EXTERN PetscErrorCode DMSwarmSortGetSizes(DM, PetscInt *, PetscInt *);
 
-PETSC_EXTERN PetscErrorCode DMSwarmProjectFields(DM, PetscInt, const char **, Vec **, PetscBool);
 PETSC_EXTERN PetscErrorCode DMSwarmCreateMassMatrixSquare(DM, DM, Mat *);
 
 PETSC_EXTERN PetscErrorCode DMSwarmGetCellSwarm(DM, PetscInt, DM);
@@ -135,4 +139,9 @@ PETSC_EXTERN PetscErrorCode DMSwarmInitializeCoordinates(DM);
 PETSC_EXTERN PetscErrorCode DMSwarmInitializeVelocities(DM, PetscProbFunc, const PetscReal[]);
 PETSC_EXTERN PetscErrorCode DMSwarmInitializeVelocitiesFromOptions(DM, const PetscReal[]);
 
-#endif
+// Interface to internal storage
+PETSC_EXTERN PetscErrorCode DMSwarmDataFieldGetEntries(const DMSwarmDataField, void **);
+PETSC_EXTERN PetscErrorCode DMSwarmDataFieldRestoreEntries(const DMSwarmDataField, void **);
+PETSC_EXTERN PetscErrorCode DMSwarmDataBucketGetDMSwarmDataFieldByName(DMSwarmDataBucket, const char[], DMSwarmDataField *);
+PETSC_EXTERN PetscErrorCode DMSwarmDataBucketGetDMSwarmDataFieldIdByName(DMSwarmDataBucket, const char[], PetscInt *);
+PETSC_EXTERN PetscErrorCode DMSwarmDataBucketQueryDMSwarmDataFieldByName(DMSwarmDataBucket, const char[], PetscBool *);

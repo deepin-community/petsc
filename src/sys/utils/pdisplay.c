@@ -1,33 +1,33 @@
-
 #include <petscsys.h>
 
 /*@C
-     PetscOptionsGetenv - Gets an environmental variable, broadcasts to all
-          processors in communicator from MPI rank zero
+  PetscOptionsGetenv - Gets an environmental variable, broadcasts to all
+  processors in communicator from MPI rank zero
 
-     Collective
+  Collective
 
-   Input Parameters:
-+    comm - communicator to share variable
-.    name - name of environmental variable
--    len - amount of space allocated to hold variable
+  Input Parameters:
++ comm - communicator to share variable
+. name - name of environmental variable
+- len  - amount of space allocated to hold variable
 
-   Output Parameters:
-+    flag - if not NULL tells if variable found or not
--    env - value of variable
+  Output Parameters:
++ flag - if not `NULL` indicates if the variable was found
+- env  - value of variable
 
   Level: advanced
 
-   Notes:
-    You can also "set" the environmental variable by setting the options database value
-    -name "stringvalue" (with name in lower case). If name begins with PETSC_ this is
-    discarded before checking the database. For example, `PETSC_VIEWER_SOCKET_PORT` would
-    be given as -viewer_socket_port 9000
+  Notes:
+  You can also "set" the environmental variable by setting the options database value
+  -name "stringvalue" (with name in lower case). If name begins with PETSC_ this is
+  discarded before checking the database. For example, `PETSC_VIEWER_SOCKET_PORT` would
+  be given as `-viewer_socket_port 9000`
 
-    If comm does not contain the 0th process in the MPIEXEC it is likely on
-    many systems that the environmental variable will not be set unless you
-    put it in a universal location like a .chsrc file
+  If comm does not contain the 0th process in the `MPI_COMM_WORLD` it is likely on
+  many systems that the environmental variable will not be set unless you
+  put it in a universal location like a .chsrc file
 
+.seealso: `PetscOptionsHasName()`
 @*/
 PetscErrorCode PetscOptionsGetenv(MPI_Comm comm, const char name[], char env[], size_t len, PetscBool *flag)
 {
@@ -39,7 +39,7 @@ PetscErrorCode PetscOptionsGetenv(MPI_Comm comm, const char name[], char env[], 
   /* first check options database */
   PetscCall(PetscStrncmp(name, "PETSC_", 6, &spetsc));
 
-  PetscCall(PetscStrcpy(work, "-"));
+  PetscCall(PetscStrncpy(work, "-", sizeof(work)));
   if (spetsc) {
     PetscCall(PetscStrlcat(work, name + 6, sizeof(work)));
   } else {
@@ -66,7 +66,7 @@ PetscErrorCode PetscOptionsGetenv(MPI_Comm comm, const char name[], char env[], 
   } else {
     PetscCall(PetscOptionsHasName(NULL, NULL, work, flag));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*
@@ -93,7 +93,7 @@ static PetscErrorCode PetscWorldIsSingleHost(PetscBool *onehost)
   PetscCall(MPIU_Allreduce(&localmatch, &allmatch, 1, MPI_INT, MPI_LAND, PETSC_COMM_WORLD));
 
   *onehost = (PetscBool)allmatch;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PetscSetDisplay(void)
@@ -105,7 +105,7 @@ PetscErrorCode PetscSetDisplay(void)
 
   PetscFunctionBegin;
   PetscCall(PetscOptionsGetString(NULL, NULL, "-display", PetscDisplay, sizeof(PetscDisplay), &flag));
-  if (flag) PetscFunctionReturn(0);
+  if (flag) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCallMPI(MPI_Comm_size(PETSC_COMM_WORLD, &size));
   PetscCallMPI(MPI_Comm_rank(PETSC_COMM_WORLD, &rank));
@@ -136,21 +136,21 @@ PetscErrorCode PetscSetDisplay(void)
   PetscCall(PetscMemcpy(PetscDisplay, display, sizeof(PetscDisplay)));
 
   PetscDisplay[sizeof(PetscDisplay) - 1] = 0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-     PetscGetDisplay - Gets the X windows display variable for all processors.
+  PetscGetDisplay - Gets the X windows display variable for all processors.
 
-  Input Parameters:
-.   n - length of string display
+  Input Parameter:
+. n - length of string display
 
-  Output Parameters:
-.   display - the display string
+  Output Parameter:
+. display - the display string
 
   Options Database Keys:
-+  -display <display> - sets the display to use
--  -x_virtual - forces use of a X virtual display Xvfb that will not display anything but -draw_save will still work. Xvfb is automatically
++ -display <display> - sets the display to use
+- -x_virtual         - forces use of a X virtual display Xvfb that will not display anything but -draw_save will still work. Xvfb is automatically
                 started up in PetscSetDisplay() with this option
 
   Level: advanced
@@ -161,5 +161,5 @@ PetscErrorCode PetscGetDisplay(char display[], size_t n)
 {
   PetscFunctionBegin;
   PetscCall(PetscStrncpy(display, PetscDisplay, n));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

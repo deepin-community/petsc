@@ -26,7 +26,7 @@ static PetscErrorCode KSPPreSolve_TAOEW_Private(KSP ksp, Vec b, Vec x, Tao tao)
   SNES snes_ewdummy = tao->snes_ewdummy;
 
   PetscFunctionBegin;
-  if (!snes_ewdummy) PetscFunctionReturn(0);
+  if (!snes_ewdummy) PetscFunctionReturn(PETSC_SUCCESS);
   /* populate snes_ewdummy struct values used in KSPPreSolve_SNESEW */
   snes_ewdummy->vec_func = b;
   snes_ewdummy->rtol     = tao->gttol;
@@ -34,7 +34,7 @@ static PetscErrorCode KSPPreSolve_TAOEW_Private(KSP ksp, Vec b, Vec x, Tao tao)
   PetscCall(VecNorm(b, NORM_2, &snes_ewdummy->norm));
   PetscCall(KSPPreSolve_SNESEW(ksp, b, x, snes_ewdummy));
   snes_ewdummy->vec_func = NULL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPPostSolve_TAOEW_Private(KSP ksp, Vec b, Vec x, Tao tao)
@@ -42,9 +42,9 @@ static PetscErrorCode KSPPostSolve_TAOEW_Private(KSP ksp, Vec b, Vec x, Tao tao)
   SNES snes_ewdummy = tao->snes_ewdummy;
 
   PetscFunctionBegin;
-  if (!snes_ewdummy) PetscFunctionReturn(0);
+  if (!snes_ewdummy) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(KSPPostSolve_SNESEW(ksp, b, x, snes_ewdummy));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode TaoSetUpEW_Private(Tao tao)
@@ -53,7 +53,7 @@ static PetscErrorCode TaoSetUpEW_Private(Tao tao)
   const char *ewprefix;
 
   PetscFunctionBegin;
-  if (!tao->ksp) PetscFunctionReturn(0);
+  if (!tao->ksp) PetscFunctionReturn(PETSC_SUCCESS);
   if (tao->ksp_ewconv) {
     if (!tao->snes_ewdummy) PetscCall(SNESCreate(PetscObjectComm((PetscObject)tao), &tao->snes_ewdummy));
     tao->snes_ewdummy->ksp_ewconv = PETSC_TRUE;
@@ -62,9 +62,9 @@ static PetscErrorCode TaoSetUpEW_Private(Tao tao)
 
     PetscCall(KSPGetOptionsPrefix(tao->ksp, &ewprefix));
     kctx = (SNESKSPEW *)tao->snes_ewdummy->kspconvctx;
-    PetscCall(SNESEWSetFromOptions_Private(kctx, PetscObjectComm((PetscObject)tao), ewprefix));
+    PetscCall(SNESEWSetFromOptions_Private(kctx, PETSC_FALSE, PetscObjectComm((PetscObject)tao), ewprefix));
   } else PetscCall(SNESDestroy(&tao->snes_ewdummy));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -76,34 +76,21 @@ static PetscErrorCode TaoSetUpEW_Private(Tao tao)
 . comm - MPI communicator
 
   Output Parameter:
-. newtao - the new Tao context
+. newtao - the new `Tao` context
 
-  Available methods include:
-+    `TAONLS` - nls Newton's method with line search for unconstrained minimization
-.    `TAONTR` - ntr Newton's method with trust region for unconstrained minimization
-.    `TAONTL` - ntl Newton's method with trust region, line search for unconstrained minimization
-.    `TAOLMVM` - lmvm Limited memory variable metric method for unconstrained minimization
-.    `TAOCG` - cg Nonlinear conjugate gradient method for unconstrained minimization
-.    `TAONM` - nm Nelder-Mead algorithm for derivate-free unconstrained minimization
-.    `TAOTRON` - tron Newton Trust Region method for bound constrained minimization
-.    `TAOGPCG` - gpcg Newton Trust Region method for quadratic bound constrained minimization
-.    `TAOBLMVM` - blmvm Limited memory variable metric method for bound constrained minimization
-.    `TAOLCL` - lcl Linearly constrained Lagrangian method for pde-constrained minimization
--    `TAOPOUNDERS` - pounders Model-based algorithm for nonlinear least squares
+  Options Database Key:
+. -tao_type - select which method Tao should use
 
-   Options Database Keys:
-.   -tao_type - select which method Tao should use
+  Level: beginner
 
-   Level: beginner
-
-.seealso: `Tao`, `TaoSolve()`, `TaoDestroy()`, `TAOSetFromOptions()`, `TAOSetType()`
+.seealso: [](ch_tao), `Tao`, `TaoSolve()`, `TaoDestroy()`, `TAOSetFromOptions()`, `TAOSetType()`
 @*/
 PetscErrorCode TaoCreate(MPI_Comm comm, Tao *newtao)
 {
   Tao tao;
 
   PetscFunctionBegin;
-  PetscValidPointer(newtao, 2);
+  PetscAssertPointer(newtao, 2);
   PetscCall(TaoInitializePackage());
   PetscCall(TaoLineSearchInitializePackage());
   PetscCall(PetscHeaderCreate(tao, TAO_CLASSID, "Tao", "Optimization solver", "Tao", comm, TaoDestroy, TaoView));
@@ -133,7 +120,7 @@ PetscErrorCode TaoCreate(MPI_Comm comm, Tao *newtao)
 
   PetscCall(TaoResetStatistics(tao));
   *newtao = tao;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -141,18 +128,18 @@ PetscErrorCode TaoCreate(MPI_Comm comm, Tao *newtao)
 
   Collective
 
-  Input Parameters:
-. tao - the Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
   Level: beginner
 
   Notes:
-  The user must set up the Tao with calls to `TaoSetSolution()`, `TaoSetObjective()`, `TaoSetGradient()`, and (if using 2nd order method) `TaoSetHessian()`.
+  The user must set up the `Tao` object  with calls to `TaoSetSolution()`, `TaoSetObjective()`, `TaoSetGradient()`, and (if using 2nd order method) `TaoSetHessian()`.
 
   You should call `TaoGetConvergedReason()` or run with `-tao_converged_reason` to determine if the optimization algorithm actually succeeded or
   why it failed.
 
-.seealso: `Tao`, `TaoCreate()`, `TaoSetObjective()`, `TaoSetGradient()`, `TaoSetHessian()`, `TaoGetConvergedReason()`, `TaoSetUp()`
+.seealso: [](ch_tao), `Tao`, `TaoCreate()`, `TaoSetObjective()`, `TaoSetGradient()`, `TaoSetHessian()`, `TaoGetConvergedReason()`, `TaoSetUp()`
  @*/
 PetscErrorCode TaoSolve(Tao tao)
 {
@@ -192,7 +179,7 @@ PetscErrorCode TaoSolve(Tao tao)
     PetscCall(PetscViewerASCIISubtractTab(viewer, ((PetscObject)tao)->tablevel));
   }
   PetscCall(TaoViewFromOptions(tao, NULL, "-tao_view"));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -201,51 +188,51 @@ PetscErrorCode TaoSolve(Tao tao)
 
   Collective
 
-  Input Parameters:
-. tao - the Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
   Level: advanced
 
-  Notes:
+  Note:
   The user will not need to explicitly call `TaoSetUp()`, as it will
   automatically be called in `TaoSolve()`.  However, if the user
   desires to call it explicitly, it should come after `TaoCreate()`
   and any TaoSetSomething() routines, but before `TaoSolve()`.
 
-.seealso: `Tao`, `TaoCreate()`, `TaoSolve()`
+.seealso: [](ch_tao), `Tao`, `TaoCreate()`, `TaoSolve()`
 @*/
 PetscErrorCode TaoSetUp(Tao tao)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  if (tao->setupcalled) PetscFunctionReturn(0);
+  if (tao->setupcalled) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(TaoSetUpEW_Private(tao));
   PetscCheck(tao->solution, PetscObjectComm((PetscObject)tao), PETSC_ERR_ARG_WRONGSTATE, "Must call TaoSetSolution");
   PetscTryTypeMethod(tao, setup);
   tao->setupcalled = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  TaoDestroy - Destroys the Tao context that was created with `TaoCreate()`
+  TaoDestroy - Destroys the `Tao` context that was created with `TaoCreate()`
 
   Collective
 
   Input Parameter:
-. tao - the Tao context
+. tao - the `Tao` context
 
   Level: beginner
 
-.seealso: `Tao`, `TaoCreate()`, `TaoSolve()`
+.seealso: [](ch_tao), `Tao`, `TaoCreate()`, `TaoSolve()`
 @*/
 PetscErrorCode TaoDestroy(Tao *tao)
 {
   PetscFunctionBegin;
-  if (!*tao) PetscFunctionReturn(0);
+  if (!*tao) PetscFunctionReturn(PETSC_SUCCESS);
   PetscValidHeaderSpecific(*tao, TAO_CLASSID, 1);
   if (--((PetscObject)*tao)->refct > 0) {
     *tao = NULL;
-    PetscFunctionReturn(0);
+    PetscFunctionReturn(PETSC_SUCCESS);
   }
 
   if ((*tao)->ops->destroy) PetscCall((*((*tao))->ops->destroy)(*tao));
@@ -301,29 +288,24 @@ PetscErrorCode TaoDestroy(Tao *tao)
     PetscCall(PetscFree((*tao)->res_weights_w));
   }
   PetscCall(PetscHeaderDestroy(tao));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoKSPSetUseEW - Sets `SNES` use Eisenstat-Walker method for
-   computing relative tolerance for linear solvers.
+  TaoKSPSetUseEW - Sets `SNES` to use Eisenstat-Walker method {cite}`ew96`for computing relative tolerance for linear solvers.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  tao - Tao context
--  flag - `PETSC_TRUE` or `PETSC_FALSE`
+  Input Parameters:
++ tao  - Tao context
+- flag - `PETSC_TRUE` or `PETSC_FALSE`
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-   See `SNESKSPSetUseEW()` for customization details.
+  Note:
+  See `SNESKSPSetUseEW()` for customization details.
 
-   Reference:
-   S. C. Eisenstat and H. F. Walker, "Choosing the forcing terms in an
-   inexact Newton method", SISC 17 (1), pp.16-32, 1996.
-
-.seealso: `Tao`, `SNESKSPSetUseEW()`
+.seealso: [](ch_tao), `Tao`, `SNESKSPSetUseEW()`
 @*/
 PetscErrorCode TaoKSPSetUseEW(Tao tao, PetscBool flag)
 {
@@ -331,59 +313,58 @@ PetscErrorCode TaoKSPSetUseEW(Tao tao, PetscBool flag)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscValidLogicalCollectiveBool(tao, flag, 2);
   tao->ksp_ewconv = flag;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  TaoSetFromOptions - Sets various Tao parameters from user
-  options.
+  TaoSetFromOptions - Sets various Tao parameters from the options database
 
   Collective
 
   Input Parameter:
-. tao - the Tao solver context
+. tao - the `Tao` solver context
 
-  options Database Keys:
-+ -tao_type <type> - The algorithm that Tao uses (lmvm, nls, etc.)
-. -tao_gatol <gatol> - absolute error tolerance for ||gradient||
-. -tao_grtol <grtol> - relative error tolerance for ||gradient||
-. -tao_gttol <gttol> - reduction of ||gradient|| relative to initial gradient
-. -tao_max_it <max> - sets maximum number of iterations
-. -tao_max_funcs <max> - sets maximum number of function evaluations
-. -tao_fmin <fmin> - stop if function value reaches fmin
-. -tao_steptol <tol> - stop if trust region radius less than <tol>
-. -tao_trust0 <t> - initial trust region radius
-. -tao_monitor - prints function value and residual at each iteration
-. -tao_smonitor - same as tao_monitor, but truncates very small values
-. -tao_cmonitor - prints function value, residual, and constraint norm at each iteration
-. -tao_view_solution - prints solution vector at each iteration
-. -tao_view_ls_residual - prints least-squares residual vector at each iteration
+  Options Database Keys:
++ -tao_type <type>        - The algorithm that Tao uses (lmvm, nls, etc.)
+. -tao_gatol <gatol>      - absolute error tolerance for ||gradient||
+. -tao_grtol <grtol>      - relative error tolerance for ||gradient||
+. -tao_gttol <gttol>      - reduction of ||gradient|| relative to initial gradient
+. -tao_max_it <max>       - sets maximum number of iterations
+. -tao_max_funcs <max>    - sets maximum number of function evaluations
+. -tao_fmin <fmin>        - stop if function value reaches fmin
+. -tao_steptol <tol>      - stop if trust region radius less than <tol>
+. -tao_trust0 <t>         - initial trust region radius
+. -tao_monitor            - prints function value and residual norm at each iteration
+. -tao_smonitor           - same as tao_monitor, but truncates very small values
+. -tao_cmonitor           - prints function value, residual, and constraint norm at each iteration
+. -tao_view_solution      - prints solution vector at each iteration
+. -tao_view_ls_residual   - prints least-squares residual vector at each iteration
 . -tao_view_stepdirection - prints step direction vector at each iteration
-. -tao_view_gradient - prints gradient vector at each iteration
-. -tao_draw_solution - graphically view solution vector at each iteration
-. -tao_draw_step - graphically view step vector at each iteration
-. -tao_draw_gradient - graphically view gradient at each iteration
-. -tao_fd_gradient - use gradient computed with finite differences
-. -tao_fd_hessian - use hessian computed with finite differences
-. -tao_mf_hessian - use matrix-free hessian computed with finite differences
-. -tao_cancelmonitors - cancels all monitors (except those set with command line)
-. -tao_view - prints information about the Tao after solving
-- -tao_converged_reason - prints the reason Tao stopped iterating
+. -tao_view_gradient      - prints gradient vector at each iteration
+. -tao_draw_solution      - graphically view solution vector at each iteration
+. -tao_draw_step          - graphically view step vector at each iteration
+. -tao_draw_gradient      - graphically view gradient at each iteration
+. -tao_fd_gradient        - use gradient computed with finite differences
+. -tao_fd_hessian         - use hessian computed with finite differences
+. -tao_mf_hessian         - use matrix-free hessian computed with finite differences
+. -tao_cancelmonitors     - cancels all monitors (except those set with command line)
+. -tao_view               - prints information about the Tao after solving
+- -tao_converged_reason   - prints the reason Tao stopped iterating
 
   Level: beginner
 
   Note:
-  To see all options, run your program with the -help option or consult the
- user's manual. Should be called after `TaoCreate()` but before `TaoSolve()`
+  To see all options, run your program with the `-help` option or consult the
+  user's manual. Should be called after `TaoCreate()` but before `TaoSolve()`
 
-.seealso: `Tao`, `TaoCreate()`, `TaoSolve()`
+.seealso: [](ch_tao), `Tao`, `TaoCreate()`, `TaoSolve()`
 @*/
 PetscErrorCode TaoSetFromOptions(Tao tao)
 {
   TaoType     default_type = TAOLMVM;
   char        type[256], monfilename[PETSC_MAX_PATH_LEN];
   PetscViewer monviewer;
-  PetscBool   flg;
+  PetscBool   flg, found;
   MPI_Comm    comm;
 
   PetscFunctionBegin;
@@ -525,9 +506,8 @@ PetscErrorCode TaoSetFromOptions(Tao tao)
     PetscCall(TaoSetHessian(tao, H, H, TaoDefaultComputeHessianMFFD, NULL));
     PetscCall(MatDestroy(&H));
   }
-  flg = PETSC_FALSE;
-  PetscCall(PetscOptionsBool("-tao_recycle_history", "enable recycling/re-using information from the previous TaoSolve() call for some algorithms", "TaoSetRecycleHistory", flg, &flg, NULL));
-  if (flg) PetscCall(TaoSetRecycleHistory(tao, PETSC_TRUE));
+  PetscCall(PetscOptionsBool("-tao_recycle_history", "enable recycling/re-using information from the previous TaoSolve() call for some algorithms", "TaoSetRecycleHistory", flg, &flg, &found));
+  if (found) PetscCall(TaoSetRecycleHistory(tao, flg));
   PetscCall(PetscOptionsEnum("-tao_subset_type", "subset type", "", TaoSubSetTypes, (PetscEnum)tao->subset_type, (PetscEnum *)&tao->subset_type, NULL));
 
   if (tao->ksp) {
@@ -542,38 +522,38 @@ PetscErrorCode TaoSetFromOptions(Tao tao)
   PetscOptionsEnd();
 
   if (tao->linesearch) PetscCall(TaoLineSearchSetFromOptions(tao->linesearch));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoViewFromOptions - View a Tao options from the options database
+  TaoViewFromOptions - View a `Tao` object based on values in the options database
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  A - the  Tao context
-.  obj - Optional object
--  name - command line option
+  Input Parameters:
++ A    - the  `Tao` context
+. obj  - Optional object that provides the prefix for the options database
+- name - command line option
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `Tao`, `TaoView`, `PetscObjectViewFromOptions()`, `TaoCreate()`
+.seealso: [](ch_tao), `Tao`, `TaoView`, `PetscObjectViewFromOptions()`, `TaoCreate()`
 @*/
 PetscErrorCode TaoViewFromOptions(Tao A, PetscObject obj, const char name[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(A, TAO_CLASSID, 1);
   PetscCall(PetscObjectViewFromOptions((PetscObject)A, obj, name));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  TaoView - Prints information about the Tao object
+  TaoView - Prints information about the `Tao` object
 
   Collective
 
-  InputParameters:
-+ tao - the Tao context
+  Input Parameters:
++ tao    - the `Tao` context
 - viewer - visualization context
 
   Options Database Key:
@@ -585,11 +565,11 @@ PetscErrorCode TaoViewFromOptions(Tao A, PetscObject obj, const char name[])
   The available visualization contexts include
 +     `PETSC_VIEWER_STDOUT_SELF` - standard output (default)
 -     `PETSC_VIEWER_STDOUT_WORLD` - synchronized standard
-         output where only the first processor opens
-         the file.  All other processors send their
-         data to the first processor to print.
+  output where only the first processor opens
+  the file.  All other processors send their
+  data to the first processor to print.
 
-.seealso: `PetscViewerASCIIOpen()`
+.seealso: [](ch_tao), `Tao`, `PetscViewerASCIIOpen()`
 @*/
 PetscErrorCode TaoView(Tao tao, PetscViewer viewer)
 {
@@ -723,7 +703,7 @@ PetscErrorCode TaoView(Tao tao, PetscViewer viewer)
     PetscCall(TaoGetType(tao, &type));
     PetscCall(PetscViewerStringSPrintf(viewer, " %-3.3s", type));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -734,10 +714,10 @@ PetscErrorCode TaoView(Tao tao, PetscViewer viewer)
   Logically Collective
 
   Input Parameters:
-+ tao - the Tao context
++ tao     - the `Tao` context
 - recycle - boolean flag
 
-  Options Database Keys:
+  Options Database Key:
 . -tao_recycle_history <true,false> - reuse the history
 
   Level: intermediate
@@ -755,7 +735,7 @@ PetscErrorCode TaoView(Tao tao, PetscViewer viewer)
 
   For any other algorithm, this setting has no effect.
 
-.seealso: `TaoGetRecycleHistory()`, `TAOBNCG`, `TAOBQNLS`, `TAOBQNKLS`, `TAOBQNKTR`, `TAOBQNKTL`
+.seealso: [](ch_tao), `Tao`, `TaoGetRecycleHistory()`, `TAOBNCG`, `TAOBQNLS`, `TAOBQNKLS`, `TAOBQNKTR`, `TAOBQNKTL`
 @*/
 PetscErrorCode TaoSetRecycleHistory(Tao tao, PetscBool recycle)
 {
@@ -763,7 +743,7 @@ PetscErrorCode TaoSetRecycleHistory(Tao tao, PetscBool recycle)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscValidLogicalCollectiveBool(tao, recycle, 2);
   tao->recycle = recycle;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
@@ -772,32 +752,32 @@ PetscErrorCode TaoSetRecycleHistory(Tao tao, PetscBool recycle)
 
   Logically Collective
 
-  Input Parameters:
-. tao - the Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-  Output Parameters:
+  Output Parameter:
 . recycle - boolean flag
 
   Level: intermediate
 
-.seealso: `TaoSetRecycleHistory()`, `TAOBNCG`, `TAOBQNLS`, `TAOBQNKLS`, `TAOBQNKTR`, `TAOBQNKTL`
+.seealso: [](ch_tao), `Tao`, `TaoSetRecycleHistory()`, `TAOBNCG`, `TAOBQNLS`, `TAOBQNKLS`, `TAOBQNKTR`, `TAOBQNKTL`
 @*/
 PetscErrorCode TaoGetRecycleHistory(Tao tao, PetscBool *recycle)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidBoolPointer(recycle, 2);
+  PetscAssertPointer(recycle, 2);
   *recycle = tao->recycle;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  TaoSetTolerances - Sets parameters used in Tao convergence tests
+  TaoSetTolerances - Sets parameters used in `TaoSolve()` convergence tests
 
   Logically Collective
 
   Input Parameters:
-+ tao - the Tao context
++ tao   - the `Tao` context
 . gatol - stop if norm of gradient is less than this
 . grtol - stop if relative norm of gradient is less than this
 - gttol - stop if norm of gradient is reduced by this factor
@@ -807,7 +787,7 @@ PetscErrorCode TaoGetRecycleHistory(Tao tao, PetscBool *recycle)
 . -tao_grtol <grtol> - Sets grtol
 - -tao_gttol <gttol> - Sets gttol
 
-  Stopping Criteria:
+  Stopping Criteria\:
 .vb
   ||g(X)||                            <= gatol
   ||g(X)|| / |f(X)|                   <= grtol
@@ -819,7 +799,7 @@ PetscErrorCode TaoGetRecycleHistory(Tao tao, PetscBool *recycle)
   Note:
   Use `PETSC_DEFAULT` to leave one or more tolerances unchanged.
 
-.seealso: `TaoGetTolerances()`
+.seealso: [](ch_tao), `Tao`, `TaoConvergedReason`, `TaoGetTolerances()`
 @*/
 PetscErrorCode TaoSetTolerances(Tao tao, PetscReal gatol, PetscReal grtol, PetscReal gttol)
 {
@@ -829,7 +809,7 @@ PetscErrorCode TaoSetTolerances(Tao tao, PetscReal gatol, PetscReal grtol, Petsc
   PetscValidLogicalCollectiveReal(tao, grtol, 3);
   PetscValidLogicalCollectiveReal(tao, gttol, 4);
 
-  if (gatol != PETSC_DEFAULT) {
+  if (gatol != (PetscReal)PETSC_DEFAULT) {
     if (gatol < 0) {
       PetscCall(PetscInfo(tao, "Tried to set negative gatol -- ignored.\n"));
     } else {
@@ -838,7 +818,7 @@ PetscErrorCode TaoSetTolerances(Tao tao, PetscReal gatol, PetscReal grtol, Petsc
     }
   }
 
-  if (grtol != PETSC_DEFAULT) {
+  if (grtol != (PetscReal)PETSC_DEFAULT) {
     if (grtol < 0) {
       PetscCall(PetscInfo(tao, "Tried to set negative grtol -- ignored.\n"));
     } else {
@@ -847,7 +827,7 @@ PetscErrorCode TaoSetTolerances(Tao tao, PetscReal gatol, PetscReal grtol, Petsc
     }
   }
 
-  if (gttol != PETSC_DEFAULT) {
+  if (gttol != (PetscReal)PETSC_DEFAULT) {
     if (gttol < 0) {
       PetscCall(PetscInfo(tao, "Tried to set negative gttol -- ignored.\n"));
     } else {
@@ -855,16 +835,16 @@ PetscErrorCode TaoSetTolerances(Tao tao, PetscReal gatol, PetscReal grtol, Petsc
       tao->gttol_changed = PETSC_TRUE;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  TaoSetConstraintTolerances - Sets constraint tolerance parameters used in Tao convergence tests
+  TaoSetConstraintTolerances - Sets constraint tolerance parameters used in `TaoSolve()` convergence tests
 
   Logically Collective
 
   Input Parameters:
-+ tao - the Tao context
++ tao   - the `Tao` context
 . catol - absolute constraint tolerance, constraint norm must be less than `catol` for used for gatol convergence criteria
 - crtol - relative constraint tolerance, constraint norm must be less than `crtol` for used for gatol, gttol convergence criteria
 
@@ -877,7 +857,7 @@ PetscErrorCode TaoSetTolerances(Tao tao, PetscReal gatol, PetscReal grtol, Petsc
   Notes:
   Use `PETSC_DEFAULT` to leave any tolerance unchanged.
 
-.seealso: `TaoGetTolerances()`, `TaoGetConstraintTolerances()`, `TaoSetTolerances()`
+.seealso: [](ch_tao), `Tao`, `TaoConvergedReason`, `TaoGetTolerances()`, `TaoGetConstraintTolerances()`, `TaoSetTolerances()`
 @*/
 PetscErrorCode TaoSetConstraintTolerances(Tao tao, PetscReal catol, PetscReal crtol)
 {
@@ -886,7 +866,7 @@ PetscErrorCode TaoSetConstraintTolerances(Tao tao, PetscReal catol, PetscReal cr
   PetscValidLogicalCollectiveReal(tao, catol, 2);
   PetscValidLogicalCollectiveReal(tao, crtol, 3);
 
-  if (catol != PETSC_DEFAULT) {
+  if (catol != (PetscReal)PETSC_DEFAULT) {
     if (catol < 0) {
       PetscCall(PetscInfo(tao, "Tried to set negative catol -- ignored.\n"));
     } else {
@@ -895,7 +875,7 @@ PetscErrorCode TaoSetConstraintTolerances(Tao tao, PetscReal catol, PetscReal cr
     }
   }
 
-  if (crtol != PETSC_DEFAULT) {
+  if (crtol != (PetscReal)PETSC_DEFAULT) {
     if (crtol < 0) {
       PetscCall(PetscInfo(tao, "Tried to set negative crtol -- ignored.\n"));
     } else {
@@ -903,16 +883,16 @@ PetscErrorCode TaoSetConstraintTolerances(Tao tao, PetscReal catol, PetscReal cr
       tao->crtol_changed = PETSC_TRUE;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  TaoGetConstraintTolerances - Gets constraint tolerance parameters used in Tao  convergence tests
+  TaoGetConstraintTolerances - Gets constraint tolerance parameters used in `TaoSolve()` convergence tests
 
   Not Collective
 
   Input Parameter:
-. tao - the Tao context
+. tao - the `Tao` context
 
   Output Parameters:
 + catol - absolute constraint tolerance, constraint norm must be less than `catol` for used for gatol convergence criteria
@@ -920,8 +900,7 @@ PetscErrorCode TaoSetConstraintTolerances(Tao tao, PetscReal catol, PetscReal cr
 
   Level: intermediate
 
-.seealso: `TaoGetTolerances()`, `TaoSetTolerances()`, `TaoSetConstraintTolerances()`
-
+.seealso: [](ch_tao), `Tao`, `TaoConvergedReasons`,`TaoGetTolerances()`, `TaoSetTolerances()`, `TaoSetConstraintTolerances()`
 @*/
 PetscErrorCode TaoGetConstraintTolerances(Tao tao, PetscReal *catol, PetscReal *crtol)
 {
@@ -929,26 +908,26 @@ PetscErrorCode TaoGetConstraintTolerances(Tao tao, PetscReal *catol, PetscReal *
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   if (catol) *catol = tao->catol;
   if (crtol) *crtol = tao->crtol;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoSetFunctionLowerBound - Sets a bound on the solution objective value.
-   When an approximate solution with an objective value below this number
-   has been found, the solver will terminate.
+  TaoSetFunctionLowerBound - Sets a bound on the solution objective value.
+  When an approximate solution with an objective value below this number
+  has been found, the solver will terminate.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  tao - the Tao solver context
--  fmin - the tolerance
+  Input Parameters:
++ tao  - the Tao solver context
+- fmin - the tolerance
 
-   Options Database Keys:
-.    -tao_fmin <fmin> - sets the minimum function value
+  Options Database Key:
+. -tao_fmin <fmin> - sets the minimum function value
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `TaoSetTolerances()`
+.seealso: [](ch_tao), `Tao`, `TaoConvergedReason`, `TaoSetTolerances()`
 @*/
 PetscErrorCode TaoSetFunctionLowerBound(Tao tao, PetscReal fmin)
 {
@@ -957,53 +936,51 @@ PetscErrorCode TaoSetFunctionLowerBound(Tao tao, PetscReal fmin)
   PetscValidLogicalCollectiveReal(tao, fmin, 2);
   tao->fmin         = fmin;
   tao->fmin_changed = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetFunctionLowerBound - Gets the bound on the solution objective value.
-   When an approximate solution with an objective value below this number
-   has been found, the solver will terminate.
+  TaoGetFunctionLowerBound - Gets the bound on the solution objective value.
+  When an approximate solution with an objective value below this number
+  has been found, the solver will terminate.
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-.  tao - the Tao solver context
+  Input Parameter:
+. tao - the `Tao` solver context
 
-   OutputParameters:
-.  fmin - the minimum function value
+  Output Parameter:
+. fmin - the minimum function value
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `TaoSetFunctionLowerBound()`
+.seealso: [](ch_tao), `Tao`, `TaoConvergedReason`, `TaoSetFunctionLowerBound()`
 @*/
 PetscErrorCode TaoGetFunctionLowerBound(Tao tao, PetscReal *fmin)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidRealPointer(fmin, 2);
+  PetscAssertPointer(fmin, 2);
   *fmin = tao->fmin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoSetMaximumFunctionEvaluations - Sets a maximum number of
-   function evaluations.
+  TaoSetMaximumFunctionEvaluations - Sets a maximum number of function evaluations allowed for a `TaoSolve()`.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  tao - the Tao solver context
--  nfcn - the maximum number of function evaluations (>=0)
+  Input Parameters:
++ tao  - the `Tao` solver context
+- nfcn - the maximum number of function evaluations (>=0)
 
-   Options Database Keys:
-.    -tao_max_funcs <nfcn> - sets the maximum number of function evaluations
+  Options Database Key:
+. -tao_max_funcs <nfcn> - sets the maximum number of function evaluations
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `TaoSetTolerances()`, `TaoSetMaximumIterations()`
+.seealso: [](ch_tao), `Tao`, `TaoSetTolerances()`, `TaoSetMaximumIterations()`
 @*/
-
 PetscErrorCode TaoSetMaximumFunctionEvaluations(Tao tao, PetscInt nfcn)
 {
   PetscFunctionBegin;
@@ -1015,76 +992,72 @@ PetscErrorCode TaoSetMaximumFunctionEvaluations(Tao tao, PetscInt nfcn)
     tao->max_funcs = -1;
   }
   tao->max_funcs_changed = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetMaximumFunctionEvaluations - Gets a maximum number of
-   function evaluations.
+  TaoGetMaximumFunctionEvaluations - Gets a maximum number of function evaluations allowed for a `TaoSolve()`
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-.  tao - the Tao solver context
+  Input Parameter:
+. tao - the `Tao` solver context
 
-   Output Parameters:
-.  nfcn - the maximum number of function evaluations
+  Output Parameter:
+. nfcn - the maximum number of function evaluations
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `TaoSetMaximumFunctionEvaluations()`, `TaoGetMaximumIterations()`
+.seealso: [](ch_tao), `Tao`, `TaoSetMaximumFunctionEvaluations()`, `TaoGetMaximumIterations()`
 @*/
-
 PetscErrorCode TaoGetMaximumFunctionEvaluations(Tao tao, PetscInt *nfcn)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidIntPointer(nfcn, 2);
+  PetscAssertPointer(nfcn, 2);
   *nfcn = tao->max_funcs;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetCurrentFunctionEvaluations - Get current number of
-   function evaluations.
+  TaoGetCurrentFunctionEvaluations - Get current number of function evaluations used by a `Tao` object
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-.  tao - the Tao solver context
+  Input Parameter:
+. tao - the `Tao` solver context
 
-   Output Parameters:
-.  nfuncs - the current number of function evaluations (maximum between gradient and function evaluations)
+  Output Parameter:
+. nfuncs - the current number of function evaluations (maximum between gradient and function evaluations)
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `TaoSetMaximumFunctionEvaluations()`, `TaoGetMaximumFunctionEvaluations()`, `TaoGetMaximumIterations()`
+.seealso: [](ch_tao), `Tao`, `TaoSetMaximumFunctionEvaluations()`, `TaoGetMaximumFunctionEvaluations()`, `TaoGetMaximumIterations()`
 @*/
-
 PetscErrorCode TaoGetCurrentFunctionEvaluations(Tao tao, PetscInt *nfuncs)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidIntPointer(nfuncs, 2);
+  PetscAssertPointer(nfuncs, 2);
   *nfuncs = PetscMax(tao->nfuncs, tao->nfuncgrads);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoSetMaximumIterations - Sets a maximum number of iterates.
+  TaoSetMaximumIterations - Sets a maximum number of iterates to be used in `TaoSolve()`
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  tao - the Tao solver context
--  maxits - the maximum number of iterates (>=0)
+  Input Parameters:
++ tao    - the `Tao` solver context
+- maxits - the maximum number of iterates (>=0)
 
-   Options Database Keys:
-.    -tao_max_it <its> - sets the maximum number of iterations
+  Options Database Key:
+. -tao_max_it <its> - sets the maximum number of iterations
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `TaoSetTolerances()`, `TaoSetMaximumFunctionEvaluations()`
+.seealso: [](ch_tao), `Tao`, `TaoSetTolerances()`, `TaoSetMaximumFunctionEvaluations()`
 @*/
 PetscErrorCode TaoSetMaximumIterations(Tao tao, PetscInt maxits)
 {
@@ -1093,48 +1066,48 @@ PetscErrorCode TaoSetMaximumIterations(Tao tao, PetscInt maxits)
   PetscValidLogicalCollectiveInt(tao, maxits, 2);
   tao->max_it         = PetscMax(0, maxits);
   tao->max_it_changed = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetMaximumIterations - Gets a maximum number of iterates that will be used
+  TaoGetMaximumIterations - Gets a maximum number of iterates that will be used
 
-   Not Collective
+  Not Collective
 
-   Input Parameters:
-.  tao - the Tao solver context
+  Input Parameter:
+. tao - the `Tao` solver context
 
-   Output Parameters:
-.  maxits - the maximum number of iterates
+  Output Parameter:
+. maxits - the maximum number of iterates
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `TaoSetMaximumIterations()`, `TaoGetMaximumFunctionEvaluations()`
+.seealso: [](ch_tao), `Tao`, `TaoSetMaximumIterations()`, `TaoGetMaximumFunctionEvaluations()`
 @*/
 PetscErrorCode TaoGetMaximumIterations(Tao tao, PetscInt *maxits)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidIntPointer(maxits, 2);
+  PetscAssertPointer(maxits, 2);
   *maxits = tao->max_it;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoSetInitialTrustRegionRadius - Sets the initial trust region radius.
+  TaoSetInitialTrustRegionRadius - Sets the initial trust region radius.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  tao - a Tao optimization solver
--  radius - the trust region radius
+  Input Parameters:
++ tao    - a `Tao` optimization solver
+- radius - the trust region radius
 
-   Level: intermediate
+  Options Database Key:
+. -tao_trust0 <t0> - sets initial trust region radius
 
-   Options Database Key:
-.  -tao_trust0 <t0> - sets initial trust region radius
+  Level: intermediate
 
-.seealso: `TaoGetTrustRegionRadius()`, `TaoSetTrustRegionTolerance()`, `TAONTR`
+.seealso: [](ch_tao), `Tao`, `TaoGetTrustRegionRadius()`, `TaoSetTrustRegionTolerance()`, `TAONTR`
 @*/
 PetscErrorCode TaoSetInitialTrustRegionRadius(Tao tao, PetscReal radius)
 {
@@ -1143,64 +1116,64 @@ PetscErrorCode TaoSetInitialTrustRegionRadius(Tao tao, PetscReal radius)
   PetscValidLogicalCollectiveReal(tao, radius, 2);
   tao->trust0         = PetscMax(0.0, radius);
   tao->trust0_changed = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetInitialTrustRegionRadius - Gets the initial trust region radius.
+  TaoGetInitialTrustRegionRadius - Gets the initial trust region radius.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  tao - a Tao optimization solver
+  Input Parameter:
+. tao - a `Tao` optimization solver
 
-   Output Parameter:
-.  radius - the trust region radius
+  Output Parameter:
+. radius - the trust region radius
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `TaoSetInitialTrustRegionRadius()`, `TaoGetCurrentTrustRegionRadius()`, `TAONTR`
+.seealso: [](ch_tao), `Tao`, `TaoSetInitialTrustRegionRadius()`, `TaoGetCurrentTrustRegionRadius()`, `TAONTR`
 @*/
 PetscErrorCode TaoGetInitialTrustRegionRadius(Tao tao, PetscReal *radius)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidRealPointer(radius, 2);
+  PetscAssertPointer(radius, 2);
   *radius = tao->trust0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetCurrentTrustRegionRadius - Gets the current trust region radius.
+  TaoGetCurrentTrustRegionRadius - Gets the current trust region radius.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  tao - a Tao optimization solver
+  Input Parameter:
+. tao - a `Tao` optimization solver
 
-   Output Parameter:
-.  radius - the trust region radius
+  Output Parameter:
+. radius - the trust region radius
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `TaoSetInitialTrustRegionRadius()`, `TaoGetInitialTrustRegionRadius()`, `TAONTR`
+.seealso: [](ch_tao), `Tao`, `TaoSetInitialTrustRegionRadius()`, `TaoGetInitialTrustRegionRadius()`, `TAONTR`
 @*/
 PetscErrorCode TaoGetCurrentTrustRegionRadius(Tao tao, PetscReal *radius)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidRealPointer(radius, 2);
+  PetscAssertPointer(radius, 2);
   *radius = tao->trust;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  TaoGetTolerances - gets the current values of tolerances
+  TaoGetTolerances - gets the current values of some tolerances used for the convergence testing of `TaoSolve()`
 
   Not Collective
 
   Input Parameter:
-. tao - the Tao context
+. tao - the `Tao` context
 
   Output Parameters:
 + gatol - stop if norm of gradient is less than this
@@ -1210,9 +1183,9 @@ PetscErrorCode TaoGetCurrentTrustRegionRadius(Tao tao, PetscReal *radius)
   Level: intermediate
 
   Note:
-  NULL can be used as an argument if not all tolerances values are needed
+  `NULL` can be used as an argument if not all tolerances values are needed
 
-.seealso: `Tao`, `TaoSetTolerances()`
+.seealso: [](ch_tao), `Tao`, `TaoSetTolerances()`
 @*/
 PetscErrorCode TaoGetTolerances(Tao tao, PetscReal *gatol, PetscReal *grtol, PetscReal *gttol)
 {
@@ -1221,99 +1194,95 @@ PetscErrorCode TaoGetTolerances(Tao tao, PetscReal *gatol, PetscReal *grtol, Pet
   if (gatol) *gatol = tao->gatol;
   if (grtol) *grtol = tao->grtol;
   if (gttol) *gttol = tao->gttol;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   TaoGetKSP - Gets the linear solver used by the optimization solver.
-  Application writers should use `TaoGetKSP()` if they need direct access
-  to the PETSc `KSP` object.
 
   Not Collective
 
-   Input Parameters:
-.  tao - the Tao solver
+  Input Parameter:
+. tao - the `Tao` solver
 
-   Output Parameters:
-.  ksp - the KSP linear solver used in the optimization solver
+  Output Parameter:
+. ksp - the `KSP` linear solver used in the optimization solver
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `Tao`, `KSP`
+.seealso: [](ch_tao), `Tao`, `KSP`
 @*/
 PetscErrorCode TaoGetKSP(Tao tao, KSP *ksp)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidPointer(ksp, 2);
+  PetscAssertPointer(ksp, 2);
   *ksp = tao->ksp;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetLinearSolveIterations - Gets the total number of linear iterations
-   used by the Tao solver
+  TaoGetLinearSolveIterations - Gets the total number of linear iterations
+  used by the `Tao` solver
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  tao - Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-   Output Parameter:
-.  lits - number of linear iterations
+  Output Parameter:
+. lits - number of linear iterations
 
-   Notes:
-   This counter is reset to zero for each successive call to TaoSolve()
+  Level: intermediate
 
-   Level: intermediate
+  Note:
+  This counter is reset to zero for each successive call to `TaoSolve()`
 
-.seealso: `Tao`, `TaoGetKSP()`
+.seealso: [](ch_tao), `Tao`, `TaoGetKSP()`
 @*/
 PetscErrorCode TaoGetLinearSolveIterations(Tao tao, PetscInt *lits)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidIntPointer(lits, 2);
+  PetscAssertPointer(lits, 2);
   *lits = tao->ksp_tot_its;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   TaoGetLineSearch - Gets the line search used by the optimization solver.
-  Application writers should use `TaoGetLineSearch()` if they need direct access
-  to the TaoLineSearch object.
 
   Not Collective
 
-   Input Parameters:
-.  tao - the Tao solver
+  Input Parameter:
+. tao - the `Tao` solver
 
-   Output Parameters:
-.  ls - the line search used in the optimization solver
+  Output Parameter:
+. ls - the line search used in the optimization solver
 
-   Level: intermediate
+  Level: intermediate
 
+.seealso: [](ch_tao), `Tao`, `TaoLineSearch`, `TaoLineSearchType`
 @*/
 PetscErrorCode TaoGetLineSearch(Tao tao, TaoLineSearch *ls)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidPointer(ls, 2);
+  PetscAssertPointer(ls, 2);
   *ls = tao->linesearch;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
   TaoAddLineSearchCounts - Adds the number of function evaluations spent
   in the line search to the running total.
 
-   Input Parameters:
-+  tao - the Tao solver
--  ls - the line search used in the optimization solver
+  Input Parameters:
+. tao - the `Tao` solver
 
-   Level: developer
+  Level: developer
 
-.seealso: `TaoGetLineSearch()`, `TaoLineSearchApply()`
+.seealso: [](ch_tao), `Tao`, `TaoGetLineSearch()`, `TaoLineSearchApply()`
 @*/
 PetscErrorCode TaoAddLineSearchCounts(Tao tao)
 {
@@ -1331,16 +1300,16 @@ PetscErrorCode TaoAddLineSearchCounts(Tao tao)
       tao->nfuncgrads += nfgeval;
     }
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  TaoGetSolution - Returns the vector with the current Tao solution
+  TaoGetSolution - Returns the vector with the current solution from the `Tao` object
 
   Not Collective
 
   Input Parameter:
-. tao - the Tao context
+. tao - the `Tao` context
 
   Output Parameter:
 . X - the current solution
@@ -1350,30 +1319,30 @@ PetscErrorCode TaoAddLineSearchCounts(Tao tao)
   Note:
   The returned vector will be the same object that was passed into `TaoSetSolution()`
 
-.seealso: `Tao`, `TaoSetSolution()`, `TaoSolve()`
+.seealso: [](ch_tao), `Tao`, `TaoSetSolution()`, `TaoSolve()`
 @*/
 PetscErrorCode TaoGetSolution(Tao tao, Vec *X)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidPointer(X, 2);
+  PetscAssertPointer(X, 2);
   *X = tao->solution;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoResetStatistics - Initialize the statistics used by Tao for all of the solvers.
-   These statistics include the iteration number, residual norms, and convergence status.
-   This routine gets called before solving each optimization problem.
+  TaoResetStatistics - Initialize the statistics collected by the `Tao` object.
+  These statistics include the iteration number, residual norms, and convergence status.
+  This routine gets called before solving each optimization problem.
 
-   Collective
+  Collective
 
-   Input Parameters:
-.  solver - the Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-   Level: developer
+  Level: developer
 
-.seealso: `Tao`, `TaoCreate()`, `TaoSolve()`
+.seealso: [](ch_tao), `Tao`, `TaoCreate()`, `TaoSolve()`
 @*/
 PetscErrorCode TaoResetStatistics(Tao tao)
 {
@@ -1394,29 +1363,27 @@ PetscErrorCode TaoResetStatistics(Tao tao)
   tao->step         = 0.0;
   tao->lsflag       = PETSC_FALSE;
   if (tao->hist_reset) tao->hist_len = 0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   TaoSetUpdate - Sets the general-purpose update function called
-  at the beginning of every iteration of the optimization algorithm. Specifically
-  it is called at the top of every iteration, after the new solution and the gradient
+  at the beginning of every iteration of the optimization algorithm. Called after the new solution and the gradient
   is determined, but before the Hessian is computed (if applicable).
 
   Logically Collective
 
   Input Parameters:
-+ tao - The tao solver context
++ tao  - The `Tao` solver context
 - func - The function
 
-  Calling sequence of func:
-$ func (Tao tao, PetscInt step);
-
-. step - The current step of the iteration
+  Calling sequence of `func`:
++ tao - the optimizer context
+- ctx - The current step of the iteration
 
   Level: advanced
 
-.seealso: `Tao`, `TaoSolve()`
+.seealso: [](ch_tao), `Tao`, `TaoSolve()`
 @*/
 PetscErrorCode TaoSetUpdate(Tao tao, PetscErrorCode (*func)(Tao, PetscInt, void *), void *ctx)
 {
@@ -1424,7 +1391,7 @@ PetscErrorCode TaoSetUpdate(Tao tao, PetscErrorCode (*func)(Tao, PetscInt, void 
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   tao->ops->update = func;
   tao->user_update = ctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -1435,24 +1402,21 @@ PetscErrorCode TaoSetUpdate(Tao tao, PetscErrorCode (*func)(Tao, PetscInt, void 
   Logically Collective
 
   Input Parameters:
-+ tao - the Tao object
++ tao  - the `Tao` object
 . conv - the routine to test for convergence
-- ctx - [optional] context for private data for the convergence routine
-        (may be NULL)
+- ctx  - [optional] context for private data for the convergence routine
+        (may be `NULL`)
 
-  Calling sequence of conv:
-$   PetscErrorCode conv(Tao tao, void *ctx)
-
-+ tao - the Tao object
+  Calling sequence of `conv`:
++ tao - the `Tao` object
 - ctx - [optional] convergence context
+
+  Level: advanced
 
   Note:
   The new convergence testing routine should call `TaoSetConvergedReason()`.
 
-  Level: advanced
-
-.seealso: `Tao`, `TaoSolve()`, `TaoSetConvergedReason()`, `TaoGetSolutionStatus()`, `TaoGetTolerances()`, `TaoSetMonitor`
-
+.seealso: [](ch_tao), `Tao`, `TaoSolve()`, `TaoSetConvergedReason()`, `TaoGetSolutionStatus()`, `TaoGetTolerances()`, `TaoSetMonitor`
 @*/
 PetscErrorCode TaoSetConvergenceTest(Tao tao, PetscErrorCode (*conv)(Tao, void *), void *ctx)
 {
@@ -1460,50 +1424,49 @@ PetscErrorCode TaoSetConvergenceTest(Tao tao, PetscErrorCode (*conv)(Tao, void *
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   tao->ops->convergencetest = conv;
   tao->cnvP                 = ctx;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoSetMonitor - Sets an additional function that is to be used at every
-   iteration of the solver to display the iteration's
-   progress.
+  TaoSetMonitor - Sets an additional function that is to be used at every
+  iteration of the solver to display the iteration's
+  progress.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  tao - the Tao solver context
-.  mymonitor - monitoring routine
--  mctx - [optional] user-defined context for private data for the
-          monitor routine (may be NULL)
+  Input Parameters:
++ tao  - the `Tao` solver context
+. func - monitoring routine
+. ctx  - [optional] user-defined context for private data for the monitor routine (may be `NULL`)
+- dest - [optional] function to destroy the context when the `Tao` is destroyed
 
-   Calling sequence of mymonitor:
-.vb
-     PetscErrorCode mymonitor(Tao tao,void *mctx)
-.ve
+  Calling sequence of `func`:
++ tao - the `Tao` solver context
+- ctx - [optional] monitoring context
 
-+    tao - the Tao solver context
--    mctx - [optional] monitoring context
+  Calling sequence of `dest`:
+. ctx - monitoring context
 
-   Options Database Keys:
-+    -tao_monitor        - sets the default monitor `TaoMonitorDefault()`
-.    -tao_smonitor       - sets short monitor
-.    -tao_cmonitor       - same as smonitor plus constraint norm
-.    -tao_view_solution   - view solution at each iteration
-.    -tao_view_gradient   - view gradient at each iteration
-.    -tao_view_ls_residual - view least-squares residual vector at each iteration
--    -tao_cancelmonitors - cancels all monitors that have been hardwired into a code by calls to TaoSetMonitor(), but does not cancel those set via the options database.
+  Options Database Keys:
++ -tao_monitor          - sets the default monitor `TaoMonitorDefault()`
+. -tao_smonitor         - sets short monitor
+. -tao_cmonitor         - same as smonitor plus constraint norm
+. -tao_view_solution    - view solution at each iteration
+. -tao_view_gradient    - view gradient at each iteration
+. -tao_view_ls_residual - view least-squares residual vector at each iteration
+- -tao_cancelmonitors   - cancels all monitors that have been hardwired into a code by calls to TaoSetMonitor(), but does not cancel those set via the options database.
 
-   Notes:
-   Several different monitoring routines may be set by calling
-   `TaoSetMonitor()` multiple times; all will be called in the
-   order in which they were set.
+  Level: intermediate
 
-   Fortran Note:
-    Only one monitor function may be set
+  Notes:
+  Several different monitoring routines may be set by calling
+  `TaoSetMonitor()` multiple times; all will be called in the
+  order in which they were set.
 
-   Level: intermediate
+  Fortran Notes:
+  Only one monitor function may be set
 
-.seealso: `Tao`, `TaoSolve()`, `TaoMonitorDefault()`, `TaoCancelMonitors()`, `TaoSetDestroyRoutine()`, `TaoView()`
+.seealso: [](ch_tao), `Tao`, `TaoSolve()`, `TaoMonitorDefault()`, `TaoCancelMonitors()`, `TaoSetDestroyRoutine()`, `TaoView()`
 @*/
 PetscErrorCode TaoSetMonitor(Tao tao, PetscErrorCode (*func)(Tao, void *), void *ctx, PetscErrorCode (*dest)(void **))
 {
@@ -1516,34 +1479,34 @@ PetscErrorCode TaoSetMonitor(Tao tao, PetscErrorCode (*func)(Tao, void *), void 
 
   for (i = 0; i < tao->numbermonitors; i++) {
     PetscCall(PetscMonitorCompare((PetscErrorCode(*)(void))func, ctx, dest, (PetscErrorCode(*)(void))tao->monitor[i], tao->monitorcontext[i], tao->monitordestroy[i], &identical));
-    if (identical) PetscFunctionReturn(0);
+    if (identical) PetscFunctionReturn(PETSC_SUCCESS);
   }
   tao->monitor[tao->numbermonitors]        = func;
   tao->monitorcontext[tao->numbermonitors] = (void *)ctx;
   tao->monitordestroy[tao->numbermonitors] = dest;
   ++tao->numbermonitors;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoCancelMonitors - Clears all the monitor functions for a Tao object.
+  TaoCancelMonitors - Clears all the monitor functions for a `Tao` object.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-.  tao - the Tao solver context
+  Input Parameter:
+. tao - the `Tao` solver context
 
-   Options Database Key:
-.  -tao_cancelmonitors - cancels all monitors that have been hardwired
+  Options Database Key:
+. -tao_cancelmonitors - cancels all monitors that have been hardwired
     into a code by calls to `TaoSetMonitor()`, but does not cancel those
     set via the options database
 
-   Notes:
-   There is no way to clear one specific monitor from a Tao object.
+  Level: advanced
 
-   Level: advanced
+  Note:
+  There is no way to clear one specific monitor from a `Tao` object.
 
-.seealso: `Tao`, `TaoMonitorDefault()`, `TaoSetMonitor()`
+.seealso: [](ch_tao), `Tao`, `TaoMonitorDefault()`, `TaoSetMonitor()`
 @*/
 PetscErrorCode TaoCancelMonitors(Tao tao)
 {
@@ -1555,27 +1518,28 @@ PetscErrorCode TaoCancelMonitors(Tao tao)
     if (tao->monitordestroy[i]) PetscCall((*tao->monitordestroy[i])(&tao->monitorcontext[i]));
   }
   tao->numbermonitors = 0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoMonitorDefault - Default routine for monitoring progress of the
-   Tao solvers (default).  This monitor prints the function value and gradient
-   norm at each iteration.  It can be turned on from the command line using the
-   -tao_monitor option
+  TaoMonitorDefault - Default routine for monitoring progress of `TaoSolve()`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao - the Tao context
--  ctx - `PetscViewer` context or NULL
+  Input Parameters:
++ tao - the `Tao` context
+- ctx - `PetscViewer` context or `NULL`
 
-   Options Database Keys:
-.  -tao_monitor - turn on default monitoring
+  Options Database Key:
+. -tao_monitor - turn on default monitoring
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `TaoDefaultSMonitor()`, `TaoSetMonitor()`
+  Note:
+  This monitor prints the function value and gradient
+  norm at each iteration.
+
+.seealso: [](ch_tao), `Tao`, `TaoDefaultSMonitor()`, `TaoSetMonitor()`
 @*/
 PetscErrorCode TaoMonitorDefault(Tao tao, void *ctx)
 {
@@ -1603,30 +1567,29 @@ PetscErrorCode TaoMonitorDefault(Tao tao, void *ctx)
     PetscCall(PetscViewerASCIIPrintf(viewer, "  Residual: %g \n", (double)gnorm));
   }
   PetscCall(PetscViewerASCIISetTab(viewer, tabs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoDefaultGMonitor - Default routine for monitoring progress of the
-   Tao solvers (default) with extra detail on the globalization method.
-   This monitor prints the function value and gradient norm at each
-   iteration, as well as the step size and trust radius. Note that the
-   step size and trust radius may be the same for some algorithms.
-   It can be turned on from the command line using the
-   -tao_gmonitor option
+  TaoDefaultGMonitor - Default routine for monitoring progress of `TaoSolve()` with extra detail on the globalization method.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao - the Tao context
--  ctx - `PetscViewer` context or NULL
+  Input Parameters:
++ tao - the `Tao` context
+- ctx - `PetscViewer` context or `NULL`
 
-   Options Database Keys:
-.  -tao_gmonitor - turn on monitoring with globalization information
+  Options Database Key:
+. -tao_gmonitor - turn on monitoring with globalization information
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `TaoDefaultSMonitor()`, `TaoSetMonitor()`
+  Note:
+  This monitor prints the function value and gradient norm at each
+  iteration, as well as the step size and trust radius. Note that the
+  step size and trust radius may be the same for some algorithms.
+
+.seealso: [](ch_tao), `Tao`, `TaoDefaultSMonitor()`, `TaoSetMonitor()`
 @*/
 PetscErrorCode TaoDefaultGMonitor(Tao tao, void *ctx)
 {
@@ -1657,30 +1620,31 @@ PetscErrorCode TaoDefaultGMonitor(Tao tao, void *ctx)
   }
   PetscCall(PetscViewerASCIIPrintf(viewer, "  Step: %g,  Trust: %g\n", (double)stp, (double)tr));
   PetscCall(PetscViewerASCIISetTab(viewer, tabs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoDefaultSMonitor - Default routine for monitoring progress of the
-   solver. Same as `TaoMonitorDefault()` except
-   it prints fewer digits of the residual as the residual gets smaller.
-   This is because the later digits are meaningless and are often
-   different on different machines; by using this routine different
-   machines will usually generate the same output. It can be turned on
-   by using the -tao_smonitor option
+  TaoDefaultSMonitor - Default routine for monitoring progress of `TaoSolve()`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao - the Tao context
--  ctx - PetscViewer context of type ASCII
+  Input Parameters:
++ tao - the `Tao` context
+- ctx - `PetscViewer` context of type `PETSCVIEWERASCII`
 
-   Options Database Keys:
-.  -tao_smonitor - turn on default short monitoring
+  Options Database Key:
+. -tao_smonitor - turn on default short monitoring
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `TaoMonitorDefault()`, `TaoSetMonitor()`
+  Note:
+  Same as `TaoMonitorDefault()` except
+  it prints fewer digits of the residual as the residual gets smaller.
+  This is because the later digits are meaningless and are often
+  different on different machines; by using this routine different
+  machines will usually generate the same output.
+
+.seealso: [](ch_tao), `Tao`, `TaoMonitorDefault()`, `TaoSetMonitor()`
 @*/
 PetscErrorCode TaoDefaultSMonitor(Tao tao, void *ctx)
 {
@@ -1708,26 +1672,25 @@ PetscErrorCode TaoDefaultSMonitor(Tao tao, void *ctx)
     PetscCall(PetscViewerASCIIPrintf(viewer, " Residual: < 1.0e-11 \n"));
   }
   PetscCall(PetscViewerASCIISetTab(viewer, tabs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoDefaultCMonitor - same as `TaoMonitorDefault()` except
-   it prints the norm of the constraints function. It can be turned on
-   from the command line using the -tao_cmonitor option
+  TaoDefaultCMonitor - same as `TaoMonitorDefault()` except
+  it prints the norm of the constraint function.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao - the Tao context
--  ctx - `PetscViewer` context or NULL
+  Input Parameters:
++ tao - the `Tao` context
+- ctx - `PetscViewer` context or `NULL`
 
-   Options Database Keys:
-.  -tao_cmonitor - monitor the constraints
+  Options Database Key:
+. -tao_cmonitor - monitor the constraints
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `TaoMonitorDefault()`, `TaoSetMonitor()`
+.seealso: [](ch_tao), `Tao`, `TaoMonitorDefault()`, `TaoSetMonitor()`
 @*/
 PetscErrorCode TaoDefaultCMonitor(Tao tao, void *ctx)
 {
@@ -1748,26 +1711,24 @@ PetscErrorCode TaoDefaultCMonitor(Tao tao, void *ctx)
   PetscCall(PetscViewerASCIIPrintf(viewer, "  Residual: %g ", (double)gnorm));
   PetscCall(PetscViewerASCIIPrintf(viewer, "  Constraint: %g \n", (double)tao->cnorm));
   PetscCall(PetscViewerASCIISetTab(viewer, tabs));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoSolutionMonitor - Views the solution at each iteration
-   It can be turned on from the command line using the
-   -tao_view_solution option
+  TaoSolutionMonitor - Views the solution at each iteration of `TaoSolve()`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao - the Tao context
--  ctx - `PetscViewer` context or NULL
+  Input Parameters:
++ tao - the `Tao` context
+- ctx - `PetscViewer` context or `NULL`
 
-   Options Database Keys:
-.  -tao_view_solution - view the solution
+  Options Database Key:
+. -tao_view_solution - view the solution
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `TaoDefaultSMonitor()`, `TaoSetMonitor()`
+.seealso: [](ch_tao), `Tao`, `TaoDefaultSMonitor()`, `TaoSetMonitor()`
 @*/
 PetscErrorCode TaoSolutionMonitor(Tao tao, void *ctx)
 {
@@ -1777,26 +1738,24 @@ PetscErrorCode TaoSolutionMonitor(Tao tao, void *ctx)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
   PetscCall(VecView(tao->solution, viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoGradientMonitor - Views the gradient at each iteration
-   It can be turned on from the command line using the
-   -tao_view_gradient option
+  TaoGradientMonitor - Views the gradient at each iteration of `TaoSolve()`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao - the Tao context
--  ctx - `PetscViewer` context or NULL
+  Input Parameters:
++ tao - the `Tao` context
+- ctx - `PetscViewer` context or `NULL`
 
-   Options Database Keys:
-.  -tao_view_gradient - view the gradient at each iteration
+  Options Database Key:
+. -tao_view_gradient - view the gradient at each iteration
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `TaoDefaultSMonitor()`, `TaoSetMonitor()`
+.seealso: [](ch_tao), `Tao`, `TaoDefaultSMonitor()`, `TaoSetMonitor()`
 @*/
 PetscErrorCode TaoGradientMonitor(Tao tao, void *ctx)
 {
@@ -1806,24 +1765,24 @@ PetscErrorCode TaoGradientMonitor(Tao tao, void *ctx)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
   PetscCall(VecView(tao->gradient, viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoStepDirectionMonitor - Views the step-direction at each iteration
+  TaoStepDirectionMonitor - Views the step-direction at each iteration of `TaoSolve()`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao - the Tao context
--  ctx - `PetscViewer` context or NULL
+  Input Parameters:
++ tao - the `Tao` context
+- ctx - `PetscViewer` context or `NULL`
 
-   Options Database Keys:
-.  -tao_view_gradient - view the gradient at each iteration
+  Options Database Key:
+. -tao_view_stepdirection - view the step direction vector at each iteration
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `TaoDefaultSMonitor()`, `TaoSetMonitor()`
+.seealso: [](ch_tao), `Tao`, `TaoDefaultSMonitor()`, `TaoSetMonitor()`
 @*/
 PetscErrorCode TaoStepDirectionMonitor(Tao tao, void *ctx)
 {
@@ -1833,26 +1792,24 @@ PetscErrorCode TaoStepDirectionMonitor(Tao tao, void *ctx)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
   PetscCall(VecView(tao->stepdirection, viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoDrawSolutionMonitor - Plots the solution at each iteration
-   It can be turned on from the command line using the
-   -tao_draw_solution option
+  TaoDrawSolutionMonitor - Plots the solution at each iteration of `TaoSolve()`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao - the Tao context
--  ctx - `TaoMonitorDraw` context
+  Input Parameters:
++ tao - the `Tao` context
+- ctx - `TaoMonitorDraw` context
 
-   Options Database Keys:
-.  -tao_draw_solution - draw the solution at each iteration
+  Options Database Key:
+. -tao_draw_solution - draw the solution at each iteration
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `TaoSolutionMonitor()`, `TaoSetMonitor()`, `TaoDrawGradientMonitor`, `TaoMonitorDraw`
+.seealso: [](ch_tao), `Tao`, `TaoSolutionMonitor()`, `TaoSetMonitor()`, `TaoDrawGradientMonitor`, `TaoMonitorDraw`
 @*/
 PetscErrorCode TaoDrawSolutionMonitor(Tao tao, void *ctx)
 {
@@ -1860,28 +1817,26 @@ PetscErrorCode TaoDrawSolutionMonitor(Tao tao, void *ctx)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  if (!(((ictx->howoften > 0) && (!(tao->niter % ictx->howoften))) || ((ictx->howoften == -1) && tao->reason))) PetscFunctionReturn(0);
+  if (!(((ictx->howoften > 0) && (!(tao->niter % ictx->howoften))) || ((ictx->howoften == -1) && tao->reason))) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(VecView(tao->solution, ictx->viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoDrawGradientMonitor - Plots the gradient at each iteration
-   It can be turned on from the command line using the
-   -tao_draw_gradient option
+  TaoDrawGradientMonitor - Plots the gradient at each iteration of `TaoSolve()`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao - the Tao context
--  ctx - `PetscViewer` context
+  Input Parameters:
++ tao - the `Tao` context
+- ctx - `PetscViewer` context
 
-   Options Database Keys:
-.  -tao_draw_gradient - draw the gradient at each iteration
+  Options Database Key:
+. -tao_draw_gradient - draw the gradient at each iteration
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `TaoGradientMonitor()`, `TaoSetMonitor()`, `TaoDrawSolutionMonitor`
+.seealso: [](ch_tao), `Tao`, `TaoGradientMonitor()`, `TaoSetMonitor()`, `TaoDrawSolutionMonitor`
 @*/
 PetscErrorCode TaoDrawGradientMonitor(Tao tao, void *ctx)
 {
@@ -1889,26 +1844,26 @@ PetscErrorCode TaoDrawGradientMonitor(Tao tao, void *ctx)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  if (!(((ictx->howoften > 0) && (!(tao->niter % ictx->howoften))) || ((ictx->howoften == -1) && tao->reason))) PetscFunctionReturn(0);
+  if (!(((ictx->howoften > 0) && (!(tao->niter % ictx->howoften))) || ((ictx->howoften == -1) && tao->reason))) PetscFunctionReturn(PETSC_SUCCESS);
   PetscCall(VecView(tao->gradient, ictx->viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoDrawStepMonitor - Plots the step direction at each iteration
+  TaoDrawStepMonitor - Plots the step direction at each iteration of `TaoSolve()`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao - the Tao context
--  ctx - PetscViewer context
+  Input Parameters:
++ tao - the `Tao` context
+- ctx - the `PetscViewer` context
 
-   Options Database Keys:
-.  -tao_draw_step - draw the step direction at each iteration
+  Options Database Key:
+. -tao_draw_step - draw the step direction at each iteration
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `TaoSetMonitor()`, `TaoDrawSolutionMonitor`
+.seealso: [](ch_tao), `Tao`, `TaoSetMonitor()`, `TaoDrawSolutionMonitor`
 @*/
 PetscErrorCode TaoDrawStepMonitor(Tao tao, void *ctx)
 {
@@ -1918,24 +1873,24 @@ PetscErrorCode TaoDrawStepMonitor(Tao tao, void *ctx)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
   PetscCall(VecView(tao->stepdirection, viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoResidualMonitor - Views the least-squares residual at each iteration
+  TaoResidualMonitor - Views the least-squares residual at each iteration of `TaoSolve()`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao - the Tao context
--  ctx - `PetscViewer` context or NULL
+  Input Parameters:
++ tao - the `Tao` context
+- ctx - the `PetscViewer` context or `NULL`
 
-   Options Database Keys:
-.  -tao_view_ls_residual - view the least-squares residual at each iteration
+  Options Database Key:
+. -tao_view_ls_residual - view the residual at each iteration
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `TaoDefaultSMonitor()`, `TaoSetMonitor()`
+.seealso: [](ch_tao), `Tao`, `TaoDefaultSMonitor()`, `TaoSetMonitor()`
 @*/
 PetscErrorCode TaoResidualMonitor(Tao tao, void *ctx)
 {
@@ -1945,33 +1900,29 @@ PetscErrorCode TaoResidualMonitor(Tao tao, void *ctx)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscValidHeaderSpecific(viewer, PETSC_VIEWER_CLASSID, 2);
   PetscCall(VecView(tao->ls_res, viewer));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoDefaultConvergenceTest - Determines whether the solver should continue iterating
-   or terminate.
+  TaoDefaultConvergenceTest - Determines whether the solver should continue iterating
+  or terminate.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao - the Tao context
--  dummy - unused dummy context
+  Input Parameters:
++ tao   - the `Tao` context
+- dummy - unused dummy context
 
-   Output Parameter:
-.  reason - for terminating
+  Level: developer
 
-   Notes:
-   This routine checks the residual in the optimality conditions, the
-   relative residual in the optimity conditions, the number of function
-   evaluations, and the function value to test convergence.  Some
-   solvers may use different convergence routines.
+  Notes:
+  This routine checks the residual in the optimality conditions, the
+  relative residual in the optimity conditions, the number of function
+  evaluations, and the function value to test convergence.  Some
+  solvers may use different convergence routines.
 
-   Level: developer
-
-.seealso: `TaoSetTolerances()`, `TaoGetConvergedReason()`, `TaoSetConvergedReason()`
+.seealso: [](ch_tao), `Tao`, `TaoSetTolerances()`, `TaoGetConvergedReason()`, `TaoSetConvergedReason()`
 @*/
-
 PetscErrorCode TaoDefaultConvergenceTest(Tao tao, void *dummy)
 {
   PetscInt           niter = tao->niter, nfuncs = PetscMax(tao->nfuncs, tao->nfuncgrads);
@@ -1985,7 +1936,7 @@ PetscErrorCode TaoDefaultConvergenceTest(Tao tao, void *dummy)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  if (reason != TAO_CONTINUE_ITERATING) PetscFunctionReturn(0);
+  if (reason != TAO_CONTINUE_ITERATING) PetscFunctionReturn(PETSC_SUCCESS);
 
   if (PetscIsInfOrNanReal(f)) {
     PetscCall(PetscInfo(tao, "Failed to converged, function value is Inf or NaN\n"));
@@ -2018,41 +1969,40 @@ PetscErrorCode TaoDefaultConvergenceTest(Tao tao, void *dummy)
     reason = TAO_CONTINUE_ITERATING;
   }
   tao->reason = reason;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoSetOptionsPrefix - Sets the prefix used for searching for all
-   Tao options in the database.
+  TaoSetOptionsPrefix - Sets the prefix used for searching for all
+  Tao options in the database.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  tao - the Tao context
--  prefix - the prefix string to prepend to all Tao option requests
+  Input Parameters:
++ tao - the `Tao` context
+- p   - the prefix string to prepend to all Tao option requests
 
-   Notes:
-   A hyphen (-) must NOT be given at the beginning of the prefix name.
-   The first character of all runtime options is AUTOMATICALLY the hyphen.
+  Level: advanced
 
-   For example, to distinguish between the runtime options for two
-   different Tao solvers, one could call
+  Notes:
+  A hyphen (-) must NOT be given at the beginning of the prefix name.
+  The first character of all runtime options is AUTOMATICALLY the hyphen.
+
+  For example, to distinguish between the runtime options for two
+  different Tao solvers, one could call
 .vb
       TaoSetOptionsPrefix(tao1,"sys1_")
       TaoSetOptionsPrefix(tao2,"sys2_")
 .ve
 
-   This would enable use of different options for each system, such as
+  This would enable use of different options for each system, such as
 .vb
       -sys1_tao_method blmvm -sys1_tao_grtol 1.e-3
       -sys2_tao_method lmvm  -sys2_tao_grtol 1.e-4
 .ve
 
-   Level: advanced
-
-.seealso: `TaoSetFromOptions()`, `TaoAppendOptionsPrefix()`, `TaoGetOptionsPrefix()`
+.seealso: [](ch_tao), `Tao`, `TaoSetFromOptions()`, `TaoAppendOptionsPrefix()`, `TaoGetOptionsPrefix()`
 @*/
-
 PetscErrorCode TaoSetOptionsPrefix(Tao tao, const char p[])
 {
   PetscFunctionBegin;
@@ -2060,26 +2010,25 @@ PetscErrorCode TaoSetOptionsPrefix(Tao tao, const char p[])
   PetscCall(PetscObjectSetOptionsPrefix((PetscObject)tao, p));
   if (tao->linesearch) PetscCall(TaoLineSearchSetOptionsPrefix(tao->linesearch, p));
   if (tao->ksp) PetscCall(KSPSetOptionsPrefix(tao->ksp, p));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoAppendOptionsPrefix - Appends to the prefix used for searching for all
-   Tao options in the database.
+  TaoAppendOptionsPrefix - Appends to the prefix used for searching for all Tao options in the database.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  tao - the Tao solver context
--  prefix - the prefix string to prepend to all Tao option requests
+  Input Parameters:
++ tao - the `Tao` solver context
+- p   - the prefix string to prepend to all `Tao` option requests
 
-   Note:
-   A hyphen (-) must NOT be given at the beginning of the prefix name.
-   The first character of all runtime options is automatically the hyphen.
+  Level: advanced
 
-   Level: advanced
+  Note:
+  A hyphen (-) must NOT be given at the beginning of the prefix name.
+  The first character of all runtime options is automatically the hyphen.
 
-.seealso: `TaoSetFromOptions()`, `TaoSetOptionsPrefix()`, `TaoGetOptionsPrefix()`
+.seealso: [](ch_tao), `Tao`, `TaoSetFromOptions()`, `TaoSetOptionsPrefix()`, `TaoGetOptionsPrefix()`
 @*/
 PetscErrorCode TaoAppendOptionsPrefix(Tao tao, const char p[])
 {
@@ -2088,7 +2037,7 @@ PetscErrorCode TaoAppendOptionsPrefix(Tao tao, const char p[])
   PetscCall(PetscObjectAppendOptionsPrefix((PetscObject)tao, p));
   if (tao->linesearch) PetscCall(PetscObjectAppendOptionsPrefix((PetscObject)tao->linesearch, p));
   if (tao->ksp) PetscCall(KSPAppendOptionsPrefix(tao->ksp, p));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -2097,58 +2046,43 @@ PetscErrorCode TaoAppendOptionsPrefix(Tao tao, const char p[])
 
   Not Collective
 
-  Input Parameters:
-. tao - the Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-  Output Parameters:
-. prefix - pointer to the prefix string used is returned
+  Output Parameter:
+. p - pointer to the prefix string used is returned
 
-  Fortran Note:
-    On the fortran side, the user should pass in a string 'prefix' of
-  sufficient length to hold the prefix.
+  Fortran Notes:
+  Pass in a string 'prefix' of sufficient length to hold the prefix.
 
   Level: advanced
 
-.seealso: `TaoSetFromOptions()`, `TaoSetOptionsPrefix()`, `TaoAppendOptionsPrefix()`
+.seealso: [](ch_tao), `Tao`, `TaoSetFromOptions()`, `TaoSetOptionsPrefix()`, `TaoAppendOptionsPrefix()`
 @*/
 PetscErrorCode TaoGetOptionsPrefix(Tao tao, const char *p[])
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscCall(PetscObjectGetOptionsPrefix((PetscObject)tao, p));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoSetType - Sets the method for the unconstrained minimization solver.
+  TaoSetType - Sets the `TaoType` for the minimization solver.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  solver - the Tao solver context
--  type - a known method
+  Input Parameters:
++ tao  - the `Tao` solver context
+- type - a known method
 
-   Options Database Key:
-.  -tao_type <type> - Sets the method; use -help for a list
+  Options Database Key:
+. -tao_type <type> - Sets the method; use -help for a list
    of available methods (for instance, "-tao_type lmvm" or "-tao_type tron")
-
-   Available methods include:
-+    `TAONLS` - nls Newton's method with line search for unconstrained minimization
-.    `TAONTR` - ntr Newton's method with trust region for unconstrained minimization
-.    `TAONTL` - ntl Newton's method with trust region, line search for unconstrained minimization
-.    `TAOLMVM` - lmvm Limited memory variable metric method for unconstrained minimization
-.    `TAOCG` - cg Nonlinear conjugate gradient method for unconstrained minimization
-.    `TAONM` - nm Nelder-Mead algorithm for derivate-free unconstrained minimization
-.    `TAOTRON` - tron Newton Trust Region method for bound constrained minimization
-.    `TAOGPCG` - gpcg Newton Trust Region method for quadratic bound constrained minimization
-.    `TAOBLMVM` - blmvm Limited memory variable metric method for bound constrained minimization
-.    `TAOLCL` - lcl Linearly constrained Lagrangian method for pde-constrained minimization
--    `TAOPOUNDERS` - pounders Model-based algorithm for nonlinear least squares
 
   Level: intermediate
 
-.seealso: `Tao`, `TaoCreate()`, `TaoGetType()`, `TaoType`
-
+.seealso: [](ch_tao), `Tao`, `TaoCreate()`, `TaoGetType()`, `TaoType`
 @*/
 PetscErrorCode TaoSetType(Tao tao, TaoType type)
 {
@@ -2159,7 +2093,7 @@ PetscErrorCode TaoSetType(Tao tao, TaoType type)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
 
   PetscCall(PetscObjectTypeCompare((PetscObject)tao, type, &issame));
-  if (issame) PetscFunctionReturn(0);
+  if (issame) PetscFunctionReturn(PETSC_SUCCESS);
 
   PetscCall(PetscFunctionListFind(TaoList, type, (void (**)(void)) & create_xxx));
   PetscCheck(create_xxx, PetscObjectComm((PetscObject)tao), PETSC_ERR_ARG_UNKNOWN_TYPE, "Unable to find requested Tao type %s", type);
@@ -2178,133 +2112,130 @@ PetscErrorCode TaoSetType(Tao tao, TaoType type)
 
   PetscCall((*create_xxx)(tao));
   PetscCall(PetscObjectChangeTypeName((PetscObject)tao, type));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoRegister - Adds a method to the Tao package for unconstrained minimization.
+  TaoRegister - Adds a method to the Tao package for minimization.
 
-   Synopsis:
-   TaoRegister(char *name_solver,char *path,char *name_Create,PetscErrorCode (*routine_Create)(Tao))
+  Not Collective
 
-   Not collective
+  Input Parameters:
++ sname - name of a new user-defined solver
+- func  - routine to Create method context
 
-   Input Parameters:
-+  sname - name of a new user-defined solver
--  func - routine to Create method context
-
-   Sample usage:
+  Example Usage:
 .vb
-   TaoRegister("my_solver",MySolverCreate);
+   TaoRegister("my_solver", MySolverCreate);
 .ve
 
-   Then, your solver can be chosen with the procedural interface via
-$     TaoSetType(tao,"my_solver")
-   or at runtime via the option
+  Then, your solver can be chosen with the procedural interface via
+$     TaoSetType(tao, "my_solver")
+  or at runtime via the option
 $     -tao_type my_solver
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   `TaoRegister()` may be called multiple times to add several user-defined solvers.
+  Note:
+  `TaoRegister()` may be called multiple times to add several user-defined solvers.
 
-.seealso: `Tao`, `TaoSetType()`, `TaoRegisterAll()`, `TaoRegisterDestroy()`
+.seealso: [](ch_tao), `Tao`, `TaoSetType()`, `TaoRegisterAll()`, `TaoRegisterDestroy()`
 @*/
 PetscErrorCode TaoRegister(const char sname[], PetscErrorCode (*func)(Tao))
 {
   PetscFunctionBegin;
   PetscCall(TaoInitializePackage());
   PetscCall(PetscFunctionListAdd(&TaoList, sname, (void (*)(void))func));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoRegisterDestroy - Frees the list of minimization solvers that were
-   registered by `TaoRegisterDynamic()`.
+  TaoRegisterDestroy - Frees the list of minimization solvers that were
+  registered by `TaoRegister()`.
 
-   Not Collective
+  Not Collective
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `Tao`, `TaoRegisterAll()`, `TaoRegister()`
+.seealso: [](ch_tao), `Tao`, `TaoRegisterAll()`, `TaoRegister()`
 @*/
 PetscErrorCode TaoRegisterDestroy(void)
 {
   PetscFunctionBegin;
   PetscCall(PetscFunctionListDestroy(&TaoList));
   TaoRegisterAllCalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetIterationNumber - Gets the number of Tao iterations completed
-   at this time.
+  TaoGetIterationNumber - Gets the number of `TaoSolve()` iterations completed
+  at this time.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  tao - Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-   Output Parameter:
-.  iter - iteration number
+  Output Parameter:
+. iter - iteration number
 
-   Notes:
-   For example, during the computation of iteration 2 this would return 1.
+  Notes:
+  For example, during the computation of iteration 2 this would return 1.
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `Tao`, `TaoGetLinearSolveIterations()`, `TaoGetResidualNorm()`, `TaoGetObjective()`
+.seealso: [](ch_tao), `Tao`, `TaoGetLinearSolveIterations()`, `TaoGetResidualNorm()`, `TaoGetObjective()`
 @*/
 PetscErrorCode TaoGetIterationNumber(Tao tao, PetscInt *iter)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidIntPointer(iter, 2);
+  PetscAssertPointer(iter, 2);
   *iter = tao->niter;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetResidualNorm - Gets the current value of the norm of the residual
-   at this time.
+  TaoGetResidualNorm - Gets the current value of the norm of the residual (gradient)
+  at this time.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  tao - Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-   Output Parameter:
-.  value - the current value
+  Output Parameter:
+. value - the current value
 
-   Level: intermediate
+  Level: intermediate
 
-   Developer Note:
-   This is the 2-norm of the residual, we cannot use `TaoGetGradientNorm()` because that has
-   a different meaning. For some reason Tao sometimes calls the gradient the residual.
+  Developer Notes:
+  This is the 2-norm of the residual, we cannot use `TaoGetGradientNorm()` because that has
+  a different meaning. For some reason `Tao` sometimes calls the gradient the residual.
 
-.seealso: `Tao`, `TaoGetLinearSolveIterations()`, `TaoGetIterationNumber()`, `TaoGetObjective()`
+.seealso: [](ch_tao), `Tao`, `TaoGetLinearSolveIterations()`, `TaoGetIterationNumber()`, `TaoGetObjective()`
 @*/
 PetscErrorCode TaoGetResidualNorm(Tao tao, PetscReal *value)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidRealPointer(value, 2);
+  PetscAssertPointer(value, 2);
   *value = tao->residual;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoSetIterationNumber - Sets the current iteration number.
+  TaoSetIterationNumber - Sets the current iteration number.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  tao - Tao context
--  iter - iteration number
+  Input Parameters:
++ tao  - the `Tao` context
+- iter - iteration number
 
-   Level: developer
+  Level: developer
 
-.seealso: `Tao`, `TaoGetLinearSolveIterations()`
+.seealso: [](ch_tao), `Tao`, `TaoGetLinearSolveIterations()`
 @*/
 PetscErrorCode TaoSetIterationNumber(Tao tao, PetscInt iter)
 {
@@ -2314,51 +2245,51 @@ PetscErrorCode TaoSetIterationNumber(Tao tao, PetscInt iter)
   PetscCall(PetscObjectSAWsTakeAccess((PetscObject)tao));
   tao->niter = iter;
   PetscCall(PetscObjectSAWsGrantAccess((PetscObject)tao));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetTotalIterationNumber - Gets the total number of Tao iterations
-   completed. This number keeps accumulating if multiple solves
-   are called with the Tao object.
+  TaoGetTotalIterationNumber - Gets the total number of `TaoSolve()` iterations
+  completed. This number keeps accumulating if multiple solves
+  are called with the `Tao` object.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  tao - Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-   Output Parameter:
-.  iter - iteration number
+  Output Parameter:
+. iter - number of iterations
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-   The total iteration count is updated after each solve, if there is a current
-   `TaoSolve()` in progress then those iterations are not yet counted.
+  Note:
+  The total iteration count is updated after each solve, if there is a current
+  `TaoSolve()` in progress then those iterations are not included in the count
 
-.seealso: `Tao`, `TaoGetLinearSolveIterations()`
+.seealso: [](ch_tao), `Tao`, `TaoGetLinearSolveIterations()`
 @*/
 PetscErrorCode TaoGetTotalIterationNumber(Tao tao, PetscInt *iter)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidIntPointer(iter, 2);
+  PetscAssertPointer(iter, 2);
   *iter = tao->ntotalits;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoSetTotalIterationNumber - Sets the current total iteration number.
+  TaoSetTotalIterationNumber - Sets the current total iteration number.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  tao - Tao context
--  iter - iteration number
+  Input Parameters:
++ tao  - the `Tao` context
+- iter - the iteration number
 
-   Level: developer
+  Level: developer
 
-.seealso: `Tao`, `TaoGetLinearSolveIterations()`
+.seealso: [](ch_tao), `Tao`, `TaoGetLinearSolveIterations()`
 @*/
 PetscErrorCode TaoSetTotalIterationNumber(Tao tao, PetscInt iter)
 {
@@ -2368,35 +2299,21 @@ PetscErrorCode TaoSetTotalIterationNumber(Tao tao, PetscInt iter)
   PetscCall(PetscObjectSAWsTakeAccess((PetscObject)tao));
   tao->ntotalits = iter;
   PetscCall(PetscObjectSAWsGrantAccess((PetscObject)tao));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-  TaoSetConvergedReason - Sets the termination flag on a Tao object
+  TaoSetConvergedReason - Sets the termination flag on a `Tao` object
 
   Logically Collective
 
   Input Parameters:
-+ tao - the Tao context
-- reason - one of
-.vb
-     TAO_CONVERGED_ATOL (2),
-     TAO_CONVERGED_RTOL (3),
-     TAO_CONVERGED_STEPTOL (4),
-     TAO_CONVERGED_MINF (5),
-     TAO_CONVERGED_USER (6),
-     TAO_DIVERGED_MAXITS (-2),
-     TAO_DIVERGED_NAN (-4),
-     TAO_DIVERGED_MAXFCN (-5),
-     TAO_DIVERGED_LS_FAILURE (-6),
-     TAO_DIVERGED_TR_REDUCTION (-7),
-     TAO_DIVERGED_USER (-8),
-     TAO_CONTINUE_ITERATING (0)
-.ve
++ tao    - the `Tao` context
+- reason - the `TaoConvergedReason`
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `Tao`
+.seealso: [](ch_tao), `Tao`, `TaoConvergedReason`
 @*/
 PetscErrorCode TaoSetConvergedReason(Tao tao, TaoConvergedReason reason)
 {
@@ -2404,84 +2321,58 @@ PetscErrorCode TaoSetConvergedReason(Tao tao, TaoConvergedReason reason)
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscValidLogicalCollectiveEnum(tao, reason, 2);
   tao->reason = reason;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetConvergedReason - Gets the reason the Tao iteration was stopped.
+  TaoGetConvergedReason - Gets the reason the `TaoSolve()` was stopped.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  tao - the Tao solver context
+  Input Parameter:
+. tao - the `Tao` solver context
 
-   Output Parameter:
-.  reason - one of
-.vb
-  TAO_CONVERGED_GATOL (3)           ||g(X)|| < gatol
-  TAO_CONVERGED_GRTOL (4)           ||g(X)|| / f(X)  < grtol
-  TAO_CONVERGED_GTTOL (5)           ||g(X)|| / ||g(X0)|| < gttol
-  TAO_CONVERGED_STEPTOL (6)         step size small
-  TAO_CONVERGED_MINF (7)            F < F_min
-  TAO_CONVERGED_USER (8)            User defined
-  TAO_DIVERGED_MAXITS (-2)          its > maxits
-  TAO_DIVERGED_NAN (-4)             Numerical problems
-  TAO_DIVERGED_MAXFCN (-5)          fevals > max_funcsals
-  TAO_DIVERGED_LS_FAILURE (-6)      line search failure
-  TAO_DIVERGED_TR_REDUCTION (-7)    trust region failure
-  TAO_DIVERGED_USER (-8)             (user defined)
-  TAO_CONTINUE_ITERATING (0)
-.ve
+  Output Parameter:
+. reason - value of `TaoConvergedReason`
 
-   where
-+  X - current solution
-.  X0 - initial guess
-.  f(X) - current function value
-.  f(X*) - true solution (estimated)
-.  g(X) - current gradient
-.  its - current iterate number
-.  maxits - maximum number of iterates
-.  fevals - number of function evaluations
--  max_funcsals - maximum number of function evaluations
+  Level: intermediate
 
-   Level: intermediate
-
-.seealso: `TaoSetConvergenceTest()`, `TaoSetTolerances()`
+.seealso: [](ch_tao), `Tao`, `TaoConvergedReason`, `TaoSetConvergenceTest()`, `TaoSetTolerances()`
 @*/
 PetscErrorCode TaoGetConvergedReason(Tao tao, TaoConvergedReason *reason)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidPointer(reason, 2);
+  PetscAssertPointer(reason, 2);
   *reason = tao->reason;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetSolutionStatus - Get the current iterate, objective value,
-   residual, infeasibility, and termination
+  TaoGetSolutionStatus - Get the current iterate, objective value,
+  residual, infeasibility, and termination from a `Tao` object
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  tao - the Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-   Output Parameters:
-+  iterate - the current iterate number (>=0)
-.  f - the current function value
-.  gnorm - the square of the gradient norm, duality gap, or other measure indicating distance from optimality.
-.  cnorm - the infeasibility of the current solution with regard to the constraints.
-.  xdiff - the step length or trust region radius of the most recent iterate.
--  reason - The termination reason, which can equal `TAO_CONTINUE_ITERATING`
+  Output Parameters:
++ its    - the current iterate number (>=0)
+. f      - the current function value
+. gnorm  - the square of the gradient norm, duality gap, or other measure indicating distance from optimality.
+. cnorm  - the infeasibility of the current solution with regard to the constraints.
+. xdiff  - the step length or trust region radius of the most recent iterate.
+- reason - The termination reason, which can equal `TAO_CONTINUE_ITERATING`
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-   Tao returns the values set by the solvers in the routine `TaoMonitor()`.
+  Notes:
+  Tao returns the values set by the solvers in the routine `TaoMonitor()`.
 
-   If any of the output arguments are set to `NULL`, no corresponding value will be returned.
+  If any of the output arguments are set to `NULL`, no corresponding value will be returned.
 
-.seealso: `TaoMonitor()`, `TaoGetConvergedReason()`
+.seealso: [](ch_tao), `TaoMonitor()`, `TaoGetConvergedReason()`
 @*/
 PetscErrorCode TaoGetSolutionStatus(Tao tao, PetscInt *its, PetscReal *f, PetscReal *gnorm, PetscReal *cnorm, PetscReal *xdiff, TaoConvergedReason *reason)
 {
@@ -2493,31 +2384,31 @@ PetscErrorCode TaoGetSolutionStatus(Tao tao, PetscInt *its, PetscReal *f, PetscR
   if (cnorm) *cnorm = tao->cnorm;
   if (reason) *reason = tao->reason;
   if (xdiff) *xdiff = tao->step;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoGetType - Gets the current Tao algorithm.
+  TaoGetType - Gets the current `TaoType` being used in the `Tao` object
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  tao - the Tao solver context
+  Input Parameter:
+. tao - the `Tao` solver context
 
-   Output Parameter:
-.  type - Tao method
+  Output Parameter:
+. type - the `TaoType`
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `Tao`, `TaoType`, `TaoSetType()`
+.seealso: [](ch_tao), `Tao`, `TaoType`, `TaoSetType()`
 @*/
 PetscErrorCode TaoGetType(Tao tao, TaoType *type)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidPointer(type, 2);
+  PetscAssertPointer(type, 2);
   *type = ((PetscObject)tao)->type_name;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
@@ -2525,24 +2416,21 @@ PetscErrorCode TaoGetType(Tao tao, TaoType *type)
   routine will record the iteration number and residual statistics,
   and call any monitors specified by the user.
 
-   Input Parameters:
-+  tao - the Tao context
-.  its - the current iterate number (>=0)
-.  f - the current objective function value
-.  res - the gradient norm, square root of the duality gap, or other measure indicating distince from optimality.  This measure will be recorded and
+  Input Parameters:
++ tao        - the `Tao` context
+. its        - the current iterate number (>=0)
+. f          - the current objective function value
+. res        - the gradient norm, square root of the duality gap, or other measure indicating distance from optimality.  This measure will be recorded and
           used for some termination tests.
-.  cnorm - the infeasibility of the current solution with regard to the constraints.
--  steplength - multiple of the step direction added to the previous iterate.
+. cnorm      - the infeasibility of the current solution with regard to the constraints.
+- steplength - multiple of the step direction added to the previous iterate.
 
-   Output Parameters:
-.  reason - The termination reason, which can equal `TAO_CONTINUE_ITERATING`
+  Options Database Key:
+. -tao_monitor - Use the default monitor, which prints statistics to standard output
 
-   Options Database Key:
-.  -tao_monitor - Use the default monitor, which prints statistics to standard output
+  Level: developer
 
-   Level: developer
-
-.seealso: `Tao`, `TaoGetConvergedReason()`, `TaoMonitorDefault()`, `TaoSetMonitor()`
+.seealso: [](ch_tao), `Tao`, `TaoGetConvergedReason()`, `TaoMonitorDefault()`, `TaoSetMonitor()`
 @*/
 PetscErrorCode TaoMonitor(Tao tao, PetscInt its, PetscReal f, PetscReal res, PetscReal cnorm, PetscReal steplength)
 {
@@ -2558,52 +2446,53 @@ PetscErrorCode TaoMonitor(Tao tao, PetscInt its, PetscReal f, PetscReal res, Pet
     tao->cnorm0 = cnorm;
     tao->gnorm0 = res;
   }
-  PetscCheck(!PetscIsInfOrNanReal(f) && !PetscIsInfOrNanReal(res), PetscObjectComm((PetscObject)tao), PETSC_ERR_USER, "User provided compute function generated Inf or NaN");
+  PetscCall(VecLockReadPush(tao->solution));
   for (i = 0; i < tao->numbermonitors; i++) PetscCall((*tao->monitor[i])(tao, tao->monitorcontext[i]));
-  PetscFunctionReturn(0);
+  PetscCall(VecLockReadPop(tao->solution));
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoSetConvergenceHistory - Sets the array used to hold the convergence history.
+  TaoSetConvergenceHistory - Sets the array used to hold the convergence history.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  tao - the Tao solver context
-.  obj   - array to hold objective value history
-.  resid - array to hold residual history
-.  cnorm - array to hold constraint violation history
-.  lits - integer array holds the number of linear iterations for each Tao iteration
-.  na  - size of `obj`, `resid`, and `cnorm`
--  reset - `PETSC_TRUE` indicates each new minimization resets the history counter to zero,
+  Input Parameters:
++ tao   - the `Tao` solver context
+. obj   - array to hold objective value history
+. resid - array to hold residual history
+. cnorm - array to hold constraint violation history
+. lits  - integer array holds the number of linear iterations for each Tao iteration
+. na    - size of `obj`, `resid`, and `cnorm`
+- reset - `PETSC_TRUE` indicates each new minimization resets the history counter to zero,
            else it continues storing new values for new minimizations after the old ones
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes:
-   If set, Tao will fill the given arrays with the indicated
-   information at each iteration.  If 'obj','resid','cnorm','lits' are
-   *all* `NULL` then space (using size `na`, or 1000 if na is `PETSC_DECIDE` or
-   `PETSC_DEFAULT`) is allocated for the history.
-   If not all are `NULL`, then only the non-`NULL` information categories
-   will be stored, the others will be ignored.
+  Notes:
+  If set, `Tao` will fill the given arrays with the indicated
+  information at each iteration.  If 'obj','resid','cnorm','lits' are
+  *all* `NULL` then space (using size `na`, or 1000 if na is `PETSC_DECIDE` or
+  `PETSC_DEFAULT`) is allocated for the history.
+  If not all are `NULL`, then only the non-`NULL` information categories
+  will be stored, the others will be ignored.
 
-   Any convergence information after iteration number 'na' will not be stored.
+  Any convergence information after iteration number 'na' will not be stored.
 
-   This routine is useful, e.g., when running a code for purposes
-   of accurate performance monitoring, when no I/O should be done
-   during the section of code that is being timed.
+  This routine is useful, e.g., when running a code for purposes
+  of accurate performance monitoring, when no I/O should be done
+  during the section of code that is being timed.
 
-.seealso: `TaoGetConvergenceHistory()`
+.seealso: [](ch_tao), `TaoGetConvergenceHistory()`
 @*/
 PetscErrorCode TaoSetConvergenceHistory(Tao tao, PetscReal obj[], PetscReal resid[], PetscReal cnorm[], PetscInt lits[], PetscInt na, PetscBool reset)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  if (obj) PetscValidRealPointer(obj, 2);
-  if (resid) PetscValidRealPointer(resid, 3);
-  if (cnorm) PetscValidRealPointer(cnorm, 4);
-  if (lits) PetscValidIntPointer(lits, 5);
+  if (obj) PetscAssertPointer(obj, 2);
+  if (resid) PetscAssertPointer(resid, 3);
+  if (cnorm) PetscAssertPointer(cnorm, 4);
+  if (lits) PetscAssertPointer(lits, 5);
 
   if (na == PETSC_DECIDE || na == PETSC_DEFAULT) na = 1000;
   if (!obj && !resid && !cnorm && !lits) {
@@ -2618,41 +2507,41 @@ PetscErrorCode TaoSetConvergenceHistory(Tao tao, PetscReal obj[], PetscReal resi
   tao->hist_max   = na;
   tao->hist_reset = reset;
   tao->hist_len   = 0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoGetConvergenceHistory - Gets the arrays used that hold the convergence history.
+  TaoGetConvergenceHistory - Gets the arrays used that hold the convergence history.
 
-   Collective
+  Collective
 
-   Input Parameter:
-.  tao - the Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-   Output Parameters:
-+  obj   - array used to hold objective value history
-.  resid - array used to hold residual history
-.  cnorm - array used to hold constraint violation history
-.  lits  - integer array used to hold linear solver iteration count
--  nhist  - size of `obj`, `resid`, `cnorm`, and `lits`
+  Output Parameters:
++ obj   - array used to hold objective value history
+. resid - array used to hold residual history
+. cnorm - array used to hold constraint violation history
+. lits  - integer array used to hold linear solver iteration count
+- nhist - size of `obj`, `resid`, `cnorm`, and `lits`
 
-   Level: advanced
+  Level: advanced
 
-   Notes:
-    This routine must be preceded by calls to `TaoSetConvergenceHistory()`
-    and `TaoSolve()`, otherwise it returns useless information.
+  Notes:
+  This routine must be preceded by calls to `TaoSetConvergenceHistory()`
+  and `TaoSolve()`, otherwise it returns useless information.
 
-   This routine is useful, e.g., when running a code for purposes
-   of accurate performance monitoring, when no I/O should be done
-   during the section of code that is being timed.
+  This routine is useful, e.g., when running a code for purposes
+  of accurate performance monitoring, when no I/O should be done
+  during the section of code that is being timed.
 
-   Fortran Note:
-   The calling sequence is
+  Fortran Notes:
+  The calling sequence is
 .vb
    call TaoGetConvergenceHistory(Tao tao, PetscInt nhist, PetscErrorCode ierr)
 .ve
 
-.seealso: `Tao`, `TaoSolve()`, `TaoSetConvergenceHistory()`
+.seealso: [](ch_tao), `Tao`, `TaoSolve()`, `TaoSetConvergenceHistory()`
 @*/
 PetscErrorCode TaoGetConvergenceHistory(Tao tao, PetscReal **obj, PetscReal **resid, PetscReal **cnorm, PetscInt **lits, PetscInt *nhist)
 {
@@ -2663,68 +2552,66 @@ PetscErrorCode TaoGetConvergenceHistory(Tao tao, PetscReal **obj, PetscReal **re
   if (resid) *resid = tao->hist_resid;
   if (lits) *lits = tao->hist_lits;
   if (nhist) *nhist = tao->hist_len;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoSetApplicationContext - Sets the optional user-defined context for
-   a solver.
+  TaoSetApplicationContext - Sets the optional user-defined context for a `Tao` solver.
 
-   Logically Collective
+  Logically Collective
 
-   Input Parameters:
-+  tao  - the Tao context
--  usrP - optional user context
+  Input Parameters:
++ tao  - the `Tao` context
+- usrP - optional user context
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `Tao`, `TaoGetApplicationContext()`, `TaoSetApplicationContext()`
+.seealso: [](ch_tao), `Tao`, `TaoGetApplicationContext()`
 @*/
 PetscErrorCode TaoSetApplicationContext(Tao tao, void *usrP)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   tao->user = usrP;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetApplicationContext - Gets the user-defined context for a
-   Tao solvers.
+  TaoGetApplicationContext - Gets the user-defined context for a `Tao` solver
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  tao  - Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-   Output Parameter:
-.  usrP - user context
+  Output Parameter:
+. usrP - user context
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `TaoSetApplicationContext()`
+.seealso: [](ch_tao), `Tao`, `TaoSetApplicationContext()`
 @*/
 PetscErrorCode TaoGetApplicationContext(Tao tao, void *usrP)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidPointer(usrP, 2);
+  PetscAssertPointer(usrP, 2);
   *(void **)usrP = tao->user;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoSetGradientNorm - Sets the matrix used to define the norm that measures the size of the gradient.
+  TaoSetGradientNorm - Sets the matrix used to define the norm that measures the size of the gradient.
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao  - the Tao context
--  M    - matrix that defines the norm
+  Input Parameters:
++ tao - the `Tao` context
+- M   - matrix that defines the norm
 
-   Level: beginner
+  Level: beginner
 
-.seealso: `Tao`, `TaoGetGradientNorm()`, `TaoGradientNorm()`
+.seealso: [](ch_tao), `Tao`, `TaoGetGradientNorm()`, `TaoGradientNorm()`
 @*/
 PetscErrorCode TaoSetGradientNorm(Tao tao, Mat M)
 {
@@ -2736,49 +2623,49 @@ PetscErrorCode TaoSetGradientNorm(Tao tao, Mat M)
   PetscCall(VecDestroy(&tao->gradient_norm_tmp));
   tao->gradient_norm = M;
   PetscCall(MatCreateVecs(M, NULL, &tao->gradient_norm_tmp));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   TaoGetGradientNorm - Returns the matrix used to define the norm used for measuring the size of the gradient.
+  TaoGetGradientNorm - Returns the matrix used to define the norm used for measuring the size of the gradient.
 
-   Not Collective
+  Not Collective
 
-   Input Parameter:
-.  tao  - Tao context
+  Input Parameter:
+. tao - the `Tao` context
 
-   Output Parameter:
-.  M - gradient norm
+  Output Parameter:
+. M - gradient norm
 
-   Level: beginner
+  Level: beginner
 
-.seealso: `Tao`, `TaoSetGradientNorm()`, `TaoGradientNorm()`
+.seealso: [](ch_tao), `Tao`, `TaoSetGradientNorm()`, `TaoGradientNorm()`
 @*/
 PetscErrorCode TaoGetGradientNorm(Tao tao, Mat *M)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
-  PetscValidPointer(M, 2);
+  PetscAssertPointer(M, 2);
   *M = tao->gradient_norm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoGradientNorm - Compute the norm with respect to the norm the user has set.
+  TaoGradientNorm - Compute the norm using the `NormType`, the user has selected
 
-   Collective
+  Collective
 
-   Input Parameters:
-+  tao      - the Tao context
-.  gradient - the gradient to be computed
--  norm     - the norm type
+  Input Parameters:
++ tao      - the `Tao` context
+. gradient - the gradient to be computed
+- type     - the norm type
 
-   Output Parameter:
-.  gnorm    - the gradient norm
+  Output Parameter:
+. gnorm - the gradient norm
 
-   Level: developer
+  Level: advanced
 
-.seealso: `Tao`, `TaoSetGradientNorm()`, `TaoGetGradientNorm()`
+.seealso: [](ch_tao), `Tao`, `TaoSetGradientNorm()`, `TaoGetGradientNorm()`
 @*/
 PetscErrorCode TaoGradientNorm(Tao tao, Vec gradient, NormType type, PetscReal *gnorm)
 {
@@ -2786,7 +2673,7 @@ PetscErrorCode TaoGradientNorm(Tao tao, Vec gradient, NormType type, PetscReal *
   PetscValidHeaderSpecific(tao, TAO_CLASSID, 1);
   PetscValidHeaderSpecific(gradient, VEC_CLASSID, 2);
   PetscValidLogicalCollectiveEnum(tao, type, 3);
-  PetscValidRealPointer(gnorm, 4);
+  PetscAssertPointer(gnorm, 4);
   if (tao->gradient_norm) {
     PetscScalar gnorms;
 
@@ -2797,23 +2684,33 @@ PetscErrorCode TaoGradientNorm(Tao tao, Vec gradient, NormType type, PetscReal *
   } else {
     PetscCall(VecNorm(gradient, type, gnorm));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoMonitorDrawCtxCreate - Creates the monitor context `TaoMonitorDrawSolution()`
+  TaoMonitorDrawCtxCreate - Creates the monitor context for `TaoMonitorDrawSolution()`
 
-   Collective
+  Collective
 
-   Output Parameter:
-.    ctx - the monitor context
+  Input Parameters:
++ comm     - the communicator to share the context
+. host     - the name of the X Windows host that will display the monitor
+. label    - the label to put at the top of the display window
+. x        - the horizontal coordinate of the lower left corner of the window to open
+. y        - the vertical coordinate of the lower left corner of the window to open
+. m        - the width of the window
+. n        - the height of the window
+- howoften - how many `Tao` iterations between displaying the monitor information
 
-   Options Database Key:
-.   -tao_draw_solution_initial - show initial guess as well as current solution
+  Output Parameter:
+. ctx - the monitor context
 
-   Level: intermediate
+  Options Database Key:
+. -tao_draw_solution_initial - show initial guess as well as current solution
 
-.seealso: `Tao`, `TaoMonitorSet()`, `TaoMonitorDefault()`, `VecView()`, `TaoMonitorDrawCtx()`
+  Level: intermediate
+
+.seealso: [](ch_tao), `Tao`, `TaoMonitorSet()`, `TaoMonitorDefault()`, `VecView()`, `TaoMonitorDrawCtx()`
 @*/
 PetscErrorCode TaoMonitorDrawCtxCreate(MPI_Comm comm, const char host[], const char label[], int x, int y, int m, int n, PetscInt howoften, TaoMonitorDrawCtx *ctx)
 {
@@ -2822,25 +2719,25 @@ PetscErrorCode TaoMonitorDrawCtxCreate(MPI_Comm comm, const char host[], const c
   PetscCall(PetscViewerDrawOpen(comm, host, label, x, y, m, n, &(*ctx)->viewer));
   PetscCall(PetscViewerSetFromOptions((*ctx)->viewer));
   (*ctx)->howoften = howoften;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-   TaoMonitorDrawCtxDestroy - Destroys the monitor context for `TaoMonitorDrawSolution()`
+  TaoMonitorDrawCtxDestroy - Destroys the monitor context for `TaoMonitorDrawSolution()`
 
-   Collective
+  Collective
 
-   Input Parameters:
-.    ctx - the monitor context
+  Input Parameter:
+. ictx - the monitor context
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `TaoMonitorSet()`, `TaoMonitorDefault()`, `VecView()`, `TaoMonitorDrawSolution()`
+.seealso: [](ch_tao), `Tao`, `TaoMonitorSet()`, `TaoMonitorDefault()`, `VecView()`, `TaoMonitorDrawSolution()`
 @*/
 PetscErrorCode TaoMonitorDrawCtxDestroy(TaoMonitorDrawCtx *ictx)
 {
   PetscFunctionBegin;
   PetscCall(PetscViewerDestroy(&(*ictx)->viewer));
   PetscCall(PetscFree(*ictx));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

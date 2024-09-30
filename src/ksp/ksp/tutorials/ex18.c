@@ -18,19 +18,17 @@ Input parameters include:\n\
 
 int main(int argc, char **args)
 {
-  Vec         x, b, u; /* approx solution, RHS, exact solution */
-  Mat         A;       /* linear system matrix */
-  KSP         ksp;     /* linear solver context */
-  PetscRandom rctx;    /* random number generator context */
-  PetscReal   norm;    /* norm of solution error */
-  PetscInt    i, j, Ii, J, Istart, Iend, m, n, its;
-  PetscBool   random_exact_sol, view_exact_sol, permute;
-  char        ordering[256] = MATORDERINGRCM;
-  IS          rowperm = NULL, colperm = NULL;
-  PetscScalar v;
-#if defined(PETSC_USE_LOG)
+  Vec           x, b, u; /* approx solution, RHS, exact solution */
+  Mat           A;       /* linear system matrix */
+  KSP           ksp;     /* linear solver context */
+  PetscRandom   rctx;    /* random number generator context */
+  PetscReal     norm;    /* norm of solution error */
+  PetscInt      i, j, Ii, J, Istart, Iend, m, n, its;
+  PetscBool     random_exact_sol, view_exact_sol, permute;
+  char          ordering[256] = MATORDERINGRCM;
+  IS            rowperm = NULL, colperm = NULL;
+  PetscScalar   v;
   PetscLogStage stage;
-#endif
 
   PetscFunctionBeginUser;
   PetscCall(PetscInitialize(&argc, &args, (char *)0, help));
@@ -175,7 +173,7 @@ int main(int argc, char **args)
     Mat Aperm;
     PetscCall(MatGetOrdering(A, ordering, &rowperm, &colperm));
     PetscCall(MatPermute(A, rowperm, colperm, &Aperm));
-    PetscCall(VecPermute(b, colperm, PETSC_FALSE));
+    PetscCall(VecPermute(b, rowperm, PETSC_FALSE));
     PetscCall(MatDestroy(&A));
     A = Aperm; /* Replace original operator with permuted version */
   }
@@ -226,7 +224,7 @@ int main(int argc, char **args)
                       Check solution and clean up
      - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-  if (permute) PetscCall(VecPermute(x, rowperm, PETSC_TRUE));
+  if (permute) PetscCall(VecPermute(x, colperm, PETSC_TRUE));
 
   /*
      Check the error

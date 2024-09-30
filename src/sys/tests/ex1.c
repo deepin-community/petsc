@@ -1,13 +1,12 @@
-
 static char help[] = "Demonstrates PETSc error handlers.\n";
 
 #include <petscsys.h>
 
-int CreateError(int n)
+PetscErrorCode CreateError(int n)
 {
-  PetscCheck(n, PETSC_COMM_SELF, PETSC_ERR_USER, "Error Created");
+  PetscCheck(n, PETSC_COMM_WORLD, PETSC_ERR_USER, "Error Created");
   PetscCall(CreateError(n - 1));
-  return 0;
+  return PETSC_SUCCESS;
 }
 
 int main(int argc, char **argv)
@@ -26,8 +25,9 @@ int main(int argc, char **argv)
 
  # Testing errors so only look for errors
    test:
-     args: -error_output_stdout
-     filter: grep -E "(PETSC ERROR)" | egrep "(Error Created|CreateError\(\)|main\(\))" | cut -f1,2,3,4,5,6 -d " "
-     TODO:  Does not always produce exactly expected output on all systems for all runs
+     requires: !defined(PETSCTEST_VALGRIND)
+     args: -petsc_ci_portable_error_output -error_output_stdout
+     nsize: {{1 2 3}}
+     filter: grep -E "(PETSC ERROR)" | egrep "(Error Created|CreateError\(\)|main\(\))"
 
 TEST*/

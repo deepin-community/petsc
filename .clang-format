@@ -8,7 +8,9 @@ AlignConsecutiveBitFields: Consecutive
 AlignConsecutiveDeclarations: Consecutive
 AlignEscapedNewlines: DontAlign
 AlignOperands: AlignAfterOperator
-AlignTrailingComments: true
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
 AllowAllArgumentsOnNextLine: true
 AllowAllConstructorInitializersOnNextLine: true
 AllowAllParametersOfDeclarationOnNextLine: true
@@ -150,6 +152,10 @@ StatementAttributeLikeMacros:
   - PETSC_EXTERN
   - PETSC_INTERN
   - PETSC_NODISCARD
+  - PETSC_DEPRECATED_FUNCTION
+  - PETSC_DEPRECATED_ENUM
+  - PETSC_DEPRECATED_TYPEDEF
+  - PETSC_DEPRECATED_MACRO
 StatementMacros:
   - PetscKernel_A_gets_transpose_A_DECLARE
   - PETSC_RETURNS
@@ -157,11 +163,30 @@ StatementMacros:
   - PETSC_NOEXCEPT_AUTO_RETURNS
   - PETSC_DECLTYPE_NOEXCEPT_AUTO_RETURNS
   - PETSC_UNUSED
+  - PetscPragmaOMP
+  - PetscPragmaSIMD
+  - PETSC_PRAGMA_DIAGNOSTIC_IGNORED_BEGIN
+  - PETSC_PRAGMA_DIAGNOSTIC_IGNORED_BEGIN_
+  - PETSC_PRAGMA_DIAGNOSTIC_IGNORED_END
+  - PETSC_PRAGMA_DIAGNOSTIC_IGNORED_END_
+  - _Pragma
 TabWidth: 2
 UseCRLF: false
 UseTab: Never
 WhitespaceSensitiveMacros:
   - PetscStringize
   - PetscStringize_
+  - PETSC_PRAGMA_DIAGNOSTIC_IGNORED_BEGIN
+  - PETSC_PRAGMA_DIAGNOSTIC_IGNORED_BEGIN_
+  - PETSC_PRAGMA_DIAGNOSTIC_IGNORED_END
+  - PETSC_PRAGMA_DIAGNOSTIC_IGNORED_END_
+  - _Pragma
+  - PETSC_DEPRECATED_IDENTIFIER
+  - PETSC_DEPRECATED_IDENTIFIER_
+  - PETSC_VALID_POINTER_IMPL_SPECIALIZATION
+  - _Generic
+  - PETSC_GENERIC_CV
+  - PetscMacroReturnStandard
 TypenameMacros:
   - khash_t
+InsertNewlineAtEOF: true

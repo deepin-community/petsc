@@ -49,7 +49,6 @@ extern void PetscRmPointer(void*);
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
 PETSC_EXTERN void  matlmvmsymbroydensetdelta_(Mat B,PetscScalar *delta, int *__ierr)
 {
 *__ierr = MatLMVMSymBroydenSetDelta(

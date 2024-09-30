@@ -1,4 +1,3 @@
-
 #include <petscsys.h>
 #if defined(PETSC_HAVE_PWD_H)
   #include <pwd.h>
@@ -16,27 +15,29 @@
 #endif
 
 /*@C
-   PetscGetRelativePath - Given a filename, returns the relative path (removes
-   all directory specifiers).
+  PetscGetRelativePath - Given a filename, returns the relative path (removes
+  all directory specifiers).
 
-   Not Collective
+  Not Collective; No Fortran Support
 
-   Input parameters:
-+  fullpath  - full pathname
-.  path      - pointer to buffer to hold relative pathname
--  flen     - size of path
+  Input Parameters:
++ fullpath - full pathname
+- flen     - size of `path`
 
-   Level: developer
+  Output Parameter:
+. path - buffer that holds relative pathname
+
+  Level: developer
 
 .seealso: `PetscGetFullPath()`
 @*/
 PetscErrorCode PetscGetRelativePath(const char fullpath[], char path[], size_t flen)
 {
-  char *p;
+  char *p = NULL;
 
   PetscFunctionBegin;
   /* Find string after last / or entire string if no / */
   PetscCall(PetscStrrchr(fullpath, '/', &p));
   PetscCall(PetscStrncpy(path, p, flen));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

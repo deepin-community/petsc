@@ -1,4 +1,3 @@
-
 /*
      Tools to help solve the coarse grid problem redundantly.
   Provides two scatter contexts that (1) map from the usual global vector
@@ -10,20 +9,20 @@
 #include <petsc/private/dmdaimpl.h> /*I   "petscdmda.h"   I*/
 
 /*@
-   DMDAGlobalToNaturalAllCreate - Creates a scatter context that maps from the
-     global vector the entire vector to each processor in natural numbering
+  DMDAGlobalToNaturalAllCreate - Creates a scatter context that maps from a
+  global vector the entire vector to each processor in natural numbering
 
-   Collective on da
+  Collective
 
-   Input Parameter:
-.  da - the distributed array context
+  Input Parameter:
+. da - the distributed array context
 
-   Output Parameter:
-.  scatter - the scatter context
+  Output Parameter:
+. scatter - the scatter context
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `DM`, `DMDA`, `DMDAGlobalToNaturalEnd()`, `DMLocalToGlobalBegin()`, `DMDACreate2d()`,
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDANaturalAllToGlobalCreate()`, `DMDAGlobalToNaturalEnd()`, `DMLocalToGlobalBegin()`, `DMDACreate2d()`,
           `DMGlobalToLocalBegin()`, `DMGlobalToLocalEnd()`, `DMDACreateNaturalVector()`
 @*/
 PetscErrorCode DMDAGlobalToNaturalAllCreate(DM da, VecScatter *scatter)
@@ -36,7 +35,7 @@ PetscErrorCode DMDAGlobalToNaturalAllCreate(DM da, VecScatter *scatter)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(da, DM_CLASSID, 1, DMDA);
-  PetscValidPointer(scatter, 2);
+  PetscAssertPointer(scatter, 2);
   PetscCall(DMDAGetAO(da, &ao));
 
   /* create the scatter context */
@@ -51,24 +50,24 @@ PetscErrorCode DMDAGlobalToNaturalAllCreate(DM da, VecScatter *scatter)
   PetscCall(VecDestroy(&global));
   PetscCall(ISDestroy(&from));
   PetscCall(ISDestroy(&to));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   DMDANaturalAllToGlobalCreate - Creates a scatter context that maps from a copy
-     of the entire vector on each processor to its local part in the global vector.
+  DMDANaturalAllToGlobalCreate - Creates a scatter context that maps from a copy
+  of the entire vector on each processor (in the natural ordering) to its local part in the global vector.
 
-   Collective on da
+  Collective
 
-   Input Parameter:
-.  da - the distributed array context
+  Input Parameter:
+. da - the distributed array context
 
-   Output Parameter:
-.  scatter - the scatter context
+  Output Parameter:
+. scatter - the scatter context
 
-   Level: advanced
+  Level: advanced
 
-.seealso: `DM`, `DMDA`, `DMDAGlobalToNaturalEnd()`, `DMLocalToGlobalBegin()`, `DMDACreate2d()`,
+.seealso: [](sec_struct), `DM`, `DMDA`, `DMDAGlobalToNaturalAllCreate()`, `DMDAGlobalToNaturalEnd()`, `DMLocalToGlobalBegin()`, `DMDACreate2d()`,
           `DMGlobalToLocalBegin()`, `DMGlobalToLocalEnd()`, `DMDACreateNaturalVector()`
 @*/
 PetscErrorCode DMDANaturalAllToGlobalCreate(DM da, VecScatter *scatter)
@@ -81,7 +80,7 @@ PetscErrorCode DMDANaturalAllToGlobalCreate(DM da, VecScatter *scatter)
 
   PetscFunctionBegin;
   PetscValidHeaderSpecificType(da, DM_CLASSID, 1, DMDA);
-  PetscValidPointer(scatter, 2);
+  PetscAssertPointer(scatter, 2);
   PetscCall(DMDAGetAO(da, &ao));
 
   /* create the scatter context */
@@ -97,5 +96,5 @@ PetscErrorCode DMDANaturalAllToGlobalCreate(DM da, VecScatter *scatter)
   PetscCall(VecDestroy(&global));
   PetscCall(ISDestroy(&from));
   PetscCall(ISDestroy(&to));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

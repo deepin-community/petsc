@@ -1,47 +1,46 @@
-
 #include <petsc/private/matimpl.h> /*I "petscmat.h" I*/
 
 typedef struct {
   Mat A;
 } Mat_Transpose;
 
-PetscErrorCode MatMult_Transpose(Mat N, Vec x, Vec y)
+static PetscErrorCode MatMult_Transpose(Mat N, Vec x, Vec y)
 {
   Mat_Transpose *Na = (Mat_Transpose *)N->data;
 
   PetscFunctionBegin;
   PetscCall(MatMultTranspose(Na->A, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatMultAdd_Transpose(Mat N, Vec v1, Vec v2, Vec v3)
+static PetscErrorCode MatMultAdd_Transpose(Mat N, Vec v1, Vec v2, Vec v3)
 {
   Mat_Transpose *Na = (Mat_Transpose *)N->data;
 
   PetscFunctionBegin;
   PetscCall(MatMultTransposeAdd(Na->A, v1, v2, v3));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatMultTranspose_Transpose(Mat N, Vec x, Vec y)
+static PetscErrorCode MatMultTranspose_Transpose(Mat N, Vec x, Vec y)
 {
   Mat_Transpose *Na = (Mat_Transpose *)N->data;
 
   PetscFunctionBegin;
   PetscCall(MatMult(Na->A, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatMultTransposeAdd_Transpose(Mat N, Vec v1, Vec v2, Vec v3)
+static PetscErrorCode MatMultTransposeAdd_Transpose(Mat N, Vec v1, Vec v2, Vec v3)
 {
   Mat_Transpose *Na = (Mat_Transpose *)N->data;
 
   PetscFunctionBegin;
   PetscCall(MatMultAdd(Na->A, v1, v2, v3));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatDestroy_Transpose(Mat N)
+static PetscErrorCode MatDestroy_Transpose(Mat N)
 {
   Mat_Transpose *Na = (Mat_Transpose *)N->data;
 
@@ -50,10 +49,10 @@ PetscErrorCode MatDestroy_Transpose(Mat N)
   PetscCall(PetscObjectComposeFunction((PetscObject)N, "MatTransposeGetMat_C", NULL));
   PetscCall(PetscObjectComposeFunction((PetscObject)N, "MatProductSetFromOptions_anytype_C", NULL));
   PetscCall(PetscFree(N->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatDuplicate_Transpose(Mat N, MatDuplicateOption op, Mat *m)
+static PetscErrorCode MatDuplicate_Transpose(Mat N, MatDuplicateOption op, Mat *m)
 {
   Mat_Transpose *Na = (Mat_Transpose *)N->data;
 
@@ -64,19 +63,19 @@ PetscErrorCode MatDuplicate_Transpose(Mat N, MatDuplicateOption op, Mat *m)
     PetscCall(MatDuplicate(Na->A, MAT_DO_NOT_COPY_VALUES, m));
     PetscCall(MatTranspose(*m, MAT_INPLACE_MATRIX, m));
   } else SETERRQ(PetscObjectComm((PetscObject)N), PETSC_ERR_SUP, "MAT_SHARE_NONZERO_PATTERN not supported for this matrix type");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatCreateVecs_Transpose(Mat A, Vec *r, Vec *l)
+static PetscErrorCode MatCreateVecs_Transpose(Mat A, Vec *r, Vec *l)
 {
   Mat_Transpose *Aa = (Mat_Transpose *)A->data;
 
   PetscFunctionBegin;
   PetscCall(MatCreateVecs(Aa->A, l, r));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatAXPY_Transpose(Mat Y, PetscScalar a, Mat X, MatStructure str)
+static PetscErrorCode MatAXPY_Transpose(Mat Y, PetscScalar a, Mat X, MatStructure str)
 {
   Mat_Transpose *Ya = (Mat_Transpose *)Y->data;
   Mat_Transpose *Xa = (Mat_Transpose *)X->data;
@@ -85,10 +84,10 @@ PetscErrorCode MatAXPY_Transpose(Mat Y, PetscScalar a, Mat X, MatStructure str)
 
   PetscFunctionBegin;
   PetscCall(MatAXPY(M, a, N, str));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatHasOperation_Transpose(Mat mat, MatOperation op, PetscBool *has)
+static PetscErrorCode MatHasOperation_Transpose(Mat mat, MatOperation op, PetscBool *has)
 {
   Mat_Transpose *X = (Mat_Transpose *)mat->data;
   PetscFunctionBegin;
@@ -103,7 +102,7 @@ PetscErrorCode MatHasOperation_Transpose(Mat mat, MatOperation op, PetscBool *ha
   } else if (op == MATOP_MULT_TRANSPOSE_ADD) {
     PetscCall(MatHasOperation(X->A, MATOP_MULT_ADD, has));
   } else if (((void **)mat->ops)[op]) *has = PETSC_TRUE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_INTERN PetscErrorCode MatProductSetFromOptions_Transpose(Mat D)
@@ -205,19 +204,19 @@ PETSC_INTERN PetscErrorCode MatProductSetFromOptions_Transpose(Mat D)
   PetscCall(MatProductReplaceMats(Ain, Bin, Cin, D));
   PetscCall(MatProductSetType(D, ptype));
   PetscCall(MatProductSetFromOptions(D));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatGetDiagonal_Transpose(Mat A, Vec v)
+static PetscErrorCode MatGetDiagonal_Transpose(Mat A, Vec v)
 {
   Mat_Transpose *Aa = (Mat_Transpose *)A->data;
 
   PetscFunctionBegin;
   PetscCall(MatGetDiagonal(Aa->A, v));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatConvert_Transpose(Mat A, MatType newtype, MatReuse reuse, Mat *newmat)
+static PetscErrorCode MatConvert_Transpose(Mat A, MatType newtype, MatReuse reuse, Mat *newmat)
 {
   Mat_Transpose *Aa = (Mat_Transpose *)A->data;
   PetscBool      flg;
@@ -238,41 +237,41 @@ PetscErrorCode MatConvert_Transpose(Mat A, MatType newtype, MatReuse reuse, Mat 
   } else { /* use basic converter as fallback */
     PetscCall(MatConvert_Basic(A, newtype, reuse, newmat));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode MatTransposeGetMat_Transpose(Mat A, Mat *M)
+static PetscErrorCode MatTransposeGetMat_Transpose(Mat A, Mat *M)
 {
   Mat_Transpose *Aa = (Mat_Transpose *)A->data;
 
   PetscFunctionBegin;
   *M = Aa->A;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-      MatTransposeGetMat - Gets the `Mat` object stored inside a `MATTRANSPOSEVIRTUAL`
+  MatTransposeGetMat - Gets the `Mat` object stored inside a `MATTRANSPOSEVIRTUAL`
 
-   Logically collective
+  Logically Collective
 
-   Input Parameter:
-.   A  - the `MATTRANSPOSEVIRTUAL` matrix
+  Input Parameter:
+. A - the `MATTRANSPOSEVIRTUAL` matrix
 
-   Output Parameter:
-.   M - the matrix object stored inside A
+  Output Parameter:
+. M - the matrix object stored inside `A`
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `MATTRANSPOSEVIRTUAL`, `MatCreateTranspose()`
+.seealso: [](ch_matrices), `Mat`, `MATTRANSPOSEVIRTUAL`, `MatCreateTranspose()`
 @*/
 PetscErrorCode MatTransposeGetMat(Mat A, Mat *M)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(A, MAT_CLASSID, 1);
   PetscValidType(A, 1);
-  PetscValidPointer(M, 2);
+  PetscAssertPointer(M, 2);
   PetscUseMethod(A, "MatTransposeGetMat_C", (Mat, Mat *), (A, M));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -280,41 +279,40 @@ PetscErrorCode MatTransposeGetMat(Mat A, Mat *M)
 
   Level: advanced
 
-.seealso: `MATHERMITIANTRANSPOSEVIRTUAL`, `Mat`, `MatCreateHermitianTranspose()`, `MatCreateTranspose()`
+.seealso: [](ch_matrices), `Mat`, `MATHERMITIANTRANSPOSEVIRTUAL`, `Mat`, `MatCreateHermitianTranspose()`, `MatCreateTranspose()`,
+          `MATNORMALHERMITIAN`, `MATNORMAL`
 M*/
 
 /*@
-      MatCreateTranspose - Creates a new matrix `MATTRANSPOSEVIRTUAL` object that behaves like A'
+  MatCreateTranspose - Creates a new matrix `MATTRANSPOSEVIRTUAL` object that behaves like A'
 
-   Collective
+  Collective
 
-   Input Parameter:
-.   A  - the (possibly rectangular) matrix
+  Input Parameter:
+. A - the (possibly rectangular) matrix
 
-   Output Parameter:
-.   N - the matrix that represents A'
+  Output Parameter:
+. N - the matrix that represents A'
 
-   Level: intermediate
+  Level: intermediate
 
-   Note:
-    The transpose A' is NOT actually formed! Rather the new matrix
-          object performs the matrix-vector product by using the `MatMultTranspose()` on
-          the original matrix
+  Note:
+  The transpose A' is NOT actually formed! Rather the new matrix
+  object performs the matrix-vector product by using the `MatMultTranspose()` on
+  the original matrix
 
-.seealso: `MATTRANSPOSEVIRTUAL`, `MatCreateNormal()`, `MatMult()`, `MatMultTranspose()`, `MatCreate()`
+.seealso: [](ch_matrices), `Mat`, `MATTRANSPOSEVIRTUAL`, `MatCreateNormal()`, `MatMult()`, `MatMultTranspose()`, `MatCreate()`,
+          `MATNORMALHERMITIAN`
 @*/
 PetscErrorCode MatCreateTranspose(Mat A, Mat *N)
 {
-  PetscInt       m, n;
   Mat_Transpose *Na;
   VecType        vtype;
 
   PetscFunctionBegin;
-  PetscCall(MatGetLocalSize(A, &m, &n));
   PetscCall(MatCreate(PetscObjectComm((PetscObject)A), N));
-  PetscCall(MatSetSizes(*N, n, m, PETSC_DECIDE, PETSC_DECIDE));
-  PetscCall(PetscLayoutSetUp((*N)->rmap));
-  PetscCall(PetscLayoutSetUp((*N)->cmap));
+  PetscCall(PetscLayoutReference(A->rmap, &((*N)->cmap)));
+  PetscCall(PetscLayoutReference(A->cmap, &((*N)->rmap)));
   PetscCall(PetscObjectChangeTypeName((PetscObject)*N, MATTRANSPOSEVIRTUAL));
 
   PetscCall(PetscNew(&Na));
@@ -345,5 +343,5 @@ PetscErrorCode MatCreateTranspose(Mat A, Mat *N)
   PetscCall(MatBindToCPU(*N, A->boundtocpu));
 #endif
   PetscCall(MatSetUp(*N));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

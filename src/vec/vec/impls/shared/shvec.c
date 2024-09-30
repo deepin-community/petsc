@@ -1,4 +1,3 @@
-
 /*
    This file contains routines for Parallel vector operations that use shared memory
  */
@@ -14,7 +13,7 @@ PetscErrorCode VecDuplicate_Shared(Vec win, Vec *v)
   PetscScalar *array;
 
   PetscFunctionBegin;
-  /* first processor allocates entire array and sends it's address to the others */
+  /* first processor allocates entire array and sends its address to the others */
   PetscCall(PetscSharedMalloc(PetscObjectComm((PetscObject)win), win->map->n * sizeof(PetscScalar), win->map->N * sizeof(PetscScalar), (void **)&array));
 
   PetscCall(VecCreate(PetscObjectComm((PetscObject)win), v));
@@ -31,7 +30,7 @@ PetscErrorCode VecDuplicate_Shared(Vec win, Vec *v)
 
   (*v)->ops->duplicate = VecDuplicate_Shared;
   (*v)->bstash.bs      = win->bstash.bs;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode VecCreate_Shared(Vec vv)
@@ -44,7 +43,7 @@ PETSC_EXTERN PetscErrorCode VecCreate_Shared(Vec vv)
 
   PetscCall(VecCreate_MPI_Private(vv, PETSC_FALSE, 0, array));
   vv->ops->duplicate = VecDuplicate_Shared;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
   /* ----------------------------------------------------------------------------------------
@@ -135,7 +134,7 @@ PetscErrorCode PetscSharedMalloc(MPI_Comm comm, PetscInt llen, PetscInt len, voi
     SETERRQ(PETSC_COMM_SELF, PETSC_ERR_LIB, "Unable to access shared memory allocated");
   }
   *result = (void *)(value + shift);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #else
@@ -148,36 +147,35 @@ PETSC_EXTERN PetscErrorCode VecCreate_Shared(Vec vv)
   PetscCallMPI(MPI_Comm_size(PetscObjectComm((PetscObject)vv), &size));
   PetscCheck(size <= 1, PETSC_COMM_SELF, PETSC_ERR_SUP_SYS, "No supported for shared memory vector objects on this machine");
   PetscCall(VecCreate_Seq(vv));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif
 
 /*@
-   VecCreateShared - Creates a parallel vector that uses shared memory.
+  VecCreateShared - Creates a parallel vector that uses shared memory.
 
-   Input Parameters:
-+  comm - the MPI communicator to use
-.  n - local vector length (or PETSC_DECIDE to have calculated if N is given)
--  N - global vector length (or PETSC_DECIDE to have calculated if n is given)
+  Collective
 
-   Output Parameter:
-.  vv - the vector
+  Input Parameters:
++ comm - the MPI communicator to use
+. n    - local vector length (or `PETSC_DECIDE` to have calculated if `N` is given)
+- N    - global vector length (or `PETSC_DECIDE` to have calculated if `n` is given)
 
-   Collective
+  Output Parameter:
+. v - the vector
 
-   Notes:
-   Currently VecCreateShared() is available only on the SGI; otherwise,
-   this routine is the same as VecCreateMPI().
+  Level: advanced
 
-   Use VecDuplicate() or VecDuplicateVecs() to form additional vectors of the
-   same type as an existing vector.
+  Notes:
+  Currently `VecCreateShared()` is available only on the SGI; otherwise,
+  this routine is the same as `VecCreateMPI()`.
 
-   Level: advanced
+  Use `VecDuplicate()` or `VecDuplicateVecs()` to form additional vectors of the
+  same type as an existing vector.
 
-.seealso: `VecCreateSeq()`, `VecCreate()`, `VecCreateMPI()`, `VecDuplicate()`, `VecDuplicateVecs()`,
+.seealso: [](ch_vectors), `Vec`, `VecType`, `VecCreateSeq()`, `VecCreate()`, `VecCreateMPI()`, `VecDuplicate()`, `VecDuplicateVecs()`,
           `VecCreateGhost()`, `VecCreateMPIWithArray()`, `VecCreateGhostWithArray()`
-
 @*/
 PetscErrorCode VecCreateShared(MPI_Comm comm, PetscInt n, PetscInt N, Vec *v)
 {
@@ -185,5 +183,5 @@ PetscErrorCode VecCreateShared(MPI_Comm comm, PetscInt n, PetscInt N, Vec *v)
   PetscCall(VecCreate(comm, v));
   PetscCall(VecSetSizes(*v, n, N));
   PetscCall(VecSetType(*v, VECSHARED));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

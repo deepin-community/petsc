@@ -49,7 +49,7 @@ PetscErrorCode ProcessOptions(MPI_Comm comm, AppCtx *options)
   PetscCall(PetscLogStageRegister("MeshDistribute", &options->stages[STAGE_DISTRIBUTE]));
   PetscCall(PetscLogStageRegister("MeshRefine", &options->stages[STAGE_REFINE]));
   PetscCall(PetscLogStageRegister("MeshOverlap", &options->stages[STAGE_OVERLAP]));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *user, DM *dm)
@@ -187,7 +187,7 @@ PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *user, DM *dm)
       PetscCall(DMGetPointSF(distributedMesh, &sf));
       PetscCall(PetscSFSetUp(sf));
       PetscCall(DMGetNeighbors(distributedMesh, &nranks, NULL));
-      PetscCallMPI(MPI_Allreduce(MPI_IN_PLACE, &nranks, 1, MPIU_INT, MPI_MIN, PetscObjectComm((PetscObject)*dm)));
+      PetscCall(MPIU_Allreduce(MPI_IN_PLACE, &nranks, 1, MPIU_INT, MPI_MIN, PetscObjectComm((PetscObject)*dm)));
       PetscCall(PetscViewerASCIIPrintf(PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)*dm)), "Minimum number of neighbors: %" PetscInt_FMT "\n", nranks));
       PetscCall(DMDestroy(dm));
       *dm = distributedMesh;
@@ -227,7 +227,7 @@ PetscErrorCode CreateMesh(MPI_Comm comm, AppCtx *user, DM *dm)
   PetscCall(DMViewFromOptions(*dm, NULL, "-dm_view"));
   if (user->final_diagnostics) PetscCall(DMPlexCheck(*dm));
   PetscCall(PetscLogEventEnd(user->createMeshEvent, 0, 0, 0, 0));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -317,15 +317,31 @@ int main(int argc, char **argv)
 
   # Parallel extrusion tests
   test:
+    suffix: 1d_extruded
+    args: -dm_plex_dim 1 -dm_plex_box_faces 5 -dm_extrude 3 -dm_plex_check_all -dm_view draw
+
+  test:
+    # This test needs a non-tensor prism so we can make a coordinate space
     suffix: spheresurface_extruded
     nsize : 4
-    args: -dm_coord_space 0 -dm_plex_shape sphere -dm_extrude 3 -dist_dm_distribute -petscpartitioner_type simple \
+    args: -dm_plex_shape sphere -dm_extrude 3 -dm_plex_transform_extrude_use_tensor 0 \
+          -dist_dm_distribute -petscpartitioner_type simple \
           -dm_plex_check_all -dm_view ::ascii_info_detail -dm_plex_view_coord_system spherical
 
   test:
+    # This test needs a non-tensor prism so we can make a coordinate space
     suffix: spheresurface_extruded_symmetric
     nsize : 4
-    args: -dm_coord_space 0 -dm_plex_shape sphere -dm_extrude 3 -dm_plex_transform_extrude_symmetric -dist_dm_distribute -petscpartitioner_type simple \
+    args: -dm_plex_shape sphere -dm_extrude 3 -dm_plex_transform_extrude_use_tensor 0 -dm_plex_transform_extrude_symmetric \
+          -dist_dm_distribute -petscpartitioner_type simple \
+          -dm_plex_check_all -dm_view ::ascii_info_detail -dm_plex_view_coord_system spherical
+
+  test:
+    # Test with a tensor prism which cannot have a coordinate space
+    suffix: spheresurface_extruded_nocoord
+    nsize : 4
+    args: -dm_coord_space 0 -dm_plex_shape sphere -dm_extrude 3 \
+          -dist_dm_distribute -petscpartitioner_type simple \
           -dm_plex_check_all -dm_view ::ascii_info_detail -dm_plex_view_coord_system spherical
 
   # Parallel simple partitioner tests
@@ -385,7 +401,11 @@ int main(int argc, char **argv)
     test:
       suffix: exo_4
       requires: exodusii
-     args: -dm_plex_filename ${wPETSC_DIR}/share/petsc/datafiles/meshes/simpleblock-100.exo
+      args: -dm_plex_filename ${wPETSC_DIR}/share/petsc/datafiles/meshes/simpleblock-100.exo
+    test:
+      suffix: exo_1d_0
+      requires: exodusii
+      args: -dm_plex_filename ${wPETSC_DIR}/share/petsc/datafiles/meshes/1d-2elems.e
 
   # Gmsh mesh reader tests
   testset:
@@ -521,7 +541,7 @@ int main(int argc, char **argv)
       args: -dm_plex_filename ${wPETSC_DIR}/share/petsc/datafiles/meshes/gmsh-3d-binary.msh4
 
   # Gmsh v41 ascii/binary reader tests
-  testset: # 32bit mesh, sequential
+  testset: # 32-bit mesh, sequential
     args: -dm_coord_space 0 -dm_view ::ascii_info_detail -dm_plex_check_all -dm_plex_gmsh_mark_vertices
     output_file: output/ex1_gmsh_3d_32.out
     test:
@@ -542,7 +562,7 @@ int main(int argc, char **argv)
     suffix: gmsh_hex_20node
     args: -dm_plex_filename ${wPETSC_DIR}/share/petsc/datafiles/meshes/gmsh-hex-20node.msh \
           -dm_view -dm_plex_check_all -dm_plex_gmsh_mark_vertices
-  testset:  # 32bit mesh, parallel
+  testset:  # 32-bit mesh, parallel
     args: -dm_coord_space 0 -dist_dm_distribute -petscpartitioner_type simple -dm_view ::ascii_info_detail -dm_plex_check_all -dm_plex_gmsh_mark_vertices
     nsize: 2
     output_file: output/ex1_gmsh_3d_32_np2.out
@@ -556,7 +576,7 @@ int main(int argc, char **argv)
       suffix: gmsh_3d_binary_v41_32_np2_mpiio
       requires: defined(PETSC_HAVE_MPIIO)
       args: -dm_plex_filename ${wPETSC_DIR}/share/petsc/datafiles/meshes/gmsh-3d-binary-32.msh -viewer_binary_mpiio
-  testset: # 64bit mesh, sequential
+  testset: # 64-bit mesh, sequential
     args: -dm_coord_space 0 -dm_view ::ascii_info_detail -dm_plex_check_all -dm_plex_gmsh_mark_vertices
     output_file: output/ex1_gmsh_3d_64.out
     test:
@@ -569,7 +589,7 @@ int main(int argc, char **argv)
       suffix: gmsh_3d_binary_v41_64_mpiio
       requires: defined(PETSC_HAVE_MPIIO)
       args: -dm_plex_filename ${wPETSC_DIR}/share/petsc/datafiles/meshes/gmsh-3d-binary-64.msh -viewer_binary_mpiio
-  testset:  # 64bit mesh, parallel
+  testset:  # 64-bit mesh, parallel
     args: -dm_coord_space 0 -dist_dm_distribute -petscpartitioner_type simple -dm_view ::ascii_info_detail -dm_plex_check_all -dm_plex_gmsh_mark_vertices
     nsize: 2
     output_file: output/ex1_gmsh_3d_64_np2.out
@@ -935,4 +955,27 @@ int main(int argc, char **argv)
   test:
     suffix: pyr_mixed_0
     args: -dm_plex_filename ${wPETSC_DIR}/share/petsc/datafiles/meshes/pyr_tet.msh -dm_plex_check_all -dm_view
+
+  test:
+    suffix: hypercubic_0
+    args: -dm_plex_dim 2 -dm_plex_shape hypercubic -dm_plex_box_faces 3,3 -dm_plex_check_all -dm_view
+
+  test:
+    suffix: hypercubic_1
+    args: -dm_plex_dim 3 -dm_plex_shape hypercubic -dm_plex_box_faces 3,3,3 -dm_plex_check_all -dm_view
+
+  test:
+    suffix: hypercubic_2
+    args: -dm_plex_dim 4 -dm_plex_shape hypercubic -dm_plex_box_faces 3,3,3,3 -dm_view \
+          -dm_plex_check_symmetry -dm_plex_check_skeleton -dm_plex_check_faces -dm_plex_check_pointsf -final_diagnostics 0
+
+  test:
+    suffix: hypercubic_3
+    args: -dm_plex_dim 5 -dm_plex_shape hypercubic -dm_plex_box_faces 3,3,3,3,3 -dm_view \
+          -dm_plex_check_symmetry -dm_plex_check_skeleton -dm_plex_check_faces -dm_plex_check_pointsf -final_diagnostics 0
+
+  test:
+    suffix: hypercubic_4
+    args: -dm_plex_dim 6 -dm_plex_shape hypercubic -dm_plex_box_faces 3,3,3,3,3,3 -dm_view \
+          -dm_plex_check_symmetry -dm_plex_check_skeleton -dm_plex_check_faces -dm_plex_check_pointsf -final_diagnostics 0
 TEST*/

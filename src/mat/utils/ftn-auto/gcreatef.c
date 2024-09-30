@@ -49,6 +49,11 @@ extern void PetscRmPointer(void*);
 #define matsetfromoptions_ matsetfromoptions
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define matheaderreplace_ MATHEADERREPLACE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define matheaderreplace_ matheaderreplace
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define matbindtocpu_ MATBINDTOCPU
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define matbindtocpu_ matbindtocpu
@@ -98,6 +103,11 @@ PETSC_EXTERN void  matsetfromoptions_(Mat B, int *__ierr)
 {
 *__ierr = MatSetFromOptions(
 	(Mat)PetscToPointer((B) ));
+}
+PETSC_EXTERN void  matheaderreplace_(Mat A,Mat *C, int *__ierr)
+{
+*__ierr = MatHeaderReplace(
+	(Mat)PetscToPointer((A) ),C);
 }
 PETSC_EXTERN void  matbindtocpu_(Mat A,PetscBool *flg, int *__ierr)
 {

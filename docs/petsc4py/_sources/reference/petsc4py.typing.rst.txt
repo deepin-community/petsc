@@ -1,0 +1,80 @@
+﻿petsc4py.typing
+===============
+
+.. automodule:: petsc4py.typing
+   :synopsis: 
+
+   
+
+   
+
+   
+
+   
+   .. rubric:: Attributes
+   .. autosummary::
+      :toctree:
+   
+      Scalar
+      ArrayInt
+      ArrayReal
+      ArrayComplex
+      ArrayScalar
+      DimsSpec
+      AccessModeSpec
+      InsertModeSpec
+      ScatterModeSpec
+      LayoutSizeSpec
+      NormTypeSpec
+      MatAssemblySpec
+      MatSizeSpec
+      MatBlockSizeSpec
+      CSRIndicesSpec
+      CSRSpec
+      NNZSpec
+      MatNullFunction
+      DMCoarsenHookFunction
+      DMRestrictHookFunction
+      KSPRHSFunction
+      KSPOperatorsFunction
+      KSPConvergenceTestFunction
+      KSPMonitorFunction
+      SNESMonitorFunction
+      SNESObjFunction
+      SNESFunction
+      SNESJacobianFunction
+      SNESGuessFunction
+      SNESUpdateFunction
+      SNESLSPreFunction
+      SNESNGSFunction
+      SNESConvergedFunction
+      TSRHSFunction
+      TSRHSJacobian
+      TSRHSJacobianP
+      TSIFunction
+      TSIJacobian
+      TSIJacobianP
+      TSI2Function
+      TSI2Jacobian
+      TSI2JacobianP
+      TSMonitorFunction
+      TSPreStepFunction
+      TSPostStepFunction
+      TSEventHandlerFunction
+      TSPostEventFunction
+      TAOObjectiveFunction
+      TAOGradientFunction
+      TAOObjectiveGradientFunction
+      TAOHessianFunction
+      TAOUpdateFunction
+      TAOMonitorFunction
+      TAOConvergedFunction
+      TAOJacobianFunction
+      TAOResidualFunction
+      TAOJacobianResidualFunction
+      TAOVariableBoundsFunction
+      TAOConstraintsFunction
+      TAOLSObjectiveFunction
+      TAOLSGradientFunction
+      TAOLSObjectiveGradientFunction
+

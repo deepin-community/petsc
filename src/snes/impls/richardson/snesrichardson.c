@@ -1,70 +1,35 @@
 #include <../src/snes/impls/richardson/snesrichardsonimpl.h>
 
-PetscErrorCode SNESReset_NRichardson(SNES snes)
+static PetscErrorCode SNESReset_NRichardson(SNES snes)
 {
   PetscFunctionBegin;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-  SNESDestroy_NRichardson - Destroys the private SNES_NRichardson context that was created with SNESCreate_NRichardson().
-
-  Input Parameter:
-. snes - the SNES context
-
-  Application Interface Routine: SNESDestroy()
-*/
-PetscErrorCode SNESDestroy_NRichardson(SNES snes)
+static PetscErrorCode SNESDestroy_NRichardson(SNES snes)
 {
   PetscFunctionBegin;
   PetscCall(SNESReset_NRichardson(snes));
   PetscCall(PetscFree(snes->data));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-   SNESSetUp_NRichardson - Sets up the internal data structures for the later use
-   of the SNESNRICHARDSON nonlinear solver.
-
-   Input Parameters:
-+  snes - the SNES context
--  x - the solution vector
-
-   Application Interface Routine: SNESSetUp()
- */
-PetscErrorCode SNESSetUp_NRichardson(SNES snes)
+static PetscErrorCode SNESSetUp_NRichardson(SNES snes)
 {
   PetscFunctionBegin;
   PetscCheck(snes->npcside != PC_RIGHT, PETSC_COMM_SELF, PETSC_ERR_ARG_WRONGSTATE, "NRichardson only supports left preconditioning");
   if (snes->functype == SNES_FUNCTION_DEFAULT) snes->functype = SNES_FUNCTION_UNPRECONDITIONED;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-  SNESSetFromOptions_NRichardson - Sets various parameters for the SNESNEWTONLS method.
-
-  Input Parameter:
-. snes - the SNES context
-
-  Application Interface Routine: SNESSetFromOptions()
-*/
 static PetscErrorCode SNESSetFromOptions_NRichardson(SNES snes, PetscOptionItems *PetscOptionsObject)
 {
   PetscFunctionBegin;
   PetscOptionsHeadBegin(PetscOptionsObject, "SNES Richardson options");
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-  SNESView_NRichardson - Prints info from the SNESRichardson data structure.
-
-  Input Parameters:
-+ SNES - the SNES context
-- viewer - visualization context
-
-  Application Interface Routine: SNESView()
-*/
 static PetscErrorCode SNESView_NRichardson(SNES snes, PetscViewer viewer)
 {
   PetscBool iascii;
@@ -72,21 +37,10 @@ static PetscErrorCode SNESView_NRichardson(SNES snes, PetscViewer viewer)
   PetscFunctionBegin;
   PetscCall(PetscObjectTypeCompare((PetscObject)viewer, PETSCVIEWERASCII, &iascii));
   if (iascii) { }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-/*
-  SNESSolve_NRichardson - Solves a nonlinear system with the Richardson method.
-
-  Input Parameters:
-. snes - the SNES context
-
-  Output Parameter:
-. outits - number of iterations until termination
-
-  Application Interface Routine: SNESSolve()
-*/
-PetscErrorCode SNESSolve_NRichardson(SNES snes)
+static PetscErrorCode SNESSolve_NRichardson(SNES snes)
 {
   Vec                  X, Y, F;
   PetscReal            xnorm, fnorm, ynorm;
@@ -114,7 +68,7 @@ PetscErrorCode SNESSolve_NRichardson(SNES snes)
     PetscCall(SNESGetConvergedReason(snes->npc, &reason));
     if (reason < 0 && reason != SNES_DIVERGED_MAX_IT) {
       snes->reason = SNES_DIVERGED_INNER;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
     PetscCall(VecNorm(F, NORM_2, &fnorm));
   } else {
@@ -130,7 +84,7 @@ PetscErrorCode SNESSolve_NRichardson(SNES snes)
     PetscCall(SNESGetConvergedReason(snes->npc, &reason));
     if (reason < 0 && reason != SNES_DIVERGED_MAX_IT) {
       snes->reason = SNES_DIVERGED_INNER;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
   } else {
     PetscCall(VecCopy(F, Y));
@@ -140,20 +94,14 @@ PetscErrorCode SNESSolve_NRichardson(SNES snes)
   snes->norm = fnorm;
   PetscCall(PetscObjectSAWsGrantAccess((PetscObject)snes));
   PetscCall(SNESLogConvergenceHistory(snes, fnorm, 0));
-  PetscCall(SNESMonitor(snes, 0, fnorm));
 
   /* test convergence */
-  PetscUseTypeMethod(snes, converged, 0, 0.0, 0.0, fnorm, &snes->reason, snes->cnvP);
-  if (snes->reason) PetscFunctionReturn(0);
+  PetscCall(SNESConverged(snes, 0, 0.0, 0.0, fnorm));
+  PetscCall(SNESMonitor(snes, 0, fnorm));
+  if (snes->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Call general purpose update function */
   PetscTryTypeMethod(snes, update, snes->iter);
-
-  /* set parameter for default relative tolerance convergence test */
-  snes->ttol = fnorm * snes->rtol;
-  /* test convergence */
-  PetscUseTypeMethod(snes, converged, 0, 0.0, 0.0, fnorm, &snes->reason, snes->cnvP);
-  if (snes->reason) PetscFunctionReturn(0);
 
   for (i = 1; i < maxits + 1; i++) {
     PetscCall(SNESLineSearchApply(snes->linesearch, X, F, &fnorm, Y));
@@ -178,9 +126,9 @@ PetscErrorCode SNESSolve_NRichardson(SNES snes)
     snes->ynorm = ynorm;
     PetscCall(PetscObjectSAWsGrantAccess((PetscObject)snes));
     PetscCall(SNESLogConvergenceHistory(snes, snes->norm, 0));
-    PetscCall(SNESMonitor(snes, snes->iter, snes->norm));
     /* Test for convergence */
-    PetscUseTypeMethod(snes, converged, snes->iter, xnorm, ynorm, fnorm, &snes->reason, snes->cnvP);
+    PetscCall(SNESConverged(snes, snes->iter, xnorm, ynorm, fnorm));
+    PetscCall(SNESMonitor(snes, snes->iter, snes->norm));
     if (snes->reason) break;
 
     /* Call general purpose update function */
@@ -197,7 +145,7 @@ PetscErrorCode SNESSolve_NRichardson(SNES snes)
       PetscCall(SNESGetConvergedReason(snes->npc, &reason));
       if (reason < 0 && reason != SNES_DIVERGED_MAX_IT) {
         snes->reason = SNES_DIVERGED_INNER;
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
     } else {
       PetscCall(VecCopy(F, Y));
@@ -207,7 +155,7 @@ PetscErrorCode SNESSolve_NRichardson(SNES snes)
     PetscCall(PetscInfo(snes, "Maximum number of iterations has been reached: %" PetscInt_FMT "\n", maxits));
     if (!snes->reason) snes->reason = SNES_DIVERGED_MAX_IT;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -222,7 +170,7 @@ PetscErrorCode SNESSolve_NRichardson(SNES snes)
    Notes:
    If no inner nonlinear preconditioner is provided then solves F(x) - b = 0 using x^{n+1} = x^{n} - lambda
    (F(x^n) - b) where lambda is obtained either `SNESLineSearchSetDamping()`, -snes_damping or a line search.  If
-   an inner nonlinear preconditioner is provided (either with -npc_snes_type or `SNESSetNPC())` then the inner
+   an inner nonlinear preconditioner is provided (either with -npc_snes_type or `SNESSetNPC()`) then the inner
    solver is called an initial solution x^n and the nonlinear Richardson uses x^{n+1} = x^{n} + lambda d^{n}
    where d^{n} = \hat{x}^{n} - x^{n} where \hat{x}^{n} is the solution returned from the inner solver.
 
@@ -233,7 +181,8 @@ PetscErrorCode SNESSolve_NRichardson(SNES snes)
 
    Only supports left non-linear preconditioning.
 
-.seealso: `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESNEWTONLS`, `SNESNEWTONTR`, `SNESNGMRES`, `SNESQN`, `SNESNCG`
+.seealso: [](ch_snes), `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESNEWTONLS`, `SNESNEWTONTR`, `SNESNGMRES`, `SNESQN`, `SNESNCG`,
+          `SNESLineSearchSetDamping()`
 M*/
 PETSC_EXTERN PetscErrorCode SNESCreate_NRichardson(SNES snes)
 {
@@ -266,5 +215,5 @@ PETSC_EXTERN PetscErrorCode SNESCreate_NRichardson(SNES snes)
     snes->max_its   = 10000;
     snes->stol      = 1e-20;
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -23,13 +23,17 @@ configure_options = [
   '--download-suitesparse',
   '--download-triangle',
   '--download-cgns',
-  '--download-chaco',
+  #'--download-chaco', run with hdf5, exodus, but without chaco
   '--download-ctetgen',
   '--download-cmake',
   '--download-amrex',
   '--download-hypre',
   '--download-ks',
+  '--download-sprng',
   '--with-ssl=1',
+  '--with-tau-perfstubs=0',
+  '--with-strict-petscerrorcode',
+  '--with-coverage',
 ]
 
 if __name__ == '__main__':

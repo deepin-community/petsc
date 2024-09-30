@@ -1,4 +1,3 @@
-
 /*
     This file implements FBiCGStab-R.
     FBiCGStab-R is a mathematically equivalent variant of FBiCGStab. Differences are:
@@ -12,7 +11,7 @@ static PetscErrorCode KSPSetUp_FBCGSR(KSP ksp)
 {
   PetscFunctionBegin;
   PetscCall(KSPSetWorkVecs(ksp, 8));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode KSPSolve_FBCGSR(KSP ksp)
@@ -37,7 +36,7 @@ static PetscErrorCode KSPSolve_FBCGSR(KSP ksp)
   B  = ksp->vec_rhs;
   P2 = ksp->work[0];
 
-  /* The followings are involved in modified inner product calculations and vector updates */
+  /* The following are involved in modified inner product calculations and vector updates */
   RP = ksp->work[1];
   PetscCall(VecGetArray(RP, (PetscScalar **)&rp));
   PetscCall(VecRestoreArray(RP, NULL));
@@ -71,7 +70,6 @@ static PetscErrorCode KSPSolve_FBCGSR(KSP ksp)
 
   /* Compute initial residual */
   PetscCall(KSPGetPC(ksp, &pc));
-  PetscCall(PCSetUp(pc));
   PetscCall(PCGetOperators(pc, &mat, NULL));
   if (!ksp->guess_zero) {
     PetscCall(KSP_MatMult(ksp, mat, X, P2)); /* P2 is used as temporary storage */
@@ -91,7 +89,7 @@ static PetscErrorCode KSPSolve_FBCGSR(KSP ksp)
   PetscCall(KSPLogResidualHistory(ksp, ksp->rnorm));
   PetscCall(KSPMonitor(ksp, 0, ksp->rnorm));
   PetscCall((*ksp->converged)(ksp, 0, ksp->rnorm, &ksp->reason, ksp->cnvP));
-  if (ksp->reason) PetscFunctionReturn(0);
+  if (ksp->reason) PetscFunctionReturn(PETSC_SUCCESS);
 
   /* Initialize iterates */
   PetscCall(VecCopy(R, RP)); /* rp <- r */
@@ -103,7 +101,7 @@ static PetscErrorCode KSPSolve_FBCGSR(KSP ksp)
     PetscCall(KSP_PCApply(ksp, P, P2));      /* p2 <- K p */
     PetscCall(KSP_MatMult(ksp, mat, P2, V)); /* v <- A p2 */
 
-    /* inner prodcuts */
+    /* inner products */
     if (i == 0) {
       tau = rho * rho;
       PetscCall(VecDot(V, RP, &sigma)); /* sigma <- (v,rp) */
@@ -135,7 +133,7 @@ static PetscErrorCode KSPSolve_FBCGSR(KSP ksp)
     PetscCall(KSP_PCApply(ksp, S, S2));      /* s2 <- K s */
     PetscCall(KSP_MatMult(ksp, mat, S2, T)); /* t <- A s2 */
 
-    /* inner prodcuts */
+    /* inner products */
     PetscCall(PetscLogEventBegin(VEC_ReduceArithmetic, 0, 0, 0, 0));
     xi1 = xi2 = xi3 = xi4 = 0.0;
     for (j = 0; j < N; j++) {
@@ -198,11 +196,11 @@ static PetscErrorCode KSPSolve_FBCGSR(KSP ksp)
   }
 
   if (i >= ksp->max_it) ksp->reason = KSP_DIVERGED_ITS;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     KSPFBCGSR - Implements a mathematically equivalent variant of flexible bi-CG-stab, `KSPFBCGS`. [](sec_flexibleksp)
+   KSPFBCGSR - Implements a mathematically equivalent variant of flexible bi-CG-stab, `KSPFBCGS`. [](sec_flexibleksp)
 
    Level: beginner
 
@@ -216,7 +214,7 @@ static PetscErrorCode KSPSolve_FBCGSR(KSP ksp)
 
    Only supports right preconditioning
 
-.seealso: [](chapter_ksp),  [](sec_flexibleksp), `KSPFBCGSR`, `KSPPIPEBCGS`, `KSPBCGSL`, `KSPBCGS`, `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPBICG`, `KSPFBCGSL`, `KSPSetPCSide()`
+.seealso: [](ch_ksp),  [](sec_flexibleksp), `KSPFBCGSR`, `KSPPIPEBCGS`, `KSPBCGSL`, `KSPBCGS`, `KSPCreate()`, `KSPSetType()`, `KSPType`, `KSP`, `KSPBICG`, `KSPFBCGS`, `KSPSetPCSide()`
 M*/
 PETSC_EXTERN PetscErrorCode KSPCreate_FBCGSR(KSP ksp)
 {
@@ -238,5 +236,5 @@ PETSC_EXTERN PetscErrorCode KSPCreate_FBCGSR(KSP ksp)
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_PRECONDITIONED, PC_LEFT, 3));
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_UNPRECONDITIONED, PC_RIGHT, 2));
   PetscCall(KSPSetSupportedNorm(ksp, KSP_NORM_NONE, PC_RIGHT, 1));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

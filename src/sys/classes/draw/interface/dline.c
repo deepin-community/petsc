@@ -1,21 +1,23 @@
-
 /*
        Provides the calling sequences for all the basic PetscDraw routines.
 */
 #include <petsc/private/drawimpl.h> /*I "petscdraw.h" I*/
 
 /*@
-   PetscDrawGetBoundingBox - Gets the bounding box of all `PetscDrawStringBoxed()` commands
+  PetscDrawGetBoundingBox - Gets the bounding box of all `PetscDrawStringBoxed()` commands
 
-   Not collective
+  Not Collective
 
-   Input Parameter:
-.  draw - the drawing context
+  Input Parameter:
+. draw - the drawing context
 
-   Output Parameters:
-.   xl,yl,xr,yr - coordinates of lower left and upper right corners of bounding box
+  Output Parameters:
++ xl - horizontal coordinate of lower left corner of bounding box
+. yl - vertical coordinate of lower left corner of bounding box
+. xr - horizontal coordinate of upper right corner of bounding box
+- yr - vertical coordinate of upper right corner of bounding box
 
-   Level: intermediate
+  Level: intermediate
 
 .seealso: `PetscDraw`, `PetscDrawPushCurrentPoint()`, `PetscDrawPopCurrentPoint()`, `PetscDrawSetCurrentPoint()`
 @*/
@@ -23,29 +25,30 @@ PetscErrorCode PetscDrawGetBoundingBox(PetscDraw draw, PetscReal *xl, PetscReal 
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
-  if (xl) PetscValidRealPointer(xl, 2);
-  if (yl) PetscValidRealPointer(yl, 3);
-  if (xr) PetscValidRealPointer(xr, 4);
-  if (yr) PetscValidRealPointer(yr, 5);
+  if (xl) PetscAssertPointer(xl, 2);
+  if (yl) PetscAssertPointer(yl, 3);
+  if (xr) PetscAssertPointer(xr, 4);
+  if (yr) PetscAssertPointer(yr, 5);
   if (xl) *xl = draw->boundbox_xl;
   if (yl) *yl = draw->boundbox_yl;
   if (xr) *xr = draw->boundbox_xr;
   if (yr) *yr = draw->boundbox_yr;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscDrawGetCurrentPoint - Gets the current draw point, some codes use this point to determine where to draw next
+  PetscDrawGetCurrentPoint - Gets the current draw point, some codes use this point to determine where to draw next
 
-   Not collective
+  Not Collective
 
-   Input Parameter:
-.  draw - the drawing context
+  Input Parameter:
+. draw - the drawing context
 
-   Output Parameters:
-.   x,y - the current point
+  Output Parameters:
++ x - horizontal coordinate of the current point
+- y - vertical coordinate of the current point
 
-   Level: intermediate
+  Level: intermediate
 
 .seealso: `PetscDraw`, `PetscDrawPushCurrentPoint()`, `PetscDrawPopCurrentPoint()`, `PetscDrawSetCurrentPoint()`
 @*/
@@ -53,23 +56,24 @@ PetscErrorCode PetscDrawGetCurrentPoint(PetscDraw draw, PetscReal *x, PetscReal 
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
-  PetscValidRealPointer(x, 2);
-  PetscValidRealPointer(y, 3);
+  PetscAssertPointer(x, 2);
+  PetscAssertPointer(y, 3);
   *x = draw->currentpoint_x[draw->currentpoint];
   *y = draw->currentpoint_y[draw->currentpoint];
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscDrawSetCurrentPoint - Sets the current draw point, some codes use this point to determine where to draw next
+  PetscDrawSetCurrentPoint - Sets the current draw point, some codes use this point to determine where to draw next
 
-   Not collective
+  Not Collective
 
-   Input Parameters:
-+  draw - the drawing context
--  x,y - the location of the current point
+  Input Parameters:
++ draw - the drawing context
+. x    - horizontal coordinate of the current point
+- y    - vertical coordinate of the current point
 
-   Level: intermediate
+  Level: intermediate
 
 .seealso: `PetscDraw`, `PetscDrawPushCurrentPoint()`, `PetscDrawPopCurrentPoint()`, `PetscDrawGetCurrentPoint()`
 @*/
@@ -79,21 +83,22 @@ PetscErrorCode PetscDrawSetCurrentPoint(PetscDraw draw, PetscReal x, PetscReal y
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
   draw->currentpoint_x[draw->currentpoint] = x;
   draw->currentpoint_y[draw->currentpoint] = y;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscDrawPushCurrentPoint - Pushes a new current draw point, retaining the old one, some codes use this point to determine where to draw next
+  PetscDrawPushCurrentPoint - Pushes a new current draw point, retaining the old one, some codes use this point to determine where to draw next
 
-   Not collective
+  Not Collective
 
-   Input Parameters:
-+  draw - the drawing context
--  x,y - the location of the current point
+  Input Parameters:
++ draw - the drawing context
+. x    - horizontal coordinate of the current point
+- y    - vertical coordinate of the current point
 
-   Level: intermediate
+  Level: intermediate
 
-.seealso: `PetscDraw`, `PetscDrawPushCurrentPoint()`, `PetscDrawPopCurrentPoint()`, `PetscDrawGetCurrentPoint()`
+.seealso: `PetscDraw`, `PetscDrawPopCurrentPoint()`, `PetscDrawGetCurrentPoint()`
 @*/
 PetscErrorCode PetscDrawPushCurrentPoint(PetscDraw draw, PetscReal x, PetscReal y)
 {
@@ -102,18 +107,18 @@ PetscErrorCode PetscDrawPushCurrentPoint(PetscDraw draw, PetscReal x, PetscReal 
   PetscCheck(draw->currentpoint <= 19, PETSC_COMM_SELF, PETSC_ERR_SUP, "You have pushed too many current points");
   draw->currentpoint_x[++draw->currentpoint] = x;
   draw->currentpoint_y[draw->currentpoint]   = y;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscDrawPopCurrentPoint - Pops a current draw point (discarding it)
+  PetscDrawPopCurrentPoint - Pops a current draw point (discarding it)
 
-   Not collective
+  Not Collective
 
-   Input Parameter:
-.  draw - the drawing context
+  Input Parameter:
+. draw - the drawing context
 
-   Level: intermediate
+  Level: intermediate
 
 .seealso: `PetscDraw`, `PetscDrawPushCurrentPoint()`, `PetscDrawSetCurrentPoint()`, `PetscDrawGetCurrentPoint()`
 @*/
@@ -122,20 +127,23 @@ PetscErrorCode PetscDrawPopCurrentPoint(PetscDraw draw)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
   PetscCheck(draw->currentpoint-- > 0, PETSC_COMM_SELF, PETSC_ERR_SUP, "You have popped too many current points");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscDrawLine - draws a line onto a drawable.
+  PetscDrawLine - draws a line onto a drawable.
 
-   Not collective
+  Not Collective
 
-   Input Parameters:
-+  draw - the drawing context
-.  xl,yl,xr,yr - the coordinates of the line endpoints
--  cl - the colors of the endpoints
+  Input Parameters:
++ draw - the drawing context
+. xl   - horizontal coordinate of first end point
+. yl   - vertical coordinate of first end point
+. xr   - horizontal coordinate of second end point
+. yr   - vertical coordinate of second end point
+- cl   - the colors of the endpoints
 
-   Level: beginner
+  Level: beginner
 
 .seealso: `PetscDraw`, `PetscDrawArrow()`, `PetscDrawLineSetWidth()`, `PetscDrawLineGetWidth()`, `PetscDrawRectangle()`, `PetscDrawTriangle()`, `PetscDrawEllipse()`,
           `PetscDrawMarker()`, `PetscDrawPoint()`
@@ -145,20 +153,23 @@ PetscErrorCode PetscDrawLine(PetscDraw draw, PetscReal xl, PetscReal yl, PetscRe
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
   PetscUseTypeMethod(draw, line, xl, yl, xr, yr, cl);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscDrawArrow - draws a line with arrow head at end if the line is long enough
+  PetscDrawArrow - draws a line with arrow head at end if the line is long enough
 
-   Not collective
+  Not Collective
 
-   Input Parameters:
-+  draw - the drawing context
-.  xl,yl,xr,yr - the coordinates of the line endpoints
--  cl - the colors of the endpoints
+  Input Parameters:
++ draw - the drawing context
+. xl   - horizontal coordinate of first end point
+. yl   - vertical coordinate of first end point
+. xr   - horizontal coordinate of second end point
+. yr   - vertical coordinate of second end point
+- cl   - the colors of the endpoints
 
-   Level: beginner
+  Level: beginner
 
 .seealso: `PetscDraw`, `PetscDrawLine()`, `PetscDrawLineSetWidth()`, `PetscDrawLineGetWidth()`, `PetscDrawRectangle()`, `PetscDrawTriangle()`, `PetscDrawEllipse()`,
           `PetscDrawMarker()`, `PetscDrawPoint()`
@@ -168,21 +179,21 @@ PetscErrorCode PetscDrawArrow(PetscDraw draw, PetscReal xl, PetscReal yl, PetscR
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
   PetscUseTypeMethod(draw, arrow, xl, yl, xr, yr, cl);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscDrawLineSetWidth - Sets the line width for future draws.  The width is
-   relative to the user coordinates of the window; 0.0 denotes the natural
-   width; 1.0 denotes the entire viewport.
+  PetscDrawLineSetWidth - Sets the line width for future draws.  The width is
+  relative to the user coordinates of the window; 0.0 denotes the natural
+  width; 1.0 denotes the entire viewport.
 
-   Not collective
+  Not Collective
 
-   Input Parameters:
-+  draw - the drawing context
--  width - the width in user coordinates
+  Input Parameters:
++ draw  - the drawing context
+- width - the width in user coordinates
 
-   Level: advanced
+  Level: advanced
 
 .seealso: `PetscDraw`, `PetscDrawLineGetWidth()`, `PetscDrawLine()`, `PetscDrawArrow()`
 @*/
@@ -191,26 +202,26 @@ PetscErrorCode PetscDrawLineSetWidth(PetscDraw draw, PetscReal width)
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
   PetscTryTypeMethod(draw, linesetwidth, width);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@
-   PetscDrawLineGetWidth - Gets the line width for future draws.  The width is
-   relative to the user coordinates of the window; 0.0 denotes the natural
-   width; 1.0 denotes the interior viewport.
+  PetscDrawLineGetWidth - Gets the line width for future draws.  The width is
+  relative to the user coordinates of the window; 0.0 denotes the natural
+  width; 1.0 denotes the interior viewport.
 
-   Not collective
+  Not Collective
 
-   Input Parameter:
-.  draw - the drawing context
+  Input Parameter:
+. draw - the drawing context
 
-   Output Parameter:
-.  width - the width in user coordinates
+  Output Parameter:
+. width - the width in user coordinates
 
-   Level: advanced
+  Level: advanced
 
-   Note:
-   Not currently implemented.
+  Note:
+  Not currently implemented.
 
 .seealso: `PetscDraw`, `PetscDrawLineSetWidth()`, `PetscDrawLine()`, `PetscDrawArrow()`
 @*/
@@ -218,7 +229,7 @@ PetscErrorCode PetscDrawLineGetWidth(PetscDraw draw, PetscReal *width)
 {
   PetscFunctionBegin;
   PetscValidHeaderSpecific(draw, PETSC_DRAW_CLASSID, 1);
-  PetscValidRealPointer(width, 2);
+  PetscAssertPointer(width, 2);
   PetscUseTypeMethod(draw, linegetwidth, width);
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

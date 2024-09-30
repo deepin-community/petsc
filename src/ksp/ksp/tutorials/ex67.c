@@ -1,4 +1,3 @@
-
 static char help[] = "Krylov methods to solve u''  = f in parallel with periodic boundary conditions,\n\
                       with a singular, inconsistent system.\n\n";
 
@@ -162,7 +161,7 @@ PetscErrorCode FormRightHandSide(Vec f, void *ctx)
      Restore vectors
   */
   PetscCall(DMDAVecRestoreArray(da, f, &ff));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 /* ------------------------------------------------------------------- */
 PetscErrorCode FormMatrix(Mat jac, void *ctx)
@@ -236,7 +235,7 @@ PetscErrorCode FormMatrix(Mat jac, void *ctx)
   }
   PetscCall(MatAssemblyBegin(jac, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(jac, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*TEST

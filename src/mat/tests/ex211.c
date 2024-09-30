@@ -1,4 +1,3 @@
-
 static char help[] = "Tests MatCreateSubmatrix() in parallel.";
 
 #include <petscmat.h>
@@ -120,7 +119,7 @@ PetscErrorCode ISGetSeqIS_SameColDist_Private(Mat mat, IS isrow, IS iscol, IS *i
   PetscCall(VecDestroy(&x));
   PetscCall(VecDestroy(&cmap));
   PetscCall(VecDestroy(&lcmap));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **args)

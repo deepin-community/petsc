@@ -434,6 +434,11 @@ extern void PetscRmPointer(void*);
 #define matsetblocksize_ matsetblocksize
 #endif
 #ifdef PETSC_HAVE_FORTRAN_CAPS
+#define matcomputevariableblockenvelope_ MATCOMPUTEVARIABLEBLOCKENVELOPE
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define matcomputevariableblockenvelope_ matcomputevariableblockenvelope
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
 #define matinvertvariableblockenvelope_ MATINVERTVARIABLEBLOCKENVELOPE
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define matinvertvariableblockenvelope_ matinvertvariableblockenvelope
@@ -717,6 +722,11 @@ extern void PetscRmPointer(void*);
 #define mathascongruentlayouts_ MATHASCONGRUENTLAYOUTS
 #elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
 #define mathascongruentlayouts_ mathascongruentlayouts
+#endif
+#ifdef PETSC_HAVE_FORTRAN_CAPS
+#define mateliminatezeros_ MATELIMINATEZEROS
+#elif !defined(PETSC_HAVE_FORTRAN_UNDERSCORE) && !defined(FORTRANDOUBLEUNDERSCORE)
+#define mateliminatezeros_ mateliminatezeros
 #endif
 
 
@@ -1210,6 +1220,11 @@ PETSC_EXTERN void  matsetblocksize_(Mat mat,PetscInt *bs, int *__ierr)
 *__ierr = MatSetBlockSize(
 	(Mat)PetscToPointer((mat) ),*bs);
 }
+PETSC_EXTERN void  matcomputevariableblockenvelope_(Mat mat, int *__ierr)
+{
+*__ierr = MatComputeVariableBlockEnvelope(
+	(Mat)PetscToPointer((mat) ));
+}
 PETSC_EXTERN void  matinvertvariableblockenvelope_(Mat A,MatReuse *reuse,Mat *C, int *__ierr)
 {
 *__ierr = MatInvertVariableBlockEnvelope(
@@ -1538,6 +1553,11 @@ PETSC_EXTERN void  mathascongruentlayouts_(Mat mat,PetscBool *cong, int *__ierr)
 {
 *__ierr = MatHasCongruentLayouts(
 	(Mat)PetscToPointer((mat) ),cong);
+}
+PETSC_EXTERN void  mateliminatezeros_(Mat A,PetscBool *keep, int *__ierr)
+{
+*__ierr = MatEliminateZeros(
+	(Mat)PetscToPointer((A) ),*keep);
 }
 #if defined(__cplusplus)
 }

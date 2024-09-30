@@ -9,33 +9,34 @@ PETSC_EXTERN PetscErrorCode TaoLineSearchCreate_OWArmijo(TaoLineSearch);
 static PetscBool            TaoLineSearchPackageInitialized = PETSC_FALSE;
 
 /*@C
-  TaoLineSearchFinalizePackage - This function destroys everything in the PETSc/TAO
-  interface to the TaoLineSearch package. It is called from PetscFinalize().
+  TaoLineSearchFinalizePackage - This function destroys everything in the `TaoLineSearch` package. It is called from `PetscFinalize()`.
 
   Level: developer
+
+.seealso: `Tao`, `TaoLineSearch`
 @*/
 PetscErrorCode TaoLineSearchFinalizePackage(void)
 {
   PetscFunctionBegin;
   PetscCall(PetscFunctionListDestroy(&TaoLineSearchList));
   TaoLineSearchPackageInitialized = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
   TaoLineSearchInitializePackage - This function registers the line-search
-  algorithms in TAO.  When using shared or static libraries, this function is called from the
-  first entry to TaoCreate(); when using dynamic, it is called
+  algorithms in `Tao`.  When using shared or static libraries, this function is called from the
+  first entry to `TaoCreate()`; when using dynamic, it is called
   from PetscDLLibraryRegister_tao()
 
   Level: developer
 
-.seealso: `TaoLineSearchCreate()`
+.seealso: `Tao`, `TaoLineSearch`, `TaoLineSearchCreate()`
 @*/
 PetscErrorCode TaoLineSearchInitializePackage(void)
 {
   PetscFunctionBegin;
-  if (TaoLineSearchPackageInitialized) PetscFunctionReturn(0);
+  if (TaoLineSearchPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   TaoLineSearchPackageInitialized = PETSC_TRUE;
 #if !defined(PETSC_USE_COMPLEX)
   PetscCall(PetscClassIdRegister("TaoLineSearch", &TAOLINESEARCH_CLASSID));
@@ -48,5 +49,5 @@ PetscErrorCode TaoLineSearchInitializePackage(void)
   PetscCall(PetscLogEventRegister("TaoLSEval", TAOLINESEARCH_CLASSID, &TAOLINESEARCH_Eval));
 #endif
   PetscCall(PetscRegisterFinalize(TaoLineSearchFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

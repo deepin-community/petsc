@@ -1,5 +1,4 @@
-#ifndef __TSIMPL_H
-#define __TSIMPL_H
+#pragma once
 
 #include <petscts.h>
 #include <petsc/private/petscimpl.h>
@@ -64,6 +63,7 @@ struct _TSOps {
   PetscErrorCode (*startingmethod)(TS);
   PetscErrorCode (*initcondition)(TS, Vec);
   PetscErrorCode (*exacterror)(TS, Vec, Vec);
+  PetscErrorCode (*resizeregister)(TS, PetscBool);
 };
 
 /*
@@ -164,6 +164,9 @@ struct _p_TS {
   TSAdaptType default_adapt_type;
   TSEvent     event;
 
+  /* ---------------- Resize ---------------------*/
+  PetscObjectList resizetransferobjs;
+
   /* ---------------- User (or PETSc) Provided stuff ---------------------*/
   PetscErrorCode (*monitor[MAXTSMONITORS])(TS, PetscInt, PetscReal, Vec, void *);
   PetscErrorCode (*monitordestroy[MAXTSMONITORS])(void **);
@@ -181,6 +184,9 @@ struct _p_TS {
   PetscErrorCode (*postevaluate)(TS);
   PetscErrorCode (*poststep)(TS);
   PetscErrorCode (*functiondomainerror)(TS, PetscReal, Vec, PetscBool *);
+  PetscErrorCode (*resizesetup)(TS, PetscInt, PetscReal, Vec, PetscBool *, void *);
+  PetscErrorCode (*resizetransfer)(TS, PetscInt, Vec[], Vec[], void *);
+  void *resizectx;
 
   /* ---------------------- Sensitivity Analysis support -----------------*/
   TSTrajectory trajectory; /* All solutions are kept here for the entire time integration process */
@@ -508,10 +514,18 @@ struct _n_TSMonitorLGCtx {
 
 struct _n_TSMonitorSPCtx {
   PetscDrawSP sp;
-  PetscInt    howoften; /* when > 0 uses step % howoften, when negative only final solution plotted */
-  PetscInt    retain;   /* Retain n points plotted to show trajectories, or -1 for all points */
-  PetscBool   phase;    /* Plot in phase space rather than coordinate space */
+  PetscInt    howoften;     /* when > 0 uses step % howoften, when negative only final solution plotted */
+  PetscInt    retain;       /* Retain n points plotted to show trajectories, or -1 for all points */
+  PetscBool   phase;        /* Plot in phase space rather than coordinate space */
+  PetscBool   multispecies; /* Change scatter point color based on species */
   PetscInt    ksp_its, snes_its;
+};
+
+struct _n_TSMonitorHGCtx {
+  PetscDrawHG *hg;
+  PetscInt     howoften; /* when > 0 uses step % howoften, when negative only final solution plotted */
+  PetscInt     Ns;       /* The number of species to histogram */
+  PetscBool    velocity; /* Plot in velocity space rather than coordinate space */
 };
 
 struct _n_TSMonitorEnvelopeCtx {
@@ -530,7 +544,7 @@ static inline PetscErrorCode TSCheckImplicitTerm(TS ts)
   PetscCall(TSGetDM(ts, &dm));
   PetscCall(DMTSGetIFunction(dm, &ifunction, NULL));
   PetscCheck(!ifunction, PetscObjectComm((PetscObject)ts), PETSC_ERR_ARG_INCOMP, "You are attempting to use an explicit ODE integrator but provided an implicit function definition with TSSetIFunction()");
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PETSC_EXTERN PetscErrorCode TSGetRHSMats_Private(TS, Mat *, Mat *);
@@ -554,4 +568,3 @@ struct _n_TSMonitorDrawCtx {
   PetscInt    howoften; /* when > 0 uses step % howoften, when negative only final solution plotted */
   PetscBool   showtimestepandtime;
 };
-#endif

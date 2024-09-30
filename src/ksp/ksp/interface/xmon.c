@@ -1,4 +1,3 @@
-
 #include <petsc/private/kspimpl.h> /*I  "petscksp.h"   I*/
 #include <petscdraw.h>
 
@@ -18,7 +17,7 @@ PetscErrorCode KSPMonitorLGCreate(MPI_Comm comm, const char host[], const char l
   PetscCall(PetscDrawAxisSetLabels(axis, "Convergence", "Iteration", metric));
   PetscCall(PetscDrawDestroy(&draw));
   *lgctx = lg;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode KSPMonitorLGRange(KSP ksp, PetscInt n, PetscReal rnorm, void *monctx)
@@ -51,7 +50,7 @@ PetscErrorCode KSPMonitorLGRange(KSP ksp, PetscInt n, PetscReal rnorm, void *mon
   PetscCall(PetscViewerDrawGetDrawLG(v, 1, &lg));
   if (!n) PetscCall(PetscDrawLGReset(lg));
   PetscCall(PetscDrawLGGetDraw(lg, &draw));
-  PetscCall(PetscDrawSetTitle(draw, "% elemts > .2*max elemt"));
+  PetscCall(PetscDrawSetTitle(draw, "% elements > .2*max element"));
   x = (PetscReal)n;
   y = 100.0 * per;
   PetscCall(PetscDrawLGAddPoint(lg, &x, &y));
@@ -85,5 +84,5 @@ PetscErrorCode KSPMonitorLGRange(KSP ksp, PetscInt n, PetscReal rnorm, void *mon
   }
 
   prev = rnorm;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

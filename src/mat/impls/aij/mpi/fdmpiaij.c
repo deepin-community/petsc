@@ -3,6 +3,31 @@
 #include <../src/mat/impls/baij/mpi/mpibaij.h>
 #include <petsc/private/isimpl.h>
 
+static PetscErrorCode MatFDColoringMarkHost_AIJ(Mat J)
+{
+  PetscBool    isseqAIJ, ismpiAIJ, issell;
+  PetscScalar *v;
+
+  PetscFunctionBegin;
+  PetscCall(PetscObjectBaseTypeCompare((PetscObject)J, MATMPIAIJ, &ismpiAIJ));
+  PetscCall(PetscObjectBaseTypeCompare((PetscObject)J, MATSEQAIJ, &isseqAIJ));
+  PetscCall(PetscObjectTypeCompareAny((PetscObject)J, &issell, MATSEQSELLCUDA, MATMPISELLCUDA, ""));
+  PetscCheck(!issell, PETSC_COMM_SELF, PETSC_ERR_SUP, "Not coded for %s. Send an email to petsc-dev@mcs.anl.gov to request this feature", ((PetscObject)J)->type_name);
+  if (isseqAIJ) {
+    PetscCall(MatSeqAIJGetArrayWrite(J, &v));
+    PetscCall(MatSeqAIJRestoreArrayWrite(J, &v));
+  } else if (ismpiAIJ) {
+    Mat dJ, oJ;
+
+    PetscCall(MatMPIAIJGetSeqAIJ(J, &dJ, &oJ, NULL));
+    PetscCall(MatSeqAIJGetArrayWrite(dJ, &v));
+    PetscCall(MatSeqAIJRestoreArrayWrite(dJ, &v));
+    PetscCall(MatSeqAIJGetArrayWrite(oJ, &v));
+    PetscCall(MatSeqAIJRestoreArrayWrite(oJ, &v));
+  }
+  PetscFunctionReturn(PETSC_SUCCESS);
+}
+
 PetscErrorCode MatFDColoringApply_BAIJ(Mat J, MatFDColoring coloring, Vec x1, void *sctx)
 {
   PetscErrorCode (*f)(void *, Vec, Vec, void *) = (PetscErrorCode(*)(void *, Vec, Vec, void *))coloring->f;
@@ -150,7 +175,7 @@ PetscErrorCode MatFDColoringApply_BAIJ(Mat J, MatFDColoring coloring, Vec x1, vo
 
   coloring->currentcolor = -1;
   PetscCall(VecBindToCPU(x1, PETSC_FALSE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* this is declared PETSC_EXTERN because it is used by MatFDColoringUseDM() which is in the DM library */
@@ -172,6 +197,7 @@ PetscErrorCode MatFDColoringApply_AIJ(Mat J, MatFDColoring coloring, Vec x1, voi
   PetscBool          alreadyboundtocpu;
 
   PetscFunctionBegin;
+  PetscCall(MatFDColoringMarkHost_AIJ(J));
   PetscCall(VecBoundToCPU(x1, &alreadyboundtocpu));
   PetscCall(VecBindToCPU(x1, PETSC_TRUE));
   PetscCheck(!(ctype == IS_COLORING_LOCAL) || !(J->ops->fdcoloringapply == MatFDColoringApply_AIJ), PetscObjectComm((PetscObject)J), PETSC_ERR_SUP, "Must call MatColoringUseDM() with IS_COLORING_LOCAL");
@@ -211,7 +237,7 @@ PetscErrorCode MatFDColoringApply_AIJ(Mat J, MatFDColoring coloring, Vec x1, voi
   }
 
   /* (3) Loop over each color */
-  if (!coloring->w3) { PetscCall(VecDuplicate(x1, &coloring->w3)); }
+  if (!coloring->w3) PetscCall(VecDuplicate(x1, &coloring->w3));
   w3 = coloring->w3;
 
   PetscCall(VecGetOwnershipRange(x1, &cstart, &cend)); /* used by ghosted vscale */
@@ -366,15 +392,12 @@ PetscErrorCode MatFDColoringApply_AIJ(Mat J, MatFDColoring coloring, Vec x1, voi
     }
   }
 
-#if defined(PETSC_HAVE_VIENNACL) || defined(PETSC_HAVE_CUDA)
-  if (J->offloadmask != PETSC_OFFLOAD_UNALLOCATED) J->offloadmask = PETSC_OFFLOAD_CPU;
-#endif
   PetscCall(MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY));
   if (vscale) PetscCall(VecRestoreArray(vscale, &vscale_array));
   coloring->currentcolor = -1;
   if (!alreadyboundtocpu) PetscCall(VecBindToCPU(x1, PETSC_FALSE));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatFDColoringSetUp_MPIXAIJ(Mat mat, ISColoring iscoloring, MatFDColoring c)
@@ -392,7 +415,7 @@ PetscErrorCode MatFDColoringSetUp_MPIXAIJ(Mat mat, ISColoring iscoloring, MatFDC
   PetscBool              isBAIJ, isSELL;
   PetscInt               bcols = c->bcols;
 #if defined(PETSC_USE_CTABLE)
-  PetscTable colmap = NULL;
+  PetscHMapI colmap = NULL;
 #else
   PetscInt *colmap = NULL;      /* local col number of off-diag col */
 #endif
@@ -560,7 +583,7 @@ PetscErrorCode MatFDColoringSetUp_MPIXAIJ(Mat mat, ISColoring iscoloring, MatFDC
         }
       } else { /* column is in B, off-diagonal block of mat */
 #if defined(PETSC_USE_CTABLE)
-        PetscCall(PetscTableFind(colmap, col + 1, &colb));
+        PetscCall(PetscHMapIGetWithDefault(colmap, col + 1, 0, &colb));
         colb--;
 #else
         colb = colmap[col] - 1; /* local column index */
@@ -628,7 +651,7 @@ PetscErrorCode MatFDColoringSetUp_MPIXAIJ(Mat mat, ISColoring iscoloring, MatFDC
 
   if (ctype == IS_COLORING_LOCAL) PetscCall(ISLocalToGlobalMappingRestoreIndices(map, &ltog));
   PetscCall(PetscInfo(c, "ncolors %" PetscInt_FMT ", brows %" PetscInt_FMT " and bcols %" PetscInt_FMT " are used.\n", c->ncolors, c->brows, c->bcols));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode MatFDColoringCreate_MPIXAIJ(Mat mat, ISColoring iscoloring, MatFDColoring c)
@@ -696,28 +719,29 @@ PetscErrorCode MatFDColoringCreate_MPIXAIJ(Mat mat, ISColoring iscoloring, MatFD
   c->m       = mat->rmap->n / bs;
   c->rstart  = mat->rmap->rstart / bs;
   c->ncolors = nis;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
 
-    MatFDColoringSetValues - takes a matrix in compressed color format and enters the matrix into a PETSc `Mat`
+  MatFDColoringSetValues - takes a matrix in compressed color format and enters the matrix into a PETSc `Mat`
 
-   Collective
+  Collective
 
-   Input Parameters:
-+    J - the sparse matrix
-.    coloring - created with `MatFDColoringCreate()` and a local coloring
--    y - column major storage of matrix values with one color of values per column, the number of rows of y should match
-         the number of local rows of J and the number of columns is the number of colors.
+  Input Parameters:
++ J        - the sparse matrix
+. coloring - created with `MatFDColoringCreate()` and a local coloring
+- y        - column major storage of matrix values with one color of values per column, the number of rows of y should match
+         the number of local rows of `J` and the number of columns is the number of colors.
 
-   Level: intermediate
+  Level: intermediate
 
-   Notes: the matrix in compressed color format may come from an automatic differentiation code
+  Notes:
+  The matrix in compressed color format may come from an automatic differentiation code
 
-   The code will be slightly faster if `MatFDColoringSetBlockSize`(coloring,`PETSC_DEFAULT`,nc); is called immediately after creating the coloring
+  The code will be slightly faster if `MatFDColoringSetBlockSize`(coloring,`PETSC_DEFAULT`,nc); is called immediately after creating the coloring
 
-.seealso: `MatFDColoringCreate()`, `ISColoring`, `ISColoringCreate()`, `ISColoringSetType()`, `IS_COLORING_LOCAL`, `MatFDColoringSetBlockSize()`
+.seealso: [](ch_matrices), `Mat`, `MatFDColoringCreate()`, `ISColoring`, `ISColoringCreate()`, `ISColoringSetType()`, `IS_COLORING_LOCAL`, `MatFDColoringSetBlockSize()`
 @*/
 PetscErrorCode MatFDColoringSetValues(Mat J, MatFDColoring coloring, const PetscScalar *y)
 {
@@ -746,5 +770,5 @@ PetscErrorCode MatFDColoringSetValues(Mat J, MatFDColoring coloring, const Petsc
   }
   PetscCall(MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY));
   PetscCall(MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

@@ -1,21 +1,20 @@
-
 /*
    Defines a ILU factorization preconditioner for any Mat implementation
 */
 #include <../src/ksp/pc/impls/factor/ilu/ilu.h> /*I "petscpc.h"  I*/
 
-PetscErrorCode PCFactorReorderForNonzeroDiagonal_ILU(PC pc, PetscReal z)
+static PetscErrorCode PCFactorReorderForNonzeroDiagonal_ILU(PC pc, PetscReal z)
 {
   PC_ILU *ilu = (PC_ILU *)pc->data;
 
   PetscFunctionBegin;
   ilu->nonzerosalongdiagonal = PETSC_TRUE;
-  if (z == PETSC_DECIDE) ilu->nonzerosalongdiagonaltol = 1.e-10;
+  if (z == (PetscReal)PETSC_DECIDE) ilu->nonzerosalongdiagonaltol = 1.e-10;
   else ilu->nonzerosalongdiagonaltol = z;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
-PetscErrorCode PCReset_ILU(PC pc)
+static PetscErrorCode PCReset_ILU(PC pc)
 {
   PC_ILU *ilu = (PC_ILU *)pc->data;
 
@@ -23,7 +22,7 @@ PetscErrorCode PCReset_ILU(PC pc)
   if (!ilu->hdr.inplace) PetscCall(MatDestroy(&((PC_Factor *)ilu)->fact));
   if (ilu->row && ilu->col && ilu->row != ilu->col) PetscCall(ISDestroy(&ilu->row));
   PetscCall(ISDestroy(&ilu->col));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode PCFactorSetDropTolerance_ILU(PC pc, PetscReal dt, PetscReal dtcol, PetscInt dtcount)
@@ -38,7 +37,7 @@ PetscErrorCode PCFactorSetDropTolerance_ILU(PC pc, PetscReal dt, PetscReal dtcol
   ((PC_Factor *)ilu)->info.dtcol   = dtcol;
   ((PC_Factor *)ilu)->info.dtcount = dtcount;
   ((PC_Factor *)ilu)->info.usedt   = 1.0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSetFromOptions_ILU(PC pc, PetscOptionItems *PetscOptionsObject)
@@ -65,7 +64,7 @@ static PetscErrorCode PCSetFromOptions_ILU(PC pc, PetscOptionItems *PetscOptions
   }
 
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCSetUp_ILU(PC pc)
@@ -114,7 +113,7 @@ static PetscErrorCode PCSetUp_ILU(PC pc)
     PetscCall(MatFactorGetError(pc->pmat, &err));
     if (err) { /* Factor() fails */
       pc->failedreason = (PCFailedReason)err;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
 
     ((PC_Factor *)ilu)->fact = pc->pmat;
@@ -124,7 +123,8 @@ static PetscErrorCode PCSetUp_ILU(PC pc)
     if (!pc->setupcalled) {
       /* first time in so compute reordering and symbolic factorization */
       PetscBool canuseordering;
-      if (!((PC_Factor *)ilu)->fact) { PetscCall(MatGetFactor(pc->pmat, ((PC_Factor *)ilu)->solvertype, MAT_FACTOR_ILU, &((PC_Factor *)ilu)->fact)); }
+
+      PetscCall(PCFactorSetUpMatSolverType(pc));
       PetscCall(MatFactorGetCanUseOrdering(((PC_Factor *)ilu)->fact, &canuseordering));
       if (canuseordering) {
         PetscCall(PCFactorSetDefaultOrdering_Factor(pc));
@@ -138,8 +138,9 @@ static PetscErrorCode PCSetUp_ILU(PC pc)
     } else if (pc->flag != SAME_NONZERO_PATTERN) {
       if (!ilu->hdr.reuseordering) {
         PetscBool canuseordering;
+
         PetscCall(MatDestroy(&((PC_Factor *)ilu)->fact));
-        PetscCall(MatGetFactor(pc->pmat, ((PC_Factor *)ilu)->solvertype, MAT_FACTOR_ILU, &((PC_Factor *)ilu)->fact));
+        PetscCall(PCFactorSetUpMatSolverType(pc));
         PetscCall(MatFactorGetCanUseOrdering(((PC_Factor *)ilu)->fact, &canuseordering));
         if (canuseordering) {
           /* compute a new ordering for the ILU */
@@ -158,7 +159,7 @@ static PetscErrorCode PCSetUp_ILU(PC pc)
     PetscCall(MatFactorGetError(((PC_Factor *)ilu)->fact, &err));
     if (err) { /* FactorSymbolic() fails */
       pc->failedreason = (PCFailedReason)err;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
 
     PetscCall(MatLUFactorNumeric(((PC_Factor *)ilu)->fact, pc->pmat, &((PC_Factor *)ilu)->info));
@@ -174,7 +175,7 @@ static PetscErrorCode PCSetUp_ILU(PC pc)
     PetscCall(MatFactorGetSolverType(((PC_Factor *)ilu)->fact, &solverpackage));
     PetscCall(PCFactorSetMatSolverType(pc, solverpackage));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCDestroy_ILU(PC pc)
@@ -187,7 +188,7 @@ static PetscErrorCode PCDestroy_ILU(PC pc)
   PetscCall(PetscFree(((PC_Factor *)ilu)->ordering));
   PetscCall(PetscFree(pc->data));
   PetscCall(PCFactorClearComposedFunctions(pc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApply_ILU(PC pc, Vec x, Vec y)
@@ -196,7 +197,7 @@ static PetscErrorCode PCApply_ILU(PC pc, Vec x, Vec y)
 
   PetscFunctionBegin;
   PetscCall(MatSolve(((PC_Factor *)ilu)->fact, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCMatApply_ILU(PC pc, Mat X, Mat Y)
@@ -205,7 +206,7 @@ static PetscErrorCode PCMatApply_ILU(PC pc, Mat X, Mat Y)
 
   PetscFunctionBegin;
   PetscCall(MatMatSolve(((PC_Factor *)ilu)->fact, X, Y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApplyTranspose_ILU(PC pc, Vec x, Vec y)
@@ -214,7 +215,7 @@ static PetscErrorCode PCApplyTranspose_ILU(PC pc, Vec x, Vec y)
 
   PetscFunctionBegin;
   PetscCall(MatSolveTranspose(((PC_Factor *)ilu)->fact, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApplySymmetricLeft_ILU(PC pc, Vec x, Vec y)
@@ -223,7 +224,7 @@ static PetscErrorCode PCApplySymmetricLeft_ILU(PC pc, Vec x, Vec y)
 
   PetscFunctionBegin;
   PetscCall(MatForwardSolve(((PC_Factor *)icc)->fact, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode PCApplySymmetricRight_ILU(PC pc, Vec x, Vec y)
@@ -232,25 +233,25 @@ static PetscErrorCode PCApplySymmetricRight_ILU(PC pc, Vec x, Vec y)
 
   PetscFunctionBegin;
   PetscCall(MatBackwardSolve(((PC_Factor *)icc)->fact, x, y));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-     PCILU - Incomplete factorization preconditioners.
+     PCILU - Incomplete factorization preconditioners {cite}`dupont1968approximate`, {cite}`oliphant1961implicit`, {cite}`chan1997approximate`
 
    Options Database Keys:
-+  -pc_factor_levels <k> - number of levels of fill for ILU(k)
-.  -pc_factor_in_place - only for ILU(0) with natural ordering, reuses the space of the matrix for
-                      its factorization (overwrites original matrix)
-.  -pc_factor_diagonal_fill - fill in a zero diagonal even if levels of fill indicate it wouldn't be fill
-.  -pc_factor_reuse_ordering - reuse ordering of factorized matrix from previous factorization
-.  -pc_factor_fill <nfill> - expected amount of fill in factored matrix compared to original matrix, nfill > 1
-.  -pc_factor_nonzeros_along_diagonal - reorder the matrix before factorization to remove zeros from the diagonal,
-                                   this decreases the chance of getting a zero pivot
++  -pc_factor_levels <k>                                 - number of levels of fill for ILU(k)
+.  -pc_factor_in_place                                   - only for ILU(0) with natural ordering, reuses the space of the matrix for
+                                                         its factorization (overwrites original matrix)
+.  -pc_factor_diagonal_fill                              - fill in a zero diagonal even if levels of fill indicate it wouldn't be fill
+.  -pc_factor_reuse_ordering                             - reuse ordering of factorized matrix from previous factorization
+.  -pc_factor_fill <nfill>                               - expected amount of fill in factored matrix compared to original matrix, nfill > 1
+.  -pc_factor_nonzeros_along_diagonal                    - reorder the matrix before factorization to remove zeros from the diagonal,
+                                                         this decreases the chance of getting a zero pivot
 .  -pc_factor_mat_ordering_type <natural,nd,1wd,rcm,qmd> - set the row/column ordering of the factored matrix
--  -pc_factor_pivot_in_blocks - for block ILU(k) factorization, i.e. with BAIJ matrices with block size larger
-                             than 1 the diagonal blocks are factored with partial pivoting (this increases the
-                             stability of the ILU factorization
+-  -pc_factor_pivot_in_blocks                            - for block ILU(k) factorization, i.e. with `MATBAIJ` matrices with block size larger
+                                                         than 1 the diagonal blocks are factored with partial pivoting (this increases the
+                                                         stability of the ILU factorization
 
    Level: beginner
 
@@ -265,16 +266,7 @@ static PetscErrorCode PCApplySymmetricRight_ILU(PC pc, Vec x, Vec y)
    If you are using `MATSEQAIJCUSPARSE` matrices (or `MATMPIAIJCUSPARSE` matrices with block Jacobi), factorization
    is never done on the GPU).
 
-   References:
-+  * - T. Dupont, R. Kendall, and H. Rachford. An approximate factorization procedure for solving
-   self adjoint elliptic difference equations. SIAM J. Numer. Anal., 5, 1968.
-.  * -  T.A. Oliphant. An implicit numerical method for solving two dimensional timedependent diffusion problems. Quart. Appl. Math., 19, 1961.
--  * -  TONY F. CHAN AND HENK A. VAN DER VORST, APPROXIMATE AND INCOMPLETE FACTORIZATIONS,
-      Chapter in Parallel Numerical
-      Algorithms, edited by D. Keyes, A. Semah, V. Venkatakrishnan, ICASE/LaRC Interdisciplinary Series in
-      Science and Engineering, Kluwer.
-
-.seealso: `PCCreate()`, `PCSetType()`, `PCType`, `PC`, `PCSOR`, `MatOrderingType`, `PCLU`, `PCICC`, `PCCHOLESKY`,
+.seealso: [](ch_ksp), `PCCreate()`, `PCSetType()`, `PCType`, `PC`, `PCSOR`, `MatOrderingType`, `PCLU`, `PCICC`, `PCCHOLESKY`,
           `PCFactorSetZeroPivot()`, `PCFactorSetShiftSetType()`, `PCFactorSetAmount()`,
           `PCFactorSetDropTolerance()`, `PCFactorSetFill()`, `PCFactorSetMatOrderingType()`, `PCFactorSetReuseOrdering()`,
           `PCFactorSetLevels()`, `PCFactorSetUseInPlace()`, `PCFactorSetAllowDiagonalFill()`, `PCFactorSetPivotInBlocks()`,
@@ -311,5 +303,5 @@ PETSC_EXTERN PetscErrorCode PCCreate_ILU(PC pc)
   pc->ops->applyrichardson     = NULL;
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCFactorSetDropTolerance_C", PCFactorSetDropTolerance_ILU));
   PetscCall(PetscObjectComposeFunction((PetscObject)pc, "PCFactorReorderForNonzeroDiagonal_C", PCFactorReorderForNonzeroDiagonal_ILU));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

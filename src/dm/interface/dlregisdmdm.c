@@ -1,4 +1,3 @@
-
 #include <petscao.h>
 #include <petsc/private/dmlabelimpl.h>
 #include <petsc/private/dmfieldimpl.h>
@@ -12,8 +11,8 @@
 
 static PetscBool DMPackageInitialized = PETSC_FALSE;
 /*@C
-  DMFinalizePackage - This function finalizes everything in the DM package. It is called
-  from PetscFinalize().
+  DMFinalizePackage - This function finalizes everything in the `DM` package. It is called
+  from `PetscFinalize()`.
 
   Level: developer
 
@@ -25,7 +24,7 @@ PetscErrorCode DMFinalizePackage(void)
   PetscCall(PetscFunctionListDestroy(&DMList));
   DMPackageInitialized = PETSC_FALSE;
   DMRegisterAllCalled  = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_HYPRE)
@@ -34,9 +33,9 @@ PETSC_EXTERN PetscErrorCode MatCreate_HYPRESStruct(Mat);
 #endif
 
 /*@C
-  DMInitializePackage - This function initializes everything in the DM package. It is called
-  from PetscDLLibraryRegister_petscdm() when using dynamic libraries, and on the first call to AOCreate()
-  or DMDACreate() when using shared or static libraries.
+  DMInitializePackage - This function initializes everything in the `DM` package. It is called
+  from `PetscDLLibraryRegister_petscdm()` when using dynamic libraries, and on the first call to `DMCreate()`
+  or `DMDACreate()` when using shared or static libraries.
 
   Level: developer
 
@@ -48,7 +47,7 @@ PetscErrorCode DMInitializePackage(void)
   PetscBool opt, pkg;
 
   PetscFunctionBegin;
-  if (DMPackageInitialized) PetscFunctionReturn(0);
+  if (DMPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   DMPackageInitialized = PETSC_TRUE;
 
   /* Register Classes */
@@ -79,11 +78,13 @@ PetscErrorCode DMInitializePackage(void)
   PetscCall(PetscLogEventRegister("DMCreateMassMat", DM_CLASSID, &DM_CreateMassMatrix));
   PetscCall(PetscLogEventRegister("DMLoad", DM_CLASSID, &DM_Load));
   PetscCall(PetscLogEventRegister("DMAdaptInterp", DM_CLASSID, &DM_AdaptInterpolator));
+  PetscCall(PetscLogEventRegister("DMProjectFunc", DM_CLASSID, &DM_ProjectFunction));
 
   PetscCall(PetscLogEventRegister("DMPlexBuFrCeLi", DM_CLASSID, &DMPLEX_BuildFromCellList));
   PetscCall(PetscLogEventRegister("DMPlexBuCoFrCeLi", DM_CLASSID, &DMPLEX_BuildCoordinatesFromCellList));
   PetscCall(PetscLogEventRegister("DMPlexCreateGmsh", DM_CLASSID, &DMPLEX_CreateGmsh));
   PetscCall(PetscLogEventRegister("DMPlexCrFromFile", DM_CLASSID, &DMPLEX_CreateFromFile));
+  PetscCall(PetscLogEventRegister("DMPlexCrFromOpts", DM_CLASSID, &DMPLEX_CreateFromOptions));
   PetscCall(PetscLogEventRegister("Mesh Partition", DM_CLASSID, &DMPLEX_Partition));
   PetscCall(PetscLogEventRegister("Mesh Migration", DM_CLASSID, &DMPLEX_Migrate));
   PetscCall(PetscLogEventRegister("DMPlexPartSelf", DM_CLASSID, &DMPLEX_PartSelf));
@@ -115,12 +116,14 @@ PetscErrorCode DMInitializePackage(void)
   PetscCall(PetscLogEventRegister("DMPlexRebalance", DM_CLASSID, &DMPLEX_RebalanceSharedPoints));
   PetscCall(PetscLogEventRegister("DMPlexLocatePoints", DM_CLASSID, &DMPLEX_LocatePoints));
   PetscCall(PetscLogEventRegister("DMPlexTopologyView", DM_CLASSID, &DMPLEX_TopologyView));
+  PetscCall(PetscLogEventRegister("DMPlexDistributionView", DM_CLASSID, &DMPLEX_DistributionView));
   PetscCall(PetscLogEventRegister("DMPlexLabelsView", DM_CLASSID, &DMPLEX_LabelsView));
   PetscCall(PetscLogEventRegister("DMPlexCoordinatesView", DM_CLASSID, &DMPLEX_CoordinatesView));
   PetscCall(PetscLogEventRegister("DMPlexSectionView", DM_CLASSID, &DMPLEX_SectionView));
   PetscCall(PetscLogEventRegister("DMPlexGlobalVectorView", DM_CLASSID, &DMPLEX_GlobalVectorView));
   PetscCall(PetscLogEventRegister("DMPlexLocalVectorView", DM_CLASSID, &DMPLEX_LocalVectorView));
   PetscCall(PetscLogEventRegister("DMPlexTopologyLoad", DM_CLASSID, &DMPLEX_TopologyLoad));
+  PetscCall(PetscLogEventRegister("DMPlexDistributionLoad", DM_CLASSID, &DMPLEX_DistributionLoad));
   PetscCall(PetscLogEventRegister("DMPlexLabelsLoad", DM_CLASSID, &DMPLEX_LabelsLoad));
   PetscCall(PetscLogEventRegister("DMPlexCoordinatesLoad", DM_CLASSID, &DMPLEX_CoordinatesLoad));
   PetscCall(PetscLogEventRegister("DMPlexSectionLoad", DM_CLASSID, &DMPLEX_SectionLoad));
@@ -130,12 +133,16 @@ PetscErrorCode DMInitializePackage(void)
   PetscCall(PetscLogEventRegister("DMPlexMetricNormalize", DM_CLASSID, &DMPLEX_MetricNormalize));
   PetscCall(PetscLogEventRegister("DMPlexMetricAverage", DM_CLASSID, &DMPLEX_MetricAverage));
   PetscCall(PetscLogEventRegister("DMPlexMetricIntersect", DM_CLASSID, &DMPLEX_MetricIntersection));
+  PetscCall(PetscLogEventRegister("DMPlexGenerate", DM_CLASSID, &DMPLEX_Generate));
+  PetscCall(PetscLogEventRegister("DMPlexTransform", DM_CLASSID, &DMPLEX_Transform));
+  PetscCall(PetscLogEventRegister("DMPlexGetLocOff", DM_CLASSID, &DMPLEX_GetLocalOffsets));
 
   PetscCall(PetscLogEventRegister("RebalBuildGraph", DM_CLASSID, &DMPLEX_RebalBuildGraph));
   PetscCall(PetscLogEventRegister("RebalGatherGraph", DM_CLASSID, &DMPLEX_RebalGatherGraph));
   PetscCall(PetscLogEventRegister("RebalPartition", DM_CLASSID, &DMPLEX_RebalPartition));
   PetscCall(PetscLogEventRegister("RebalScatterPart", DM_CLASSID, &DMPLEX_RebalScatterPart));
   PetscCall(PetscLogEventRegister("RebalRewriteSF", DM_CLASSID, &DMPLEX_RebalRewriteSF));
+  PetscCall(PetscLogEventRegister("DMPlexUninterp", DM_CLASSID, &DMPLEX_Uninterpolate));
 
   PetscCall(PetscLogEventRegister("DMSwarmMigrate", DM_CLASSID, &DMSWARM_Migrate));
   PetscCall(PetscLogEventRegister("DMSwarmDETSetup", DM_CLASSID, &DMSWARM_DataExchangerTopologySetup));
@@ -170,15 +177,18 @@ PetscErrorCode DMInitializePackage(void)
   PetscCall(PetscRegisterFinalize(DMGenerateRegisterDestroy));
   PetscCall(DMPlexTransformRegisterAll());
   PetscCall(PetscRegisterFinalize(DMPlexTransformRegisterDestroy));
+  PetscCall(DMLabelRegisterAll());
+  PetscCall(PetscRegisterFinalize(DMLabelRegisterDestroy));
   PetscCall(PetscRegisterFinalize(DMFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #include <petscfe.h>
 
 static PetscBool PetscFEPackageInitialized = PETSC_FALSE;
+
 /*@C
-  PetscFEFinalizePackage - This function finalizes everything in the PetscFE package. It is called
-  from PetscFinalize().
+  PetscFEFinalizePackage - This function finalizes everything in the `PetscFE` package. It is called
+  from `PetscFinalize()`.
 
   Level: developer
 
@@ -194,12 +204,12 @@ PetscErrorCode PetscFEFinalizePackage(void)
   PetscSpaceRegisterAllCalled     = PETSC_FALSE;
   PetscDualSpaceRegisterAllCalled = PETSC_FALSE;
   PetscFERegisterAllCalled        = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  PetscFEInitializePackage - This function initializes everything in the FE package. It is called
-  from PetscDLLibraryRegister() when using dynamic libraries, and on the first call to PetscSpaceCreate()
+  PetscFEInitializePackage - This function initializes everything in the `PetscFE` package. It is called
+  from `PetscDLLibraryRegister()` when using dynamic libraries, and on the first call to `PetscSpaceCreate()`
   when using static libraries.
 
   Level: developer
@@ -212,7 +222,7 @@ PetscErrorCode PetscFEInitializePackage(void)
   PetscBool opt, pkg;
 
   PetscFunctionBegin;
-  if (PetscFEPackageInitialized) PetscFunctionReturn(0);
+  if (PetscFEPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   PetscFEPackageInitialized = PETSC_TRUE;
 
   /* Register Classes */
@@ -245,14 +255,15 @@ PetscErrorCode PetscFEInitializePackage(void)
   }
   /* Register package finalizer */
   PetscCall(PetscRegisterFinalize(PetscFEFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #include <petscfv.h>
 
 static PetscBool PetscFVPackageInitialized = PETSC_FALSE;
+
 /*@C
-  PetscFVFinalizePackage - This function finalizes everything in the PetscFV package. It is called
-  from PetscFinalize().
+  PetscFVFinalizePackage - This function finalizes everything in the `PetscFV` package. It is called
+  from `PetscFinalize()`.
 
   Level: developer
 
@@ -266,12 +277,12 @@ PetscErrorCode PetscFVFinalizePackage(void)
   PetscFVPackageInitialized     = PETSC_FALSE;
   PetscFVRegisterAllCalled      = PETSC_FALSE;
   PetscLimiterRegisterAllCalled = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  PetscFVInitializePackage - This function initializes everything in the FV package. It is called
-  from PetscDLLibraryRegister() when using dynamic libraries, and on the first call to PetscFVCreate()
+  PetscFVInitializePackage - This function initializes everything in the `PetscFV` package. It is called
+  from `PetscDLLibraryRegister()` when using dynamic libraries, and on the first call to `PetscFVCreate()`
   when using static libraries.
 
   Level: developer
@@ -284,7 +295,7 @@ PetscErrorCode PetscFVInitializePackage(void)
   PetscBool opt, pkg;
 
   PetscFunctionBegin;
-  if (PetscFVPackageInitialized) PetscFunctionReturn(0);
+  if (PetscFVPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   PetscFVPackageInitialized = PETSC_TRUE;
 
   /* Register Classes */
@@ -312,11 +323,12 @@ PetscErrorCode PetscFVInitializePackage(void)
   }
   /* Register package finalizer */
   PetscCall(PetscRegisterFinalize(PetscFVFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 #include <petscds.h>
 
 static PetscBool PetscDSPackageInitialized = PETSC_FALSE;
+
 /*@C
   PetscDSFinalizePackage - This function finalizes everything in the PetscDS package. It is called
   from PetscFinalize().
@@ -331,12 +343,12 @@ PetscErrorCode PetscDSFinalizePackage(void)
   PetscCall(PetscFunctionListDestroy(&PetscDSList));
   PetscDSPackageInitialized = PETSC_FALSE;
   PetscDSRegisterAllCalled  = PETSC_FALSE;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*@C
-  PetscDSInitializePackage - This function initializes everything in the DS package. It is called
-  from PetscDLLibraryRegister() when using dynamic libraries, and on the first call to PetscDSCreate()
+  PetscDSInitializePackage - This function initializes everything in the `PetscDS` package. It is called
+  from `PetscDLLibraryRegister()` when using dynamic libraries, and on the first call to `PetscDSCreate()`
   when using static libraries.
 
   Level: developer
@@ -349,7 +361,7 @@ PetscErrorCode PetscDSInitializePackage(void)
   PetscBool opt, pkg;
 
   PetscFunctionBegin;
-  if (PetscDSPackageInitialized) PetscFunctionReturn(0);
+  if (PetscDSPackageInitialized) PetscFunctionReturn(PETSC_SUCCESS);
   PetscDSPackageInitialized = PETSC_TRUE;
 
   /* Register Classes */
@@ -373,7 +385,7 @@ PetscErrorCode PetscDSInitializePackage(void)
   }
   /* Register package finalizer */
   PetscCall(PetscRegisterFinalize(PetscDSFinalizePackage));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #if defined(PETSC_HAVE_DYNAMIC_LIBRARIES)
@@ -393,7 +405,7 @@ PETSC_EXTERN PetscErrorCode PetscDLLibraryRegister_petscdm(void)
   PetscCall(PetscFEInitializePackage());
   PetscCall(PetscFVInitializePackage());
   PetscCall(DMFieldInitializePackage());
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 #endif /* PETSC_HAVE_DYNAMIC_LIBRARIES */

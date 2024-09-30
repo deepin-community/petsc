@@ -6,7 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Install &#8212; PETSc 3.18.6 documentation</title>
+    <title>Install &#8212; PETSc 3.20.6 documentation</title>
   
   
   
@@ -28,9 +28,10 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.4/dist/katex.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/katex-math.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/css/custom.css" />
   
   <!-- Pre-loaded scripts that we'll load fully later -->
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=796348d33e8b1d947c94">
@@ -53,7 +54,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Download" href="download.html" />
-    <link rel="prev" title="PetscViewersGetViewer" href="../docs/manualpages/Viewer/PetscViewersGetViewer.html" />
+    <link rel="prev" title="Documentation for previous PETSc releases" href="../overview/previous_release_docs.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="docsearch:language" content="en">
   </head>
@@ -142,31 +143,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -194,9 +197,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -293,31 +293,33 @@
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manual/index.html">
+                      <a class="nav-link nav-internal" href="../tutorials/index.html">
+                        Tutorials
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../manual/index.html">
                         User-Guide
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../docs/manualpages/index.html">
-                        API-Docs
+                      <a class="nav-link nav-internal" href="../manualpages/index.html">
+                        C/Fortran API
                       </a>
                     </li>
                 
 
                     <li class="nav-item">
-                      <a class="nav-link nav-internal" href="../tutorials/index.html">
-                        Tutorials
+                      <a class="nav-link nav-internal" href="../petsc4py/index.html">
+                        petsc4py API
                       </a>
                     </li>
                 
-            <div class="nav-item dropdown">
-                <button class="btn dropdown-toggle nav-item" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    More
-                </button>
-                <div class="dropdown-menu">
-                    
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="../faq/index.html">
                         FAQ
@@ -345,9 +347,6 @@
                       </a>
                     </li>
                 
-                </div>
-            </div>
-            
     </ul>
 </nav>
       </div>
@@ -435,7 +434,65 @@
               
   <section id="install">
 <span id="doc-install"></span><h1>Install<a class="headerlink" href="#install" title="Permalink to this heading">#</a></h1>
-<p>PETSc is available from a variety of package managers, if you are not planning to use PETSc with external packages that is likely the easiest way to install it.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>PETSc is available from multiple package managers.
+Depending on your exact needs (for example limited use of <a class="reference internal" href="external_software.html#doc-externalsoftware"><span class="std std-ref">external packages</span></a>) they are possibly the easiest way for
+you to install PETSc.
+Always verify that the package manager is providing a recent enough release of PETSc with support for the external packages you need.
+Some package managers provide separate packages for the complex number installation of PETSc.</p>
+<ul class="simple">
+<li><p>Archlinux <a class="reference external" href="https://aur.archlinux.org/packages/petsc">https://aur.archlinux.org/packages/petsc</a></p></li>
+<li><dl class="simple">
+<dt>Conda: <a class="reference external" href="https://anaconda.org/conda-forge/petsc">https://anaconda.org/conda-forge/petsc</a></dt><dd><p><code class="docutils notranslate"><span class="pre">conda</span> <span class="pre">install</span> <span class="pre">-c</span> <span class="pre">conda-forge</span> <span class="pre">petsc</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Debian: <a class="reference external" href="https://packages.debian.org/petsc-dev">https://packages.debian.org/petsc-dev</a></dt><dd><p><code class="docutils notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">petsc-dev</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Fedora: <a class="reference external" href="https://packages.fedoraproject.org/pkgs/petsc/petsc">https://packages.fedoraproject.org/pkgs/petsc/petsc</a></dt><dd><p><code class="docutils notranslate"><span class="pre">sudo</span> <span class="pre">yum</span> <span class="pre">install</span> <span class="pre">petsc-mpich-devel</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Homebrew: <a class="reference external" href="https://formulae.brew.sh/formula/petsc">https://formulae.brew.sh/formula/petsc</a></dt><dd><p><code class="docutils notranslate"><span class="pre">brew</span> <span class="pre">install</span> <span class="pre">petsc</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>MacPorts: <a class="reference external" href="https://ports.macports.org/port/petsc">https://ports.macports.org/port/petsc</a></dt><dd><p><code class="docutils notranslate"><span class="pre">sudo</span> <span class="pre">port</span> <span class="pre">install</span> <span class="pre">petsc</span></code></p>
+</dd>
+</dl>
+</li>
+<li><p>MSYS2 (Windows) <a class="reference external" href="https://packages.msys2.org/package/mingw-w64-x86_64-petsc">https://packages.msys2.org/package/mingw-w64-x86_64-petsc</a></p></li>
+<li><p>openSUSE <a class="reference external" href="https://software.opensuse.org/package/petsc">https://software.opensuse.org/package/petsc</a></p></li>
+<li><dl class="simple">
+<dt>Python: <a class="reference external" href="https://pypi.org/project/petsc">https://pypi.org/project/petsc</a></dt><dd><p><code class="docutils notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">mpi4py</span> <span class="pre">petsc</span> <span class="pre">petsc4py</span></code></p>
+</dd>
+</dl>
+</li>
+<li><p>Slackware: <a class="reference external" href="https://slackbuilds.org/repository/15.0/academic/petsc/?search=petsc">https://slackbuilds.org/repository/15.0/academic/petsc/?search=petsc</a></p></li>
+<li><dl class="simple">
+<dt>Spack: <a class="reference external" href="https://spack.io">https://spack.io</a></dt><dd><ul>
+<li><p>debug install - <code class="docutils notranslate"><span class="pre">spack</span> <span class="pre">install</span> <span class="pre">petsc</span> <span class="pre">+debug</span></code></p></li>
+<li><p>optimized install -<code class="docutils notranslate"><span class="pre">spack</span> <span class="pre">install</span> <span class="pre">petsc</span> <span class="pre">cflags='-g</span> <span class="pre">-O3</span> <span class="pre">-march=native</span> <span class="pre">-mtune=native'</span> <span class="pre">fflags='-g</span> <span class="pre">-O3</span> <span class="pre">-march=native</span> <span class="pre">-mtune=native'</span>&#160; <span class="pre">cxxflags='-g</span> <span class="pre">-O3</span> <span class="pre">-march=native</span> <span class="pre">-mtune=native'</span></code></p></li>
+<li><p>install with some external packages - <code class="docutils notranslate"><span class="pre">spack</span> <span class="pre">install</span> <span class="pre">petsc</span> <span class="pre">+superlu-dist</span> <span class="pre">+metis</span> <span class="pre">+hypre</span> <span class="pre">+hdf5</span></code></p></li>
+<li><p>list available variants (configurations) - <code class="docutils notranslate"><span class="pre">spack</span> <span class="pre">info</span> <span class="pre">petsc</span></code></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Ubuntu: <a class="reference external" href="https://packages.ubuntu.com/petsc-dev">https://packages.ubuntu.com/petsc-dev</a></dt><dd><p><code class="docutils notranslate"><span class="pre">sudo</span> <span class="pre">apt</span> <span class="pre">install</span> <span class="pre">petsc-dev</span></code></p>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
 <p>Information and tutorials on setting up a PETSc installation.</p>
 <div class="toctree-wrapper compound">
 <ul>
@@ -459,12 +516,13 @@
 <li class="toctree-l2"><a class="reference internal" href="install.html#compilers">Compilers</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#external-packages">External Packages</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#blas-lapack">BLAS/LAPACK</a></li>
-<li class="toctree-l2"><a class="reference internal" href="install.html#mpi-problems-i-don-t-want-mpi">MPI Problems/I Don’t Want MPI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#mpi">MPI</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installing-on-macos">Installing On macOS</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installation-location-in-place-or-out-of-place">Installation Location: In-place or Out-of-place</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installing-on-machine-requiring-cross-compiler-or-a-job-scheduler">Installing On Machine Requiring Cross Compiler Or A Job Scheduler</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installing-with-tau-instrumentation-package">Installing With TAU Instrumentation Package</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installing-petsc-to-use-gpus-and-accelerators">Installing PETSc To Use GPUs And Accelerators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="install.html#installing-to-run-in-browser-with-emscripten">Installing To Run in Browser with Emscripten</a></li>
 <li class="toctree-l2"><a class="reference internal" href="install.html#installing-on-large-scale-doe-systems">Installing On Large Scale DOE Systems</a></li>
 </ul>
 </li>
@@ -475,14 +533,14 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="multibuild.html">Maintaining Your PETSc Installation(s)</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="multibuild.html#environmental-variables-petsc-dir-and-petsc-arch">Environmental Variables <code class="docutils literal notranslate"><span class="pre">$PETSC_DIR</span></code> And <code class="docutils literal notranslate"><span class="pre">$PETSC_ARCH</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="multibuild.html#environmental-variables-petsc-dir-and-petsc-arch">Environmental Variables <code class="docutils notranslate"><span class="pre">$PETSC_DIR</span></code> And <code class="docutils notranslate"><span class="pre">$PETSC_ARCH</span></code></a></li>
 <li class="toctree-l2"><a class="reference internal" href="multibuild.html#configure-caching">Configure Caching</a></li>
 <li class="toctree-l2"><a class="reference internal" href="multibuild.html#reconfigure">Reconfigure</a></li>
 <li class="toctree-l2"><a class="reference internal" href="multibuild.html#updating-or-reinstalling-petsc">Updating or Reinstalling PETSc</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="external_software.html">Supported External Software</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="external_software.html#list-of-software">List Of Software</a></li>
+<li class="toctree-l2"><a class="reference internal" href="external_software.html#partial-list-of-software">Partial List Of Software</a></li>
 <li class="toctree-l2"><a class="reference internal" href="external_software.html#additional-software">Additional Software</a></li>
 </ul>
 </li>
@@ -504,11 +562,11 @@
             <footer class="bd-footer-article">
                 <!-- Previous / next buttons -->
 <div class='prev-next-area'>
-  <a class='left-prev' id="prev-link" href="../docs/manualpages/Viewer/PetscViewersGetViewer.html" title="previous page">
+  <a class='left-prev' id="prev-link" href="../overview/previous_release_docs.html" title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
           <p class="prev-next-subtitle">previous</p>
-          <p class="prev-next-title">PetscViewersGetViewer</p>
+          <p class="prev-next-title">Documentation for previous PETSc releases</p>
       </div>
   </a>
   <a class='right-next' id="next-link" href="download.html" title="next page">
@@ -579,7 +637,7 @@
     
 <p class="copyright">
 
-    &copy; Copyright 1991-2023, UChicago Argonne, LLC and the PETSc Development Team.<br>
+    &copy; Copyright 1991-2024, UChicago Argonne, LLC and the PETSc Development Team.<br>
 
 </p>
 
@@ -595,7 +653,7 @@ Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br>
   
   <div class="footer-item">
     <p class="last-updated">
-Last updated on 2023-03-30T10:44:47-0500 (v3.18.6).<br>
+Last updated on 2024-03-29T09:10:29-0500 (v3.20.6).<br>
 </p>
   </div>
   

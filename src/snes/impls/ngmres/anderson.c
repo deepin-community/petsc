@@ -15,7 +15,7 @@ static PetscErrorCode SNESSetFromOptions_Anderson(SNES snes, PetscOptionItems *P
   PetscCall(PetscOptionsBool("-snes_anderson_monitor", "Monitor steps of Anderson Mixing", "SNES", ngmres->monitor ? PETSC_TRUE : PETSC_FALSE, &monitor, NULL));
   if (monitor) ngmres->monitor = PETSC_VIEWER_STDOUT_(PetscObjectComm((PetscObject)snes));
   PetscOptionsHeadEnd();
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode SNESSolve_Anderson(SNES snes)
@@ -44,7 +44,7 @@ static PetscErrorCode SNESSolve_Anderson(SNES snes)
   X            = snes->vec_sol;
   F            = snes->vec_func;
   B            = snes->vec_rhs;
-  XA           = snes->vec_sol_update;
+  XA           = snes->work[2];
   FA           = snes->work[0];
   D            = snes->work[1];
 
@@ -66,7 +66,7 @@ static PetscErrorCode SNESSolve_Anderson(SNES snes)
     PetscCall(SNESGetConvergedReason(snes->npc, &reason));
     if (reason < 0 && reason != SNES_DIVERGED_MAX_IT) {
       snes->reason = SNES_DIVERGED_INNER;
-      PetscFunctionReturn(0);
+      PetscFunctionReturn(PETSC_SUCCESS);
     }
     PetscCall(VecNorm(F, NORM_2, &fnorm));
   } else {
@@ -83,14 +83,18 @@ static PetscErrorCode SNESSolve_Anderson(SNES snes)
   snes->norm = fnorm;
   PetscCall(PetscObjectSAWsGrantAccess((PetscObject)snes));
   PetscCall(SNESLogConvergenceHistory(snes, fnorm, 0));
+  PetscCall(SNESConverged(snes, 0, 0.0, 0.0, fnorm));
   PetscCall(SNESMonitor(snes, 0, fnorm));
-  PetscUseTypeMethod(snes, converged, 0, 0.0, 0.0, fnorm, &snes->reason, snes->cnvP);
-  if (snes->reason) PetscFunctionReturn(0);
+  if (snes->reason) PetscFunctionReturn(PETSC_SUCCESS);
+  PetscCall(SNESNGMRESUpdateSubspace_Private(snes, 0, 0, F, fnorm, X));
 
   k_restart = 0;
   l         = 0;
   ivec      = 0;
   for (k = 1; k < snes->max_its + 1; k++) {
+    /* Call general purpose update function */
+    PetscTryTypeMethod(snes, update, snes->iter);
+
     /* select which vector of the stored subspace will be updated */
     if (snes->npc && snes->npcside == PC_RIGHT) {
       PetscCall(VecCopy(X, XM));
@@ -103,7 +107,7 @@ static PetscErrorCode SNESSolve_Anderson(SNES snes)
       PetscCall(SNESGetConvergedReason(snes->npc, &reason));
       if (reason < 0 && reason != SNES_DIVERGED_MAX_IT) {
         snes->reason = SNES_DIVERGED_INNER;
-        PetscFunctionReturn(0);
+        PetscFunctionReturn(PETSC_SUCCESS);
       }
       PetscCall(SNESGetNPCFunction(snes, FM, &fMnorm));
       if (ngmres->andersonBeta != 1.0) PetscCall(VecAXPBY(XM, (1.0 - ngmres->andersonBeta), ngmres->andersonBeta, X));
@@ -157,23 +161,23 @@ static PetscErrorCode SNESSolve_Anderson(SNES snes)
     snes->ynorm = ynorm;
     PetscCall(PetscObjectSAWsGrantAccess((PetscObject)snes));
     PetscCall(SNESLogConvergenceHistory(snes, snes->norm, snes->iter));
+    PetscCall(SNESConverged(snes, snes->iter, xnorm, ynorm, fnorm));
     PetscCall(SNESMonitor(snes, snes->iter, snes->norm));
-    PetscUseTypeMethod(snes, converged, snes->iter, xnorm, ynorm, fnorm, &snes->reason, snes->cnvP);
-    if (snes->reason) PetscFunctionReturn(0);
+    if (snes->reason) PetscFunctionReturn(PETSC_SUCCESS);
   }
   snes->reason = SNES_DIVERGED_MAX_IT;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
-  SNESANDERSON - Anderson Mixing nonlinear solver
+  SNESANDERSON - Anderson Mixing nonlinear solver {cite}`anderson1965`, {cite}`bruneknepleysmithtu15`
 
    Level: beginner
 
    Options Database Keys:
 +  -snes_anderson_m                - Number of stored previous solutions and residuals
 .  -snes_anderson_beta             - Anderson mixing parameter
-.  -snes_anderson_restart_type     - Type of restart (see SNESNGMRES)
+.  -snes_anderson_restart_type     - Type of restart (see `SNESNGMRES`)
 .  -snes_anderson_restart_it       - Number of iterations of restart conditions before restart
 .  -snes_anderson_restart          - Number of iterations before periodic restart
 -  -snes_anderson_monitor          - Prints relevant information about the ngmres iteration
@@ -184,13 +188,7 @@ static PetscErrorCode SNESSolve_Anderson(SNES snes)
 
    Very similar to the `SNESNGMRES` algorithm.
 
-   References:
-+  * -  D. G. Anderson. Iterative procedures for nonlinear integral equations.
-    J. Assoc. Comput. Mach., 12, 1965."
--  * - Peter R. Brune, Matthew G. Knepley, Barry F. Smith, and Xuemin Tu,"Composing Scalable Nonlinear Algebraic Solvers",
-   SIAM Review, 57(4), 2015
-
-.seealso: `SNESNGMRES`, `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESType`
+.seealso: [](ch_snes), `SNESNGMRES`, `SNESCreate()`, `SNES`, `SNESSetType()`, `SNESType`
 M*/
 
 PETSC_EXTERN PetscErrorCode SNESCreate_Anderson(SNES snes)
@@ -235,5 +233,5 @@ PETSC_EXTERN PetscErrorCode SNESCreate_Anderson(SNES snes)
   ngmres->epsilonB            = 0.1;
 
   ngmres->andersonBeta = 1.0;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }

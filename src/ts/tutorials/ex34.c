@@ -58,7 +58,7 @@ static PetscErrorCode FormRHSFunction(TS ts, PetscReal t, Vec U, Vec F, void *ct
   PetscCall(DMDAVecRestoreArrayRead(dm, U, (void *)&u));
   PetscCall(DMDAVecRestoreArray(dm, F, &f));
   PetscCall(DMDAVecRestoreArrayRead(cdm, C, (void *)&x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 static PetscErrorCode FormIFunction(TS ts, PetscReal t, Vec U, Vec Udot, Vec F, void *ctx)
@@ -106,7 +106,7 @@ static PetscErrorCode FormIFunction(TS ts, PetscReal t, Vec U, Vec Udot, Vec F, 
   PetscCall(DMDAVecRestoreArray(dm, F, &f));
   PetscCall(DMDAVecRestoreArrayRead(cdm, C, &x));
   PetscCall(DMRestoreLocalVector(dm, &Uloc));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /* IJacobian - Compute IJacobian = dF/dU + a dF/dUdot */
@@ -173,7 +173,7 @@ PetscErrorCode FormIJacobian(TS ts, PetscReal t, Vec U, Vec Udot, PetscReal a, M
     PetscCall(MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY));
     PetscCall(MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY));
   }
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 PetscErrorCode FormInitialSolution(TS ts, Vec U, void *ctx)
@@ -201,7 +201,7 @@ PetscErrorCode FormInitialSolution(TS ts, Vec U, void *ctx)
   }
   PetscCall(DMDAVecRestoreArray(dm, U, &u));
   PetscCall(DMDAVecRestoreArrayRead(cdm, C, &x));
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 int main(int argc, char **argv)
@@ -274,7 +274,7 @@ int main(int argc, char **argv)
 /*TEST
 
     build:
-      requires: !single  !complex
+      requires: !single !complex
 
     test:
       TODO: broken, was not nightly tested, SNES solve eventually fails, -snes_test_jacobian indicates Jacobian is wrong, but even -snes_mf_operator fails

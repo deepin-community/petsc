@@ -27,7 +27,7 @@ static PetscErrorCode TSAdaptChoose_CFL(TSAdapt adapt, TS ts, PetscReal h, Petsc
   /* The optimal new step based purely on CFL constraint for this step. */
   hcfl = adapt->safety * cfltimestep * ccfl;
   if (hcfl < adapt->dt_min) {
-    PetscCall(PetscInfo(adapt, "Cannot satisfy CFL constraint %g (with %g safety) at minimum time step %g with method coefficient %g, proceding anyway\n", (double)cfltimestep, (double)adapt->safety, (double)adapt->dt_min, (double)ccfl));
+    PetscCall(PetscInfo(adapt, "Cannot satisfy CFL constraint %g (with %g safety) at minimum time step %g with method coefficient %g, proceeding anyway\n", (double)cfltimestep, (double)adapt->safety, (double)adapt->dt_min, (double)ccfl));
   }
 
   *next_sc = 0;
@@ -35,7 +35,7 @@ static PetscErrorCode TSAdaptChoose_CFL(TSAdapt adapt, TS ts, PetscReal h, Petsc
   *wlte    = -1; /* Weighted local truncation error was not evaluated */
   *wltea   = -1; /* Weighted absolute local truncation error was not evaluated */
   *wlter   = -1; /* Weighted relative local truncation error was not evaluated */
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
 
 /*MC
@@ -43,11 +43,11 @@ static PetscErrorCode TSAdaptChoose_CFL(TSAdapt adapt, TS ts, PetscReal h, Petsc
 
    Level: intermediate
 
-.seealso: [](chapter_ts), `TS`, `TSAdapt`, `TSGetAdapt()`, `TSAdaptType`
+.seealso: [](ch_ts), `TS`, `TSAdapt`, `TSGetAdapt()`, `TSAdaptType`
 M*/
 PETSC_EXTERN PetscErrorCode TSAdaptCreate_CFL(TSAdapt adapt)
 {
   PetscFunctionBegin;
   adapt->ops->choose = TSAdaptChoose_CFL;
-  PetscFunctionReturn(0);
+  PetscFunctionReturn(PETSC_SUCCESS);
 }
